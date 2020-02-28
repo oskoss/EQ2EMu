@@ -35,15 +35,15 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 
 3. Source in Databases: Issue the following commands to setup EQ2Emulator's databases for login (eq2ls) and world (eq2emu).
 
-   - You must first go into source C:\[YOUREQ2EMUGITSRC]\DB\ and extract world_db.zip 'Here' into the same \DB\ directory.
+   - You must first go into source C:\\[YOUREQ2EMUGITSRC]\DB\ and extract world_db.zip 'Here' into the same \DB\ directory.
 
    - Run the following commands in the MySQL Client prompt:
       create database eq2ls;
       create database eq2emu;
       \u eq2ls
-      source C:\[YOUREQ2EMUGITSRC]\DB\ls_db.sql
+      source C:\\[YOUREQ2EMUGITSRC]\DB\ls_db.sql
       \u eq2emu
-      source C:\[YOUREQ2EMUGITSRC]\DB\world_db.sql
+      source C:\\[YOUREQ2EMUGITSRC]\DB\world_db.sql
 
 4. Add Game Account / World Account: Using the same MySQL Client, continue on creating your accounts
 
@@ -52,7 +52,7 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
     World Login Account (LoginServer.ini):
     insert into login_worldservers set name='TestLabs',account='testlabs',description='TestLabs',password=md5('testpass'),login_version='0.7.3-dev';
 
-5. Open the C:\[YOUREQ2EMUGITSRC]\server\LoginServer.ini file (Notepad or other flavor editor)
+5. Open the C:\\[YOUREQ2EMUGITSRC]\server\LoginServer.ini file (Notepad or other flavor editor)
 
     Note: Steps to find your LAN IP (command prompt, ipconfig, IPv4 address): https://www.lifewire.com/ip-config-818377
 
@@ -67,14 +67,14 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 	  password - Column 'password' in login_worldservers (eg. testpass)
    - Save Changes
    
-6. Open the C:\[YOUREQ2EMUGITSRC]\server\login_db.ini file (Notepad or other flavor editor)
+6. Open the C:\\[YOUREQ2EMUGITSRC]\server\login_db.ini file (Notepad or other flavor editor)
    - Modify the [Database] section:
       host - Should remain localhost unless you have your MariaDB server reside on another host IP
 	  user - When installing MariaDB the user defined (default is 'root') should be set here
 	  password - When installing MariaDB use the password defined along with the default user.
 	  database - This field should remain eq2ls unless changed by the user to use a custom database name.
 
-7. Open the C:\[YOUREQ2EMUGITSRC]\server\world_db.ini file (Notepad or other flavor editor)
+7. Open the C:\\[YOUREQ2EMUGITSRC]\server\world_db.ini file (Notepad or other flavor editor)
    - Modify the [Database] section:
       host - Should remain localhost or 127.0.0.1 unless you have your MariaDB server reside on another host IP
 	  user - When installing MariaDB the user defined (default is 'root') should be set here
