@@ -2,3 +2,7 @@
 /EQ2/source/LoginServer/EQ2[[:space:]]Login.ncb filter=lfs diff=lfs merge=lfs -text
 /EQ2/source/LoginServer/EQ2[[:space:]]Login.sdf filter=lfs diff=lfs merge=lfs -text
 /server/EQ2World__Debug_x64.exe filter=lfs diff=lfs merge=lfs -text
+/EQ2/source/depends/mariadb-10.1.19/lib/32-debug/mysqlclient.lib filter=lfs diff=lfs merge=lfs -text
+/EQ2/source/depends/mariadb-10.1.19/lib/32/mysqlclient.lib filter=lfs diff=lfs merge=lfs -text
+/EQ2/source/depends/mariadb-10.1.19/lib/64-debug/mysqlclient.lib filter=lfs diff=lfs merge=lfs -text
+/EQ2/source/depends/mariadb-10.1.19/lib/64/mysqlclient.lib filter=lfs diff=lfs merge=lfs -text
