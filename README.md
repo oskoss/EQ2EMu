@@ -25,11 +25,11 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 
 1. Software Requirement: MariaDB (MySQL DB, etc.) to allow EQ2Emulator LoginServer / WorldServer to interface
 
-Obtain Latest Install (be sure to select OS on the right hand side as default will be a linux distro): https://mariadb.com/downloads/
+  Obtain Latest Install (be sure to select OS on the right hand side as default will be a linux distro): https://mariadb.com/downloads/
 
-Installation Instructions for MariaDB can be found here: https://mariadb.com/kb/en/installing-mariadb-msi-packages-on-windows/
+  Installation Instructions for MariaDB can be found here: https://mariadb.com/kb/en/installing-mariadb-msi-packages-on-windows/
 
-Note: Be sure to remember the user and password defined in the installation!!  Used in later steps.
+  Note: Be sure to remember the user and password defined in the installation!!  Used in later steps.
 
 2. Open MySQL Client: Login using the password (assigned to root or other default user) setup in the MariaDB installation.
 
