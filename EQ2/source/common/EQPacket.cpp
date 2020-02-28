@@ -138,7 +138,12 @@ void EQPacket::DumpRawHeader(uint16 seq, FILE *to) const
 {
 	if (timestamp.tv_sec) {
 		char temp[20];
-		strftime(temp,20,"%F %T",localtime((const time_t *)&timestamp.tv_sec));
+		struct tm* info = localtime((const time_t*)&timestamp.tv_sec);
+		if (info)
+			strftime(temp, 20, "%F %T", info);
+		else
+			_snprintf(temp, 20, "[UNKNOWNTIME]");
+
 		fprintf(to, "%s.%06lu ",temp,timestamp.tv_usec);
 	}
 	if (src_ip) {
