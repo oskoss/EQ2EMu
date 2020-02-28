@@ -39,12 +39,12 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 
    b. Run the following commands in the MySQL Client prompt:
 
-  create database eq2ls;
-  create database eq2emu;
-  \u eq2ls
-  source C:\[YOUREQ2EMUGITSRC]\DB\ls_db.sql
-  \u eq2emu
-  source C:\[YOUREQ2EMUGITSRC]\DB\world_db.sql
+      create database eq2ls;
+      create database eq2emu;
+      \u eq2ls
+      source C:\[YOUREQ2EMUGITSRC]\DB\ls_db.sql
+      \u eq2emu
+      source C:\[YOUREQ2EMUGITSRC]\DB\world_db.sql
 
 
 4. Add Game Account / World Account: Using the same MySQL Client, continue on creating your accounts
