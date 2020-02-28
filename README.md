@@ -31,9 +31,7 @@ Installation Instructions for MariaDB can be found here: https://mariadb.com/kb/
 
 Note: Be sure to remember the user and password defined in the installation!!  Used in later steps.
 
-
 2. Open MySQL Client: Login using the password (assigned to root or other default user) setup in the MariaDB installation.
-
 
 3. Source in Databases: Issue the following commands to setup EQ2Emulator's databases for login (eq2ls) and world (eq2emu).
 
