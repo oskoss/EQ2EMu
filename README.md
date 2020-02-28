@@ -81,9 +81,9 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 	  password - When installing MariaDB use the password defined along with the default user.
 	  database - This field should remain eq2emu unless changed by the user to use a custom database name.
 
-8. Start the Login Server: C:\[YOUREQ2EMUGITSRC]\server\EQ2Login__Debug.exe
+8. Start the Login Server: C:\\[YOUREQ2EMUGITSRC]\server\EQ2Login__Debug.exe
 
-9. Start the World Server: C:\[YOUREQ2EMUGITSRC]\server\EQ2World__Debug.exe
+9. Start the World Server: C:\\[YOUREQ2EMUGITSRC]\server\EQ2World__Debug.exe
 
 ### Building/Compiling
 
