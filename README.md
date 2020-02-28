@@ -35,9 +35,9 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 
 3. Source in Databases: Issue the following commands to setup EQ2Emulator's databases for login (eq2ls) and world (eq2emu).
 
-   a. You must first go into source C:\[YOUREQ2EMUGITSRC]\DB\ and extract world_db.zip 'Here' into the same \DB\ directory.
+   - You must first go into source C:\[YOUREQ2EMUGITSRC]\DB\ and extract world_db.zip 'Here' into the same \DB\ directory.
 
-   b. Run the following commands in the MySQL Client prompt:
+   - Run the following commands in the MySQL Client prompt:
       create database eq2ls;
       create database eq2emu;
       \u eq2ls
@@ -68,14 +68,14 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
    b. Save Changes
    
 6. Open the C:\[YOUREQ2EMUGITSRC]\server\login_db.ini file (Notepad or other flavor editor)
-   a. Modify the [Database] section:
+   - Modify the [Database] section:
       host - Should remain localhost unless you have your MariaDB server reside on another host IP
 	  user - When installing MariaDB the user defined (default is 'root') should be set here
 	  password - When installing MariaDB use the password defined along with the default user.
 	  database - This field should remain eq2ls unless changed by the user to use a custom database name.
 
 7. Open the C:\[YOUREQ2EMUGITSRC]\server\world_db.ini file (Notepad or other flavor editor)
-   a. Modify the [Database] section:
+   - Modify the [Database] section:
       host - Should remain localhost or 127.0.0.1 unless you have your MariaDB server reside on another host IP
 	  user - When installing MariaDB the user defined (default is 'root') should be set here
 	  password - When installing MariaDB use the password defined along with the default user.
