@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="EQ2 Login">
+</Property><Property Name="Solution File" Value="B:\eq2emu-ls\EQ2EMuLS\Login\EQ2 Login.sln">
+</Property><Property Name="User Options File" Value="B:\eq2emu-ls\EQ2EMuLS\Login\EQ2 Login.suo">
+</Property><Property Name="Date" Value="Tuesday, February 25, 2020">
+</Property><Property Name="Time" Value="13:55 PM">
+</Property><Property Name="Log Number" Value="3">
+</Property></Properties><Event ErrorLevel="2" Project="" Source="EQ2 Login.sln" Description="Error creating backup file: B:\eq2emu-ls\EQ2EMuLS\Login\EQ2 Login.sln.old">
+</Event><Event ErrorLevel="2" Project="" Source="EQ2 Login.suo" Description="Error creating backup file: B:\eq2emu-ls\EQ2EMuLS\Login\EQ2 Login.suo.old">
+</Event><Event ErrorLevel="0" Project="Login" Source="Login.vcproj" Description="Converting project file 'B:\eq2emu-ls\EQ2EMuLS\Login\Login.vcproj'.">
+</Event><Event ErrorLevel="1" Project="Login" Source="Login.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="Login" Source="Login.vcproj" Description="MSB8012: $(TargetName) ('EQ2 Login') does not match the Linker's OutputFile property value '../Build/EQ2Login.exe' ('EQ2Login') in project configuration 'EQ2Login|Win32'. This may cause your project to build incorrectly. To correct this, please make sure that $(TargetName) property value matches the value specified in %(Link.OutputFile).">
+</Event><Event ErrorLevel="1" Project="Login" Source="Login.vcproj" Description="MSB8012: $(TargetPath) ('B:\eq2emu-ls\EQ2EMuLS\Login\.\../Build\EQ2 Login.exe') does not match the Linker's OutputFile property value '../Build/EQ2Login.exe' ('B:\eq2emu-ls\EQ2EMuLS\Login\../Build/EQ2Login.exe') in project configuration 'EQ2Login|Win32'. This may cause your project to build incorrectly. To correct this, please make sure that $(TargetPath) property value matches the value specified in %(Link.OutputFile).">
+</Event><Event ErrorLevel="1" Project="Login" Source="Login.vcproj" Description="MSB8012: $(TargetName) ('EQ2 Login') does not match the Linker's OutputFile property value '../Build/EQ2MiniLogin.exe' ('EQ2MiniLogin') in project configuration 'MiniLogin Release|Win32'. This may cause your project to build incorrectly. To correct this, please make sure that $(TargetName) property value matches the value specified in %(Link.OutputFile).">
+</Event><Event ErrorLevel="1" Project="Login" Source="Login.vcproj" Description="MSB8012: $(TargetPath) ('B:\eq2emu-ls\EQ2EMuLS\Login\MiniLogin Release\EQ2 Login.exe') does not match the Linker's OutputFile property value '../Build/EQ2MiniLogin.exe' ('B:\eq2emu-ls\EQ2EMuLS\Login\../Build/EQ2MiniLogin.exe') in project configuration 'MiniLogin Release|Win32'. This may cause your project to build incorrectly. To correct this, please make sure that $(TargetPath) property value matches the value specified in %(Link.OutputFile).">
+</Event><Event ErrorLevel="0" Project="Login" Source="Login.vcproj" Description="Done converting to new project file 'B:\eq2emu-ls\EQ2EMuLS\Login\Login.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="Login" Source="Login.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="EQ2 Login.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="EQ2 Login.sln" Description="Converted">
+</Event></UpgradeLog>

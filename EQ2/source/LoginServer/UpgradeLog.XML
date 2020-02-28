@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="EQ2 Login">
+</Property><Property Name="Solution File" Value="C:\eq2emu\Source\Login\EQ2 Login.sln">
+</Property><Property Name="User Options File" Value="C:\eq2emu\Source\Login\EQ2 Login.suo">
+</Property><Property Name="Date" Value="Tuesday, December 15, 2009">
+</Property><Property Name="Time" Value="8:12 AM">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="EQ2 Login.sln" Description="File successfully backed up as C:\eq2emu\Source\Login\EQ2 Login.sln.old">
+</Event><Event ErrorLevel="0" Project="" Source="EQ2 Login.suo" Description="File successfully backed up as C:\eq2emu\Source\Login\EQ2 Login.suo.old">
+</Event><Event ErrorLevel="0" Project="Login" Source="Login.vcproj" Description="Converting project file 'C:\eq2emu\Source\Login\Login.vcproj'.">
+</Event><Event ErrorLevel="0" Project="Login" Source="..\..\..\Program Files (x86)\Microsoft Visual Studio 10.0\VC\VCProjectDefaults\UpgradeFromVC71.props" Description="Settings file 'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\VCProjectDefaults\UpgradeFromVC71.props' already exists and will not attempt to overwrite it.">
+</Event><Event ErrorLevel="1" Project="Login" Source="Login.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="0" Project="Login" Source="Login.vcproj" Description="Done converting to new project file 'C:\eq2emu\Source\Login\Login.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="Login" Source="Login.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="EQ2 Login.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="EQ2 Login.sln" Description="Converted">
+</Event></UpgradeLog>
