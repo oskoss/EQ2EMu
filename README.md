@@ -7,6 +7,7 @@ Based on https://www.eq2emulator.net/ visit https://www.eqpvp.com/ or https://ww
 1. Install Game: Install AoM client available on Steam: https://store.steampowered.com/app/201230/EverQuest_II/
 
 2. Update Login Server: Navigate to EverQuest install directory, eg. C:\Steam\steamapps\common\EverQuest 2
+
    a. Open eq2_default.ini with your Notepad or other flavor editor
    b. Replace first line with 'cl_ls_address a.b.c.d' - where a.b.c.d is one or many IPv4 addresses
       eg. cl_ls_address 192.168.0.2
