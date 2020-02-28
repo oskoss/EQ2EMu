@@ -59,6 +59,7 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
     Find your WAN (Internet) IP: https://www.google.com/search?q=what+is+my+ip
 
    - Modify the [LoginServer] section:
+   
       loginserver - LAN/WAN IP of your login server to use the login_worldservers account against
 	  worldname - World Name that matches the 'name' column defined in login_worldservers (eg. TestLabs)
 	  worldaddress - LAN/WAN IP of your world server
