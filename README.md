@@ -46,11 +46,8 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
       source C:\\[YOUREQ2EMUGITSRC]\DB\world_db.sql
 
 4. Add Game Account / World Account: Using the same MySQL Client, continue on creating your accounts
-
-    Game Login Account:
-    insert into account set name='test',passwd=md5('test');
-    World Login Account (LoginServer.ini):
-    insert into login_worldservers set name='TestLabs',account='testlabs',description='TestLabs',password=md5('testpass'),login_version='0.7.3-dev';
+    - Game Login Account: insert into account set name='test',passwd=md5('test');
+    - World Server Login Account (Used in Step 5): insert into login_worldservers set name='TestLabs',account='testlabs',description='TestLabs',password=md5('testpass'),login_version='0.7.3-dev';
 
 5. Open the C:\\[YOUREQ2EMUGITSRC]\server\LoginServer.ini file (Notepad or other flavor editor)
 
