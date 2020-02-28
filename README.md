@@ -38,7 +38,6 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
    a. You must first go into source C:\[YOUREQ2EMUGITSRC]\DB\ and extract world_db.zip 'Here' into the same \DB\ directory.
 
    b. Run the following commands in the MySQL Client prompt:
-
       create database eq2ls;
       create database eq2emu;
       \u eq2ls
