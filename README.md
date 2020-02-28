@@ -60,27 +60,27 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 
    - Modify the [LoginServer] section:
    
-      loginserver - LAN/WAN IP of your login server to use the login_worldservers account against
-	  worldname - World Name that matches the 'name' column defined in login_worldservers (eg. TestLabs)
-	  worldaddress - LAN/WAN IP of your world server
-	  internalworldaddress - LAN IP of your world server
-	  account - Column 'account' defined in login_worldservers (eg. testlabs)
-	  password - Column 'password' in login_worldservers (eg. testpass)
+      - loginserver: LAN/WAN IP of your login server to use the login_worldservers account against
+      - worldname: World Name that matches the 'name' column defined in login_worldservers (eg. TestLabs)
+	  - worldaddress: LAN/WAN IP of your world server
+	  - internalworldaddress: LAN IP of your world server
+	  - account: Column 'account' defined in login_worldservers (eg. testlabs)
+	  - password: Column 'password' in login_worldservers (eg. testpass)
    - Save Changes
    
 6. Open the C:\\[YOUREQ2EMUGITSRC]\server\login_db.ini file (Notepad or other flavor editor)
    - Modify the [Database] section:
-      host - Should remain localhost unless you have your MariaDB server reside on another host IP
-	  user - When installing MariaDB the user defined (default is 'root') should be set here
-	  password - When installing MariaDB use the password defined along with the default user.
-	  database - This field should remain eq2ls unless changed by the user to use a custom database name.
+      - host: Should remain localhost unless you have your MariaDB server reside on another host IP
+      - user: When installing MariaDB the user defined (default is 'root') should be set here
+      - password: When installing MariaDB use the password defined along with the default user.
+      - database: This field should remain eq2ls unless changed by the user to use a custom database name.
 
 7. Open the C:\\[YOUREQ2EMUGITSRC]\server\world_db.ini file (Notepad or other flavor editor)
    - Modify the [Database] section:
-      host - Should remain localhost or 127.0.0.1 unless you have your MariaDB server reside on another host IP
-	  user - When installing MariaDB the user defined (default is 'root') should be set here
-	  password - When installing MariaDB use the password defined along with the default user.
-	  database - This field should remain eq2emu unless changed by the user to use a custom database name.
+      - host: Should remain localhost or 127.0.0.1 unless you have your MariaDB server reside on another host IP
+      - user: When installing MariaDB the user defined (default is 'root') should be set here
+      - password: When installing MariaDB use the password defined along with the default user.
+      - database: This field should remain eq2emu unless changed by the user to use a custom database name.
 
 8. Start the Login Server: C:\\[YOUREQ2EMUGITSRC]\server\EQ2Login__Debug.exe
 
