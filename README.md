@@ -54,9 +54,9 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 
 5. Open the C:\[YOUREQ2EMUGITSRC]\server\LoginServer.ini file (Notepad or other flavor editor)
 
-   Note: Steps to find your LAN IP (command prompt, ipconfig, IPv4 address): https://www.lifewire.com/ip-config-818377
+    Note: Steps to find your LAN IP (command prompt, ipconfig, IPv4 address): https://www.lifewire.com/ip-config-818377
 
-   Find your WAN (Internet) IP: https://www.google.com/search?q=what+is+my+ip
+    Find your WAN (Internet) IP: https://www.google.com/search?q=what+is+my+ip
 
    - Modify the [LoginServer] section:
       loginserver - LAN/WAN IP of your login server to use the login_worldservers account against
