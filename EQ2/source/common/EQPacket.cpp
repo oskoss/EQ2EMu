@@ -138,28 +138,27 @@ void EQPacket::DumpRawHeader(uint16 seq, FILE *to) const
 {
 	if (timestamp.tv_sec) {
 		char temp[20];
-		struct tm* info = localtime((const time_t*)&timestamp.tv_sec);
-		if (info)
-			strftime(temp, 20, "%F %T", info);
-		else
-			_snprintf(temp, 20, "[UNKNOWNTIME]");
-
-		fprintf(to, "%s.%06lu ",temp,timestamp.tv_usec);
+		tm t;
+		const time_t sec = timestamp.tv_sec;
+		localtime_s(&t, &sec);
+		strftime(temp, 20, "%F %T", &t);
+		fprintf(to, "%s.%06lu ", temp, timestamp.tv_usec);
 	}
 	if (src_ip) {
-		string sIP,dIP;;
-		sIP=long2ip(src_ip);
-		dIP=long2ip(dst_ip);
-		fprintf(to, "[%s:%d->%s:%d]\n",sIP.c_str(),src_port,dIP.c_str(),dst_port);
+		string sIP, dIP;;
+		sIP = long2ip(src_ip);
+		dIP = long2ip(dst_ip);
+		fprintf(to, "[%s:%d->%s:%d]\n", sIP.c_str(), src_port, dIP.c_str(), dst_port);
 	}
 	if (seq != 0xffff)
-		fprintf(to, "[Seq=%u] ",seq);
+		fprintf(to, "[Seq=%u] ", seq);
 	string name;
 	int16 OpcodeVersion = GetOpcodeVersion(version);
-	if(EQOpcodeManager.count(OpcodeVersion) > 0)
+	if (EQOpcodeManager.count(OpcodeVersion) > 0)
 		name = EQOpcodeManager[OpcodeVersion]->EQToName(opcode);
-	fprintf(to, "[OpCode 0x%04x (%s) Size=%u]\n",opcode,name.c_str(),size);
+	fprintf(to, "[OpCode 0x%04x (%s) Size=%u]\n", opcode, name.c_str(), size);
 }
+
 const char* EQPacket::GetOpcodeName(){
 	int16 OpcodeVersion = GetOpcodeVersion(version);
 	if(EQOpcodeManager.count(OpcodeVersion) > 0)
