@@ -80,7 +80,7 @@ protected:
 
 	EQPacket(const uint16 op, const unsigned char *buf, const uint32 len);
 	EQPacket(const EQPacket &p) { version = 0; }
-	EQPacket() { opcode=0; pBuffer=NULL; size=0; version = 0;}
+	EQPacket() { opcode=0; pBuffer=NULL; size=0; version = 0; setTimeInfo(0, 0); }
 
 };
 
