@@ -3373,7 +3373,10 @@ void Client::HandleVerbRequest(EQApplicationPacket* app){
 				if(player->IsIgnored(spawn->GetName()))
 					delete_commands.push_back(player->CreateEntityCommand("remove from ignore list", 10000, "ignore_remove", "", 0, 0));
 				else
+				{
 					delete_commands.push_back(player->CreateEntityCommand("add to ignore list", 10000, "ignore_add", "", 0, 0));
+					delete_commands.push_back(player->CreateEntityCommand("Trade", 10, "start_trade", "", 0, 0));
+				}
 				if(((Player*)spawn)->GetGroupMemberInfo()) {
 					if(player->IsGroupMember((Player*)spawn) && player->GetGroupMemberInfo()->leader) { //group leader
 						delete_commands.push_back(player->CreateEntityCommand("kick from group", 10000, "kickfromgroup", "", 0, 0));

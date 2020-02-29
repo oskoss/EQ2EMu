@@ -31975,6 +31975,46 @@ to zero and treated like placeholders." />
 <Data ElementName="their_gold" Type="int32" />
 <Data ElementName="their_plat" Type="int32" />
 </Struct>
+<Struct Name="WS_PlayerTrade" ClientVersion="60114" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateStoreCmd"> <!-- Figured out in a 1208 client -->
+<Data ElementName="spawn_id" Type="int32" />
+<Data ElementName="type" Type="int16" />
+<!-- top half -->
+<Data ElementName="your_item_count" Type="int8" />
+<Data ElementName="your_item_array" Type="Array" ArraySizeVariable="your_item_count">
+  <Data ElementName="your_item_unknown1" Type="int8" /> <!-- needs to be set to 1 -->
+  <Data ElementName="your_item_unknown2" Type="int8" /> <!-- needs to be set to 1 -->
+  <Data ElementName="your_item_slot" Type="int8" />
+  <Data ElementName="your_item_unknown3" Type ="int8" Size="3" />
+  <Data ElementName="your_item_id" Type="int32" />
+  <Data ElementName="your_item_quantity" Type="int32" />
+  <Data ElementName="your_item_icon" Type="int16" />
+  <Data ElementName="your_item_unknown4" Type="int8" />
+  <Data ElementName="your_item_background" Type="int8" />
+  <Data ElementName="your_item_unknown5" Type="int8" Size="8" />      
+</Data>
+<Data ElementName="your_copper" Type="int32" />
+<Data ElementName="your_silver" Type="int32" />
+<Data ElementName="your_gold" Type="int32" />
+<Data ElementName="your_plat" Type="int32" />
+<!-- lower half -->
+<Data ElementName="their_item_count" Type="int8" />
+<Data ElementName="their_item_array" Type="Array" ArraySizeVariable="their_item_count">
+  <Data ElementName="their_item_unknown1" Type="int8" /> <!-- needs to be set to 1 -->
+  <Data ElementName="their_item_unknown2" Type="int8" /> <!-- needs to be set to 1 -->
+  <Data ElementName="their_item_slot" Type="int8" />
+  <Data ElementName="their_item_unknown3" Type ="int8" Size="3" />
+  <Data ElementName="their_item_id" Type="int32" />
+  <Data ElementName="their_item_quantity" Type="int32" />
+  <Data ElementName="their_item_icon" Type="int16" />
+  <Data ElementName="their_item_unknown4" Type="int8" />
+  <Data ElementName="their_item_background" Type="int8" />
+  <Data ElementName="their_item_unknown5" Type="int8" Size="8" />      
+</Data>
+<Data ElementName="their_copper" Type="int32" />
+<Data ElementName="their_silver" Type="int32" />
+<Data ElementName="their_gold" Type="int32" />
+<Data ElementName="their_plat" Type="int32" />
+</Struct>
 <Struct Name="WS_PlayerTrade" ClientVersion="63225" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateStoreCmd" >
 	<Data ElementName="spawn_id" Type="int32" />
 	<Data ElementName="type" Type="int16" />
