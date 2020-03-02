@@ -946,7 +946,7 @@ void Entity::CalculateSpellBonuses(ItemStatsValues* stats){
 		bool race_match = false;
 		while(itr.Next()) {
 			if (itr.value->race_req.size() > 0) {
-				for (int8 i; i < itr.value->race_req.size(); i++) {
+				for (int8 i = 0; i < itr.value->race_req.size(); i++) {
 					if (GetRace() == itr.value->race_req[i]) {
 						race_match = true;
 					}

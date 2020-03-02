@@ -337,8 +337,7 @@ public:
 		last_heading_angle = heading;
 		if (heading != 180)
 			heading = (heading - 180) * 64;
-		SetPos(&appearance.pos.Dir1, (sint16)heading, updateFlags);
-		SetPos(&appearance.pos.Dir2, (sint16)heading, updateFlags);
+		SetHeading((sint16)heading, (sint16)heading, updateFlags);
 	}
 	void SetPitch(sint16 pitch1, sint16 pitch2, bool updateFlags = true){
 		SetPos(&appearance.pos.Pitch1, (sint16)pitch1, updateFlags);
@@ -840,7 +839,7 @@ public:
 	int32	GetTransporterID();
 	bool	MeetsSpawnAccessRequirements(Player* player);
 
-	void	InitializePosPacketData(Player* player, PacketStruct* packet);
+	void	InitializePosPacketData(Player* player, PacketStruct* packet, bool bSpawnUpdate = false);
 	void	InitializeInfoPacketData(Player* player, PacketStruct* packet);
 	void	InitializeVisPacketData(Player* player, PacketStruct* packet);
 	void	InitializeHeaderPacketData(Player* player, PacketStruct* packet, int16 index);

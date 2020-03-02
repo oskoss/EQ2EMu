@@ -472,7 +472,7 @@ uchar* Spawn::spawn_pos_changes(Player* player, int16 version){
 	player->pos_mutex.writelock(__FUNCTION__, __LINE__);
 	uchar* orig_packet = player->GetSpawnPosPacketForXOR(id);
 	packet->ResetData();
-	InitializePosPacketData(player, packet);
+	InitializePosPacketData(player, packet, true);
 	string* data = packet->serializeString();
 	int32 size = data->length();
 	uchar* xor_pos_packet = player->GetTempPosPacketForXOR();
@@ -1283,7 +1283,7 @@ int32 Spawn::GetTransporterID(){
 	return transporter_id;
 }
 
-void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet){
+void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool bSpawnUpdate) {
 	int16 version = packet->GetVersion();
 	packet->setDataByName("pos_grid_id", appearance.pos.grid_id);
 	bool include_heading = true;
@@ -1351,6 +1351,8 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet){
 		packet->setDataByName("pos_z_velocity", static_cast<sint16>(GetSpeedZ() * 32));
 	}
 
+	bool bSendSpeed = true;
+
 	if (IsWidget() && ((Widget*)this)->GetMultiFloorLift()) {
 		Widget* widget = (Widget*)this;
 
@@ -1377,7 +1379,9 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet){
 		packet->setDataByName("pos_y3", y);
 		packet->setDataByName("pos_z3", z);
 	}
-	else {
+	//If this is a spawn update or this spawn is currently moving we can send these values, otherwise set speed and next_xyz to 0
+	//This fixes the bug where spawns with movement scripts face south when initially spawning if they are at their target location.
+	else if (bSpawnUpdate || memcmp(&appearance.pos.X, &appearance.pos.X2, sizeof(float) * 3) != 0) {
 		packet->setDataByName("pos_next_x", appearance.pos.X2);
 		packet->setDataByName("pos_next_y", appearance.pos.Y2);
 		packet->setDataByName("pos_next_z", appearance.pos.Z2);
@@ -1385,6 +1389,10 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet){
 		packet->setDataByName("pos_x3", appearance.pos.X3);
 		packet->setDataByName("pos_y3", appearance.pos.Y3);
 		packet->setDataByName("pos_z3", appearance.pos.Z3);
+	}
+	else
+	{
+		bSendSpeed = false;
 	}
 	//packet->setDataByName("pos_unknown2", 4, 2);
 
@@ -1397,7 +1405,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet){
 		packet->setDataByName("pos_speed", player->GetPosPacketSpeed() * speed_multiplier);
 		packet->setDataByName("pos_side_speed", player->GetSideSpeed() * speed_multiplier);
 	}
-	else {
+	else if (bSendSpeed) {
 		packet->setDataByName("pos_speed", GetSpeed() * speed_multiplier);
 	}
 	
@@ -2195,8 +2203,13 @@ void Spawn::CalculateRunningLocation(bool stop){
 void Spawn::FaceTarget(float x, float z){
 	float angle;
 
-	double diff_x=x - GetX();
-	double diff_z=z - GetZ();
+	double diff_x = x - GetX();
+	double diff_z = z - GetZ();
+
+	//If we're very close to the same spot don't bother changing heading
+	if (sqrt(diff_x * diff_x * diff_z * diff_z) < .1) {
+		return;
+	}
 
 	if(diff_z==0){
 	   if(diff_x > 0)

@@ -46,6 +46,9 @@ public:
 		for(iter = global_faction_list.begin();iter != global_faction_list.end(); iter++){
 			safe_delete(iter->second);
 		}
+
+		hostile_factions.clear();
+		friendly_factions.clear();
 	}
 	sint32 GetDefaultFactionValue(int32 faction_id){
 		if(global_faction_list.count(faction_id) > 0 && global_faction_list[faction_id])

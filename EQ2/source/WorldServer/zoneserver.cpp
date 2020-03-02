@@ -2015,6 +2015,9 @@ void ZoneServer::ProcessSpawnLocation(int32 location_id, bool respawn)
 					CalculateSpawnGroup(spawn_location_list[location_id]);
 
 				LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
+
+				// need to unlock the list before we exit the function
+				MSpawnLocationList.releasereadlock(__FUNCTION__, __LINE__);
 				return;
 			}
 		}

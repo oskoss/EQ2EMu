@@ -1923,6 +1923,123 @@
 <Data ElementName="activity_timer" Type="int32" Size="1" />
 <Data ElementName="unknown18" Type="int8" Size="68" />-->
 </Struct>
+<Struct Name="Substruct_SpawnInfoStruct" ClientVersion="67633" >
+<Data ElementName="model_type" Type="int32" Size="1" />
+<Data ElementName="soga_model_type" Type="int32" Size="1" />
+<Data ElementName="equipment_types" Type="int32" Size="25" />
+<Data ElementName="unknown7a" Type="int16" Size="2" />
+<Data ElementName="unknown7aa" Type="int16" Size="2" />
+<Data ElementName="hair_type_id" Type="int16" Size="1" />
+<Data ElementName="unknown30" Type="int16" Size="1" />
+<Data ElementName="facial_hair_type_id" Type="int16" Size="1" />
+<Data ElementName="unknown30a" Type="int16" Size="1" />
+<Data ElementName="wing_type_id" Type="int16" Size="1" />
+<Data ElementName="unknown30b" Type="int16" Size="1" />
+<Data ElementName="chest_type_id" Type="int16" Size="1" />
+<Data ElementName="unknown30c" Type="int16" Size="1" />
+<Data ElementName="legs_type_id" Type="int16" Size="1" />
+<Data ElementName="unknown_new_type_id" Type="int16" Size="1" />
+<Data ElementName="unknown30d" Type="int16" Size="1" />
+<Data ElementName="unknown30e" Type="int16" Size="1" />
+<Data ElementName="soga_hair_type_id" Type="int16" Size="1" />
+<Data ElementName="unknown30f" Type="int16" Size="1" />
+<Data ElementName="soga_facial_hair_type_id" Type="int16" Size="1" />
+<Data ElementName="unknown30g" Type="int16" Size="1" />
+<Data ElementName="mount_type" Type="int32" />
+<Data ElementName="combat_voice" Type="int32" Size="1" />
+<Data ElementName="emote_voice" Type="int32" Size="1" />
+<Data ElementName="unknown17" Type="int32" Size="1" />
+<Data ElementName="visual_flag" Type="int8" Size="1" />
+<Data ElementName="interaction_flag" Type="int8" Size="1" />
+<Data ElementName="unknown60055" Type="int8" Size="18" />
+<Data ElementName="equipment_colors" Type="EQ2_Color" Size="25" />
+<Data ElementName="unknown7b" Type="EQ2_Color" Size="2" />
+<Data ElementName="hair_type_color" Type="EQ2_Color" />
+<Data ElementName="hair_face_color" Type="EQ2_Color" />
+<Data ElementName="wing_color1" Type="EQ2_Color" />
+<Data ElementName="unknown10" Type="EQ2_Color" Size="3" />
+<Data ElementName="equipment_highlights" Type="EQ2_Color" Size="25" />
+<Data ElementName="unknown7c" Type="EQ2_Color" Size="2" />
+<Data ElementName="hair_type_highlight_color" Type="EQ2_Color" />
+<Data ElementName="hair_face_highlight_color" Type="EQ2_Color" />
+<Data ElementName="wing_color2" Type="EQ2_Color" />
+<Data ElementName="unknown11" Type="EQ2_Color" Size="3" />
+<Data ElementName="soga_hair_type_color" Type="EQ2_Color" />
+<Data ElementName="soga_hair_type_highlight_color" Type="EQ2_Color" />
+<Data ElementName="soga_hair_face_color" Type="EQ2_Color" />
+<Data ElementName="soga_hair_face_highlight_color" Type="EQ2_Color" />
+<Data ElementName="skin_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="eye_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="soga_eye_color" Type="EQ2_Color" />
+<Data ElementName="soga_skin_color" Type="EQ2_Color" />
+<Data ElementName="kunark_unknown_color1" Type="EQ2_Color" />
+<Data ElementName="kunark_unknown_color2" Type="EQ2_Color" />
+<Data ElementName="unknown12" Type="EQ2_Color" Size="1" />
+<Data ElementName="eye_type" Type="sint8" Size="3" />
+<Data ElementName="ear_type" Type="sint8" Size="3" />
+<Data ElementName="eye_brow_type" Type="sint8" Size="3" />
+<Data ElementName="cheek_type" Type="sint8" Size="3" />
+<Data ElementName="lip_type" Type="sint8" Size="3" />
+<Data ElementName="chin_type" Type="sint8" Size="3" />
+<Data ElementName="nose_type" Type="sint8" Size="3" />
+<Data ElementName="body_size" Type="sint8" Size="1" />
+<Data ElementName="body_size_unknown" Type="sint8" Size="1" />
+<Data ElementName="unknown14a" Type="int8" Size="3" />
+<Data ElementName="soga_eye_type" Type="sint8" Size="3" />
+<Data ElementName="soga_ear_type" Type="sint8" Size="3" />
+<Data ElementName="soga_eye_brow_type" Type="sint8" Size="3" />
+<Data ElementName="soga_cheek_type" Type="sint8" Size="3" />
+<Data ElementName="soga_lip_type" Type="sint8" Size="3" />
+<Data ElementName="soga_chin_type" Type="sint8" Size="3" />
+<Data ElementName="soga_nose_type" Type="sint8" Size="3" />
+<Data ElementName="unknown14b" Type="int8" Size="2" />
+<Data ElementName="mount_color" Type="EQ2_Color" /><!--index 464-->
+<Data ElementName="mount_saddle_color" Type="EQ2_Color" />
+<Data ElementName="hair_color1" Type="EQ2_Color" />
+<Data ElementName="hair_color2" Type="EQ2_Color" />
+<Data ElementName="hair_highlight" Type="EQ2_Color" />
+<Data ElementName="soga_hair_color1" Type="EQ2_Color" />
+<Data ElementName="soga_hair_color2" Type="EQ2_Color" />
+<Data ElementName="soga_hair_highlight" Type="EQ2_Color" />
+<Data ElementName="action_state" Type="int32" Size="1" />
+<Data ElementName="visual_state" Type="int32" Size="1" />
+<Data ElementName="mood_state" Type="int32" Size="1" />
+<Data ElementName="emote_state" Type="int32" Size="1" />
+<Data ElementName="unknown600552" Type="int8" Size="52" />
+<Data ElementName="spell_effects" Substruct="Substruct_TargetSpellEffects" Size="30" />
+<Data ElementName="target_id" Type="int32" Size="1" /> 
+<Data ElementName="follow_target" Type="int32" Size="1" /> 
+<Data ElementName="size_unknown" Type="int32" />
+<Data ElementName="unknown3b" Type="int8" Size="4" />
+<Data ElementName="spawn_type" Type="int8" Size="1" />
+<Data ElementName="icon" Type="int8" Size="1" />
+<Data ElementName="activity_status" Type="int32" Size="1" />
+<Data ElementName="unknownpk1" Type="int8" Size="2" />
+<Data ElementName="activity_timer" Type="int32" Size="1" />
+<Data ElementName="unknown600554" Type="int8" Size="4" />
+<Data ElementName="hp_remaining" Type="int32" Size="1" />
+<Data ElementName="power_percent" Type="int32" Size="1" />
+<Data ElementName="unknown600553" Type="int8" Size="4" />
+<Data ElementName="size_mod" Type="int8" Size="1" />
+<Data ElementName="size_type" Type="int8" Size="1" />
+<Data ElementName="unknown600553b" Type="int8" Size="3" />
+<Data ElementName="unknown4" Type="int8" />
+<Data ElementName="unknown67633" Type="int8" Size="3" />
+<Data ElementName="level" Type="int8" />
+<Data ElementName="unknown5" Type="int8" Size="1" />
+<Data ElementName="heroic_flag" Type="int8" Size="1" />
+<Data ElementName="unknown67633b" Type="int8" Size="1" />
+<Data ElementName="unknown7" Type="int32" Size="1" />
+<Data ElementName="race" Type="int8" Size="1" />
+<Data ElementName="gender" Type="int8" Size="1" />
+<Data ElementName="class" Type="int8" Size="1" />
+<Data ElementName="difficulty" Type="int8" Size="1" />
+<Data ElementName="unknown21" Type="int8" Size="3" /><!--
+<Data ElementName="unknownz5" Type="int16" Size="1" />
+<Data ElementName="unknown6" Type="int8" Size="1" />
+<Data ElementName="activity_timer" Type="int32" Size="1" />
+<Data ElementName="unknown18" Type="int8" Size="68" />-->
+</Struct>
 <Struct Name="WS_SpawnStruct_Footer" ClientVersion="1">
 <Data ElementName="name" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="unknown" Type="int32" Size="2" />
@@ -2188,8 +2305,12 @@
 <Data ElementName="vis" Substruct="Substruct_SpawnVisualizationInfoStruct" Size="1" />
 <Data ElementName="info" Substruct="Substruct_SpawnInfoStruct" Size="1" />
 </Struct>
-
 <Struct Name="WS_SpawnStruct" ClientVersion="60055">
+<Data ElementName="position" Substruct="Substruct_SpawnPositionStruct" Size="1" />
+<Data ElementName="vis" Substruct="Substruct_SpawnVisualizationInfoStruct" Size="1" />
+<Data ElementName="info" Substruct="Substruct_SpawnInfoStruct" Size="1" />
+</Struct>
+<Struct Name="WS_SpawnStruct" ClientVersion="67633">
 <Data ElementName="position" Substruct="Substruct_SpawnPositionStruct" Size="1" />
 <Data ElementName="vis" Substruct="Substruct_SpawnVisualizationInfoStruct" Size="1" />
 <Data ElementName="info" Substruct="Substruct_SpawnInfoStruct" Size="1" />

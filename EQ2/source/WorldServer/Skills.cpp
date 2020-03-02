@@ -296,6 +296,8 @@ int16 PlayerSkillList::CalculateSkillValue(int32 skill_id, int16 current_val){
 		}
 		return new_val;
 	}
+
+	return current_val;
 }
 
 int16 PlayerSkillList::CalculateSkillMaxValue(int32 skill_id, int16 max_val) {

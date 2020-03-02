@@ -883,7 +883,7 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 				if(zar)
 				{
 					firstlogin = zar->isFirstLogin ( );
-					LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID());
+					LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
 					if(database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)){
 						version = request->getType_int16_ByName("version");
 						MDeletePlayer.writelock(__FUNCTION__, __LINE__);
