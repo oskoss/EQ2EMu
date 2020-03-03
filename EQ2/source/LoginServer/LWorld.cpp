@@ -1127,7 +1127,7 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 	}
 	ServerNum+=3;
 	*/
-	
+
 	PacketStruct* packet = configReader.getStruct("LS_WorldList", version);
 	packet->setArrayLengthByName("num_worlds", 1);
 
@@ -1155,7 +1155,8 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 		}
 	}
 
-			EQ2Packet* pack = packet->serialize();
+	EQ2Packet* pack = packet->serialize();
+	safe_delete(ServerListData);
 	ServerListData = pack;
 	MWorldMap.releasereadlock();
 

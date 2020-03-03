@@ -75,39 +75,22 @@ to zero and treated like placeholders." />
 </Data>
 </Struct>-->
 <Struct Name="LS_WorldList" ClientVersion="1" OpcodeName="OP_WorldListMsg">
-	<Data ElementName="num_worlds" Type="int8" />
-	<Data ElementName="world_list" Type="Array" ArraySizeVariable="num_worlds">
-		<Data ElementName="id" Type="int32" Size="1" />
-		<Data ElementName="name" Type="EQ2_16Bit_String" />
-		<Data ElementName="name2" Type="EQ2_16Bit_String" />
-		<Data ElementName="tag" Type="int8" Size="1" />
-		<Data ElementName="locked" Type="int8" Size="1" />
-		<Data ElementName="hidden" Type="int8" Size="1" />
-		<Data ElementName="unknown" Type="int8" Size="1" />
-		<Data ElementName="num_players" Type="int16" Size="1" />
-		<Data ElementName="load" Type="int8" Size="1" />
-		<Data ElementName="number_online_flag" Type="int8" Size="1" />
-		<Data ElementName="feature_set" Type="int8" Size="1" />
-		<Data ElementName="allowed_races" Type="int32" Size="1" />
-	</Data>
-</Struct>
-<Struct Name="LS_WorldList" ClientVersion="60100" OpcodeName="OP_WorldListMsg">
-	<Data ElementName="num_worlds" Type="int8" />
-	<Data ElementName="world_list" Type="Array" ArraySizeVariable="num_worlds">
-		<Data ElementName="id" Type="int32" Size="1" />
-		<Data ElementName="name" Type="EQ2_16Bit_String" />
-		<Data ElementName="name2" Type="EQ2_16Bit_String" />
-		<Data ElementName="tag" Type="int8" Size="1" />
-		<Data ElementName="locked" Type="int8" Size="1" />
-		<Data ElementName="hidden" Type="int8" Size="1" />
-		<Data ElementName="unknown" Type="int8" Size="1" />
-		<Data ElementName="num_players" Type="int16" Size="1" />
-		<Data ElementName="load" Type="int8" Size="1" />
-		<Data ElementName="number_online_flag" Type="int8" Size="1" />
-		<Data ElementName="feature_set" Type="int8" Size="2" />
-		<Data ElementName="allowed_races" Type="int32" Size="1" />
-		</Data>
-	<Data ElementName="unknown2" Type="int8" />
+<Data ElementName="num_worlds" Type="int8" />
+<Data ElementName="world_list" Type="Array" ArraySizeVariable="num_worlds">
+  <Data ElementName="id" Type="int32" Size="1" />
+  <Data ElementName="name" Type="EQ2_16Bit_String" />
+  <Data ElementName="name2" Type="EQ2_16Bit_String" />
+  <Data ElementName="tag" Type="int8" Size="1" />
+  <Data ElementName="locked" Type="int8" Size="1" />
+  <Data ElementName="hidden" Type="int8" Size="1" />
+  <Data ElementName="unknown" Type="int8" Size="1" />
+  <Data ElementName="num_players" Type="int16" Size="1" />
+  <Data ElementName="load" Type="int8" Size="1" />
+  <Data ElementName="number_online_flag" Type="int8" Size="1" />
+  <Data ElementName="feature_set" Type="int8" Size="2" />
+  <Data ElementName="allowed_races" Type="int32" Size="1" />
+</Data>
+<Data ElementName="unknown2" Type="int8" />
 </Struct>
 <Struct Name="LS_WorldUpdate" ClientVersion="1" OpcodeName="OP_WorldStatusChangeMsg">
 <Data ElementName="server_id" Type="int32" Size="1" />
