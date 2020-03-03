@@ -191,11 +191,11 @@ Skill* PlayerSkillList::GetSkill(int32 skill_id){
 
 void PlayerSkillList::IncreaseSkill(Skill* skill, int16 amount){
 	if(skill){
-		AddSkillUpdateNeeded(skill);
 		skill->previous_val = skill->current_val;
 		skill->current_val += amount;
 		if(skill->current_val > skill->max_val)
 			skill->max_val = skill->current_val;
+		AddSkillUpdateNeeded(skill);
 		skill->save_needed = true;
 	}
 }
@@ -255,8 +255,8 @@ void PlayerSkillList::DecreaseSkillCap(Skill* skill, int16 amount){
 		if(skill->current_val > skill->max_val){
 			skill->previous_val = skill->current_val;
 			skill->current_val = skill->max_val;
-			AddSkillUpdateNeeded(skill);
 		}
+		AddSkillUpdateNeeded(skill);
 		skill->save_needed = true;
 	}
 }
@@ -271,8 +271,8 @@ void PlayerSkillList::SetSkillCap(Skill* skill, int16 value){
 		if(skill->current_val > skill->max_val){
 			skill->previous_val = skill->current_val;
 			skill->current_val = skill->max_val;
-			AddSkillUpdateNeeded(skill);
 		}
+		AddSkillUpdateNeeded(skill);
 		skill->save_needed = true;
 	}
 }

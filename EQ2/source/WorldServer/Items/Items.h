@@ -898,6 +898,7 @@ public:
 	void SetItemScript(string name);
 	const char*	GetItemScript();
 	int32 CalculateRepairCost();
+	string CreateItemLink(bool bUseUniqueID);
 
 	void SetItemType(int8 in_type);
 	void serialize(PacketStruct* packet, bool show_name = false, Player* player = 0, int16 packet_type = 0, int8 subtype = 0, bool loot_item = false);

@@ -497,6 +497,7 @@
     <ClCompile Include="..\..\source\WorldServer\Tradeskills\TradeskillsDB.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Tradeskills\TradeskillsPackets.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Traits\Traits.cpp" />
+    <ClCompile Include="..\..\source\WorldServer\Transmute.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Widget.cpp" />
     <ClCompile Include="..\..\source\WorldServer\World.cpp" />
     <ClCompile Include="..\..\source\WorldServer\WorldDatabase.cpp" />
@@ -615,6 +616,7 @@
     <ClInclude Include="..\..\source\WorldServer\Titles.h" />
     <ClInclude Include="..\..\source\WorldServer\Trade.h" />
     <ClInclude Include="..\..\source\WorldServer\Traits\Traits.h" />
+    <ClInclude Include="..\..\source\WorldServer\Transmute.h" />
     <ClInclude Include="..\..\source\WorldServer\Variables.h" />
     <ClInclude Include="..\..\source\WorldServer\VisualStates.h" />
     <ClInclude Include="..\..\source\WorldServer\Widget.h" />

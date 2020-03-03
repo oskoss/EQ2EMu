@@ -2015,7 +2015,6 @@ void ZoneServer::ProcessSpawnLocation(int32 location_id, bool respawn)
 					CalculateSpawnGroup(spawn_location_list[location_id]);
 
 				LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
-
 				// need to unlock the list before we exit the function
 				MSpawnLocationList.releasereadlock(__FUNCTION__, __LINE__);
 				return;
@@ -4804,6 +4803,11 @@ EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 	packet->setArrayLengthByName("num_client_setup", variables->size());
 	for(int i=variables->size()-1;i>=0;i--)
 		packet->setArrayDataByName("client_cmds", variables->at(i)->GetNameValuePair().c_str(), i);
+
+	// For AoM clients so item link work
+	if (client->GetVersion() >= 60114)
+		packet->setArrayDataByName("client_cmds", "chat_linkbrackets_item 1", variables->size());
+
 	safe_delete(variables);
 	//packet->setDataByName("unknown8", ); story?
 	// AA Tabs for 1193+ clients

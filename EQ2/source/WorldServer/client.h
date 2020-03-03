@@ -385,6 +385,10 @@ public:
 
 	void EndAutoMount();
 	bool GetOnAutoMount() { return on_auto_mount; }
+	
+	bool IsCurrentTransmuteID(int32 trans_id);
+	void SetTransmuteID(int32 trans_id);
+	int32 GetTransmuteID();
 
 private:
 	void    SavePlayerImages();
@@ -463,6 +467,7 @@ private:
 	PendingResurrection current_rez;
 	string* pending_last_name;
 	IncomingPaperdollImage incoming_paperdoll;
+	int32 transmuteID;
 
 	bool m_recipeListSent;
 	bool initial_spawns_sent;

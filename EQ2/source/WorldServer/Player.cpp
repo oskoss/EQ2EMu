@@ -2022,6 +2022,7 @@ void Player::AddSkill(int32 skill_id, int16 current_val, int16 max_val, bool sav
 	Skill* master_skill = master_skill_list.GetSkill(skill_id);
 	Skill* skill = new Skill(master_skill);
 	skill->current_val = current_val;
+	skill->previous_val = current_val;
 	skill->max_val = max_val;
 	if(save_needed)
 		skill->save_needed = true;

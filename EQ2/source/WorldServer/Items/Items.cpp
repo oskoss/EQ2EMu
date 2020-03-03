@@ -29,6 +29,7 @@
 #include "../Entity.h"
 #include "../Recipes/Recipe.h"
 #include <algorithm>
+#include <sstream>
 
 extern World world;
 extern MasterSpellList master_spell_list;
@@ -3503,4 +3504,10 @@ int8 EquipmentItemList::GetSlotByItem(Item* item) {
 		}
 	}
 	return slot;
+}
+
+string Item::CreateItemLink(bool bUseUniqueID) {
+	ostringstream ss;
+	ss << "\\aITEM " << details.item_id << ' ' << (bUseUniqueID ? details.unique_id : 0) << ':' << name << "\\/a";
+	return ss.str();
 }

@@ -1,21 +1,21 @@
-/*
-	EQ2Emulator:  Everquest II Server Emulator
-	Copyright (C) 2007  EQ2EMulator Development Team (http://www.eq2emulator.net)
+/*  
+    EQ2Emulator:  Everquest II Server Emulator
+    Copyright (C) 2007  EQ2EMulator Development Team (http://www.eq2emulator.net)
 
-	This file is part of EQ2Emulator.
+    This file is part of EQ2Emulator.
 
-	EQ2Emulator is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    EQ2Emulator is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	EQ2Emulator is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    EQ2Emulator is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "LuaInterface.h"
 #include "LuaFunctions.h"
@@ -23,13 +23,13 @@
 #include "../common/Log.h"
 
 #ifndef WIN32
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <pthread.h>
+    #include <stdio.h>
+    #include <sys/types.h>
+	#include <sys/stat.h>
+    #include <dirent.h>
+    #include <pthread.h>
 #else
-#include <process.h>
+	#include <process.h>
 #endif
 
 extern WorldDatabase database;
@@ -54,50 +54,49 @@ LuaInterface::LuaInterface() {
 #ifdef WIN32
 vector<string>* LuaInterface::GetDirectoryListing(const char* directory) {
 	vector<string>* ret = new vector<string>;
-	WIN32_FIND_DATA fdata;
-	HANDLE dhandle;
-	char buf[MAX_PATH];
-	snprintf(buf, sizeof(buf), "%s\\*", directory);
-	if ((dhandle = FindFirstFile(buf, &fdata)) == INVALID_HANDLE_VALUE) {
+    WIN32_FIND_DATA fdata;
+    HANDLE dhandle;
+    char buf[MAX_PATH];
+    snprintf(buf, sizeof(buf), "%s\\*", directory);
+    if((dhandle = FindFirstFile(buf, &fdata)) == INVALID_HANDLE_VALUE) {
 		safe_delete(ret);
 		return 0;
-	}
+    }
 
-	ret->push_back(string(fdata.cFileName));
+    ret->push_back(string(fdata.cFileName));
 
-	while (1) {
-		if (FindNextFile(dhandle, &fdata)) {
+    while(1) {
+        if(FindNextFile(dhandle, &fdata)) {
 			ret->push_back(string(fdata.cFileName));
-		}
-		else {
-			if (GetLastError() == ERROR_NO_MORE_FILES) {
-				break;
-			}
-			else {
+        } 
+		else{
+            if(GetLastError() == ERROR_NO_MORE_FILES) {
+                break;
+            } else {
 				safe_delete(ret);
-				FindClose(dhandle);
-				return 0;
-			}
-		}
-	}
+                FindClose(dhandle);
+                return 0;
+            }
+        }
+    }
 
-	if (FindClose(dhandle) == 0) {
+    if(FindClose(dhandle) == 0) {
 		safe_delete(ret);
-		return 0;
-	}
+        return 0;
+    }
 	return ret;
 }
 #else
 vector<string>* LuaInterface::GetDirectoryListing(const char* directory) {
 	vector<string>* ret = new vector<string>;
-	DIR* dp;
-	struct dirent* ep;
-	dp = opendir(directory);
-	if (dp != NULL) {
-		while ((ep = readdir(dp)))
+	DIR *dp;
+	struct dirent *ep;
+	dp = opendir (directory);
+	if (dp != NULL){
+		while ((ep = readdir (dp)))
 			ret->push_back(string(ep->d_name));
-		(void)closedir(dp);
-	}
+		(void) closedir (dp);
+    }
 	else {
 		safe_delete(ret);
 		return 0;
@@ -122,12 +121,12 @@ LuaInterface::~LuaInterface() {
 }
 
 void LuaInterface::Process() {
-	if (shutting_down)
+	if(shutting_down)
 		return;
 	MLUAMain.lock();
-	if (user_data_timer && user_data_timer->Check())
+	if(user_data_timer && user_data_timer->Check())
 		DeleteUserDataPtrs(false);
-	if (spell_delete_timer && spell_delete_timer->Check())
+	if(spell_delete_timer && spell_delete_timer->Check())
 		DeletePendingSpells(false);
 	MLUAMain.unlock();
 }
@@ -135,7 +134,7 @@ void LuaInterface::Process() {
 void LuaInterface::DestroySpells() {
 	map<string, LuaSpell*>::iterator itr;
 	MSpells.lock();
-	for (itr = spells.begin(); itr != spells.end(); itr++) {
+	for(itr = spells.begin(); itr != spells.end(); itr++){
 		lua_close(itr->second->state);
 		safe_delete(itr->second);
 	}
@@ -146,18 +145,18 @@ void LuaInterface::DestroySpells() {
 void LuaInterface::DestroyQuests(bool reload) {
 	map<int32, lua_State*>::iterator itr;
 	MQuests.lock();
-	for (itr = quest_states.begin(); itr != quest_states.end(); itr++) {
+	for(itr = quest_states.begin(); itr != quest_states.end(); itr++){
 		safe_delete(quests[itr->first]);
 		lua_close(itr->second);
 	}
 	quests.clear();
 	quest_states.clear();
 	map<int32, Mutex*>::iterator mutex_itr;
-	for (mutex_itr = quests_mutex.begin(); mutex_itr != quests_mutex.end(); mutex_itr++) {
+	for(mutex_itr = quests_mutex.begin(); mutex_itr != quests_mutex.end(); mutex_itr++){
 		safe_delete(mutex_itr->second);
 	}
 	quests_mutex.clear();
-	if (reload)
+	if(reload)
 		database.LoadQuests();
 	MQuests.unlock();
 }
@@ -167,10 +166,10 @@ void LuaInterface::DestroyItemScripts() {
 	map<lua_State*, bool>::iterator state_itr;
 	Mutex* mutex = 0;
 	MItemScripts.writelock(__FUNCTION__, __LINE__);
-	for (itr = item_scripts.begin(); itr != item_scripts.end(); itr++) {
+	for(itr = item_scripts.begin(); itr != item_scripts.end(); itr++){
 		mutex = GetItemScriptMutex(itr->first.c_str());
 		mutex->writelock(__FUNCTION__, __LINE__);
-		for (state_itr = itr->second.begin(); state_itr != itr->second.end(); state_itr++)
+		for(state_itr = itr->second.begin(); state_itr != itr->second.end(); state_itr++)
 			lua_close(state_itr->first);
 		mutex->releasewritelock(__FUNCTION__, __LINE__);
 		safe_delete(mutex);
@@ -185,10 +184,10 @@ void LuaInterface::DestroySpawnScripts() {
 	map<lua_State*, bool>::iterator state_itr;
 	Mutex* mutex = 0;
 	MSpawnScripts.writelock(__FUNCTION__, __LINE__);
-	for (itr = spawn_scripts.begin(); itr != spawn_scripts.end(); itr++) {
+	for(itr = spawn_scripts.begin(); itr != spawn_scripts.end(); itr++){
 		mutex = GetSpawnScriptMutex(itr->first.c_str());
 		mutex->writelock(__FUNCTION__, __LINE__);
-		for (state_itr = itr->second.begin(); state_itr != itr->second.end(); state_itr++)
+		for(state_itr = itr->second.begin(); state_itr != itr->second.end(); state_itr++)
 			lua_close(state_itr->first);
 		mutex->releasewritelock(__FUNCTION__, __LINE__);
 		safe_delete(mutex);
@@ -198,15 +197,15 @@ void LuaInterface::DestroySpawnScripts() {
 	MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-void LuaInterface::DestroyZoneScripts() {
+void LuaInterface::DestroyZoneScripts()  {
 	map<string, map<lua_State*, bool> >::iterator itr;
 	map<lua_State*, bool>::iterator state_itr;
 	Mutex* mutex = 0;
 	MZoneScripts.writelock(__FUNCTION__, __LINE__);
-	for (itr = zone_scripts.begin(); itr != zone_scripts.end(); itr++) {
+	for (itr = zone_scripts.begin(); itr != zone_scripts.end(); itr++){
 		mutex = GetZoneScriptMutex(itr->first.c_str());
 		mutex->writelock(__FUNCTION__, __LINE__);
-		for (state_itr = itr->second.begin(); state_itr != itr->second.end(); state_itr++)
+		for(state_itr = itr->second.begin(); state_itr != itr->second.end(); state_itr++)
 			lua_close(state_itr->first);
 		mutex->releasewritelock(__FUNCTION__, __LINE__);
 		safe_delete(mutex);
@@ -227,7 +226,7 @@ bool LuaInterface::LoadLuaSpell(const char* name) {
 	if (lua_script.find(".lua") == string::npos)
 		lua_script.append(".lua");
 	lua_State* state = LoadLuaFile(lua_script.c_str());
-	if (state) {
+	if(state){
 		spell = new LuaSpell;
 		spell->file_name = lua_script;
 		spell->state = state;
@@ -270,9 +269,9 @@ bool LuaInterface::LoadItemScript(string name) {
 
 bool LuaInterface::LoadItemScript(const char* name) {
 	bool ret = false;
-	if (name) {
+	if(name){
 		lua_State* state = LoadLuaFile(name);
-		if (state) {
+		if(state){
 			MItemScripts.writelock(__FUNCTION__, __LINE__);
 			item_scripts[name][state] = false;
 			MItemScripts.releasewritelock(__FUNCTION__, __LINE__);
@@ -284,9 +283,9 @@ bool LuaInterface::LoadItemScript(const char* name) {
 
 bool LuaInterface::LoadSpawnScript(const char* name) {
 	bool ret = false;
-	if (name) {
+	if(name){
 		lua_State* state = LoadLuaFile(name);
-		if (state) {
+		if(state){
 			MSpawnScripts.writelock(__FUNCTION__, __LINE__);
 			spawn_scripts[name][state] = false;
 			MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
@@ -296,7 +295,7 @@ bool LuaInterface::LoadSpawnScript(const char* name) {
 	return ret;
 }
 
-bool LuaInterface::LoadZoneScript(const char* name) {
+bool LuaInterface::LoadZoneScript(const char* name)  {
 	bool ret = false;
 	if (name) {
 		lua_State* state = LoadLuaFile(name);
@@ -314,13 +313,13 @@ void LuaInterface::ProcessErrorMessage(const char* message) {
 	MDebugClients.lock();
 	vector<Client*> delete_clients;
 	map<Client*, int32>::iterator itr;
-	for (itr = debug_clients.begin(); itr != debug_clients.end(); itr++) {
-		if ((Timer::GetCurrentTime2() - itr->second) > 60000)
+	for(itr = debug_clients.begin(); itr != debug_clients.end(); itr++){
+		if((Timer::GetCurrentTime2() - itr->second) > 60000)
 			delete_clients.push_back(itr->first);
 		else
 			itr->first->Message(CHANNEL_COLOR_RED, "LUA Error: %s", message);
 	}
-	for (int32 i = 0; i < delete_clients.size(); i++)
+	for(int32 i=0;i<delete_clients.size();i++)
 		debug_clients.erase(delete_clients[i]);
 	MDebugClients.unlock();
 }
@@ -337,10 +336,10 @@ void LuaInterface::UpdateDebugClients(Client* client) {
 	MDebugClients.unlock();
 }
 
-Mutex* LuaInterface::GetQuestMutex(Quest* quest) {
+Mutex*  LuaInterface::GetQuestMutex(Quest* quest) {
 	Mutex* ret = 0;
 	MQuests.lock();
-	if (quests_mutex.count(quest->GetQuestID()) == 0) {
+	if(quests_mutex.count(quest->GetQuestID()) == 0){
 		ret = new Mutex();
 		quests_mutex[quest->GetQuestID()] = ret;
 		ret->SetName(string("Quest::").append(quest->GetName()));
@@ -352,27 +351,27 @@ Mutex* LuaInterface::GetQuestMutex(Quest* quest) {
 }
 
 void LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* player, int32 step_id) {
-	if (shutting_down)
+	if(shutting_down)
 		return;
 	lua_State* state = 0;
-	if (quest) {
+	if(quest){
 		LogWrite(LUA__DEBUG, 0, "LUA", "Quest: %s, function: %s", quest->GetName(), function);
 		Mutex* mutex = GetQuestMutex(quest);
 		mutex->lock();
-		if (quest_states.count(quest->GetQuestID()) > 0)
+		if(quest_states.count(quest->GetQuestID()) > 0)
 			state = quest_states[quest->GetQuestID()];
-		if (state) {
+		if(state){
 			int8 arg_count = 3;
 			lua_getglobal(state, function);
 			SetQuestValue(state, quest);
 			Spawn* spawn = player->GetZone()->GetSpawnByDatabaseID(quest->GetQuestGiver());
 			SetSpawnValue(state, spawn);
 			SetSpawnValue(state, player);
-			if (step_id != 0xFFFFFFFF) {
+			if(step_id != 0xFFFFFFFF){
 				SetInt32Value(state, step_id);
 				arg_count++;
 			}
-			if (lua_pcall(state, arg_count, 0, 0) != 0) {
+			if(lua_pcall(state, arg_count, 0, 0) != 0){
 				LogError("Error processing quest function '%s': %s ", function, lua_tostring(state, -1));
 				lua_pop(state, 1);
 				mutex->unlock();
@@ -385,11 +384,11 @@ void LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* 
 }
 
 Quest* LuaInterface::LoadQuest(int32 id, const char* name, const char* type, const char* zone, int8 level, const char* description, char* script_name) {
-	if (shutting_down)
+	if(shutting_down)
 		return 0;
 	lua_State* state = LoadLuaFile(script_name);
 	Quest* quest = 0;
-	if (state) {
+	if(state){
 		quest = new Quest(id);
 		if (name)
 			quest->SetName(string(name));
@@ -402,14 +401,14 @@ Quest* LuaInterface::LoadQuest(int32 id, const char* name, const char* type, con
 			quest->SetDescription(string(description));
 		lua_getglobal(state, "Init");
 		SetQuestValue(state, quest);
-		if (lua_pcall(state, 1, 0, 0) != 0) {
+		if(lua_pcall(state, 1, 0, 0) != 0){
 			LogError("Error processing Quest \"%s\" (%u): %s", name ? name : "unknown", id, lua_tostring(state, -1));
 			lua_pop(state, 1);
 			safe_delete(quest);
 			return 0;
 		}
-		if (!quest->GetName()) {
-			safe_delete(quest);
+		if(!quest->GetName()){
+			safe_delete(quest);	
 			return 0;
 		}
 		quest_states[id] = state;
@@ -431,7 +430,7 @@ void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool preca
 		lua_getglobal(spell->state, function);
 	else if (precast)
 		lua_getglobal(spell->state, "precast");
-	else if (first_cast)
+	else if(first_cast)
 		lua_getglobal(spell->state, "cast");
 	else
 		lua_getglobal(spell->state, "tick");
@@ -453,9 +452,9 @@ void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool preca
 	if (temp_spawn)
 		SetSpawnValue(spell->state, temp_spawn);
 	else {
-		if (spell->caster && spell->initial_target)
+		if(spell->caster && spell->initial_target)
 			SetSpawnValue(spell->state, spell->caster->GetZone()->GetSpawnByID(spell->initial_target));
-		else if (spell->caster && spell->caster->GetTarget())
+		else if(spell->caster && spell->caster->GetTarget())
 			SetSpawnValue(spell->state, spell->caster->GetTarget());
 		else
 			SetSpawnValue(spell->state, 0);
@@ -463,16 +462,16 @@ void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool preca
 }
 
 LuaSpell* LuaInterface::GetCurrentSpell(lua_State* state) {
-	if (current_spells.count(state) > 0)
+	if(current_spells.count(state) > 0)
 		return current_spells[state];
 	return 0;
 }
 
 bool LuaInterface::CallSpellProcess(LuaSpell* spell, int8 num_parameters) {
-	if (shutting_down || !spell || !spell->caster)
+	if(shutting_down || !spell || !spell->caster)
 		return false;
 	current_spells[spell->state] = spell;
-	if (lua_pcall(spell->state, num_parameters, 0, 0) != 0) {
+	if(lua_pcall(spell->state, num_parameters, 0, 0) != 0){
 		LogError("Error running %s", lua_tostring(spell->state, -1));
 		lua_pop(spell->state, 1);
 		RemoveSpell(spell, false);
@@ -484,7 +483,7 @@ bool LuaInterface::CallSpellProcess(LuaSpell* spell, int8 num_parameters) {
 void LuaInterface::RemoveSpawnScript(const char* name) {
 	lua_State* state = 0;
 	Mutex* mutex = GetSpawnScriptMutex(name);
-	while ((state = GetSpawnScript(name, false))) {
+	while((state = GetSpawnScript(name, false))){
 		mutex->writelock(__FUNCTION__, __LINE__);
 		lua_close(state);
 		spawn_scripts[name].erase(state);
@@ -496,10 +495,10 @@ void LuaInterface::RemoveSpawnScript(const char* name) {
 }
 
 bool LuaInterface::CallItemScript(lua_State* state, int8 num_parameters) {
-	if (shutting_down)
+	if(shutting_down)
 		return false;
-	if (!state || lua_pcall(state, num_parameters, 0, 0) != 0) {
-		if (state) {
+	if(!state || lua_pcall(state, num_parameters, 0, 0) != 0){
+		if (state){
 			const char* err = lua_tostring(state, -1);
 			LogError(err);
 			lua_pop(state, 1);
@@ -510,10 +509,10 @@ bool LuaInterface::CallItemScript(lua_State* state, int8 num_parameters) {
 }
 
 bool LuaInterface::CallSpawnScript(lua_State* state, int8 num_parameters) {
-	if (shutting_down)
+	if(shutting_down)
 		return false;
-	if (!state || lua_pcall(state, num_parameters, 0, 0) != 0) {
-		if (state) {
+	if(!state || lua_pcall(state, num_parameters, 0, 0) != 0){
+		if (state){
 			const char* err = lua_tostring(state, -1);
 			LogError(err);
 			lua_pop(state, 1);
@@ -524,10 +523,10 @@ bool LuaInterface::CallSpawnScript(lua_State* state, int8 num_parameters) {
 }
 
 bool LuaInterface::CallZoneScript(lua_State* state, int8 num_parameters) {
-	if (shutting_down)
+	if(shutting_down)
 		return false;
 	if (!state || lua_pcall(state, num_parameters, 0, 0) != 0) {
-		if (state) {
+		if (state){
 			const char* err = lua_tostring(state, -1);
 			LogError(err);
 			lua_pop(state, 1);
@@ -538,15 +537,15 @@ bool LuaInterface::CallZoneScript(lua_State* state, int8 num_parameters) {
 }
 
 lua_State* LuaInterface::LoadLuaFile(const char* name) {
-	if (shutting_down)
+	if(shutting_down)
 		return 0;
 	lua_State* state = luaL_newstate();
 	luaL_openlibs(state);
-	if (luaL_dofile(state, name) == 0) {
+	if(luaL_dofile(state, name) == 0){
 		RegisterFunctions(state);
 		return state;
 	}
-	else {
+	else{
 		LogError("Error loading %s (file name: '%s')", lua_tostring(state, -1), name);
 		lua_pop(state, 1);
 		lua_close(state);
@@ -555,17 +554,17 @@ lua_State* LuaInterface::LoadLuaFile(const char* name) {
 }
 
 void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool can_delete) {
-	if (shutting_down)
+	if(shutting_down)
 		return;
-	if (call_remove_function) {
+	if(call_remove_function){
 		lua_getglobal(spell->state, "remove");
 		LUASpawnWrapper* spawn_wrapper = new LUASpawnWrapper();
 		spawn_wrapper->spawn = spell->caster;
 		AddUserDataPtr(spawn_wrapper);
 		lua_pushlightuserdata(spell->state, spawn_wrapper);
-		if (spell->caster && (spell->initial_target || spell->caster->GetTarget())) {
+		if(spell->caster && (spell->initial_target || spell->caster->GetTarget())){
 			spawn_wrapper = new LUASpawnWrapper();
-			if (!spell->initial_target)
+			if(!spell->initial_target)
 				spawn_wrapper->spawn = spell->caster->GetTarget();
 			else
 				spawn_wrapper->spawn = spell->caster->GetZone()->GetSpawnByID(spell->initial_target);
@@ -641,7 +640,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetSpeed", EQ2Emu_lua_GetSpeed);
 	lua_register(state, "HasMoved", EQ2Emu_lua_HasMoved);
 	lua_register(state, "SpellDamage", EQ2Emu_lua_SpellDamage);
-	lua_register(state, "CastSpell", EQ2Emu_lua_CastSpell);
+	lua_register(state, "CastSpell", EQ2Emu_lua_CastSpell);	
 	lua_register(state, "SpellHeal", EQ2Emu_lua_SpellHeal);
 	lua_register(state, "SummonItem", EQ2Emu_lua_SummonItem);
 	lua_register(state, "RemoveItem", EQ2Emu_lua_RemoveItem);
@@ -658,7 +657,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "IsInCombat", EQ2Emu_lua_IsInCombat);
 	lua_register(state, "Attack", EQ2Emu_lua_Attack);
 	lua_register(state, "ApplySpellVisual", EQ2Emu_lua_ApplySpellVisual);
-
+	
 	lua_register(state, "IsPlayer", EQ2Emu_lua_IsPlayer);
 	lua_register(state, "FaceTarget", EQ2Emu_lua_FaceTarget);
 	lua_register(state, "MoveToLocation", EQ2Emu_lua_MoveToLocation);
@@ -670,7 +669,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetCurrentZoneSafeLocation", EQ2Emu_lua_GetCurrentZoneSafeLocation);
 	lua_register(state, "AddTimer", EQ2Emu_lua_AddTimer);
 	lua_register(state, "Harvest", EQ2Emu_lua_Harvest);
-
+	
 	lua_register(state, "AddSpellBonus", EQ2Emu_lua_AddSpellBonus);
 	lua_register(state, "RemoveSpellBonus", EQ2Emu_lua_RemoveSpellBonus);
 	lua_register(state, "AddSkillBonus", EQ2Emu_lua_AddSkillBonus);
@@ -727,7 +726,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SpawnSet", EQ2Emu_lua_SpawnSet);
 	lua_register(state, "SpawnSetByDistance", EQ2Emu_lua_SpawnSetByDistance);
 	lua_register(state, "SpawnMove", EQ2Emu_lua_SpawnMove);
-	lua_register(state, "KillSpawn", EQ2Emu_lua_KillSpawn);
+	lua_register(state, "KillSpawn", EQ2Emu_lua_KillSpawn); 
 	lua_register(state, "KillSpawnByDistance", EQ2Emu_lua_KillSpawnByDistance);
 	lua_register(state, "Despawn", EQ2Emu_lua_Despawn);
 	lua_register(state, "IsBindAllowed", EQ2Emu_lua_IsBindAllowed);
@@ -790,11 +789,11 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "UpdateQuestZone", EQ2Emu_lua_UpdateQuestZone);
 	lua_register(state, "SetCompletedDescription", EQ2Emu_lua_SetCompletedDescription);
 	lua_register(state, "OfferQuest", EQ2Emu_lua_OfferQuest);
-	lua_register(state, "ProvidesQuest", EQ2Emu_lua_ProvidesQuest);
-	lua_register(state, "HasQuest", EQ2Emu_lua_HasQuest);
-	lua_register(state, "HasCompletedQuest", EQ2Emu_lua_HasCompletedQuest);
-	lua_register(state, "QuestIsComplete", EQ2Emu_lua_QuestIsComplete);
-	lua_register(state, "QuestReturnNPC", EQ2Emu_lua_QuestReturnNPC);
+	lua_register(state, "ProvidesQuest", EQ2Emu_lua_ProvidesQuest);	
+	lua_register(state, "HasQuest", EQ2Emu_lua_HasQuest);	
+	lua_register(state, "HasCompletedQuest", EQ2Emu_lua_HasCompletedQuest);	
+	lua_register(state, "QuestIsComplete", EQ2Emu_lua_QuestIsComplete);	
+	lua_register(state, "QuestReturnNPC", EQ2Emu_lua_QuestReturnNPC);		
 	lua_register(state, "GetQuest", EQ2Emu_lua_GetQuest);
 	lua_register(state, "HasCollectionsToHandIn", EQ2Emu_lua_HasCollectionsToHandIn);
 	lua_register(state, "HandInCollections", EQ2Emu_lua_HandInCollections);
@@ -962,10 +961,12 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "Evac", EQ2Emu_lua_Evac);
 	lua_register(state, "GetSpellTier", EQ2Emu_lua_GetSpellTier);
 	lua_register(state, "GetSpellID", EQ2Emu_lua_GetSpellID);
+	lua_register(state, "StartTransmute", EQ2Emu_lua_StartTransmute);
+	lua_register(state, "CompleteTransmute", EQ2Emu_lua_CompleteTransmute);
 	lua_register(state, "ProcHate", EQ2Emu_lua_ProcHate);
 }
 
-void LuaInterface::LogError(const char* error, ...) {
+void LuaInterface::LogError(const char* error, ...)  {
 	va_list argptr;
 	char buffer[4096];
 
@@ -992,17 +993,17 @@ void LuaInterface::AddUserDataPtr(LUAUserData* data) {
 
 void LuaInterface::DeletePendingSpells(bool all) {
 	MSpellDelete.lock();
-	if (spells_pending_delete.size() > 0) {
+	if(spells_pending_delete.size() > 0){
 		int32 time = Timer::GetCurrentTime2();
 		map<LuaSpell*, int32>::iterator itr;
 		vector<LuaSpell*> tmp_deletes;
 		vector<LuaSpell*>::iterator del_itr;
-		for (itr = spells_pending_delete.begin(); itr != spells_pending_delete.end(); itr++) {
-			if (all || time >= itr->second)
+		for(itr = spells_pending_delete.begin(); itr != spells_pending_delete.end(); itr++){
+			if(all || time >= itr->second)
 				tmp_deletes.push_back(itr->first);
 		}
 		LuaSpell* spell = 0;
-		for (del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++) {
+		for(del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++){
 			spell = *del_itr;
 			spells_pending_delete.erase(spell);
 			safe_delete(spell);
@@ -1013,17 +1014,17 @@ void LuaInterface::DeletePendingSpells(bool all) {
 
 void LuaInterface::DeleteUserDataPtrs(bool all) {
 	MLUAUserData.lock();
-	if (user_data.size() > 0) {
+	if(user_data.size() > 0){
 		map<LUAUserData*, int32>::iterator itr;
 		int32 time = Timer::GetCurrentTime2();
 		vector<LUAUserData*> tmp_deletes;
 		vector<LUAUserData*>::iterator del_itr;
-		for (itr = user_data.begin(); itr != user_data.end(); itr++) {
-			if (all || time >= itr->second)
+		for(itr = user_data.begin(); itr != user_data.end(); itr++){
+			if(all || time >= itr->second)
 				tmp_deletes.push_back(itr->first);
 		}
 		LUAUserData* data = 0;
-		for (del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++) {
+		for(del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++){
 			data = *del_itr;
 			user_data.erase(data);
 			safe_delete(data);
@@ -1034,14 +1035,14 @@ void LuaInterface::DeleteUserDataPtrs(bool all) {
 
 Spawn* LuaInterface::GetSpawn(lua_State* state, int8 arg_num) {
 	Spawn* ret = 0;
-	if (lua_islightuserdata(state, arg_num)) {
+	if (lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
-		if (!data || !data->IsCorrectlyInitialized()) {
+		if(!data || !data->IsCorrectlyInitialized()){
 			LogError("GetSpawn error while processing %s", lua_tostring(state, -1));
 		}
-		else if (!data->IsSpawn()) {
+		else if(!data->IsSpawn()){
 			lua_Debug ar;
-			lua_getstack(state, 1, &ar);
+			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
 			LogError("Invalid data type used for GetSpawn in %s (line %d)", ar.source, ar.currentline);
 		}
@@ -1051,16 +1052,16 @@ Spawn* LuaInterface::GetSpawn(lua_State* state, int8 arg_num) {
 	return ret;
 }
 
-vector<ConversationOption>* LuaInterface::GetConversation(lua_State* state, int8 arg_num) {
+vector<ConversationOption>*	LuaInterface::GetConversation(lua_State* state, int8 arg_num) {
 	vector<ConversationOption>* ret = 0;
-	if (lua_islightuserdata(state, arg_num)) {
+	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
-		if (!data || !data->IsCorrectlyInitialized()) {
+		if(!data || !data->IsCorrectlyInitialized()){
 			LogError("GetConversation error while processing %s", lua_tostring(state, -1));
 		}
-		else if (!data->IsConversationOption()) {
+		else if(!data->IsConversationOption()){
 			lua_Debug ar;
-			lua_getstack(state, 1, &ar);
+			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
 			LogError("Invalid data type used for GetConversation in %s (line %d)", ar.source, ar.currentline);
 		}
@@ -1070,16 +1071,16 @@ vector<ConversationOption>* LuaInterface::GetConversation(lua_State* state, int8
 	return ret;
 }
 
-vector<OptionWindowOption>* LuaInterface::GetOptionWindow(lua_State* state, int8 arg_num) {
+vector<OptionWindowOption>*	LuaInterface::GetOptionWindow(lua_State* state, int8 arg_num) {
 	vector<OptionWindowOption>* ret = 0;
-	if (lua_islightuserdata(state, arg_num)) {
+	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
-		if (!data || !data->IsCorrectlyInitialized()) {
+		if(!data || !data->IsCorrectlyInitialized()){
 			LogError("GetOptionWindow error while processing %s", lua_tostring(state, -1));
 		}
-		else if (!data->IsOptionWindow()) {
+		else if(!data->IsOptionWindow()){
 			lua_Debug ar;
-			lua_getstack(state, 1, &ar);
+			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
 			LogError("Invalid data type used for GetOptionWindow in %s (line %d)", ar.source, ar.currentline);
 		}
@@ -1091,14 +1092,14 @@ vector<OptionWindowOption>* LuaInterface::GetOptionWindow(lua_State* state, int8
 
 Quest* LuaInterface::GetQuest(lua_State* state, int8 arg_num) {
 	Quest* ret = 0;
-	if (lua_islightuserdata(state, arg_num)) {
+	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
-		if (!data || !data->IsCorrectlyInitialized()) {
+		if(!data || !data->IsCorrectlyInitialized()){
 			LogError("GetQuest error while processing %s", lua_tostring(state, 0));
 		}
-		else if (!data->IsQuest()) {
+		else if(!data->IsQuest()){
 			lua_Debug ar;
-			lua_getstack(state, 1, &ar);
+ 			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
 			LogError("Invalid data type used for GetQuest in %s (line %d)", ar.source, ar.currentline);
 		}
@@ -1110,14 +1111,14 @@ Quest* LuaInterface::GetQuest(lua_State* state, int8 arg_num) {
 
 Item* LuaInterface::GetItem(lua_State* state, int8 arg_num) {
 	Item* ret = 0;
-	if (lua_islightuserdata(state, arg_num)) {
+	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
-		if (!data || !data->IsCorrectlyInitialized()) {
+		if(!data || !data->IsCorrectlyInitialized()){
 			LogError("GetItem error while processing %s", lua_tostring(state, 0));
 		}
-		else if (!data->IsItem()) {
+		else if(!data->IsItem()){
 			lua_Debug ar;
-			lua_getstack(state, 1, &ar);
+ 			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
 			LogError("Invalid data type used for GetItem in %s (line %d)", ar.source, ar.currentline);
 		}
@@ -1131,12 +1132,12 @@ Skill* LuaInterface::GetSkill(lua_State* state, int8 arg_num) {
 	Skill* ret = 0;
 	if (lua_islightuserdata(state, arg_num)) {
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
-		if (!data || !data->IsCorrectlyInitialized()) {
+		if(!data || !data->IsCorrectlyInitialized()){
 			LogError("GetSkill error while processing %s", lua_tostring(state, 0));
 		}
-		else if (!data->IsSkill()) {
+		else if(!data->IsSkill()){
 			lua_Debug ar;
-			lua_getstack(state, 1, &ar);
+ 			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
 			LogError("Invalid data type used for GetSkill in %s (line %d)", ar.source, ar.currentline);
 		}
@@ -1148,14 +1149,14 @@ Skill* LuaInterface::GetSkill(lua_State* state, int8 arg_num) {
 
 ZoneServer* LuaInterface::GetZone(lua_State* state, int8 arg_num) {
 	ZoneServer* ret = 0;
-	if (lua_islightuserdata(state, arg_num)) {
+	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
-		if (!data || !data->IsCorrectlyInitialized()) {
+		if(!data || !data->IsCorrectlyInitialized()){
 			LogError("GetZone error while processing %s", lua_tostring(state, -1));
 		}
-		else if (!data->IsZone()) {
+		else if(!data->IsZone()){
 			lua_Debug ar;
-			lua_getstack(state, 1, &ar);
+			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
 			LogError("Invalid data type used for GetZone in %s (line %d)", ar.source, ar.currentline);
 		}
@@ -1167,7 +1168,7 @@ ZoneServer* LuaInterface::GetZone(lua_State* state, int8 arg_num) {
 
 sint32 LuaInterface::GetSInt32Value(lua_State* state, int8 arg_num) {
 	sint32 val = 0;
-	if (lua_isnumber(state, arg_num)) {
+	if(lua_isnumber(state, arg_num)){
 		val = lua_tointeger(state, arg_num);
 	}
 	return val;
@@ -1175,7 +1176,7 @@ sint32 LuaInterface::GetSInt32Value(lua_State* state, int8 arg_num) {
 
 int32 LuaInterface::GetInt32Value(lua_State* state, int8 arg_num) {
 	int32 val = 0;
-	if (lua_isnumber(state, arg_num)) {
+	if(lua_isnumber(state, arg_num)){
 		val = (int32)lua_tonumber(state, arg_num);
 	}
 	return val;
@@ -1183,7 +1184,7 @@ int32 LuaInterface::GetInt32Value(lua_State* state, int8 arg_num) {
 
 int16 LuaInterface::GetInt16Value(lua_State* state, int8 arg_num) {
 	int16 val = 0;
-	if (lua_isnumber(state, arg_num)) {
+	if(lua_isnumber(state, arg_num)){
 		val = lua_tointeger(state, arg_num);
 	}
 	return val;
@@ -1191,7 +1192,7 @@ int16 LuaInterface::GetInt16Value(lua_State* state, int8 arg_num) {
 
 int8 LuaInterface::GetInt8Value(lua_State* state, int8 arg_num) {
 	int8 val = 0;
-	if (lua_isnumber(state, arg_num)) {
+	if(lua_isnumber(state, arg_num)){
 		val = lua_tointeger(state, arg_num);
 	}
 	return val;
@@ -1199,17 +1200,17 @@ int8 LuaInterface::GetInt8Value(lua_State* state, int8 arg_num) {
 
 float LuaInterface::GetFloatValue(lua_State* state, int8 arg_num) {
 	float val = 0;
-	if (lua_isnumber(state, arg_num))
+	if(lua_isnumber(state, arg_num))
 		val = (float)lua_tonumber(state, arg_num);
 	return val;
 }
 
 string LuaInterface::GetStringValue(lua_State* state, int8 arg_num) {
 	string val;
-	if (lua_isstring(state, arg_num)) {
+	if(lua_isstring(state, arg_num)){
 		size_t size = 0;
 		const char* str = lua_tolstring(state, arg_num, &size);
-		if (str)
+		if(str)
 			val = string(str);
 	}
 	return val;
@@ -1288,11 +1289,11 @@ void LuaInterface::SetZoneValue(lua_State* state, ZoneServer* zone) {
 	lua_pushlightuserdata(state, zone_wrapper);
 }
 
-LuaSpell* LuaInterface::GetSpell(const char* name) {
+LuaSpell* LuaInterface::GetSpell(const char* name)  {
 	string lua_script = string(name);
 	if (lua_script.find(".lua") == string::npos)
 		lua_script.append(".lua");
-	if (spells.count(lua_script) > 0)
+	if(spells.count(lua_script) > 0)
 	{
 		LogWrite(LUA__DEBUG, 0, "LUA", "Found LUA Spell Script: '%s'", lua_script.c_str());
 		LuaSpell* spell = spells[lua_script];
@@ -1315,7 +1316,7 @@ LuaSpell* LuaInterface::GetSpell(const char* name) {
 		new_spell->effect_bitmask = 0;
 		return new_spell;
 	}
-	else {
+	else{
 		LogWrite(LUA__ERROR, 0, "LUA", "Error LUA Spell Script: '%s'", name);
 		return 0;
 	}
@@ -1323,9 +1324,9 @@ LuaSpell* LuaInterface::GetSpell(const char* name) {
 
 Mutex* LuaInterface::GetItemScriptMutex(const char* name) {
 	Mutex* mutex = 0;
-	if (item_scripts_mutex.count(name) > 0)
+	if(item_scripts_mutex.count(name) > 0)
 		mutex = item_scripts_mutex[name];
-	if (!mutex) {
+	if(!mutex){
 		mutex = new Mutex();
 		item_scripts_mutex[name] = mutex;
 	}
@@ -1334,9 +1335,9 @@ Mutex* LuaInterface::GetItemScriptMutex(const char* name) {
 
 Mutex* LuaInterface::GetSpawnScriptMutex(const char* name) {
 	Mutex* mutex = 0;
-	if (spawn_scripts_mutex.count(string(name)) > 0)
+	if(spawn_scripts_mutex.count(string(name)) > 0)
 		mutex = spawn_scripts_mutex[name];
-	if (!mutex) {
+	if(!mutex){
 		mutex = new Mutex();
 		spawn_scripts_mutex[name] = mutex;
 	}
@@ -1345,9 +1346,9 @@ Mutex* LuaInterface::GetSpawnScriptMutex(const char* name) {
 
 Mutex* LuaInterface::GetZoneScriptMutex(const char* name) {
 	Mutex* mutex = 0;
-	if (zone_scripts_mutex.count(name) > 0)
+	if(zone_scripts_mutex.count(name) > 0)
 		mutex = zone_scripts_mutex[name];
-	if (!mutex) {
+	if(!mutex){
 		mutex = new Mutex();
 		zone_scripts_mutex[name] = mutex;
 	}
@@ -1373,22 +1374,22 @@ lua_State* LuaInterface::GetItemScript(const char* name, bool create_new, bool u
 	Mutex* mutex = 0;
 
 	itr = item_scripts.find(name);
-	if (itr != item_scripts.end()) {
+	if(itr != item_scripts.end()) {
 		mutex = GetItemScriptMutex(name);
 		mutex->readlock(__FUNCTION__, __LINE__);
-		for (item_script_itr = itr->second.begin(); item_script_itr != itr->second.end(); item_script_itr++) {
-			if (!item_script_itr->second) { //not in use
-				if (use)
+		for(item_script_itr = itr->second.begin(); item_script_itr != itr->second.end(); item_script_itr++){
+			if(!item_script_itr->second){ //not in use
+				if(use)
 					item_script_itr->second = true;
 				ret = item_script_itr->first;
 			}
 		}
 		mutex->releasereadlock(__FUNCTION__, __LINE__);
 	}
-	if (!ret && create_new) {
-		if (name && LoadItemScript(name))
+	if(!ret && create_new){
+		if(name && LoadItemScript(name))
 			ret = GetItemScript(name, create_new, use);
-		else {
+		else{
 			LogError("Error LUA Item Script '%s'", name);
 			return 0;
 		}
@@ -1405,22 +1406,22 @@ lua_State* LuaInterface::GetSpawnScript(const char* name, bool create_new, bool 
 	Mutex* mutex = 0;
 
 	itr = spawn_scripts.find(name);
-	if (itr != spawn_scripts.end()) {
+	if(itr != spawn_scripts.end()) {
 		mutex = GetSpawnScriptMutex(name);
 		mutex->readlock(__FUNCTION__, __LINE__);
-		for (spawn_script_itr = itr->second.begin(); spawn_script_itr != itr->second.end(); spawn_script_itr++) {
-			if (!spawn_script_itr->second) { //not in use
-				if (use)
+		for(spawn_script_itr = itr->second.begin(); spawn_script_itr != itr->second.end(); spawn_script_itr++){
+			if(!spawn_script_itr->second){ //not in use
+				if(use)
 					spawn_script_itr->second = true;
 				ret = spawn_script_itr->first;
 			}
 		}
 		mutex->releasereadlock(__FUNCTION__, __LINE__);
 	}
-	if (!ret && create_new) {
-		if (name && LoadSpawnScript(name))
+	if(!ret && create_new){
+		if(name && LoadSpawnScript(name))
 			ret = GetSpawnScript(name, create_new, use);
-		else {
+		else{
 			LogError("Error LUA Spawn Script '%s'", name);
 			return 0;
 		}
@@ -1428,29 +1429,29 @@ lua_State* LuaInterface::GetSpawnScript(const char* name, bool create_new, bool 
 	return ret;
 }
 
-lua_State* LuaInterface::GetZoneScript(const char* name, bool create_new, bool use) {
+lua_State* LuaInterface::GetZoneScript(const char* name, bool create_new, bool use)  {
 	map<string, map<lua_State*, bool> >::iterator itr;
 	map<lua_State*, bool>::iterator zone_script_itr;
 	lua_State* ret = 0;
 	Mutex* mutex = 0;
 
 	itr = zone_scripts.find(name);
-	if (itr != zone_scripts.end()) {
+	if(itr != zone_scripts.end()) {
 		mutex = GetZoneScriptMutex(name);
 		mutex->readlock(__FUNCTION__, __LINE__);
-		for (zone_script_itr = itr->second.begin(); zone_script_itr != itr->second.end(); zone_script_itr++) {
-			if (!zone_script_itr->second) { //not in use
-				if (use)
+		for(zone_script_itr = itr->second.begin(); zone_script_itr != itr->second.end(); zone_script_itr++){
+			if(!zone_script_itr->second){ //not in use
+				if(use)
 					zone_script_itr->second = true;
 				ret = zone_script_itr->first;
 			}
 		}
 		mutex->releasereadlock(__FUNCTION__, __LINE__);
 	}
-	if (!ret && create_new) {
-		if (name && LoadZoneScript(name))
+	if(!ret && create_new){
+		if(name && LoadZoneScript(name))
 			ret = GetZoneScript(name);
-		else {
+		else{
 			LogError("Error LUA Zone Script '%s'", name);
 			return 0;
 		}
@@ -1459,38 +1460,38 @@ lua_State* LuaInterface::GetZoneScript(const char* name, bool create_new, bool u
 }
 
 bool LuaInterface::RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn) {
-	if (!item)
+	if(!item)
 		return false;
 	lua_State* state = GetItemScript(script_name.c_str(), true, true);
-	if (state) {
+	if(state){
 		Mutex* mutex = GetItemScriptMutex(script_name.c_str());
-		if (mutex)
+		if(mutex)
 			mutex->readlock(__FUNCTION__, __LINE__);
-		else {
+		else{
 			LogError("Error getting lock for '%s'", script_name.c_str());
 			UseItemScript(script_name.c_str(), state, false);
 			return false;
 		}
 		lua_getglobal(state, function_name);
 		lua_getglobal(state, function_name);
-		if (!lua_isfunction(state, lua_gettop(state))) {
+		if (!lua_isfunction(state, lua_gettop(state))){
 			lua_pop(state, 1);
 			mutex->releasereadlock(__FUNCTION__);
 			return false;
 		}
 		SetItemValue(state, item);
 		int8 num_parms = 1;
-		if (spawn) {
+		if(spawn){
 			SetSpawnValue(state, spawn);
 			num_parms++;
 		}
-		if (!CallItemScript(state, num_parms)) {
-			if (mutex)
+		if(!CallItemScript(state, num_parms)){
+			if(mutex)
 				mutex->releasereadlock(__FUNCTION__, __LINE__);
 			UseItemScript(script_name.c_str(), state, false);
 			return false;
 		}
-		if (mutex)
+		if(mutex)
 			mutex->releasereadlock(__FUNCTION__, __LINE__);
 		UseItemScript(script_name.c_str(), state, false);
 		return true;
@@ -1501,41 +1502,41 @@ bool LuaInterface::RunItemScript(string script_name, const char* function_name, 
 
 
 bool LuaInterface::RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn, const char* message) {
-	if (!npc || spawn_scripts_reloading)
+	if(!npc || spawn_scripts_reloading)
 		return false;
 	lua_State* state = GetSpawnScript(script_name.c_str(), true, true);
-	if (state) {
+	if(state){
 		Mutex* mutex = GetSpawnScriptMutex(script_name.c_str());
-		if (mutex)
+		if(mutex)
 			mutex->readlock(__FUNCTION__, __LINE__);
-		else {
+		else{
 			LogError("Error getting lock for '%s'", script_name.c_str());
 			UseSpawnScript(script_name.c_str(), state, false);
 			return false;
 		}
 		lua_getglobal(state, function_name);
-		if (!lua_isfunction(state, lua_gettop(state))) {
+		if (!lua_isfunction(state, lua_gettop(state))){
 			lua_pop(state, 1);
 			mutex->releasereadlock(__FUNCTION__);
 			return false;
 		}
 		SetSpawnValue(state, npc);
 		int8 num_parms = 1;
-		if (spawn) {
+		if(spawn){
 			SetSpawnValue(state, spawn);
 			num_parms++;
 		}
-		if (message) {
+		if(message){
 			SetStringValue(state, message);
 			num_parms++;
 		}
-		if (!CallSpawnScript(state, num_parms)) {
-			if (mutex)
+		if(!CallSpawnScript(state, num_parms)){
+			if(mutex)
 				mutex->releasereadlock(__FUNCTION__, __LINE__);
 			UseSpawnScript(script_name.c_str(), state, false);
 			return false;
 		}
-		if (mutex)
+		if(mutex)
 			mutex->releasereadlock(__FUNCTION__, __LINE__);
 		UseSpawnScript(script_name.c_str(), state, false);
 		return true;
@@ -1544,7 +1545,7 @@ bool LuaInterface::RunSpawnScript(string script_name, const char* function_name,
 		return false;
 }
 
-bool LuaInterface::RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn, int32 grid_id) {
+bool LuaInterface::RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn, int32 grid_id)  {
 	if (!zone)
 		return false;
 	lua_State* state = GetZoneScript(script_name.c_str(), true, true);
@@ -1558,7 +1559,7 @@ bool LuaInterface::RunZoneScript(string script_name, const char* function_name, 
 			return false;
 		}
 		lua_getglobal(state, function_name);
-		if (!lua_isfunction(state, lua_gettop(state))) {
+		if (!lua_isfunction(state, lua_gettop(state))){
 			lua_pop(state, 1);
 			mutex->releasereadlock(__FUNCTION__);
 			return false;
@@ -1594,7 +1595,7 @@ void LuaInterface::AddPendingSpellDelete(LuaSpell* spell) {
 	MSpellDelete.unlock();
 }
 
-LUAUserData::LUAUserData() {
+LUAUserData::LUAUserData(){
 	correctly_initialized = false;
 	quest = 0;
 	conversation_options = 0;
@@ -1605,11 +1606,11 @@ LUAUserData::LUAUserData() {
 	item = 0;
 }
 
-bool LUAUserData::IsCorrectlyInitialized() {
+bool LUAUserData::IsCorrectlyInitialized(){
 	return correctly_initialized;
 }
 
-bool LUAUserData::IsConversationOption() {
+bool LUAUserData::IsConversationOption(){
 	return false;
 }
 
@@ -1617,19 +1618,19 @@ bool LUAUserData::IsOptionWindow() {
 	return false;
 }
 
-bool LUAUserData::IsSpawn() {
+bool LUAUserData::IsSpawn(){
 	return false;
 }
 
-bool LUAUserData::IsQuest() {
+bool LUAUserData::IsQuest(){
 	return false;
 }
 
-bool LUAUserData::IsZone() {
+bool LUAUserData::IsZone(){
 	return false;
 }
 
-bool LUAUserData::IsItem() {
+bool LUAUserData::IsItem(){
 	return false;
 }
 
@@ -1637,11 +1638,11 @@ bool LUAUserData::IsSkill() {
 	return false;
 }
 
-LUAConversationOptionWrapper::LUAConversationOptionWrapper() {
+LUAConversationOptionWrapper::LUAConversationOptionWrapper(){
 	correctly_initialized = true;
 }
 
-bool LUAConversationOptionWrapper::IsConversationOption() {
+bool LUAConversationOptionWrapper::IsConversationOption(){
 	return true;
 }
 
@@ -1653,35 +1654,35 @@ bool LUAOptionWindowWrapper::IsOptionWindow() {
 	return true;
 }
 
-LUASpawnWrapper::LUASpawnWrapper() {
+LUASpawnWrapper::LUASpawnWrapper(){
 	correctly_initialized = true;
 }
 
-bool LUASpawnWrapper::IsSpawn() {
+bool LUASpawnWrapper::IsSpawn(){
 	return true;
 }
 
-LUAZoneWrapper::LUAZoneWrapper() {
+LUAZoneWrapper::LUAZoneWrapper(){
 	correctly_initialized = true;
 }
 
-bool LUAZoneWrapper::IsZone() {
+bool LUAZoneWrapper::IsZone(){
 	return true;
 }
 
-LUAQuestWrapper::LUAQuestWrapper() {
+LUAQuestWrapper::LUAQuestWrapper(){
 	correctly_initialized = true;
 }
 
-bool LUAQuestWrapper::IsQuest() {
+bool LUAQuestWrapper::IsQuest(){
 	return true;
 }
 
-LUAItemWrapper::LUAItemWrapper() {
+LUAItemWrapper::LUAItemWrapper(){
 	correctly_initialized = true;
 }
 
-bool LUAItemWrapper::IsItem() {
+bool LUAItemWrapper::IsItem(){
 	return true;
 }
 

@@ -30,6 +30,7 @@
 #include "packet_dump.h"
 #include <map>
 #include "Log.h"
+#include <time.h>
 
 using namespace std;
 extern map<int16,OpcodeManager*>EQOpcodeManager;
@@ -134,29 +135,19 @@ EQPacket::~EQPacket()
 	pBuffer=NULL;
 }
 
-void EQPacket::DumpRawHeader(uint16 seq, FILE *to) const
+
+void EQPacket::DumpRawHeader(uint16 seq, FILE* to) const
 {
-	if (timestamp.tv_sec) {
+	/*if (timestamp.tv_sec) {
 		char temp[20];
 		tm t;
 		const time_t sec = timestamp.tv_sec;
 		localtime_s(&t, &sec);
 		strftime(temp, 20, "%F %T", &t);
 		fprintf(to, "%s.%06lu ", temp, timestamp.tv_usec);
-	}
-	if (src_ip) {
-		string sIP, dIP;;
-		sIP = long2ip(src_ip);
-		dIP = long2ip(dst_ip);
-		fprintf(to, "[%s:%d->%s:%d]\n", sIP.c_str(), src_port, dIP.c_str(), dst_port);
-	}
-	if (seq != 0xffff)
-		fprintf(to, "[Seq=%u] ", seq);
-	string name;
-	int16 OpcodeVersion = GetOpcodeVersion(version);
-	if (EQOpcodeManager.count(OpcodeVersion) > 0)
-		name = EQOpcodeManager[OpcodeVersion]->EQToName(opcode);
-	fprintf(to, "[OpCode 0x%04x (%s) Size=%u]\n", opcode, name.c_str(), size);
+	}*/
+
+	DumpRawHeaderNoTime(seq, to);
 }
 
 const char* EQPacket::GetOpcodeName(){

@@ -45,6 +45,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "../AltAdvancement/AltAdvancement.h"
 #include "../RaceTypes/RaceTypes.h"
 #include "../classes.h"
+#include "../Transmute.h"
 
 extern WorldDatabase database;
 extern MasterSpellList master_spell_list;
@@ -1315,7 +1316,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				int32 item_index = atoul(sep->arg[0]);
 				Item* item = player->item_list.GetItemFromIndex(item_index);
 				if (item && item->GetItemScript()) {
-					if (item->generic_info.max_charges == 0)
+					if (item->generic_info.max_charges == 0 || item->generic_info.max_charges == 0xFFFF)
 						lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
 					else {
 						if (item->generic_info.display_charges > 0) {
@@ -3870,7 +3871,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case SWITCH_AA_PROFILE			: { Switch_AA_Profile(client, sep); break; }
 		case CANCEL_AA_PROFILE			: { Cancel_AA_Profile(client, sep); break; }
 		case SAVE_AA_PROFILE			: { Save_AA_Profile(client, sep); break; }
-
+		case COMMAND_TARGETITEM			: { Command_TargetItem(client, sep); break; }
 
 
 
@@ -5875,9 +5876,9 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 
 	// need at least 2 args for a valid command
 
-	if( sep && sep->arg[1] )
+	if (sep && sep->arg[1])
 	{
-		
+
 		if (strcmp(sep->arg[0], "list") == 0)
 		{
 			map<int32, Quest*>* quests = player->GetPlayerQuests();
@@ -5887,13 +5888,13 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 				client->Message(CHANNEL_COLOR_YELLOW, "%s has no quests.", client->GetPlayer()->GetName());
 			else
 			{
-				for( itr = quests->begin(); itr != quests->end(); itr++ )
+				for (itr = quests->begin(); itr != quests->end(); itr++)
 				{
 					Quest* quest = itr->second;
 					client->Message(CHANNEL_COLOR_YELLOW, "%u) %s", itr->first, quest->GetName());
 				}
 			}
-		
+
 		}
 
 		else if (strcmp(sep->arg[0], "completed") == 0)
@@ -5906,13 +5907,13 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 				client->Message(CHANNEL_COLOR_YELLOW, "%s has no completed quests.", client->GetPlayer()->GetName());
 			else
 			{
-				for( itr = quests->begin(); itr != quests->end(); itr++ )
+				for (itr = quests->begin(); itr != quests->end(); itr++)
 				{
-				Quest* quest = itr->second;
-				client->Message(CHANNEL_COLOR_YELLOW, "%u) %s", itr->first, quest->GetName());
+					Quest* quest = itr->second;
+					client->Message(CHANNEL_COLOR_YELLOW, "%u) %s", itr->first, quest->GetName());
 				}
 			}
-		
+
 		}
 		// Add in a progress step, and a LogWrite() for tracking GM Commands.
 		// LogWrite(LUA__DEBUG, 0, "LUA", "Quest: %s, function: %s", quest->GetName(), function);
@@ -5938,12 +5939,54 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 							client->Message(CHANNEL_COLOR_YELLOW, "You have removed the quest %s from %s's journal", quest->GetName(), player->GetName());
 							client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s has removed the quest %s from your journal", client->GetPlayer()->GetName(), quest->GetName());
 						}
-						LogWrite(COMMAND__INFO, 0, "GM Command", "%s removed the quest %s from %s", client->GetPlayer()->GetName(), quest->GetName(), player->GetName());
-						lua_interface->CallQuestFunction(quest, "Deleted", client->GetPlayer());
+					LogWrite(COMMAND__INFO, 0, "GM Command", "%s removed the quest %s from %s", client->GetPlayer()->GetName(), quest->GetName(), player->GetName());
+					lua_interface->CallQuestFunction(quest, "Deleted", client->GetPlayer());
 				}
 				client->RemovePlayerQuest(quest_id);
 				client->GetCurrentZone()->SendQuestUpdates(client);
-			}	
+			}
+		}
+
+		else if (strcmp(sep->arg[0], "advance") == 0)
+		{
+			int32 quest_id = 0;
+			int32 step = 0;
+
+			if (sep && sep->arg[1] && sep->IsNumber(1))
+			{
+				quest_id = atoul(sep->arg[1]);
+				Quest* quest = client->GetPlayer()->player_quests[quest_id];
+
+				if (sep && sep->arg[2] && sep->IsNumber(1))
+				{
+					step = atoul(sep->arg[2]);
+
+					if (quest_id > 0 && step > 0)
+					{
+						if (player && player->IsPlayer() && quest_id > 0 && step > 0 && (player->player_quests.count(quest_id) > 0))
+						{
+							if (client)
+							{
+								client->AddPendingQuestUpdate(quest_id, step);
+								client->Message(CHANNEL_COLOR_YELLOW, "The quest %s has been advanced one step.", quest->GetName());
+								LogWrite(COMMAND__INFO, 0, "GM Command", "%s advanced the quest %s one step", client->GetPlayer()->GetName(), quest->GetName());
+							}
+						}
+					}
+					else
+					{
+						client->Message(CHANNEL_COLOR_RED, "Quest ID and Step Number must be greater than 0!");
+					}
+				}
+				else
+				{
+					client->Message(CHANNEL_COLOR_RED, "Step Number must be a number!");
+				}
+			}
+			else
+			{
+				client->Message(CHANNEL_COLOR_RED, "Quest ID must be a number!");
+			}
 		}
 
 		else
@@ -5954,12 +5997,13 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 
 	else
 	{
-		client->SimpleMessage(CHANNEL_COLOR_RED, "Usage: /modify quest [action] [quest id]");
-		client->SimpleMessage(CHANNEL_COLOR_RED, "Actions: list, completed, remove");
+		client->SimpleMessage(CHANNEL_COLOR_RED, "Usage: /modify quest [action] [quest id] [step number]");
+		client->SimpleMessage(CHANNEL_COLOR_RED, "Actions: list, completed, remove, advance");
 		client->SimpleMessage(CHANNEL_COLOR_RED, "Example: /modify quest list");
 		client->SimpleMessage(CHANNEL_COLOR_RED, "Example: /modify quest remove 156");
+		client->SimpleMessage(CHANNEL_COLOR_RED, "Example: /modify quest advance 50 1");
 	}
-		
+
 }
 
 
@@ -7792,6 +7836,8 @@ void Commands::Command_TellChannel(Client *client, Seperator *sep) {
 }
 
 void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
+	PacketStruct* p = configReader.getStruct("WS_EqTargetItemCmd", client->GetVersion());
+	if (!p) return;
 
 	//Seperator* sep2 = new Seperator(command_parms->data.c_str(), ' ', 50, 500, true);
 	//client->GetCurrentZone()->SendSpellFailedPacket(client, atoi(sep2->arg[0]));
@@ -8692,5 +8738,28 @@ void Commands::Save_AA_Profile(Client* client, Seperator* sep) {
 	if (sep && sep->IsSet(0)) {
 		PrintSep(sep, "Save_AA_Profile");
 
+	}
+}
+
+void Commands::Command_TargetItem(Client* client, Seperator* sep) {
+	if (!sep || sep->GetArgNumber() < 1 || !client->GetPlayer()) return;
+
+	if (!sep->IsNumber(0)) return;
+
+	int32 request_id = atoul(sep->arg[0]);
+
+	if (!sep->IsNumber(1)) return;
+
+	sint32 item_id = atoi(sep->arg[1]);
+
+	if (client->IsCurrentTransmuteID(request_id)) {
+		Transmute::HandleItemResponse(client, client->GetPlayer(), request_id, reinterpret_cast<int32&>(item_id));
+	}
+	else if (client->IsCurrentTransmuteID(item_id)) {
+		if (!sep->IsSet(2)) return;
+
+		if (sep->IsNumber(2) && atoi(sep->arg[2]) == 1) {
+			Transmute::HandleConfirmResponse(client, client->GetPlayer(), reinterpret_cast<int32&>(item_id));
+		}
 	}
 }

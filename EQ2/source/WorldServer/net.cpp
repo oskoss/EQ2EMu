@@ -54,6 +54,7 @@ using namespace std;
 #include "Commands/ConsoleCommands.h"
 #include "Traits/Traits.h"
 #include "IRC/IRC.h"
+#include "Transmute.h"
 
 #ifdef WIN32
 	#include <process.h>
@@ -329,6 +330,9 @@ int main(int argc, char** argv) {
 
 	LogWrite(WORLD__INFO, 0, "World", "Loading Race Types Data...");
 	database.LoadRaceTypes();
+
+	LogWrite(WORLD__INFO, 0, "World", "Loading Transmuting Data...");
+	database.LoadTransmuting();
 
 	if (threadedLoad) {
 		LogWrite(WORLD__INFO, 0, "World", "Waiting for load threads to finish.");

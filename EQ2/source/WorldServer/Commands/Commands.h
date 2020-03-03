@@ -455,6 +455,7 @@ public:
 	void Command_Editor(Client* client, Seperator* sep);
 	void Command_AcceptResurrection(Client* client, Seperator* sep);
 	void Command_DeclineResurrection(Client* client, Seperator* set);
+	void Command_TargetItem(Client* client, Seperator* set);
 
 	// Bot Commands
 	void Command_Bot(Client* client, Seperator* sep);
@@ -856,6 +857,7 @@ private:
 #define COMMAND_ACCEPT_RESURRECTION     312
 #define COMMAND_DECLINE_RESURRECTION    313
 #define COMMAND_WIND					314
+#define COMMAND_TARGETITEM              315
 #define COMMAND_READ					463
 
 #define COMMAND_BOT						500

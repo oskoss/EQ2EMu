@@ -25,6 +25,26 @@
 #include "../common/types.h"
 #include "MutexMap.h"
 
+#define SKILL_TYPE_COMBAT 1
+#define SKILL_TYPE_SPELLCASTING 2
+#define SKILL_TYPE_AVOIDANCE 3
+#define SKILL_TYPE_HARVESTING 6
+#define SKILL_TYPE_ARTISAN 7
+#define SKILL_TYPE_CRAFTSMAN 8
+#define SKILL_TYPE_OUTFITTER 9
+#define SKILL_TYPE_SCHOLAR 10
+#define SKILL_TYPE_GENERAL 12
+
+#define SKILL_ID_SCULPTING 1039865549
+#define SKILL_ID_FLETCHING 3076004370
+#define SKILL_ID_ARTISTRY 3881305672
+#define SKILL_ID_TAILORING 2082133324
+#define SKILL_ID_METALSHAPING 3108933728
+#define SKILL_ID_METALWORKING 4032608519
+#define SKILL_ID_SCRIBING 773137566
+#define SKILL_ID_CHEMISTRY 2557647574
+#define SKILL_ID_ARTIFICING 3330500131
+
 /* Each SkillBonus is comprised of multiple possible skill bonus values.  This is so one spell can modify
    more than one skill */
 struct SkillBonusValue {

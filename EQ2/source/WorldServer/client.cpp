@@ -115,7 +115,7 @@ extern MasterAAList master_tree_nodes;
 
 using namespace std;
 
-Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000){
+Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000), transmuteID(0) {
 	eqs = ieqs;
 	ip = eqs->GetrIP();
 	port = ntohs(eqs->GetrPort());
@@ -843,6 +843,10 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 	cout << " Packet: OPCode: 0x" << hex << setw(2) << setfill('0') << app->GetOpcode() << dec << ", size: " << setw(5) << setfill(' ') << app->Size() << endl;
 	DumpPacket(app);
 #endif
+
+	//if (opcode != OP_UpdatePositionMsg) {
+	//	LogWrite(PACKET__DEBUG, 0, "opcode %s received", app->GetOpcodeName());
+	//}
 
 		switch(opcode){
 		case OP_LoginByNumRequestMsg:{
@@ -2287,10 +2291,10 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app){
 			DumpPacket(app);
 		}
 	}
-	else if(type == 2){
+	else if (type == 2) {
 		request = configReader.getStruct("WS_ExamineInfoItemLinkRequest", GetVersion());
-		if(!request) {
-					return;
+		if (!request) {
+			return;
 		}
 
 		request->LoadPacketData(app->pBuffer, app->size);
@@ -2302,13 +2306,13 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app){
 		//int16 unknown5 = request->getType_sint16_ByName("unknown5");
 		//printf("Type: (%i) Unknown_0: (%u) Unknown_1: (%u) Unknown2: (%i) Unique ID: (%u) Unknown5: (%i) Item ID: (%u)\n",type,unknown_0,unknown_1,unknown2,unique_id,unknown5,id);
 		Item* item = master_item_list.GetItem(id);
-		if(item){
+		if (item) {
 			//only display popup for non merchant links
-			EQ2Packet* app = item->serialize(GetVersion(), (request->getType_int32_ByName("unique_id") != 0xFFFFFFFF), GetPlayer(), true, 0, 0, true);
+			EQ2Packet* app = item->serialize(GetVersion(), (request->getType_int8_ByName("show_popup") != 0), GetPlayer(), true, 0, 0, true);
 			//DumpPacket(app);
 			QueuePacket(app);
 		}
-		else{
+		else {
 			LogWrite(WORLD__ERROR, 0, "World", "HandleExamineInfoRequest: Unknown Item ID = %u", id);
 			DumpPacket(app);
 		}
@@ -2489,6 +2493,8 @@ bool Client::Process(bool zone_process) {
 				skill = *itr;
 				SkillChanged(skill, skill->previous_val, skill->current_val);
 			}
+			EQ2Packet* app = GetPlayer()->skill_list.GetSkillPacket(GetVersion());
+			if (app) QueuePacket(app);
 			safe_delete(skills);
 		}
 	}
@@ -3373,10 +3379,7 @@ void Client::HandleVerbRequest(EQApplicationPacket* app){
 				if(player->IsIgnored(spawn->GetName()))
 					delete_commands.push_back(player->CreateEntityCommand("remove from ignore list", 10000, "ignore_remove", "", 0, 0));
 				else
-				{
 					delete_commands.push_back(player->CreateEntityCommand("add to ignore list", 10000, "ignore_add", "", 0, 0));
-					delete_commands.push_back(player->CreateEntityCommand("Trade", 10, "start_trade", "", 0, 0));
-				}
 				if(((Player*)spawn)->GetGroupMemberInfo()) {
 					if(player->IsGroupMember((Player*)spawn) && player->GetGroupMemberInfo()->leader) { //group leader
 						delete_commands.push_back(player->CreateEntityCommand("kick from group", 10000, "kickfromgroup", "", 0, 0));
@@ -3415,13 +3418,12 @@ void Client::HandleVerbRequest(EQApplicationPacket* app){
 }
 
 void Client::SkillChanged(Skill* skill, int16 previous_value, int16 new_value){
-	Message(CHANNEL_COLOR_SKILL, "You get %s at %s (%i/%i).", new_value > previous_value ? "better" : "worse", skill->name.data.c_str(), new_value, skill->max_val);
-	char tmp[200] = {0};
-	sprintf(tmp, "\\#6EFF6EYou get %s at \12\\#C8FFC8%s\\#6EFF6E! (%i/%i)", new_value > previous_value ? "better" : "worse", skill->name.data.c_str(), new_value, skill->max_val);
-	SendPopupMessage(6, tmp, new_value > previous_value ? "skill_up" : "skill_down", 2.75, 0xFF, 0xFF, 0xFF);
-	EQ2Packet* app = GetPlayer()->skill_list.GetSkillPacket(GetVersion());
-	if(app)
-		QueuePacket(app);
+	if (previous_value != new_value) {
+		Message(CHANNEL_COLOR_SKILL, "You get %s at %s (%i/%i).", new_value > previous_value ? "better" : "worse", skill->name.data.c_str(), new_value, skill->max_val);
+		char tmp[200] = { 0 };
+		sprintf(tmp, "\\#6EFF6EYou get %s at \12\\#C8FFC8%s\\#6EFF6E! (%i/%i)", new_value > previous_value ? "better" : "worse", skill->name.data.c_str(), new_value, skill->max_val);
+		SendPopupMessage(6, tmp, new_value > previous_value ? "skill_up" : "skill_down", 2.75, 0xFF, 0xFF, 0xFF);
+	}
 
 }
 
@@ -3501,7 +3503,6 @@ void Client::ChangeLevel(int16 old_level, int16 new_level){
 	if (!player->get_character_flag(CF_ENABLE_CHANGE_LASTNAME) && new_level >= rule_manager.GetGlobalRule(R_Player, MinLastNameLevel)->GetInt8())
 		player->set_character_flag(CF_ENABLE_CHANGE_LASTNAME);
 
-	player->GetSkills()->IncreaseAllSkillCaps(5 * (new_level - old_level));
 	SendNewSpells(player->GetAdventureClass());
 	SendNewSpells(classes.GetBaseClass(player->GetAdventureClass()));
 	SendNewSpells(classes.GetSecondaryBaseClass(player->GetAdventureClass()));
@@ -3520,18 +3521,19 @@ void Client::ChangeLevel(int16 old_level, int16 new_level){
 	GetPlayer()->CalculateBonuses();
 	GetPlayer()->SetHP(GetPlayer()->GetTotalHP());
 	GetPlayer()->SetPower(GetPlayer()->GetTotalPower());
-	GetPlayer()->GetInfoStruct()->agi_base = new_level*2+15;
-	GetPlayer()->GetInfoStruct()->intel_base = new_level*2+15;
-	GetPlayer()->GetInfoStruct()->wis_base = new_level*2+15;
-	GetPlayer()->GetInfoStruct()->str_base = new_level*2+15;
-	GetPlayer()->GetInfoStruct()->sta_base = new_level*2+15;
-	GetPlayer()->GetInfoStruct()->cold_base = (int16)(new_level*1.5+10);
-	GetPlayer()->GetInfoStruct()->heat_base = (int16)(new_level*1.5+10);
-	GetPlayer()->GetInfoStruct()->disease_base = (int16)(new_level*1.5+10);
-	GetPlayer()->GetInfoStruct()->mental_base = (int16)(new_level*1.5+10);
-	GetPlayer()->GetInfoStruct()->magic_base = (int16)(new_level*1.5+10);
-	GetPlayer()->GetInfoStruct()->divine_base = (int16)(new_level*1.5+10);
-	GetPlayer()->GetInfoStruct()->poison_base = (int16)(new_level*1.5+10);
+	InfoStruct* info = player->GetInfoStruct();
+	info->agi_base = new_level*2+15;
+	info->intel_base = new_level*2+15;
+	info->wis_base = new_level*2+15;
+	info->str_base = new_level*2+15;
+	info->sta_base = new_level*2+15;
+	info->cold_base = (int16)(new_level*1.5+10);
+	info->heat_base = (int16)(new_level*1.5+10);
+	info->disease_base = (int16)(new_level*1.5+10);
+	info->mental_base = (int16)(new_level*1.5+10);
+	info->magic_base = (int16)(new_level*1.5+10);
+	info->divine_base = (int16)(new_level*1.5+10);
+	info->poison_base = (int16)(new_level*1.5+10);
 	GetPlayer()->SetHPRegen((int)(new_level*.75)+(int)(new_level/10)+3);
 	GetPlayer()->SetPowerRegen(new_level+(int)(new_level/10)+4);
 	GetPlayer()->GetInfoStruct()->poison_base = (int16)(new_level*1.5+10);
@@ -3540,46 +3542,51 @@ void Client::ChangeLevel(int16 old_level, int16 new_level){
 
 	Message(CHANNEL_COLOR_EXP,"You are now level %i!", new_level);
 	LogWrite(WORLD__DEBUG, 0, "World", "Player: %s leveled from %u to %u", GetPlayer()->GetName(), old_level, new_level);
-	GetPlayer()->GetSkills()->SetSkillCapsByType(1, 5*new_level);
-	GetPlayer()->GetSkills()->SetSkillCapsByType(3, 5*new_level);
-	GetPlayer()->GetSkills()->SetSkillCapsByType(6, 5*new_level);
-	GetPlayer()->GetSkills()->SetSkillCapsByType(13, 5*new_level);
+	int16 new_skill_cap = 5 * new_level;
+	PlayerSkillList* player_skills = player->GetSkills();
+	player_skills->SetSkillCapsByType(SKILL_TYPE_COMBAT, new_skill_cap);
+	player_skills->SetSkillCapsByType(SKILL_TYPE_SPELLCASTING, new_skill_cap);
+	player_skills->SetSkillCapsByType(SKILL_TYPE_AVOIDANCE, new_skill_cap);
+	player_skills->SetSkillCapsByType(SKILL_TYPE_GENERAL, new_skill_cap);
+	if (new_level > player->GetTSLevel())
+		player_skills->SetSkillCapsByType(SKILL_TYPE_HARVESTING, new_skill_cap);
 
 	Guild* guild = GetPlayer()->GetGuild();
 	if (guild) {
-		int8 event_type = 0; 
+		int8 event_type = 0;
 		if (new_level < 10)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_1_10;
 		else if (new_level == 10)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_10;
-		else if (new_level < 20)
+		else if (new_level >= 11 && new_level < 20)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_11_20;
 		else if (new_level == 20)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_20;
-		else if (new_level < 30)
+		else if (new_level >= 21 && new_level < 30)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_21_30;
 		else if (new_level == 30)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_30;
-		else if (new_level < 40)
+		else if (new_level >= 31 && new_level < 40)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_31_40;
 		else if (new_level == 40)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_40;
-		else if (new_level < 50)
+		else if (new_level >= 41 && new_level < 50)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_41_50;
 		else if (new_level == 50)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_50;
-		else if (new_level < 60)
+		else if (new_level >= 51 && new_level < 60)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_51_60;
 		else if (new_level == 60)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_60;
-		else if (new_level < 70)
+		else if (new_level >= 61 && new_level < 70)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_61_70;
 		else if (new_level == 70)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_70;
-		else if (new_level < 80)
+		else if (new_level >= 71 && new_level < 80)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_71_80;
 		else if (new_level == 80)
 			event_type = GUILD_EVENT_GAINS_ADV_LEVEL_80;
+
 		guild->AddNewGuildEvent(event_type, "%s has gained an adventure level and is now a level %u %s.", Timer::GetUnixTimeStamp(), true, GetPlayer()->GetName(), new_level, classes.GetClassNameCase(GetPlayer()->GetAdventureClass()).c_str());
 		guild->SendMessageToGuild(event_type, "%s has gained an adventure level and is now a level %u %s.", GetPlayer()->GetName(), new_level, classes.GetClassNameCase(GetPlayer()->GetAdventureClass()).c_str());
 		guild->UpdateGuildMemberInfo(GetPlayer());
@@ -3625,7 +3632,6 @@ void Client::ChangeTSLevel(int16 old_level, int16 new_level){
 		}
 	}
 	// Only tradeskill skills should increace, and then only those related to your class
-	// player->GetSkills()->IncreaseAllSkillCaps(5 * (new_level - old_level));
 	PacketStruct* level_update = configReader.getStruct("WS_LevelChanged", GetVersion());
 	if(level_update){
 		level_update->setDataByName("old_level", old_level);
@@ -3653,10 +3659,104 @@ void Client::ChangeTSLevel(int16 old_level, int16 new_level){
 	GetPlayer()->SetCharSheetChanged(true);
 	Message(CHANNEL_COLOR_WHITE,"Your tradeskill level is now %i!", new_level);
 	LogWrite(WORLD__DEBUG, 0, "World", "Player: %s leveled from %u to %u", GetPlayer()->GetName(), old_level, new_level);
-	//GetPlayer()->GetSkills()->SetSkillCapsByType(1, 5*new_level);
-	//GetPlayer()->GetSkills()->SetSkillCapsByType(3, 5*new_level);
-	//GetPlayer()->GetSkills()->SetSkillCapsByType(6, 5*new_level);
-	//GetPlayer()->GetSkills()->SetSkillCapsByType(13, 5*new_level);
+	
+	PlayerSkillList* player_skills = player->GetSkills();
+	int16 specialize_skill_cap = new_level * 5;
+	int16 artisan_skill_cap = std::max<int16>(specialize_skill_cap, 49);
+	int16 specialize_10_skill_cap = std::max<int16>(specialize_skill_cap, 99);
+
+	int8 ts_class = player->GetTradeskillClass();
+	int8 base_ts_class = classes.GetSecondaryTSBaseClass(ts_class);
+	int32 skill_id_1, skill_id_2, skill_id_3;
+
+	switch (base_ts_class) {
+	case ARTISAN:
+		player_skills->SetSkillCapsByType(SKILL_TYPE_OUTFITTER, artisan_skill_cap);
+		player_skills->SetSkillCapsByType(SKILL_TYPE_SCHOLAR, artisan_skill_cap);
+		player_skills->SetSkillCapsByType(SKILL_TYPE_CRAFTSMAN, artisan_skill_cap);
+		break;
+	case OUTFITTER:
+		player_skills->SetSkillCapsByType(SKILL_TYPE_SCHOLAR, artisan_skill_cap);
+		player_skills->SetSkillCapsByType(SKILL_TYPE_CRAFTSMAN, artisan_skill_cap);
+
+		skill_id_1 = SKILL_ID_TAILORING;
+		skill_id_2 = SKILL_ID_METALSHAPING;
+		skill_id_3 = SKILL_ID_METALWORKING;
+
+		if (ts_class == TAILOR) {
+			player_skills->SetSkillCap(skill_id_1, specialize_skill_cap);
+			skill_id_1 = 0;
+		}
+		else if (ts_class == ARMORER) {
+			player_skills->SetSkillCap(skill_id_2, specialize_skill_cap);
+			skill_id_2 = 0;
+		}
+		else if (ts_class == WEAPONSMITH) {
+			player_skills->SetSkillCap(skill_id_3, specialize_skill_cap);
+			skill_id_3 = 0;
+		}
+
+		if (skill_id_1) player_skills->SetSkillCap(skill_id_1, specialize_10_skill_cap);
+		if (skill_id_2) player_skills->SetSkillCap(skill_id_2, specialize_10_skill_cap);
+		if (skill_id_3) player_skills->SetSkillCap(skill_id_3, specialize_10_skill_cap);
+		break;
+	case SCHOLAR:
+		player_skills->SetSkillCapsByType(SKILL_TYPE_OUTFITTER, artisan_skill_cap);
+		player_skills->SetSkillCapsByType(SKILL_TYPE_CRAFTSMAN, artisan_skill_cap);
+
+		skill_id_1 = SKILL_ID_SCRIBING;
+		skill_id_2 = SKILL_ID_CHEMISTRY;
+		skill_id_3 = SKILL_ID_ARTIFICING;
+
+		if (ts_class == SAGE) {
+			player_skills->SetSkillCap(skill_id_1, specialize_skill_cap);
+			skill_id_1 = 0;
+		}
+		else if (ts_class == ALCHEMIST) {
+			player_skills->SetSkillCap(skill_id_2, specialize_skill_cap);
+			skill_id_2 = 0;
+		}
+		else if (ts_class == JEWELER) {
+			player_skills->SetSkillCap(skill_id_3, specialize_skill_cap);
+			skill_id_3 = 0;
+		}
+
+		if (skill_id_1) player_skills->SetSkillCap(skill_id_1, specialize_10_skill_cap);
+		if (skill_id_2) player_skills->SetSkillCap(skill_id_2, specialize_10_skill_cap);
+		if (skill_id_3) player_skills->SetSkillCap(skill_id_3, specialize_10_skill_cap);
+		break;
+	case CRAFTSMAN:
+		player_skills->SetSkillCapsByType(SKILL_TYPE_OUTFITTER, artisan_skill_cap);
+		player_skills->SetSkillCapsByType(SKILL_TYPE_SCHOLAR, artisan_skill_cap);
+
+		skill_id_1 = SKILL_ID_ARTISTRY;
+		skill_id_2 = SKILL_ID_FLETCHING;
+		skill_id_3 = SKILL_ID_SCULPTING;
+
+		if (ts_class == PROVISIONER) {
+			player_skills->SetSkillCap(skill_id_1, specialize_skill_cap);
+			skill_id_1 = 0;
+		}
+		else if (ts_class == WOODWORKER) {
+			player_skills->SetSkillCap(skill_id_2, specialize_skill_cap);
+			skill_id_2 = 0;
+		}
+		else if (ts_class == CARPENTER) {
+			player_skills->SetSkillCap(skill_id_3, specialize_skill_cap);
+			skill_id_3 = 0;
+		}
+
+		if (skill_id_1) player_skills->SetSkillCap(skill_id_1, specialize_10_skill_cap);
+		if (skill_id_2) player_skills->SetSkillCap(skill_id_2, specialize_10_skill_cap);
+		if (skill_id_3) player_skills->SetSkillCap(skill_id_3, specialize_10_skill_cap);
+		break;
+	default:
+		break;
+	}
+
+	if (new_level > player->GetAdventureClass())
+		player_skills->SetSkillCapsByType(SKILL_TYPE_HARVESTING, specialize_skill_cap);
+
 	Guild* guild = GetPlayer()->GetGuild();
 	if (guild) {
 		int8 event_type = 0; 
@@ -3664,31 +3764,31 @@ void Client::ChangeTSLevel(int16 old_level, int16 new_level){
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_1_10;
 		else if (new_level == 10)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_10;
-		else if (new_level < 20)
+		else if (new_level >= 11 && new_level < 20)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_11_20;
 		else if (new_level == 20)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_20;
-		else if (new_level < 30)
+		else if (new_level >= 21 && new_level < 30)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_21_30;
 		else if (new_level == 30)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_30;
-		else if (new_level < 40)
+		else if (new_level >= 31 && new_level < 40)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_31_40;
 		else if (new_level == 40)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_40;
-		else if (new_level < 50)
+		else if (new_level >= 41 && new_level < 50)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_41_50;
 		else if (new_level == 50)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_50;
-		else if (new_level < 60)
+		else if (new_level >= 51 && new_level < 60)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_51_60;
 		else if (new_level == 60)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_60;
-		else if (new_level < 70)
+		else if (new_level >= 61 && new_level < 70)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_61_70;
 		else if (new_level == 70)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_70;
-		else if (new_level < 80)
+		else if (new_level >= 71 && new_level < 80)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_71_80;
 		else if (new_level == 80)
 			event_type = GUILD_EVENT_GAINS_TS_LEVEL_80;
@@ -5759,7 +5859,7 @@ void Client::SendSellMerchantList(bool sell){
 						packet->setArrayDataByName("status2", item->sell_status, i); //this one is the main status
 					}
 					packet->setArrayDataByName("item_id", item->details.item_id, i);
-					packet->setArrayDataByName("unique_item_id", (item->details.unique_id, i));
+					packet->setArrayDataByName("unique_item_id", item->details.unique_id, i);
 					packet->setArrayDataByName("stack_size", item->details.count, i);
 					packet->setArrayDataByName("icon", item->details.icon, i);
 					if(item->generic_info.adventure_default_level > 0)
@@ -7887,4 +7987,16 @@ bool Client::EntityCommandPrecheck(Spawn* spawn, const char* command){
 		}
 	}
 	return should_use_spawn;
+}
+
+bool Client::IsCurrentTransmuteID(int32 req_id) {
+	return req_id == transmuteID;
+}
+
+void Client::SetTransmuteID(int32 trans_id) {
+	transmuteID = trans_id;
+}
+
+int32 Client::GetTransmuteID() {
+	return transmuteID;
 }

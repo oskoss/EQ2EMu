@@ -40,7 +40,6 @@
 using namespace std;
 
 #ifndef PATCHER
-#include "../WorldServer/World.h"
 extern map<int16, int16> EQOpcodeVersions;
 #endif
 
@@ -387,7 +386,12 @@ int64 hextoi64(char* num) {
 
 float MakeRandomFloat(float low, float high)
 {
-	static bool seeded=0;
+#ifdef _WIN32	
+	thread_local bool seeded = false;
+#else
+	static bool seeded = false;
+#endif
+
 	float diff = high - low;
   
 	if(!diff) return low;
