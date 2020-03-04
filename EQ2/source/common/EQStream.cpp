@@ -294,7 +294,9 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 					LogWrite(PACKET__DEBUG, 1, "Packet", "[End]");
 #endif				
 					OutOfOrderpackets[seq] = p->Copy();
-					SendOutOfOrderAck(seq);
+
+					// Image (2020): Removed as this is bad contributes to infinite loop
+					//SendOutOfOrderAck(seq);
 				} else if (check<0) {
 #ifdef EQN_DEBUG
 					LogWrite(PACKET__DEBUG, 1, "Packet", "*** Duplicate packet: Expecting Seq=%i, but got Seq=%i", NextInSeq, seq);
@@ -302,9 +304,16 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 					p->DumpRawHeader(seq);
 					LogWrite(PACKET__DEBUG, 1, "Packet", "[End]");
 #endif
-					OutOfOrderpackets[seq] = p->Copy();
+					// Image (2020): Removed as this is bad contributes to infinite loop
+					//OutOfOrderpackets[seq] = p->Copy();
 					SendOutOfOrderAck(seq);
 				} else {
+					EQProtocolPacket* qp = RemoveQueue(seq);
+					if (qp) {
+						LogWrite(PACKET__DEBUG, 1, "Packet", "OP_Fragment: Removing older queued packet with sequence %i", seq);
+						delete qp;
+					}
+
 					SetNextAckToSend(seq);
 					NextInSeq++;
 					if(HandleEmbeddedPacket(p))
@@ -345,6 +354,13 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 					//OutOfOrderpackets[seq] = p->Copy();
 					SendOutOfOrderAck(seq);
 				} else {
+					// In case we did queue one before as well.
+					EQProtocolPacket* qp = RemoveQueue(seq);
+					if (qp) {
+						LogWrite(PACKET__DEBUG, 1, "Packet", "OP_Fragment: Removing older queued packet with sequence %i", seq);
+						delete qp;
+					}
+
 					SetNextAckToSend(seq);
 					NextInSeq++;
 					if (oversize_buffer) {
@@ -480,24 +496,9 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 				//SendDisconnect();
 				break;
 		}
-		if (OutOfOrderpackets.find(NextInSeq) != OutOfOrderpackets.end()){
-			p = OutOfOrderpackets[NextInSeq];
-			// Remove te packet from the list
-			OutOfOrderpackets.erase(NextInSeq);
-			if (p){
-
-#ifdef EQN_DEBUG
-				LogWrite(PACKET__DEBUG, 1, "Packet", "*** Processing Future packet: Seq=%i", NextInSeq);
-				LogWrite(PACKET__DEBUG, 1, "Packet", "[Start]");
-				//p->DumpRawHeader(NextInSeq);
-				LogWrite(PACKET__DEBUG, 1, "Packet", "[End]");
-#endif
-				ProcessPacket(p);
-				safe_delete(p);
-			}
-		}
 	}
 }
+
 int8 EQStream::EQ2_Compress(EQ2Packet* app, int8 offset){
 
 #ifdef LE_DEBUG
@@ -1184,6 +1185,7 @@ uint32 newlength=0;
 			newlength-=2;
 		EQProtocolPacket p(newbuffer,newlength);
 		ProcessPacket(&p);
+		ProcessQueue();
 	} else {
 #ifdef EQN_DEBUG
 		cout << "Incoming packet failed checksum:" <<endl;
@@ -1294,6 +1296,33 @@ void EQStream::SetStreamType(EQStreamType type)
 			encoded=false;
 			break;
 	}
+}
+
+void EQStream::ProcessQueue()
+{
+	if (OutOfOrderpackets.empty()) {
+		return;
+	}
+
+	EQProtocolPacket* qp = NULL;
+	while ((qp = RemoveQueue(NextInSeq)) != NULL) {
+		//_log(NET__DEBUG, _L "Processing Queued Packet: Seq=%d" __L, NextInSeq);
+		ProcessPacket(qp);
+		delete qp;
+		//_log(NET__APP_TRACE, _L "OP_Packet Queue size=%d" __L, PacketQueue.size());
+	}
+}
+
+EQProtocolPacket* EQStream::RemoveQueue(uint16 seq)
+{
+	map<unsigned short, EQProtocolPacket*>::iterator itr;
+	EQProtocolPacket* qp = NULL;
+	if ((itr = OutOfOrderpackets.find(seq)) != OutOfOrderpackets.end()) {
+		qp = itr->second;
+		OutOfOrderpackets.erase(itr);
+	//_log(NET__APP_TRACE, _L "OP_Packet Queue size=%d" __L, PacketQueue.size());
+	}
+	return qp;
 }
 
 sint8 EQStream::CompareSequence(uint16 expected_seq , uint16 seq)

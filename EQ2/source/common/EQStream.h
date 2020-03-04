@@ -302,6 +302,9 @@ class EQStream {
 		void SetStreamType(EQStreamType t);
 		inline const EQStreamType GetStreamType() const { return StreamType; }
 
+		void ProcessQueue();
+		EQProtocolPacket* RemoveQueue(uint16 seq);
+
 		void Decay();
 		void AdjustRates(uint32 average_delta);
 		Timer* resend_que_timer;
