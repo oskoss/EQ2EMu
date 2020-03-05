@@ -55,18 +55,32 @@
 
 uint16 EQStream::MaxWindowSize=2048;
 
-void EQStream::init() {
+void EQStream::init(bool resetSession) {
+	if (resetSession)
+	{
+		streamactive = false;
+		sessionAttempts = 0;
+	}
+
 	timeout_delays = 0;
+
+	MInUse.lock();
 	active_users = 0;
+	MInUse.unlock();
+
 	Session=0;
 	Key=0;
 	MaxLen=0;
 	NextInSeq=0;
 	NextOutSeq=0;
 	CombinedAppPacket=NULL;
-	MaxAckReceived=-1;
-	NextAckToSend=-1;
-	LastAckSent=-1;
+
+	MAcks.lock();
+	MaxAckReceived = -1;
+	NextAckToSend = -1;
+	LastAckSent = -1;
+	MAcks.unlock();
+
 	LastSeqSent=-1;
 	MaxSends=5;
 	LastPacket=Timer::GetCurrentTime2();
@@ -74,8 +88,12 @@ void EQStream::init() {
 	oversize_length=0;
 	oversize_offset=0;
 	Factory = NULL;
+
+	MRate.lock();
 	RateThreshold=RATEBASE/250;
 	DecayRate=DECAYBASE/250;
+	MRate.unlock();
+
 	BytesWritten=0;
 	crypto->setRC4Key(0);
 }
@@ -198,6 +216,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 #endif
 			return;
 		}
+
  		//cout << "Received " << (int)p->opcode << ":\n";
 		//DumpPacket(p->pBuffer, p->size);
 		switch (p->opcode) {
@@ -284,6 +303,11 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			}
 			break;
 			case OP_Packet: {
+				if (!p->pBuffer || (p->Size() < 4))
+				{
+					break;
+				}
+
 				uint16 seq=ntohs(*(uint16 *)(p->pBuffer));
 				sint8 check=CompareSequence(NextInSeq,seq);
 				if (check>0) {
@@ -333,6 +357,11 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			}
 			break;
 			case OP_Fragment: {
+				if (!p->pBuffer || (p->Size() < 4))
+				{
+					break;
+				}
+
 				uint16 seq=ntohs(*(uint16 *)(p->pBuffer));
 				sint8 check=CompareSequence(NextInSeq,seq);
 				if (check>0) {
@@ -404,16 +433,36 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			}
 			break;
 			case OP_Ack: {
+				if (!p->pBuffer || (p->Size() < 4))
+				{
+					break;
+				}
 				uint16 seq=ntohs(*(uint16 *)(p->pBuffer));
 				SetMaxAckReceived(seq);
 			}
 			break;
 			case OP_SessionRequest: {
-				if(GetState() == ESTABLISHED){//reset state
-					SetState(CLOSED);
+				if (p->Size() < sizeof(SessionRequest))
+				{
 					break;
 				}
-				init();
+
+				if (GetState() == ESTABLISHED) {
+					//_log(NET__ERROR, _L "Received OP_SessionRequest in ESTABLISHED state (%d) streamactive (%i) attempt (%i)" __L, GetState(), streamactive, sessionAttempts);
+
+					// client seems to try a max of 4 times (initial +3 retries) then gives up, giving it a few more attempts just in case
+					// streamactive means we identified the opcode, we cannot re-establish this connection
+					if (streamactive || (sessionAttempts > 30))
+					{
+						SendDisconnect(false);
+						SetState(CLOSED);
+						break;
+					}
+				}
+
+				sessionAttempts++;
+				init(GetState() != ESTABLISHED);
+				OutboundQueueClear();
 				SessionRequest *Request=(SessionRequest *)p->pBuffer;
 				Session=ntohl(Request->Session);
 				SetMaxLen(ntohl(Request->MaxLength));
@@ -426,7 +475,13 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			}
 			break;
 			case OP_SessionResponse: {
+				if (p->Size() < sizeof(SessionResponse))
+				{
+					break;
+				}
 				init();
+				OutboundQueueClear();
+				SetActive(true);
 				SessionResponse *Response=(SessionResponse *)p->pBuffer;
 				SetMaxLen(ntohl(Response->MaxLength));
 				Key=ntohl(Response->Key);
@@ -456,6 +511,10 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			}
 			break;
 			case OP_OutOfOrderAck: {
+				if (!p->pBuffer || (p->Size() < 4))
+				{
+					break;
+				}
 #ifndef COLLECTOR
 				uint16 seq=ntohs(*(uint16 *)(p->pBuffer));
 				if (CompareSequence(GetMaxAckReceived(),seq)>0 && CompareSequence(NextOutSeq,seq) < 0) {
@@ -465,6 +524,11 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			}
 			break;
 			case OP_ServerKeyRequest:{
+				if (p->Size() < sizeof(ClientSessionStats))
+				{
+					//_log(NET__ERROR, _L "Received OP_SessionStatRequest that was of malformed size" __L);
+					break;
+				}
 				ClientSessionStats* Stats = (ClientSessionStats*)p->pBuffer;
 				int16 request_id = Stats->RequestID;
 				AdjustRates(ntohl(Stats->average_delta));

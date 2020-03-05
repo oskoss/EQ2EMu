@@ -127,6 +127,9 @@ class EQStream {
 		bool compressed,encoded;
 		//uint32 buffer_len;
 
+		uint16 sessionAttempts;
+		bool streamactive;
+
 		uint32 Session, Key;
 		uint16 NextInSeq;
 		uint16 NextOutSeq;
@@ -220,7 +223,7 @@ class EQStream {
 			}
 		}
 		inline void SetFactory(EQStreamFactory *f) { Factory=f; }
-		void init();
+		void init(bool resetSession = true);
 		void SetMaxLen(uint32 length) { MaxLen=length; }
 		int8 getTimeoutDelays(){ return timeout_delays; }
 		void addTimeoutDelay(){ timeout_delays++; }
@@ -241,6 +244,8 @@ class EQStream {
 		deque<EQProtocolPacket*>resend_que;
 		void CheckResend(int eq_fd);
 		void Write(int eq_fd);
+
+		void SetActive(bool val) { streamactive = val; }
 
 		void WritePacket(int fd,EQProtocolPacket *p);
 
