@@ -3507,7 +3507,7 @@ void WorldDatabase::Save(Client* client){
 	SavePlayerMail(client);
 	SavePlayerCollections(client);
 
-	LogWrite(PLAYER__INFO, 3, "Player", "Player '%s (%u) data saved.", player->GetName(), player->GetCharacterID());
+	LogWrite(PLAYER__INFO, 3, "Player", "Player '%s' (%u) data saved.", player->GetName(), player->GetCharacterID());
 }
 
 void WorldDatabase::LoadEntityCommands(ZoneServer* zone) {
@@ -5617,7 +5617,6 @@ void WorldDatabase::LoadSpellErrors() {
 }
 
 void WorldDatabase::SaveCharacterHistory(Player* player, int8 type, int8 subtype, int32 value, int32 value2, char* location, int32 event_date) {
-	LogWrite(PLAYER__INFO, 1, "Player", "Saving character history, type = %i subtype = %i", type, subtype);
 	string str_type;
 	string str_subtype;
 	switch (type) {
@@ -5634,7 +5633,7 @@ void WorldDatabase::SaveCharacterHistory(Player* player, int8 type, int8 subtype
 		str_type = "XP";
 		break;
 	default:
-		LogWrite(PLAYER__ERROR, 0, "Player", "WorldDatabase::SaveCharacterHistory() - Invalid history type given (%i), character history NOT saved.", type);
+		LogWrite(PLAYER__ERROR, 0, "Player", "WorldDatabase::SaveCharacterHistory() - Invalid history type given (%i) with subtype (%i), character history NOT saved.", type, subtype);
 		return;
 	}
 	switch (subtype) {
@@ -5660,9 +5659,11 @@ void WorldDatabase::SaveCharacterHistory(Player* player, int8 type, int8 subtype
 		str_subtype = "Location";
 		break;
 	default:
-		LogWrite(PLAYER__ERROR, 0, "Player", "WorldDatabase::SaveCharacterHistory() - Invalid history sub type given (%i), character history NOT saved.", subtype);
+		LogWrite(PLAYER__ERROR, 0, "Player", "WorldDatabase::SaveCharacterHistory() - Invalid history sub type given (%i) with type (%i), character history NOT saved.", subtype, type);
 		return;
 	}
+
+	LogWrite(PLAYER__INFO, 1, "Player", "Saving character history, type = %s (%i) subtype = %s (%i)", (char*)str_type.c_str(), type, (char*)str_subtype.c_str(), subtype);
 
 	Query query;
 	query.RunQuery2(Q_REPLACE, "replace into character_history (char_id, type, subtype, value, value2, location, event_date) values (%u, '%s', '%s', %i, %i, '%s', %u)", 
