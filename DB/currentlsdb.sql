@@ -248,6 +248,8 @@ CREATE TABLE `login_characters` (
   `created_date` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `last_played` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `char_id` int(11) NOT NULL DEFAULT 0,
+  `soga_model_type` mediumint(8) NOT NULL DEFAULT 0,
+  `model_type` mediumint(8) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `ServerIDX` (`account_id`,`server_id`,`char_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci;

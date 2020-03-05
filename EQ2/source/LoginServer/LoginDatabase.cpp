@@ -107,7 +107,7 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 	Query query;
 	Query query2;
 	int32 id = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT lc.char_id, lc.server_id, lc.name, lc.race, lc.class, lc.gender, lc.deity, lc.body_size, lc.body_age, lc.current_zone_id, lc.level, lc.soga_wing_type, lc.soga_chest_type, lc.soga_legs_type, lc.soga_hair_type, lc.legs_type, lc.chest_type, lc.wing_type, lc.hair_type, unix_timestamp(lc.created_date), unix_timestamp(lc.last_played), lc.id, lw.name, lc.facial_hair_type, lc.soga_facial_hair_type from login_characters lc, login_worldservers lw where lw.id = lc.server_id and lc.account_id=%i and lc.deleted=0",acct->getLoginAccountID());
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT lc.char_id, lc.server_id, lc.name, lc.race, lc.class, lc.gender, lc.deity, lc.body_size, lc.body_age, lc.current_zone_id, lc.level, lc.soga_wing_type, lc.soga_chest_type, lc.soga_legs_type, lc.soga_hair_type, lc.legs_type, lc.chest_type, lc.wing_type, lc.hair_type, unix_timestamp(lc.created_date), unix_timestamp(lc.last_played), lc.id, lw.name, lc.facial_hair_type, lc.soga_facial_hair_type, lc.soga_model_type, lc.model_type from login_characters lc, login_worldservers lw where lw.id = lc.server_id and lc.account_id=%i and lc.deleted=0",acct->getLoginAccountID());
 	if(result) {
 		MYSQL_ROW row;
 		MYSQL_ROW row2;
@@ -130,12 +130,10 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 			player->packet->setDataByName("soga_chest_type", atoi(row[12]));
 			player->packet->setDataByName("soga_legs_type", atoi(row[13]));
 			player->packet->setDataByName("soga_hair_type", atoi(row[14]));
-//			player->packet->setDataByName("soga_race_type", atoi(row[15]));
 			player->packet->setDataByName("legs_type", atoi(row[15]));
 			player->packet->setDataByName("chest_type", atoi(row[16]));
 			player->packet->setDataByName("wing_type", atoi(row[17]));
 			player->packet->setDataByName("hair_type", atoi(row[18]));
-			//player->packet->setDataByName("race_type", atoi(row[19]));
 			player->packet->setDataByName("created_date", atol(row[19]));
 			if (row[20])
 				player->packet->setDataByName("last_played", atol(row[20]));
@@ -152,6 +150,9 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 				player->packet->setMediumStringByName("server_name", row[22]);
 			player->packet->setDataByName("hair_face_type", atoi(row[23]));
 			player->packet->setDataByName("soga_hair_face_type", atoi(row[24]));
+
+			player->packet->setDataByName("soga_race_type", atoi(row[25]));
+			player->packet->setDataByName("race_type", atoi(row[26]));
 
 			player->packet->setDataByName("unknown3", 57);
 			player->packet->setDataByName("unknown4", 56);
@@ -255,8 +256,8 @@ int32 LoginDatabase::SaveCharacter(PacketStruct* create, LoginAccount* acct, int
 	int32 ret_id = 0;
 	Query query;
 	string create_char = 
-		string("Insert into login_characters (account_id, server_id, char_id, name, race, class, gender, deity, body_size, body_age, soga_wing_type, soga_chest_type, soga_legs_type, soga_hair_type, soga_facial_hair_type, legs_type, chest_type, wing_type, hair_type, facial_hair_type)" 
-		" values(%i, %i, %i, '%s', %i, %i, %i, %i, %f, %f, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i)");
+		string("Insert into login_characters (account_id, server_id, char_id, name, race, class, gender, deity, body_size, body_age, soga_wing_type, soga_chest_type, soga_legs_type, soga_hair_type, soga_facial_hair_type, legs_type, chest_type, wing_type, hair_type, facial_hair_type, soga_model_type, model_type)" 
+		" values(%i, %i, %i, '%s', %i, %i, %i, %i, %f, %f, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i)");
 	query.RunQuery2(Q_INSERT, create_char.c_str(), 
 		acct->getLoginAccountID(), 
 		create->getType_int32_ByName("server_id"), world_charid, 
@@ -276,7 +277,9 @@ int32 LoginDatabase::SaveCharacter(PacketStruct* create, LoginAccount* acct, int
 		GetAppearanceID(create->getType_EQ2_16BitString_ByName("chest_file").data),
 		GetAppearanceID(create->getType_EQ2_16BitString_ByName("wing_file").data), 
 		GetAppearanceID(create->getType_EQ2_16BitString_ByName("hair_file").data), 
-		GetAppearanceID(create->getType_EQ2_16BitString_ByName("face_file").data));
+		GetAppearanceID(create->getType_EQ2_16BitString_ByName("face_file").data),
+		GetAppearanceID(create->getType_EQ2_16BitString_ByName("soga_race_file").data),
+		GetAppearanceID(create->getType_EQ2_16BitString_ByName("race_file").data));
 	if(query.GetError() && strlen(query.GetError()) > 0){
 		LogWrite(LOGIN__ERROR, 0, "Login", "Error in SaveCharacter query '%s': %s", query.GetQuery(), query.GetError());
 		return 0;

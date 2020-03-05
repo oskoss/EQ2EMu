@@ -21,7 +21,6 @@ extern ConfigReader configReader;
 class CharSelectProfile : public DataBuffer{
 public:
 	CharSelectProfile(int16 version){
-		printf("GetCharSelectProfile\n");
 		packet = configReader.getStruct("CharSelectProfile",version);
 		for(int8 i=0;i<24;i++){
 			packet->setEquipmentByName("equip",0,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,i);
