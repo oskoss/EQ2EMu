@@ -3733,9 +3733,9 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 	Client* client = 0;
 
 	// Clear the pointer in the spawn list, spawn thread will remove the key
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
-	spawn_list[spawn->GetID()] = 0;
-	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+	MSpawnList.writelock(__FUNCTION__, __LINE__);
+	spawn_list.erase(spawn->GetID());
+	MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 	
 	vector<Client*>::iterator client_itr;
 
