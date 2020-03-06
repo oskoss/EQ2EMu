@@ -101,6 +101,10 @@ using namespace std;
 #define APPEARANCE_LT			46
 #define APPEARANCE_BODY_AGE		47
 
+#define CHAR_PROPERTY_SPEED			"modify_speed"
+#define CHAR_PROPERTY_FLYMODE		"modify_flymode"
+#define CHAR_PROPERTY_INVUL			"modify_invul"
+
 
 struct StartingItem{
 	string	type;
@@ -277,6 +281,8 @@ public:
 	bool	LoadCharacterStats(int32 id, int32 account_id, Client* client);
 	bool	InsertCharacterStats(int32 character_id, int8 class_id, int8 race_id);
 	bool	UpdateCharacterTimeStamp(int32 account_id, int32 character_id, int32 timestamp);
+	bool	insertCharacterProperty(Client* client, char* propName, char* propValue);
+	bool	loadCharacterProperties(Client* client);
 	string	GetPlayerName(char* name);
 	int32	GetCharacterTimeStamp(int32 character_id, int32 account_id,bool* char_exists);
 	int32	GetCharacterTimeStamp(int32 character_id);

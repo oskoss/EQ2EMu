@@ -400,3 +400,51 @@ void ClientPacketFunctions::SendStateCommand(Client* client, int32 spawn_id, int
 	}
 	safe_delete(packet);
 }
+
+void ClientPacketFunctions::SendFlyMode(Client* client, int8 flymode, bool updateCharProperty)
+{
+	PacketStruct* packet = configReader.getStruct("WS_ServerControlFlags", client->GetVersion());
+
+	if (updateCharProperty)
+		database.insertCharacterProperty(client, CHAR_PROPERTY_FLYMODE, (char*)std::to_string(flymode).c_str());
+
+	if (packet) {
+		packet->setDataByName("parameter5", 32);
+		packet->setDataByName("value", flymode);
+		client->QueuePacket(packet->serialize());
+
+		client->Message(CHANNEL_STATUS, "Flymode %s", flymode == 1 ? "on" : "off");
+		/*
+		Some other values for this packet
+		first param:
+		01 flymode
+		02 collisons off
+		04 unknown
+		08 forward movement
+		16 heading movement
+		32 low gravity
+		64 sit
+
+		second
+		2 crouch
+
+
+		third:
+		04 float when trying to jump, no movement
+		08 jump high, no movement
+
+		fourth:
+		04 autorun (fear?)
+		16 moon jumps
+		32 safe fall (float to ground)
+		64 cant move
+
+		fifth:
+		01 die
+		08 hover (fae)
+		32 flymode2?
+
+		*/
+		safe_delete(packet);
+	}
+}

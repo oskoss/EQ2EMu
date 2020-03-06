@@ -135,7 +135,6 @@
 #define HISTORY_SUBTYPE_ITEM		5
 #define HISTORY_SUBTYPE_LOCATION	6
 
-
 /// <summary>Character history data, should match the `character_history` table in the DB</summary>
 struct HistoryData {
 	int32		Value;

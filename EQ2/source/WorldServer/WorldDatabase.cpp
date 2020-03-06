@@ -43,6 +43,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "Titles.h"
 #include "Languages.h"
 #include "Traits/Traits.h"
+#include "ClientPacketFunctions.h"
 
 extern Classes classes;
 extern Commands commands;
@@ -1600,6 +1601,63 @@ bool WorldDatabase::UpdateCharacterTimeStamp(int32 account_id, int32 character_i
 	{
 		LogWrite(WORLD__ERROR, 0, "World", "Error in UpdateCharacterTimeStamp query '%s': %s", query.GetQuery(), query.GetError());
 		return false;
+	}
+
+	return true;
+}
+
+bool WorldDatabase::insertCharacterProperty(Client* client, char* propName, char* propValue) {
+	Query query;
+
+	string update_status = string("update charactersProperties set propvalue='%s' where charid=%i and propname='%s'");
+	query.RunQuery2(Q_UPDATE, update_status.c_str(), propValue, client->GetCharacterID(), propName);
+	if (!query.GetAffectedRows())
+	{
+		query.RunQuery2(Q_UPDATE, "insert into charactersProperties (charid, propname, propvalue) values(%i, '%s', '%s')", client->GetCharacterID(), propName, propValue);
+		if (query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF) {
+			LogWrite(WORLD__ERROR, 0, "World", "Error in insertCharacterProperty query '%s': %s", query.GetQuery(), query.GetError());
+			return false;
+		}
+	}
+	return true;
+}
+
+bool WorldDatabase::loadCharacterProperties(Client* client) {
+	Query query;
+	MYSQL_ROW row;
+	int32 id = 0;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT propname, propvalue FROM charactersProperties where charid = %i", client->GetCharacterID());
+	// no character found
+	if (result == NULL) {
+		LogWrite(PLAYER__ERROR, 0, "Player", "Error loading character properties for '%s'", client->GetPlayer()->GetName());
+		return false;
+	}
+
+	while (result && (row = mysql_fetch_row(result))) {
+		char* prop_name = row[0];
+		char* prop_value = row[1];
+
+		if (!prop_name || !prop_value)
+			continue;
+
+		if (!stricmp(prop_name, CHAR_PROPERTY_SPEED))
+		{
+			float new_speed = atof(prop_value);
+			client->GetPlayer()->SetSpeed(new_speed);
+			client->GetPlayer()->SetCharSheetChanged(true);
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_FLYMODE))
+		{
+			int8 flymode = atoi(prop_value);
+			ClientPacketFunctions::SendFlyMode(client, flymode, false);
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_INVUL))
+		{
+			int8 invul = atoi(prop_value);
+			client->GetPlayer()->SetInvulnerable(invul == 1);
+			if (client->GetPlayer()->GetInvulnerable())
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You are now invulnerable!");
+		}
 	}
 
 	return true;

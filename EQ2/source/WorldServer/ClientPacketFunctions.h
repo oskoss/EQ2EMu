@@ -67,6 +67,8 @@ public:
 
 	static void SendStateCommand(Client* client, int32 spawn_id, int32 state);
 
+	static void SendFlyMode(Client* client, int8 flymode, bool updateCharProperty=true);
+
 	/* Tradeskills (/Tradeskills/TradeskillsPackets.cpp) */
 	static void SendCreateFromRecipe(Client* client, int32 recipeID);
 	static void SendItemCreationUI(Client* client, Recipe* recipe);

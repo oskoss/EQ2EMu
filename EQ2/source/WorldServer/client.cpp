@@ -937,6 +937,8 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 						ClientPacketFunctions::SendLoginDenied( this );
 					}
 					zone_auth.RemoveAuth(zar);
+
+					database.loadCharacterProperties(this);
 				}
 				else
 				{
@@ -2107,7 +2109,7 @@ void Client::HandleLoot(EQApplicationPacket* app){
 			Loot(0, player->GetPendingLootItems(loot_id), (Entity*)spawn);
 		}
 		else{
-			if(spawn && spawn->IsNPC() && ((NPC*)spawn)->Brain()->CheckLootAllowed(player)){
+			if(spawn && !spawn->Alive() && spawn->IsNPC() && ((NPC*)spawn)->Brain()->CheckLootAllowed(player)){
 				if(loot_all){
 					while(loot_all && ((item_id = ((Entity*)spawn)->GetLootItemID()) > 0)){
 						loot_all = HandleLootItem((Entity*)spawn, item_id);

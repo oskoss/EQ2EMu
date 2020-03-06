@@ -1819,47 +1819,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 							}
 		case COMMAND_FLYMODE:{
-			PacketStruct* packet = configReader.getStruct("WS_ServerControlFlags", client->GetVersion());
-			if(packet && sep && sep->arg[0] && sep->IsNumber(0)){
+			if(sep && sep->arg[0] && sep->IsNumber(0)){
 				PrintSep(sep, "COMMAND_FLYMODE");
 				int8 val = atoi(sep->arg[0]);
-				packet->setDataByName("parameter5", 32);
-				packet->setDataByName("value", val);
-				client->QueuePacket(packet->serialize());
-
-				client->Message(CHANNEL_STATUS, "Flymode %s", val == 1 ? "on" : "off");
-				/*
-				Some other values for this packet
-				first param:
-				01 flymode
-				02 collisons off
-				04 unknown
-				08 forward movement
-				16 heading movement
-				32 low gravity
-				64 sit
-
-				second
-				2 crouch
-
-
-				third:
-				04 float when trying to jump, no movement
-				08 jump high, no movement
-
-				fourth:
-				04 autorun (fear?)
-				16 moon jumps
-				32 safe fall (float to ground)
-				64 cant move
-
-				fifth:
-				01 die
-				08 hover (fae)
-				32 flymode2?
-
-				*/
-				safe_delete(packet);
+				ClientPacketFunctions::SendFlyMode(client, val);
 			}
 			else{
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage ON: /flymode 1");
@@ -1937,6 +1900,12 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_LOOT_CORPSE:
 		case COMMAND_LOOT:{
 			Spawn* target = client->GetPlayer()->GetTarget();
+			if (((Entity*)target)->IsNPC() && target->Alive())
+			{
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Your target is not dead.");
+				break;
+			}
+
 			if(target && target->IsEntity()){
 				if (target->GetDistance(client->GetPlayer()) <= 10){
 					client->Loot((Entity*)target);
@@ -2672,6 +2641,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			sint8 val = -1;
 			if(sep && sep->arg[0] && sep->IsNumber(0)){
 				val = atoi(sep->arg[0]);
+				
+				database.insertCharacterProperty(client, CHAR_PROPERTY_INVUL, (val == 1) ? "1" : "0");
+
 				client->GetPlayer()->SetInvulnerable(val==1);
 				if(client->GetPlayer()->GetInvulnerable())
 					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You are now invulnerable!");
@@ -7014,9 +6986,15 @@ void Commands::Command_SpawnTemplate(Client* client, Seperator* sep)
 void Commands::Command_Speed(Client* client, Seperator* sep) {
 	if(sep && sep->arg[0][0] && sep->IsNumber(0)){
 		float new_speed = atof(sep->arg[0]);
-		client->GetPlayer()->SetSpeed(new_speed);
-		client->GetPlayer()->SetCharSheetChanged(true);
-		client->Message(CHANNEL_STATUS, "Setting speed to %.2f.", new_speed);
+		if (new_speed > 0.0f)
+		{
+			client->GetPlayer()->SetSpeed(new_speed);
+			client->GetPlayer()->SetCharSheetChanged(true);
+			database.insertCharacterProperty(client, CHAR_PROPERTY_SPEED, sep->arg[0]);
+			client->Message(CHANNEL_STATUS, "Setting speed to %.2f.", new_speed);
+		}
+		else
+			client->Message(CHANNEL_STATUS, "Invalid speed provided %s.", sep->arg[0]);
 	}
 	else{
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage: /speed {new speed value}");
