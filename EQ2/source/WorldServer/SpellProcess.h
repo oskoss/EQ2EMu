@@ -125,6 +125,7 @@ struct InterruptStruct{
 };
 struct CastTimer{
 	Client*			caster;
+	int32			target_id;
 	EntityCommand*	entity_command;
 	LuaSpell*		spell;
 	Timer*			timer;
@@ -225,7 +226,7 @@ public:
 	/// <param name='entity_command'>EntityCommand to cast</param>
 	/// <param name='client'>Client casting the entity command</param>
 	/// <returns>True if the spell was casted</returns>
-	bool CastProcessedEntityCommand(EntityCommand* entity_command, Client* client);
+	bool CastProcessedEntityCommand(EntityCommand* entity_command, Client* client, Spawn* target);
 
 	/// <summary>Sends the start cast packet for the given client</summary>
 	/// <param name='spell'>LuaSpell being cast</param>

@@ -327,10 +327,14 @@ void Widget::ProcessUse(){
 			GetZone()->PlaySoundFile(0, GetCloseSound(), widget_x, widget_y, widget_z);
 }
 
-void Widget::HandleUse(Client* client, string command){
+void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 	vector<TransportDestination*>* destinations = 0;
 	//The following check disables the use of doors and other widgets if the player does not meet the quest requirements
 	//If this is from a script ignore this check (client will be null)
+
+	if (overrideWidgetType == 0xFF)
+		overrideWidgetType = widget_type;
+
 	if (client) {
 		bool meets_quest_reqs = MeetsSpawnAccessRequirements(client->GetPlayer());
 		if (!meets_quest_reqs && (GetQuestsRequiredOverride() & 2) == 0)
@@ -343,7 +347,7 @@ void Widget::HandleUse(Client* client, string command){
 		destinations = GetZone()->GetTransporters(GetTransporterID());
 	if (destinations)
 		client->ProcessTeleport(this, destinations, GetTransporterID());
-	else if (widget_type == WIDGET_TYPE_DOOR || widget_type == WIDGET_TYPE_LIFT){
+	else if (overrideWidgetType == WIDGET_TYPE_DOOR || overrideWidgetType == WIDGET_TYPE_LIFT){
 		Widget* widget = this;
 		if (!action_spawn && action_spawn_id > 0){
 			Spawn* spawn = GetZone()->GetSpawnByDatabaseID(action_spawn_id);

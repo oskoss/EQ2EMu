@@ -181,7 +181,8 @@ void SpellProcess::Process(){
 					else if (cast_timer->entity_command) {
 						if (cast_timer->timer->Check(false)) {
 							cast_timer->delete_timer = true;
-							CastProcessedEntityCommand(cast_timer->entity_command, cast_timer->caster);
+							Spawn* target = cast_timer->zone->GetSpawnByID(cast_timer->target_id);
+							CastProcessedEntityCommand(cast_timer->entity_command, cast_timer->caster, target);
 						}
 					}
 				}
@@ -1157,6 +1158,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		{
 			CastTimer* cast_timer = new CastTimer;
 			cast_timer->entity_command = 0;
+			cast_timer->target_id = target ? target->GetID() : 0;
 			cast_timer->spell = lua_spell;
 			cast_timer->spell->caster = caster;
 			cast_timer->delete_timer = false;
@@ -1200,6 +1202,7 @@ void SpellProcess::ProcessEntityCommand(ZoneServer* zone, EntityCommand* entity_
 
 				CastTimer* cast_timer = new CastTimer;
 				cast_timer->caster = client;
+				cast_timer->target_id = target ? target->GetID() : 0;
 				cast_timer->entity_command = entity_command;
 				cast_timer->spell = 0;
 				cast_timer->delete_timer = false;
@@ -1209,7 +1212,7 @@ void SpellProcess::ProcessEntityCommand(ZoneServer* zone, EntityCommand* entity_
 				caster->IsCasting(true);
 			}
 		}
-		else if (!CastProcessedEntityCommand(entity_command, client))
+		else if (!CastProcessedEntityCommand(entity_command, client, target))
 			return;
 		if (entity_command && entity_command->spell_visual > 0)
 			caster->GetZone()->SendCastEntityCommandPacket(entity_command, caster->GetID(), target->GetID());
@@ -1439,13 +1442,13 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 	return true;
 }
 
-bool SpellProcess::CastProcessedEntityCommand(EntityCommand* entity_command, Client* client) {
+bool SpellProcess::CastProcessedEntityCommand(EntityCommand* entity_command, Client* client, Spawn* target) {
 	bool ret = false;
 	if (entity_command && client) {
 		UnlockAllSpells(client);
 		client->GetPlayer()->IsCasting(false);
 		if (entity_command->cast_time == 0) {
-			client->GetPlayer()->GetZone()->CallSpawnScript(client->GetPlayer()->GetTarget(), SPAWN_SCRIPT_CASTED_ON, client->GetPlayer(), entity_command->command.c_str());
+			client->GetPlayer()->GetZone()->CallSpawnScript(target, SPAWN_SCRIPT_CASTED_ON, client->GetPlayer(), entity_command->command.c_str());
 			ret = true;;
 		}
 		if (!ret) {
@@ -1455,7 +1458,7 @@ bool SpellProcess::CastProcessedEntityCommand(EntityCommand* entity_command, Cli
 				client->QueuePacket(packet->serialize());
 				safe_delete(packet);
 				SendSpellBookUpdate(client);
-				client->GetPlayer()->GetZone()->CallSpawnScript(client->GetPlayer()->GetTarget(), SPAWN_SCRIPT_CASTED_ON, client->GetPlayer(), entity_command->command.c_str());
+				client->GetPlayer()->GetZone()->CallSpawnScript(target, SPAWN_SCRIPT_CASTED_ON, client->GetPlayer(), entity_command->command.c_str());
 				ret = true;
 			}
 		}
@@ -1465,7 +1468,7 @@ bool SpellProcess::CastProcessedEntityCommand(EntityCommand* entity_command, Cli
 			command.size = entity_command->command.length();
 			int32 handler = commands.GetCommandHandler(command.data.c_str());
 			if (handler != 0xFFFFFFFF && handler < 999)
-				commands.Process(handler, &command, client);
+				commands.Process(handler, &command, client, target);
 		}
 	}
 	return ret;

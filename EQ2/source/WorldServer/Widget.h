@@ -48,7 +48,7 @@ public:
 	void	HandleTimerUpdate();
 	void	OpenDoor();
 	void	CloseDoor();
-	void	HandleUse(Client* client, string command);
+	void	HandleUse(Client* client, string command, int8 overrideWidgetType=0xFF);
 	float	GetOpenHeading();
 	void	SetOpenHeading(float val);
 	float	GetClosedHeading();

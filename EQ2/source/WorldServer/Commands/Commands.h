@@ -311,7 +311,7 @@ public:
 	bool SetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value, bool send_update = true, bool temporary = false, string* temp_value = 0);
 	bool SetZoneCommand(Client* client, int32 zone_id, ZoneServer* zone, int8 type, const char* value);
 	RemoteCommands* GetRemoteCommands() { return remote_commands; }
-	void	Process(int32 index, EQ2_16BitString* command_parms, Client* client);
+	void	Process(int32 index, EQ2_16BitString* command_parms, Client* client, Spawn* targetOverride=NULL);
 	int32 GetCommandHandler(const char* name){
 		return remote_commands->GetCommandHandler(name);
 	}

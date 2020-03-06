@@ -970,11 +970,15 @@ bool Commands::SetZoneCommand(Client* client, int32 zone_id, ZoneServer* zone, i
 	return true;
 }
 
-void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* client) {
+void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* client, Spawn* targetOverride) {
+
 	if (index >= remote_commands->commands.size()) {
 		LogWrite(COMMAND__ERROR, 0, "Command", "Error, command handler of %u was requested, but max handler is %u", index, remote_commands->commands.size());
 		return;
 	}
+
+	Spawn* cmdTarget = targetOverride ? targetOverride : client->GetPlayer()->GetTarget();
+
 	EQ2_RemoteCommandString* parent_command = 0;
 	EQ2_RemoteCommandString* command = &remote_commands->commands[index];
 	Seperator* sep = 0;
@@ -1107,7 +1111,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				int32 item_index = atol(sep->arg[1]);
 				Item* item = client->GetPlayer()->item_list.GetItemFromIndex(item_index);
 				if (item) {
-					Spawn* spawn = client->GetPlayer()->GetTarget();
+					Spawn* spawn = cmdTarget;
 					int8 numpages = item->book_pages.size();
 					
 					string page1 = string(item->book_pages[0]->page_text.data);
@@ -1147,34 +1151,40 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 }
 		case COMMAND_USEABILITY:{
-			if(sep && sep->arg[0][0] && sep->IsNumber(0)){
-				if(client->GetPlayer()->GetHP() == 0){
-					client->SimpleMessage(CHANNEL_COLOR_RED,"You cannot do that right now.");
+			if (sep && sep->arg[0][0] && sep->IsNumber(0)) {
+				if (client->GetPlayer()->GetHP() == 0) {
+					client->SimpleMessage(CHANNEL_COLOR_RED, "You cannot do that right now.");
 				}
-				else{
+				else {
 					int32 spell_id = atoul(sep->arg[0]);
 					int8 spell_tier = 0;
-					if(sep->arg[1][0] && sep->IsNumber(1))
+					if (sep->arg[1][0] && sep->IsNumber(1))
 						spell_tier = atoi(sep->arg[1]);
 					else
 						spell_tier = client->GetPlayer()->GetSpellTier(spell_id);
-					if (!spell_tier) 
+					if (!spell_tier)
 						spell_tier = 1;
 					Spell* spell = master_spell_list.GetSpell(spell_id, spell_tier);
 					if (spell) {
 						if (strncmp(spell->GetName(), "Gathering", 9) == 0 || strncmp(spell->GetName(), "Mining", 6) == 0 || strncmp(spell->GetName(), "Trapping", 8) == 0 || strncmp(spell->GetName(), "Foresting", 9) == 0 || strncmp(spell->GetName(), "Fishing", 7) == 0 || strncmp(spell->GetName(), "Collecting", 10) == 0)
-							client->GetCurrentZone()->ProcessSpell(spell, client->GetPlayer(), client->GetPlayer()->GetTarget(), true, true);
+							client->GetCurrentZone()->ProcessSpell(spell, client->GetPlayer(), cmdTarget, true, true);
 						else
 						{
-							if (client->GetPlayer()->HasTarget())
-								client->GetCurrentZone()->ProcessSpell(spell, client->GetPlayer(), client->GetPlayer()->GetTarget());
+							if (cmdTarget)
+								client->GetCurrentZone()->ProcessSpell(spell, client->GetPlayer(), cmdTarget);
 							else
 								client->GetCurrentZone()->ProcessSpell(spell, client->GetPlayer(), client->GetPlayer());
 						}
 					}
 				}
 			}
-			else{
+			else if (cmdTarget && cmdTarget->IsWidget())
+			{
+				Widget* widget = (Widget*)cmdTarget;
+				widget->HandleUse(client, "use", WIDGET_TYPE_DOOR);
+			}
+			else
+			{
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /useability {spell_id} [spell_tier]");
 			}
 			break;
@@ -1498,8 +1508,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 									 }
 		case COMMAND_SPAWN_MOVE:{
-			Spawn* target = client->GetPlayer()->GetTarget();
-			if(target && target->IsPlayer() == false){
+			if(cmdTarget && cmdTarget->IsPlayer() == false){
 				PacketStruct* packet = configReader.getStruct("WS_MoveObjectMode", client->GetVersion());
 				if(packet){
 					float unknown2_3 = 0;
@@ -1513,8 +1522,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							placement_mode = 1;
 					}
 					packet->setDataByName("placement_mode", placement_mode);
-					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(target));
-					packet->setDataByName("model_type", target->GetModelType());
+					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(cmdTarget));
+					packet->setDataByName("model_type", cmdTarget->GetModelType());
 					packet->setDataByName("unknown", 1); //size
 					packet->setDataByName("unknown2", 1); //size 2
 					packet->setDataByName("unknown2", .5, 1); //size 3
@@ -1533,7 +1542,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 								}
 		case COMMAND_HAIL:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->GetTargetable())
 			{
 				char tmp[75] = {0};
@@ -1563,8 +1572,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_SAY:{
 			if (sep && sep->arg[0][0]) {
 				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SAY, sep->argplus[0], HEAR_SPAWN_DISTANCE);
-				if (client->GetPlayer()->GetTarget() && !(client->GetPlayer()->GetTarget()->IsPlayer()))
-					client->GetCurrentZone()->CallSpawnScript(client->GetPlayer()->GetTarget(), SPAWN_SCRIPT_HEAR_SAY, client->GetPlayer(), sep->argplus[0]);
+				if (cmdTarget && !(cmdTarget->IsPlayer()))
+					client->GetCurrentZone()->CallSpawnScript(cmdTarget, SPAWN_SCRIPT_HEAR_SAY, client->GetPlayer(), sep->argplus[0]);
 			}
 			else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /say {message}");
@@ -1644,13 +1653,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 									 }
 		case COMMAND_BANK_CANCEL:{
-			Spawn* banker = client->GetPlayer()->GetTarget();
+			Spawn* banker = cmdTarget;
 			client->Bank(banker, true);
 			break;
 								 }
 		case COMMAND_BANK:{
 			LogWrite(PLAYER__DEBUG, 0, "Players", "Open Player Personal Bank...");
-			Spawn* banker = client->GetPlayer()->GetTarget();
+			Spawn* banker = cmdTarget;
 			client->Bank(banker);
 			break;
 						  }
@@ -1661,7 +1670,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 						  }
 		case COMMAND_START_MAIL: {
-			client->SetMailTransaction(client->GetPlayer()->GetTarget());
+			client->SetMailTransaction(cmdTarget);
 			client->SendMailList();
 			break;
 								}
@@ -1745,7 +1754,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->GetPlayer()->SetHP(0);
 				client->GetPlayer()->KillSpawn(dead);
 			}else{
-				dead=client->GetPlayer()->GetTarget();
+				dead= cmdTarget;
 				if(dead && dead->IsPlayer() == false){
 					dead->SetHP(0);
 					if(sep && sep->arg[0] && sep->IsNumber(0) && atoi(sep->arg[0]) == 1)
@@ -1831,7 +1840,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 							 }
 		case COMMAND_LOOT_LIST:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity()){
 				vector<int32> loot_list = client->GetCurrentZone()->GetSpawnLootList(spawn->GetDatabaseID(), spawn->GetZone()->GetZoneID(), spawn->GetLevel(), race_types_list.GetRaceType(spawn->GetModelType()));
 				if(loot_list.size() > 0){
@@ -1862,7 +1871,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 							   }
 		case COMMAND_LOOT_SETCOIN:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity() && sep && sep->arg[0] && sep->IsNumber(0)){
 				Entity* target = (Entity*)spawn;
 				target->SetLootCoins(atoul(sep->arg[0]));
@@ -1873,7 +1882,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 								  }
 		case COMMAND_LOOT_ADDITEM:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity() && sep && sep->arg[0] && sep->IsNumber(0)){
 				Entity* target = (Entity*)spawn;
 				int16 charges = 1;
@@ -1887,7 +1896,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 								  }
 		case COMMAND_LOOT_REMOVEITEM:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity() && sep && sep->arg[0] && sep->IsNumber(0)){
 				Entity* target = (Entity*)spawn;
 				target->LootItem(atoul(sep->arg[0]));
@@ -1899,25 +1908,24 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 									 }
 		case COMMAND_LOOT_CORPSE:
 		case COMMAND_LOOT:{
-			Spawn* target = client->GetPlayer()->GetTarget();
-			if (((Entity*)target)->IsNPC() && target->Alive())
+			if (cmdTarget && ((Entity*)cmdTarget)->IsNPC() && cmdTarget->Alive())
 			{
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Your target is not dead.");
 				break;
 			}
 
-			if(target && target->IsEntity()){
-				if (target->GetDistance(client->GetPlayer()) <= 10){
-					client->Loot((Entity*)target);
-					if (!((Entity*)target)->HasLoot()){
-						if (((Entity*)target)->IsNPC())
-							client->GetCurrentZone()->RemoveDeadSpawn(target);
+			if(cmdTarget && cmdTarget->IsEntity()){
+				if (cmdTarget->GetDistance(client->GetPlayer()) <= 10){
+					client->Loot((Entity*)cmdTarget);
+					if (!((Entity*)cmdTarget)->HasLoot()){
+						if (((Entity*)cmdTarget)->IsNPC())
+							client->GetCurrentZone()->RemoveDeadSpawn(cmdTarget);
 					}
 				}
 				else
 					client->Message(CHANNEL_COLOR_YELLOW, "You are too far away to interact with that");
 			}
-			else if(!target || target->GetHP() > 0)
+			else if(!cmdTarget || cmdTarget->GetHP() > 0)
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Invalid target.");
 			break;
 						  }
@@ -2136,8 +2144,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			string name = "";
 			if(sep && sep->arg[0] && strlen(sep->arg[0]) > 1)
 				name = database.GetPlayerName(sep->arg[0]);
-			else if(client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer())
-				name = string(client->GetPlayer()->GetTarget()->GetName());
+			else if(cmdTarget && cmdTarget->IsPlayer())
+				name = string(cmdTarget->GetName());
 			if(name.length() > 0){
 				if(strcmp(name.c_str(), client->GetPlayer()->GetName()) != 0){
 					if(client->GetPlayer()->IsIgnored(name.c_str())){
@@ -2162,8 +2170,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			string name = "";
 			if(sep && sep->arg[0] && strlen(sep->arg[0]) > 1)
 				name = database.GetPlayerName(sep->arg[0]);
-			else if(client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer())
-				name = string(client->GetPlayer()->GetTarget()->GetName());
+			else if(cmdTarget && cmdTarget->IsPlayer())
+				name = string(cmdTarget->GetName());
 			if(name.length() > 0){
 				client->GetPlayer()->RemoveFriend(name.c_str());
 				client->SendChatRelationship(1, name.c_str());
@@ -2181,8 +2189,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			string name = "";
 			if(sep && sep->arg[0] && strlen(sep->arg[0]) > 1)
 				name = database.GetPlayerName(sep->arg[0]);
-			else if(client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer())
-				name = string(client->GetPlayer()->GetTarget()->GetName());
+			else if(cmdTarget && cmdTarget->IsPlayer())
+				name = string(cmdTarget->GetName());
 			if(name.length() > 0){
 				if(strcmp(name.c_str(), client->GetPlayer()->GetName()) != 0){
 					if(client->GetPlayer()->IsFriend(name.c_str())){
@@ -2205,8 +2213,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			string name = "";
 			if(sep && sep->arg[0] && strlen(sep->arg[0]) > 1)
 				name = database.GetPlayerName(sep->arg[0]);
-			else if(client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer())
-				name = string(client->GetPlayer()->GetTarget()->GetName());
+			else if(cmdTarget && cmdTarget->IsPlayer())
+				name = string(cmdTarget->GetName());
 			if(name.length() > 0){
 				client->GetPlayer()->RemoveIgnore(name.c_str());
 				client->SendChatRelationship(3, name.c_str());
@@ -2233,8 +2241,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if (kicked_client)
 					kicked = kicked_client->GetPlayer();
 			}
-			else if (client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsEntity()) {
-				kicked = (Entity*)client->GetPlayer()->GetTarget();
+			else if (cmdTarget && cmdTarget->IsEntity()) {
+				kicked = (Entity*)cmdTarget;
 			}
 
 			group_id = client->GetPlayer()->GetGroupMemberInfo()->group_id;
@@ -2270,8 +2278,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				else
 					client->SimpleMessage(CHANNEL_COMMANDS, "Unable to find the given player.");
 			}
-			else if (client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer())
-				world.GetGroupManager()->MakeLeader(client->GetPlayer()->GetGroupMemberInfo()->group_id, (Entity*)client->GetPlayer()->GetTarget());
+			else if (cmdTarget && cmdTarget->IsPlayer())
+				world.GetGroupManager()->MakeLeader(client->GetPlayer()->GetGroupMemberInfo()->group_id, (Entity*)cmdTarget);
 			else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to change group leader.");
 
@@ -2303,7 +2311,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[0][0])
 				search_name = sep->arg[0];
 
-			if(!search_name && !client->GetPlayer()->GetTarget()){
+			if(!search_name && !cmdTarget){
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage: /summon [name]");
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Summons a targeted spawn or a spawn by name to you.  If more than one spawn matches name, it will summon closest.");
 			}
@@ -2317,7 +2325,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			const char* search_name = 0;
 			if(sep && sep->arg[0][0])
 				search_name = sep->argplus[0];
-			if(!search_name && !client->GetPlayer()->GetTarget()){
+			if(!search_name && !cmdTarget){
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage: /goto [name]");
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Moves to targeted spawn or to a spawn by name.  If more than one spawn matches name, you will move to closest.");
 			}
@@ -2518,7 +2526,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 		}
 		case COMMAND_USE:{
-			Spawn* target = client->GetPlayer()->GetTarget();
+			Spawn* target = cmdTarget;
 			if(target->IsWidget())
 				((Widget*)target)->HandleUse(client, "use");
 			break;
@@ -2655,7 +2663,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 		}
 		case COMMAND_REPAIR: {
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if (spawn && spawn->GetMerchantType() & MERCHANT_TYPE_REPAIR) {
 				client->SetMerchantTransaction(spawn);
 				client->SendRepairList();
@@ -2663,7 +2671,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 							 }
 		case COMMAND_LOTTO: {
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if (spawn && spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO) {
 				client->SetMerchantTransaction(spawn);
 				client->ShowLottoWindow();
@@ -2756,7 +2764,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		}
 		case COMMAND_SPAWN_GROUP:
 		{
-			Spawn* target = client->GetPlayer()->GetTarget();
+			Spawn* target = cmdTarget;
 
 			if(target && target->IsPlayer() == false)
 			{
@@ -2870,7 +2878,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 		}
 		case COMMAND_SPAWN_COMBINE:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			float radius = 0;
 			bool failed = true;
 			if(spawn && !spawn->IsPlayer() && sep && sep->arg[0] && sep->arg[0][0]){
@@ -2968,7 +2976,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 								  }
 		case COMMAND_SPAWN_EQUIPMENT:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if(spawn && sep && sep->arg[1][0] && sep->IsNumber(0) && sep->IsNumber(1) && spawn->IsEntity()){
 				int8 slot = atoi(sep->arg[0]);
 				int16 type = atoi(sep->arg[1]);
@@ -3001,7 +3009,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 									 }
 		case COMMAND_SPAWN_DETAILS:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if(spawn){
 				const char* type = "NPC";
 				if(spawn->IsObject())
@@ -3157,7 +3165,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								  }
 		case COMMAND_SPAWN_SET:
 			{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			sint16 set_type = -1; 
 			string type_str;
 
@@ -3268,7 +3276,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 			}
 		case COMMAND_SPAWN_REMOVE:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if(spawn && !spawn->IsPlayer()){
 				if(spawn->GetSpawnLocationID() > 0){
 					if(database.RemoveSpawnFromSpawnLocation(spawn)){
@@ -3317,7 +3325,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 								}
 		case COMMAND_SPAWN_ADD:{
-			Spawn* spawn = client->GetPlayer()->GetTarget();
+			Spawn* spawn = cmdTarget;
 			if(spawn && sep && sep->arg[1][0] && (sep->IsNumber(0) || strncasecmp(sep->arg[0], "new", 3) == 0)){
 				if(spawn->GetSpawnLocationID() > 0){
 					client->Message(CHANNEL_COLOR_RED, "This spawn already has a spawn group id of %u, use /spawn remove to reassign it", spawn->GetSpawnLocationID());
@@ -3522,8 +3530,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			PacketStruct* command_packet = configReader.getStruct("WS_CannedEmote", client->GetVersion());
 			if(command_packet){
 				int32 id = client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer());
-				if (client->GetPlayer()->HasTarget())
-					id = client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()->GetTarget());
+				if (cmdTarget)
+					id = client->GetPlayer()->GetIDWithPlayerSpawn(cmdTarget);
 				command_packet->setDataByName ( "spawn_id" , id);
 
 				int animID = 1;
