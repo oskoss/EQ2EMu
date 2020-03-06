@@ -937,8 +937,6 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 						ClientPacketFunctions::SendLoginDenied( this );
 					}
 					zone_auth.RemoveAuth(zar);
-
-					database.loadCharacterProperties(this);
 				}
 				else
 				{
@@ -953,6 +951,7 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 			LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SysClient", opcode, opcode);
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
 			ready_for_updates = true;
+			database.loadCharacterProperties(this);
 			break;
 		}
 		case OP_MapRequest:{

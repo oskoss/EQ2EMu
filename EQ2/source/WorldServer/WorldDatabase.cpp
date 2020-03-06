@@ -1649,7 +1649,8 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 		else if (!stricmp(prop_name, CHAR_PROPERTY_FLYMODE))
 		{
 			int8 flymode = atoi(prop_value);
-			ClientPacketFunctions::SendFlyMode(client, flymode, false);
+			if (flymode) // avoid fly mode notification unless enabled
+				ClientPacketFunctions::SendFlyMode(client, flymode, false);
 		}
 		else if (!stricmp(prop_name, CHAR_PROPERTY_INVUL))
 		{
