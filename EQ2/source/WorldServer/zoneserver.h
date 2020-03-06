@@ -334,6 +334,8 @@ public:
 	
 	void	WritePlayerStatistics();
 	
+	bool	SendRadiusSpawnInfo(Client* client, float radius);
+
 	volatile bool	spawnthread_active;
 	volatile bool	combatthread_active;
 	volatile int8	initial_spawn_threads_active;

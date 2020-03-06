@@ -5475,6 +5475,63 @@ void ZoneServer::WritePlayerStatistics() {
 		client_itr->value->GetPlayer()->WritePlayerStatistics();
 }
 
+bool ZoneServer::SendRadiusSpawnInfo(Client* client, float radius) {
+	if (!client)
+		return false;
+
+	Spawn* spawn = 0;
+	bool ret = false;
+	map<int32, Spawn*>::iterator itr;
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+		spawn = itr->second;
+		if (spawn && spawn != client->GetPlayer() && !spawn->IsPlayer() && spawn->GetDistance(client->GetPlayer()) <= radius) {
+			const char* type = "NPC";
+			const char* specialTypeID = "N/A";
+			int32 specialID = 0, spawnEntryID = spawn->GetSpawnEntryID();
+			if (spawn->IsObject())
+			{
+				Object* obj = (Object*)spawn;
+				specialID = obj->GetID();
+				specialTypeID = "GetID";
+				type = "Object";
+			}
+			else if (spawn->IsSign())
+			{
+				Sign* sign = (Sign*)spawn;
+				specialID = sign->GetWidgetID();
+				specialTypeID = "WidgetID";
+				type = "Sign";
+			}
+			else if (spawn->IsWidget())
+			{
+				Widget* widget = (Widget*)spawn;
+				specialID = widget->GetWidgetID();
+				specialTypeID = "WidgetID";
+				if ( specialID == 0xFFFFFFFF )
+					specialTypeID = "WidgetID(spawn_widgets entry missing)";
+
+				type = "Widget";
+			}
+			else if (spawn->IsGroundSpawn())
+			{
+				GroundSpawn* gs = (GroundSpawn*)spawn;
+				specialID = gs->GetGroundSpawnEntryID();
+				specialTypeID = "GroundSpawnEntryID";
+				type = "GroundSpawn";
+			}
+			client->Message(CHANNEL_COLOR_RED, "Name: %s (%s), Spawn Table ID: %u, %s: %u", spawn->GetName(), type, spawn->GetDatabaseID(), specialTypeID, specialID);
+			client->Message(CHANNEL_COLOR_RED, "Spawn Location ID: %u, Spawn Group ID: %u, SpawnEntryID: %u, Grid ID: %u", spawn->GetSpawnLocationID(), spawn->GetSpawnGroupID(), spawnEntryID, spawn->GetLocation());
+			client->Message(CHANNEL_COLOR_RED, "Respawn Time: %u (sec), X: %f, Y: %f, Z: %f Heading: %f", spawn->GetRespawnTime(), spawn->GetX(), spawn->GetY(), spawn->GetZ(), spawn->GetHeading());
+			client->Message(CHANNEL_COLOR_YELLOW, "=============================");
+			ret = true;
+		}
+	}
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+	return ret;
+}
+
+
 void ZoneServer::AddPlayerTracking(Player* player) {
 	if (player && !player->GetIsTracking() && players_tracking.count(player->GetDatabaseID()) == 0) {
 		Client* client = GetClientBySpawn(player);

@@ -1118,7 +1118,12 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 		widget->appearance.model_type = atoi(row[2]);
 		widget->SetSize(atoi(row[3]));
 		widget->appearance.show_command_icon = atoi(row[4]);
-		widget->SetWidgetID(atoul(row[5]));
+
+		if (row[5] == NULL)
+			widget->SetWidgetID(0xFFFFFFFF);
+		else
+			widget->SetWidgetID(atoul(row[5]));
+
 		widget->SetWidgetX(atof(row[6]));
 		widget->SetWidgetY(atof(row[7]));
 		widget->SetWidgetZ(atof(row[8]));
@@ -4796,7 +4801,7 @@ void WorldDatabase::LoadPlayerStatistics(Player* player, int32 char_id) {
 }
 
 void WorldDatabase::WritePlayerStatistic(Player *player, Statistic* stat) {
-	if (player && stat) {
+	if (player && player->GetCharacterID() > 0 && stat) {
 		Query query;
 		query.RunQuery2(Q_INSERT, "INSERT INTO statistics (char_id, guild_id, stat_id, stat_value, stat_date) VALUES(%i, %i, %i, %i, %i) ON DUPLICATE KEY UPDATE stat_value = %i, stat_date = %i;",
 			player->GetCharacterID(), 0, stat->stat_id, stat->stat_value, stat->stat_date,

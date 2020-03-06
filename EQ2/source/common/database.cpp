@@ -213,6 +213,35 @@ MYSQL_RES* Query::RunQuery2(string in_query, QUERY_TYPE type){
 		multiple_results->push_back(result);
 	}	
 	query = in_query;
+
+#ifdef WORLD && _DEBUG
+	if (type == Q_UPDATE || type == Q_INSERT || type == Q_DELETE || type == Q_REPLACE)
+	{
+		char* filteredTables[] = { " characters", " character_", " statistics", " variables", " guilds" };
+
+		bool match = false;
+		for (int i = 0; i < sizeof(filteredTables) / sizeof(filteredTables[0]); i++)
+		{
+			if (query.find(filteredTables[i]) != std::string::npos) {
+				match = true;
+			}
+		}
+		try
+		{
+			if (!match)
+			{
+				FILE* pFile;
+				pFile = fopen("sql_updates.sql", "a+");
+				fwrite(query.c_str(), 1, query.length(), pFile);
+				fwrite("\n", sizeof(char), 1, pFile);
+				fclose(pFile);
+			}
+		}
+		catch (...) {}
+	}
+#endif
+
+	
 	database.RunQuery(query.c_str(), query.length(), errbuf, &result, affected_rows, last_insert_id, &errnum, retry); 
 	return result;
 }

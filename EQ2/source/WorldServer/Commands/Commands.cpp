@@ -3126,9 +3126,15 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					safe_delete(packet);
 				}
 			}
-			else{
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Syntax: /spawn details ");
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "This will display information about the currently selected spawn");
+			else if (sep && sep->arg[0][0] && sep->IsNumber(0))
+			{
+				float radius = atof(sep->arg[0]);
+				if ( !client->GetCurrentZone()->SendRadiusSpawnInfo(client, radius) )
+					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "No results in the radius were found.");
+			}
+			else {
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Syntax: /spawn details (radius)");
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "This will display information about the currently selected spawn, or in the case of specifying a numerical radius will show minor details about spawns in the players radius.");
 			}
 			break;
 								   }

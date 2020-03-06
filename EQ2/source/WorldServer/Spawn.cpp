@@ -41,7 +41,7 @@ Spawn::Spawn(){
 	group_id = 0;
 	size_offset = 0;
 	merchant_id = 0;
-	memset(&appearance, 0, sizeof(appearance)); 
+	memset(&appearance, 0, sizeof(AppearanceData)); 
 	memset(&basic_info, 0, sizeof(BasicInfoStruct)); 
 	appearance.encounter_level =6;
 	size = 32;

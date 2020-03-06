@@ -47,6 +47,7 @@ extern MasterTitlesList master_titles_list;
 extern MasterLanguagesList master_languages_list;
 
 Player::Player(){
+	char_id = 0;
 	group = 0;
 	appearance.pos.grid_id = 0;
 	spawn_index = 0;

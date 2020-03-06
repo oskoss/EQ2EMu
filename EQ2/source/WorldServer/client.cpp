@@ -134,6 +134,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	connect->Disable();
 	zoneID = 0;
 	account_name[0] = 0;
+	character_id = 0;
 	account_id = 0;
 	pwaitingforbootup = 0;
 	current_zone = 0;
@@ -3318,6 +3319,9 @@ void Client::DetermineCharacterUpdates ( ) {
 }
 
 void Client::Save(){
+	if (GetCharacterID() == 0)
+		return;
+
 	if(current_zone){
 		DetermineCharacterUpdates();
 
