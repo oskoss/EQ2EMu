@@ -2570,6 +2570,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->Message(CHANNEL_COLOR_YELLOW, "Syntax: /castspell [spellid] (tier=1) - Cast Spell with specified spell id, tier is optional, default of 1.");
 				client->Message(CHANNEL_COLOR_YELLOW, "Syntax: /castspell [spellname] - Find spells wildcard match with a partial spell name");
 			}
+			break;
 		}
 		case COMMAND_ATTACK:
 		case COMMAND_AUTO_ATTACK:{
