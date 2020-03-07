@@ -869,6 +869,8 @@ private:
 #define COMMAND_BOT_SETTINGS			506
 #define COMMAND_BOT_HELP				507
 
+#define COMMAND_OPEN					508
+
 #define GET_AA_XML						751
 #define ADD_AA							752
 #define COMMIT_AA_PROFILE				753				

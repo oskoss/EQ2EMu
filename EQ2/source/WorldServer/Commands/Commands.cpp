@@ -2525,12 +2525,18 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			safe_delete(zonename);
 			break;
 		}
-		case COMMAND_USE:{
+		case COMMAND_USE: {
 			Spawn* target = cmdTarget;
-			if(target->IsWidget())
+			if (target->IsWidget())
 				((Widget*)target)->HandleUse(client, "use");
 			break;
-						 }
+		}
+		case COMMAND_OPEN: {
+			Spawn* target = cmdTarget;
+			if (target->IsWidget())
+				((Widget*)target)->HandleUse(client, "Open", WIDGET_TYPE_DOOR);
+			break;
+		}
 		case COMMAND_ATTACK:
 		case COMMAND_AUTO_ATTACK:{
 			int8 type = 1;
