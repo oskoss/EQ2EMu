@@ -3548,14 +3548,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 										}
 		case COMMAND_ITEMSEARCH:{
-
-
-			if (sep && sep->arg[0])
-			{
-
-			}
-			else
-			{
 				PacketStruct* packet = configReader.getStruct("WS_StartBroker", client->GetVersion());
 				if (packet) {
 					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
@@ -3573,7 +3565,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					}
 					safe_delete(packet);
 				}
-			}
 			break;
 		}
 		case COMMAND_ANIMTEST:{
