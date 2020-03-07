@@ -1199,7 +1199,7 @@ int EQ2Emu_lua_SpellDamage(lua_State* state){
 		if (luaspell->initial_target == target_id) {
 			int xxx = 0;
 		}
-		if (luaspell->targets.size() > 0 && (luaspell->initial_target != target_id)) {
+		if (luaspell->targets.size() > 0) {
 			ZoneServer* zone = luaspell->caster->GetZone();
 			Spawn* target = 0;
 			luaspell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
