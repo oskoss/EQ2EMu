@@ -427,7 +427,11 @@ bool SpellProcess::ProcessSpell(LuaSpell* spell, bool first_cast, const char* fu
 }
 
 bool SpellProcess::CastPassives(Spell* spell, Entity* caster, bool remove) {
+	CastInstant(spell, caster, caster, remove, true);
+	return true;
+}
 
+bool SpellProcess::CastInstant(Spell* spell, Entity* caster, Entity* target, bool remove, bool passive) {
 	LuaSpell* lua_spell = 0;
 
 	if(lua_interface)
@@ -452,11 +456,11 @@ bool SpellProcess::CastPassives(Spell* spell, Entity* caster, bool remove) {
 
 	lua_spell->caster = caster;
 	lua_spell->spell = spell;
-	lua_spell->initial_target = caster->GetID();
+	lua_spell->initial_target = target->GetID();
 	GetSpellTargets(lua_spell);
 
 	if (!remove)
-		return CastProcessedSpell(lua_spell, true);
+		return CastProcessedSpell(lua_spell, passive);
 
 	lua_interface->RemoveSpell(lua_spell, true, SpellScriptTimersHasSpell(lua_spell));
 	return true;

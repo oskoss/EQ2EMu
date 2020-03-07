@@ -337,6 +337,7 @@ public:
 	/// <param name='caster'>The Entity to apply or remove the passive spell to</param>
 	/// <param name='remove'>Tells the function to remove the spell effects of this passive, default is false</param>
 	bool CastPassives(Spell* spell, Entity* caster, bool remove = false);
+	bool CastInstant(Spell* spell, Entity* caster, Entity* target, bool remove = false, bool passive=false);
 
 	/// <summary>Adds a spell script timer to the list</summary>
 	/// <param name='timer'>Timer to add</param>

@@ -870,6 +870,7 @@ private:
 #define COMMAND_BOT_HELP				507
 
 #define COMMAND_OPEN					508
+#define COMMAND_CASTSPELL				509
 
 #define GET_AA_XML						751
 #define ADD_AA							752

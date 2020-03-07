@@ -562,6 +562,8 @@ public:
 	void				DeleteBot(int32 char_id, int32 bot_index);
 	void				SetBotStartingItems(Bot* bot, int8 class_id, int8 race_id);
 	void                LoadTransmuting();
+
+	void				FindSpell(Client* client, char* findString);
 private:
 	DatabaseNew			database_new;
 	map<int32, string>	zone_names;

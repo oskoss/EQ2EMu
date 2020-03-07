@@ -6537,3 +6537,29 @@ void WorldDatabase::LoadCharacterLUAHistory(int32 char_id, Player* player) {
 
 	LogWrite(PLAYER__DEBUG, 0, "Player", "Loaded %u LUA history for %s", total, player->GetName());
 }
+
+void WorldDatabase::FindSpell(Client* client, char* findString)
+{
+	DatabaseResult result;
+		if (!database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `tier` "
+			"FROM (spells s, spell_tiers st) "
+			"LEFT JOIN spell_ts_ability_index ts "
+			"ON s.`id` = ts.spell_id "
+			"WHERE s.id = st.spell_id and s.name like '%%%s%%' AND s.is_active = 1 "
+			"ORDER BY s.`id`, `tier` limit 50", findString))
+		{
+			// error
+		}
+		else
+		{
+			client->Message(CHANNEL_COLOR_YELLOW, "SpellID (SpellTier): SpellName for %s", findString);
+			while (result.Next())
+			{
+				int32 spell_id = result.GetInt32Str("id");
+				string spell_name = result.GetStringStr("name");
+				int8 tier = result.GetInt8Str("tier");
+				client->Message(CHANNEL_COLOR_YELLOW, "%i (%i): %s", spell_id, tier, spell_name.c_str());
+			}
+			client->Message(CHANNEL_COLOR_YELLOW, "End Spell Results for %s", findString);
+		}
+}

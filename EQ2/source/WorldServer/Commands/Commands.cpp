@@ -2537,6 +2537,40 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				((Widget*)target)->HandleUse(client, "Open", WIDGET_TYPE_DOOR);
 			break;
 		}
+		case COMMAND_CASTSPELL: {
+			if (sep && sep->arg[0] && sep->IsNumber(0))
+			{
+				int8 tier = 1;
+				if (sep->arg[1] && sep->IsNumber(1))
+					tier = atoul(sep->arg[1]);
+
+				int32 spellid = atoul(sep->arg[0]);
+				Spell* spell = master_spell_list.GetSpell(spellid, tier);
+
+				if (spell)
+				{
+					client->Message(CHANNEL_COLOR_RED, "Casting spell %u.", spellid);
+					SpellProcess* spellProcess = 0;
+					// Get the current zones spell process
+					spellProcess = client->GetCurrentZone()->GetSpellProcess();
+
+					spellProcess->CastInstant(spell, (Entity*)client->GetPlayer(), (cmdTarget && cmdTarget->IsEntity()) ? (Entity*)cmdTarget : (Entity*)client->GetPlayer());
+				}
+				else
+				{
+					client->Message(CHANNEL_COLOR_RED, "Could not find spell %u.",spellid);
+				}
+			}
+			else if (sep && sep->arg[0])
+			{
+				database.FindSpell(client, (char*)sep->argplus[0]);
+			}
+			else
+			{
+				client->Message(CHANNEL_COLOR_YELLOW, "Syntax: /castspell [spellid] (tier=1) - Cast Spell with specified spell id, tier is optional, default of 1.");
+				client->Message(CHANNEL_COLOR_YELLOW, "Syntax: /castspell [spellname] - Find spells wildcard match with a partial spell name");
+			}
+		}
 		case COMMAND_ATTACK:
 		case COMMAND_AUTO_ATTACK:{
 			int8 type = 1;
