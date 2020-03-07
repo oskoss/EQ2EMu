@@ -6913,7 +6913,15 @@ void Client::SearchStore(int32 page){
 					else
 						packet->setArrayDataByName("quantity", item->stack_count, i);
 					packet->setArrayDataByName("stack_size", item->stack_count, i);
-					packet->setArrayDataByName("item_name", item->name.c_str(), i);
+
+
+					std::string tmpStr("");
+					tmpStr.append(item->name.c_str());
+					tmpStr.append(" (");
+					tmpStr.append(std::to_string(item->details.item_id));
+					tmpStr.append(")");
+
+					packet->setArrayDataByName("item_name", tmpStr.c_str(), i);
 					packet->setArrayDataByName("req_level", item->generic_info.adventure_default_level, i);
 					//QueuePacket(item->serialize(GetVersion(), false, GetPlayer()));
 				}

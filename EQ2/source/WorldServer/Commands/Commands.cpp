@@ -3548,22 +3548,31 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 										}
 		case COMMAND_ITEMSEARCH:{
-			PacketStruct* packet = configReader.getStruct("WS_StartBroker", client->GetVersion());
-			if(packet){
-				packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
-				//packet->setDataByName("unknown", 1);
-				packet->setDataByName("unknown2", 5, 0); 
-				packet->setDataByName("unknown2", 20, 1);
-				packet->setDataByName("unknown2", 58, 3);
-				packet->setDataByName("unknown2", 40, 4);
-				client->QueuePacket(packet->serialize());
-				PacketStruct* packet2 = configReader.getStruct("WS_BrokerBags", client->GetVersion());
-				if(packet2){
-					packet2->setDataByName("char_id", client->GetCharacterID());
-					client->QueuePacket(packet2->serialize()); //send this for now, needed to properly clear data
-					safe_delete(packet2);
+
+
+			if (sep && sep->arg[0])
+			{
+
+			}
+			else
+			{
+				PacketStruct* packet = configReader.getStruct("WS_StartBroker", client->GetVersion());
+				if (packet) {
+					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
+					//packet->setDataByName("unknown", 1);
+					packet->setDataByName("unknown2", 5, 0);
+					packet->setDataByName("unknown2", 20, 1);
+					packet->setDataByName("unknown2", 58, 3);
+					packet->setDataByName("unknown2", 40, 4);
+					client->QueuePacket(packet->serialize());
+					PacketStruct* packet2 = configReader.getStruct("WS_BrokerBags", client->GetVersion());
+					if (packet2) {
+						packet2->setDataByName("char_id", client->GetCharacterID());
+						client->QueuePacket(packet2->serialize()); //send this for now, needed to properly clear data
+						safe_delete(packet2);
+					}
+					safe_delete(packet);
 				}
-				safe_delete(packet);
 			}
 			break;
 		}
