@@ -51,7 +51,7 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 		insert into account set name='test',passwd=md5('test');
     - World Server Login Account (Used in Step 5): 
 	
-		insert into login_worldservers set name='TestLabs',account='testlabs',description='TestLabs',password=md5('testpass'),login_version='0.7.3-dev';
+		insert into login_worldservers set name='TestLabs',account='testlabs',description='TestLabs',password=md5('testpass'),note='',login_version='0.7.3-dev';
 
 5. Open the C:\\[YOUREQ2EMUGITSRC]\server\LoginServer.ini file (Notepad or other flavor editor)
 
