@@ -527,7 +527,7 @@ void Client::SendLoginAccepted() {
 		packet->setDataByName("account_id", 1);
 		//packet->setDataByName("login_response", 0);
 		//packet->setDataByName("reset_appearance", 0);
-		packet->setDataByName("do_not_force_soga", 1);
+		//packet->setDataByName("do_not_force_soga", 1);
 		//packet->setDataByName("race_unknown", 0x3F);
 		//packet->setDataByName("unknown11", 2); // can be 7
 		packet->setDataByName("sub_level", 2);
