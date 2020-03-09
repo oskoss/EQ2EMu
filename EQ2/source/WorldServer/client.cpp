@@ -7231,6 +7231,7 @@ void Client::ShowClaimWindow() {
 			packet->setArrayDataByName("item_id", item->details.item_id, i);
 			i++;
 		}
+		packet->setDataByName("unknown3", 1);
 		QueuePacket(packet->serialize());
 		safe_delete(packet);
 	}

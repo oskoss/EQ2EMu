@@ -30665,6 +30665,24 @@ to zero and treated like placeholders." />
 	<Data ElementName="unknown" Type="int32" Size="1" />
 </Data>
 </Struct>
+<Struct Name="WS_PromoFlagsDetails" ClientVersion="60114" OpcodeName="OP_PromoFlagsDetailsMsg">
+<Data ElementName="num_claim_items" Type="int32" Size="1" />
+<Data ElementName="claim_items_array" Type="Array" ArraySizeVariable="num_claim_items">
+    <Data ElementName="id" Type="int32" Size="1" />
+    <Data ElementName="not_yet_claimed" Type="int8" Size="1" />
+    <Data ElementName="num_remaining" Type="int32" Size="1" />
+    <Data ElementName="one_per_character" Type="int8" Size="1" />
+    <Data ElementName="claimed_on_this_char" Type="int8" Size="1" />
+    <Data ElementName="unknown2" Type="int8" Size="1" />
+    <Data ElementName="item_name" Type="EQ2_16Bit_String" Size="1" />
+    <Data ElementName="text" Type="EQ2_16Bit_String" Size="1" />
+    <Data ElementName="category" Type="EQ2_16Bit_String" Size="1" />
+    <Data ElementName="icon" Type="int16" Size="1" />
+    <Data ElementName="item_id" Type="int32" Size="1" />
+    <Data ElementName="unknown" Type="int32" Size="1" />
+</Data>
+<Data ElementName="unknown3" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_CharacterAchievements" ClientVersion="603" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_CharacterAchievements">
 <Data ElementName="num_achievements" Type="int16" Size="1" />
 <Data ElementName="achievement_array" Type="Array" ArraySizeVariable="num_achievements">
