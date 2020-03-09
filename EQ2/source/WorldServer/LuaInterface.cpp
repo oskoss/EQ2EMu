@@ -1356,15 +1356,22 @@ Mutex* LuaInterface::GetZoneScriptMutex(const char* name) {
 }
 
 void LuaInterface::UseItemScript(const char* name, lua_State* state, bool val) {
+	MItemScripts.writelock(__FUNCTION__, __LINE__);
 	item_scripts[name][state] = val;
+	MItemScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 void LuaInterface::UseSpawnScript(const char* name, lua_State* state, bool val) {
+	MSpawnScripts.writelock(__FUNCTION__, __LINE__);
 	spawn_scripts[name][state] = val;
+	MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 void LuaInterface::UseZoneScript(const char* name, lua_State* state, bool val) {
+
+	MZoneScripts.writelock(__FUNCTION__, __LINE__);
 	zone_scripts[name][state] = val;
+	MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 lua_State* LuaInterface::GetItemScript(const char* name, bool create_new, bool use) {
@@ -1379,9 +1386,13 @@ lua_State* LuaInterface::GetItemScript(const char* name, bool create_new, bool u
 		mutex->readlock(__FUNCTION__, __LINE__);
 		for(item_script_itr = itr->second.begin(); item_script_itr != itr->second.end(); item_script_itr++){
 			if(!item_script_itr->second){ //not in use
-				if(use)
-					item_script_itr->second = true;
 				ret = item_script_itr->first;
+
+				if (use)
+				{
+					item_script_itr->second = true;
+					break; // don't keep iterating, we already have our result
+				}
 			}
 		}
 		mutex->releasereadlock(__FUNCTION__, __LINE__);
@@ -1411,9 +1422,13 @@ lua_State* LuaInterface::GetSpawnScript(const char* name, bool create_new, bool 
 		mutex->readlock(__FUNCTION__, __LINE__);
 		for(spawn_script_itr = itr->second.begin(); spawn_script_itr != itr->second.end(); spawn_script_itr++){
 			if(!spawn_script_itr->second){ //not in use
-				if(use)
-					spawn_script_itr->second = true;
 				ret = spawn_script_itr->first;
+
+				if (use)
+				{
+					spawn_script_itr->second = true;
+					break; // don't keep iterating, we already have our result
+				}
 			}
 		}
 		mutex->releasereadlock(__FUNCTION__, __LINE__);
@@ -1441,9 +1456,13 @@ lua_State* LuaInterface::GetZoneScript(const char* name, bool create_new, bool u
 		mutex->readlock(__FUNCTION__, __LINE__);
 		for(zone_script_itr = itr->second.begin(); zone_script_itr != itr->second.end(); zone_script_itr++){
 			if(!zone_script_itr->second){ //not in use
-				if(use)
-					zone_script_itr->second = true;
 				ret = zone_script_itr->first;
+
+				if (use)
+				{
+					zone_script_itr->second = true;
+					break; // don't keep iterating, we already have our result
+				}
 			}
 		}
 		mutex->releasereadlock(__FUNCTION__, __LINE__);
@@ -1477,6 +1496,7 @@ bool LuaInterface::RunItemScript(string script_name, const char* function_name, 
 		if (!lua_isfunction(state, lua_gettop(state))){
 			lua_pop(state, 1);
 			mutex->releasereadlock(__FUNCTION__);
+			UseItemScript(script_name.c_str(), state, false);
 			return false;
 		}
 		SetItemValue(state, item);
@@ -1518,6 +1538,7 @@ bool LuaInterface::RunSpawnScript(string script_name, const char* function_name,
 		if (!lua_isfunction(state, lua_gettop(state))){
 			lua_pop(state, 1);
 			mutex->releasereadlock(__FUNCTION__);
+			UseSpawnScript(script_name.c_str(), state, false);
 			return false;
 		}
 		SetSpawnValue(state, npc);
@@ -1562,6 +1583,7 @@ bool LuaInterface::RunZoneScript(string script_name, const char* function_name, 
 		if (!lua_isfunction(state, lua_gettop(state))){
 			lua_pop(state, 1);
 			mutex->releasereadlock(__FUNCTION__);
+			UseZoneScript(script_name.c_str(), state, false);
 			return false;
 		}
 		SetZoneValue(state, zone);

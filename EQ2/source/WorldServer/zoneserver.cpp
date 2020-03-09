@@ -2864,15 +2864,11 @@ void ZoneServer::RemoveClient(Client* client)
 				client->GetPlayer()->DismissPet((NPC*)client->GetPlayer()->GetCharmedPet());
 				client->GetPlayer()->DismissPet((NPC*)client->GetPlayer()->GetDeityPet());
 				client->GetPlayer()->DismissPet((NPC*)client->GetPlayer()->GetCosmeticPet());
-
-				RemoveSpawn(false, client->GetPlayer(), false);
-				connected_clients.Remove(client, true, DisconnectClientTimer);
 			//}
 		}
 		else
 		{
 			LogWrite(ZONE__DEBUG, 0, "Zone", "Removing client '%s' (%u) due to some client zoning...", client->GetPlayer()->GetName(), client->GetPlayer()->GetCharacterID());
-			connected_clients.Remove(client, true, DisconnectClientTimer); // changed from a hardcoded 30000 (30 sec) to the DisconnectClientTimer rule
 		}
 
 		map<int32, int32>::iterator itr;
@@ -2890,6 +2886,9 @@ void ZoneServer::RemoveClient(Client* client)
 		LogWrite(ZONE__INFO, 0, "Zone", "Scheduling client '%s' for removal.", client->GetPlayer()->GetName());
 		LogWrite(MISC__TODO, 1, "TODO", "Put Player Online Status updates in a timer eventually\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 		database.ToggleCharacterOnline(client, 0);
+		
+		RemoveSpawn(false, client->GetPlayer(), false);
+		connected_clients.Remove(client, true, DisconnectClientTimer); // changed from a hardcoded 30000 (30 sec) to the DisconnectClientTimer rule
 	}
 }
 
