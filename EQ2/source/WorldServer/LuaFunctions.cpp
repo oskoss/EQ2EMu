@@ -184,7 +184,7 @@ int EQ2Emu_lua_KillSpawn(lua_State* state) {
 	Spawn* killer = lua_interface->GetSpawn(state, 2);
 	bool send_packet = (lua_interface->GetInt8Value(state, 3) == 1);
 	if(dead && dead->Alive() && dead->GetZone())
-		dead->GetZone()->KillSpawn(true, dead, killer, send_packet);
+		dead->GetZone()->KillSpawn(false, dead, killer, send_packet);
 	return 0;
 } 
 
