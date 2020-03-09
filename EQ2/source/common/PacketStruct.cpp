@@ -17,6 +17,8 @@
     You should have received a copy of the GNU General Public License
     along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <iostream>
+#include <exception>
 #include "PacketStruct.h"
 #include "ConfigReader.h"
 #include "../common/debug.h"
@@ -1192,7 +1194,11 @@ bool PacketStruct::LoadPacketData(uchar* data, int32 data_len){
 					useType2 = true;
 				safe_delete(varnames);
 			}
- 			StructLoadData(data_struct, GetStructPointer(data_struct), data_struct->GetLength(), useType2);
+			if (!StructLoadData(data_struct, GetStructPointer(data_struct), data_struct->GetLength(), useType2))
+			{
+				loadedSuccessfully = false;
+				break;
+			}
 		}
 	}
 	catch(...){
@@ -1200,7 +1206,7 @@ bool PacketStruct::LoadPacketData(uchar* data, int32 data_len){
 	}
 	return loadedSuccessfully;
 }
-void PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len, bool useType2){
+bool PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len, bool useType2){
 	int8 type = 0;
 	if (useType2) {
 		type = data_struct->GetType2();
@@ -1312,8 +1318,9 @@ void PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len
 		case DATA_STRUCT_ARRAY:{
 			int32 size = GetArraySize(data_struct,0);
 			if(size > 0xFFFF){
-				LogWrite(PACKET__WARNING, 1, "Packet", "Possible corrupt packet while loading struct array, orig array size: %u", size);
+				LogWrite(PACKET__WARNING, 1, "Packet", "Possible corrupt packet while loading struct array, orig array size: %u in struct name %s, data name %s", size, GetName(), (data_struct && data_struct->GetName()) ? data_struct->GetName() : "??");
 				size = 1;
+				return false;
 			}
 			PacketStruct* ps = GetPacketStructByName(data_struct->GetName());
 			if(ps && ps->GetSubPacketSize() != size){
@@ -1333,6 +1340,8 @@ void PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len
 			data_struct->SetIsSet(false);
 		}
 	}
+
+	return true;
 }
 PacketStruct* PacketStruct::GetPacketStructByName(const char* name){
 	PacketStruct* ps = 0;
