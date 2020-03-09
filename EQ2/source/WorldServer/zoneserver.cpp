@@ -3783,6 +3783,7 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 				database.CreateInstanceSpawnRemoved(spawn->GetSpawnLocationID(),SPAWN_ENTRY_TYPE_OBJECT, 
 				spawn->GetRespawnTime(),spawn->GetZone()->GetInstanceID());
 			}
+			safe_delete(spawn);
 		}
 		else
 		{
