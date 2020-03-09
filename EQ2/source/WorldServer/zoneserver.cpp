@@ -30,6 +30,8 @@ using namespace std;
 #ifdef WIN32
 #include <WinSock2.h>
 #include <windows.h>
+#include <dbghelp.h>
+#pragma comment(lib,"imagehlp.lib")
 #else
 #include <sys/socket.h>
 #ifdef FREEBSD //Timothy Whitman - January 7, 2003
@@ -3724,7 +3726,7 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 		MSpawnList.writelock(__FUNCTION__, __LINE__);
 	
 	LogWrite(ZONE__DEBUG, 7, "Zone", "RemoveSpawnList Start...");
-	spawn_list[spawn->GetID()] = 0;
+	spawn_list.erase(spawn->GetID());
 	
 	if (!spawnListLocked)
 		MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
