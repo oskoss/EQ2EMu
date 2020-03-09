@@ -48,6 +48,7 @@ Entity::Entity(){
 	memset(&ranged_combat_data, 0, sizeof(CombatData));
 	memset(&info_struct, 0, sizeof(InfoStruct));
 	loot_coins = 0;
+	trap_triggered = false;
 	memset(&features, 0, sizeof(CharFeatures));
 	memset(&equipment, 0, sizeof(EQ2_Equipment));
 	pet = 0;
@@ -1196,7 +1197,7 @@ void Entity::DismissPet(NPC* pet, bool from_death) {
 
 	// remove the spawn from the world
 	if (!from_death && pet->GetPetType() != PET_TYPE_CHARMED)
-		GetZone()->RemoveSpawn(pet);
+		GetZone()->RemoveSpawn(false, pet);
 }
 
 float Entity::CalculateBonusMod() {

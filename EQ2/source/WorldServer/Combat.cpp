@@ -1075,7 +1075,7 @@ void Entity::KillSpawn(Spawn* dead, int8 damage_type, int16 kill_blow_type) {
 	// Kill movement for the dead npc so the corpse doesn't move
 	dead->CalculateRunningLocation(true);
 
-	GetZone()->KillSpawn(dead, this, true, damage_type, kill_blow_type);
+	GetZone()->KillSpawn(true, dead, this, true, damage_type, kill_blow_type);
 }
 
 void Entity::ProcessCombat() {

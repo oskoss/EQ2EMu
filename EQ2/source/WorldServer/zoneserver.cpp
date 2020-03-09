@@ -1202,9 +1202,9 @@ void ZoneServer::DelayedSpawnRemoval(bool force_delete_all) {
 					}
 
 					if (spawn->IsPlayer())
-						RemoveSpawn(spawn, false);
+						RemoveSpawn(false, spawn, false);
 					else
-						RemoveSpawn(spawn);
+						RemoveSpawn(false, spawn);
 				}
 			}
 		}
@@ -1614,7 +1614,7 @@ void ZoneServer::CheckDeadSpawnRemoval() {
 				if (!spawn->IsPlayer())
 				{
 					dead_spawns.erase(spawn->GetID());
-					RemoveSpawn(spawn, true, true, false);
+					RemoveSpawn(true, spawn, true, true, false);
 				}
 			}
 		}
@@ -1831,7 +1831,7 @@ void ZoneServer::ProcessDrowning(){
 		vector<Client*>::iterator itr;
 		for(itr = dead_list.begin(); itr != dead_list.end(); itr++){
 			RemoveDrowningVictim((*itr)->GetPlayer());
-			KillSpawn((*itr)->GetPlayer(), 0);
+			KillSpawn(false, (*itr)->GetPlayer(), 0);
 			(*itr)->SimpleMessage(CHANNEL_COLOR_WHITE, "You are sleeping with the fishes!  Glug, glug...");
 		}
 	}
@@ -2863,7 +2863,7 @@ void ZoneServer::RemoveClient(Client* client)
 				client->GetPlayer()->DismissPet((NPC*)client->GetPlayer()->GetDeityPet());
 				client->GetPlayer()->DismissPet((NPC*)client->GetPlayer()->GetCosmeticPet());
 
-				RemoveSpawn(client->GetPlayer(), false);
+				RemoveSpawn(false, client->GetPlayer(), false);
 				connected_clients.Remove(client, true, DisconnectClientTimer);
 			//}
 		}
@@ -3644,7 +3644,7 @@ void ZoneServer::KillSpawnByDistance(Spawn* spawn, float max_distance, bool incl
 		test_spawn = itr->second;
 		if(test_spawn && test_spawn->IsEntity() && test_spawn != spawn && (!test_spawn->IsPlayer() || include_players)){
 			if(test_spawn->GetDistance(spawn) < max_distance)
-				KillSpawn(test_spawn, spawn, send_packet);
+				KillSpawn(true, test_spawn, spawn, send_packet);
 		}
 	}
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
@@ -3681,7 +3681,7 @@ void ZoneServer::RemoveFromRangeMap(Client* client){
 }
 */
 
-void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool lock) 
+void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spawn, bool respawn, bool lock) 
 {
 	LogWrite(ZONE__DEBUG, 3, "Zone", "Processing RemoveSpawn function...");
 
@@ -3690,18 +3690,74 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 	}
 
 	RemoveSpawnSupportFunctions(spawn);
-	RemoveDeadEnemyList(spawn);
+	if (reloading)
+		RemoveDeadEnemyList(spawn);
+
+	LogWrite(ZONE__DEBUG, 7, "Zone", "Lock DeadSpawns...");
+
 	if (lock)
 		MDeadSpawns.writelock(__FUNCTION__, __LINE__);
+
+	LogWrite(ZONE__DEBUG, 7, "Zone", "Erase DeadSpawns...");
 	if (dead_spawns.count(spawn->GetID()) > 0)
 		dead_spawns.erase(spawn->GetID());
 	if (lock)
-		MDeadSpawns.releasewritelock(__FUNCTION__, __LINE__);;
+		MDeadSpawns.releasewritelock(__FUNCTION__, __LINE__);
 
+	LogWrite(ZONE__DEBUG, 7, "Zone", "End DeadSpawns...");
+
+
+	LogWrite(ZONE__DEBUG, 7, "Zone", "SpawnExpireTimers...");
 	if (spawn_expire_timers.count(spawn->GetID()) > 0)
 		spawn_expire_timers.erase(spawn->GetID());
+	LogWrite(ZONE__DEBUG, 7, "Zone", "SpawnExpireTimers Done...");
 	
 	RemoveDelayedSpawnRemove(spawn);
+	LogWrite(ZONE__DEBUG, 7, "Zone", "RemoveDelayedSpawnRemove Done...");
+
+	// Clear the pointer in the spawn list, spawn thread will remove the key
+	if (!spawnListLocked)
+		MSpawnList.writelock(__FUNCTION__, __LINE__);
+	
+	LogWrite(ZONE__DEBUG, 7, "Zone", "RemoveSpawnList Start...");
+	spawn_list[spawn->GetID()] = 0;
+	
+	if (!spawnListLocked)
+		MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
+	LogWrite(ZONE__DEBUG, 7, "Zone", "RemoveSpawnList Done...");
+
+	PacketStruct* packet = 0;
+	int16 packet_version = 0;
+	Client* client = 0;
+
+	vector<Client*>::iterator client_itr;
+
+	LogWrite(ZONE__DEBUG, 7, "Zone", "ClientList Start...");
+	MClientList.readlock(__FUNCTION__, __LINE__);
+	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
+		client = *client_itr;
+
+		if (client) {
+			if (client->IsConnected() && (!packet || packet_version != client->GetVersion()))
+			{
+				safe_delete(packet);
+				packet_version = client->GetVersion();
+				packet = configReader.getStruct("WS_DestroyGhostCmd", packet_version);
+			}
+
+			if (client->GetPlayer()->HasTarget() && client->GetPlayer()->GetTarget() == spawn)
+				client->GetPlayer()->SetTarget(0);
+
+			SendRemoveSpawn(client, spawn, packet, delete_spawn);
+			if (spawn_range_map.count(client) > 0)
+				spawn_range_map.Get(client)->erase(spawn->GetID());
+		}
+	}
+	MClientList.releasereadlock(__FUNCTION__, __LINE__);
+
+	LogWrite(ZONE__DEBUG, 7, "Zone", "ClientList End...");
+
+	safe_delete(packet);
 
 	if(respawn && !spawn->IsPlayer() && spawn->GetRespawnTime() > 0 && spawn->GetSpawnLocationID() > 0)
 	{
@@ -3725,50 +3781,20 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 			}
 		}
 		else
-			respawn_timers.Put(spawn->GetSpawnLocationID(), Timer::GetCurrentTime2() + spawn->GetRespawnTime()*1000);
-	}
-
-	PacketStruct* packet = 0;
-	int16 packet_version = 0;
-	Client* client = 0;
-
-	// Clear the pointer in the spawn list, spawn thread will remove the key
-	MSpawnList.writelock(__FUNCTION__, __LINE__);
-	spawn_list.erase(spawn->GetID());
-	MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
-	
-	vector<Client*>::iterator client_itr;
-
-	MClientList.readlock(__FUNCTION__, __LINE__);
-	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
-		client = *client_itr;
-
-		if (client) {
-			if(client->IsConnected() && (!packet || packet_version != client->GetVersion()))
-			{
-				safe_delete(packet);
-				packet_version = client->GetVersion();
-				packet = configReader.getStruct("WS_DestroyGhostCmd", packet_version);
-			}
-
-			if(client->GetPlayer()->HasTarget() && client->GetPlayer()->GetTarget() == spawn)
-				client->GetPlayer()->SetTarget(0);
-
-			SendRemoveSpawn(client, spawn, packet, delete_spawn);
-			if(spawn_range_map.count(client) > 0)
-				spawn_range_map.Get(client)->erase(spawn->GetID());
+		{
+			int32 spawnLocationID = spawn->GetSpawnLocationID();
+			int32 spawnRespawnTime = spawn->GetRespawnTime();
+			safe_delete(spawn);
+			respawn_timers.Put(spawnLocationID, Timer::GetCurrentTime2() + spawnRespawnTime * 1000);
 		}
 	}
-	MClientList.releasereadlock(__FUNCTION__, __LINE__);
-
-	safe_delete(packet);
 
 	// Do we really need the mutex locks and check to dead_spawns as we remove it from dead spawns at the start of this function
-	if (lock)
+	if (lock && !respawn)
 		MDeadSpawns.readlock(__FUNCTION__, __LINE__);
-	if(delete_spawn && dead_spawns.count(spawn->GetID()) == 0)
+	if(!respawn && delete_spawn && dead_spawns.count(spawn->GetID()) == 0)
 		AddPendingDelete(spawn);
-	if (lock)
+	if (lock && !respawn)
 		MDeadSpawns.releasereadlock(__FUNCTION__, __LINE__);
 
 	LogWrite(ZONE__DEBUG, 3, "Zone", "Done processing RemoveSpawn function...");
@@ -4017,7 +4043,7 @@ void ZoneServer::Despawn(Spawn* spawn, int32 timer){
 	AddDeadSpawn(spawn, timer);
 }
 
-void ZoneServer::KillSpawn(Spawn* dead, Spawn* killer, bool send_packet, int8 damage_type, int16 kill_blow_type)
+void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, bool send_packet, int8 damage_type, int16 kill_blow_type)
 {
 	MDeadSpawns.readlock(__FUNCTION__, __LINE__);
 	if(!dead || this->dead_spawns.count(dead->GetID()) > 0) {

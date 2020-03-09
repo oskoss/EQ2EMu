@@ -502,6 +502,12 @@ public:
 	void AddLootCoins(int32 coins){
 		loot_coins += coins;
 	}
+	bool HasTrapTriggered() {
+		return trap_triggered;
+	}
+	void SetTrapTriggered(bool triggered) {
+		trap_triggered = triggered;
+	}
 	void AddLootItem(int32 id, int16 charges = 1){
 		Item* master_item = master_item_list.GetItem(id);
 		if(master_item){
@@ -817,6 +823,7 @@ private:
 	float	max_speed;
 	vector<Item*>	loot_items;
 	int32			loot_coins;
+	bool			trap_triggered;
 	int8	deity;
 	sint16	regen_hp_rate;
 	sint16	regen_power_rate;

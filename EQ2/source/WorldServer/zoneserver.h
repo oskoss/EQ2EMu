@@ -267,7 +267,7 @@ public:
 	
 	void	AddSpawnGroupChance(int32 group_id, float percent);
 	
-	void	RemoveSpawn(Spawn* spawn, bool delete_spawn = true, bool respawn = true, bool lock = true);
+	void	RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spawn = true, bool respawn = true, bool lock = true);
 	void	ProcessSpawnLocations();
 	void	SendQuestUpdates(Client* client, Spawn* spawn = 0);
 	
@@ -295,7 +295,7 @@ public:
 	
 	vector<Entity*> GetPlayers();
 	
-	void	KillSpawn(Spawn* dead, Spawn* killer, bool send_packet = true, int8 damage_type = 0, int16 kill_blow_type = 0);
+	void	KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, bool send_packet = true, int8 damage_type = 0, int16 kill_blow_type = 0);
 	
 	void	SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, int8 type2, int8 damage_type, int16 damage, const char* spell_name);
 	void    SendHealPacket(Spawn* caster, Spawn* target, int16 type, int32 heal_amt, const char* spell_name);

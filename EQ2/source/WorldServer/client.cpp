@@ -586,7 +586,7 @@ void Client::HandlePlayerRevive(int32 point_id)
 		safe_delete(packet);
 	}
 
-	GetCurrentZone()->RemoveSpawn(player, false);
+	GetCurrentZone()->RemoveSpawn(false, player, false);
 	
 	m_resurrect.writelock(__FUNCTION__, __LINE__);
 	if(current_rez.active)
@@ -1299,7 +1299,7 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 							GetPlayer()->SetCharSheetChanged(true);
 						GetCurrentZone()->SendDamagePacket(0, GetPlayer(), DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE, GetPlayer()->GetInvulnerable() ? DAMAGE_PACKET_RESULT_INVULNERABLE : DAMAGE_PACKET_RESULT_SUCCESSFUL, DAMAGE_PACKET_DAMAGE_TYPE_FALLING, damage, 0);
 						if(GetPlayer()->GetHP() == 0) {
-							GetCurrentZone()->KillSpawn(GetPlayer(), 0);
+							GetCurrentZone()->KillSpawn(false, GetPlayer(), 0);
 						}
 					}
 				}
@@ -2724,7 +2724,7 @@ void ClientList::Remove(Client* client, bool remove_data) {
 void Client::SetCurrentZone(int32 id){
 	if(current_zone){
 		//current_zone->GetCombat()->RemoveHate(player);
-		current_zone->RemoveSpawn(player, false);
+		current_zone->RemoveSpawn(false, player, false);
 	}
 	SetCurrentZone(zone_list.Get(id));
 
@@ -2733,7 +2733,7 @@ void Client::SetCurrentZone(int32 id){
 void Client::SetCurrentZoneByInstanceID(int32 id,int32 zoneid){
 	if(current_zone){
 		//current_zone->GetCombat()->RemoveHate(player);
-		current_zone->RemoveSpawn(player, false);
+		current_zone->RemoveSpawn(false, player, false);
 	}
 	SetCurrentZone(zone_list.GetByInstanceID(id,zoneid));
 
@@ -3181,7 +3181,7 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords){
 
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Removing player from current zone...", __FUNCTION__);
-	GetCurrentZone()->RemoveSpawn(player, false);
+	GetCurrentZone()->RemoveSpawn(false, player, false);
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting zone to '%s'...", __FUNCTION__, new_zone->GetZoneName());
 	SetCurrentZone(new_zone);
@@ -3952,7 +3952,7 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Entity* entity){
 		memcpy(data, &packet_size, sizeof(int32));
 		packet_size += sizeof(int32);
 		EQ2Packet* outapp = new EQ2Packet(OP_ClientCmdMsg, data, packet_size);
-		//DumpPacket(outapp);
+			//DumpPacket(outapp);
 		QueuePacket(outapp);
 		safe_delete_array(data);
 		safe_delete(packet);
@@ -3967,34 +3967,85 @@ void Client::Loot(Entity* entity){
 		Loot(total_coins, entity->GetLootItems(), entity);
 		entity->UnlockLoot();
 
-		int32 state = 0;
-		// Check for the chest and set the action state
-		/*4034 = small chest | 5864 = treasure chest | 5865 = ornate treasure chest | 4015 = exquisite chest*/
-		if (entity->GetModelType() == 4034) {			
-			// small chest, open with copper coins
-			state = 11899;
-		}
-		else if (entity->GetModelType() == 5864) {
-			// treasure chest, open with silver coins
-			state = 11901;
-		}
-		else if (entity->GetModelType() == 5865) {
-			// ornate chest, open with gold coins
-			state = 11900;
-		}
-		else if (entity->GetModelType() == 4015) {
-			// exquisite chest, open with gold coins and jewels as well as a glow effect
-			state = 11898;
-		}
-
-		// We set the visual state with out updating so those not in range will see it opened when it is finally sent to them,
-		// for those in range the SendStateCommand will cause it to animate open.
-		entity->SetVisualState(state, false);
-		GetCurrentZone()->SendStateCommand(entity, state);
+		OpenChest(entity);
 	}
 	else
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "You are not allowed to loot at this time.");
 
+}
+
+void Client::OpenChest(Entity* entity)
+{
+	if (!entity)
+		return;
+
+	int8 chest_difficulty = 0;
+	int32 state = 0;
+	// Check for the chest and set the action state
+	/*4034 = small chest | 5864 = treasure chest | 5865 = ornate treasure chest | 4015 = exquisite chest*/
+	if (entity->GetModelType() == 4034) {
+		// small chest, open with copper coins
+		// does not include traps, however can be disarmed
+		chest_difficulty = 1;
+		state = 11899;
+	}
+	else if (entity->GetModelType() == 5864) {
+		// treasure chest, open with silver coins
+		chest_difficulty = 2;
+		state = 11901;
+	}
+	else if (entity->GetModelType() == 5865) {
+		// ornate chest, open with gold coins
+		chest_difficulty = 3;
+		state = 11900;
+	}
+	else if (entity->GetModelType() == 4015) {
+		// exquisite chest, open with gold coins and jewels as well as a glow effect
+		chest_difficulty = 5;
+		state = 11898;
+	}
+	boolean firstChestOpen = false;
+
+	if (chest_difficulty > 0 && !entity->HasTrapTriggered())
+	{
+		Skill* disarmSkill = GetPlayer()->GetSkillByName("Disarm Trap", false);
+		firstChestOpen = true;
+		entity->SetTrapTriggered(true);
+		if (disarmSkill)
+		{
+			if (disarmSkill->CheckDisarmSkill(entity->GetLevel(), chest_difficulty) < 1)
+			{
+				//Spell* spell = master_spell_list.GetSpell(spellid, tier);
+
+				//GetPlayer()->GetZone()->GetSpellProcess()->CastInstant(spell, (Entity*)GetPlayer(), (Entity*)GetPlayer());
+
+				SimpleMessage(CHANNEL_COLOR_YELLOW, "You failed to disarm the chest.");
+			}
+			else
+			{
+				SimpleMessage(CHANNEL_COLOR_YELLOW, "You have disarmed the chest.");
+				GetPlayer()->GetSkillByName("Disarm Trap", true);
+			}
+		}
+		else
+		{
+			SimpleMessage(CHANNEL_COLOR_YELLOW, "You triggered the chest.");
+		}
+	}
+	else if(!entity->HasTrapTriggered())
+	{
+		firstChestOpen = true;
+		entity->SetTrapTriggered(true);
+	}
+	
+	// We set the visual state with out updating so those not in range will see it opened when it is finally sent to them,
+	// for those in range the SendStateCommand will cause it to animate open.
+
+	// TODO: when player enters radius that does not have visual state, update visual state
+	if (firstChestOpen)
+		entity->SetVisualState(state, false);
+
+	GetCurrentZone()->SendStateCommand(entity, state);
 }
 
 Spawn* Client::GetBanker(){
@@ -5006,7 +5057,7 @@ void Client::SaveCombineSpawns(const char* name){
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "Error: You only have a single Spawn in the group!");
 	else if(database.SaveCombinedSpawnLocation(GetCurrentZone(), combine_spawn, name)){
 		Message(CHANNEL_COLOR_YELLOW, "Successfully combined %u spawns into spawn location: %u", count, combine_spawn->GetSpawnLocationID());
-		GetCurrentZone()->RemoveSpawn(combine_spawn);
+		GetCurrentZone()->RemoveSpawn(false, combine_spawn);
 	}
 	else
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "Error saving spawn group, check console for details.");

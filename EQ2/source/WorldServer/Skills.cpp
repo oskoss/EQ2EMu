@@ -481,3 +481,33 @@ void PlayerSkillList::RemoveSkillBonus(int32 spell_id) {
 		safe_delete(sb);
 	}
 }
+
+int Skill::CheckDisarmSkill(int16 targetLevel, int8 chest_difficulty)
+{
+	if (chest_difficulty < 2) // no triggers on this chest type
+		return 1;
+
+	int	chest_diff_result = targetLevel * chest_difficulty;
+	float base_difficulty = 15.0f;
+	float fail_threshold = 10.0f;
+
+
+	float chance = ((100.0f - base_difficulty) * ((float)current_val / (float)chest_diff_result));
+
+	if (chance > (100.0f - base_difficulty))
+	{
+		chance = 100.0f - base_difficulty;
+	}
+
+	float d100 = (float)MakeRandomFloat(0, 100);
+
+	if (d100 <= chance)
+		return 1;
+	else
+	{
+		if (d100 > (chance + fail_threshold))
+			return -1;
+	}
+
+	return 0;
+}

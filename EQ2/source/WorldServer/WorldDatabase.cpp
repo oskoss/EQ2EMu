@@ -191,7 +191,7 @@ int32 WorldDatabase::LoadCharacterSpells(int32 char_id, Player* player)
 
 void WorldDatabase::SavePlayerSpells(Client* client)
 {
-	if(!client)
+	if(!client || client->GetCharacterID() < 1)
 		return;
 
 	LogWrite(SPELL__DEBUG, 3, "Spells", "Saving Spell(s) for Player: '%s'", client->GetPlayer()->GetName());
@@ -3090,7 +3090,7 @@ bool WorldDatabase::SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* in_spawn,
 		}
 		for(itr=spawns->begin();itr!=spawns->end();itr++){
 			spawn = *itr;
-			zone->RemoveSpawn(spawn);
+			zone->RemoveSpawn(false, spawn);
 		}
 		safe_delete(spawns);
 	}

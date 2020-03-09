@@ -1758,7 +1758,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if(dead && dead->IsPlayer() == false){
 					dead->SetHP(0);
 					if(sep && sep->arg[0] && sep->IsNumber(0) && atoi(sep->arg[0]) == 1)
-						client->GetCurrentZone()->RemoveSpawn(dead, true);
+						client->GetCurrentZone()->RemoveSpawn(false, dead, true);
 					else
 						client->GetPlayer()->KillSpawn(dead);
 				}else{
@@ -3327,7 +3327,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								delete_spawn = true;
 						}
 						if(delete_spawn)
-							client->GetCurrentZone()->RemoveSpawn(spawn, true, false);
+							client->GetCurrentZone()->RemoveSpawn(false, spawn, true, false);
 						else
 							spawn->SetSpawnLocationID(0);
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully removed spawn from zone");

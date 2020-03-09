@@ -184,7 +184,7 @@ int EQ2Emu_lua_KillSpawn(lua_State* state) {
 	Spawn* killer = lua_interface->GetSpawn(state, 2);
 	bool send_packet = (lua_interface->GetInt8Value(state, 3) == 1);
 	if(dead && dead->Alive() && dead->GetZone())
-		dead->GetZone()->KillSpawn(dead, killer, send_packet);
+		dead->GetZone()->KillSpawn(true, dead, killer, send_packet);
 	return 0;
 } 
 
@@ -3351,7 +3351,7 @@ int EQ2Emu_lua_Harvest(lua_State* state){
 
 			((GroundSpawn*)node)->ProcessHarvest(client);
 			if(((GroundSpawn*)node)->GetNumberHarvests() == 0)
-				player->GetZone()->RemoveSpawn(node, true);
+				player->GetZone()->RemoveSpawn(false, node, true);
 		}
 	}
 	else if(player && player->IsPlayer()){
