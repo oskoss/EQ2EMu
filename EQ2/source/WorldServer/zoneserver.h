@@ -280,7 +280,7 @@ public:
 	void	HandleEmote(Client* originator, string name);
 	Client*	GetClientBySpawn(Spawn* spawn);
 	Spawn*	GetSpawnByDatabaseID(int32 id);
-	Spawn*	GetSpawnByID(int32 id);
+	Spawn*	GetSpawnByID(int32 id, bool spawnListLocked=false);
 	
 	void	PlaySoundFile(Client* client, const char* name, float origin_x, float origin_y, float origin_z);
 	void	SendZoneSpawns(Client* client);

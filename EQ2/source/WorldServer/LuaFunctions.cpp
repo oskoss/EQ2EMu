@@ -3351,7 +3351,7 @@ int EQ2Emu_lua_Harvest(lua_State* state){
 
 			((GroundSpawn*)node)->ProcessHarvest(client);
 			if(((GroundSpawn*)node)->GetNumberHarvests() == 0)
-				player->GetZone()->RemoveSpawn(false, node, true);
+				player->GetZone()->RemoveSpawn(true, node, true);
 		}
 	}
 	else if(player && player->IsPlayer()){

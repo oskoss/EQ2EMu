@@ -3483,12 +3483,16 @@ Spawn*	ZoneServer::GetSpawnByDatabaseID(int32 id){
 	return ret;
 }
 
-Spawn* ZoneServer::GetSpawnByID(int32 id) {
+Spawn* ZoneServer::GetSpawnByID(int32 id, bool spawnListLocked) {
 	Spawn* ret = 0;
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	if (!spawnListLocked )
+		MSpawnList.readlock(__FUNCTION__, __LINE__);
+
 	if (spawn_list.count(id) > 0)
 		ret = spawn_list[id];
-	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+	
+	if (!spawnListLocked)
+		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
@@ -4124,7 +4128,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 
 
 		for (int8 i = 0; i < encounter->size(); i++) {
-			spawn = GetSpawnByID(encounter->at(i));
+			spawn = GetSpawnByID(encounter->at(i),spawnListLocked);
 			// set a flag to let us know if the killer is in the encounter
 			if (!killer_in_encounter && spawn == killer)
 				killer_in_encounter = true;
