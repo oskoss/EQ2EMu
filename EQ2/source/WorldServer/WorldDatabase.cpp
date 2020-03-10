@@ -2878,12 +2878,23 @@ void WorldDatabase::LoadSpawns(ZoneServer* zone)
 
 }
 
-bool WorldDatabase::UpdateSpawnLocationSpawns(Spawn* spawn){
+bool WorldDatabase::UpdateSpawnLocationSpawns(Spawn* spawn) {
 	Query query;
 	query.RunQuery2(Q_UPDATE, "update spawn_location_placement set x=%f, y=%f, z=%f, heading=%f, x_offset=%f, y_offset=%f, z_offset=%f, respawn=%u, expire_timer=%u, expire_offset=%u, grid_id=%u, pitch=%f, roll=%f where id = %u",
 		spawn->GetX(), spawn->GetY(), spawn->GetZ(), spawn->GetHeading(), spawn->GetXOffset(), spawn->GetYOffset(), spawn->GetZOffset(), spawn->GetRespawnTime(), spawn->GetExpireTime(), spawn->GetExpireOffsetTime(), spawn->appearance.pos.grid_id, spawn->GetPitch(), spawn->GetRoll(), spawn->GetSpawnLocationPlacementID());
-	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
+	if (query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF) {
 		LogWrite(WORLD__ERROR, 0, "World", "Error in UpdateSpawnLocationSpawns query '%s': %s", query.GetQuery(), query.GetError());
+		return false;
+	}
+	return true;
+}
+
+bool WorldDatabase::UpdateSpawnWidget(int32 widget_id, char* queryString) {
+	Query query;
+	query.RunQuery2(Q_UPDATE, "update spawn_widgets set %s where widget_id = %u",
+		queryString, widget_id);
+	if (query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF) {
+		LogWrite(WORLD__ERROR, 0, "World", "Error in UpdateSpawnWidget query '%s': %s", query.GetQuery(), query.GetError());
 		return false;
 	}
 	return true;

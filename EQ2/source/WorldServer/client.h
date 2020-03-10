@@ -391,6 +391,9 @@ public:
 	void SetTransmuteID(int32 trans_id);
 	int32 GetTransmuteID();
 
+	enum ServerSpawnPlacementMode { DEFAULT, OPEN_HEADING, CLOSE_HEADING };
+	void SetSpawnPlacementMode(ServerSpawnPlacementMode mode) { spawnPlacementMode = mode; }
+	ServerSpawnPlacementMode GetSpawnPlacementMode() { return spawnPlacementMode; }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -480,6 +483,7 @@ private:
 
 	int32 pending_flight_path;
 
+	ServerSpawnPlacementMode spawnPlacementMode;
 	bool on_auto_mount;
 	bool EntityCommandPrecheck(Spawn* spawn, const char* command);
 };

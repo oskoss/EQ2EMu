@@ -178,6 +178,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	memset(&incoming_paperdoll, 0, sizeof(incoming_paperdoll));
 	on_auto_mount = false;
 	should_load_spells = true;
+	spawnPlacementMode = ServerSpawnPlacementMode::DEFAULT;
 }
 
 Client::~Client() {
@@ -1168,32 +1169,75 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 			}
 			break;
 								}
-		case OP_PositionMoveableObject:{
+		case OP_PositionMoveableObject: {
 			LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_PositionMoveableObject", opcode, opcode);
-			PacketStruct* place_object=configReader.getStruct("WS_PlaceMoveableObject",GetVersion());
-			if(place_object && place_object->LoadPacketData(app->pBuffer, app->size)){
+			PacketStruct* place_object = configReader.getStruct("WS_PlaceMoveableObject", GetVersion());
+			if (place_object && place_object->LoadPacketData(app->pBuffer, app->size)) {
 				Spawn* spawn = GetPlayer()->GetSpawnWithPlayerID(place_object->getType_int32_ByName("spawn_id"));
-				if(!spawn){
+				if (!spawn) {
 					SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to find spawn.");
 					break;
 				}
-				spawn->SetX(place_object->getType_float_ByName("x"));
-				spawn->SetY(place_object->getType_float_ByName("y"));
-				spawn->SetZ(place_object->getType_float_ByName("z"));
-				spawn->SetHeading(place_object->getType_float_ByName("heading") + 180);
-				spawn->SetSpawnOrigX(spawn->GetX());
-				spawn->SetSpawnOrigY(spawn->GetY());
-				spawn->SetSpawnOrigZ(spawn->GetZ());
-				spawn->SetSpawnOrigHeading(spawn->GetHeading());
 
-				if(spawn->GetSpawnLocationID() > 0 && database.UpdateSpawnLocationSpawns(spawn))
-					SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully saved spawn information.");
-				else if(spawn->GetSpawnLocationID() > 0)
-					SimpleMessage(CHANNEL_COLOR_YELLOW, "Error saving spawn information, see console window for details.");
+				float newHeading = place_object->getType_float_ByName("heading") + 180;
+
+				char query[256];
+
+				switch (GetSpawnPlacementMode())
+				{
+				case ServerSpawnPlacementMode::OPEN_HEADING:
+				{
+					if (spawn && spawn->IsWidget())
+					{
+						Widget* widget = (Widget*)spawn;
+						widget->SetOpenHeading(newHeading);
+
+						spawn->position_changed = true;
+						_snprintf(query, 256, "open_heading=%f,include_heading=1", newHeading);
+						if (database.UpdateSpawnWidget(widget->GetWidgetID(), query))
+							SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully saved widget open heading information.");
+					}
+					else
+						SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn is not widget, unable to set close heading information.");
+					break;
+				}
+				case ServerSpawnPlacementMode::CLOSE_HEADING:
+				{
+					if (spawn && spawn->IsWidget())
+					{
+						Widget* widget = (Widget*)spawn;
+						widget->SetClosedHeading(newHeading);
+
+						spawn->position_changed = true;
+						_snprintf(query, 256, "close_heading=%f,include_heading=1", newHeading);
+						if (database.UpdateSpawnWidget(widget->GetWidgetID(), query))
+							SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully saved widget close heading information.");
+					}
+					else
+						SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn is not widget, unable to set close heading information.");
+					break;
+				}
+				default:
+				{
+					spawn->SetX(place_object->getType_float_ByName("x"));
+					spawn->SetY(place_object->getType_float_ByName("y"));
+					spawn->SetZ(place_object->getType_float_ByName("z"));
+					spawn->SetHeading(newHeading);
+					spawn->SetSpawnOrigX(spawn->GetX());
+					spawn->SetSpawnOrigY(spawn->GetY());
+					spawn->SetSpawnOrigZ(spawn->GetZ());
+					spawn->SetSpawnOrigHeading(spawn->GetHeading());
+					if (spawn->GetSpawnLocationID() > 0 && database.UpdateSpawnLocationSpawns(spawn))
+						SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully saved spawn information.");
+					else if (spawn->GetSpawnLocationID() > 0)
+						SimpleMessage(CHANNEL_COLOR_YELLOW, "Error saving spawn information, see console window for details.");
+				}
+				}
+
 				safe_delete(place_object);
 			}
 			break;
-									   }
+		}
 		case OP_CampAbortedMsg:{
 			LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_CampAbortedMsg", opcode, opcode);
 			if(camp_timer)

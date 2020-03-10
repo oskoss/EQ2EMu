@@ -203,6 +203,7 @@ public:
 	void	UpdateStartingSkillbar(int32 char_id, int8 class_id, int8 race_id);
 	void	UpdateStartingTitles(int32 char_id, int8 class_id, int8 race_id, int8 gender_id);
 	bool	UpdateSpawnLocationSpawns(Spawn* spawn);
+	bool	UpdateSpawnWidget(int32 widget_id, char* query);
 	bool	CheckVersionTable();
 	void	LoadFactionAlliances();
 	void	LoadFactionList();

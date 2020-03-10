@@ -1513,13 +1513,24 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if(packet){
 					float unknown2_3 = 0;
 					int8 placement_mode = 0;
+					client->SetSpawnPlacementMode(Client::ServerSpawnPlacementMode::DEFAULT);
 					if(sep && sep->arg[0][0]){
 						if(strcmp(sep->arg[0], "wall") == 0){
 							placement_mode = 2;
 							unknown2_3 = 150;
 						}
-						else if(strcmp(sep->arg[0], "ceiling") == 0)
+						else if (strcmp(sep->arg[0], "ceiling") == 0)
 							placement_mode = 1;
+						else if (strcmp(sep->arg[0], "openheading") == 0 && cmdTarget->IsWidget())
+						{
+							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "[PlacementMode] WIDGET OPEN HEADING MODE");
+							client->SetSpawnPlacementMode(Client::ServerSpawnPlacementMode::OPEN_HEADING);
+						}
+						else if (strcmp(sep->arg[0], "closeheading") == 0 && cmdTarget->IsWidget())
+						{
+							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "[PlacementMode] WIDGET CLOSE HEADING MODE");
+							client->SetSpawnPlacementMode(Client::ServerSpawnPlacementMode::CLOSE_HEADING);
+						}
 					}
 					packet->setDataByName("placement_mode", placement_mode);
 					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(cmdTarget));
