@@ -4050,7 +4050,7 @@ void Client::OpenChest(Entity* entity)
 		chest_difficulty = 5;
 		state = 11898;
 	}
-	boolean firstChestOpen = false;
+	bool firstChestOpen = false;
 
 	if (chest_difficulty > 0 && !entity->HasTrapTriggered())
 	{
