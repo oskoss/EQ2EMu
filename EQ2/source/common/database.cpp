@@ -217,7 +217,7 @@ MYSQL_RES* Query::RunQuery2(string in_query, QUERY_TYPE type){
 #if defined WORLD && defined _DEBUG
 	if (type == Q_UPDATE || type == Q_INSERT || type == Q_DELETE || type == Q_REPLACE)
 	{
-		char* filteredTables[] = { " characters", " character_", " statistics", " variables", "`guilds`" };
+		char* filteredTables[] = { " characters", " character_", " `character_", " statistics", " variables", " char_colors", " `guild_", " bugs" };
 
 		bool match = false;
 		for (int i = 0; i < sizeof(filteredTables) / sizeof(filteredTables[0]); i++)
