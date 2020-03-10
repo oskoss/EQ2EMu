@@ -6663,8 +6663,12 @@ void ZoneServer::AddLootDrop(int32 id, LootDrop* drop){
 	loot_drops[id].push_back(drop);
 }
 
-void ZoneServer::AddSpawnLootList(int32 spawn_id, int32 id){
+void ZoneServer::AddSpawnLootList(int32 spawn_id, int32 id) {
 	spawn_loot_list[spawn_id].push_back(id);
+}
+
+void ZoneServer::ClearSpawnLootList(int32 spawn_id) {
+	spawn_loot_list[spawn_id].clear();
 }
 
 void ZoneServer::AddLevelLootList(GlobalLoot* loot) {

@@ -151,3 +151,56 @@ void WorldDatabase::LoadGlobalLoot(ZoneServer* zone) {
 		LogWrite(LOOT__DEBUG, 0, "Loot", "--Loaded %u Global loot list%s.", count, count == 1 ? "" : "s");
 	}
 }
+
+bool WorldDatabase::LoadSpawnLoot(ZoneServer* zone, Spawn* spawn)
+{
+	if (!spawn->GetDatabaseID())
+		return false;
+
+	DatabaseResult result;
+	int32 count = 0;
+
+	zone->ClearSpawnLootList(spawn->GetDatabaseID());
+	// Finally, load loot tables into spawns that are set to use these loot tables
+	if (database_new.Select(&result, "SELECT spawn_id, loottable_id FROM spawn_loot where spawn_id=%u",spawn->GetDatabaseID())) {
+		count = 0;
+		LogWrite(LOOT__DEBUG, 0, "Loot", "--Assigning loot table(s) to spawn(s)...");
+
+		while (result.Next()) {
+			int32 spawn_id = result.GetInt32Str("spawn_id");
+			int32 table_id = result.GetInt32Str("loottable_id");
+			zone->AddSpawnLootList(spawn_id, table_id);
+			LogWrite(LOOT__DEBUG, 5, "Loot", "---Adding loot table %u to spawn %u", table_id, spawn_id);
+			count++;
+		}
+		LogWrite(LOOT__DEBUG, 0, "Loot", "--Loaded %u spawn loot list%s.", count, count == 1 ? "" : "s");
+		return true;
+	}
+	return false;
+}
+
+void WorldDatabase::AddLootTableToSpawn(Spawn* spawn, int32 loottable_id) {
+	Query query;
+	query.RunQuery2(Q_INSERT, "insert into spawn_loot set spawn_id=%u,loottable_id=%u", spawn->GetDatabaseID(), loottable_id);
+}
+
+bool WorldDatabase::RemoveSpawnLootTable(Spawn* spawn, int32 loottable_id) {
+	Query query;
+	if (loottable_id)
+	{
+		string delete_char = string("delete from spawn_loot where spawn_id=%i and loottable_id=%i");
+		query.RunQuery2(Q_DELETE, delete_char.c_str(), spawn->GetDatabaseID(), loottable_id);
+	}
+	else
+	{
+		string delete_char = string("delete from spawn_loot where spawn_id=%i");
+		query.RunQuery2(Q_DELETE, delete_char.c_str(), spawn->GetDatabaseID());
+	}
+	if (!query.GetAffectedRows())
+	{
+		//No error just in case ppl try doing stupid stuff
+		return false;
+	}
+
+	return true;
+}

@@ -808,6 +808,15 @@ public:
 	void UpdateGroupMemberInfo();
 
 	void CustomizeAppearance(PacketStruct* packet);
+
+	void ClearLootList() {
+		vector<Item*>::iterator itr;
+		for (itr = loot_items.begin(); itr != loot_items.end(); itr++)
+			safe_delete(*itr);
+
+		loot_items.clear();
+	}
+
 	Trade* trade;
 
 	// Keep track of entities that hate this spawn.

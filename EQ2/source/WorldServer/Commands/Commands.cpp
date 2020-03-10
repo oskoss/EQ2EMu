@@ -1853,31 +1853,104 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_LOOT_LIST:{
 			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity()){
-				vector<int32> loot_list = client->GetCurrentZone()->GetSpawnLootList(spawn->GetDatabaseID(), spawn->GetZone()->GetZoneID(), spawn->GetLevel(), race_types_list.GetRaceType(spawn->GetModelType()));
-				if(loot_list.size() > 0){
-					client->Message(CHANNEL_COLOR_YELLOW, "%s belongs to the following loot lists: ", spawn->GetName());
-					vector<int32>::iterator list_itr;
-					LootTable* table = 0;
-					for(list_itr = loot_list.begin(); list_itr != loot_list.end(); list_itr++){
-						table = client->GetCurrentZone()->GetLootTable(*list_itr);
-						if(table)
-							client->Message(CHANNEL_COLOR_YELLOW, "%u - %s", *list_itr, table->name.c_str());
+				if (sep && sep->arg[0]) {
+					if (!spawn->GetDatabaseID())
+					{
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn has no database id to assign to loottables.");
+						break;
 					}
-				}
-				Entity* target = (Entity*)spawn;
-				client->Message(CHANNEL_COLOR_YELLOW, "Coins being carried: %u", target->GetLootCoins());
-				vector<Item*>* items = target->GetLootItems();
-				if(items){
-					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn is carrying the following items: ");
-					vector<Item*>::iterator itr;
-					Item* item = 0;
-					for(itr = items->begin(); itr != items->end(); itr++){
-						item = *itr;
-						client->Message(CHANNEL_COLOR_YELLOW, "%u - %s", item->details.item_id, item->name.c_str());
+					else if (!spawn->IsNPC())
+					{
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "these /loot list [add/remove/clearall] sub-commands are only designed for an NPC.");
+						break;
 					}
+
+					bool reloadLoot = false;
+					if (!stricmp(sep->arg[0], "remove") && sep->arg[1] && sep->IsNumber(1))
+					{
+						int32 loottable_id = atoul(sep->arg[1]);
+						if (loottable_id > 0 && database.RemoveSpawnLootTable(spawn, loottable_id))
+						{
+							client->Message(CHANNEL_COLOR_YELLOW, "Spawn %u loot table %u removed.", spawn->GetDatabaseID(), loottable_id);
+							reloadLoot = true;
+						}
+						else
+							client->Message(CHANNEL_COLOR_YELLOW, "/loot list remove [loottableid] - could not match any spawn_id entries against loottable_id %u.", loottable_id);
+					}
+					else if (!stricmp(sep->arg[0], "add") && sep->arg[1] && sep->IsNumber(1))
+					{
+
+						int32 loottable_id = atoul(sep->arg[1]);
+						if (loottable_id > 0)
+						{
+							database.AddLootTableToSpawn(spawn, loottable_id);
+							client->Message(CHANNEL_COLOR_YELLOW, "Spawn %u loot table %u added.", spawn->GetDatabaseID(), loottable_id);
+							reloadLoot = true;
+						}
+						else
+							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/loot list add [loottableid] - cannot add a loottable id of 0.");
+					}
+					else if (!stricmp(sep->arg[0], "clearall"))
+					{
+						if (database.RemoveSpawnLootTable(spawn, 0))
+						{
+							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn loot tables removed.");
+							reloadLoot = true;
+						}
+						else
+							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/loot list clearall - could not match any spawn_id entries in loottable_id.");
+					}
+					else
+					{
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/loot list argument not supported.");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/loot list add [loottableid] - add new loottable to spawn");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/loot list remove [loottableid] - remove existing loottable from spawn");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/loot list clearall - remove all loottables from spawn");
+						break;
+					}
+					
+					if (reloadLoot)
+					{
+							database.LoadSpawnLoot(spawn->GetZone(), spawn);
+							if (spawn->IsNPC())
+							{
+								Entity* ent = (Entity*)spawn;
+								ent->SetLootCoins(0);
+								ent->ClearLootList();
+								spawn->GetZone()->AddLoot((NPC*)spawn);
+								client->Message(CHANNEL_COLOR_YELLOW, "Spawn %u active loot purged and reloaded.", spawn->GetDatabaseID());
+							}
+					}
+					break; // nothing further this is the end of these sub commands
 				}
 				else
-					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn is not carrying any items.");
+				{
+					vector<int32> loot_list = client->GetCurrentZone()->GetSpawnLootList(spawn->GetDatabaseID(), spawn->GetZone()->GetZoneID(), spawn->GetLevel(), race_types_list.GetRaceType(spawn->GetModelType()));
+					if (loot_list.size() > 0) {
+						client->Message(CHANNEL_COLOR_YELLOW, "%s belongs to the following loot lists: ", spawn->GetName());
+						vector<int32>::iterator list_itr;
+						LootTable* table = 0;
+						for (list_itr = loot_list.begin(); list_itr != loot_list.end(); list_itr++) {
+							table = client->GetCurrentZone()->GetLootTable(*list_itr);
+							if (table)
+								client->Message(CHANNEL_COLOR_YELLOW, "%u - %s", *list_itr, table->name.c_str());
+						}
+					}
+					Entity* target = (Entity*)spawn;
+					client->Message(CHANNEL_COLOR_YELLOW, "Coins being carried: %u", target->GetLootCoins());
+					vector<Item*>* items = target->GetLootItems();
+					if (items) {
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn is carrying the following items: ");
+						vector<Item*>::iterator itr;
+						Item* item = 0;
+						for (itr = items->begin(); itr != items->end(); itr++) {
+							item = *itr;
+							client->Message(CHANNEL_COLOR_YELLOW, "%u - %s", item->details.item_id, item->name.c_str());
+						}
+					}
+					else
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn is not carrying any items.");
+				}
 			}
 			break;
 							   }

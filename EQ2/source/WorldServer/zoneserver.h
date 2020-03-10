@@ -963,6 +963,7 @@ public:
 	void				AddLootTable(int32 id, LootTable* table);
 	void				AddLootDrop(int32 id, LootDrop* drop);
 	void				AddSpawnLootList(int32 spawn_id, int32 id);
+	void				ClearSpawnLootList(int32 spawn_id);
 	void				AddLevelLootList(GlobalLoot* loot);
 	void				AddRacialLootList(int16 racial_id, GlobalLoot* loot);
 	void				AddZoneLootList(int32 zone, GlobalLoot* loot);

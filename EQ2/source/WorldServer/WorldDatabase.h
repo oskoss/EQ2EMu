@@ -512,6 +512,9 @@ public:
 	/* Loot */
 	void				LoadLoot(ZoneServer* zone);
 	void				LoadGlobalLoot(ZoneServer* zone);
+	bool				LoadSpawnLoot(ZoneServer* zone, Spawn* spawn);
+	void				AddLootTableToSpawn(Spawn* spawn, int32 loottable_id);
+	bool				RemoveSpawnLootTable(Spawn* spawn, int32 loottable_id);
 
 	void				LoadCharacterHistory(int32 char_id, Player *player);
 	void				LoadSpellErrors();
