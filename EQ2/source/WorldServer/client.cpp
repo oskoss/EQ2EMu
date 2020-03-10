@@ -1191,6 +1191,7 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 					{
 						Widget* widget = (Widget*)spawn;
 						widget->SetOpenHeading(newHeading);
+						widget->SetIncludeHeading(true);
 
 						spawn->position_changed = true;
 						_snprintf(query, 256, "open_heading=%f,include_heading=1", newHeading);
@@ -1207,6 +1208,7 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 					{
 						Widget* widget = (Widget*)spawn;
 						widget->SetClosedHeading(newHeading);
+						widget->SetIncludeHeading(true);
 
 						spawn->position_changed = true;
 						_snprintf(query, 256, "close_heading=%f,include_heading=1", newHeading);
