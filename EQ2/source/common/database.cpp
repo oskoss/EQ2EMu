@@ -233,6 +233,7 @@ MYSQL_RES* Query::RunQuery2(string in_query, QUERY_TYPE type){
 				FILE* pFile;
 				pFile = fopen("sql_updates.sql", "a+");
 				fwrite(query.c_str(), 1, query.length(), pFile);
+				fwrite(";", sizeof(char), 1, pFile);
 				fwrite("\n", sizeof(char), 1, pFile);
 				fclose(pFile);
 			}
