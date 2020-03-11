@@ -3042,7 +3042,10 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 				spawn->GetCollisionRadius(), spawn->GetTotalHP(), spawn->GetTotalPower(), ((Object*)spawn)->GetDeviceID(), spawn->GetDatabaseID());
 		}
 		else if(spawn->IsWidget()){
-
+			query.RunQuery2(Q_UPDATE, "update spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s' where spawn.id = %u",
+				name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->appearance.display_name, spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, spawn->GetSize(),
+				spawn->GetTotalHP(), spawn->GetTotalPower(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->GetFactionID(), 
+				suffix.c_str(), prefix.c_str(), last_name.c_str(), spawn->GetDatabaseID());
 		}
 		else if(spawn->IsSign()){
 
