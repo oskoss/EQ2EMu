@@ -65,6 +65,12 @@ extern MasterCollectionList master_collection_list;
 extern RuleManager rule_manager;
 extern MasterLanguagesList master_languages_list;
 
+//devn00b: Fix for linux builds since we dont use stricmp we use strcasecmp
+#if defined(__GNUC__)
+#define stricmp strcasecmp
+#define strnicmp strncasecmp
+#endif
+
 WorldDatabase::WorldDatabase(){
 }
 

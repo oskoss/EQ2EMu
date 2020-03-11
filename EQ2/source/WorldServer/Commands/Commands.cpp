@@ -71,6 +71,13 @@ extern MasterAAList master_aa_list;
 extern MasterRaceTypeList race_types_list;
 extern Classes classes;
 
+//devn00b: Fix for linux builds since we dont use stricmp we use strcasecmp
+#if defined(__GNUC__)
+#define stricmp strcasecmp
+#define strnicmp strncasecmp
+#endif
+
+
 EQ2Packet* RemoteCommands::serialize(){
 	buffer.clear();
 	vector<EQ2_RemoteCommandString>::iterator command_list;
@@ -2775,7 +2782,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[0] && sep->IsNumber(0)){
 				val = atoi(sep->arg[0]);
 				
-				database.insertCharacterProperty(client, CHAR_PROPERTY_INVUL, (val == 1) ? "1" : "0");
+//devn00b: Fix for linux builds
+#if defined(__GNUC__)
+ database.insertCharacterProperty(client, CHAR_PROPERTY_INVUL, (val == 1) ? (char*) 1 : 0);
+#else
+ database.insertCharacterProperty(client, CHAR_PROPERTY_INVUL, (val == 1) ? "1" : "0");
+#endif
+//				database.insertCharacterProperty(client, CHAR_PROPERTY_INVUL, (val == 1) ? "1" : "0");
 
 				client->GetPlayer()->SetInvulnerable(val==1);
 				if(client->GetPlayer()->GetInvulnerable())

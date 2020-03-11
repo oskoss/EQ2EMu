@@ -58,6 +58,11 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include <unistd.h>
 #endif
 
+#if defined(__GNUC__)
+#define _snprintf snprintf
+#endif
+
+
 #include "client.h"
 #include "../common/emu_opcodes.h"
 #include "../common/packet_dump.h"
@@ -1194,6 +1199,7 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 						widget->SetIncludeHeading(true);
 
 						spawn->position_changed = true;
+
 						_snprintf(query, 256, "open_heading=%f,include_heading=1", newHeading);
 						if (database.UpdateSpawnWidget(widget->GetWidgetID(), query))
 							SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully saved widget open heading information.");
