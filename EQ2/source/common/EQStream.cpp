@@ -714,14 +714,14 @@ void EQStream::SendPacket(EQProtocolPacket *p)
 	uint32 length;
 
 	// Convert the EQApplicationPacket to 1 or more EQProtocolPackets
-	if (p->size>( MaxLen-6)) { // proto-op(2), app-op(2) ... data ... crc(2)
+	if (p->size>( MaxLen-8)) { // proto-op(2), seq(2), app-op(2) ... data ... crc(2)
 		uchar* tmpbuff=p->pBuffer;
 		length=p->size - 2;
 
 		EQProtocolPacket *out=new EQProtocolPacket(OP_Fragment,NULL,MaxLen-4);
 		*(uint32 *)(out->pBuffer+2)=htonl(length);
-		memcpy(out->pBuffer+6,tmpbuff+2,MaxLen-10);
 		used=MaxLen-10;
+		memcpy(out->pBuffer+6,tmpbuff+2,used);
 
 #ifdef LE_DEBUG
 		LogWrite(PACKET__DEBUG, 0, "Packet", "(%s, %i) New Fragment: ", __FUNCTION__, __LINE__);
