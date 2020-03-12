@@ -184,8 +184,8 @@ bool LoginServer::Process() {
 			{
 				LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): ServerOP_LSFatalError", pack->opcode, pack->opcode);
 
-				LogWrite(WORLD__ERROR, 0, "World", "Login Server returned a fatal error: %s\nDisabling reconnect.", pack->pBuffer);
-				pTryReconnect = false;
+				LogWrite(WORLD__ERROR, 0, "World", "Login Server returned a fatal error: %s\n", pack->pBuffer);
+				tcpc->Disconnect();
 				ret = false;
 				break;
 			}
@@ -448,6 +448,10 @@ bool LoginServer::Process() {
 			}
 		}
 		safe_delete(pack);
+
+		// break out if ret is now false
+		if (!ret)
+			break;
 	}
 	return ret;
 }
