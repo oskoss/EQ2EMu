@@ -1522,7 +1522,7 @@ bool ZoneServer::SpawnProcess(){
 			if (spawn) {
 				// Process spawn movement
 				if (movement) {
-					spawn->ProcessMovement();
+					spawn->ProcessMovement(true);
 					// update last_movement_update for all spawns (used for time_step)
 					spawn->last_movement_update = Timer::GetCurrentTime2();
 				}
@@ -3194,25 +3194,6 @@ void ZoneServer::AddMovementNPC(Spawn* spawn){
 void ZoneServer::RemoveMovementNPC(Spawn* spawn){
 	if (spawn)
 		remove_movement_spawns.Add(spawn->GetID());
-}
-
-void ZoneServer::ProcessMovement(){	
-	Spawn* spawn = 0;
-	MutexMap<int32, int32>::iterator itr = movement_spawns.begin();
-	while(itr.Next()){
-		spawn = GetSpawnByID(itr->first);
-		if(spawn) {
-			if(spawn->IsNPC() && !spawn->MovementInterrupted())
-				spawn->ProcessMovement();
-		}
-		else
-			movement_spawns.erase(itr->first);
-	}
-	MutexList<int32>::iterator remove_itr = remove_movement_spawns.begin();
-	while(remove_itr.Next()){
-		movement_spawns.erase(remove_itr->value);
-	}
-	remove_movement_spawns.clear();
 }
 
 void ZoneServer::PlayFlavor(Client* client, Spawn* spawn, const char* mp3, const char* text, const char* emote, int32 key1, int32 key2, int8 language){

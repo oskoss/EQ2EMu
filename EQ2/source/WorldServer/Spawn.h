@@ -847,7 +847,7 @@ public:
 
 	void	MoveToLocation(Spawn* spawn, float distance, bool immediate = true);
 	void	AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function);
-	void	ProcessMovement();
+	void	ProcessMovement(bool isSpawnListLocked=false);
 	void	ResetMovement();
 	bool	IsRunning();
 	void	CalculateRunningLocation(bool stop = false);
