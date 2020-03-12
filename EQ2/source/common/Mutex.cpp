@@ -1,21 +1,21 @@
-/*  
-    EQ2Emulator:  Everquest II Server Emulator
-    Copyright (C) 2007  EQ2EMulator Development Team (http://www.eq2emulator.net)
+/*
+	EQ2Emulator:  Everquest II Server Emulator
+	Copyright (C) 2007  EQ2EMulator Development Team (http://www.eq2emulator.net)
 
-    This file is part of EQ2Emulator.
+	This file is part of EQ2Emulator.
 
-    EQ2Emulator is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	EQ2Emulator is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    EQ2Emulator is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	EQ2Emulator is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "../common/Log.h"
 #include "../common/debug.h"
@@ -40,7 +40,7 @@ Mutex::~Mutex() {
 #endif
 }
 
-void Mutex::SetName(string in_name){
+void Mutex::SetName(string in_name) {
 #ifdef DEBUG
 	name = in_name;
 #endif
@@ -50,10 +50,10 @@ void Mutex::lock() {
 #ifdef DEBUG
 	int i = 0;
 #endif
-	if (name.length() > 0){
-		while (mlocked){
+	if (name.length() > 0) {
+		while (mlocked) {
 #ifdef DEBUG
-			if (i>MUTEX_TIMEOUT_MILLISECONDS){
+			if (i > MUTEX_TIMEOUT_MILLISECONDS) {
 				LogWrite(MUTEX__ERROR, 0, "Mutex", "Possible deadlock attempt by '%s'!", name.c_str());
 				return;
 			}
@@ -75,14 +75,14 @@ void Mutex::unlock() {
 	mlocked = false;
 }
 
-void Mutex::readlock(const char* function, int32 line){
+void Mutex::readlock(const char* function, int32 line) {
 #ifdef DEBUG
 	int32 i = 0;
 #endif
-	while (true){
+	while (true) {
 		//Loop until there isn't a writer, then we can read!
 		CSRead.lock();
-		if (!writing){
+		if (!writing) {
 			readers++;
 			CSRead.unlock();
 #ifdef DEBUG
@@ -95,12 +95,12 @@ void Mutex::readlock(const char* function, int32 line){
 		}
 		CSRead.unlock();
 #ifdef DEBUG
-		if (i > MUTEX_TIMEOUT_MILLISECONDS){
+		if (i > MUTEX_TIMEOUT_MILLISECONDS) {
 			LogWrite(MUTEX__ERROR, 0, "Mutex", "The mutex %s called from %s at line %u timed out waiting for a readlock!", name.c_str(), function ? function : "name_not_provided", line);
 			LogWrite(MUTEX__ERROR, 0, "Mutex", "The following functions had locks:");
 			map<string, int32>::iterator itr;
 			CSStack.lock();
-			for (itr = stack.begin(); itr != stack.end(); itr++){
+			for (itr = stack.begin(); itr != stack.end(); itr++) {
 				if (itr->second > 0 && itr->first.length() > 0)
 					LogWrite(MUTEX__ERROR, 0, "Mutex", "%s, number of locks = %u", itr->first.c_str(), itr->second);
 			}
@@ -113,7 +113,7 @@ void Mutex::readlock(const char* function, int32 line){
 	}
 }
 
-void Mutex::releasereadlock(const char* function, int32 line){
+void Mutex::releasereadlock(const char* function, int32 line) {
 	//Wait for the readcount lock
 	CSRead.lock();
 	//Lower the readcount by one, when readcount is 0 writers may start writing
@@ -121,10 +121,10 @@ void Mutex::releasereadlock(const char* function, int32 line){
 	CSRead.unlock();
 #ifdef DEBUG
 	CSStack.lock();
-	if (function){
+	if (function) {
 		map<string, int32>::iterator itr = stack.find((string)function);
-		if (itr != stack.end()){
-			if (--(itr->second) == 0){
+		if (itr != stack.end()) {
+			if (--(itr->second) == 0) {
 				stack.erase(itr);
 			}
 		}
@@ -133,10 +133,10 @@ void Mutex::releasereadlock(const char* function, int32 line){
 #endif
 }
 
-bool Mutex::tryreadlock(const char* function){
+bool Mutex::tryreadlock(const char* function) {
 	//This returns true if able to instantly obtain a readlock, false if not
 	CSRead.lock();
-	if (!writing){
+	if (!writing) {
 		readers++;
 		CSRead.unlock();
 	}
@@ -155,24 +155,25 @@ bool Mutex::tryreadlock(const char* function){
 	return true;
 }
 
-void Mutex::writelock(const char* function, int32 line){
+void Mutex::writelock(const char* function, int32 line) {
 	//Wait until the writer lock becomes available, then we can be the only writer!
 #ifdef DEBUG
 	int32 i = 0;
 #endif
-	while (!CSWrite.trylock()){
+	while (!CSWrite.trylock()) {
 #ifdef DEBUG
-		if (i > MUTEX_TIMEOUT_MILLISECONDS){
+		if (i > MUTEX_TIMEOUT_MILLISECONDS) {
 			LogWrite(MUTEX__ERROR, 0, "Mutex", "The mutex %s called from %s at line %u timed out waiting on another writelock!", name.c_str(), function ? function : "name_not_provided", line);
 			LogWrite(MUTEX__ERROR, 0, "Mutex", "The following functions had locks:");
 			map<string, int32>::iterator itr;
 			CSStack.lock();
-			for (itr = stack.begin(); itr != stack.end(); itr++){
+			for (itr = stack.begin(); itr != stack.end(); itr++) {
 				if (itr->second > 0 && itr->first.length() > 0)
 					LogWrite(MUTEX__ERROR, 0, "Mutex", "%s, number of locks = %u", itr->first.c_str(), itr->second);
 			}
 			CSStack.unlock();
-			return;
+			i = 0;
+			continue;
 		}
 		i++;
 #endif
@@ -187,7 +188,7 @@ void Mutex::writelock(const char* function, int32 line){
 #endif
 }
 
-void Mutex::releasewritelock(const char* function, int32 line){
+void Mutex::releasewritelock(const char* function, int32 line) {
 	//Wait for the readcount lock
 	CSRead.lock();
 	//Readers are aloud again
@@ -197,10 +198,10 @@ void Mutex::releasewritelock(const char* function, int32 line){
 	CSWrite.unlock();
 #ifdef DEBUG
 	CSStack.lock();
-	if (function){
+	if (function) {
 		map<string, int32>::iterator itr = stack.find((string)function);
-		if (itr != stack.end()){
-			if (--(itr->second) == 0){
+		if (itr != stack.end()) {
+			if (--(itr->second) == 0) {
 				stack.erase(itr);
 			}
 		}
@@ -209,14 +210,14 @@ void Mutex::releasewritelock(const char* function, int32 line){
 #endif
 }
 
-bool Mutex::trywritelock(const char* function){
+bool Mutex::trywritelock(const char* function) {
 	//This returns true if able to instantly obtain a writelock, false if not
-	if (CSWrite.trylock()){
+	if (CSWrite.trylock()) {
 		CSRead.lock();
 		if (readers == 0)
 			writing = true;
 		CSRead.unlock();
-		if (!writing){
+		if (!writing) {
 			CSWrite.unlock();
 			return false;
 		}
@@ -240,30 +241,29 @@ void Mutex::waitReaders(const char* function, int32 line)
 #ifdef DEBUG
 	int32 i = 0;
 #endif
-	CSRead.lock();
-	writing = true;
-	CSRead.unlock();
 	while (true)
 	{
 		CSRead.lock();
 		if (readers == 0)
 		{
+			writing = true;
 			CSRead.unlock();
 			break;
 		}
 		CSRead.unlock();
 #ifdef DEBUG
-		if (i > MUTEX_TIMEOUT_MILLISECONDS){
+		if (i > MUTEX_TIMEOUT_MILLISECONDS) {
 			LogWrite(MUTEX__ERROR, 0, "Mutex", "The mutex %s called from %s at line %u timed out while waiting on readers!", name.c_str(), function ? function : "name_not_provided", line);
 			LogWrite(MUTEX__ERROR, 0, "Mutex", "The following functions had locks:");
 			map<string, int32>::iterator itr;
 			CSStack.lock();
-			for (itr = stack.begin(); itr != stack.end(); itr++){
+			for (itr = stack.begin(); itr != stack.end(); itr++) {
 				if (itr->second > 0 && itr->first.length() > 0)
 					LogWrite(MUTEX__ERROR, 0, "Mutex", "%s, number of locks = %u", itr->first.c_str(), itr->second);
 			}
 			CSStack.unlock();
-			return;
+			i = 0;
+			continue;
 		}
 		i++;
 #endif
@@ -297,12 +297,12 @@ void LockMutex::lock() {
 	locked = true;
 }
 
-CriticalSection::CriticalSection(int attribute){
+CriticalSection::CriticalSection(int attribute) {
 #ifdef WIN32
 	InitializeCriticalSection(&CSMutex);
 #else
 	pthread_mutexattr_init(&type_attribute);
-	switch(attribute)
+	switch (attribute)
 	{
 	case MUTEX_ATTRIBUTE_FAST:
 		pthread_mutexattr_settype(&type_attribute, PTHREAD_MUTEX_FAST_NP);
@@ -322,7 +322,7 @@ CriticalSection::CriticalSection(int attribute){
 #endif
 }
 
-CriticalSection::~CriticalSection(){
+CriticalSection::~CriticalSection() {
 #ifdef WIN32
 	DeleteCriticalSection(&CSMutex);
 #else
@@ -331,7 +331,7 @@ CriticalSection::~CriticalSection(){
 #endif
 }
 
-void CriticalSection::lock(){
+void CriticalSection::lock() {
 	//Waits for a lock on this critical section
 #ifdef WIN32
 	EnterCriticalSection(&CSMutex);
@@ -340,7 +340,7 @@ void CriticalSection::lock(){
 #endif
 }
 
-void CriticalSection::unlock(){
+void CriticalSection::unlock() {
 	//Gets rid of one of the current thread's locks on this critical section
 #ifdef WIN32
 	LeaveCriticalSection(&CSMutex);
@@ -349,7 +349,7 @@ void CriticalSection::unlock(){
 #endif
 }
 
-bool CriticalSection::trylock(){
+bool CriticalSection::trylock() {
 	//Returns true if able to instantly get a lock on this critical section, false if not
 #ifdef WIN32
 	return TryEnterCriticalSection(&CSMutex);
