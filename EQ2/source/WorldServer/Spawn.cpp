@@ -1783,14 +1783,14 @@ void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate){
 	AddRunningLocation(spawn->GetX(), spawn->GetY(), spawn->GetZ(), GetSpeed(), distance);
 }
 
-void Spawn::ProcessMovement(){
+void Spawn::ProcessMovement(bool isSpawnListLocked){
 	if(IsPlayer()){
 		//Check if player is riding a boat, if so update pos (boat's current location + XYZ offsets)
 		Player* player = ((Player*)this);
 		int32 boat_id = player->GetBoatSpawn();
 		Spawn* boat = 0;
 		if(boat_id > 0)
-			boat = GetZone()->GetSpawnByID(boat_id);
+			boat = GetZone()->GetSpawnByID(boat_id, isSpawnListLocked);
 		if(boat){
 			SetX(boat->GetX() + player->GetBoatX());
 			SetY(boat->GetY() + player->GetBoatY());
@@ -1803,7 +1803,7 @@ void Spawn::ProcessMovement(){
 		return;
 
 	MMovementLoop.lock();
-	Spawn* followTarget = GetZone()->GetSpawnByID(m_followTarget);
+	Spawn* followTarget = GetZone()->GetSpawnByID(m_followTarget, isSpawnListLocked);
 	if (!followTarget && m_followTarget > 0)
 		m_followTarget = 0;
 	if (following && followTarget) {

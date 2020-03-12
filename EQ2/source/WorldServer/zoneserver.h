@@ -645,7 +645,6 @@ private:
 	void	CheckSpawnScriptTimers();																			// never used outside zone server
 	void	CheckHeadingTimers();																				// never used outside zone server
 	void	RemoveHeadingTimer(Spawn* spawn);																	// never used outside zone server
-	void	ProcessMovement();																					// never used outside zone server
 	void	PrepareSpawnID(Player* player, Spawn* spawn);														// never used outside zone server
 	void	RemoveMovementNPC(Spawn* spawn);																	// never used outside zone server
 	bool	CheckNPCAttacks(NPC* npc, Spawn* victim, Client* client = 0);										// never used outside zone server
