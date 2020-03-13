@@ -2823,6 +2823,9 @@ void ZoneServer::RemoveClient(Client* client)
 
 	if(client)
 	{
+		if (client->GetPlayer()) 
+			client_list.RemovePlayerFromInvisHistory(client->GetPlayer()->GetID());
+
 		LogWrite(ZONE__DEBUG, 0, "Zone", "Sending login equipment appearance updates...");
 		loginserver.SendImmediateEquipmentUpdatesForChar(client->GetPlayer()->GetCharacterID());
 
@@ -7054,10 +7057,13 @@ void ZoneServer::ProcessSpawnConditional(int8 condition) {
 	MSpawnList.readlock(__FUNCTION__, __LINE__);
 	map<int32, Spawn*>::iterator itr;
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-		SpawnLocation* loc = spawn_location_list[itr->second->GetSpawnLocationID()];
-		if (loc && loc->conditional > 0) {
-			if ((loc->conditional & condition) != condition) {
-				Despawn(itr->second, 0);
+		if (itr->second != NULL) // null itr->second still coming into ProcessSpawnConditional
+		{
+			SpawnLocation* loc = spawn_location_list[itr->second->GetSpawnLocationID()];
+			if (loc && loc->conditional > 0) {
+				if ((loc->conditional & condition) != condition) {
+					Despawn(itr->second, 0);
+				}
 			}
 		}
 	}

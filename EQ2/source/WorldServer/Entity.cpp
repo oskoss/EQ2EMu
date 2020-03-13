@@ -1627,6 +1627,10 @@ bool Entity::IsStealthed(){
 	return  (!stealth_list || stealth_list->size(true) == 0) == false;
 }
 
+bool Entity::CanSeeInvis(Entity* target) {
+	return true;
+}
+
 bool Entity::IsInvis(){
 	MutexList<LuaSpell*>* invis_list = control_effects[CONTROL_EFFECT_TYPE_INVIS];
 	return  (!invis_list || invis_list->size(true) == 0) == false;

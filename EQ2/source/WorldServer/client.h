@@ -502,6 +502,8 @@ public:
 	void	Process();
 	int32	Count();
 	void	ReloadQuests();
+	void	CheckPlayersInvisStatus(Client* owner);
+	void	RemovePlayerFromInvisHistory(int32 spawnID);
 private:
 	Mutex	MClients;
 	list<Client*> client_list;

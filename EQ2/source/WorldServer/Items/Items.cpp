@@ -994,6 +994,19 @@ bool Item::CheckLevel(int8 adventure_class, int8 tradeskill_class, int16 level) 
 void Item::AddStat(ItemStat* in_stat){
 	item_stats.push_back(in_stat);
 }
+
+bool Item::HasStat(uint32 statID)
+{
+	vector<ItemStat*>::iterator itr;
+	for (itr = item_stats.begin(); itr != item_stats.end(); itr++) {
+		if ((*itr)->stat_type_combined == statID) {
+			return true;
+			break;
+		}
+	}
+
+	return false;
+}
 void Item::AddSet(ItemSet* in_set){
 	item_sets.push_back(in_set);
 }

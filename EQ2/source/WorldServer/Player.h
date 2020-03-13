@@ -667,6 +667,12 @@ public:
 	void				AddSkillBonus(int32 spell_id, int32 skill_id, float value);
 	SkillBonus*			GetSkillBonus(int32 spell_id);
 	virtual void		RemoveSkillBonus(int32 spell_id);
+
+	virtual bool		CanSeeInvis(Entity* target);
+	bool				CheckChangeInvisHistory(Entity* target);
+	void				UpdateTargetInvisHistory(int32 targetID, bool canSeeStatus);
+	void				RemoveTargetInvisHistory(int32 targetID);
+
 	bool				HasFreeBankSlot();
 	int8				FindFreeBankSlot();
 	PlayerCollectionList * GetCollectionList() { return &collection_list; }
@@ -866,6 +872,8 @@ private:
 	bool                pending_deletion;
 	float               pos_packet_speed;
 	PlayerControlFlags  control_flags;
+
+	map<int32, bool>	target_invis_history;
 
 	// JA: POI Discoveries
 	map<int32, vector<int32> >	players_poi_list;

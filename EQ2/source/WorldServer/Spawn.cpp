@@ -1439,7 +1439,13 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 
 void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	int16 version = packet->GetVersion();
-	if(appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1){
+
+	bool hiddenInPVP = false;
+	bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
+	if (pvp_allowed && (Spawn*)spawn != this && this->IsPlayer() && !spawn->CanSeeInvis((Entity*)this))
+			hiddenInPVP = true;
+
+	if(!hiddenInPVP && (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1)){
 		appearance.locked_no_loot = 1; //for now
 		if(!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign()){
 			int8 percent = 0;
@@ -1482,11 +1488,18 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 			model_type = GetIllusionModel();
 	}
 
+	int16 sogaModelType = appearance.soga_model_type;
+	if (hiddenInPVP)
+	{
+		model_type = 0;
+		sogaModelType = 0;
+	}
+
 	packet->setDataByName("model_type", model_type);
 	if(appearance.soga_model_type == 0)
 		packet->setDataByName("soga_model_type", model_type);
 	else
-		packet->setDataByName("soga_model_type", appearance.soga_model_type);
+		packet->setDataByName("soga_model_type", sogaModelType);
 
 	if(GetTempActionState() >= 0)
 		packet->setDataByName("action_state", GetTempActionState());

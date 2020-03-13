@@ -849,6 +849,7 @@ public:
 	void SetAppearance(int16 type, int8 red, int8 green, int8 blue, int8 highlight_red, int8 highlight_green, int8 highlight_blue);
 	void SetAppearance(ItemAppearance* appearance);
 	void AddStat(ItemStat* in_stat);
+	bool HasStat(uint32 statID);
 	void AddSet(ItemSet* in_set);
 	void AddStatString(ItemStatString* in_stat);
 	void AddStat(int8 type, int16 subtype, float value, char* name = 0);

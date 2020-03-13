@@ -2527,6 +2527,7 @@ bool Client::Process(bool zone_process) {
 	}
 	if(pos_update.Check() && player_pos_changed){
 		//GetPlayer()->CalculateLocation();
+		client_list.CheckPlayersInvisStatus(this);
 		GetCurrentZone()->SendPlayerPositionChanges(GetPlayer());
 		player_pos_changed = false;
 		GetCurrentZone()->CheckTransporters(this);
@@ -2629,14 +2630,49 @@ void ClientList::ReloadQuests() {
 	list<Client*>::iterator client_iter;
 	Client* client = 0;
 	MClients.readlock(__FUNCTION__, __LINE__);
-	for(client_iter=client_list.begin(); client_iter!=client_list.end(); client_iter++){
+	for (client_iter = client_list.begin(); client_iter != client_list.end(); client_iter++) {
 		client = *client_iter;
-		if(client)
+		if (client)
 			client->ReloadQuests();
 	}
 	MClients.releasereadlock(__FUNCTION__, __LINE__);
 
 }
+
+void ClientList::CheckPlayersInvisStatus(Client* owner) {
+	if ( !owner->GetPlayer() || (!owner->GetPlayer()->IsInvis() && !owner->GetPlayer()->IsStealthed()) )
+		return;
+
+	list<Client*>::iterator client_iter;
+	Client* client = 0;
+	MClients.readlock(__FUNCTION__, __LINE__);
+	for (client_iter = client_list.begin(); client_iter != client_list.end(); client_iter++) {
+		client = *client_iter;
+		if (client == owner || client->GetPlayer() == NULL)
+			continue;
+
+		if (client->GetPlayer()->CheckChangeInvisHistory((Entity*)owner->GetPlayer()))
+			client->GetPlayer()->GetZone()->SendSpawnChanges(owner->GetPlayer(), client, true, true);
+	}
+	MClients.releasereadlock(__FUNCTION__, __LINE__);
+
+}
+
+void ClientList::RemovePlayerFromInvisHistory(int32 spawnID) {
+	list<Client*>::iterator client_iter;
+	Client* client = 0;
+	MClients.readlock(__FUNCTION__, __LINE__);
+	for (client_iter = client_list.begin(); client_iter != client_list.end(); client_iter++) {
+		client = *client_iter;
+		if (!client->GetPlayer())
+			continue;
+
+		client->GetPlayer()->RemoveTargetInvisHistory(spawnID);
+	}
+	MClients.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+
 
 int32 ClientList::Count(){
 	return client_list.size();

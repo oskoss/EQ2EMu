@@ -5434,3 +5434,84 @@ LUAHistory* Player::GetLUAHistory(int32 event_id) {
 	return ret;
 }
 
+bool Player::CanSeeInvis(Entity* target)
+{
+	if (!target->IsStealthed() && !target->IsInvis())
+		return true;
+
+	sint32 radius = rule_manager.GetGlobalRule(R_PVP, InvisPlayerDiscoveryRange)->GetSInt32();
+
+	if (radius == 0) // radius of 0 is always seen
+		return true;
+	// radius of -1 is never seen except through items/spells, radius > -1 means we will show the player if they get into the inner radius
+	else if (radius > -1 && this->GetDistance((Spawn*)target) < (float)radius)
+		return true;
+
+	// TODO: Implement See Invis Spells! http://cutpon.com:3000/devn00b/EQ2EMu/issues/43
+
+	Item* item = 0;
+	vector<Item*>* equipped_list = GetEquippedItemList();
+	bool seeInvis = false;
+	bool seeStealth = false;
+	for (int32 i = 0; i < equipped_list->size(); i++)
+	{
+		item = equipped_list->at(i);
+		seeInvis = item->HasStat(ITEM_STAT_SEEINVIS);
+		seeStealth = item->HasStat(ITEM_STAT_SEESTEALTH);
+		if (target->IsStealthed() && seeStealth)
+			return true;
+		else if (target->IsInvis() && seeInvis)
+			return true;
+	}
+
+	return false;
+}
+
+// returns true if we need to update target info due to see invis status change
+bool Player::CheckChangeInvisHistory(Entity* target)
+{
+	std::map<int32, bool>::iterator it;
+
+	it = target_invis_history.find(target->GetID());
+	if (it != target_invis_history.end())
+	{
+		//canSeeStatus
+		if (it->second)
+		{
+			if (!this->CanSeeInvis(target))
+			{
+				UpdateTargetInvisHistory(target->GetID(), false);
+				return true;
+			}
+			else
+				return false;
+		}
+		else
+		{
+			if (this->CanSeeInvis(target))
+			{
+				UpdateTargetInvisHistory(target->GetID(), true);
+				return true;
+			}
+			else
+				return false;
+		}
+	}
+
+	if (!this->CanSeeInvis(target))
+		UpdateTargetInvisHistory(target->GetID(), false);
+	else
+		UpdateTargetInvisHistory(target->GetID(), true);
+
+	return true;
+}
+
+void Player::UpdateTargetInvisHistory(int32 targetID, bool canSeeStatus)
+{
+	target_invis_history[targetID] = canSeeStatus;
+}
+
+void Player::RemoveTargetInvisHistory(int32 targetID)
+{
+	target_invis_history.erase(targetID);
+}

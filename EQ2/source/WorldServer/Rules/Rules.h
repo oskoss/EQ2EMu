@@ -70,6 +70,7 @@ enum RuleType {
 	/* PVP */
 	AllowPVP,
 	LevelRange,
+	InvisPlayerDiscoveryRange,
 
 	/* SPAWN */
 	SpeedMultiplier,
