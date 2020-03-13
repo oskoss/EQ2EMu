@@ -896,6 +896,9 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 					firstlogin = zar->isFirstLogin ( );
 					LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
 					if(database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)){
+						bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
+						if (pvp_allowed)
+							this->GetPlayer()->SetAttackable(1);
 						version = request->getType_int16_ByName("version");
 						MDeletePlayer.writelock(__FUNCTION__, __LINE__);
 						Client* client = zone_list.GetClientByCharName(player->GetName());

@@ -21,6 +21,7 @@
 #include "../common/Log.h"
 #include "Tradeskills/Tradeskills.h"
 #include "ClientPacketFunctions.h"
+#include "Rules/Rules.h"
 
 extern MasterSpellList master_spell_list;
 extern MasterSkillList master_skill_list;
@@ -28,6 +29,7 @@ extern ConfigReader configReader;
 extern LuaInterface* lua_interface;
 extern Commands commands;
 extern World world;
+extern RuleManager rule_manager;
 
 SpellProcess::SpellProcess(){
 	last_checked_time = 0;
@@ -1052,10 +1054,14 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 				if ((target->IsPlayer() || target->IsBot()) && (caster->IsPlayer() || caster->IsBot())) 
 				{
-					LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target (%s) is player and not attackable.", spell->GetName(), target->GetName());
-					zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_AN_ENEMY);
-					safe_delete(lua_spell);
-					return;
+					bool attackAllowed = (Entity*)caster->AttackAllowed((Entity*)target, 0);
+					if (!attackAllowed)
+					{
+						LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target (%s) is player and not attackable.", spell->GetName(), target->GetName());
+						zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_AN_ENEMY);
+						safe_delete(lua_spell);
+						return;
+					}
 				}
 
 				if (target->IsPet() && ((NPC*)target)->GetOwner() && ((NPC*)target)->GetOwner() == caster) {

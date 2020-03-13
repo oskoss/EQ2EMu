@@ -105,9 +105,6 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 			target = ((NPC*)target)->GetOwner();
 	}
 
-	bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
-	LogWrite(COMBAT__DEBUG, 3, "PVP", "PVP is: %s", pvp_allowed ? "ENABLED!" : "Disabled.");
-
 	if (attacker == target) {
 		LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: attacker tried to attack himself or his pet.");
 		return false;
@@ -123,9 +120,24 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 		return false;
 	}
 
-	if (!pvp_allowed && (attacker->IsPlayer() && target->IsPlayer())) {
-		LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: pvp is not allowed");
-		return false;
+	if (attacker->IsPlayer() && target->IsPlayer())
+	{
+		bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
+		if (!pvp_allowed) {
+			LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: pvp is not allowed");
+			return false;
+		}
+		else
+		{
+			sint32 pvpLevelRange = rule_manager.GetGlobalRule(R_PVP, LevelRange)->GetSInt32();
+			int32 attackerLevel = attacker->GetLevel();
+			int32 defenderLevel = target->GetLevel();
+			if ((sint32)abs((sint32)attackerLevel - (sint32)defenderLevel) > pvpLevelRange)
+			{
+				LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: pvp range of %i exceeded abs(%i-%i).", pvpLevelRange, attackerLevel, defenderLevel);
+				return false;
+			}
+		}
 	}
 
 	if (target->GetHP() <= 0) {

@@ -204,6 +204,7 @@ RuleManager::RuleManager() {
 
 	/* PVP */
 	RULE_INIT(R_PVP, AllowPVP, "0");
+	RULE_INIT(R_PVP, LevelRange, "4");
 
 	/* SPAWN */
 	RULE_INIT(R_Spawn, SpeedMultiplier, "300"); // note: this value was 1280 until 6/1/2009, then was 600 til Sep 2009, when it became 300...?

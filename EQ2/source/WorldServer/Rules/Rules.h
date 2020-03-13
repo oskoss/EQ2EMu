@@ -69,6 +69,7 @@ enum RuleType {
 
 	/* PVP */
 	AllowPVP,
+	LevelRange,
 
 	/* SPAWN */
 	SpeedMultiplier,
