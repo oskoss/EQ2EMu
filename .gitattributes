@@ -7,3 +7,4 @@
 /EQ2/source/depends/mariadb-10.1.19/lib/64-debug/mysqlclient.lib filter=lfs diff=lfs merge=lfs -text
 /EQ2/source/depends/mariadb-10.1.19/lib/64/mysqlclient.lib filter=lfs diff=lfs merge=lfs -text
 /Content/eq2_item_icons.zip filter=lfs diff=lfs merge=lfs -text
+/server/EQ2World__Debug.exe filter=lfs diff=lfs merge=lfs -text
