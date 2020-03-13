@@ -1440,12 +1440,14 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	int16 version = packet->GetVersion();
 
-	bool hiddenInPVP = false;
-	bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
-	if (pvp_allowed && (Spawn*)spawn != this && this->IsPlayer() && !spawn->CanSeeInvis((Entity*)this))
-			hiddenInPVP = true;
+	bool spawnHiddenFromClient = false;
 
-	if(!hiddenInPVP && (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1)){
+	// radius of 0 is always seen, -1 is never seen (unless items/spells override), larger than 0 is a defined radius to restrict visibility
+	sint32 radius = rule_manager.GetGlobalRule(R_PVP, InvisPlayerDiscoveryRange)->GetSInt32();
+	if (radius != 0 && (Spawn*)spawn != this && this->IsPlayer() && !spawn->CanSeeInvis((Entity*)this))
+		spawnHiddenFromClient = true;
+
+	if(!spawnHiddenFromClient && (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1)){
 		appearance.locked_no_loot = 1; //for now
 		if(!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign()){
 			int8 percent = 0;
@@ -1489,7 +1491,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	}
 
 	int16 sogaModelType = appearance.soga_model_type;
-	if (hiddenInPVP)
+	if (spawnHiddenFromClient)
 	{
 		model_type = 0;
 		sogaModelType = 0;
