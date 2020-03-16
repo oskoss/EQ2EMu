@@ -4077,26 +4077,31 @@ void Client::OpenChest(Entity* entity)
 	int32 state = 0;
 	// Check for the chest and set the action state
 	/*4034 = small chest | 5864 = treasure chest | 5865 = ornate treasure chest | 4015 = exquisite chest*/
+	string modelName;
 	if (entity->GetModelType() == 4034) {
 		// small chest, open with copper coins
 		// does not include traps, however can be disarmed
 		chest_difficulty = 1;
 		state = 11899;
+		modelName.append("Small Chest");
 	}
 	else if (entity->GetModelType() == 5864) {
 		// treasure chest, open with silver coins
 		chest_difficulty = 2;
 		state = 11901;
+		modelName.append("Treasure Chest");
 	}
 	else if (entity->GetModelType() == 5865) {
 		// ornate chest, open with gold coins
 		chest_difficulty = 3;
 		state = 11900;
+		modelName.append("Ornate Chest");
 	}
 	else if (entity->GetModelType() == 4015) {
 		// exquisite chest, open with gold coins and jewels as well as a glow effect
 		chest_difficulty = 5;
 		state = 11898;
+		modelName.append("Exquisite Chest");
 	}
 	bool firstChestOpen = false;
 
@@ -4120,11 +4125,12 @@ void Client::OpenChest(Entity* entity)
 					spellProcess->CastInstant(spell, entity, (Entity*)GetPlayer());
 				}
 
-				SimpleMessage(CHANNEL_COLOR_YELLOW, "You failed to disarm the chest.");
+				// need to confirm live fail to disarm message (seems now you either trigger or it gives no message?)
+				Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
 			}
 			else
 			{
-				SimpleMessage(CHANNEL_COLOR_YELLOW, "You have disarmed the chest.");
+				Message(CHANNEL_COLOR_WHITE, "You disarm the trap on %s", modelName.c_str());
 			}
 
 			// despite fail/succeed we should always try to increase skill if disarm is available
@@ -4142,7 +4148,7 @@ void Client::OpenChest(Entity* entity)
 				spellProcess->CastInstant(spell, entity, (Entity*)GetPlayer());
 			}
 
-			SimpleMessage(CHANNEL_COLOR_YELLOW, "You triggered the chest.");
+			Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
 		}
 	}
 	else if(!entity->HasTrapTriggered())
