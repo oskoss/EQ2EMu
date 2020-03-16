@@ -38,6 +38,8 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "Titles.h"
 #include "IRC/IRC.h"
 #include "Chat/Chat.h"
+#include "SpellProcess.h"
+#include "Zone/ChestTrap.h"
 
 //#include "Quests.h"
 
@@ -117,6 +119,7 @@ extern IRC irc;
 extern Chat chat;
 extern MasterAAList master_aa_list;
 extern MasterAAList master_tree_nodes;
+extern ChestTrapList chest_trap_list;
 
 using namespace std;
 
@@ -4099,6 +4102,8 @@ void Client::OpenChest(Entity* entity)
 
 	if (chest_difficulty > 0 && !entity->HasTrapTriggered())
 	{
+		ChestTrap::ChestTrapInfo nextTrap = chest_trap_list.GetNextTrap(GetCurrentZone()->GetZoneID(), chest_difficulty);
+
 		Skill* disarmSkill = GetPlayer()->GetSkillByName("Disarm Trap", false);
 		firstChestOpen = true;
 		entity->SetTrapTriggered(true);
@@ -4106,20 +4111,37 @@ void Client::OpenChest(Entity* entity)
 		{
 			if (disarmSkill->CheckDisarmSkill(entity->GetLevel(), chest_difficulty) < 1)
 			{
-				//Spell* spell = master_spell_list.GetSpell(spellid, tier);
+				Spell* spell = master_spell_list.GetSpell(nextTrap.spell_id, nextTrap.spell_tier);
+				if (spell)
+				{
+					// Get the current zones spell process
+					SpellProcess* spellProcess = GetCurrentZone()->GetSpellProcess();
 
-				//GetPlayer()->GetZone()->GetSpellProcess()->CastInstant(spell, (Entity*)GetPlayer(), (Entity*)GetPlayer());
+					spellProcess->CastInstant(spell, entity, (Entity*)GetPlayer());
+				}
 
 				SimpleMessage(CHANNEL_COLOR_YELLOW, "You failed to disarm the chest.");
 			}
 			else
 			{
 				SimpleMessage(CHANNEL_COLOR_YELLOW, "You have disarmed the chest.");
-				GetPlayer()->GetSkillByName("Disarm Trap", true);
 			}
+
+			// despite fail/succeed we should always try to increase skill if disarm is available
+			GetPlayer()->GetSkillByName("Disarm Trap", true);
 		}
-		else
+		else // no disarm skill, always fail
 		{
+			Spell* spell = master_spell_list.GetSpell(nextTrap.spell_id, nextTrap.spell_tier);
+
+			if (spell)
+			{
+				// Get the current zones spell process
+				SpellProcess* spellProcess = GetCurrentZone()->GetSpellProcess();
+
+				spellProcess->CastInstant(spell, entity, (Entity*)GetPlayer());
+			}
+
 			SimpleMessage(CHANNEL_COLOR_YELLOW, "You triggered the chest.");
 		}
 	}

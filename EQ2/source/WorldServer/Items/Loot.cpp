@@ -430,6 +430,7 @@ NPC* Entity::DropChest() {
 	chest->SetShowLevel(0);
 	chest->SetShowName(1);
 	chest->SetTargetable(1);
+	chest->SetLevel(GetLevel());
 
 	// Set the brain to a blank brain so it does nothing
 	chest->SetBrain(new BlankBrain(chest));

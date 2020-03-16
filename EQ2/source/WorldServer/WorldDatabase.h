@@ -568,6 +568,8 @@ public:
 	void                LoadTransmuting();
 
 	void				FindSpell(Client* client, char* findString);
+
+	void				LoadChestTraps();
 private:
 	DatabaseNew			database_new;
 	map<int32, string>	zone_names;

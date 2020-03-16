@@ -487,6 +487,9 @@ int Skill::CheckDisarmSkill(int16 targetLevel, int8 chest_difficulty)
 	if (chest_difficulty < 2) // no triggers on this chest type
 		return 1;
 
+	if (targetLevel < 1)
+		targetLevel = 1;
+
 	int	chest_diff_result = targetLevel * chest_difficulty;
 	float base_difficulty = 15.0f;
 	float fail_threshold = 10.0f;

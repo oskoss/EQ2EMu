@@ -141,6 +141,7 @@ SRC= ../common/Condition.o \
 	World.o \
 	WorldDatabase.o \
 	Zone/SPGrid.o \
+	Zone/ChestTraps.o \
 	zoneserver.o
 
 

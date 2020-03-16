@@ -44,6 +44,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "Languages.h"
 #include "Traits/Traits.h"
 #include "ClientPacketFunctions.h"
+#include "Zone/ChestTrap.h"
 
 extern Classes classes;
 extern Commands commands;
@@ -64,6 +65,7 @@ extern GuildList guild_list;
 extern MasterCollectionList master_collection_list;
 extern RuleManager rule_manager;
 extern MasterLanguagesList master_languages_list;
+extern ChestTrapList chest_trap_list;
 
 //devn00b: Fix for linux builds since we dont use stricmp we use strcasecmp
 #if defined(__GNUC__)
@@ -6582,4 +6584,25 @@ void WorldDatabase::FindSpell(Client* client, char* findString)
 			}
 			client->Message(CHANNEL_COLOR_YELLOW, "End Spell Results for %s", findString);
 		}
+}
+
+void WorldDatabase::LoadChestTraps() {
+	chest_trap_list.Clear();
+	int32 index = 0;
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, applicable_zone_id, chest_min_difficulty, chest_max_difficulty, spell_id, spell_tier FROM chest_traps");
+	if (result && mysql_num_rows(result) > 0) {
+		Title* title = 0;
+		while (result && (row = mysql_fetch_row(result))) {
+			int32 dbid = atoul(row[0]);
+			sint32 applicable_zone_id = atoi(row[1]);
+			int32 mindifficulty = atoul(row[2]);
+			int32 maxdifficulty = atoul(row[3]);
+			int32 spellid = atoul(row[4]);
+			int32 tier = atoul(row[5]);
+			ChestTrap* trap = new ChestTrap(dbid,applicable_zone_id,mindifficulty,maxdifficulty,spellid,tier);
+			chest_trap_list.AddChestTrap(trap);
+		}
+	}
 }

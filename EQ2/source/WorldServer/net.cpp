@@ -55,6 +55,7 @@ using namespace std;
 #include "Traits/Traits.h"
 #include "IRC/IRC.h"
 #include "Transmute.h"
+#include "Zone/ChestTrap.h"
 
 #ifdef WIN32
 	#include <process.h>
@@ -107,6 +108,7 @@ int last_signal = 0;
 RuleManager rule_manager;
 MasterTitlesList master_titles_list;
 MasterLanguagesList master_languages_list;
+ChestTrapList chest_trap_list;
 extern MasterAchievementList master_achievement_list;
 extern map<int16, int16> EQOpcodeVersions;
 PatchServer patch;
@@ -333,6 +335,9 @@ int main(int argc, char** argv) {
 
 	LogWrite(WORLD__INFO, 0, "World", "Loading Transmuting Data...");
 	database.LoadTransmuting();
+
+	LogWrite(WORLD__INFO, 0, "World", "Loading Chest Trap Data...");
+	database.LoadChestTraps();
 
 	if (threadedLoad) {
 		LogWrite(WORLD__INFO, 0, "World", "Waiting for load threads to finish.");

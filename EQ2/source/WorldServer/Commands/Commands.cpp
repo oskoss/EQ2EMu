@@ -1998,6 +1998,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 									 }
 		case COMMAND_LOOT_CORPSE:
+		case COMMAND_DISARM:
 		case COMMAND_LOOT:{
 			if (cmdTarget && ((Entity*)cmdTarget)->IsNPC() && cmdTarget->Alive())
 			{

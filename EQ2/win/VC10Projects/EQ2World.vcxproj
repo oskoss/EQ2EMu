@@ -117,7 +117,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WORLD;DEBUG;_EQDEBUG;WIN32;_CONSOLE;EQ2;EQN_DEBUG;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WORLD;_DEBUG;_EQDEBUG;WIN32;_CONSOLE;EQ2;EQN_DEBUG;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -147,7 +147,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <OmitFramePointers>
       </OmitFramePointers>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <ResourceCompile>
@@ -219,7 +219,7 @@
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ShowIncludes>false</ShowIncludes>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
@@ -530,6 +530,7 @@
     <ClCompile Include="..\..\source\common\TCPConnection.cpp" />
     <ClCompile Include="..\..\source\common\timer.cpp" />
     <ClCompile Include="..\..\source\common\xmlParser.cpp" />
+    <ClCompile Include="..\..\source\WorldServer\Zone\ChestTrap.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Zone\SPGrid.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -663,6 +664,7 @@
     <ClInclude Include="..\..\source\common\types.h" />
     <ClInclude Include="..\..\source\common\version.h" />
     <ClInclude Include="..\..\source\common\xmlParser.h" />
+    <ClInclude Include="..\..\source\WorldServer\Zone\ChestTrap.h" />
     <ClInclude Include="..\..\source\WorldServer\Zone\SPGrid.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
