@@ -27,31 +27,30 @@ void ChestTrapList::AddChestTrap(ChestTrap* trap) {
 	MChestTrapList.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-ChestTrap::ChestTrapInfo ChestTrapList::GetChestTrap(int32 id) {
+bool ChestTrapList::GetChestTrap(int32 id, ChestTrap::ChestTrapInfo* cti) {
 	ChestTrap* res = 0;
 	MChestTrapList.readlock(__FUNCTION__, __LINE__);
 	if (chesttrap_list.count(id) > 0)
 		res = chesttrap_list[id];
 
-	ChestTrap::ChestTrapInfo cti;
-	memset(&cti, 0, sizeof(ChestTrap::ChestTrapInfo));
+	memset(cti, 0, sizeof(ChestTrap::ChestTrapInfo));
 	if (res)
-		memcpy(&cti, &res->GetChestTrapInfo(), sizeof(ChestTrap::ChestTrapInfo));
+		memcpy(cti, &res->GetChestTrapInfo(), sizeof(ChestTrap::ChestTrapInfo));
 	MChestTrapList.releasereadlock(__FUNCTION__, __LINE__);
 
 	return cti;
 }
 
-ChestTrap::ChestTrapInfo ChestTrapList::GetNextTrap(int32 zoneid, int32 chest_difficulty)
+bool ChestTrapList::GetNextTrap(int32 zoneid, int32 chest_difficulty, ChestTrap::ChestTrapInfo* cti)
 {
 	MChestListsInUse.writelock(__FUNCTION__, __LINE__);
 	ChestTrapList* zoneTrapList = GetChestListByZone(zoneid);
 	ChestTrapList* zoneDifficultyTrapList = zoneTrapList->GetChestListByDifficulty(chest_difficulty);
 
-	ChestTrap::ChestTrapInfo nextTrap = zoneTrapList->GetNextChestTrap();
+	zoneTrapList->GetNextChestTrap(cti);
 	MChestListsInUse.releasewritelock(__FUNCTION__, __LINE__);
 
-	return nextTrap;
+	return true;
 }
 
 void ChestTrapList::Clear() {
@@ -61,7 +60,7 @@ void ChestTrapList::Clear() {
 	MChestListsInUse.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-ChestTrap::ChestTrapInfo ChestTrapList::GetNextChestTrap() {
+bool ChestTrapList::GetNextChestTrap(ChestTrap::ChestTrapInfo* cti) {
 	MChestTrapList.readlock(__FUNCTION__, __LINE__);
 	if (cycleItr == chesttrap_list.end())
 	{
@@ -75,15 +74,14 @@ ChestTrap::ChestTrapInfo ChestTrapList::GetNextChestTrap() {
 	MChestTrapList.writelock(__FUNCTION__, __LINE__);
 	ChestTrap* trap = cycleItr->second;
 
-	ChestTrap::ChestTrapInfo cti;
-	memset(&cti, 0, sizeof(ChestTrap::ChestTrapInfo));
+	memset(cti, 0, sizeof(ChestTrap::ChestTrapInfo));
 	if (trap)
-		memcpy(&cti, &trap->GetChestTrapInfo(), sizeof(ChestTrap::ChestTrapInfo));
+		memcpy(cti, &trap->GetChestTrapInfo(), sizeof(ChestTrap::ChestTrapInfo));
 
 	cycleItr++;
 	MChestTrapList.releasewritelock(__FUNCTION__, __LINE__);
 
-	return cti;
+	return true;
 }
 
 ChestTrapList* ChestTrapList::GetChestListByDifficulty(int32 difficulty) {
