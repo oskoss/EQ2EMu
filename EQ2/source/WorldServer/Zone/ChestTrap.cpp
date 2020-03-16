@@ -1,6 +1,7 @@
 #include "ChestTrap.h"
 #include <vector>
 #include <algorithm>    // std::random_shuffle
+#include <string.h>
 
 int32 ChestTrapList::Size() {
 
