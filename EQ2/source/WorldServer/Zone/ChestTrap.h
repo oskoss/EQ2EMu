@@ -73,10 +73,6 @@ public:
 
 		ChestTrapParent = parentClass;
 
-		// instantiates one inner layer to the top layer of chest trap lists
-		if (parentClass)
-			InstantiateLists(false);
-
 		ListLoaded = false;
 	}
 
@@ -105,9 +101,12 @@ private:
 	bool	IsListLoaded();
 	void	SetListLoaded(bool val);
 
+	void	AddChestTrapList(ChestTrapList* trap, int32 id);
+
 	void	SetCycleIterator(map<int32, ChestTrap*>::iterator itr);
 
 	ChestTrapList* GetChestTrapList(ChestTrapBaseList listName);
+	ChestTrapList* GetChestTrapListByID(int32 id);
 
 	void ClearTraps();
 	void ClearTrapList();

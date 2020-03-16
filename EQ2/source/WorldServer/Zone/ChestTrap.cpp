@@ -85,11 +85,27 @@ bool ChestTrapList::GetNextChestTrap(ChestTrap::ChestTrapInfo* cti) {
 }
 
 ChestTrapList* ChestTrapList::GetChestListByDifficulty(int32 difficulty) {
-	ChestTrapList* usedList = GetChestTrapList(ChestTrapBaseList::DIFFICULTY);
+		ChestTrapList* usedList = 0;
+
+		int32 id = 0;
+		if (ChestTrapParent)
+		{
+			usedList = GetChestTrapList(ChestTrapBaseList::DIFFICULTY);
+			id = ChestTrapBaseList::DIFFICULTY;
+		}
+		else
+		{
+			usedList = GetChestTrapListByID(difficulty);
+			id = difficulty;
+		}
+
 	if (usedList && usedList->IsListLoaded())
 		return usedList;
 	else if (!usedList)
-		return NULL;
+	{
+		usedList = new ChestTrapList();
+		AddChestTrapList(usedList, id);
+	}
 
 	MChestTrapList.writelock(__FUNCTION__, __LINE__);
 	map<int32, ChestTrap*>::iterator itr;
@@ -109,11 +125,27 @@ ChestTrapList* ChestTrapList::GetChestListByDifficulty(int32 difficulty) {
 }
 
 ChestTrapList* ChestTrapList::GetChestListByZone(int32 zoneid) {
-	ChestTrapList* usedList = GetChestTrapList(ChestTrapBaseList::ZONE);
+	ChestTrapList* usedList = 0;
+
+	int32 id = 0;
+	if (ChestTrapParent)
+	{
+		usedList = GetChestTrapList(ChestTrapBaseList::ZONE);
+		id = ChestTrapBaseList::ZONE;
+	}
+	else
+	{
+		usedList = GetChestTrapListByID(zoneid);
+		id = zoneid;
+	}
+
 	if (usedList && usedList->IsListLoaded())
 		return usedList;
 	else if (!usedList)
-		return NULL;
+	{
+		usedList = new ChestTrapList();
+		AddChestTrapList(usedList, id);
+	}
 
 	MChestTrapList.writelock(__FUNCTION__, __LINE__);
 	map<int32, ChestTrap*>::iterator itr;
@@ -135,11 +167,33 @@ map<int32, ChestTrap*>* ChestTrapList::GetAllChestTraps() { return &chesttrap_li
 bool	ChestTrapList::IsListLoaded() { return ListLoaded; }
 void	ChestTrapList::SetListLoaded(bool val) { ListLoaded = val; }
 
+void ChestTrapList::AddChestTrapList(ChestTrapList* traplist, int32 id) {
+	if (chesttrap_innerlist.count(id) > 0)
+	{
+		ChestTrapList* tmpTrapList = chesttrap_innerlist[id];
+		chesttrap_innerlist.erase(id);
+		safe_delete(tmpTrapList);
+	}
+
+	chesttrap_innerlist[id] = traplist;
+}
+
+
 ChestTrapList* ChestTrapList::GetChestTrapList(ChestTrapBaseList listName) {
 	ChestTrapList* ctl = 0;
 	MChestTrapInnerList.readlock(__FUNCTION__, __LINE__);
 	if (chesttrap_innerlist.count(listName) > 0)
 		ctl = chesttrap_innerlist[listName];
+	MChestTrapInnerList.releasereadlock(__FUNCTION__, __LINE__);
+
+	return ctl;
+}
+
+ChestTrapList* ChestTrapList::GetChestTrapListByID(int32 id) {
+	ChestTrapList* ctl = 0;
+	MChestTrapInnerList.readlock(__FUNCTION__, __LINE__);
+	if (chesttrap_innerlist.count(id) > 0)
+		ctl = chesttrap_innerlist[id];
 	MChestTrapInnerList.releasereadlock(__FUNCTION__, __LINE__);
 
 	return ctl;
@@ -175,12 +229,15 @@ void ChestTrapList::SetupMutexes()
 
 void ChestTrapList::InstantiateLists(bool parent)
 {
-	difficultyList = new ChestTrapList(parent);
-	zoneList = new ChestTrapList(parent);
-	MChestTrapInnerList.writelock(__FUNCTION__, __LINE__);
-	chesttrap_innerlist[ChestTrapBaseList::DIFFICULTY] = difficultyList;
-	chesttrap_innerlist[ChestTrapBaseList::ZONE] = zoneList;
-	MChestTrapInnerList.releasewritelock(__FUNCTION__, __LINE__);
+	if (parent)
+	{
+		difficultyList = new ChestTrapList(false);
+		zoneList = new ChestTrapList(false);
+		MChestTrapInnerList.writelock(__FUNCTION__, __LINE__);
+		chesttrap_innerlist[ChestTrapBaseList::DIFFICULTY] = difficultyList;
+		chesttrap_innerlist[ChestTrapBaseList::ZONE] = zoneList;
+		MChestTrapInnerList.releasewritelock(__FUNCTION__, __LINE__);
+	}
 }
 
 void ChestTrapList::shuffleMap(ChestTrapList* list) {
