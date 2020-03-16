@@ -51,7 +51,7 @@ public:
 	int32	GetSpellID() { return s_ChestTrapInfo.spell_id; }
 	int32	GetSpellTier() { return s_ChestTrapInfo.spell_tier; }
 
-	ChestTrapInfo GetChestTrapInfo() { return s_ChestTrapInfo; }
+	ChestTrapInfo* GetChestTrapInfo() { return &s_ChestTrapInfo; }
 private:
 	ChestTrapInfo s_ChestTrapInfo;
 };

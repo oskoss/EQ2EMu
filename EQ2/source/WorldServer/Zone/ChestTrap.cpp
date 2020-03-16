@@ -35,7 +35,7 @@ bool ChestTrapList::GetChestTrap(int32 id, ChestTrap::ChestTrapInfo* cti) {
 
 	memset(cti, 0, sizeof(ChestTrap::ChestTrapInfo));
 	if (res)
-		memcpy(cti, &res->GetChestTrapInfo(), sizeof(ChestTrap::ChestTrapInfo));
+		memcpy(cti, res->GetChestTrapInfo(), sizeof(ChestTrap::ChestTrapInfo));
 	MChestTrapList.releasereadlock(__FUNCTION__, __LINE__);
 
 	return cti;
@@ -76,7 +76,7 @@ bool ChestTrapList::GetNextChestTrap(ChestTrap::ChestTrapInfo* cti) {
 
 	memset(cti, 0, sizeof(ChestTrap::ChestTrapInfo));
 	if (trap)
-		memcpy(cti, &trap->GetChestTrapInfo(), sizeof(ChestTrap::ChestTrapInfo));
+		memcpy(cti, trap->GetChestTrapInfo(), sizeof(ChestTrap::ChestTrapInfo));
 
 	cycleItr++;
 	MChestTrapList.releasewritelock(__FUNCTION__, __LINE__);
