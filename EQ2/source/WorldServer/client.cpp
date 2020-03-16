@@ -4107,7 +4107,9 @@ void Client::OpenChest(Entity* entity)
 
 	if (chest_difficulty > 0 && !entity->HasTrapTriggered())
 	{
-		ChestTrap::ChestTrapInfo nextTrap = chest_trap_list.GetNextTrap(GetCurrentZone()->GetZoneID(), chest_difficulty);
+		ChestTrap::ChestTrapInfo nextTrap;
+		
+		chest_trap_list.GetNextTrap(GetCurrentZone()->GetZoneID(), chest_difficulty, &nextTrap);
 
 		Skill* disarmSkill = GetPlayer()->GetSkillByName("Disarm Trap", false);
 		firstChestOpen = true;

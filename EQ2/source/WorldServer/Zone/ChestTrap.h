@@ -88,14 +88,14 @@ public:
 
 	void AddChestTrap(ChestTrap* trap);
 
-	ChestTrap::ChestTrapInfo GetChestTrap(int32 id);
+	bool GetChestTrap(int32 id, ChestTrap::ChestTrapInfo* cti);
 
-	ChestTrap::ChestTrapInfo GetNextTrap(int32 zoneid, int32 chest_difficulty);
+	bool GetNextTrap(int32 zoneid, int32 chest_difficulty, ChestTrap::ChestTrapInfo* cti);
 
 	void Clear();
 private:
 	// randomized maps so we just iterate the map for our next 'random' result
-	ChestTrap::ChestTrapInfo GetNextChestTrap();
+	bool GetNextChestTrap(ChestTrap::ChestTrapInfo* cti);
 
 	ChestTrapList* GetChestListByDifficulty(int32 difficulty);
 
