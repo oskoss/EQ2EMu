@@ -461,6 +461,8 @@ bool SpellProcess::CastInstant(Spell* spell, Entity* caster, Entity* target, boo
 	lua_spell->initial_target = target->GetID();
 	GetSpellTargets(lua_spell);
 
+	caster->GetZone()->SendCastSpellPacket(lua_spell, caster);
+
 	if (!remove)
 		return CastProcessedSpell(lua_spell, passive);
 
