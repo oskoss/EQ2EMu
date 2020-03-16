@@ -61,12 +61,17 @@ void ChestTrapList::Clear() {
 }
 
 ChestTrap::ChestTrapInfo ChestTrapList::GetNextChestTrap() {
+	MChestTrapList.readlock(__FUNCTION__, __LINE__);
 	if (cycleItr == chesttrap_list.end())
 	{
+		MChestTrapList.releasereadlock(__FUNCTION__, __LINE__);
 		//re-shuffle the map, we reached the end
 		shuffleMap(this);
 	}
+	else
+		MChestTrapList.releasereadlock(__FUNCTION__, __LINE__);
 
+	MChestTrapList.writelock(__FUNCTION__, __LINE__);
 	ChestTrap* trap = cycleItr->second;
 
 	ChestTrap::ChestTrapInfo cti;
@@ -75,6 +80,7 @@ ChestTrap::ChestTrapInfo ChestTrapList::GetNextChestTrap() {
 		memcpy(&cti, &trap->GetChestTrapInfo(), sizeof(ChestTrap::ChestTrapInfo));
 
 	cycleItr++;
+	MChestTrapList.releasewritelock(__FUNCTION__, __LINE__);
 
 	return cti;
 }
