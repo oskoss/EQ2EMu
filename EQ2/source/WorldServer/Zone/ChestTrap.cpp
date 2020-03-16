@@ -65,7 +65,6 @@ ChestTrap::ChestTrapInfo ChestTrapList::GetNextChestTrap() {
 	{
 		//re-shuffle the map, we reached the end
 		shuffleMap(this);
-		cycleItr = chesttrap_list.begin();
 	}
 
 	ChestTrap* trap = cycleItr->second;
