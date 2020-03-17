@@ -23,6 +23,7 @@
 #include <string.h>
 #include "Log.h"
 #include "DatabaseNew.h"
+#include <errmsg.h>
 
 //increase this if large queries are being run frequently to make less calls to malloc()
 #define QUERY_INITIAL_SIZE	512
@@ -155,7 +156,18 @@ bool DatabaseNew::Query(const char *query, ...) {
 	}
 
 	if (mysql_real_query(&mysql, buf, (unsigned long)num_chars) != 0) {
-		if (!IsIgnoredErrno(mysql_errno(&mysql))) {
+
+		if (mysql_errno(&mysql) == CR_SERVER_LOST || mysql_errno(&mysql) == CR_SERVER_GONE_ERROR) {
+			LogWrite(DATABASE__ERROR, 0, "Database", "Lost connection, attempting to recover and retry query...");
+			mysql_close(&mysql);
+			Connect();
+
+			// retry attempt of previous query (1 try and we give up)
+			if (mysql_real_query(&mysql, buf, (unsigned long)num_chars) != 0) {
+				ret = false;
+			}
+		}
+		else if (!IsIgnoredErrno(mysql_errno(&mysql))) {
 			LogWrite(DATABASE__ERROR, 0, "Database", "Error %i running MySQL query: %s\n%s\n", mysql_errno(&mysql), mysql_error(&mysql), buf);
 			ret = false;
 		}
@@ -198,7 +210,19 @@ bool DatabaseNew::Select(DatabaseResult *result, const char *query, ...) {
 	}
 
 	if (mysql_real_query(&mysql, buf, (unsigned long)num_chars) != 0) {
-		if (!IsIgnoredErrno(mysql_errno(&mysql))) {
+
+		if (mysql_errno(&mysql) == CR_SERVER_LOST || mysql_errno(&mysql) == CR_SERVER_GONE_ERROR) {
+			LogWrite(DATABASE__ERROR, 0, "Database", "Lost connection, attempting to recover and retry query...");
+
+			mysql_close(&mysql);
+			Connect();
+
+			// retry attempt of previous query (1 try and we give up)
+			if (mysql_real_query(&mysql, buf, (unsigned long)num_chars) != 0) {
+				ret = false;
+			}
+		}
+		else if (!IsIgnoredErrno(mysql_errno(&mysql))) {
 			LogWrite(DATABASE__ERROR, 0, "Database", "Error %i running MySQL query: %s\n%s\n", mysql_errno(&mysql), mysql_error(&mysql), buf);
 			ret = false;
 		}
