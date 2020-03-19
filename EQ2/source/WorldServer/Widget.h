@@ -21,6 +21,8 @@
 #define __EQ2_WIDGET__
 #include "Spawn.h"
 #include "client.h"
+#include <string.h>
+
 using namespace std;
 #define WIDGET_TYPE_GENERIC	0
 #define WIDGET_TYPE_DOOR	1
@@ -84,6 +86,21 @@ public:
 
 	void	SetMultiFloorLift(bool val) { multi_floor_lift = val; }
 	bool	GetMultiFloorLift() { return multi_floor_lift; }
+
+	static	string GetWidgetTypeNameByTypeID(int8 type)
+	{
+		switch (type)
+		{
+		case WIDGET_TYPE_DOOR:
+			return string("Door");
+			break;
+		case WIDGET_TYPE_LIFT:
+			return string("Lift");
+			break;
+		}
+
+		return string("Generic");
+	}
 
 private:
 	int8	widget_type;
