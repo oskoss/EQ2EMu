@@ -2007,7 +2007,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 
 			if(cmdTarget && cmdTarget->IsEntity()){
-				if (cmdTarget->GetDistance(client->GetPlayer()) <= 10){
+				if (cmdTarget->GetDistance(client->GetPlayer()) <= rule_manager.GetGlobalRule(R_Loot, LootRadius)->GetFloat()){
 					client->Loot((Entity*)cmdTarget);
 					if (!((Entity*)cmdTarget)->HasLoot()){
 						if (((Entity*)cmdTarget)->IsNPC())

@@ -442,8 +442,8 @@ NPC* Entity::DropChest() {
 	chest->SetHeading(GetHeading() - 180);
 	chest->SetLocation(GetLocation());
 	// Set the primary command to loot and the secondary to disarm
-	chest->AddPrimaryEntityCommand("loot", 10.0f, "loot", "", 0, 0);
-	chest->AddSecondaryEntityCommand("Disarm", 10.0f, "Disarm", "", 0, 0);
+	chest->AddPrimaryEntityCommand("loot", rule_manager.GetGlobalRule(R_Loot, LootRadius)->GetFloat(), "loot", "", 0, 0);
+	chest->AddSecondaryEntityCommand("Disarm", rule_manager.GetGlobalRule(R_Loot, LootRadius)->GetFloat(), "Disarm", "", 0, 0);
 	// 32 = loot icon for the mouse
 	chest->SetIcon(32);
 	// 1 = show the right click menu

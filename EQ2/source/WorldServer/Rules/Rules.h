@@ -36,7 +36,8 @@ enum RuleCategory {
 	R_Spawn,
 	R_UI,
 	R_World,
-	R_Zone
+	R_Zone,
+	R_Loot
 };
 
 enum RuleType {
@@ -139,6 +140,8 @@ enum RuleType {
 	CheckAttackNPC,
 	HOTime,
 
+	/* LOOT */
+	LootRadius,
 	/* ZONE TIMERS */
 	RegenTimer,
 	ClientSaveTimer,
