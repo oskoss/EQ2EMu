@@ -49,6 +49,7 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
     - Game Login Account:
 	
 		insert into account set name='test',passwd=sha2('test',512);
+		
 		**Note: If you have AccountCreation set to 1 in LoginServer.ini LoginConfig block, you can just login to make a new account**
     - World Server Login Account (Used in Step 5): 
 	
