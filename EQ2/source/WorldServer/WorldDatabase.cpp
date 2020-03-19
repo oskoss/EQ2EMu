@@ -3023,7 +3023,8 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 			query.RunQuery2(Q_INSERT, "insert into spawn_objects (spawn_id) values(%u)", spawn->GetDatabaseID());
 		}
 		else if(spawn->IsWidget()){
-
+			Widget* widget = (Widget*)spawn;
+			query.RunQuery2(Q_INSERT, "insert into spawn_widgets (spawn_id, widget_id) values(%u, %u)", spawn->GetDatabaseID(), widget->GetWidgetID());
 		}
 		else if(spawn->IsSign()){
 			query.RunQuery2(Q_INSERT, "insert into spawn_signs (spawn_id, description) values(%u, 'change me')", spawn->GetDatabaseID());
@@ -3050,13 +3051,30 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 				spawn->GetCollisionRadius(), spawn->GetTotalHP(), spawn->GetTotalPower(), ((Object*)spawn)->GetDeviceID(), spawn->GetDatabaseID());
 		}
 		else if(spawn->IsWidget()){
-			query.RunQuery2(Q_UPDATE, "update spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s' where spawn.id = %u",
+			Widget* widget = (Widget*)spawn;
+			char* openSound = 0;
+			char* closeSound = 0;
+			if (widget->GetOpenSound() != NULL) openSound = (char*)widget->GetOpenSound(); else openSound = (char*)string("0").c_str();
+			if (widget->GetCloseSound() != NULL) closeSound = (char*)widget->GetCloseSound(); else closeSound = (char*)string("0").c_str();
+			query.RunQuery2(Q_UPDATE, "update spawn_widgets, spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s',widget_id = %u,widget_x = %f,widget_y = %f,widget_z = %f,include_heading = %u,include_location = %u,icon = %u,type='%s',open_heading = %f,closed_heading = %f,open_x = %f,open_y = %f,open_z = %f,action_spawn_id = %u,open_sound_file='%s',close_sound_file='%s',open_duration = %u,close_x = %f,close_y=%f,close_z=%f,linked_spawn_id = %u,house_id = %u where spawn_widgets.spawn_id = spawn.id and spawn.id = %u",
 				name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->appearance.display_name, spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, spawn->GetSize(),
 				spawn->GetTotalHP(), spawn->GetTotalPower(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->GetFactionID(), 
-				suffix.c_str(), prefix.c_str(), last_name.c_str(), spawn->GetDatabaseID());
+				suffix.c_str(), prefix.c_str(), last_name.c_str(), widget->GetWidgetID(), widget->GetX(), widget->GetY(), widget->GetZ(), widget->GetIncludeHeading(), widget->GetIncludeLocation(), widget->GetIconValue(), Widget::GetWidgetTypeNameByTypeID(widget->GetWidgetType()).c_str(),
+				widget->GetOpenHeading(), widget->GetClosedHeading(), widget->GetOpenX(), widget->GetOpenY(), widget->GetOpenZ(), 
+				widget->GetActionSpawnID(), openSound, closeSound,widget->GetOpenDuration(),
+				widget->GetCloseX(),widget->GetCloseY(),widget->GetCloseZ(),widget->GetLinkedSpawnID(),widget->GetHouseID(),
+				spawn->GetDatabaseID());
 		}
 		else if(spawn->IsSign()){
-
+			Sign* sign = (Sign*)spawn;
+			query.RunQuery2(Q_UPDATE, "update spawn_signs, spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s', type='%s', zone_id = %u, widget_id = %u, title='%s', widget_x = %f, widget_y = %f, widget_z = %f, icon = %u, description='%s', sign_distance = %f, zone_x = %f, zone_y = %f, zone_z = %f, zone_heading = %f, include_heading = %u, include_location = %u where spawn_signs.spawn_id = spawn.id and spawn.id = %u",
+				name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->appearance.display_name, spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, spawn->GetSize(),
+				spawn->GetTotalHP(), spawn->GetTotalPower(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->GetFactionID(),
+				suffix.c_str(), prefix.c_str(), last_name.c_str(), sign->GetSignType(), sign->GetSignZoneID(), 
+				sign->GetWidgetID(), sign->GetSignTitle(), sign->GetWidgetX(), sign->GetWidgetY(), sign->GetWidgetZ(), 
+				sign->GetIconValue(), sign->GetSignDescription(), sign->GetSignDistance(), sign->GetSignZoneX(), 
+				sign->GetSignZoneY(), sign->GetSignZoneZ(), sign->GetSignZoneHeading(), sign->GetIncludeHeading(), 
+				sign->GetIncludeLocation(), spawn->GetDatabaseID());
 		}
 	}
 	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
