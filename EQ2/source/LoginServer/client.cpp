@@ -357,6 +357,8 @@ bool Client::Process() {
 
 					EQ2Packet* outapp = response->serialize();
 					QueuePacket(outapp);
+
+					this->SendCharList();
 				}
 				safe_delete(request);
 				safe_delete(response);
