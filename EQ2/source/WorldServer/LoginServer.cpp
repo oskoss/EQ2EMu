@@ -187,6 +187,7 @@ bool LoginServer::Process() {
 				LogWrite(WORLD__ERROR, 0, "World", "Login Server returned a fatal error: %s\n", pack->pBuffer);
 				tcpc->Disconnect();
 				ret = false;
+				net.ReadLoginINI();
 				break;
 			}
 		case ServerOP_CharTimeStamp: 

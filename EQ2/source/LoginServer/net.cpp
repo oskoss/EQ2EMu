@@ -221,6 +221,10 @@ bool NetConnection::ReadLoginConfig() {
 			items[1] = 1;
 			items[2] = 1;
 			items[3] = 1;
+			if (!strncasecmp(type, "[", 1)) {
+				// new block after LoginServer, skip
+				break;
+			}
 			if (!strncasecmp(type, "serverport", 10)) {
 				if (Seperator::IsNumber(buf) && atoi(buf) > 0 && atoi(buf) < 0xFFFF) {
 					port = atoi(buf);

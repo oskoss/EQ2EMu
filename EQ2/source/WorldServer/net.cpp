@@ -679,6 +679,10 @@ bool NetConnection::ReadLoginINI() {
 		if (fscanf (f, "%[^=]=%[^\r\n]\n", type, buf) == 2)
 #endif
 		{
+			if (!strncasecmp(type, "[", 1)) {
+				// new block after LoginServer, skip
+				break;
+			}
 			if (!strncasecmp (type, "worldname", 9)) {
 				snprintf(worldname, sizeof(worldname), "%s", buf);
 				items[1] = 1;
