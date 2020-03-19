@@ -228,7 +228,7 @@ struct ServerLSInfo_Struct {
 	char	name[201];				// name the worldserver wants
 	char	address[250];			// DNS address of the server
 	char	account[31];			// account name for the worldserver
-	char	password[31];			// password for the name
+	char	password[256];			// password for the name
 	char	protocolversion[25];	// Major protocol version number
 	char	serverversion[64];		// minor server software version number
 	int8	servertype;				// 0=world, 1=chat, 2=login, 3=MeshLogin, 4=World Debug

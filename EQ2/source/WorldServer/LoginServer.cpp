@@ -26,9 +26,9 @@ using namespace std;
 #include <iomanip>
 using namespace std;
 #include <stdlib.h>
-#include "../common/md5.h"
 #include "../common/version.h"
 #include "../common/GlobalHeaders.h"
+#include "../common/sha512.h"
 
 #ifdef WIN32
 #include <process.h>
@@ -885,13 +885,8 @@ void LoginServer::SendInfo() {
 	lsi->servertype = 4;
 #endif
 	int8 tmppass[16];
-	MD5::Generate((uchar*)net.GetWorldPassword(), strlen(net.GetWorldPassword()), tmppass);
-	char* ptr = lsi->password;
-	for(int i=0;i<15;i++){
-		sprintf(ptr, "%02x", tmppass[i]);
-		ptr += 2;
-	}
-	//memcpy(lsi->password, tmppass, 16);
+	string passwdSha512 = sha512(net.GetWorldPassword());
+	memcpy(lsi->password, (char*)passwdSha512.c_str(), passwdSha512.length());
 	strcpy(lsi->address, net.GetWorldAddress());
 	SendPacket(pack);
 	delete pack;

@@ -25,7 +25,7 @@ DROP TABLE IF EXISTS `account`;
 CREATE TABLE `account` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(64) COLLATE latin1_general_ci NOT NULL DEFAULT '',
-  `passwd` varchar(64) COLLATE latin1_general_ci NOT NULL DEFAULT '',
+  `passwd` varchar(256) COLLATE latin1_general_ci NOT NULL DEFAULT '',
   `ip_address` varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
   `email_address` varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT 'Unknown',
   `created_date` int(10) NOT NULL DEFAULT 0,
@@ -362,7 +362,7 @@ CREATE TABLE `login_worldservers` (
   `chat_shortname` varchar(20) COLLATE latin1_general_ci NOT NULL DEFAULT '',
   `description` text COLLATE latin1_general_ci NOT NULL,
   `server_type` varchar(15) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
-  `password` varchar(32) COLLATE latin1_general_ci NOT NULL,
+  `password` varchar(256) COLLATE latin1_general_ci NOT NULL,
   `serverop` varchar(64) COLLATE latin1_general_ci NOT NULL DEFAULT '',
   `lastseen` int(10) unsigned NOT NULL DEFAULT 0,
   `admin_id` int(11) unsigned NOT NULL DEFAULT 0,
@@ -388,18 +388,8 @@ CREATE TABLE `login_worldservers` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `account` (`account`),
   UNIQUE KEY `NameIDX` (`name`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `login_worldservers`
---
-
-LOCK TABLES `login_worldservers` WRITE;
-/*!40000 ALTER TABLE `login_worldservers` DISABLE KEYS */;
-INSERT INTO `login_worldservers` VALUES (1,'Zeklabs',0,'zeklabs','','zeklabs','0','ed8acc7338a6ba5072472ae4554c16','admin',1582775680,1,0,0,'0','','10.1.1.2',0,1387650563,1,1,1,1,'','Standard','Admin',0,NULL,0,0,'0.7.3-dev');
-/*!40000 ALTER TABLE `login_worldservers` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `login_worldstats`

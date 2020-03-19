@@ -451,7 +451,7 @@ LoginAccount* LoginDatabase::LoadAccount(const char* name, const char* password)
 	query.escaped_name = getEscapeString(name);
 	query.escaped_pass = getEscapeString(password);
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id from account where name='%s' and passwd=md5('%s')", query.escaped_name, query.escaped_pass);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id from account where name='%s' and passwd=sha2('%s',512)", query.escaped_name, query.escaped_pass);
 	if(result){
 		if (mysql_num_rows(result) == 1){
 			row = mysql_fetch_row(result);

@@ -57,7 +57,6 @@ extern int errno;
 #include "races.h"
 #include "classes.h"
 #include "../common/seperator.h"
-#include "../common/md5.h"
 #include "../common/EQStream.h"
 #include "../common/EQStreamFactory.h"
 #include "../common/opcodemgr.h"

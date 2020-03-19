@@ -27,7 +27,6 @@
 #include "../common/TCPConnection.h"
 #include "WorldTCPConnection.h"
 #include "../common/Mutex.h"
-#include "../common/md5.h"
 #include "../common/DataBuffer.h"
 #include "net.h"
 #include "Player.h"

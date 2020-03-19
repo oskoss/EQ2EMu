@@ -396,6 +396,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\source\common\DatabaseNew.cpp" />
     <ClCompile Include="..\..\source\common\DatabaseResult.cpp" />
+    <ClCompile Include="..\..\source\common\sha512.cpp" />
     <ClCompile Include="..\..\source\LUA\lapi.c" />
     <ClCompile Include="..\..\source\LUA\lauxlib.c" />
     <ClCompile Include="..\..\source\LUA\lbaselib.c" />
@@ -536,6 +537,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\source\common\DatabaseNew.h" />
     <ClInclude Include="..\..\source\common\DatabaseResult.h" />
+    <ClInclude Include="..\..\source\common\sha512.h" />
     <ClInclude Include="..\..\source\LUA\lapi.h" />
     <ClInclude Include="..\..\source\LUA\lauxlib.h" />
     <ClInclude Include="..\..\source\LUA\lcode.h" />
