@@ -230,6 +230,11 @@ bool NetConnection::ReadLoginConfig() {
 				eqsf.listen_ip_address = new char[sizeof(buf) + 1];
 				strcpy(eqsf.listen_ip_address, buf);
 			}
+			if (!strncasecmp(type, "accountcreation", 15)) {
+				if (Seperator::IsNumber(buf)) {
+					allowAccountCreation = atoi(buf);
+				}
+			}
 		}
 	}
 

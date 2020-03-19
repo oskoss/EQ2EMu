@@ -38,6 +38,7 @@ public:
 		Uplink_WrongVersion = false;
 		numclients = 0;
 		numservers = 0;
+		allowAccountCreation = true;
 	}
 	void UpdateWindowTitle(char* iNewTitle = 0);
 	bool Init();
@@ -57,6 +58,7 @@ public:
 	char*	GetUplinkAccount()	{ return uplinkaccount; }
 	char*	GetUplinkPassword()	{ return uplinkpassword; }
 
+	bool	IsAllowingAccountCreation() { return allowAccountCreation; }
 
 protected:
 	friend class LWorld;
@@ -69,4 +71,5 @@ private:
 	char	uplinkaccount[300];
 	char	uplinkpassword[300];
 	eServerMode	LoginMode;
+	bool	allowAccountCreation;
 };

@@ -445,7 +445,7 @@ bool LoginDatabase::UpdateCharacterGender(int32 account_id, int32 character_id, 
 	return true;
 }
 
-LoginAccount* LoginDatabase::LoadAccount(const char* name, const char* password){
+LoginAccount* LoginDatabase::LoadAccount(const char* name, const char* password, bool attemptAccountCreation){
 	LoginAccount* acct = NULL;
 	Query query;
 	query.escaped_name = getEscapeString(name);
@@ -463,6 +463,14 @@ LoginAccount* LoginDatabase::LoadAccount(const char* name, const char* password)
 		}
 		else if(mysql_num_rows(result) > 0)
 			LogWrite(LOGIN__ERROR, 0, "Login", "Error in LoginAccount: more than one account returned for '%s'", name);
+		else if (attemptAccountCreation)
+		{
+			Query newquery;
+			newquery.RunQuery2(Q_INSERT, "insert into account set name='%s',passwd=sha2('%s',512)", query.escaped_name, query.escaped_pass);
+			// re-run the query for select only not account creation
+			return LoadAccount(name, password, false);
+		}
+
 	}
 	return acct;
 }

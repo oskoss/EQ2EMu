@@ -183,7 +183,7 @@ bool Client::Process() {
 						getConnection()->SetClientVersion(GetOrigVersion());
 						EQ2_16BitString username = packet->getType_EQ2_16BitString_ByName("username");
 						EQ2_16BitString password = packet->getType_EQ2_16BitString_ByName("password");
-						LoginAccount* acct = database.LoadAccount(username.data.c_str(),password.data.c_str());
+						LoginAccount* acct = database.LoadAccount(username.data.c_str(),password.data.c_str(), net.IsAllowingAccountCreation());
 						if(acct){
 							Client* otherclient = client_list.FindByLSID(acct->getLoginAccountID());
 							if(otherclient)

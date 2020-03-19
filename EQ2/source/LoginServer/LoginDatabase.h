@@ -35,7 +35,7 @@ public:
 	void UpdateAccountIPAddress(int32 account_id, int32 address);
 	void UpdateWorldIPAddress(int32 world_id, int32 address);
 	void SaveBugReport(int32 world_id, char* category, char* subcategory, char* causes_crash, char* reproducible, char* summary, char* description, char* version, char* player, int32 account_id, char* spawn_name, int32 spawn_id, int32 zone_id);
-	LoginAccount* LoadAccount(const char* name, const char* password);
+	LoginAccount* LoadAccount(const char* name, const char* password, bool attemptAccountCreation=true);
 	int32 CheckServerAccount(char* name, char* passwd);
 	void  GetServerAccounts(vector<LWorld*>* server_list);
 	char* GetServerAccountName(int32 id);
