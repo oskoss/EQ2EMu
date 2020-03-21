@@ -37,7 +37,8 @@ enum RuleCategory {
 	R_UI,
 	R_World,
 	R_Zone,
-	R_Loot
+	R_Loot,
+	R_Spells
 };
 
 enum RuleType {
@@ -142,6 +143,10 @@ enum RuleType {
 
 	/* LOOT */
 	LootRadius,
+
+	/* SPELLS */
+	NoInterruptBaseChance,
+
 	/* ZONE TIMERS */
 	RegenTimer,
 	ClientSaveTimer,

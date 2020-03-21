@@ -283,8 +283,10 @@ RuleManager::RuleManager() {
 	RULE_INIT(R_Zone, DefaultZoneShutdownTimer, "300000");
 	RULE_INIT(R_Zone, WeatherTimer, "60000");						// default: 1 minute
 	RULE_INIT(R_Zone, SpawnDeleteTimer, "30000");					// default: 30 seconds, how long a spawn pointer is held onto after being removed from the world before deleting it
-	
+
 	RULE_INIT(R_Loot, LootRadius, "5.0");
+
+	RULE_INIT(R_Spells, NoInterruptBaseChance, "50");
 
 	#undef RULE_INIT
 }

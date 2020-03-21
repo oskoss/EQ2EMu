@@ -1029,8 +1029,9 @@ bool Entity::CheckInterruptSpell(Entity* attacker) {
 	if(!spell || spell->GetSpellData()->interruptable == 0)
 		return false;
 
-	//base of 30 percent chance to continue casting if attacked (RULE)
-	int8 percent = 30;
+	//originally base of 30 percent chance to continue casting if attacked
+	//modified to 50% and added global rule, 30% was too small at starting levels
+	int8 percent = rule_manager.GetGlobalRule(R_Spells, NoInterruptBaseChance)->GetInt32();
 	Skill* skill = GetSkillByName("Focus", true);
 	if(skill)
 		percent += ((skill->current_val + 1)/6);
