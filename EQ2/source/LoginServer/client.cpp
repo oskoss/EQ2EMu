@@ -420,9 +420,10 @@ void Client::CharacterApproved(int32 server_id,int32 char_id)
 		if(!world_server)
 			return;
 
-		PacketStruct* packet = configReader.getStruct("LS_CreateCharacterReply", GetVersion());
+		PacketStruct* packet = configReader.getStruct("LS_CreateCharacterReply", GetOrigVersion());
 		if(packet){
 			packet->setDataByName("account_id", GetAccountID());
+			packet->setDataByName("unknown", 0xFFFFFFFF);
 			packet->setDataByName("response", CREATESUCCESS_REPLY);
 			packet->setMediumStringByName("name", (char*)createRequest->getType_EQ2_16BitString_ByName("name").data.c_str());
 			EQ2Packet* outapp = packet->serialize();

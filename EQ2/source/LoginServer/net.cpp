@@ -222,7 +222,7 @@ bool NetConnection::ReadLoginConfig() {
 			items[2] = 1;
 			items[3] = 1;
 			if (!strncasecmp(type, "[", 1)) {
-				// new block after LoginServer, skip
+				// new block after LoginConfig, skip
 				break;
 			}
 			if (!strncasecmp(type, "serverport", 10)) {

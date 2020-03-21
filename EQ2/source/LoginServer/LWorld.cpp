@@ -1127,31 +1127,45 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 	}
 	ServerNum+=3;
 	*/
+	uint32 tmpCount = 0;
+	map<int32, LWorld*>::iterator map_list;
+	for (map_list = worldmap.begin(); map_list != worldmap.end(); map_list++) {
+		LWorld* world = map_list->second;
+		if ((world->IsInit || (world->ShowDown() && world->ShowDownActive())) && world->GetType() == World) {
+			tmpCount++;
+		}
+	}
 
 	PacketStruct* packet = configReader.getStruct("LS_WorldList", version);
-	packet->setArrayLengthByName("num_worlds", 1);
+	packet->setArrayLengthByName("num_worlds", tmpCount);
 
 	string world_data;	
-	map<int32,LWorld*>::iterator map_list;
 	for( map_list = worldmap.begin(); map_list != worldmap.end(); map_list++) {
 		LWorld* world = map_list->second;
 		if ((world->IsInit || (world->ShowDown() && world->ShowDownActive())) && world->GetType() == World) {
 			ServerNum++;
 			packet->setArrayDataByName("id", world->GetID(), ServerNum-1);
-			packet->setArrayDataByName("allowed_races", 0x000FFFFF, ServerNum-1); //change later
+
+			if (version < 1096)
+				packet->setDataByName("allowed_races", 0x0007FFFF, ServerNum - 1); // no Freeblood and Aerakyn race
+			else if (version < 60006)
+				packet->setArrayDataByName("allowed_races", 0x000FFFFF, ServerNum - 1); // + Freeblood
+			else
+				packet->setArrayDataByName("allowed_races", 0x001FFFFF, ServerNum - 1);	// + Aerakyn
+
 			packet->setArrayDataByName("number_online_flag", 1, ServerNum-1);
 			packet->setArrayDataByName("num_players", world->GetPlayerNum(), ServerNum-1);
 			packet->setArrayDataByName("name", world->GetName(), ServerNum-1);
 			packet->setArrayDataByName("name2", world->GetName(), ServerNum-1);
 			packet->setArrayDataByName("feature_set",0, ServerNum-1);
-			packet->setArrayDataByName("load", 2, ServerNum-1);
+			packet->setArrayDataByName("load", world->GetWorldStatus(), ServerNum-1);
 			if(world->IsLocked())
-				packet->setArrayDataByName("locked", 1);
+				packet->setArrayDataByName("locked", 1, ServerNum - 1);
 
 			if(world->ShowDown())
-				packet->setArrayDataByName("tag", 0);
+				packet->setArrayDataByName("tag", 0, ServerNum - 1);
 			else
-				packet->setArrayDataByName("tag", 1);
+				packet->setArrayDataByName("tag", 1, ServerNum - 1);
 		}
 	}
 
