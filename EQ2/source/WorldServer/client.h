@@ -243,8 +243,8 @@ public:
 	void	CloseLoot();
 	void	SendPendingLoot(int32 total_coins, Entity* entity);
 	void	Loot(int32 total_coins, vector<Item*>* items, Entity* entity);
-	void	Loot(Entity* entity);
-	void	OpenChest(Entity* entity);
+	void	Loot(Entity* entity, bool attemptDisarm=true);
+	void	OpenChest(Entity* entity, bool attemptDisarm=true);
 	void	CheckPlayerQuestsKillUpdate(Spawn* spawn);
 	void	CheckPlayerQuestsChatUpdate(Spawn* spawn);
 	void	CheckPlayerQuestsItemUpdate(Item* item);

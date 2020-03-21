@@ -4054,21 +4054,21 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Entity* entity){
 
 }
 
-void Client::Loot(Entity* entity){
+void Client::Loot(Entity* entity, bool attemptDisarm){
 	if(entity->IsNPC() && ((NPC*)entity)->Brain()->CheckLootAllowed(GetPlayer())){
 		int32 total_coins = entity->GetLootCoins();
 		entity->LockLoot();
 		Loot(total_coins, entity->GetLootItems(), entity);
 		entity->UnlockLoot();
 
-		OpenChest(entity);
+		OpenChest(entity, attemptDisarm);
 	}
 	else
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "You are not allowed to loot at this time.");
 
 }
 
-void Client::OpenChest(Entity* entity)
+void Client::OpenChest(Entity* entity, bool attemptDisarm)
 {
 	if (!entity)
 		return;
@@ -4114,7 +4114,7 @@ void Client::OpenChest(Entity* entity)
 		Skill* disarmSkill = GetPlayer()->GetSkillByName("Disarm Trap", false);
 		firstChestOpen = true;
 		entity->SetTrapTriggered(true);
-		if (disarmSkill)
+		if (disarmSkill && attemptDisarm)
 		{
 			if (disarmSkill->CheckDisarmSkill(entity->GetLevel(), chest_difficulty) < 1)
 			{

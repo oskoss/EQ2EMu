@@ -2008,7 +2008,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 			if(cmdTarget && cmdTarget->IsEntity()){
 				if (cmdTarget->GetDistance(client->GetPlayer()) <= rule_manager.GetGlobalRule(R_Loot, LootRadius)->GetFloat()){
-					client->Loot((Entity*)cmdTarget);
+					if (!rule_manager.GetGlobalRule(R_Loot, AutoDisarmChest)->GetBool() && command->handler == COMMAND_DISARM )
+						client->OpenChest((Entity*)cmdTarget, true);
+					else
+						client->Loot((Entity*)cmdTarget, rule_manager.GetGlobalRule(R_Loot, AutoDisarmChest)->GetBool());
 					if (!((Entity*)cmdTarget)->HasLoot()){
 						if (((Entity*)cmdTarget)->IsNPC())
 							client->GetCurrentZone()->RemoveDeadSpawn(cmdTarget);
