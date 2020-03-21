@@ -213,6 +213,8 @@ public:
 	lua_State*		GetZoneScript(const char* name, bool create_new = true, bool use = false);
 	Quest*			LoadQuest(int32 id, const char* name, const char* type, const char* zone, int8 level, const char* description, char* script_name);
 
+	char*			GetScriptName(lua_State* state);
+
 	void			RemoveSpawnScript(const char* name);
 	bool			RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn = 0);
 	bool			CallItemScript(lua_State* state, int8 num_parameters);
@@ -260,11 +262,18 @@ private:
 	lua_State*		LoadLuaFile(const char* name);
 	void			RegisterFunctions(lua_State* state);
 	map<string, LuaSpell*> spells;
+	map<lua_State*, string> inverse_spells;
+
 	map<int32, Quest*>		quests;
 	map<int32, lua_State*> quest_states;
 	map<string, map<lua_State*, bool> > item_scripts;
 	map<string, map<lua_State*, bool> > spawn_scripts;
 	map<string, map<lua_State*, bool> > zone_scripts;
+
+	map<lua_State*, string> item_inverse_scripts;
+	map<lua_State*, string> spawn_inverse_scripts;
+	map<lua_State*, string> zone_inverse_scripts;
+
 	map<string, Mutex*> item_scripts_mutex;
 	map<string, Mutex*> spawn_scripts_mutex;
 	map<string, Mutex*> zone_scripts_mutex;

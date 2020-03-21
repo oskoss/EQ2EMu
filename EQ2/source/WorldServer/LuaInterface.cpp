@@ -175,6 +175,7 @@ void LuaInterface::DestroyItemScripts() {
 		safe_delete(mutex);
 	}
 	item_scripts.clear();
+	item_inverse_scripts.clear();
 	item_scripts_mutex.clear();
 	MItemScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
@@ -193,6 +194,7 @@ void LuaInterface::DestroySpawnScripts() {
 		safe_delete(mutex);
 	}
 	spawn_scripts.clear();
+	spawn_inverse_scripts.clear();
 	spawn_scripts_mutex.clear();
 	MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
@@ -211,6 +213,7 @@ void LuaInterface::DestroyZoneScripts()  {
 		safe_delete(mutex);
 	}
 	zone_scripts.clear();
+	zone_inverse_scripts.clear();
 	zone_scripts_mutex.clear();
 	MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
@@ -372,7 +375,7 @@ void LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* 
 				arg_count++;
 			}
 			if(lua_pcall(state, arg_count, 0, 0) != 0){
-				LogError("Error processing quest function '%s': %s ", function, lua_tostring(state, -1));
+				LogError("%s: Error processing quest function '%s': %s ", GetScriptName(state), function, lua_tostring(state, -1));
 				lua_pop(state, 1);
 				mutex->unlock();
 				return;
@@ -415,6 +418,36 @@ Quest* LuaInterface::LoadQuest(int32 id, const char* name, const char* type, con
 		quests[id] = quest;
 	}
 	return quest;
+}
+
+char* LuaInterface::GetScriptName(lua_State* state)
+{
+	map<lua_State*, string>::iterator itr;
+	MItemScripts.writelock(__FUNCTION__, __LINE__);
+	itr = item_inverse_scripts.find(state);
+	if (itr != item_inverse_scripts.end())
+		return (char*)itr->second.c_str();
+	MItemScripts.releasewritelock(__FUNCTION__, __LINE__);
+
+	MSpawnScripts.writelock(__FUNCTION__, __LINE__);
+	itr = spawn_inverse_scripts.find(state);
+	if (itr != spawn_inverse_scripts.end())
+		return (char*)itr->second.c_str();
+	MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
+
+	MZoneScripts.writelock(__FUNCTION__, __LINE__);
+	itr = zone_inverse_scripts.find(state);
+	if (itr != zone_inverse_scripts.end())
+		return (char*)itr->second.c_str();
+	MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
+
+	MSpells.lock();
+	LuaSpell* spell = GetCurrentSpell(state);
+	if (spell)
+		return (spell->file_name.length() > 0) ? (char*)spell->file_name.c_str() : "";
+
+	MSpells.unlock();
+	return "";
 }
 
 bool LuaInterface::LoadSpawnScript(string name) {
@@ -500,7 +533,7 @@ bool LuaInterface::CallItemScript(lua_State* state, int8 num_parameters) {
 	if(!state || lua_pcall(state, num_parameters, 0, 0) != 0){
 		if (state){
 			const char* err = lua_tostring(state, -1);
-			LogError(err);
+			LogError("%s: %s", GetScriptName(state), err);
 			lua_pop(state, 1);
 		}
 		return false;
@@ -514,7 +547,7 @@ bool LuaInterface::CallSpawnScript(lua_State* state, int8 num_parameters) {
 	if(!state || lua_pcall(state, num_parameters, 0, 0) != 0){
 		if (state){
 			const char* err = lua_tostring(state, -1);
-			LogError(err);
+			LogError("%s: %s", GetScriptName(state), err);
 			lua_pop(state, 1);
 		}
 		return false;
@@ -528,7 +561,7 @@ bool LuaInterface::CallZoneScript(lua_State* state, int8 num_parameters) {
 	if (!state || lua_pcall(state, num_parameters, 0, 0) != 0) {
 		if (state){
 			const char* err = lua_tostring(state, -1);
-			LogError(err);
+			LogError("%s: %s", GetScriptName(state), err);
 			lua_pop(state, 1);
 		}
 		return false;
@@ -1038,13 +1071,13 @@ Spawn* LuaInterface::GetSpawn(lua_State* state, int8 arg_num) {
 	if (lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if(!data || !data->IsCorrectlyInitialized()){
-			LogError("GetSpawn error while processing %s", lua_tostring(state, -1));
+			LogError("%s: GetSpawn error while processing %s", GetScriptName(state), lua_tostring(state, -1));
 		}
 		else if(!data->IsSpawn()){
 			lua_Debug ar;
 			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
-			LogError("Invalid data type used for GetSpawn in %s (line %d)", ar.source, ar.currentline);
+			LogError("%s: Invalid data type used for GetSpawn in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
 		}
 		else
 			ret = data->spawn;
@@ -1057,13 +1090,13 @@ vector<ConversationOption>*	LuaInterface::GetConversation(lua_State* state, int8
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if(!data || !data->IsCorrectlyInitialized()){
-			LogError("GetConversation error while processing %s", lua_tostring(state, -1));
+			LogError("%s: GetConversation error while processing %s", GetScriptName(state), lua_tostring(state, -1));
 		}
 		else if(!data->IsConversationOption()){
 			lua_Debug ar;
 			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
-			LogError("Invalid data type used for GetConversation in %s (line %d)", ar.source, ar.currentline);
+			LogError("%s: Invalid data type used for GetConversation in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
 		}
 		else
 			ret = data->conversation_options;
@@ -1076,13 +1109,13 @@ vector<OptionWindowOption>*	LuaInterface::GetOptionWindow(lua_State* state, int8
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if(!data || !data->IsCorrectlyInitialized()){
-			LogError("GetOptionWindow error while processing %s", lua_tostring(state, -1));
+			LogError("%s: GetOptionWindow error while processing %s", GetScriptName(state), lua_tostring(state, -1));
 		}
 		else if(!data->IsOptionWindow()){
 			lua_Debug ar;
 			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
-			LogError("Invalid data type used for GetOptionWindow in %s (line %d)", ar.source, ar.currentline);
+			LogError("%s: Invalid data type used for GetOptionWindow in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
 		}
 		else
 			ret = data->option_window_option;
@@ -1095,13 +1128,13 @@ Quest* LuaInterface::GetQuest(lua_State* state, int8 arg_num) {
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if(!data || !data->IsCorrectlyInitialized()){
-			LogError("GetQuest error while processing %s", lua_tostring(state, 0));
+			LogError("%s: GetQuest error while processing %s", GetScriptName(state), lua_tostring(state, 0));
 		}
 		else if(!data->IsQuest()){
 			lua_Debug ar;
  			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
-			LogError("Invalid data type used for GetQuest in %s (line %d)", ar.source, ar.currentline);
+			LogError("%s: Invalid data type used for GetQuest in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
 		}
 		else
 			ret = data->quest;
@@ -1114,13 +1147,13 @@ Item* LuaInterface::GetItem(lua_State* state, int8 arg_num) {
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if(!data || !data->IsCorrectlyInitialized()){
-			LogError("GetItem error while processing %s", lua_tostring(state, 0));
+			LogError("%s: GetItem error while processing %s", GetScriptName(state), lua_tostring(state, 0));
 		}
 		else if(!data->IsItem()){
 			lua_Debug ar;
  			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
-			LogError("Invalid data type used for GetItem in %s (line %d)", ar.source, ar.currentline);
+			LogError("%s: Invalid data type used for GetItem in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
 		}
 		else
 			ret = data->item;
@@ -1133,13 +1166,13 @@ Skill* LuaInterface::GetSkill(lua_State* state, int8 arg_num) {
 	if (lua_islightuserdata(state, arg_num)) {
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if(!data || !data->IsCorrectlyInitialized()){
-			LogError("GetSkill error while processing %s", lua_tostring(state, 0));
+			LogError("%s: GetSkill error while processing %s", GetScriptName(state), lua_tostring(state, 0));
 		}
 		else if(!data->IsSkill()){
 			lua_Debug ar;
  			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
-			LogError("Invalid data type used for GetSkill in %s (line %d)", ar.source, ar.currentline);
+			LogError("%s: Invalid data type used for GetSkill in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
 		}
 		else
 			ret = data->skill;
@@ -1152,13 +1185,13 @@ ZoneServer* LuaInterface::GetZone(lua_State* state, int8 arg_num) {
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if(!data || !data->IsCorrectlyInitialized()){
-			LogError("GetZone error while processing %s", lua_tostring(state, -1));
+			LogError("%s: GetZone error while processing %s", GetScriptName(state), lua_tostring(state, -1));
 		}
 		else if(!data->IsZone()){
 			lua_Debug ar;
 			lua_getstack (state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
-			LogError("Invalid data type used for GetZone in %s (line %d)", ar.source, ar.currentline);
+			LogError("%s: Invalid data type used for GetZone in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
 		}
 		else
 			ret = data->zone;
@@ -1358,12 +1391,14 @@ Mutex* LuaInterface::GetZoneScriptMutex(const char* name) {
 void LuaInterface::UseItemScript(const char* name, lua_State* state, bool val) {
 	MItemScripts.writelock(__FUNCTION__, __LINE__);
 	item_scripts[name][state] = val;
+	item_inverse_scripts[state] = name;
 	MItemScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 void LuaInterface::UseSpawnScript(const char* name, lua_State* state, bool val) {
 	MSpawnScripts.writelock(__FUNCTION__, __LINE__);
 	spawn_scripts[name][state] = val;
+	spawn_inverse_scripts[state] = name;
 	MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -1371,6 +1406,7 @@ void LuaInterface::UseZoneScript(const char* name, lua_State* state, bool val) {
 
 	MZoneScripts.writelock(__FUNCTION__, __LINE__);
 	zone_scripts[name][state] = val;
+	zone_inverse_scripts[state] = name;
 	MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
