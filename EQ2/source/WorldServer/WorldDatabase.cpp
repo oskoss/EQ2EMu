@@ -3084,8 +3084,9 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 	return true;
 }
 
-bool WorldDatabase::SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* in_spawn, const char* name){
+int32 WorldDatabase::SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* in_spawn, const char* name){
 	vector<Spawn*>* spawns = in_spawn->GetSpawnGroup();
+	uint32 spawnLocationID = 0;
 	if(spawns && spawns->size() > 0){
 		vector<Spawn*>::iterator itr;
 		map<Spawn*, int32>::iterator freq_itr;
@@ -3096,11 +3097,12 @@ bool WorldDatabase::SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* in_spawn,
 		float y_offset = GetSpawnLocationPlacementOffsetY(in_spawn->GetSpawnLocationID());
 		float z_offset = GetSpawnLocationPlacementOffsetZ(in_spawn->GetSpawnLocationID());
 		int32 spawn_location_id = GetNextSpawnLocation();
+		spawnLocationID = spawn_location_id;
 		if(!name)
 			name = "Combine SpawnGroup Generated";
 		if(!CreateNewSpawnLocation(spawn_location_id, name)){
 			safe_delete(spawns);
-			return false;
+			return 0;
 		}
 		for(itr = spawns->begin();itr!=spawns->end();itr++){
 			spawn = *itr;
@@ -3125,7 +3127,7 @@ bool WorldDatabase::SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* in_spawn,
 			int8 percent = (freq_itr->second*100)/total;
 			if(!SaveSpawnEntry(freq_itr->first, name, percent, x_offset, y_offset, z_offset, freq_itr->first == in_spawn, false)){
 				safe_delete(spawns);
-				return false;
+				return 0;
 			}
 		}
 		for(itr=spawns->begin();itr!=spawns->end();itr++){
@@ -3136,9 +3138,9 @@ bool WorldDatabase::SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* in_spawn,
 	}
 	else{
 		safe_delete(spawns);
-		return false;
+		return 0;
 	}
-	return true;
+	return spawnLocationID;
 }
 
 bool WorldDatabase::SaveSpawnEntry(Spawn* spawn, const char* spawn_location_name, int8 percent, float x_offset, float y_offset, float z_offset, bool save_zonespawn, bool create_spawnlocation){

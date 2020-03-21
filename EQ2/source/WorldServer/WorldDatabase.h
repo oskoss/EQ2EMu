@@ -221,7 +221,7 @@ public:
 	void	ResetDatabase();
 	void	EnableConstraints();
 	void	DisableConstraints();
-	bool	SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* spawn, const char* name);
+	int32	SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* spawn, const char* name);
 	int32	ProcessSpawnLocations(ZoneServer* zone, const char* sql_query, int8 type);
 	int32	LoadSpawnLocationGroupAssociations(ZoneServer* zone);
 	int32	LoadSpawnLocationGroups(ZoneServer* zone);

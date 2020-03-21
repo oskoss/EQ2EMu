@@ -5173,17 +5173,20 @@ void Client::SaveCombineSpawns(const char* name){
 			return;
 	}
 	int32 count = spawns->size();
-	safe_delete(spawns);
+	int32 spawnLocationID = 0;
+
 	if(count == 1)
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "Error: You only have a single Spawn in the group!");
-	else if(database.SaveCombinedSpawnLocation(GetCurrentZone(), combine_spawn, name)){
-		Message(CHANNEL_COLOR_YELLOW, "Successfully combined %u spawns into spawn location: %u", count, combine_spawn->GetSpawnLocationID());
-		GetCurrentZone()->RemoveSpawn(false, combine_spawn);
+	else if((spawnLocationID = database.SaveCombinedSpawnLocation(GetCurrentZone(), combine_spawn, name)) > 0){
+		Message(CHANNEL_COLOR_YELLOW, "Successfully combined %u spawns into spawn location: %u", count, spawnLocationID);
+		// we remove the spawn inside SaveCombinedSpawnLocation
+		//GetCurrentZone()->RemoveSpawn(false, combine_spawn);
 	}
 	else
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "Error saving spawn group, check console for details.");
-	combine_spawn = 0;
 
+	safe_delete(spawns);
+	combine_spawn = 0;
 }
 
 bool Client::AddItem(int32 item_id, int16 quantity){
