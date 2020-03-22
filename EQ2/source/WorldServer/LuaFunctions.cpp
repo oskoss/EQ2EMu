@@ -159,11 +159,21 @@ int	EQ2Emu_lua_PerformCameraShake(lua_State* state) {
 		return 0;
 	Client* client = 0;
 	Spawn* player = lua_interface->GetSpawn(state);
+	if (!player) {
+		lua_interface->LogError("LUA PerformCameraShake command error: spawn is not valid");
+		return 0;
+	}
+
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("LUA PerformCameraShake command error: spawn is not a player");
+		return 0;
+	}
+
 	if (player->GetZone())
 		client = player->GetZone()->GetClientBySpawn(player);
 
 	if (!client) {
-		lua_interface->LogError("%s: LUA PerformCameraShake command error: could not find client", lua_interface->GetScriptName(state));
+		lua_interface->LogError("LUA PerformCameraShake command error: could not find client");
 		return 0;
 	}
 	int16 value1 = lua_interface->GetInt16Value(state, 2);
@@ -177,6 +187,7 @@ int	EQ2Emu_lua_PerformCameraShake(lua_State* state) {
 	}
 	return 0;
 }
+
 int EQ2Emu_lua_KillSpawn(lua_State* state) {
 	if (!lua_interface)
 		return 0;
