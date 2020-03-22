@@ -80,6 +80,11 @@ int16 GetOpcodeVersion(int16 version);
 void SleepMS(int32 milliseconds);
 size_t strlcpy(char *dst, const char *src, size_t size);
 
+float short_to_float(const ushort x);
+uint32 float_to_int(const float x);
+uint32 as_uint(const float x);
+float as_float(const uint32 x);
+
 bool INIReadBool(FILE *f, const char *section, const char *property, bool *out);
 bool INIReadInt(FILE *f, const char *section, const char *property, int *out);
 

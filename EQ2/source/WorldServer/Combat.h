@@ -27,7 +27,8 @@
 #define COMBAT_NORMAL_FIGHTER	0
 #define COMBAT_ADD_FIGHTER		1
 #define COMBAT_REMOVE_FIGHTER	2
-#define MAX_COMBAT_RANGE		3
+// replace with rule rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat()
+//#define MAX_COMBAT_RANGE		3
 
 class ZoneServer;
 class SpellProcess;

@@ -25,6 +25,9 @@
 #include "../common/Log.h"
 #include "LuaInterface.h"
 #include "World.h"
+#include "Rules/Rules.h"
+
+extern RuleManager rule_manager;
 
 extern LuaInterface* lua_interface;
 extern World world;
@@ -101,8 +104,6 @@ void Brain::Think() {
 				// Still within max chase distance lets to the combat stuff now
 
 				float distance = m_body->GetDistance(target);
-				distance -= target->appearance.pos.collision_radius / 10;
-				distance -= m_body->appearance.pos.collision_radius / 10;
 
 				if(!m_body->IsCasting() && (!HasRecovered() || !ProcessSpell(target, distance))) {
 					LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "%s is attempting melee on %s.", m_body->GetName(), target->GetName());
@@ -328,7 +329,7 @@ bool Brain::CheckBuffs() {
 }
 
 void Brain::ProcessMelee(Entity* target, float distance) {
-	if(distance > MAX_COMBAT_RANGE)
+	if(distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
 		MoveCloser(target);
 	else {
 		if (target) {
@@ -479,11 +480,9 @@ void CombatPetBrain::Think() {
 
 	// Get distance from the owner
 	float distance = GetBody()->GetDistance(target);
-	distance -= target->appearance.pos.collision_radius / 10;
-	distance -= GetBody()->appearance.pos.collision_radius / 10;
 
 	// If out of melee range then move closer
-	if (distance > MAX_COMBAT_RANGE)
+	if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
 		MoveCloser(target);
 }
 
@@ -513,11 +512,9 @@ void NonCombatPetBrain::Think() {
 
 	// Get distance from the owner
 	float distance = GetBody()->GetDistance(target);
-	distance -= target->appearance.pos.collision_radius / 10;
-	distance -= GetBody()->appearance.pos.collision_radius / 10;
 
 	// If out of melee range then move closer
-	if (distance > MAX_COMBAT_RANGE)
+	if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
 		MoveCloser(target);
 }
 
@@ -591,8 +588,6 @@ void DumbFirePetBrain::Think() {
 			}
 
 			float distance = GetBody()->GetDistance(target);
-			distance -= target->appearance.pos.collision_radius / 10;
-			distance -= GetBody()->appearance.pos.collision_radius / 10;
 
 			if(!GetBody()->IsCasting() && (!HasRecovered() || !ProcessSpell(target, distance))) {
 				LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "%s is attempting melee on %s.", GetBody()->GetName(), target->GetName());

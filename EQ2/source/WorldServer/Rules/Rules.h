@@ -33,6 +33,7 @@ enum RuleCategory {
 	R_Guild,
 	R_Player,
 	R_PVP,
+	R_Combat,
 	R_Spawn,
 	R_UI,
 	R_World,
@@ -73,6 +74,9 @@ enum RuleType {
 	AllowPVP,
 	LevelRange,
 	InvisPlayerDiscoveryRange,
+
+	/* COMBAT */
+	MaxCombatRange,
 
 	/* SPAWN */
 	SpeedMultiplier,

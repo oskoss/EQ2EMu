@@ -2,6 +2,9 @@
 #include "../Combat.h"
 #include "../Spells.h"
 #include "../../common/Log.h"
+#include "../Rules/Rules.h"
+
+extern RuleManager rule_manager;
 
 BotBrain::BotBrain(Bot* body) : Brain(body) {
 	Body = body;
@@ -46,11 +49,9 @@ void BotBrain::Think() {
 
 	// Get distance from the owner
 	float distance = GetBody()->GetDistance(target);
-	distance -= target->appearance.pos.collision_radius / 10;
-	distance -= GetBody()->appearance.pos.collision_radius / 10;
 
 	// If out of melee range then move closer
-	if (distance > MAX_COMBAT_RANGE)
+	if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
 		MoveCloser(target);
 }
 

@@ -864,8 +864,6 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 		luaspell->resisted = false;
 		if (target) {
 			float distance = caster->GetDistance(target, true);
-			distance -= caster->appearance.pos.collision_radius / 10;
-			distance -= target->appearance.pos.collision_radius / 10;
 			if (((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs))
 				success = true;
 		}
@@ -876,8 +874,6 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 			for (int32 i = 0; i < luaspell->targets.size(); i++) {
 				if ((target = zone->GetSpawnByID(luaspell->targets[i]))) {
 					float distance = caster->GetDistance(target, true);
-					distance -= caster->appearance.pos.collision_radius / 10;
-					distance -= target->appearance.pos.collision_radius / 10;
 					((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs);
 				}
 			}
@@ -1230,8 +1226,6 @@ int EQ2Emu_lua_SpellDamage(lua_State* state) {
 						race_match = true; // if the race_req.size = 0 then there is no race requirement and the race_match will be true
 					if (race_match == true) {
 						float distance = caster->GetDistance(target, true);
-						distance -= caster->appearance.pos.collision_radius / 10;
-						distance -= target->appearance.pos.collision_radius / 10;
 						((Entity*)caster)->SpellAttack(target, distance, luaspell, type, min_damage, max_damage, crit_mod, no_calcs);
 					}
 				}
@@ -1253,8 +1247,6 @@ int EQ2Emu_lua_SpellDamage(lua_State* state) {
 				race_match = true; // if the race_req.size = 0 then there is no race requirement and the race_match will be true
 			if (race_match == true) {
 				float distance = caster->GetDistance(target, true);
-				distance -= caster->appearance.pos.collision_radius / 10;
-				distance -= target->appearance.pos.collision_radius / 10;
 				if (((Entity*)caster)->SpellAttack(target, distance, luaspell, type, min_damage, max_damage, crit_mod, no_calcs))
 					success = true;
 			}
@@ -2322,11 +2314,7 @@ int EQ2Emu_lua_GetDistance(lua_State* state) {
 	Spawn* spawn2 = lua_interface->GetSpawn(state, 2);
 	bool include_radius = lua_interface->GetInt8Value(state, 3) == 1;
 	if (spawn && spawn2) {
-		float distance = spawn->GetDistance(spawn2);
-		if (include_radius) {
-			distance -= spawn->appearance.pos.collision_radius / 10;
-			distance -= spawn2->appearance.pos.collision_radius / 10;
-		}
+		float distance = spawn->GetDistance(spawn2, false, include_radius);
 
 		lua_interface->SetFloatValue(state, distance);
 		return 1;

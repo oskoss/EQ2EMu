@@ -590,9 +590,13 @@ public:
 	int32 GetID(){
 		return id;
 	}
-	float GetDistance(Spawn* spawn, bool ignore_y = false);
-	float GetDistance(float x, float y, float z, bool ignore_y = false);
 	float GetDistance(float x1, float y1, float z1, float x2, float y2, float z2);
+	float GetDistance(float x, float y, float z, float radius, bool ignore_y = false);
+	float GetDistance(float x, float y, float z, bool ignore_y = false);
+	float GetDistance(Spawn* spawn, bool ignore_y = false, bool includeRadius=true);
+	float GetDistance(Spawn* spawn, float x1, float y1, float z1, bool includeRadius=true);
+	float CalculateRadius(Spawn* target);
+
 	int8 GetEncounterLevel(){
 		return appearance.encounter_level;
 	}

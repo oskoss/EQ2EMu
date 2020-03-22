@@ -170,7 +170,7 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 		}
 	}
 	else if (distance != 0) {
-		if(distance >= MAX_COMBAT_RANGE) {
+		if(distance >= rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat()) {
 			LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: distance is beyond melee range");
 			return false;
 		}
@@ -1151,8 +1151,6 @@ void Player::ProcessCombat() {
 
 	float distance = 0;
 	distance = GetDistance(combat_target);
-	distance -= combat_target->appearance.pos.collision_radius / 10;
-	distance -= appearance.pos.collision_radius / 10;
 
 	// Check to see if we are doing ranged auto attacks if not check to see if we are in melee range
 	if (GetRangeAttack()) {
@@ -1185,7 +1183,7 @@ void Player::ProcessCombat() {
 			}
 		}
 	}
-	else if(distance <= MAX_COMBAT_RANGE) {
+	else if(distance <= rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat()) {
 		// We are doing melee auto attacks and are within range
 
 		// Check to see if we can attack the target

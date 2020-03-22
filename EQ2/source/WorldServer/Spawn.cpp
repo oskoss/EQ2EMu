@@ -22,6 +22,7 @@
 #include "../common/timer.h"
 #include <time.h>
 #include <math.h>
+#include <emmintrin.h>
 #include "Entity.h"
 #include "Widget.h"
 #include "Sign.h"
@@ -1078,18 +1079,62 @@ float Spawn::GetDistance(float x1, float y1, float z1, float x2, float y2, float
 	return sqrt(x1*x1 + y1*y1 + z1*z1); 
 }
 
-float Spawn::GetDistance(float x, float y, float z, bool ignore_y){
-	if(ignore_y)
-		return GetDistance(x, y, z, GetX(), y, GetZ());
+float Spawn::GetDistance(float x, float y, float z, float radius, bool ignore_y) {
+	if (ignore_y)
+		return GetDistance(x, y, z, GetX(), y, GetZ()) - radius;
 	else
-		return GetDistance(x, y, z, GetX(), GetY(), GetZ());
+		return GetDistance(x, y, z, GetX(), GetY(), GetZ()) - radius;
 }
 
-float Spawn::GetDistance(Spawn* spawn, bool ignore_y){
+float Spawn::GetDistance(float x, float y, float z, bool ignore_y) {
+	return GetDistance(x, y, z, 0.0f, ignore_y);
+}
+float Spawn::GetDistance(Spawn* spawn, bool ignore_y, bool includeRadius){
 	float ret = 0;
-	if(spawn)
-		ret = GetDistance(spawn->GetX(), spawn->GetY(), spawn->GetZ(), ignore_y);
+
+	if (spawn)
+	{
+		float radius = 0.0f;
+		if (includeRadius)
+			radius = CalculateRadius(spawn);
+		ret = GetDistance(spawn->GetX(), spawn->GetY(), spawn->GetZ(), radius, ignore_y);
+	}
+
+	// maybe distance against ourselves, in that case we want to nullify the radius check
+	if (ret < 0)
+		ret = 0.0f;
+
 	return ret;
+}
+
+float Spawn::GetDistance(Spawn* spawn, float x1, float y1, float z1, bool includeRadius) {
+	float ret = 0;
+
+	if (spawn)
+	{
+		float radius = 0.0f;
+		if (includeRadius)
+			radius = CalculateRadius(spawn);
+		ret = GetDistance(x1, y1, z1, spawn->GetX(), spawn->GetY(), spawn->GetZ()) - radius;
+	}
+
+	// maybe distance against ourselves, in that case we want to nullify the radius check
+	if (ret < 0)
+		ret = 0.0f;
+
+	return ret;
+}
+
+float Spawn::CalculateRadius(Spawn* target)
+{
+	float srcRadius = short_to_float(appearance.pos.collision_radius);
+	if (target)
+	{
+		float targRadius = short_to_float(target->appearance.pos.collision_radius);
+		return (targRadius / 32.0f) + (srcRadius / 32.0f);
+	}
+	else
+		return (srcRadius / 32.0f);
 }
 
 int32 Spawn::GetRespawnTime(){
@@ -1841,19 +1886,19 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				SetSpeed(speed);
 			}
 			MovementLocation* loc = GetCurrentRunningLocation();
-			if (GetDistance(followTarget, true) <= MAX_COMBAT_RANGE || (loc && loc->x == GetX() && loc->y == GetY() && loc->z == GetZ())) {
+			if ((GetDistance(followTarget, true) <= rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat()) || (loc && loc->x == GetX() && loc->y == GetY() && loc->z == GetZ())) {
 				ClearRunningLocations();
 				CalculateRunningLocation(true);
 			}
 			else if (loc) {
-				float distance = GetDistance(loc->x, loc->y, loc->z, followTarget->GetX(), followTarget->GetY(), followTarget->GetZ());
-				if (distance > MAX_COMBAT_RANGE) {
-					MoveToLocation(followTarget, MAX_COMBAT_RANGE);
+				float distance = GetDistance(followTarget, loc->x, loc->y, loc->z);
+				if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat()) {
+					MoveToLocation(followTarget, rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat());
 					CalculateRunningLocation();
 				}
 			}
 			else {
-				MoveToLocation(followTarget, MAX_COMBAT_RANGE);
+				MoveToLocation(followTarget, rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat());
 				CalculateRunningLocation();
 			}
 		}
