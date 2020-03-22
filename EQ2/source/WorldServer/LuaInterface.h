@@ -213,7 +213,7 @@ public:
 	lua_State*		GetZoneScript(const char* name, bool create_new = true, bool use = false);
 	Quest*			LoadQuest(int32 id, const char* name, const char* type, const char* zone, int8 level, const char* description, char* script_name);
 
-	char*			GetScriptName(lua_State* state);
+	const char*		GetScriptName(lua_State* state);
 
 	void			RemoveSpawnScript(const char* name);
 	bool			RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn = 0);

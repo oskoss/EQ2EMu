@@ -420,31 +420,31 @@ Quest* LuaInterface::LoadQuest(int32 id, const char* name, const char* type, con
 	return quest;
 }
 
-char* LuaInterface::GetScriptName(lua_State* state)
+const char* LuaInterface::GetScriptName(lua_State* state)
 {
 	map<lua_State*, string>::iterator itr;
 	MItemScripts.writelock(__FUNCTION__, __LINE__);
 	itr = item_inverse_scripts.find(state);
 	if (itr != item_inverse_scripts.end())
-		return (char*)itr->second.c_str();
+		return itr->second.c_str();
 	MItemScripts.releasewritelock(__FUNCTION__, __LINE__);
 
 	MSpawnScripts.writelock(__FUNCTION__, __LINE__);
 	itr = spawn_inverse_scripts.find(state);
 	if (itr != spawn_inverse_scripts.end())
-		return (char*)itr->second.c_str();
+		return itr->second.c_str();
 	MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
 
 	MZoneScripts.writelock(__FUNCTION__, __LINE__);
 	itr = zone_inverse_scripts.find(state);
 	if (itr != zone_inverse_scripts.end())
-		return (char*)itr->second.c_str();
+		return itr->second.c_str();
 	MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
 
 	MSpells.lock();
 	LuaSpell* spell = GetCurrentSpell(state);
 	if (spell)
-		return (spell->file_name.length() > 0) ? (char*)spell->file_name.c_str() : "";
+		return (spell->file_name.length() > 0) ? spell->file_name.c_str() : "";
 
 	MSpells.unlock();
 	return "";
