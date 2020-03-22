@@ -22,7 +22,6 @@
 #include "../common/timer.h"
 #include <time.h>
 #include <math.h>
-#include <emmintrin.h>
 #include "Entity.h"
 #include "Widget.h"
 #include "Sign.h"
