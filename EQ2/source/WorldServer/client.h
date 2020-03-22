@@ -245,6 +245,7 @@ public:
 	void	Loot(int32 total_coins, vector<Item*>* items, Entity* entity);
 	void	Loot(Entity* entity, bool attemptDisarm=true);
 	void	OpenChest(Entity* entity, bool attemptDisarm=true);
+	void	CastGroupOrSelf(Entity* source, uint32 spellID, uint32 spellTier=1, float restrictiveRadius=0.0f);
 	void	CheckPlayerQuestsKillUpdate(Spawn* spawn);
 	void	CheckPlayerQuestsChatUpdate(Spawn* spawn);
 	void	CheckPlayerQuestsItemUpdate(Item* item);

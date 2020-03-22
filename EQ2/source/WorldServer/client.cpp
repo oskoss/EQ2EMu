@@ -4118,16 +4118,8 @@ void Client::OpenChest(Entity* entity, bool attemptDisarm)
 		{
 			if (disarmSkill->CheckDisarmSkill(entity->GetLevel(), chest_difficulty) < 1)
 			{
-				Spell* spell = master_spell_list.GetSpell(nextTrap.spell_id, nextTrap.spell_tier);
-				if (spell)
-				{
-					// Get the current zones spell process
-					SpellProcess* spellProcess = GetCurrentZone()->GetSpellProcess();
-
-					spellProcess->CastInstant(spell, entity, (Entity*)GetPlayer());
-				}
-
-				// need to confirm live fail to disarm message (seems now you either trigger or it gives no message?)
+				CastGroupOrSelf(entity, nextTrap.spell_id, nextTrap.spell_tier, 
+					rule_manager.GetGlobalRule(R_Loot, ChestTriggerRadiusGroup)->GetFloat());
 				Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
 			}
 			else
@@ -4140,16 +4132,8 @@ void Client::OpenChest(Entity* entity, bool attemptDisarm)
 		}
 		else // no disarm skill, always fail
 		{
-			Spell* spell = master_spell_list.GetSpell(nextTrap.spell_id, nextTrap.spell_tier);
-
-			if (spell)
-			{
-				// Get the current zones spell process
-				SpellProcess* spellProcess = GetCurrentZone()->GetSpellProcess();
-
-				spellProcess->CastInstant(spell, entity, (Entity*)GetPlayer());
-			}
-
+			CastGroupOrSelf(entity, nextTrap.spell_id, nextTrap.spell_tier, 
+				rule_manager.GetGlobalRule(R_Loot, ChestTriggerRadiusGroup)->GetFloat());
 			Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
 		}
 	}
@@ -4167,6 +4151,35 @@ void Client::OpenChest(Entity* entity, bool attemptDisarm)
 		entity->SetVisualState(state, false);
 
 	GetCurrentZone()->SendStateCommand(entity, state);
+}
+
+void Client::CastGroupOrSelf(Entity* source, uint32 spellID, uint32 spellTier, float restrictiveRadius)
+{
+	Spell* spell = master_spell_list.GetSpell(spellID, spellTier);
+	SpellProcess* spellProcess = GetCurrentZone()->GetSpellProcess();
+	if (source == NULL)
+		source = (Entity*)GetPlayer();
+	if (spell)
+	{
+		GroupMemberInfo* gmi = GetPlayer()->GetGroupMemberInfo();
+		if (gmi && gmi->group_id)
+		{
+			deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(gmi->group_id);
+			for (int8 i = 0; i < members->size(); i++) {
+				Entity* member = members->at(i)->member;
+
+				if (!member->Alive() || (member->GetZone() != source->GetZone()))
+					continue;
+				// if we have a radius provided then check if the group member is outside the radius or not
+				if (restrictiveRadius > 0.0f && member->GetDistance(source) > restrictiveRadius)
+					continue;
+
+				spellProcess->CastInstant(spell, source, (Entity*)GetPlayer());
+			}
+		}
+		else
+			spellProcess->CastInstant(spell, source, (Entity*)GetPlayer());
+	}
 }
 
 Spawn* Client::GetBanker(){

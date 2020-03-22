@@ -288,6 +288,7 @@ RuleManager::RuleManager() {
 
 	RULE_INIT(R_Loot, LootRadius, "5.0");
 	RULE_INIT(R_Loot, AutoDisarmChest, "1");
+	RULE_INIT(R_Loot, ChestTriggerRadiusGroup, "10.0"); // radius at which chest will trigger against group members
 
 	RULE_INIT(R_Spells, NoInterruptBaseChance, "50");
 
