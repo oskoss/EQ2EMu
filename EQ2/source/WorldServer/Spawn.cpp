@@ -1441,7 +1441,6 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 	//packet->setDataByName("pos_unknown2", 4, 2);
 
 	int16 speed_multiplier = rule_manager.GetGlobalRule(R_Spawn, SpeedMultiplier)->GetInt16(); // was 1280, 600 and now 300... investigating why
-	//float speed_ratio = rule_manager.GetGlobalRule(R_Spawn, SpeedRatio)->GetFloat(); // was 7.5 for 1280 and 600, then 0 for 300... investigating why
 
 	if (IsPlayer()) {
 		Player* player = static_cast<Player*>(this);

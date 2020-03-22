@@ -80,7 +80,7 @@ enum RuleType {
 
 	/* SPAWN */
 	SpeedMultiplier,
-	SpeedRatio,
+	//SpeedRatio,
 
 	/* UI */
 	MaxWhoResults,
