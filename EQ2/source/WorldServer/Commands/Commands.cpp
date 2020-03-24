@@ -1538,6 +1538,24 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "[PlacementMode] WIDGET CLOSE HEADING MODE");
 							client->SetSpawnPlacementMode(Client::ServerSpawnPlacementMode::CLOSE_HEADING);
 						}
+						else if (strcmp(sep->arg[0], "myloc") == 0)
+						{
+							if (cmdTarget->GetSpawnLocationPlacementID() < 1) {
+								client->Message(CHANNEL_COLOR_YELLOW, "[PlacementMode] Spawn %s cannot be moved it is not assigned a spawn location placement id.", cmdTarget->GetName());
+								safe_delete(packet);
+								break;
+							}
+
+							cmdTarget->SetX(client->GetPlayer()->GetX(), true);
+							cmdTarget->SetY(client->GetPlayer()->GetY(), true);
+							cmdTarget->SetZ(client->GetPlayer()->GetZ(), true);
+							cmdTarget->SetHeading(client->GetPlayer()->GetHeading(), true);
+
+							if (database.UpdateSpawnLocationSpawns(cmdTarget))
+								client->Message(CHANNEL_COLOR_YELLOW, "[PlacementMode] Spawn %s placed at your location.  Updated spawn_location_placement for spawn.", cmdTarget->GetName());
+							safe_delete(packet);
+							break;
+						}
 					}
 					packet->setDataByName("placement_mode", placement_mode);
 					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(cmdTarget));
