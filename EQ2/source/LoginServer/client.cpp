@@ -164,6 +164,7 @@ bool Client::Process() {
 				PacketStruct* packet = configReader.getStruct("LS_LoginRequest", 1);
 				if(packet->LoadPacketData(app->pBuffer,app->size)){
 					version = packet->getType_int32_ByName("version");
+					//[7:19 PM] Kirmmin: Well, I very quickly learned that unknown3 in LS_LoginRequest packet is the same value as cl_eqversion in the eq2_defaults.ini file.
 
 					LogWrite(LOGIN__DEBUG, 0, "Login", "Client Version Provided: %i", version);
 

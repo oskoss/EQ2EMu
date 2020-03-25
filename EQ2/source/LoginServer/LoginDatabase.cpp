@@ -463,7 +463,7 @@ LoginAccount* LoginDatabase::LoadAccount(const char* name, const char* password,
 		}
 		else if(mysql_num_rows(result) > 0)
 			LogWrite(LOGIN__ERROR, 0, "Login", "Error in LoginAccount: more than one account returned for '%s'", name);
-		else if (attemptAccountCreation)
+		else if (attemptAccountCreation && !database.GetAccountIDByName(name))
 		{
 			Query newquery;
 			newquery.RunQuery2(Q_INSERT, "insert into account set name='%s',passwd=sha2('%s',512)", query.escaped_name, query.escaped_pass);
@@ -473,6 +473,19 @@ LoginAccount* LoginDatabase::LoadAccount(const char* name, const char* password,
 
 	}
 	return acct;
+}
+
+int32 LoginDatabase::GetAccountIDByName(const char* name) {
+	int32 id = 0;
+	Query query;
+	MYSQL_ROW row;
+	query.escaped_name = getEscapeString(name);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id from account where name='%s'", query.escaped_name);
+	if (result && mysql_num_rows(result) == 1) {
+		row = mysql_fetch_row(result);
+		id = atoi(row[0]);
+	}
+	return id;
 }
 
 int32 LoginDatabase::CheckServerAccount(char* name, char* passwd){
