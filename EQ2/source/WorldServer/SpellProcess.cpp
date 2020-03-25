@@ -1804,7 +1804,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 							Spawn* group_member = *itr;
 
 							// if NPC group member is (still) an NPC (wtf?) and is alive, send the NPC group member back as a successful target of non-friendly spell
-							if (group_member->IsNPC() && group_member->Alive() && group_member != target && !((Entity*)group_member)->IsAOEImmune())
+							if (group_member->IsNPC() && group_member->Alive() && !((Entity*)group_member)->IsAOEImmune())
 								luaspell->targets.push_back(group_member->GetID());
 
 							// note: this should generate some hate towards the caster
