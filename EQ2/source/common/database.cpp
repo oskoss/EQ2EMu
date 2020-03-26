@@ -75,6 +75,7 @@ ThreadReturnType DBAsyncQueries(void* str)
 	Sleep(10);
 	DBStruct* data = (DBStruct*)str;
 	database.RunAsyncQueries(data->queryid);
+	delete data;
 	THREAD_RETURN(NULL);
 }
 #endif
