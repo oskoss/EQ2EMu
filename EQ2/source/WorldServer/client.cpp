@@ -937,6 +937,7 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 							GetCurrentZone()->AddClient(this); //add to zones client list
 							world.RejoinGroup(this);
 							zone_list.AddClientToMap(player->GetName(), this);
+							GetCurrentZone()->SetSpawnStructs(this);
 						}
 						else{
 							LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);

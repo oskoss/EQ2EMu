@@ -598,6 +598,7 @@ public:
 
 	void ProcessSpawnConditional(int8 condition);
 
+	void SetSpawnStructs(Client* client);
 private:
 	/* Private Functions */
 	void	AddTransporter(LocationTransportDestination* loc);
@@ -673,8 +674,6 @@ private:
 	void	InitWeather();																						// never used outside zone server
 	///<summary>Dismiss all pets in the zone, useful when the spell process needs to be reloaded</summary>
 	void DismissAllPets();																						// never used outside zone server
-
-	void SetSpawnStructs(Client* client);
 
 	/* Mutex Lists */
 	MutexList<int32> changed_spawns;										// int32 = spawn id

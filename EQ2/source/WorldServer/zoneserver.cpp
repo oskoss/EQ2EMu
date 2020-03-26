@@ -1069,10 +1069,7 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 		return;
 	}
 
-	if (initial_login){
-		SetSpawnStructs(client);
-	}
-	else if (!client->GetInitialSpawnsSent())
+	if (!initial_login && !client->GetInitialSpawnsSent())
 		return;
 
 	Spawn* spawn = 0;
