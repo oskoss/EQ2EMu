@@ -163,7 +163,7 @@ void WorldDatabase::SaveBuyBack(int32 char_id, int32 item_id, int16 quantity, in
 
 	Query query;
 	string insert = string("INSERT INTO character_buyback (char_id, item_id, quantity, price) VALUES (%u, %u, %i, %u) ");
-	query.RunQuery2(Q_INSERT, insert.c_str(), char_id, item_id, quantity, price);
+	query.AddQueryAsync(char_id, this, Q_INSERT, insert.c_str(), char_id, item_id, quantity, price);
 }
 
 int32 WorldDatabase::LoadCharacterSpells(int32 char_id, Player* player)
@@ -215,7 +215,7 @@ void WorldDatabase::SavePlayerSpells(Client* client)
 			spell = *itr;
 			Query query;
 			LogWrite(SPELL__DEBUG, 5, "Spells", "\tSaving SpellID: %u, tier: %i, slot: %i", spell->spell_id, spell->tier, spell->slot);
-			query.RunQuery2(Q_INSERT, "INSERT INTO character_spells (char_id, spell_id, tier) SELECT %u, %u, %i ON DUPLICATE KEY UPDATE tier = %i",
+			query.AddQueryAsync(client->GetCharacterID(), this, Q_INSERT, "INSERT INTO character_spells (char_id, spell_id, tier) SELECT %u, %u, %i ON DUPLICATE KEY UPDATE tier = %i",
 				client->GetPlayer()->GetCharacterID(), spell->spell_id, spell->tier, spell->tier);
 			spell->save_needed = false;
 		}
@@ -2206,7 +2206,7 @@ void WorldDatabase::SaveCharacterSkills(Client* client){
 			Skill* skill = 0;
 			for(int32 i=0;i<skills->size();i++){
 				skill = skills->at(i);
-				query.RunQuery2(Q_REPLACE, "replace into character_skills (char_id, skill_id, current_val, max_val) values(%u, %u, %i, %i)", client->GetCharacterID(), skill->skill_id, skill->current_val, skill->max_val);
+				query.AddQueryAsync(client->GetCharacterID(),this,Q_REPLACE, "replace into character_skills (char_id, skill_id, current_val, max_val) values(%u, %u, %i, %i)", client->GetCharacterID(), skill->skill_id, skill->current_val, skill->max_val);
 			}
 			if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
 				LogWrite(WORLD__ERROR, 0, "World", "Error in SaveCharacterSkills query '%s': %s", query.GetQuery(), query.GetError());
@@ -2223,12 +2223,12 @@ void WorldDatabase::SaveCharacterQuests(Client* client){
 	map<int32, Quest*>* quests = client->GetPlayer()->GetPlayerQuests();
 	for(itr = quests->begin(); itr != quests->end(); itr++){
 		if(client->GetCurrentQuestID() == itr->first){
-			query.RunQuery2(Q_UPDATE, "update character_quests set current_quest = 0 where char_id = %u", client->GetCharacterID());
-			query.RunQuery2(Q_UPDATE, "update character_quests set current_quest = 1 where char_id = %u and quest_id = %u", client->GetCharacterID(), itr->first);
+			query.AddQueryAsync(client->GetCharacterID(),this,Q_UPDATE, "update character_quests set current_quest = 0 where char_id = %u", client->GetCharacterID());
+			query.AddQueryAsync(client->GetCharacterID(), this,Q_UPDATE, "update character_quests set current_quest = 1 where char_id = %u and quest_id = %u", client->GetCharacterID(), itr->first);
 		}
 		if(itr->second->GetSaveNeeded()){
-			query.RunQuery2(Q_INSERT, "insert ignore into character_quests (char_id, quest_id, given_date, quest_giver) values(%u, %u, now(), %u)", client->GetCharacterID(), itr->first, itr->second->GetQuestGiver());
-			query.RunQuery2(Q_UPDATE, "update character_quests set tracked = %i, quest_flags = %u, hidden = %i, complete_count = %u where char_id = %u and quest_id = %u", itr->second->IsTracked() ? 1 : 0, itr->second->GetQuestFlags(), itr->second->IsHidden() ? 1 : 0, itr->second->GetCompleteCount(), client->GetCharacterID(), itr->first);
+			query.AddQueryAsync(client->GetCharacterID(), this,Q_INSERT, "insert ignore into character_quests (char_id, quest_id, given_date, quest_giver) values(%u, %u, now(), %u)", client->GetCharacterID(), itr->first, itr->second->GetQuestGiver());
+			query.AddQueryAsync(client->GetCharacterID(), this,Q_UPDATE, "update character_quests set tracked = %i, quest_flags = %u, hidden = %i, complete_count = %u where char_id = %u and quest_id = %u", itr->second->IsTracked() ? 1 : 0, itr->second->GetQuestFlags(), itr->second->IsHidden() ? 1 : 0, itr->second->GetCompleteCount(), client->GetCharacterID(), itr->first);
 			SaveCharacterQuestProgress(client, itr->second);
 			itr->second->SetSaveNeeded(false);
 		}
@@ -2238,11 +2238,11 @@ void WorldDatabase::SaveCharacterQuests(Client* client){
 	quests = client->GetPlayer()->GetCompletedPlayerQuests();
 	for(itr = quests->begin(); itr != quests->end(); itr++){
 		if(itr->second->GetSaveNeeded()){
-			query.RunQuery2(Q_DELETE, "delete FROM character_quest_progress where char_id = %u and quest_id = %u", client->GetCharacterID(), itr->first);
+			query.AddQueryAsync(client->GetCharacterID(), this,Q_DELETE, "delete FROM character_quest_progress where char_id = %u and quest_id = %u", client->GetCharacterID(), itr->first);
 
 			/* incase the quest is completed before the quest could be inserted in the PlayerQuests loop, we first try to insert it.  If it already exists then we can just update
 			 * the completed_date */
-			query.RunQuery2(Q_INSERT, "INSERT INTO character_quests (char_id, quest_id, quest_giver, current_quest, given_date, completed_date, complete_count) values (%u,%u,%u,0, now(),now(), %u) ON DUPLICATE KEY UPDATE completed_date = now(), complete_count = %u, current_quest = 0", client->GetCharacterID(), itr->first, itr->second->GetQuestGiver(), itr->second->GetCompleteCount(), itr->second->GetCompleteCount());
+			query.AddQueryAsync(client->GetCharacterID(), this,Q_INSERT, "INSERT INTO character_quests (char_id, quest_id, quest_giver, current_quest, given_date, completed_date, complete_count) values (%u,%u,%u,0, now(),now(), %u) ON DUPLICATE KEY UPDATE completed_date = now(), complete_count = %u, current_quest = 0", client->GetCharacterID(), itr->first, itr->second->GetQuestGiver(), itr->second->GetCompleteCount(), itr->second->GetCompleteCount());
 			itr->second->SetSaveNeeded(false);
 		}
 	}
@@ -3573,8 +3573,8 @@ void WorldDatabase::Save(Client* client){
 	int32 zone_id = 0;
 	if(client->GetCurrentZone())
 		zone_id = client->GetCurrentZone()->GetZoneID();
-	query.RunQuery2(Q_UPDATE, "update characters set current_zone_id=%u, x=%f, y=%f, z=%f, heading=%f, level=%i,instance_id=%i,last_saved=%i, `class`=%i, `tradeskill_level`=%i, `tradeskill_class`=%i where id = %u", zone_id, player->GetX(), player->GetY(), player->GetZ(), player->GetHeading(), player->GetLevel(), instance_id, client->GetLastSavedTimeStamp(), client->GetPlayer()->GetAdventureClass(), client->GetPlayer()->GetTSLevel(), client->GetPlayer()->GetTradeskillClass(), client->GetCharacterID());
-	query.RunQuery2(Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %u, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s' where char_id = %u",
+	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update characters set current_zone_id=%u, x=%f, y=%f, z=%f, heading=%f, level=%i,instance_id=%i,last_saved=%i, `class`=%i, `tradeskill_level`=%i, `tradeskill_class`=%i where id = %u", zone_id, player->GetX(), player->GetY(), player->GetZ(), player->GetHeading(), player->GetLevel(), instance_id, client->GetLastSavedTimeStamp(), client->GetPlayer()->GetAdventureClass(), client->GetPlayer()->GetTSLevel(), client->GetPlayer()->GetTradeskillClass(), client->GetCharacterID());
+	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %u, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s' where char_id = %u",
 		player->GetHP(), player->GetPower(), player->GetStrBase(), player->GetStaBase(), player->GetAgiBase(), player->GetWisBase(), player->GetIntBase(), player->GetHeatResistanceBase(), player->GetColdResistanceBase(), player->GetMagicResistanceBase(),
 		player->GetMentalResistanceBase(), player->GetDivineResistanceBase(), player->GetDiseaseResistanceBase(), player->GetPoisonResistanceBase(), player->GetCoinsCopper(), player->GetCoinsSilver(), player->GetCoinsGold(), player->GetCoinsPlat(), player->GetTotalHPBase(), player->GetTotalPowerBase(), player->GetXP(), player->GetNeededXP(), player->GetXPDebt(), player->GetXPVitality(), player->GetTSXP(), player->GetNeededTSXP(), player->GetTSXPVitality(), player->GetBankCoinsCopper(),
 		player->GetBankCoinsSilver(), player->GetBankCoinsGold(), player->GetBankCoinsPlat(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneID(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneX(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneY(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneZ(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneHeading(), client->GetPlayer()->GetPlayerInfo()->GetHouseZoneID(), 
@@ -3584,11 +3584,11 @@ void WorldDatabase::Save(Client* client){
 	if(friends && friends->size() > 0){
 		for(itr = friends->begin(); itr != friends->end(); itr++){
 			if(itr->second == 1){
-				query.RunQuery2(Q_INSERT, "insert ignore into character_social (char_id, name, type) values(%u, '%s', 'FRIEND')", client->GetCharacterID(), getSafeEscapeString(itr->first.c_str()).c_str());
+				query.AddQueryAsync(client->GetCharacterID(), this, Q_INSERT, "insert ignore into character_social (char_id, name, type) values(%u, '%s', 'FRIEND')", client->GetCharacterID(), getSafeEscapeString(itr->first.c_str()).c_str());
 				itr->second = 0;
 			}
 			else if(itr->second == 2){
-				query.RunQuery2(Q_DELETE, "delete FROM character_social where char_id = %u and name = '%s'", client->GetCharacterID(), getSafeEscapeString(itr->first.c_str()).c_str());
+				query.AddQueryAsync(client->GetCharacterID(), this, Q_DELETE, "delete FROM character_social where char_id = %u and name = '%s'", client->GetCharacterID(), getSafeEscapeString(itr->first.c_str()).c_str());
 				itr->second = 3;
 			}
 		}
@@ -3597,11 +3597,11 @@ void WorldDatabase::Save(Client* client){
 	if(ignored && ignored->size() > 0){
 		for(itr = ignored->begin(); itr != ignored->end(); itr++){
 			if(itr->second == 1){
-				query.RunQuery2(Q_INSERT, "insert ignore into character_social (char_id, name, type) values(%u, '%s', 'IGNORE')", client->GetCharacterID(), getSafeEscapeString(itr->first.c_str()).c_str());
+				query.AddQueryAsync(client->GetCharacterID(), this, Q_INSERT, "insert ignore into character_social (char_id, name, type) values(%u, '%s', 'IGNORE')", client->GetCharacterID(), getSafeEscapeString(itr->first.c_str()).c_str());
 				itr->second = 0;
 			}
 			else if(itr->second == 2){
-				query.RunQuery2(Q_DELETE, "delete FROM character_social where char_id = %u and name = '%s'", client->GetCharacterID(), getSafeEscapeString(itr->first.c_str()).c_str());
+				query.AddQueryAsync(client->GetCharacterID(), this, Q_DELETE, "delete FROM character_social where char_id = %u and name = '%s'", client->GetCharacterID(), getSafeEscapeString(itr->first.c_str()).c_str());
 				itr->second = 3;
 			}
 		}
@@ -3857,7 +3857,7 @@ void WorldDatabase::SavePlayerFactions(Client* client){
 	map<int32, sint32>* factions = client->GetPlayer()->GetFactions()->GetFactionValues();
 	map<int32, sint32>::iterator itr;
 	for(itr = factions->begin(); itr != factions->end(); itr++)
-		query.RunQuery2(Q_INSERT, "insert into character_factions (char_id, faction_id, faction_level) values(%u, %u, %i) ON DUPLICATE KEY UPDATE faction_level=%i", client->GetCharacterID(), itr->first, itr->second, itr->second);	
+		query.AddQueryAsync(client->GetCharacterID(), this,Q_INSERT, "insert into character_factions (char_id, faction_id, faction_level) values(%u, %u, %i) ON DUPLICATE KEY UPDATE faction_level=%i", client->GetCharacterID(), itr->first, itr->second, itr->second);
 }
 
 bool WorldDatabase::LoadPlayerFactions(Client* client) {
@@ -3880,9 +3880,9 @@ void WorldDatabase::SavePlayerMail(Mail* mail) {
 	Query query_update;
 	Query query_insert;
 	if (mail) {
-		query_update.RunQuery2(Q_UPDATE, "UPDATE `character_mail` SET `already_read`=%u, `coin_copper`=%u, `coin_silver`=%u, `coin_gold`=%u, `coin_plat`=%u WHERE `id`=%u", mail->already_read, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->mail_id);
+		query_update.AddQueryAsync(mail->player_to_id, this, Q_UPDATE, "UPDATE `character_mail` SET `already_read`=%u, `coin_copper`=%u, `coin_silver`=%u, `coin_gold`=%u, `coin_plat`=%u WHERE `id`=%u", mail->already_read, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->mail_id);
 		if (query_update.GetAffectedRows() == 0)
-			query_insert.RunQuery2(Q_UPDATE, "INSERT INTO `character_mail` (`player_to_id`, `player_from`, `subject`, `mail_body`, `already_read`, `mail_type`, `coin_copper`, `coin_silver`, `coin_gold`, `coin_plat`, `stack`, `postage_cost`, `attachment_cost`, `char_item_id`, `time_sent`, `expire_time`) VALUES (%u, '%s', '%s', '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)", mail->player_to_id, mail->player_from.c_str(), getSafeEscapeString(mail->subject.c_str()).c_str(), getSafeEscapeString(mail->mail_body.c_str()).c_str(), mail->already_read, mail->mail_type, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->stack, mail->postage_cost, mail->attachment_cost, mail->char_item_id, mail->time_sent, mail->expire_time);
+			query_insert.AddQueryAsync(mail->player_to_id, this, Q_UPDATE, "INSERT INTO `character_mail` (`player_to_id`, `player_from`, `subject`, `mail_body`, `already_read`, `mail_type`, `coin_copper`, `coin_silver`, `coin_gold`, `coin_plat`, `stack`, `postage_cost`, `attachment_cost`, `char_item_id`, `time_sent`, `expire_time`) VALUES (%u, '%s', '%s', '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)", mail->player_to_id, mail->player_from.c_str(), getSafeEscapeString(mail->subject.c_str()).c_str(), getSafeEscapeString(mail->mail_body.c_str()).c_str(), mail->already_read, mail->mail_type, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->stack, mail->postage_cost, mail->attachment_cost, mail->char_item_id, mail->time_sent, mail->expire_time);
 		mail->save_needed = false;
 	}
 }
@@ -4096,17 +4096,17 @@ void WorldDatabase::SaveQuickBar(int32 char_id, vector<QuickBarItem*>* quickbar_
 		if(qbi->deleted == false){
 			Query query;
 			if(qbi->text.size > 0){
-				query.RunQuery2(Q_REPLACE, "replace into character_skillbar (id, hotbar, slot, char_id, spell_id, type, text_val, tier) values(%u, %u, %u, %u, %u, %i, '%s', %i)", 
+				query.AddQueryAsync(char_id, this, Q_REPLACE, "replace into character_skillbar (id, hotbar, slot, char_id, spell_id, type, text_val, tier) values(%u, %u, %u, %u, %u, %i, '%s', %i)", 
 					qbi->unique_id, qbi->hotbar, qbi->slot, char_id, qbi->id, qbi->type, getSafeEscapeString(qbi->text.data.c_str()).c_str(), qbi->tier);
 			}
 			else{
-				query.RunQuery2(Q_REPLACE, "replace into character_skillbar (id, hotbar, slot, char_id, spell_id, type, text_val, tier) values(%u, %u, %u, %u, %u, %i, 'Unused', %i)", 
+				query.AddQueryAsync(char_id, this, Q_REPLACE, "replace into character_skillbar (id, hotbar, slot, char_id, spell_id, type, text_val, tier) values(%u, %u, %u, %u, %u, %i, 'Unused', %i)",
 					qbi->unique_id, qbi->hotbar, qbi->slot, char_id, qbi->id, qbi->type, qbi->tier);
 			}
 		}
 		else{
 			Query query;
-			query.RunQuery2(Q_DELETE, "delete FROM character_skillbar where hotbar=%u and slot=%u and char_id=%u", qbi->hotbar, qbi->slot, char_id);
+			query.AddQueryAsync(char_id, this, Q_DELETE, "delete FROM character_skillbar where hotbar=%u and slot=%u and char_id=%u", qbi->hotbar, qbi->slot, char_id);
 		}
 	}
 }
@@ -5772,7 +5772,7 @@ void WorldDatabase::SaveCharacterHistory(Player* player, int8 type, int8 subtype
 	LogWrite(PLAYER__INFO, 1, "Player", "Saving character history, type = %s (%i) subtype = %s (%i)", (char*)str_type.c_str(), type, (char*)str_subtype.c_str(), subtype);
 
 	Query query;
-	query.RunQuery2(Q_REPLACE, "replace into character_history (char_id, type, subtype, value, value2, location, event_date) values (%u, '%s', '%s', %i, %i, '%s', %u)", 
+	query.AddQueryAsync(player->GetCharacterID(), this, Q_REPLACE, "replace into character_history (char_id, type, subtype, value, value2, location, event_date) values (%u, '%s', '%s', %i, %i, '%s', %u)", 
 		player->GetCharacterID(), str_type.c_str(), str_subtype.c_str(), value, value2, location, event_date);
 }
 
@@ -6554,8 +6554,11 @@ void WorldDatabase::LoadZoneFlightPathLocations(ZoneServer* zone) {
 }
 
 void WorldDatabase::SaveCharacterLUAHistory(Player* player, int32 event_id, int32 value, int32 value2) {
-	if (!database_new.Query("REPLACE INTO character_lua_history (char_id, event_id, value, value2) VALUES (%u, %u, %u, %u)", player->GetCharacterID(), event_id, value, value2))
-		LogWrite(DATABASE__ERROR, 0, "DBNew", "MySQL Error %u: %s", database_new.GetError(), database_new.GetErrorMsg());
+	Query query;
+	query.AddQueryAsync(player->GetCharacterID(), this, Q_REPLACE, "REPLACE INTO character_lua_history(char_id, event_id, value, value2) VALUES(% u, % u, % u, % u)", player->GetCharacterID(), event_id, value, value2);
+
+//	if (!database_new.Query("REPLACE INTO character_lua_history (char_id, event_id, value, value2) VALUES (%u, %u, %u, %u)", player->GetCharacterID(), event_id, value, value2))
+//		LogWrite(DATABASE__ERROR, 0, "DBNew", "MySQL Error %u: %s", database_new.GetError(), database_new.GetErrorMsg());
 }
 
 void WorldDatabase::LoadCharacterLUAHistory(int32 char_id, Player* player) {

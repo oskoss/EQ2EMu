@@ -255,7 +255,7 @@ void WorldDatabase::SavePlayerCollection(Client *client, Collection *collection)
 	assert(client);
 	assert(collection);
 
-	query.RunQuery2(Q_UPDATE,	"INSERT INTO `character_collections` (`char_id`,`collection_id`,`completed`)\n"
+	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE,	"INSERT INTO `character_collections` (`char_id`,`collection_id`,`completed`)\n"
 								"VALUES (%u,%u,0)\n"
 								"ON DUPLICATE KEY UPDATE `completed`=%i",
 								client->GetPlayer()->GetCharacterID(), collection->GetID(),
@@ -288,7 +288,7 @@ void WorldDatabase::SavePlayerCollectionItem(Client *client, Collection *collect
 	assert(collection);
 	//assert(item);
 
-	query.RunQuery2(Q_INSERT,	"INSERT IGNORE INTO `character_collection_items` (`char_id`,`collection_id`,`collection_item_id`)\n"
+	query.AddQueryAsync(client->GetCharacterID(), this, Q_INSERT,	"INSERT IGNORE INTO `character_collection_items` (`char_id`,`collection_id`,`collection_item_id`)\n"
 								"VALUES (%u,%u,%u)",
 								client->GetPlayer()->GetCharacterID(), collection->GetID(), item_id);
 }

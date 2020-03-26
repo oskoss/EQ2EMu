@@ -68,13 +68,23 @@ using namespace std;
 #include "../common/packet_dump.h"
 #include "../common/Log.h"
 
+#ifdef WORLD
+ThreadReturnType DBAsyncQueries(void* str)
+{
+	// allow some buffer for multiple queries to collect
+	Sleep(10);
+	DBStruct* data = (DBStruct*)str;
+	database.RunAsyncQueries(data->queryid);
+	THREAD_RETURN(NULL);
+}
+#endif
+
 Database::Database()
 {
 	InitVars();
-	
 }
 
-bool Database::Init() {
+bool Database::Init(bool silentLoad) {
 	char host[200], user[200], passwd[200], database[200];
 	int32 port=0;
 	bool compression = false;
@@ -104,7 +114,8 @@ bool Database::Init() {
 	}
 	else
 	{
-		LogWrite(DATABASE__INFO, 0, "DB", "Using database '%s' at %s", database, host);
+		if (!silentLoad)
+			LogWrite(DATABASE__INFO, 0, "DB", "Using database '%s' at %s", database, host);
 	}
 
 	return true;
@@ -163,7 +174,74 @@ void Database::InitVars() {
 
 Database::~Database()
 {
+#ifdef WORLD
+	DBQueryMutex.writelock(__FUNCTION__, __LINE__);
+	activeQuerySessions.clear();
+	DBQueryMutex.releasewritelock(__FUNCTION__, __LINE__);
+
+	DBAsyncMutex.writelock();
+	continueAsync = false;
+	map<int32, deque<Query*>>::iterator itr;
+	for (itr = asyncQueries.begin(); itr != asyncQueries.end(); itr++)
+	{
+		asyncQueriesMutex[itr->first]->writelock();
+		deque<Query*> queries = itr->second;
+		while (queries.size() > 0)
+		{
+			Query* cur = queries.front();
+			queries.pop_front();
+			safe_delete(cur);
+		}
+		asyncQueriesMutex[itr->first]->releasewritelock();
+		Mutex* mutex = asyncQueriesMutex[itr->first];
+		asyncQueriesMutex.erase(itr->first);
+		safe_delete(mutex);
+	}
+	asyncQueries.clear();
+
+	asyncQueriesMutex.clear();
+	DBAsyncMutex.releasewritelock();
+
+	PurgeDBInstances();
+#endif
 }
+
+#ifdef WORLD
+void Query::AddQueryAsync(int32 queryID, Database* db, QUERY_TYPE type, const char* format, ...) {
+	in_type = type;
+	va_list args;
+	va_start(args, format);
+#ifdef WIN32
+	char* buffer;
+	int buf_len = _vscprintf(format, args) + 1;
+	buffer = new char[buf_len];
+	vsprintf(buffer, format, args);
+#else
+	char* buffer;
+	int buf_len;
+	va_list argcopy;
+	va_copy(argcopy, args);
+	buf_len = vsnprintf(NULL, 0, format, argcopy) + 1;
+	va_end(argcopy);
+
+	buffer = new char[buf_len];
+	vsnprintf(buffer, buf_len, format, args);
+#endif
+	va_end(args);
+	query = string(buffer);
+
+	Query* asyncQuery = new Query(this, queryID);
+
+	safe_delete_array(buffer);
+
+	db->AddAsyncQuery(asyncQuery);
+}
+
+void Query::RunQueryAsync(Database* db) {
+	db->RunQuery(query.c_str(), query.length(), errbuf, &result, affected_rows, last_insert_id, &errnum, retry);
+}
+#endif
+
 MYSQL_RES* Query::RunQuery2(QUERY_TYPE type, const char* format, ...){
 	va_list args;
 	va_start( args, format );
@@ -246,3 +324,177 @@ MYSQL_RES* Query::RunQuery2(string in_query, QUERY_TYPE type){
 	database.RunQuery(query.c_str(), query.length(), errbuf, &result, affected_rows, last_insert_id, &errnum, retry); 
 	return result;
 }
+
+#ifdef WORLD
+void Database::RunAsyncQueries(int32 queryid)
+{
+	Database* asyncdb = FindFreeInstance();
+	DBAsyncMutex.writelock();
+	map<int32, deque<Query*>>::iterator itr = asyncQueries.find(queryid);
+	if (itr == asyncQueries.end())
+	{
+		DBAsyncMutex.releasewritelock();
+		return;
+	}
+
+	asyncQueriesMutex[queryid]->writelock();
+	deque<Query*> queries;
+	while (itr->second.size())
+	{
+		Query* cur = itr->second.front();
+		queries.push_back(cur);
+		itr->second.pop_front();
+	}
+	itr->second.clear();
+	asyncQueries.erase(itr);
+	DBAsyncMutex.releasewritelock();
+
+	int32 count = 0;
+	while (queries.size() > 0)
+	{
+		Query* cur = queries.front();
+		cur->RunQueryAsync(asyncdb);
+		this->RemoveActiveQuery(cur);
+		queries.pop_front();
+		safe_delete(cur);
+	}
+	FreeDBInstance(asyncdb);
+
+	asyncQueriesMutex[queryid]->releasewritelock();
+}
+
+void Database::AddAsyncQuery(Query* query)
+{
+	DBAsyncMutex.writelock();
+	map<int32, Mutex*>::iterator mutexItr = asyncQueriesMutex.find(query->GetQueryID());
+	if (mutexItr == asyncQueriesMutex.end())
+	{
+		Mutex* queryMutex = new Mutex();
+		queryMutex->SetName("AsyncQuery" + query->GetQueryID());
+		asyncQueriesMutex.insert(make_pair(query->GetQueryID(), queryMutex));
+	}
+	map<int32, deque<Query*>>::iterator itr = asyncQueries.find(query->GetQueryID());
+	asyncQueriesMutex[query->GetQueryID()]->writelock();
+
+	if ( itr != asyncQueries.end())
+		itr->second.push_back(query);
+	else
+	{
+		deque<Query*> queue;
+		queue.push_back(query);
+		asyncQueries.insert(make_pair(query->GetQueryID(), queue));
+	}
+
+	AddActiveQuery(query);
+
+	asyncQueriesMutex[query->GetQueryID()]->releasewritelock();
+	DBAsyncMutex.releasewritelock();
+
+	bool isActive = IsActiveQuery(query->GetQueryID(), query);
+	if (!isActive)
+	{
+	continueAsync = true;
+	DBStruct* tmp = new DBStruct;
+	tmp->queryid = query->GetQueryID();
+#ifdef WIN32
+	_beginthread(DBAsyncQueries, 0, (void*)tmp);
+#else
+	pthread_create(&t1, NULL, DBAsyncQueries, (void*)tmp);
+	pthread_detach(t1);
+#endif
+	}
+}
+
+Database* Database::FindFreeInstance()
+{
+	Database* db_inst = 0;
+	map<Database*, bool>::iterator itr;
+	DBInstanceMutex.writelock(__FUNCTION__, __LINE__);
+	for (itr = dbInstances.begin(); itr != dbInstances.end(); itr++) {
+		if (!itr->second)
+		{
+			db_inst = itr->first;
+			itr->second = true;
+			break;
+		}
+	}
+
+	if (!db_inst)
+	{
+		WorldDatabase* tmp = new WorldDatabase();
+		db_inst = (Database*)tmp;
+		tmp->Init();
+		tmp->ConnectNewDatabase();
+		dbInstances.insert(make_pair(db_inst, true));
+	}
+	DBInstanceMutex.releasewritelock(__FUNCTION__, __LINE__);
+
+	return db_inst;
+}
+
+void Database::PurgeDBInstances()
+{
+	map<Database*, bool>::iterator itr;
+	DBInstanceMutex.writelock(__FUNCTION__, __LINE__);
+	for (itr = dbInstances.begin(); itr != dbInstances.end(); itr++) {
+		Database* tmpInst = itr->first;
+		safe_delete(tmpInst);
+	}
+	dbInstances.clear();
+	DBInstanceMutex.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void Database::FreeDBInstance(Database* cur)
+{
+	DBInstanceMutex.writelock(__FUNCTION__, __LINE__);
+	dbInstances[cur] = false;
+	DBInstanceMutex.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void Database::RemoveActiveQuery(Query* query)
+{
+	DBQueryMutex.writelock(__FUNCTION__, __LINE__);
+
+	vector<Query*>::iterator itr;
+	for (itr = activeQuerySessions.begin(); itr != activeQuerySessions.end(); itr++)
+	{
+		Query* curQuery = *itr;
+		if (query == curQuery)
+		{
+			activeQuerySessions.erase(itr);
+			break;
+		}
+	}
+	DBQueryMutex.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void Database::AddActiveQuery(Query* query)
+{
+	DBQueryMutex.writelock(__FUNCTION__, __LINE__);
+	activeQuerySessions.push_back(query);
+	DBQueryMutex.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+bool Database::IsActiveQuery(int32 id, Query* skip)
+{
+	bool isActive = false;
+
+	DBQueryMutex.readlock(__FUNCTION__, __LINE__);
+	vector<Query*>::iterator itr;
+	for (itr = activeQuerySessions.begin(); itr != activeQuerySessions.end(); itr++)
+	{
+		Query* query = *itr;
+		if (query == skip)
+			continue;
+
+		if (query->GetQueryID() == id)
+		{
+			isActive = true;
+			break;
+		}
+	}
+	DBQueryMutex.releasereadlock(__FUNCTION__, __LINE__);
+
+	return isActive;
+}
+#endif

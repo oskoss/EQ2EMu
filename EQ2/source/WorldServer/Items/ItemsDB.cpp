@@ -1103,7 +1103,7 @@ void WorldDatabase::SaveItem(int32 account_id, int32 char_id, Item* item, const 
 
 	Query query;
 	string update_item = string("REPLACE INTO character_items (id, type, char_id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value, account_id, login_checksum) VALUES (%u, '%s', %u, %i, %u, '%s', %i, %i, %i, %i, %i, %i, %i, %u, %u, 0)");
-	query.RunQuery2(Q_REPLACE, update_item.c_str(), item->details.unique_id, type, char_id, item->details.slot_id, item->details.item_id, 
+	query.AddQueryAsync(char_id, this, Q_REPLACE, update_item.c_str(), item->details.unique_id, type, char_id, item->details.slot_id, item->details.item_id,
 		getSafeEscapeString(item->creator.c_str()).c_str(),item->adorn0,item->adorn1,item->adorn2, item->generic_info.condition, item->CheckFlag(ATTUNED) ? 1 : 0, item->details.inv_slot_id, item->details.count, item->GetMaxSellValue(), account_id);
 }
 

@@ -123,7 +123,7 @@ extern ChestTrapList chest_trap_list;
 
 using namespace std;
 
-Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000), transmuteID(0) {
+Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000), delayTimer(500), transmuteID(0) {
 	eqs = ieqs;
 	ip = eqs->GetrIP();
 	port = ntohs(eqs->GetrPort());
@@ -187,6 +187,10 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	on_auto_mount = false;
 	should_load_spells = true;
 	spawnPlacementMode = ServerSpawnPlacementMode::DEFAULT;
+	delayedLogin = false;
+	delayedAccountID = 0;
+	delayedAccessKey = 0;
+	delayTimer.Disable();
 }
 
 Client::~Client() {
@@ -892,71 +896,8 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 				int32 account_id = request->getType_int32_ByName("account_id");
 				int32 access_code = request->getType_int32_ByName("access_code");
 
-				ZoneAuthRequest* zar = zone_auth.GetAuth(account_id, access_code);
-
-				if(zar)
-				{
-					firstlogin = zar->isFirstLogin ( );
-					LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
-					if(database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)){
-						bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
-						if (pvp_allowed)
-							this->GetPlayer()->SetAttackable(1);
-						version = request->getType_int16_ByName("version");
-						MDeletePlayer.writelock(__FUNCTION__, __LINE__);
-						Client* client = zone_list.GetClientByCharName(player->GetName());
-						if(client){
-							if(client->getConnection())
-								client->getConnection()->SendDisconnect();
-							if(client->GetCurrentZone() && !client->IsZoning()){
-								//swap players, allowing the client to resume his LD'd player (ONLY if same version of the client)
-								if(client->GetVersion() == version){
-									Player* current_player = GetPlayer();
-									SetPlayer(client->GetPlayer());
-									client->SetPlayer(current_player);
-									client->GetPlayer()->SetPendingDeletion(true);
-
-									GetPlayer()->SetPendingDeletion(false);
-									GetPlayer()->ResetSavedSpawns();
-									GetPlayer()->SetReturningFromLD(true);
-									GetPlayer()->GetZone()->RemoveDelayedSpawnRemove(GetPlayer());
-								}
-								client->GetCurrentZone()->RemoveClientImmediately(client);
-							}
-						}
-						MDeletePlayer.releasewritelock(__FUNCTION__, __LINE__);						
-						if(!GetCurrentZone()){
-							LogWrite(ZONE__ERROR, 0, "Zone", "Error loading zone for character: %s", player->GetName());
-							ClientPacketFunctions::SendLoginDenied( this );
-						}
-						else if(EQOpcodeManager.count(GetOpcodeVersion(version)) > 0 && getConnection()){
-							getConnection()->SetClientVersion(version);
-							connected_to_zone = true;
-							client_list.Remove(this); //remove from master client list
-							new_client_login = true;
-							GetCurrentZone()->AddClient(this); //add to zones client list
-							world.RejoinGroup(this);
-							zone_list.AddClientToMap(player->GetName(), this);
-							GetCurrentZone()->SetSpawnStructs(this);
-						}
-						else{
-							LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);
-							ClientPacketFunctions::SendLoginDenied( this );
-
-													return false;
-						}
-					}
-					else{
-						LogWrite(WORLD__ERROR, 0, "World", "Could not load character '%s' with account id of: %u", zar->GetCharacterName(), zar->GetAccountID());
-						ClientPacketFunctions::SendLoginDenied( this );
-					}
-					zone_auth.RemoveAuth(zar);
-				}
-				else
-				{
-					LogWrite(WORLD__ERROR, 0, "World", "Invalid ZoneAuthRequest, disconnecting client.");
-					Disconnect();
-				}
+				if (!HandleNewLogin(account_id, access_code))
+					return false;
 			}
 			safe_delete(request);
 			break;
@@ -2521,6 +2462,12 @@ bool Client::Process(bool zone_process) {
 		should_load_spells = false;
 	}
 
+	if (delayedLogin && delayTimer.Enabled() && delayTimer.Check())
+	{
+		if (!HandleNewLogin(delayedAccountID, delayedAccessKey))
+			return false;
+	}
+
 	if(quest_updates) {
 		LogWrite(CCLIENT__DEBUG, 1, "Client", "%s, ProcessQuestUpdates", __FUNCTION__, __LINE__);
 		ProcessQuestUpdates();
@@ -2616,8 +2563,9 @@ bool Client::Process(bool zone_process) {
 	if (!eqs || (eqs && !eqs->CheckActive()))
 		ret = false;
 
-	if(!ret)
-		Save();
+// redundant to client disconnect
+//	if(!ret)
+//		Save();
 
 	return ret;
 }
@@ -8202,4 +8150,87 @@ void Client::SetTransmuteID(int32 trans_id) {
 
 int32 Client::GetTransmuteID() {
 	return transmuteID;
+}
+
+bool Client::HandleNewLogin(int32 account_id, int32 access_code)
+{
+	ZoneAuthRequest* zar = zone_auth.GetAuth(account_id, access_code);
+
+	if (zar)
+	{
+		int32 charID = database.GetCharacterID(zar->GetCharacterName());
+		if (database.IsActiveQuery(charID))
+		{
+			delayedLogin = true;
+			delayedAccountID = account_id;
+			delayedAccessKey = access_code;
+			delayTimer.Start(500);
+			LogWrite(ZONE__INFO, 0, "ZoneAuth", "Attempt to Login must be delayed, async character save in progress! ... Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
+			return true;
+		}
+
+		delayedLogin = false;
+		delayTimer.Disable();
+
+		firstlogin = zar->isFirstLogin();
+		LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
+		if (database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)) {
+			bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
+			if (pvp_allowed)
+				this->GetPlayer()->SetAttackable(1);
+			MDeletePlayer.writelock(__FUNCTION__, __LINE__);
+			Client* client = zone_list.GetClientByCharName(player->GetName());
+			if (client) {
+				if (client->getConnection())
+					client->getConnection()->SendDisconnect();
+				if (client->GetCurrentZone() && !client->IsZoning()) {
+					//swap players, allowing the client to resume his LD'd player (ONLY if same version of the client)
+					if (client->GetVersion() == version) {
+						Player* current_player = GetPlayer();
+						SetPlayer(client->GetPlayer());
+						client->SetPlayer(current_player);
+						client->GetPlayer()->SetPendingDeletion(true);
+
+						GetPlayer()->SetPendingDeletion(false);
+						GetPlayer()->ResetSavedSpawns();
+						GetPlayer()->SetReturningFromLD(true);
+						GetPlayer()->GetZone()->RemoveDelayedSpawnRemove(GetPlayer());
+					}
+					client->GetCurrentZone()->RemoveClientImmediately(client);
+				}
+			}
+			MDeletePlayer.releasewritelock(__FUNCTION__, __LINE__);
+			if (!GetCurrentZone()) {
+				LogWrite(ZONE__ERROR, 0, "Zone", "Error loading zone for character: %s", player->GetName());
+				ClientPacketFunctions::SendLoginDenied(this);
+			}
+			else if (EQOpcodeManager.count(GetOpcodeVersion(version)) > 0 && getConnection()) {
+				getConnection()->SetClientVersion(version);
+				connected_to_zone = true;
+				client_list.Remove(this); //remove from master client list
+				new_client_login = true;
+				GetCurrentZone()->AddClient(this); //add to zones client list
+				world.RejoinGroup(this);
+				zone_list.AddClientToMap(player->GetName(), this);
+				GetCurrentZone()->SetSpawnStructs(this);
+			}
+			else {
+				LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);
+				ClientPacketFunctions::SendLoginDenied(this);
+				return false;
+			}
+		}
+		else {
+			LogWrite(WORLD__ERROR, 0, "World", "Could not load character '%s' with account id of: %u", zar->GetCharacterName(), zar->GetAccountID());
+			ClientPacketFunctions::SendLoginDenied(this);
+		}
+		zone_auth.RemoveAuth(zar);
+	}
+	else
+	{
+		LogWrite(WORLD__ERROR, 0, "World", "Invalid ZoneAuthRequest, disconnecting client.");
+		Disconnect();
+	}
+
+	return true;
 }

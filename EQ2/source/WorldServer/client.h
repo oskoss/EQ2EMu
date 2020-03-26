@@ -395,6 +395,8 @@ public:
 	enum ServerSpawnPlacementMode { DEFAULT, OPEN_HEADING, CLOSE_HEADING };
 	void SetSpawnPlacementMode(ServerSpawnPlacementMode mode) { spawnPlacementMode = mode; }
 	ServerSpawnPlacementMode GetSpawnPlacementMode() { return spawnPlacementMode; }
+
+	bool HandleNewLogin(int32 account_id, int32 access_code);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -487,6 +489,10 @@ private:
 	ServerSpawnPlacementMode spawnPlacementMode;
 	bool on_auto_mount;
 	bool EntityCommandPrecheck(Spawn* spawn, const char* command);
+	bool delayedLogin;
+	int32 delayedAccountID;
+	int32 delayedAccessKey;
+	Timer delayTimer;
 };
 
 class ClientList {

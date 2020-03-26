@@ -37,26 +37,53 @@
 #include <map>
 
 using namespace std;
+class Query;
 
 class Database : public DBcore
 {
 public:
 	Database();
 	~Database();
-	bool Init();
+	bool Init(bool silentLoad=false);
 	bool LoadVariables();
 	void HandleMysqlError(int32 errnum);
 	map<string, uint16> GetOpcodes(int16 version);
 	map<int16, int16> GetVersions();
 
+#ifdef WORLD
+	void AddAsyncQuery(Query* query);
+	void RunAsyncQueries(int32 queryid);
+	Database* FindFreeInstance();
+	void RemoveActiveQuery(Query* query);
+	void AddActiveQuery(Query* query);
+	bool IsActiveQuery(int32 id, Query* skip=0);
+#endif
 protected:
-	
+
 private:
 	void InitVars();
+
+#ifdef WORLD
+	void PurgeDBInstances();
+	void FreeDBInstance(Database* cur);
+	bool continueAsync;
+	map<int32, deque<Query*>> asyncQueries;
+	map<int32, Mutex*> asyncQueriesMutex;
+	map<Database*, bool> dbInstances;
+	vector<Query*> activeQuerySessions;
+	Mutex DBAsyncMutex;
+	Mutex DBInstanceMutex;
+	Mutex DBQueryMutex;
+#endif
 };
+
+typedef struct {
+	int32 queryid;
+}DBStruct;
+
 class Query{
 public:
-	Query(){
+	Query() {
 		result = 0;
 		affected_rows = 0;
 		last_insert_id = 0;
@@ -68,7 +95,25 @@ public:
 		escaped_data1 = 0;
 		multiple_results = 0;
 		memset(errbuf, 0, sizeof(errbuf));
+		queryID = 0;
 	}
+	Query(Query* queryPtr, int32 in_id) {
+		result = 0;
+		affected_rows = 0;
+		last_insert_id = 0;
+		errnum = 0;
+		row = 0;
+		retry = true;
+		escaped_name = 0;
+		escaped_pass = 0;
+		escaped_data1 = 0;
+		multiple_results = 0;
+		memset(errbuf, 0, sizeof(errbuf));
+		query = string(queryPtr->GetQuery());
+		in_type = queryPtr->GetQueryType();
+		queryID = in_id;
+	}
+
 	~Query(){
 		if(result)
 			mysql_free_result(result);
@@ -105,7 +150,16 @@ public:
 		if(result)
 			*row = mysql_fetch_row(result);
 	}
+	void AddQueryAsync(int32 queryID, Database* db, QUERY_TYPE type, const char* format, ...);
+	void RunQueryAsync(Database* db);
 	MYSQL_RES*	RunQuery2(QUERY_TYPE type, const char* format, ...);
+
+	QUERY_TYPE GetQueryType() {
+		return in_type;
+	}
+
+	int32 GetQueryID() { return queryID; }
+
 	char* escaped_name;
 	char* escaped_pass;
 	char* escaped_data1;
@@ -117,8 +171,10 @@ private:
 	int32* affected_rows;
 	int32* last_insert_id;
 	int32 errnum;
+	QUERY_TYPE in_type;
 	bool retry;
 	MYSQL_ROW* row;
 	MYSQL	mysql;
+	int32 queryID;
 };
 #endif
