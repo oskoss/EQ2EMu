@@ -2903,7 +2903,9 @@ void ZoneServer::RemoveClientImmediately(Client* client) {
 				guild->GuildMemberLogoff(client->GetPlayer());
 
 			MClientList.writelock(__FUNCTION__, __LINE__);
-			clients.erase(find(clients.begin(), clients.end(), client));
+			std::vector<Client*>::iterator itr = find(clients.begin(), clients.end(), client);
+			if (itr != clients.end())
+				clients.erase(itr);
 			MClientList.releasewritelock(__FUNCTION__, __LINE__);
 			//clients.Remove(client);
 			LogWrite(ZONE__INFO, 0, "Zone", "Removing connection for client '%s'.", client->GetPlayer()->GetName());
@@ -2912,7 +2914,9 @@ void ZoneServer::RemoveClientImmediately(Client* client) {
 		else
 		{
 			MClientList.writelock(__FUNCTION__, __LINE__);
-			clients.erase(find(clients.begin(), clients.end(), client));
+			std::vector<Client*>::iterator itr = find(clients.begin(), clients.end(), client);
+			if (itr != clients.end())
+				clients.erase(itr);
 			MClientList.releasewritelock(__FUNCTION__, __LINE__);
 			//clients.Remove(client, true);
 		}
@@ -3678,38 +3682,27 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 	if (reloading)
 		RemoveDeadEnemyList(spawn);
 
-	LogWrite(ZONE__DEBUG, 7, "Zone", "Lock DeadSpawns...");
-
 	if (lock)
 		MDeadSpawns.writelock(__FUNCTION__, __LINE__);
 
-	LogWrite(ZONE__DEBUG, 7, "Zone", "Erase DeadSpawns...");
 	if (dead_spawns.count(spawn->GetID()) > 0)
 		dead_spawns.erase(spawn->GetID());
 	if (lock)
 		MDeadSpawns.releasewritelock(__FUNCTION__, __LINE__);
 
-	LogWrite(ZONE__DEBUG, 7, "Zone", "End DeadSpawns...");
-
-
-	LogWrite(ZONE__DEBUG, 7, "Zone", "SpawnExpireTimers...");
 	if (spawn_expire_timers.count(spawn->GetID()) > 0)
 		spawn_expire_timers.erase(spawn->GetID());
-	LogWrite(ZONE__DEBUG, 7, "Zone", "SpawnExpireTimers Done...");
 	
 	RemoveDelayedSpawnRemove(spawn);
-	LogWrite(ZONE__DEBUG, 7, "Zone", "RemoveDelayedSpawnRemove Done...");
 
 	// Clear the pointer in the spawn list, spawn thread will remove the key
 	if (!spawnListLocked)
 		MSpawnList.writelock(__FUNCTION__, __LINE__);
 	
-	LogWrite(ZONE__DEBUG, 7, "Zone", "RemoveSpawnList Start...");
 	spawn_list.erase(spawn->GetID());
 	
 	if (!spawnListLocked)
 		MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
-	LogWrite(ZONE__DEBUG, 7, "Zone", "RemoveSpawnList Done...");
 
 	PacketStruct* packet = 0;
 	int16 packet_version = 0;
@@ -3717,7 +3710,6 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 
 	vector<Client*>::iterator client_itr;
 
-	LogWrite(ZONE__DEBUG, 7, "Zone", "ClientList Start...");
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
@@ -3739,8 +3731,6 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 		}
 	}
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
-
-	LogWrite(ZONE__DEBUG, 7, "Zone", "ClientList End...");
 
 	safe_delete(packet);
 
