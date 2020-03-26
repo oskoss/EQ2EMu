@@ -426,27 +426,43 @@ const char* LuaInterface::GetScriptName(lua_State* state)
 	MItemScripts.writelock(__FUNCTION__, __LINE__);
 	itr = item_inverse_scripts.find(state);
 	if (itr != item_inverse_scripts.end())
-		return itr->second.c_str();
+	{
+		const char* scriptName = itr->second.c_str();
+		MItemScripts.releasewritelock(__FUNCTION__, __LINE__);
+		return scriptName;
+	}
 	MItemScripts.releasewritelock(__FUNCTION__, __LINE__);
 
 	MSpawnScripts.writelock(__FUNCTION__, __LINE__);
 	itr = spawn_inverse_scripts.find(state);
 	if (itr != spawn_inverse_scripts.end())
-		return itr->second.c_str();
+	{
+		const char* scriptName = itr->second.c_str();
+		MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
+		return scriptName;
+	}
 	MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
 
 	MZoneScripts.writelock(__FUNCTION__, __LINE__);
 	itr = zone_inverse_scripts.find(state);
 	if (itr != zone_inverse_scripts.end())
-		return itr->second.c_str();
+	{
+		const char* scriptName = itr->second.c_str();
+		MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
+		return scriptName;
+	}
 	MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
 
 	MSpells.lock();
 	LuaSpell* spell = GetCurrentSpell(state);
 	if (spell)
-		return (spell->file_name.length() > 0) ? spell->file_name.c_str() : "";
-
+	{
+		const char* fileName = (spell->file_name.length() > 0) ? spell->file_name.c_str() : "";
+		MSpells.unlock();
+		return fileName;
+	}
 	MSpells.unlock();
+
 	return "";
 }
 
