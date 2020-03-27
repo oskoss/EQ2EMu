@@ -1168,6 +1168,12 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 						_snprintf(query, 256, "closed_heading=%f,include_heading=1", newHeading);
 						if (database.UpdateSpawnWidget(widget->GetWidgetID(), query))
 							SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully saved widget close heading information.");
+
+						if (spawn->GetSpawnLocationID())
+						{
+							Query query;
+							query.RunQuery2(Q_INSERT, "update spawn_location_placement set heading = %f where id = %u", newHeading, spawn->GetSpawnLocationID());
+						}
 					}
 					else
 						SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn is not widget, unable to set close heading information.");
