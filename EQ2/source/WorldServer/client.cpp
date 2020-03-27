@@ -1165,7 +1165,7 @@ bool Client::HandlePacket(EQApplicationPacket *app) {
 						widget->SetIncludeHeading(true);
 
 						spawn->position_changed = true;
-						_snprintf(query, 256, "close_heading=%f,include_heading=1", newHeading);
+						_snprintf(query, 256, "closed_heading=%f,include_heading=1", newHeading);
 						if (database.UpdateSpawnWidget(widget->GetWidgetID(), query))
 							SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully saved widget close heading information.");
 					}
