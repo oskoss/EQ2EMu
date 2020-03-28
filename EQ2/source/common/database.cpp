@@ -90,7 +90,9 @@ bool Database::Init(bool silentLoad) {
 	int32 port=0;
 	bool compression = false;
 	bool items[6] = {false, false, false, false, false, false};
-	
+	const char* itemsNames[6] = { "host", "user", "passwd", "database", "port", "compression" };
+	const char* exampleIni[] = { "[Database]", "host = localhost", "user = root", "password = pass", "database = dbname", "### --- Assure each parameter is on a new line!" };
+
 	if(!ReadDBINI(host, user, passwd, database, port, compression, items)) {
 		//exit(1);
 		return false;
@@ -98,8 +100,17 @@ bool Database::Init(bool silentLoad) {
 	
 	if (!items[0] || !items[1] || !items[2] || !items[3])
 	{
-		LogWrite(DATABASE__ERROR, 0, "DB", "Incomplete DB.INI file.");
-		LogWrite(DATABASE__ERROR, 0, "DB", "Read README.TXT!");
+		LogWrite(DATABASE__ERROR, 0, "DB", "Database file %s is incomplete.", DB_INI_FILE);
+		int i;
+		for (i = 0; i < 4; i++)
+		{
+			if ( !items[i] )
+				LogWrite(DATABASE__ERROR, 0, "DB", "Could not find parameter %s", exampleIni[i]);
+		}
+		LogWrite(DATABASE__ERROR, 0, "DB", "Example File:");
+		int length = sizeof exampleIni / sizeof exampleIni[0];
+		for(i=0;i<length;i++)
+		LogWrite(DATABASE__ERROR, 0, "DB", "%s", exampleIni[i]);
 		//exit (1);
 		return false;
 	}
