@@ -70,6 +70,9 @@ int main(int argc, char** argv){
 	if (signal(SIGINT, CatchSignal) == SIG_ERR) {
 		cerr << "Could not set signal handler" << endl;
 	}
+
+	LogStart();
+
 	srand(time(NULL));
 
 	if(!net.ReadLoginConfig())
@@ -256,9 +259,8 @@ bool NetConnection::ReadLoginConfig() {
 	if (!database.Init()) {
 		LogWrite(INIT__ERROR, 0, "Init", "Database init FAILED!");
 		LogStop();
-		return EXIT_FAILURE;
+		return false;
 	}
-
 
 	LogWrite(INIT__INFO, 0, "Init", "Loading opcodes 2.0..");
 	EQOpcodeVersions = database.GetVersions();

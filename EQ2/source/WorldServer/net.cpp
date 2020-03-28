@@ -121,12 +121,12 @@ int main(int argc, char** argv) {
 #ifdef PROFILER
 	PROFILE_FUNC();
 #endif
-	LogParseConfigs();
-	WelcomeHeader();
-
 	int32 t_total = Timer::GetUnixTimeStamp();
 
 	LogStart();
+
+	LogParseConfigs();
+	WelcomeHeader();
 
 	LogWrite(INIT__INFO, 0, "Init", "Starting EQ2Emulator WorldServer...");
 	//int32 server_startup = time(NULL);
