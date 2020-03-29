@@ -45,16 +45,13 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
       \u eq2emu
       source C:\\[YOUREQ2EMUGITSRC]\DB\world_db.sql
 
-4. Add Game Account / World Account: Using the same MySQL Client, continue on creating your accounts
-    - Game Login Account:
-	
-		insert into account set name='test',passwd=sha2('test',512);
+4. Add World Account (in Login Server database, eq2ls): 
 		
-		**Note: If you have AccountCreation set to 1 in LoginServer.ini LoginConfig block, you can just login to make a new account**
-    - World Server Login Account (Used in Step 5): 
-	
+		\u eq2ls
 		insert into login_worldservers set name='TestLabs',account='testlabs',description='TestLabs',password=sha2('testpass',512),note='',login_version='0.7.3-dev';
 
+		The account and password will be used in Step 5 for the 'account' and 'password' parameters.
+		
 5. Open the C:\\[YOUREQ2EMUGITSRC]\server\LoginServer.ini file (Notepad or other flavor editor)
 
     Note: Steps to find your LAN IP (command prompt, ipconfig, IPv4 address): https://www.lifewire.com/ip-config-818377
@@ -88,6 +85,13 @@ Note: These instructions for now will be primarily based in Windows, but any Lin
 8. Start the Login Server: C:\\[YOUREQ2EMUGITSRC]\server\EQ2Login__Debug.exe
 
 9. Start the World Server: C:\\[YOUREQ2EMUGITSRC]\server\EQ2World__Debug.exe
+
+10. Startup EverQuest2.exe (DO NOT USE EQ2.EXE AS IT WILL PATCH!) and login using credentials of your choice.  After login the account will be automatically created.
+
+11. Optional: After creating a character and logging in give yourself all admin privileges to use commands/GM access
+
+		\u eq2emu
+		update characters set admin_status=255 where name='charname';
 
 ### Building/Compiling
 
