@@ -381,6 +381,7 @@ void Database::RunAsyncQueries(int32 queryid)
 #ifdef WIN32
 		_beginthread(DBAsyncQueries, 0, (void*)tmp);
 #else
+		pthread_t t1;
 		pthread_create(&t1, NULL, DBAsyncQueries, (void*)tmp);
 		pthread_detach(t1);
 #endif
@@ -423,6 +424,7 @@ void Database::AddAsyncQuery(Query* query)
 #ifdef WIN32
 	_beginthread(DBAsyncQueries, 0, (void*)tmp);
 #else
+	pthread_t t1;
 	pthread_create(&t1, NULL, DBAsyncQueries, (void*)tmp);
 	pthread_detach(t1);
 #endif
