@@ -375,7 +375,6 @@ void Database::RunAsyncQueries(int32 queryid)
 	bool isActive = IsActiveQuery(queryid);
 	if (isActive)
 	{
-		printf("Need to startup new thread, more queries to process.\n");
 		continueAsync = true;
 		DBStruct* tmp = new DBStruct;
 		tmp->queryid = queryid;
