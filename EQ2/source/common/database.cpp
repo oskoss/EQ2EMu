@@ -90,7 +90,6 @@ bool Database::Init(bool silentLoad) {
 	int32 port=0;
 	bool compression = false;
 	bool items[6] = {false, false, false, false, false, false};
-	const char* itemsNames[6] = { "host", "user", "passwd", "database", "port", "compression" };
 	const char* exampleIni[] = { "[Database]", "host = localhost", "user = root", "password = pass", "database = dbname", "### --- Assure each parameter is on a new line!" };
 
 	if(!ReadDBINI(host, user, passwd, database, port, compression, items)) {
@@ -360,6 +359,7 @@ void Database::RunAsyncQueries(int32 queryid)
 	itr->second.clear();
 	asyncQueries.erase(itr);
 	DBAsyncMutex.releasewritelock();
+	asyncQueriesMutex[queryid]->releasewritelock();
 
 	int32 count = 0;
 	while (queries.size() > 0)
@@ -372,7 +372,20 @@ void Database::RunAsyncQueries(int32 queryid)
 	}
 	FreeDBInstance(asyncdb);
 
-	asyncQueriesMutex[queryid]->releasewritelock();
+	bool isActive = IsActiveQuery(queryid);
+	if (isActive)
+	{
+		printf("Need to startup new thread, more queries to process.\n");
+		continueAsync = true;
+		DBStruct* tmp = new DBStruct;
+		tmp->queryid = queryid;
+#ifdef WIN32
+		_beginthread(DBAsyncQueries, 0, (void*)tmp);
+#else
+		pthread_create(&t1, NULL, DBAsyncQueries, (void*)tmp);
+		pthread_detach(t1);
+#endif
+	}
 }
 
 void Database::AddAsyncQuery(Query* query)
