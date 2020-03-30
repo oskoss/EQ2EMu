@@ -313,6 +313,7 @@ MYSQL_RES* Query::RunQuery2(string in_query, QUERY_TYPE type){
 		{
 			if (query.find(filteredTables[i]) != std::string::npos) {
 				match = true;
+				break;
 			}
 		}
 		try
