@@ -188,3 +188,4 @@
 /server/Maps/tutorial_island02.EQ2Map filter=lfs diff=lfs merge=lfs -text
 /server/Maps/varsoon.EQ2Map filter=lfs diff=lfs merge=lfs -text
 /server/Maps/wailingcaves.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/adv02_dun_drowned_caverns.EQ2Map filter=lfs diff=lfs merge=lfs -text
