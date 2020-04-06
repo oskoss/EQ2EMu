@@ -1,20 +1,24 @@
 ## Compiled source #
 *.com
 *.class
-*.dll
-*.exe
 *.ilk
 *.o
 *.pdb
 *.so
 *.idb
+*.db
+*.ipch
+*.user
+*.db-shm
+*.db-wal
+*.filters
+*.tlog
+*.txt
+
 
 ## Linux exes have no extension
 RecastDemo/Bin/RecastDemo
 RecastDemo/Bin/Tests
-
-# Build directory
-RecastDemo/Build
 
 # Ignore meshes
 RecastDemo/Bin/Meshes/*
