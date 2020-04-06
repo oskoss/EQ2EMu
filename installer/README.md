@@ -1,13 +1,14 @@
 ### ***Included Software and Versions***
 MariaDB(mysql) -- 10.4.12 (https://downloads.mariadb.org/)
+
 Unrar          -- 5.90    (https://www.rarlab.com/rar/unrarw32.exe)
+
 Wget(windows)  -- 1.20.3  (https://eternallybored.org/misc/wget/)
+
 Zeklabs EQ2emu -- Git Live (http://cutpon.com:3000/devn00b/EQ2EMu)
 
 The default password for MYSQL root user is blank (Localhost only).
 The user/password for Login and Mysql is eq2emu/eq2emu.
-
-### ***Configuration Options.***
 
 ### 	***Server Update Options***:
     In file launch.bat If you want to update (You will lose all data) leave SET SQLUDATE=1. If you DO NOT want to     download the most recent db set SET UDATE=0.
