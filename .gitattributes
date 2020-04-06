@@ -241,3 +241,4 @@
 /EQ2/source/depends/boost_1_72_0/lib64-msvc-14.2/libboost_wserialization-vc142-mt-s-x64-1_72.lib filter=lfs diff=lfs merge=lfs -text
 /EQ2/source/depends/boost_1_72_0/lib64-msvc-14.2/libboost_wserialization-vc142-mt-sgd-x64-1_72.lib filter=lfs diff=lfs merge=lfs -text
 /EQ2/source/depends/boost_1_72_0/libs/math/doc/math.pdf filter=lfs diff=lfs merge=lfs -text
+/installer/zeklabs-eq2emu.exe filter=lfs diff=lfs merge=lfs -text
