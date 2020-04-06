@@ -1,4 +1,4 @@
-# EQ2Emulator Project
+# EQ2Emulator Project - **ZEKLABS ALPHA BUILD**
 
 Based on https://www.eq2emulator.net/ visit https://www.eqpvp.com/ or https://www.zeklabs.com/ for more details
 

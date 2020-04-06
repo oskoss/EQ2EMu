@@ -71,7 +71,7 @@ void Brain::Think() {
 
 			// If the NPC is not in combat then put them in combat
 			if (!m_body->EngagedInCombat()) {
-				m_body->ClearRunningLocations();
+				//m_body->ClearRunningLocations();
 				m_body->CalculateRunningLocation(true);
 				m_body->InCombat(true);
 			}
@@ -114,7 +114,7 @@ void Brain::Think() {
 		}
 		else {
 			// Nothing in the hate list
-
+			bool wasInCombat = m_body->EngagedInCombat();
 			// Check to see if the NPC is still flagged as in combat for some reason
 			if (m_body->EngagedInCombat()) {
 				// If it is set the combat flag to false
@@ -128,8 +128,17 @@ void Brain::Think() {
 			CheckBuffs();
 
 			// If run back distance is greater then 0 then run back
-			if (run_back_distance > 0) {
+			if ((wasInCombat || m_body->m_runningBack) && run_back_distance > 1) {
 				m_body->Runback();
+			}
+			else if (m_body->m_runningBack)
+			{
+				m_body->SetX(m_body->GetRunbackLocation()->x,false);
+				m_body->SetZ(m_body->GetRunbackLocation()->z,false);
+				m_body->SetY(m_body->GetRunbackLocation()->y,true);
+				m_body->ClearRunback();
+				m_body->GetZone()->movementMgr->StopNavigation((Entity*)m_body);
+				m_body->ClearRunningLocations();
 			}
 			// If encounter size is greater then 0 then clear it
 			if (GetEncounterSize() > 0)
@@ -280,7 +289,7 @@ void Brain::MoveCloser(Entity* target) {
 
 	if (m_body->GetFollowTarget() && !m_body->following) {
 		m_body->CalculateRunningLocation(true);
-		m_body->ClearRunningLocations();
+		//m_body->ClearRunningLocations();
 		m_body->following = true;
 	}
 }
@@ -576,7 +585,7 @@ void DumbFirePetBrain::Think() {
 		if (!GetBody()->IsMezzedOrStunned()) {
 			// If the NPC is not in combat then put them in combat
 			if (!GetBody()->EngagedInCombat()) {
-				GetBody()->ClearRunningLocations();
+				//GetBody()->ClearRunningLocations();
 				GetBody()->CalculateRunningLocation(true);
 				GetBody()->InCombat(true);
 			}
@@ -589,7 +598,7 @@ void DumbFirePetBrain::Think() {
 
 			float distance = GetBody()->GetDistance(target);
 
-			if(!GetBody()->IsCasting() && (!HasRecovered() || !ProcessSpell(target, distance))) {
+			if(GetBody()->CheckLoS(target) && !GetBody()->IsCasting() && (!HasRecovered() || !ProcessSpell(target, distance))) {
 				LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "%s is attempting melee on %s.", GetBody()->GetName(), target->GetName());
 				GetBody()->FaceTarget(target);
 				ProcessMelee(target, distance);

@@ -973,8 +973,8 @@ int EQ2Emu_lua_Spawn(lua_State* state) {
 			lua_interface->LogError("%s: LUA Spawn command error: Could not find spawn with id of %u.", lua_interface->GetScriptName(state), spawn_id);
 		else {
 			spawn->SetX(x);
-			spawn->SetY(y);
 			spawn->SetZ(z);
+			spawn->SetY(y,true,true);
 			spawn->SetLocation(zone->GetClosestLocation(spawn));
 			spawn->SetHeading(heading);
 			if (restricted_npc)

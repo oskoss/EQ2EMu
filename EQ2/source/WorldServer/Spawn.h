@@ -27,10 +27,12 @@
 #include "../common/opcodemgr.h"
 #include "../common/timer.h"
 #include "Commands/Commands.h"
+#include "Zone/position.h"
 #include "SpawnLists.h"
 #include <vector>
 #include "../common/ConfigReader.h"
 #include "Items/Items.h"
+#include "Zone/map.h"
 #include "../common/Mutex.h"
 #include <deque>
 
@@ -189,6 +191,7 @@ struct MovementLocation{
 	//int32	end_time;
 	bool	attackable;
 	string	lua_function;
+	bool	mapped;
 };
 
 class Spawn {
@@ -323,9 +326,7 @@ public:
 	void SetX(float x, bool updateFlags = true){ 
 		SetPos(&appearance.pos.X, x, updateFlags); 
 	}
-	void SetY(float y, bool updateFlags = true){ 
-		SetPos(&appearance.pos.Y, y, updateFlags); 
-	}
+	void SetY(float y, bool updateFlags = true, bool disableYMapFix = false);
 	void SetZ(float z, bool updateFlags = true){ 
 		SetPos(&appearance.pos.Z, z, updateFlags);
 	}
@@ -849,7 +850,7 @@ public:
 	void	InitializeHeaderPacketData(Player* player, PacketStruct* packet, int16 index);
 	void	InitializeFooterPacketData(Player* player, PacketStruct* packet);
 
-	void	MoveToLocation(Spawn* spawn, float distance, bool immediate = true);
+	void	MoveToLocation(Spawn* spawn, float distance, bool immediate = true, bool isMappedLocation = false);
 	void	AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function);
 	void	ProcessMovement(bool isSpawnListLocked=false);
 	void	ResetMovement();
@@ -860,7 +861,7 @@ public:
 	MovementLocation* GetCurrentRunningLocation();
 	MovementLocation* GetLastRunningLocation();
 	bool	CalculateChange();
-	void	AddRunningLocation(float x, float y, float z, float speed, float distance_away = 0, bool attackable = true, bool finished_adding_locations = true, string lua_function = "");
+	void	AddRunningLocation(float x, float y, float z, float speed, float distance_away = 0, bool attackable = true, bool finished_adding_locations = true, string lua_function = "", bool isMapped=false);
 	bool	RemoveRunningLocation();
 	void	ClearRunningLocations();
 
@@ -872,6 +873,7 @@ public:
 	void	NeedsToResumeMovement(bool val) { attack_resume_needed = val; }
 	bool	HasMovementLoop(){ return movement_loop.size() > 0; }
 	Timer*	GetRunningTimer();
+	float	GetFaceTarget(float x, float z);
 	void	FaceTarget(float x, float z);
 	void	FaceTarget(Spawn* target);
 	void	SetInvulnerable(bool val);
@@ -896,6 +898,7 @@ public:
 	vector<Spawn*>*		spawn_group_list;
 	AppearanceData		appearance;
 	int32	last_movement_update;
+	int32	last_location_update;
 	bool following;
 	bool	IsPet() { return is_pet; }
 	void	SetPet(bool val) { is_pet = val; }
@@ -940,7 +943,18 @@ public:
 	void SetAddedToWorldTimestamp(int32 value) { m_addedToWorldTimestamp = value; }
 	int16 GetSpawnAnimLeeway() { return m_spawnAnimLeeway; }
 	void SetSpawnAnimLeeway(int16 value) { m_spawnAnimLeeway = value; }
-	
+
+	float FindDestGroundZ(glm::vec3 dest, float z_offset);
+	float GetFixedZ(const glm::vec3& destination, int32 z_find_offset = 1);
+	void FixZ(int32 z_find_offset=1, bool fix_client_z=false);
+	bool CheckLoS(Spawn* target);
+	bool CheckLoS(glm::vec3 myloc, glm::vec3 oloc);
+
+
+	void StopMoving() {
+		if (movement_locations)
+			movement_locations->clear();
+	}
 protected:
 	bool	send_spawn_changes;
 	bool	invulnerable;
@@ -952,6 +966,7 @@ protected:
 	vector<MovementData*> movement_loop;
 	bool	running_timer_updated;
 	int16	movement_index;
+	int32	last_grid_update;
 	int32	movement_start_time;
 	Mutex	MMovementLoop;
 	map<int32, int8>	allowed_access;

@@ -541,6 +541,42 @@
     <ClCompile Include="..\..\source\WorldServer\Transmute.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\common\sha512.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\map.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\raycast_mesh.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\position.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\common\string_util.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\mob_movement_manager.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\water_map.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\pathfinder_interface.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\ChestTrap.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\pathfinder_nav_mesh.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\pathfinder_null.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\pathfinder_waypoint.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\common\Common_Defines.h">
@@ -935,6 +971,42 @@
     </ClInclude>
     <ClInclude Include="..\..\source\WorldServer\Transmute.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\ChestTrap.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\common\sha512.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\map.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\position.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\raycast_mesh.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\common\string_util.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\mob_movement_manager.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\water_map.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\pathfinder_interface.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\pathfinder_nav_mesh.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\pathfinder_null.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\pathfinder_waypoint.h">
+      <Filter>Header Files\Zone</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

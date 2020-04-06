@@ -31,15 +31,15 @@
 #define ERRBUF_SIZE		1024
 #endif
 
-int		MakeAnyLenString(char** ret, const char* format, ...);
+//int		MakeAnyLenString(char** ret, const char* format, ...);
 int32	hextoi(char* num);
 int64	hextoi64(char* num);
 sint32	filesize(FILE* fp);
 int32	ResolveIP(const char* hostname, char* errbuf = 0);
 void	CoutTimestamp(bool ms = true);
-char*	strn0cpy(char* dest, const char* source, int32 size);
+//char*	strn0cpy(char* dest, const char* source, int32 size);
 		// return value =true if entire string(source) fit, false if it was truncated
-bool	strn0cpyt(char* dest, const char* source, int32 size);
+//bool	strn0cpyt(char* dest, const char* source, int32 size);
 string	loadInt32String(uchar* buffer, int16 buffer_size, int16* pos, EQ2_32BitString* eq_string = NULL);
 string	loadInt16String(uchar* buffer, int16 buffer_size, int16* pos, EQ2_16BitString* eq_string = NULL);
 string	 loadInt8String(uchar* buffer, int16 buffer_size, int16* pos, EQ2_8BitString* eq_string = NULL);

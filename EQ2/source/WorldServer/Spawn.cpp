@@ -32,6 +32,7 @@
 #include "LuaInterface.h"
 #include "Zone/SPGrid.h"
 #include "Bots/Bot.h"
+#include "Zone/raycast_mesh.h"
 
 extern ConfigReader configReader;
 extern RuleManager rule_manager;
@@ -96,6 +97,9 @@ Spawn::Spawn(){
 	m_requiredHistory.SetName("Spawn::m_requiredHistory");
 	m_requiredQuests.SetName("Spawn::m_requiredQuests");
 	last_heading_angle = 0.0;
+	last_grid_update = 0;
+	last_location_update = 0.0;
+	last_movement_update = Timer::GetCurrentTime2();
 }
 
 Spawn::~Spawn(){
@@ -1831,14 +1835,27 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	}
 }
 
-void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate){
+void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate, bool mapped){
 	if(!spawn)
 		return;
 	SetRunningTo(spawn);
 	FaceTarget(spawn);
-	if(immediate)
-		ClearRunningLocations();	
-	AddRunningLocation(spawn->GetX(), spawn->GetY(), spawn->GetZ(), GetSpeed(), distance);
+
+	if (!IsPlayer() && distance > 0.0f)
+	{
+		if (/*!mapped && */GetZone())
+		{
+			GetZone()->movementMgr->NavigateTo((Entity*)this, spawn->GetX(), spawn->GetY(), spawn->GetZ());
+			last_grid_update = Timer::GetCurrentTime2();
+		}
+		else
+		{
+			if (immediate)
+				ClearRunningLocations();
+
+			AddRunningLocation(spawn->GetX(), spawn->GetY(), spawn->GetZ(), GetSpeed(), distance, true, true, "", mapped);
+		}
+	}
 }
 
 void Spawn::ProcessMovement(bool isSpawnListLocked){
@@ -1884,14 +1901,14 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				SetSpeed(speed);
 			}
 			MovementLocation* loc = GetCurrentRunningLocation();
-			if ((GetDistance(followTarget, true) <= rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat()) || (loc && loc->x == GetX() && loc->y == GetY() && loc->z == GetZ())) {
+			if ((GetDistance(followTarget, true) <= rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())) {
 				ClearRunningLocations();
 				CalculateRunningLocation(true);
 			}
 			else if (loc) {
 				float distance = GetDistance(followTarget, loc->x, loc->y, loc->z);
 				if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat()) {
-					MoveToLocation(followTarget, rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat());
+					MoveToLocation(followTarget, rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat(), true, loc->mapped);
 					CalculateRunningLocation();
 				}
 			}
@@ -1928,8 +1945,8 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 					data2 = movement_loop[tmp_index];
 				else
 					data2 = movement_loop[0];
-				AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false);				
-				AddRunningLocation(data2->x, data2->y, data2->z, data2->speed);
+				AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);				
+				AddRunningLocation(data2->x, data2->y, data2->z, data2->speed, 0, true, true, "", true);
 			}
 			// delay at target location, only need to set 1 location
 			else
@@ -1985,9 +2002,9 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 					else
 						data2 = movement_loop[0];
 					// set the first location (adds it to movement_locations that we just cleared)
-					AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false);
+					AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);
 					// set the location after that
-					AddRunningLocation(data2->x, data2->y, data2->z, data2->speed);
+					AddRunningLocation(data2->x, data2->y, data2->z, data2->speed, 0, true, true, "", true);
 				}
 				// there is a delay at the next location so we only need to set it
 				else
@@ -2012,8 +2029,6 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	else if (IsNPC() && !IsRunning() && !EngagedInCombat() && ((NPC*)this)->GetRunbackLocation()) {
 		// Is an npc that is not moving and not engaged in combat but has a run back location set then clear the runback location
 		LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "Clear runback location for %s", GetName());
-		SetPos(&appearance.pos.Dir1, ((NPC*)this)->m_runbackHeading, false);
-		SetPos(&appearance.pos.Dir2, ((NPC*)this)->m_runbackHeading, true);
 		((NPC*)this)->ClearRunback();
 		resume_movement = true;
 		NeedsToResumeMovement(false);
@@ -2060,19 +2075,23 @@ bool Spawn::IsRunning(){
 void Spawn::RunToLocation(float x, float y, float z, float following_x, float following_y, float following_z){
 	if(!IsWidget())
 		FaceTarget(x, z);
-	SetPos(&appearance.pos.X2, x);
-	SetPos(&appearance.pos.Y2, y);
-	SetPos(&appearance.pos.Z2, z);
+	SetPos(&appearance.pos.X2, x, false);
+	SetPos(&appearance.pos.Z2, z, false);
+	SetPos(&appearance.pos.Y2, y, false);
 	if(following_x == 0 && following_y == 0 && following_z == 0){
-		SetPos(&appearance.pos.X3, x);
-		SetPos(&appearance.pos.Y3, y);
-		SetPos(&appearance.pos.Z3, z);
+		SetPos(&appearance.pos.X3, x, false);
+		SetPos(&appearance.pos.Z3, z, false);
+		SetPos(&appearance.pos.Y3, y, false);
 	}
 	else{
-		SetPos(&appearance.pos.X3, following_x);
-		SetPos(&appearance.pos.Y3, following_y);
-		SetPos(&appearance.pos.Z3, following_z);
+		SetPos(&appearance.pos.X3, following_x, false);
+		SetPos(&appearance.pos.Y3, following_y, false);
+		SetPos(&appearance.pos.Z3, following_z, false);
 	}
+
+	position_changed = true;
+	changed = true;
+	GetZone()->AddChangedSpawn(this);
 }
 
 MovementLocation* Spawn::GetCurrentRunningLocation(){
@@ -2095,13 +2114,15 @@ MovementLocation* Spawn::GetLastRunningLocation(){
 	return ret;
 }
 
-void Spawn::AddRunningLocation(float x, float y, float z, float speed, float distance_away, bool attackable, bool finished_adding_locations, string lua_function){
+void Spawn::AddRunningLocation(float x, float y, float z, float speed, float distance_away, bool attackable, bool finished_adding_locations, string lua_function, bool isMapped){
 	if(speed == 0)
 		return;
 	MovementLocation* current_location = 0;
+
 	float distance = GetDistance(x, y, z, distance_away != 0);
 	if(distance_away != 0){
 		distance -= distance_away;
+
 		x = x - (GetX() - x)*distance_away/distance;
 		z = z - (GetZ() - z)*distance_away/distance;
 	}
@@ -2110,6 +2131,7 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 		MMovementLocations = new Mutex();
 	}
 	MovementLocation* data = new MovementLocation;
+	data->mapped = isMapped;
 	data->x = x;
 	data->y = y;
 	data->z = z;
@@ -2205,19 +2227,24 @@ bool Spawn::CalculateChange(){
 			// Normalize the forward vector and multiply by speed, this gives us our change in coords, just need to add them to our current coords
 			float len = sqrtf(tar_vx * tar_vx + tar_vy * tar_vy + tar_vz * tar_vz);
 			tar_vx = (tar_vx / len) * speed;
-			tar_vy = (tar_vy / len) * speed;
+
+			if (GetZone() == NULL || GetZone()->Grid == NULL)
+				tar_vy = (tar_vy / len) * speed;
+
 			tar_vz = (tar_vz / len) * speed;
 
 			// Distance less then 0.5 just set the npc to the target location
-			if (GetDistance(data->x, data->y, data->z, IsWidget() ? false : true) <= 0.5f) {
+			if (GetDistance(data->x, data->y, data->z, ( IsWidget() && (!GetZone() || (GetZone() && GetZone()->Grid == NULL))) ? false : true) <= 0.5f) {
 				SetX(data->x, false);
-				SetY(data->y, false);
 				SetZ(data->z, false);
+				SetY(data->y, false, true);
+				remove_needed = true;
 			}
 			else {
 				SetX(nx + tar_vx, false);
-				SetY(ny + tar_vy, false);
 				SetZ(nz + tar_vz, false);
+				SetY(ny, false, true);
+				remove_needed = true;
 			}
 
 			if (GetZone()->Grid != nullptr) {
@@ -2237,8 +2264,15 @@ bool Spawn::CalculateChange(){
 }
 
 void Spawn::CalculateRunningLocation(bool stop){
+
+	if (!stop && (last_location_update + 100) > Timer::GetCurrentTime2())
+		return;
+	else if (!stop)
+	last_location_update = Timer::GetCurrentTime2();
+
+
 	bool removed = CalculateChange();
-	if(stop) {
+	if (stop) {
 		//following = false;
 		SetPos(&appearance.pos.X2, GetX());
 		SetPos(&appearance.pos.Y2, GetY());
@@ -2256,6 +2290,45 @@ void Spawn::CalculateRunningLocation(bool stop){
 		else
 			RunToLocation(current_location->x, current_location->y, current_location->z, 0, 0, 0);
 	}
+	else if (GetZone() && GetTarget() != NULL && EngagedInCombat())
+	{
+		if (GetDistance(GetTarget()) > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
+			GetZone()->movementMgr->NavigateTo((Entity*)this, GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
+		else
+			GetZone()->movementMgr->StopNavigation((Entity*)this);
+	} 
+}
+float Spawn::GetFaceTarget(float x, float z) {
+	float angle;
+
+	double diff_x = x - GetX();
+	double diff_z = z - GetZ();
+
+	//If we're very close to the same spot don't bother changing heading
+	if (sqrt(diff_x * diff_x * diff_z * diff_z) < .1) {
+		return GetHeading();
+	}
+
+	if (diff_z == 0) {
+		if (diff_x > 0)
+			angle = 90;
+		else
+			angle = 270;
+	}
+	else
+		angle = ((atan(diff_x / diff_z)) * 180) / 3.14159265358979323846;
+
+	if (angle < 0)
+		angle = angle + 360;
+	else
+		angle = angle + 180;
+
+	if (diff_x < 0)
+		angle = angle + 180;
+
+	if (last_heading_angle == angle) return angle;
+
+	return angle;
 }
 
 void Spawn::FaceTarget(float x, float z){
@@ -2614,3 +2687,106 @@ void Spawn::CopySpawnAppearance(Spawn* spawn){
 	SetSize(spawn->GetSize());
 	SetModelType(spawn->GetModelType());
 }
+
+void Spawn::SetY(float y, bool updateFlags, bool disableYMapCheck)
+{
+	SetPos(&appearance.pos.Y, y, updateFlags);
+	if (!disableYMapCheck)
+		FixZ();
+}
+
+float Spawn::FindDestGroundZ(glm::vec3 dest, float z_offset)
+{
+	float best_z = BEST_Z_INVALID;
+	if (GetZone() != nullptr && GetZone()->zonemap != nullptr)
+	{
+		dest.z += z_offset;
+		best_z = zone->zonemap->FindBestZ(dest, nullptr);
+	}
+	return best_z;
+}
+
+float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
+	BenchTimer timer;
+	timer.reset();
+
+	float new_z = destination.z;
+
+	if (GetZone() != nullptr && zone->zonemap != nullptr) {
+
+/*		if (flymode == GravityBehavior::Flying)
+			return new_z;
+			*/
+/*		if (zone->HasWaterMap() && zone->watermap->InLiquid(glm::vec3(m_Position)))
+			return new_z;
+			*/
+		/*
+		 * Any more than 5 in the offset makes NPC's hop/snap to ceiling in small corridors
+		 */
+		new_z = this->FindDestGroundZ(destination, z_find_offset);
+		if (new_z != BEST_Z_INVALID) {
+			new_z += z_find_offset;
+
+			if (new_z < -2000) {
+				new_z = GetY();
+			}
+		}
+
+		auto duration = timer.elapsed();
+		LogWrite(MAP__DEBUG, 0, "Map", "Mob::GetFixedZ() ([{%s}]) returned [{%f}] at [{%f}], [{%f}], [{%f}] - Took [{%f}]",
+			this->GetName(),
+			new_z,
+			destination.x,
+			destination.y,
+			destination.z,
+			duration);
+	}
+
+	return new_z;
+}
+
+
+void Spawn::FixZ(int32 z_find_offset /*= 1*/, bool fix_client_z /*= false*/) {
+	if (IsPlayer() && !fix_client_z) {
+		return;
+	}
+	/*
+	if (flymode == GravityBehavior::Flying) {
+		return;
+	}*/
+	/*
+	if (zone->watermap && zone->watermap->InLiquid(m_Position)) {
+		return;
+	}*/
+
+	glm::vec3 current_loc(GetX(), GetZ(), GetY());
+	float new_z = GetFixedZ(current_loc, 1);
+	if (new_z == GetY())
+		return;
+
+	if ((new_z > -2000) && new_z != BEST_Z_INVALID) {
+		SetY(new_z, fix_client_z,true);
+	}
+	else {
+		LogWrite(MAP__DEBUG, 0, "Map", "[{%s}] is failing to find Z [{%f}]", this->GetName(), std::abs(GetY() - new_z));
+	}
+}
+
+bool Spawn::CheckLoS(Spawn* target)
+{
+	glm::vec3 targpos(target->GetX(), target->GetZ(), target->GetY()+1.0f);
+	glm::vec3 pos(GetX(), GetZ(), GetY()+1.0f);
+	return CheckLoS(pos, targpos);
+}
+
+bool Spawn::CheckLoS(glm::vec3 myloc, glm::vec3 oloc)
+{
+	ZoneServer* zone = GetZone();
+	if (zone == NULL || zone->zonemap == NULL)
+		return false;
+	else
+		return zone->zonemap->CheckLoS(myloc, oloc);
+
+	return false;
+}
+

@@ -26,6 +26,7 @@ using namespace std;
 #include <time.h>
 #include <stdlib.h>
 #include "Commands/Commands.h"
+#include "Zone/pathfinder_interface.h"
 
 #ifdef WIN32
 #include <WinSock2.h>
@@ -151,6 +152,8 @@ ZoneServer::ZoneServer(const char* name) {
 	MMasterZoneLock = new CriticalSection(MUTEX_ATTRIBUTE_RECURSIVE);
 	
 	Grid = nullptr;
+	zonemap = nullptr;
+	pathing = nullptr;
 	
 	reloading = true;
 }
@@ -196,6 +199,15 @@ ZoneServer::~ZoneServer() {
 
 	if (Grid != nullptr)
 		delete Grid;
+
+	if (zonemap != nullptr)
+		delete zonemap;
+
+	if (pathing != nullptr)
+		delete pathing;
+
+	if (movementMgr != nullptr)
+		delete movementMgr;
 
 	LogWrite(ZONE__INFO, 0, "Zone", "Completed zone shutdown of '%s'", zone_name);
 	--numzones;
@@ -257,6 +269,12 @@ void ZoneServer::Init()
 	world.UpdateServerStatistic(STAT_SERVER_NUM_ACTIVE_ZONES, 1);
 	UpdateWindowTitle(0);
 
+	string zoneName(GetZoneFile());
+	if (zonemap == nullptr) {
+		zonemap = Map::LoadMapFile(zoneName);
+	}
+	pathing = IPathfinder::Load(zoneName);
+	movementMgr = new MobMovementManager();
 	if (Grid == nullptr) {
 		Grid = new SPGrid(string(GetZoneFile()), 0);
 		if (Grid->Init())
@@ -267,8 +285,8 @@ void ZoneServer::Init()
 			Grid = nullptr;
 		}
 	}
-	else
-		LogWrite(ZONE__ERROR, 0, "SPGrid", "ZoneServer::Init() Grid is not null in init, wtf!");
+//	else
+	//	LogWrite(ZONE__ERROR, 0, "SPGrid", "ZoneServer::Init() Grid is not null in init, wtf!");
 
 	MMasterSpawnLock.SetName("ZoneServer::MMasterSpawnLock");
 	m_npc_faction_list.SetName("ZoneServer::npc_faction_list");
@@ -1226,6 +1244,9 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 		for (itr = spawn_delete_list.begin(); itr != spawn_delete_list.end(); ) {
 			if (delete_all || current_time >= itr->second){
 				spawn = itr->first;
+				if (spawn && movementMgr != nullptr) {
+					movementMgr->RemoveMob((Entity*)spawn);
+				}
 				erase_itr = itr++;
 				spawn_delete_list.erase(erase_itr);
 				safe_delete(spawn);
@@ -1564,7 +1585,11 @@ bool ZoneServer::SpawnProcess(){
 			MPendingSpawnListAdd.releasewritelock(__FUNCTION__, __LINE__);
 			MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 		}
-		
+
+		MSpawnList.readlock(__FUNCTION__, __LINE__);
+		if (movementMgr != nullptr)
+			movementMgr->Process();
+		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 
 		// Do other loops for spawns
 		// tracking, client loop with spawn loop for each client that is tracking, change to a spawn_range_map loop instead of using the main spawn list?
@@ -1838,6 +1863,7 @@ void ZoneServer::ProcessDrowning(){
 void ZoneServer::SendSpawnChanges(){	
 	Spawn* spawn = 0;
 	MutexList<int32>::iterator spawn_iter = changed_spawns.begin();
+	int count = 0;
 	while(spawn_iter.Next()){		
 		spawn = GetSpawnByID(spawn_iter->value);
 		if(spawn && spawn->changed){
@@ -2386,7 +2412,7 @@ void ZoneServer::DeterminePosition(SpawnLocation* spawnlocation, Spawn* spawn){
 		spawn->SetY(spawnlocation->y + ((float)(rand()%offset - rand()%offset))/1000);
 	}
 	else
-		spawn->SetY(spawnlocation->y);
+		spawn->SetY(spawnlocation->y, true, true);
 	if(spawnlocation->z_offset > 0){
 		//since rand() deals with integers only, we are going to divide by 1000 later so that we can use fractions of integers
 		offset = (int)((spawnlocation->z_offset*1000)+1); 
@@ -2800,6 +2826,9 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 
 	if (Grid != nullptr) {
 		Grid->AddSpawn(spawn);
+	}
+	if (movementMgr != nullptr) {
+		movementMgr->AddMob((Entity*)spawn);
 	}
 
 	spawn->SetAddedToWorldTimestamp(Timer::GetCurrentTime2());
@@ -3677,6 +3706,9 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 	if (Grid != nullptr) {
 		Grid->RemoveSpawnFromCell(spawn);
 	}
+	if (movementMgr != nullptr) {
+		movementMgr->RemoveMob((Entity*)spawn);
+	}
 
 	RemoveSpawnSupportFunctions(spawn);
 	if (reloading)
@@ -4008,6 +4040,10 @@ void ZoneServer::ProcessFaction(Spawn* spawn, Client* client)
 }
 
 void ZoneServer::Despawn(Spawn* spawn, int32 timer){
+	if (spawn && movementMgr != nullptr) {
+		movementMgr->RemoveMob((Entity*)spawn);
+	}
+
 	if(!spawn || spawn->IsPlayer())
 		return;
 
@@ -6204,7 +6240,7 @@ ThreadReturnType ZoneLoop(void* tmp) {
 	ZoneServer* zs = (ZoneServer*) tmp;
 	while (zs->Process()) {
 		if(zs->GetClientCount() == 0)
-			Sleep(1000);
+			Sleep(10);
 		else
 			Sleep(10);
 	}

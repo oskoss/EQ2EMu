@@ -888,6 +888,14 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			}
 		}
 
+		if (caster != target && target != NULL && !caster->CheckLoS(target))
+		{
+			LogWrite(SPELL__DEBUG, 1, "Spell", "%s cannot see target %s.", caster->GetName(), target->GetName());
+			zone->SendSpellFailedPacket(client, SPELL_ERROR_CANT_SEE_TARGET);
+			safe_delete(lua_spell);
+			return;
+		}
+
 		if ((caster->IsMezzed() && !spell->CastWhileMezzed()) || (caster->IsStunned() && !spell->CastWhileStunned())) 
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "%s cannot cast (mezzed or stunned).", caster->GetName());

@@ -181,11 +181,18 @@ float NPC::GetRunbackDistance(){
 
 void NPC::Runback(){
 	following = false;
+	if (!m_runningBack)
+	{
+		ClearRunningLocations();
+		GetZone()->movementMgr->StopNavigation((Entity*)this);
+	}
+
 	m_runningBack = true;
-	ClearRunningLocations();
 	FaceTarget(runback->x, runback->z);
-	SetSpeed(GetMaxSpeed()*2);	
-	AddRunningLocation(runback->x, runback->y, runback->z, GetSpeed(), 0, false);	
+	SetSpeed(GetMaxSpeed()*2);
+	GetZone()->movementMgr->NavigateTo((Entity*)this, runback->x, runback->y, runback->z);
+
+	//AddRunningLocation(runback->x, runback->y, runback->z, GetSpeed(), 0, false);	
 	last_movement_update = Timer::GetCurrentTime2();
 }
 

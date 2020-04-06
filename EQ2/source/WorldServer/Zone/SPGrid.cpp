@@ -80,8 +80,10 @@ bool SPGrid::Init() {
 	name[len] = '\0';
 	LogWrite(ZONE__DEBUG, 0, "SPGrid", "name = %s", name);
 
+	string fileName(name);
+	std::size_t found = fileName.find(m_ZoneFile);
 	// Make sure file contents are for the correct zone
-	if (string(name) != m_ZoneFile) {
+	if (found == std::string::npos) {
 		fclose(file);
 		LogWrite(ZONE__ERROR, 0, "SPGrid", "SPGrid::Init() map contents (%s) do not match its name (%s).", &name, m_ZoneFile.c_str());
 		return false;
@@ -303,7 +305,7 @@ FaceCell* SPGrid::GetFaceCell(float x, float z) {
 void SPGrid::AddFace(Face* face, int32 grid) {
 	// As each face has three vertices we will need to check the cell
 	// for all of them and add the face to each cell that it is within
-
+	face->grid_id = grid;
 	// Get the cell at the first vertex position (X and Z, Y is vertical in EQ2)
 	// as this is the first check we will add it to this cell and compare it 
 	// to the other two cells we get for the other two verticies
@@ -416,6 +418,264 @@ void SPGrid::RemoveSpawnFromCell(Spawn * spawn) {
 		spawn->Cell_Info.CellListIndex = -1;
 		spawn->Cell_Info.CurrentCell = nullptr;
 	}
+}
+
+float SPGrid::GetBestY(float x, float y, float z)
+{
+	float temp_y = 0;
+	float best_y = 999999.0f;
+	FaceCell* startCell = GetFaceCell(x, z);
+
+	float tmpY = y + 0.5f;
+
+	float point[3];
+	point[0] = x;
+	point[1] = tmpY; // Small bump to make sure we are above ground when we do the trace
+	point[2] = z;
+
+	float MinDistance = 0.0f;
+
+	// Create the direction for the trace, as we want what
+	// is below it will just be -1 in the y direction
+	float direction[3];
+	direction[0] = 0.0f;
+	direction[1] = -1.0f;
+	direction[2] = 0.0f;
+
+	Face* lastFace = 0;
+	int32 Grid = 0;
+	float BestZ = -999999.0f;
+	map<int32, vector<Face*> >::iterator mapitr;
+	for (mapitr = startCell->FaceList.begin(); mapitr != startCell->FaceList.end(); mapitr++) {
+		vector<Face*>::iterator itr;
+		for (itr = (*mapitr).second.begin(); itr != (*mapitr).second.end(); itr++) {
+			Face* face = *itr;
+			float distance;
+			if ((distance = rayIntersectsTriangle(point, direction, face->Vertex1, face->Vertex2, face->Vertex3)) != 0) {
+				if (MinDistance == 0.0f || distance < MinDistance) {
+					BestZ = face->Vertex2[1];
+					MinDistance = distance;
+					lastFace = face;
+					Grid = (*mapitr).first;
+				}
+			}
+		}
+	}
+
+	printf("GridID: %i, BestZ: %f yIn:% f\n", Grid, BestZ, y);
+
+	float endY = 999999.0f;
+
+	if (lastFace)
+	{
+/*		for (int i = 0; i < 3; i++)
+		{
+			for (int z = 0; z < 3; z++)
+			{
+				if (i == 0)
+					printf("Face%i-%i: %f\n", i, z, lastFace->Vertex1[z]);
+				else if (i == 1)
+					printf("Face%i-%i: %f\n", i, z, lastFace->Vertex2[z]);
+				else if (i == 2)
+					printf("Face%i-%i: %f\n", i, z, lastFace->Vertex3[z]);
+			}
+		}*/
+		endY = lastFace->Vertex2[1];
+	}
+
+	return endY;
+}
+
+Face* SPGrid::GetClosestFace(float x, float y, float z)
+{
+	float temp_y = 0;
+	float best_y = 999999.0f;
+	FaceCell* startCell = GetFaceCell(x, z);
+
+	float tmpY = y + 0.5f;
+
+	float point[3];
+	point[0] = x;
+	point[1] = tmpY; // Small bump to make sure we are above ground when we do the trace
+	point[2] = z;
+
+	float MinDistance = 0.0f;
+
+	// Create the direction for the trace, as we want what
+	// is below it will just be -1 in the y direction
+	float direction[3];
+	direction[0] = 0.0f;
+	direction[1] = -1.0f;
+	direction[2] = 0.0f;
+
+	Face* lastFace = 0;
+	int32 Grid = 0;
+	float BestZ = -999999.0f;
+	map<int32, vector<Face*> >::iterator mapitr;
+	for (mapitr = startCell->FaceList.begin(); mapitr != startCell->FaceList.end(); mapitr++) {
+		vector<Face*>::iterator itr;
+		for (itr = (*mapitr).second.begin(); itr != (*mapitr).second.end(); itr++) {
+			Face* face = *itr;
+			float distance;
+			if ((distance = rayIntersectsTriangle(point, direction, face->Vertex1, face->Vertex2, face->Vertex3)) != 0) {
+				if (MinDistance == 0.0f || distance < MinDistance) {
+					BestZ = face->Vertex2[1];
+					MinDistance = distance;
+					lastFace = face;
+					Grid = (*mapitr).first;
+				}
+			}
+		}
+	}
+
+	return lastFace;
+}
+
+Face* SPGrid::FindPath(float x, float y, float z, float targX, float targY, float targZ, bool forceEndCell)
+{
+	float MinDistance = 0.0f;
+	float MinDistanceEnd = 999999.0f;
+	// Create the starting point for the trace
+	float point[3];
+	point[0] = x;
+	point[1] = y + 1.0f; // Small bump to make sure we are above ground when we do the trace
+	point[2] = z;
+
+	float pointEnd[3];
+	pointEnd[0] = targX;
+	pointEnd[1] = y + 1.0f; // Small bump to make sure we are above ground when we do the trace
+	pointEnd[2] = targZ;
+
+	// Create the direction for the trace, as we want what
+	// is below it will just be -1 in the y direction
+	float direction[3];
+
+	if (!forceEndCell)
+	{
+		if (targX > x)
+			direction[0] = -0.5f;
+		else
+			direction[0] = 0.5f;
+	}
+	else
+	{
+		if (targX > x)
+			direction[0] = 1.0f;
+		else// if (targZ < z)
+			direction[0] = -1.0f;
+	}
+
+	//if (targY < y)
+		direction[1] = -1.0f;
+	//else
+	//	direction[1] = .5f;
+
+	//direction[1] = -1.0f;
+
+	if (forceEndCell)
+	{
+		if (targZ > z)
+			direction[2] = -0.5f;
+		else
+			direction[2] = 0.5f;
+	}
+	else
+	{
+		if (targZ > z)
+			direction[2] = 1.0f;
+		else// if ( targX < x )
+			direction[2] = -1.0f;
+	}
+
+	FaceCell* startCell = GetFaceCell(x, z);
+	FaceCell* endCell = GetFaceCell(x, z);
+
+	Face* startFace = GetClosestFace(x, y, z);
+	if (startFace == NULL)
+		return 0;
+
+	//float tmpDistance = rayIntersectsTriangle(pointEnd, direction, startFace->Vertex1, startFace->Vertex2, startFace->Vertex3);
+	//if (tmpDistance != 0.0f && tmpDistance < 15.0f)
+	//	return 0;
+
+	Face* nextFace = 0;
+
+	Face* endFace = GetClosestFace(targX, targY, targZ);
+
+	float distBetweenEachOther = 999999.0f;
+	map<int32, vector<Face*> >::iterator mapitr;
+	if (endFace != NULL && startCell->FaceList.count(endFace->grid_id))
+		mapitr = startCell->FaceList.find(endFace->grid_id);
+	else if (startFace != NULL)
+		mapitr = startCell->FaceList.find(startFace->grid_id);
+	else
+		return 0;
+
+	//FILE* pFile;
+	//pFile = fopen("vertices.txt", "a+");
+	char msg[256];
+	//_snprintf(msg, 256, "%f %f %f - %f %f %f\n", x,y,z,targX,targY,targZ);
+	//fwrite(msg, 1, strnlen(msg, 256), pFile);
+	for (; mapitr != startCell->FaceList.end(); mapitr++) {
+		vector<Face*>::iterator itr;
+		for (itr = (*mapitr).second.begin(); itr != (*mapitr).second.end(); itr++) {
+			Face* face = *itr;
+			float distance;
+			float distanceend;
+			distance = rayIntersectsTriangle(point, direction, face->Vertex1, face->Vertex2, face->Vertex3);
+			//distanceend = rayIntersectsTriangle(pointEnd, direction, face->Vertex1, face->Vertex2, face->Vertex3);
+
+			float tmpx1 = face->Vertex1[0] - pointEnd[0];
+			float tmpy1 = face->Vertex1[1] - pointEnd[1];
+			float tmpz1 = face->Vertex1[2] - pointEnd[2];
+			float tmpDistBetweenEachOther = sqrt(tmpx1 * tmpx1 + tmpy1 * tmpy1 + tmpz1 * tmpz1);
+			_snprintf(msg, 256, "%f (%f): Face: %f %f %f\n", tmpDistBetweenEachOther, distance, face->Vertex1[0], face->Vertex1[1], face->Vertex1[2]);
+
+			if (face == startFace)
+			{
+				printf("Hit Start Cell..%s\n",msg);
+				break;
+			}
+			else if (face == endFace)
+			{
+				printf("Hit End Cell..%s\n",msg);
+				//continue;
+			}
+			//fwrite(msg, 1, strnlen(msg,256), pFile);
+			//printf("%f: Face: %f %f %f... distance: %f..\n", tmpDistBetweenEachOther, face->Vertex1[0], face->Vertex1[1], face->Vertex1[2],distance);
+			if (distance > 0.0f && ((MinDistance == 0.0f || distance < MinDistance) || (tmpDistBetweenEachOther < distBetweenEachOther))) {
+				printf("%f (%f): !HIT! Face: %f %f %f\n", tmpDistBetweenEachOther, distance, face->Vertex1[0], face->Vertex1[1], face->Vertex1[2]);
+				distBetweenEachOther = tmpDistBetweenEachOther;
+				nextFace = face;
+				MinDistance = distance;
+			}
+		}
+	}
+	/*
+	fwrite("\n", sizeof(char), 1, pFile);
+	if (forceEndCell)
+		fwrite("Y", sizeof(char), 1, pFile);
+	fwrite("\n\n", sizeof(char), 2, pFile);
+	fclose(pFile);*/
+
+	Face* anotherAttempt = 0;
+	if (!forceEndCell)
+	{
+		printf("ForceEndCellSet:\n");
+		anotherAttempt = FindPath(x, y, z, targX, targY, targZ, true);
+	}
+	if (!nextFace)
+	{
+		if (anotherAttempt)
+			nextFace = anotherAttempt;
+		else
+			nextFace = endFace;
+		/*if (!forceEndCell)
+			return FindPath(x, y, z, targX, targY, targZ, true);
+		nextFace = endFace;*/
+	}
+
+	return nextFace;
 }
 
 /**********************************************************************

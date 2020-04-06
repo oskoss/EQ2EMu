@@ -177,7 +177,7 @@ public:
 	void	ChangeTSLevel(int16 old_level, int16 new_level);
 	bool	Summon(const char* search_name);
 	bool	TryZoneInstance(int32 zoneID, bool zone_coords_valid=false);
-	bool	GotoSpawn(const char* search_name);
+	bool	GotoSpawn(const char* search_name, bool forceTarget=false);
 	void	DisplayDeadWindow();
 	void	HandlePlayerRevive(int32 point_id);
 	void	Bank(Spawn* banker, bool cancel = false);

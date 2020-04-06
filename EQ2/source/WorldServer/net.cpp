@@ -26,6 +26,7 @@ using namespace std;
 #include <stdio.h>
 #include <stdlib.h>
 #include <algorithm> 
+#include <chrono>
 
 #include <signal.h>
 
@@ -56,6 +57,8 @@ using namespace std;
 #include "IRC/IRC.h"
 #include "Transmute.h"
 #include "Zone/ChestTrap.h"
+
+double frame_time = 0.0;
 
 #ifdef WIN32
 	#include <process.h>
@@ -398,8 +401,14 @@ int main(int argc, char** argv) {
 
 	// just before starting loops, announce how to get console help
 	LogWrite(WORLD__INFO, 0, "Console", "Type 'help' or '?' and press enter for menu options.");
+
+
+	std::chrono::time_point<std::chrono::system_clock> frame_prev = std::chrono::system_clock::now();
 	while(RunLoops) {
 		Timer::SetCurrentTime();
+		std::chrono::time_point<std::chrono::system_clock> frame_now = std::chrono::system_clock::now();
+		frame_time = std::chrono::duration_cast<std::chrono::duration<double>>(frame_now - frame_prev).count();
+		frame_prev = frame_now;
 		
 #ifndef NO_CATCH
 		try

@@ -435,9 +435,10 @@ NPC* Entity::DropChest() {
 	// Set the brain to a blank brain so it does nothing
 	chest->SetBrain(new BlankBrain(chest));
 	// Set the x, y, z, heading, location (grid id) to that of the dead spawn
+	chest->SetZone(GetZone());
 	chest->SetX(GetX());
+	chest->SetZ(GetZ()); // need to set X/Z BEFORE setting Y
 	chest->SetY(GetY());
-	chest->SetZ(GetZ());
 	// heading needs to be GetHeading() - 180 so the chest faces the proper way
 	chest->SetHeading(GetHeading() - 180);
 	chest->SetLocation(GetLocation());

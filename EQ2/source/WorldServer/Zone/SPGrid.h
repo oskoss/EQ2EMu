@@ -32,6 +32,7 @@ struct Face {
 	float Vertex1[3];
 	float Vertex2[3];
 	float Vertex3[3];
+	int32 grid_id;
 };
 
 /*struct GridBounds {
@@ -84,6 +85,11 @@ public:
 
 	// Get cell based on world coordinates
 	FaceCell* GetFaceCell(float x, float z);
+
+	float GetBestY(float x, float y, float z);
+	Face* GetClosestFace(float x, float y, float z);
+	Face* FindPath(float x, float y, float z, float targX, float targY, float targZ, bool forceEndCell=false);
+
 private:
 	// 1-D array for cells as it is better performance wise then 2-D
 	std::vector<Cell> m_Cells;

@@ -82,20 +82,6 @@ void CoutTimestamp(bool ms) {
 	cout << " GMT";
 }
 
-// normal strncpy doesnt put a null term on copied strings, this one does
-// ref: http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wcecrt/htm/_wcecrt_strncpy_wcsncpy.asp
-char* strn0cpy(char* dest, const char* source, int32 size) {
-	if (!dest)
-		return 0;
-	if (size == 0 || source == 0) {
-		dest[0] = 0;
-		return dest;
-	}
-	strncpy(dest, source, size);
-	dest[size - 1] = 0;
-	return dest;
-}
-
 string loadInt32String(uchar* buffer, int16 buffer_size, int16* pos, EQ2_32BitString* eq_string){
 	buffer += *pos;
 	int32 size = *(int32*)buffer;
@@ -175,55 +161,7 @@ sint16 storeInt8String(uchar* buffer, int16 buffer_size, string in_str){
 	buffer += string_size;
 	return (buffer_size - (string_size + sizeof(int8)));
 }
-// String N w/null Copy Truncated?
-// return value =true if entire string(source) fit, false if it was truncated
-bool strn0cpyt(char* dest, const char* source, int32 size) {
-	if (!dest)
-		return 0;
-	if (size == 0 || source == 0) {
-		dest[0] = 0;
-		return dest;
-	}
-	strncpy(dest, source, size);
-	dest[size - 1] = 0;
-	return (bool) (source[strlen(dest)] == 0);
-}
 
-int MakeAnyLenString(char** ret, const char* format, ...) {
-	int buf_len = 128;
-    int chars = -1;
-	va_list argptr;
-	va_start(argptr, format);
-	while (chars == -1 || chars >= buf_len) {
-		safe_delete_array(*ret);
-		if (chars == -1)
-			buf_len *= 2;
-		else
-			buf_len = chars + 1;
-		*ret = new char[buf_len];
-		chars = vsnprintf(*ret, buf_len, format, argptr);
-	}
-	va_end(argptr);
-	return chars;
-}
-void MakeAnyLenString(string &ret, const char* format, ...) {
-	va_list args;
-	va_start( args, format );
-#ifdef WIN32
-	char * buffer;
-	int buf_len = _vscprintf( format, args ) + 1;
-	buffer = new char[buf_len];
-	vsprintf( buffer, format, args );
-#else
-	char buffer[4000];
-	vsnprintf(buffer, 4000, format, args);
-#endif
-	va_end(args);
-	ret = string(buffer);
-#ifdef WIN32
-	safe_delete_array( buffer );
-#endif
-}
 
 sint32 filesize(FILE* fp) {
 #ifdef WIN32

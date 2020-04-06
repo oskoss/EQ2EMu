@@ -3081,7 +3081,7 @@ bool Client::TryZoneInstance(int32 zoneID, bool zone_coords_valid) {
 		return false;
 }
 
-bool Client::GotoSpawn(const char* search_name){
+bool Client::GotoSpawn(const char* search_name, bool forceTarget){
 	Spawn* target = 0;
 	if(search_name || GetPlayer()->GetTarget()){
 		Client* search_client = 0;
@@ -3092,6 +3092,8 @@ bool Client::GotoSpawn(const char* search_name){
 				if(search_client)
 					target = search_client->GetPlayer();
 			}
+			if (target)
+				GetPlayer()->SetTarget(target);
 		}
 		else
 			target = GetPlayer()->GetTarget();

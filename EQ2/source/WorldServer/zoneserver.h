@@ -42,6 +42,9 @@
 #include "Object.h"
 #include "GroundSpawn.h"
 #include "Sign.h"
+#include "Zone/map.h"
+#include "Zone/pathfinder_interface.h"
+#include "Zone/mob_movement_manager.h"
 
 extern NetConnection net;		// needs to be here or compile errors in commands.cpp
 class SpellProcess;
@@ -92,10 +95,10 @@ class Bot;
 #define MAX_REVIVEPOINT_DISTANCE 1000
 
 /* JA: TODO Turn into R_World Rules */
-#define SEND_SPAWN_DISTANCE 150		/* when spawns appear visually to the client */
+#define SEND_SPAWN_DISTANCE 90		/* when spawns appear visually to the client */
 #define HEAR_SPAWN_DISTANCE	30		/* max distance a client can be from a spawn to 'hear' it */
 #define MAX_CHASE_DISTANCE 80
-#define REMOVE_SPAWN_DISTANCE 180
+#define REMOVE_SPAWN_DISTANCE 100
 
 #define TRACKING_STOP				0
 #define TRACKING_START				1
@@ -404,6 +407,9 @@ public:
 	map<int32, int32>* GetSpawnLocationsByGroup(int32 group_id);
 
 	SPGrid* Grid;
+	Map* zonemap;
+	IPathfinder* pathing;
+	MobMovementManager* movementMgr;
 
 	/****************************************************
 	Following functions are only used for LUA commands

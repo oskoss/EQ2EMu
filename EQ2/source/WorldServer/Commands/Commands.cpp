@@ -46,6 +46,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "../RaceTypes/RaceTypes.h"
 #include "../classes.h"
 #include "../Transmute.h"
+#include "../Zone/SPGrid.h"
 
 extern WorldDatabase database;
 extern MasterSpellList master_spell_list;
@@ -3170,6 +3171,46 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 									 }
 		case COMMAND_SPAWN_DETAILS:{
 			Spawn* spawn = cmdTarget;
+			if (sep && sep->arg[0][0]) {
+				if (cmdTarget)
+				{
+					if (ToLower(string(sep->arg[0])) == "los")
+					{
+						bool hasLOS = client->GetPlayer()->CheckLoS(cmdTarget);
+						if (hasLOS)
+							client->Message(CHANNEL_COLOR_YELLOW, "You have line of sight with %s", spawn->GetName());
+						else
+							client->Message(CHANNEL_COLOR_RED, "You DO NOT have line of sight with %s", spawn->GetName());
+
+						break;
+					}
+					else if (ToLower(string(sep->arg[0])) == "bestz")
+					{
+						glm::vec3 targPos(cmdTarget->GetX(), cmdTarget->GetZ(), cmdTarget->GetY());
+
+						float bestZ = client->GetPlayer()->FindDestGroundZ(targPos, cmdTarget->GetYOffset());
+							client->Message(CHANNEL_COLOR_YELLOW, "Best Z for %s is %f", spawn->GetName(), bestZ);
+						break;
+					}
+					else if (ToLower(string(sep->arg[0])) == "pathto")
+					{
+
+						break;
+					}
+					else if (ToLower(string(sep->arg[0])) == "pathfrom")
+					{
+
+						break;
+					}
+				}
+				if (sep->IsNumber(0))
+				{
+					float radius = atof(sep->arg[0]);
+					if (!client->GetCurrentZone()->SendRadiusSpawnInfo(client, radius))
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "No results in the radius were found.");
+					break;
+				}
+			}
 			if(spawn){
 				const char* type = "NPC";
 				if(spawn->IsObject())
@@ -3293,12 +3334,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					client->QueuePacket(packet->serialize());
 					safe_delete(packet);
 				}
-			}
-			else if (sep && sep->arg[0][0] && sep->IsNumber(0))
-			{
-				float radius = atof(sep->arg[0]);
-				if ( !client->GetCurrentZone()->SendRadiusSpawnInfo(client, radius) )
-					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "No results in the radius were found.");
 			}
 			else {
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Syntax: /spawn details (radius)");

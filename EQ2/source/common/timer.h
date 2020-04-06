@@ -21,6 +21,7 @@
 #define TIMER_H
 
 #include "types.h"
+#include <chrono>
 
 // Disgrace: for windows compile
 #ifdef WIN32
@@ -70,6 +71,18 @@ private:
 
 //	static int32 current_time;
 //	static int32 last_time;
+};
+
+struct BenchTimer
+{
+	typedef std::chrono::high_resolution_clock clock;
+
+	BenchTimer() : start_time(clock::now()) {}
+	void reset() { start_time = clock::now(); }
+	// this is seconds
+	double elapsed() { return std::chrono::duration<double>(clock::now() - start_time).count(); }
+private:
+	std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
 };
 
 #endif
