@@ -17,7 +17,7 @@ Based on https://www.eq2emulator.net/ visit https://www.eqpvp.com/ or https://ww
 
    d. Always Open EverQuest2.exe to start the game, **DO NOT USE EQ2.EXE**
 
-   e. Splash login account / name is one provided by Login Server or otherwise created in 'Getting Started (Server)' Step 4 below.
+   e. Splash login account / name set your desired credentials (user/password).  If account exists with different password the login will be rejected.
 
 ## Getting Started (Server)
 
