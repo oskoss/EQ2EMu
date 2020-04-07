@@ -48,4 +48,3 @@ D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\obj
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\obj\Debug\EQ2ModelViewer.csproj.CopyComplete
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\obj\Debug\EQ2ModelViewer.exe
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\obj\Debug\EQ2ModelViewer.pdb
-D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\obj\Debug\EQ2ModelViewer.csprojAssemblyReference.cache

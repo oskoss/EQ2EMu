@@ -1,0 +1,18 @@
+===================================================
+Loading D:\github\Maps\extract\cooked\characters\accessories\cooked\characters\interactiveobjects\crate\crate.draw
+===================================================
+Loading D:\github\Maps\extract\cooked\characters\accessories\cooked\characters\interactiveobjects\crate\crate.draw
+===================================================
+Loading D:\github\Maps\extract\cooked\characters\accessories\cooked\characters\interactiveobjects\crate\crate.draw
+===================================================
+Loading D:\github\Maps\extract\cooked\characters\accessories\cooked\characters\interactiveobjects\crate\crate.draw
+LoadModel: D:\github\Maps\extract\cooked\characters\accessories\cooked\characters\interactiveobjects\crate\crate.draw
+===================================================
+Loading D:\github\Maps\extract\cooked\characters\accessories\cooked\characters\interactiveobjects\crate\crate.draw
+LoadModel: D:\github\Maps\extract\cooked\characters\accessories\cooked\characters\interactiveobjects\crate\crate.draw
+===================================================
+Loading D:\github\Maps\extract\cooked\characters\npc\villains\zombie\scenes\zombie.draw
+LoadModel: D:\github\Maps\extract\cooked\characters\npc\villains\zombie\scenes\zombie.draw
+===================================================
+Loading D:\github\Maps\extract\cooked\characters\npc\villains\zombie\scenes\zombie.draw
+LoadModel: D:\github\Maps\extract\cooked\characters\npc\villains\zombie\scenes\zombie.draw

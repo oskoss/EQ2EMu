@@ -247,30 +247,74 @@ namespace EQ2ModelViewer
 
         private void LoadZoneFile(String filename="")
         {
+            bool isDrawFile = false;
+
             string fullName = "";
             String dirName = "";
             if (filename.Length < 1)
             {
                 OpenFileDialog fd = new OpenFileDialog();
-                fd.Filter = "lut files (*.lut)|*.lut";
+                fd.Filter = "lut/draw files (*.lut;*.draw)|*.lut;*.draw|lut files (*.lut)|*.lut|draw files (*.draw)|*.draw";
                 if (fd.ShowDialog() == DialogResult.OK)
                 {
                     AppendLoadFile("===================================================");
                     AppendLoadFile("Loading " + fd.FileName);
 
-                    string temp = fd.FileName.Substring(0, fd.FileName.IndexOf("zones"));
-                    ZoneFile = fd.SafeFileName.Substring(0, fd.SafeFileName.IndexOf(".lut"));
-                    fullName = ZoneFile;
-                    dirName = temp;
-                    filename = fd.FileName;
+                    if (fd.FileName.EndsWith(".draw"))
+                    {
+                        isDrawFile = true;
+                        string temp = fd.FileName.Substring(0, fd.FileName.LastIndexOf("\\"));
+                        ZoneFile = fd.SafeFileName.Substring(0, fd.SafeFileName.IndexOf(".draw"));
+                        fullName = ZoneFile;
+                        dirName = temp;
+                        filename = fd.FileName;
+                    }
+                    else
+                    {
+                        string temp = fd.FileName.Substring(0, fd.FileName.IndexOf("zones"));
+                        ZoneFile = fd.SafeFileName.Substring(0, fd.SafeFileName.IndexOf(".lut"));
+                        fullName = ZoneFile;
+                        dirName = temp;
+                        filename = fd.FileName;
+                    }
                 }
             }
             else
             {
-                string temp = filename.Substring(0, filename.IndexOf("zones"));
-                ZoneFile = filename.Substring(0, filename.IndexOf(".lut"));
-                fullName = filename;
-                dirName = temp;
+                if (filename.EndsWith(".draw"))
+                {
+                    isDrawFile = true;
+                    string temp = filename.Substring(0, filename.LastIndexOf("\\"));
+                    ZoneFile = filename.Substring(0, filename.IndexOf(".draw"));
+                    fullName = filename;
+                    dirName = temp;
+                }
+                else
+                {
+                    string temp = filename.Substring(0, filename.IndexOf("zones"));
+                    ZoneFile = filename.Substring(0, filename.IndexOf(".lut"));
+                    fullName = filename;
+                    dirName = temp;
+                }
+            }
+
+            if (isDrawFile)
+            {
+                Model tmpModel = new Model();
+                string[] textures = new string[1];
+                textures[0] = "goblin_ice.dds";
+                tmpModel.Initialize(Graphics.Device, filename, textures);
+                tmpModel.Position.X = 0;
+                tmpModel.Position.Y = 0;
+                tmpModel.Position.Z = 0;
+                tmpModel.Rotation.X = 0;
+                tmpModel.Rotation.Y = 0;
+                tmpModel.Rotation.Z = 0;
+                tmpModel.Scale = 1;
+                tmpModel.WidgetID = 1;
+                tmpModel.GridID = 1;
+                m_Models.Add(tmpModel);
+                return;
             }
 
             if (fullName.Length < 1)
