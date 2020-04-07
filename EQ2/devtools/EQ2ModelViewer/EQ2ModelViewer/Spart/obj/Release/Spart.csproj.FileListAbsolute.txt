@@ -1,0 +1,6 @@
+D:\github\maps\ModelViewer_SAVE\EQ2ModelViewerFixed\EQ2ModelViewer\EQ2ModelViewer\Spart\bin\Release\Spart.dll
+D:\github\maps\ModelViewer_SAVE\EQ2ModelViewerFixed\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Release\Spart.csprojAssemblyReference.cache
+D:\github\maps\ModelViewer_SAVE\EQ2ModelViewerFixed\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Release\Spart.dll
+D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\bin\Release\Spart.dll
+D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Release\Spart.dll
+D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Release\Spart.csprojAssemblyReference.cache
