@@ -71,8 +71,7 @@ void Brain::Think() {
 
 			// If the NPC is not in combat then put them in combat
 			if (!m_body->EngagedInCombat()) {
-				//m_body->ClearRunningLocations();
-				m_body->CalculateRunningLocation(true);
+				m_body->ClearRunningLocations();
 				m_body->InCombat(true);
 			}
 

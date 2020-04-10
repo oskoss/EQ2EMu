@@ -49,7 +49,15 @@ namespace Everquest2.Visualization
 
             if (classVersion == 0)
             {
-                reader.ReadBytes(64);
+                orientation[0] = reader.ReadSingle();
+                orientation[1] = reader.ReadSingle();
+                orientation[2] = reader.ReadSingle();
+                //3x3 rotation matrix
+                reader.ReadBytes(sizeof(float) * (3 * 3));
+                scale = reader.ReadSingle();
+                position[0] = reader.ReadSingle();
+                position[1] = reader.ReadSingle();
+                position[2] = reader.ReadSingle();
             }
             else
             {
