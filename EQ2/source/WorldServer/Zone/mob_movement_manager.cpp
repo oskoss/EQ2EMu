@@ -140,7 +140,11 @@ public:
 				current_speed = mob->GetBaseSpeed();
 			}
 			else {
-				current_speed = mob->GetMaxSpeed();
+				//runback overrides
+				if (mob->GetSpeed() > mob->GetMaxSpeed())
+					current_speed = mob->GetSpeed();
+				else
+					current_speed = mob->GetMaxSpeed();
 			}
 		}
 		else {
@@ -280,7 +284,11 @@ public:
 				current_speed = mob->GetBaseSpeed();
 			}
 			else {
-				current_speed = mob->GetMaxSpeed();
+				//runback overrides
+				if (mob->GetSpeed() > mob->GetMaxSpeed())
+					current_speed = mob->GetSpeed();
+				else
+					current_speed = mob->GetMaxSpeed();
 			}
 		}
 		else {
