@@ -243,3 +243,14 @@
 /EQ2/source/depends/boost_1_72_0/libs/math/doc/math.pdf filter=lfs diff=lfs merge=lfs -text
 /installer/zeklabs-eq2emu.exe filter=lfs diff=lfs merge=lfs -text
 /EQ2/devtools/EQ2ModelViewer/EQ2ModelViewer/bin/Release/tutorial_island02.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp04_rgn_kylong_plains.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/feerrott_epic01_temple.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/fprt_south.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/home_oakmyst.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/qey_adv01_oakmyst.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/qey_adv02_ruins.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/qey_adv04_bog.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/qey_elddar.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/qey_ph_5r01.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/qey_village06.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/qey_village06_revamp.EQ2Map filter=lfs diff=lfs merge=lfs -text
