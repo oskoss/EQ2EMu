@@ -15,7 +15,8 @@ function hailed(NPC, Spawn)
 end
 
 function respawn(NPC)
-end
+	spawn(NPC)
+	end
 
 function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 705.82, -20.64, -22.54, 2, 0)
