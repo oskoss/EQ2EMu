@@ -2783,7 +2783,7 @@ bool Spawn::CheckLoS(glm::vec3 myloc, glm::vec3 oloc)
 {
 	ZoneServer* zone = GetZone();
 	if (zone == NULL || zone->zonemap == NULL)
-		return false;
+		return true;
 	else
 		return zone->zonemap->CheckLoS(myloc, oloc);
 
