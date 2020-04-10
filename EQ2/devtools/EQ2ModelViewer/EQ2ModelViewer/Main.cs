@@ -363,10 +363,6 @@ namespace EQ2ModelViewer
             {
                 widgetID = ((VeNode)item).WidgetID;
 
-                if ( widgetID == 3365739999)
-                {
-                    int test = 0;
-                }
                 Model model = new Model();
                 model.Initialize(Graphics.Device, (VeMeshGeometryNode)item, temp);
                 model.Position.X = x;
@@ -479,13 +475,23 @@ namespace EQ2ModelViewer
             Dictionary<UInt32, List<Vector3>> MasterVertexList = new Dictionary<UInt32, List<Vector3>>();
             foreach (Model model in m_Models)
             {
+                if  (model.WidgetID == 1253219127)
+                {
+                    int test = 0;
+                }
                 List<Vector3> VertexList = model.GetVertices();
                 UInt32 grid = model.GridID;
 
                 if (!MasterVertexList.ContainsKey(grid))
                     MasterVertexList[grid] = new List<Vector3>();
 
-                MasterVertexList[grid].AddRange(VertexList);
+                List<Vector3> convertedVertices = new List<Vector3>();
+                foreach(Vector3 vect in VertexList)
+                {
+                    Vector3 newVect = vect + model.Position;
+                    convertedVertices.Add(newVect);
+                }
+                MasterVertexList[grid].AddRange(convertedVertices);
             }
 
             float minX = float.NaN;
