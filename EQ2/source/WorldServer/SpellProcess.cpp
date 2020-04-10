@@ -1387,70 +1387,83 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 	if (client && spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_TRADESKILL)
 		client->GetCurrentZone()->GetTradeskillMgr()->CheckTradeskillEvent(client, spell->spell->GetSpellData()->icon);
 
+
 	if (spell->spell->GetSpellData()->friendly_spell && zone->GetSpawnByID(spell->initial_target))
 		spell->caster->CheckProcs(PROC_TYPE_BENEFICIAL, zone->GetSpawnByID(spell->initial_target));
 	// Check HO's
 	if (client) {
+		HeroicOP* ho = nullptr;
+		Spell* ho_spell = nullptr;
+		int32 ho_target = 0;
+
 		MSoloHO.writelock(__FUNCTION__, __LINE__);
 		MGroupHO.writelock(__FUNCTION__, __LINE__);
-		if (m_soloHO.count(client) > 0) {
+		map<Client*, HeroicOP*>::iterator soloItr = m_soloHO.find(client);
+		if (soloItr != m_soloHO.end()) {
+			ho = soloItr->second;
 			bool match = false;
-			LogWrite(SPELL__ERROR, 0, "HO", "target = %u", m_soloHO[client]->GetTarget());
+			LogWrite(SPELL__ERROR, 0, "HO", "target = %u", ho->GetTarget());
 			spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 			for (int8 i = 0; i < spell->targets.size(); i++) {
 				LogWrite(SPELL__ERROR, 0, "HO", "%u", spell->targets.at(i));
-				if (spell->targets.at(i) == m_soloHO[client]->GetTarget()) {
+				if (spell->targets.at(i) == ho->GetTarget()) {
 					match = true;
 					LogWrite(SPELL__ERROR, 0, "HO", "match found");
 					break;
 				}
 			}
 			spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
-			if (match && m_soloHO[client]->UpdateHeroicOP(spell->spell->GetSpellIconHeroicOp())) {
-				ClientPacketFunctions::SendHeroicOPUpdate(client, m_soloHO[client]);
-				if (m_soloHO[client]->GetComplete() > 0) {
-					Spell* ho_spell = master_spell_list.GetSpell(m_soloHO[client]->GetWheel()->spell_id, 1);
-					if (ho_spell)
-						client->GetCurrentZone()->ProcessSpell(ho_spell, client->GetPlayer(), spell->caster->GetZone()->GetSpawnByID(m_soloHO[client]->GetTarget()));
-					else
-						LogWrite(SPELL__ERROR, 0, "HO", "Invalid spell for a HO, spell id = %u", m_soloHO[client]->GetWheel()->spell_id);
+			if (match && ho->UpdateHeroicOP(spell->spell->GetSpellIconHeroicOp())) {
+				ClientPacketFunctions::SendHeroicOPUpdate(client, ho);
+				if (ho->GetComplete() > 0) {
+					ho_spell = master_spell_list.GetSpell(ho->GetWheel()->spell_id, 1);
+					ho_target = ho->GetTarget();
+					if (!ho_spell)
+						LogWrite(SPELL__ERROR, 0, "HO", "Invalid spell for a HO, spell id = %u", ho->GetWheel()->spell_id);
 
-					safe_delete(m_soloHO[client]);
-					m_soloHO.erase(client);
+					safe_delete(ho);
+					m_soloHO.erase(soloItr);
 				}
 			}
 		}
-		else if (client->GetPlayer()->GetGroupMemberInfo() && m_groupHO.count(client->GetPlayer()->GetGroupMemberInfo()->group_id)) {
-			int32 group_id = client->GetPlayer()->GetGroupMemberInfo()->group_id;
-			spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
-			if (spell->targets.at(0) == m_groupHO[group_id]->GetTarget() && m_groupHO[group_id]->UpdateHeroicOP(spell->spell->GetSpellIconHeroicOp())) {
-				spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+		else if (client->GetPlayer()->GetGroupMemberInfo()) {
+			map<int32, HeroicOP*>::iterator groupItr = m_groupHO.find(client->GetPlayer()->GetGroupMemberInfo()->group_id);
+			if (groupItr != m_groupHO.end()) {
+				ho = groupItr->second;
+				int32 group_id = client->GetPlayer()->GetGroupMemberInfo()->group_id;
+				spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+				if (spell->targets.at(0) == ho->GetTarget() && ho->UpdateHeroicOP(spell->spell->GetSpellIconHeroicOp())) {
+					spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 
-				world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
-				deque<GroupMemberInfo*>::iterator itr;
-				deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(group_id);
-				for (itr = members->begin(); itr != members->end(); itr++) {
-					if ((*itr)->client)
-						ClientPacketFunctions::SendHeroicOPUpdate((*itr)->client, m_groupHO[group_id]);
+					world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+					deque<GroupMemberInfo*>::iterator itr;
+					deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(group_id);
+					for (itr = members->begin(); itr != members->end(); itr++) {
+						if ((*itr)->client)
+							ClientPacketFunctions::SendHeroicOPUpdate((*itr)->client, ho);
+					}
+					world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+
+					if (ho->GetComplete() > 0) {
+						ho_spell = master_spell_list.GetSpell(ho->GetWheel()->spell_id, 1);
+						ho_target = ho->GetTarget();
+						if (!ho_spell)
+							LogWrite(SPELL__ERROR, 0, "HO", "Invalid spell for a HO, spell id = %u", ho->GetWheel()->spell_id);
+
+						safe_delete(ho);
+						m_groupHO.erase(groupItr);
+					}
 				}
-				world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
-
-				if (m_groupHO[group_id]->GetComplete() > 0) {
-					Spell* ho_spell = master_spell_list.GetSpell(m_groupHO[group_id]->GetWheel()->spell_id, 1);
-					if (ho_spell)
-						client->GetCurrentZone()->ProcessSpell(ho_spell, client->GetPlayer(), spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0)));
-					else
-						LogWrite(SPELL__ERROR, 0, "HO", "Invalid spell for a HO, spell id = %u", m_groupHO[group_id]->GetWheel()->spell_id);
-
-					safe_delete(m_groupHO[group_id]);
-					m_groupHO.erase(group_id);
-				}
+				else
+					spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 			}
-			else
-				spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 		}
 		MGroupHO.releasewritelock(__FUNCTION__, __LINE__);
 		MSoloHO.releasewritelock(__FUNCTION__, __LINE__);
+
+		if (ho_spell && ho_target != 0)
+			client->GetCurrentZone()->ProcessSpell(ho_spell, client->GetPlayer(), spell->caster->GetZone()->GetSpawnByID(ho_target));
+
 	}
 
 	if (spell->spell->GetSpellData()->friendly_spell == 1 && spell->initial_target)
