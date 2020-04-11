@@ -551,6 +551,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			break;
 			case OP_OutOfSession: {
 				LogWrite(PACKET__INFO, 0, "Packet", "OP_OutOfSession");
+				SendDisconnect();
 			}
 			break;
 			default:
