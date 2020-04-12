@@ -1860,7 +1860,8 @@ void ZoneServer::ProcessDrowning(){
 	}
 }
 
-void ZoneServer::SendSpawnChanges(){	
+void ZoneServer::SendSpawnChanges(){
+	set<Spawn*> spawns_to_send;
 	Spawn* spawn = 0;
 	MutexList<int32>::iterator spawn_iter = changed_spawns.begin();
 	int count = 0;
@@ -1868,6 +1869,11 @@ void ZoneServer::SendSpawnChanges(){
 		spawn = GetSpawnByID(spawn_iter->value);
 		if(spawn && spawn->changed){
 			if(!spawn->IsPlayer() || (spawn->IsPlayer() && (spawn->info_changed || spawn->vis_changed))){
+				if (spawn->position_changed)
+				{
+					spawn->position_changed = false;
+					spawns_to_send.insert(spawn);
+				}
 				SendSpawnChanges(spawn);
 			}
 		}
@@ -1875,6 +1881,23 @@ void ZoneServer::SendSpawnChanges(){
 			changed_spawns.Remove(spawn_iter->value);
 	}
 	changed_spawns.clear();
+
+	for (const auto& spawn : spawns_to_send) {
+		spawn->position_changed = true;
+	}
+
+	vector<Client*>::iterator client_itr;
+	Client* client = 0;
+	MClientList.readlock(__FUNCTION__, __LINE__);
+	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
+		client = *client_itr;
+		client->SendSpawnChanges(spawns_to_send);
+	}
+	MClientList.releasereadlock(__FUNCTION__, __LINE__);
+
+	for (const auto& spawn : spawns_to_send) {
+		spawn->position_changed = false;
+	}
 }
 
 void ZoneServer::SendPlayerPositionChanges(Player* player){

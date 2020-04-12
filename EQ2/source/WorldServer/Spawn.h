@@ -194,6 +194,20 @@ struct MovementLocation{
 	bool	mapped;
 };
 
+struct SpawnUpdate {
+	int32 spawn_id;
+	bool info_changed;
+	bool vis_changed;
+	bool pos_changed;
+	shared_ptr<Client> client;
+};
+
+struct SpawnData {
+	Spawn* spawn;
+	uchar* data;
+	int32 size;
+};
+
 class Spawn {
 public:
 	Spawn();
@@ -738,6 +752,10 @@ public:
 	uchar* spawn_pos_changes(Player* spawn, int16 version);
 	uchar* spawn_vis_changes(Player* spawn, int16 version);
 
+	uchar* spawn_info_changes_ex(Player* spawn, int16 version);
+	uchar* spawn_pos_changes_ex(Player* spawn, int16 version);
+	uchar* spawn_vis_changes_ex(Player* spawn, int16 version);
+
 	virtual bool EngagedInCombat(){ return false; }
 	virtual bool IsObject(){ return false; }
 	virtual bool IsGroundSpawn(){ return false; }
@@ -955,6 +973,10 @@ public:
 		if (movement_locations)
 			movement_locations->clear();
 	}
+
+	int16 pos_packet_size;
+	int16 info_packet_size;
+	int16 vis_packet_size;
 protected:
 	bool	send_spawn_changes;
 	bool	invulnerable;
@@ -982,7 +1004,6 @@ protected:
 	map<int32, vector<int16>* > required_quests;
 	map<int32, LUAHistory> required_history;
 	EquipmentItemList equipment_list;
-
 private:	
 	deque<MovementLocation*>* movement_locations;
 	Mutex*			MMovementLocations;
@@ -1028,9 +1049,6 @@ private:
 	int32 m_addedToWorldTimestamp;
 	int16 m_spawnAnimLeeway;
 
-	int16 pos_packet_size;
-	int16 info_packet_size;
-	int16 vis_packet_size;
 	Mutex m_Update;
 };
 
