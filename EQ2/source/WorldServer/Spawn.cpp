@@ -2461,7 +2461,7 @@ bool Spawn::CalculateChange(){
 				}
 
 				int32 newGrid = GetZone()->Grid->GetGridID(this);
-				if (newGrid != appearance.pos.grid_id)
+				if (newGrid != 0 && newGrid != appearance.pos.grid_id)
 					SetPos(&(appearance.pos.grid_id), newGrid);
 			}
 		}
@@ -2480,12 +2480,12 @@ void Spawn::CalculateRunningLocation(bool stop){
 	bool removed = CalculateChange();
 	if (stop) {
 		//following = false;
-		SetPos(&appearance.pos.X2, GetX());
-		SetPos(&appearance.pos.Y2, GetY());
-		SetPos(&appearance.pos.Z2, GetZ());
-		SetPos(&appearance.pos.X3, GetX());
-		SetPos(&appearance.pos.Y3, GetY());
-		SetPos(&appearance.pos.Z3, GetZ());
+		SetPos(&appearance.pos.X2, GetX(), false);
+		SetPos(&appearance.pos.Y2, GetY(), false);
+		SetPos(&appearance.pos.Z2, GetZ(), false);
+		SetPos(&appearance.pos.X3, GetX(), false);
+		SetPos(&appearance.pos.Y3, GetY(), false);
+		SetPos(&appearance.pos.Z3, GetZ(), false);
 	}
 	else if (removed && movement_locations->size() > 0) {
 		MovementLocation* current_location = movement_locations->at(0);
@@ -2931,8 +2931,6 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 		 */
 		new_z = this->FindDestGroundZ(destination, z_find_offset);
 		if (new_z != BEST_Z_INVALID) {
-			new_z += z_find_offset;
-
 			if (new_z < -2000) {
 				new_z = GetY();
 			}
@@ -2971,7 +2969,7 @@ void Spawn::FixZ(int32 z_find_offset /*= 1*/, bool fix_client_z /*= false*/) {
 		return;
 
 	if ((new_z > -2000) && new_z != BEST_Z_INVALID) {
-		SetY(new_z, fix_client_z,true);
+		SetY(new_z, false,true);
 	}
 	else {
 		LogWrite(MAP__DEBUG, 0, "Map", "[{%s}] is failing to find Z [{%f}]", this->GetName(), std::abs(GetY() - new_z));
