@@ -572,15 +572,16 @@ int8 EQStream::EQ2_Compress(EQ2Packet* app, int8 offset){
 #endif
 
 	uchar* pDataPtr = app->pBuffer + offset;
-	uchar* deflate_buff = new uchar[app->size];
+	int xpandSize = app->size * 2;
+	uchar* deflate_buff = new uchar[xpandSize];
 	MCompressData.lock();
 	stream.next_in  = pDataPtr;
 	stream.avail_in = app->size - offset;
 	stream.next_out = deflate_buff;
-	stream.avail_out = app->size;
+	stream.avail_out = xpandSize;
 
 	deflate(&stream, Z_SYNC_FLUSH);
-	int32 newsize = app->size - stream.avail_out;
+	int32 newsize = xpandSize - stream.avail_out;
 	safe_delete_array(app->pBuffer);
 	app->size = newsize + offset;
 	app->pBuffer = new uchar[app->size];

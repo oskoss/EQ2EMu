@@ -8242,3 +8242,169 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 
 	return true;
 }
+
+
+void Client::SendSpawnChanges(set<Spawn*>& spawns) {
+	map<int32, SpawnData> info_changes;
+	map<int32, SpawnData> pos_changes;
+	map<int32, SpawnData> vis_changes;
+
+	int32 info_size = 0;
+	int32 pos_size = 0;
+	int32 vis_size = 0;
+
+	int count = 0;
+	for (const auto& spawn : spawns) {
+		if (count > 40 || (info_size+pos_size+vis_size) > 400)
+		{
+			MakeSpawnChangePacket(info_changes, pos_changes, vis_changes, info_size, pos_size, vis_size);
+
+			for (auto& kv : info_changes) {
+				safe_delete_array(kv.second.data);
+			}
+			info_changes.clear();
+			for (auto& kv : pos_changes) {
+				safe_delete_array(kv.second.data);
+			}
+
+			pos_changes.clear();
+			for (auto& kv : vis_changes) {
+				safe_delete_array(kv.second.data);
+			}
+			vis_changes.clear();
+
+			info_size = 0;
+			pos_size = 0;
+			vis_size = 0;
+		}
+
+		if (!player->WasSentSpawn(spawn->GetID()))
+			continue;
+		int16 index = player->player_spawn_index_map[spawn];
+		/*
+		if (spawn->info_changed) {
+			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());
+
+			if (info_change) {
+				SpawnData data;
+				data.spawn = spawn;
+				data.data = info_change;
+				data.size = spawn->info_packet_size;
+				info_size += spawn->info_packet_size;
+
+				info_changes[index] = data;
+			}
+		}*/
+
+		if (spawn->position_changed) {
+			auto pos_change = spawn->spawn_pos_changes_ex(GetPlayer(), GetVersion());
+
+			if (pos_change) {
+				SpawnData data;
+				data.spawn = spawn;
+				data.data = pos_change;
+				data.size = spawn->pos_packet_size;
+				pos_size += spawn->pos_packet_size;
+
+				pos_changes[index] = data;
+			}
+			count++;
+		}
+		/*
+		if (spawn->vis_changed) {
+			auto vis_change = spawn->spawn_vis_changes_ex(GetPlayer(), GetVersion());
+
+			if (vis_change) {
+				SpawnData data;
+				data.spawn = spawn;
+				data.data = vis_change;
+				data.size = spawn->vis_packet_size;
+				vis_size += spawn->vis_packet_size;
+
+				vis_changes[index] = data;
+			}
+		}*/
+
+	}
+
+	if (info_size == 0 && pos_size == 0 && vis_size == 0) {
+		return;
+	}
+
+	MakeSpawnChangePacket(info_changes, pos_changes, vis_changes, info_size, pos_size, vis_size);
+
+	for (auto& kv : info_changes) {
+		safe_delete_array(kv.second.data);
+	}
+
+	for (auto& kv : pos_changes) {
+		safe_delete_array(kv.second.data);
+	}
+
+	for (auto& kv : vis_changes) {
+		safe_delete_array(kv.second.data);
+	}
+}
+
+void Client::MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32, SpawnData> pos_changes, map<int32, SpawnData> vis_changes, int32 info_size, int32 pos_size, int32 vis_size)
+{
+	static const int8 oversized = 255;
+	int16 opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd);
+	int32 size = info_size + pos_size + vis_size + 11;
+	size += CheckOverLoadSize(info_size);
+	size += CheckOverLoadSize(pos_size);
+	size += CheckOverLoadSize(vis_size);
+
+	uchar* tmp = new uchar[size];
+	uchar* ptr = tmp;
+
+	memset(tmp, 0, size);
+
+	size -= 4;
+	memcpy(ptr, &size, sizeof(int32));
+	size += 4;
+	ptr += sizeof(int32);
+
+	memcpy(ptr, &oversized, sizeof(int8));
+	ptr += sizeof(int8);
+
+	memcpy(ptr, &opcode_val, sizeof(int16));
+	ptr += sizeof(int16);
+
+	int32 current_time = Timer::GetCurrentTime2();
+	memcpy(ptr, &current_time, sizeof(int32));
+	ptr += sizeof(int32);
+
+	ptr += DoOverLoad(info_size, ptr);
+
+	for (const auto& kv : info_changes) {
+		auto info = kv.second;
+		memcpy(ptr, info.data, info.size);
+		ptr += info.size;
+	}
+
+	ptr += DoOverLoad(pos_size, ptr);
+
+	for (const auto& kv : pos_changes) {
+		auto pos = kv.second;
+		memcpy(ptr, pos.data, pos.size);
+		ptr += pos.size;
+	}
+
+	ptr += DoOverLoad(vis_size, ptr);
+
+	for (const auto& kv : vis_changes) {
+		auto vis = kv.second;
+		memcpy(ptr, vis.data, vis.size);
+		ptr += vis.size;
+	}
+
+	EQ2Packet* packet = new EQ2Packet(OP_ClientCmdMsg, tmp, size);
+
+	//	DumpPacket(packet->pBuffer, packet->size);
+	if (packet) {
+		QueuePacket(packet);
+	}
+
+	delete[] tmp;
+}

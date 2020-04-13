@@ -617,8 +617,21 @@ vector<Item*>* MasterItemList::GetItems(map<string, string> criteria){
 	int16 minlevel = 0;
 	int16 maxlevel = 0;
 	sint8 itemclass = 0;
-	if(criteria.count("ITEM") > 0)
-		name = criteria["ITEM"];
+	int32 itemID = 0;
+	if (criteria.count("ITEM") > 0)
+	{
+		if (IsNumber(criteria["ITEM"].c_str()))
+		{
+			itemID = atoul(criteria["ITEM"].c_str());
+			Item* itm = GetItem(itemID);
+			vector<Item*>* ret = new vector<Item*>;
+			if (itm)
+				ret->push_back(itm);
+			return ret;
+		}
+		else
+			name = criteria["ITEM"];
+	}
 	if(criteria.count("MINSKILL") > 0)
 		minskill = (int8)ParseIntValue(criteria["MINSKILL"]);
 	if(criteria.count("MAXSKILL") > 0)

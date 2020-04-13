@@ -647,6 +647,217 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 	return ret_packet;
 }
 
+uchar* Spawn::spawn_info_changes_ex(Player* player, int16 version) {
+	int16 index = player->player_spawn_index_map[this];
+
+	PacketStruct* packet = player->GetSpawnInfoStruct();
+
+	player->info_mutex.writelock(__FUNCTION__, __LINE__);
+
+	packet->ResetData();
+	InitializeInfoPacketData(player, packet);
+
+	string* data = packet->serializeString();
+	int32 size = data->length();
+	uchar* xor_info_packet = player->GetTempInfoPacketForXOR();
+
+	if (!xor_info_packet) {
+		xor_info_packet = player->SetTempInfoPacketForXOR(size);
+	}
+
+	uchar* orig_packet = player->GetSpawnInfoPacketForXOR(id);
+
+	if (orig_packet) {
+		memcpy(xor_info_packet, (uchar*)data->c_str(), size);
+		Encode(xor_info_packet, orig_packet, size);
+	}
+
+	bool changed = false;
+	for (int i = 0; i < size; ++i) {
+		if (xor_info_packet[i]) {
+			changed = true;
+			break;
+		}
+	}
+
+	if (!changed) {
+		player->info_mutex.releasewritelock(__FUNCTION__, __LINE__);
+		return nullptr;
+	}
+
+	uchar* tmp = new uchar[size + 10];
+	size = Pack(tmp, xor_info_packet, size, size, version);
+
+	player->info_mutex.releasewritelock(__FUNCTION__, __LINE__);
+
+	int32 orig_size = size;
+
+	size -= sizeof(int32);
+	size += CheckOverLoadSize(index);
+	info_packet_size = size;
+
+	uchar* tmp2 = new uchar[size];
+	uchar* ptr = tmp2;
+
+	ptr += DoOverLoad(index, ptr);
+
+	memcpy(ptr, tmp + sizeof(int32), orig_size - sizeof(int32));
+
+	delete[] tmp;
+
+	return move(tmp2);
+}
+
+uchar* Spawn::spawn_vis_changes_ex(Player* player, int16 version) {
+	PacketStruct* vis_struct = player->GetSpawnVisStruct();
+	int16 index = player->player_spawn_index_map[this];
+
+	player->vis_mutex.writelock(__FUNCTION__, __LINE__);
+
+	uchar* orig_packet = player->GetSpawnVisPacketForXOR(id);
+
+	vis_struct->ResetData();
+	InitializeVisPacketData(player, vis_struct);
+
+	string* data = vis_struct->serializeString();
+	int32 size = data->length();
+	uchar* xor_vis_packet = player->GetTempVisPacketForXOR();
+
+	if (!xor_vis_packet) {
+		xor_vis_packet = player->SetTempVisPacketForXOR(size);
+	}
+
+	if (orig_packet) {
+		memcpy(xor_vis_packet, (uchar*)data->c_str(), size);
+		Encode(xor_vis_packet, orig_packet, size);
+	}
+
+	bool changed = false;
+	for (int i = 0; i < size; ++i) {
+		if (xor_vis_packet[i]) {
+			changed = true;
+			break;
+		}
+	}
+
+	if (!changed) {
+		player->vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
+		return nullptr;
+	}
+
+	uchar* tmp = new uchar[size + 10];
+	size = Pack(tmp, xor_vis_packet, size, size, version);
+
+	player->vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
+
+	int32 orig_size = size;
+
+	size -= sizeof(int32);
+	size += CheckOverLoadSize(index);
+	vis_packet_size = size;
+
+	uchar* tmp2 = new uchar[size];
+	uchar* ptr = tmp2;
+
+	ptr += DoOverLoad(index, ptr);
+
+	memcpy(ptr, tmp + sizeof(int32), orig_size - sizeof(int32));
+
+	delete[] tmp;
+
+	return move(tmp2);
+}
+
+uchar* Spawn::spawn_pos_changes_ex(Player* player, int16 version) {
+	int16 index = player->GetIndexForSpawn(this);
+
+	PacketStruct* packet = player->GetSpawnPosStruct();
+
+	player->pos_mutex.writelock(__FUNCTION__, __LINE__);
+
+	uchar* orig_packet = player->GetSpawnPosPacketForXOR(id);
+
+	packet->ResetData();
+	InitializePosPacketData(player, packet);
+
+	string* data = packet->serializeString();
+	int32 size = data->length();
+	uchar* xor_pos_packet = player->GetTempPosPacketForXOR();
+
+	if (!xor_pos_packet) {
+		xor_pos_packet = player->SetTempPosPacketForXOR(size);
+	}
+
+	if (orig_packet) {
+		memcpy(xor_pos_packet, (uchar*)data->c_str(), size);
+		Encode(xor_pos_packet, orig_packet, size);
+	}
+
+	bool changed = false;
+	for (int i = 0; i < size; ++i) {
+		if (xor_pos_packet[i]) {
+			changed = true;
+			break;
+		}
+	}
+
+	if (!changed) {
+		player->pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
+		return nullptr;
+	}
+
+	uchar* tmp = new uchar[size + 10];
+
+	size = Pack(tmp, xor_pos_packet, size, size, version);
+
+	player->pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
+
+	int32 orig_size = size;
+
+	if (version >= 1188) {
+		size += 1;
+	}
+
+	if (IsPlayer()) {
+		size += 4;
+	}
+
+	size -= sizeof(int32);
+	size += CheckOverLoadSize(index);
+	pos_packet_size = size;
+
+	uchar* tmp2 = new uchar[size];
+	uchar* ptr = tmp2;
+
+	ptr += DoOverLoad(index, ptr);
+
+	// extra byte in coe+ clients, 0 for NPC's 1 for Players
+	int8 x = 0;
+
+	if (version >= 1188) {
+		if (IsPlayer()) {
+			x = 1;
+			memcpy(ptr, &x, sizeof(int8));
+			ptr += sizeof(int8);
+
+			int32 now = Timer::GetCurrentTime2();
+			memcpy(ptr, &now, sizeof(int32));
+			ptr += sizeof(int32);
+		}
+		else {
+			memcpy(ptr, &x, sizeof(int8));
+			ptr += sizeof(int8);
+		}
+	}
+
+	memcpy(ptr, tmp + sizeof(int32), orig_size - sizeof(int32));
+
+	delete[] tmp;
+
+	return move(tmp2);
+}
+
+
 EQ2Packet* Spawn::serialize(Player* player, int16 version){
 	return 0;
 }
@@ -2227,24 +2438,19 @@ bool Spawn::CalculateChange(){
 			// Normalize the forward vector and multiply by speed, this gives us our change in coords, just need to add them to our current coords
 			float len = sqrtf(tar_vx * tar_vx + tar_vy * tar_vy + tar_vz * tar_vz);
 			tar_vx = (tar_vx / len) * speed;
-
-			if (GetZone() == NULL || GetZone()->Grid == NULL)
-				tar_vy = (tar_vy / len) * speed;
-
+			tar_vy = (tar_vy / len) * speed;
 			tar_vz = (tar_vz / len) * speed;
 
 			// Distance less then 0.5 just set the npc to the target location
-			if (GetDistance(data->x, data->y, data->z, ( IsWidget() && (!GetZone() || (GetZone() && GetZone()->Grid == NULL))) ? false : true) <= 0.5f) {
+			if (GetDistance(data->x, data->y, data->z, IsWidget() ? false : true) <= 0.5f) {
 				SetX(data->x, false);
 				SetZ(data->z, false);
 				SetY(data->y, false, true);
-				remove_needed = true;
 			}
 			else {
 				SetX(nx + tar_vx, false);
 				SetZ(nz + tar_vz, false);
-				SetY(ny, false, true);
-				remove_needed = true;
+				SetY(ny + tar_vy, false);
 			}
 
 			if (GetZone()->Grid != nullptr) {
@@ -2255,7 +2461,7 @@ bool Spawn::CalculateChange(){
 				}
 
 				int32 newGrid = GetZone()->Grid->GetGridID(this);
-				if (newGrid != appearance.pos.grid_id)
+				if (newGrid != 0 && newGrid != appearance.pos.grid_id)
 					SetPos(&(appearance.pos.grid_id), newGrid);
 			}
 		}
@@ -2274,12 +2480,12 @@ void Spawn::CalculateRunningLocation(bool stop){
 	bool removed = CalculateChange();
 	if (stop) {
 		//following = false;
-		SetPos(&appearance.pos.X2, GetX());
-		SetPos(&appearance.pos.Y2, GetY());
-		SetPos(&appearance.pos.Z2, GetZ());
-		SetPos(&appearance.pos.X3, GetX());
-		SetPos(&appearance.pos.Y3, GetY());
-		SetPos(&appearance.pos.Z3, GetZ());
+		SetPos(&appearance.pos.X2, GetX(), false);
+		SetPos(&appearance.pos.Y2, GetY(), false);
+		SetPos(&appearance.pos.Z2, GetZ(), false);
+		SetPos(&appearance.pos.X3, GetX(), false);
+		SetPos(&appearance.pos.Y3, GetY(), false);
+		SetPos(&appearance.pos.Z3, GetZ(), false);
 	}
 	else if (removed && movement_locations->size() > 0) {
 		MovementLocation* current_location = movement_locations->at(0);
@@ -2725,8 +2931,6 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 		 */
 		new_z = this->FindDestGroundZ(destination, z_find_offset);
 		if (new_z != BEST_Z_INVALID) {
-			new_z += z_find_offset;
-
 			if (new_z < -2000) {
 				new_z = GetY();
 			}
@@ -2765,7 +2969,7 @@ void Spawn::FixZ(int32 z_find_offset /*= 1*/, bool fix_client_z /*= false*/) {
 		return;
 
 	if ((new_z > -2000) && new_z != BEST_Z_INVALID) {
-		SetY(new_z, fix_client_z,true);
+		SetY(new_z, false,true);
 	}
 	else {
 		LogWrite(MAP__DEBUG, 0, "Map", "[{%s}] is failing to find Z [{%f}]", this->GetName(), std::abs(GetY() - new_z));
