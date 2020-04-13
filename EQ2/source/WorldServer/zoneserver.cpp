@@ -1869,22 +1869,13 @@ void ZoneServer::SendSpawnChanges(){
 		spawn = GetSpawnByID(spawn_iter->value);
 		if(spawn && spawn->changed){
 			if(!spawn->IsPlayer() || (spawn->IsPlayer() && (spawn->info_changed || spawn->vis_changed))){
-				if (spawn->position_changed)
-				{
-					spawn->position_changed = false;
 					spawns_to_send.insert(spawn);
-				}
-				SendSpawnChanges(spawn);
 			}
 		}
 		if (!spawn)
 			changed_spawns.Remove(spawn_iter->value);
 	}
 	changed_spawns.clear();
-
-	for (const auto& spawn : spawns_to_send) {
-		spawn->position_changed = true;
-	}
 
 	vector<Client*>::iterator client_itr;
 	Client* client = 0;
@@ -1896,7 +1887,10 @@ void ZoneServer::SendSpawnChanges(){
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 
 	for (const auto& spawn : spawns_to_send) {
+		spawn->changed = false;
 		spawn->position_changed = false;
+		spawn->vis_changed = false;
+		spawn->info_changed = false;
 	}
 }
 

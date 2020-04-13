@@ -8281,7 +8281,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 		if (!player->WasSentSpawn(spawn->GetID()))
 			continue;
 		int16 index = player->player_spawn_index_map[spawn];
-		/*
+		
 		if (spawn->info_changed) {
 			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());
 
@@ -8294,7 +8294,8 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 
 				info_changes[index] = data;
 			}
-		}*/
+			count++;
+		}
 
 		if (spawn->position_changed) {
 			auto pos_change = spawn->spawn_pos_changes_ex(GetPlayer(), GetVersion());
@@ -8310,7 +8311,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 			}
 			count++;
 		}
-		/*
+		
 		if (spawn->vis_changed) {
 			auto vis_change = spawn->spawn_vis_changes_ex(GetPlayer(), GetVersion());
 
@@ -8323,7 +8324,8 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 
 				vis_changes[index] = data;
 			}
-		}*/
+			count++;
+		}
 
 	}
 
