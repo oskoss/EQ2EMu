@@ -211,7 +211,8 @@ void NPC::ClearRunback(){
 	safe_delete(runback);
 	m_runningBack = false;
 	m_runbackHeading = 0;
-	NeedsToResumeMovement(true);
+	resume_movement = true;
+	NeedsToResumeMovement(false);
 }
 
 void NPC::InCombat(bool val){
