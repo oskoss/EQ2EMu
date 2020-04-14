@@ -4066,32 +4066,35 @@ void Client::OpenChest(Entity* entity, bool attemptDisarm)
 	{
 		ChestTrap::ChestTrapInfo nextTrap;
 		
-		chest_trap_list.GetNextTrap(GetCurrentZone()->GetZoneID(), chest_difficulty, &nextTrap);
+		bool ret = chest_trap_list.GetNextTrap(GetCurrentZone()->GetZoneID(), chest_difficulty, &nextTrap);
 
 		Skill* disarmSkill = GetPlayer()->GetSkillByName("Disarm Trap", false);
 		firstChestOpen = true;
 		entity->SetTrapTriggered(true);
-		if (disarmSkill && attemptDisarm)
+		if (ret)
 		{
-			if (disarmSkill->CheckDisarmSkill(entity->GetLevel(), chest_difficulty) < 1)
+			if (disarmSkill && attemptDisarm)
 			{
-				CastGroupOrSelf(entity, nextTrap.spell_id, nextTrap.spell_tier, 
+				if (disarmSkill->CheckDisarmSkill(entity->GetLevel(), chest_difficulty) < 1)
+				{
+					CastGroupOrSelf(entity, nextTrap.spell_id, nextTrap.spell_tier,
+						rule_manager.GetGlobalRule(R_Loot, ChestTriggerRadiusGroup)->GetFloat());
+					Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
+				}
+				else
+				{
+					Message(CHANNEL_COLOR_WHITE, "You disarm the trap on %s", modelName.c_str());
+				}
+
+				// despite fail/succeed we should always try to increase skill if disarm is available
+				GetPlayer()->GetSkillByName("Disarm Trap", true);
+			}
+			else // no disarm skill, always fail
+			{
+				CastGroupOrSelf(entity, nextTrap.spell_id, nextTrap.spell_tier,
 					rule_manager.GetGlobalRule(R_Loot, ChestTriggerRadiusGroup)->GetFloat());
 				Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
 			}
-			else
-			{
-				Message(CHANNEL_COLOR_WHITE, "You disarm the trap on %s", modelName.c_str());
-			}
-
-			// despite fail/succeed we should always try to increase skill if disarm is available
-			GetPlayer()->GetSkillByName("Disarm Trap", true);
-		}
-		else // no disarm skill, always fail
-		{
-			CastGroupOrSelf(entity, nextTrap.spell_id, nextTrap.spell_tier, 
-				rule_manager.GetGlobalRule(R_Loot, ChestTriggerRadiusGroup)->GetFloat());
-			Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
 		}
 	}
 	else if(!entity->HasTrapTriggered())

@@ -47,10 +47,10 @@ bool ChestTrapList::GetNextTrap(int32 zoneid, int32 chest_difficulty, ChestTrap:
 	ChestTrapList* zoneTrapList = GetChestListByZone(zoneid);
 	ChestTrapList* zoneDifficultyTrapList = zoneTrapList->GetChestListByDifficulty(chest_difficulty);
 
-	zoneTrapList->GetNextChestTrap(cti);
+	bool ret = zoneTrapList->GetNextChestTrap(cti);
 	MChestListsInUse.releasewritelock(__FUNCTION__, __LINE__);
 
-	return true;
+	return ret;
 }
 
 void ChestTrapList::Clear() {
@@ -70,6 +70,9 @@ bool ChestTrapList::GetNextChestTrap(ChestTrap::ChestTrapInfo* cti) {
 	}
 	else
 		MChestTrapList.releasereadlock(__FUNCTION__, __LINE__);
+
+	if (cycleItr == chesttrap_list.end())
+		return false;
 
 	MChestTrapList.writelock(__FUNCTION__, __LINE__);
 	ChestTrap* trap = cycleItr->second;
