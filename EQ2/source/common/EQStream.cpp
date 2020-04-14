@@ -239,17 +239,28 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 #ifdef LE_DEBUG
 					LogWrite(PACKET__DEBUG, 0, "Packet", "OP_Combined Packet %i (%u) (%u): ", count, subpacket_length, processed);
 #endif
-					EQProtocolPacket *subp=new EQProtocolPacket(p->pBuffer+processed+offset,subpacket_length);
-					subp->copyInfo(p);
+					bool isSubPacket = EQProtocolPacket::IsProtocolPacket(p->pBuffer + processed + offset, subpacket_length, false);
+					if (isSubPacket) {
+						EQProtocolPacket* subp = new EQProtocolPacket(p->pBuffer + processed + offset, subpacket_length);
+						subp->copyInfo(p);
+						//I've seen some garbage packets get sent with wrong protocol opcodes but the rest of the combine is still correct
+						//So don't break if GetProtocolPacket fails
 #ifdef LE_DEBUG
-					LogWrite(PACKET__DEBUG, 0, "Packet", "Opcode %i:", subp->opcode);
-					DumpPacket(subp);
+						LogWrite(PACKET__DEBUG, 0, "Packet", "Opcode %i:", subp->opcode);
+						DumpPacket(subp);
 #endif
-					ProcessPacket(subp);
+						ProcessPacket(subp);
 #ifdef LE_DEBUG
-					DumpPacket(subp);
+						DumpPacket(subp);
 #endif
-					delete subp;
+						delete subp;
+					}
+					else if (ntohs(*reinterpret_cast<uint16_t*>(p->pBuffer + processed + offset)) > 0x1e) {
+						//Garbage packet?
+						crypto->RC4Decrypt(p->pBuffer + processed + offset, subpacket_length);
+						LogWrite(PACKET__ERROR, 0, "Packet", "Garbage packet?!:");
+						DumpPacket(p->pBuffer + processed + offset, subpacket_length);
+					}
 					processed+=subpacket_length+offset;
 				}
 				break;

@@ -104,6 +104,8 @@ public:
 	static uint32 Compress(const unsigned char *buffer, const uint32 length, unsigned char *newbuf, uint32 newbufsize);
 	static void ChatDecode(unsigned char *buffer, int size, int DecodeKey);
 	static void ChatEncode(unsigned char *buffer, int size, int EncodeKey);
+	static bool IsProtocolPacket(const unsigned char* in_buff, uint32_t len, bool bTrimCRC);
+
 	EQProtocolPacket *Copy() { 
 		EQProtocolPacket* new_packet = new EQProtocolPacket(opcode,pBuffer,size);
 		new_packet->eq2_compressed = this->eq2_compressed;

@@ -555,6 +555,31 @@ void EQProtocolPacket::ChatEncode(unsigned char *buffer, int size, int EncodeKey
 	}
 }
 
+bool EQProtocolPacket::IsProtocolPacket(const unsigned char* in_buff, uint32_t len, bool bTrimCRC) {
+	bool ret = false;
+	uint16_t opcode = ntohs(*(uint16_t*)in_buff);
+	uint32_t offset = 2;
+
+	switch (opcode) {
+	case OP_SessionRequest:
+	case OP_SessionDisconnect:
+	case OP_KeepAlive:
+	case OP_SessionStatResponse:
+	case OP_Packet:
+	case OP_Combined:
+	case OP_Fragment:
+	case OP_Ack:
+	case OP_OutOfOrderAck:
+	case OP_OutOfSession:
+		{
+			ret = true;
+			break;
+		}
+	}
+
+	return ret;
+}
+
 
 
 void DumpPacketHex(const EQApplicationPacket* app)
