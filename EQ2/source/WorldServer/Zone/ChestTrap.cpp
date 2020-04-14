@@ -66,7 +66,10 @@ bool ChestTrapList::GetNextChestTrap(ChestTrap::ChestTrapInfo* cti) {
 	{
 		MChestTrapList.releasereadlock(__FUNCTION__, __LINE__);
 		//re-shuffle the map, we reached the end
+
+		MChestTrapList.writelock(__FUNCTION__, __LINE__);
 		shuffleMap(this);
+		MChestTrapList.releasewritelock(__FUNCTION__, __LINE__);
 	}
 	else
 		MChestTrapList.releasereadlock(__FUNCTION__, __LINE__);
