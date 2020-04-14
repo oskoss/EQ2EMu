@@ -100,6 +100,7 @@ Spawn::Spawn(){
 	last_grid_update = 0;
 	last_location_update = 0.0;
 	last_movement_update = Timer::GetCurrentTime2();
+	forceMapCheck = false;
 }
 
 Spawn::~Spawn(){
@@ -2092,6 +2093,12 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		return;
 	}
 
+	if (forceMapCheck && GetZone() != nullptr && zone->zonemap != nullptr && zone->zonemap->IsMapLoaded())
+	{
+		FixZ(true);
+		forceMapCheck = false;
+	}
+
 	if (GetHP() <= 0 && !IsWidget())
 		return;
 
@@ -2975,8 +2982,8 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 }
 
 
-void Spawn::FixZ(int32 z_find_offset /*= 1*/, bool fix_client_z /*= false*/) {
-	if (IsPlayer() && !fix_client_z || (this->GetInitialState() == 49156)) {
+void Spawn::FixZ(bool forceUpdate) {
+	if (IsPlayer() || (this->GetInitialState() == 49156)) {
 		return;
 	}
 	/*
@@ -2994,7 +3001,7 @@ void Spawn::FixZ(int32 z_find_offset /*= 1*/, bool fix_client_z /*= false*/) {
 		return;
 
 	if ((new_z > -2000) && new_z != BEST_Z_INVALID) {
-		SetY(new_z, false,true);
+		SetY(new_z, forceUpdate, true);
 	}
 	else {
 		LogWrite(MAP__DEBUG, 0, "Map", "[{%s}] is failing to find Z [{%f}]", this->GetName(), std::abs(GetY() - new_z));

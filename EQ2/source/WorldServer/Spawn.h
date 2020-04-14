@@ -918,6 +918,8 @@ public:
 	AppearanceData		appearance;
 	int32	last_movement_update;
 	int32	last_location_update;
+	bool	forceMapCheck;
+
 	bool following;
 	bool	IsPet() { return is_pet; }
 	void	SetPet(bool val) { is_pet = val; }
@@ -965,7 +967,7 @@ public:
 
 	float FindDestGroundZ(glm::vec3 dest, float z_offset);
 	float GetFixedZ(const glm::vec3& destination, int32 z_find_offset = 1);
-	void FixZ(int32 z_find_offset=1, bool fix_client_z=false);
+	void FixZ(bool forceUpdate=false);
 	bool CheckLoS(Spawn* target);
 	bool CheckLoS(glm::vec3 myloc, glm::vec3 oloc);
 

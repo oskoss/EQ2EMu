@@ -1267,6 +1267,8 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 			continue;
 		spawn = new GroundSpawn();
 		spawn->SetDatabaseID(id);
+		spawn->forceMapCheck = true;
+
 		strcpy(spawn->appearance.name, row[1]);
 		vector<EntityCommand*>* primary_command_list = zone->GetEntityCommandList(atoul(row[4]));
 		vector<EntityCommand*>* secondary_command_list = zone->GetEntityCommandList(atoul(row[5]));

@@ -48,6 +48,7 @@ public:
 		new_spawn->SetGroundSpawnEntryID(groundspawn_id);
 		new_spawn->SetCollectionSkill(collection_skill.c_str());
 		new_spawn->SetQuestsRequired(GetQuestsRequired());
+		new_spawn->forceMapCheck = forceMapCheck;
 		return new_spawn;
 	}
 	bool IsGroundSpawn(){ return true; }
