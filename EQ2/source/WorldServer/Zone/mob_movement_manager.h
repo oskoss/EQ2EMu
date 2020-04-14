@@ -51,6 +51,7 @@ public:
 	void Teleport(Entity *who, float x, float y, float z, float heading);
 	void NavigateTo(Entity *who, float x, float y, float z, MobMovementMode mode = MovementRunning, bool overrideDistance=false);
 	void StopNavigation(Entity *who);
+	void DisruptNavigation(Entity* who);
 	/*
 	void SendCommandToClients(
 		Entity *mob,

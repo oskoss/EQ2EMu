@@ -135,6 +135,8 @@ void Brain::Think() {
 				m_body->SetX(m_body->GetRunbackLocation()->x,false);
 				m_body->SetZ(m_body->GetRunbackLocation()->z,false);
 				m_body->SetY(m_body->GetRunbackLocation()->y,true);
+				if (m_body->GetRunbackLocation()->gridid > 0)
+					m_body->SetLocation(m_body->GetRunbackLocation()->gridid);
 				m_body->ClearRunback();
 				m_body->GetZone()->movementMgr->StopNavigation((Entity*)m_body);
 				m_body->ClearRunningLocations();

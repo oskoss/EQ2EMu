@@ -2054,7 +2054,14 @@ void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate, bool ma
 
 	if (!IsPlayer() && distance > 0.0f)
 	{
-		if (/*!mapped && */GetZone())
+		if (GetInitialState() == 49156 && CheckLoS(spawn))
+		{
+			if (immediate)
+				ClearRunningLocations();
+
+			AddRunningLocation(spawn->GetX(), spawn->GetY(), spawn->GetZ(), GetSpeed(), distance, true, true, "", true);
+		}
+		else if (/*!mapped && */GetZone())
 		{
 			GetZone()->movementMgr->NavigateTo((Entity*)this, spawn->GetX(), spawn->GetY(), spawn->GetZ());
 			last_grid_update = Timer::GetCurrentTime2();
@@ -2178,6 +2185,17 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				// If this waypoint had a lua function then call it
 				if(data->lua_function.length() > 0)
 					GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, 0, data->lua_function.c_str());
+
+				int16 nextMove;
+				if ((int16)(movement_index + 1) < movement_loop.size())
+					nextMove = movement_index + 1;
+				else
+					nextMove = 0;
+				// Get the next target location
+				data = movement_loop[nextMove];
+				
+				//Go ahead and face the next location
+				FaceTarget(data->x, data->z);
 			}
 			// If this waypoint has no delay or we have waited the required time (current time >= delay + movement_start_time)
 			else if(data->delay == 0 || (data->delay > 0 && Timer::GetCurrentTime2() >= (data->delay+movement_start_time))) {
@@ -2237,13 +2255,13 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	else if (IsRunning()) {
 		CalculateRunningLocation();
 	}
-	else if (IsNPC() && !IsRunning() && !EngagedInCombat() && ((NPC*)this)->GetRunbackLocation()) {
+	/*else if (IsNPC() && !IsRunning() && !EngagedInCombat() && ((NPC*)this)->GetRunbackLocation()) {
 		// Is an npc that is not moving and not engaged in combat but has a run back location set then clear the runback location
 		LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "Clear runback location for %s", GetName());
 		((NPC*)this)->ClearRunback();
 		resume_movement = true;
 		NeedsToResumeMovement(false);
-	}
+	}*/
 	MMovementLoop.unlock();
 }
 
@@ -2349,6 +2367,8 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 	data->speed = speed;
 	data->attackable = attackable;
 	data->lua_function = lua_function;
+	data->gridid = 0; // used for runback defaults
+
 	MMovementLocations->writelock(__FUNCTION__, __LINE__);
 	if(movement_locations->size() > 0)
 		current_location = movement_locations->back();
@@ -2461,7 +2481,7 @@ bool Spawn::CalculateChange(){
 				}
 
 				int32 newGrid = GetZone()->Grid->GetGridID(this);
-				if (newGrid != 0 && newGrid != appearance.pos.grid_id)
+				if (GetInitialState() != 49156 && newGrid != 0 && newGrid != appearance.pos.grid_id)
 					SetPos(&(appearance.pos.grid_id), newGrid);
 			}
 		}
@@ -2499,7 +2519,12 @@ void Spawn::CalculateRunningLocation(bool stop){
 	else if (GetZone() && GetTarget() != NULL && EngagedInCombat())
 	{
 		if (GetDistance(GetTarget()) > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
-			GetZone()->movementMgr->NavigateTo((Entity*)this, GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
+		{
+			if (GetInitialState() == 49156 && CheckLoS(GetTarget()))
+				AddRunningLocation(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), GetSpeed(), 0, false);
+			else
+				GetZone()->movementMgr->NavigateTo((Entity*)this, GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
+		}
 		else
 			GetZone()->movementMgr->StopNavigation((Entity*)this);
 	} 
@@ -2951,7 +2976,7 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 
 
 void Spawn::FixZ(int32 z_find_offset /*= 1*/, bool fix_client_z /*= false*/) {
-	if (IsPlayer() && !fix_client_z) {
+	if (IsPlayer() && !fix_client_z || (this->GetInitialState() == 49156)) {
 		return;
 	}
 	/*

@@ -192,6 +192,7 @@ struct MovementLocation{
 	bool	attackable;
 	string	lua_function;
 	bool	mapped;
+	int32	gridid;
 };
 
 struct SpawnUpdate {

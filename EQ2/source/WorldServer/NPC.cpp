@@ -161,12 +161,13 @@ void NPC::SetSpells(vector<Spell*>* in_spells){
 	spells = in_spells;
 }
 
-void NPC::SetRunbackLocation(float x, float y, float z){
+void NPC::SetRunbackLocation(float x, float y, float z, int32 gridid){
 	safe_delete(runback);
 	runback = new MovementLocation;
 	runback->x = x;
 	runback->y = y;
 	runback->z = z;
+	runback->gridid = gridid;
 }
 
 MovementLocation* NPC::GetRunbackLocation(){
@@ -188,9 +189,19 @@ void NPC::Runback(){
 	}
 
 	m_runningBack = true;
-	FaceTarget(runback->x, runback->z);
 	SetSpeed(GetMaxSpeed()*2);
-	GetZone()->movementMgr->NavigateTo((Entity*)this, runback->x, runback->y, runback->z);
+
+	if (GetInitialState() == 49156 && CheckLoS(glm::vec3(runback->x, runback->z, runback->y + 1.0f), glm::vec3(GetX(), GetZ(), GetY() + 1.0f)))
+	{
+		FaceTarget(runback->x, runback->z);
+		ClearRunningLocations();
+		GetZone()->movementMgr->DisruptNavigation((Entity*)this);
+		if (GetRunbackLocation()->gridid > 0)
+			SetLocation(GetRunbackLocation()->gridid);
+		AddRunningLocation(runback->x, runback->y, runback->z, GetSpeed(), 0, true, true, "", true);
+	}
+	else
+		GetZone()->movementMgr->NavigateTo((Entity*)this, runback->x, runback->y, runback->z);
 
 	//AddRunningLocation(runback->x, runback->y, runback->z, GetSpeed(), 0, false);	
 	last_movement_update = Timer::GetCurrentTime2();
@@ -237,7 +248,7 @@ void NPC::InCombat(bool val){
 	if(val){
 		// if not a pet and no current run back location set then set one to the current location
 		if(!IsPet() && !GetRunbackLocation()) {
-			SetRunbackLocation(GetX(), GetY(), GetZ());
+			SetRunbackLocation(GetX(), GetY(), GetZ(), GetLocation());
 			m_runbackHeading = appearance.pos.Dir1;
 		}
 	}

@@ -723,6 +723,26 @@ void MobMovementManager::StopNavigation(Entity *who)
 	MobListMutex.releasereadlock();
 }
 
+void MobMovementManager::DisruptNavigation(Entity* who)
+{
+	MobListMutex.readlock();
+	auto iter = _impl->Entries.find(who);
+	auto& ent = (*iter);
+	auto& nav = ent.second.NavTo;
+
+	nav.navigate_to_x = 0.0;
+	nav.navigate_to_y = 0.0;
+	nav.navigate_to_z = 0.0;
+	nav.navigate_to_heading = 0.0;
+	nav.last_set_time = 0.0;
+
+	if (!who->IsRunning()) {
+		ent.second.Commands.clear();
+		MobListMutex.releasereadlock();
+		return;
+	}
+}
+
 /**
  * @param in
  * @return

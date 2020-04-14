@@ -110,7 +110,7 @@ public:
 	int8	GetCastPercentage();
 	void	SetSkills(map<string, Skill*>* in_skills);
 	void	SetSpells(vector<Spell*>* in_spells);
-	void	SetRunbackLocation(float x, float y, float z);
+	void	SetRunbackLocation(float x, float y, float z, int32 gridid);
 	MovementLocation* GetRunbackLocation();
 	float	GetRunbackDistance();
 	void	Runback();
