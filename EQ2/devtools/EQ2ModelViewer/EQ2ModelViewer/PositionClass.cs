@@ -30,7 +30,7 @@ namespace EQ2ModelViewer
         private float m_RightTurnSpeed;
         private float m_LookUpSpeed;
         private float m_LookDownSpeed;
-
+        public bool m_ShiftDown;
         public void SetPosition(float x, float y, float z)
         {
             m_PositionX = x;
@@ -64,15 +64,20 @@ namespace EQ2ModelViewer
         {
             float radians;
 
+            float mod = 1.0f;
+
+            if (m_ShiftDown)
+                mod = 10.0f;
+
             if (keydown)
             {
-                m_ForwardSpeed += m_FrameTime * 0.001f;
-                if (m_ForwardSpeed > (m_FrameTime * 0.03f))
-                    m_ForwardSpeed = m_FrameTime * 0.03f;
+                m_ForwardSpeed += m_FrameTime * 0.001f * mod;
+                if (m_ForwardSpeed > (m_FrameTime * 0.03f) * mod)
+                    m_ForwardSpeed = m_FrameTime * 0.03f * mod;
             }
             else
             {
-                m_ForwardSpeed -= m_FrameTime * 0.0007f;
+                m_ForwardSpeed -= m_FrameTime * 0.0007f * mod;
                 if (m_ForwardSpeed < 0.0f)
                     m_ForwardSpeed = 0.0f;
             }
@@ -86,15 +91,20 @@ namespace EQ2ModelViewer
         {
             float radians;
 
+            float mod = 1.0f;
+
+            if (m_ShiftDown)
+                mod = 10.0f;
+
             if (keydown)
             {
-                m_BackwardSpeed += m_FrameTime * 0.001f;
-                if (m_BackwardSpeed > (m_FrameTime * 0.03f))
-                    m_BackwardSpeed = m_FrameTime * 0.03f;
+                m_BackwardSpeed += m_FrameTime * 0.001f * mod;
+                if (m_BackwardSpeed > (m_FrameTime * 0.03f) * mod)
+                    m_BackwardSpeed = m_FrameTime * 0.03f * mod;
             }
             else
             {
-                m_BackwardSpeed -= m_FrameTime * 0.0007f;
+                m_BackwardSpeed -= m_FrameTime * 0.0007f * mod;
                 if (m_BackwardSpeed < 0.0f)
                     m_BackwardSpeed = 0.0f;
             }

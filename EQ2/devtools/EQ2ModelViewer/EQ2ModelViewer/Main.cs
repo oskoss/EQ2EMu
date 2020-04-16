@@ -135,6 +135,12 @@ namespace EQ2ModelViewer
 
                         if (this.Focused)
                         {
+                            if (input.IsKeyPressed(SlimDX.DirectInput.Key.LeftShift) ||
+                            input.IsKeyPressed(SlimDX.DirectInput.Key.RightShift))
+                                position.m_ShiftDown = true;
+                            else
+                                position.m_ShiftDown = false;
+
                             position.TurnLeft(input.IsLeftPressed());
                             position.TurnRight(input.IsRightPressed());
                             position.MoveForward(input.IsUpPressed());
@@ -357,12 +363,18 @@ namespace EQ2ModelViewer
         float scale = 0;
         UInt32 widgetID;
         UInt32 GridID;
+        bool flipStatus = false;
         private void CheckNode(string temp, object item)
         {
             if (item is VeMeshGeometryNode)
             {
                 widgetID = ((VeNode)item).WidgetID;
 
+                // testing antonica spires which are not oriented correctly
+                if ( widgetID == 2990295910 )
+                {
+                    int test = 0;
+                }
                 Model model = new Model();
                 model.Initialize(Graphics.Device, (VeMeshGeometryNode)item, temp);
                 model.Position.X = x;
@@ -386,16 +398,17 @@ namespace EQ2ModelViewer
                     yaw = ((VeRoomItemNode)item).orientation[0];
                     pitch = ((VeRoomItemNode)item).orientation[1];
                     roll = ((VeRoomItemNode)item).orientation[2];
-                    GridID = ((VeRoomItemNode)item).unk0;
+                    GridID = ((VeRoomItemNode)item).myId_grid;
                 }
                 else if (item is VeXformNode)
                 {
                     x1 = ((VeXformNode)item).position[0];
                     y1 = ((VeXformNode)item).position[1];
                     z1 = ((VeXformNode)item).position[2];
-                    yaw = ((VeXformNode)item).orientation[0] * (3.141592654f / 180.0f);
-                    pitch = ((VeXformNode)item).orientation[1] * (3.141592654f / 180.0f);
-                    roll = ((VeXformNode)item).orientation[2] * (3.141592654f / 180.0f);
+
+                    yaw = (((VeXformNode)item).orientation[0]) * (3.141592654f / 180.0f);
+                    pitch = (((VeXformNode)item).orientation[1]) * (3.141592654f / 180.0f);
+                    roll = (((VeXformNode)item).orientation[2]) * (3.141592654f / 180.0f);
                     scale = ((VeXformNode)item).scale;
 
                     x += x1;
@@ -488,8 +501,13 @@ namespace EQ2ModelViewer
                 List<Vector3> convertedVertices = new List<Vector3>();
                 foreach(Vector3 vect in VertexList)
                 {
-                    Vector3 newVect = vect + model.Position;
-                    convertedVertices.Add(newVect);
+                    Quaternion rotation = Quaternion.RotationYawPitchRoll(model.Rotation.X, model.Rotation.Y, model.Rotation.Z);
+                    var matrix = Matrix.Identity;
+                    Matrix.RotationQuaternion(ref rotation, out matrix);
+                    Matrix scaled = Matrix.Multiply(matrix, Matrix.Scaling(model.Scale, model.Scale, model.Scale));
+
+                    Vector3 result = Vector3.Add(Vector3.TransformNormal(vect, scaled), model.Position);
+                    convertedVertices.Add(result);
                 }
                 MasterVertexList[grid].AddRange(convertedVertices);
             }
