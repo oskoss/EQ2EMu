@@ -2575,6 +2575,43 @@ void ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 		return;
 
 	const char* script = npc->GetSpawnScript();
+	if ( script == nullptr || strlen(script) < 1 )
+	{
+		if (npc->GetZone() != nullptr)
+		{
+			string tmpScript;
+			tmpScript.append("SpawnScripts/");
+			tmpScript.append(npc->GetZone()->GetZoneName());
+			tmpScript.append("/");
+			int count = 0;
+			for (int s = 0; s < strlen(npc->GetName()); s++)
+			{
+				if (isalnum(npc->GetName()[s]))
+				{
+					tmpScript += npc->GetName()[s];
+					count++;
+				}
+			}
+
+			tmpScript.append(".lua");
+
+			if (count < 1)
+			{
+				LogWrite(SPAWN__TRACE, 0, "Spawn", "Could not form script name %s..", __FUNCTION__);
+			}
+			else
+			{
+				struct stat buffer;
+				bool fileExists = (stat(tmpScript.c_str(), &buffer) == 0);
+				if (fileExists)
+				{
+					LogWrite(SPAWN__WARNING, 0, "Spawn", "No script file described in the database, overriding with SpawnScript at %s", (char*)tmpScript.c_str());
+					npc->SetSpawnScript(tmpScript);
+					script = npc->GetSpawnScript();
+				}
+			}
+		}
+	}
 	if(lua_interface && script){
 		switch(type){
 			case SPAWN_SCRIPT_SPAWN:{
