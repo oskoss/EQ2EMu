@@ -402,14 +402,34 @@ namespace EQ2ModelViewer
                 }
                 else if (item is VeXformNode)
                 {
+                    VeNode tmp = (VeNode)item;
+
+                    //resets yaw/pitch/roll to 0,0,0 for next mesh (like antonica spires)
+                    if ( tmp.nodeFlags == 1409875968)
+                    {
+                        if (flipStatus)
+                            flipStatus = false;
+                        else
+                            flipStatus = true;
+                    }
                     x1 = ((VeXformNode)item).position[0];
                     y1 = ((VeXformNode)item).position[1];
                     z1 = ((VeXformNode)item).position[2];
 
-                    yaw = (((VeXformNode)item).orientation[0]) * (3.141592654f / 180.0f);
-                    pitch = (((VeXformNode)item).orientation[1]) * (3.141592654f / 180.0f);
-                    roll = (((VeXformNode)item).orientation[2]) * (3.141592654f / 180.0f);
-                    scale = ((VeXformNode)item).scale;
+                    if (flipStatus)
+                    {
+                        yaw = 0;
+                        pitch = 0;
+                        roll = 0;
+                        scale = ((VeXformNode)item).scale;
+                    }
+                    else
+                    {
+                        yaw = (((VeXformNode)item).orientation[0]) * (3.141592654f / 180.0f);
+                        pitch = (((VeXformNode)item).orientation[1]) * (3.141592654f / 180.0f);
+                        roll = (((VeXformNode)item).orientation[2]) * (3.141592654f / 180.0f);
+                        scale = ((VeXformNode)item).scale;
+                    }
 
                     x += x1;
                     y += y1;
@@ -422,6 +442,7 @@ namespace EQ2ModelViewer
                     {
                         CheckNode(temp, enumerator.Current);
                     }
+                    flipStatus = false;
                     x -= x1;
                     y -= y1;
                     z -= z1;
