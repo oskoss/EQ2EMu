@@ -45,39 +45,45 @@ namespace Everquest2.Visualization
         {
             byte classVersion = context.ClassVersions[typeof(VeRoomItemNode)];
 
-            unk0 = reader.ReadUInt32();
+            myId_grid = reader.ReadUInt32();
 
-            if (classVersion > 0) unk1 = reader.ReadByte();
+            if (classVersion > 0)
+            {
+                byte boolVals = reader.ReadByte();
+                bOutside = (boolVals & 1) == 1;
+                unkBool = (boolVals & 2) == 2;
+            }
 
-            unk2 = reader.ReadSingle();
+            roomLoadRadius = reader.ReadSingle();
 
             if (classVersion > 1)
             {
-                unk3    = reader.ReadByte();
-                unk4[0] = reader.ReadSingle();
-                unk4[1] = reader.ReadSingle();
-                unk4[2] = reader.ReadSingle();
-                unk5[0] = reader.ReadSingle();
-                unk5[1] = reader.ReadSingle();
-                unk5[2] = reader.ReadSingle();
-                unk6    = reader.ReadByte();
-                unk7    = reader.ReadByte();
-                unk8    = reader.ReadByte();
-                unk9    = reader.ReadByte();
+                bOverrideAmbient = reader.ReadBoolean();
+                dayLightColor[0] = reader.ReadSingle();
+                dayLightColor[1] = reader.ReadSingle();
+                dayLightColor[2] = reader.ReadSingle();
+                nightLightColor[0] = reader.ReadSingle();
+                nightLightColor[1] = reader.ReadSingle();
+                nightLightColor[2] = reader.ReadSingle();
+                onHour = reader.ReadByte();
+                onMinute = reader.ReadByte();
+                offHour = reader.ReadByte();
+                offMinute = reader.ReadByte();
             }
         }
 
 
-        public uint    unk0;
-        public byte    unk1;
-        public float   unk2;
-        public byte    unk3;
-        public float[] unk4 = new float[3];
-        public float[] unk5 = new float[3];
-        public byte    unk6;
-        public byte    unk7;
-        public byte    unk8;
-        public byte    unk9;
+        public uint myId_grid;
+        public float roomLoadRadius;
+        public bool bOverrideAmbient;
+        public float[] dayLightColor = new float[3];
+        public float[] nightLightColor = new float[3];
+        public byte onHour;
+        public byte onMinute;
+        public byte offHour;
+        public byte offMinute;
+        public bool unkBool;
+        public bool bOutside;
     }
 }
 
