@@ -168,6 +168,10 @@ sint32 Brain::GetHate(Entity* entity) {
 }
 
 void Brain::AddHate(Entity* entity, sint32 hate) {
+	// do not aggro when running back, despite taking damage
+	if (m_body->IsNPC() && ((NPC*)m_body)->m_runningBack)
+		return;
+
 	// Lock the hate list, we are altering the list so use write lock
 	MHateList.writelock(__FUNCTION__, __LINE__);
 
