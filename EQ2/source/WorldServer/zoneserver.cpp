@@ -821,84 +821,49 @@ void ZoneServer::RepopSpawns(Client* client, Spawn* in_spawn){
 	safe_delete(packet);
 }
 
+bool ZoneServer::AggroVictim(NPC* npc, Spawn* victim, Client* client)
+{
+	bool isEntity = victim->IsEntity();
+	if (npc->HasSpawnGroup()) {
+		vector<Spawn*>* groupVec = npc->GetSpawnGroup();
+		for (int32 i = 0; i < groupVec->size(); i++) {
+			Spawn* group_member = groupVec->at(i);
+			if (group_member && !group_member->EngagedInCombat() && group_member->Alive()) {
+				CallSpawnScript(group_member, SPAWN_SCRIPT_AGGRO, victim);
+				if (isEntity)
+					((NPC*)group_member)->AddHate((Entity*)victim, 50);
+				else
+					((NPC*)group_member)->InCombat(true);
+			}
+		}
+		safe_delete(groupVec);
+	}
+	else
+	{
+		if (isEntity)
+		{
+			CallSpawnScript(victim, SPAWN_SCRIPT_AGGRO, victim);
+			npc->AddHate((Entity*)victim, 50);
+		}
+		else
+			npc->InCombat(true);
+	}
+	return true;
+}
+
 bool ZoneServer::CheckNPCAttacks(NPC* npc, Spawn* victim, Client* client){
 	if(!npc || !victim)
 		return true;
 
-	if(client){
-		if(client->IsConnected() && client->GetPlayer()->GetFactions()->ShouldAttack(npc->GetFactionID()) && npc->AttackAllowed((Entity*)victim, false)){
-			if(!npc->EngagedInCombat() && client->GetPlayer()->GetArrowColor(npc->GetLevel()) != ARROW_COLOR_GRAY){
-				if(victim->IsEntity()) {
-					if (npc->HasSpawnGroup()) {
-						vector<Spawn*>* groupVec = npc->GetSpawnGroup();
-						for (int32 i = 0; i < groupVec->size(); i++) {
-							Spawn* group_member = groupVec->at(i);
-							if (group_member && !group_member->EngagedInCombat() && group_member->Alive()) {
-								CallSpawnScript(group_member, SPAWN_SCRIPT_AGGRO, victim);
-								((NPC*)group_member)->AddHate((Entity*)victim, 50);
-							}
-						}
-						safe_delete(groupVec);
-					}
-					else
-					{
-						npc->AddHate((Entity*)victim, 50);
-					}
-				}
-				else {
-					if (npc->HasSpawnGroup()) {
-						vector<Spawn*>* groupVec = npc->GetSpawnGroup();
-						for (int32 i = 0; i < groupVec->size(); i++) {
-							Spawn* group_member = groupVec->at(i);
-							if (group_member && !group_member->EngagedInCombat() && group_member->Alive()) {
-								CallSpawnScript(group_member, SPAWN_SCRIPT_AGGRO, victim);
-								((NPC*)group_member)->InCombat(true);
-							}
-						}
-						safe_delete(groupVec);
-					}
-					else
-						npc->InCombat(true);
-				}
+	if (client) {
+		if (client->IsConnected() && client->GetPlayer()->GetFactions()->ShouldAttack(npc->GetFactionID()) && npc->AttackAllowed((Entity*)victim, false)) {
+			if (!npc->EngagedInCombat() && client->GetPlayer()->GetArrowColor(npc->GetLevel()) != ARROW_COLOR_GRAY) {
+				AggroVictim(npc, victim, client);
 			}
 		}
 	}
 	else{
-		if(!npc->EngagedInCombat()){
-			if(victim->IsEntity()) {
-				if (npc->HasSpawnGroup()) {
-					vector<Spawn*>* groupVec = npc->GetSpawnGroup();
-					for (int32 i = 0; i < groupVec->size(); i++) {
-						Spawn* group_member = groupVec->at(i);
-						if (group_member && !group_member->EngagedInCombat() && group_member->Alive()) {
-							CallSpawnScript(group_member, SPAWN_SCRIPT_AGGRO, victim);
-							((NPC*)group_member)->AddHate((Entity*)victim, 50);
-						}
-					}
-					safe_delete(groupVec);
-				}
-				else
-				{
-					npc->AddHate((Entity*)victim, 50);
-				}
-			}
-			else {
-				if (npc->HasSpawnGroup()) {
-					vector<Spawn*>* groupVec = npc->GetSpawnGroup();
-					for (int32 i = 0; i < groupVec->size(); i++) {
-						Spawn* group_member = groupVec->at(i);
-						if (group_member && !group_member->EngagedInCombat() && group_member->Alive()) {
-							CallSpawnScript(group_member, SPAWN_SCRIPT_AGGRO, victim);
-							((NPC*)group_member)->InCombat(true);
-						}
-					}
-				}
-				else
-				{
-					npc->InCombat(true);
-				}
-			}
-		}
+		AggroVictim(npc, victim, client);
 	}
 	return true;
 }

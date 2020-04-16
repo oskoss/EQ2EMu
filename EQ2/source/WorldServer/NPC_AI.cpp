@@ -73,6 +73,7 @@ void Brain::Think() {
 			if (!m_body->EngagedInCombat()) {
 				m_body->ClearRunningLocations();
 				m_body->InCombat(true);
+				m_body->GetZone()->CallSpawnScript(m_body, SPAWN_SCRIPT_AGGRO, target);
 			}
 
 			// Set the NPC's target to the most hated entity if it is not already.

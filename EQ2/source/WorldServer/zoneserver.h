@@ -654,6 +654,7 @@ private:
 	void	PrepareSpawnID(Player* player, Spawn* spawn);														// never used outside zone server
 	void	RemoveMovementNPC(Spawn* spawn);																	// never used outside zone server
 	bool	CheckNPCAttacks(NPC* npc, Spawn* victim, Client* client = 0);										// never used outside zone server
+	bool	AggroVictim(NPC* npc, Spawn* victim, Client* client = 0);											// never used outside zone server
 	bool	CheckEnemyList(NPC* npc);																			// never used outside zone server
 	void	RemovePlayerProximity(Spawn* spawn, bool all = false);												// never used outside zone server
 	void	RemovePlayerProximity(Client* client);																// never used outside zone server
