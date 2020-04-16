@@ -230,8 +230,8 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 #endif
 				while(processed<p->size) {
 					if ((subpacket_length=(unsigned char)*(p->pBuffer+processed))==0xff) {
-						subpacket_length=ntohs(*(uint16 *)(p->pBuffer+processed+1));
-						offset = 3;
+						subpacket_length=255;
+						offset = 1;
 					}
 					else
 						offset = 1;
@@ -259,6 +259,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 						//Garbage packet?
 						crypto->RC4Decrypt(p->pBuffer + processed + offset, subpacket_length);
 						LogWrite(PACKET__ERROR, 0, "Packet", "Garbage packet?!:");
+						printf("!!!!!!!!!Garbage Packet!!!!!!!!!!!!!:\n");
 						DumpPacket(p->pBuffer + processed + offset, subpacket_length);
 					}
 					processed+=subpacket_length+offset;
