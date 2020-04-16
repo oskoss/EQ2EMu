@@ -28,5 +28,9 @@
 *.out
 *.app
 
+# VS files
+*.lock
+*.cache
+
 server/logs/*.log
 server/*.log
