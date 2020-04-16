@@ -254,3 +254,4 @@
 /server/Maps/qey_ph_5r01.EQ2Map filter=lfs diff=lfs merge=lfs -text
 /server/Maps/qey_village06.EQ2Map filter=lfs diff=lfs merge=lfs -text
 /server/Maps/qey_village06_revamp.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/EQ2/devtools/EQ2ModelViewer/EQ2ModelViewer/bin/Debug/loaded.txt filter=lfs diff=lfs merge=lfs -text
