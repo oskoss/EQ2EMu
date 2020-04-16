@@ -34,3 +34,4 @@ D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\lib
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.csproj.CopyComplete
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.dll
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.pdb
+D:\github\Maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.csproj.CoreCompileInputs.cache

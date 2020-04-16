@@ -61,3 +61,4 @@ D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spa
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Debug\Spart.dll
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Debug\Spart.pdb
 D:\github\Maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Debug\Spart.csprojAssemblyReference.cache
+D:\github\Maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Debug\Spart.csproj.CoreCompileInputs.cache

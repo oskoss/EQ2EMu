@@ -18,3 +18,4 @@ D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Eq2
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Eq2VpkTool\obj\Release\Eq2VpkTool.csproj.GenerateResource.cache
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Eq2VpkTool\obj\Release\Eq2VpkTool.csproj.CopyComplete
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Eq2VpkTool\obj\Release\Eq2VpkTool.exe
+D:\github\Maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Eq2VpkTool\obj\Release\Eq2VpkTool.csproj.CoreCompileInputs.cache
