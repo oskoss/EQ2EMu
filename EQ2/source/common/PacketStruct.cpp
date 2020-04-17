@@ -1319,7 +1319,6 @@ bool PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len
 			int32 size = GetArraySize(data_struct,0);
 			if(size > 0xFFFF){
 				LogWrite(PACKET__WARNING, 1, "Packet", "Possible corrupt packet while loading struct array, orig array size: %u in struct name %s, data name %s", size, GetName(), (data_struct && data_struct->GetName()) ? data_struct->GetName() : "??");
-				size = 1;
 				return false;
 			}
 			PacketStruct* ps = GetPacketStructByName(data_struct->GetName());

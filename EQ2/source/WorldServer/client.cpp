@@ -841,8 +841,8 @@ void Client::SendDefaultGroupOptions(){
 bool Client::HandlePacket(EQApplicationPacket *app) {
 	bool ret = true;
 
-	LogWrite(PACKET__DEBUG, 9, "Packet", "[EQDEBUG] Received Packet:");
 #if EQDEBUG >= 9
+	LogWrite(PACKET__DEBUG, 9, "Packet", "[EQDEBUG] Received Packet:");
 	DumpPacket(app, true);
 #endif
 

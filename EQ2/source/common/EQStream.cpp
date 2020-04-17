@@ -207,6 +207,19 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 void EQStream::ProcessPacket(EQProtocolPacket *p)
 {
 	uint32 processed=0,subpacket_length=0;
+	if (p == nullptr)
+		return;
+
+	if (p->opcode > 0xff) {
+		p->opcode = htons(p->opcode); //byte order is backwards in the protocol packet
+		EQApplicationPacket* ap = p->MakeApplicationPacket(2);
+		if (ap)
+			InboundQueuePush(ap);
+
+		LogWrite(PACKET__ERROR, 0, "Packet", "*** Received 0xff opcode, updated to %i",p->opcode);
+		return;
+	}
+
 	if (p) {
 
 		if (p->opcode!=OP_SessionRequest && p->opcode!=OP_SessionResponse && !Session) {
