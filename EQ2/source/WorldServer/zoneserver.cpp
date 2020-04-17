@@ -6259,7 +6259,7 @@ ThreadReturnType ZoneLoop(void* tmp) {
 	ZoneServer* zs = (ZoneServer*) tmp;
 	while (zs->Process()) {
 		if(zs->GetClientCount() == 0)
-			Sleep(10);
+			Sleep(1000);
 		else
 			Sleep(10);
 	}
