@@ -604,8 +604,18 @@ int8 EQStream::EQ2_Compress(EQ2Packet* app, int8 offset){
 	stream.next_out = deflate_buff;
 	stream.avail_out = app->size;
 
-	deflate(&stream, Z_SYNC_FLUSH);
+	int ret = deflate(&stream, Z_SYNC_FLUSH);
+
+	if (ret != Z_OK)
+	{
+		printf("ZLIB COMPRESSION RETFAIL: %i, %i (Ret: %i)\n", app->size, stream.avail_out, ret);
+		MCompressData.unlock();
+		safe_delete_array(deflate_buff);
+		return 0;
+	}
+
 	int32 newsize = app->size - stream.avail_out;
+	DumpPacket(deflate_buff, newsize);
 	safe_delete_array(app->pBuffer);
 	app->size = newsize + offset;
 	app->pBuffer = new uchar[app->size];
@@ -711,9 +721,10 @@ void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 	DumpPacket(app);
 #endif
 
-	if(!app->eq2_compressed && app->size>=0x80){
+	if(!app->eq2_compressed && app->size>128){
 		compressed_offset = EQ2_Compress(app);
-		app->eq2_compressed = true;
+		if (compressed_offset)
+			app->eq2_compressed = true;
 	}
 	if(!app->packet_encrypted){
 		EncryptPacket(app, compressed_offset, offset);
@@ -897,7 +908,7 @@ bool EQStream::CheckCombineQueue(){
 					//DumpPacket(first);
 				}
 				MCombineQueueLock.lock();
-				if(count >= 10){ //other clients need packets too
+				if(count >= 60 || first->size > 4000){ //other clients need packets too
 					ret = false;
 					break;
 				}

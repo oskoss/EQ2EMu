@@ -8258,7 +8258,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 
 	int count = 0;
 	for (const auto& spawn : spawns) {
-/*		if (count > 50 || (info_size+pos_size+vis_size) > 200)
+		if (count > 50 || (info_size+pos_size+vis_size) > 400)
 		{
 			MakeSpawnChangePacket(info_changes, pos_changes, vis_changes, info_size, pos_size, vis_size);
 
@@ -8279,9 +8279,9 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 			info_size = 0;
 			pos_size = 0;
 			vis_size = 0;
-		}*/
+		}
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
-		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->WasSpawnRemoved(spawn))
+		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->WasSpawnRemoved(spawn) || GetPlayer()->GetDistance(spawn) >= SEND_SPAWN_INBULK_DISTANCE)
 			continue;
 		
 		if (spawn->info_changed) {
