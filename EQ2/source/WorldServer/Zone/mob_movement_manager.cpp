@@ -136,19 +136,7 @@ public:
 		int    current_speed = 0;
 
 		if (m_move_to_mode == MovementRunning) {
-			if (mob->IsFeared()) {
-				current_speed = mob->GetBaseSpeed();
-			}
-			else {
-				//runback overrides
-				if (mob->GetSpeed() > mob->GetMaxSpeed())
-					current_speed = mob->GetSpeed();
-				else
-					current_speed = mob->GetMaxSpeed();
-			}
-		}
-		else {
-			current_speed = mob->GetBaseSpeed();
+			current_speed = ((Spawn*)mob)->GetSpeed();
 		}
 
 		if (!m_started) {
