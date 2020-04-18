@@ -7136,7 +7136,7 @@ int EQ2Emu_lua_GetItemSkillReq(lua_State* state) {
 	return 1;
 }
 
-int EQ2Emu_lua_SetSpeeedMultiplier(lua_State* state) {
+int EQ2Emu_lua_SetSpeedMultiplier(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 
@@ -7146,6 +7146,10 @@ int EQ2Emu_lua_SetSpeeedMultiplier(lua_State* state) {
 	// Added from Gangrenous post
 	if (spell && spell->resisted)
 		return 0;
+
+	// if its a percentage of 100 its a slow, we want to go at a fraction of the speed
+	if (val > 1.0f)
+		val = 1.0f - (val / 100.0f);
 
 	if (spell && spell->spell && spell->targets.size() > 0) {
 		ZoneServer* zone = spell->caster->GetZone();

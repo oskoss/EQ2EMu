@@ -346,7 +346,7 @@ int EQ2Emu_lua_BreatheUnderwater(lua_State* state);
 int EQ2Emu_lua_BlurVision(lua_State* state);
 int EQ2Emu_lua_SetVision(lua_State* state);
 int EQ2Emu_lua_GetItemSkillReq(lua_State* state);
-int EQ2Emu_lua_SetSpeeedMultiplier(lua_State* state);
+int EQ2Emu_lua_SetSpeedMultiplier(lua_State* state);
 int EQ2Emu_lua_SetIllusion(lua_State* state);
 int EQ2Emu_lua_ResetIllusion(lua_State* state);
 int EQ2Emu_lua_AddThreatTransfer(lua_State* state);

@@ -948,7 +948,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "BlurVision", EQ2Emu_lua_BlurVision);
 	lua_register(state, "SetVision", EQ2Emu_lua_SetVision);
 	lua_register(state, "GetItemSkillReq", EQ2Emu_lua_GetItemSkillReq);
-	lua_register(state, "SetSpeedMultiplier", EQ2Emu_lua_SetSpeeedMultiplier);
+	lua_register(state, "SetSpeedMultiplier", EQ2Emu_lua_SetSpeedMultiplier);
 	lua_register(state, "SetIllusion", EQ2Emu_lua_SetIllusion);
 	lua_register(state, "ResetIllusion", EQ2Emu_lua_ResetIllusion);
 	lua_register(state, "AddThreatTransfer", EQ2Emu_lua_AddThreatTransfer);
