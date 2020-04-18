@@ -36,6 +36,7 @@ extern Classes classes;
 
 Entity::Entity(){
 	max_speed = 6;
+	base_speed = 0.0f;
 	last_x = -1;
 	last_y = -1;
 	last_z = -1;
@@ -67,6 +68,9 @@ Entity::Entity(){
 	MSpellEffects.SetName("Entity::MSpellEffects");
 	m_procList.clear();
 	control_effects.clear();
+	for (int i = 0; i < CONTROL_MAX_EFFECTS; i++)
+		control_effects[i] = NULL;
+
 	immunities.clear();
 
 	for(int i=0;i<45;i++){
@@ -1313,7 +1317,10 @@ float Entity::CalculateCastingSpeedMod() {
 }
 
 float Entity::GetSpeed() {
-	float ret = speed;
+	float ret = GetBaseSpeed();
+
+	if (EngagedInCombat())
+		ret = GetMaxSpeed();
 
 	if (IsStealthed() || IsInvis())
 		ret += stats[ITEM_STAT_STEALTHINVISSPEEDMOD];
@@ -1752,6 +1759,13 @@ void Entity::AddFearSpell(LuaSpell* spell){
 			GetZone()->LockAllSpells((Player*)this);
 	}
 
+	if (IsNPC())
+	{
+		this->ClearRunningLocations();
+		if (GetZone())
+			GetZone()->movementMgr->StopNavigation(this);
+	}
+
 	control_effects[CONTROL_EFFECT_TYPE_FEAR]->Add(spell);
 }
 
@@ -1766,6 +1780,14 @@ void Entity::RemoveFearSpell(LuaSpell* spell){
 		((Player*)this)->SetPlayerControlFlag(4, 4, false); // feared disabled
 		if (!IsMezzedOrStunned() && !IsStifled())
 			GetZone()->LockAllSpells((Player*)this);
+	}
+
+	if (IsNPC())
+	{
+		this->ClearRunningLocations();
+
+		if (GetZone())
+			GetZone()->movementMgr->StopNavigation(this);
 	}
 }
 
@@ -1827,36 +1849,57 @@ float Entity::GetHighestSnare() {
 }
 
 bool Entity::IsSnared() {
+	if (control_effects.size() < 1 || !control_effects[CONTROL_EFFECT_TYPE_SNARE])
+		return false;
+
 	MutexList<LuaSpell*>* snare_list = control_effects[CONTROL_EFFECT_TYPE_SNARE];
 	return (!snare_list || snare_list->size(true) == 0) == false;
 }
 
 bool Entity::IsMezzed(){
+	if (control_effects.size() < 1 || !control_effects[CONTROL_EFFECT_TYPE_MEZ])
+		return false;
+
 	MutexList<LuaSpell*>* mez_spells = control_effects[CONTROL_EFFECT_TYPE_MEZ];
 	return  (!mez_spells || mez_spells->size(true) == 0 || IsMezImmune()) == false;
 }
 
 bool Entity::IsStifled(){
+	if (!control_effects[CONTROL_EFFECT_TYPE_STIFLE])
+		return false;
+
 	MutexList<LuaSpell*>* stifle_list = control_effects[CONTROL_EFFECT_TYPE_STIFLE];
 	return  (!stifle_list || stifle_list->size(true) == 0 || IsStifleImmune()) == false;
 }
 
 bool Entity::IsDazed(){
+	if (control_effects.size() < 1 || !control_effects[CONTROL_EFFECT_TYPE_DAZE])
+		return false;
+
 	MutexList<LuaSpell*>* daze_list = control_effects[CONTROL_EFFECT_TYPE_DAZE];
 	return  (!daze_list || daze_list->size(true) == 0 || IsDazeImmune()) == false;
 }
 
 bool Entity::IsStunned(){
+	if (!control_effects[CONTROL_EFFECT_TYPE_STUN])
+		return false;
+
 	MutexList<LuaSpell*>* stun_list = control_effects[CONTROL_EFFECT_TYPE_STUN];
 	return (!stun_list || stun_list->size(true) == 0 || IsStunImmune()) == false;
 }
 
 bool Entity::IsRooted(){
+	if (control_effects.size() < 1 || !control_effects[CONTROL_EFFECT_TYPE_ROOT])
+		return false;
+
 	MutexList<LuaSpell*>* root_list = control_effects[CONTROL_EFFECT_TYPE_ROOT];
 	return (!root_list || root_list->size(true) == 0 || IsRootImmune()) == false;
 }
 
 bool Entity::IsFeared(){
+	if (control_effects.size() < 1 || !control_effects[CONTROL_EFFECT_TYPE_FEAR])
+		return false;
+
 	MutexList<LuaSpell*>* fear_list = control_effects[CONTROL_EFFECT_TYPE_FEAR];
 	return (!fear_list || fear_list->size(true) == 0 || IsFearImmune()) == false;
 }

@@ -971,6 +971,7 @@ public:
 	bool CheckLoS(Spawn* target);
 	bool CheckLoS(glm::vec3 myloc, glm::vec3 oloc);
 
+	void CalculateNewFearpoint();
 
 	void StopMoving() {
 		if (movement_locations)

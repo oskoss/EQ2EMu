@@ -316,6 +316,7 @@ struct ThreatTransfer {
 #define CONTROL_EFFECT_TYPE_FLIGHT 12
 #define CONTROL_EFFECT_TYPE_GLIDE 13
 #define CONTROL_EFFECT_TYPE_SAFEFALL 14
+#define CONTROL_MAX_EFFECTS 15 // always +1 to highest control effect
 
 #define IMMUNITY_TYPE_MEZ 1
 #define IMMUNITY_TYPE_STIFLE 2
@@ -741,8 +742,8 @@ public:
 
 	float GetSpeed();
 	float GetAirSpeed();
-	float GetBaseSpeed() { return speed; }
-	void SetSpeed(float val) { speed = val; }
+	float GetBaseSpeed() { return base_speed; }
+	void SetSpeed(float val) { if (base_speed == 0.0f && val > 0.0f) base_speed = val;  speed = val; }
 	void SetSpeedMultiplier(float val) { speed_multiplier = val; }
 
 	void SetThreatTransfer(ThreatTransfer* transfer) { m_threatTransfer = transfer; }
@@ -871,6 +872,7 @@ private:
 	/// <param name='target'>Target of the proc</param>
 	bool CastProc(Proc* proc, int8 type, Spawn* target);
 
+	float base_speed;
 	float speed;
 	float speed_multiplier;
 

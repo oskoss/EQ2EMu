@@ -59,7 +59,7 @@ void Brain::Think() {
 	Entity* target = GetMostHated();
 
 	// If mezzed, stunned or feared we can't do anything so skip
-	if (!m_body->IsMezzedOrStunned() || !m_body->IsFeared()) {
+	if (!m_body->IsMezzedOrStunned()) {
 		// Not mezzed or stunned
 
 		// Get the distance to the runback location

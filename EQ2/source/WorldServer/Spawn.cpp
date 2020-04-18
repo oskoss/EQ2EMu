@@ -2102,11 +2102,26 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	if (GetHP() <= 0 && !IsWidget())
 		return;
 
+	if (EngagedInCombat())
+	{
+		int locations = 0;
+		if (movement_locations && MMovementLocations)
+		{
+			MMovementLocations->readlock(__FUNCTION__, __LINE__);
+			locations = movement_locations->size();
+			MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
+		}
+		if (locations < 1 && GetZone() && ((Entity*)this)->IsFeared())
+		{
+			CalculateNewFearpoint();
+		}
+	}
+
 	MMovementLoop.lock();
 	Spawn* followTarget = GetZone()->GetSpawnByID(m_followTarget, isSpawnListLocked);
 	if (!followTarget && m_followTarget > 0)
 		m_followTarget = 0;
-	if (following && followTarget) {
+	if (following && followTarget && !((Entity*)this)->IsFeared()) {
 
 		// Need to clear m_followTarget before the zoneserver deletes it
 		if (followTarget->GetHP() <= 0) {
@@ -3026,3 +3041,12 @@ bool Spawn::CheckLoS(glm::vec3 myloc, glm::vec3 oloc)
 	return false;
 }
 
+void Spawn::CalculateNewFearpoint()
+{
+	if (GetZone() && GetZone()->pathing) {
+		auto Node = zone->pathing->GetRandomLocation(glm::vec3(GetX(), GetZ(), GetY()));
+		if (Node.x != 0.0f || Node.y != 0.0f || Node.z != 0.0f) {
+			AddRunningLocation(Node.x, Node.y, Node.z, GetSpeed(), 0, true, true, "", true);
+		}
+	}
+}
