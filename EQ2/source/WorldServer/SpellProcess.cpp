@@ -1306,6 +1306,10 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 			if (client && client->IsZoning())
 				continue;
 
+			// TODO: Establish actual hate per spell
+			if (!spell->spell->GetSpellData()->friendly_spell && target->IsNPC())
+				((NPC*)target)->AddHate((Entity*)spell->caster, 50);
+
 			if(spell->spell->GetSpellData()->success_message.length() > 0){
 				if(client){
 					string success_message = spell->spell->GetSpellData()->success_message;
