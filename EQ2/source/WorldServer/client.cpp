@@ -8280,9 +8280,8 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 			pos_size = 0;
 			vis_size = 0;
 		}*/
-
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
-		if (index == 0)
+		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->WasSpawnRemoved(spawn))
 			continue;
 		
 		if (spawn->info_changed) {

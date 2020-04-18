@@ -613,7 +613,6 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 	tmp_info_packet_size = info_packet_size;
 	tmp_pos_packet_size = pos_packet_size;
 	tmp_vis_packet_size = vis_packet_size;
-	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 
 	int32 size = info_packet_size + pos_packet_size + vis_packet_size + 11;
 	uchar* tmp = new uchar[size];
@@ -645,6 +644,7 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 	safe_delete_array(info_changes);
 	safe_delete_array(vis_changes);
 	safe_delete_array(pos_changes);
+	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 	return ret_packet;
 }
 

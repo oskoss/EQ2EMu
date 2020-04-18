@@ -1450,13 +1450,6 @@ bool ZoneServer::SpawnProcess(){
 	MMasterSpawnLock.writelock(__FUNCTION__, __LINE__);
 	// If the zone is loading data or shutting down don't do anything
 	if(!LoadingData && !zoneShuttingDown && !reloading_spellprocess) {
-
-
-		// send spawn changes, changed_spawns loop
-		if(spawn_update.Check() && !zoneShuttingDown) { //check for changed spawns every {Rule:SpawnUpdateTimer} milliseconds (default: 200ms)
-			SendSpawnChanges();
-		}
-
 		// Set some bool's for timers
 		bool movement = movement_timer.Check();
 		bool spawnRange = spawn_range.Check();
@@ -1493,6 +1486,12 @@ bool ZoneServer::SpawnProcess(){
 		// might be an issue with other functions moved from the spawn thread to the main thread?
 		if(spawn_check_add.Check() && !zoneShuttingDown)
 			CheckSendSpawnToClient();
+
+
+		// send spawn changes, changed_spawns loop
+		if (spawn_update.Check() && !zoneShuttingDown) { //check for changed spawns every {Rule:SpawnUpdateTimer} milliseconds (default: 200ms)
+			SendSpawnChanges();
+		}
 
 		MSpawnList.readlock(__FUNCTION__, __LINE__);
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
