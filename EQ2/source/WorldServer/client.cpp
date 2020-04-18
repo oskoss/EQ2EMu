@@ -236,7 +236,7 @@ Client::~Client() {
 	UpdateWindowTitle(0);
 }
 
-void Client::QueuePacket(EQ2Packet* app){
+void Client::QueuePacket(EQ2Packet* app, bool attemptedCombine){
 	if(eqs){
 		if(!eqs->CheckActive()){
 			client_list.Remove(this);
@@ -244,7 +244,7 @@ void Client::QueuePacket(EQ2Packet* app){
 		}
 	}
 	if(app && eqs && version > 0)
-		eqs->EQ2QueuePacket(app);
+		eqs->EQ2QueuePacket(app, attemptedCombine);
 	else{
 		safe_delete(app);
 	}
@@ -8258,7 +8258,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 
 	int count = 0;
 	for (const auto& spawn : spawns) {
-		if (count > 40 || (info_size+pos_size+vis_size) > 400)
+/*		if (count > 50 || (info_size+pos_size+vis_size) > 200)
 		{
 			MakeSpawnChangePacket(info_changes, pos_changes, vis_changes, info_size, pos_size, vis_size);
 
@@ -8279,11 +8279,11 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 			info_size = 0;
 			pos_size = 0;
 			vis_size = 0;
-		}
+		}*/
 
-		if (!player->WasSentSpawn(spawn->GetID()))
+		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
+		if (index == 0)
 			continue;
-		int16 index = player->player_spawn_index_map[spawn];
 		
 		if (spawn->info_changed) {
 			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());

@@ -243,8 +243,8 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 #endif
 				while(processed<p->size) {
 					if ((subpacket_length=(unsigned char)*(p->pBuffer+processed))==0xff) {
-						subpacket_length=255;
-						offset = 1;
+						subpacket_length = ntohs(*(uint16*)(p->pBuffer + processed + 1));
+						offset = 3;
 					}
 					else
 						offset = 1;
@@ -597,20 +597,19 @@ int8 EQStream::EQ2_Compress(EQ2Packet* app, int8 offset){
 #endif
 
 	uchar* pDataPtr = app->pBuffer + offset;
-	int xpandSize = app->size * 2;
-	uchar* deflate_buff = new uchar[xpandSize];
+	uchar* deflate_buff = new uchar[app->size];
 	MCompressData.lock();
-	stream.next_in  = pDataPtr;
+	stream.next_in = pDataPtr;
 	stream.avail_in = app->size - offset;
 	stream.next_out = deflate_buff;
-	stream.avail_out = xpandSize;
+	stream.avail_out = app->size;
 
 	deflate(&stream, Z_SYNC_FLUSH);
-	int32 newsize = xpandSize - stream.avail_out;
+	int32 newsize = app->size - stream.avail_out;
 	safe_delete_array(app->pBuffer);
 	app->size = newsize + offset;
 	app->pBuffer = new uchar[app->size];
-	app->pBuffer[(offset-1)] = 1;
+	app->pBuffer[(offset - 1)] = 1;
 	memcpy(app->pBuffer + offset, deflate_buff, newsize);
 	MCompressData.unlock();
 	safe_delete_array(deflate_buff);
@@ -667,7 +666,7 @@ void EQStream::EncryptPacket(EQ2Packet* app, int8 compress_offset, int8 offset){
 
 void EQStream::EQ2QueuePacket(EQ2Packet* app, bool attempted_combine){
 	if(CheckActive()){
-		if(app->size < 600 && !attempted_combine){
+		if(!attempted_combine){
 			MCombineQueueLock.lock();
 			combine_queue.push_back(app);
 			MCombineQueueLock.unlock();
@@ -898,7 +897,7 @@ bool EQStream::CheckCombineQueue(){
 					//DumpPacket(first);
 				}
 				MCombineQueueLock.lock();
-				if(count >= 20){ //other clients need packets too
+				if(count >= 10){ //other clients need packets too
 					ret = false;
 					break;
 				}
