@@ -1572,6 +1572,7 @@ int EQ2Emu_lua_SetSpeed(lua_State* state) {
 	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		spawn->SetSpeed(value);
+		((Entity*)spawn)->SetSpeed(value);
 		if (spawn->IsPlayer()) {
 			Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
 			if (client) {
