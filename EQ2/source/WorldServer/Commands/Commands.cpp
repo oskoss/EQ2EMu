@@ -7197,7 +7197,7 @@ void Commands::Command_Speed(Client* client, Seperator* sep) {
 		float new_speed = atof(sep->arg[0]);
 		if (new_speed > 0.0f)
 		{
-			client->GetPlayer()->SetSpeed(new_speed);
+			client->GetPlayer()->SetSpeed(new_speed, true);
 			client->GetPlayer()->SetCharSheetChanged(true);
 			database.insertCharacterProperty(client, CHAR_PROPERTY_SPEED, sep->arg[0]);
 			client->Message(CHANNEL_STATUS, "Setting speed to %.2f.", new_speed);

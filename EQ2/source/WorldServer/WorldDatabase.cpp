@@ -1658,7 +1658,7 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 		if (!stricmp(prop_name, CHAR_PROPERTY_SPEED))
 		{
 			float new_speed = atof(prop_value);
-			client->GetPlayer()->SetSpeed(new_speed);
+			client->GetPlayer()->SetSpeed(new_speed,true);
 			client->GetPlayer()->SetCharSheetChanged(true);
 		}
 		else if (!stricmp(prop_name, CHAR_PROPERTY_FLYMODE))

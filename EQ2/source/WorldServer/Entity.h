@@ -743,7 +743,7 @@ public:
 	float GetSpeed();
 	float GetAirSpeed();
 	float GetBaseSpeed() { return base_speed; }
-	void SetSpeed(float val) { if (base_speed == 0.0f && val > 0.0f) base_speed = val;  speed = val; }
+void SetSpeed(float val, bool override_ = false) { if ((base_speed == 0.0f && val > 0.0f) || override_) base_speed = val;  speed = val; }
 	void SetSpeedMultiplier(float val) { speed_multiplier = val; }
 
 	void SetThreatTransfer(ThreatTransfer* transfer) { m_threatTransfer = transfer; }
