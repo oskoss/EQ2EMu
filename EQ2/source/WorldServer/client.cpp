@@ -8281,7 +8281,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 			vis_size = 0;
 		}*/
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
-		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->WasSpawnRemoved(spawn) || GetPlayer()->GetDistance(spawn) >= SEND_SPAWN_INBULK_DISTANCE)
+		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->NeedsSpawnResent(spawn) || GetPlayer()->GetDistance(spawn) >= SEND_SPAWN_DISTANCE)
 			continue;
 		
 		if (spawn->info_changed) {
