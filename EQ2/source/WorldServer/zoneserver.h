@@ -98,7 +98,7 @@ class Bot;
 #define SEND_SPAWN_DISTANCE 250		/* when spawns appear visually to the client */
 #define HEAR_SPAWN_DISTANCE	30		/* max distance a client can be from a spawn to 'hear' it */
 #define MAX_CHASE_DISTANCE 80
-#define REMOVE_SPAWN_DISTANCE 280
+#define REMOVE_SPAWN_DISTANCE 300 // increased distance between send/remove is ideal, this makes sure there is no overlap if a 'fast' client (AKA GM warp speed)
 #define SEND_SPAWN_INBULK_DISTANCE (SEND_SPAWN_DISTANCE+REMOVE_SPAWN_DISTANCE)/2
 
 #define TRACKING_STOP				0

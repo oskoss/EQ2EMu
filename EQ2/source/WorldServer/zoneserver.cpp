@@ -1129,7 +1129,11 @@ void ZoneServer::CheckRemoveSpawnFromClient(Spawn* spawn) {
 				packet = configReader.getStruct("WS_DestroyGhostCmd", packet_version);
 			}
 
-			if(spawn && spawn != client->GetPlayer() && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && client->GetPlayer()->WasSpawnRemoved(spawn) == false && (spawn_range_map.Get(client)->Get(spawn->GetID()) > REMOVE_SPAWN_DISTANCE && !spawn->IsWidget())){
+			if(spawn && spawn != client->GetPlayer() && 
+				client->GetPlayer()->WasSentSpawn(spawn->GetID()) && 
+				client->GetPlayer()->WasSpawnRemoved(spawn) == false && 
+				(spawn_range_map.Get(client)->Get(spawn->GetID()) > REMOVE_SPAWN_DISTANCE &&
+					!spawn->IsSign() && !spawn->IsObject() && !spawn->IsWidget())){
 				SendRemoveSpawn(client, spawn, packet);
 			}
 
@@ -3537,7 +3541,7 @@ bool ZoneServer::SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* pac
 	int32 cur_id = client->GetPlayer()->GetIDWithPlayerSpawn(spawn);
 	if(packet && index > 0 && client->GetPlayer()->WasSpawnRemoved(spawn) == false)
 	{
-		LogWrite(ZONE__DEBUG, 7, "Zone", "Processing SendRemoveSpawn for spawn index %u...", index);
+		LogWrite(ZONE__DEBUG, 7, "Zone", "Processing SendRemoveSpawn for spawn index %u (%s)...cur_id: %i", index,spawn->GetName(), cur_id);
 		packet->setDataByName("spawn_index", index);
 		client->GetPlayer()->GetPlayerSpawnMap()->erase(index);
 		client->GetPlayer()->GetPlayerSpawnIndexMap()->erase(spawn);
