@@ -2174,6 +2174,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 			}
 
 			data = movement_loop[movement_index];
+			((Entity*)this)->SetSpeed(data->speed);
 			SetSpeed(data->speed);
 			if(!IsWidget())
 				FaceTarget(data->x, data->z);
