@@ -615,7 +615,6 @@ int8 EQStream::EQ2_Compress(EQ2Packet* app, int8 offset){
 	}
 
 	int32 newsize = app->size - stream.avail_out;
-	DumpPacket(deflate_buff, newsize);
 	safe_delete_array(app->pBuffer);
 	app->size = newsize + offset;
 	app->pBuffer = new uchar[app->size];
