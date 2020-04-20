@@ -8259,7 +8259,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 	int count = 0;
 	bool forceSend = false;
 	for (const auto& spawn : spawns) {
-		if (forceSend || count > 20 || (info_size+pos_size+vis_size) > 200)
+		if (forceSend)
 		{
 			forceSend = false;
 			MakeSpawnChangePacket(info_changes, pos_changes, vis_changes, info_size, pos_size, vis_size);
