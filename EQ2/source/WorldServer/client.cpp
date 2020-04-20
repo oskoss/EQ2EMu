@@ -8285,6 +8285,12 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
 		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->NeedsSpawnResent(spawn) || GetPlayer()->GetDistance(spawn) >= SEND_SPAWN_DISTANCE)
 			continue;
+
+		if (spawn->info_changed || spawn->vis_changed)
+		{
+			GetPlayer()->GetZone()->SendSpawnChanges(spawn->GetID(), this, false, false);
+			continue;
+		}
 		
 		if (spawn->info_changed) {
 			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());
