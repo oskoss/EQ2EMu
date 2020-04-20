@@ -742,7 +742,7 @@ public:
 
 	float GetSpeed();
 	float GetAirSpeed();
-	float GetBaseSpeed() { if (base_speed == 0.0f) base_speed = 2.0f; return base_speed; }
+	float GetBaseSpeed() { return base_speed; }
 	void SetSpeed(float val, bool override_ = false) { if ((base_speed == 0.0f && val > 0.0f) || override_) base_speed = val;  speed = val; }
 	void SetSpeedMultiplier(float val) { speed_multiplier = val; }
 
