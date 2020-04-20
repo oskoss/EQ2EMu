@@ -8257,9 +8257,8 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 	int32 vis_size = 0;
 
 	int count = 0;
-	bool forceSend = false;
 	for (const auto& spawn : spawns) {
-		if (count > 9 || (info_size+pos_size+vis_size) > 200)
+		if (count > 20 || (info_size+pos_size+vis_size) > 200)
 		{
 			MakeSpawnChangePacket(info_changes, pos_changes, vis_changes, info_size, pos_size, vis_size);
 
@@ -8296,7 +8295,6 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 				info_size += spawn->info_packet_size;
 
 				info_changes[index] = data;
-				forceSend = true;
 			}
 			count++;
 		}
@@ -8327,7 +8325,6 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 				vis_size += spawn->vis_packet_size;
 
 				vis_changes[index] = data;
-				forceSend = true;
 			}
 			count++;
 		}
