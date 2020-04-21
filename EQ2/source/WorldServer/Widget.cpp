@@ -276,6 +276,8 @@ void Widget::OpenDoor(){
 	is_open = true;
 	if(open_duration > 0)
 		GetZone()->AddWidgetTimer(this, open_duration);
+
+	GetZone()->SendSpawnChanges(this);
 }
 
 void Widget::CloseDoor(){
@@ -309,6 +311,8 @@ void Widget::CloseDoor(){
 	}
 
 	is_open = false;
+
+	GetZone()->SendSpawnChanges(this);
 }
 
 void Widget::ProcessUse(){
