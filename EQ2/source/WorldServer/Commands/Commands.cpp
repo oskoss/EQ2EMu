@@ -2807,7 +2807,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				
 //devn00b: Fix for linux builds
 #if defined(__GNUC__)
- database.insertCharacterProperty(client, CHAR_PROPERTY_INVUL, (val == 1) ? (char*) 1 : 0);
+ database.insertCharacterProperty(client, CHAR_PROPERTY_INVUL, (val == 1) ? (char*) "1" : (char*) "0");
 #else
  database.insertCharacterProperty(client, CHAR_PROPERTY_INVUL, (val == 1) ? "1" : "0");
 #endif
