@@ -179,7 +179,7 @@ public:
 			//mob_movemesnt_manager->SendCommandToClients(mob, 0.0, 0.0, 0.0, 0.0, current_speed, ClientRangeCloseMedium);
 		}
 
-		auto& p = glm::vec3(mob->GetX(), mob->GetY(), mob->GetZ());
+		glm::vec3 p = glm::vec3(mob->GetX(), mob->GetY(), mob->GetZ());
 		// our X/Z versus the mobs X/Z
 		glm::vec2 tar(m_move_to_x, m_move_to_z);
 		glm::vec2 pos(p.x, p.z);
@@ -310,7 +310,7 @@ public:
 			//mob_movement_manager->SendCommandToClients(mob, 0.0, 0.0, 0.0, 0.0, current_speed, ClientRangeCloseMedium);
 		}
 
-		auto& p = glm::vec4(mob->GetX(), mob->GetZ(), mob->GetY(), mob->GetHeading());
+		glm::vec4 p = glm::vec4(mob->GetX(), mob->GetZ(), mob->GetY(), mob->GetHeading());
 		glm::vec2 tar(m_move_to_x, m_move_to_y);
 		glm::vec2 pos(p.x, p.y);
 		double    len = glm::distance(pos, tar);

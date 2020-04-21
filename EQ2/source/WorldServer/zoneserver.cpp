@@ -35,6 +35,7 @@ using namespace std;
 #pragma comment(lib,"imagehlp.lib")
 #else
 #include <sys/socket.h>
+#include <sys/stat.h>
 #ifdef FREEBSD //Timothy Whitman - January 7, 2003
 #include <sys/types.h>
 #endif

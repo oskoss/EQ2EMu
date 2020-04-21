@@ -35,6 +35,7 @@
 #include "Zone/map.h"
 #include "../common/Mutex.h"
 #include <deque>
+#include <memory> // needed for LS to compile properly on linux
 
 #define DAMAGE_PACKET_TYPE_SIPHON_SPELL		0x41
 #define DAMAGE_PACKET_TYPE_SIPHON_SPELL2	0x49

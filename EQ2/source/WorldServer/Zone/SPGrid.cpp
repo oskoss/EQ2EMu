@@ -629,7 +629,7 @@ Face* SPGrid::FindPath(float x, float y, float z, float targX, float targY, floa
 			float tmpy1 = face->Vertex1[1] - pointEnd[1];
 			float tmpz1 = face->Vertex1[2] - pointEnd[2];
 			float tmpDistBetweenEachOther = sqrt(tmpx1 * tmpx1 + tmpy1 * tmpy1 + tmpz1 * tmpz1);
-			_snprintf(msg, 256, "%f (%f): Face: %f %f %f\n", tmpDistBetweenEachOther, distance, face->Vertex1[0], face->Vertex1[1], face->Vertex1[2]);
+			snprintf(msg, 256, "%f (%f): Face: %f %f %f\n", tmpDistBetweenEachOther, distance, face->Vertex1[0], face->Vertex1[1], face->Vertex1[2]);
 
 			if (face == startFace)
 			{
