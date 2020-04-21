@@ -1157,6 +1157,7 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 			widget->SetWidgetType(WIDGET_TYPE_DOOR);
 		else if (strncasecmp(row[15], "Lift", 4) == 0)
 			widget->SetWidgetType(WIDGET_TYPE_LIFT);
+
 		widget->SetOpenHeading(atof(row[16]));
 		widget->SetOpenY(atof(row[17]));
 		widget->SetActionSpawnID(atoul(row[18]));
