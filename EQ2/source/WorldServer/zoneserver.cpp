@@ -1469,7 +1469,10 @@ bool ZoneServer::SpawnProcess(){
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 			// if zone is shutting down kill the loop
 			if (zoneShuttingDown)
+			{
+				MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 				break;
+			}
 
 			Spawn* spawn = itr->second;
 			if (spawn) {
@@ -1502,7 +1505,10 @@ bool ZoneServer::SpawnProcess(){
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 			// Break the loop if the zone is shutting down
 			if (zoneShuttingDown)
+			{
+				MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 				break;
+			}
 
 			Spawn* spawn = itr->second;
 			if (spawn) {
@@ -1606,7 +1612,9 @@ void ZoneServer::CheckDeadSpawnRemoval() {
 				if (!spawn->IsPlayer())
 				{
 					dead_spawns.erase(spawn->GetID());
-					RemoveSpawn(true, spawn, true, true, false);
+					MDeadSpawns.releasewritelock(__FUNCTION__, __LINE__);
+					RemoveSpawn(false, spawn, true, true, true);
+					MDeadSpawns.writelock(__FUNCTION__, __LINE__);
 				}
 			}
 		}
