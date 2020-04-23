@@ -228,7 +228,7 @@ bool EQ2Packet::AppCombine(EQ2Packet* rhs){
 		DumpPacket(rhs);
 		whee = true;
 	}*/
-	if (opcode==OP_AppCombined && ((size + rhs->size + 3) < 512)){
+	if (opcode==OP_AppCombined && ((size + rhs->size + 3) < 255)){
 		int16 tmp_size = rhs->size - 2;
 		if(tmp_size >= 255){
 			new_size = size+tmp_size+3;
@@ -258,7 +258,7 @@ bool EQ2Packet::AppCombine(EQ2Packet* rhs){
 		safe_delete(rhs);
 		result=true;
 	}
-	else if((size + rhs->size + 6) < 512){
+	else if((size + rhs->size + 6) < 255){
 		int32 tmp_size = size - 2;
 		int32 tmp_size2 = rhs->size - 2;
 		opcode=OP_AppCombined;
