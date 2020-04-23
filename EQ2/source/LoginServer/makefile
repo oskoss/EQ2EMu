@@ -12,8 +12,8 @@ CC=g++
 LINKER=gcc
 DFLAGS=-DEQ2 -DLOGIN
 WFLAGS=-Wall -Wuninitialized -Wwrite-strings -Wcast-qual  -Wcomment -Wcast-align -Wno-deprecated
-COPTS=$(WFLAGS) -g -march=native -O -pthread -pipe -DFX -D_GNU_SOURCE -DINVERSEXY $(DFLAGS) -I/usr/include/mysql -I/usr/mysql/include
-LINKOPTS=-rdynamic -L. -lstdc++ -lm -lz -L/usr/lib/mysql -L/usr/mysql/lib -lmysqlclient -ldl
+COPTS=$(WFLAGS) -g -march=native -O -pthread -pipe -DFX -D_GNU_SOURCE -DINVERSEXY $(DFLAGS) -I/usr/include/mariadb -I/usr/mariadb/include
+LINKOPTS=-rdynamic -L. -lstdc++ -lm -lz -L/usr/lib/x86_64-linux-gnu -lmariadbclient -ldl
 all: $(APP)
 
 $(APP): $(SF)
