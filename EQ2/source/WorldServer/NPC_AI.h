@@ -140,6 +140,8 @@ private:
 	int16					m_tick;
 	// m_encounter = list of players (entities) that will get a reward (xp/loot) for killing this npc
 	vector<int32>			m_encounter;
+	map<int32, int32>		m_encounter_playerlist;
+
 	// MEncounter = mutex to lock and unlock the encounter list
 	Mutex					MEncounter;
 	//m_playerInEncounter = true if a player is added to the encounter

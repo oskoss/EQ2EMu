@@ -398,13 +398,21 @@ void Brain::AddToEncounter(Entity* entity) {
 		deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(group_id);
 		for (itr = members->begin(); itr != members->end(); itr++) {
 			if ((*itr)->client)
+			{
 				m_encounter.push_back((*itr)->client->GetPlayer()->GetID());
+				m_encounter_playerlist.insert(make_pair((*itr)->client->GetPlayer()->GetCharacterID(), (*itr)->client->GetPlayer()->GetID()));
+			}
 		}
 
 		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 	}
 	else {
 		m_encounter.push_back(entity->GetID());
+		if (entity->IsPlayer())
+		{
+			Player* plyr = (Player*)entity;
+			m_encounter_playerlist.insert(make_pair(plyr->GetCharacterID(), entity->GetID()));
+		}
 	}
 	MEncounter.releasewritelock(__FUNCTION__, __LINE__);
 }
@@ -415,6 +423,21 @@ bool Brain::CheckLootAllowed(Entity* entity) {
 
 	// Check the encounter list to see if the given entity is in it, if so return true.
 	MEncounter.readlock(__FUNCTION__, __LINE__);
+	if (entity->IsPlayer())
+	{
+		Player* plyr = (Player*)entity;
+
+		map<int32, int32>::iterator itr = m_encounter_playerlist.find(plyr->GetCharacterID());
+		if (itr != m_encounter_playerlist.end())
+		{
+			MEncounter.releasereadlock(__FUNCTION__, __LINE__);
+			return true;
+		}
+
+		MEncounter.releasereadlock(__FUNCTION__, __LINE__);
+		return false;
+	}
+
 	for (itr = m_encounter.begin(); itr != m_encounter.end(); itr++) {
 		if ((*itr) == entity->GetID()) {
 			// found the entity in the encounter list, set return value to true and break the loop
@@ -456,6 +479,7 @@ vector<int32>* Brain::GetEncounter() {
 void Brain::ClearEncounter() {
 	MEncounter.writelock(__FUNCTION__, __LINE__);
 	m_encounter.clear();
+	m_encounter_playerlist.clear();
 	m_playerInEncounter = false;
 	MEncounter.releasewritelock(__FUNCTION__, __LINE__);
 }
