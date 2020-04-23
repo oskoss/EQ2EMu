@@ -464,6 +464,7 @@ int main(int argc, char** argv) {
 			if (InterserverTimer.Check()) {
 				InterserverTimer.Start();
 				database.ping();
+				database.PingAsyncDatabase();
 
 				if (net.LoginServerInfo && loginserver.Connected() == false && loginserver.CanReconnect()) {
 					LogWrite(WORLD__DEBUG, 0, "Thread", "Starting autoinit loginserver thread...");

@@ -38,6 +38,8 @@
 
 DatabaseNew::DatabaseNew() {
 	mysql_init(&mysql);
+	int timeout = 10;
+	mysql_options(&mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
 	MMysql.SetName("DatabaseNew::mysql");
 }
 

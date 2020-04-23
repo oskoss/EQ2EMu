@@ -56,8 +56,8 @@ DBcore::DBcore() {
 	pPassword = 0;
 	pDatabase = 0;
 	pCompress = false;
-	pSSL = false;
-	pStatus = Closed;
+pSSL = false;
+pStatus = Closed;
 }
 
 DBcore::~DBcore() {
@@ -75,10 +75,10 @@ DBcore::~DBcore() {
 }
 
 
-bool DBcore::ReadDBINI(char *host, char *user, char *passwd, char *database, int32 &port, bool &compress, bool *items) {
-	char line[256], *key, *val;
+bool DBcore::ReadDBINI(char* host, char* user, char* passwd, char* database, int32& port, bool& compress, bool* items) {
+	char line[256], * key, * val;
 	bool on_database_section = false;
-	FILE *f;
+	FILE* f;
 
 	if ((f = fopen(DB_INI_FILE, "r")) == NULL) {
 		LogWrite(DATABASE__ERROR, 0, "DBCore", "Unable to open '%s' for reading", DB_INI_FILE);
@@ -154,6 +154,22 @@ void DBcore::ping() {
 		return;
 	}
 	mysql_ping(&mysql);
+
+	int32* errnum = new int32;
+	*errnum = mysql_errno(&mysql);
+	
+	switch (*errnum)
+	{
+		case CR_COMMANDS_OUT_OF_SYNC:
+		case CR_SERVER_GONE_ERROR:
+		case CR_UNKNOWN_ERROR:
+		{
+			LogWrite(DATABASE__ERROR, 0, "DBCore", "[Database] We lost connection to the database., errno: %i", errno);
+			break;
+		}
+	}
+
+	safe_delete(errnum);
 	MDatabase.unlock();
 }
 

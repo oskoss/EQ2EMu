@@ -57,6 +57,7 @@ public:
 	void RemoveActiveQuery(Query* query);
 	void AddActiveQuery(Query* query);
 	bool IsActiveQuery(int32 id, Query* skip=0);
+	void PingAsyncDatabase();
 #endif
 protected:
 

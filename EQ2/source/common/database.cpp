@@ -471,6 +471,18 @@ void Database::PurgeDBInstances()
 	DBInstanceMutex.releasewritelock(__FUNCTION__, __LINE__);
 }
 
+
+void Database::PingAsyncDatabase()
+{
+	map<Database*, bool>::iterator itr;
+	DBInstanceMutex.readlock(__FUNCTION__, __LINE__);
+	for (itr = dbInstances.begin(); itr != dbInstances.end(); itr++) {
+		Database* tmpInst = itr->first;
+		tmpInst->ping();
+	}
+	DBInstanceMutex.releasereadlock(__FUNCTION__, __LINE__);
+}
+
 void Database::FreeDBInstance(Database* cur)
 {
 	DBInstanceMutex.writelock(__FUNCTION__, __LINE__);
