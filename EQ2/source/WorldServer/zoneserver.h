@@ -290,7 +290,7 @@ public:
 	void	SendSpawnChanges();
 	void	SendSpawnChanges(Spawn* spawn);
 	void	SendSpawnChanges(Spawn* spawn, Client* client, bool override_changes = false, bool override_vis_changes = false);
-	void	SendSpawnChanges(int32 spawn_id, Client* client, bool override_changes = false, bool override_vis_changes = false);
+	void	SendSpawnChangesByDBID(int32 spawn_id, Client* client, bool override_changes = false, bool override_vis_changes = false);
 	void	SendPlayerPositionChanges(Player* player);
 	
 	void	UpdateVitality(float amount);

@@ -4555,7 +4555,7 @@ void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets)
 	quest->SetPlayer(player);
 	current_quest_id = quest->GetQuestID();
 	if(send_packets && quest->GetQuestGiver() > 0)
-		GetCurrentZone()->SendSpawnChanges(quest->GetQuestGiver(), this, false, true);
+		GetCurrentZone()->SendSpawnChangesByDBID(quest->GetQuestGiver(), this, false, true);
 	if(lua_interface && call_accepted)
 		lua_interface->CallQuestFunction(quest, "Accepted", player);
 	if(send_packets) {
@@ -4584,7 +4584,7 @@ void Client::RemovePlayerQuest(int32 id, bool send_update, bool delete_quest){
 			database.DeleteCharacterQuest(id, GetCharacterID(), player->GetCompletedPlayerQuests()->count(id) > 0);
 		}
 		if(send_update && player->player_quests[id]->GetQuestGiver() > 0)
-			GetCurrentZone()->SendSpawnChanges(player->player_quests[id]->GetQuestGiver(), this, false, true);
+			GetCurrentZone()->SendSpawnChangesByDBID(player->player_quests[id]->GetQuestGiver(), this, false, true);
 		if(send_update) {
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 			SendQuestJournal();
@@ -4655,7 +4655,7 @@ void Client::SendQuestUpdate(Quest* quest){
 			lua_interface->CallQuestFunction(quest, quest->GetCompleteAction(), player);
 		if(quest->GetCompleted()){
 			if (quest->GetQuestReturnNPC() > 0)
-				GetCurrentZone()->SendSpawnChanges(quest->GetQuestReturnNPC(), this, false, true);
+				GetCurrentZone()->SendSpawnChangesByDBID(quest->GetQuestReturnNPC(), this, false, true);
 			if (quest->GetCompletedFlag())
 				quest->SetCompletedFlag(false);
 		}
@@ -4977,7 +4977,7 @@ void Client::GiveQuestReward(Quest* quest){
 		SimpleMessage(type, message.c_str());
 	}
 	if(quest->GetQuestGiver() > 0)
-		GetCurrentZone()->SendSpawnChanges(quest->GetQuestGiver(), this, false, true);
+		GetCurrentZone()->SendSpawnChangesByDBID(quest->GetQuestGiver(), this, false, true);
 	RemovePlayerQuest(quest->GetQuestID(), true, false);
 
 }
@@ -8282,16 +8282,17 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 			pos_size = 0;
 			vis_size = 0;
 		}
+
+		if (spawn->IsWidget() || spawn->info_changed || spawn->vis_changed)
+		{
+			GetPlayer()->GetZone()->SendSpawnChanges(spawn, this, false, false);
+			continue;
+		}
+
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
 		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->NeedsSpawnResent(spawn) || GetPlayer()->GetDistance(spawn) >= SEND_SPAWN_DISTANCE)
 			continue;
 
-		if (spawn->IsWidget() || spawn->info_changed || spawn->vis_changed)
-		{
-			GetPlayer()->GetZone()->SendSpawnChanges(spawn->GetID(), this, false, false);
-			continue;
-		}
-		
 		if (spawn->info_changed) {
 			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());
 

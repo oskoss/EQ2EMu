@@ -1710,8 +1710,8 @@ void ZoneServer::SendSpawnVisualState(Spawn* spawn, int16 type){
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-void ZoneServer::SendSpawnChanges(int32 spawn_id, Client* client, bool override_changes, bool override_vis_changes){
-	Spawn* spawn = GetSpawnByDatabaseID(spawn_id);
+void ZoneServer::SendSpawnChangesByDBID(int32 db_id, Client* client, bool override_changes, bool override_vis_changes){
+	Spawn* spawn = GetSpawnByID(db_id);
 	if(spawn && (spawn->changed || override_changes || override_vis_changes))
 		SendSpawnChanges(spawn, client, override_changes, override_vis_changes);
 }
@@ -1844,10 +1844,8 @@ void ZoneServer::SendSpawnChanges(){
 	int count = 0;
 	while(spawn_iter.Next()){		
 		spawn = GetSpawnByID(spawn_iter->value);
-		if(spawn && spawn->changed){
-			if(!spawn->IsPlayer() || (spawn->IsPlayer() && (spawn->info_changed || spawn->vis_changed))){
-					spawns_to_send.insert(spawn);
-			}
+		if(spawn){
+			spawns_to_send.insert(spawn);
 		}
 		if (!spawn)
 			changed_spawns.Remove(spawn_iter->value);
