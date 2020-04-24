@@ -2504,7 +2504,7 @@ bool Spawn::CalculateChange(){
 				}
 
 				int32 newGrid = GetZone()->Grid->GetGridID(this);
-				if (IsFlying() && newGrid != 0 && newGrid != appearance.pos.grid_id)
+				if (!IsFlying() && newGrid != 0 && newGrid != appearance.pos.grid_id)
 					SetPos(&(appearance.pos.grid_id), newGrid);
 			}
 		}
