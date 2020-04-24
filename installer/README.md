@@ -18,7 +18,7 @@ The user/password for Login and Mysql is eq2emu/eq2emu.
 ### 	***Server Update Options***:
 
 	In file launch.bat you will find the following options (All Default 1): 
-	SQLUPDATE  - Update the database (1 on 0 off). *** THIS WILL ERASE ALL CHARACTERS ***
+	SQLUPDATE  - Update the database (0 off, 1 on, 2 Partial). *** THIS WILL ERASE ALL CHARACTERS ***
 	EXEUPDATE  - Update the Loginserver/Worldserver to the most recent build (1 on 0 off).
     LUAUPDATE  - Update the LUA Scripts (1 on 0 off).
 	MAPUPDATE  - Update the 3d Maps/Navmesh (1 on 0 off).
