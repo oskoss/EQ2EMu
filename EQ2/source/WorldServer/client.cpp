@@ -8283,7 +8283,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 			vis_size = 0;
 		}
 
-		if (spawn->IsWidget() || spawn->info_changed || spawn->vis_changed)
+		if (spawn->info_changed || spawn->vis_changed)
 		{
 			GetPlayer()->GetZone()->SendSpawnChanges(spawn, this, false, false);
 			continue;
