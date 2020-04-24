@@ -740,6 +740,8 @@ public:
 	int16 GetModelType(){
 		return appearance.model_type;
 	}
+	
+	bool IsFlying() { return (GetInitialState() == 49156); }
 	void SetPrimaryCommand(const char* name, const char* command, float distance = 10);
 	void SetPrimaryCommands(vector<EntityCommand*>* commands);
 	void SetSecondaryCommands(vector<EntityCommand*>* commands);

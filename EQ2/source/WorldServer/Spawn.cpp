@@ -2055,7 +2055,7 @@ void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate, bool ma
 
 	if (!IsPlayer() && distance > 0.0f)
 	{
-		if (GetInitialState() == 49156 && CheckLoS(spawn))
+		if (IsFlying() && CheckLoS(spawn))
 		{
 			if (immediate)
 				ClearRunningLocations();
@@ -2504,7 +2504,7 @@ bool Spawn::CalculateChange(){
 				}
 
 				int32 newGrid = GetZone()->Grid->GetGridID(this);
-				if (GetInitialState() != 49156 && newGrid != 0 && newGrid != appearance.pos.grid_id)
+				if (IsFlying() && newGrid != 0 && newGrid != appearance.pos.grid_id)
 					SetPos(&(appearance.pos.grid_id), newGrid);
 			}
 		}
@@ -2543,7 +2543,7 @@ void Spawn::CalculateRunningLocation(bool stop){
 	{
 		if (GetDistance(GetTarget()) > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
 		{
-			if (GetInitialState() == 49156 && CheckLoS(GetTarget()))
+			if (IsFlying() && CheckLoS(GetTarget()))
 				AddRunningLocation(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), GetSpeed(), 0, false);
 			else
 				GetZone()->movementMgr->NavigateTo((Entity*)this, GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
@@ -2999,7 +2999,7 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 
 
 void Spawn::FixZ(bool forceUpdate) {
-	if (IsPlayer() || (this->GetInitialState() == 49156)) {
+	if (IsPlayer() || IsFlying()) {
 		return;
 	}
 	/*
