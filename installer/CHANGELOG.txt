@@ -1,0 +1,7 @@
+V0.1 - Initial Creation. Basic functions.
+
+V0.2 - Included more udpate options, cleaned up some unneeded code.
+
+V0.3 - Added Options.bat, permits cleaning/updating of the db.
+
+V0.4 - Added Partial update of Database (all but guilds/character data). Made it so all windows close once done. Updated all files.
