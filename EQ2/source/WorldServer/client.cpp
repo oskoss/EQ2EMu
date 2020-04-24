@@ -8291,13 +8291,13 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
 		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->NeedsSpawnResent(spawn) || GetPlayer()->GetDistance(spawn) >= SEND_SPAWN_DISTANCE)
 			continue;
-
+		/*
 		if (spawn->IsWidget() || spawn->info_changed || spawn->vis_changed)
 		{
 			EQ2Packet* outapp = spawn->spawn_update_packet(GetPlayer(), GetVersion(), false, false);
 			individualSpawns.push_back(outapp);
 			continue;
-		}
+		}*/
 
 		if (spawn->info_changed) {
 			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());
@@ -8365,11 +8365,11 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 	for (auto& kv : vis_changes) {
 		safe_delete_array(kv.second.data);
 	}
-	
+	/*
 	for (int i = 0; i < individualSpawns.size(); i++)
 	{
-		QueuePacket(individualSpawns[i], true);
-	}
+		QueuePacket(individualSpawns[i]);
+	}*/
 
 	individualSpawns.clear();	
 }
@@ -8431,7 +8431,7 @@ void Client::MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32
 
 	//	DumpPacket(packet->pBuffer, packet->size);
 	if (packet) {
-		QueuePacket(packet);
+		QueuePacket(packet, true);
 	}
 
 	delete[] tmp;
