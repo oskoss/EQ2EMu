@@ -1711,7 +1711,7 @@ void ZoneServer::SendSpawnVisualState(Spawn* spawn, int16 type){
 }
 
 void ZoneServer::SendSpawnChangesByDBID(int32 db_id, Client* client, bool override_changes, bool override_vis_changes){
-	Spawn* spawn = GetSpawnByID(db_id);
+	Spawn* spawn = GetSpawnByDatabaseID(db_id);
 	if(spawn && (spawn->changed || override_changes || override_vis_changes))
 		SendSpawnChanges(spawn, client, override_changes, override_vis_changes);
 }
