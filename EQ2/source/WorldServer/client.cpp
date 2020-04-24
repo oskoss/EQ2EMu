@@ -8260,44 +8260,18 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 	int32 vis_size = 0;
 
 	int count = 0;
-	bool forceSend = false;
-	deque<EQ2Packet*> individualSpawns;
 
 	for (const auto& spawn : spawns) {
-		if (forceSend)
-		{
-			forceSend = false;
-			MakeSpawnChangePacket(info_changes, pos_changes, vis_changes, info_size, pos_size, vis_size);
-
-			for (auto& kv : info_changes) {
-				safe_delete_array(kv.second.data);
-			}
-			info_changes.clear();
-			for (auto& kv : pos_changes) {
-				safe_delete_array(kv.second.data);
-			}
-
-			pos_changes.clear();
-			for (auto& kv : vis_changes) {
-				safe_delete_array(kv.second.data);
-			}
-			vis_changes.clear();
-
-			info_size = 0;
-			pos_size = 0;
-			vis_size = 0;
-		}
-
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
 		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->NeedsSpawnResent(spawn) || GetPlayer()->GetDistance(spawn) >= SEND_SPAWN_DISTANCE)
 			continue;
-		/*
-		if (spawn->IsWidget() || spawn->info_changed || spawn->vis_changed)
+		
+		if (spawn->vis_changed)
 		{
 			EQ2Packet* outapp = spawn->spawn_update_packet(GetPlayer(), GetVersion(), false, false);
-			individualSpawns.push_back(outapp);
+			QueuePacket(outapp);
 			continue;
-		}*/
+		}
 
 		if (spawn->info_changed) {
 			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());
@@ -8310,7 +8284,6 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 				info_size += spawn->info_packet_size;
 
 				info_changes[index] = data;
-				forceSend = true;
 			}
 			count++;
 		}
@@ -8341,7 +8314,6 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 				vis_size += spawn->vis_packet_size;
 
 				vis_changes[index] = data;
-				forceSend = true;
 			}
 			count++;
 		}
@@ -8365,13 +8337,6 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 	for (auto& kv : vis_changes) {
 		safe_delete_array(kv.second.data);
 	}
-	/*
-	for (int i = 0; i < individualSpawns.size(); i++)
-	{
-		QueuePacket(individualSpawns[i]);
-	}*/
-
-	individualSpawns.clear();	
 }
 
 void Client::MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32, SpawnData> pos_changes, map<int32, SpawnData> vis_changes, int32 info_size, int32 pos_size, int32 vis_size)
@@ -8431,7 +8396,7 @@ void Client::MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32
 
 	//	DumpPacket(packet->pBuffer, packet->size);
 	if (packet) {
-		QueuePacket(packet, true);
+		QueuePacket(packet);
 	}
 
 	delete[] tmp;
