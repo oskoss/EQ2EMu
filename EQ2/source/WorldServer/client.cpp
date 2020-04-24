@@ -8248,6 +8248,9 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 
 
 void Client::SendSpawnChanges(set<Spawn*>& spawns) {
+	if (!IsReadyForUpdates())
+		return;
+
 	map<int32, SpawnData> info_changes;
 	map<int32, SpawnData> pos_changes;
 	map<int32, SpawnData> vis_changes;
@@ -8258,6 +8261,8 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 
 	int count = 0;
 	bool forceSend = false;
+	deque<EQ2Packet*> individualSpawns;
+
 	for (const auto& spawn : spawns) {
 		if (forceSend)
 		{
@@ -8283,15 +8288,16 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 			vis_size = 0;
 		}
 
-		if (spawn->info_changed || spawn->vis_changed)
-		{
-			GetPlayer()->GetZone()->SendSpawnChanges(spawn, this, false, false);
-			continue;
-		}
-
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
 		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->NeedsSpawnResent(spawn) || GetPlayer()->GetDistance(spawn) >= SEND_SPAWN_DISTANCE)
 			continue;
+
+		if (spawn->IsWidget() || spawn->info_changed || spawn->vis_changed)
+		{
+			EQ2Packet* outapp = spawn->spawn_update_packet(GetPlayer(), GetVersion(), false, false);
+			individualSpawns.push_back(outapp);
+			continue;
+		}
 
 		if (spawn->info_changed) {
 			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());
@@ -8359,6 +8365,13 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 	for (auto& kv : vis_changes) {
 		safe_delete_array(kv.second.data);
 	}
+	
+	for (int i = 0; i < individualSpawns.size(); i++)
+	{
+		QueuePacket(individualSpawns[i], true);
+	}
+
+	individualSpawns.clear();	
 }
 
 void Client::MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32, SpawnData> pos_changes, map<int32, SpawnData> vis_changes, int32 info_size, int32 pos_size, int32 vis_size)
