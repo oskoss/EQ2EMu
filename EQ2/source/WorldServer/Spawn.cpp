@@ -212,7 +212,7 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 	}
 
 	int8 vis_flags = 0;
-	if (MeetsSpawnAccessRequirements(player)){
+	if (MeetsSpawnAccessRequirements(player)) {
 		if (appearance.attackable == 1)
 			vis_flags += 64; //attackable icon
 		if (appearance.show_level == 1)
@@ -223,14 +223,17 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 			vis_flags += 4;
 		if (appearance.show_command_icon == 1)
 			vis_flags += 2;
+		if (this == player) {
+			vis_flags += 1;
+		}
 	}
-	else{
+	else if (req_quests_override > 0)
+	{
 		//Check to see if there's an override value set
-		if (req_quests_override > 0)
 			vis_flags = req_quests_override & 0xFF;
 	}
-
 	vis_packet->setDataByName("vis_flags", vis_flags);
+
 
 	if (MeetsSpawnAccessRequirements(player))
 		vis_packet->setDataByName("hand_flag", appearance.display_hand_icon);
