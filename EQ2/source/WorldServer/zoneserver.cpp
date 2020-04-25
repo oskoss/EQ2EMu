@@ -1074,7 +1074,7 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 						spawn->RemoveSpawnAccess(client->GetPlayer());
 				}
 				if(spawn && spawn != client->GetPlayer() && client->GetPlayer()->ShouldSendSpawn(spawn)) {
-					if(spawn_iter->second <= SEND_SPAWN_DISTANCE) {
+					if((!initial_login && spawn_iter->second <= SEND_SPAWN_DISTANCE) || (initial_login && (spawn_iter->second <= (SEND_SPAWN_DISTANCE/2) || spawn->IsWidget()))) {
 						if(closest_spawns.count(spawn_iter->second) == 0)
 							closest_spawns[spawn_iter->second] = new vector<Spawn*>();
 						closest_spawns[spawn_iter->second]->push_back(spawn);
