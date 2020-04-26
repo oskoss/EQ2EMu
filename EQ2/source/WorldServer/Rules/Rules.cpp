@@ -274,7 +274,7 @@ RuleManager::RuleManager() {
 	RULE_INIT(R_Zone, WeatherChangePerInterval, "0.02");			// default: 0.02 (slight changes)
 	RULE_INIT(R_Zone, WeatherChangeChance, "20");					// default: 20% (in whole percents)
 	RULE_INIT(R_Zone, WeatherDynamicMaxOffset, "0.08");				// default: 0.08 - dynamic weather changes can only change this max amount
-	RULE_INIT(R_Zone, SpawnUpdateTimer, "200");						// default: 50ms - how often to check for spawn update sends
+	RULE_INIT(R_Zone, SpawnUpdateTimer, "50");						// default: 50ms - how often to check for spawn update sends
 	RULE_INIT(R_Zone, CheckAttackNPC, "2000");                      // default: 2 seconds, how often to for NPCs to attack eachother
 	RULE_INIT(R_Zone, CheckAttackPlayer, "2000");                   // default: 2 seconds, how often to check for NPCs to attack players
 	RULE_INIT(R_Zone, HOTime, "10.0");								// default: 10 seconds, time to complete the HO wheel before it expires

@@ -236,7 +236,7 @@ void ZoneServer::Init()
 
 	/* Static Timers */
 	// JA - haven't decided yet if these should remain hard-coded. Changing them could break EQ2Emu functionality
-	spawn_check_add.Start(1000);
+	spawn_check_add.Start(100);
 	spawn_check_remove.Start(30000);
 	spawn_expire_timer.Start(10000);
 	respawn_timer.Start(10000);
