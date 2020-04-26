@@ -392,3 +392,26 @@ bool DatabaseNew::IsIgnoredErrno(unsigned int db_errno) {
 
 	return false;
 }
+
+// Sends the MySQL server a keepalive
+void DatabaseNew::PingNewDB() {
+	MMysql.writelock(__FUNCTION__, __LINE__);
+	mysql_ping(&mysql);
+
+	int32* errnum = new int32;
+	*errnum = mysql_errno(&mysql);
+
+	switch (*errnum)
+	{
+		case CR_COMMANDS_OUT_OF_SYNC:
+		case CR_SERVER_GONE_ERROR:
+		case CR_UNKNOWN_ERROR:
+		{
+			LogWrite(DATABASE__ERROR, 0, "Database", "[Database] We lost connection to the database., errno: %i", errno);
+			break;
+		}
+	}
+
+	safe_delete(errnum);
+	MMysql.releasewritelock(__FUNCTION__, __LINE__);
+}

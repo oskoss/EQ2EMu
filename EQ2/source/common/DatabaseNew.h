@@ -38,6 +38,7 @@ public:
 	void RemoveIgnoredErrno(unsigned int db_errno);
 	bool IsIgnoredErrno(unsigned int db_errno);
 
+	void PingNewDB();
 private:
 	MYSQL mysql;
 	Mutex MMysql;

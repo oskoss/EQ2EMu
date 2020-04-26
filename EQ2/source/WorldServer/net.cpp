@@ -464,6 +464,7 @@ int main(int argc, char** argv) {
 			if (InterserverTimer.Check()) {
 				InterserverTimer.Start();
 				database.ping();
+				database.PingNewDB();
 				database.PingAsyncDatabase();
 
 				if (net.LoginServerInfo && loginserver.Connected() == false && loginserver.CanReconnect()) {

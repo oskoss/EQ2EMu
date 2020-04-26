@@ -97,7 +97,10 @@ bool WorldDatabase::ConnectNewDatabase() {
 	return database_new.Connect();
 }
 
-
+void WorldDatabase::PingNewDB()
+{
+	database_new.PingNewDB();
+}
 
 void WorldDatabase::DeleteBuyBack(int32 char_id, int32 item_id, int16 quantity, int32 price) {
 	LogWrite(MERCHANT__DEBUG, 0, "Merchant", "Deleting Buyback - Player: %u, Item ID: %u, Qty: %i, Price: %u", char_id, item_id, quantity, price);
