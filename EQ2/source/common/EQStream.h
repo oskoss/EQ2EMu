@@ -44,6 +44,7 @@ using namespace std;
 typedef enum {
 	ESTABLISHED,
 	CLOSING,
+	DISCONNECTING,
 	CLOSED
 } EQStreamState;
 

@@ -622,6 +622,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			case OP_OutOfSession: {
 				LogWrite(PACKET__INFO, 0, "Packet", "OP_OutOfSession");
 				SendDisconnect();
+				SetState(CLOSED);
 			}
 			break;
 			default:
@@ -1228,11 +1229,18 @@ void EQStream::Write(int eq_fd)
 	if (SeqEmpty && NonSeqEmpty) {
 		//no more data to send
 		if (GetState() == CLOSING) {
-			LogWrite(PACKET__DEBUG, 9, "Packet",  "All outgoing data flushed, closing stream");
-			//we are waiting for the queues to empty, now we can do our disconnect.
-			//this packet will not actually go out until the next call to Write().
-			SendDisconnect();
-			SetState(CLOSED);
+			MOutboundQueue.lock();
+			if (SequencedQueue.size() > 0 )
+				LogWrite(PACKET__DEBUG, 9, "Packet",  "All outgoing data flushed, client should be disconnecting, awaiting acknowledgement of SequencedQueue.");
+			else
+			{
+				LogWrite(PACKET__DEBUG, 9, "Packet", "All outgoing data flushed, disconnecting client.");
+				//we are waiting for the queues to empty, now we can do our disconnect.
+				//this packet will not actually go out until the next call to Write().
+				SendDisconnect();
+				//SetState(CLOSED);
+			}	
+			MOutboundQueue.unlock();
 		}
 	}
 }
@@ -1241,7 +1249,7 @@ void EQStream::WritePacket(int eq_fd, EQProtocolPacket *p)
 {
 uint32 length = 0;
 sockaddr_in address;
-unsigned char tmpbuffer[1024];
+unsigned char tmpbuffer[2048];
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr=remote_ip;
 	address.sin_port=remote_port;
@@ -1260,9 +1268,11 @@ unsigned char tmpbuffer[1024];
 	length=p->serialize(buffer);
 	if (p->opcode!=OP_SessionRequest && p->opcode!=OP_SessionResponse) {
 		if (compressed) {
-			uint32 newlen=EQProtocolPacket::Compress(buffer,length,tmpbuffer,1024);
+			BytesWritten -= p->size;
+			uint32 newlen=EQProtocolPacket::Compress(buffer,length,tmpbuffer,2048);
 			memcpy(buffer,tmpbuffer,newlen);
 			length=newlen;
+			BytesWritten += newlen;
 		}
 		if (encoded) {
 			EQProtocolPacket::ChatEncode(buffer,length,Key);
