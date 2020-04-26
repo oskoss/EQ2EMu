@@ -95,6 +95,7 @@ public:
 		sequence = 0;
 		sent_time = 0;
 		attempt_count = 0;
+		acked = false;
 	} 
 	EQProtocolPacket(const unsigned char *buf, uint32 len, int in_opcode = -1);
 	bool combine(const EQProtocolPacket *rhs);
@@ -117,6 +118,7 @@ public:
 	bool eq2_compressed;
 	bool packet_prepared;
 	bool packet_encrypted;
+	bool acked;
 	int32 sent_time;
 	int8  attempt_count;
 	int32 sequence;

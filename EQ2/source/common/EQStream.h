@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <deque>
+#include <queue>
 
 #include <map>
 #include <set>
@@ -51,6 +52,18 @@ typedef enum {
 
 #define RATEBASE	1048576 // 1 MB
 #define DECAYBASE	78642	// RATEBASE/10
+
+#ifndef RETRANSMIT_TIMEOUT_MULT
+#define RETRANSMIT_TIMEOUT_MULT 3.0
+#endif
+
+#ifndef RETRANSMIT_TIMEOUT_MAX
+#define RETRANSMIT_TIMEOUT_MAX 5000
+#endif
+
+#ifndef AVERAGE_DELTA_MAX
+#define AVERAGE_DELTA_MAX 2500
+#endif
 
 #pragma pack(1)
 struct SessionRequest {
@@ -115,6 +128,12 @@ typedef enum {
 
 class EQStream {
 	protected:
+		typedef enum {
+			SeqPast,
+			SeqInOrder,
+			SeqFuture
+		} SeqOrder;
+
 		uint32 received_packets;
 		uint32 sent_packets;
 		uint32 remote_ip;
@@ -125,6 +144,9 @@ class EQStream {
 		uint8 app_opcode_size;
 		EQStreamType StreamType;
 		bool compressed,encoded;
+
+		uint32 retransmittimer;
+		uint32 retransmittimeout;
 		//uint32 buffer_len;
 
 		uint16 sessionAttempts;
@@ -133,6 +155,7 @@ class EQStream {
 		uint32 Session, Key;
 		uint16 NextInSeq;
 		uint16 NextOutSeq;
+		uint16 SequencedBase;	//the sequence number of SequencedQueue[0]
 		uint32  MaxLen;
 		uint16 MaxSends;
 		int8 timeout_delays;
@@ -165,8 +188,8 @@ class EQStream {
 		Mutex MAcks;
 
 		// Packets waiting to be sent
-		deque<EQProtocolPacket *> NonSequencedQueue;
-		deque<EQProtocolPacket *> SequencedQueue;
+		queue<EQProtocolPacket*> NonSequencedQueue;
+		deque<EQProtocolPacket*> SequencedQueue;
 		map<uint16, EQProtocolPacket *> OutOfOrderpackets;
 		Mutex MOutboundQueue;
 
@@ -181,6 +204,7 @@ class EQStream {
 		Mutex MRate;
 		sint32 RateThreshold;
 		sint32 DecayRate;
+		uint32 AverageDelta;
 
 		EQStreamFactory *Factory;
 
@@ -205,6 +229,9 @@ class EQStream {
 		encoded = false; app_opcode_size = 2;}
 		EQStream(sockaddr_in addr);
 		virtual ~EQStream() { 
+			MOutboundQueue.lock();
+			SetState(CLOSED);
+			MOutboundQueue.unlock();
 			RemoveData(); 
 			safe_delete(crypto);
 			safe_delete(combine_timer);
@@ -243,6 +270,8 @@ class EQStream {
 		Mutex MCompressData;
 		deque<EQProtocolPacket*>resend_que;
 		void CheckResend(int eq_fd);
+
+		void AckPackets(uint16 seq);
 		void Write(int eq_fd);
 
 		void SetActive(bool val) { streamactive = val; }
@@ -287,9 +316,11 @@ class EQStream {
 		inline bool IsInUse() { bool flag; MInUse.lock(); flag=(active_users>0); MInUse.unlock(); return flag; }
 		inline void PutInUse() { MInUse.lock(); active_users++; MInUse.unlock(); }
 		inline void ReleaseFromUse() { MInUse.lock(); if(active_users > 0) active_users--; MInUse.unlock(); }
-		
+
+		static SeqOrder CompareSequence(uint16 expected_seq, uint16 seq);
+
 		inline EQStreamState GetState() { return State; }
-		inline void SetState(EQStreamState state) { State=state;  }
+		inline void SetState(EQStreamState state) { MState.lock();  State = state; MState.unlock(); }
 
 		inline uint32 GetRemoteIP() { return remote_ip; }
 		inline uint32 GetrIP() { return remote_ip; }
@@ -298,7 +329,6 @@ class EQStream {
 		
 
 		static EQProtocolPacket *Read(int eq_fd, sockaddr_in *from);
-		static sint8 CompareSequence(uint16 expected_seq , uint16 seq);
 
 		void Close() { SendDisconnect(); }
 		bool CheckActive() { return GetState()==ESTABLISHED; }

@@ -119,14 +119,26 @@ uint32 EQProtocolPacket::serialize(unsigned char *dest, int8 offset) const
 
 uint32 EQApplicationPacket::serialize(unsigned char *dest) const
 {
+	uint8 OpCodeBytes = app_opcode_size;
+
 	if (app_opcode_size==1)
 		*(unsigned char *)dest=opcode;
 	else
-		*(uint16 *)dest=opcode;
+	{
+		// Application opcodes with a low order byte of 0x00 require an extra 0x00 byte inserting prior to the opcode.
+		if ((opcode & 0x00ff) == 0)
+		{
+			*(uint8*)dest = 0;
+			*(uint16*)(dest + 1) = opcode;
+			++OpCodeBytes;
+		}
+		else
+			*(uint16*)dest = opcode;
+	}
 
 	memcpy(dest+app_opcode_size,pBuffer,size);
 
-	return size+app_opcode_size;
+	return size+ OpCodeBytes;
 }
 
 EQPacket::~EQPacket()

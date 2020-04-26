@@ -95,7 +95,17 @@ void EQStream::init(bool resetSession) {
 	MRate.unlock();
 
 	BytesWritten=0;
+	SequencedBase = 0;
+	AverageDelta = 500;
+
 	crypto->setRC4Key(0);
+
+	retransmittimer = Timer::GetCurrentTime2();
+	retransmittimeout = 500 * RETRANSMIT_TIMEOUT_MULT;
+
+	if (uint16(SequencedBase + SequencedQueue.size()) != NextOutSeq) {
+		LogWrite(PACKET__DEBUG, 9, "Packet",  "init Invalid Sequenced queue: BS %u + SQ %u != NOS %u", SequencedBase, SequencedQueue.size(), NextOutSeq);
+	}
 }
 
 EQStream::EQStream(sockaddr_in addr){ 
@@ -335,7 +345,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 
 				uint16 seq=ntohs(*(uint16 *)(p->pBuffer));
 				sint8 check=CompareSequence(NextInSeq,seq);
-				if (check>0) {
+				if (check == SeqFuture) {
 #ifdef EQN_DEBUG
 					LogWrite(PACKET__DEBUG, 1, "Packet", "*** Future packet: Expecting Seq=%i, but got Seq=%i", NextInSeq, seq);
 					LogWrite(PACKET__DEBUG, 1, "Packet", "[Start]");
@@ -346,7 +356,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 
 					// Image (2020): Removed as this is bad contributes to infinite loop
 					//SendOutOfOrderAck(seq);
-				} else if (check<0) {
+				} else if (check == SeqPast) {
 #ifdef EQN_DEBUG
 					LogWrite(PACKET__DEBUG, 1, "Packet", "*** Duplicate packet: Expecting Seq=%i, but got Seq=%i", NextInSeq, seq);
 					LogWrite(PACKET__DEBUG, 1, "Packet", "[Start]");
@@ -389,7 +399,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 
 				uint16 seq=ntohs(*(uint16 *)(p->pBuffer));
 				sint8 check=CompareSequence(NextInSeq,seq);
-				if (check>0) {
+				if (check == SeqFuture) {
 #ifdef EQN_DEBUG
 					LogWrite(PACKET__DEBUG, 1, "Packet", "*** Future packet2: Expecting Seq=%i, but got Seq=%i", NextInSeq, seq);
 					LogWrite(PACKET__DEBUG, 1, "Packet", "[Start]");
@@ -398,7 +408,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 #endif
 					OutOfOrderpackets[seq] = p->Copy();
 					//SendOutOfOrderAck(seq);
-				} else if (check<0) {
+				} else if (check == SeqPast) {
 #ifdef EQN_DEBUG
 					LogWrite(PACKET__DEBUG, 1, "Packet", "*** Duplicate packet2: Expecting Seq=%i, but got Seq=%i", NextInSeq, seq);
 					LogWrite(PACKET__DEBUG, 1, "Packet", "[Start]");
@@ -460,10 +470,12 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			case OP_Ack: {
 				if (!p->pBuffer || (p->Size() < 4))
 				{
+					LogWrite(PACKET__DEBUG, 9, "Packet", "Received OP_Ack that was of malformed size");
 					break;
 				}
-				uint16 seq=ntohs(*(uint16 *)(p->pBuffer));
-				SetMaxAckReceived(seq);
+				uint16 seq = ntohs(*(uint16*)(p->pBuffer));
+				AckPackets(seq);
+				retransmittimer = Timer::GetCurrentTime2();
 			}
 			break;
 			case OP_SessionRequest: {
@@ -538,14 +550,47 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			case OP_OutOfOrderAck: {
 				if (!p->pBuffer || (p->Size() < 4))
 				{
+					LogWrite(PACKET__DEBUG, 9, "Packet",  "Received OP_OutOfOrderAck that was of malformed size");
 					break;
 				}
-#ifndef COLLECTOR
-				uint16 seq=ntohs(*(uint16 *)(p->pBuffer));
-				if (CompareSequence(GetMaxAckReceived(),seq)>0 && CompareSequence(NextOutSeq,seq) < 0) {
-					SetLastSeqSent(GetMaxAckReceived());
+				uint16 seq = ntohs(*(uint16*)(p->pBuffer));
+				MOutboundQueue.lock();
+
+				if (uint16(SequencedBase + SequencedQueue.size()) != NextOutSeq) {
+					LogWrite(PACKET__DEBUG, 9, "Packet",  "Pre-OOA Invalid Sequenced queue: BS %u + SQ %u != NOS %u", SequencedBase, SequencedQueue.size(), NextOutSeq);
 				}
-#endif
+
+				//if the packet they got out of order is between our last acked packet and the last sent packet, then its valid.
+				if (CompareSequence(SequencedBase, seq) != SeqPast && CompareSequence(NextOutSeq, seq) == SeqPast) {
+					uint16 sqsize = SequencedQueue.size();
+					uint16 index = seq - SequencedBase;
+					LogWrite(PACKET__DEBUG, 9, "Packet",  "OP_OutOfOrderAck marking packet acked in queue (queue index = %u, queue size = %u)", index, sqsize);
+					if (index < sqsize) {
+						SequencedQueue[index]->acked = true;
+						// flag packets for a resend
+						uint16 count = 0;
+						uint32 timeout = AverageDelta * 2 + 100;
+						for (auto sitr = SequencedQueue.begin(); sitr != SequencedQueue.end() && count < index; ++sitr, ++count) {
+							if (!(*sitr)->acked && (*sitr)->sent_time > 0 && (((*sitr)->sent_time + timeout) < Timer::GetCurrentTime2())) {
+								(*sitr)->sent_time = 0;
+								LogWrite(PACKET__DEBUG, 9, "Packet",  "OP_OutOfOrderAck Flagging packet %u for retransmission", SequencedBase + count);
+							}
+						}
+					}
+
+					if (RETRANSMIT_TIMEOUT_MULT) {
+						retransmittimer = Timer::GetCurrentTime2();
+					}
+				}
+				else {
+					LogWrite(PACKET__DEBUG, 9, "Packet",  "Received OP_OutOfOrderAck for out-of-window %u. Window (%u->%u)", seq, SequencedBase, NextOutSeq);
+				}
+
+				if (uint16(SequencedBase + SequencedQueue.size()) != NextOutSeq) {
+					LogWrite(PACKET__DEBUG, 9, "Packet",  "Post-OOA Invalid Sequenced queue: BS %u + SQ %u != NOS %u", SequencedBase, SequencedQueue.size(), NextOutSeq);
+				}
+
+				MOutboundQueue.unlock();
 			}
 			break;
 			case OP_ServerKeyRequest:{
@@ -849,7 +894,7 @@ void EQStream::NonSequencedPush(EQProtocolPacket *p)
 {
 	p->setVersion(client_version);
 	MOutboundQueue.lock();
-	NonSequencedQueue.push_back(p);
+	NonSequencedQueue.push(p);
 	MOutboundQueue.unlock();
 }
 
@@ -951,12 +996,71 @@ void EQStream::CheckResend(int eq_fd){
 	MResendQue.unlock();
 }
 
+
+
+//returns SeqFuture if `seq` is later than `expected_seq`
+EQStream::SeqOrder EQStream::CompareSequence(uint16 expected_seq, uint16 seq)
+{
+	if (expected_seq == seq) {
+		// Curent
+		return SeqInOrder;
+	}
+	else if ((seq > expected_seq && (uint32)seq < ((uint32)expected_seq + EQStream::MaxWindowSize)) || seq < (expected_seq - EQStream::MaxWindowSize)) {
+		// Future
+		return SeqFuture;
+	}
+	else {
+		// Past
+		return SeqPast;
+	}
+}
+
+void EQStream::AckPackets(uint16 seq)
+{
+	std::deque<EQProtocolPacket*>::iterator itr, tmp;
+
+	MOutboundQueue.lock();
+
+	SeqOrder ord = CompareSequence(SequencedBase, seq);
+	if (ord == SeqInOrder) {
+		//they are not acking anything new...
+		LogWrite(PACKET__DEBUG, 9, "Packet",  "Received an ack with no window advancement (seq %u)", seq);
+	}
+	else if (ord == SeqPast) {
+		//they are nacking blocks going back before our buffer, wtf?
+		LogWrite(PACKET__DEBUG, 9, "Packet",  "Received an ack with backward window advancement (they gave %u, our window starts at %u). This is bad" , seq, SequencedBase);
+	}
+	else {
+		LogWrite(PACKET__DEBUG, 9, "Packet",  "Received an ack up through sequence %u. Our base is %u", seq, SequencedBase);
+
+
+		//this is a good ack, we get to ack some blocks.
+		seq++;	//we stop at the block right after their ack, counting on the wrap of both numbers.
+		while (SequencedBase != seq) {
+			if (SequencedQueue.empty()) {
+				LogWrite(PACKET__DEBUG, 9, "Packet",  "OUT OF PACKETS acked packet with sequence %u. Next send is %u before this", (unsigned long)SequencedBase, SequencedQueue.size());
+				SequencedBase = NextOutSeq;
+				break;
+			}
+			LogWrite(PACKET__DEBUG, 9, "Packet",  "Removing acked packet with sequence %u", (unsigned long)SequencedBase);
+			//clean out the acked packet
+			delete SequencedQueue.front();
+			SequencedQueue.pop_front();
+			//advance the base sequence number to the seq of the block after the one we just got rid of.
+			SequencedBase++;
+		}
+		if (uint16(SequencedBase + SequencedQueue.size()) != NextOutSeq) {
+			LogWrite(PACKET__DEBUG, 9, "Packet",  "Post-Ack on %u Invalid Sequenced queue: BS %u + SQ %u != NOS %u", seq, SequencedBase, SequencedQueue.size(), NextOutSeq);
+		}
+	}
+
+	MOutboundQueue.unlock();
+}
+
 void EQStream::Write(int eq_fd)
 {
-	deque<EQProtocolPacket *> ReadyToSend;
-	deque<EQProtocolPacket *> SeqReadyToSend;
+	queue<EQProtocolPacket *> ReadyToSend;
 	long maxack;
-	map<uint16, EQProtocolPacket *>::iterator sitr;
 
 	// Check our rate to make sure we can send more
 	MRate.lock();
@@ -988,83 +1092,148 @@ void EQStream::Write(int eq_fd)
 	MOutboundQueue.lock();
 
 	// Adjust where we start sending in case we get a late ack
-	if (maxack>LastSeqSent)
-		LastSeqSent=maxack;
+	//if (maxack>LastSeqSent)
+	//	LastSeqSent=maxack;
 
 	// Place to hold the base packet t combine into
 	EQProtocolPacket *p=NULL;
+	std::deque<EQProtocolPacket*>::iterator sitr;
 
+	// Find the next sequenced packet to send from the "queue"
+	sitr = SequencedQueue.begin();
+
+	uint16 count = 0;
+	// get to start of packets
+	while (sitr != SequencedQueue.end() && (*sitr)->sent_time > 0) {
+		++sitr;
+		++count;
+	}
+
+	bool SeqEmpty = false, NonSeqEmpty = false;
 	// Loop until both are empty or MaxSends is reached
-	
-	// See if there are more non-sequenced packets left
-	while (NonSequencedQueue.size()) {
-		if (!p) {
-			// If we don't have a packet to try to combine into, use this one as the base
-			// And remove it form the queue
-			p = NonSequencedQueue.front();
-			NonSequencedQueue.pop_front();
-		}
-		//Check if we have a packet to combine p with...
-		if (NonSequencedQueue.size()){
-			if (!p->combine(NonSequencedQueue.front())) {
-				// Tryint to combine this packet with the base didn't work (too big maybe)
+	while (!SeqEmpty || !NonSeqEmpty) {
+
+		// See if there are more non-sequenced packets left
+		if (!NonSequencedQueue.empty()) {
+			if (!p) {
+				// If we don't have a packet to try to combine into, use this one as the base
+				// And remove it form the queue
+				p = NonSequencedQueue.front();
+				LogWrite(PACKET__DEBUG, 9, "Packet", "Starting combined packet with non-seq packet of len %u",p->size);
+				NonSequencedQueue.pop();
+			}
+			else if (!p->combine(NonSequencedQueue.front())) {
+				// Trying to combine this packet with the base didn't work (too big maybe)
 				// So just send the base packet (we'll try this packet again later)
-				ReadyToSend.push_back(p);
+				LogWrite(PACKET__DEBUG, 9, "Packet", "Combined packet full at len %u, next non-seq packet is len %u", p->size, (NonSequencedQueue.front())->size);
+				ReadyToSend.push(p);
 				BytesWritten += p->size;
-				p = NULL;
+				p = nullptr;
+
+				if (BytesWritten > threshold) {
+					// Sent enough this round, lets stop to be fair
+					LogWrite(PACKET__DEBUG, 9, "Packet", "Exceeded write threshold in nonseq (%u > %u)", BytesWritten, threshold);
+					break;
+				}
 			}
 			else {
 				// Combine worked, so just remove this packet and it's spot in the queue
+				LogWrite(PACKET__DEBUG, 9, "Packet", "Combined non-seq packet of len %u, yeilding %u combined", (NonSequencedQueue.front())->size, p->size);
 				delete NonSequencedQueue.front();
-				NonSequencedQueue.pop_front();
+				NonSequencedQueue.pop();
 			}
 		}
 		else {
-			//We have no packets to combine p with so just send it...
-			ReadyToSend.push_back(p);
-			BytesWritten += p->size;
-			p = NULL;
+			// No more non-sequenced packets
+			NonSeqEmpty = true;
 		}
-		if (BytesWritten > threshold) {
-			// Sent enough this round, lets stop to be fair
-			break;
+
+		if (sitr != SequencedQueue.end()) {
+			uint16 seq_send = SequencedBase + count;	//just for logging...
+
+			if (SequencedQueue.empty()) {
+				LogWrite(PACKET__DEBUG, 9, "Packet", "Tried to write a packet with an empty queue (%u is past next out %u)", seq_send, NextOutSeq);
+				SeqEmpty = true;
+				continue;
+			}
+
+				if ((*sitr)->acked || (*sitr)->sent_time != 0) {
+					++sitr;
+					++count;
+					if (p) {
+						LogWrite(PACKET__DEBUG, 9, "Packet", "Final combined packet not full, len %u", p->size);
+						ReadyToSend.push(p);
+						BytesWritten += p->size;
+						p = nullptr;
+					}
+					LogWrite(PACKET__DEBUG, 9, "Packet", "Not retransmitting seq packet %u because already marked as acked", seq_send);
+				}
+				else if (!p) {
+					// If we don't have a packet to try to combine into, use this one as the base
+					// Copy it first as it will still live until it is acked
+					p = (*sitr)->Copy();
+					LogWrite(PACKET__DEBUG, 9, "Packet", "Starting combined packet with seq packet %u of len %u", seq_send, p->size);
+					(*sitr)->sent_time = Timer::GetCurrentTime2();
+					++sitr;
+					++count;
+				}
+				else if (!p->combine(*sitr)) {
+					// Trying to combine this packet with the base didn't work (too big maybe)
+					// So just send the base packet (we'll try this packet again later)
+					LogWrite(PACKET__DEBUG, 9, "Packet", "Combined packet full at len %u, next seq packet %u is len %u", p->size, seq_send + 1, (*sitr)->size);
+					ReadyToSend.push(p);
+					BytesWritten += p->size;
+					p = nullptr;
+					if ((*sitr)->opcode != OP_Fragment && BytesWritten > threshold) {
+						// Sent enough this round, lets stop to be fair
+						LogWrite(PACKET__DEBUG, 9, "Packet", "Exceeded write threshold in seq (%u > %u)", BytesWritten, threshold);
+						break;
+					}
+				}
+				else {
+					// Combine worked
+					LogWrite(PACKET__DEBUG, 9, "Packet", "Combined seq packet %u of len %u, yeilding %u combined", seq_send, (*sitr)->size, p->size);
+					(*sitr)->sent_time = Timer::GetCurrentTime2();
+					++sitr;
+					++count;
+				}
+
+			if (uint16(SequencedBase + SequencedQueue.size()) != NextOutSeq) {
+				LogWrite(PACKET__DEBUG, 9, "Packet", "Post send Invalid Sequenced queue: BS %u + SQ %u != NOS %u", SequencedBase, SequencedQueue.size(), NextOutSeq);
+			}
+		}
+		else {
+			// No more sequenced packets
+			SeqEmpty = true;
 		}
 	}
+	MOutboundQueue.unlock();	// Unlock the queue
 
-	//The non-seq loop must have broke before we sent this packet, send it now
-	if (p){
-		ReadyToSend.push_back(p);
+	// We have a packet still, must have run out of both seq and non-seq, so send it
+	if (p) {
+		LogWrite(PACKET__DEBUG, 9, "Packet",  "Final combined packet not full, len %u", p->size);
+		ReadyToSend.push(p);
 		BytesWritten += p->size;
 	}
 
-	if (SequencedQueue.size() && BytesWritten < threshold) {
-		while(SequencedQueue.size()) {
-			p = SequencedQueue.front();
-			BytesWritten+=p->size;
-			SeqReadyToSend.push_back(p);
-			p->sent_time = Timer::GetCurrentTime2();
-			resend_que.push_back(p);
-			SequencedQueue.pop_front();
-			LastSeqSent=p->sequence;
-			if (BytesWritten > threshold) {
-				break;
-			}
-		}
-	}
-			
-	// Unlock the queue
-	MOutboundQueue.unlock();
-
 	// Send all the packets we "made"
-	while(ReadyToSend.size()) {
-		WritePacket(eq_fd,ReadyToSend.front());
-		delete ReadyToSend.front();
-		ReadyToSend.pop_front();
+	while (!ReadyToSend.empty()) {
+		p = ReadyToSend.front();
+		WritePacket(eq_fd, p);
+		delete p;
+		ReadyToSend.pop();
 	}
 
-	while(SeqReadyToSend.size()){
-		WritePacket(eq_fd,SeqReadyToSend.front());
-		SeqReadyToSend.pop_front();
+	//see if we need to send our disconnect and finish our close
+	if (SeqEmpty && NonSeqEmpty) {
+		//no more data to send
+		if (GetState() == CLOSING) {
+			LogWrite(PACKET__DEBUG, 9, "Packet",  "All outgoing data flushed, closing stream");
+			//we are waiting for the queues to empty, now we can do our disconnect.
+			//this packet will not actually go out until the next call to Write().
+			SendDisconnect();
+			SetState(CLOSED);
+		}
 	}
 }
 
@@ -1258,7 +1427,7 @@ void EQStream::OutboundQueueClear()
 	MOutboundQueue.lock();
 	while(NonSequencedQueue.size()) {
 		delete NonSequencedQueue.front();
-		NonSequencedQueue.pop_front();
+		NonSequencedQueue.pop();
 	}
 	while(SequencedQueue.size()) {
 		delete SequencedQueue.front();
@@ -1425,20 +1594,6 @@ EQProtocolPacket* EQStream::RemoveQueue(uint16 seq)
 	return qp;
 }
 
-sint8 EQStream::CompareSequence(uint16 expected_seq , uint16 seq)
-{
-	if (expected_seq==seq) {
-		// Curent
-		return 0;
-	}  else if ((seq > expected_seq && (uint32)seq < ((uint32)expected_seq + EQStream::MaxWindowSize)) || seq < (expected_seq - EQStream::MaxWindowSize)) {
-		// Future
-		return 1;
-	} else {
-		// Past
-		return -1;
-	}
-}
-
 void EQStream::Decay()
 {
 	MRate.lock();
@@ -1449,14 +1604,30 @@ void EQStream::Decay()
 		if (BytesWritten<0)
 			BytesWritten=0;
 	}
+
+	int count = 0;
+	MOutboundQueue.lock();
+	for (auto sitr = SequencedQueue.begin(); sitr != SequencedQueue.end(); ++sitr, count++) {
+		if (!(*sitr)->acked && (*sitr)->sent_time > 0 && ((*sitr)->sent_time + retransmittimeout) < Timer::GetCurrentTime2()) {
+			(*sitr)->sent_time = 0;
+			LogWrite(PACKET__DEBUG, 9, "Packet", "Timeout exceeded for seq %u.  Flagging packet for retransmission", SequencedBase + count);
+		}
+	}
+	MOutboundQueue.unlock();
 }
 
 void EQStream::AdjustRates(uint32 average_delta)
 {
-	if (average_delta) {
+	if (average_delta && (average_delta <= AVERAGE_DELTA_MAX)) {
 		MRate.lock();
-		RateThreshold=RATEBASE/average_delta;
-		DecayRate=DECAYBASE/average_delta;
+		AverageDelta = average_delta;
+		RateThreshold = RATEBASE / average_delta;
+		DecayRate = DECAYBASE / average_delta;
+		if (BytesWritten > RateThreshold)
+			BytesWritten = RateThreshold + DecayRate;
 		MRate.unlock();
+	}
+	else {
+		AverageDelta = AVERAGE_DELTA_MAX;
 	}
 }
