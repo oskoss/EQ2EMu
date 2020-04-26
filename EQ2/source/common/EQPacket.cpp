@@ -333,6 +333,9 @@ bool EQ2Packet::AppCombine(EQ2Packet* rhs){
 
 bool EQProtocolPacket::combine(const EQProtocolPacket *rhs)
 {
+	if (opcode == OP_Ack || rhs->opcode == OP_Ack)
+		return false;
+
 	bool result=false;
 	//if(dont_combine)
 	//	return false;
