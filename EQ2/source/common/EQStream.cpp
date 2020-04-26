@@ -1025,6 +1025,12 @@ void EQStream::AckPackets(uint16 seq)
 	SeqOrder ord = CompareSequence(SequencedBase, seq);
 	if (ord == SeqInOrder) {
 		//they are not acking anything new...
+
+		uint16 index = seq - SequencedBase;
+		if (SequencedQueue.size() > 0 && index < SequencedQueue.size())
+		{
+			SequencedQueue[index]->acked = true;
+		}
 		LogWrite(PACKET__DEBUG, 9, "Packet",  "Received an ack with no window advancement (seq %u)", seq);
 	}
 	else if (ord == SeqPast) {
