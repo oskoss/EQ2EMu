@@ -929,7 +929,7 @@ public:
 	Mutex m_requiredQuests;
 	Mutex m_requiredHistory;
 
-	void SetFollowTarget(Spawn* spawn);
+	void SetFollowTarget(Spawn* spawn, int32 followDistance=0);
 	Spawn* GetFollowTarget();
 
 	/// <summary>Sets a user defined variable</summary>
@@ -1037,6 +1037,7 @@ private:
 	bool			is_pet;
 	// m_followTarget = spawn to follow around
 	int32			m_followTarget;
+	int32			m_followDistance;
 	bool            req_quests_private;
 	int16           req_quests_override;
 	bool            req_quests_continued_access;

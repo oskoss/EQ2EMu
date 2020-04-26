@@ -101,6 +101,7 @@ Spawn::Spawn(){
 	last_location_update = 0.0;
 	last_movement_update = Timer::GetCurrentTime2();
 	forceMapCheck = false;
+	m_followDistance = 0;
 }
 
 Spawn::~Spawn(){
@@ -2144,13 +2145,16 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				SetSpeed(speed);
 			}
 			MovementLocation* loc = GetCurrentRunningLocation();
-			if ((GetDistance(followTarget, true) <= rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())) {
+			float dist = GetDistance(followTarget, true);
+			if ((!EngagedInCombat() && m_followDistance > 0 && dist <= m_followDistance) || 
+				(dist <= rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())) {
 				ClearRunningLocations();
 				CalculateRunningLocation(true);
 			}
 			else if (loc) {
 				float distance = GetDistance(followTarget, loc->x, loc->y, loc->z);
-				if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat()) {
+				if ( (!EngagedInCombat() && m_followDistance > 0 && distance > m_followDistance) ||
+					 ( EngagedInCombat() && distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())) {
 					MoveToLocation(followTarget, rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat(), true, loc->mapped);
 					CalculateRunningLocation();
 				}
@@ -2809,14 +2813,16 @@ void Spawn::RemoveSpawnAccess(Spawn* spawn) {
 	}
 }
 
-void Spawn::SetFollowTarget(Spawn* spawn) {
+void Spawn::SetFollowTarget(Spawn* spawn, int32 follow_distance) {
 	if (spawn && spawn != this) {
 		m_followTarget = spawn->GetID();
+		m_followDistance = follow_distance;
 	}
 	else {
 		m_followTarget = 0;
 		if (following)
 			following = false;
+		m_followDistance = 0;
 	}
 }
 

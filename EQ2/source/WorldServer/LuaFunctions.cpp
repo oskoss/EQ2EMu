@@ -4530,6 +4530,7 @@ int EQ2Emu_lua_SetFollowTarget(lua_State* state) {
 
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	Spawn* target = lua_interface->GetSpawn(state, 2);
+	int32 follow_distance = lua_interface->GetInt32Value(state, 3);
 
 	if (!spawn) {
 		lua_interface->LogError("%s: LUA SetFollowTarget command error: spawn is not valid", lua_interface->GetScriptName(state));
@@ -4538,7 +4539,7 @@ int EQ2Emu_lua_SetFollowTarget(lua_State* state) {
 
 	// Target can be null, setting follow target to 0 clears it and will cancel follow, so no need to check it
 
-	spawn->SetFollowTarget(target);
+	spawn->SetFollowTarget(target, follow_distance);
 	return 0;
 }
 
