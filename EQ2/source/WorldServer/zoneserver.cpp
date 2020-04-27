@@ -1106,11 +1106,13 @@ void ZoneServer::CheckSendSpawnToClient(){
 	Client* client = 0;
 
 	MClientList.readlock(__FUNCTION__, __LINE__);
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
 	for (itr = clients.begin(); itr != clients.end(); itr++) {
 		client = *itr;
 		if(client->IsReadyForSpawns())
 			CheckSendSpawnToClient(client);
 	}
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
@@ -4664,9 +4666,9 @@ void ZoneServer::SendZoneSpawns(Client* client){
 			CheckSpawnRange(client, spawn, true);
 		}
 	}
-	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
-	
+
 	CheckSendSpawnToClient(client, true);
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 	client->SetConnected(true);
 	ClientPacketFunctions::SendFinishedEntitiesList(client);
 	initial_spawn_threads_active--;
