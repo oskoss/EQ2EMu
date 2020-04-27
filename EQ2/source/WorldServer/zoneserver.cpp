@@ -1842,6 +1842,9 @@ void ZoneServer::ProcessDrowning(){
 void ZoneServer::SendSpawnChanges(){
 	set<Spawn*> spawns_to_send;
 	Spawn* spawn = 0;
+
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+
 	MutexList<int32>::iterator spawn_iter = changed_spawns.begin();
 	int count = 0;
 	while(spawn_iter.Next()){		
@@ -1869,6 +1872,7 @@ void ZoneServer::SendSpawnChanges(){
 		spawn->vis_changed = false;
 		spawn->info_changed = false;
 	}
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 void ZoneServer::SendPlayerPositionChanges(Player* player){
