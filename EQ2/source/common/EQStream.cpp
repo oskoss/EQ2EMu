@@ -1027,7 +1027,7 @@ void EQStream::AckPackets(uint16 seq)
 		//they are not acking anything new...
 
 		uint16 index = seq - SequencedBase;
-		if (SequencedQueue.size() > 0 && index < SequencedQueue.size())
+		if (SequencedQueue.size() > 0 && index > -1 && index < SequencedQueue.size() && seq == SequencedQueue[index]->sequence)
 		{
 			SequencedQueue[index]->acked = true;
 		}

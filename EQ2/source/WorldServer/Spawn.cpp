@@ -276,6 +276,9 @@ void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
 		footer->setDataByName("show", 1);
 	}
 
+	if (strlen(appearance.name) < 1)
+		strncpy(appearance.name,to_string(GetID()).c_str(),128);
+
 	footer->setMediumStringByName("name", appearance.name);
 	footer->setMediumStringByName("guild", appearance.sub_title);
 	footer->setMediumStringByName("prefix", appearance.prefix_title);
@@ -373,9 +376,9 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
 	string* part3 = footer->serializeString();
 
 	uchar tmp[900];
+	int32 origPart2Size = part2_size;
 	part2_size = Pack(tmp, part2, part2_size, 900, version);
 	int32 total_size = part1->length() + part2_size + part3->length() + 3;
-
 
 	uchar* final_packet = new uchar[total_size + 4];
 	ptr = final_packet;
@@ -396,6 +399,8 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
 	
 	memcpy(ptr, part3->c_str(), part3->length());
 	delete[] part2;
+
+//	printf("%s (%i): p1: %i, p2:% i (%i), p3:% i, ts: %i\n", GetName(), GetID(), part1->length(), part2_size, origPart2Size, part3->length(), total_size);
 
 	EQ2Packet* ret = new EQ2Packet(OP_ClientCmdMsg, final_packet, total_size + 4);
 	delete[] final_packet;

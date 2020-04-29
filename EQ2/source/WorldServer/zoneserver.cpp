@@ -1322,13 +1322,13 @@ bool ZoneServer::Process()
 			}
 			database.LoadRevivePoints(revive_points, GetZoneID());
 
+			RemoveLocationGrids();
+			database.LoadLocationGrids(this);
+
 			LoadingData = false;
 
 			spawn_range.Trigger();
 			spawn_check_add.Trigger();
-
-			RemoveLocationGrids();
-			database.LoadLocationGrids(this);
 
 			const char* zone_script = world.GetZoneScript(this->GetZoneID());
 			if(lua_interface && zone_script) {
@@ -1471,10 +1471,7 @@ bool ZoneServer::SpawnProcess(){
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 			// if zone is shutting down kill the loop
 			if (zoneShuttingDown)
-			{
-				MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 				break;
-			}
 
 			Spawn* spawn = itr->second;
 			if (spawn) {
@@ -1507,10 +1504,7 @@ bool ZoneServer::SpawnProcess(){
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 			// Break the loop if the zone is shutting down
 			if (zoneShuttingDown)
-			{
-				MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 				break;
-			}
 
 			Spawn* spawn = itr->second;
 			if (spawn) {
@@ -1727,6 +1721,7 @@ void ZoneServer::SendSpawnChanges(Spawn* spawn, Client* client, bool override_ch
 }
 
 void ZoneServer::SendSpawnChanges(Spawn* spawn){
+	MSpawnList.readlock();
 	if(spawn && spawn->changed){
 		if(!spawn->IsPlayer() || (spawn->IsPlayer() && (spawn->info_changed || spawn->vis_changed))){
 			vector<Client*>::iterator itr;
@@ -1745,6 +1740,7 @@ void ZoneServer::SendSpawnChanges(Spawn* spawn){
 			spawn->position_changed = false;
 		spawn->vis_changed = false;
 	}
+	MSpawnList.releasereadlock();
 }
 
 Spawn* ZoneServer::FindSpawn(Player* searcher, const char* name){
@@ -3196,7 +3192,7 @@ void ZoneServer::SendSpawn(Spawn* spawn, Client* client){
 	EQ2Packet* outapp = spawn->serialize(client->GetPlayer(), client->GetVersion());
 
 	if(outapp)
-		client->QueuePacket(outapp);
+		client->QueuePacket(outapp, true);
 	/*
 	vis flags:
 	2 = show icon
@@ -3736,7 +3732,7 @@ void ZoneServer::RemoveFromRangeMap(Client* client){
 
 void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spawn, bool respawn, bool lock) 
 {
-	LogWrite(ZONE__DEBUG, 3, "Zone", "Processing RemoveSpawn function...");
+	LogWrite(ZONE__DEBUG, 3, "Zone", "Processing RemoveSpawn function for %s (%i)...", spawn->GetName(),spawn->GetID());
 
 	if (Grid != nullptr) {
 		Grid->RemoveSpawnFromCell(spawn);
