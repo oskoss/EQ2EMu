@@ -105,7 +105,8 @@ void Mutex::readlock(const char* function, int32 line) {
 					LogWrite(MUTEX__ERROR, 0, "Mutex", "%s, number of locks = %u", itr->first.c_str(), itr->second);
 			}
 			CSStack.unlock();
-			return;
+			i = 0;
+			continue;
 		}
 		i++;
 #endif
