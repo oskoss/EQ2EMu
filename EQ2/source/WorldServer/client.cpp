@@ -8296,7 +8296,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 					}
 				}
 
-				if (spawn->position_changed) {
+			/*	if (spawn->position_changed) {
 					auto pos_change = spawn->spawn_pos_changes_ex(GetPlayer(), GetVersion());
 
 					if (pos_change) {
@@ -8307,7 +8307,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 						tmp_pos_size = data.size;
 						tmp_pos_changes[index] = data;
 					}
-				}
+				}*/
 
 				MakeSpawnChangePacket(tmp_info_changes, tmp_pos_changes, tmp_vis_changes, tmp_info_size, tmp_pos_size, data.size);
 				continue;
