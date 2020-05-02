@@ -488,6 +488,7 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 	//		packet->setDataByName("unknown7", 257, i);
 		//packet->setDataByName("unknown21", info_struct->rain, 2);
 		packet->setDataByName("rain", info_struct->rain);
+		packet->setDataByName("rain2", info_struct->wind); //-102.24);
 		/*packet->setDataByName("unknown22", 3, 4);
 		packet->setDataByName("unknown23", 3, 161);
 		packet->setDataByName("unknown20", 103);
@@ -510,7 +511,7 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 		packet->setDataByName("unknown20b", 255, 2);
 		packet->setDataByName("unknown20", 50, 75);
 		*/
-		packet->setDataByName("rain2", -102.24);
+		//packet->setDataByName("rain2", -102.24);
 		for(int i=0;i<45;i++){
 			if(i < 30){
 				packet->setSubstructDataByName("maintained_effects", "name", info_struct->maintained_effects[i].name, i, 0);

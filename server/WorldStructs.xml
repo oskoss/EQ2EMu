@@ -1245,10 +1245,8 @@ to zero and treated like placeholders." />
 <Struct Name="Substruct_GroupMember" ClientVersion="57048" >
 <Data ElementName="spawn_id" Type="int32" Size="1" />
 <Data ElementName="pet_id" Type="int32" Size="1" />
-<Data ElementName="hp_current" Type="sint32" Size="1" />
-<Data ElementName="hp_current2" Type="sint32" Size="1" />
-<Data ElementName="hp_max" Type="sint32" Size="1" />
-<Data ElementName="hp_max2" Type="sint32" Size="1" />
+<Data ElementName="hp_current" Type="sint64" Size="1" />
+<Data ElementName="hp_max" Type="sint64" Size="1" />
 <Data ElementName="power_current" Type="sint32" Size="1" />
 <Data ElementName="power_max" Type="sint32" Size="1" />
 <Data ElementName="level_current" Type="int16" Size="1" />
@@ -9700,7 +9698,9 @@ to zero and treated like placeholders." />
 <Data ElementName="vision" Type ="int16" Size="1" />
 <Data ElementName="unknown551" Type ="int8" Size="1" />
 <Data ElementName="unknown525" Type ="int8" Size="1062" />
+<Data ElementName="activegroupmembers" Type ="int8" Size="1" />
 <Data ElementName="group_members" Substruct="Substruct_GroupMember" Size="5" />
+<Data ElementName="leaderIndex" Type ="int32" Size="1" />
 <Data ElementName="unknown182" Type="int16" Size="1" />
 <Data ElementName="unknown183" Type="int8" Size="462" />
 <Data ElementName="pet_id" Type="int32" Size="1" />
@@ -10758,16 +10758,15 @@ to zero and treated like placeholders." />
 <Data ElementName="tradeskill_effects_bonus" Type="float" Size="1" />
 <Data ElementName="unknown137" Type="float" Size="1" />
 <Data ElementName="unknown138" Type="float" Size="1" />
-<Data ElementName="unknown139" Type="float" Size="1" />
 <Data ElementName="dps" Type="float" Size="1" />
 <Data ElementName="unknown141" Type="float" Size="1" />
 <Data ElementName="unknown142" Type="float" Size="1" />
+<Data ElementName="unknown142x" Type="float" Size="1" />
 <Data ElementName="base_avoidance" Type="float" Size="1" />
 <Data ElementName="unknown144" Type="float" Size="1" />
 <Data ElementName="uncontested_riposte_pve" Type="float" Size="1" />
 <Data ElementName="uncontested_parry_pve" Type="float" Size="1" />
 <Data ElementName="unknown147" Type="float" Size="1" />
-<Data ElementName="unknown148" Type="float" Size="1" />
 <Data ElementName="melee_ae" Type="float" Size="1" />
 <Data ElementName="multi_attack" Type="float" Size="1" /> 
 <Data ElementName="spell_multi_attack" Type="float" Size="1" /> <!-- spell_doublecast -->
@@ -10788,6 +10787,7 @@ to zero and treated like placeholders." />
 <Data ElementName="casting_speed" Type="float" Size="1" />
 <Data ElementName="spell_reuse_speed" Type="float" Size="1" />
 <Data ElementName="unknown168" Type="float" Size="1" />
+<Data ElementName="unknown168x" Type="float" Size="1" />
 <Data ElementName="decrease_falling_dmg" Type="float" Size="1" />
 <Data ElementName="unknown170" Type="float" Size="1" />
 <Data ElementName="unknown171" Type="float" Size="1" />
@@ -10817,7 +10817,7 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown195" Type="float" Size="1" />
 <Data ElementName="unknown197" Type="float" Size="1" />
 <Data ElementName="pvp_crit_mit" Type ="float" Size="1" />
-<Data ElementName="pvp_crit_mit" Type ="float" Size="1" />
+<Data ElementName="unknown199x" Type ="float" Size="1" />
 <Data ElementName="unknown199" Type ="float" Size="1" />
 <Data ElementName="unknown200" Type ="float" Size="1" />
 <Data ElementName="unknown201" Type ="float" Size="1" />
@@ -11008,18 +11008,6 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown380" Type="float" Size="1" />
 <Data ElementName="unknown381" Type="float" Size="1" />
 <Data ElementName="lethality_pvp" Type="float" Size="1" />
-<Data ElementName="unknown383" Type="float" Size="1" />
-<Data ElementName="unknown384" Type="float" Size="1" />
-<Data ElementName="unknown385" Type="float" Size="1" />
-<Data ElementName="unknown386" Type="float" Size="1" />
-<Data ElementName="unknown387" Type="float" Size="1" />
-<Data ElementName="unknown388" Type="float" Size="1" />
-<Data ElementName="unknown389" Type="float" Size="1" />
-<Data ElementName="unknown390" Type="float" Size="1" />
-<Data ElementName="unknown391" Type="float" Size="1" />
-<Data ElementName="unknown392" Type="float" Size="1" />
-<Data ElementName="unknown393" Type="float" Size="1" />
-<Data ElementName="unknown394" Type="float" Size="1" />
 <Data ElementName="unknown395" Type="float" Size="1" />
 <Data ElementName="unknown396" Type="float" Size="1" />
 <Data ElementName="unknown397" Type="float" Size="1" />
@@ -11047,7 +11035,6 @@ to zero and treated like placeholders." />
 <Data ElementName="max_crafting" Type="float" Size="1" />
 <Data ElementName="component_refund" Type="float" Size="1" />
 <Data ElementName="unknown421" Type="float" Size="1" />
-<Data ElementName="refine_quantity_mod" Type="float" Size="1" />
 <Data ElementName="ex_durability_mod" Type="float" Size="1" />
 <Data ElementName="ex_durability_add" Type="float" Size="1" />
 <Data ElementName="ex_crit_success_mod" Type="float" Size="1" />
@@ -11067,6 +11054,19 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown439" Type="float" Size="1" />
 <Data ElementName="unknown440" Type="float" Size="1" />
 <Data ElementName="unknown441" Type="float" Size="1" />
+<Data ElementName="unknown442x" Type="float" Size="1" />
+<Data ElementName="unknown443x" Type="float" Size="1" />
+<Data ElementName="unknown444x" Type="float" Size="1" />
+<Data ElementName="unknown445x" Type="float" Size="1" />
+<Data ElementName="unknown446x" Type="float" Size="1" />
+<Data ElementName="unknown447x" Type="float" Size="1" />
+<Data ElementName="unknown448x" Type="float" Size="1" />
+<Data ElementName="unknown449x" Type="float" Size="1" />
+<Data ElementName="unknown450x" Type="float" Size="1" />
+<Data ElementName="unknown451x" Type="float" Size="1" />
+<Data ElementName="unknown452x" Type="float" Size="1" />
+<Data ElementName="unknown453x" Type="float" Size="1" />
+<Data ElementName="unknown454x" Type="float" Size="1" />
 <Data ElementName="unknown180" Type="int8" Size="1" />
 <Data ElementName="unknown524" Type="int8" Size="1" />
 <Data ElementName="unknown181a" Type="int8" Size="1" />
@@ -11155,12 +11155,11 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown523" Type ="float" Size="1" />
 <Data ElementName="unknown550" Type ="int8" Size="1" />
 <Data ElementName="vision" Type ="int16" Size="1" />
-<Data ElementName="unknown551" Type ="int8" Size="25" />
-<Data ElementName="unknown551a" Type ="int32" Size="12" />
-<Data ElementName="unknown525" Type ="int8" Size="990" />
+<Data ElementName="unknown551" Type ="int8" Size="1" />
+<Data ElementName="unknown525" Type ="int8" Size="1062" />
 <Data ElementName="group_members" Substruct="Substruct_GroupMember" Size="5" />
-<Data ElementName="unknown182" Type="int16" Size="1" />
-<Data ElementName="unknown183" Type="int8" Size="462" />
+<Data ElementName="group_leader_index" Type="int32" Size="1" />
+<Data ElementName="unknown183" Type="int8" Size="460" />
 <Data ElementName="pet_id" Type="int32" Size="1" />
 <Data ElementName="pet_name" Type="char" Size="32" />
 <Data ElementName="unknown184" Type="int8" Size="9" />
@@ -11183,13 +11182,11 @@ to zero and treated like placeholders." />
 <Data ElementName="merc_unknown21cc" Type="int8" Size="4" />
 <Data ElementName="rain" Type="float" Size="1" />
 <Data ElementName="rain2" Type="float" Size="1" />
-<Data ElementName="status_points" Type="int32" Size="1" />
-<Data ElementName="unknownint32a" Type="int32" Size="1" />
-<Data ElementName="guild_status" Type="int32" Size="1" />
-<Data ElementName="unknownint32b" Type="int32" Size="1" />
-<Data ElementName="unknown527" Type="int8" Size="1" />
+<Data ElementName="unknownx527" Type="int8" Size="9" />
 <Data ElementName="house_zone" Type="char" Size="48" />
-<Data ElementName="unknown526" Type="int8" Size="132" />
+<Data ElementName="unknownx526" Type="int8" Size="132" />
+<Data ElementName="status_points" Type="int32" Size="1" />
+<Data ElementName="guild_status" Type="int32" Size="1" />
 <Data ElementName="unknown187" Type="int8" Size="11" />
 <Data ElementName="bind_zone" Type="char" Size="32" />
 <Data ElementName="unknown188" Type="int8" Size="52" />

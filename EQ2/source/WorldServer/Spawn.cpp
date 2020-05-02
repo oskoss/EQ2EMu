@@ -179,7 +179,7 @@ void Spawn::InitializeHeaderPacketData(Player* player, PacketStruct* header, int
 	}
 
 	header->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(this));
-	header->setDataByName("crc", id);
+	header->setDataByName("crc", 1);
 	header->setDataByName("time_stamp", Timer::GetCurrentTime2());
 }
 
@@ -251,7 +251,7 @@ void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
 		if (widget->GetMultiFloorLift()) {
 			footer->setDataByName("widget_x", widget->GetX());
 			footer->setDataByName("widget_y", widget->GetY());
-			footer->setDataByName("widget_z", widget->GetZ());
+			footer->setDataByName("widget_z", widget->GetZ());	
 		}
 		else {
 			footer->setDataByName("widget_x", widget->GetWidgetX());
@@ -1568,23 +1568,23 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 		packet->setDataByName("pos_heading2", appearance.pos.Dir2);
 	}
 
-	packet->setDataByName("pos_collision_radius", appearance.pos.collision_radius > 0 ? appearance.pos.collision_radius : 32);
 	if (version <= 910) {
+		packet->setDataByName("pos_collision_radius", appearance.pos.collision_radius > 0 ? appearance.pos.collision_radius : 32);
 		packet->setDataByName("pos_size", size > 0 ? size : 32);
 		packet->setDataByName("pos_size_multiplier", 32); //32 is normal
 	}
 	else {
-		if (IsPlayer()) {
-			if (this != player)
-				packet->setDataByName("pos_size", 49152);
+			if (size == 0)
+				size = 32;
+			packet->setDataByName("size", 1);
+			packet->setDataByName("pos_collision_radius", appearance.pos.collision_radius > 0 ? appearance.pos.collision_radius : 32);
 
-			packet->setDataByName("pos_size_ratio", 1);
-			packet->setDataByName("pos_size_multiplier_ratio", 1); // used for growth with players
-		}
-		else {
-			packet->setDataByName("pos_size_ratio", size > 0 ? (((float)size) / 32) : 1);
-			packet->setDataByName("pos_size_multiplier_ratio", 1);
-		}
+			packet->setDataByName("pos_size", 1.0f);
+
+			if (!IsPlayer())
+				packet->setDataByName("pos_size_ratio", size > 0 ? (((float)size) / 32) : 1);
+			else
+				packet->setDataByName("pos_size_ratio", 1.0f);
 	}
 	packet->setDataByName("pos_state", appearance.pos.state);
 
@@ -1691,15 +1691,21 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 
 	if (!IsPlayer())
 		packet->setDataByName("pos_movement_mode", 2);
-
+	
 	if(version <= 910)
 		packet->setDataByName("pos_unknown10", 0xFFFF, 1);
+	else if (version >= 1119)
+			packet->setDataByName("face_actor_id", 0xFFFFFFFF);
 	else
 		packet->setDataByName("pos_unknown10", 0xFFFF);
+
 	if(version <= 910)
 		packet->setDataByName("pos_unknown10", 0xFFFF, 2);
+	else if (version >= 1119)
+		packet->setDataByName("face_actor_id", 0xFFFFFFFF);
 	else
 		packet->setDataByName("pos_unknown10", 0XFFFF, 1);
+
 	packet->setDataByName("pos_pitch1", appearance.pos.Pitch1);
 	packet->setDataByName("pos_pitch2", appearance.pos.Pitch2);
 	packet->setDataByName("pos_roll", appearance.pos.Roll);
