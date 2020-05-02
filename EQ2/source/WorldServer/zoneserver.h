@@ -605,6 +605,10 @@ public:
 	void ProcessSpawnConditional(int8 condition);
 
 	void SetSpawnStructs(Client* client);
+
+	bool IsLoading() {
+		return LoadingData;
+	}
 private:
 	/* Private Functions */
 	void	AddTransporter(LocationTransportDestination* loc);
