@@ -6,7 +6,7 @@
 	Script Notes	: 
 --]]
 
-local QUEST_1_CONSULBREE = 223
+local QUEST_1_CONSULBREE = 361
 
 function examined(Item, Player)
 	if HasQuest(Player, QUEST_1_CONSULBREE) and GetQuestStep(Player, QUEST_1_CONSULBREE) == 2 then

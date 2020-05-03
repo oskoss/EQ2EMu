@@ -6,7 +6,7 @@
 	Script Notes	: 
 --]]
 
-local QUEST_1_ANTONICA = 300
+local QUEST_1_ANTONICA = 498
 
 function examined(Item, Player)
 	if not HasQuest(Player, QUEST_1_ANTONICA) and not HasCompletedQuest(Player, QUEST_1_ANTONICA) then
