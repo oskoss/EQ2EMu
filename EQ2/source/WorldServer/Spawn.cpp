@@ -276,6 +276,10 @@ void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
 		footer->setDataByName("show", 1);
 	}
 
+	if ( IsPlayer())
+		footer->setDataByName("is_player", 1);
+
+
 	if (strlen(appearance.name) < 1)
 		strncpy(appearance.name,to_string(GetID()).c_str(),128);
 
