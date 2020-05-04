@@ -940,7 +940,34 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				return;
 			}
 
-			if(caster->GetDistance(target) > spell->GetSpellData()->range) 
+			float tmpRange = spell->GetSpellData()->range;
+
+			if (client && target != caster && !spell->GetSpellData()->range)
+			{
+				bool match = false;
+				int tmpTier = 0;
+				Spell* tmpSpell = 0;
+				for (tmpTier = 0; tmpTier < spell->GetSpellTier(); tmpTier++)
+				{
+					tmpSpell = master_spell_list.GetSpell(spell->GetSpellData()->id, tmpTier);
+					if (tmpSpell && tmpSpell->GetSpellData()->range)
+					{
+						match = true;
+						break;
+					}
+				}
+				if (tmpSpell)
+					tmpRange = tmpSpell->GetSpellData()->range;
+
+				if (!match)
+					tmpTier = -1;
+
+				char msg[512];
+				snprintf(msg, 512, "%s: SpellCasted without proper spell range set: %s ID: %i Tier: %i Range obtained from tier %i range %f", caster->GetName(), spell->GetName(), spell->GetSpellID(), spell->GetSpellTier(), tmpTier, tmpRange);
+				commands.Command_ReportBug(client, new Seperator(msg));
+			}
+
+			if(caster->GetDistance(target) > tmpRange)
 			{
 				LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Too far.", spell->GetName());
 				zone->SendSpellFailedPacket(client, SPELL_ERROR_TOO_FAR_AWAY);

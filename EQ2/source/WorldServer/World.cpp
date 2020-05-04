@@ -955,7 +955,7 @@ bool World::ReportBug(string data, char* player_name, int32 account_id, const ch
 			list.push_back(data.substr(old_offset, offset));
 		old_offset = offset;
 	}
-	if(list.size() < 7){
+	if(list.size() > 0 && list.size() < 7){
 		string output = "Invalid bug list:\n";
 		for(int32 i=0;i<list.size();i++)
 			output = output.append("\t").append(list[i]).append("\n");
@@ -964,13 +964,27 @@ bool World::ReportBug(string data, char* player_name, int32 account_id, const ch
 	}
 	ServerPacket* outpack = new ServerPacket(ServerOP_BugReport, sizeof(BugReport));
 	BugReport* report = (BugReport*)outpack->pBuffer;
-	strncpy(report->category, list[0].c_str(), list[0].length() > 63 ? 63 : list[0].length());
-	strncpy(report->subcategory, list[1].c_str(), list[1].length() > 63 ? 63 : list[1].length());
-	strncpy(report->causes_crash, list[2].c_str(), list[2].length() > 63 ? 63 : list[2].length());
-	strncpy(report->reproducible, list[3].c_str(), list[3].length() > 63 ? 63 : list[3].length());
-	strncpy(report->summary, list[4].c_str(), list[4].length() > 127 ? 127 : list[4].length());
-	strncpy(report->description, list[5].c_str(), list[5].length() > 1999 ? 1999 : list[5].length());
-	strncpy(report->version, list[6].c_str(), list[6].length() > 31 ? 31 : list[6].length());
+
+	if (list.size() < 7) {
+		strncpy(report->category, "AutoBug", 7);
+		strncpy(report->subcategory, "AutoGenerate", 12);
+		strncpy(report->causes_crash, "N", 1);
+		strncpy(report->reproducible, "Y", 1);
+		strncpy(report->summary, data.c_str(), data.length() > 127 ? 127 : data.length());
+		strncpy(report->description, data.c_str(), data.length() > 1999 ? 1999 : data.length());
+		strncpy(report->version, "CUR", 3);
+	}
+	else
+	{
+		strncpy(report->category, list[0].c_str(), list[0].length() > 63 ? 63 : list[0].length());
+		strncpy(report->subcategory, list[1].c_str(), list[1].length() > 63 ? 63 : list[1].length());
+		strncpy(report->causes_crash, list[2].c_str(), list[2].length() > 63 ? 63 : list[2].length());
+		strncpy(report->reproducible, list[3].c_str(), list[3].length() > 63 ? 63 : list[3].length());
+		strncpy(report->summary, list[4].c_str(), list[4].length() > 127 ? 127 : list[4].length());
+		strncpy(report->description, list[5].c_str(), list[5].length() > 1999 ? 1999 : list[5].length());
+		strncpy(report->version, list[6].c_str(), list[6].length() > 31 ? 31 : list[6].length());
+	}
+
 	strncpy(report->player, player_name, strlen(player_name) > 63 ? 63 : strlen(player_name));
 	strncpy(report->spawn_name, spawn_name, strlen(spawn_name) > 63 ? 63 : strlen(spawn_name));
 	report->spawn_id = spawn_id;

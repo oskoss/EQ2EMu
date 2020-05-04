@@ -32,7 +32,9 @@
 	<Data ElementName="command_list_max_distance" Type="float" Size="1" />
 	<Data ElementName="command_list_has_error_text" Type="int8" Size="1" />
 	<Data ElementName="command_list_unknown" Type="int8" Size="1" />
-	<Data ElementName="command_list_error" Type="EQ2_16Bit_String" Size="1" />
+	<Data ElementName="command_list_error_array" Type="Array" ArraySizeVariable="command_list_has_error_text">
+		<Data ElementName="command_list_error" Type="EQ2_16Bit_String" Size="1" />
+	</Data>
 	<Data ElementName="command_list_command" Type="EQ2_16Bit_String" />
 </Data>
 <Data ElementName="default_command" Type="EQ2_16Bit_String" Size="1" />
@@ -1887,10 +1889,8 @@
 <Data ElementName="follow_target" Type="int32" Size="1" /> 
 <Data ElementName="size_unknown" Type="int32" />
 <Data ElementName="unknown3b" Type="int8" Size="4" />
-<Data ElementName="spawn_type" Type="int8" />
-<Data ElementName="icon" Type="int8" Size="1" />
 <Data ElementName="activity_status" Type="int32" Size="1" />
-<Data ElementName="unknownpk2" Type="int8" Size="2" />
+<Data ElementName="unknownpk2" Type="int8" Size="4" />
 <Data ElementName="activity_timer" Type="int32" Size="1" />
 <Data ElementName="unknown600554" Type="int8" Size="4" />
 <Data ElementName="hp_remaining" Type="int32" Size="1" />
@@ -2170,6 +2170,10 @@
 <Data ElementName="sign_distance" Type="float" Size="1" />
 <Data ElementName="show" Type="int8" Size="1" />
 <Data ElementName="language" Type="int8" Size="1" />
+<Data ElementName="unkStringArrayCount" Type="int8" Size="1" />
+<Data ElementName="unkStringArray" Type="Array" ArraySizeVariable="unkStringArrayCount">
+	<Data ElementName="unkString" Type="EQ2_16Bit_String" />
+</Data>
 </Struct>
 <Struct Name="Substruct_SpawnVisualizationInfoStruct" ClientVersion="1">
 <Data ElementName="arrow_color" Type="int8" Size="1" />
