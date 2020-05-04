@@ -544,6 +544,9 @@ public:
 	uchar*	SetTempInfoPacketForXOR(int16 size);
 	uchar*	SetTempVisPacketForXOR(int16 size);
 	uchar*	SetTempPosPacketForXOR(int16 size);
+	int32	GetTempInfoXorSize() { return info_xor_size; }
+	int32	GetTempVisXorSize() { return vis_xor_size; }
+	int32	GetTempPosXorSize() { return pos_xor_size; }
 	bool	CheckPlayerInfo();
 	void	CalculateLocation();
 	void	SetSpawnDeleteTime(int32 id, int32 time);
@@ -932,6 +935,9 @@ private:
 	uchar*		  spawn_tmp_vis_xor_packet;
 	uchar*		  spawn_tmp_pos_xor_packet;
 	uchar*		  spawn_tmp_info_xor_packet;
+	int32 vis_xor_size;
+	int32 pos_xor_size;
+	int32 info_xor_size;
 
 	// Character history, map<type, map<subtype, vector<data> > >
 	map<int8, map<int8, vector<HistoryData*> > > m_characterHistory;

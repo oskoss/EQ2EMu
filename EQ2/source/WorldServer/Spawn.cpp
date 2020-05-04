@@ -423,8 +423,13 @@ uchar* Spawn::spawn_info_changes(Player* player, int16 version){
 	string* data = packet->serializeString();
 	int32 size = data->length();
 	uchar* xor_info_packet = player->GetTempInfoPacketForXOR();
-	if (!xor_info_packet)
+	if (!xor_info_packet || size != player->GetTempInfoXorSize())
+	{
+		LogWrite(ZONE__DEBUG, 0, "Zone", "InstantiateInfoPacket: %i, %i", size, player->GetTempInfoXorSize());
+		safe_delete(xor_info_packet);
 		xor_info_packet = player->SetTempInfoPacketForXOR(size);
+	}
+
 	uchar* orig_packet = player->GetSpawnInfoPacketForXOR(id);
 	if(orig_packet){
 		memcpy(xor_info_packet, (uchar*)data->c_str(), size);
@@ -459,8 +464,12 @@ uchar* Spawn::spawn_vis_changes(Player* player, int16 version){
 	string* data = vis_struct->serializeString();
 	int32 size = data->length();
 	uchar* xor_vis_packet = player->GetTempVisPacketForXOR();
-	if (!xor_vis_packet)
+	if (!xor_vis_packet || size != player->GetTempVisXorSize())
+	{
+		LogWrite(ZONE__DEBUG, 0, "Zone", "InstantiateVisPacket: %i, %i", size, player->GetTempVisXorSize());
+		safe_delete(xor_vis_packet);
 		xor_vis_packet = player->SetTempVisPacketForXOR(size);
+	}
 	if(orig_packet){
 		memcpy(xor_vis_packet, (uchar*)data->c_str(), size);
 		Encode(xor_vis_packet, orig_packet, size);
@@ -482,9 +491,9 @@ uchar* Spawn::spawn_vis_changes(Player* player, int16 version){
 	return tmp2;
 }
 
-uchar* Spawn::spawn_pos_changes(Player* player, int16 version){
+uchar* Spawn::spawn_pos_changes(Player* player, int16 version) {
 	int16 index = player->GetIndexForSpawn(this);
-	
+
 	PacketStruct* packet = player->GetSpawnPosStruct();
 
 	player->pos_mutex.writelock(__FUNCTION__, __LINE__);
@@ -494,8 +503,12 @@ uchar* Spawn::spawn_pos_changes(Player* player, int16 version){
 	string* data = packet->serializeString();
 	int32 size = data->length();
 	uchar* xor_pos_packet = player->GetTempPosPacketForXOR();
-	if (!xor_pos_packet)
+	if (!xor_pos_packet || size != player->GetTempPosXorSize())
+	{
+		LogWrite(ZONE__DEBUG, 0, "Zone", "InstantiatePosPacket: %i, %i", size, player->GetTempPosXorSize());
+		safe_delete(xor_pos_packet);
 		xor_pos_packet = player->SetTempPosPacketForXOR(size);
+	}
 	if(orig_packet){
 		memcpy(xor_pos_packet, (uchar*)data->c_str(), size);
 		Encode(xor_pos_packet, orig_packet, size);
@@ -675,7 +688,9 @@ uchar* Spawn::spawn_info_changes_ex(Player* player, int16 version) {
 	int32 size = data->length();
 	uchar* xor_info_packet = player->GetTempInfoPacketForXOR();
 
-	if (!xor_info_packet) {
+	if (!xor_info_packet || size != player->GetTempInfoXorSize()) {
+		LogWrite(ZONE__DEBUG, 0, "Zone", "InstantiateInfoExPacket: %i, %i", size, player->GetTempInfoXorSize());
+		safe_delete(xor_info_packet);
 		xor_info_packet = player->SetTempInfoPacketForXOR(size);
 	}
 
@@ -737,7 +752,9 @@ uchar* Spawn::spawn_vis_changes_ex(Player* player, int16 version) {
 	int32 size = data->length();
 	uchar* xor_vis_packet = player->GetTempVisPacketForXOR();
 
-	if (!xor_vis_packet) {
+	if (!xor_vis_packet || size != player->GetTempVisXorSize()) {
+		LogWrite(ZONE__DEBUG, 0, "Zone", "InstantiateVisExPacket: %i, %i", size, player->GetTempVisXorSize());
+		safe_delete(xor_vis_packet);
 		xor_vis_packet = player->SetTempVisPacketForXOR(size);
 	}
 
@@ -798,7 +815,9 @@ uchar* Spawn::spawn_pos_changes_ex(Player* player, int16 version) {
 	int32 size = data->length();
 	uchar* xor_pos_packet = player->GetTempPosPacketForXOR();
 
-	if (!xor_pos_packet) {
+	if (!xor_pos_packet || size != player->GetTempPosXorSize()) {
+		LogWrite(ZONE__DEBUG, 0, "Zone", "InstantiatePosExPacket: %i, %i", size, player->GetTempPosXorSize());
+		safe_delete(xor_pos_packet);
 		xor_pos_packet = player->SetTempPosPacketForXOR(size);
 	}
 
@@ -1580,7 +1599,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 	else {
 			if (size == 0)
 				size = 32;
-			packet->setDataByName("size", 1);
+
 			packet->setDataByName("pos_collision_radius", appearance.pos.collision_radius > 0 ? appearance.pos.collision_radius : 32);
 
 			packet->setDataByName("pos_size", 1.0f);
@@ -1751,10 +1770,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	packet->setDataByName("heroic_flag", appearance.heroic_flag);
  	if(!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign())
 		packet->setDataByName("interaction_flag", 12); //this makes NPCs head turn to look at you
-	if (version >= 1188 && (IsPlayer() || IsBot()))
-		packet->setDataByName("spawn_type", 0);
-	else
-		packet->setDataByName("spawn_type", spawn_type);
+
 	packet->setDataByName("class", appearance.adventure_class);
 
 	int16 model_type = appearance.model_type;
@@ -1954,8 +1970,16 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	}
 	packet->setDataByName("icon", temp_icon);//appearance.icon);
 
-	int16 temp_activity_status = 0;
+	int32 temp_activity_status = 0;
+	
+	if (!Alive() && !IsObject() && !IsGroundSpawn())
+		temp_activity_status = 1;
+
+	temp_activity_status += (IsNPC() || IsObject() || IsGroundSpawn()) ? 1 << 1 : 0;
 	if (version >= 1188) {
+		if (IsGroundSpawn())
+			temp_activity_status += ACTIVITY_STATUS_INTERACTABLE_1188;
+
 		if ((appearance.activity_status & ACTIVITY_STATUS_ROLEPLAYING) > 0)
 			temp_activity_status += ACTIVITY_STATUS_ROLEPLAYING_1188;
 

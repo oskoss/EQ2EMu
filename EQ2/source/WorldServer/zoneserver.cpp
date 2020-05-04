@@ -3191,8 +3191,9 @@ void ZoneServer::UpdateVitality(float amount){
 void ZoneServer::SendSpawn(Spawn* spawn, Client* client){
 	EQ2Packet* outapp = spawn->serialize(client->GetPlayer(), client->GetVersion());
 
+	LogWrite(ZONE__DEBUG, 7, "Zone", "%s: Processing SendSpawn for spawn index %u (%s)...", client->GetPlayer()->GetName(), client->GetPlayer()->GetIndexForSpawn(spawn), spawn->GetName());
 	if(outapp)
-		client->QueuePacket(outapp, true);
+		client->QueuePacket(outapp);
 	/*
 	vis flags:
 	2 = show icon
@@ -3548,9 +3549,10 @@ bool ZoneServer::SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* pac
 
 	int16 index = client->GetPlayer()->GetIndexForSpawn(spawn);
 	int32 cur_id = client->GetPlayer()->GetIDWithPlayerSpawn(spawn);
-	if(packet && index > 0 && client->GetPlayer()->WasSpawnRemoved(spawn) == false)
+	bool wasRemoved = client->GetPlayer()->WasSpawnRemoved(spawn);
+	LogWrite(ZONE__DEBUG, 7, "Zone", "%s: Processing SendRemoveSpawn for spawn index %u (%s)...cur_id: %i, wasremoved:: %i", client->GetPlayer()->GetName(), index, spawn->GetName(), cur_id, wasRemoved);
+	if(packet && index > 0 && !wasRemoved)
 	{
-		LogWrite(ZONE__DEBUG, 7, "Zone", "Processing SendRemoveSpawn for spawn index %u (%s)...cur_id: %i", index,spawn->GetName(), cur_id);
 		packet->setDataByName("spawn_index", index);
 		client->GetPlayer()->GetPlayerSpawnMap()->erase(index);
 		client->GetPlayer()->GetPlayerSpawnIndexMap()->erase(spawn);

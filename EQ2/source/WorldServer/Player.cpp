@@ -106,6 +106,9 @@ Player::Player(){
 	spawn_footer_struct = 0;
 	widget_footer_struct = 0;
 	sign_footer_struct = 0;
+	pos_xor_size = 0;
+	info_xor_size = 0;
+	vis_xor_size = 0;
 	pos_mutex.SetName("Player::pos_mutex");
 	vis_mutex.SetName("Player::vis_mutex");
 	info_mutex.SetName("Player::info_mutex");
@@ -2966,16 +2969,19 @@ uchar* Player::GetTempPosPacketForXOR(){
 
 uchar* Player::SetTempInfoPacketForXOR(int16 size){
 	spawn_tmp_info_xor_packet = new uchar[size];
+	info_xor_size = size;
 	return spawn_tmp_info_xor_packet;
 }
 
 uchar* Player::SetTempVisPacketForXOR(int16 size){
 	spawn_tmp_vis_xor_packet = new uchar[size];
+	vis_xor_size = size;
 	return spawn_tmp_vis_xor_packet;
 }
 
 uchar* Player::SetTempPosPacketForXOR(int16 size){
 	spawn_tmp_pos_xor_packet = new uchar[size];
+	pos_xor_size = size;
 	return spawn_tmp_pos_xor_packet;
 }
 
