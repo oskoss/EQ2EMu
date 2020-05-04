@@ -579,7 +579,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 	PacketStruct* packet = configReader.getStruct("WS_CharacterSheet", version);
 	if(packet){
 		packet->setDataByName("character_name", info_struct->name);
-				packet->setDataByName("unknown_1_1_MJ", 99);//unknown_1_1_MJ
+			//	packet->setDataByName("unknown_1_1_MJ", 99);//unknown_1_1_MJ
 		packet->setDataByName("race", info_struct->race);
 		packet->setDataByName("gender", info_struct->gender);
 		packet->setDataByName("exiled", 0);  // need exiled data
@@ -592,14 +592,14 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 		packet->setDataByName("level", info_struct->level);
 		packet->setDataByName("effective_level", info_struct->level);
 		packet->setDataByName("tradeskill_level", info_struct->tradeskill_level);
-				packet->setDataByName("unknown_1_2_MJ", 98);  //unknown_1_2_MJ
+		//		packet->setDataByName("unknown_1_2_MJ", 98);  //unknown_1_2_MJ
 		packet->setDataByName("account_age_base", info_struct->account_age_base);
 		for(int8 i=0;i<sizeof(info_struct->account_age_bonus);i++)
 			packet->setDataByName("account_age_bonus", info_struct->account_age_bonus[i]);
 		packet->setDataByName("deity", "None");
 		packet->setDataByName("deity", info_struct->deity);
 		packet->setDataByName("last_name", player->GetLastName());
-				packet->setDataByName("unknown_1_3_MJ", 97);//unknown_1_3_MJ
+			//	packet->setDataByName("unknown_1_3_MJ", 97);//unknown_1_3_MJ
 		packet->setDataByName("current_hp", player->GetHP());
 		packet->setDataByName("max_hp",player-> GetTotalHP());
 		packet->setDataByName("base_hp", player->GetTotalHPBase());
@@ -615,8 +615,8 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 			player->SetPowerRegen(info_struct->level + (int)(info_struct->level / 10) + 4);
 		packet->setDataByName("hp_regen", player->GetHPRegen() + player->stats[ITEM_STAT_HPREGEN]);
 		packet->setDataByName("power_regen", player->GetPowerRegen() + player->stats[ITEM_STAT_MANAREGEN]);
-		packet->setDataByName("unknown_1_4a_MJ", 96); //-1// was unknown11
-		packet->setDataByName("unknown_1_4b_MJ", 96); //-1
+	//	packet->setDataByName("unknown_1_4a_MJ", 96); //-1// was unknown11
+	//	packet->setDataByName("unknown_1_4b_MJ", 96); //-1
 		packet->setDataByName("stat_bonus_health", player->CalculateBonusMod());//bonus health and bonus power getting same value?
 		packet->setDataByName("stat_bonus_power", player->CalculateBonusMod());//bonus health and bonus power getting same value?
 		float bonus_health = floor((float)(info_struct->sta * player->CalculateBonusMod()));
@@ -632,15 +632,15 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 		packet->setDataByName("avoidance_pct", 0);//avoidance_pct 192 = 19.2% // confirmed DoV
 		packet->setDataByName("avoidance_base", info_struct->avoidance_base); // confirmed DoV
 		packet->setDataByName("avoidance", 71); 
-				packet->setDataByName("unknown_1096_1_MJ", 90);//unknown_1096_1_MJ
+		//		packet->setDataByName("unknown_1096_1_MJ", 90);//unknown_1096_1_MJ
 		packet->setDataByName("base_avoidance_pct", info_struct->base_avoidance_pct);// confirmed DoV
-				packet->setDataByName("unknown_1096_2_MJ", 89);//unknown_1096_2_MJ
+		//		packet->setDataByName("unknown_1096_2_MJ", 89);//unknown_1096_2_MJ
 		packet->setDataByName("parry",  info_struct->parry_base);// confirmed DoV
-				packet->setDataByName("unknown_1096_3_MJ", 88);//unknown_1096_3_MJ
+		//		packet->setDataByName("unknown_1096_3_MJ", 88);//unknown_1096_3_MJ
 		packet->setDataByName("block", info_struct->block_base);// confirmed DoV
-				packet->setDataByName("unknown_1096_4_MJ", 87);//unknown_1096_4_MJ
+		//		packet->setDataByName("unknown_1096_4_MJ", 87);//unknown_1096_4_MJ
 		packet->setDataByName("uncontested_block", info_struct->uncontested_block);// confirmed DoV
-				packet->setDataByName("unknown_1096_5_MJ", 86);//unknown_1096_5_MJ
+		//		packet->setDataByName("unknown_1096_5_MJ", 86);//unknown_1096_5_MJ
 		packet->setDataByName("str", info_struct->str);// confirmed DoV
 		packet->setDataByName("sta", info_struct->sta);// confirmed DoV
 		packet->setDataByName("agi", info_struct->agi);// confirmed DoV
@@ -651,7 +651,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 		packet->setDataByName("agi_base", info_struct->agi_base);// confirmed DoV
 		packet->setDataByName("wis_base", info_struct->wis_base);// confirmed DoV
 		packet->setDataByName("int_base", info_struct->intel_base);// confirmed DoV
-				packet->setDataByName("unknown_1096_6_MJ", 86);//unknown_1096_6_MJ
+		//		packet->setDataByName("unknown_1096_6_MJ", 86);//unknown_1096_6_MJ
 		if (version <= 996) {
 			packet->setDataByName("heat", info_struct->heat);
 			packet->setDataByName("cold", info_struct->cold);
@@ -672,24 +672,24 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 			packet->setDataByName("elemental", info_struct->heat);// confirmed DoV
 			packet->setDataByName("noxious", info_struct->poison);// confirmed DoV
 			packet->setDataByName("arcane", info_struct->magic);// confirmed DoV
-					packet->setDataByName("unknown_1096_7_MJ", 85);//unknown_1096_7_MJ
+			//		packet->setDataByName("unknown_1096_7_MJ", 85);//unknown_1096_7_MJ
 			packet->setDataByName("elemental_base", info_struct->elemental_base);// confirmed DoV
 			packet->setDataByName("noxious_base", info_struct->noxious_base);// confirmed DoV
 			packet->setDataByName("arcane_base", info_struct->arcane_base);// confirmed DoV
 		}
-				packet->setDataByName("unknown_1096_8_MJ", 205);//unknown_1096_8_MJ
+			//	packet->setDataByName("unknown_1096_8_MJ", 205);//unknown_1096_8_MJ
 		packet->setDataByName("elemental_absorb_pve", 0); //210 = 21.0% confirmed DoV
 		packet->setDataByName("noxious_absorb_pve", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("arcane_absorb_pve", 0);//210 = 21.0% confirmed DoV
-				packet->setDataByName("unknown_1096_9_MJ", 240);//unknown_1096_9_MJ
+		//		packet->setDataByName("unknown_1096_9_MJ", 240);//unknown_1096_9_MJ
 		packet->setDataByName("elemental_absorb_pvp", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("noxious_absorb_pvp", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("arcane_absorb_pvp", 0);//210 = 21.0% confirmed DoV
-				packet->setDataByName("unknown_1096_10_MJ", 280);//unknown_1096_10_MJ
+			//	packet->setDataByName("unknown_1096_10_MJ", 280);//unknown_1096_10_MJ
 		packet->setDataByName("elemental_dmg_reduction", 0);// confirmed DoV
 		packet->setDataByName("noxious_dmg_reduction", 0);// confirmed DoV
 		packet->setDataByName("arcane_dmg_reduction", 0);// confirmed DoV
-				packet->setDataByName("unknown_1096_11_MJ", 320);//unknown_1096_11_MJ
+		//		packet->setDataByName("unknown_1096_11_MJ", 320);//unknown_1096_11_MJ
 		packet->setDataByName("elemental_dmg_reduction_pct", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("noxious_dmg_reduction_pct",0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("arcane_dmg_reduction_pct", 0);//210 = 21.0% confirmed DoV
@@ -725,7 +725,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 		packet->setDataByName("adv_xp_to_aa_xp_max", 100);  // aa slider position // dov confirmed
 		packet->setDataByName("aa_blue_bar", 0);// dov confirmed
 		packet->setDataByName("bonus_achievement_xp", 0); // dov confirmed
-				packet->setDataByName("unknown_1096_12_MJ", 90);
+		//		packet->setDataByName("unknown_1096_12_MJ", 90);
 		packet->setDataByName("items_found", 62);// dov confirmed
 		packet->setDataByName("named_npcs_killed", 192);// dov confirmed
 		packet->setDataByName("quests_completed", 670);// dov confirmed
@@ -737,7 +737,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 		packet->setDataByName("coins_silver", info_struct->coin_silver);// dov confirmed
 		packet->setDataByName("coins_gold", info_struct->coin_gold);// dov confirmed
 		packet->setDataByName("coins_plat", info_struct->coin_plat);// dov confirmed
-		packet->setDataByName("unknown_1096_15_MJ", 50);//unknown_1096_15_MJ
+		//packet->setDataByName("unknown_1096_15_MJ", 50);//unknown_1096_15_MJ
 		//////Spell Effects go here, but are below
 		//////Dettrimental effects go here, but are below
 		packet->setDataByName("trauma_count", 45);// added with spells leave here for testing//dov confirmed
@@ -745,10 +745,10 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 		packet->setDataByName("noxious_count", 47);// added with spells leave here for testing//dov confirmed
 		packet->setDataByName("elemental_count", 255);// added with spells leave here for testing//dov confirmed
 		packet->setDataByName("curse_count", 49);// added with spells leave here for testing//dov confirmed
-		packet->setDataByName("unknown_1096_17_MJ", 30);//unknown_1096_17_MJ
+	//	packet->setDataByName("unknown_1096_17_MJ", 30);//unknown_1096_17_MJ
 		//////Maintained effects go here, but are below
 		packet->setDataByName("breath", 30);
-		packet->setDataByName("unknown_1096_18_MJ", 1000);//16880
+		//packet->setDataByName("unknown_1096_18_MJ", 1000);//16880
 		packet->setDataByName("melee_pri_dmg_min", player->GetPrimaryWeaponMinDamage());// dov confirmed
 		packet->setDataByName("melee_pri_dmg_max", player->GetPrimaryWeaponMaxDamage());// dov confirmed
 		packet->setDataByName("melee_sec_dmg_min", player->GetSecondaryWeaponMinDamage());// dov confirmed
@@ -765,10 +765,10 @@ EQ2Packet* PlayerInfo::serialize(int16 version){
 			packet->setDataByName("melee_sec_delay", (float)player->GetSecondaryWeaponDelay() * .001);// dov confirmed
 			packet->setDataByName("ranged_delay", (float)player->GetRangeWeaponDelay() * .001);// dov confirmed
 		}
-		packet->setDataByName("unknown_1096_18_MJ", 99);//unknown_1096_19a_MJ
-		packet->setDataByName("unknown_1096_18_MJ", 98);//unknown_1096_19b_MJ
-		packet->setDataByName("unknown_1096_18_MJ", 97);//unknown_1096_19c_MJ
-		packet->setDataByName("unknown_1096_18_MJ", 96);//unknown_1096_19d_MJ
+		//packet->setDataByName("unknown_1096_18_MJ", 99);//unknown_1096_19a_MJ
+		//packet->setDataByName("unknown_1096_18_MJ", 98);//unknown_1096_19b_MJ
+		//packet->setDataByName("unknown_1096_18_MJ", 97);//unknown_1096_19c_MJ
+		//packet->setDataByName("unknown_1096_18_MJ", 96);//unknown_1096_19d_MJ
 		packet->setDataByName("ability_mod_pve", info_struct->ability_modifier);// dov confirmed
 		packet->setDataByName("base_melee_crit", 85);//85 = 8500% dov confirmed
 		packet->setDataByName("base_spell_crit", 84);// dov confirmed
