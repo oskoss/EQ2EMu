@@ -592,7 +592,7 @@ bool LWorld::Process() {
 				cout << "Unknown LoginSOPcode: 0x" << hex << (int)pack->opcode << dec;
 				cout << " size:" << pack->size << " from " << GetAccount() << endl;
 				DumpPacket(pack->pBuffer, pack->size);
-				Kick("Possible Hacking Attempt");
+				//Kick("Possible Hacking Attempt");
 				break;
 			}
 		}
