@@ -2467,6 +2467,7 @@ bool Client::Process(bool zone_process) {
 
 		delete app;
 	}
+
 	if (GetCurrentZone() && GetCurrentZone()->GetSpawnByID(GetPlayer()->GetID()) && should_load_spells) {
 		player->ApplyPassiveSpells();
 		//database.LoadCharacterActiveSpells(player);
@@ -2489,7 +2490,7 @@ bool Client::Process(bool zone_process) {
 		LogWrite(CCLIENT__DEBUG, 1, "Client", "%s, CheckQuestQueue", __FUNCTION__, __LINE__);
 		CheckQuestQueue();
 	}
-	if (pos_update.Check() && player_pos_changed) {
+	if (pos_update.Check() && player_pos_changed && IsReadyForUpdates() && ( !disconnect_timer || !disconnect_timer->Enabled())) {
 		//GetPlayer()->CalculateLocation();
 		client_list.CheckPlayersInvisStatus(this);
 		GetCurrentZone()->SendPlayerPositionChanges(GetPlayer());

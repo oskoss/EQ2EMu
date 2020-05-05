@@ -619,6 +619,11 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 	static const int8 vis_size = 1;
 	m_Update.writelock(__FUNCTION__, __LINE__);
 	uchar* pos_changes = spawn_pos_changes(player, version);
+	if (pos_changes == NULL )
+	{
+		return NULL;
+	}
+
 	int32 tmp_pos_packet_size = pos_packet_size;
 	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 
