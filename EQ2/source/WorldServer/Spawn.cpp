@@ -435,6 +435,21 @@ uchar* Spawn::spawn_info_changes(Player* player, int16 version){
 		memcpy(xor_info_packet, (uchar*)data->c_str(), size);
  		Encode(xor_info_packet, orig_packet, size);
 	}
+
+
+	bool changed = false;
+	for (int i = 0; i < size; ++i) {
+		if (xor_info_packet[i]) {
+			changed = true;
+			break;
+		}
+	}
+
+	if (!changed) {
+		player->info_mutex.releasewritelock(__FUNCTION__, __LINE__);
+		return nullptr;
+	}
+
 	uchar* tmp = new uchar[size + 10];
 	size = Pack(tmp, xor_info_packet, size, size, version);
 	player->info_mutex.releasewritelock(__FUNCTION__, __LINE__);
@@ -474,6 +489,20 @@ uchar* Spawn::spawn_vis_changes(Player* player, int16 version){
 		memcpy(xor_vis_packet, (uchar*)data->c_str(), size);
 		Encode(xor_vis_packet, orig_packet, size);
 	}
+
+	bool changed = false;
+	for (int i = 0; i < size; ++i) {
+		if (xor_vis_packet[i]) {
+			changed = true;
+			break;
+		}
+	}
+
+	if (!changed) {
+		player->vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
+		return nullptr;
+	}
+
 	uchar* tmp = new uchar[size + 10];
 	size = Pack(tmp, xor_vis_packet, size, size, version);
 	player->vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
@@ -513,6 +542,21 @@ uchar* Spawn::spawn_pos_changes(Player* player, int16 version) {
 		memcpy(xor_pos_packet, (uchar*)data->c_str(), size);
 		Encode(xor_pos_packet, orig_packet, size);
 	}
+
+	bool changed = false;
+	for (int i = 0; i < size; ++i) {
+		if (xor_pos_packet[i]) {
+			changed = true;
+			break;
+		}
+	}
+
+	if (!changed) {
+		player->pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
+		return nullptr;
+	}
+
+
 	uchar* tmp;
 	if (IsPlayer())
 		tmp = new uchar[size + 14];

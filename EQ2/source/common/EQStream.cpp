@@ -179,11 +179,11 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 			else
 				length-=2;
 #ifdef LE_DEBUG
-			LogWrite(PACKET__DEBUG, 0, "Packet", "Creating OP_AppCombined Packet!");
+			printf( "Creating OP_AppCombined Packet!\n");
 #endif
 			EQProtocolPacket *subp=new EQProtocolPacket(OP_AppCombined, p->pBuffer+2+offset, length);
 			subp->copyInfo(p);
-			ProcessPacket(subp);
+			ProcessPacket(subp, p);
 			safe_delete(subp);
 			return true;
 		}
@@ -193,18 +193,30 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 			else
 				length--;
 #ifdef LE_DEBUG
-			LogWrite(PACKET__DEBUG, 0, "Packet", "Creating Opcode 0 Packet!");
+			printf( "Creating Opcode 0 Packet!\n");
 			DumpPacket(p->pBuffer+1+offset, length);
 #endif
 			EQProtocolPacket* newpacket = ProcessEncryptedData(p->pBuffer+1+offset, length, OP_Packet);			
 			if(newpacket){
 #ifdef LE_DEBUG
-				LogWrite(PACKET__DEBUG, 0, "Packet", "Result: ");
+				printf( "Result: \n");
 				DumpPacket(newpacket);
 #endif
-				EQApplicationPacket *ap = newpacket->MakeApplicationPacket(2);
-				InboundQueuePush(ap);
-				safe_delete(newpacket);
+				//ProcessPacket(newpacket, p);
+				if (newpacket->size > 5)
+				{
+					uchar* buf = newpacket->pBuffer;
+					buf += 2;
+					int32 size = newpacket->size - 2;
+					EQApplicationPacket* ap = new EQApplicationPacket(buf, size, 2);
+					InboundQueuePush(ap);
+					safe_delete(newpacket);
+				}
+				else
+				{
+					printf("Discarded opcode 0 packet content, too short for opcode.\n");
+					DumpPacket(newpacket);
+				}
 			}
 			else
 				LogWrite(PACKET__ERROR, 0, "Packet", "No Packet!");
@@ -214,7 +226,7 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 	return false;
 }
 
-void EQStream::ProcessPacket(EQProtocolPacket *p)
+void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 {
 	uint32 processed=0,subpacket_length=0;
 
@@ -236,7 +248,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 				int8 offset = 0;
 				int count = 0;
 #ifdef LE_DEBUG
-				LogWrite(PACKET__DEBUG, 0, "Packet", "OP_Combined: ");
+				printf( "OP_Combined:\n");
 				DumpPacket(p);
 #endif
 				while(processed<p->size) {
@@ -248,7 +260,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 						offset = 1;
 					count++;
 #ifdef LE_DEBUG
-					LogWrite(PACKET__DEBUG, 0, "Packet", "OP_Combined Packet %i (%u) (%u): ", count, subpacket_length, processed);
+					printf( "OP_Combined Packet %i (%u) (%u):\n", count, subpacket_length, processed);
 #endif
 					bool isSubPacket = EQProtocolPacket::IsProtocolPacket(p->pBuffer + processed + offset, subpacket_length, false);
 					if (isSubPacket) {
@@ -257,10 +269,10 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 						//I've seen some garbage packets get sent with wrong protocol opcodes but the rest of the combine is still correct
 						//So don't break if GetProtocolPacket fails
 #ifdef LE_DEBUG
-						LogWrite(PACKET__DEBUG, 0, "Packet", "Opcode %i:", subp->opcode);
+						printf( "Opcode %i:\n", subp->opcode);
 						DumpPacket(subp);
 #endif
-						ProcessPacket(subp);
+						ProcessPacket(subp, p);
 #ifdef LE_DEBUG
 						DumpPacket(subp);
 #endif
@@ -282,7 +294,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 				EQProtocolPacket* newpacket = 0;
 				int8 offset = 0;
 #ifdef LE_DEBUG
-				LogWrite(PACKET__DEBUG, 0, "Packet", "OP_AppCombined: ");
+				printf( "OP_AppCombined: \n");
 				DumpPacket(p);
 #endif
 				int count = 0;
@@ -298,22 +310,22 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 					}
 					else if(crypto->isEncrypted()){
 #ifdef LE_DEBUG
-						LogWrite(PACKET__DEBUG, 0, "Packet", "OP_AppCombined Packet %i (%u) (%u): ", count, subpacket_length, processed);
+						printf( "OP_AppCombined Packet %i (%u) (%u): \n", count, subpacket_length, processed);
 						DumpPacket(p->pBuffer+processed+offset, subpacket_length);
 #endif
 						if(!HandleEmbeddedPacket(p, processed + offset, subpacket_length)){
 #ifdef LE_DEBUG
-							LogWrite(PACKET__DEBUG, 0, "Packet", "OP_AppCombined Here:");
+							printf( "OP_AppCombined Here:\n");
 #endif
 							newpacket = ProcessEncryptedData(p->pBuffer+processed + offset, subpacket_length, OP_AppCombined);						
 							if(newpacket){
 #ifdef LE_DEBUG
-								LogWrite(PACKET__DEBUG, 0, "Packet", "Opcode %i:", newpacket->opcode);
+								printf( "Opcode %i:\n", newpacket->opcode);
 								DumpPacket(newpacket);
 #endif
 								EQApplicationPacket* ap = newpacket->MakeApplicationPacket(2);
 #ifdef LE_DEBUG
-								LogWrite(PACKET__DEBUG, 0, "Packet", "OP_AppCombined Here2:");
+								printf( "OP_AppCombined Here2:\n");
 								DumpPacket(ap);
 #endif
 								InboundQueuePush(ap);
@@ -423,7 +435,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 							if (*(p->pBuffer+2)==0x00 && *(p->pBuffer+3)==0x19) {
 								EQProtocolPacket *subp=new EQProtocolPacket(oversize_buffer,oversize_offset);
 								subp->copyInfo(p);
-								ProcessPacket(subp);
+								ProcessPacket(subp, p);
 								delete subp;
 							} else {
 								
@@ -614,9 +626,27 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			}
 			break;
 			default:
-				EQApplicationPacket *ap = p->MakeApplicationPacket(app_opcode_size);
-				InboundQueuePush(ap);
-				LogWrite(PACKET__INFO, 0, "Packet", "Received unknown packet type, disconnecting client");
+				//EQApplicationPacket *ap = p->MakeApplicationPacket(app_opcode_size);
+				//InboundQueuePush(ap);
+
+				printf("!!!!!!!!!GarbageBEFORE Packet!!!!!!!!!!!!!:\n");
+				DumpPacket(p->pBuffer, p->size);
+				LogWrite(PACKET__INFO, 0, "Packet", "Received unknown packet type");
+				crypto->RC4Decrypt(p->pBuffer, p->size);
+				LogWrite(PACKET__ERROR, 0, "Packet", "Garbage packet?!:");
+				printf("!!!!!!!!!GarbageAFTER Packet!!!!!!!!!!!!!:\n");
+				DumpPacket(p->pBuffer, p->size);
+
+				if (oversize_buffer) {
+					printf("!!!!!!!!!OverSizedBufferExists: %i, %i, %i!!!!!!!!!!!!!:\n", oversize_offset, p->size, oversize_length);
+				}
+
+				if (lastp)
+				{
+					printf("!!!!!!!!!PREVIOUSPACKET!!!!!!!!!!!!!:\n");
+					DumpPacket(lastp->pBuffer, lastp->size);
+				}
+				//InboundQueuePush(ap);
 				//SendDisconnect();
 				break;
 		}
@@ -626,17 +656,19 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 int8 EQStream::EQ2_Compress(EQ2Packet* app, int8 offset){
 
 #ifdef LE_DEBUG
-	LogWrite(PACKET__DEBUG, 0, "Packet", "Before Compress in %s, line %i:", __FUNCTION__, __LINE__);
+	printf( "Before Compress in %s, line %i:\n", __FUNCTION__, __LINE__);
 	DumpPacket(app);
 #endif
 
+
 	uchar* pDataPtr = app->pBuffer + offset;
-	uchar* deflate_buff = new uchar[app->size];
+	int xpandSize = app->size * 2;
+	uchar* deflate_buff = new uchar[xpandSize];
 	MCompressData.lock();
 	stream.next_in = pDataPtr;
 	stream.avail_in = app->size - offset;
 	stream.next_out = deflate_buff;
-	stream.avail_out = app->size;
+	stream.avail_out = xpandSize;
 
 	int ret = deflate(&stream, Z_SYNC_FLUSH);
 
@@ -648,7 +680,7 @@ int8 EQStream::EQ2_Compress(EQ2Packet* app, int8 offset){
 		return 0;
 	}
 
-	int32 newsize = app->size - stream.avail_out;
+	int32 newsize = xpandSize - stream.avail_out;
 	safe_delete_array(app->pBuffer);
 	app->size = newsize + offset;
 	app->pBuffer = new uchar[app->size];
@@ -658,7 +690,7 @@ int8 EQStream::EQ2_Compress(EQ2Packet* app, int8 offset){
 	safe_delete_array(deflate_buff);
 
 #ifdef LE_DEBUG
-	LogWrite(PACKET__DEBUG, 0, "Packet", "After Compress in %s, line %i:", __FUNCTION__, __LINE__);
+	printf( "After Compress in %s, line %i:\n", __FUNCTION__, __LINE__);
 	DumpPacket(app);
 #endif
 
@@ -715,9 +747,11 @@ void EQStream::EQ2QueuePacket(EQ2Packet* app, bool attempted_combine){
 			MCombineQueueLock.unlock();
 		}
 		else{
+			MCombineQueueLock.lock();
 			PreparePacket(app);
+			MCombineQueueLock.unlock();
 #ifdef LE_DEBUG
-			LogWrite(PACKET__DEBUG, 0, "Packet", "After B in %s, line %i:", __FUNCTION__, __LINE__);
+			printf( "After B in %s, line %i:\n", __FUNCTION__, __LINE__);
 			DumpPacket(app);
 #endif
 			SendPacket(app);
@@ -740,7 +774,7 @@ void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 	compressed_offset = 0;
 
 #ifdef LE_DEBUG
-	LogWrite(PACKET__DEBUG, 0, "Packet", "Before A in %s, line %i:", __FUNCTION__, __LINE__);
+	printf( "Before A in %s, line %i:\n", __FUNCTION__, __LINE__);
 	DumpPacket(app);
 #endif
 
@@ -750,7 +784,7 @@ void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 	}
 
 #ifdef LE_DEBUG
-	LogWrite(PACKET__DEBUG, 0, "Packet", "After Prepare in %s, line %i:", __FUNCTION__, __LINE__);
+	printf( "After Prepare in %s, line %i:\n", __FUNCTION__, __LINE__);
 	DumpPacket(app);
 #endif
 
@@ -772,7 +806,7 @@ void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 	}
 
 #ifdef LE_DEBUG
-	LogWrite(PACKET__DEBUG, 0, "Packet", "After A in %s, line %i:", __FUNCTION__, __LINE__);
+	printf( "After A in %s, line %i:\n", __FUNCTION__, __LINE__);
 	DumpPacket(app);
 #endif
 
@@ -794,7 +828,7 @@ void EQStream::SendPacket(EQProtocolPacket *p)
 		memcpy(out->pBuffer+6,tmpbuff+2,used);
 
 #ifdef LE_DEBUG
-		LogWrite(PACKET__DEBUG, 0, "Packet", "(%s, %i) New Fragment: ", __FUNCTION__, __LINE__);
+		printf("(%s, %i) New Fragment:\n ", __FUNCTION__, __LINE__);
 		DumpPacket(out);
 #endif
 
@@ -806,7 +840,7 @@ void EQStream::SendPacket(EQProtocolPacket *p)
 			//memcpy(out->pBuffer+2,tmpbuff,1);
 			memcpy(out->pBuffer+2,tmpbuff+used+2,chunksize);
 #ifdef LE_DEBUG
-		LogWrite(PACKET__DEBUG, 0, "Packet", "Chunk: ");
+		printf("Chunk: \n");
 		DumpPacket(out);
 #endif
 			SequencedPush(out);
@@ -815,9 +849,9 @@ void EQStream::SendPacket(EQProtocolPacket *p)
 		}
 
 #ifdef LE_DEBUG
-		LogWrite(PACKET__DEBUG, 0, "Packet", "Chunk: ");
+		printf( "ChunkDelete: \n");
 		DumpPacket(out);
-		cerr << "1: Deleting 0x" << hex << (uint32)(p) << dec << endl;
+		//cerr << "1: Deleting 0x" << hex << (uint32)(p) << dec << endl;
 #endif
 
 		delete p;
@@ -918,7 +952,6 @@ bool EQStream::CheckCombineQueue(){
 				count++;
 				second = combine_queue.front();
 				combine_queue.pop_front();
-				MCombineQueueLock.unlock();
 				PreparePacket(second);
 				/*if(first->GetRawOpcode() != OP_AppCombined && first->pBuffer[2] == 0){
 					EQ2Packet* tmp = second;
@@ -940,7 +973,6 @@ bool EQStream::CheckCombineQueue(){
 					combine_worked = true;
 					//DumpPacket(first);
 				}
-				MCombineQueueLock.lock();
 				if(count >= 60 || first->size > 4000){ //other clients need packets too
 					ret = false;
 					break;
@@ -1439,9 +1471,19 @@ void EQStream::Process(const unsigned char *buffer, const uint32 length)
 	received_packets++;
 static unsigned char newbuffer[2048];
 uint32 newlength=0;
+
+#ifdef LE_DEBUG
+printf("ProcessBuffer:\n");
+DumpPacket(buffer, length);
+#endif
+
 	if (EQProtocolPacket::ValidateCRC(buffer,length,Key)) {
 		if (compressed) {
 			newlength=EQProtocolPacket::Decompress(buffer,length,newbuffer,2048);
+#ifdef LE_DEBUG
+			printf("ProcessBufferDecompress:\n");
+			DumpPacket(buffer, newlength);
+#endif
 		} else {
 			memcpy(newbuffer,buffer,length);
 			newlength=length;
@@ -1450,6 +1492,11 @@ uint32 newlength=0;
 		}
 		if (buffer[1]!=0x01 && buffer[1]!=0x02 && buffer[1]!=0x1d)
 			newlength-=2;
+
+#ifdef LE_DEBUG
+		printf("ResultProcessBuffer:\n");
+		DumpPacket(buffer, newlength);
+#endif
 		EQProtocolPacket p(newbuffer,newlength);
 		ProcessPacket(&p);
 		ProcessQueue();

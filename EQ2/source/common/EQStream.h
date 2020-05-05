@@ -286,7 +286,7 @@ class EQStream {
 		void SetLastPacketTime(uint32 t) {LastPacket=t;}
 
 		void Process(const unsigned char *data, const uint32 length);
-		void ProcessPacket(EQProtocolPacket *p);
+		void ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp=NULL);
 		bool HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset = 2, int16 length = 0);
 
 		EQProtocolPacket * ProcessEncryptedPacket(EQProtocolPacket *p);
