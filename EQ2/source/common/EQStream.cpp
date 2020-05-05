@@ -187,36 +187,24 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 			safe_delete(subp);
 			return true;
 		}
-		else if(p->pBuffer[offset] == 0 && p->pBuffer[offset+1] == 0){
-			if(length == 0)
-				length = p->size-1-offset;
+		else if (p->pBuffer[offset] == 0 && p->pBuffer[offset + 1] == 0) {
+			if (length == 0)
+				length = p->size - 1 - offset;
 			else
 				length--;
 #ifdef LE_DEBUG
-			printf( "Creating Opcode 0 Packet!\n");
-			DumpPacket(p->pBuffer+1+offset, length);
+			LogWrite(PACKET__DEBUG, 0, "Packet", "Creating Opcode 0 Packet!");
+			DumpPacket(p->pBuffer + 1 + offset, length);
 #endif
-			EQProtocolPacket* newpacket = ProcessEncryptedData(p->pBuffer+1+offset, length, OP_Packet);			
-			if(newpacket){
+			EQProtocolPacket* newpacket = ProcessEncryptedData(p->pBuffer + 1 + offset, length, OP_Packet);
+			if (newpacket) {
 #ifdef LE_DEBUG
-				printf( "Result: \n");
+				LogWrite(PACKET__DEBUG, 0, "Packet", "Result: ");
 				DumpPacket(newpacket);
 #endif
-				//ProcessPacket(newpacket, p);
-				if (newpacket->size > 5)
-				{
-					uchar* buf = newpacket->pBuffer;
-					buf += 2;
-					int32 size = newpacket->size - 2;
-					EQApplicationPacket* ap = new EQApplicationPacket(buf, size, 2);
-					InboundQueuePush(ap);
-					safe_delete(newpacket);
-				}
-				else
-				{
-					printf("Discarded opcode 0 packet content, too short for opcode.\n");
-					DumpPacket(newpacket);
-				}
+				EQApplicationPacket* ap = newpacket->MakeApplicationPacket(2);
+				InboundQueuePush(ap);
+				safe_delete(newpacket);
 			}
 			else
 				LogWrite(PACKET__ERROR, 0, "Packet", "No Packet!");
@@ -1478,6 +1466,7 @@ DumpPacket(buffer, length);
 #endif
 
 	if (EQProtocolPacket::ValidateCRC(buffer,length,Key)) {
+		MCombineQueueLock.lock();
 		if (compressed) {
 			newlength=EQProtocolPacket::Decompress(buffer,length,newbuffer,2048);
 #ifdef LE_DEBUG
@@ -1500,6 +1489,7 @@ DumpPacket(buffer, length);
 		EQProtocolPacket p(newbuffer,newlength);
 		ProcessPacket(&p);
 		ProcessQueue();
+		MCombineQueueLock.unlock();
 	} else {
 #ifdef EQN_DEBUG
 		cout << "Incoming packet failed checksum:" <<endl;
