@@ -1269,12 +1269,19 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		break;
 	}
 	case OP_ReadyToZoneMsg: {
-		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_ReadyToZoneMsg", opcode, opcode);
-		if (client_zoning)
-			LogWrite(WORLD__INFO, 0, "World", "OP_ReadyToZone: Player %s zoning to %s", player->GetName(), GetCurrentZone()->GetZoneName());
+		if (!IsReadyForSpawns())
+		{
+			LogWrite(WORLD__INFO, 0, "World", "OP_ReadyToZone: Player %s is logging into zone, skipping disconnect.");
+		}
 		else
-			LogWrite(WORLD__ERROR, 0, "World", "OP_ReadyToZone: Player %s attempting to zone without server authorization.", player->GetName());
-		Disconnect();
+		{
+			LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_ReadyToZoneMsg", opcode, opcode);
+			if (client_zoning)
+				LogWrite(WORLD__INFO, 0, "World", "OP_ReadyToZone: Player %s zoning to %s", player->GetName(), GetCurrentZone()->GetZoneName());
+			else
+				LogWrite(WORLD__ERROR, 0, "World", "OP_ReadyToZone: Player %s attempting to zone without server authorization.", player->GetName());
+			Disconnect();
+		}
 		break;
 	}
 	case OP_ClientFellMsg: {
@@ -8165,6 +8172,7 @@ int32 Client::GetTransmuteID() {
 
 bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 {
+	printf("HandleNewLogin: AcctID: %i AccessCode: %i\n", account_id, access_code);
 	ZoneAuthRequest* zar = zone_auth.GetAuth(account_id, access_code);
 
 	if (zar)
