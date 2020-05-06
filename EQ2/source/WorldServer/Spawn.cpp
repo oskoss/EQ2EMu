@@ -324,6 +324,7 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
 		player->player_spawn_reverse_id_map[this] = spawn_id;
 	}
 
+	m_Update.writelock(__FUNCTION__, __LINE__);
 	PacketStruct* header = player->GetSpawnHeaderStruct();
 	header->ResetData();
 	InitializeHeaderPacketData(player, header, index);
@@ -408,6 +409,8 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
 
 	EQ2Packet* ret = new EQ2Packet(OP_ClientCmdMsg, final_packet, total_size + 4);
 	delete[] final_packet;
+
+	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 
   	return ret;
 }
