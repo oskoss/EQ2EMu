@@ -8226,13 +8226,13 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 			}
 			else if (EQOpcodeManager.count(GetOpcodeVersion(version)) > 0 && getConnection()) {
 				getConnection()->SetClientVersion(version);
+				GetCurrentZone()->SetSpawnStructs(this);
 				connected_to_zone = true;
 				client_list.Remove(this); //remove from master client list
 				new_client_login = true;
 				GetCurrentZone()->AddClient(this); //add to zones client list
 				world.RejoinGroup(this);
 				zone_list.AddClientToMap(player->GetName(), this);
-				GetCurrentZone()->SetSpawnStructs(this);
 			}
 			else {
 				LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);
