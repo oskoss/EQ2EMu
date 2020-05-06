@@ -641,14 +641,17 @@ int EQ2Emu_lua_StartConversation(lua_State* state) {
 	string mp3 = lua_interface->GetStringValue(state, 5);
 	int32 key1 = lua_interface->GetInt32Value(state, 6);
 	int32 key2 = lua_interface->GetInt32Value(state, 7);
-	if (conversation && text.length() > 0 && npc && npc->IsEntity() && player && player->IsPlayer()) {
+	if (conversation && conversation->size() > 0 && text.length() > 0 && npc && npc->IsEntity() && player && player->IsPlayer()) {
 		Client* client = npc->GetZone()->GetClientBySpawn(player);
 		if (mp3.length() > 0)
 			client->DisplayConversation((Entity*)npc, 1, conversation, text.c_str(), mp3.c_str(), key1, key2);
 		else
 			client->DisplayConversation((Entity*)npc, 1, conversation, text.c_str());
 		safe_delete(conversation);
+		lua_interface->SetConversationValue(state, NULL);
 	}
+	else
+		LogWrite(LUA__ERROR, 0, "LUA", "Spawn %s Error in StartConversation, potentially AddConversationOption not yet called or the StartConversation arguments are incorrect, text: %s, conversationSize: %i.", npc->GetName(), text.c_str(), conversation ? conversation->size() : -1);
 	return 0;
 }
 
