@@ -3131,7 +3131,7 @@ bool Spawn::CheckLoS(Spawn* target)
 bool Spawn::CheckLoS(glm::vec3 myloc, glm::vec3 oloc)
 {
 	ZoneServer* zone = GetZone();
-	if (zone == NULL || zone->zonemap == NULL)
+	if (zone == NULL || zone->zonemap == NULL || !zone->zonemap->IsMapLoaded())
 		return true;
 	else
 		return zone->zonemap->CheckLoS(myloc, oloc);
