@@ -410,4 +410,7 @@ int EQ2Emu_lua_GetSpellID(lua_State* state);
 int EQ2Emu_lua_StartTransmute(lua_State* state);
 int EQ2Emu_lua_CompleteTransmute(lua_State* state);
 int EQ2Emu_lua_ProcHate(lua_State* state);
+
+int EQ2Emu_lua_CheckLOS(lua_State* state);
+int EQ2Emu_lua_CheckLOSByCoordinates(lua_State* state);
 #endif

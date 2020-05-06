@@ -1013,6 +1013,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "StartTransmute", EQ2Emu_lua_StartTransmute);
 	lua_register(state, "CompleteTransmute", EQ2Emu_lua_CompleteTransmute);
 	lua_register(state, "ProcHate", EQ2Emu_lua_ProcHate);
+
+	lua_register(state, "CheckLOS", EQ2Emu_lua_CheckLOS);
+	lua_register(state, "CheckLOSByCoordinates", EQ2Emu_lua_CheckLOSByCoordinates);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

@@ -9158,3 +9158,26 @@ int EQ2Emu_lua_ProcHate(lua_State* state) {
 	caster->GetZone()->SendThreatPacket(static_cast<Entity*>(caster), target, threat_amt, spell_name.c_str());
 	return 0;
 }
+
+int EQ2Emu_lua_CheckLOS(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	Spawn* target = lua_interface->GetSpawn(state, 2);
+	if (spawn && target)
+		return spawn->CheckLoS(target);
+
+	return 0;
+}
+int EQ2Emu_lua_CheckLOSByCoordinates(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	float x = lua_interface->GetFloatValue(state, 2);
+	float y = lua_interface->GetFloatValue(state, 3);
+	float z = lua_interface->GetFloatValue(state, 4);
+	if (spawn)
+		return spawn->CheckLoS(glm::vec3(spawn->GetX(), spawn->GetZ(), spawn->GetY() + 1.0f), glm::vec3(x, z, y+1.0f));
+
+	return 0;
+}
