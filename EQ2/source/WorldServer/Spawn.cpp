@@ -2191,6 +2191,11 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	if (forceMapCheck && GetZone() != nullptr && zone->zonemap != nullptr && zone->zonemap->IsMapLoaded())
 	{
 		FixZ(true);
+
+		int32 newGrid = GetZone()->Grid->GetGridID(this);
+		if (!IsFlying() && newGrid != 0 && newGrid != appearance.pos.grid_id)
+			SetPos(&(appearance.pos.grid_id), newGrid);
+
 		forceMapCheck = false;
 	}
 
