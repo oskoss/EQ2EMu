@@ -22,6 +22,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <map>
 #include "../../common/types.h"
+#include <cmath>
 
 class Spawn;
 

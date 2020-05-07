@@ -19,7 +19,6 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SPGrid.h"
 #include "../../common/Log.h"
-#include <cmath>
 
 SPGrid::SPGrid(string file, int32 cellSize) {
 	m_ZoneFile = file;
