@@ -518,7 +518,11 @@ int EQ2Emu_lua_HasPendingLoot(lua_State* state) {
 int EQ2Emu_lua_CreateConversation(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	vector<ConversationOption>* conversation = new vector<ConversationOption>();
+
+	vector<ConversationOption>* conversation = lua_interface->GetConversation(state);
+	safe_delete(conversation);
+
+	conversation = new vector<ConversationOption>();
 	lua_interface->SetConversationValue(state, conversation);
 	return 1;
 }
@@ -605,6 +609,7 @@ int EQ2Emu_lua_StartDialogConversation(lua_State* state) {
 		}
 	}
 	safe_delete(conversation);
+	lua_interface->SetConversationValue(state, NULL);
 	return 0;
 }
 
