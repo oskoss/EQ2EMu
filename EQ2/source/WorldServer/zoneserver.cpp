@@ -1301,6 +1301,8 @@ bool ZoneServer::Process()
 
 			while (zonemap != nullptr && zonemap->IsMapLoading())
 			{
+				// Client loop
+				ClientProcess();
 				Sleep(10);
 			}
 
