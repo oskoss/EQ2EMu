@@ -624,6 +624,7 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 	uchar* pos_changes = spawn_pos_changes(player, version);
 	if (pos_changes == NULL )
 	{
+		m_Update.releasewritelock(__FUNCTION__, __LINE__);
 		return NULL;
 	}
 
