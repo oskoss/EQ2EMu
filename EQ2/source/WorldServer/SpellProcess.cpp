@@ -1839,7 +1839,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 				} // end is player
 			} // end is friendly
 
-			else if (data->group_spell > 0) // is not friendly, but is a group spell
+			else if (data->group_spell > 0 || data->icon_backdrop == 312) // is not friendly, but is a group spell, icon_backdrop 312 is green (encounter AE)
 			{
 				// target is non-player
 				if (target->IsNPC())
