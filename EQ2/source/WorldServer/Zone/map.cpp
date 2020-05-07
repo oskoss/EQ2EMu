@@ -31,14 +31,18 @@ ThreadReturnType LoadMapAsync(void* mapToLoad)
 
 	if (map->Load(filename))
 		map->SetMapLoaded(true);
+
+	map->SetMapLoading(false);
 	THREAD_RETURN(NULL);
 }
 
-Map::Map(string file) {
+Map::Map(string file, SPGrid* grid) {
 	CheckMapMutex.SetName(file + "MapMutex");
 	SetMapLoaded(false);
 	m_ZoneFile = file;
 	imp = nullptr;
+	mGrid = grid;
+	m_CellSize = CELLSIZEDEFAULT;
 }
 
 Map::~Map() {
@@ -240,7 +244,7 @@ inline bool file_exists(const std::string& name) {
 	return f.good();
 }
 
-Map *Map::LoadMapFile(std::string file) {
+Map *Map::LoadMapFile(std::string file, SPGrid* grid) {
 
 	std::string filename = "Maps/";
 	filename += file;
@@ -248,8 +252,8 @@ Map *Map::LoadMapFile(std::string file) {
 
 	LogWrite(MAP__INFO, 7, "Map", "Attempting to load Map File [{%s}]", filename.c_str());
 
-	auto m = new Map(file);
-
+	auto m = new Map(file, grid);
+	m->SetMapLoading(true);
 #ifdef WIN32
 	_beginthread(LoadMapAsync, 0, (void*)m);
 #else
@@ -334,6 +338,9 @@ bool Map::LoadV2(FILE* f) {
 	m_NumCellsX = ceil(width / m_CellSize);
 	m_NumCellsZ = ceil(height / m_CellSize);
 
+	if (mGrid != nullptr)
+		mGrid->InitValues(m_MinX, m_MaxX, m_MinZ, m_MaxZ, m_NumCellsX, m_NumCellsZ);
+
 	// Read the number of grids
 	int32 NumGrids;
 	fread(&NumGrids, sizeof(int32), 1, f);
@@ -393,6 +400,24 @@ bool Map::LoadV2(FILE* f) {
 
 			verts.push_back(c);
 			indices.push_back((uint32)sz + 2);
+
+			if (mGrid != nullptr)
+			{
+				Face* face = new Face;
+				face->Vertex1[0] = x1;
+				face->Vertex1[1] = y1;
+				face->Vertex1[2] = z1;
+
+				face->Vertex2[0] = x2;
+				face->Vertex2[1] = y2;
+				face->Vertex2[2] = z2;
+
+				face->Vertex3[0] = x3;
+				face->Vertex3[1] = y3;
+				face->Vertex3[2] = z3;
+
+				mGrid->AddFace(face, GridID);
+			}
 		}
 	}
 	face_count = face_count / 3;

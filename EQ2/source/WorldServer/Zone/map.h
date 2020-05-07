@@ -26,13 +26,14 @@
 #include "../../common/Mutex.h"
 #include "position.h"
 #include <stdio.h>
+#include "SPGrid.h"
 
 #define BEST_Z_INVALID -99999
 
 class Map
 {
 public:
-	Map(string filename);
+	Map(string filename, SPGrid* grid=nullptr);
 	~Map();
 
 	float FindBestZ(glm::vec3 &start, glm::vec3 *result);
@@ -48,11 +49,10 @@ public:
 	bool Load(const std::string& filename);
 #endif
 
-	static Map *LoadMapFile(std::string file);
+	static Map *LoadMapFile(std::string file, SPGrid* grid=nullptr);
 
 	std::string GetFileName() { return m_ZoneFile; }
 	void SetMapLoaded(bool val) {
-		bool isMapLoaded = false;
 		CheckMapMutex.writelock();
 		mapLoaded = val;
 		CheckMapMutex.releasewritelock();
@@ -63,6 +63,19 @@ public:
 		isMapLoaded = mapLoaded;
 		CheckMapMutex.releasereadlock();
 		return isMapLoaded;
+	}
+
+	void SetMapLoading(bool val) {
+		CheckMapMutex.writelock();
+		mapLoading = val;
+		CheckMapMutex.releasewritelock();
+	}
+	bool IsMapLoading() {
+		bool isMapLoading = false;
+		CheckMapMutex.readlock();
+		isMapLoading = mapLoading;
+		CheckMapMutex.releasereadlock();
+		return isMapLoading;
 	}
 private:
 	void RotateVertex(glm::vec3 &v, float rx, float ry, float rz);
@@ -92,7 +105,9 @@ private:
 	struct impl;
 	impl *imp;
 	bool mapLoaded;
+	bool mapLoading;
 	Mutex CheckMapMutex;
+	SPGrid* mGrid;
 };
 
 #endif

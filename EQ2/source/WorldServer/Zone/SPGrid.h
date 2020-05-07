@@ -90,6 +90,24 @@ public:
 	Face* GetClosestFace(float x, float y, float z);
 	Face* FindPath(float x, float y, float z, float targX, float targY, float targZ, bool forceEndCell=false);
 
+	void InitValues(float minX, float maxX, float minZ, float maxZ, int32 numCellsX, int32 numCellsZ)
+	{
+		m_MinX = minX;
+		m_MaxX = maxX;
+		m_MinZ = minZ;
+		m_MaxZ = maxZ;
+		m_NumCellsX = numCellsX;
+		m_NumCellsZ = numCellsZ;
+
+		float width = m_MaxX - m_MinX;
+		float height = m_MaxZ - m_MinZ;
+		// Allocate all the cells
+		m_Cells.resize(m_NumCellsZ * m_NumCellsX);
+
+		m_NumFaceCellsX = ceil(width / FACECELLSIZEDEFAULT);
+		m_NumFaceCellsZ = ceil(height / FACECELLSIZEDEFAULT);
+		m_FaceCells.resize(m_NumFaceCellsX * m_NumFaceCellsZ);
+	}
 private:
 	// 1-D array for cells as it is better performance wise then 2-D
 	std::vector<Cell> m_Cells;

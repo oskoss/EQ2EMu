@@ -271,21 +271,14 @@ void ZoneServer::Init()
 	UpdateWindowTitle(0);
 
 	string zoneName(GetZoneFile());
+	if (Grid == nullptr) {
+		Grid = new SPGrid(string(GetZoneFile()), 0);
+	}
 	if (zonemap == nullptr) {
-		zonemap = Map::LoadMapFile(zoneName);
+		zonemap = Map::LoadMapFile(zoneName, Grid);
 	}
 	pathing = IPathfinder::Load(zoneName);
 	movementMgr = new MobMovementManager();
-	if (Grid == nullptr) {
-		Grid = new SPGrid(string(GetZoneFile()), 0);
-		if (Grid->Init())
-			LogWrite(ZONE__DEBUG, 0, "SPGrid", "ZoneServer::Init() successfully initialized the grid");
-		else {
-			LogWrite(ZONE__DEBUG, 0, "SPGrid", "ZoneServer::Init() failed to initialize the grid... poor tron...");
-			delete Grid;
-			Grid = nullptr;
-		}
-	}
 //	else
 	//	LogWrite(ZONE__ERROR, 0, "SPGrid", "ZoneServer::Init() Grid is not null in init, wtf!");
 
@@ -1240,15 +1233,15 @@ void ZoneServer::RemoveDamagedSpawn(Spawn* spawn){
 		damaged_spawns.Remove(spawn->GetID());
 }
 
-bool ZoneServer::Process() 
+bool ZoneServer::Process()
 {
 	MMasterZoneLock->lock(); //Changing this back to a recursive lock to fix a possible /reload spells crash with multiple zones running - Foof
 #ifndef NO_CATCH
 	try
 	{
 #endif
-		if(LoadingData){
-			while(zoneID == 0){ //this is loaded by world
+		if (LoadingData) {
+			while (zoneID == 0) { //this is loaded by world
 				Sleep(10);
 			}
 
@@ -1277,7 +1270,7 @@ bool ZoneServer::Process()
 				LogWrite(GROUNDSPAWN__INFO, 0, "GSpawn", "-Load Groundspawn data complete!");
 
 				LogWrite(PET__INFO, 0, "Pet", "-Loading Pet data...");
-				database.GetPetNames(this);	
+				database.GetPetNames(this);
 				LogWrite(PET__INFO, 0, "Pet", "-Load Pet data complete!");
 
 				LogWrite(LOOT__INFO, 0, "Loot", "-Loading Spawn loot data...");
@@ -1306,6 +1299,14 @@ bool ZoneServer::Process()
 			spawn_group_chances.clear();
 			MSpawnGroupChances.releasewritelock(__FUNCTION__, __LINE__);
 
+			while (zonemap != nullptr && zonemap->IsMapLoading())
+			{
+				Sleep(10);
+			}
+
+			if (zonemap != nullptr && Grid != nullptr && !zonemap->IsMapLoaded())
+				delete Grid;
+
 			DeleteTransporters();
 			ReloadTransporters();
 
@@ -1315,7 +1316,7 @@ bool ZoneServer::Process()
 			if (!revive_points)
 				revive_points = new vector<RevivePoint*>;
 			else {
-				while (!revive_points->empty()){
+				while (!revive_points->empty()) {
 					safe_delete(revive_points->back());
 					revive_points->pop_back();
 				}
@@ -1331,7 +1332,7 @@ bool ZoneServer::Process()
 			spawn_check_add.Trigger();
 
 			const char* zone_script = world.GetZoneScript(this->GetZoneID());
-			if(lua_interface && zone_script) {
+			if (lua_interface && zone_script) {
 				RemoveLocationProximities();
 				lua_interface->RunZoneScript(zone_script, "init_zone_script", this);
 			}
