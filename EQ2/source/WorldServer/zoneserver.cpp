@@ -150,6 +150,7 @@ ZoneServer::ZoneServer(const char* name) {
 	dawn_hour = 0;
 	dawn_minute = 0;
 	reloading_spellprocess = false;
+	expansion_flag = 0;
 	MMasterZoneLock = new CriticalSection(MUTEX_ATTRIBUTE_RECURSIVE);
 	
 	Grid = nullptr;
@@ -1241,6 +1242,16 @@ bool ZoneServer::Process()
 	{
 #endif
 		if (LoadingData) {
+			if (lua_interface) {
+				string tmpScript("ZoneScripts/");
+				tmpScript.append(GetZoneName());
+				tmpScript.append(".lua");
+				struct stat buffer;
+				bool fileExists = (stat(tmpScript.c_str(), &buffer) == 0);
+				if (fileExists)
+					lua_interface->RunZoneScript(tmpScript.c_str(), "preinit_zone_script", this);
+			}
+
 			while (zoneID == 0) { //this is loaded by world
 				Sleep(10);
 			}

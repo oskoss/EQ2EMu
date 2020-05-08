@@ -550,6 +550,9 @@ public:
 	void	SetWeatherPattern(int8 val) { weather_pattern = val; }
 	void	SetWeatherLastChangedTime(int32 val) { weather_last_changed_time = val; }
 
+	int32	GetExpansionFlag() { return expansion_flag; }
+	void	SetExpansionFlag(int32 val) { expansion_flag = val; }
+
 	void	RemoveClientImmediately(Client* client);
 
 	void	ClearHate(Entity* entity);
@@ -825,6 +828,7 @@ private:
 	int		dusk_minute;
 	int		dawn_minute;
 	int32	spawn_delete_timer;
+	int32	expansion_flag;
 	map<int16, PacketStruct*> versioned_pos_structs;
 	map<int16, PacketStruct*> versioned_info_structs;
 	map<int16, PacketStruct*> versioned_vis_structs;
