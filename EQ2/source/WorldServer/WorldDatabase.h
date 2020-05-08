@@ -573,6 +573,8 @@ public:
 	void				FindSpell(Client* client, char* findString);
 
 	void				LoadChestTraps();
+
+	bool				CheckExpansionFlags(ZoneServer* zone, int32 spawnXpackFlag);
 private:
 	DatabaseNew			database_new;
 	map<int32, string>	zone_names;

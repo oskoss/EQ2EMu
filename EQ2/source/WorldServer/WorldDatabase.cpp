@@ -880,7 +880,7 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 	NPC* npc = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag\n"
 													"FROM spawn s\n"
 													"INNER JOIN spawn_npcs npc\n"
 													"ON s.id = npc.spawn_id\n"
@@ -897,6 +897,10 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		if(appearance)
 		memcpy(&npc->appearance, appearance, sizeof(AppearanceData));
 		*/
+		int32 npcXpackFlag = atoul(row[75]);
+		if (!CheckExpansionFlags(zone, npcXpackFlag))
+			continue;
+
 		id = atoul(row[0]);
 		if(zone->GetNPC(id, true))
 			continue;
@@ -1108,7 +1112,7 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 	Widget* widget = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.expansion_flag\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_widgets sw\n"
 												  "ON s.id = sw.spawn_id\n"
@@ -1120,6 +1124,10 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 												  "GROUP BY s.id",
 												  zone->GetZoneID());
 	while(result && (row = mysql_fetch_row(result))){
+		int32 widgetXpackFlag = atoul(row[32]);
+		if (!CheckExpansionFlags(zone, widgetXpackFlag))
+			continue;
+
 		id = atoul(row[0]);
 		if(zone->GetWidget(id, true))
 			continue;
@@ -1195,7 +1203,7 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 	Object* object = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.expansion_flag\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_objects so\n"
 												  "ON s.id = so.spawn_id\n"
@@ -1208,6 +1216,11 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 												  zone->GetZoneID());
 
 	while(result && (row = mysql_fetch_row(result))){
+
+		int32 objXpackFlag = atoul(row[19]);
+		if (!CheckExpansionFlags(zone, objXpackFlag))
+			continue;
+
 		id = atoul(row[0]);
 		if(zone->GetObject(id, true))
 			continue;
@@ -1254,7 +1267,7 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 	GroundSpawn* spawn = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.expansion_flag\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_ground sg\n"
 												  "ON s.id = sg.spawn_id\n"
@@ -1266,6 +1279,11 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 												  "GROUP BY s.id",
 												  zone->GetZoneID());
 	while(result && (row = mysql_fetch_row(result))){
+
+		int32 gsXpackFlag = atoul(row[21]);
+		if (!CheckExpansionFlags(zone, gsXpackFlag))
+			continue;
+
 		id = atoul(row[0]);
 		if(zone->GetGroundSpawn(id, true))
 			continue;
@@ -5995,7 +6013,7 @@ bool WorldDatabase::LoadGroundSpawn(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset\n"
+	database_new.Select(&result, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.expansion_flag\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_ground sg\n"
 								 "ON sg.spawn_id = s.id\n"
@@ -6634,4 +6652,21 @@ void WorldDatabase::LoadChestTraps() {
 			chest_trap_list.AddChestTrap(trap);
 		}
 	}
+}
+
+bool WorldDatabase::CheckExpansionFlags(ZoneServer* zone, int32 spawnXpackFlag)
+{
+	if (spawnXpackFlag == 0)
+		return true;
+
+	int32 globalXpackFlag = rule_manager.GetGlobalRule(R_Expansion, GlobalExpansionFlag)->GetInt32();
+	int32 zoneXpackFlag = zone->GetExpansionFlag();
+	// zone expansion flag takes priority
+	if (zoneXpackFlag > 0 && (spawnXpackFlag & zoneXpackFlag) == 0)
+		return false;
+	// zone expansion flag fails, then if global expansion flag set, we see if that bit operand doesn't match, skip mob then
+	else if (zoneXpackFlag == 0 && globalXpackFlag > 0 && (spawnXpackFlag & globalXpackFlag) == 0)
+		return false;
+
+	return true;
 }
