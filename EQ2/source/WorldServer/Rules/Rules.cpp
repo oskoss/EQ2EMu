@@ -292,6 +292,8 @@ RuleManager::RuleManager() {
 
 	RULE_INIT(R_Spells, NoInterruptBaseChance, "50");
 
+	RULE_INIT(R_Expansion, GlobalExpansionFlag, "0");
+
 	#undef RULE_INIT
 }
 

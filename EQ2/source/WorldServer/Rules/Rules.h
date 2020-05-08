@@ -39,7 +39,8 @@ enum RuleCategory {
 	R_World,
 	R_Zone,
 	R_Loot,
-	R_Spells
+	R_Spells,
+	R_Expansion
 };
 
 enum RuleType {
@@ -158,7 +159,9 @@ enum RuleType {
 	ClientSaveTimer,
 	DefaultZoneShutdownTimer,
 	WeatherTimer,
-	SpawnDeleteTimer
+	SpawnDeleteTimer,
+
+	GlobalExpansionFlag
 };
 
 class Rule {
