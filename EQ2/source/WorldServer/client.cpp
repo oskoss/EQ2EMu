@@ -8451,3 +8451,23 @@ void Client::MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32
 
 	delete[] tmp;
 }
+
+void Client::SendHailCommand(Spawn* spawn)
+{
+	// hardcoded 'hail' entity commands
+	switch (spawn->secondary_command_list_id)
+	{
+		case 9:
+		case 1262:
+		case 1265:
+		case 1267:
+		{
+			EQ2_16BitString* command = new EQ2_16BitString();
+			command->data = "";
+			command->size = 0;
+			commands.Process(COMMAND_HAIL, command, this, spawn);
+			safe_delete(command);
+			break;
+		}
+	}
+}

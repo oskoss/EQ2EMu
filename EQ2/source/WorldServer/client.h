@@ -401,6 +401,8 @@ public:
 	void MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32, SpawnData> pos_changes, map<int32, SpawnData> vis_changes, int32 info_size, int32 pos_size, int32 vis_size);
 
 	bool IsZonedIn() { return connected_to_zone; }
+
+	void SendHailCommand(Spawn* target);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

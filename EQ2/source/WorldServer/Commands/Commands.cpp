@@ -2844,6 +2844,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_REPAIR: {
 			Spawn* spawn = cmdTarget;
 			if (spawn && spawn->GetMerchantType() & MERCHANT_TYPE_REPAIR) {
+				client->SendHailCommand(spawn);
 				client->SetMerchantTransaction(spawn);
 				client->SendRepairList();
 			}
@@ -8395,6 +8396,7 @@ void Commands::Command_SendMerchantWindow(Client* client, Seperator* sep, bool s
 	if(spawn) {
 		client->SetMerchantTransaction(spawn);
 		if (spawn->GetMerchantID() > 0){
+			client->SendHailCommand(spawn);
 			//MerchantFactionMultiplier* multiplier = world.GetMerchantMultiplier(spawn->GetMerchantID());
 			//if(!multiplier || (multiplier && client->GetPlayer()->GetFactions()->GetFactionValue(multiplier->faction_id) >= multiplier->faction_min)){
 			client->SendBuyMerchantList(sell);
