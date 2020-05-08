@@ -497,7 +497,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			if (target->GetDatabaseID() > 0)
 			{
 				char query[256];
-				_snprintf(query, 256, "update spawn set expansion_flag=%i where id=%i", atoul(value), target->GetDatabaseID());
+				snprintf(query, 256, "update spawn set expansion_flag=%i where id=%i", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
 					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
