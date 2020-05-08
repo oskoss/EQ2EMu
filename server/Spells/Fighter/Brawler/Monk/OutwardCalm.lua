@@ -8,3 +8,12 @@
 
 -- Info from spell_display_effects (remove from script when done)
 -- Wards caster against 2789 points of elemental, noxious and arcane damage
+
+function cast(Caster, Target)
+AddWard(25, 1, 1)
+end
+
+
+function remove(Caster, Target)
+RemoveWard(Target)
+end

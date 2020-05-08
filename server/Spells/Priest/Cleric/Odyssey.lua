@@ -1,28 +1,25 @@
 --[[
     Script Name    : Spells/Priest/Cleric/Odyssey.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 06:08:33
+    Script Author  : neatz09
+    Script Date    : 2020.01.02 04:01:10
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
 -- Teleports target to a zone landmark
--- You must be a citizen to benefit from an odyssey.
+--     You must be a citizen to benefit from an odyssey.
 -- This effect cannot be cast during combat
 -- If not a City Betrayer
+-- Teleports you to your recall point.
+function precast(Caster, Target)
+    if GetBoundZoneID(Caster) == 0 then
+        return false
+    end
 
+    return true
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+function cast(Caster, Target)
+    Gate(Caster)
 end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-

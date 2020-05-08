@@ -16,6 +16,6 @@ function cast(Caster, Target, DmgType, MinVal, MaxVal)
     end
 
     -- Interrupts target
-    Interrupt(Caster)
+    Interrupt(Caster, Target)
 
 end

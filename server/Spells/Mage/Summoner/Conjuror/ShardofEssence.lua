@@ -10,5 +10,5 @@ function cast(Caster, Target, ItemID)
     if IsPlayer(Target) and HasItem(Target, ItemID) then 
 RemoveItem(Target, ItemID)
 end
-SummonItem(Target, ItemID)
+SummonItem(Target, ItemID, 1)
 end

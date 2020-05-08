@@ -8,9 +8,5 @@
 
 function cast(Caster, Target, MinVal, MaxVal)
     -- Heals target for 31 - 38
-    if MaxVal ~= nil and MinVal < MaxVal then
-        SpellHeal("Heal", MinVal, MaxVal)
-    else
-        SpellHeal("Heal", MinVal)
-    end
+SpellHeal("Heal", MinVal, MaxVal)
 end

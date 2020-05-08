@@ -1,25 +1,24 @@
 --[[
     Script Name    : Spells/Fighter/Warrior/Mangle.lua
-    Script Author  : Dello
-    Script Date    : 2014.07.11 02:07:39
+    Script Author  : neatz09
+    Script Date    : 2020.01.02 03:01:17
     Script Purpose : 
                    : 
 --]]
+
 function cast(Caster, Target, DmgType, MinVal, MaxVal, SkillAmt)
-
+-- Inflicts 21 - 35 slashing damage on target
+SpellDamage(Target, DmgType, MinVal, MaxVal)
+-- Decreases Slashing, Crushing and Piercing of target by 1.5
+if LastSpellAttackHit() then
     AddSkillBonus(Target, GetSkillIDByName("Slashing"), SkillAmt)
-
-    AddSkillBonus(Target, GetSkillIDByName("Piercing"), SkillAmt)
-
     AddSkillBonus(Target, GetSkillIDByName("Crushing"), SkillAmt)
-
-    if MaxVal ~= nil and MinVal < MaxVal then
-        SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))
-    else
-        SpellDamage(Target, DmgType, MinVal)
-    end
+    AddSkillBonus(Target, GetSkillIDByName("Piercing"), SkillAmt)
 end
+    end
+
 
 function remove(Caster, Target)
     RemoveSkillBonus(Target)
+
 end

@@ -6,7 +6,7 @@
 	Script Notes	:
 --]]
 
-local QUEST_2 = 216
+local QUEST_2 = 508
 local gnoll_spawned_recently = false
 
 function spawn(NPC)
@@ -40,9 +40,9 @@ function GetRandomGnollID()
 	
 	-- 1 of 2 'a gnoll machinist'
 	if choice == 1 then
-		return 1980103
+		return 1980062
 	elseif choice == 2 then
-		return 1980102
+		return 1980065
 	end
 end
 

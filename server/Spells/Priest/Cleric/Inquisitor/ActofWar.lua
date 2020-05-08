@@ -1,24 +1,23 @@
 --[[
     Script Name    : Spells/Priest/Cleric/Inquisitor/ActofWar.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 06:08:48
+    Script Author  : neatz09
+    Script Date    : 2019.10.26 11:10:55
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
 
--- Info from spell_display_effects (remove from script when done)
+-- On any combat or spell hit this spell may cast Strike of Faith on target of attack.  Triggers about 1.0 times per minute. 
+--     Inflicts 83 divine damage on target
 
+function cast(Caster, Target, DmgType, Dmg)
+	AddProc(Target, 1, 1.7, nil, 1)
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+function proc(Caster, Target, Type, DmgType, Dmg)
+	ProcDamage(Caster, Target, "Strike of Faith", DmgType, Dmg)
 end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+	RemoveProc(Target)
 end
-

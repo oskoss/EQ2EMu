@@ -2,7 +2,7 @@
     Script Name    : Spells/Mage/Summoner/Necromancer/GrislyProtection.lua
     Script Author  : Jabantiz
     Script Date    : 2013.12.08 12:12:05
-    Script Purpose : 
+    Script Purpose : Updated Proc Hate 4/16/20 Neatz09
                    : 
 --]]
 
@@ -37,10 +37,9 @@ function proc(Caster, Target, Type, agg, procDmgType, procDmg, procHeal, atkSpee
         --     On any combat or spell hit this spell will cast Shout on target of attack.  
         --         Increases Threat to target encounter by 35 - 42 
         if procHateMax ~= nil and procHateMin < procHateMax then
-            AddHate(Target, math.random(procHateMin, procHateMax))
-        else
-            AddHate(Target, procHateMin)
+ProcHate(Caster, Target, math.random(procHateMin, procHateMax), "Shout")
         end
+
     elseif Type == 2 then
         -- 2 = defensive
 

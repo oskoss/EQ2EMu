@@ -5,6 +5,21 @@
     Script Purpose : 
                    : 
 --]]
-
--- Info from spell_display_effects (remove from script when done)
 -- Summons a pet Illusion Ally
+function cast(Caster, Target, PetID, MaxLevel)
+   -- Summons a pet
+local pet = SummonPet(Caster, PetID, MaxLevel)
+if pet ~= nil then
+    CopySpawnAppearance(pet, Caster)
+end
+end
+
+function remove(Caster, Target)
+   pet = GetPet(Caster)
+   if pet ~= nil then
+      DismissPet(pet)
+   end
+end
+
+
+ 

@@ -6,7 +6,24 @@
                    : 
 --]]
 
--- Info from spell_display_effects (remove from script when done)
--- When damaged with a melee weapon this spell will cast Counterattack on target's attacker.  
+-- When damaged with a melee weapon this spell will cast Counterattack on target's attacker.
 --     Inflicts 43 - 72 melee damage on target
 --     Grants a total of 3 triggers of the spell.
+
+function cast(Caster, Target, DmgType, MinVal, MaxVal, Triggers)
+	AddProc(Target, 15, 100)
+	SetSpellTriggerCount(Triggers, 1)
+end
+
+function proc(Caster, Target, Type, DmgType, MinVal, MaxVal, Triggers)
+  
+if Type == 15 then
+        --         Inflicts 79 - 133 piercing damage on target
+        ProcDamage(Caster, Target, "Counterattack", DmgType, MinVal, MaxVal)
+        RemoveTriggerFromSpell(1)
+    end
+end
+
+function remove(Caster, Target)
+	RemoveProc(Target)
+end

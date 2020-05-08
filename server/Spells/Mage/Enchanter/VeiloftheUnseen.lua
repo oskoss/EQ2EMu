@@ -11,7 +11,8 @@ function precast(Caster)
 end
 
 function cast(Caster, Target)
--- Prevents AOE (except when direct) -- need support for this
+--     Say(Caster, "Prevents AOE (except when direct) -- need support for this")
+
 -- Grants invisibility to target
 -- Suspends target's movement speed enhancements
 -- Dispelled when target takes damage

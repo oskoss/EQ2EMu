@@ -6,13 +6,30 @@
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
 
-function death(NPC, Spawn)
-	choice = math.random(1,2)
-	
-	if choice == 1 then
-		PlayFlavor(NPC, "", "Well done!", "", 1689589577, 4560189, Spawn)
-	else
-		PlayFlavor(NPC, "", "Okay, who's next?", "", 1689589577, 4560189, Spawn)
-	end
+
+function spawn(NPC)
+
 end
 
+function hailed(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+end
+
+function respawn(NPC)
+	spawn(NPC)
+end
+
+function healthchanged(NPC, Spawn)
+	local hp_percent = GetPCTOfHP(NPC, pctHealMin)
+	if hp_percent <= 0.50
+	if spoke == true then
+        Runback(NPC)
+        SetInCombat(NPC, false)
+        ClearHate(NPC)
+        ClearEncounter(NPC)
+	SetHP(NPC, GetPCTofHP(NPC, pctHealMin))
+	end
+end
+end
+
+ 

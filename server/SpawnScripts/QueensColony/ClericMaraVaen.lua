@@ -24,16 +24,16 @@ end
 function Think(NPC, Target)
 	local mostHated = GetMostHated(NPC)
 	if mostHated ~= nil then
-Say(NPC, "Has most hated")
+--[[ Say(NPC, "Has most hated") --]]
 		aggro(NPC, mostHated)
 	end
 end
 
 -- Should only cast on lost scouts (ghost version)
 function aggro(NPC, Spawn)
-Say(NPC, "In aggro()")
+--[[ Say(NPC, "In aggro()") --]]
 	if GetTempVariable(NPC, "CASTING") ~= "True" then
-Say(NPC, "Casting spell")
+--[[ Say(NPC, "Casting spell") --]]
 		SetTempVariable(NPC, "CASTING", "True")
 		CastSpell(Spawn, 130027, 1, NPC)
 		AddTimer(NPC, 1610, "FinishedCasting")

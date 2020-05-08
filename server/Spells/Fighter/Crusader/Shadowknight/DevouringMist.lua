@@ -12,7 +12,7 @@
 -- Decreases Mitigation of target encounter vs physical damage by 1234
 
 function cast(Caster, Target, CsterAmt, TgtAmt)
-    Say(Caster, "This Spell is not setup for AoE correctly")
+    Say(Caster, "This Spell is not setup for AoE correctly. mitigation is also increased per target.")
 
 AddSpellBonus(Caster, 200, CstrAmt)
 AddSpellBonus(Target, 200, TgtAmt)

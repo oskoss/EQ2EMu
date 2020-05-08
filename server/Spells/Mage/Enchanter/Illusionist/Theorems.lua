@@ -6,7 +6,20 @@
                    : 
 --]]
 
--- Info from spell_display_effects (remove from script when done)
+
 -- When damaged with a spell this spell will cast Theorems on target.  
 --     Inflicts 555 - 678 mental damage on target
 --     Grants a total of 3 triggers of the spell.
+function cast(Caster, Target, DmgType, MinVal, MaxVal)
+	AddProc(Target, 17, 100)
+	SetSpellTriggerCount(3, 1)
+end
+
+function proc(Caster, Target, Type, DmgType, MinVal, MaxVal)
+	ProcDamage(Caster, Target, "Theorems", DmgType, MinVal, MaxVal)
+        RemoveTriggerFromSpell(1)
+end
+
+function remove(Caster, Target)
+	RemoveProc(Target)
+end

@@ -1,12 +1,13 @@
 --[[
 	Script Name	: Armored
 	Script Purpose	: Guardian Defensive Stance script
-	Script Author	: Zcoretri
+	Script Author	: Zcoretri - rewriten by neatz09 10-29-19
 	Script Date	: 2010.01.26
-	Script Note	: Need "worn armor" effectiveness
+	Script Note	: 
 --]]
 
-function cast(Caster, Target, Physical, Avoidance, SkillAmt, Aggression, Defense, MitNox, MitElem, WornArmor)
+function cast(Caster, Target, Physical, Avoidance, SkillAmt, Aggro, Defense, MitNox, MitElem, Armor)
+    Say(Caster, "physical reduction looks wrong")
 
     AddSpellBonus(Caster, 200, Physical)        -- physical
     AddSpellBonus(Caster, 696, Avoidance)       -- avoidance
@@ -14,14 +15,17 @@ function cast(Caster, Target, Physical, Avoidance, SkillAmt, Aggression, Defense
     AddSpellBonus(Caster, 203, MitNox)          -- mitigation against arcane
     AddSpellBonus(Caster, 201, MitElem)         -- mitigation against elemental
 
-    AddSkillBonus(Caster, 418532101, SkillAmt)  -- slashing
-    AddSkillBonus(Caster, 3421494576, SkillAmt) -- crushing
-    AddSkillBonus(Caster, 3048574950, SkillAmt) -- piercing
-    AddSkillBonus(Caster, 723762198, Aggression)-- aggression
-    AddSkillBonus(Caster, 609880714, Defense)   -- defense
+AddSkillBonus(Target, GetSkillIDByName("Slashing"), SkillAmt)
+AddSkillBonus(Target, GetSkillIDByName("Crushing"), SkillAmt)
+AddSkillBonus(Target, GetSkillIDByName("Piercing"), SkillAmt)
+AddSkillBonus(Target, GetSkillIDByName("Agression"), Aggro)
+AddSkillBonus(Target, GetSkillIDByName("Defense"), Defense)
+AddSkillBonus(Target, GetSkillIDByName("Parry"), Defense)
 
-    -- Increases the caster's effectiveness of worn armor vs physical damage by 15%
-    -- TODO
+
+-- Increases the caster's effectiveness of worn armor vs physical damage by 25%
+    AddSpellBonus(Target, 678, Armor)
+
 end
 
 

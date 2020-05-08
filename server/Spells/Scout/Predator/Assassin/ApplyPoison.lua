@@ -1,24 +1,13 @@
 --[[
     Script Name    : Spells/Scout/Predator/Assassin/ApplyPoison.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.12 06:08:37
+    Script Author  : neatz09
+    Script Date    : 2019.11.07 08:11:55
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+-- On a melee hit this spell may cast Assassin's Hemotoxin on target of attack.  Lasts for 24.0 seconds.  Triggers about 3.0 times per minute. 
+--     Inflicts 268 poison damage on target instantly and every 4 seconds
+-- If profession other than Predator
+-- If profession other than Rogue

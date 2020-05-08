@@ -13,10 +13,9 @@ function hailed(NPC, Spawn)
 	if choice == 1 then
 		PlayFlavor(NPC, "", "There it was again!", "", 1689589577, 4560189, Spawn)
 	elseif choice == 2 then
-		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1027.mp3", "", "", 0, 0, Spawn)
-	elseif choice == 3 then
-		PlayFlavor(NPC, "", "I sssee a fin rissing up from the ruins over there!", "", 1689589577, 4560189, Spawn)
+		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1027.mp3", "Ever heard of the dreaded Bladefin?", "", 0, 0, Spawn)
 	else
+		PlayFlavor(NPC, "", "I sssee a fin rissing up from the ruins over there!", "", 1689589577, 4560189, Spawn)
 	end
 
 end

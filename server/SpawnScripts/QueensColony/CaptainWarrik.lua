@@ -3,7 +3,9 @@
     Script Author  : Zcoretri
     Script Date    : 2015.07.30
     Script Purpose : Captain Warrik dialog
-                   : 
+    Modified Date  : 2020.04.03
+    Modified by    : premierio015
+    Notes             : Added animations
 --]]
 
 function spawn(NPC)
@@ -18,7 +20,7 @@ function hailed(NPC, Spawn)
     FaceTarget(NPC, Spawn)
     conversation = CreateConversation()
 
-    PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int001.mp3", "", "", 204642470, 358524335, Spawn)
+    PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int001.mp3", "", "salute", 204642470, 358524335, Spawn)
     AddConversationOption(conversation, "Teach me about interacting with people and objects around Norrath.", "dlg_6_1")
     AddConversationOption(conversation, "I'll return for instruction later.")
     StartConversation(conversation, NPC, Spawn, "Greetings," .. GetName(Spawn) .. ". You're the new addition to the colony that we've been hearing about. I've been stationed here by the queen to show you ways to interact with the world around you.")
@@ -28,7 +30,7 @@ function dlg_6_1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int002.mp3", "", "", 3266378152, 2419021702, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int002.mp3", "", "nod", 3266378152, 2419021702, Spawn)
 	AddConversationOption(conversation, "In what ways can I interact with other player characters?", "dlg_6_2")
 	AddConversationOption(conversation, "How do I interact with non-player characters?", "dlg_6_5")
 	AddConversationOption(conversation, "How can I interact with objects in the world?", "dlg_6_10")
@@ -50,7 +52,7 @@ function dlg_6_3(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int004.mp3", "", "", 217492850, 1476210113, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int004.mp3", "", "nod", 217492850, 1476210113, Spawn)
 	AddConversationOption(conversation, "How do I talk to other players?", "dlg_6_4")
 	StartConversation(conversation, NPC, Spawn, "If one of the right-click choices is grey, it means it is unavailable. You either need to be closer to the other player or be grouped with them.")
 end
@@ -59,7 +61,7 @@ function dlg_6_4(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int005.mp3", "", "", 499804299, 1158500700, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int005.mp3", "", "nod", 499804299, 1158500700, Spawn)
 	AddConversationOption(conversation, "How do I interact with non-player characters?", "dlg_6_5")
 	AddConversationOption(conversation, "How can I interact with objects in the world?", "dlg_6_10")
 	AddConversationOption(conversation, "What can I do with items in my inventory?", "dlg_6_13")
@@ -89,7 +91,7 @@ function dlg_6_7(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int008.mp3", "", "", 4204591829, 775598592, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int008.mp3", "", "nod", 4204591829, 775598592, Spawn)
 	AddConversationOption(conversation, "Are there multiple ways to talk to an NPC?", "dlg_6_8")
 	StartConversation(conversation, NPC, Spawn, "You can see all the ways you can interact with an NPC by right-clicking on it. If an option is grey, you probably need to be closer to it.")
 end
@@ -98,7 +100,7 @@ function dlg_6_8(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int009.mp3", "", "", 3050147178, 1058091559, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int009.mp3", "", "chuckle", 3050147178, 1058091559, Spawn)
 	AddConversationOption(conversation, "How do I go about attacking an NPC?", "dlg_6_9")
 	StartConversation(conversation, NPC, Spawn, "Well, you're talking to me, so you know at least one way! You can either right-click and select 'hail,' click on them if that is their default action, or target them and hit the H key.")
 end
@@ -107,7 +109,7 @@ function dlg_6_9(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int010.mp3", "", "", 3207862275, 1652184320, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int010.mp3", "", "nod", 3207862275, 1652184320, Spawn)
 	AddConversationOption(conversation, "In what ways can I interact with other player characters?", "dlg_6_2")
 	AddConversationOption(conversation, "How do I interact with non-player characters?", "dlg_6_5")
 	AddConversationOption(conversation, "How can I interact with objects in the world?", "dlg_6_10")
@@ -129,7 +131,7 @@ function dlg_6_11(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int012.mp3", "", "", 281123238, 3770593908, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int012.mp3", "", "nod", 281123238, 3770593908, Spawn)
 	AddConversationOption(conversation, "Can anything bad happen by clicking on an object?", "dlg_6_12")
 	StartConversation(conversation, NPC, Spawn, "Sometimes you'll receive information on what the object will do when you hold your mouse over it. Other times you will need to right-click on the object to see what action you can take with it.")
 end
@@ -138,7 +140,7 @@ function dlg_6_12(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int013.mp3", "", "", 22184547, 714173495, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int013.mp3", "", "scold", 22184547, 714173495, Spawn)
 	AddConversationOption(conversation, "In what ways can I interact with other player characters?", "dlg_6_2")
 	AddConversationOption(conversation, "How do I interact with non-player characters?", "dlg_6_5")
 	AddConversationOption(conversation, "What can I do with items in my inventory?", "dlg_6_13")
@@ -177,7 +179,7 @@ function dlg_6_16(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int017.mp3", "", "", 1124732255, 409658595, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/captain_warrik/tutorial_island02_revamp/trainers/world_interaction/world_int017.mp3", "", "nod", 1124732255, 409658595, Spawn)
 	AddConversationOption(conversation, "In what ways can I interact with other player characters?", "dlg_6_2")
 	AddConversationOption(conversation, "How do I interact with non-player characters?", "dlg_6_5")
 	AddConversationOption(conversation, "How can I interact with objects in the world?", "dlg_6_10")

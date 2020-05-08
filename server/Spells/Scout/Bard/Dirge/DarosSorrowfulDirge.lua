@@ -6,6 +6,14 @@
                    : 
 --]]
 
--- Info from spell_display_effects (remove from script when done)
 -- Decreases Haste of target encounter by 11.7
 -- Slows target encounter by 16.2%
+function cast(Caster, Target, Haste, Slow)
+    AddSpellBonus(Target, 617, Haste)
+	SetSpeedMultiplier(Target, Slow)
+end
+
+function remove(Caster, Target)
+	RemoveSpellBonus(Target)
+	SetSpeedMultiplier(Target, 1)
+end

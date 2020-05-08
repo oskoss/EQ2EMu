@@ -8,3 +8,11 @@
 
 -- Info from spell_display_effects (remove from script when done)
 -- Causes 5% Threat to transfer to target when in combat
+
+function cast(Caster, Target, Xfer)
+    AddThreatTransfer(Caster, Target, Xfer)
+end
+
+function remove(Caster, Target)
+    RemoveThreatTransfer(Caster)
+end

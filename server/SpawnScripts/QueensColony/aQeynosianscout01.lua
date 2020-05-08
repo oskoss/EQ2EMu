@@ -2,7 +2,7 @@
     Script Name    : SpawnScripts/QueensColony/aQeynosianscout.lua
     Script Author  : premierio015
     Script Date    : 2020.04.18 05:04:21
-    Script Purpose : 
+    Script Purpose :  Qeynosian Scout  script
                    : 
 --]]
 

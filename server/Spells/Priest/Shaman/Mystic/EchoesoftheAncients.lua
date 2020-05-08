@@ -1,27 +1,27 @@
 --[[
     Script Name    : Spells/Priest/Shaman/Mystic/EchoesoftheAncients.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 07:08:49
+    Script Author  : neatz09
+    Script Date    : 2020.02.03 09:02:12
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
--- Info from spell_display_effects (remove from script when done)
+-- Increases all damage done to target encounter by 1.35%
 -- Interrupts target encounter
--- Decreases Max Health of target encounter by 1.3%
 -- Decreases Mitigation of target encounter vs elemental and noxious damage by 234
 
-end
+function cast(Caster, Target, DmgBonus, Mit)
+    Say(Caster, "Unsure if dmg bonus works or not")
+    
+AddSpellBonus(Caster, 704, DmgBonus)
+    Interrupt(Caster, Target)
+    AddSpellBonus(Target, 201, Mit)
+    AddSpellBonus(Target, 202, Mit)
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
 end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+    RemoveSpellBonus(Caster, Target)
 end
+
 

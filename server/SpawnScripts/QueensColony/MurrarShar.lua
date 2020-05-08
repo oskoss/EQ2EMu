@@ -3,6 +3,9 @@
 	Script Purpose	: Murrar Shar <Emissary of Queen Antonia Bayle>
 	Script Author	: Zcoretri
 	Script Date	: 2015.07.30
+        Modified Date :  2020.04.20
+        Modified by     : premierio015
+       Modified Notes: Added animations
 	Script Notes	: 
 --]]
 

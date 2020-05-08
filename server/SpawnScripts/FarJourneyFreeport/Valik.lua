@@ -7,7 +7,22 @@
 --]]
 
 function spawn(NPC)
+	AddTimer(NPC, 5000, "ValikMove")
+end
 
+function ValikMove(NPC, Spawn)
+	MoveToLocation(NPC, -4.17, -2.02, -1.52, 2)
+	MoveToLocation(NPC, -5.37, -1.97, -4.22, 2)
+	MoveToLocation(NPC, -6.39, -1.81, -3.96, 2)
+	
+	AddTimer(NPC, 30000, "ValikMove_2")
+end
+
+function ValikMove_2(NPC, Spawn)
+	MoveToLocation(NPC, -4.17, -2.02, -1.52, 2)
+	MoveToLocation(NPC, -6.62, -1.82, 5.12, 2)
+	
+	AddTimer(NPC, 30000, "ValikMove")
 end
 
 function hailed(NPC, Spawn)

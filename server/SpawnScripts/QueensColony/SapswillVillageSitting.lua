@@ -3,7 +3,10 @@
 	Script Purpose	: Spawn script for a sitting Sapswill.
 	Script Author	: Scatman
 	Script Date	: 2009.01.11
-	Script Notes	: 
+        Modified by      : premierio015
+        Modified  Date : 2020.04.29
+	Script Notes	:   
+        Modified Notes :  Changed speed from 4 to 7, so now running look a like Live version.
 --]]
 
 local ADiplomaticMission = 166

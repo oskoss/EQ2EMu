@@ -7,6 +7,8 @@
 	Script Notes: Auto-Generated Conversation from PacketParser Data
 --]]
 
+local AquaticResearchNotebook = 488
+
 function spawn(NPC)
 end
 
@@ -21,6 +23,11 @@ function hailed(NPC, Spawn)
 	choice = math.random(1,3)
 	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_" .. choice .. "_1004.mp3", "", "", 0, 0, Spawn)
 
+    if HasQuest(Spawn, AquaticResearchNotebook) then
+        if GetQuestStep(Spawn, AquaticResearchNotebook) == 5 then
+            FoundNotebook(NPC, Spawn)
+        end
+    end
 	AddConversationOption(conversation, "Let us begin.", "Begin")
 	AddConversationOption(conversation, "I will return for instruction later.")
 	StartConversation(conversation, NPC, Spawn, "Welcome to the service of the Overlord. Our great leader has sent me here to explain something very important: how your Spells, Combat Arts, and Abilities work, as well as how to improve them. Listen and learn from the mighty Sythor the All-Seeing!")
@@ -141,4 +148,21 @@ function SortKnowledge(NPC, Spawn)
 	AddConversationOption(conversation, "I have more questions.", "Begin")
 	AddConversationOption(conversation, "I will return for instruction later.")
 	StartConversation(conversation, NPC, Spawn, "Your Spells and Combat Arts can easily be organized according to your personal taste. Just open your Knowledge Book and click the 'Sort' button in the upper right corner. This allows you to organize your Spells and Arts for easy access to the abilities you wish to use.")
+end
+
+function FoundNotebook(NPC, Spawn)
+    AddConversationOption(conversation, "I found this research notebook and completed the work described in it for you.  Apparently the person sent before me wasn't so lucky.", "FoundNotebook2")
+end
+
+function FoundNotebook2(NPC, Spawn)
+    FaceTarget(NPC, Spawn)
+    conversation = CreateConversation()
+    
+    PlayFlavor(NPC, "trainer_sythor_the_all-seeing/tutorial_island02_evil_revamp/trainers/spells_arts_abilities/spells_arts017.mp3", "", "", 654103180, 563259402, Spawn)
+    AddConversationOption(conversation, "Thanks.", "FoundNotebook3")
+    StartConversation(conversation, NPC, Spawn, "I knew I shouldn't have sent such a tasty looking gnome into dangerous waters.  Ludz will be slightly missed...  Anyways, here is the reward I was going to give him, but I guess it's yours now.")
+end
+
+function FoundNotebook3(NPC, Spawn)
+    SetStepComplete(Spawn, AquaticResearchNotebook, 5)
 end

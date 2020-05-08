@@ -6,9 +6,9 @@
                    : 
 --]]
 
-function cast(Caster, Target, PetID, MaxLevel)
+function cast(Caster, Target, PetID)
    -- Summons a pet
-   SummonPet(Caster, PetID, MaxLevel)
+   SummonPet(Caster, PetID)
 end
 
 function remove(Caster, Target)

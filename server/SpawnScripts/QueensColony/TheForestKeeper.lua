@@ -38,7 +38,7 @@ function MustRemainStrong(NPC, Spawn, Choice)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/the_forest_keeper/tutorial_island02_revamp/quests/forest_keeper/forest_keeper001.mp3", "", "", 404349798, 0, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/the_forest_keeper/tutorial_island02_revamp/quests/forest_keeper/forest_keeper001.mp3", "", "", 434333229, 272774680, Spawn)
 
 	if Choice == 1 then
 		AddConversationOption(conversation, "Are you the Forest Keeper that Deianeira spoke of?", "dlg_1_1")

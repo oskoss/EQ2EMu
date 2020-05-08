@@ -1,9 +1,9 @@
 --[[
     Script Name    : SpawnScripts/QueensColony/aQeynosianscout02.lua
     Script Author  : Premierio015
-    Script Date    : 2020.04.18 05:04:25
-    Script Purpose : 
-                   : 
+    Script Date     : 2020.04.18 05:04:25
+    Script Purpose  : a Qeynosian scout script 
+    Notes                : 
 --]]
 
 function spawn(NPC)

@@ -1,12 +1,9 @@
 --[[
-	Spawn Template
-	Script Name	: circle_clockwise_small_01.lua
-	Script Purpose	: Makes the spawn do a small circle in a counter-clockwise fashion.
-	Script Author	: Scatman
-	Script Date	: 2008-08-26
-	Script Notes	: If the coords are out of bounds then the spawn will still go there.
-
-	These are just suggested functions to get you started. Edit as needed.
+	Script Name	:	SpawnScripts/QueensColony/SkeletonScript1.lua
+	Script Purpose	:	SkeletonScript1
+	Script Author	:	premierio015
+	Script Date	:	2020.04.10
+	Script Notes	:	
 --]]
 
 function spawn(NPC)
@@ -25,4 +22,25 @@ end
 
 function hailed(NPC, Spawn)
    FaceTarget(NPC, Spawn)
+end
+
+function aggro(NPC, Spawn)
+ local choice = math.random(1, 3)
+ if choice == 1 then
+ PlayFlavor(NPC, "voiceover/english/skeleton_base_1/ft/skeleton/skeleton_base_1_1_aggro_c77d7bff.mp3", "Your eyes are so pretty.", "", 1412152942, 873988632, Spawn)
+ elseif choice == 2 then
+ PlayFlavor(NPC, "voiceover/english/skeleton_base_1/ft/skeleton/skeleton_base_1_1_aggro_2168c5.mp3", "Seek death and it finds you.", "", 2988489621, 1045543573, Spawn)
+ elseif choice == 3 then
+ PlayFlavor(NPC, "voiceover/english/skeleton_base_1/ft/skeleton/skeleton_base_1_1_aggro_8bc7a2cc.mp3", "Your blood calls to me.", "", 1242322025, 1154999668, Spawn)
+ end
+ end
+ 
+ 
+function death(NPC, Spawn)
+local choice = math.random(1, 2)
+if choice == 1 then
+ PlayFlavor(NPC, "voiceover/english/skeleton_base_1/ft/skeleton/skeleton_base_1_1_death_ff39f327.mp3", "Final death comes at last.", "", 3768284332, 62777040, Spawn)
+elseif choice == 2 then
+ PlayFlavor(NPC, "voiceover/english/skeleton_base_1/ft/skeleton/skeleton_base_1_1_death_fbcb503b.mp3", "Rest in peace.", "", 3591309093, 1423656405, Spawn)
+end
 end

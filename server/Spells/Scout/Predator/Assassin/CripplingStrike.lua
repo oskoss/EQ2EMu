@@ -22,6 +22,7 @@ function cast(Caster, Target, DmgType, MinVal, MaxVal, SkillAmt)
     else
         SpellDamage(Target, DmgType, MinVal)
     end
+    Say(Caster, "need to add IfLastHit to debuff portion")
 
 -- Decreases Defense of target by 23.5
         AddSkillBonus(Target, GetSkillIDByName("Defense"), SkillAmt)

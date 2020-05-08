@@ -8,14 +8,14 @@
 
 --     Grants a total of 3 triggers of the spell.
 function cast(Caster, Target, DmgType, MinVal, MaxVal)
-      AddProc(Target, 1, 100)
+      AddProc(Target, 17, 100)
  --         Grants a total of 3 triggers of the spell.
     SetSpellTriggerCount(3, 1)
 end
 
 function proc(Caster, Target, Type, DmgType, MinVal, MaxVal)
     -- When damaged with a spell this spell will cast Aura of Pain on target. 
-    if Type == 1 then
+    if Type == 17 then
         --     Inflicts 125 - 152 disease damage on target
         ProcDamage(Caster, Target, "Aura of Pain", DmgType, MinVal, MaxVal)
         RemoveTriggerFromSpell(1)

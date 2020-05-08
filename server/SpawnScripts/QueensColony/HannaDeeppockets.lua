@@ -3,18 +3,24 @@
     Script Author  : Zcoretri
     Script Date    : 2015.07.30
     Script Purpose : Hanna Deeppockets dialog
-                   : 
+    Modified Data  : 2020.04.04
+	Modiefied by   : premierio015
+	Notes          : All VoiceOvers addded
 --]]
 
 function hailed(NPC, Spawn)
     FaceTarget(NPC, Spawn)
-    choice = math.random(1,2)
+	math.randomseed(os.time())
+	str = tostring(choice)
+    choice = math.random(1,3)
 
-    -- need the halfling greeting voiceovers
+
     if choice == 1 then
-        PlayFlavor(NPC, "", "All your basic necessities you'll find here.", "", 1689589577, 4560189, Spawn)
-    else
-        PlayFlavor(NPC, "", "The Deeppockets have a long history of good deals, ask anyone!", "", 0, 0, Spawn)
+        PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_1_1019.mp3", "All your basic necessities you'll find here.", "", 0, 0, Spawn)
+    elseif choice == 2 then
+        PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1019.mp3", "The Deeppockets have a long history of good deals, ask anyone!", "", 0, 0, Spawn)
+	else
+        PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1019.mp3", "All your basic necessities you'll find here.", "", 0, 0, Spawn)	
     end
 end
 

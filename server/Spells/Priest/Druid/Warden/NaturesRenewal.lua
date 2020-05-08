@@ -1,24 +1,14 @@
 --[[
     Script Name    : Spells/Priest/Druid/Warden/NaturesRenewal.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 07:08:13
+    Script Author  : neatz09
+    Script Date    : 2020.03.01 10:03:54
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+-- On death this spell will cast Nature's Touch on target.  Lasts for 24.0 seconds.  
+--     Heals target for 492
+--     Heals target for 123 every 2 seconds
+--     Increases WIS of target by 48.8
+--     Grants a total of 1 trigger of the spell.

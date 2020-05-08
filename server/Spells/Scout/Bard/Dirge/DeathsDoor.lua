@@ -14,7 +14,8 @@
 -- Increases Mitigation of caster vs elemental, noxious and arcane damage
 
 function cast(Caster, Target, AgiAmt, ProcChance, DDType, DmgLow, DmgHigh, AvoidAmt, PhysMit, EleNoxMit)
-    AddSpellBonus(Target, 2, AgiAmt)
+    Say(Caster, "Fervor Not Implemented.")
+	AddSpellBonus(Target, 2, AgiAmt)
     AddProc(Target, 2, ProcChance)
     AddSpellBonus(Target, 696, AvoidAmt)
     AddSpellBonus(Target, 200, PhysMit)

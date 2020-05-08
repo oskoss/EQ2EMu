@@ -15,6 +15,7 @@ function hailed(NPC, Spawn)
 	elseif choice == 2 then
 		PlayFlavor(NPC, "", "Welcome to Ebb Tide's Alehouse.", "", 1689589577, 4560189, Spawn)
 	else
+                PlayFlavor(NPC, "", "If you can trade it, I can buy it." "", 1689589577, 4560189, Spawn)
 	end
 
 end

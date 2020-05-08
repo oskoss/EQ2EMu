@@ -1,12 +1,12 @@
 --[[
-	Script Name	: Heal (Spell Type)
-	Script Purpose	: Generic script for healing spells
-	Script Author	: John Adams
-	Script Date	: 2013.11.19
-	Script Note	: 
+    Script Name    : Spells/Priest/Shaman/Defiler/SacrificialRestoration.lua
+    Script Author  : Jabantiz
+    Script Date    : 2014.03.13 03:03:45
+    Script Purpose : 
+                   : 
 --]]
 
-function cast(Caster, Target, HealMinVal, HealMaxVal)
-    -- Heal Component
-    SpellHeal("Heal", HealMinVal, HealMaxVal)
+function cast(Caster, Target, MinVal, MaxVal)
+    -- Heals target for 44 - 54
+    SpellHeal("Heal", MinVal, MaxVal, Target)
 end

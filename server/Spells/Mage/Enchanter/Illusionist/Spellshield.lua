@@ -1,24 +1,13 @@
 --[[
     Script Name    : Spells/Mage/Enchanter/Illusionist/Spellshield.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 08:08:41
+    Script Author  : neatz09
+    Script Date    : 2020.01.31 06:01:36
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+-- When damaged this spell will cast Shock of Mana on target's attacker.  
+--     Inflicts 32 - 39 magic damage on target
+--     Grants a total of 5 triggers of the spell.
+--     This effect can only trigger once every 1.0 second.

@@ -7,7 +7,8 @@
 --]]
 
 function cast(Caster, Target, DmgType, MinDmgVal, MaxDmgVal, SpellID)
-    -- Missing Slows Target Component
+    Say(Caster, "Missing slow components")
+-- Missing Slows Target Component
     -- Damage component
     if MaxDmg ~= nil and MinDmg < MaxDmg then
         dmgAmount = math.random(MinDmg, MaxDmg)

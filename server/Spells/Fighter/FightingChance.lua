@@ -6,13 +6,13 @@
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- Begins a Heroic Opportunity
-    Say(Caster, "Heroic Opportunities are not implemented yet.")
-end
 
 function precast(Caster, Target)
    -- Must be engaged in combat
    return IsInCombat(Caster)
 end
 
+function cast(Caster, Target)
+    -- Begins a Heroic Opportunity
+StartHeroicOpportunity(Caster, 1)
+end

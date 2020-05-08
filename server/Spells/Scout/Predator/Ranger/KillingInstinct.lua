@@ -1,24 +1,23 @@
 --[[
     Script Name    : Spells/Scout/Predator/Ranger/KillingInstinct.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 11:08:13
+    Script Author  : neatz09
+    Script Date    : 2019.10.24 03:10:05
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
+-- Increases Multi Attack of caster by 43.5
+-- Increases Ranged of caster by 16.2
 
--- Info from spell_display_effects (remove from script when done)
+function cast(Caster, Target, Multi, Range)
+AddSpellBonus(Target, 641, Multi)
+    AddSkillBonus(Target, GetSkillIDByName("Ranged"), Range)
 
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
 
 function remove(Caster, Target)
-    -- code to remove the spell
-end
+    RemoveSpellBonus(Target)
+    RemoveSkillBonus(Target)
 
+end

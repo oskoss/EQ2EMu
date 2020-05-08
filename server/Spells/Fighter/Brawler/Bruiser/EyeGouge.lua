@@ -8,20 +8,17 @@
 
 
 function cast(Caster, Target, DmgType, MinVal, MaxVal, SkillAmt)
+SpellDamage(Target, DmgType, MinVal, MaxVal)
+if LastSpellAttackHit() then    
+AddSkillBonus(Target, GetSkillIDByName("Slashing"), SkillAmt)
+    
+AddSkillBonus(Target, GetSkillIDByName("Ranged"), SkillAmt)
+    
+AddSkillBonus(Target, GetSkillIDByName("Piercing"), SkillAmt)
+    
+AddSkillBonus(Target, GetSkillIDByName("Crushing"), SkillAmt)
 
-    AddSkillBonus(Target, GetSkillIDByName("Slashing"), SkillAmt)
-
-    AddSkillBonus(Target, GetSkillIDByName("Ranged"), SkillAmt)
-
-    AddSkillBonus(Target, GetSkillIDByName("Piercing"), SkillAmt)
-
-    AddSkillBonus(Target, GetSkillIDByName("Crushing"), SkillAmt)
-
-    if MaxVal ~= nil and MinVal < MaxVal then
-        SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))
-    else
-        SpellDamage(Target, DmgType, MinVal)
-    end
+end
 end
 
 function remove(Caster, Target)

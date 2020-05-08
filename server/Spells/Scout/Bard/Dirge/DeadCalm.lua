@@ -6,6 +6,16 @@
                    : 
 --]]
 
--- Info from spell_display_effects (remove from script when done)
 -- On a combat hit this spell has a 12% chance to cast Crypt's Revenge on target of attack.  
 --     Inflicts 30 - 51 disease damage on target
+
+function cast(Caster, Target)
+   AddProc(Target, 1, 12, nil, 1)
+end
+
+function proc(Caster, Target, Type, DmgType, MinVal, MaxVal)
+	ProcDamage(Caster, Target, "Crypt's Revenge", DmgType, MinVal, MaxVal)
+end
+function remove(Caster, Target)
+	RemoveProc(Target)
+end

@@ -300,7 +300,7 @@ function AbilitiesDuringBattle(NPC, Spawn)
 
 	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_darg_frostwind/tutorial_island02_evil_revamp/trainers/combat/darg_frostwind024.mp3", "", "", 2163337564, 124850201, Spawn)
 	AddConversationOption(conversation, "What else should I know about spells and arts?", "MoreSpellsAndArts")
-	StartConversation(conversation, NPC, Spawn, "Whether you're a front-lines melee type or someone attacking from a distance with weapons or spells, you should be using abilities that damage your foes effectively and efficiently. Right click on your spells and arts and select \"Examine\" to see details on their effects.")
+	StartConversation(conversation, NPC, Spawn, "Whether you're a front-lines melee type or someone attacking from a distance with weapons or spells, you should be using abilities that damage your foes effectively and efficiently. Right click on your spells and arts and select " .. [["Examine"]] .. " to see details on their effects.")
 end
 
 function MoreSpellsAndArts(NPC, Spawn)

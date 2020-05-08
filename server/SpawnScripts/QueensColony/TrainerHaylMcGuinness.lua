@@ -2,8 +2,10 @@
     Script Name    : SpawnScripts/QueensColony/TrainerHaylMcGuinness.lua
     Script Author  : Jabantiz
     Script Date    : 2016.09.06 09:09:52
-    Script Purpose : 
-                   : 
+    Script Purpose : Trainer Hayl McGuiness Dialogue
+    Modified Date  : 2020.04.04
+    Modified by    : premierio015
+    Notes          : Added animations
 --]]
 
 function spawn(NPC)
@@ -40,14 +42,14 @@ function hailed(NPC, Spawn)
    conversation = CreateConversation()
    
    if HasCompletedQuest(Spawn, TheArtOfCombat) then
-		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good026.mp3", "", "", 1881020230, 3830147813, Spawn)
+		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good026.mp3", "", "agree", 1881020230, 3830147813, Spawn)
 		AddConversationOption(conversation, "I'd like to learn about combat so that I can help the colony.", "dlg_8_1")
 		StartConversation(conversation, NPC, Spawn, "Hello there, " .. GetName(Spawn) .. "! I'm here to teach new recruits the basics of combat. Murrar told me you show great promise!")
    elseif HasQuest(Spawn, TheArtOfCombat) and GetQuestStep(Spawn, TheArtOfCombat) < 4 then
 		if GetQuestStep(Spawn, TheArtOfCombat) == 1 then
 			-- on the first step
 			
-			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good026.mp3", "", "", 1881020230, 3830147813, Spawn)
+			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good026.mp3", "", "agree", 1881020230, 3830147813, Spawn)
 			AddConversationOption(conversation, "I'd like to learn about combat so that I can help the colony.", "dlg_8_1")
 			StartConversation(conversation, NPC, Spawn, "Hello there, " .. GetName(Spawn) .. "! I'm here to teach new recruits the basics of combat. Murrar told me you show great promise!")
 		else
@@ -70,7 +72,7 @@ function Victorious(NPC, Spawn)
    SetStepComplete(Spawn, TheArtOfCombat, 3)
    conversation = CreateConversation()
 
-   PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good_quest002.mp3", "", "", 1477689908, 1568507038, Spawn)
+   PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good_quest002.mp3", "", "nod", 1477689908, 1568507038, Spawn)
    AddConversationOption(conversation, "I'll report back to Murrar.")
    StartConversation(conversation, NPC, Spawn, "Great work! You've proven your worth and are ready for greater challenges. If you want further instruction later, just come see me. But right now you must report back to Murrar so that you can discover what's behind the trouble here at the colony.")
 end
@@ -80,7 +82,7 @@ end
 function dlg_8_1(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good_quest000.mp3", "", "", 861129842, 2513176543, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good_quest000.mp3", "", "agree", 861129842, 2513176543, Spawn)
 	AddConversationOption(conversation, "How do I challenge a foe in battle?", "dlg_8_2")
 	if HasQuest(Spawn, TheArtOfCombat) then
 		if GetQuestStep(Spawn, TheArtOfCombat) == 1 then
@@ -95,7 +97,7 @@ function dlg_8_2(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good003.mp3", "", "", 1337742058, 2404050935, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good003.mp3", "", "nod", 1337742058, 2404050935, Spawn)
 	AddConversationOption(conversation, "How do I begin the battle?", "dlg_8_3")
 	StartConversation(conversation, NPC, Spawn, "Starting combat is easy. Just use your mouse pointer to left-click on an opponent. Its name will appear in the Target window in the upper left of your screen. You can also use the Tab key to cycle through nearby targets or the F8 key to select your closest enemy.")
 end
@@ -113,7 +115,7 @@ function dlg_8_4(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good005.mp3", "", "", 1297419022, 3029770958, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good005.mp3", "", "no", 1297419022, 3029770958, Spawn)
 	AddConversationOption(conversation, "Tell me about melee combat.", "dlg_8_5")
 	AddConversationOption(conversation, "Tell me about ranged combat.", "dlg_8_10")
 	AddConversationOption(conversation, "What kind of rewards can I earn in battle?", "dlg_8_14")
@@ -126,7 +128,7 @@ function dlg_8_5(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good006.mp3", "", "", 416525203, 2657385928, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good006.mp3", "", "brandish", 416525203, 2657385928, Spawn)
 	AddConversationOption(conversation, "What classes specialize in melee combat?", "dlg_8_6")
 	StartConversation(conversation, NPC, Spawn, "Melee combat means a toe-to-toe, physical confrontation. It is a combination of auto-attack damage that happens automatically when you press the Melee Attack button on your hotbar or the ~ key and spells or combat arts that you use in close proximity to your foe.")
 end
@@ -135,7 +137,7 @@ function dlg_8_6(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good007.mp3", "", "", 1651948874, 1480304616, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good007.mp3", "", "nod", 1651948874, 1480304616, Spawn)
 	AddConversationOption(conversation, "Tell me how to begin a fight.", "dlg_8_2")
 	AddConversationOption(conversation, "Tell me about ranged combat.", "dlg_8_10")
 	AddConversationOption(conversation, "What kind of rewards can I earn in battle?", "dlg_8_14")
@@ -148,7 +150,7 @@ function dlg_8_10(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good008.mp3", "", "", 1478105613, 895646178, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good008.mp3", "", "nod", 1478105613, 895646178, Spawn)
 	AddConversationOption(conversation, "How do I launch a ranged attack?", "dlg_8_11")
 	StartConversation(conversation, NPC, Spawn, "Ranged combat means that you put some distance between yourself and the enemy. This can be done with weapons such as bows or throwing daggers, or with spells and arts that can be cast from a distance.")
 end
@@ -166,7 +168,7 @@ function dlg_8_12(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good010.mp3", "", "", 4251211849, 3911610409, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good010.mp3", "", "nod", 4251211849, 3911610409, Spawn)
 	AddConversationOption(conversation, "How do I tell if I can use spells or arts from a distance?", "dlg_8_13")
 	StartConversation(conversation, NPC, Spawn, "While most classes have the ability to attack from a distance, scout classes such as Swashbucklers, Troubadors, Dirges, and particularly Rangers specialize in ranged physical attacks. Mages, priests, and paladins have spells that do damage to their foes from a distance.")
 end
@@ -188,7 +190,7 @@ function dlg_8_14(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good012.mp3", "", "", 2647469623, 502375197, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good012.mp3", "", "agree", 2647469623, 502375197, Spawn)
 	AddConversationOption(conversation, "What do you mean by 'a worthy opponent'?", "dlg_8_15")
 	StartConversation(conversation, NPC, Spawn, "Victory in battle can be very rewarding. Successful combat against a worthy opponent awards you experience (XP) to help you advance your level, as well as the chance at coin, usable items, and other valuables.")
 end
@@ -197,7 +199,7 @@ function dlg_8_15(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good013.mp3", "", "", 3707215797, 2577902646, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good013.mp3", "", "nod", 3707215797, 2577902646, Spawn)
 	AddConversationOption(conversation, "Are certain types of targets more rewarding than others?", "dlg_8_16")
 	StartConversation(conversation, NPC, Spawn, "You don't earn rewards for defeating foes that are too far below your level. If your target has a grey name, it means it is very weak and won't provide any benefit for beating it. Talk to Trainer Marla Gilliam for more information on evaluating your opponents.")
 end
@@ -206,7 +208,7 @@ function dlg_8_16(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good014.mp3", "", "", 2418682059, 3250675692, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good014.mp3", "", "agree", 2418682059, 3250675692, Spawn)
 	AddConversationOption(conversation, "Tell me how to begin a fight.", "dlg_8_2")
 	AddConversationOption(conversation, "Tell me about melee combat.", "dlg_8_5")
 	AddConversationOption(conversation, "Tell me about ranged combat.", "dlg_8_10")
@@ -219,7 +221,7 @@ function dlg_8_17(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good015.mp3", "", "", 3575809563, 632788793, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_hayl_mcguinness/tutorial_island02_revamp/trainers/combat/combat_good015.mp3", "", "nod", 3575809563, 632788793, Spawn)
 	AddConversationOption(conversation, "Tell me about selecting the right opponent.", "dlg_8_18")
 	AddConversationOption(conversation, "Teach me about knowing my surroundings.", "dlg_8_21")
 	AddConversationOption(conversation, "Tell me about using my abilities.", "dlg_8_24")

@@ -1,27 +1,13 @@
 --[[
     Script Name    : Spells/Priest/Druid/Fury/Porcupine.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 07:08:44
+    Script Author  : neatz09
+    Script Date    : 2020.03.01 10:03:04
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
+-- Increases Max Health of raid and group members (AE) by 58.5
+-- Increases Mitigation of raid and group members (AE) vs all damage by 1260
 -- When any damage is received this spell will cast Porcupine Quills on target's attacker, which can be triggered up to 50 times across all targets.  
--- Inflicts 118 divine damage on target
--- Increases Mitigation of raid and group members (AE) vs all damage by 900
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+--     Inflicts 121 divine damage on target

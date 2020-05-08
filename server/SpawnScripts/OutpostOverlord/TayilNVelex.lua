@@ -146,6 +146,7 @@ function PledgeToFreeport(NPC, Spawn)
 	-- update WelcomeToNorrath Quest
 	if not HasCompletedQuest (Spawn, WelcomeToNorrath) then
 		SetStepComplete(Spawn, WelcomeToNorrath, 1)
+                PlaySound(Spawn, "sounds/test/endquest.wav", GetX(Spawn), GetY(Spawn), GetZ(Spawn), Spawn) --Ding!
 	end
 
 	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/tayil_n_velex/tutorial_island02_evil_revamp/quests/citizenship/tayilnvelex/tayilnvelex007.mp3", "", "", 4165919735, 3979142709, Spawn)
@@ -193,6 +194,7 @@ function IAmReady(NPC, Spawn)
 	if HasQuest(Spawn, TheArtOfCombat) then
 		if GetQuestStep(Spawn, TheArtOfCombat) == 4 then
 			SetStepComplete(Spawn, TheArtOfCombat, 4)
+                        PlaySound(Spawn, "sounds/test/endquest.wav", GetX(Spawn), GetY(Spawn), GetZ(Spawn), Spawn) --Ding!
 		end
 	end
 

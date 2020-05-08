@@ -8,5 +8,5 @@
 
 function cast(Caster, Target, MinVal, MaxVal)
     -- Heals target for 44 - 54
-    SpellHeal("Heal", MinVal, MaxVal)
+    SpellHeal("Heal", MinVal, MaxVal, Target)
 end

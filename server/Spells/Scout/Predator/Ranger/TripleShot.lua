@@ -1,28 +1,34 @@
 --[[
     Script Name    : Spells/Scout/Predator/Ranger/TripleShot.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 11:08:57
+    Script Author  : neatz09
+    Script Date    : 2019.10.24 03:10:20
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
+function precast(Caster, Target)   
+ local item = GetEquippedItemBySlot(Caster, 16)
+    if item~= nil then
+        if GetItemType(item) == 2 then
+            return true
+        end
+    end
 
--- Info from spell_display_effects (remove from script when done)
--- Inflicts 53 - 89 ranged damage on target
--- Inflicts 107 - 179 ranged damage on target
--- Inflicts 161 - 269 ranged damage on target
--- Requires bow
-
+    return false, 68
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+function cast(Caster, Target, DmgType, MinVal, MaxVal, DmgType2, MinVal2, MaxVal2, DmgType3, MinVal3, MaxVal3)
+-- Inflicts 32 - 54 ranged damage on target
+SpellDamage(Target, DmgType, MinVal, MaxVal)
+-- Inflicts 64 - 108 ranged damage on target
+if LastSpellAttackHit() then
+SpellDamage(Target, DmgType2, MinVal2, MaxVal2)
+end
+-- Inflicts 97 - 162 ranged damage on target
+if LastSpellAttackHit() then
+SpellDamage(Target, DmgType3, MinVal3, MaxVal3)
+end
 end
 
-function remove(Caster, Target)
-    -- code to remove the spell
-end
+
 

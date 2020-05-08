@@ -1,26 +1,41 @@
 --[[
     Script Name    : Spells/Mage/Enchanter/Coercer/CannibalizeThoughts.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 08:08:55
+    Script Author  : neatz09
+    Script Date    : 2019.10.22 05:10:15
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
--- Info from spell_display_effects (remove from script when done)
--- Decreases INT of target by 44.3
 -- Increases power of group members (AE) by 11 instantly and every 6 seconds
+-- Decreases INT of target by 44.3
 
+function cast(Caster, Target, Int, GrpPwr)
+    AddSpellBonus(Target, 4, Int)
+
+local group = GetGroup(Caster)
+if group == nil then
+    SpellHeal("Power", GrpPwr, 0, Caster)
+else
+    for k,v in ipairs(GetGroup(Spawn)) do
+        SpellHeal("Power", GrpPwr, 0, v)
+    end
+end
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+
+function tick(Caster, Target, Int, GrpPwr)
+local group = GetGroup(Caster)
+if group == nil then
+    SpellHeal("Power", GrpPwr, 0, Caster)
+else
+    for k,v in ipairs(GetGroup(Spawn)) do
+        SpellHeal("Power", GrpPwr, 0, v)
+    end
 end
+end
+
 
 function remove(Caster, Target)
-    -- code to remove the spell
-end
+    RemoveSpellBonus(Target)
 
+end

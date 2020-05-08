@@ -1,28 +1,21 @@
 --[[
     Script Name    : Spells/Priest/Druid/Fury/UntamedShroud.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 07:08:10
+    Script Author  : neatz09
+    Script Date    : 2019.10.28 06:10:39
     Script Purpose : 
                    : 
 --]]
 
+function precast(Caster)
+    return not IsInCombat(Caster)
+end
+
+
 function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
--- Info from spell_display_effects (remove from script when done)
--- Grants invisibility to group members (AE)
--- Suspends group members (AE)'s movement speed enhancements
--- Dispelled when target takes damage
--- This effect cancels during combat
-
+Stealth(2, Target)
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+RemoveInvis(Target)
 end
-

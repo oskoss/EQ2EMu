@@ -1,24 +1,24 @@
 --[[
     Script Name    : Spells/Priest/Druid/SpiritoftheBat.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 07:08:24
+    Script Author  : neatz09
+    Script Date    : 2020.01.02 05:01:59
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
+function cast(Caster, Target, Agi, Avoid, Regen, MaxPwr)
+-- Increases AGI of target by 12.1    
+AddSpellBonus(Target, 2, Agi)
+-- Adds 0.5% to base avoidance.    
+AddSpellBonus(Target, 696, Avoid)
+-- Increases Combat Power Regen of target by 6.1    
+AddSpellBonus(Target, 605, Regen)
+-- Increases Max Power of target by 74.2    
+AddSpellBonus(Target, 619, MaxPwr)
 
--- Info from spell_display_effects (remove from script when done)
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
 end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+    RemoveSpellBonus(Target)
 end
 

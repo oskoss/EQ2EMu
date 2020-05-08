@@ -25,6 +25,7 @@ function casted_on(NPC, Spawn, Message)
 		if newScout ~= nil then
 			CopySpawnAppearance(newScout, NPC)
 			SpawnSet(newScout, "visual_state", "0")
+                        SpawnSet(newScout, "attackable", "false")
 			AddTimer(newScout, 5000, "Speak")
 		end
 		local mostHated = GetMostHated(NPC)

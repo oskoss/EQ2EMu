@@ -1,24 +1,14 @@
 --[[
     Script Name    : Spells/Mage/Summoner/Conjuror/ElementalUnity.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 08:08:58
+    Script Author  : neatz09
+    Script Date    : 2020.02.11 04:02:53
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+-- On a spell cast this spell will cast Elemental Vestment on target.  Lasts for 15.0 seconds.  
+--     On any combat or spell hit this spell will cast Force of the Elements on target of attack.  
+--         Inflicts 77 heat damage on target encounter
+--         Inflicts 77 cold damage on target encounter
+--         Grants a total of 1 trigger of the spell.

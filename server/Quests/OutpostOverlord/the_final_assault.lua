@@ -13,7 +13,6 @@
 local CaptainTyreth = 2780099
 local KeyOfTheElders = 8588
 local TayilNVelex = 3480005
-local OverseerAdrium = 2780101
 
 function Init(Quest)
 	-- Freeportian Bard's Dagger
@@ -70,7 +69,7 @@ function step3_complete_talkedToCaptain(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 3, "I returned and spoke to Captain Tyreth.")
 	UpdateQuestTaskGroupDescription(Quest, 3, "I returned and spoke to Captain Tyreth.")
 	
-	AddQuestStepKill(Quest, 4, "Kill Overseer Adrium in his tree house near Fisher Falls to the east of the Valley of Discipline.", 1, 100, "The leader of the Tunarians on the island resides in a tree house to the east of the Valley of Discipline. I am to find Overseer Adrium and kill the Qeynosian before he has a chance to escape.", 611, OverseerAdrium)
+	AddQuestStepKill(Quest, 4, "Kill Overseer Adrium in his tree house near Fisher Falls to the east of the Valley of Discipline.", 1, 100, "The leader of the Tunarians on the island resides in a tree house to the east of the Valley of Discipline. I am to find Overseer Adrium and kill the Qeynosian before he has a chance to escape.", 611, 2780166)
 	AddQuestStepCompleteAction(Quest, 4, "step4_complete_killedOverseer")
 end
 

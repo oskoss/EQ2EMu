@@ -1,27 +1,25 @@
 --[[
     Script Name    : Spells/Mage/Enchanter/Coercer/Hostage.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 08:08:57
+    Script Author  : neatz09
+    Script Date    : 2019.10.22 05:10:06
     Script Purpose : 
                    : 
 --]]
 
 function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
--- Info from spell_display_effects (remove from script when done)
 -- When damaged with a melee weapon this spell will cast Convulsions on target.  
--- Inflicts 151 - 184 mental damage on target
--- Grants a total of 3 triggers of the spell.
+--     Inflicts 88 - 107 mental damage on target
+--     Grants a total of 3 triggers of the spell.
 
+    SetSpellTriggerCount(3, 1)
+    AddProc(Target, 16, 100)
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+function proc(Caster, Target, ProcType, DDType, DDLow, DDHigh)
+    ProcDamage(Caster, Target, "Convulsions", DDType, DDLow, DDHigh)
+    RemoveTriggerFromSpell()
 end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+    RemoveProc(Target)
 end
-

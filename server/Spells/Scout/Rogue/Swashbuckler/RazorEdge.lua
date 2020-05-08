@@ -12,7 +12,7 @@ function precast(Caster, Target)
 end
 
 
-function cast(Caster, Target, DmgType, MinVal, MaxVal, BonusAmt)
+function cast(Caster, Target, DmgType, MinVal, MaxVal, SkillAmt)
     -- Inflicts 98 - 163 melee damage on target
     if MaxVal ~= nil and MinVal < MaxVal then
         SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))

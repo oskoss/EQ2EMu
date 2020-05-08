@@ -6,12 +6,16 @@
                    : 
 --]]
 
-function cast(Caster, Target, MinHate, MaxHate)
+function cast(Caster, Target, MinVal, MaxVal)
     -- Interrupts target encounter
-    Interrupt(Caster, Target)
+   Interrupt(Caster, Target)
 
     -- Decreases Threat to target by 355 - 434
-    AddHate(Caster, Target, math.random(MinHate, MaxHate), 1)
+    if MaxVal ~= nil and MinVal < MaxVal then
+        AddHate(Caster, Target, math.random(MinVal, MaxVal), 1)
+    else
+        AddHate(Caster, Target, MinVal, 1)
+    end
 
 -- Stifles target
 --     If Target is not Epic

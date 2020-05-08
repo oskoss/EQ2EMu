@@ -8,3 +8,14 @@
 
 -- Info from spell_display_effects (remove from script when done)
 -- Decreases Hate Gain of caster by 7.8%
+
+function cast(Caster, Target)
+    AddSpellBonus(Target, 624, Hate)
+
+end
+
+
+function remove(Caster, Target)
+    RemoveSpellBonus(Target)
+
+end

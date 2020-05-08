@@ -4,6 +4,9 @@
 	Script Author	: John Adams
 	Script Date	: 2008.09.20
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
+	Modified Date   : 2020.04.03
+	Modified by     : premierio015
+	Notes           : Added animations
 --]]
 
 function spawn(NPC)
@@ -17,7 +20,7 @@ function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_gurga_trueheart/tutorial_island02_revamp/trainers/attributes/gurga_trueheart001.mp3", "", "", 330223646, 1165391404, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_gurga_trueheart/tutorial_island02_revamp/trainers/attributes/gurga_trueheart001.mp3", "", "beckon", 330223646, 1165391404, Spawn)
 	AddConversationOption(conversation, "Tell me what my physical attributes do.", "dlg_14_1")
 	AddConversationOption(conversation, "How do I view my physical attributes?", "dlg_14_6")
 	AddConversationOption(conversation, "How do I improve my physical attributes?", "dlg_14_7")
@@ -29,7 +32,7 @@ function dlg_14_1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_gurga_trueheart/tutorial_island02_revamp/trainers/attributes/gurga_trueheart002.mp3", "", "", 3017268324, 3420396892, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_gurga_trueheart/tutorial_island02_revamp/trainers/attributes/gurga_trueheart002.mp3", "", "flex", 3017268324, 3420396892, Spawn)
 	AddConversationOption(conversation, "Tell me about Agility.", "dlg_14_2")
 	AddConversationOption(conversation, "How do I view my physical attributes?", "dlg_14_6")
 	AddConversationOption(conversation, "How do I improve my physical attributes?", "dlg_14_7")
@@ -65,7 +68,7 @@ function dlg_14_4(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_gurga_trueheart/tutorial_island02_revamp/trainers/attributes/gurga_trueheart005.mp3", "", "", 634969391, 333054011, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/trainer_gurga_trueheart/tutorial_island02_revamp/trainers/attributes/gurga_trueheart005.mp3", "", "ponder", 634969391, 333054011, Spawn)
 	AddConversationOption(conversation, "Tell me about Wisdom.", "dlg_14_5")
 	AddConversationOption(conversation, "How do I view my physical attributes?", "dlg_14_6")
 	AddConversationOption(conversation, "How do I improve my physical attributes?", "dlg_14_7")
@@ -119,4 +122,3 @@ end
 --[[ raw_conversations
 	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_1_1015.mp3", "", "", 0, 0)
 --]]
-

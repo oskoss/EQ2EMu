@@ -1,29 +1,14 @@
 --[[
-    Script Name    : Spells/Scout/Bard/Troubadour/AlinsSereneSerenade.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 09:08:35
+    Script Name    : Spells/Scout/Bard/Troubador/AlinsSereneSerenade.lua
+    Script Author  : neatz09
+    Script Date    : 2020.02.11 07:02:21
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
--- When damaged this spell will cast Serenade on target's attacker.  
--- Decreases Threat to target by 37 
--- If not fighter
 -- Decreases Hate Gain of group members (AE) by 10.7%
--- If not fighter
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+--     If not fighter
+-- When damaged this spell will cast Serenade on target's attacker.  
+--     Decreases Threat to target by 22 
+--     If not fighter

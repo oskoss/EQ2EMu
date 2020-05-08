@@ -1,24 +1,14 @@
 --[[
-    Script Name    : Spells/Scout/Bard/Troubadour/RequiemofReflection.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 09:08:55
+    Script Name    : Spells/Scout/Bard/Troubador/RequiemofReflection.lua
+    Script Author  : neatz09
+    Script Date    : 2020.03.07 10:03:02
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+-- When receiving a hostile spell this spell has a 6% chance to cast Requiem of Reflection on target.  Lasts for 2 minutes.  
+--     When damaged this spell will cast Shock of Sound on target's attacker.  
+--         Inflicts 126 - 153 mental damage on target
+--         Grants a total of 3 triggers of the spell.
+--     Will absorb elemental, noxious and arcane damage.  This spell will absorb a total of 1 attack.

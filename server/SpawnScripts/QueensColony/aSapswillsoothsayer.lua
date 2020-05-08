@@ -1,9 +1,12 @@
 --[[
-	Script Name	: <script-name>
-	Script Purpose	: <purpose>
-	Script Author	: <author-name>
-	Script Date	: <date>
-	Script Notes	: <special-instructions>
+	Script Name	: aSapswillsoothsayer
+	Script Purpose	: Quest and Conversations
+	Script Author	: Unknown
+	Script Date	: 2020.04.11
+	Script Notes	: Need loot changes
+        Modified Date   : 2020.04.11
+        Modified by     : premierio015
+        Modified Notes  : Added missing Favors
 --]]
 
 local GhostsAndGoblins = 184
@@ -58,7 +61,8 @@ function GrexxPromises(NPC, Spawn, Choice)
 	elseif Choice == 2 then
 		AddConversationOption(conversation, "I've gotten the items you've asked for.", "GotYourItemsBitch")
 	end
-
+	
+    PlayFlavor(NPC, "voiceover/english/tutorial_revamp/a_sapswill_soothsayer/tutorial_island02_revamp/quests/sapswill_soothsayer/sapswill_soothsayer001.mp3", "", "", 3035051138, 3409395583, Spawn)
 	AddConversationOption(conversation, "I'll bet they are.")
 	StartConversation(conversation, NPC, Spawn, "Grexx promises us and his promise is kept!")
 end
@@ -66,7 +70,8 @@ end
 function ForestKeeperSentMe(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
-
+    
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/a_sapswill_soothsayer/tutorial_island02_revamp/quests/sapswill_soothsayer/sapswill_soothsayer002.mp3", "", "", 2152575465, 987709738, Spawn)
 	AddConversationOption(conversation, "But what...", "ButWhat")
 	StartConversation(conversation, NPC, Spawn, "Forest Keeper, big tree! Yes, yes, waiting for you. Big tree, big promise! Water is needed, yes! Three waters, fallen from the skies and the roots from deep beneath! Fetch the waters! Gather the roots!")
 end
@@ -75,7 +80,8 @@ function ButWhat(NPC, Spawn)
 	SetStepComplete(Spawn, GhostsAndGoblins, 4)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
-
+	
+    PlayFlavor(NPC, "voiceover/english/tutorial_revamp/a_sapswill_soothsayer/tutorial_island02_revamp/quests/sapswill_soothsayer/sapswill_soothsayer003.mp3", "", "", 993058875, 4130995149, Spawn)
 	AddConversationOption(conversation, "Well. Okay.")
 	StartConversation(conversation, NPC, Spawn, "Nothing more to say! Big tree sends you to me to help! Big tree keeps promise! Bring waters and roots first, then sayings I will sooth! Must bring to me, or nothing more will I say!")
 end
@@ -131,6 +137,7 @@ function GiftFromQeynos(NPC, Spawn)
 		AddConversationOption(conversation, "It's a small token of friendship. A diplomatic gesture.", "TokenOfFriendship")
 	end
 	
+    PlayFlavor(NPC, "voiceover/english/tutorial_revamp/a_sapswill_soothsayer/tutorial_island02_revamp/quests/sapswill_soothsayer/sapswill_soothsayer008.mp3", "", "", 4111507292, 2842514657, Spawn)
 	AddConversationOption(conversation, "It's my pleasure to meet you.")
 	StartConversation(conversation, NPC, Spawn, "Hello! Hello! I knew you would be coming! I knew! And bringing a present...we loves presents!")
 end
@@ -142,7 +149,8 @@ end
 function TokenOfFriendship(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
-
+	
+    PlayFlavor(NPC, "voiceover/english/tutorial_revamp/a_sapswill_soothsayer/tutorial_island02_revamp/quests/sapswill_soothsayer/sapswill_soothsayer009.mp3", "", "", 3719258575, 2018058923, Spawn)
 	AddConversationOption(conversation, "I'll pay my respect to your...er people.", "OfferQuest1")
 	AddConversationOption(conversation, "I need to run.")
 	StartConversation(conversation, NPC, Spawn, "Friends for life, we are now! Is our tradition to greet everyone we meet. Go meet the Sapswills! Is the diplomatic way! Hail them all! We like friends! Meet the Sapswills, then meet High Chiefain Grexx! He likes friends too! To long life and happy friendships!")

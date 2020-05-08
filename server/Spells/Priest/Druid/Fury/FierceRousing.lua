@@ -11,13 +11,14 @@
 function cast(Caster, Target)
 -- Resurrects target with 15% health and power
 Resurrect(15, 15, 1) 
+    Say(Caster, "need to complete spell script")
 end
 --nil, "Awakening", 2, No_calcs(add to perams)
 -- Applies Awakening on termination.
-function remove(Caster, Target)
+--function remove(Caster, Target)
 --Heals target for 15.0% of max health
-SpellHeal("Heal", GetPCTOfHP(Target, 15))
-end
+--SpellHeal("Heal", GetPCTOfHP(Target, 15))
+--end
 
 --     Heals target for 15.0% of max health
 --         This effect cannot be critically applied.

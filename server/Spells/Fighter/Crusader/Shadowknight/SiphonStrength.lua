@@ -19,5 +19,7 @@ end
 
 function remove(Caster, Target)
     RemoveSpellBonus(Target)
+    RemoveSpellBonus(Caster)
+
 end
 

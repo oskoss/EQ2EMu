@@ -8,7 +8,5 @@
 
 function cast(Caster, Target, Amount)
     SpellHeal("Power", Amount)
-    Say(Caster, "Missing Health conversion")
- 
 end
 

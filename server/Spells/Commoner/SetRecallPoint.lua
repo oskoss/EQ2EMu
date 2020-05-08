@@ -11,6 +11,6 @@
 
 function cast(Caster, Target)
     Bind(Caster)
-    Say(Caster, "No Check setup for allowed binds yet")
+    Say(Caster, "No Check setup for allowed binds yet. cannot be cast during combat not implemented yet.")
 
 end

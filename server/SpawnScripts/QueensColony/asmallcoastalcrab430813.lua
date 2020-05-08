@@ -18,7 +18,7 @@ function respawn(NPC)
 end
 
 function waypoints(NPC)
-	MovementLoopAddLocation(NPC, 10.26, -10.8, 236.38, 2, math.random(10, 20))
+	MovementLoopAddLocation(NPC, 10.18, -10.8, 236.41, 2, math.random(10, 20))
 	MovementLoopAddLocation(NPC, 6.22, -8.62, 238.92, 2, 0)
 	MovementLoopAddLocation(NPC, 4.85, -8.77, 242.62, 2, 0)
 	MovementLoopAddLocation(NPC, 6.18, -9.13, 243.6, 2, 0)

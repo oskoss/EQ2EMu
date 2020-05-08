@@ -8,3 +8,14 @@
 
 -- Info from spell_display_effects (remove from script when done)
 -- Increases Combat Power Regen of group members (AE) by 6.3
+
+function cast(Caster, Target, Pwr)
+    AddSpellBonus(Target, 605, Pwr)
+
+end
+
+
+function remove(Caster, Target)
+    RemoveSpellBonus(Target)
+
+end

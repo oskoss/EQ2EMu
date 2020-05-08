@@ -10,3 +10,24 @@
 -- Inflicts 140 - 234 melee damage on targets in Area of Effect
 -- Inflicts 43 piercing damage on targets in Area of Effect instantly and every 2 seconds
 -- You must be in stealth or have Bloody Assault.
+function precast(Caster, Target)
+    -- You must be sneaking to use this ability.
+    if IsStealthed(Caster) then
+        return true
+    end
+
+    SendMessage(Caster, "You must be sneaking to use this ability.", "yellow")
+    return false
+end
+
+
+function cast(Caster, Target, DmgType, MinVal, MaxVal, DoTType, DoTVal)
+SpellDamage(Target, DmgType, MinVal, MaxVal)
+SpellDamage(Target, DoTType, DoTVal)
+end
+
+
+function tick(Caster, Target, DmgType, MinVal, MaxVal, DoTType, DoTVal)
+SpellDamage(Target, DoTType, DotVal)
+end
+

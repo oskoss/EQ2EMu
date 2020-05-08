@@ -1,14 +1,13 @@
 --[[
-    Script Name      :    Quests/OutpostOverlord/disruption_for_distraction.lua
-    Script Purpose   :    Handles the quest, "Disruption for Distraction"
-    Script Author    :    vo1d
-    Script Date      :    2019.10.27
-    Script Notes     :    
+	Script Name:    Quests/OutpostOverlord/disruption_for_distraction.lua
+	Script Purpose: Handles the quest, "Disruption for Distraction"
+	Script Author:  vo1d
+	Script Date:    10/4/2019
 
-    Zone             :    Outpost of the Overlord
-    Quest Giver      :    Tayil N'Velex
-    Preceded by      :    Preventative Maintenance (preventative_maintenance.lua)
-    Followed by      :    The Final Assault (the_final_assault.lua)
+	Zone:           Outpost of the Overlord
+	Quest           Giver: Tayil N'Velex
+	Preceded by:    Preventative Maintenance (preventative_maintenance.lua)
+	Followed by:    The Final Assault (the_final_assault.lua)
 --]]
 
 local CoercerZlith = 2780072
@@ -24,9 +23,7 @@ function Init(Quest)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-    local GiverID = GetSpawnID(QuestGiver)
-    local TayilNVelex = 2780038
-    if QuestGiver ~= nil and GiverID == TayilNVelex then
+    if QuestGiver ~= nil then
         if GetDistance(Player, QuestGiver) < 30 then
           FaceTarget(QuestGiver, Player)
           conversation = CreateConversation()

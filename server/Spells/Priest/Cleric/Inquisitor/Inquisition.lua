@@ -1,24 +1,14 @@
 --[[
     Script Name    : Spells/Priest/Cleric/Inquisitor/Inquisition.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 07:08:32
+    Script Author  : neatz09
+    Script Date    : 2020.03.02 09:03:52
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+-- Applies Inquisition.
+--     Heals group members (AE) for 316 - 386
+--         If Target is closer than 8 meters
+--     Heals group members (AE) for 117 - 143
+--         If Target is between 8 and 15 meters away

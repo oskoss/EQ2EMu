@@ -1,27 +1,12 @@
 --[[
     Script Name    : Spells/Scout/Predator/Stalk.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 11:08:26
+    Script Author  : neatz09
+    Script Date    : 2019.11.07 08:11:45
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
--- Decreases Threat to target by 165 - 276 
+-- Decreases Threat to target by 2,661 - 4,435 
 -- Grants stealth to caster
 -- Suspends caster's movement speed enhancements
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-

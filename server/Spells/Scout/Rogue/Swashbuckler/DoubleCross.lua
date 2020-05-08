@@ -7,7 +7,9 @@
 --]]
 
 function cast(Caster, Target, BonusAmt, SkillAmt)
-    -- Decreases WIS of target by 6.1
+        Say(Caster, "Missing Elemental damage bonus")
+
+-- Decreases WIS of target by 6.1
     AddSpellBonus(Target, 600, BonusAmt)
 
     -- Decreases Defense of target by 2.0

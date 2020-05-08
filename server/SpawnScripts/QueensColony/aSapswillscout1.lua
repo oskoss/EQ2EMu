@@ -2,7 +2,7 @@
     Script Name    : SpawnScripts/QueensColony/aSapswillscout1.lua
     Script Author  : Premierio015
     Script Date    : 2020.04.29 07:04:57
-    Script Purpose : 
+    Script Purpose :  Sapswill Scout chitchat 
                    : 
 --]]
 

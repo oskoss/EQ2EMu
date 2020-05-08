@@ -7,7 +7,8 @@
 --]]
 
 function cast(Caster, Target, DmgType, MinVal, MaxVal, SkillAmt)
-    -- Inflicts 49 - 82 melee damage on target
+        Say(Caster, "need to add iflasthit to script.")
+-- Inflicts 49 - 82 melee damage on target
     if MaxVal ~= nil and MinVal < MaxVal then
         SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))
     else

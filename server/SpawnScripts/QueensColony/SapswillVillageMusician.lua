@@ -3,12 +3,15 @@
 	Script Purpose	: Spawn script for Sapswill musician.
 	Script Author	: Scatman
 	Script Date	: 2009.01.11
-	Script Notes	: 
+        Modified Date   : 2020.18.04
+        Modified by     : premierio015
+	Script Notes	: Added missing guitar visual effect
 --]]
 
 local ADiplomaticMission = 166
 
 function spawn(NPC)
+         EmoteLoop(NPC)
 end
 
 function respawn(NPC)
@@ -23,6 +26,11 @@ function hailed(NPC, Spawn)
 	end
 	
 	
+end
+
+function EmoteLoop(NPC)
+         PlayAnimation(NPC, 20839)
+         AddTimer(NPC, 1000, "EmoteLoop")
 end
 
 function NormalTalk(NPC, Spawn)

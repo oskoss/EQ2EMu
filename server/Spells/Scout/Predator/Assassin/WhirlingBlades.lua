@@ -7,7 +7,9 @@
 --]]
 
 function cast(Caster, Target, DmgType, MinVal, MaxVal, Def, OffSkills)
-    -- On a melee hit this spell may cast Swipe on target of attack.  Triggers about 2.0 times per minute. 
+        Say(Caster, "Fervor Not Implemented.")
+
+-- On a melee hit this spell may cast Swipe on target of attack.  Triggers about 2.0 times per minute. 
     AddProc(Target, 3, 10)
 
     -- Decreases Defense of caster by 5.1

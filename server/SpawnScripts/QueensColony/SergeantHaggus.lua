@@ -4,6 +4,9 @@
 	Script Author	: Scatman
 	Script Date	: 2008.09.20
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
+	Modified Data   : 2020.04.04
+	Modified by     : premierio015
+	Notes           : Added animations
 --]]
 
 local APresenceOfEvil = 131
@@ -22,13 +25,14 @@ function hailed(NPC, Spawn)
 	if HasQuest(Spawn, APresenceOfEvil) and GetQuestStep(Spawn, APresenceOfEvil) < 6 then
 		if GetQuestStep(Spawn, APresenceOfEvil) == 1 then
 			--on 1st part of quest
-			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/sergeant_haggus/tutorial_island02_revamp/quests/citizenship/sergeanthaggus/sergeanthaggus001.mp3", "", "", 706977451, 1189091137, Spawn)
+			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/sergeant_haggus/tutorial_island02_revamp/quests/citizenship/sergeanthaggus/sergeanthaggus001.mp3", "", "threaten", 706977451, 1189091137, Spawn)
 			AddConversationOption(conversation, "Yes. He was wondering how our defenses are holding?", "WonderingHowDefenses")
 			AddConversationOption(conversation, "I'll come back. It seems that you're busy.")
 			StartConversation(conversation, NPC, Spawn, "Har! These scampering whelps will never break through! Oh, hello there. What's that, Murrar sent you?")
 		elseif GetQuestStep(Spawn, APresenceOfEvil) == 2 then
 			-- on 2nd part of quest
 			AddConversationOption(conversation, "I will.")
+			PlayAnimation(NPC, 20601)
 			StartConversation(conversation, NPC, Spawn, "Har har! Don't give up yet, " .. GetName(Spawn) .. ". Slay some of those invaders. If you need some tips on combat, talk to Hayl McGuinness at the Training Grounds in the colony.")
 		elseif GetQuestStep(Spawn, APresenceOfEvil) == 3 then
 			--on 3rd part of quest
@@ -43,12 +47,12 @@ function hailed(NPC, Spawn)
 		elseif GetQuestStep(Spawn, APresenceOfEvil) == 5 then
 			--on 5th part of quest
 			SetStepComplete(Spawn, APresenceOfEvil, 5)
-			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/sergeant_haggus/tutorial_island02_revamp/quests/citizenship/sergeanthaggus/sergeanthaggus009.mp3", "", "", 3590531004, 2647104527, Spawn)
+			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/sergeant_haggus/tutorial_island02_revamp/quests/citizenship/sergeanthaggus/sergeanthaggus009.mp3", "", "13063", 3590531004, 2647104527, Spawn)
 			AddConversationOption(conversation, "Farewell to you.")
 			StartConversation(conversation, NPC, Spawn, "Ah, they'll pay for this! You've done well, " .. GetName(Spawn) .. ". Sometime when you're not so busy, maybe you'd take a job with the Qeynos Guard and we can fight along side one another again. Take this information back to Murrar. Farewell.")
 		end
 	elseif HasCompletedQuest(Spawn, APresenceOfEvil) or (HasQuest(Spawn, APresenceOfEvil) and GetQuestStep(Spawn, APresenceOfEvil) == 6) then
-		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/sergeant_haggus/tutorial_island02_revamp/quests/citizenship/sergeanthaggus/sergeanthaggus010.mp3", "", "", 3061438505, 1032934814, Spawn)
+		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/sergeant_haggus/tutorial_island02_revamp/quests/citizenship/sergeanthaggus/sergeanthaggus010.mp3", "", "salute", 3061438505, 1032934814, Spawn)
 		AddConversationOption(conversation, "Thank you.")
 		StartConversation(conversation, NPC, Spawn, "You've proven yourself to me, " .. GetName(Spawn) .. ". Consider yourself a friend to the Qeynos Guard.")
 	else

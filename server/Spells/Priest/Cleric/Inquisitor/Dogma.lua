@@ -1,24 +1,26 @@
 --[[
     Script Name    : Spells/Priest/Cleric/Inquisitor/Dogma.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 06:08:23
+    Script Author  : neatz09
+    Script Date    : 2019.10.26 12:10:25
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
+-- Info from spell_display_effects (remove from script when done)  
 
--- Info from spell_display_effects (remove from script when done)
-
+function cast(Caster, Target, DmgType, DmgVal)
+      AddProc(Target, 12, 100)
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+function proc(Caster, Target, Type, DmgType, DmgVal)
+    -- On a beneficial spell cast this spell will cast Convert Ally on target of spell cast.
+    if Type == 12 then
+       --     Heals target for 128
+        ProcHeal(Caster, Target, "Convert Ally", "Heal", HealVal, 0, "You cast Convert Ally on %t")
+
+    end
 end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+    RemoveProc(Target)
 end
-

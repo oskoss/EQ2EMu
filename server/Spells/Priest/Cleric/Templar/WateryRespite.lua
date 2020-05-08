@@ -1,26 +1,23 @@
 --[[
     Script Name    : Spells/Priest/Cleric/Templar/WateryRespite.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 06:08:55
+    Script Author  : neatz09
+    Script Date    : 2019.11.04 07:11:39
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
--- Info from spell_display_effects (remove from script when done)
--- Allows group members (AE) to breathe under water
 -- Increases Swimming of group members (AE) by 69.0
+-- Allows group members (AE) to breathe under water
+
+function cast(Caster, Target, SkillAmt)
+BreatheUnderwater(Target, true)
+    AddSkillBonus(Target, GetSkillIDByName("Swimming"), SkillAmt)
 
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
 
 function remove(Caster, Target)
-    -- code to remove the spell
-end
+BreatheUnderwater(Target, false)
+    RemoveSkillBonus(Target)
 
+end

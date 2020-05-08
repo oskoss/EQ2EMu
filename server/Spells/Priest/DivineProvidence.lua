@@ -1,26 +1,17 @@
 --[[
     Script Name    : Spells/Priest/DivineProvidence.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 02:08:30
+    Script Author  : neatz09
+    Script Date    : 2020.01.02 04:01:17
     Script Purpose : 
                    : 
 --]]
 
+function precast(Caster, Target)
+   -- Must be engaged in combat
+   return IsInCombat(Caster)
+end
+
 function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
--- Info from spell_display_effects (remove from script when done)
--- Begins a Heroic Opportunity
--- Must be engaged in combat
-
+    -- Begins a Heroic Opportunity
+StartHeroicOpportunity(Caster, 11)
 end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-

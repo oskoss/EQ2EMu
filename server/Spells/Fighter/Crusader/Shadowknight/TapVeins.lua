@@ -8,6 +8,8 @@
 --this needs to hit everything and tap each mob
 
 function cast(Caster, Target, DmgType, MinVal, HealType, pctHealMin, pctHealMax)
+    Say(Caster, "spell heals a portion of total amount of damage... not implemented.")
+
 -- Applies Tap on termination.
 --     Inflicts 543 disease damage on target        
 SpellDamage(Target, DmgType, MinVal)

@@ -8,3 +8,14 @@
 
 -- Info from spell_display_effects (remove from script when done)
 -- Decreases DPS of target by 15.9
+
+function cast(Caster, Target, Amt)
+    AddSpellBonus(Target, 629, Amt)
+
+end
+
+
+function remove(Caster, Target)
+    RemoveSpellBonus(Target)
+
+end

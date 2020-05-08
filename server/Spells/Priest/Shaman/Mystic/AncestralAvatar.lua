@@ -1,24 +1,23 @@
 --[[
     Script Name    : Spells/Priest/Shaman/Mystic/AncestralAvatar.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 07:08:56
+    Script Author  : neatz09
+    Script Date    : 2019.11.04 09:11:00
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
--- Info from spell_display_effects (remove from script when done)
+function cast(Caster, Target, Stat, Avoid)
+-- Increases AGI, STR and STA of target by 54.4
+    AddSpellBonus(Target, 0, Stat)
+    AddSpellBonus(Target, 1, Stat)
+    AddSpellBonus(Target, 2, Stat)
+-- Adds 1.3% to base avoidance.
+    AddSpellBonus(Target, 696, Avoid)
 
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
 
 function remove(Caster, Target)
-    -- code to remove the spell
-end
+    RemoveSpellBonus(Target)
 
+end

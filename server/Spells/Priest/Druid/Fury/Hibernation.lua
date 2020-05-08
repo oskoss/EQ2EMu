@@ -6,6 +6,14 @@
                    : 
 --]]
 
--- Info from spell_display_effects (remove from script when done)
+
 -- Applies Awakening on termination.
 --     Heals target for 1089 - 1332
+
+function cast(Caster, Target)
+
+end
+
+function remove(Caster, Target, MinVal, MaxVal)
+SpellHeal("Heal", MinVal, MaxVal)
+end

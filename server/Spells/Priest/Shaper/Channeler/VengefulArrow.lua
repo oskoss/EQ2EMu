@@ -11,7 +11,7 @@ function precast(Caster, Target)
     return true
 end
 
-function cast(Caster, Target, DmgType, MinVal, MaxVal)
+function cast(Caster, Target, MinVal, MaxVal)
     -- Inflicts 7 - 12 ranged damage on target
     if MaxVal ~= nil and MinVal < MaxVal then
         SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))

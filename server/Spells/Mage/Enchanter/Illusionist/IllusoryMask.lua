@@ -13,7 +13,7 @@
 
 function cast(Caster, Target)
 Stealth(2, Target)
-    Say(Caster, "Suspends group members (AE)'s movement speed enhancements Not Implemented")
+    Say(Caster, "Suspends group members (AE)'s movement speed enhancements Not Implemented. Unsure if can be cast in combat or not.")
 end
 
 function remove(Caster, Target)

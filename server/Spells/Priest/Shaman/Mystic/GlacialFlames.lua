@@ -1,25 +1,19 @@
 --[[
     Script Name    : Spells/Priest/Shaman/Mystic/GlacialFlames.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 07:08:35
+    Script Author  : neatz09
+    Script Date    : 2019.11.04 09:11:19
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
 
--- Info from spell_display_effects (remove from script when done)
--- Inflicts 59 - 72 cold damage on target instantly and every 3 seconds
+-- Inflicts 58 - 71 cold damage on target instantly and every 3 seconds
 
+
+function cast(Caster, Target, DoTType, MinVal, MaxVal)
+  SpellDamage(Target, DoTType, MinVal, MaxVal)
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+function tick(Caster, Target, DoTType, MinVal, MaxVal)
+  SpellDamage(Target, DoTType, MinVal, MaxVal)
 end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-

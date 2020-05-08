@@ -1,18 +1,14 @@
 --[[
-	Script Name	: Wrath.lua
-	Script Purpose	: Priest Generic Direct Damage
-	Script Author	: Zcoretri
-	Script Date	: 15.March.2011
-	Script Notes	:
+    Script Name    : Spells/Priest/Wrath.lua
+    Script Author  : neatz09
+    Script Date    : 2020.01.02 04:01:39
+    Script Purpose : 
+                   : 
 --]]
 
-function cast(Caster, Target, DmgType, MinDmg, MaxDmg)
-    -- Instant Damage
-    dmgAmount = math.random(MinDmg, MaxDmg)
-    if MaxDmg ~= nil and MinDmg < MaxDmg then
-        SpellDamage(Target, DmgType, dmgAmount)
-    else
-        SpellDamage(Target, DmgType, MinDmg)
-    end
+-- Inflicts 22 - 27 divine damage on target
+
+function cast(Caster, Target, DmgType, DmgMin, DmgMax)
+SpellDamage(Target, DmgType, DmgMin, DmgMax)
 end
 

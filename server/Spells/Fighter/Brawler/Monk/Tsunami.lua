@@ -1,24 +1,11 @@
 --[[
     Script Name    : Spells/Fighter/Brawler/Monk/Tsunami.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 05:08:27
+    Script Author  : neatz09
+    Script Date    : 2020.03.03 02:03:01
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+-- Caster will Riposte 100.0% of incoming frontal attacks.  Attacks from other quadrants have the same chance of being Parried
+-- Makes caster immune to strikethrough attacks.

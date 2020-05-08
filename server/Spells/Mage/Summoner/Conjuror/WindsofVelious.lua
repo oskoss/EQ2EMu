@@ -1,27 +1,25 @@
 --[[
     Script Name    : Spells/Mage/Summoner/Conjuror/WindsofVelious.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 08:08:37
+    Script Author  : neatz09
+    Script Date    : 2019.11.11 05:11:10
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
--- Info from spell_display_effects (remove from script when done)
--- Slows target by 75.0%
 -- Interrupts target
--- Inflicts 92 - 112 cold damage on target instantly and every 4 seconds
-
+-- Inflicts 90 - 111 cold damage on target instantly and every 4 seconds
+function cast(Caster, Target, DmgType, MinVal, MaxVal)
+    Interrupt(Target)
+SpellDamage(Target, DmgType, MinVal, MaxVal)
+-- Slows target by 75.0%
+SetSpeedMultiplier(Target, 0.25)
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+-- Inflicts 90 - 111 cold damage on target instantly and every 4 seconds
+function tick(Caster, Target, DmgType, MinVal, MaxVal)
+SpellDamage(Target, DmgType, MinVal, MaxVal)
 end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+    SetSpeedMultiplier(Target, 1)
 end
-

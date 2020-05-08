@@ -1,26 +1,11 @@
 --[[
     Script Name    : Spells/Priest/Cleric/Templar/HealingFate.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 06:08:43
+    Script Author  : neatz09
+    Script Date    : 2019.11.04 08:11:11
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
 -- When target receives a reduction in health of 20% this spell will cast Fate of Healing on caster.  
--- Heals group members (AE) for 169
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+--     Heals group members (AE) for 153

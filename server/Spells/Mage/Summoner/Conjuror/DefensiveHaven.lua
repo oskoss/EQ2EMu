@@ -2,7 +2,7 @@
     Script Name    : Spells/Mage/Summoner/Conjuror/DefensiveHaven.lua
     Script Author  : Jabantiz
     Script Date    : 2014.03.12 05:03:47
-    Script Purpose : 
+    Script revision : Updated 4/13/2020 neatz09
                    : 
 --]]
 
@@ -11,7 +11,7 @@ function cast(Caster, Target, AtkSpeed, MaxHP, HateGain, Agg, Resist, HateMin, H
     AddSpellBonus(Target, 617, AtkSpeed)
 
     --     Increases Max Health of target by 9.0%
-    AddSpellBonus(Target, 606, MaxHP)
+    AddSpellBonus(Target, 607, MaxHP)
 
     --     Increases Hate Gain of target by 11.9%
     AddSpellBonus(Target, 624, HateGain)
@@ -38,7 +38,7 @@ end
 
 function proc(Caster, Target, Type, AtkSpeed, MaxHP, HateGain, Agg, Resist, HateMin, HateMax, Ward)
     if Type == 1 then
-        AddHate(Caster, Target, math.random(HateMin, HateMax))
+ProcHate(Caster, Target, math.random(HateMin, HateMax), "Shout")
     end
 end
 
