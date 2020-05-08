@@ -2025,7 +2025,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 
 	int32 temp_activity_status = 0;
 	
-	if (!Alive() && !IsObject() && !IsGroundSpawn())
+	if (!Alive() && GetTotalHP() > 0 && !IsObject() && !IsGroundSpawn())
 		temp_activity_status = 1;
 
 	temp_activity_status += (IsNPC() || IsObject() || IsGroundSpawn()) ? 1 << 1 : 0;
