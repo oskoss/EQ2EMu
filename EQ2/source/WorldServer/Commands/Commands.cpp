@@ -150,6 +150,7 @@ Commands::Commands(){
 	spawn_set_values["prefix"] = SPAWN_SET_VALUE_PREFIX;
 	spawn_set_values["suffix"] = SPAWN_SET_VALUE_SUFFIX;
 	spawn_set_values["lastname"] = SPAWN_SET_VALUE_LASTNAME;
+	spawn_set_values["expansion_flag"] = SPAWN_SET_VALUE_EXPANSION_FLAG;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -193,7 +194,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 		return false;
 	int32 val = 0;
 	try{
-		if(type != SPAWN_SET_VALUE_NAME && !(type >= SPAWN_SET_VALUE_SPAWN_SCRIPT && type <= SPAWN_SET_VALUE_SUB_TITLE) && !(type >= SPAWN_SET_VALUE_PREFIX && type <= SPAWN_SET_VALUE_LASTNAME))
+		if(type != SPAWN_SET_VALUE_NAME && !(type >= SPAWN_SET_VALUE_SPAWN_SCRIPT && type <= SPAWN_SET_VALUE_SUB_TITLE) && !(type >= SPAWN_SET_VALUE_PREFIX && type <= SPAWN_SET_VALUE_EXPANSION_FLAG))
 			val = atoul(value);
 	}
 	catch(...){
@@ -476,10 +477,14 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			}
 
 			case SPAWN_SET_VALUE_LASTNAME: {
-				 sprintf(tmp, "%s", target->GetLastName());
-				 target->SetLastName(value);
-				 client->GetCurrentZone()->SendUpdateTitles(target);
-				 break;
+				sprintf(tmp, "%s", target->GetLastName());
+				target->SetLastName(value);
+				client->GetCurrentZone()->SendUpdateTitles(target);
+				break;
+			}
+			case SPAWN_SET_VALUE_EXPANSION_FLAG: {
+				// nothing to do must reload spawns
+				break;
 			}
 
 			*temp_value = string(tmp);
@@ -487,6 +492,19 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 	}
 	else{
 		switch(type){
+		case SPAWN_SET_VALUE_EXPANSION_FLAG: {
+
+			if (target->GetDatabaseID() > 0)
+			{
+				char query[256];
+				_snprintf(query, 256, "update spawn set expansion_flag=%i where id=%i", atoul(value), target->GetDatabaseID());
+				if (database.RunQuery(query, strnlen(query, 256)))
+				{
+					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
+				}
+			}
+			break;
+		}
 			case SPAWN_SET_VALUE_NAME:{
 				target->SetName(value);
 				client->GetCurrentZone()->SendUpdateTitles(target);
@@ -3376,7 +3394,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if(set_type > 0)
 				{
 					// check if spawn set is NOT a char update, or not location, or isn't a number
-					if(!(set_type >= SPAWN_SET_VALUE_PREFIX) && !(set_type <= SPAWN_SET_VALUE_LASTNAME) && set_type != SPAWN_SET_VALUE_NAME && ((set_type < SPAWN_SET_VALUE_SPAWN_SCRIPT) || (set_type > SPAWN_SET_VALUE_SUB_TITLE)) && set_type != SPAWN_SET_VALUE_LOCATION && sep->IsNumber(1) == false)
+					if(!(set_type >= SPAWN_SET_VALUE_PREFIX) && !(set_type <= SPAWN_SET_VALUE_EXPANSION_FLAG) && set_type != SPAWN_SET_VALUE_NAME && ((set_type < SPAWN_SET_VALUE_SPAWN_SCRIPT) || (set_type > SPAWN_SET_VALUE_SUB_TITLE)) && set_type != SPAWN_SET_VALUE_LOCATION && sep->IsNumber(1) == false)
 					{
 						client->SimpleMessage(CHANNEL_COLOR_RED, "Invalid value for set command.");
 					}
@@ -3385,7 +3403,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						string name = string(spawn->GetName());
 						if(SetSpawnCommand(client, spawn, set_type, sep->arg[1]))
 						{
-							if(set_type == SPAWN_SET_VALUE_NAME)
+							if (set_type == SPAWN_SET_VALUE_EXPANSION_FLAG)
+							{
+								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "A /reload spawns is required to properly update the spawns with the xpack flag.");
+							}
+							else if(set_type == SPAWN_SET_VALUE_NAME)
 							{
 								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "New name will not be effective until zone reload.");
 							}
@@ -3399,7 +3421,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set '%s' to '%s' for spawn '%s'", sep->arg[0], sep->arg[1], name.c_str());
 							}
 
-							if(set_type != SPAWN_SET_VALUE_FACTION)
+							if(set_type != SPAWN_SET_VALUE_FACTION && set_type != SPAWN_SET_VALUE_EXPANSION_FLAG)
 							{
 								client->GetCurrentZone()->ApplySetSpawnCommand(client, spawn, set_type, sep->arg[1]);
 							}

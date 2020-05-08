@@ -540,6 +540,7 @@ private:
 #define SPAWN_SET_VALUE_PREFIX              56
 #define SPAWN_SET_VALUE_SUFFIX              57
 #define SPAWN_SET_VALUE_LASTNAME            58
+#define SPAWN_SET_VALUE_EXPANSION_FLAG      59
 
 #define ZONE_SET_VALUE_EXPANSION_ID			0
 #define ZONE_SET_VALUE_NAME					1
