@@ -1655,12 +1655,12 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 
 			packet->setDataByName("pos_collision_radius", appearance.pos.collision_radius > 0 ? appearance.pos.collision_radius : 32);
 
-			packet->setDataByName("pos_size", 1.0f);
-
 			if (!IsPlayer())
-				packet->setDataByName("pos_size_ratio", size > 0 ? (((float)size) / 32) : 1);
+				packet->setDataByName("pos_size", size > 0 ? (((float)size) / 32.0f) : 1.0f);
 			else
-				packet->setDataByName("pos_size_ratio", 1.0f);
+				packet->setDataByName("pos_size", 1.0f);
+
+			packet->setDataByName("pos_size_ratio", 1.0f);
 	}
 	packet->setDataByName("pos_state", appearance.pos.state);
 
