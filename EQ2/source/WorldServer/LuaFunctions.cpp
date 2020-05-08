@@ -9189,3 +9189,24 @@ int EQ2Emu_lua_CheckLOSByCoordinates(lua_State* state) {
 
 	return 0;
 }
+
+int EQ2Emu_lua_SetZoneExpansionFlag(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	ZoneServer* zone = lua_interface->GetZone(state);
+	int32 xpackFlag = lua_interface->GetInt32Value(state, 2);
+	if (zone)
+		zone->SetExpansionFlag(xpackFlag);
+	return 0;
+}
+
+int EQ2Emu_lua_GetZoneExpansionFlag(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	ZoneServer* zone = lua_interface->GetZone(state);
+	if (zone) {
+		lua_interface->SetInt32Value(state, zone->GetExpansionFlag());
+		return 1;
+	}
+	return 0;
+}

@@ -413,4 +413,7 @@ int EQ2Emu_lua_ProcHate(lua_State* state);
 
 int EQ2Emu_lua_CheckLOS(lua_State* state);
 int EQ2Emu_lua_CheckLOSByCoordinates(lua_State* state);
+
+int EQ2Emu_lua_SetZoneExpansionFlag(lua_State* state);
+int EQ2Emu_lua_GetZoneExpansionFlag(lua_State* state);
 #endif

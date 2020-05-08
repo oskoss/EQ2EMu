@@ -1016,6 +1016,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 
 	lua_register(state, "CheckLOS", EQ2Emu_lua_CheckLOS);
 	lua_register(state, "CheckLOSByCoordinates", EQ2Emu_lua_CheckLOSByCoordinates);
+
+	lua_register(state, "SetZoneExpansionFlag", EQ2Emu_lua_SetZoneExpansionFlag);
+	lua_register(state, "GetZoneExpansionFlag", EQ2Emu_lua_GetZoneExpansionFlag);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
