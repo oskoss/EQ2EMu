@@ -1856,7 +1856,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 							Spawn* group_member = *itr;
 
 							// if NPC group member is (still) an NPC (wtf?) and is alive, send the NPC group member back as a successful target of non-friendly spell
-							if (group_member->IsNPC() && group_member->Alive() && !((Entity*)group_member)->IsAOEImmune())
+							if (group_member->IsNPC() && group_member->Alive() && !((Entity*)group_member)->IsAOEImmune() && (!((Entity*)group_member)->IsMezzed() || group_member == target))
 								luaspell->targets.push_back(group_member->GetID());
 
 							// note: this should generate some hate towards the caster
@@ -1973,7 +1973,7 @@ void SpellProcess::GetSpellTargetsTrueAOE(LuaSpell* luaspell) {
 			}
 			if (spawn){
 				//If this spawn is immune to aoe, continue
-				if (((Entity*)spawn)->IsAOEImmune())
+				if (((Entity*)spawn)->IsAOEImmune() || ((Entity*)spawn)->IsMezzed())
 					continue;
 				luaspell->targets.push_back(spawn->GetID());
 			}
