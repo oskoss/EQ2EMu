@@ -1012,6 +1012,11 @@ void Entity::AddMezSpell(LuaSpell* spell) {
 			GetZone()->LockAllSpells((Player*)this);
 	}
 
+	if (IsNPC() && !IsMezImmune())
+	{
+		HaltMovement();
+	}
+
 	mez_spells->Add(spell);
 }
 
@@ -1759,11 +1764,9 @@ void Entity::AddFearSpell(LuaSpell* spell){
 			GetZone()->LockAllSpells((Player*)this);
 	}
 
-	if (IsNPC())
+	if (!IsFearImmune() && IsNPC())
 	{
-		this->ClearRunningLocations();
-		if (GetZone())
-			GetZone()->movementMgr->StopNavigation(this);
+		HaltMovement();
 	}
 
 	control_effects[CONTROL_EFFECT_TYPE_FEAR]->Add(spell);
@@ -1784,10 +1787,7 @@ void Entity::RemoveFearSpell(LuaSpell* spell){
 
 	if (IsNPC())
 	{
-		this->ClearRunningLocations();
-
-		if (GetZone())
-			GetZone()->movementMgr->StopNavigation(this);
+		HaltMovement();
 	}
 }
 
@@ -2462,4 +2462,14 @@ void Entity::CustomizeAppearance(PacketStruct* packet) {
 void Entity::AddSkillBonus(int32 spell_id, int32 skill_id, float value) {
 	// handled in npc or player
 	return;
+}
+
+void Entity::HaltMovement()
+{
+	this->ClearRunningLocations();
+
+	if (GetZone())
+		GetZone()->movementMgr->StopNavigation(this);
+
+	RunToLocation(GetX(), GetY(), GetZ());
 }

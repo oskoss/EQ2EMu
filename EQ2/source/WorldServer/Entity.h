@@ -678,6 +678,8 @@ public:
 	bool IsSnared();
 	float GetHighestSnare();
 
+	void HaltMovement();
+
 
 	void SetCombatPet(Entity* pet) { this->pet = pet; }
 	void SetCharmedPet(Entity* pet) { charmedPet = pet; }
