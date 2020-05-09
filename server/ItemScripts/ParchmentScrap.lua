@@ -3,7 +3,7 @@
 	Script Purpose	:	Handles the quest item "Parchment Scrap (right-click this item to Examine it)" (10317)
 	Script Author	:	Jabantiz
 	Script Date		:	9/8/2016
-	Script Notes	:	
+	Script Notes	:	Updated May 9th 2020.  Parchment Scrap 10313 was duplicating due to lack of HasItem check (when continuously examining)
 --]]
 
 local Tainted = 183
@@ -15,7 +15,9 @@ function examined(Item, Player)
 		if GetQuestStep(Player, Tainted) == 2 then
 			AddConversationOption(con, "Examine the parchment.", "Examine")
 		elseif GetQuestStep(Player, Tainted) == 4 then
-		    SummonItem(Player, 10313, 0)
+			if HasItem(Player, 10313, 0) == false then
+		 	   SummonItem(Player, 10313, 0)
+			end
 			AddConversationOption(con, "Put together the parchment pieces.", "PutTogether")
 		elseif GetQuestStep(Player, Tainted) == 7 then
 			AddConversationOption(con, "Piece together the parchment.", "PieceTogether")
