@@ -1318,7 +1318,10 @@ bool ZoneServer::Process()
 			}
 
 			if (zonemap != nullptr && Grid != nullptr && !zonemap->IsMapLoaded())
+			{
 				delete Grid;
+				Grid = nullptr;
+			}
 
 			DeleteTransporters();
 			ReloadTransporters();
