@@ -373,6 +373,26 @@ int EQ2Emu_lua_GetFactionAmount(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_SetFactionID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 value = lua_interface->GetInt32Value(state, 2);
+	if (spawn) {
+		spawn->SetFactionID(value);
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_GetFactionID(lua_State* state) {
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn) {
+		lua_interface->SetInt32Value(state, spawn->GetFactionID());
+		return 1;
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_GetGender(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	if (spawn) {
