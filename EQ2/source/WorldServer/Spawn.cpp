@@ -2063,11 +2063,21 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 		if ((appearance.activity_status & ACTIVITY_STATUS_IMMUNITY_REMAINING) > 0)
 			temp_activity_status += ACTIVITY_STATUS_IMMUNITY_REMAINING_1188;
 
+		if ((appearance.activity_status & ACTIVITY_STATUS_AFK) > 0)
+			temp_activity_status += ACTIVITY_STATUS_AFK_1188;
+
 		if (EngagedInCombat())
 			temp_activity_status += ACTIVITY_STATUS_INCOMBAT_1188;
 	}
 	else
+	{
 		temp_activity_status = appearance.activity_status;
+
+		// WE ARE UNSURE OF THESE OLD CLIENT VALUES USED AS TEMP PLACEHOLDERS FOR NEWER CLIENTS
+		if ((appearance.activity_status & ACTIVITY_STATUS_AFK) > 0)
+			temp_activity_status -= ACTIVITY_STATUS_AFK;
+
+	}
 
 	packet->setDataByName("activity_status", temp_activity_status); //appearance.activity_status);
 

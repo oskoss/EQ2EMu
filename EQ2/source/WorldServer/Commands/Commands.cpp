@@ -4161,8 +4161,8 @@ void Commands::Command_AFK(Client* client, Seperator* sep)
 
 	if (player->get_character_flag(CF_AFK))
 	{
-		LogWrite(MISC__TODO, 1, "TODO", "player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK); <-- need to find this");
-		/*player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK); <-- need to find this */
+		//LogWrite(MISC__TODO, 1, "TODO", "player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK); <-- need to find this");
+		player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK);
 
 		if (sep && sep->argplus[0])
 			player->SetAwayMessage("I am away from the keyboard, " + string(sep->argplus[0]));
@@ -4181,8 +4181,8 @@ void Commands::Command_AFK(Client* client, Seperator* sep)
 
 		player->GetZone()->SimpleMessage(CHANNEL_COLOR_YELLOW, message.c_str(), player, 30);
 	}
-	/*else
-		player->SetActivityStatus(player->GetActivityStatus() - ACTIVITY_STATUS_AFK); <-- need to find this */
+	else
+		player->SetActivityStatus(player->GetActivityStatus() - ACTIVITY_STATUS_AFK);
 }
 
 /* 
