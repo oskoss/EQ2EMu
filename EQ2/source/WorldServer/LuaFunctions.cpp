@@ -676,7 +676,7 @@ int EQ2Emu_lua_StartConversation(lua_State* state) {
 		lua_interface->SetConversationValue(state, NULL);
 	}
 	else
-		LogWrite(LUA__ERROR, 0, "LUA", "Spawn %s Error in StartConversation, potentially AddConversationOption not yet called or the StartConversation arguments are incorrect, text: %s, conversationSize: %i.", npc->GetName(), text.c_str(), conversation ? conversation->size() : -1);
+		LogWrite(LUA__ERROR, 0, "LUA", "Spawn %s Error in StartConversation, potentially AddConversationOption not yet called or the StartConversation arguments are incorrect, text: %s, conversationSize: %i.", npc ? npc->GetName() : "UNKNOWN", text.size() ? text.c_str() : "", conversation ? conversation->size() : -1);
 	return 0;
 }
 
