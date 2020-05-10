@@ -1684,6 +1684,13 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						}
 					}
 				}
+				else
+				{
+					if (target->IsPlayer() && ((Entity*)caster)->AttackAllowed((Entity*)target)) {
+						luaspell->initial_target = target->GetID();
+						luaspell->targets.push_back(target->GetID());
+					}
+				}
 			}
 		}
 		else if (target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_RAID_AE) {
