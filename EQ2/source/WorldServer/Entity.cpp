@@ -1324,7 +1324,7 @@ float Entity::CalculateCastingSpeedMod() {
 float Entity::GetSpeed() {
 	float ret = speed > GetBaseSpeed() ? speed : GetBaseSpeed();
 
-	if (EngagedInCombat())
+	if (EngagedInCombat() && GetMaxSpeed() > 0.0f)
 		ret = GetMaxSpeed();
 
 	if (IsStealthed() || IsInvis())

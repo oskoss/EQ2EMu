@@ -2478,6 +2478,8 @@ MovementLocation* Spawn::GetLastRunningLocation(){
 void Spawn::AddRunningLocation(float x, float y, float z, float speed, float distance_away, bool attackable, bool finished_adding_locations, string lua_function, bool isMapped){
 	if(speed == 0)
 		return;
+
+	((Entity*)this)->SetSpeed(speed);
 	MovementLocation* current_location = 0;
 
 	float distance = GetDistance(x, y, z, distance_away != 0);
@@ -2639,7 +2641,7 @@ void Spawn::CalculateRunningLocation(bool stop){
 		SetPos(&appearance.pos.Y3, GetY(), false);
 		SetPos(&appearance.pos.Z3, GetZ(), false);
 	}
-	else if (removed && movement_locations->size() > 0) {
+	else if (removed && movement_locations && movement_locations->size() > 0) {
 		MovementLocation* current_location = movement_locations->at(0);
 		if (movement_locations->size() > 1) {
 			MovementLocation* data = movement_locations->at(1);
@@ -2658,7 +2660,7 @@ void Spawn::CalculateRunningLocation(bool stop){
 				GetZone()->movementMgr->NavigateTo((Entity*)this, GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
 		}
 		else
-			GetZone()->movementMgr->StopNavigation((Entity*)this);
+			((Entity*)this)->HaltMovement();
 	} 
 }
 float Spawn::GetFaceTarget(float x, float z) {
