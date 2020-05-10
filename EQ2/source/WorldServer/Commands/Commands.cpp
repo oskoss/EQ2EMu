@@ -3652,6 +3652,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			const char* script = world.GetSpawnScript(id);
 			if(script && lua_interface && lua_interface->GetSpawnScript(script) != 0)
 				spawn->SetSpawnScript(string(script));
+
+			spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_PRESPAWN);
+
 			client->GetCurrentZone()->AddSpawn(spawn);
 			if(spawn->IsNPC())
 				spawn->GetZone()->AddLoot((NPC*)spawn);
@@ -4545,8 +4548,7 @@ void Commands::Command_Grid(Client* client)
 void Commands::Command_Guild(Client* client, Seperator* sep)
 {
 	Guild* guild = client->GetPlayer()->GetGuild();
-
-	if (sep && sep->arg[0]) 
+	if (sep && sep->GetMaxArgNum() > 0 && sep->arg[0])
 	{
 		const char* command = sep->arg[0];
 		int32 length = strlen(command);
@@ -4671,10 +4673,10 @@ void Commands::Command_Guild(Client* client, Seperator* sep)
 		}
 		else if (strncmp(command, "create", length) == 0 && sep->arg[1]) 
 		{
-			const char* guild_name = sep->argplus[0];
+			const char* guild_name = sep->argplus[1];
 
 			if (!guild_list.GetGuild(guild_name))
-				world.CreateGuild(guild_name, client, client->GetPlayer()->GetGroupMemberInfo()->group_id);
+				world.CreateGuild(guild_name, client, client->GetPlayer()->GetGroupMemberInfo() ? client->GetPlayer()->GetGroupMemberInfo()->group_id : 0);
 			else
 				client->SimpleMessage(CHANNEL_COLOR_WHITE, "A guild with that name already exists.");
 		}
