@@ -963,8 +963,9 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 					tmpTier = -1;
 
 				char msg[512];
-				snprintf(msg, 512, "%s: SpellCasted without proper spell range set: %s ID: %i Tier: %i Range obtained from tier %i range %f", caster->GetName(), spell->GetName(), spell->GetSpellID(), spell->GetSpellTier(), tmpTier, tmpRange);
-				commands.Command_ReportBug(client, new Seperator(msg));
+				snprintf(msg, 512, "SpellCasted without proper spell range set %s ID %i Tier %i Range obtained from tier %i range %f", spell->GetName(), spell->GetSpellID(), spell->GetSpellTier(), tmpTier, tmpRange);
+				if (!world.CheckTempBugCRC(msg))
+					commands.Command_ReportBug(client, new Seperator(msg));
 			}
 
 			if(caster->GetDistance(target) > tmpRange)

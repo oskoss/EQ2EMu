@@ -2087,6 +2087,25 @@ sint16 World::GetItemStatKAValue(sint16 subtype) {
 	return (ka_itemstat_conversion[subtype] - 600);
 }
 
+bool World::CheckTempBugCRC(char* msg)
+{
+	MBugReport.writelock();
+
+	sint32 crc = GetItemNameCrc(std::string(msg));
+	
+	if (bug_report_crc.count(crc) > 0)
+	{
+		MBugReport.releasewritelock();
+		return true;
+	}
+	else
+		bug_report_crc.insert(make_pair(crc, true));
+
+	MBugReport.releasewritelock();
+
+	return false;
+}
+
 
 #ifdef WIN32
 ulong World::GetCurrentThreadID(){

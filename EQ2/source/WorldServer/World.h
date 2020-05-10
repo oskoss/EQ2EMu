@@ -406,7 +406,6 @@ class ZoneList {
 	void ShutDownZones();
 	void ReloadMail();
 	void ReloadSpawns();
-
 private:
 	Mutex				MClientList;
 	Mutex				MZoneList;
@@ -523,6 +522,7 @@ public:
 
 	PlayerGroupManager* GetGroupManager() { return &m_playerGroupManager; }
 
+	bool CheckTempBugCRC(char* msg);
 private:
 	//void RemovePlayerFromGroup(PlayerGroup* group, GroupMemberInfo* info, bool erase = true);
 	//void DeleteGroupMember(GroupMemberInfo* info);
@@ -574,5 +574,8 @@ private:
 	map<int16,int16> ka_itemstat_conversion;
 
 	PlayerGroupManager m_playerGroupManager;
+
+	Mutex				MBugReport;
+	map<sint32, bool> bug_report_crc;
 };
 #endif
