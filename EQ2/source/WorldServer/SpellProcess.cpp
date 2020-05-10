@@ -1671,6 +1671,19 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 									implied = true;
 								}
 							}
+							else if (target->IsPlayer() && ((Entity*)caster)->AttackAllowed((Entity*)target))
+							{
+								secondary_target = target;
+								implied = true;
+								luaspell->initial_target = target->GetID();
+								luaspell->targets.push_back(target->GetID());
+							}
+							else if (target->IsPlayer() && ((Entity*)caster)->AttackAllowed((Entity*)secondary_target))
+							{
+								implied = true;
+								luaspell->initial_target = secondary_target->GetID();
+								luaspell->targets.push_back(secondary_target->GetID());
+							}
 						}
 					} // end friendly spell check
 				}
