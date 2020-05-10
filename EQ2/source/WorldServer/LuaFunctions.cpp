@@ -1007,10 +1007,18 @@ int EQ2Emu_lua_Spawn(lua_State* state) {
 			spawn->SetHeading(heading);
 			if (restricted_npc)
 				spawn->AddAllowAccessSpawn(spawn);
-			zone->AddSpawn(spawn);
+
 			const char* spawn_script = world.GetSpawnScript(spawn_id);
+			bool scriptActive = false;
 			if (spawn_script && lua_interface->GetSpawnScript(spawn_script) != 0) {
+				scriptActive = true;
 				spawn->SetSpawnScript(string(spawn_script));
+			}
+
+			zone->CallSpawnScript(spawn, SPAWN_SCRIPT_PRESPAWN);
+
+			zone->AddSpawn(spawn);
+			if (scriptActive) {
 				zone->CallSpawnScript(spawn, SPAWN_SCRIPT_SPAWN);
 			}
 			lua_interface->SetSpawnValue(state, spawn);
@@ -9228,5 +9236,19 @@ int EQ2Emu_lua_GetZoneExpansionFlag(lua_State* state) {
 		lua_interface->SetInt32Value(state, zone->GetExpansionFlag());
 		return 1;
 	}
+	return 0;
+}
+
+int EQ2Emu_lua_AddSpawnProximity(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 spawn_value = lua_interface->GetInt32Value(state, 2);
+	int8 spawn_type = lua_interface->GetInt8Value(state, 3);
+	float distance = lua_interface->GetFloatValue(state, 4);
+	string in_range_function = lua_interface->GetStringValue(state, 5);
+	string leaving_range_function = lua_interface->GetStringValue(state, 6);
+	if (spawn && distance > 0 && in_range_function.length() > 0)
+		spawn->AddLUASpawnProximity(spawn_value, (Spawn::SpawnProximityType)spawn_type, distance, in_range_function, leaving_range_function);
 	return 0;
 }

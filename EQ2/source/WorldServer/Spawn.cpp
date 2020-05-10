@@ -136,6 +136,9 @@ Spawn::~Spawn(){
 		safe_delete(rq_itr->second);
 	}
 	m_requiredQuests.releasewritelock(__FUNCTION__, __LINE__);
+
+	// just in case to make sure data is destroyed
+	RemoveSpawnProximities();
 }
 
 void Spawn::InitializeHeaderPacketData(Player* player, PacketStruct* header, int16 index) {
@@ -2174,6 +2177,8 @@ void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate, bool ma
 }
 
 void Spawn::ProcessMovement(bool isSpawnListLocked){
+	CheckProximities();
+
 	if(IsPlayer()){
 		//Check if player is riding a boat, if so update pos (boat's current location + XYZ offsets)
 		Player* player = ((Player*)this);
@@ -3154,6 +3159,65 @@ void Spawn::CalculateNewFearpoint()
 		auto Node = zone->pathing->GetRandomLocation(glm::vec3(GetX(), GetZ(), GetY()));
 		if (Node.x != 0.0f || Node.y != 0.0f || Node.z != 0.0f) {
 			AddRunningLocation(Node.x, Node.y, Node.z, GetSpeed(), 0, true, true, "", true);
+		}
+	}
+}
+
+void Spawn::CheckProximities()
+{
+	if (spawn_proximities.size() > 0)
+	{
+		MutexList<SpawnProximity*>::iterator itr = spawn_proximities.begin();
+		while (itr.Next()) {
+			SpawnProximity* prox = itr.value;
+			map<int32, bool>::iterator spawnsItr;
+			for (spawnsItr = prox->spawns_in_proximity.begin(); spawnsItr != prox->spawns_in_proximity.end(); spawnsItr++) {
+				Spawn* tmpSpawn = 0;
+				if (spawnsItr->first &&
+					((prox->spawn_type == SPAWNPROXIMITY_DATABASE_ID && (tmpSpawn = GetZone()->GetSpawnByDatabaseID(spawnsItr->first)) != 0) ||
+						(prox->spawn_type == SPAWNPROXIMITY_LOCATION_ID && (tmpSpawn = GetZone()->GetSpawnByLocationID(spawnsItr->first)) != 0)))
+				{
+					if (!spawnsItr->second && tmpSpawn->GetDistance(this) <= prox->distance)
+					{
+						if (prox->in_range_lua_function.size() > 0)
+							GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, tmpSpawn, prox->in_range_lua_function.c_str());
+						spawnsItr->second = true;
+					}
+					else if (spawnsItr->second && tmpSpawn->GetDistance(this) > prox->distance)
+					{
+						if (prox->leaving_range_lua_function.size() > 0)
+							GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, tmpSpawn, prox->leaving_range_lua_function.c_str());
+						spawnsItr->second = false;
+					}
+				}
+			}
+		}
+	}
+}
+
+void Spawn::AddSpawnToProximity(int32 spawnValue, SpawnProximityType type)
+{
+	if (spawn_proximities.size() > 0)
+	{
+		MutexList<SpawnProximity*>::iterator itr = spawn_proximities.begin();
+		while (itr.Next()) {
+			SpawnProximity* prox = itr->value;
+			if (prox->spawn_value == spawnValue && prox->spawn_type == type)
+				prox->spawns_in_proximity.insert(make_pair(spawnValue, false));
+		}
+	}
+}
+
+void Spawn::RemoveSpawnFromProximity(int32 spawnValue, SpawnProximityType type)
+{
+	if (spawn_proximities.size() > 0)
+	{
+		MutexList<SpawnProximity*>::iterator itr = spawn_proximities.begin();
+		while (itr.Next()) {
+			SpawnProximity* prox = itr->value;
+			if (prox->spawn_value == spawnValue && prox->spawn_type == type &&
+				prox->spawns_in_proximity.count(spawnValue) > 0)
+				prox->spawns_in_proximity.erase(spawnValue);
 		}
 	}
 }

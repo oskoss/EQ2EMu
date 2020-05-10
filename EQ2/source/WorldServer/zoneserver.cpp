@@ -2092,47 +2092,23 @@ Spawn* ZoneServer::ProcessSpawnLocation(SpawnLocation* spawnlocation, bool respa
 				continue;
 		}
 
-		if(spawnlocation->entities[i]->spawn_percentage >= rand_number){
-			if(spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_NPC)
+		if (spawnlocation->entities[i]->spawn_percentage >= rand_number) {
+			if (spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_NPC)
 				spawn = AddNPCSpawn(spawnlocation, spawnlocation->entities[i]);
-			else if(spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_GROUNDSPAWN)
+			else if (spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_GROUNDSPAWN)
 				spawn = AddGroundSpawn(spawnlocation, spawnlocation->entities[i]);
-			else if(spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_OBJECT)
+			else if (spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_OBJECT)
 				spawn = AddObjectSpawn(spawnlocation, spawnlocation->entities[i]);
-			else if(spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_WIDGET)
+			else if (spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_WIDGET)
 				spawn = AddWidgetSpawn(spawnlocation, spawnlocation->entities[i]);
-			else if(spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_SIGN)
+			else if (spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_SIGN)
 				spawn = AddSignSpawn(spawnlocation, spawnlocation->entities[i]);
 
-			if (!spawn) 
+			if (!spawn)
 			{
 				LogWrite(ZONE__ERROR, 0, "Zone", "Error adding spawn to zone");
 				safe_delete(spawn);
 				continue;
-			}
-
-			const char* script = 0;
-
-			for(int x=0;x<3;x++)
-			{
-				switch(x)
-				{
-					case 0:
-						script = world.GetSpawnEntryScript(spawnlocation->entities[i]->spawn_entry_id);
-						break;
-					case 1:
-						script = world.GetSpawnLocationScript(spawnlocation->entities[i]->spawn_location_id);
-						break;
-					case 2:
-						script = world.GetSpawnScript(spawnlocation->entities[i]->spawn_id);
-						break;
-				}
-
-				if(script && lua_interface && lua_interface->GetSpawnScript(script) != 0)
-				{
-					spawn->SetSpawnScript(string(script));
-					break;
-				}
 			}
 
 			if (spawn) 
@@ -2449,6 +2425,7 @@ NPC* ZoneServer::AddNPCSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentr
 	NPC* npc = GetNewNPC(spawnentry->spawn_id);
 	if(npc){
 		DeterminePosition(spawnlocation, npc);
+		npc->SetDatabaseID(spawnentry->spawn_id);
 		npc->SetSpawnLocationID(spawnentry->spawn_location_id);
 		npc->SetSpawnEntryID(spawnentry->spawn_entry_id);
 		npc->SetRespawnTime(spawnentry->respawn);
@@ -2456,6 +2433,11 @@ NPC* ZoneServer::AddNPCSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentr
 		if (spawnentry->expire_time > 0)
 			AddSpawnExpireTimer(npc, spawnentry->expire_time, spawnentry->expire_offset);
 		AddLoot(npc);
+
+		SetSpawnScript(spawnentry, npc);
+
+		CallSpawnScript(npc, SPAWN_SCRIPT_PRESPAWN);
+
 		AddSpawn(npc);
 	}
 	LogWrite(SPAWN__TRACE, 1, "Spawn", "Exit %s", __FUNCTION__);
@@ -2713,6 +2695,10 @@ void ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 				lua_interface->RunSpawnScript(script, "hear_say", npc, spawn, message);
 				break;
 			}
+			case SPAWN_SCRIPT_PRESPAWN: {
+				lua_interface->RunSpawnScript(script, "prespawn", npc);
+				break;
+			}
 		}
 	}
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
@@ -2774,14 +2760,18 @@ Sign* ZoneServer::AddSignSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnen
 	Sign* sign = GetNewSign(spawnentry->spawn_id);
 	if(sign){
 		DeterminePosition(spawnlocation, sign);
+		sign->SetDatabaseID(spawnentry->spawn_id);
 		sign->SetSpawnLocationID(spawnentry->spawn_location_id);
 		sign->SetSpawnEntryID(spawnentry->spawn_entry_id);
 		sign->SetRespawnTime(spawnentry->respawn);
 		sign->SetExpireTime(spawnentry->expire_time);
 		if (spawnentry->expire_time > 0)
 			AddSpawnExpireTimer(sign, spawnentry->expire_time, spawnentry->expire_offset);
-		
-		
+
+		SetSpawnScript(spawnentry, sign);
+
+		CallSpawnScript(sign, SPAWN_SCRIPT_PRESPAWN);
+
 		AddSpawn(sign);
 	}
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
@@ -2793,6 +2783,7 @@ Widget* ZoneServer::AddWidgetSpawn(SpawnLocation* spawnlocation, SpawnEntry* spa
 	Widget* widget = GetNewWidget(spawnentry->spawn_id);
 	if(widget){
 		DeterminePosition(spawnlocation, widget);
+		widget->SetDatabaseID(spawnentry->spawn_id);
 		widget->SetSpawnLocationID(spawnentry->spawn_location_id);
 		widget->SetSpawnEntryID(spawnentry->spawn_entry_id);
 		if(!widget->GetIncludeLocation()){
@@ -2806,6 +2797,11 @@ Widget* ZoneServer::AddWidgetSpawn(SpawnLocation* spawnlocation, SpawnEntry* spa
 		widget->SetSpawnOrigHeading(widget->GetHeading());
 		if (spawnentry->expire_time > 0)
 			AddSpawnExpireTimer(widget, spawnentry->expire_time, spawnentry->expire_offset);
+
+		SetSpawnScript(spawnentry, widget);
+
+		CallSpawnScript(widget, SPAWN_SCRIPT_PRESPAWN);
+
 		AddSpawn(widget);
 	}
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
@@ -2817,12 +2813,18 @@ Object* ZoneServer::AddObjectSpawn(SpawnLocation* spawnlocation, SpawnEntry* spa
 	Object* object = GetNewObject(spawnentry->spawn_id);
 	if(object){
 		DeterminePosition(spawnlocation, object);
+		object->SetDatabaseID(spawnentry->spawn_id);
 		object->SetSpawnLocationID(spawnentry->spawn_location_id);
 		object->SetSpawnEntryID(spawnentry->spawn_entry_id);
 		object->SetRespawnTime(spawnentry->respawn);
 		object->SetExpireTime(spawnentry->expire_time);
 		if (spawnentry->expire_time > 0)
 			AddSpawnExpireTimer(object, spawnentry->expire_time, spawnentry->expire_offset);
+
+		SetSpawnScript(spawnentry, object);
+
+		CallSpawnScript(object, SPAWN_SCRIPT_PRESPAWN);
+
 		AddSpawn(object);
 	}
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
@@ -2834,12 +2836,18 @@ GroundSpawn* ZoneServer::AddGroundSpawn(SpawnLocation* spawnlocation, SpawnEntry
 	GroundSpawn* spawn = GetNewGroundSpawn(spawnentry->spawn_id);
 	if(spawn){
 		DeterminePosition(spawnlocation, spawn);
+		spawn->SetDatabaseID(spawnentry->spawn_id);
 		spawn->SetSpawnLocationID(spawnentry->spawn_location_id);
 		spawn->SetSpawnEntryID(spawnentry->spawn_entry_id);
 		spawn->SetRespawnTime(spawnentry->respawn);
 		spawn->SetExpireTime(spawnentry->expire_time);
 		if (spawnentry->expire_time > 0)
 			AddSpawnExpireTimer(spawn, spawnentry->expire_time, spawnentry->expire_offset);
+
+		SetSpawnScript(spawnentry, spawn);
+
+		CallSpawnScript(spawn, SPAWN_SCRIPT_PRESPAWN);
+
 		AddSpawn(spawn);
 	}
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
@@ -2848,6 +2856,7 @@ GroundSpawn* ZoneServer::AddGroundSpawn(SpawnLocation* spawnlocation, SpawnEntry
 
 void ZoneServer::AddSpawn(Spawn* spawn) {
 	spawn->SetZone(this);
+
 	spawn->position_changed = false;
 	spawn->info_changed = false;
 	spawn->vis_changed = false;
@@ -2878,6 +2887,8 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 	if (movementMgr != nullptr) {
 		movementMgr->AddMob((Entity*)spawn);
 	}
+
+	AddSpawnProximities(spawn);
 
 	spawn->SetAddedToWorldTimestamp(Timer::GetCurrentTime2());
 }
@@ -3753,6 +3764,9 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 {
 	LogWrite(ZONE__DEBUG, 3, "Zone", "Processing RemoveSpawn function for %s (%i)...", spawn->GetName(),spawn->GetID());
 
+	spawn->RemoveSpawnProximities();
+	RemoveSpawnProximities(spawnListLocked, spawn);
+
 	if (Grid != nullptr) {
 		Grid->RemoveSpawnFromCell(spawn);
 	}
@@ -4186,7 +4200,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 
 
 		for (int8 i = 0; i < encounter->size(); i++) {
-			spawn = GetSpawnByID(encounter->at(i),spawnListLocked);
+			spawn = GetSpawnByID(encounter->at(i), spawnListLocked);
 			// set a flag to let us know if the killer is in the encounter
 			if (!killer_in_encounter && spawn == killer)
 				killer_in_encounter = true;
@@ -4205,11 +4219,11 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 				// Get the client of the player
 				client = GetClientBySpawn(spawn);
 				// valid client?
-				if(client) {
+				if (client) {
 					// Check for quest kill updates
 					client->CheckPlayerQuestsKillUpdate(dead);
 					// If the dead mob is not a player and if it had a faction with an ID greater or equal to 10 the send faction changes
-					if(!dead->IsPlayer() && dead->GetFactionID() > 10)
+					if (!dead->IsPlayer() && dead->GetFactionID() > 10)
 						ProcessFaction(dead, client);
 
 					// Send xp...this is currently wrong fix it
@@ -4222,7 +4236,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 							if (((Player*)spawn)->AddXP((int32)xp)) {
 								client->Message(CHANNEL_COLOR_EXP, "You gain %u XP!", (int32)xp);
 								LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u experience.", spawn->GetName(), (int32)xp);
-								if(spawn->GetLevel() != level)
+								if (spawn->GetLevel() != level)
 									client->ChangeLevel(level, spawn->GetLevel());
 								((Player*)spawn)->SetCharSheetChanged(true);
 							}
@@ -4232,7 +4246,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 			}
 
 			// If a chest is being dropped add this spawn to the chest's encounter so they can loot it
-			if (chest)
+			if (chest && spawn && spawn->IsEntity())
 				chest->Brain()->AddToEncounter((Entity*)spawn);
 		}
 
@@ -7150,4 +7164,94 @@ void ZoneServer::ProcessSpawnConditional(int8 condition) {
 	}
 	
 	MSpawnLocationList.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+void ZoneServer::AddSpawnProximities(Spawn* newSpawn) {
+	Spawn* spawn = 0;
+	map<int32, Spawn*>::iterator itr;
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	MPendingSpawnListAdd.readlock(__FUNCTION__, __LINE__);
+	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+		spawn = itr->second;
+		if (spawn && spawn != newSpawn) {
+			if (newSpawn->GetDatabaseID())
+				spawn->AddSpawnToProximity(newSpawn->GetDatabaseID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_DATABASE_ID);
+			if (newSpawn->GetSpawnLocationID())
+				spawn->AddSpawnToProximity(newSpawn->GetSpawnLocationID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_LOCATION_ID);
+
+			if (spawn->GetDatabaseID())
+				newSpawn->AddSpawnToProximity(spawn->GetDatabaseID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_DATABASE_ID);
+			if (spawn->GetSpawnLocationID())
+				newSpawn->AddSpawnToProximity(spawn->GetSpawnLocationID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_LOCATION_ID);
+		}
+	}
+
+	list<Spawn*>::iterator itr2;
+	for (itr2 = pending_spawn_list_add.begin(); itr2 != pending_spawn_list_add.end(); itr2++) {
+		spawn = *itr2;
+		if (spawn && spawn != newSpawn) {
+			if (newSpawn->GetDatabaseID())
+				spawn->AddSpawnToProximity(newSpawn->GetDatabaseID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_DATABASE_ID);
+			if (newSpawn->GetSpawnLocationID())
+				spawn->AddSpawnToProximity(newSpawn->GetSpawnLocationID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_LOCATION_ID);
+
+			if (spawn->GetDatabaseID())
+				newSpawn->AddSpawnToProximity(spawn->GetDatabaseID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_DATABASE_ID);
+			if (spawn->GetSpawnLocationID())
+				newSpawn->AddSpawnToProximity(spawn->GetSpawnLocationID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_LOCATION_ID);
+		}
+	}
+	MPendingSpawnListAdd.releasereadlock(__FUNCTION__, __LINE__);
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+void ZoneServer::RemoveSpawnProximities(bool spawnListLocked, Spawn* oldSpawn) {
+	Spawn* spawn = 0;
+	map<int32, Spawn*>::iterator itr;
+	if (!spawnListLocked)
+		MSpawnList.readlock(__FUNCTION__, __LINE__);
+	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+		spawn = itr->second;
+		if (spawn && spawn != oldSpawn) {
+			if (oldSpawn->GetDatabaseID())
+				spawn->RemoveSpawnFromProximity(oldSpawn->GetDatabaseID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_DATABASE_ID);
+			if (oldSpawn->GetSpawnLocationID())
+				spawn->RemoveSpawnFromProximity(oldSpawn->GetSpawnLocationID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_LOCATION_ID);
+
+			// don't need to remove oldSpawn proximities, we clear them all out
+		}
+	}
+
+	if (!spawnListLocked)
+		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+void ZoneServer::SetSpawnScript(SpawnEntry* entry, Spawn* spawn)
+{
+	if (!entry || !spawn)
+		return;
+
+	const char* script = 0;
+
+	for (int x = 0; x < 3; x++)
+	{
+		switch (x)
+		{
+		case 0:
+			script = world.GetSpawnEntryScript(entry->spawn_entry_id);
+			break;
+		case 1:
+			script = world.GetSpawnLocationScript(entry->spawn_location_id);
+			break;
+		case 2:
+			script = world.GetSpawnScript(entry->spawn_id);
+			break;
+		}
+
+		if (script && lua_interface && lua_interface->GetSpawnScript(script) != 0)
+		{
+			spawn->SetSpawnScript(string(script));
+			break;
+		}
+	}
 }

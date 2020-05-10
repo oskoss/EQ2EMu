@@ -34,6 +34,7 @@
 #include "Items/Items.h"
 #include "Zone/map.h"
 #include "../common/Mutex.h"
+#include "MutexList.h"
 #include <deque>
 #include <memory> // needed for LS to compile properly on linux
 
@@ -994,7 +995,47 @@ public:
 	int16 pos_packet_size;
 	int16 info_packet_size;
 	int16 vis_packet_size;
+
+	enum SpawnProximityType {
+		SPAWNPROXIMITY_DATABASE_ID = 0,
+		SPAWNPROXIMITY_LOCATION_ID = 1
+	};
+
+	struct SpawnProximity {
+		float				x;
+		float				y;
+		float				z;
+		int32				spawn_value;
+		int8				spawn_type;
+		float				distance;
+		string				in_range_lua_function;
+		string				leaving_range_lua_function;
+		map<int32, bool>	spawns_in_proximity;
+	};
+
+	void AddSpawnToProximity(int32 spawnValue, SpawnProximityType type);
+	void RemoveSpawnFromProximity(int32 spawnValue, SpawnProximityType type);
+
+	SpawnProximity* AddLUASpawnProximity(int32 spawnValue, SpawnProximityType type, float distance, string in_range_function, string leaving_range_function) {
+		SpawnProximity* prox = new SpawnProximity;
+		prox->spawn_value = spawnValue;
+		prox->spawn_type = type;
+		prox->distance = distance;
+		prox->in_range_lua_function = in_range_function;
+		prox->leaving_range_lua_function = leaving_range_function;
+		spawn_proximities.Add(prox);
+		return prox;
+	}
+
+	void RemoveSpawnProximities() {
+		MutexList<SpawnProximity*>::iterator itr = spawn_proximities.begin();
+		while (itr.Next()) {
+			safe_delete(itr->value);
+		}
+		spawn_proximities.clear();
+	}
 protected:
+
 	bool	send_spawn_changes;
 	bool	invulnerable;
 	bool	attack_resume_needed;
@@ -1021,6 +1062,10 @@ protected:
 	map<int32, vector<int16>* > required_quests;
 	map<int32, LUAHistory> required_history;
 	EquipmentItemList equipment_list;
+
+	MutexList<SpawnProximity*> spawn_proximities;
+
+	void CheckProximities();
 private:	
 	deque<MovementLocation*>* movement_locations;
 	Mutex*			MMovementLocations;

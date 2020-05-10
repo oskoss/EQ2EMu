@@ -85,6 +85,7 @@ class Bot;
 #define SPAWN_SCRIPT_COMBAT_RESET		16
 #define SPAWN_SCRIPT_GROUP_DEAD			17
 #define SPAWN_SCRIPT_HEAR_SAY			18
+#define SPAWN_SCRIPT_PRESPAWN			19
 
 #define SPAWN_CONDITIONAL_NONE			0
 #define SPAWN_CONDITIONAL_DAY			1
@@ -609,6 +610,9 @@ public:
 
 	void SetSpawnStructs(Client* client);
 
+	void AddSpawnProximities(Spawn* spawn);
+	void RemoveSpawnProximities(bool spawnListLocked, Spawn* spawn);
+	void SetSpawnScript(SpawnEntry* entry, Spawn* spawn);
 	bool IsLoading() {
 		return LoadingData;
 	}
