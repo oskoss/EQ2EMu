@@ -102,6 +102,7 @@ Spawn::Spawn(){
 	last_movement_update = Timer::GetCurrentTime2();
 	forceMapCheck = false;
 	m_followDistance = 0;
+	MCommandMutex.SetName("Entity::MCommandMutex");
 }
 
 Spawn::~Spawn(){

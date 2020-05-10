@@ -1036,6 +1036,8 @@ public:
 		}
 		spawn_proximities.clear();
 	}
+
+	Mutex	MCommandMutex;
 protected:
 
 	bool	send_spawn_changes;

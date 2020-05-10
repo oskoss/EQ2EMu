@@ -826,7 +826,6 @@ public:
 
 	// Keep track of entities that hate this spawn.
 	set<int32> HatedBy;
-
 protected:
 	bool	in_combat;
 

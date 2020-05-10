@@ -23,7 +23,7 @@ class IMovementCommand {
 public:
 	IMovementCommand() = default;
 	virtual ~IMovementCommand() = default;
-	virtual bool Process(MobMovementManager* mob_movement_manager, Entity* mob) = 0;
+	virtual bool Process(MobMovementManager* mob_movement_manager, Spawn* mob) = 0;
 	virtual bool Started() const = 0;
 };
 
@@ -42,7 +42,7 @@ public:
 
 	}
 
-	virtual bool Process(MobMovementManager* mob_movement_manager, Entity* mob)
+	virtual bool Process(MobMovementManager* mob_movement_manager, Spawn* mob)
 	{
 		auto rotate_to_speed = m_rotate_to_mode == MovementRunning ? 200.0 : 16.0; //todo: get this from mob
 
@@ -129,7 +129,7 @@ public:
 	 * @param mob
 	 * @return
 	 */
-	virtual bool Process(MobMovementManager* mob_movement_manager, Entity* mob)
+	virtual bool Process(MobMovementManager* mob_movement_manager, Spawn* mob)
 	{
 		//Send a movement packet when you start moving		
 		double current_time = static_cast<double>(Timer::GetCurrentTime2()) / 1000.0;
@@ -261,22 +261,22 @@ public:
 
 	}
 
-	virtual bool Process(MobMovementManager* mob_movement_manager, Entity* mob)
+	virtual bool Process(MobMovementManager* mob_movement_manager, Spawn* mob)
 	{
 		//Send a movement packet when you start moving
 		double current_time = static_cast<double>(Timer::GetCurrentTime2()) / 1000.0;
 		int    current_speed = 0;
 
-		if (m_move_to_mode == MovementRunning) {
-			if (mob->IsFeared()) {
-				current_speed = mob->GetBaseSpeed();
+		if (m_move_to_mode == MovementRunning && mob->IsEntity()) {
+			if (((Entity*)mob)->IsFeared()) {
+				current_speed = ((Entity*)mob)->GetBaseSpeed();
 			}
 			else {
 				//runback overrides
-				if (mob->GetSpeed() > mob->GetMaxSpeed())
-					current_speed = mob->GetSpeed();
+				if (((Entity*)mob)->GetSpeed() > ((Entity*)mob)->GetMaxSpeed())
+					current_speed = ((Entity*)mob)->GetSpeed();
 				else
-					current_speed = mob->GetMaxSpeed();
+					current_speed = ((Entity*)mob)->GetMaxSpeed();
 			}
 		}
 		else {
@@ -362,7 +362,7 @@ public:
 
 	}
 
-	virtual bool Process(MobMovementManager* mob_movement_manager, Entity* mob)
+	virtual bool Process(MobMovementManager* mob_movement_manager, Spawn* mob)
 	{
 		mob->SetX(m_teleport_to_x);
 		mob->SetZ(m_teleport_to_z);
@@ -397,7 +397,7 @@ public:
 
 	}
 
-	virtual bool Process(MobMovementManager* mob_movement_manager, Entity* mob)
+	virtual bool Process(MobMovementManager* mob_movement_manager, Spawn* mob)
 	{
 		mob->ClearRunningLocations();
 		return true;
@@ -420,7 +420,7 @@ public:
 
 	}
 
-	virtual bool Process(MobMovementManager* mob_movement_manager, Entity* mob)
+	virtual bool Process(MobMovementManager* mob_movement_manager, Spawn* mob)
 	{
 		if (mob->IsRunning()) {
 			mob->StopMoving();
@@ -474,7 +474,7 @@ struct MobMovementEntry {
 	NavigateTo                                    NavTo;
 };
 
-void AdjustRoute(std::list<IPathfinder::IPathNode> &nodes, Entity *who)
+void AdjustRoute(std::list<IPathfinder::IPathNode> &nodes, Spawn *who)
 {
 	if (who->GetZone() == nullptr || !who->GetZone()->zonemap /*|| !zone->HasWaterMap()*/) {
 		return;
@@ -493,7 +493,7 @@ void AdjustRoute(std::list<IPathfinder::IPathNode> &nodes, Entity *who)
 }
 
 struct MobMovementManager::Implementation {
-	std::map<Entity *, MobMovementEntry> Entries;
+	std::map<Spawn *, MobMovementEntry> Entries;
 	std::vector<Client *>             Clients;
 	MovementStats                     Stats;
 };
@@ -515,6 +515,7 @@ void MobMovementManager::Process()
 		auto &ent      = iter.second;
 		auto &commands = ent.Commands;
 
+		iter.first->MCommandMutex.writelock();
 		while (true != commands.empty()) {
 			auto &cmd = commands.front();
 			auto r    = cmd->Process(this, iter.first);
@@ -525,6 +526,7 @@ void MobMovementManager::Process()
 
 			commands.pop_front();
 		}
+		iter.first->MCommandMutex.releasewritelock();
 	}
 	MobListMutex.releasereadlock();
 }
@@ -532,20 +534,24 @@ void MobMovementManager::Process()
 /**
  * @param mob
  */
-void MobMovementManager::AddMob(Entity *mob)
+void MobMovementManager::AddMob(Spawn *mob)
 {
 	MobListMutex.writelock();
+	mob->MCommandMutex.writelock();
 	_impl->Entries.insert(std::make_pair(mob, MobMovementEntry()));
+	mob->MCommandMutex.releasewritelock();
 	MobListMutex.releasewritelock();
 }
 
 /**
  * @param mob
  */
-void MobMovementManager::RemoveMob(Entity *mob)
+void MobMovementManager::RemoveMob(Spawn *mob)
 {
 	MobListMutex.writelock();
+	mob->MCommandMutex.writelock();
 	_impl->Entries.erase(mob);
+	mob->MCommandMutex.releasewritelock();
 	MobListMutex.releasewritelock();
 }
 
@@ -578,7 +584,7 @@ void MobMovementManager::RemoveClient(Client *client)
  * @param to
  * @param mob_movement_mode
  */
-void MobMovementManager::RotateTo(Entity *who, float to, MobMovementMode mob_movement_mode)
+void MobMovementManager::RotateTo(Spawn *who, float to, MobMovementMode mob_movement_mode)
 {
 	MobListMutex.readlock();
 	auto iter = _impl->Entries.find(who);
@@ -599,7 +605,7 @@ void MobMovementManager::RotateTo(Entity *who, float to, MobMovementMode mob_mov
  * @param z
  * @param heading
  */
-void MobMovementManager::Teleport(Entity *who, float x, float y, float z, float heading)
+void MobMovementManager::Teleport(Spawn *who, float x, float y, float z, float heading)
 {
 	MobListMutex.readlock();
 	auto iter = _impl->Entries.find(who);
@@ -618,7 +624,7 @@ void MobMovementManager::Teleport(Entity *who, float x, float y, float z, float 
  * @param z
  * @param mode
  */
-void MobMovementManager::NavigateTo(Entity *who, float x, float y, float z, MobMovementMode mode, bool overrideDistance)
+void MobMovementManager::NavigateTo(Spawn *who, float x, float y, float z, MobMovementMode mode, bool overrideDistance)
 {
 	if (who->IsRunning())
 		return;
@@ -645,15 +651,19 @@ void MobMovementManager::NavigateTo(Entity *who, float x, float y, float z, MobM
 			6.0f
 		);
 
+		who->MCommandMutex.writelock();
+
 		if (within && ent.second.Commands.size() > 0 && nav.last_set_time != 0)
 		{
 			//who->ClearRunningLocations();
 			//StopNavigation((Entity*)who);
+			who->MCommandMutex.releasewritelock();
 			MobListMutex.releasereadlock();
 			return;
 		}
 		else if (!within && ent.second.Commands.size() > 0 && nav.last_set_time != 0)
 		{
+			who->MCommandMutex.releasewritelock();
 			MobListMutex.releasereadlock();
 			return;
 		}
@@ -673,6 +683,7 @@ void MobMovementManager::NavigateTo(Entity *who, float x, float y, float z, MobM
 			nav.navigate_to_z       = z;
 			nav.navigate_to_heading = 0.0;
 			nav.last_set_time       = current_time;
+			who->MCommandMutex.releasewritelock();
 		//}
 	}
 	MobListMutex.releasereadlock();
@@ -681,7 +692,7 @@ void MobMovementManager::NavigateTo(Entity *who, float x, float y, float z, MobM
 /**
  * @param who
  */
-void MobMovementManager::StopNavigation(Entity *who)
+void MobMovementManager::StopNavigation(Spawn *who)
 {
 	MobListMutex.readlock();
 	auto iter = _impl->Entries.find(who);
@@ -694,24 +705,28 @@ void MobMovementManager::StopNavigation(Entity *who)
 	nav.navigate_to_heading = 0.0;
 	nav.last_set_time = 0.0;
 
+	who->MCommandMutex.writelock();
 	if (true == ent.second.Commands.empty()) {
 		PushStopMoving(ent.second);
+		who->MCommandMutex.releasewritelock();
 		MobListMutex.releasereadlock();
 		return;
 	}
 
 	if (!who->IsRunning()) {
 		ent.second.Commands.clear();
+		who->MCommandMutex.releasewritelock();
 		MobListMutex.releasereadlock();
 		return;
 	}
 
 	ent.second.Commands.clear();
 	PushStopMoving(ent.second);
+	who->MCommandMutex.releasewritelock();
 	MobListMutex.releasereadlock();
 }
 
-void MobMovementManager::DisruptNavigation(Entity* who)
+void MobMovementManager::DisruptNavigation(Spawn* who)
 {
 	MobListMutex.readlock();
 	auto iter = _impl->Entries.find(who);
@@ -725,7 +740,9 @@ void MobMovementManager::DisruptNavigation(Entity* who)
 	nav.last_set_time = 0.0;
 
 	if (!who->IsRunning()) {
+		who->MCommandMutex.writelock();
 		ent.second.Commands.clear();
+		who->MCommandMutex.releasewritelock();
 		MobListMutex.releasereadlock();
 		return;
 	}
@@ -766,7 +783,7 @@ void MobMovementManager::ClearStats()
  * @param z
  * @param mob_movement_mode
  */
-void MobMovementManager::UpdatePath(Entity *who, float x, float y, float z, MobMovementMode mob_movement_mode)
+void MobMovementManager::UpdatePath(Spawn *who, float x, float y, float z, MobMovementMode mob_movement_mode)
 {
 	if (!who->GetZone()->zonemap /*|| !zone->HasWaterMap()*/) {
 		MobListMutex.readlock();
@@ -797,7 +814,7 @@ void MobMovementManager::UpdatePath(Entity *who, float x, float y, float z, MobM
  * @param z
  * @param mode
  */
-void MobMovementManager::UpdatePathGround(Entity *who, float x, float y, float z, MobMovementMode mode)
+void MobMovementManager::UpdatePathGround(Spawn *who, float x, float y, float z, MobMovementMode mode)
 {
 	PathfinderOptions opts;
 	opts.smooth_path = true;
@@ -941,7 +958,7 @@ void MobMovementManager::UpdatePathGround(Entity *who, float x, float y, float z
  * @param z
  * @param movement_mode
  */
-void MobMovementManager::UpdatePathUnderwater(Entity *who, float x, float y, float z, MobMovementMode movement_mode)
+void MobMovementManager::UpdatePathUnderwater(Spawn *who, float x, float y, float z, MobMovementMode movement_mode)
 {
 	MobListMutex.readlock();
 	auto eiter = _impl->Entries.find(who);
@@ -1062,7 +1079,7 @@ void MobMovementManager::UpdatePathUnderwater(Entity *who, float x, float y, flo
  * @param z
  * @param mode
  */
-void MobMovementManager::UpdatePathBoat(Entity *who, float x, float y, float z, MobMovementMode mode)
+void MobMovementManager::UpdatePathBoat(Spawn *who, float x, float y, float z, MobMovementMode mode)
 {
 	MobListMutex.readlock();
 	auto eiter = _impl->Entries.find(who);
@@ -1115,7 +1132,7 @@ void MobMovementManager::PushSwimTo(MobMovementEntry &ent, float x, float y, flo
  * @param to
  * @param mob_movement_mode
  */
-void MobMovementManager::PushRotateTo(MobMovementEntry &ent, Entity *who, float to, MobMovementMode mob_movement_mode)
+void MobMovementManager::PushRotateTo(MobMovementEntry &ent, Spawn *who, float to, MobMovementMode mob_movement_mode)
 {
 	auto from = FixHeading(who->GetHeading());
 	to = FixHeading(to);
@@ -1160,7 +1177,7 @@ void MobMovementManager::PushEvadeCombat(MobMovementEntry &mob_movement_entry)
  * @param z
  * @param mob_movement_mode
  */
-void MobMovementManager::HandleStuckBehavior(Entity *who, float x, float y, float z, MobMovementMode mob_movement_mode)
+void MobMovementManager::HandleStuckBehavior(Spawn *who, float x, float y, float z, MobMovementMode mob_movement_mode)
 {
 	//LogDebug("Handle stuck behavior for {0} at ({1}, {2}, {3}) with movement_mode {4}", who->GetName(), x, y, z, mob_movement_mode);
 
