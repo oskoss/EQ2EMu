@@ -2062,6 +2062,9 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 
 		if ((appearance.activity_status & ACTIVITY_STATUS_IMMUNITY_REMAINING) > 0)
 			temp_activity_status += ACTIVITY_STATUS_IMMUNITY_REMAINING_1188;
+
+		if (EngagedInCombat())
+			temp_activity_status += ACTIVITY_STATUS_INCOMBAT_1188;
 	}
 	else
 		temp_activity_status = appearance.activity_status;
