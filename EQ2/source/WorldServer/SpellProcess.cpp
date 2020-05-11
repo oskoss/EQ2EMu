@@ -1677,12 +1677,15 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 								implied = true;
 								luaspell->initial_target = target->GetID();
 								luaspell->targets.push_back(target->GetID());
+								GetPlayerGroupTargets((Player*)target, caster, luaspell);
+
 							}
 							else if (target->IsPlayer() && ((Entity*)caster)->AttackAllowed((Entity*)secondary_target))
 							{
 								implied = true;
 								luaspell->initial_target = secondary_target->GetID();
 								luaspell->targets.push_back(secondary_target->GetID());
+								GetPlayerGroupTargets((Player*)secondary_target, caster, luaspell);
 							}
 						}
 					} // end friendly spell check
@@ -1961,6 +1964,31 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 
 	if (luaspell && luaspell->targets.size() > 20)
 		LogWrite(SPELL__WARNING, 0, "Spell", "Warning in %s: Size of targets array is %u", __FUNCTION__, luaspell->targets.size());
+}
+
+void SpellProcess::GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell* luaspell)
+{
+	if (luaspell->spell->GetSpellData()->group_spell > 0 || luaspell->spell->GetSpellData()->icon_backdrop == 312)
+	{
+		if (((Player*)target)->GetGroupMemberInfo())
+		{
+			deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(((Player*)target)->GetGroupMemberInfo()->group_id);
+			deque<GroupMemberInfo*>::iterator itr;
+			GroupMemberInfo* info = 0;
+
+			for (itr = members->begin(); itr != members->end(); itr++) {
+				info = *itr;
+				if (info == ((Player*)target)->GetGroupMemberInfo())
+					continue;
+				else if (info && info->client &&
+					info->client->GetPlayer()->GetZone() == ((Player*)target)->GetZone() && info->client->GetPlayer()->Alive()
+					&& caster->GetDistance((Entity*)info->client->GetPlayer()) <= luaspell->spell->GetSpellData()->range)
+				{
+					luaspell->targets.push_back(info->client->GetPlayer()->GetID());
+				}
+			}
+		}
+	}
 }
 
 void SpellProcess::GetSpellTargetsTrueAOE(LuaSpell* luaspell) {
