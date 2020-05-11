@@ -103,6 +103,7 @@ Spawn::Spawn(){
 	forceMapCheck = false;
 	m_followDistance = 0;
 	MCommandMutex.SetName("Entity::MCommandMutex");
+	has_spawn_proximities = true;
 }
 
 Spawn::~Spawn(){
@@ -3213,6 +3214,9 @@ void Spawn::CheckProximities()
 
 void Spawn::AddSpawnToProximity(int32 spawnValue, SpawnProximityType type)
 {
+	if (!has_spawn_proximities)
+		return;
+
 	if (spawn_proximities.size() > 0)
 	{
 		MutexList<SpawnProximity*>::iterator itr = spawn_proximities.begin();
@@ -3226,6 +3230,9 @@ void Spawn::AddSpawnToProximity(int32 spawnValue, SpawnProximityType type)
 
 void Spawn::RemoveSpawnFromProximity(int32 spawnValue, SpawnProximityType type)
 {
+	if (!has_spawn_proximities)
+		return;
+
 	if (spawn_proximities.size() > 0)
 	{
 		MutexList<SpawnProximity*>::iterator itr = spawn_proximities.begin();

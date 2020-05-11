@@ -1026,6 +1026,7 @@ public:
 		prox->in_range_lua_function = in_range_function;
 		prox->leaving_range_lua_function = leaving_range_function;
 		spawn_proximities.Add(prox);
+		has_spawn_proximities = true;
 		return prox;
 	}
 
@@ -1035,9 +1036,11 @@ public:
 			safe_delete(itr->value);
 		}
 		spawn_proximities.clear();
+		has_spawn_proximities = false;
 	}
 
 	Mutex	MCommandMutex;
+	bool	has_spawn_proximities;
 protected:
 
 	bool	send_spawn_changes;
