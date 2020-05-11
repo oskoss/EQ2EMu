@@ -103,7 +103,7 @@ Spawn::Spawn(){
 	forceMapCheck = false;
 	m_followDistance = 0;
 	MCommandMutex.SetName("Entity::MCommandMutex");
-	has_spawn_proximities = true;
+	has_spawn_proximities = false;
 }
 
 Spawn::~Spawn(){
@@ -3182,6 +3182,9 @@ void Spawn::CalculateNewFearpoint()
 
 void Spawn::CheckProximities()
 {
+	if (!has_spawn_proximities)
+		return;
+
 	if (spawn_proximities.size() > 0)
 	{
 		MutexList<SpawnProximity*>::iterator itr = spawn_proximities.begin();
