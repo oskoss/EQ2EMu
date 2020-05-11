@@ -1364,13 +1364,29 @@ void Entity::CheckProcs(int8 type, Spawn* target) {
 
 	float roll = MakeRandomFloat(0, 100);
 
+	std::map<int8, Proc*> tmpMap;
+
 	MProcList.readlock(__FUNCTION__, __LINE__);
 	for (int8 i = 0; i < m_procList[type].size(); i++) {
 		Proc* proc = m_procList[type].at(i);
 		if (roll <= proc->chance)
-			CastProc(proc, type, target);
+		{
+			Proc* tmpProc = new Proc();
+			tmpProc->chance = proc->chance;
+			tmpProc->item = proc->item;
+			tmpProc->spell = proc->spell;
+			tmpMap.insert(make_pair(i, tmpProc));
+		}
 	}
 	MProcList.releasereadlock(__FUNCTION__, __LINE__);
+
+
+	map<int8,Proc*>::iterator proc_itr;
+	for (proc_itr = tmpMap.begin(); proc_itr != tmpMap.end(); proc_itr++) {
+		Proc* tmpProc = proc_itr->second;
+		CastProc(tmpProc, proc_itr->first, target);
+		safe_delete(tmpProc);
+	}
 }
 
 void Entity::ClearProcs() {
