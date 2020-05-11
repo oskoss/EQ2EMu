@@ -139,14 +139,21 @@ void SpellProcess::Process(){
 		}
 	}
 	if (SpellCancelList.size() > 0){
+		std::vector<LuaSpell*> tmpList;
 		MSpellCancelList.writelock(__FUNCTION__, __LINE__);
 		vector<LuaSpell*>::iterator itr = SpellCancelList.begin();
 		while (itr != SpellCancelList.end()){
-			DeleteCasterSpell(*itr);
+			tmpList.push_back(*itr);
 			itr++;
 		}
 		SpellCancelList.clear();
 		MSpellCancelList.releasewritelock(__FUNCTION__, __LINE__);
+
+		itr = tmpList.begin();
+		while (itr != tmpList.end()) {
+			DeleteCasterSpell(*itr);
+			itr++;
+		}
 	}
 	if(interrupt_list.size(true) > 0){		
 		InterruptStruct* interrupt = 0;
