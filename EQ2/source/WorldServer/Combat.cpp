@@ -1348,7 +1348,7 @@ bool Entity::CastProc(Proc* proc, int8 type, Spawn* target) {
 	}
 
 	if (lua_pcall(state, num_args, 0, 0) != 0) {
-		LogWrite(COMBAT__ERROR, 0, "Proc", "Unable to call the proc function");
+		LogWrite(COMBAT__ERROR, 0, "Proc", "Unable to call the proc function for spell %i tier %i", proc->spell->spell->GetSpellID(), proc->spell->spell->GetSpellTier());
 		lua_pop(state, 1);
 		return false;
 	}
