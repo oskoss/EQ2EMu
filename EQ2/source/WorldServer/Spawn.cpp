@@ -2034,7 +2034,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 
 	temp_activity_status += (IsNPC() || IsObject() || IsGroundSpawn()) ? 1 << 1 : 0;
 	if (version >= 1188) {
-		if (IsGroundSpawn())
+		if (IsGroundSpawn() || GetShowHandIcon())
 			temp_activity_status += ACTIVITY_STATUS_INTERACTABLE_1188;
 
 		if ((appearance.activity_status & ACTIVITY_STATUS_ROLEPLAYING) > 0)

@@ -486,5 +486,8 @@ NPC* Entity::DropChest() {
 	else
 		safe_delete(chest);	
 
+	if (chest)
+		chest->SetShowHandIcon(1);
+
 	return chest;
 }
