@@ -54,16 +54,16 @@ Brain::~Brain() {
 
 void Brain::Think() {
 
+	// Get the entity this NPC hates the most,
+	// GetMostHated() will handle dead spawns so no need to check the health in this function
+	Entity* target = GetMostHated();
+
 	// If mezzed, stunned or feared we can't do anything so skip
 	if (!m_body->IsMezzedOrStunned()) {
 		// Not mezzed or stunned
 
 		// Get the distance to the runback location
 		float run_back_distance = m_body->GetRunbackDistance();
-
-		// Get the entity this NPC hates the most,
-		// GetMostHated() will handle dead spawns so no need to check the health in this function
-		Entity* target = GetMostHated();
 
 		if (target) {
 			LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "%s has %s targeted.", m_body->GetName(), target->GetName());

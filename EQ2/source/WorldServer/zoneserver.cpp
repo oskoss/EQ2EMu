@@ -237,7 +237,7 @@ void ZoneServer::Init()
 
 	/* Static Timers */
 	// JA - haven't decided yet if these should remain hard-coded. Changing them could break EQ2Emu functionality
-	spawn_check_add.Start(1000);
+	spawn_check_add.Start(100);
 	spawn_check_remove.Start(30000);
 	spawn_expire_timer.Start(10000);
 	respawn_timer.Start(10000);
@@ -1056,7 +1056,7 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 		if(initial_login || client->IsConnected()) {
 			MutexMap<int32, float >::iterator spawn_iter = spawn_range_map.Get(client)->begin();
 			while(spawn_iter.Next()) {
-				spawn = GetSpawnByID(spawn_iter->first, !initial_login);
+				spawn = GetSpawnByID(spawn_iter->first);
 				if(spawn && spawn->GetPrivateQuestSpawn()) {
 					if(!spawn->IsPrivateSpawn())
 						spawn->AddAllowAccessSpawn(spawn);
@@ -1242,10 +1242,6 @@ bool ZoneServer::Process()
 	{
 #endif
 		if (LoadingData) {
-			while (zoneID == 0) { //this is loaded by world
-				Sleep(10);
-			}
-
 			if (lua_interface) {
 				string tmpScript("ZoneScripts/");
 				tmpScript.append(GetZoneName());
@@ -1254,6 +1250,10 @@ bool ZoneServer::Process()
 				bool fileExists = (stat(tmpScript.c_str(), &buffer) == 0);
 				if (fileExists)
 					lua_interface->RunZoneScript(tmpScript.c_str(), "preinit_zone_script", this);
+			}
+
+			while (zoneID == 0) { //this is loaded by world
+				Sleep(10);
 			}
 
 			if (reloading) {
@@ -1530,18 +1530,14 @@ bool ZoneServer::SpawnProcess(){
 					spawn->ProcessMovement(true);
 					// update last_movement_update for all spawns (used for time_step)
 					spawn->last_movement_update = Timer::GetCurrentTime2();
-
-					// Process combat for the spawn
-					if (!aggroCheck)
-						CombatProcess(spawn);
 				}
 
 				// Makes NPC's KOS to other NPC's or players
 				if (aggroCheck)
-				{
 					ProcessAggroChecks(spawn);
-					CombatProcess(spawn);
-				}
+
+				// Process combat for the spawn
+				CombatProcess(spawn);
 			}
 			else {
 				// unable to get a valid spawn, lets add the id to another list to remove from the spawn list after this loop is finished
@@ -1865,7 +1861,7 @@ void ZoneServer::SendSpawnChanges(){
 	MutexList<int32>::iterator spawn_iter = changed_spawns.begin();
 	int count = 0;
 	while(spawn_iter.Next()){		
-		spawn = GetSpawnByID(spawn_iter->value, true);
+		spawn = GetSpawnByID(spawn_iter->value);
 		if(spawn){
 			spawns_to_send.insert(spawn);
 		}
@@ -6310,7 +6306,7 @@ ThreadReturnType ZoneLoop(void* tmp) {
 		if(zs->GetClientCount() == 0)
 			Sleep(1000);
 		else
-			Sleep(20);
+			Sleep(10);
 	}
 	zs->Process(); //run loop once more to clean up some functions
 	safe_delete(zs);
