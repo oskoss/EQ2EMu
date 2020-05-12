@@ -826,6 +826,8 @@ public:
 
 	// Keep track of entities that hate this spawn.
 	set<int32> HatedBy;
+
+	Mutex	MCommandMutex;
 protected:
 	bool	in_combat;
 

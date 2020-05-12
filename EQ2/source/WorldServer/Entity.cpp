@@ -81,6 +81,8 @@ Entity::Entity(){
 		}
 		info_struct.spell_effects[i].spell_id = 0xFFFFFFFF;	
 	}
+
+	MCommandMutex.SetName("Entity::MCommandMutex");
 }
 
 Entity::~Entity(){

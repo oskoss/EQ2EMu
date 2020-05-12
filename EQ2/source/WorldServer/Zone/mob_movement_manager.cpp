@@ -515,6 +515,7 @@ void MobMovementManager::Process()
 		auto &ent      = iter.second;
 		auto &commands = ent.Commands;
 
+		iter.first->MCommandMutex.writelock();
 		while (true != commands.empty()) {
 			auto &cmd = commands.front();
 			auto r    = cmd->Process(this, iter.first);
@@ -525,6 +526,7 @@ void MobMovementManager::Process()
 
 			commands.pop_front();
 		}
+		iter.first->MCommandMutex.releasewritelock();
 	}
 	MobListMutex.releasereadlock();
 }
@@ -642,15 +644,19 @@ void MobMovementManager::NavigateTo(Entity *who, float x, float y, float z, MobM
 			6.0f
 		);
 
+		who->MCommandMutex.writelock();
+
 		if (within && ent.second.Commands.size() > 0 && nav.last_set_time != 0)
 		{
 			//who->ClearRunningLocations();
 			//StopNavigation((Entity*)who);
+			who->MCommandMutex.releasewritelock();
 			MobListMutex.releasereadlock();
 			return;
 		}
 		else if (!within && ent.second.Commands.size() > 0 && nav.last_set_time != 0)
 		{
+			who->MCommandMutex.releasewritelock();
 			MobListMutex.releasereadlock();
 			return;
 		}
@@ -670,6 +676,8 @@ void MobMovementManager::NavigateTo(Entity *who, float x, float y, float z, MobM
 			nav.navigate_to_z       = z;
 			nav.navigate_to_heading = 0.0;
 			nav.last_set_time       = current_time;
+
+			who->MCommandMutex.releasewritelock();
 		//}
 	}
 	MobListMutex.releasereadlock();
@@ -691,20 +699,25 @@ void MobMovementManager::StopNavigation(Entity *who)
 	nav.navigate_to_heading = 0.0;
 	nav.last_set_time = 0.0;
 
+	who->MCommandMutex.writelock();
 	if (true == ent.second.Commands.empty()) {
 		PushStopMoving(ent.second);
+		who->MCommandMutex.releasewritelock();
 		MobListMutex.releasereadlock();
 		return;
 	}
 
 	if (!who->IsRunning()) {
 		ent.second.Commands.clear();
+		who->MCommandMutex.releasewritelock();
 		MobListMutex.releasereadlock();
 		return;
 	}
 
 	ent.second.Commands.clear();
 	PushStopMoving(ent.second);
+
+	who->MCommandMutex.releasewritelock();
 	MobListMutex.releasereadlock();
 }
 
@@ -722,8 +735,10 @@ void MobMovementManager::DisruptNavigation(Entity* who)
 	nav.last_set_time = 0.0;
 
 	if (!who->IsRunning()) {
+		who->MCommandMutex.writelock();
 		ent.second.Commands.clear();
 		MobListMutex.releasereadlock();
+		who->MCommandMutex.releasewritelock();
 		return;
 	}
 }
