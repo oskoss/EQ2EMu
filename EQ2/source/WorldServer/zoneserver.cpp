@@ -237,7 +237,7 @@ void ZoneServer::Init()
 
 	/* Static Timers */
 	// JA - haven't decided yet if these should remain hard-coded. Changing them could break EQ2Emu functionality
-	spawn_check_add.Start(100);
+	spawn_check_add.Start(1000);
 	spawn_check_remove.Start(30000);
 	spawn_expire_timer.Start(10000);
 	respawn_timer.Start(10000);
@@ -1530,14 +1530,16 @@ bool ZoneServer::SpawnProcess(){
 					spawn->ProcessMovement(true);
 					// update last_movement_update for all spawns (used for time_step)
 					spawn->last_movement_update = Timer::GetCurrentTime2();
+					if (!aggroCheck)
+						CombatProcess(spawn);
 				}
 
 				// Makes NPC's KOS to other NPC's or players
 				if (aggroCheck)
+				{
 					ProcessAggroChecks(spawn);
-
-				// Process combat for the spawn
-				CombatProcess(spawn);
+					CombatProcess(spawn);
+				}
 			}
 			else {
 				// unable to get a valid spawn, lets add the id to another list to remove from the spawn list after this loop is finished
@@ -2884,7 +2886,7 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 	if (Grid != nullptr) {
 		Grid->AddSpawn(spawn);
 	}
-	if (movementMgr != nullptr) {
+	if (movementMgr != nullptr && spawn->IsEntity()) {
 		movementMgr->AddMob((Entity*)spawn);
 	}
 
@@ -3770,7 +3772,7 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 	if (Grid != nullptr) {
 		Grid->RemoveSpawnFromCell(spawn);
 	}
-	if (movementMgr != nullptr) {
+	if (movementMgr != nullptr && spawn->IsEntity()) {
 		movementMgr->RemoveMob((Entity*)spawn);
 	}
 
