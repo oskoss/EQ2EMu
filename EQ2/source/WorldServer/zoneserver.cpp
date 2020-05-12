@@ -2335,7 +2335,7 @@ void ZoneServer::AddLoot(NPC* npc){
 
 						//LogWrite(PLAYER__DEBUG, 0, "Player", "Probability:%f  Table Chance: '%f'", table->lootdrop_probability, chancetable);
 						loot_drops = GetLootDrops(*loot_list_itr);
-						if (loot_drops) {
+						if (loot_drops && loot_drops->size() > 0) {
 							LootDrop* drop = 0;
 							int16 count = 0;
 
