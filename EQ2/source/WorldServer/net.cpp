@@ -440,6 +440,7 @@ int main(int argc, char** argv) {
 					connecting_clients[eqs] = Timer::GetCurrentTime2();
 				}
 			}
+
 			if(connecting_clients.size() > 0){
 				for(cc_itr = connecting_clients.begin(); cc_itr!=connecting_clients.end(); cc_itr++){
 					if(cc_itr->first && cc_itr->first->CheckActive() && client_list.ContainsStream(cc_itr->first) == false){
@@ -488,7 +489,7 @@ int main(int argc, char** argv) {
 			Sleep(10);
 			continue;
 		}
-		Sleep(1);
+		Sleep(10);
 	}
 	LogWrite(WORLD__DEBUG, 0, "World", "The world is ending!");
 

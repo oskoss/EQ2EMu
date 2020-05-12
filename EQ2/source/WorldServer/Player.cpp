@@ -4090,17 +4090,12 @@ void Player::ClearRemovedSpawn(Spawn* spawn){
 }
 
 bool Player::ShouldSendSpawn(Spawn* spawn){
-	// Added a try catch to attempt to prevent a zone crash when an invalid spawn is passed to this function.
-	// Think invalid spawns are coming from the mutex list, if spawn is invalid return false.
-	try
-	{
-		if((WasSentSpawn(spawn->GetID()) == false || NeedsSpawnResent(spawn)) && (!spawn->IsPrivateSpawn() || spawn->AllowedAccess(this)))
-			return true;
-	}
-	catch (...)
-	{
-		LogWrite(SPAWN__ERROR, 0, "Spawn", "Invalid spawn passes to player->ShouldSendSpawn()");
-	}
+
+	bool wasSentSpawn = WasSentSpawn(spawn->GetID());
+	if((!wasSentSpawn || (wasSentSpawn && WasSpawnRemoved(spawn)))
+		&& (!spawn->IsPrivateSpawn() || spawn->AllowedAccess(this)))
+		return true;
+
 	return false;
 }
 

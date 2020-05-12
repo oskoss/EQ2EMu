@@ -340,7 +340,9 @@ void EQStreamFactory::CombinePacketLoop(){
 		}
 		MStreams.unlock();
 		if(!packets_waiting)
-			Sleep(25);
+			Sleep(20);
+
+		Sleep(10);
 	}
 }
 
