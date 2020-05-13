@@ -305,7 +305,9 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 #ifdef LE_DEBUG
 							printf( "OP_AppCombined Here:\n");
 #endif
-							newpacket = ProcessEncryptedData(p->pBuffer+processed + offset, subpacket_length, OP_AppCombined);						
+							MCombineQueueLock.lock();
+							newpacket = ProcessEncryptedData(p->pBuffer+processed + offset, subpacket_length, OP_AppCombined);
+							MCombineQueueLock.unlock();
 							if(newpacket){
 #ifdef LE_DEBUG
 								printf( "Opcode %i:\n", newpacket->opcode);
@@ -369,7 +371,9 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						processRSAKey(p);
 					}
 					else if(crypto->isEncrypted() && p){
+						MCombineQueueLock.lock();
 						EQProtocolPacket* newpacket = ProcessEncryptedPacket(p);
+						MCombineQueueLock.unlock();
 						if(newpacket){
 							EQApplicationPacket *ap = newpacket->MakeApplicationPacket(2);
 							InboundQueuePush(ap);
@@ -428,7 +432,9 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 							} else {
 								
 								if(crypto->isEncrypted() && p && p->size > 2){
+									MCombineQueueLock.lock();
 									EQProtocolPacket* p2 = ProcessEncryptedData(oversize_buffer, oversize_offset, p->opcode);
+									MCombineQueueLock.unlock();
 									EQApplicationPacket *ap = p2->MakeApplicationPacket(2);
 									ap->copyInfo(p);
 									InboundQueuePush(ap);
@@ -1466,7 +1472,6 @@ DumpPacket(buffer, length);
 #endif
 
 	if (EQProtocolPacket::ValidateCRC(buffer,length,Key)) {
-		MCombineQueueLock.lock();
 		if (compressed) {
 			newlength=EQProtocolPacket::Decompress(buffer,length,newbuffer,2048);
 #ifdef LE_DEBUG
@@ -1489,7 +1494,6 @@ DumpPacket(buffer, length);
 		EQProtocolPacket p(newbuffer,newlength);
 		ProcessPacket(&p);
 		ProcessQueue();
-		MCombineQueueLock.unlock();
 	} else {
 #ifdef EQN_DEBUG
 		cout << "Incoming packet failed checksum:" <<endl;

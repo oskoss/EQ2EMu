@@ -1012,12 +1012,20 @@ void ZoneServer::CheckSpawnRange(Client* client, Spawn* spawn, bool initial_logi
 		if(spawn != client->GetPlayer()) {
 			if(spawn_range_map.count(client) == 0)
 				spawn_range_map.Put(client, new MutexMap<int32, float >());
-			spawn_range_map.Get(client)->Put(spawn->GetID(), spawn->GetDistance(client->GetPlayer()));
-			if(!initial_login && client && spawn->IsNPC() && spawn_range_map.Get(client)->Get(spawn->GetID()) <= ((NPC*)spawn)->GetAggroRadius() && !client->GetPlayer()->GetInvulnerable())
+			float curDist = spawn->GetDistance(client->GetPlayer());
+
+			if (!client->GetPlayer()->WasSentSpawn(spawn->GetID()) && curDist > SEND_SPAWN_DISTANCE)
+			{
+				return;
+			}
+
+			spawn_range_map.Get(client)->Put(spawn->GetID(), curDist);
+
+			if(!initial_login && client && spawn->IsNPC() && curDist <= ((NPC*)spawn)->GetAggroRadius() && !client->GetPlayer()->GetInvulnerable())
 				CheckNPCAttacks((NPC*)spawn, client->GetPlayer(), client);
 		} 
 
-		if(!initial_login && player_proximities.size() > 0 && player_proximities.count(spawn->GetID()) > 0)
+		if(!initial_login)
 			CheckPlayerProximity(spawn, client);
 	}
 }
@@ -1132,6 +1140,7 @@ void ZoneServer::CheckRemoveSpawnFromClient(Spawn* spawn) {
 				(spawn_range_map.Get(client)->Get(spawn->GetID()) > REMOVE_SPAWN_DISTANCE &&
 					!spawn->IsSign() && !spawn->IsObject() && !spawn->IsWidget())){
 				SendRemoveSpawn(client, spawn, packet);
+				spawn_range_map.Get(client)->erase(spawn->GetID());
 			}
 
 		}
@@ -1241,20 +1250,20 @@ bool ZoneServer::Process()
 	try
 	{
 #endif
-		if (LoadingData) {
-			if (lua_interface) {
-				string tmpScript("ZoneScripts/");
-				tmpScript.append(GetZoneName());
-				tmpScript.append(".lua");
-				struct stat buffer;
-				bool fileExists = (stat(tmpScript.c_str(), &buffer) == 0);
-				if (fileExists)
-					lua_interface->RunZoneScript(tmpScript.c_str(), "preinit_zone_script", this);
-			}
-
 			while (zoneID == 0) { //this is loaded by world
 				Sleep(10);
 			}
+
+			if (LoadingData) {
+				if (lua_interface) {
+					string tmpScript("ZoneScripts/");
+					tmpScript.append(GetZoneName());
+					tmpScript.append(".lua");
+					struct stat buffer;
+					bool fileExists = (stat(tmpScript.c_str(), &buffer) == 0);
+					if (fileExists)
+						lua_interface->RunZoneScript(tmpScript.c_str(), "preinit_zone_script", this);
+				}
 
 			if (reloading) {
 				LogWrite(COMMAND__DEBUG, 0, "Command", "-Loading Entity Commands...");
@@ -1481,27 +1490,30 @@ bool ZoneServer::SpawnProcess(){
 		bool aggroCheck = aggro_timer.Check();
 		vector<int32> pending_spawn_list_remove;
 
-		// Loop through the spawn list
 		map<int32, Spawn*>::iterator itr;
-		MSpawnList.readlock(__FUNCTION__, __LINE__);
-		// Loop throught the list to set up spawns to be sent to clients
-		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-			// if zone is shutting down kill the loop
-			if (zoneShuttingDown)
-				break;
+		if (spawnRange || checkRemove)
+		{
+			// Loop through the spawn list
+			MSpawnList.readlock(__FUNCTION__, __LINE__);
+			// Loop throught the list to set up spawns to be sent to clients
+			for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+				// if zone is shutting down kill the loop
+				if (zoneShuttingDown)
+					break;
 
-			Spawn* spawn = itr->second;
-			if (spawn) {
-				// Checks the range to all clients in the zone
-				if (spawnRange)
-					CheckSpawnRange(spawn);
+				Spawn* spawn = itr->second;
+				if (spawn) {
+					// Checks the range to all clients in the zone
+					if (spawnRange)
+						CheckSpawnRange(spawn);
 
-				// Checks to see if the spawn needs to be removed from a client
-				if (checkRemove)
-					CheckRemoveSpawnFromClient(spawn);
+					// Checks to see if the spawn needs to be removed from a client
+					if (checkRemove)
+						CheckRemoveSpawnFromClient(spawn);
+				}
 			}
+			MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 		}
-		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 
 		// Broke the spawn loop into 2 so spawns are sent to the client faster, send the spawns to clients now then resume the spawn loop
 
@@ -1517,37 +1529,40 @@ bool ZoneServer::SpawnProcess(){
 			SendSpawnChanges();
 		}
 
-		MSpawnList.readlock(__FUNCTION__, __LINE__);
-		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-			// Break the loop if the zone is shutting down
-			if (zoneShuttingDown)
-				break;
+		if (movement || aggroCheck)
+		{
+			MSpawnList.readlock(__FUNCTION__, __LINE__);
+			for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+				// Break the loop if the zone is shutting down
+				if (zoneShuttingDown)
+					break;
 
-			Spawn* spawn = itr->second;
-			if (spawn) {
-				// Process spawn movement
-				if (movement) {
-					spawn->ProcessMovement(true);
-					// update last_movement_update for all spawns (used for time_step)
-					spawn->last_movement_update = Timer::GetCurrentTime2();
-					if (!aggroCheck)
+				Spawn* spawn = itr->second;
+				if (spawn) {
+					// Process spawn movement
+					if (movement) {
+						spawn->ProcessMovement(true);
+						// update last_movement_update for all spawns (used for time_step)
+						spawn->last_movement_update = Timer::GetCurrentTime2();
+						if (!aggroCheck)
+							CombatProcess(spawn);
+					}
+
+					// Makes NPC's KOS to other NPC's or players
+					if (aggroCheck)
+					{
+						ProcessAggroChecks(spawn);
 						CombatProcess(spawn);
+					}
+				}
+				else {
+					// unable to get a valid spawn, lets add the id to another list to remove from the spawn list after this loop is finished
+					pending_spawn_list_remove.push_back(itr->first);
 				}
 
-				// Makes NPC's KOS to other NPC's or players
-				if (aggroCheck)
-				{
-					ProcessAggroChecks(spawn);
-					CombatProcess(spawn);
-				}
 			}
-			else {
-				// unable to get a valid spawn, lets add the id to another list to remove from the spawn list after this loop is finished
-				pending_spawn_list_remove.push_back(itr->first);
-			}
-
+			MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 		}
-		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 
 		// Check to see if there are any spawn id's that need to be removed from the spawn list, if so remove them all
 		if (pending_spawn_list_remove.size() > 0) {
@@ -1855,6 +1870,9 @@ void ZoneServer::ProcessDrowning(){
 }
 
 void ZoneServer::SendSpawnChanges(){
+	if (changed_spawns.size() < 1)
+		return;
+
 	set<Spawn*> spawns_to_send;
 	Spawn* spawn = 0;
 
@@ -5164,6 +5182,9 @@ void ZoneServer::SendUpdateDefaultCommand(Spawn* spawn, const char* command, flo
 }
 
 void ZoneServer::CheckPlayerProximity(Spawn* spawn, Client* client){
+	if (player_proximities.size() < 1)
+		return;
+
 	if(player_proximities.count(spawn->GetID()) > 0){
 		PlayerProximity* prox = player_proximities.Get(spawn->GetID());
 		if(prox->clients_in_proximity.count(client) == 0 && spawn_range_map.count(client) > 0 && spawn_range_map.Get(client)->count(spawn->GetID()) > 0 && spawn_range_map.Get(client)->Get(spawn->GetID()) < prox->distance){

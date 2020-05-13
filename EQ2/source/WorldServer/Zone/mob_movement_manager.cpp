@@ -515,6 +515,9 @@ void MobMovementManager::Process()
 		auto &ent      = iter.second;
 		auto &commands = ent.Commands;
 
+		if (commands.size() < 1)
+			continue;
+
 		iter.first->MCommandMutex.writelock();
 		while (true != commands.empty()) {
 			auto &cmd = commands.front();
