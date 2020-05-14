@@ -1064,7 +1064,7 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 		if(initial_login || client->IsConnected()) {
 			MutexMap<int32, float >::iterator spawn_iter = spawn_range_map.Get(client)->begin();
 			while(spawn_iter.Next()) {
-				spawn = GetSpawnByID(spawn_iter->first);
+				spawn = GetSpawnByID(spawn_iter->first, true);
 				if(spawn && spawn->GetPrivateQuestSpawn()) {
 					if(!spawn->IsPrivateSpawn())
 						spawn->AddAllowAccessSpawn(spawn);
@@ -2293,12 +2293,12 @@ void ZoneServer::ProcessSpawnLocations()
 		{
 			if ( this->IsInstanceZone() )
 			{
-				LogWrite(SPAWN__DEBUG, 5, "Spawn", "ProcessInstanceSpawnLocation (%u)...", itr->second->placement_id);
+				//LogWrite(SPAWN__DEBUG, 5, "Spawn", "ProcessInstanceSpawnLocation (%u)...", itr->second->placement_id);
 				ProcessInstanceSpawnLocation(itr->second,instNPCs,instGroundSpawns,instObjSpawns,instWidgetSpawns,instSignSpawns);
 			}
 			else
 			{
-				LogWrite(SPAWN__DEBUG, 5, "Spawn", "ProcessSpawnLocation (%u)...", itr->second->placement_id);
+				//LogWrite(SPAWN__DEBUG, 5, "Spawn", "ProcessSpawnLocation (%u)...", itr->second->placement_id);
 				ProcessSpawnLocation(itr->second);
 			}
 		}
@@ -5802,6 +5802,7 @@ void ZoneServer::SendEpicMobDeathToGuild(Player* killer, Spawn* victim) {
 }
 
 void ZoneServer::ProcessAggroChecks(Spawn* spawn) {
+	if ( spawn->GetFactionID() < 1 || !spawn->EngagedInCombat())
 	// If faction based combat is not allowed then no need to run the loops so just return out
 	if(!rule_manager.GetGlobalRule(R_Faction, AllowFactionBasedCombat)->GetBool())
 		return;

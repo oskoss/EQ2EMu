@@ -151,6 +151,9 @@ struct sockaddr_in address;
 
 EQStream *EQStreamFactory::Pop()
 {
+	if (!NewStreams.size())
+		return NULL;
+
 EQStream *s=NULL;
 	//cout << "Pop():Locking MNewStreams" << endl;
 	MNewStreams.lock();
