@@ -5802,7 +5802,8 @@ void ZoneServer::SendEpicMobDeathToGuild(Player* killer, Spawn* victim) {
 }
 
 void ZoneServer::ProcessAggroChecks(Spawn* spawn) {
-	if ( spawn->GetFactionID() < 1 || !spawn->EngagedInCombat())
+	if (spawn->GetFactionID() < 1 || spawn->EngagedInCombat())
+		return;
 	// If faction based combat is not allowed then no need to run the loops so just return out
 	if(!rule_manager.GetGlobalRule(R_Faction, AllowFactionBasedCombat)->GetBool())
 		return;
