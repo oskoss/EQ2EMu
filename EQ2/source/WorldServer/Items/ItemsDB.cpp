@@ -32,7 +32,8 @@ extern World world;
 
 void WorldDatabase::LoadDataFromRow(MYSQL_ROW row, Item* item) 
 {
-	LogWrite(ITEM__DEBUG, 5, "Items", "\tSetting details for item ID: %u", strtoul(row[0], NULL, 0));
+// this is too much on top of already having the top level load item debug msg
+//	LogWrite(ITEM__DEBUG, 5, "Items", "\tSetting details for item ID: %u", strtoul(row[0], NULL, 0));
 	item->details.item_id = strtoul(row[0], NULL, 0);
 	int8 size = strlen(row[1]);
 
@@ -136,7 +137,8 @@ void WorldDatabase::LoadDataFromRow(MYSQL_ROW row, Item* item)
 // handle new database class til all functions are converted
 void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item) 
 {
-	LogWrite(ITEM__DEBUG, 5, "Items", "\tSetting details for item ID: %i", result->GetInt32Str("id"));
+// this is too much on top of already having the top level load item debug msg
+//	LogWrite(ITEM__DEBUG, 5, "Items", "\tSetting details for item ID: %i", result->GetInt32Str("id"));
 
 	item->details.item_id						= result->GetInt32Str("id");
 	int8 size									= strlen(result->GetStringStr("name"));
