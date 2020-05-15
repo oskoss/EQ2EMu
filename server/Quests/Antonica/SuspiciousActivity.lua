@@ -43,7 +43,7 @@ end
 
 function CompleteStage1Check(Quest, Player)
 	if QuestStepIsComplete(Player, QuestID, 1) and QuestStepIsComplete(Player, QuestID, 2) and QuestStepIsComplete(Player, QuestID, 3) then
-		UpdateQuestTaskGroupDescription(Quest, 3, "I have done what Tyllia asked of me.")
+		UpdateQuestTaskGroupDescription(Quest, 1, "I have done what Tyllia asked of me.")
 		AddQuestStep(Quest, 4, "I need to return to Tyllia now that I have done all that she asked.", 1, 100, "I have done what Tyllia asked of me.", 11)
 		AddQuestStepCompleteAction(Quest, 4, "Step4Complete")
 	end
