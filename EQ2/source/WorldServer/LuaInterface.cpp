@@ -895,6 +895,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "AddToWard", EQ2Emu_lua_AddToWard);
 	lua_register(state, "RemoveWard", EQ2Emu_lua_RemoveWard);
 	lua_register(state, "GetWardAmountLeft", EQ2Emu_lua_GetWardAmountLeft);
+	lua_register(state, "GetWardValue", EQ2Emu_lua_GetWardValue);
 
 	lua_register(state, "SetTarget", EQ2Emu_lua_SetTarget);
 	lua_register(state, "IsPet", EQ2Emu_lua_IsPet);

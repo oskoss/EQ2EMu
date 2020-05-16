@@ -35,6 +35,7 @@
 #include "RaceTypes/RaceTypes.h"
 #include "ClientPacketFunctions.h"
 #include "Transmute.h"
+#include <boost/algorithm/string/predicate.hpp>
 
 extern WorldDatabase database;
 extern LuaInterface* lua_interface;
@@ -5033,6 +5034,43 @@ int EQ2Emu_lua_GetWardAmountLeft(lua_State* state) {
 		WardInfo* ward = target->GetWard(spell->spell->GetSpellID());
 		if (ward) {
 			lua_interface->SetInt32Value(state, ward->DamageLeft);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_GetWardValue(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
+	if (!spell) {
+		lua_interface->LogError("%s: LUA GetWardValue command error: this command can only be used in a spell script", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	string type = lua_interface->GetStringValue(state, 2);
+
+	if (spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
+
+		Entity* target = (Entity*)spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0));
+		WardInfo* ward = target->GetWard(spell->spell->GetSpellID());
+		if (ward) {
+			if (boost::iequals(type, "damageleft"))
+				lua_interface->SetInt32Value(state, ward->DamageLeft);
+			else if (boost::iequals(type, "basedamage"))
+				lua_interface->SetInt32Value(state, ward->BaseDamage);
+			else if (boost::iequals(type, "keepward"))
+				lua_interface->SetBooleanValue(state, ward->keepWard);
+			else if (boost::iequals(type, "wardtype"))
+				lua_interface->SetInt32Value(state, ward->WardType);
+			else if (boost::iequals(type, "dmgabsorptionpct"))
+				lua_interface->SetInt32Value(state, ward->DamageAbsorptionPercentage);
+			else if (boost::iequals(type, "dmgabsorptionmaxhealthpct"))
+				lua_interface->SetInt32Value(state, ward->DamageAbsorptionMaxHealthPercent);
+			else
+				lua_interface->LogError("%s: LUA GetWardValue command argument type '%s' did not match any options", lua_interface->GetScriptName(state), type);
 			return 1;
 		}
 	}
