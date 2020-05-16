@@ -1208,7 +1208,7 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 			for (int16 i = 0; i < total_task_groups; i++)
 				packet->setArrayDataByName("unknown4", 0xFFFFFFFF, i);
 
-			if (step->GetItemID() > 0) {
+			if (step && step->GetItemID() > 0) {
 				packet->setArrayLengthByName("usable_item_count", 1);
 				Item* item = player->GetPlayerItemList()->GetItemFromID(step->GetItemID(), 1);
 				if (item) {
