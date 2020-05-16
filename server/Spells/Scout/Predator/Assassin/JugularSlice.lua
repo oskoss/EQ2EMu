@@ -7,15 +7,14 @@
 --]]
 
 function precast(Caster, Target)
-    -- You must be in stealth.
-    if not IsStealthed(Caster) then
-        SendMessage(Caster, "You must be in stealth.", "yellow")
-        return false
+    -- You must be sneaking to use this ability.
+    if IsStealthed(Caster) then
+        return true
     end
 
-    return true
+    SendMessage(Caster, "You must be sneaking to use this ability.", "yellow")
+    return false
 end
-
 function cast(Caster, Target, DmgType, MinVal, MaxVal)
     -- Inflicts 217 - 362 slashing damage on target
     if MaxVal ~= nil and MinVal < MaxVal then

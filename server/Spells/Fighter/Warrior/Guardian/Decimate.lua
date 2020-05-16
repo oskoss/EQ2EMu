@@ -9,6 +9,7 @@
 
 
 function cast(Caster, Target, DmgType, MinVal, MaxVal, DefSkills)
+    Say(Caster, "cannot be parry etc... not implemented.")
 
     AddSkillBonus(Target, GetSkillIDByName("Parry"), DefSkills)
 

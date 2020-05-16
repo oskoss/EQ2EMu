@@ -11,6 +11,6 @@ function cast(Caster, Target, ProgressMod, DurabilityAmount)
 	AddSpellBonus(Caster, 801, DurabilityAmount)
 end
 
-function remove(Caster, Target, SuccessMod, ProgressAmount)
+function remove(Caster, Target, ProgressMod, DurabilityAmount)
     RemoveSpellBonus(Target)
 end

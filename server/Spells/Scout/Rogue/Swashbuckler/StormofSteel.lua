@@ -20,11 +20,11 @@ end
 
 -- Inflicts 298 - 497 ranged damage on targets in Area of Effect
 
-function cast(Caster, Target, DmgType, MinVal, MaxVal)
+function cast(Caster, Target, MinVal, MaxVal)
     if MaxVal ~= nil and MinVal < MaxVal then
-        SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))
+        SpellDamage(Target, math.random(MinVal, MaxVal))
     else
-        SpellDamage(Target, DmgType, MinVal)
+        SpellDamage(Target, MinVal)
     end
 end
 

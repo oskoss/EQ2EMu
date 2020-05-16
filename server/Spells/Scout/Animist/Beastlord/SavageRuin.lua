@@ -1,27 +1,12 @@
 --[[
     Script Name    : Spells/Scout/Animist/Beastlord/SavageRuin.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.12 08:08:08
+    Script Author  : neatz09
+    Script Date    : 2020.05.10 09:05:30
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
+-- Increases Mitigation of caster vs physical damage by 313
 -- On any combat or spell hit this spell may cast Savage Ruin on target of attack.  Triggers about 5.0 times per minute. 
--- Inflicts 83 - 102 slashing damage on target
--- Increases Mitigation of caster vs physical damage by 183
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-
+--     Inflicts 51 - 62 slashing damage on target

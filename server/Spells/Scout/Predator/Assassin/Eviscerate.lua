@@ -6,20 +6,20 @@
                    : 
 --]]
 
-function precast(Caster, Target)
+function precast(Caster,Target)
     -- You must be sneaking to use this ability.
     if not IsStealthed(Caster) then
         SendMessage(Caster, "You must be sneaking to use this ability.", "yellow")
         return false
     end
 
-    -- Must be flanking or behind
-    if not IsFlanking(Caster, Target) then
-        SendMessage(Caster, "You must be flanking or behind", "yellow")
-        return false
-    end
+if not IsFlanking(Target, Caster) then
+    SendMessage(Caster, "Must be flanking or behind", "yellow")
+    return false
+end
 
-    return true
+return true
+
 end
 
 function cast(Caster, Target, DmgType, MinVal, MaxVal)

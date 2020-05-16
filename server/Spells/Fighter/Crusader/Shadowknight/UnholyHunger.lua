@@ -8,7 +8,7 @@
 
 function cast(Caster, Target)
     -- On a hit this spell may cast Unholy Strike on target of attack.  Triggers about 1.6 times per minute. 
-    AddProc(Target, 3, 16.0)
+    AddProc(Target, 3, 16, nil, 1)
 end
 
 function proc(Caster, Target, Type, DmgType, DmgMin, DmgMax, HealMin, HealMax)

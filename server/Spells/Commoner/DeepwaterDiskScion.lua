@@ -20,13 +20,13 @@ function cast(Caster, Target, Crit, Health, Pwr, Speed)
 SetMount(Caster, 10984)
 
 
--- Increases Crit Chance of caster by 3.0%
+-- Increases Crit Chance of caster by 2.0%
     AddSpellBonus(Caster, 654, Crit)
 
---Increases Max Health of caster by 300.0
+--Increases Max Health of caster by 150.0
     AddSpellBonus(Caster, 606, Health)
 
---Increases Max Power of caster by 300.0
+--Increases Max Power of caster by 150.0
     AddSpellBonus(Caster, 619, Pwr)
 
     --Increases your Ground Speed by 130%

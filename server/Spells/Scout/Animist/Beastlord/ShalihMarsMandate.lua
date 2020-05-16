@@ -1,28 +1,13 @@
 --[[
     Script Name    : Spells/Scout/Animist/Beastlord/ShalihMarsMandate.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.12 08:08:44
+    Script Author  : neatz09
+    Script Date    : 2020.05.10 09:05:30
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
--- Inflicts 537 - 895 melee damage on target
--- Increases Potency by 20-44%
+-- Inflicts 306 - 510 melee damage on target
 -- The effect of this ability grows based on Savagery and Feral Rampage level.
+-- Increases Potency by 20-44%
 -- You must have your warder active to use this ability.
-
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
-end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-

@@ -12,3 +12,11 @@
 -- Dispelled when target takes damage
 -- Epic targets gain an immunity to Mesmerize effects of 22.5 seconds and duration is reduced to 2.5 seconds.
 -- Resistibility increases against targets higher than level 29.
+function cast(Caster, Target)
+    AddControlEffect(Target, 1)
+    Say(Caster, "Resistability + immunity not implemented")
+end
+
+function remove(Caster, Target)
+    RemoveControlEffect(Target, 1) 
+end

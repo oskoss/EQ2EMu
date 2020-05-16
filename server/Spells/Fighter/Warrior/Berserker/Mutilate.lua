@@ -12,10 +12,12 @@
 function cast(Caster, Target, DmgType, MinVal, MaxVal, DotType, DotMin, DotMax, AttkSpeed)
 -- Inflicts 4 - 14 slashing damage on target    
 SpellDamage(Target, DmgType, MinVal, MaxVal)
+if LastSpellAttackHit() then
     -- Inflicts 10 slashing damage on target instantly and every 4 seconds
 spellDamage(Target, DotType, DotMin, DotMax)
 -- Decreases Haste of target by 5.1    
 AddSpellBonus(Target, 617, AttkSpeed)
+end
 end
 
 

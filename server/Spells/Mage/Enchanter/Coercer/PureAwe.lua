@@ -1,7 +1,7 @@
 --[[
     Script Name    : Spells/Mage/Enchanter/Coercer/PureAwe.lua
     Script Author  : neatz09
-    Script Date    : 2019.09.29 06:09:35
+    Script Date    : 2020.05.09 06:05:13
     Script Purpose : 
                    : 
 --]]
@@ -12,3 +12,13 @@
 -- Dispelled when target takes damage
 -- Epic targets gain an immunity to Mesmerize effects of 27.0 seconds and duration is reduced to 3.0 seconds.
 -- Resistibility increases against targets higher than level 29.
+function cast(Caster, Target)
+    AddControlEffect(Target, 1)
+    Say(Caster, "Resistability and immunity not implemented.")
+ 
+end
+
+function remove(Caster, Target)
+    RemoveControlEffect(Target, 1) 
+end
+

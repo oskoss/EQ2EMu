@@ -6,8 +6,16 @@
                    : 
 --]]
 
--- Info from spell_display_effects (remove from script when done)
 -- Decreases Threat to targets in Area of Effect by 1,850 
 -- Makes targets in Area of Effect afraid
 -- Dispelled when target takes damage
 -- Resistibility increases against targets higher than level 29.
+function cast(Caster, Target, Hate)
+	AddHate(Caster, Target, Hate, 1)
+	AddControlEffect(Target, 6)
+	Say(Caster, "Resistability not implemented.")
+end
+
+function remove(Caster, Target)
+	RemoveControlEffect(Target, 6)
+end

@@ -6,7 +6,7 @@
     Script Notes  : 
 --]]
 
-function cast(Caster, Target, SucessMod, DurabilityAmount)
+function cast(Caster, Target, SuccessMod, DurabilityAmount)
 	AddSpellBonus(Caster, 804, SuccessMod)
 	AddSpellBonus(Caster, 801, DurabilityAmount)
 end

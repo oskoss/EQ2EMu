@@ -8,7 +8,7 @@
 
 function cast(Caster, Target, DmgType, MinVal, MaxVal)
     -- On a hit this spell may cast Divine Strike on target of attack.  Triggers about 1.6 times per minute. 
-    AddProc(Target, 3, 12.5)
+    AddProc(Target, 3, 12.5, nil, 1)
 end
 
 function proc(Caster, Target, Type, DmgType, MinVal, MaxVal)

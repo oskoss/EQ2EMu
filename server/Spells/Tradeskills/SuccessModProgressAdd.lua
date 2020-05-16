@@ -7,8 +7,8 @@
 --]]
 
 function cast(Caster, Target, SuccessMod, ProgressAmount)
-	AddSpellBonus(Target, 804, SuccessMod)
-	AddSpellBonus(Target, 802, ProgressAmount)
+	AddSpellBonus(Caster, 804, SuccessMod)
+	AddSpellBonus(Caster, 802, ProgressAmount)
 end
 
 function remove(Caster, Target, SuccessMod, ProgressAmount)

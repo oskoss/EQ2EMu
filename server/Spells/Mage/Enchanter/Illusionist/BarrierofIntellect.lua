@@ -1,29 +1,24 @@
 --[[
     Script Name    : Spells/Mage/Enchanter/Illusionist/BarrierofIntellect.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 08:08:31
+    Script Author  : neatz09
+    Script Date    : 2020.05.09 06:05:09
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
+-- Decreases Threat to targets in Area of Effect by 1,850 
 -- Mesmerizes targets in Area of Effect
--- If Target is not Epic
--- Decreases Threat to targets in Area of Effect by 694 
+--     If Target is not Epic
 -- Dispelled when target takes damage
 -- Resistibility increases against targets higher than level 29.
 
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+function cast(Caster, Target, Hate)
+    AddHate(Caster, Target, Hate, 1)
+    AddControlEffect(Target, 1)
+    Say(Caster, "leve resistability not implemented")
 end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+    RemoveControlEffect(Target, 1) 
 end
-
