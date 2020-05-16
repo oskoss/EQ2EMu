@@ -1285,9 +1285,32 @@ int32 Entity::CheckWards(int32 damage, int8 damage_type) {
 
 		spell = ward->Spell;
 
-		if (damage >= ward->DamageLeft) {
+		int32 damageToAbsorb = 0;
+		if (ward->DamageAbsorptionPercentage > 0)
+			damageToAbsorb = (int32)(double)damage * ((double)ward->DamageAbsorptionPercentage/100.0);
+		else
+			damageToAbsorb = damage;
+
+		int32 maxDamageAbsorptionAllowed = 0;
+
+		// spells like Divine Aura have caps on health, eg. anything more than 50% damage is not absorbed
+		if (ward->DamageAbsorptionMaxHealthPercent > 0)
+			maxDamageAbsorptionAllowed = (int32)(double)GetTotalHP() * ((double)ward->DamageAbsorptionMaxHealthPercent / 100.0);
+
+		if (maxDamageAbsorptionAllowed > 0 && damageToAbsorb >= maxDamageAbsorptionAllowed)
+			damageToAbsorb = 0; // its over or equal to 50% of the total hp allowed, thus this damage is not absorbed
+
+		int32 baseDamageRemaining = damage - damageToAbsorb;
+
+		if (damageToAbsorb >= ward->DamageLeft) {
 			// Damage is greater than or equal to the amount left on the ward
-			damage -= ward->DamageLeft;
+
+			// remove what damage we can absorb 
+			damageToAbsorb -= ward->DamageLeft;
+
+			// move back what couldn't be absorbed to the base dmg and apply to the overall damage
+			baseDamageRemaining += damageToAbsorb;
+			damage = baseDamageRemaining;
 			ward->DamageLeft = 0;
 			spell->damage_remaining = 0;
 			GetZone()->SendHealPacket(spell->caster, this, HEAL_PACKET_TYPE_ABSORB, ward->DamageLeft, spell->spell->GetName());
@@ -1298,12 +1321,14 @@ int32 Entity::CheckWards(int32 damage, int8 damage_type) {
 		}
 		else {
 			// Damage is less then the amount left on the ward
-			ward->DamageLeft -= damage;
+			ward->DamageLeft -= damageToAbsorb;
 			spell->damage_remaining = ward->DamageLeft;
 			if (spell->caster->IsPlayer())
 				ClientPacketFunctions::SendMaintainedExamineUpdate(GetZone()->GetClientBySpawn(spell->caster), spell->slot_pos, ward->DamageLeft, 1);
 			GetZone()->SendHealPacket(ward->Spell->caster, this, HEAL_PACKET_TYPE_ABSORB, damage, spell->spell->GetName());
-			damage = 0;
+
+			// remaining damage not absorbed by percentage must be set
+			damage = baseDamageRemaining;
 		}
 
 		// Reset ward pointer

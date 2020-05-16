@@ -4933,6 +4933,8 @@ int EQ2Emu_lua_AddWard(lua_State* state) {
 	bool keepWard = (lua_interface->GetInt8Value(state, 2) == 1);
 	int8 wardType = lua_interface->GetInt8Value(state, 3);
 	int8 damageTypes = lua_interface->GetInt8Value(state, 4);
+	int8 damageAbsorptionPercent = lua_interface->GetInt8Value(state, 5);
+	int8 damageAbsorptionMaxHealthPercent = lua_interface->GetInt8Value(state, 6);
 
 	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 
@@ -4956,6 +4958,16 @@ int EQ2Emu_lua_AddWard(lua_State* state) {
 			ward->DamageLeft = damage;
 			ward->keepWard = keepWard;
 			ward->WardType = wardType;
+			if (damageAbsorptionPercent > 100)
+				damageAbsorptionPercent = 100;
+
+			ward->DamageAbsorptionPercentage = damageAbsorptionPercent;
+
+			if (damageAbsorptionMaxHealthPercent > 100)
+				damageAbsorptionMaxHealthPercent = 100;
+
+			ward->DamageAbsorptionMaxHealthPercent = damageAbsorptionMaxHealthPercent;
+
 			if (wardType == WARD_TYPE_MAGICAL)
 				ward->DamageType = damageTypes;
 

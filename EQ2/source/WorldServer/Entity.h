@@ -255,6 +255,8 @@ struct WardInfo {
 	int8		WardType;
 	int8		DamageType;
 	bool		keepWard;
+	int8		DamageAbsorptionPercentage;
+	int8		DamageAbsorptionMaxHealthPercent;
 };
 
 #define WARD_TYPE_ALL 0
