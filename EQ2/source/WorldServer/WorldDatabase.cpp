@@ -4551,7 +4551,16 @@ int32 WorldDatabase::LoadQuests(){
 				LogWrite(QUEST__DEBUG, 5, "Quests", "\tLoading Quest: '%s' (%u)", name, id);
 
 				LoadQuestDetails(quest);
-				quest->SetCompletedDescription(string(completed_description));
+				string compDescription;
+				if (completed_description == NULL)
+				{
+					compDescription = string("Missing! Notify Developer");
+					LogWrite(QUEST__WARNING, 5, "Quests", "\tLoading Quest MISSING completed_text in quests table for: '%s' (%u)", name, id);
+				}
+				else
+					compDescription = string(completed_description);
+
+				quest->SetCompletedDescription(string(compDescription));
 				quest->SetQuestReturnNPC(return_npc_id);
 				quest->SetEncounterLevel(enc_level);
 				total++;

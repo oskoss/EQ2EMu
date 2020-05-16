@@ -3842,7 +3842,8 @@ bool Player::GetQuestStepComplete(int32 quest_id, int32 step_id){
 	MPlayerQuests.lock();
 	if(player_quests.count(quest_id) > 0){
 		Quest* quest = player_quests[quest_id];
-		ret = quest->GetQuestStepCompleted(step_id);
+		if ( quest != NULL )
+			ret = quest->GetQuestStepCompleted(step_id);
 	}
 	MPlayerQuests.unlock();
 	return ret;
