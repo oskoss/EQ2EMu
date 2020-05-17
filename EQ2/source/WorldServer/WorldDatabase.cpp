@@ -45,6 +45,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "Traits/Traits.h"
 #include "ClientPacketFunctions.h"
 #include "Zone/ChestTrap.h"
+#include "../common/version.h"
 
 extern Classes classes;
 extern Commands commands;
@@ -4499,11 +4500,14 @@ void WorldDatabase::SaveWorldTime(WorldTime* time){
 
 void WorldDatabase::SaveBugReport(const char* category, const char* subcategory, const char* causes_crash, const char* reproducible, const char* summary, const char* description, const char* version, const char* player, int32 account_id, const char* spawn_name, int32 spawn_id, int32 zone_id){
 	Query query;
-	string bug_report = string("insert into bugs (category, subcategory, causes_crash, reproducible, summary, description, version, player, account_id, spawn_name, spawn_id, zone_id) values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %u, '%s', %u, %u)");
+
+	int32 dbVersion = rule_manager.GetGlobalRule(R_World, DatabaseVersion)->GetInt32();
+
+	string bug_report = string("insert into bugs (category, subcategory, causes_crash, reproducible, summary, description, version, player, account_id, spawn_name, spawn_id, zone_id, dbversion, worldversion) values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %u, '%s', %u, %u, %u, '%s')");
 	query.RunQuery2(Q_INSERT, bug_report.c_str(), getSafeEscapeString(category).c_str(), getSafeEscapeString(subcategory).c_str(),
 		getSafeEscapeString(causes_crash).c_str(), getSafeEscapeString(reproducible).c_str(), getSafeEscapeString(summary).c_str(),
 		getSafeEscapeString(description).c_str(), getSafeEscapeString(version).c_str(), getSafeEscapeString(player).c_str(), account_id,
-		getSafeEscapeString(spawn_name).c_str(), spawn_id, zone_id);
+		getSafeEscapeString(spawn_name).c_str(), spawn_id, zone_id, dbVersion, CURRENT_VERSION);
 	FixBugReport();
 	FixBugReport();
 	FixBugReport();

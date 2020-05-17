@@ -561,8 +561,8 @@ void LoginDatabase::UpdateRaceID(char* name){
 bool LoginDatabase::CheckVersion(char* in_version){
 	Query query;
 	query.escaped_data1 = getEscapeString(in_version);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id from login_versions where version='%s'", query.escaped_data1);
-	if(result && mysql_num_rows(result) == 1)
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id from login_versions where version='%s' or version='*'", query.escaped_data1);
+	if(result && mysql_num_rows(result) > 0)
 		return true;
 	else
 		return false;
