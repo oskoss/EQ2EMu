@@ -294,6 +294,7 @@ RuleManager::RuleManager() {
 
 	RULE_INIT(R_Expansion, GlobalExpansionFlag, "0");
 
+	RULE_INIT(R_World, DatabaseVersion, "0");
 	#undef RULE_INIT
 }
 
