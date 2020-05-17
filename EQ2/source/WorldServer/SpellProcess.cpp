@@ -1717,8 +1717,42 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 			}
 		}
 		else if (target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_RAID_AE) {
+
+			// player handling
+			if (target)
+			{
+				if (data->icon_backdrop == 316) // using TARGET backdrop icon
+				{
+					// PLAYER LOGIC:
+					if ((target->IsPlayer() && luaspell->caster->IsPlayer() && target != luaspell->caster && ((Player*)target)->GetGroupMemberInfo() != NULL && ((Player*)luaspell->caster)->GetGroupMemberInfo() != NULL
+						&& ((Player*)target)->GetGroupMemberInfo()->group_id == ((Player*)luaspell->caster)->GetGroupMemberInfo()->group_id))
+					{
+
+					}//TODO: NEED RAID SUPPORT
+
+					// NPC LOGIC:
+					else if (target->group_id > 0 && target->group_id == luaspell->caster->group_id)
+					{
+
+					}
+					else
+					{
+						target = NULL;
+						luaspell->initial_target = 0;
+					}
+				}
+				else // default self cast for group/raid AE
+				{
+					target = caster;
+					luaspell->initial_target = caster->GetID();
+				}
+				// spell target versus self cast
+			}
+			else  if (data->icon_backdrop != 316) // default self cast for group/raid AE and not using TARGET backdrop icon
+			{
 				target = caster;
 				luaspell->initial_target = caster->GetID();
+			}
 		}
 		else if (target_type == SPELL_TARGET_SELF){
 			target = caster;
@@ -1736,8 +1770,13 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 		// Group AE type                            NOTE: Add support for RAID AE to affect raid members once raids have been completed
 		if (target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_RAID_AE) 
 		{
+			if (data->icon_backdrop == 316) // single target in a group/raid
+			{
+				if (target)
+					luaspell->targets.push_back(target->GetID());
+			}
 			// is friendly
-			if (data->friendly_spell) 
+			else if (data->friendly_spell) 
 			{
 				// caster is an Entity
 				if (luaspell->caster->IsEntity()) 
@@ -1870,7 +1909,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 				} // end is player
 			} // end is friendly
 
-			else if (data->group_spell > 0 || data->icon_backdrop == 312) // is not friendly, but is a group spell, icon_backdrop 312 is green (encounter AE)
+			else if (target && data->group_spell > 0 || data->icon_backdrop == 312) // is not friendly, but is a group spell, icon_backdrop 312 is green (encounter AE)
 			{
 				// target is non-player
 				if (target->IsNPC())
@@ -1926,11 +1965,11 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						luaspell->targets.push_back(target->GetID()); // player not in group
 				} // end is caster player or npc
 			}
-			else
+			else if (target)
 				luaspell->targets.push_back(target->GetID()); // is not friendly nor a group spell
 		}
 		//Rez spells
-		else if(target_type == SPELL_TARGET_ENEMY_CORPSE){
+		else if(target && target_type == SPELL_TARGET_ENEMY_CORPSE){
 			//is friendly
 			if(data->friendly_spell){
 				//target is player
