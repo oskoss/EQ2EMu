@@ -1263,7 +1263,7 @@ void Entity::RemoveWard(int32 spellID) {
 	}
 }
 
-int32 Entity::CheckWards(int32 damage, int8 damage_type) {
+int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 	map<int32, WardInfo*>::iterator itr;
 	WardInfo* ward = 0;
 	LuaSpell* spell = 0;
@@ -1272,7 +1272,7 @@ int32 Entity::CheckWards(int32 damage, int8 damage_type) {
 		// Get the ward with the lowest base damage
 		for (itr = m_wardList.begin(); itr != m_wardList.end(); itr++) {
 			if (!ward || itr->second->BaseDamage < ward->BaseDamage) {
-				if (itr->second->DamageLeft > 0 &&
+				if ((itr->second->AbsorbAllDamage || itr->second->DamageLeft > 0) &&
 					(itr->second->WardType == WARD_TYPE_ALL ||
 					(itr->second->WardType == WARD_TYPE_PHYSICAL && damage_type >= DAMAGE_PACKET_DAMAGE_TYPE_SLASH && damage_type <= DAMAGE_PACKET_DAMAGE_TYPE_PIERCE) ||
 					(itr->second->WardType == WARD_TYPE_MAGICAL && ((itr->second->DamageType == 0 && damage_type >= DAMAGE_PACKET_DAMAGE_TYPE_PIERCE) || (damage_type >= DAMAGE_PACKET_DAMAGE_TYPE_PIERCE && itr->second->DamageType == damage_type)))))
@@ -1285,6 +1285,12 @@ int32 Entity::CheckWards(int32 damage, int8 damage_type) {
 
 		spell = ward->Spell;
 
+		// damage to redirect at the source (like intercept)
+		int32 redirectDamage = 0;
+		if (ward->RedirectDamagePercent)
+			redirectDamage = (int32)(double)damage * ((double)ward->RedirectDamagePercent / 100.0);
+
+		// percentage the spell absorbs of all possible damage
 		int32 damageToAbsorb = 0;
 		if (ward->DamageAbsorptionPercentage > 0)
 			damageToAbsorb = (int32)(double)damage * ((double)ward->DamageAbsorptionPercentage/100.0);
@@ -1302,9 +1308,17 @@ int32 Entity::CheckWards(int32 damage, int8 damage_type) {
 
 		int32 baseDamageRemaining = damage - damageToAbsorb;
 
-		if (damageToAbsorb >= ward->DamageLeft) {
+		bool hasSpellBeenRemoved = false;
+		if (ward->AbsorbAllDamage)
+		{
+			ward->LastAbsorbedDamage = ward->DamageLeft;
+			GetZone()->SendHealPacket(ward->Spell->caster, this, HEAL_PACKET_TYPE_ABSORB, damage, spell->spell->GetName());
+			damage = 0;
+		}
+		else if (damageToAbsorb >= ward->DamageLeft) {
 			// Damage is greater than or equal to the amount left on the ward
 
+			ward->LastAbsorbedDamage = ward->DamageLeft;
 			// remove what damage we can absorb 
 			damageToAbsorb -= ward->DamageLeft;
 
@@ -1315,13 +1329,16 @@ int32 Entity::CheckWards(int32 damage, int8 damage_type) {
 			spell->damage_remaining = 0;
 			GetZone()->SendHealPacket(spell->caster, this, HEAL_PACKET_TYPE_ABSORB, ward->DamageLeft, spell->spell->GetName());
 			if (!ward->keepWard) {
+				hasSpellBeenRemoved = true;
 				RemoveWard(spell->spell->GetSpellID());
 				GetZone()->GetSpellProcess()->DeleteCasterSpell(spell);
 			}
 		}
 		else {
+			ward->LastAbsorbedDamage = damageToAbsorb;
 			// Damage is less then the amount left on the ward
 			ward->DamageLeft -= damageToAbsorb;
+
 			spell->damage_remaining = ward->DamageLeft;
 			if (spell->caster->IsPlayer())
 				ClientPacketFunctions::SendMaintainedExamineUpdate(GetZone()->GetClientBySpawn(spell->caster), spell->slot_pos, ward->DamageLeft, 1);
@@ -1329,6 +1346,31 @@ int32 Entity::CheckWards(int32 damage, int8 damage_type) {
 
 			// remaining damage not absorbed by percentage must be set
 			damage = baseDamageRemaining;
+		}
+
+		if (redirectDamage)
+		{
+			ward->LastRedirectDamage = redirectDamage;
+			if (attacker && spell->caster)
+				attacker->DamageSpawn(spell->caster, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, redirectDamage, redirectDamage, 0);
+		}
+
+		bool shouldRemoveSpell = false;
+		ward->HitCount++; // increment hit count
+
+		if (ward->MaxHitCount && spell->num_triggers)
+		{
+			spell->num_triggers--;
+			ClientPacketFunctions::SendMaintainedExamineUpdate(spell->caster->GetZone()->GetClientBySpawn(spell->caster), spell->slot_pos, spell->num_triggers, 0);
+		}
+		
+		if (ward->HitCount >= ward->MaxHitCount) // there isn't a max hit requirement with the hit count, so just go based on hit count
+			shouldRemoveSpell = true;
+
+		if (shouldRemoveSpell && !hasSpellBeenRemoved)
+		{
+			RemoveWard(spell->spell->GetSpellID());
+			GetZone()->GetSpellProcess()->DeleteCasterSpell(spell);
 		}
 
 		// Reset ward pointer

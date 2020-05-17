@@ -908,6 +908,8 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 
 	LogWrite(MISC__TODO, 3, "TODO", "Take players armor into account\nfile: %s, func: %s, line: %i)", __FILE__, __FUNCTION__, __LINE__);
 
+	bool useWards = false;
+
 	if(damage <= 0){
 		hit_result = DAMAGE_PACKET_RESULT_NO_DAMAGE;
 		damage = 0;
@@ -915,7 +917,12 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 	else{
 		hit_result = DAMAGE_PACKET_RESULT_SUCCESSFUL;
 		GetZone()->CallSpawnScript(victim, SPAWN_SCRIPT_HEALTHCHANGED, this);
-		damage = victim->CheckWards(damage, damage_type);
+		int32 prevDmg = damage;
+		damage = victim->CheckWards(this, damage, damage_type);
+
+		if (damage < prevDmg)
+			useWards = true;
+
 		victim->TakeDamage(damage);
 		victim->CheckProcs(PROC_TYPE_DAMAGED, this);
 
@@ -952,6 +959,10 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 
 		if (victim->IsEntity())
 			((Entity*)victim)->CheckInterruptSpell(this);
+	}
+	else if (useWards)
+	{
+		GetZone()->SendDamagePacket(this, victim, DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE, DAMAGE_PACKET_RESULT_NO_DAMAGE, damage_type, 0, spell_name);
 	}
 
 	if (victim->GetHP() <= 0)

@@ -4934,8 +4934,10 @@ int EQ2Emu_lua_AddWard(lua_State* state) {
 	bool keepWard = (lua_interface->GetInt8Value(state, 2) == 1);
 	int8 wardType = lua_interface->GetInt8Value(state, 3);
 	int8 damageTypes = lua_interface->GetInt8Value(state, 4);
-	int8 damageAbsorptionPercent = lua_interface->GetInt8Value(state, 5);
-	int8 damageAbsorptionMaxHealthPercent = lua_interface->GetInt8Value(state, 6);
+	int32 damageAbsorptionPercent = lua_interface->GetInt32Value(state, 5);
+	int32 damageAbsorptionMaxHealthPercent = lua_interface->GetInt32Value(state, 6);
+	int32 redirectDamagePercent = lua_interface->GetInt32Value(state, 7);
+	int32 maxHitCount = lua_interface->GetInt32Value(state, 8);
 
 	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 
@@ -4957,6 +4959,8 @@ int EQ2Emu_lua_AddWard(lua_State* state) {
 			ward->Spell = spell;
 			ward->BaseDamage = damage;
 			ward->DamageLeft = damage;
+			ward->AbsorbAllDamage = (damage == 0) ? true : false;
+
 			ward->keepWard = keepWard;
 			ward->WardType = wardType;
 			if (damageAbsorptionPercent > 100)
@@ -4968,6 +4972,17 @@ int EQ2Emu_lua_AddWard(lua_State* state) {
 				damageAbsorptionMaxHealthPercent = 100;
 
 			ward->DamageAbsorptionMaxHealthPercent = damageAbsorptionMaxHealthPercent;
+
+			ward->RedirectDamagePercent = redirectDamagePercent;
+
+			ward->LastRedirectDamage = 0;
+			ward->LastAbsorbedDamage = 0;
+			ward->HitCount = 0;
+
+			spell->num_triggers = maxHitCount;
+			spell->had_triggers = true;
+			spell->cancel_after_all_triggers = false;
+			ward->MaxHitCount = maxHitCount;
 
 			if (wardType == WARD_TYPE_MAGICAL)
 				ward->DamageType = damageTypes;
@@ -5069,6 +5084,16 @@ int EQ2Emu_lua_GetWardValue(lua_State* state) {
 				lua_interface->SetInt32Value(state, ward->DamageAbsorptionPercentage);
 			else if (boost::iequals(type, "dmgabsorptionmaxhealthpct"))
 				lua_interface->SetInt32Value(state, ward->DamageAbsorptionMaxHealthPercent);
+			else if (boost::iequals(type, "redirectdamagepercent"))
+				lua_interface->SetInt32Value(state, ward->RedirectDamagePercent);
+			else if (boost::iequals(type, "lastredirectdamage"))
+				lua_interface->SetInt32Value(state, ward->LastRedirectDamage);
+			else if (boost::iequals(type, "lastabsorbeddamage"))
+				lua_interface->SetInt32Value(state, ward->LastAbsorbedDamage);
+			else if (boost::iequals(type, "hitcount"))
+				lua_interface->SetInt32Value(state, ward->HitCount);
+			else if (boost::iequals(type, "maxhitcount"))
+				lua_interface->SetInt32Value(state, ward->MaxHitCount);
 			else
 				lua_interface->LogError("%s: LUA GetWardValue command argument type '%s' did not match any options", lua_interface->GetScriptName(state), type);
 			return 1;

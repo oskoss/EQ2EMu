@@ -255,8 +255,17 @@ struct WardInfo {
 	int8		WardType;
 	int8		DamageType;
 	bool		keepWard;
-	int8		DamageAbsorptionPercentage;
-	int8		DamageAbsorptionMaxHealthPercent;
+	int32		DamageAbsorptionPercentage;
+	int32		DamageAbsorptionMaxHealthPercent;
+	int32		RedirectDamagePercent;
+	
+	int32		LastRedirectDamage;
+	int32		LastAbsorbedDamage;
+
+	int32		HitCount;
+	int32		MaxHitCount;
+
+	bool		AbsorbAllDamage; // damage is always absorbed, usually spells based on hits, when we pass damage in AddWard as 0 this will be set to true
 };
 
 #define WARD_TYPE_ALL 0
@@ -720,7 +729,7 @@ public:
 	/// <summary>Subtracts the given damage from the wards</summary>
 	/// <param name='damage'>The damage to subtract from the wards</param>
 	/// <returns>The amount of damage left after wards</returns>
-	int32 CheckWards(int32 damage, int8 damage_type);
+	int32 CheckWards(Entity* attacker, int32 damage, int8 damage_type);
 
 	map<int16, float> stats;
 
