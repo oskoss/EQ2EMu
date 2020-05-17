@@ -2011,7 +2011,7 @@ void Player::RemoveSpellBookEntry(int32 spell_id, bool remove_passives_from_list
 	MSpellsBook.unlock();
 }
 
-void Player::ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 book_type)
+void Player::ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 maxlvl_only, int32 book_type)
 {
 	//sort_by : 0 - alpha, 1 - level, 2 - category
 	//order : 0 - ascending, 1 - descending

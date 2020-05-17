@@ -2711,7 +2711,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				int32 sort_by = atoul(sep->arg[1]); // 0 - alpha, 1 - level, 2 - category
 				int32 order = atoul(sep->arg[2]); // 0 - ascending, 1 - descending
 				int32 pattern = atoul(sep->arg[3]); // 0 - zigzag, 1 - down, 2 - across
-				client->GetPlayer()->ResortSpellBook(sort_by, order, pattern, book);
+				int32 maxlvlonly = atoul(sep->arg[4]); // 0 - zigzag, 1 - down, 2 - across
+				client->GetPlayer()->ResortSpellBook(sort_by, order, pattern, maxlvlonly, book);
 				ClientPacketFunctions::SendSkillSlotMappings(client);
 			}
 			else
