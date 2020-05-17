@@ -161,9 +161,7 @@ enum RuleType {
 	WeatherTimer,
 	SpawnDeleteTimer,
 
-	GlobalExpansionFlag,
-
-	DatabaseVersion
+	GlobalExpansionFlag
 };
 
 class Rule {

@@ -34,15 +34,7 @@
 #else
 	#define EQ2EMU_MODULE	"EQ2EMu WorldServer"
 #endif
-
-#if defined(LOGIN)
-#define CURRENT_VERSION	"0.8.0-taurus2"
-#elif defined(WORLD)
-#define CURRENT_VERSION	"0.8.0-taurus2"
-#else
 #define CURRENT_VERSION	"0.7.3-dev"
-#endif
-
 #define COMPILE_DATE	__DATE__
 #define COMPILE_TIME	__TIME__
 #ifndef WIN32

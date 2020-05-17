@@ -402,8 +402,6 @@ bool LWorld::Process() {
 			else {
 				ServerLSInfo_Struct* lsi = (ServerLSInfo_Struct*) pack->pBuffer;
 				if (strcmp(lsi->protocolversion, EQEMU_PROTOCOL_VERSION) != 0 || !database.CheckVersion(lsi->serverversion)) {
-					cout << "ERROR - KICK BAD VERSION: Got versions: protocol: '" << lsi->protocolversion << "', database version: " << lsi->serverversion << endl;
-					cout << "To allow all world server versions to login, run query on your login database (alternatively replacing * with the database version if preferred): insert into login_versions set version = '*';" << endl;
 					this->Kick(ERROR_BADVERSION);
 					ret = false;
 					struct in_addr  in;
