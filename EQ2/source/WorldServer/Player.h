@@ -161,6 +161,7 @@ struct SpellBookEntry{
 	int16	recast;
 	int32	timer;
 	bool	save_needed;
+	Player* player;
 };
 
 #define QUICKBAR_NORMAL		1
@@ -686,6 +687,15 @@ public:
 	void				SetPendingCollectionReward(Collection *collection) { pending_collection_reward = collection; }
 	Collection *		GetPendingCollectionReward() { return pending_collection_reward; }
 	void RemoveSpellBookEntry(int32 spell_id, bool remove_passives_from_list = true);
+	void ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 book_type);
+
+	static bool SortSpellEntryByName(SpellBookEntry* s1, SpellBookEntry* s2);
+	static bool SortSpellEntryByCategory(SpellBookEntry* s1, SpellBookEntry* s2);
+	static bool SortSpellEntryByLevel(SpellBookEntry* s1, SpellBookEntry* s2);
+	static bool SortSpellEntryByNameReverse(SpellBookEntry* s1, SpellBookEntry* s2);
+	static bool SortSpellEntryByCategoryReverse(SpellBookEntry* s1, SpellBookEntry* s2);
+	static bool SortSpellEntryByLevelReverse(SpellBookEntry* s1, SpellBookEntry* s2);
+
 	int8 GetSpellSlot(int32 spell_id);
 	void				AddTitle(int32 title_id, const char *name, int8 prefix, bool save_needed = false);
 	void				AddAAEntry(int16 template_id, int8 tab_id, int32 aa_id, int16 order, int8 treeid);

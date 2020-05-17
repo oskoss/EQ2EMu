@@ -1986,6 +1986,7 @@ void Player::AddSpellBookEntry(int32 spell_id, int8 tier, sint32 slot, int32 typ
 	spell->save_needed = save_needed;
 	spell->recast = 0;
 	spell->recast_available = 0;
+	spell->player = this;
 	MSpellsBook.lock();
 	spells.push_back(spell);
 	MSpellsBook.unlock();
@@ -2008,6 +2009,127 @@ void Player::RemoveSpellBookEntry(int32 spell_id, bool remove_passives_from_list
 		}
 	}
 	MSpellsBook.unlock();
+}
+
+void Player::ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 book_type)
+{
+	//sort_by : 0 - alpha, 1 - level, 2 - category
+	//order : 0 - ascending, 1 - descending
+	//pattern : 0 - zigzag, 1 - down, 2 - across
+	MSpellsBook.lock();
+	switch (sort_by)
+	{
+	case 0:
+		if (!order)
+			stable_sort(spells.begin(), spells.end(), SortSpellEntryByName);
+		else
+			stable_sort(spells.begin(), spells.end(), SortSpellEntryByNameReverse);
+		break;
+	case 1:
+		if (!order)
+			stable_sort(spells.begin(), spells.end(), SortSpellEntryByLevel);
+		else
+			stable_sort(spells.begin(), spells.end(), SortSpellEntryByLevelReverse);
+		break;
+	case 2:
+		if (!order)
+			stable_sort(spells.begin(), spells.end(), SortSpellEntryByCategory);
+		else
+			stable_sort(spells.begin(), spells.end(), SortSpellEntryByCategoryReverse);
+		break;
+	}
+
+	vector<SpellBookEntry*>::iterator itr;
+	SpellBookEntry* spell = 0;
+	int i = 0;
+	for (itr = spells.begin(); itr != spells.end(); itr++) {
+		spell = *itr;
+
+		if (spell->type != book_type || spell->slot == -1)
+			continue;
+
+		spell->slot = i;
+		i++;
+	}
+	MSpellsBook.unlock();
+}
+
+bool Player::SortSpellEntryByName(SpellBookEntry* s1, SpellBookEntry* s2)
+{
+	Spell* spell1 = master_spell_list.GetSpell(s1->spell_id, s1->tier);
+	Spell* spell2 = master_spell_list.GetSpell(s2->spell_id, s2->tier);
+
+	if (!spell1 || !spell2)
+		return false;
+
+	return (string(spell1->GetName()) < string(spell2->GetName()));
+}
+
+bool Player::SortSpellEntryByCategory(SpellBookEntry* s1, SpellBookEntry* s2)
+{
+	Spell* spell1 = master_spell_list.GetSpell(s1->spell_id, s1->tier);
+	Spell* spell2 = master_spell_list.GetSpell(s2->spell_id, s2->tier);
+
+	if (!spell1 || !spell2)
+		return false;
+
+	return (spell1->GetSpellIconBackdrop() < spell2->GetSpellIconBackdrop());
+}
+
+bool Player::SortSpellEntryByLevel(SpellBookEntry* s1, SpellBookEntry* s2)
+{
+	Spell* spell1 = master_spell_list.GetSpell(s1->spell_id, s1->tier);
+	Spell* spell2 = master_spell_list.GetSpell(s2->spell_id, s2->tier);
+
+	if (!spell1 || !spell2)
+		return false;
+
+	int16 lvl1 = spell1->GetLevelRequired(s1->player);
+	int16 lvl2 = spell2->GetLevelRequired(s2->player);
+	if (lvl1 == 0xFFFF)
+		lvl1 = 0;
+	if (lvl2 == 0xFFFF)
+		lvl2 = 0;
+
+	return (lvl1 < lvl2);
+}
+
+bool Player::SortSpellEntryByNameReverse(SpellBookEntry* s1, SpellBookEntry* s2)
+{
+	Spell* spell1 = master_spell_list.GetSpell(s1->spell_id, s1->tier);
+	Spell* spell2 = master_spell_list.GetSpell(s2->spell_id, s2->tier);
+
+	if (!spell1 || !spell2)
+		return false;
+
+	return (string(spell2->GetName()) < string(spell1->GetName()));
+}
+
+bool Player::SortSpellEntryByCategoryReverse(SpellBookEntry* s1, SpellBookEntry* s2)
+{
+	Spell* spell1 = master_spell_list.GetSpell(s1->spell_id, s1->tier);
+	Spell* spell2 = master_spell_list.GetSpell(s2->spell_id, s2->tier);
+	if (!spell1 || !spell2)
+		return false;
+	return (spell2->GetSpellIconBackdrop() < spell1->GetSpellIconBackdrop());
+}
+
+bool Player::SortSpellEntryByLevelReverse(SpellBookEntry* s1, SpellBookEntry* s2)
+{
+	Spell* spell1 = master_spell_list.GetSpell(s1->spell_id, s1->tier);
+	Spell* spell2 = master_spell_list.GetSpell(s2->spell_id, s2->tier);
+
+	if (!spell1 || !spell2)
+		return false;
+
+	int16 lvl1 = spell1->GetLevelRequired(s1->player);
+	int16 lvl2 = spell2->GetLevelRequired(s2->player);
+	if (lvl1 == 0xFFFF)
+		lvl1 = 0;
+	if (lvl2 == 0xFFFF)
+		lvl2 = 0;
+
+	return (lvl2 < lvl1);
 }
 
 int8 Player::GetSpellSlot(int32 spell_id){
@@ -2349,22 +2471,22 @@ EQ2Packet* Player::GetSpellBookUpdatePacket(int16 version){
 
 		if(count > 0){
 			packet->setArrayLengthByName("spell_count", count);
-			if(count > spell_count){
+			if (count > spell_count) {
 				uchar* tmp = 0;
-				if(spell_orig_packet){
-					tmp = new uchar[count*total_bytes];
-					memset(tmp, 0, total_bytes*count);
-					memcpy(tmp, spell_orig_packet, spell_count*total_bytes);
+				if (spell_orig_packet) {
+					tmp = new uchar[count * total_bytes];
+					memset(tmp, 0, total_bytes * count);
+					memcpy(tmp, spell_orig_packet, spell_count * total_bytes);
 					safe_delete_array(spell_orig_packet);
 					safe_delete_array(spell_xor_packet);
 					spell_orig_packet = tmp;
 				}
-				else{
-					spell_orig_packet = new uchar[count*total_bytes];
-					memset(spell_orig_packet, 0, total_bytes*count);
+				else {
+					spell_orig_packet = new uchar[count * total_bytes];
+					memset(spell_orig_packet, 0, total_bytes * count);
 				}
-				spell_xor_packet = new uchar[count*total_bytes];
-				memset(spell_xor_packet, 0, count*total_bytes);
+				spell_xor_packet = new uchar[count * total_bytes];
+				memset(spell_xor_packet, 0, count * total_bytes);
 				spell_count = count;
 			}
 			MSpellsBook.lock();

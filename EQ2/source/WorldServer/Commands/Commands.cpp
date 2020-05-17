@@ -2704,6 +2704,22 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 			break;
 		}
+		case COMMAND_KNOWLEDGEWINDOWSORT: {
+			if (sep && sep->GetArgNumber() == 4)
+			{
+				int32 book = atoul(sep->arg[0]); // 0 - spells, 1 - combat, 2 - abilities, 3 - tradeskill
+				int32 sort_by = atoul(sep->arg[1]); // 0 - alpha, 1 - level, 2 - category
+				int32 order = atoul(sep->arg[2]); // 0 - ascending, 1 - descending
+				int32 pattern = atoul(sep->arg[3]); // 0 - zigzag, 1 - down, 2 - across
+				client->GetPlayer()->ResortSpellBook(sort_by, order, pattern, book);
+				ClientPacketFunctions::SendSkillSlotMappings(client);
+			}
+			else
+			{
+				client->Message(CHANNEL_COLOR_YELLOW, "Syntax: /knowledgewindow_sort [book] [sort_by] [order] [pattern]");
+			}
+			break;
+		}
 		case COMMAND_ATTACK:
 		case COMMAND_AUTO_ATTACK:{
 			int8 type = 1;

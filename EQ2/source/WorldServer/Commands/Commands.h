@@ -873,6 +873,7 @@ private:
 #define COMMAND_OPEN					508
 #define COMMAND_CASTSPELL				509
 #define COMMAND_DISARM					510
+#define COMMAND_KNOWLEDGEWINDOWSORT		511
 
 #define GET_AA_XML						751
 #define ADD_AA							752

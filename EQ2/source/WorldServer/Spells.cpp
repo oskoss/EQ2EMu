@@ -148,15 +148,15 @@ void Spell::AddSpellLuaDataString(string value, string value2,string helper) {
 	MSpellInfo.unlock();
 }
 
-int16 Spell::GetLevelRequired(Client* client){
+int16 Spell::GetLevelRequired(Player* player){
 	int16 ret = 0xFFFF;
-	if(!client)
+	if(!player)
 		return ret;
 	LevelArray* level = 0;
 	vector<LevelArray*>::iterator itr;
 	for(itr = levels.begin(); itr != levels.end(); itr++){
 		level = *itr;
-		if(level && level->adventure_class == client->GetPlayer()->GetAdventureClass()){
+		if(level && level->adventure_class == player->GetAdventureClass()){
 			ret = level->spell_level/10;
 			break;
 		}
@@ -208,7 +208,7 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 
 
 		if (client && spell->type != 2) {
-			sint8 spell_text_color = client->GetPlayer()->GetArrowColor(GetLevelRequired(client));
+			sint8 spell_text_color = client->GetPlayer()->GetArrowColor(GetLevelRequired(client->GetPlayer()));
 			if (spell_text_color != ARROW_COLOR_WHITE && spell_text_color != ARROW_COLOR_RED && spell_text_color != ARROW_COLOR_GRAY)
 				spell_text_color = ARROW_COLOR_WHITE;
 			spell_text_color -= 6;
@@ -408,7 +408,7 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 		packet->setSubstructDataByName("spell_info", "next_mastery_skill", spell2->mastery_skill);
 		packet->setSubstructDataByName("spell_info", "next_duration_flag", spell2->duration_until_cancel);
 		if (client && spell->type != 2) {
-			sint8 spell_text_color = client->GetPlayer()->GetArrowColor(GetLevelRequired(client));
+			sint8 spell_text_color = client->GetPlayer()->GetArrowColor(GetLevelRequired(client->GetPlayer()));
 			if (spell_text_color != ARROW_COLOR_WHITE && spell_text_color != ARROW_COLOR_RED && spell_text_color != ARROW_COLOR_GRAY)
 				spell_text_color = ARROW_COLOR_WHITE;
 			spell_text_color -= 6;
@@ -592,7 +592,7 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 		packet->setSubstructDataByName("spell_info", "mastery_skill", spell->mastery_skill);
 		packet->setSubstructDataByName("spell_info", "duration_flag", spell->duration_until_cancel);
 		if (client && spell->type != 2) {
-			sint8 spell_text_color = client->GetPlayer()->GetArrowColor(GetLevelRequired(client));
+			sint8 spell_text_color = client->GetPlayer()->GetArrowColor(GetLevelRequired(client->GetPlayer()));
 			if (spell_text_color != ARROW_COLOR_WHITE && spell_text_color != ARROW_COLOR_RED && spell_text_color != ARROW_COLOR_GRAY)
 				spell_text_color = ARROW_COLOR_WHITE;
 			spell_text_color -= 6;

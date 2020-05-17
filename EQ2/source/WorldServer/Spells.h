@@ -306,7 +306,7 @@ public:
 	int16 GetSpellIcon();
 	int16 GetSpellIconBackdrop();
 	int16 GetSpellIconHeroicOp();
-	int16 GetLevelRequired(Client* client);
+	int16 GetLevelRequired(Player* player);
 	int16 GetHPRequired(Spawn* spawn);
 	int16 GetPowerRequired(Spawn* spawn);
 	int16 GetSavageryRequired(Spawn* spawn);
