@@ -162,6 +162,7 @@ struct SpellBookEntry{
 	int32	timer;
 	bool	save_needed;
 	Player* player;
+	bool visible;
 };
 
 #define QUICKBAR_NORMAL		1

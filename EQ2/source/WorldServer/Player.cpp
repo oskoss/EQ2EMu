@@ -30,6 +30,7 @@
 #include "Languages.h"
 #include "SpellProcess.h"
 #include <algorithm>
+#include <regex>
 #include "ClientPacketFunctions.h"
 
 extern Classes classes;
@@ -1987,6 +1988,7 @@ void Player::AddSpellBookEntry(int32 spell_id, int8 tier, sint32 slot, int32 typ
 	spell->recast = 0;
 	spell->recast_available = 0;
 	spell->player = this;
+	spell->visible = true;
 	MSpellsBook.lock();
 	spells.push_back(spell);
 	MSpellsBook.unlock();
@@ -2017,40 +2019,114 @@ void Player::ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 ma
 	//order : 0 - ascending, 1 - descending
 	//pattern : 0 - zigzag, 1 - down, 2 - across
 	MSpellsBook.lock();
-	switch (sort_by)
+
+	if (!maxlvl_only)
 	{
-	case 0:
-		if (!order)
-			stable_sort(spells.begin(), spells.end(), SortSpellEntryByName);
-		else
-			stable_sort(spells.begin(), spells.end(), SortSpellEntryByNameReverse);
-		break;
-	case 1:
-		if (!order)
-			stable_sort(spells.begin(), spells.end(), SortSpellEntryByLevel);
-		else
-			stable_sort(spells.begin(), spells.end(), SortSpellEntryByLevelReverse);
-		break;
-	case 2:
-		if (!order)
-			stable_sort(spells.begin(), spells.end(), SortSpellEntryByCategory);
-		else
-			stable_sort(spells.begin(), spells.end(), SortSpellEntryByCategoryReverse);
-		break;
+		switch (sort_by)
+		{
+		case 0:
+			if (!order)
+				stable_sort(spells.begin(), spells.end(), SortSpellEntryByName);
+			else
+				stable_sort(spells.begin(), spells.end(), SortSpellEntryByNameReverse);
+			break;
+		case 1:
+			if (!order)
+				stable_sort(spells.begin(), spells.end(), SortSpellEntryByLevel);
+			else
+				stable_sort(spells.begin(), spells.end(), SortSpellEntryByLevelReverse);
+			break;
+		case 2:
+			if (!order)
+				stable_sort(spells.begin(), spells.end(), SortSpellEntryByCategory);
+			else
+				stable_sort(spells.begin(), spells.end(), SortSpellEntryByCategoryReverse);
+			break;
+		}
 	}
 
 	vector<SpellBookEntry*>::iterator itr;
 	SpellBookEntry* spell = 0;
 	int i = 0;
+	map<string, SpellBookEntry*> tmpSpells;
+	vector<SpellBookEntry*> resultSpells;
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
 		spell = *itr;
 
 		if (spell->type != book_type || spell->slot == -1)
 			continue;
 
+		if (maxlvl_only)
+		{
+			Spell* actual_spell = 0;
+			actual_spell = master_spell_list.GetSpell(spell->spell_id, spell->tier);
+
+			std::regex re("^(.*?)(\\s(I{1,}[VX]{0,}|V{1,}[IVX]{0,})|X{1,}[IVX]{0,})$");
+			std::string output = std::regex_replace(string(actual_spell->GetName()), re, "$1", std::regex_constants::format_no_copy);
+
+			if ( output.size() < 1 )
+				output = string(actual_spell->GetName());
+
+			map<string, SpellBookEntry*>::iterator tmpItr = tmpSpells.find(output);
+			if (tmpItr != tmpSpells.end())
+			{
+				Spell* tmpSpell = master_spell_list.GetSpell(tmpItr->second->spell_id, tmpItr->second->tier);
+				if (actual_spell->GetLevelRequired(this) > tmpSpell->GetLevelRequired(this))
+				{
+					tmpItr->second->visible = false;
+					tmpItr->second->slot = 0xFFFF;
+
+					std::vector<SpellBookEntry*>::iterator it;
+					it = find(resultSpells.begin(), resultSpells.end(), (SpellBookEntry*)tmpItr->second);
+					if (it != resultSpells.end())
+						resultSpells.erase(it);
+
+					tmpSpells.erase(tmpItr);
+				}
+				else
+					continue; // leave as-is we have the newer spell
+			}
+			
+			spell->visible = true;
+			tmpSpells.insert(make_pair(output, spell));
+			resultSpells.push_back(spell);
+		}
 		spell->slot = i;
 		i++;
+	} // end for loop for setting slots
+
+	if (maxlvl_only)
+	{
+		switch (sort_by)
+		{
+		case 0:
+			if (!order)
+				stable_sort(resultSpells.begin(), resultSpells.end(), SortSpellEntryByName);
+			else
+				stable_sort(resultSpells.begin(), resultSpells.end(), SortSpellEntryByNameReverse);
+			break;
+		case 1:
+			if (!order)
+				stable_sort(resultSpells.begin(), resultSpells.end(), SortSpellEntryByLevel);
+			else
+				stable_sort(resultSpells.begin(), resultSpells.end(), SortSpellEntryByLevelReverse);
+			break;
+		case 2:
+			if (!order)
+				stable_sort(resultSpells.begin(), resultSpells.end(), SortSpellEntryByCategory);
+			else
+				stable_sort(resultSpells.begin(), resultSpells.end(), SortSpellEntryByCategoryReverse);
+			break;
+		}
+
+		i = 0;
+		vector<SpellBookEntry*>::iterator tmpItr;
+		for (tmpItr = resultSpells.begin(); tmpItr != resultSpells.end(); tmpItr++) {
+			((SpellBookEntry*)*tmpItr)->slot = i;
+			i++;
+		}
 	}
+
 	MSpellsBook.unlock();
 }
 
