@@ -1312,7 +1312,10 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 		if (ward->AbsorbAllDamage)
 		{
 			ward->LastAbsorbedDamage = ward->DamageLeft;
-			GetZone()->SendHealPacket(ward->Spell->caster, this, HEAL_PACKET_TYPE_ABSORB, damage, spell->spell->GetName());
+
+			if (!redirectDamage)
+				GetZone()->SendHealPacket(ward->Spell->caster, this, HEAL_PACKET_TYPE_ABSORB, damage, spell->spell->GetName());
+
 			damage = 0;
 		}
 		else if (damageToAbsorb >= ward->DamageLeft) {
@@ -1327,7 +1330,10 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 			damage = baseDamageRemaining;
 			ward->DamageLeft = 0;
 			spell->damage_remaining = 0;
-			GetZone()->SendHealPacket(spell->caster, this, HEAL_PACKET_TYPE_ABSORB, ward->DamageLeft, spell->spell->GetName());
+
+			if(!redirectDamage)
+				GetZone()->SendHealPacket(spell->caster, this, HEAL_PACKET_TYPE_ABSORB, ward->DamageLeft, spell->spell->GetName());
+
 			if (!ward->keepWard) {
 				hasSpellBeenRemoved = true;
 				RemoveWard(spell->spell->GetSpellID());
@@ -1342,7 +1348,9 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 			spell->damage_remaining = ward->DamageLeft;
 			if (spell->caster->IsPlayer())
 				ClientPacketFunctions::SendMaintainedExamineUpdate(GetZone()->GetClientBySpawn(spell->caster), spell->slot_pos, ward->DamageLeft, 1);
-			GetZone()->SendHealPacket(ward->Spell->caster, this, HEAL_PACKET_TYPE_ABSORB, damage, spell->spell->GetName());
+
+			if (!redirectDamage)
+				GetZone()->SendHealPacket(ward->Spell->caster, this, HEAL_PACKET_TYPE_ABSORB, damage, spell->spell->GetName());
 
 			// remaining damage not absorbed by percentage must be set
 			damage = baseDamageRemaining;
@@ -1351,6 +1359,17 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 		if (redirectDamage)
 		{
 			ward->LastRedirectDamage = redirectDamage;
+			if (this->IsPlayer())
+			{
+				Client* client = GetZone()->GetClientBySpawn(this);
+				client->Message(CHANNEL_COLOR_COMBAT, "%s intercepted some of the damage intended for you!", spell->caster->GetName());
+			}
+			if (spell->caster && spell->caster->IsPlayer())
+			{
+				Client* client = GetZone()->GetClientBySpawn(spell->caster);
+				client->Message(CHANNEL_COLOR_COMBAT, "YOU intercept some of the damage intended for %s!", this->GetName());
+			}
+
 			if (attacker && spell->caster)
 				attacker->DamageSpawn(spell->caster, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, redirectDamage, redirectDamage, 0);
 		}
