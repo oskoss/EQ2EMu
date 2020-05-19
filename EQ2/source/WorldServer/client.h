@@ -403,6 +403,7 @@ public:
 	bool IsZonedIn() { return connected_to_zone; }
 
 	void SendHailCommand(Spawn* target);
+	void SendDefaultCommand(Spawn* spawn, const char* command, float distance);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

@@ -21,6 +21,7 @@
 #define EQ2_SPAWN_LISTS
 #include "../common/types.h"
 #include <vector>
+#include <map>
 
 #define SPAWN_ENTRY_TYPE_NPC		0
 #define SPAWN_ENTRY_TYPE_OBJECT		1
@@ -35,6 +36,8 @@ struct EntityCommand{
 	string	command;
 	int16	cast_time;
 	int32	spell_visual;
+	map<int32, bool> allow_or_deny; // this is a map of player IDs and whether they are allowed on the command or denied
+	bool default_allow_list; // if set to false then its a defaultDenyList
 };
 struct SpawnEntry{
 	int32	spawn_entry_id;

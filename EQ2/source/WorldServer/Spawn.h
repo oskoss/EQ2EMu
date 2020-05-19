@@ -279,9 +279,10 @@ public:
 		entity_command->error_text = old_command->error_text;
 		entity_command->cast_time = old_command->cast_time;
 		entity_command->spell_visual = old_command->spell_visual;
+		entity_command->default_allow_list = old_command->default_allow_list;
 		return entity_command;
 	}
-	EntityCommand* CreateEntityCommand(const char* name, float distance, const char* command, const char* error_text, int16 cast_time, int32 spell_visual){
+	EntityCommand* CreateEntityCommand(const char* name, float distance, const char* command, const char* error_text, int16 cast_time, int32 spell_visual, bool default_allow_list=true){
 		EntityCommand* entity_command = new EntityCommand;
 		entity_command->name = name;
 		entity_command->distance = distance;
@@ -289,12 +290,14 @@ public:
 		entity_command->error_text = error_text;
 		entity_command->cast_time = cast_time;
 		entity_command->spell_visual = spell_visual;
+		entity_command->default_allow_list = default_allow_list;
 		return entity_command;
 	}
 	void AddChangedZoneSpawn();
-	void AddPrimaryEntityCommand(const char* name, float distance, const char* command, const char* error_text, int16 cast_time, int32 spell_visual){
-		primary_command_list.push_back(CreateEntityCommand(name, distance, command, error_text, cast_time, spell_visual));
-	}
+	void AddPrimaryEntityCommand(const char* name, float distance, const char* command, const char* error_text, int16 cast_time, int32 spell_visual, bool defaultDenyList = false, Player* player = NULL);
+	void RemovePrimaryEntityCommand(const char* command);
+	bool SetPermissionToEntityCommand(EntityCommand* command, Player* player, bool permissionValue);
+
 	void AddSecondaryEntityCommand(const char* name, float distance, const char* command, const char* error_text, int16 cast_time, int32 spell_visual){
 		secondary_command_list.push_back(CreateEntityCommand(name, distance, command, error_text, cast_time, spell_visual));
 	}
@@ -760,7 +763,7 @@ public:
 	void SetSecondaryCommands(vector<EntityCommand*>* commands);
 	vector<EntityCommand*>* GetPrimaryCommands() {return &primary_command_list;}
 	vector<EntityCommand*>* GetSecondaryCommands() {return &secondary_command_list;}
-	EntityCommand* FindEntityCommand(string command);
+	EntityCommand* FindEntityCommand(string command, bool primaryOnly=false);
 	virtual EQ2Packet* serialize(Player* player, int16 version);
 	EQ2Packet* spawn_serialize(Player* player, int16 version);
 	EQ2Packet* spawn_update_packet(Player* player, int16 version, bool override_changes = false, bool override_vis_changes = false);
@@ -878,6 +881,8 @@ public:
 	void	SetTransporterID(int32 id);
 	int32	GetTransporterID();
 	bool	MeetsSpawnAccessRequirements(Player* player);
+
+	void	RemovePrimaryCommands();
 
 	void	InitializePosPacketData(Player* player, PacketStruct* packet, bool bSpawnUpdate = false);
 	void	InitializeInfoPacketData(Player* player, PacketStruct* packet);

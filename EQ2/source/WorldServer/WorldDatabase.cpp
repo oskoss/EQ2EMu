@@ -3662,6 +3662,7 @@ void WorldDatabase::LoadEntityCommands(ZoneServer* zone) {
 		command->error_text = result.GetString(4);
 		command->cast_time = result.GetInt16(5);
 		command->spell_visual = result.GetInt32(6);
+		command->default_allow_list = true;
 
 		zone->SetEntityCommandList(id, command);
 		LogWrite(COMMAND__DEBUG, 5, "Command", "---Loading Command: '%s' (%s)", command->name.c_str(), command->command.c_str());

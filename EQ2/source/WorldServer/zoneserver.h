@@ -404,7 +404,7 @@ public:
     void SendDispellPacket(Entity* caster, Spawn* target, string dispell_name, string spell_name, int8 dispell_type);
 
 	void SetupInstance(int32 createdInstanceID=0);
-	void SendUpdateDefaultCommand(Spawn* spawn, const char* command, float distance);
+	void SendUpdateDefaultCommand(Spawn* spawn, const char* command, float distance, Spawn* toplayer = NULL);
 
 	map<int32, int32>* GetSpawnLocationsByGroup(int32 group_id);
 

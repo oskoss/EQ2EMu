@@ -107,9 +107,8 @@ Spawn::Spawn(){
 }
 
 Spawn::~Spawn(){
-	for(int32 i=0;i<primary_command_list.size();i++){
-		safe_delete(primary_command_list[i]);
-	}
+	RemovePrimaryCommands();
+
 	for(int32 i=0;i<secondary_command_list.size();i++){
 		safe_delete(secondary_command_list[i]);
 	}
@@ -141,6 +140,14 @@ Spawn::~Spawn(){
 
 	// just in case to make sure data is destroyed
 	RemoveSpawnProximities();
+}
+
+void Spawn::RemovePrimaryCommands()
+{
+	for (int32 i = 0; i < primary_command_list.size(); i++) {
+		safe_delete(primary_command_list[i]);
+	}
+	primary_command_list.clear();
 }
 
 void Spawn::InitializeHeaderPacketData(Player* player, PacketStruct* header, int16 index) {
@@ -1537,17 +1544,21 @@ void Spawn::SetPrimaryCommands(vector<EntityCommand*>* commands){
 	}
 }
 
-EntityCommand* Spawn::FindEntityCommand(string command) {
+EntityCommand* Spawn::FindEntityCommand(string command, bool primaryOnly) {
 	EntityCommand* entity_command = 0;
 	if (primary_command_list.size() > 0) {
 		vector<EntityCommand*>::iterator itr;
 		for (itr = primary_command_list.begin(); itr != primary_command_list.end(); itr++) {
-			if ((*itr)->command == command) {
+			if ((*itr)->command.compare(command) == 0) {
 				entity_command = *itr;
 				break;
 			}
 		}
 	}
+
+	if (primaryOnly)
+		return entity_command;
+
 	if (!entity_command && secondary_command_list.size() > 0) {
 		vector<EntityCommand*>::iterator itr;
 		for (itr = secondary_command_list.begin(); itr != secondary_command_list.end(); itr++) {
@@ -3246,4 +3257,60 @@ void Spawn::RemoveSpawnFromProximity(int32 spawnValue, SpawnProximityType type)
 				prox->spawns_in_proximity.erase(spawnValue);
 		}
 	}
+}
+
+void Spawn::AddPrimaryEntityCommand(const char* name, float distance, const char* command, const char* error_text, int16 cast_time, int32 spell_visual, bool defaultDenyList, Player* player) {
+
+	EntityCommand* cmd = FindEntityCommand(string(command), true);
+
+	bool newCommand = false;
+	if (!cmd)
+	{
+		newCommand = true;
+		cmd = CreateEntityCommand(name, distance, command, error_text, cast_time, spell_visual, !defaultDenyList);
+	}
+
+	if (defaultDenyList)
+		SetPermissionToEntityCommand(cmd, player, true);
+
+	if (newCommand)
+		primary_command_list.push_back(cmd);
+}
+
+void Spawn::RemovePrimaryEntityCommand(const char* command) {
+	vector<EntityCommand*>::iterator itr;
+	string tmpStr(command);
+	for (itr = primary_command_list.begin(); itr != primary_command_list.end();) {
+		EntityCommand* cmd = *itr;
+		if (cmd->command.compare(tmpStr) == 0)
+		{
+			safe_delete(cmd);
+
+			vector<EntityCommand*>::iterator tmpItr = itr++;
+			primary_command_list.erase(itr);
+
+			if (tmpItr == primary_command_list.end())
+				break;
+
+			itr = tmpItr;
+		}
+		else
+			itr++;
+	}
+}
+
+bool Spawn::SetPermissionToEntityCommand(EntityCommand* command, Player* player, bool permissionValue)
+{
+	if (player != NULL)
+	{
+		map<int32, bool>::iterator itr = command->allow_or_deny.find(player->GetCharacterID());
+		if (itr == command->allow_or_deny.end())
+			command->allow_or_deny.insert(make_pair(player->GetCharacterID(), permissionValue));
+		else if (itr->second != permissionValue)
+			itr->second = permissionValue;
+
+		return true;
+	}
+
+	return false;
 }

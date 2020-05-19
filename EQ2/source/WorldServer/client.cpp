@@ -3432,7 +3432,23 @@ void Client::HandleVerbRequest(EQApplicationPacket* app) {
 		vector<EntityCommand*> delete_commands;
 		if (out && spawn) {
 			for (int32 i = 0; i < spawn->primary_command_list.size(); i++)
+			{
+				// default is a deny list not allow, only allow if on the iterator list and itr second is not false (deny)
+				if (!spawn->primary_command_list[i]->default_allow_list)
+				{
+					map<int32, bool>::iterator itr = spawn->primary_command_list[i]->allow_or_deny.find(GetPlayer()->GetCharacterID());
+					if (itr == spawn->primary_command_list[i]->allow_or_deny.end() || !itr->second)
+						continue;
+				}
+				else
+				{
+					// default is allow list, only deny if added to the list as deny (false itr second)
+					map<int32, bool>::iterator itr = spawn->primary_command_list[i]->allow_or_deny.find(GetPlayer()->GetCharacterID());
+					if (itr != spawn->primary_command_list[i]->allow_or_deny.end() && !itr->second)
+						continue;
+				}
 				commands.push_back(spawn->primary_command_list[i]);
+			}
 			for (int32 i = 0; i < spawn->secondary_command_list.size(); i++)
 				commands.push_back(spawn->secondary_command_list[i]);
 			if (spawn->IsPlayer()) {
@@ -8468,6 +8484,20 @@ void Client::SendHailCommand(Spawn* spawn)
 			commands.Process(COMMAND_HAIL, command, this, spawn);
 			safe_delete(command);
 			break;
+		}
+	}
+}
+
+void Client::SendDefaultCommand(Spawn* spawn, const char* command, float distance)
+{
+	if (GetPlayer()->WasSentSpawn(spawn->GetID()) && GetPlayer()->WasSpawnRemoved(spawn) == false) {
+		PacketStruct* packet = configReader.getStruct("WS_SetDefaultCommand", GetVersion());
+		if (packet) {
+			packet->setDataByName("spawn_id", GetPlayer()->GetIDWithPlayerSpawn(spawn));
+			packet->setMediumStringByName("command_name", command);
+			packet->setDataByName("distance", distance);
+			QueuePacket(packet->serialize());
+			safe_delete(packet);
 		}
 	}
 }

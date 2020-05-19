@@ -1028,6 +1028,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "CanSeeInvis", EQ2Emu_lua_CanSeeInvis);
 	lua_register(state, "SetSeeInvis", EQ2Emu_lua_SetSeeInvis);
 	lua_register(state, "SetSeeHide", EQ2Emu_lua_SetSeeHide);
+
+	lua_register(state, "SetAccessToEntityCommand", EQ2Emu_lua_SetAccessToEntityCommand);
+	lua_register(state, "RemovePrimaryEntityCommand", EQ2Emu_lua_RemovePrimaryEntityCommand);
+	lua_register(state, "SendUpdateDefaultCommand", EQ2Emu_lua_SendUpdateDefaultCommand);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
@@ -1591,6 +1595,7 @@ bool LuaInterface::RunItemScript(string script_name, const char* function_name, 
 bool LuaInterface::RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn, const char* message) {
 	if(!npc || spawn_scripts_reloading)
 		return false;
+
 	lua_State* state = GetSpawnScript(script_name.c_str(), true, true);
 	if(state){
 		Mutex* mutex = GetSpawnScriptMutex(script_name.c_str());

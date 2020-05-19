@@ -5172,7 +5172,24 @@ EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 	return outapp;
 }
 
-void ZoneServer::SendUpdateDefaultCommand(Spawn* spawn, const char* command, float distance){
+void ZoneServer::SendUpdateDefaultCommand(Spawn* spawn, const char* command, float distance, Spawn* toPlayer){
+	if (spawn == nullptr || command == nullptr)
+		return;
+
+	if (toPlayer)
+	{
+		if (!toPlayer->IsPlayer())
+			return;
+
+		Client* client = GetClientBySpawn(toPlayer);
+		if (client)
+		{
+			client->SendDefaultCommand(spawn, command, distance);
+		}
+		// we don't override the primary command cause that would change ALL clients
+		return;
+	}
+
 	Client* client = 0;
 	PacketStruct* packet = 0;
 	vector<Client*>::iterator client_itr;
@@ -5180,18 +5197,11 @@ void ZoneServer::SendUpdateDefaultCommand(Spawn* spawn, const char* command, flo
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(client && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && client->GetPlayer()->WasSpawnRemoved(spawn) == false){
-			packet = configReader.getStruct("WS_SetDefaultCommand", client->GetVersion());
-			if(packet){
-				packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(spawn));
-				packet->setMediumStringByName("command_name", command);
-				packet->setDataByName("distance", distance);
-				client->QueuePacket(packet->serialize());
-				safe_delete(packet);
-			}
-		}
-		spawn->SetPrimaryCommand(command, command, distance);
+		client->SendDefaultCommand(spawn, command, distance);
 	}
+	
+	if (strlen(command)>0)
+		spawn->SetPrimaryCommand(command, command, distance);
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 

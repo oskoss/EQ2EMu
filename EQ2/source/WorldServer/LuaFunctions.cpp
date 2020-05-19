@@ -3609,13 +3609,22 @@ int EQ2Emu_lua_AddPrimaryEntityCommand(lua_State* state) {
 	string error_text = lua_interface->GetStringValue(state, 6);
 	int16 cast_time = lua_interface->GetInt16Value(state, 7);
 	int32 spell_visual = lua_interface->GetInt32Value(state, 8);
-	if (spawn && player && player->IsPlayer() && name.length() > 0) {
+	bool denyListDefault = (lua_interface->GetInt8Value(state, 9) == 1);
+	if (spawn) {
 		if (distance == 0)
 			distance = 10.0f;
 		if (command.length() == 0)
 			command = name;
-		spawn->AddPrimaryEntityCommand(name.c_str(), distance, command.c_str(), error_text.c_str(), cast_time, spell_visual);
-		player->GetZone()->SendUpdateDefaultCommand(spawn, command.c_str(), distance);
+		if (command.length() < 1 && name.length() < 1)
+		{
+			// have to run this first to send a 'blank' default command, then remove all commands from the list
+			spawn->GetZone()->SendUpdateDefaultCommand(spawn, command.c_str(), distance);
+			spawn->RemovePrimaryCommands();
+		}
+		else
+		{
+			spawn->AddPrimaryEntityCommand(name.c_str(), distance, command.c_str(), error_text.c_str(), cast_time, spell_visual, denyListDefault, (player && player->IsPlayer()) ? (Player*)player : NULL);
+		}
 	}
 	return 0;
 }
@@ -9385,5 +9394,57 @@ int EQ2Emu_lua_SetSeeHide(lua_State* state) {
 		}
 	}
 
+	return 0;
+}
+
+
+int EQ2Emu_lua_SetAccessToEntityCommand(lua_State* state)
+{
+	if (!lua_interface)
+		return 0;
+
+	Spawn* player = lua_interface->GetSpawn(state);
+	Spawn* spawn = lua_interface->GetSpawn(state, 2);
+	string command = lua_interface->GetStringValue(state, 3);
+	bool val = (lua_interface->GetInt8Value(state, 4) == 1);
+
+	if (spawn && player && player->IsPlayer())
+	{
+		EntityCommand* cmd = spawn->FindEntityCommand(string(command), true);
+		bool res = false;
+		if (cmd)
+			res = spawn->SetPermissionToEntityCommand(cmd, (Player*)player, val);
+
+		lua_interface->SetBooleanValue(state, res);
+		return 1;
+	}
+
+	return 0;
+}
+
+int EQ2Emu_lua_RemovePrimaryEntityCommand(lua_State* state)
+{
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string command = lua_interface->GetStringValue(state, 2);
+
+	if (spawn && command.length() > 0)
+		spawn->RemovePrimaryEntityCommand(command.c_str());
+
+	return 0;
+}
+
+
+int EQ2Emu_lua_SendUpdateDefaultCommand(lua_State* state) {
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	float distance = lua_interface->GetFloatValue(state, 2);
+	string command = lua_interface->GetStringValue(state, 3);
+	Spawn* player = lua_interface->GetSpawn(state, 4);
+
+	if (spawn) {
+		spawn->GetZone()->SendUpdateDefaultCommand(spawn, command.c_str(), distance, player);
+	}
 	return 0;
 }
