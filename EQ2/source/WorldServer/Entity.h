@@ -839,6 +839,12 @@ public:
 	set<int32> HatedBy;
 
 	Mutex	MCommandMutex;
+
+	bool HasSeeInvisSpell() { return hasSeeInvisSpell; }
+	void SetSeeInvisSpell(bool val) { hasSeeInvisSpell = val; }
+
+	bool HasSeeHideSpell() { return hasSeeHideSpell; }
+	void SetSeeHideSpell(bool val) { hasSeeHideSpell = val; }
 protected:
 	bool	in_combat;
 
@@ -895,6 +901,9 @@ private:
 	ThreatTransfer* m_threatTransfer;
 
 	GroupMemberInfo* group_member_info;
+
+	bool hasSeeInvisSpell;
+	bool hasSeeHideSpell;
 };
 
 #endif

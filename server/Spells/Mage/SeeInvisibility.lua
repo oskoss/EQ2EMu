@@ -8,10 +8,9 @@
 
 function cast(Caster, Target)
     -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
 -- Info from spell_display_effects (remove from script when done)
 -- Grants See Invisibility to target
+	SetSeeInvis(Target, 1)
 
 end
 
@@ -21,5 +20,6 @@ end
 
 function remove(Caster, Target)
     -- code to remove the spell
+	SetSeeInvis(Target, 0)
 end
 

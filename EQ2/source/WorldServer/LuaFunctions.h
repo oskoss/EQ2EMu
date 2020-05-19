@@ -421,4 +421,8 @@ int EQ2Emu_lua_SetZoneExpansionFlag(lua_State* state);
 int EQ2Emu_lua_GetZoneExpansionFlag(lua_State* state);
 
 int EQ2Emu_lua_AddSpawnProximity(lua_State* state);
+
+int EQ2Emu_lua_CanSeeInvis(lua_State* state);
+int EQ2Emu_lua_SetSeeInvis(lua_State* state);
+int EQ2Emu_lua_SetSeeHide(lua_State* state);
 #endif

@@ -5644,6 +5644,10 @@ bool Player::CanSeeInvis(Entity* target)
 {
 	if (!target->IsStealthed() && !target->IsInvis())
 		return true;
+	if (target->IsStealthed() && HasSeeHideSpell())
+		return true;
+	else if (target->IsInvis() && HasSeeInvisSpell())
+		return true;
 
 	sint32 radius = rule_manager.GetGlobalRule(R_PVP, InvisPlayerDiscoveryRange)->GetSInt32();
 

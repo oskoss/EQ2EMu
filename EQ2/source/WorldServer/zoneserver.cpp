@@ -851,7 +851,7 @@ bool ZoneServer::CheckNPCAttacks(NPC* npc, Spawn* victim, Client* client){
 		return true;
 
 	if (client) {
-		if (client->IsConnected() && client->GetPlayer()->GetFactions()->ShouldAttack(npc->GetFactionID()) && npc->AttackAllowed((Entity*)victim, false)) {
+		if (client->IsConnected() && npc->CanSeeInvis(client->GetPlayer()) && client->GetPlayer()->GetFactions()->ShouldAttack(npc->GetFactionID()) && npc->AttackAllowed((Entity*)victim, false)) {
 			if (!npc->EngagedInCombat() && client->GetPlayer()->GetArrowColor(npc->GetLevel()) != ARROW_COLOR_GRAY) {
 				AggroVictim(npc, victim, client);
 			}
@@ -3967,16 +3967,30 @@ void ZoneServer::SendQuestUpdates(Client* client, Spawn* spawn){
 	}
 }
 
-void ZoneServer::SendAllSpawnsForLevelChange(Client* client){
+void ZoneServer::SendAllSpawnsForLevelChange(Client* client) {
 	Spawn* spawn = 0;
-	if(spawn_range_map.count(client) > 0) {
+	if (spawn_range_map.count(client) > 0) {
 		MutexMap<int32, float >::iterator itr = spawn_range_map.Get(client)->begin();
-		while(itr.Next()) {
+		while (itr.Next()) {
 			spawn = GetSpawnByID(itr->first);
-			if(spawn && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
+			if (spawn && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
 				SendSpawnChanges(spawn, client, false, true);
 				// Attempt to slow down the packet spam sent to the client
 				Sleep(5);
+			}
+		}
+	}
+}
+
+
+void ZoneServer::SendAllSpawnsForInvisChange(Client* client) {
+	Spawn* spawn = 0;
+	if (spawn_range_map.count(client) > 0) {
+		MutexMap<int32, float >::iterator itr = spawn_range_map.Get(client)->begin();
+		while (itr.Next()) {
+			spawn = GetSpawnByID(itr->first);
+			if (spawn && spawn->IsEntity() && (((Entity*)spawn)->IsInvis() || ((Entity*)spawn)->IsStealthed()) && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
+				SendSpawnChanges(spawn, client, true, true);
 			}
 		}
 	}

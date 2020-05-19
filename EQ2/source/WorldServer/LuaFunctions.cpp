@@ -9327,3 +9327,63 @@ int EQ2Emu_lua_AddSpawnProximity(lua_State* state) {
 		spawn->AddLUASpawnProximity(spawn_value, (Spawn::SpawnProximityType)spawn_type, distance, in_range_function, leaving_range_function);
 	return 0;
 }
+
+int EQ2Emu_lua_CanSeeInvis(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	Spawn* target = lua_interface->GetSpawn(state, 2);
+	if (spawn && target)
+	{
+		if (spawn->IsPlayer() && target->IsEntity())
+		{
+			lua_interface->SetBooleanValue(state, ((Player*)spawn)->CanSeeInvis((Entity*)target));
+			return 1;
+		}
+		else if (spawn->IsEntity() && target->IsEntity())
+		{
+			lua_interface->SetBooleanValue(state, ((Entity*)spawn)->CanSeeInvis((Entity*)target));
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int EQ2Emu_lua_SetSeeInvis(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	bool val = (lua_interface->GetInt8Value(state, 2) == 1);
+	if (spawn && spawn->IsEntity())
+	{
+		((Entity*)spawn)->SetSeeInvisSpell(val);
+		if (spawn->IsPlayer())
+		{
+			Client* client = spawn->GetZone()->GetClientBySpawn((Player*)spawn);
+			if (client)
+				((Player*)spawn)->GetZone()->SendAllSpawnsForInvisChange(client);
+		}
+	}
+
+	return 0;
+}
+
+int EQ2Emu_lua_SetSeeHide(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	bool val = (lua_interface->GetInt8Value(state, 2) == 1);
+	if (spawn && spawn->IsEntity())
+	{
+		((Entity*)spawn)->SetSeeHideSpell(val);
+		if (spawn->IsPlayer())
+		{
+			Client* client = spawn->GetZone()->GetClientBySpawn((Player*)spawn);
+			if (client)
+				((Player*)spawn)->GetZone()->SendAllSpawnsForInvisChange(client);
+		}
+	}
+
+	return 0;
+}

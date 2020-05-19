@@ -83,6 +83,9 @@ Entity::Entity(){
 	}
 
 	MCommandMutex.SetName("Entity::MCommandMutex");
+	hasSeeInvisSpell = false;
+	hasSeeHideSpell = false;
+
 }
 
 Entity::~Entity(){
@@ -1728,7 +1731,17 @@ bool Entity::IsStealthed(){
 }
 
 bool Entity::CanSeeInvis(Entity* target) {
-	return true;
+	if (!target)
+		return true;
+
+	if (!target->IsStealthed() && !target->IsInvis())
+		return true;
+	if (target->IsStealthed() && HasSeeHideSpell())
+		return true;
+	else if (target->IsInvis() && HasSeeInvisSpell())
+		return true;
+
+	return false;
 }
 
 bool Entity::IsInvis(){

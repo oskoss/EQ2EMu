@@ -1024,6 +1024,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetZoneExpansionFlag", EQ2Emu_lua_GetZoneExpansionFlag);
 
 	lua_register(state, "AddSpawnProximity", EQ2Emu_lua_AddSpawnProximity);
+
+	lua_register(state, "CanSeeInvis", EQ2Emu_lua_CanSeeInvis);
+	lua_register(state, "SetSeeInvis", EQ2Emu_lua_SetSeeInvis);
+	lua_register(state, "SetSeeHide", EQ2Emu_lua_SetSeeHide);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
