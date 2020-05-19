@@ -3280,22 +3280,14 @@ void Spawn::AddPrimaryEntityCommand(const char* name, float distance, const char
 void Spawn::RemovePrimaryEntityCommand(const char* command) {
 	vector<EntityCommand*>::iterator itr;
 	string tmpStr(command);
-	for (itr = primary_command_list.begin(); itr != primary_command_list.end();) {
+	for (itr = primary_command_list.begin(); itr != primary_command_list.end(); itr++) {
 		EntityCommand* cmd = *itr;
 		if (cmd->command.compare(tmpStr) == 0)
 		{
-			safe_delete(cmd);
-
-			vector<EntityCommand*>::iterator tmpItr = itr++;
 			primary_command_list.erase(itr);
-
-			if (tmpItr == primary_command_list.end())
-				break;
-
-			itr = tmpItr;
+			delete cmd;
+			break;
 		}
-		else
-			itr++;
 	}
 }
 
