@@ -293,7 +293,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						offset = 3;
 					} else
 						offset = 1;
-					if(crypto->getRC4Key()==0 && p->size >= 70){
+					if(crypto->getRC4Key()==0 && p->size >= 8){
 						processRSAKey(p);
 					}
 					else if(crypto->isEncrypted()){
@@ -367,7 +367,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 					NextInSeq++;
 					if(HandleEmbeddedPacket(p))
 						break;
-					if(crypto->getRC4Key()==0 && p && p->size >= 70){
+					if(crypto->getRC4Key()==0 && p && p->size >= 10){
 						processRSAKey(p);
 					}
 					else if(crypto->isEncrypted() && p){
@@ -704,10 +704,7 @@ int16 EQStream::processRSAKey(EQProtocolPacket *p){
 	}
 	crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + offset + (limit-8), 8));
 	return (limit + offset +1) - offset2;*/
-	if(p->pBuffer[0] == 0)
-		crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + 62, 8));
-	else
-		crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + 61, 8));
+	crypto->setRC4Key(Crypto::RSADecrypt((p->pBuffer + p->size) - 8, 8));
 	return 0;
 }
 
