@@ -9371,7 +9371,7 @@ int EQ2Emu_lua_SetSeeInvis(lua_State* state) {
 		{
 			Client* client = spawn->GetZone()->GetClientBySpawn((Player*)spawn);
 			if (client)
-				((Player*)spawn)->GetZone()->SendAllSpawnsForInvisChange(client);
+				((Player*)spawn)->GetZone()->SendAllSpawnsForSeeInvisChange(client);
 		}
 	}
 

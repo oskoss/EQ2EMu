@@ -862,7 +862,14 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	//	LogWrite(PACKET__DEBUG, 0, "opcode %s received", app->GetOpcodeName());
 	//}
 
+	if (!connected_to_zone && opcode != OP_LoginByNumRequestMsg)
+	{
+		opcode = _maxEmuOpcode; // skip since this is not a valid packet, sent before we allowed the login
+	}
+
 	switch (opcode) {
+	case _maxEmuOpcode:
+		break;
 	case OP_LoginByNumRequestMsg: {
 		LogWrite(OPCODE__DEBUG, 0, "Opcode", "Opcode 0x%X (%i): OP_LoginByNumRequestMsg", opcode, opcode);
 

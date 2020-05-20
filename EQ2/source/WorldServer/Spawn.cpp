@@ -204,6 +204,12 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 		if (!IsGroundSpawn()){
 			int8 arrow_color = ARROW_COLOR_WHITE;
 			sint8 npc_con = player->GetFactions()->GetCon(faction_id);
+
+			if (IsPlayer() && !((Player*)this)->CanSeeInvis(player))
+				npc_con = 0;
+			else if (!IsPlayer() && IsEntity() && !((Entity*)this)->CanSeeInvis(player))
+				npc_con = 0;
+
 			if (appearance.attackable == 1)
 				arrow_color = player->GetArrowColor(GetLevel());
 			vis_packet->setDataByName("arrow_color", arrow_color);

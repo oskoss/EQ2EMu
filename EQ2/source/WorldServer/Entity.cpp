@@ -1762,7 +1762,10 @@ void Entity::AddStealthSpell(LuaSpell* spell) {
 		changed = true;
 		AddChangedZoneSpawn();
 		if (IsPlayer())
+		{
 			((Player*)this)->SetCharSheetChanged(true);
+			GetZone()->SendAllSpawnsForInvisChange(GetZone()->GetClientBySpawn(this));
+		}
 	}
 }
 
@@ -1779,7 +1782,10 @@ void Entity::AddInvisSpell(LuaSpell* spell) {
 		changed = true;
 		AddChangedZoneSpawn();
 		if (IsPlayer())
+		{
 			((Player*)this)->SetCharSheetChanged(true);
+			GetZone()->SendAllSpawnsForInvisChange(GetZone()->GetClientBySpawn(this));
+		}
 	}
 }
 
@@ -1795,7 +1801,10 @@ void Entity::RemoveInvisSpell(LuaSpell* spell) {
 		changed = true;
 		AddChangedZoneSpawn();
 		if (IsPlayer())
+		{
 			((Player*)this)->SetCharSheetChanged(true);
+			GetZone()->SendAllSpawnsForInvisChange(GetZone()->GetClientBySpawn(this));
+		}
 	}
 }
 
@@ -1811,7 +1820,10 @@ void Entity::RemoveStealthSpell(LuaSpell* spell) {
 		changed = true;
 		AddChangedZoneSpawn();
 		if (IsPlayer())
+		{
 			((Player*)this)->SetCharSheetChanged(true);
+			GetZone()->SendAllSpawnsForInvisChange(GetZone()->GetClientBySpawn(this));
+		}
 	}
 }
 

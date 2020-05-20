@@ -327,6 +327,7 @@ public:
 	
 	void	ReloadClientQuests();
 	void	SendAllSpawnsForLevelChange(Client* client);
+	void	SendAllSpawnsForSeeInvisChange(Client* client);
 	void	SendAllSpawnsForInvisChange(Client* client);
 	
 	void	AddLocationGrid(LocationGrid* grid);

@@ -3983,7 +3983,7 @@ void ZoneServer::SendAllSpawnsForLevelChange(Client* client) {
 }
 
 
-void ZoneServer::SendAllSpawnsForInvisChange(Client* client) {
+void ZoneServer::SendAllSpawnsForSeeInvisChange(Client* client) {
 	Spawn* spawn = 0;
 	if (spawn_range_map.count(client) > 0) {
 		MutexMap<int32, float >::iterator itr = spawn_range_map.Get(client)->begin();
@@ -3991,6 +3991,20 @@ void ZoneServer::SendAllSpawnsForInvisChange(Client* client) {
 			spawn = GetSpawnByID(itr->first);
 			if (spawn && spawn->IsEntity() && (((Entity*)spawn)->IsInvis() || ((Entity*)spawn)->IsStealthed()) && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
 				SendSpawnChanges(spawn, client, true, true);
+			}
+		}
+	}
+}
+
+
+void ZoneServer::SendAllSpawnsForInvisChange(Client* client) {
+	Spawn* spawn = 0;
+	if (spawn_range_map.count(client) > 0) {
+		MutexMap<int32, float >::iterator itr = spawn_range_map.Get(client)->begin();
+		while (itr.Next()) {
+			spawn = GetSpawnByID(itr->first);
+			if (spawn && spawn->IsEntity() && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
+				SendSpawnChanges(spawn, client, false, true);
 			}
 		}
 	}
