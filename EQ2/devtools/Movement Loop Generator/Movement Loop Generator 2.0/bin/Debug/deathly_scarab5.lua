@@ -2,7 +2,7 @@
 	Script Name		:	deathly_scarab5.lua
 	Script Purpose	:	Waypoint Path for deathly_scarab5.lua
 	Script Author	:	Auto Generated
-	Script Date		:	05/20/2020 09:49:21 PM
+	Script Date		:	05/20/2020 09:59:10 PM
 	Script Notes	:	Locations collected from Live
 --]]
 
@@ -15,6 +15,7 @@ function hailed(NPC, Spawn)
 end
 
 function respawn(NPC)
+	spawn(NPC)
 end
 
 function waypoints(NPC)
