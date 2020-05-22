@@ -3997,7 +3997,7 @@ void ZoneServer::SendAllSpawnsForSeeInvisChange(Client* client) {
 }
 
 
-void ZoneServer::SendAllSpawnsForInvisChange(Client* client) {
+void ZoneServer::SendAllSpawnsForVisChange(Client* client) {
 	Spawn* spawn = 0;
 	if (spawn_range_map.count(client) > 0) {
 		MutexMap<int32, float >::iterator itr = spawn_range_map.Get(client)->begin();

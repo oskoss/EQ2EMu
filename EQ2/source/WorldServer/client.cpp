@@ -4461,19 +4461,28 @@ void Client::AddStepProgress(int32 quest_id, int32 step, int32 progress) {
 }
 
 void Client::CheckPlayerQuestsKillUpdate(Spawn* spawn) {
+	bool hadUpdates = false;
 	vector<Quest*>* quest_updates = player->CheckQuestsKillUpdate(spawn);
 	if (quest_updates) {
 		for (int32 i = 0; i < quest_updates->size(); i++)
+		{
 			SendQuestUpdate(quest_updates->at(i));
+			hadUpdates = true;
+		}
 	}
 	safe_delete(quest_updates);
 	vector<Quest*>* quest_failures = player->CheckQuestsFailures();
 	if (quest_failures) {
 		for (int32 i = 0; i < quest_failures->size(); i++)
+		{
 			SendQuestFailure(quest_failures->at(i));
+			hadUpdates = true;
+		}
 	}
 	safe_delete(quest_failures);
 
+	if (hadUpdates)
+		GetCurrentZone()->SendAllSpawnsForVisChange(this);
 }
 
 void Client::CheckPlayerQuestsChatUpdate(Spawn* spawn) {
@@ -4599,6 +4608,8 @@ void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets)
 		QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player));
 		quest->SetTracked(true);
 		QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player));
+
+		GetCurrentZone()->SendAllSpawnsForVisChange(this);
 	}
 	//This isn't during a load screen, so update spawns with required quests
 	if (call_accepted)
@@ -4624,6 +4635,7 @@ void Client::RemovePlayerQuest(int32 id, bool send_update, bool delete_quest) {
 		if (send_update) {
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 			SendQuestJournal();
+			GetCurrentZone()->SendAllSpawnsForVisChange(this);
 		}
 	}
 
