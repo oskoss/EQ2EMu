@@ -1535,13 +1535,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 									 }
 		case COMMAND_SPAWN_MOVE:{
 			if(cmdTarget && cmdTarget->IsPlayer() == false){
-				PacketStruct* packet = configReader.getStruct("WS_MoveObjectMode", client->GetVersion());
-				if(packet){
 					float unknown2_3 = 0;
 					int8 placement_mode = 0;
 					client->SetSpawnPlacementMode(Client::ServerSpawnPlacementMode::DEFAULT);
-					if(sep && sep->arg[0][0]){
-						if(strcmp(sep->arg[0], "wall") == 0){
+					if (sep && sep->arg[0][0]) {
+						if (strcmp(sep->arg[0], "wall") == 0) {
 							placement_mode = 2;
 							unknown2_3 = 150;
 						}
@@ -1561,7 +1559,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						{
 							if (cmdTarget->GetSpawnLocationPlacementID() < 1) {
 								client->Message(CHANNEL_COLOR_YELLOW, "[PlacementMode] Spawn %s cannot be moved it is not assigned a spawn location placement id.", cmdTarget->GetName());
-								safe_delete(packet);
 								break;
 							}
 
@@ -1572,23 +1569,12 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 							if (database.UpdateSpawnLocationSpawns(cmdTarget))
 								client->Message(CHANNEL_COLOR_YELLOW, "[PlacementMode] Spawn %s placed at your location.  Updated spawn_location_placement for spawn.", cmdTarget->GetName());
-							safe_delete(packet);
 							break;
 						}
+
+
+						client->SendMoveObjectMode(cmdTarget, placement_mode, unknown2_3);
 					}
-					packet->setDataByName("placement_mode", placement_mode);
-					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(cmdTarget));
-					packet->setDataByName("model_type", cmdTarget->GetModelType());
-					packet->setDataByName("unknown", 1); //size
-					packet->setDataByName("unknown2", 1); //size 2
-					packet->setDataByName("unknown2", .5, 1); //size 3
-					packet->setDataByName("unknown2", 3, 2);
-					packet->setDataByName("unknown2", unknown2_3, 3);
-					packet->setDataByName("max_distance", 500);
-					packet->setDataByName("CoEunknown", 0xFFFFFFFF);
-					client->QueuePacket(packet->serialize());
-					safe_delete(packet);
-				}
 			}
 			else{
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage: /spawn move (wall OR ceiling)");
@@ -2718,6 +2704,60 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			else
 			{
 				client->Message(CHANNEL_COLOR_YELLOW, "Syntax: /knowledgewindow_sort [book] [sort_by] [order] [pattern]");
+			}
+			break;
+		}
+		case COMMAND_PLACE_HOUSE_ITEM: {
+			if (sep && sep->IsNumber(0))
+			{
+				int32 uniqueid = atoi(sep->arg[0]);
+
+				Item* item = client->GetPlayer()->item_list.GetItemFromUniqueID(uniqueid);
+				//Item* item = player->GetEquipmentList()->GetItem(slot);
+				if (item && item->IsHouseItem())
+				{
+					if (!client->HasOwnerOrEditAccess())
+					{
+						client->SimpleMessage(CHANNEL_COLOR_RED, "This is not your home!");
+						break;
+					}
+					else if (!item->generic_info.appearance_id)
+					{
+						client->Message(CHANNEL_COLOR_RED, "This item has not been configured in the database, %s (%u) needs an entry where ?? has the model type id, eg. insert into item_appearances set item_id=%u,equip_type=??;", item->name.c_str(), item->details.item_id, item->details.item_id);
+						break;
+					}
+
+					if (client->GetTempPlacementSpawn())
+					{
+						Spawn* tmp = client->GetTempPlacementSpawn();
+						client->GetCurrentZone()->RemoveSpawn(false, tmp);
+						delete tmp;
+						client->SetTempPlacementSpawn(nullptr);
+					}
+
+					Spawn* spawn = new Object();
+					memset(&spawn->appearance, 0, sizeof(spawn->appearance));
+					spawn->SetID(Spawn::NextID());
+					spawn->SetX(client->GetPlayer()->GetX());
+					spawn->SetY(client->GetPlayer()->GetY());
+					spawn->SetZ(client->GetPlayer()->GetZ());
+					spawn->SetHeading(client->GetPlayer()->GetHeading());
+					spawn->SetSpawnOrigX(spawn->GetX());
+					spawn->SetSpawnOrigY(spawn->GetY());
+					spawn->SetSpawnOrigZ(spawn->GetZ());
+					spawn->SetSpawnOrigHeading(spawn->GetHeading());
+					spawn->appearance.targetable = 1;
+					spawn->appearance.race = item && item->generic_info.appearance_id ? item->generic_info.appearance_id : 1472;
+					spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+					spawn->SetModelType(item && item->generic_info.appearance_id ? item->generic_info.appearance_id : 1472);
+					spawn->SetZone(client->GetCurrentZone());
+					client->GetCurrentZone()->SendSpawn(spawn, client);
+
+					client->SetTempPlacementSpawn(spawn);
+					client->SetPlacementUniqueItemID(uniqueid);
+
+					client->SendMoveObjectMode(spawn, 0);
+				}
 			}
 			break;
 		}

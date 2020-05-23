@@ -575,6 +575,8 @@ public:
 	void				LoadChestTraps();
 
 	bool				CheckExpansionFlags(ZoneServer* zone, int32 spawnXpackFlag);
+	void				GetHouseSpawnInstanceData(ZoneServer* zone, Spawn* spawn);
+	int32				FindHouseInstanceSpawn(Spawn* spawn);
 private:
 	DatabaseNew			database_new;
 	map<int32, string>	zone_names;

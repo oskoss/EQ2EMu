@@ -1046,6 +1046,13 @@ public:
 
 	Mutex	MCommandMutex;
 	bool	has_spawn_proximities;
+
+	void	SetPickupItemID(int32 itemid)
+	{
+		pickup_item_id = itemid;
+	}
+
+	int32	GetPickupItemID() { return pickup_item_id; }
 protected:
 
 	bool	send_spawn_changes;
@@ -1071,6 +1078,7 @@ protected:
 	int32			merchant_id;
 	int8			merchant_type;
 	int32			transporter_id;
+	int32			pickup_item_id;
 	map<int32, vector<int16>* > required_quests;
 	map<int32, LUAHistory> required_history;
 	EquipmentItemList equipment_list;

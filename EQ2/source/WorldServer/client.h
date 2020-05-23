@@ -404,6 +404,24 @@ public:
 
 	void SendHailCommand(Spawn* target);
 	void SendDefaultCommand(Spawn* spawn, const char* command, float distance);
+
+	void SetTempPlacementSpawn(Spawn* tmp) { tempPlacementSpawn = tmp; }
+	Spawn* GetTempPlacementSpawn() { return tempPlacementSpawn; }
+
+	void SetPlacementUniqueItemID(int32 id) { placement_unique_item_id = id; }
+	int32 GetPlacementUniqueItemID() { return placement_unique_item_id; }
+
+	void SetHasOwnerOrEditAccess(bool val) { hasOwnerOrEditAccess = val; }
+	bool HasOwnerOrEditAccess() { return hasOwnerOrEditAccess; }
+
+	bool HandleHouseEntityCommands(Spawn* spawn, int32 spawnid, string command);
+	// find an appropriate spawn to use for the house object, save spawn location/entry data to DB
+	bool PopulateHouseSpawn(PacketStruct* place_object);
+	
+	// finalize the spawn-in of the object in world, remove the item from player inventory, set the spawned in object item id (for future pickup)
+	bool PopulateHouseSpawnFinalize();
+
+	void SendMoveObjectMode(Spawn* spawn, uint8 placementMode, float unknown2_3=0.0f);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -500,6 +518,9 @@ private:
 	int32 delayedAccountID;
 	int32 delayedAccessKey;
 	Timer delayTimer;
+	Spawn* tempPlacementSpawn;
+	int32 placement_unique_item_id;
+	bool hasOwnerOrEditAccess;
 };
 
 class ClientList {

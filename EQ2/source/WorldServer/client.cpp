@@ -191,6 +191,9 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	delayedAccountID = 0;
 	delayedAccessKey = 0;
 	delayTimer.Disable();
+	tempPlacementSpawn = nullptr;
+	placement_unique_item_id = 0;
+	SetHasOwnerOrEditAccess(false);
 }
 
 Client::~Client() {
@@ -233,6 +236,12 @@ Client::~Client() {
 	safe_delete(pending_last_name);
 	safe_delete_array(incoming_paperdoll.image_bytes);
 
+	if (GetTempPlacementSpawn())
+	{
+		Spawn* tmp = GetTempPlacementSpawn();
+		delete tmp;
+		SetTempPlacementSpawn(nullptr);
+	}
 	UpdateWindowTitle(0);
 }
 
@@ -1129,15 +1138,44 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		}
 		break;
 	}
+	case OP_CancelMoveObjectModeMsg: {
+		SetSpawnPlacementMode(Client::ServerSpawnPlacementMode::DEFAULT);
+		if (GetTempPlacementSpawn())
+		{
+			Spawn* tmp = GetTempPlacementSpawn();
+			GetCurrentZone()->RemoveSpawn(false, tmp);
+			delete tmp;
+			SetTempPlacementSpawn(nullptr);
+			SetPlacementUniqueItemID(0);
+			break; // break out early if we are tied to a temp spawn
+		}
+
+		// if we are moving some other object?  other use-cases not covered
+		break;
+	}
 	case OP_PositionMoveableObject: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_PositionMoveableObject", opcode, opcode);
 		PacketStruct* place_object = configReader.getStruct("WS_PlaceMoveableObject", GetVersion());
 		if (place_object && place_object->LoadPacketData(app->pBuffer, app->size)) {
-			Spawn* spawn = GetPlayer()->GetSpawnWithPlayerID(place_object->getType_int32_ByName("spawn_id"));
+			Spawn* spawn = 0;
+
+			if (GetTempPlacementSpawn())
+				spawn = GetTempPlacementSpawn();
+			else
+				spawn = GetPlayer()->GetSpawnWithPlayerID(place_object->getType_int32_ByName("spawn_id"));
+
 			if (!spawn) {
 				SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to find spawn.");
 				break;
 			}
+			else if (GetCurrentZone()->GetInstanceType() == PERSONAL_HOUSE_INSTANCE && !HasOwnerOrEditAccess())
+			{
+				SimpleMessage(CHANNEL_COLOR_RED, "This is not your home!");
+				break;
+			}
+
+			// handles instantiation logic + adding to zone of a new house object
+			PopulateHouseSpawn(place_object);
 
 			float newHeading = place_object->getType_float_ByName("heading") + 180;
 
@@ -1202,6 +1240,10 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					SimpleMessage(CHANNEL_COLOR_YELLOW, "Error saving spawn information, see console window for details.");
 			}
 			}
+
+			PopulateHouseSpawnFinalize();
+
+			SetSpawnPlacementMode(Client::ServerSpawnPlacementMode::DEFAULT);
 
 			safe_delete(place_object);
 		}
@@ -1439,15 +1481,19 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			Spawn* spawn = player->GetTarget();
 			if (spawn && !spawn->IsNPC() && !spawn->IsPlayer()) {
 				string command = packet->getType_EQ2_16BitString_ByName("command").data;
-				if (EntityCommandPrecheck(spawn, command.c_str())) {
-					if (spawn->IsGroundSpawn())
-						((GroundSpawn*)spawn)->HandleUse(this, command);
-					else if (spawn->IsObject())
-						((Object*)spawn)->HandleUse(this, command);
-					else if (spawn->IsWidget())
-						((Widget*)spawn)->HandleUse(this, command);
-					else if (spawn->IsSign())
-						((Sign*)spawn)->HandleUse(this, command);
+
+				if (!HandleHouseEntityCommands(spawn, spawn_id, command))
+				{
+					if (EntityCommandPrecheck(spawn, command.c_str())) {
+						if (spawn->IsGroundSpawn())
+							((GroundSpawn*)spawn)->HandleUse(this, command);
+						else if (spawn->IsObject())
+							((Object*)spawn)->HandleUse(this, command);
+						else if (spawn->IsWidget())
+							((Widget*)spawn)->HandleUse(this, command);
+						else if (spawn->IsSign())
+							((Sign*)spawn)->HandleUse(this, command);
+					}
 				}
 			}
 			else {
@@ -8266,6 +8312,18 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 				client_list.Remove(this); //remove from master client list
 				new_client_login = true;
 				GetCurrentZone()->AddClient(this); //add to zones client list
+
+				if (GetCurrentZone()->GetInstanceID())
+				{
+					PlayerHouse* ph = world.GetPlayerHouseByInstanceID(GetCurrentZone()->GetInstanceID());
+					if (ph) {
+						//HouseZone* hz = world.GetHouseZone(ph->house_id);
+						string name = string(GetPlayer()->GetName());
+						if (name.compare(ph->player_name) == 0)
+							SetHasOwnerOrEditAccess(true);
+					}
+				}
+
 				world.RejoinGroup(this);
 				zone_list.AddClientToMap(player->GetName(), this);
 			}
@@ -8519,4 +8577,133 @@ void Client::SendDefaultCommand(Spawn* spawn, const char* command, float distanc
 			safe_delete(packet);
 		}
 	}
+}
+
+bool Client::HandleHouseEntityCommands(Spawn* spawn, int32 spawnid, string command)
+{
+	if (GetCurrentZone()->GetInstanceType() != PERSONAL_HOUSE_INSTANCE)
+		return false;
+
+	if (!HasOwnerOrEditAccess())
+	{
+		//SimpleMessage(CHANNEL_COLOR_RED, "This is not your home!");
+		return false;
+	}
+	else if (command == "house_spawn_move")
+	{
+		SendMoveObjectMode(spawn, 0);
+		return true;
+	}
+	else if (command == "house_spawn_pickup" && spawn->GetPickupItemID())
+	{
+		AddItem(spawn->GetPickupItemID(), 1);
+
+		Query query;
+		query.RunQuery2(Q_INSERT, "delete from spawn_instance_data where spawn_id = %u and spawn_location_id = %u and pickup_item_id = %u", spawn->GetDatabaseID(), spawn->GetSpawnLocationID(), spawn->GetPickupItemID());
+
+		if (database.RemoveSpawnFromSpawnLocation(spawn)) {
+			GetCurrentZone()->RemoveSpawn(false, spawn, true, true);
+		}
+		return true;
+	}
+
+	return false;
+}
+
+bool Client::PopulateHouseSpawn(PacketStruct* place_object)
+{
+	if (GetTempPlacementSpawn())
+	{
+		Spawn* tmp = GetTempPlacementSpawn();
+
+		int32 spawn_group_id = database.GetNextSpawnLocation();
+		tmp->SetSpawnLocationID(spawn_group_id);
+
+		float newHeading = place_object->getType_float_ByName("heading") + 180;
+
+		int32 spawnDBID = 0;
+		if (GetCurrentZone()->house_object_database_lookup.count(tmp->GetModelType()) > 0)
+		{
+			spawnDBID = GetCurrentZone()->house_object_database_lookup.Get(tmp->GetModelType());
+			tmp->SetDatabaseID(spawnDBID);
+		}
+		else
+		{
+			spawnDBID = database.FindHouseInstanceSpawn(tmp);
+			if (spawnDBID)
+			{
+				GetCurrentZone()->house_object_database_lookup.Put(tmp->GetModelType(), spawnDBID);
+				tmp->SetDatabaseID(spawnDBID);
+			}
+		}
+
+		tmp->SetX(place_object->getType_float_ByName("x"));
+		tmp->SetY(place_object->getType_float_ByName("y"));
+		tmp->SetZ(place_object->getType_float_ByName("z"));
+		tmp->SetHeading(newHeading);
+		tmp->SetSpawnOrigX(tmp->GetX());
+		tmp->SetSpawnOrigY(tmp->GetY());
+		tmp->SetSpawnOrigZ(tmp->GetZ());
+		tmp->SetSpawnOrigHeading(tmp->GetHeading());
+		database.SaveSpawnInfo(tmp);
+		database.SaveSpawnEntry(tmp, "houseplacement", 100, 0, 0, 0);
+
+		if (!spawnDBID)
+		{
+			GetCurrentZone()->house_object_database_lookup.Put(tmp->GetModelType(), tmp->GetDatabaseID());
+			GetCurrentZone()->AddObject(tmp->GetDatabaseID(), (Object*)tmp);
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool Client::PopulateHouseSpawnFinalize()
+{
+	if (GetTempPlacementSpawn())
+	{
+		Spawn* tmp = GetTempPlacementSpawn();
+		GetCurrentZone()->AddSpawn(tmp);
+		GetCurrentZone()->SendSpawnChanges(tmp, this);
+		SetTempPlacementSpawn(nullptr);
+		int32 uniqueID = GetPlacementUniqueItemID();
+		Item* uniqueItem = GetPlayer()->item_list.GetItemFromUniqueID(uniqueID);
+		tmp->SetPickupItemID(uniqueItem->details.item_id);
+
+		if (uniqueItem)
+		{
+			if (GetCurrentZone()->GetInstanceType() == PERSONAL_HOUSE_INSTANCE)
+			{
+				Query query;
+				query.RunQuery2(Q_INSERT, "insert into spawn_instance_data set spawn_id = %u, spawn_location_id = %u, pickup_item_id = %u", tmp->GetDatabaseID(), tmp->GetSpawnLocationID(), tmp->GetPickupItemID());
+			}
+
+			database.DeleteItem(GetCharacterID(), uniqueItem, 0);
+			GetPlayer()->item_list.RemoveItem(uniqueItem, true);
+			QueuePacket(GetPlayer()->SendInventoryUpdate(GetVersion()));
+			SetPlacementUniqueItemID(0);
+		}
+		return true;
+	}
+
+	return false;
+}
+
+void Client::SendMoveObjectMode(Spawn* spawn, uint8 placementMode, float unknown2_3)
+{
+	PacketStruct* packet = configReader.getStruct("WS_MoveObjectMode", GetVersion());
+	packet->setDataByName("placement_mode", placementMode);
+	packet->setDataByName("spawn_id", GetPlayer()->GetIDWithPlayerSpawn(spawn));
+	packet->setDataByName("model_type", spawn->GetModelType());
+	packet->setDataByName("unknown", 1); //size
+	packet->setDataByName("unknown2", 1); //size 2
+	packet->setDataByName("unknown2", .5, 1); //size 3
+	packet->setDataByName("unknown2", 3, 2);
+	packet->setDataByName("unknown2", unknown2_3, 3);
+	packet->setDataByName("max_distance", 500);
+	packet->setDataByName("CoEunknown", 0xFFFFFFFF);
+	QueuePacket(packet->serialize());
+	safe_delete(packet);
 }

@@ -618,6 +618,8 @@ public:
 	bool IsLoading() {
 		return LoadingData;
 	}
+
+	MutexMap<int32, int32>							house_object_database_lookup;						// 1st int32 = model type, 2nd int32 = spawn id
 private:
 	/* Private Functions */
 	void	AddTransporter(LocationTransportDestination* loc);

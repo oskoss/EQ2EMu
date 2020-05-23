@@ -2124,6 +2124,9 @@ Spawn* ZoneServer::ProcessSpawnLocation(SpawnLocation* spawnlocation, bool respa
 			else if (spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_SIGN)
 				spawn = AddSignSpawn(spawnlocation, spawnlocation->entities[i]);
 
+			if (GetInstanceType() == PERSONAL_HOUSE_INSTANCE)
+				database.GetHouseSpawnInstanceData(this, spawn);
+
 			if (!spawn)
 			{
 				LogWrite(ZONE__ERROR, 0, "Zone", "Error adding spawn to zone");
@@ -2184,6 +2187,9 @@ Spawn* ZoneServer::ProcessInstanceSpawnLocation(SpawnLocation* spawnlocation, ma
 			else if(spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_SIGN && 
 				(spawnTime = database.CheckSpawnRemoveInfo(instSignSpawns,spawnlocation->entities[i]->spawn_location_id)) > 0)
 				spawn = AddSignSpawn(spawnlocation, spawnlocation->entities[i]);
+
+			if (GetInstanceType() == PERSONAL_HOUSE_INSTANCE)
+				database.GetHouseSpawnInstanceData(this, spawn);
 
 			const char* script = 0;
 
@@ -2892,6 +2898,16 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 		((Player*)spawn)->SetReturningFromLD(false);
 	spawn_range.Trigger();
 	spawn_check_add.Trigger();
+
+	if (GetInstanceType() == PERSONAL_HOUSE_INSTANCE && spawn->IsObject())
+	{
+		spawn->AddSecondaryEntityCommand("Examine", 20, "house_spawn_examine", "", 0, 0);
+		spawn->AddSecondaryEntityCommand("Move", 20, "house_spawn_move", "", 0, 0);
+		spawn->AddSecondaryEntityCommand("Pack in Moving Crate", 20, "house_spawn_pack_in_moving_crate", "", 0, 0);
+		spawn->AddSecondaryEntityCommand("Pick Up", 20, "house_spawn_pickup", "", 0, 0);
+		spawn->SetShowCommandIcon(1);
+	}
+
 	if(spawn->IsNPC())
 		AddEnemyList((NPC*)spawn);
 	if(spawn->IsPlayer() && ((Player*)spawn)->GetGroupMemberInfo())

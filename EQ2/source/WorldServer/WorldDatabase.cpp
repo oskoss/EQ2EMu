@@ -889,9 +889,9 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 													"ON npc.spawn_id = le.spawn_id\n"
 													"INNER JOIN spawn_location_placement lp\n"
 													"ON le.spawn_location_id = lp.spawn_location_id\n"
-													"WHERE lp.zone_id = %u\n"
+													"WHERE lp.zone_id = %u and (lp.instance_id = 0 or lp.instance_id = %u)\n"
 													"GROUP BY s.id",
-													zone->GetZoneID());
+													zone->GetZoneID(), zone->GetInstanceID());
 	while(result && (row = mysql_fetch_row(result))){
 		/*npc->SetAppearanceID(atoi(row[12]));
 		AppearanceData* appearance = world.GetNPCAppearance(npc->GetAppearanceID());
@@ -1212,9 +1212,9 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 												  "ON so.spawn_id = le.spawn_id\n"
 												  "INNER JOIN spawn_location_placement lp\n"
 												  "ON le.spawn_location_id = lp.spawn_location_id\n"
-												  "WHERE lp.zone_id = %u\n"
+												  "WHERE lp.zone_id = %u and (lp.instance_id = 0 or lp.instance_id = %u)\n"
 												  "GROUP BY s.id",
-												  zone->GetZoneID());
+												  zone->GetZoneID(), zone->GetInstanceID());
 
 	while(result && (row = mysql_fetch_row(result))){
 
@@ -2862,6 +2862,7 @@ int32 WorldDatabase::ProcessSpawnLocations(ZoneServer* zone, const char* sql_que
 			spawn_location->grid_id = strtoul(row[12], NULL, 0);
 			spawn_location->placement_id = strtoul(row[13], NULL, 0);
 			spawn_location->AddSpawn(entry);
+
 		}
 		if(spawn_location){
 			zone->AddSpawnLocation(spawn_location_id, spawn_location);
@@ -3027,10 +3028,12 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 	string last_name = getSafeEscapeString(spawn->GetLastName());
 	if(spawn->GetDatabaseID() == 0){
 
+		int8 isInstanceType = (spawn->GetZone()->GetInstanceType() == Instance_Type::PERSONAL_HOUSE_INSTANCE);
+
 		int32 new_spawn_id = GetNextSpawnIDInZone(spawn->GetZone()->GetZoneID());
 
-		query.RunQuery2(Q_INSERT, "insert into spawn (id, name, race, model_type, size, targetable, show_name, command_primary, command_secondary, visual_state, attackable, show_level, show_command_icon, display_hand_icon, faction_id, collision_radius, hp, power, prefix, suffix, last_name) values(%u, '%s', %i, %i, %i, %i, %i, %u, %u, %i, %i, %i, %i, %i, %u, %i, %u, %u, '%s', '%s', '%s')",
-			new_spawn_id, name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->GetSize(), spawn->appearance.targetable, spawn->appearance.display_name, spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, 0, spawn->appearance.pos.collision_radius, spawn->GetTotalHP(), spawn->GetTotalPower(), prefix.c_str(), suffix.c_str(), last_name.c_str());
+		query.RunQuery2(Q_INSERT, "insert into spawn (id, name, race, model_type, size, targetable, show_name, command_primary, command_secondary, visual_state, attackable, show_level, show_command_icon, display_hand_icon, faction_id, collision_radius, hp, power, prefix, suffix, last_name, is_instanced_spawn) values(%u, '%s', %i, %i, %i, %i, %i, %u, %u, %i, %i, %i, %i, %i, %u, %i, %u, %u, '%s', '%s', '%s', %u)",
+			new_spawn_id, name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->GetSize(), spawn->appearance.targetable, spawn->appearance.display_name, spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, 0, spawn->appearance.pos.collision_radius, spawn->GetTotalHP(), spawn->GetTotalPower(), prefix.c_str(), suffix.c_str(), last_name.c_str(), isInstanceType);
 
 		if( new_spawn_id > 0 )
 			spawn->SetDatabaseID(new_spawn_id); // use the new zone_id range
@@ -3186,7 +3189,7 @@ bool WorldDatabase::SaveSpawnEntry(Spawn* spawn, const char* spawn_location_name
 		return false;
 	}
 	if(save_zonespawn){
-		query2.RunQuery2(Q_INSERT, "insert into spawn_location_placement (zone_id, spawn_location_id, x, y, z, x_offset, y_offset, z_offset, heading, grid_id) values(%u, %u, %f, %f, %f, %f, %f, %f, %f, %u)", spawn->GetZone()->GetZoneID(), spawn->GetSpawnLocationID(), spawn->GetX(), spawn->GetY(), spawn->GetZ(),x_offset, y_offset, z_offset, spawn->GetHeading(), spawn->appearance.pos.grid_id);
+		query2.RunQuery2(Q_INSERT, "insert into spawn_location_placement (zone_id, instance_id, spawn_location_id, x, y, z, x_offset, y_offset, z_offset, heading, grid_id) values(%u, %u, %u, %f, %f, %f, %f, %f, %f, %f, %u)", spawn->GetZone()->GetZoneID(), spawn->GetZone()->GetInstanceID(), spawn->GetSpawnLocationID(), spawn->GetX(), spawn->GetY(), spawn->GetZ(),x_offset, y_offset, z_offset, spawn->GetHeading(), spawn->appearance.pos.grid_id);
 		if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF){
 			LogWrite(SPAWN__ERROR, 0, "Spawn", "Error in SaveSpawnEntry query '%s': %s", query2.GetQuery(), query2.GetError());
 			return false;
@@ -6683,4 +6686,40 @@ bool WorldDatabase::CheckExpansionFlags(ZoneServer* zone, int32 spawnXpackFlag)
 		return false;
 
 	return true;
+}
+
+void WorldDatabase::GetHouseSpawnInstanceData(ZoneServer* zone, Spawn* spawn)
+{
+	if (!spawn)
+		return;
+
+	if (zone->house_object_database_lookup.count(spawn->GetModelType()) < 1)
+		zone->house_object_database_lookup.Put(spawn->GetModelType(), spawn->GetDatabaseID());
+
+	DatabaseResult result;
+
+	database_new.Select(&result, "SELECT pickup_item_id\n"
+		" FROM spawn_instance_data\n"
+		" WHERE spawn_id = %u and spawn_location_id = %u",
+		spawn->GetDatabaseID(),spawn->GetSpawnLocationID());
+
+	if (result.GetNumRows() > 0 && result.Next()) {
+		spawn->SetPickupItemID(result.GetInt32(0));
+	}
+}
+
+int32 WorldDatabase::FindHouseInstanceSpawn(Spawn* spawn)
+{
+	DatabaseResult result;
+
+	database_new.Select(&result, "SELECT id\n"
+		" FROM spawn\n"
+		" WHERE model_type = %u limit 1",
+		spawn->GetModelType());
+
+	if (result.GetNumRows() > 0 && result.Next()) {
+		return result.GetInt32(0);
+	}
+
+	return 0;
 }
