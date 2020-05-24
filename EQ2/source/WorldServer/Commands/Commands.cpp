@@ -1533,8 +1533,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 			break;
 									 }
-		case COMMAND_SPAWN_MOVE:{
-			if(cmdTarget && cmdTarget->IsPlayer() == false){
+		case COMMAND_SPAWN_MOVE: {
+			if (cmdTarget && cmdTarget->IsPlayer() == false) {
+				PacketStruct* packet = configReader.getStruct("WS_MoveObjectMode", client->GetVersion());
+				if (packet) {
 					float unknown2_3 = 0;
 					int8 placement_mode = 0;
 					client->SetSpawnPlacementMode(Client::ServerSpawnPlacementMode::DEFAULT);
@@ -1559,6 +1561,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						{
 							if (cmdTarget->GetSpawnLocationPlacementID() < 1) {
 								client->Message(CHANNEL_COLOR_YELLOW, "[PlacementMode] Spawn %s cannot be moved it is not assigned a spawn location placement id.", cmdTarget->GetName());
+								safe_delete(packet);
 								break;
 							}
 
@@ -1569,19 +1572,30 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 							if (database.UpdateSpawnLocationSpawns(cmdTarget))
 								client->Message(CHANNEL_COLOR_YELLOW, "[PlacementMode] Spawn %s placed at your location.  Updated spawn_location_placement for spawn.", cmdTarget->GetName());
+							safe_delete(packet);
 							break;
 						}
-
-
-						client->SendMoveObjectMode(cmdTarget, placement_mode, unknown2_3);
 					}
+					packet->setDataByName("placement_mode", placement_mode);
+					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(cmdTarget));
+					packet->setDataByName("model_type", cmdTarget->GetModelType());
+					packet->setDataByName("unknown", 1); //size
+					packet->setDataByName("unknown2", 1); //size 2
+					packet->setDataByName("unknown2", .5, 1); //size 3
+					packet->setDataByName("unknown2", 3, 2);
+					packet->setDataByName("unknown2", unknown2_3, 3);
+					packet->setDataByName("max_distance", 500);
+					packet->setDataByName("CoEunknown", 0xFFFFFFFF);
+					client->QueuePacket(packet->serialize());
+					safe_delete(packet);
+				}
 			}
-			else{
+			else {
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage: /spawn move (wall OR ceiling)");
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Moves a spawn anywhere you like.  Optionally wall/ceiling can be provided to place wall/ceiling items.");
 			}
 			break;
-								}
+		}
 		case COMMAND_HAIL:{
 			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->GetTargetable())
@@ -2757,6 +2771,29 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					client->SetPlacementUniqueItemID(uniqueid);
 
 					client->SendMoveObjectMode(spawn, 0);
+				}
+			}
+			break;
+		}
+		case COMMAND_GM:
+		{
+			if (sep->arg[0] && sep->arg[1])
+			{
+				bool onOff = (strcmp(sep->arg[1], "on") == 0);
+				if (strcmp(sep->arg[0], "vision") == 0)
+				{
+					client->GetPlayer()->SetGMVision(onOff);
+					#if defined(__GNUC__)
+						database.insertCharacterProperty(client, CHAR_PROPERTY_GMVISION, (onOff) ? (char*)"1" : (char*)"0");
+					#else
+						database.insertCharacterProperty(client, CHAR_PROPERTY_GMVISION, (onOff) ? "1" : "0");
+					#endif
+					client->GetCurrentZone()->SendAllSpawnsForVisChange(client, false);
+
+					if (onOff)
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "GM Vision Enabled!");
+					else
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "GM Vision Disabled!");
 				}
 			}
 			break;

@@ -875,6 +875,7 @@ private:
 #define COMMAND_DISARM					510
 #define COMMAND_KNOWLEDGEWINDOWSORT		511
 #define COMMAND_PLACE_HOUSE_ITEM		512
+#define COMMAND_GM						513
 
 #define GET_AA_XML						751
 #define ADD_AA							752

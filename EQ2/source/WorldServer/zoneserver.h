@@ -328,7 +328,7 @@ public:
 	void	ReloadClientQuests();
 	void	SendAllSpawnsForLevelChange(Client* client);
 	void	SendAllSpawnsForSeeInvisChange(Client* client);
-	void	SendAllSpawnsForVisChange(Client* client);
+	void	SendAllSpawnsForVisChange(Client* client, bool limitToEntities=true);
 	
 	void	AddLocationGrid(LocationGrid* grid);
 	void	RemoveLocationGrids();

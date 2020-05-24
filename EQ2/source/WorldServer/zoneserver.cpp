@@ -4013,13 +4013,13 @@ void ZoneServer::SendAllSpawnsForSeeInvisChange(Client* client) {
 }
 
 
-void ZoneServer::SendAllSpawnsForVisChange(Client* client) {
+void ZoneServer::SendAllSpawnsForVisChange(Client* client, bool limitToEntities) {
 	Spawn* spawn = 0;
 	if (spawn_range_map.count(client) > 0) {
 		MutexMap<int32, float >::iterator itr = spawn_range_map.Get(client)->begin();
 		while (itr.Next()) {
 			spawn = GetSpawnByID(itr->first);
-			if (spawn && spawn->IsEntity() && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
+			if (spawn && (!limitToEntities || (limitToEntities && spawn->IsEntity())) && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
 				SendSpawnChanges(spawn, client, false, true);
 			}
 		}

@@ -252,6 +252,15 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 		//Check to see if there's an override value set
 			vis_flags = req_quests_override & 0xFF;
 	}
+
+	if (player->HasGMVision())
+	{
+		if ((vis_flags & 16) == 0 && appearance.display_name == 0)
+			vis_flags += 16;
+		if ((vis_flags & 4) == 0)
+			vis_flags += 4;
+	}
+
 	vis_packet->setDataByName("vis_flags", vis_flags);
 
 

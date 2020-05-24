@@ -1697,6 +1697,14 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 			if (client->GetPlayer()->GetInvulnerable())
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You are now invulnerable!");
 		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_GMVISION))
+		{
+			int8 val = atoi(prop_value);
+			client->GetPlayer()->SetGMVision(val == 1);
+			client->GetCurrentZone()->SendAllSpawnsForVisChange(client, false);
+			if (val)
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "GM Vision Enabled!");
+		}
 	}
 
 	return true;

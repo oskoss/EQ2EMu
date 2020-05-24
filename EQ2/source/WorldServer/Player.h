@@ -829,8 +829,8 @@ public:
 	void UpdateLUAHistory(int32 event_id, int32 value, int32 value2);
 	LUAHistory* GetLUAHistory(int32 event_id);
 
-
-
+	bool HasGMVision() { return gm_vision; }
+	void SetGMVision(bool val) { gm_vision = val; }
 
 
 
@@ -958,6 +958,8 @@ private:
 	int32 tmp_mount_model;
 	EQ2_Color tmp_mount_color;
 	EQ2_Color tmp_mount_saddle_color;
+
+	bool gm_vision;
 };
 #pragma pack()
 #endif

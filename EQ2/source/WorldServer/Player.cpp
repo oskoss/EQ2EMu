@@ -115,6 +115,7 @@ Player::Player(){
 	info_mutex.SetName("Player::info_mutex");
 	m_playerSpawnQuestsRequired.SetName("Player::player_spawn_quests_required");
 	m_playerSpawnHistoryRequired.SetName("Player::player_spawn_history_required");
+	gm_vision = false;
 }
 Player::~Player(){
 	for(int32 i=0;i<spells.size();i++){
