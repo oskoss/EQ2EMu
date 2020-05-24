@@ -8584,7 +8584,24 @@ bool Client::HandleHouseEntityCommands(Spawn* spawn, int32 spawnid, string comma
 	if (GetCurrentZone()->GetInstanceType() != PERSONAL_HOUSE_INSTANCE)
 		return false;
 
-	if (!HasOwnerOrEditAccess())
+	if (command == "house_spawn_examine")
+	{
+		uint32 itemID = spawn->GetPickupItemID();
+		if (itemID)
+		{
+
+			Item* item = master_item_list.GetItem(itemID);
+			if (item)
+			{
+				EQ2Packet* app = item->serialize(GetVersion(), true, GetPlayer());
+				//DumpPacket(app);
+				QueuePacket(app);
+			}
+
+		}
+		return true;
+	}
+	else if (!HasOwnerOrEditAccess())
 	{
 		//SimpleMessage(CHANNEL_COLOR_RED, "This is not your home!");
 		return false;
