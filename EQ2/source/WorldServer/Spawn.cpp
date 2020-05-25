@@ -3154,7 +3154,7 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 
 
 void Spawn::FixZ(bool forceUpdate) {
-	if (IsPlayer() || IsFlying() || (IsObject() && GetZone()->GetInstanceType() == Instance_Type::PERSONAL_HOUSE_INSTANCE)) {
+	if (IsPlayer() || IsFlying() || !GetZone() || (IsObject() && GetZone()->GetInstanceType() == Instance_Type::PERSONAL_HOUSE_INSTANCE)) {
 		return;
 	}
 	/*
