@@ -6722,7 +6722,7 @@ int32 WorldDatabase::FindHouseInstanceSpawn(Spawn* spawn)
 
 	database_new.Select(&result, "SELECT id\n"
 		" FROM spawn\n"
-		" WHERE model_type = %u limit 1",
+		" WHERE model_type = %u and is_instanced_spawn=1 limit 1",
 		spawn->GetModelType());
 
 	if (result.GetNumRows() > 0 && result.Next()) {
