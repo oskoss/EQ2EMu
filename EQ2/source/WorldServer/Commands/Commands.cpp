@@ -2761,6 +2761,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					spawn->SetSpawnOrigZ(spawn->GetZ());
 					spawn->SetSpawnOrigHeading(spawn->GetHeading());
 					spawn->appearance.targetable = 1;
+					spawn->appearance.activity_status = ACTIVITY_STATUS_SOLID;
 					spawn->appearance.race = item && item->generic_info.appearance_id ? item->generic_info.appearance_id : 1472;
 					spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
 					spawn->SetModelType(item && item->generic_info.appearance_id ? item->generic_info.appearance_id : 1472);
