@@ -4846,6 +4846,10 @@ EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 	packet->setSmallStringByName("upload_key", "dsya987yda9");
 	packet->setSmallStringByName("zone", GetZoneFile());
 	packet->setSmallStringByName("zone2", GetZoneName());
+
+	if ( strlen(GetZoneSkyFile()) > 0 )
+		packet->setSmallStringByName("zone_unknown2", GetZoneSkyFile()); // used for the sky map
+
 	packet->setSmallStringByName("zone_desc", GetZoneDescription());
 	packet->setSmallStringByName("char_name", client->GetPlayer()->GetName());
 		

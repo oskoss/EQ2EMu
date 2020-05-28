@@ -2417,7 +2417,7 @@ void WorldDatabase::LoadZoneInfo(ZoneServer* zone){
 	Query query;
 	int32 ruleset_id;
 	char* escaped = getEscapeString(zone->GetZoneName());
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, file, description, underworld, safe_x, safe_y, safe_z, min_status, min_level, max_level, instance_type+0, shutdown_timer, zone_motd, default_reenter_time, default_reset_time, default_lockout_time, force_group_to_zone, safe_heading, xp_modifier, ruleset_id, expansion_id, weather_allowed FROM zones where name='%s'",escaped);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, file, description, underworld, safe_x, safe_y, safe_z, min_status, min_level, max_level, instance_type+0, shutdown_timer, zone_motd, default_reenter_time, default_reset_time, default_lockout_time, force_group_to_zone, safe_heading, xp_modifier, ruleset_id, expansion_id, weather_allowed, sky_file FROM zones where name='%s'",escaped);
 	if(result && mysql_num_rows(result) > 0) {
 		MYSQL_ROW row;
 		row = mysql_fetch_row(result);
@@ -2453,6 +2453,8 @@ void WorldDatabase::LoadZoneInfo(ZoneServer* zone){
 		// check data_version to see if client has proper expansion to enter a zone
 		zone->SetMinimumVersion(GetMinimumClientVersion(atoi(row[20])));
 		zone->SetWeatherAllowed(atoi(row[21]) == 0 ? false : true);
+
+		zone->SetZoneSkyFile(row[22]);
 
 		if (zone->IsInstanceZone())
 		{

@@ -449,11 +449,17 @@ public:
 			return;
 		strcpy(zone_name, new_zone); 
 	}
-	inline const char*	GetZoneFile()	{ return zone_file; }
-	void	SetZoneFile(char* zone) { 
-		if( strlen(zone) >= sizeof zone_file )
+	inline const char* GetZoneFile() { return zone_file; }
+	void	SetZoneFile(char* zone) {
+		if (strlen(zone) >= sizeof zone_file)
 			return;
-		strcpy(zone_file, zone); 
+		strcpy(zone_file, zone);
+	}
+	inline const char* GetZoneSkyFile() { return zonesky_file; }
+	void	SetZoneSkyFile(char* zone) {
+		if (strlen(zone) >= sizeof zonesky_file)
+			return;
+		strcpy(zonesky_file, zone);
 	}
 	inline const char*	GetZoneDescription() { return zone_description; }
 	void	SetZoneDescription(char* desc) { 
@@ -813,6 +819,7 @@ private:
 	int16	maximumLevel;
 	int16	minimumVersion;
 	char	zone_name[64];
+	char	zonesky_file[64];
 	char	zone_file[64];
 	char	zone_description[255];
 	float	underworld;
