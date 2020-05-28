@@ -156,6 +156,7 @@ ZoneServer::ZoneServer(const char* name) {
 	Grid = nullptr;
 	zonemap = nullptr;
 	pathing = nullptr;
+	strcpy(zonesky_file,"");
 	
 	reloading = true;
 }
