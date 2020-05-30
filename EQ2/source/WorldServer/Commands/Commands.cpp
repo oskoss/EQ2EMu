@@ -2721,15 +2721,41 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 			break;
 		}
-		case COMMAND_HOUSE_UI:
+		case COMMAND_HOUSE:
 		{
-			PrintSep(sep, "COMMAND_HOUSEUI");
+			PrintSep(sep, "COMMAND_HOUSE");
 			if (sep && sep->IsNumber(0))
 			{
 				int32 unique_id = atoi(sep->arg[0]);
 				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
 				HouseZone* hz = 0;
 
+				if (ph)
+					hz = world.GetHouseZone(ph->house_id);
+				// there is a arg[1] that is true/false, but not sure what it is for investigate more later
+				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetPlayer()->GetID());
+			}
+			else if (client->GetCurrentZone()->GetInstanceType() != 0)
+			{
+				// inside a house or something? Send the access window
+				PlayerHouse* ph = world.GetPlayerHouseByInstanceID(client->GetCurrentZone()->GetInstanceID());
+
+				HouseZone* hz = 0;
+				if ( ph )
+					hz = world.GetHouseZone(ph->house_id);
+
+				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetPlayer()->GetID());
+			}
+			break;
+		}
+		case COMMAND_HOUSE_UI:
+		{
+			PrintSep(sep, "COMMAND_HOUSEUI");
+			if (sep && sep->IsNumber(0) && client->GetCurrentZone()->GetInstanceType() == Instance_Type::NONE)
+			{
+				int32 unique_id = atoi(sep->arg[0]);
+				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
+				HouseZone* hz = 0;
 				if ( ph )
 					hz = world.GetHouseZone(ph->house_id);
 				// there is a arg[1] that is true/false, but not sure what it is for investigate more later
