@@ -85,14 +85,14 @@ void ClientPacketFunctions::SendHousingList(Client* client) {
 		packet->setArrayDataByName("house_city", hz->name.c_str(), i);
 		packet->setArrayDataByName("house_address", "", i); // need this pulled from live
 		packet->setArrayDataByName("house_description", name.c_str(), i);
-		packet->setArrayDataByName("index", i + 1, i); // they send 2, 4, 6, 8 as the index ID's on the client..
+		packet->setArrayDataByName("index", i, i); // they send 2, 4, 6, 8 as the index ID's on the client..
 
 		// this seems to be some kind of timestamp, if we keep updating then in conjunction with upkeep_due
 		// in SendBaseHouseWindow/WS_PlayerHouseBaseScreen being a >0 number we can access 'enter house'
 		if ( client->GetVersion() >= 63119 )
-			packet->setArrayDataByName("unknown2a", ph->upkeep_due, i);
+			packet->setArrayDataByName("unknown2a", 1, i);
 		else
-			packet->setArrayDataByName("unknown2", ph->upkeep_due, i);
+			packet->setArrayDataByName("unknown2", 1, i);
 	}
 	client->QueuePacket(packet->serialize());
 }
@@ -109,6 +109,9 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 	name = ph->player_name;
 	name.append("'s ");
 	name.append(hz->name);
+
+	if (spawnID)
+		SendHousingList(client);
 
 	PacketStruct* packet = configReader.getStruct("WS_PlayerHouseBaseScreen", client->GetVersion());
 	if (packet) {

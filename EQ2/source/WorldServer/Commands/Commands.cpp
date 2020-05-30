@@ -2733,7 +2733,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if ( ph )
 					hz = world.GetHouseZone(ph->house_id);
 				// there is a arg[1] that is true/false, but not sure what it is for investigate more later
-				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, cmdTarget ? cmdTarget->GetID() : 0);
+				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, 0);
 			}
 			break;
 		}

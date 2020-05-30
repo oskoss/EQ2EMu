@@ -389,7 +389,7 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 			ph = world.GetPlayerHouseByHouseID(client->GetPlayer()->GetCharacterID(), hz->id);
 		if (ph) {
 			// if we aren't in our own house we should get the full list of houses we can visit
-			if ( client->GetCurrentZone()->GetInstanceType() != Instance_Type::PERSONAL_HOUSE_INSTANCE )
+			if ( m_houseID && client->GetCurrentZone()->GetInstanceType() != Instance_Type::PERSONAL_HOUSE_INSTANCE )
 				ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
 
 			ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, id);
@@ -406,12 +406,15 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 			HouseZone* hz = world.GetHouseZone(ph->house_id);
 			if (hz) {
 				int32 id = client->GetPlayer()->GetIDWithPlayerSpawn(this);
-				ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
+				if (m_houseID)
+					ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
+
 				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, id);
 			}
 		}
 	}
 	else if (client && m_houseID > 0 && strncasecmp("visit", command.c_str(), 6) == 0) {
+		ClientPacketFunctions::SendHousingList(client);
 		ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
 	}
 	else if (client && command.length() > 0) {

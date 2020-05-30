@@ -1806,7 +1806,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
 				int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
 				world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
-				ClientPacketFunctions::SendHousingList(this);
+				//ClientPacketFunctions::SendHousingList(this);
 				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
 				ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
 			}
@@ -1872,7 +1872,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				{
 					ph->upkeep_due = upkeep_due;
 					database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
-					ClientPacketFunctions::SendHousingList(this);
+					//ClientPacketFunctions::SendHousingList(this);
 					ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
 					PlaySound("coin_cha_ching");
 				}
