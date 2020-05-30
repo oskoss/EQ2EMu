@@ -125,25 +125,6 @@ void ClientPacketFunctions::SendTraitList ( Client* client ){
 
 }
 
-void ClientPacketFunctions::SendClassAA( Client* client ){
-	int16 version = 1;
-	if(client)
-		version = client->GetVersion();
-
-	PacketStruct* packet = configReader.getStruct("WS_DisplayHouseStatus", version);
-	
-	packet->setDataByName("spawn_id", client->GetCharacterID());
-	packet->setDataByName("house_name", client->GetPlayer()->GetName());
-	packet->setDataByName("house_location", "Qeynos Village Inn");
-
-	packet->PrintPacket();
-	EQ2Packet* data = packet->serialize();
-	EQ2Packet* app = new EQ2Packet(OP_PlayerHouseDisplayStatusMsg, data->pBuffer, data->size);
-	safe_delete(packet);
-	safe_delete(data);
-	client->QueuePacket(app);
-}
-
 void ClientPacketFunctions::SendAbilities ( Client* client ){
 	LogWrite(MISC__TODO, 1, "TODO", " Add SendAbilities functionality\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	// this is the featherfall ability data

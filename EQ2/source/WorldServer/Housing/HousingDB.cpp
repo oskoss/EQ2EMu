@@ -24,6 +24,13 @@ int64 WorldDatabase::AddPlayerHouse(int32 char_id, int32 house_id, int32 instanc
 	return unique_id;
 }
 
+void WorldDatabase::SetHouseUpkeepDue(int32 char_id, int32 house_id, int32 instance_id, int32 upkeep_due) {
+	Query query;
+	string update = string("UPDATE character_houses set upkeep_due=%u where char_id = %u and house_id = %u and instance_id = %u");
+	query.RunQuery2(Q_UPDATE, update.c_str(), upkeep_due, char_id, house_id, instance_id);
+}
+
+
 void WorldDatabase::RemovePlayerHouse(int32 char_id, int32 house_id) {
 }
 

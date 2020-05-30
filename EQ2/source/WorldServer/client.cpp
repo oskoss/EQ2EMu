@@ -733,6 +733,21 @@ void Client::SendCharInfo() {
 
 	if (!player->Alive())
 		DisplayDeadWindow();
+
+	ClientPacketFunctions::SendLocalizedTextMessage(this);
+
+	if (GetCurrentZone()->GetInstanceID())
+	{
+		PlayerHouse* ph = world.GetPlayerHouseByInstanceID(GetCurrentZone()->GetInstanceID());
+		if (ph) {
+			//HouseZone* hz = world.GetHouseZone(ph->house_id);
+			string name = string(GetPlayer()->GetName());
+			if (name.compare(ph->player_name) == 0)
+				SetHasOwnerOrEditAccess(true);
+		}
+	}
+
+	ClientPacketFunctions::SendHousingList(this);
 }
 
 void Client::SendZoneSpawns() {
@@ -1781,10 +1796,19 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 			HouseZone* hz = world.GetHouseZone(packet->getType_int64_ByName("house_id"));
 			if (hz) {
+				std::vector<PlayerHouse*> houses = world.GetAllPlayerHouses(GetCharacterID());
+				if (houses.size() > 24)
+				{
+					SimpleMessage(CHANNEL_COLOR_YELLOW, "You already own 25 houses and may not own another.");
+					break;
+				}
 				ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id);
 				int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
 				int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
 				world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
+				ClientPacketFunctions::SendHousingList(this);
+				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
+				ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
 			}
 		}
 
@@ -1816,9 +1840,49 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_PayHouseUpkeepMsg", opcode, opcode);
 		DumpPacket(app);
 		PacketStruct* packet = configReader.getStruct("WS_PayUpkeep", GetVersion());
+
 		if (packet) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 
+			int64 houseID = packet->getType_int64_ByName("house_id");
+			PlayerHouse* ph = world.GetPlayerHouseByUniqueID(houseID);
+			if (ph)
+			{
+				HouseZone* hz = world.GetHouseZone(ph->house_id);
+				if (!hz)
+				{
+					Message(CHANNEL_COLOR_YELLOW, "HouseZone ID %u does NOT exist!", ph->house_id);
+					break;
+				}
+
+				int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800;
+				if (((sint64)ph->upkeep_due - (sint64)Timer::GetUnixTimeStamp()) > 0)
+				{
+					upkeep_due = ph->upkeep_due + 604800; // 604800 = 7 days
+
+					if (upkeep_due > (Timer::GetUnixTimeStamp() + 7257600)) // 84 days max upkeep to pay https://eq2.zam.com/wiki/Housing_%28EQ2%29#Upkeep
+					{
+						Message(CHANNEL_COLOR_YELLOW, "You cannot pay more than 1 month of upkeep.");
+						break;
+					}
+				}
+
+				// TODO: Need support for upkeep_status, but alas status_points are not implemented!
+				if (!hz->upkeep_coin || hz->upkeep_coin && player->RemoveCoins(hz->upkeep_coin)) // TODO: Need option to take from bank if player does not have enough coin on them
+				{
+					ph->upkeep_due = upkeep_due;
+					database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
+					ClientPacketFunctions::SendHousingList(this);
+					ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+					PlaySound("coin_cha_ching");
+				}
+				else
+				{
+					SimpleMessage(CHANNEL_COLOR_YELLOW, "You do not have enough money to pay for upkeep.");
+				}
+			}
+			else
+				Message(CHANNEL_COLOR_YELLOW, "PlayerHouse ID %u does NOT exist!", houseID);
 		}
 
 		safe_delete(packet);
@@ -8312,17 +8376,6 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 				client_list.Remove(this); //remove from master client list
 				new_client_login = true;
 				GetCurrentZone()->AddClient(this); //add to zones client list
-
-				if (GetCurrentZone()->GetInstanceID())
-				{
-					PlayerHouse* ph = world.GetPlayerHouseByInstanceID(GetCurrentZone()->GetInstanceID());
-					if (ph) {
-						//HouseZone* hz = world.GetHouseZone(ph->house_id);
-						string name = string(GetPlayer()->GetName());
-						if (name.compare(ph->player_name) == 0)
-							SetHasOwnerOrEditAccess(true);
-					}
-				}
 
 				world.RejoinGroup(this);
 				zone_list.AddClientToMap(player->GetName(), this);

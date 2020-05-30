@@ -41,7 +41,6 @@ public:
 	static void SendSkillBook ( Client* client );
 	static void SendTraitList ( Client* client );
 	static void SendAbilities ( Client* client );
-	static void SendClassAA ( Client* client );
 
 	static void SendCommandNamePacket ( Client* client );
 
@@ -79,8 +78,10 @@ public:
 
 	/* Housing (/Housing/HousingPackets.cpp) */
 	static void SendHousePurchace(Client* client, HouseZone* hz, int32 spawnID);
+	static void SendHousingList(Client* client);
 	static void SendBaseHouseWindow(Client* client, HouseZone* hz, PlayerHouse* ph, int32 spawnID);
 	static void SendHouseVisitWindow(Client* client, vector<PlayerHouse*> houses);
+	static void SendLocalizedTextMessage(Client* client);
 
 	/* Heroic OP's (/HeroicOp/HeroicOpPackets.cpp) */
 	static void SendHeroicOPUpdate(Client* client, HeroicOP* ho);

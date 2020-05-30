@@ -500,6 +500,7 @@ public:
 	/* Housing */
 	void				LoadHouseZones();
 	int64				AddPlayerHouse(int32 char_id, int32 house_id, int32 instance_id, int32 upkeep_due);
+	void				SetHouseUpkeepDue(int32 char_id, int32 house_id, int32 instance_id, int32 upkeep_due);
 	void				RemovePlayerHouse(int32 char_id, int32 house_id);
 	void				LoadPlayerHouses();
 
