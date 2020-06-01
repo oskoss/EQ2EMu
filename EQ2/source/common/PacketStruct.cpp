@@ -1531,7 +1531,22 @@ void PacketStruct::serializePacket(bool clear){
 					}
 				}
 				else{
-					if(!GetVariableIsNotSet(varname.c_str()))
+					// Check to see if the variable contains %i, if it does assume we are in an array
+					// and get the current index from the end of the data struct's name
+					char name[250] = { 0 };
+					if (varname.find("%i") < 0xFFFFFFFF) {
+						vector<string>* varnames = SplitString(varname, '_');
+						vector<string>* indexes = SplitString(data->GetName(), '_');
+						int index = 0;
+						if (indexes->size() > 0 )
+							index = atoi(indexes->at(indexes->size() - 1).c_str());
+
+						sprintf(name, varname.c_str(), index);
+					}
+					else
+						strcpy(name, varname.c_str());
+
+					if(!GetVariableIsNotSet(name))
 						continue;
 				}
 			}
