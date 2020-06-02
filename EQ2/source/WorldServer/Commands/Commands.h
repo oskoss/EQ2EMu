@@ -878,6 +878,8 @@ private:
 #define COMMAND_GM						513
 #define COMMAND_HOUSE_UI				514
 #define COMMAND_HOUSE					515
+#define COMMAND_MOVE_ITEM				516
+#define COMMAND_PICKUP					517
 
 #define GET_AA_XML						751
 #define ADD_AA							752

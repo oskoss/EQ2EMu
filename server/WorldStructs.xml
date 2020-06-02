@@ -32975,6 +32975,30 @@ to zero and treated like placeholders." />
 </Data>
 <Data ElementName="unknown7" Type="int16" />
 </Struct>
+<Struct Name="WS_HouseItemsList" ClientVersion="60114" OpcodeName="OP_HouseItemsList">
+<Data ElementName="num_items" Type="int32" />
+<Data ElementName="items_array" Type="Array" ArraySizeVariable="num_items">
+  <Data ElementName="unique_id" Type="int32" />
+  <Data ElementName="item_name" Type="EQ2_16Bit_String" />
+  <Data ElementName="status_reduction" Type="int32" />
+  <Data ElementName="unknown1" Type="int32" />
+  <Data ElementName="unknown2" Type="int32" />
+  <Data ElementName="tradeable" Type="int8" /> <!-- when 0 should must? item_description -->
+  <Data ElementName="is_notrade" Type="EQ2_16Bit_String" IfVariableNotEquals="tradeable_%i"/>
+  <Data ElementName="unknown5" Type="int8"/>
+  <Data ElementName="ui_tab_flag1" Type="int8"/>
+  <Data ElementName="first_item_description" Type="EQ2_16Bit_String" IfVariableNotSet="ui_tab_flag1_%i"/>
+  <Data ElementName="ui_tab_flag2" Type="int8"/>
+  <Data ElementName="second_item_description" Type="EQ2_16Bit_String" IfVariableNotSet="ui_tab_flag2_%i"/>
+  <Data ElementName="icon" Type="int16" />
+  <Data ElementName="location" Type="int8" />
+  <Data ElementName="item_state" Type="int8"/>
+  <Data ElementName="item_state_extended" Type="int8" size="3" /> <!-- could be more of the item_state -->
+</Data>
+<Data ElementName="unknown7" Type="int8" />
+<!-- setting to 1 causes it to populate on the items tab with the widget door aka /house command. 0 its a popup (moving crate). -->
+<Data ElementName="is_widget_door" Type="int16" />
+</Struct>
 <Struct Name="WS_HouseItemsList" ClientVersion="63119" OpcodeName="OP_HouseItemsList">
 <Data ElementName="num_items" Type="int32" />
 <Data ElementName="items_array" Type="Array" ArraySizeVariable="num_items">

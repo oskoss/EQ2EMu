@@ -799,7 +799,7 @@ bool ZoneServer::AddCloseSpawnsToSpawnGroup(Spawn* spawn, float radius){
 
 void ZoneServer::RepopSpawns(Client* client, Spawn* in_spawn){
 	vector<Spawn*>* spawns = in_spawn->GetSpawnGroup();
-	PacketStruct* packet = configReader.getStruct("WS_DestroyGhostCmd", client->GetVersion());;
+	PacketStruct* packet = configReader.getStruct("WS_DestroyGhostCmd", client->GetVersion());
 	if(spawns){
 		if(!packet)
 			return;
@@ -2903,9 +2903,9 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 	if (GetInstanceType() == PERSONAL_HOUSE_INSTANCE && spawn->IsObject())
 	{
 		spawn->AddSecondaryEntityCommand("Examine", 20, "house_spawn_examine", "", 0, 0);
-		spawn->AddSecondaryEntityCommand("Move", 20, "house_spawn_move", "", 0, 0);
+		spawn->AddSecondaryEntityCommand("Move", 20, "move_item", "", 0, 0);
 		spawn->AddSecondaryEntityCommand("Pack in Moving Crate", 20, "house_spawn_pack_in_moving_crate", "", 0, 0);
-		spawn->AddSecondaryEntityCommand("Pick Up", 20, "house_spawn_pickup", "", 0, 0);
+		spawn->AddSecondaryEntityCommand("Pick Up", 20, "pickup", "", 0, 0);
 		spawn->SetShowCommandIcon(1);
 	}
 
@@ -7338,4 +7338,111 @@ void ZoneServer::SetSpawnScript(SpawnEntry* entry, Spawn* spawn)
 			break;
 		}
 	}
+}
+
+vector<HouseItem> ZoneServer::GetHouseItems(Client* client)
+{
+	if (!client->GetCurrentZone()->GetInstanceID() || !client->HasOwnerOrEditAccess())
+		return std::vector<HouseItem>();
+
+	PacketStruct* packet = configReader.getStruct("WS_HouseItemsList", client->GetVersion());
+
+	std::vector<HouseItem> items;
+	map<int32, Spawn*>::iterator itr;
+	Spawn* spawn = 0;
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+		spawn = itr->second;
+		if (spawn && spawn->IsObject() && spawn->GetPickupItemID())
+		{
+			HouseItem tmpItem;
+			tmpItem.item_id = spawn->GetPickupItemID();
+			tmpItem.unique_id = spawn->GetPickupUniqueItemID();
+			tmpItem.spawn_id = spawn->GetID();
+			tmpItem.item = master_item_list.GetItem(spawn->GetPickupItemID());
+
+			if (!tmpItem.item)
+				continue;
+
+			items.push_back(tmpItem);
+		}
+	}
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+
+	return items;
+}
+
+void ZoneServer::SendHouseItems(Client* client)
+{
+	if (!client->GetCurrentZone()->GetInstanceID() || !client->HasOwnerOrEditAccess())
+		return;
+
+	PacketStruct* packet = configReader.getStruct("WS_HouseItemsList", client->GetVersion());
+
+	std::vector<HouseItem> items = GetHouseItems(client);
+
+	// setting this to 1 puts it on the door widget
+	packet->setDataByName("is_widget_door", 1);
+	packet->setArrayLengthByName("num_items", items.size());
+	for (int i = 0; i < items.size(); i++)
+	{
+		HouseItem tmpItem = items[i];
+		packet->setArrayDataByName("unique_id", tmpItem.unique_id, i); // unique_id is in fact the item_id...
+		packet->setArrayDataByName("item_name", tmpItem.item->name.c_str(), i);
+		packet->setArrayDataByName("status_reduction", tmpItem.item->houseitem_info->status_rent_reduction, i);
+
+		// location, 0 = floor, 1 = ceiling
+		//packet->setArrayDataByName("location", 1, i, 0);
+
+		// item_state int8
+		// 0 = normal (cannot pick up item / move item / toggle visibility)
+		// 1 = virtual (toggle visibility available, no move item)
+		// 2 = hidden (cannot pick up item / move item / toggle visibility)
+		// 3 = virtual/hidden/toggle visibility
+		// 4 = none (cannot pick up item / move item / toggle visibility)
+		// 5 = none, toggle visibility (cannot pick up item / move item)
+		// 8 = none (cannot pick up item / move item / toggle visibility)
+		//packet->setArrayDataByName("item_state", tmpvalue, i, 0);
+
+		// makes it so we don't have access to move item/retrieve item
+		// cannot use in conjunction with ui_tab_flag1/ui_tab_flag2
+		//packet->setArrayDataByName("tradeable", 1, i);
+		//packet->setArrayDataByName("item_description", "failboat", i);
+
+		// access to move item/retrieve item, do not use in conjunction with tradeable
+		packet->setArrayDataByName("ui_tab_flag1", 1, i, 0);
+		packet->setArrayDataByName("ui_tab_flag2", 1, i, 0);
+
+		// both of these can serve as description fields (only one should be used they populate the same area below the item name)
+		//packet->setArrayDataByName("first_item_description", "test", i);
+		//packet->setArrayDataByName("second_item_description", "Description here!", i);
+
+		packet->setArrayDataByName("icon", tmpItem.item->details.icon, i);
+	}
+
+	EQ2Packet* pack = packet->serialize();
+	client->QueuePacket(pack);
+	safe_delete(packet);
+}
+
+Spawn* ZoneServer::GetSpawnFromUniqueItemID(int32 unique_id)
+{
+	if (!GetInstanceID() || GetInstanceType() != Instance_Type::PERSONAL_HOUSE_INSTANCE)
+		return nullptr;
+
+	map<int32, Spawn*>::iterator itr;
+	Spawn* spawn = 0;
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+		spawn = itr->second;
+		if (spawn && spawn->IsObject() && spawn->GetPickupUniqueItemID() == unique_id)
+		{
+			Spawn* tmpSpawn = spawn;
+			MSpawnList.releasereadlock();
+			return tmpSpawn;
+		}
+	}
+	MSpawnList.releasereadlock();
+
+	return nullptr;
 }

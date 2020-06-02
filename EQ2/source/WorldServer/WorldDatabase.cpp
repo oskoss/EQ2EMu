@@ -6708,13 +6708,14 @@ void WorldDatabase::GetHouseSpawnInstanceData(ZoneServer* zone, Spawn* spawn)
 
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT pickup_item_id\n"
+	database_new.Select(&result, "SELECT pickup_item_id, pickup_unique_item_id\n"
 		" FROM spawn_instance_data\n"
 		" WHERE spawn_id = %u and spawn_location_id = %u",
 		spawn->GetDatabaseID(),spawn->GetSpawnLocationID());
 
 	if (result.GetNumRows() > 0 && result.Next()) {
 		spawn->SetPickupItemID(result.GetInt32(0));
+		spawn->SetPickupUniqueItemID(result.GetInt32(1));
 	}
 }
 

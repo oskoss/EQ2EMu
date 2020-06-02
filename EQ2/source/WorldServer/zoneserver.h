@@ -154,6 +154,13 @@ struct TrackedSpawn {
 	float distance;
 };
 
+struct HouseItem {
+	int32 spawn_id;
+	int32 item_id;
+	int32 unique_id;
+	Item* item;
+};
+
 class Widget;
 class Client;
 class Sign;
@@ -624,6 +631,10 @@ public:
 	bool IsLoading() {
 		return LoadingData;
 	}
+
+	vector<HouseItem> GetHouseItems(Client* client);
+	Spawn* GetSpawnFromUniqueItemID(int32 unique_id);
+	void SendHouseItems(Client* client);
 
 	MutexMap<int32, int32>							house_object_database_lookup;						// 1st int32 = model type, 2nd int32 = spawn id
 private:

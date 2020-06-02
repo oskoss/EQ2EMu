@@ -95,6 +95,7 @@ void ClientPacketFunctions::SendHousingList(Client* client) {
 			packet->setArrayDataByName("unknown2", 1, i);
 	}
 	client->QueuePacket(packet->serialize());
+	safe_delete(packet);
 }
 
 void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, PlayerHouse* ph, int32 spawnID) {

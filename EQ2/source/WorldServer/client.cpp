@@ -1862,7 +1862,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 
 					if (upkeep_due > (Timer::GetUnixTimeStamp() + 7257600)) // 84 days max upkeep to pay https://eq2.zam.com/wiki/Housing_%28EQ2%29#Upkeep
 					{
-						Message(CHANNEL_COLOR_YELLOW, "You cannot pay more than 1 month of upkeep.");
+						Message(CHANNEL_COLOR_YELLOW, "You cannot pay more than 3 months of upkeep.");
 						break;
 					}
 				}
@@ -2381,8 +2381,28 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 			return;
 		}
 		request->LoadPacketData(app->pBuffer, app->size);
+
 		int32 id = request->getType_int32_ByName("id");
-		Item* item = GetPlayer()->item_list.GetItemFromUniqueID(id, true);
+
+		Item* item = 0;
+
+		// translate from unique id to spawn id for houses
+		Spawn* spawn = this->GetCurrentZone()->GetSpawnFromUniqueItemID(id);
+
+		bool wasSpawn = false;
+		if (spawn)
+		{
+			item = master_item_list.GetItem(spawn->GetPickupItemID());
+			if (item)
+			{
+				wasSpawn = true;
+				item = new Item(item);
+				item->details.unique_id = spawn->GetPickupUniqueItemID();
+			}
+		}
+
+		if (!item)
+			item = GetPlayer()->item_list.GetItemFromUniqueID(id, true);
 		if (!item)
 			item = GetPlayer()->GetEquipmentList()->GetItemFromUniqueID(id);
 		if (!item)
@@ -2392,6 +2412,8 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 			EQ2Packet* app = item->serialize(GetVersion(), false, GetPlayer());
 			//DumpPacket(app);
 			QueuePacket(app);
+			if (wasSpawn)
+				delete item;
 		}
 		else {
 			LogWrite(WORLD__ERROR, 0, "World", "HandleExamineInfoRequest: Unknown Item ID = %u", id);
@@ -8654,28 +8676,6 @@ bool Client::HandleHouseEntityCommands(Spawn* spawn, int32 spawnid, string comma
 		}
 		return true;
 	}
-	else if (!HasOwnerOrEditAccess())
-	{
-		//SimpleMessage(CHANNEL_COLOR_RED, "This is not your home!");
-		return false;
-	}
-	else if (command == "house_spawn_move")
-	{
-		SendMoveObjectMode(spawn, 0);
-		return true;
-	}
-	else if (command == "house_spawn_pickup" && spawn->GetPickupItemID())
-	{
-		AddItem(spawn->GetPickupItemID(), 1);
-
-		Query query;
-		query.RunQuery2(Q_INSERT, "delete from spawn_instance_data where spawn_id = %u and spawn_location_id = %u and pickup_item_id = %u", spawn->GetDatabaseID(), spawn->GetSpawnLocationID(), spawn->GetPickupItemID());
-
-		if (database.RemoveSpawnFromSpawnLocation(spawn)) {
-			GetCurrentZone()->RemoveSpawn(false, spawn, true, true);
-		}
-		return true;
-	}
 
 	return false;
 }
@@ -8741,13 +8741,14 @@ bool Client::PopulateHouseSpawnFinalize()
 		int32 uniqueID = GetPlacementUniqueItemID();
 		Item* uniqueItem = GetPlayer()->item_list.GetItemFromUniqueID(uniqueID);
 		tmp->SetPickupItemID(uniqueItem->details.item_id);
+		tmp->SetPickupUniqueItemID(uniqueID);
 
 		if (uniqueItem)
 		{
 			if (GetCurrentZone()->GetInstanceType() == PERSONAL_HOUSE_INSTANCE)
 			{
 				Query query;
-				query.RunQuery2(Q_INSERT, "insert into spawn_instance_data set spawn_id = %u, spawn_location_id = %u, pickup_item_id = %u", tmp->GetDatabaseID(), tmp->GetSpawnLocationID(), tmp->GetPickupItemID());
+				query.RunQuery2(Q_INSERT, "insert into spawn_instance_data set spawn_id = %u, spawn_location_id = %u, pickup_item_id = %u, pickup_unique_item_id = %u", tmp->GetDatabaseID(), tmp->GetSpawnLocationID(), tmp->GetPickupItemID(), uniqueID);
 			}
 
 			database.DeleteItem(GetCharacterID(), uniqueItem, 0);

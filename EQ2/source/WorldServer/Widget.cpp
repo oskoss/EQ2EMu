@@ -393,6 +393,7 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 				ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
 
 			ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, id);
+			client->GetCurrentZone()->SendHouseItems(client);
 		}
 		else {
 			if (hz)

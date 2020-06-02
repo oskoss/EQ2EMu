@@ -2721,9 +2721,61 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 			break;
 		}
+		case COMMAND_MOVE_ITEM:
+		{
+			int32 id = 0;
+
+			if (sep->IsNumber(0))
+				id = atoul(sep->arg[0]);
+
+			Spawn* spawn = 0;
+			if (id == 0)
+			{
+				spawn = cmdTarget;
+			}
+			else
+				spawn = client->GetCurrentZone()->GetSpawnFromUniqueItemID(id);
+
+			if (!spawn || !client->HasOwnerOrEditAccess() || !spawn->GetPickupItemID())
+				break;
+
+			client->SendMoveObjectMode(spawn, 0);
+			break;
+		}
+		case COMMAND_PICKUP:
+		{
+			int32 id = 0;
+			if (sep->IsNumber(0))
+				id = atoul(sep->arg[0]);
+
+			Spawn* spawn = 0;
+			if (id == 0)
+			{
+				spawn = cmdTarget;
+			}
+			else
+				spawn = client->GetCurrentZone()->GetSpawnFromUniqueItemID(id);
+
+			if (!spawn || !client->HasOwnerOrEditAccess() || !spawn->GetPickupItemID())
+				break;
+
+			client->AddItem(spawn->GetPickupItemID(), 1);
+
+			Query query;
+			query.RunQuery2(Q_INSERT, "delete from spawn_instance_data where spawn_id = %u and spawn_location_id = %u and pickup_item_id = %u", spawn->GetDatabaseID(), spawn->GetSpawnLocationID(), spawn->GetPickupItemID());
+
+			if (database.RemoveSpawnFromSpawnLocation(spawn)) {
+				client->GetCurrentZone()->RemoveSpawn(false, spawn, true, true);
+			}
+
+			// we had a UI Window displayed, update the house items
+			if ( id > 0 )
+				client->GetCurrentZone()->SendHouseItems(client);
+
+			break;
+		}
 		case COMMAND_HOUSE:
 		{
-			PrintSep(sep, "COMMAND_HOUSE");
 			if (sep && sep->IsNumber(0))
 			{
 				int32 unique_id = atoi(sep->arg[0]);
@@ -2745,12 +2797,12 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					hz = world.GetHouseZone(ph->house_id);
 
 				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetPlayer()->GetID());
+				client->GetCurrentZone()->SendHouseItems(client);
 			}
 			break;
 		}
 		case COMMAND_HOUSE_UI:
 		{
-			PrintSep(sep, "COMMAND_HOUSEUI");
 			if (sep && sep->IsNumber(0) && client->GetCurrentZone()->GetInstanceType() == Instance_Type::NONE)
 			{
 				int32 unique_id = atoi(sep->arg[0]);

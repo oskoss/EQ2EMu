@@ -105,6 +105,7 @@ Spawn::Spawn(){
 	MCommandMutex.SetName("Entity::MCommandMutex");
 	has_spawn_proximities = false;
 	pickup_item_id = 0;
+	pickup_unique_item_id = 0;
 }
 
 Spawn::~Spawn(){

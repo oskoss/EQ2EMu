@@ -1052,7 +1052,13 @@ public:
 		pickup_item_id = itemid;
 	}
 
+	void	SetPickupUniqueItemID(int32 uniqueid)
+	{
+		pickup_unique_item_id = uniqueid;
+	}
+
 	int32	GetPickupItemID() { return pickup_item_id; }
+	int32	GetPickupUniqueItemID() { return pickup_unique_item_id; }
 protected:
 
 	bool	send_spawn_changes;
@@ -1079,6 +1085,7 @@ protected:
 	int8			merchant_type;
 	int32			transporter_id;
 	int32			pickup_item_id;
+	int32			pickup_unique_item_id;
 	map<int32, vector<int16>* > required_quests;
 	map<int32, LUAHistory> required_history;
 	EquipmentItemList equipment_list;
