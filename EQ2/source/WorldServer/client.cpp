@@ -1802,13 +1802,23 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					SimpleMessage(CHANNEL_COLOR_YELLOW, "You already own 25 houses and may not own another.");
 					break;
 				}
-				ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id);
-				int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
-				int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
-				world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
-				//ClientPacketFunctions::SendHousingList(this);
-				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
-				ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+
+				if ((!hz->upkeep_coin && !hz->cost_coin) || player->RemoveCoins(hz->cost_coin+hz->upkeep_coin)) // TODO: Need option to take from bank if player does not have enough coin on them
+				{
+					ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id);
+					int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
+					int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
+					world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
+					//ClientPacketFunctions::SendHousingList(this);
+					PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
+					ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+					PlaySound("coin_cha_ching");
+				}
+				else
+				{
+					SimpleMessage(CHANNEL_COLOR_YELLOW, "You do not have enough money to purchase the house.");
+					PlaySound("buy_failed");
+				}
 			}
 		}
 
@@ -1852,6 +1862,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				if (!hz)
 				{
 					Message(CHANNEL_COLOR_YELLOW, "HouseZone ID %u does NOT exist!", ph->house_id);
+					safe_delete(packet);
 					break;
 				}
 
@@ -1863,6 +1874,8 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					if (upkeep_due > (Timer::GetUnixTimeStamp() + 7257600)) // 84 days max upkeep to pay https://eq2.zam.com/wiki/Housing_%28EQ2%29#Upkeep
 					{
 						Message(CHANNEL_COLOR_YELLOW, "You cannot pay more than 3 months of upkeep.");
+						PlaySound("buy_failed");
+						safe_delete(packet);
 						break;
 					}
 				}
@@ -1879,6 +1892,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				else
 				{
 					SimpleMessage(CHANNEL_COLOR_YELLOW, "You do not have enough money to pay for upkeep.");
+					PlaySound("buy_failed");
 				}
 			}
 			else
