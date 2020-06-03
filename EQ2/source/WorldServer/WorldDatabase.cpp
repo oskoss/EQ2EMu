@@ -6716,6 +6716,12 @@ void WorldDatabase::GetHouseSpawnInstanceData(ZoneServer* zone, Spawn* spawn)
 	if (result.GetNumRows() > 0 && result.Next()) {
 		spawn->SetPickupItemID(result.GetInt32(0));
 		spawn->SetPickupUniqueItemID(result.GetInt32(1));
+
+		if (spawn->GetZone() != nullptr && spawn->GetZone()->zonemap != nullptr && spawn->GetZone()->zonemap->IsMapLoaded())
+		{
+			int32 newGrid = spawn->GetZone()->Grid->GetGridID(spawn);
+			spawn->SetPos(&(spawn->appearance.pos.grid_id), newGrid);
+		}
 	}
 }
 

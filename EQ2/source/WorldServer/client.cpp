@@ -8715,6 +8715,7 @@ bool Client::PopulateHouseSpawn(PacketStruct* place_object)
 		tmp->SetSpawnOrigY(tmp->GetY());
 		tmp->SetSpawnOrigZ(tmp->GetZ());
 		tmp->SetSpawnOrigHeading(tmp->GetHeading());
+		
 		database.SaveSpawnInfo(tmp);
 		database.SaveSpawnEntry(tmp, "houseplacement", 100, 0, 0, 0);
 
