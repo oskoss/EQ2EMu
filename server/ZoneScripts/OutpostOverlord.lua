@@ -3,11 +3,12 @@
 	Script Purpose	:	Zone Scripts and Location Pop-ups
 	Script Author	:	Cynnar
 	Script Date		:	9/16/2018
-	Script Notes	:	<special-instructions>
+	Script Notes	:	
 --]]
 
 local WelcomeToNorrath = 362
 local TheArtOfCombat = 132
+
 
 function init_zone_script(Zone)
 	SetLocationProximityFunction(Zone, -13.41, -4.94, 220.74, 20, "OfferQuestLocation", "LeaveLocation")
@@ -21,4 +22,6 @@ function OfferQuestLocation (Zone, Player)
 end
 
 function LeaveLocation(Zone, Player)
+
 end
+

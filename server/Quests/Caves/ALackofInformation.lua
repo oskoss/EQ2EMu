@@ -2,13 +2,15 @@
 	Script Name		:	ALackofInformation.lua
 	Script Purpose	:	Handles the quest, "A Lack of Information"
 	Script Author	:	Shatou
-	Script Date		:	9/3/2018
+	Script Date		:	1/4/2020
 	Script Notes	:	
 
 	Zone			:	Caves
-	Quest Giver		:	
+	Quest Giver		:	Consul Bree
 	Preceded by		:	None
-	Followed by		:	None
+	Followed by		:	Hit Them Where it Hurts; An Explosive Idea
+
+               ***NEED TO ADD BOOK TO TENT FOR 1ST STEP***
 --]]
 
 
@@ -19,7 +21,8 @@ end
 
 function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have found the written orders of the Dustpaw gnolls in their camp.")
-
+	
+	
 	AddQuestStepObtainItem(Quest, 2, "I need to read the book I found in the Dustpaw camp.", 1, 100, "Consul Bree has asked that I help her in obtaining a recent version of the Rockpaw gnoll battle orders.", 11, 1256)
 	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
 end
@@ -27,7 +30,7 @@ end
 function Step2Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 2, "I have attempted to read the book in the Dustpaw camp.")
 
-	AddQuestStepKill(Quest, 3, "I need to retrieve the key to the Rockpaw cipher. Any gnoll in the Caves may have one.", 1, 100, "Consul Bree has asked that I help her in obtaining a recent version of the Rockpaw gnoll battle orders.", 185, 1970017)
+	AddQuestStepKill(Quest, 3, "I need to retrieve the key to the Rockpaw cipher. Any gnoll in the Caves may have one.", 1, 100, "Consul Bree has asked that I help her in obtaining a recent version of the Rockpaw gnoll battle orders.", 185, 1970017, 1970016, 1970018, 1970019, 1970020, 1970021, 1970027, 1970028, 1970029, 1970034)
 	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
 end
 

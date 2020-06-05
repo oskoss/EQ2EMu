@@ -8,13 +8,16 @@
 	Quest Giver: Lieutenant Charlin
 	Preceded by: An Important Meeting (an_important_meeting.lua)
 	Followed by: Reinforcements (reinforcements.lua)
+	Modified   : 5/6/2020
+	      by   : Ememjr
+	    Notes  : updated spawn ID's and quest id's
 --]]
 
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "I need to kill Lieutenant Gnar'Sok. I can find him hiding in an alcove just northwest of The Western Falls.", 1, 100, "I need to take out the remaining gnoll lieutenants.", 1220, 1950086)
-	AddQuestStepKill(Quest, 2, "I need to kill Lieutenant Chorsun. The path west from Lieutenant Charlin leads to him if I turn north before passing under the bridge.", 1, 100, "I need to take out the remaining gnoll lieutenants.", 1220, 1950085)
-	AddQuestStepKill(Quest, 3, "I need to kill Lieutenant Scyn. He is hiding on a rocky hill southeast of Clearwater Pond.", 1, 100, "I need to take out the remaining gnoll lieutenants.", 1220, 1950084)
+	AddQuestStepKill(Quest, 1, "I need to kill Lieutenant Gnar'Sok. I can find him hiding in an alcove just northwest of The Western Falls.", 1, 100, "I need to take out the remaining gnoll lieutenants.", 1220, 1950066)
+	AddQuestStepKill(Quest, 2, "I need to kill Lieutenant Chorsun. The path west from Lieutenant Charlin leads to him if I turn north before passing under the bridge.", 1, 100, "I need to take out the remaining gnoll lieutenants.", 1220, 1950038)
+	AddQuestStepKill(Quest, 3, "I need to kill Lieutenant Scyn. He is hiding on a rocky hill southeast of Clearwater Pond.", 1, 100, "I need to take out the remaining gnoll lieutenants.", 1220, 1950067)
 	AddQuestStepCompleteAction(Quest, 1, "Step1_Complete_KilledGnarSok")
 	AddQuestStepCompleteAction(Quest, 2, "Step2_Complete_KilledChorsun")
 	AddQuestStepCompleteAction(Quest, 3, "Step3_Complete_KilledScyn")
@@ -35,14 +38,14 @@ end
 function Step1_Complete_KilledGnarSok(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have slain Lieutenant Gnar'Sok.")
 
-	if QuestIsComplete(Player, 208) then
+	if QuestIsComplete(Player, 211) then
 		Multiple_Steps_Complete(Quest, QuestGiver, Player)
 	end
 end
 function Step2_Complete_KilledChorsun(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 2, "I have slain Lieutenant Chorsun.")
 
-	if QuestIsComplete(Player, 208) then
+	if QuestIsComplete(Player, 211) then
 		Multiple_Steps_Complete(Quest, QuestGiver, Player)
 	end
 end
@@ -50,7 +53,7 @@ end
 function Step3_Complete_KilledScyn(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 3, "I have slain Lieutenant Scyn.")
 
-	if QuestIsComplete(Player, 208) then
+	if QuestIsComplete(Player, 211) then
 		Multiple_Steps_Complete(Quest, QuestGiver, Player)
 	end
 end
@@ -58,7 +61,7 @@ end
 function Multiple_Steps_Complete(Quest, QuestGiver, Player)
 	UpdateQuestTaskGroupDescription(Quest, 1, "I have slain the three gnoll lieutenants.")
 
-	AddQuestStepChat(Quest, 4, "I need to return to Lieutenant Charlin.", 1, "I need to bring the news of the slain lieutenants back to Lieutenant Charlin.", 0, 1950015) 
+	AddQuestStepChat(Quest, 4, "I need to return to Lieutenant Charlin.", 1, "I need to bring the news of the slain lieutenants back to Lieutenant Charlin.", 0, 1950008) 
 	AddQuestStepCompleteAction(Quest, 4, "QuestComplete")
 end
 

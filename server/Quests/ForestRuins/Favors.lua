@@ -27,11 +27,7 @@ function Step1Complete(Quest, QuestGiver, Player)
 
 	AddQuestStep(Quest, 2, "I need some samples of the rubble from the ruins.", 4, 100, "Poko has agreed to help, but has asked that I do a favor for him.", 11)
 	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
-end
-
-function Step2Complete(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 2, "I have collected some rubble.")
-
+	
 	AddQuestStepHarvest(Quest, 3, "I need to collect a bark sample from one of the trees south of the river and outside the ruins.", 1, 100, "Poko has agreed to help, but has asked that I do a favor for him.", 834, A_FALLEN_BRANCH_ID)
 	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
 	
@@ -43,6 +39,25 @@ function Step2Complete(Quest, QuestGiver, Player)
 	
 	AddQuestStepHarvest(Quest, 6, "I need to collect a bark sample from one of the trees north of the river and inside the ruins.", 1, 100, "Poko has agreed to help, but has asked that I do a favor for him.", 834, A_FALLEN_BRANCH_ID)
 	AddQuestStepCompleteAction(Quest, 6, "Step6Complete")
+	
+	
+	
+end
+
+function Step2Complete(Quest, QuestGiver, Player)
+	UpdateQuestStepDescription(Quest, 2, "I have collected some rubble.")
+    CheckProgress(Quest, QuestGiver, Player)
+	--AddQuestStepHarvest(Quest, 3, "I need to collect a bark sample from one of the trees south of the river and outside the ruins.", 1, 100, "Poko has agreed to help, but has asked that I do a favor for him.", 834, A_FALLEN_BRANCH_ID)
+	--AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
+	
+	--AddQuestStepHarvest(Quest, 4, "I need to collect a bark sample from one of the trees north of the river and outside the ruins.", 1, 100, "Poko has agreed to help, but has asked that I do a favor for him.", 834, A_FALLEN_BRANCH_ID)
+	--AddQuestStepCompleteAction(Quest, 4, "Step4Complete")
+	
+	--AddQuestStepHarvest(Quest, 5, "I need to collect a bark sample from one of the trees south of the river and inside the ruins.", 1, 100, "Poko has agreed to help, but has asked that I do a favor for him.", 834, A_FALLEN_BRANCH_ID)
+	--AddQuestStepCompleteAction(Quest, 5, "Step5Complete")
+	
+	--AddQuestStepHarvest(Quest, 6, "I need to collect a bark sample from one of the trees north of the river and inside the ruins.", 1, 100, "Poko has agreed to help, but has asked that I do a favor for him.", 834, A_FALLEN_BRANCH_ID)
+	--AddQuestStepCompleteAction(Quest, 6, "Step6Complete")
 end
 
 function CheckProgress(Quest, QuestGiver, Player)
