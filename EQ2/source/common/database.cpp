@@ -104,7 +104,7 @@ bool Database::Init(bool silentLoad) {
 		for (i = 0; i < 4; i++)
 		{
 			if ( !items[i] )
-				LogWrite(DATABASE__ERROR, 0, "DB", "Could not find parameter %s", exampleIni[i]);
+				LogWrite(DATABASE__ERROR, 0, "DB", "Could not find parameter %s", exampleIni[i+1]); // offset by 1 because the [Database] entry
 		}
 		LogWrite(DATABASE__ERROR, 0, "DB", "Example File:");
 		int length = sizeof exampleIni / sizeof exampleIni[0];

@@ -100,12 +100,23 @@ bool DBcore::ReadDBINI(char* host, char* user, char* passwd, char* database, int
 
 		key = strtok(line, "=");
 
+		if (key == NULL)
+			continue;
+
 		//don't do anything until we find the [Database] section
 		if (!on_database_section && strncasecmp(key, "[Database]", 10) == 0)
 			on_database_section = true;
 		else {
 			val = strtok(NULL, "=");
 
+			if (val == NULL)
+			{
+				if (strcasecmp(key, "password") == 0) {
+					strcpy(passwd, "");
+					items[2] = true;
+				}
+				continue;
+			}
 			if (strcasecmp(key, "host") == 0) {
 				strcpy(host, val);
 				items[0] = true;
