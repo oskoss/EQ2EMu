@@ -1800,6 +1800,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				if (houses.size() > 24)
 				{
 					SimpleMessage(CHANNEL_COLOR_YELLOW, "You already own 25 houses and may not own another.");
+					safe_delete(packet);
 					break;
 				}
 
