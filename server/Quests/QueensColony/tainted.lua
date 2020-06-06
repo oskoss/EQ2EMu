@@ -90,8 +90,7 @@ function step4_complete_putParchmentTogether(Quest, QuestGiver, Player)
 	
 	-- remove the old parchment
 	-- summon Parchment Scrap
-	RemoveItem(Player, 10317)
-	SummonItem(Player, 10313, 0)
+
 end
 
 function step5_complete_foundParchment(Quest, QuestGiver, Player)
@@ -125,8 +124,6 @@ function step7_complete_putParchmentTogether(Quest, QuestGiver, Player)
 	 UpdateQuestStepDescription(Quest, 7, "I've pieced the parchment together.")
 	 
 	 -- remove old parchment
-	 RemoveItem(Player, 10313)
-	 RemoveItem(Player, 10315)
 	 -- spawn direspike when player gets close to his loc
 	SpawnMob(GetZone(Player), 2530106, false, 89.7797, 4.85852, 124.289, 300) 
 	AddQuestStepKill(Quest, 8, "The parchment refers to Direspike. I must slay Direspike, the spider that must be at the root of this problem.", 1, 100, "There is more to be learned in the Tainted Forest.", 1859, 2530106)

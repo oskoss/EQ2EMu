@@ -8,17 +8,46 @@
 	Quest Giver: Mav Boilfist
 	Preceded by: None
 	Followed by: Cheers! (cheers.lua)
+	Modified by: Ememjr
+	Mod    Date: 5/14/20
+	Notes      : added code for randomizing the items, based notes n zam, but still verifying thoses notes are correct or not
 --]]
 
 local AFamilyRecipe = 283
+local item1 = nil
+local item2 = nil
+local item3 = nil
+local a = {}
+local b = {}
+local c = {0,0,342,770,0,357}
+local d = {"3CF0F", "3CF1G", "2DF0F", "4QGCG", "CC4QF", "QGC4F"}
+table.insert(a,"I need to acquire some [1111]. 3CF0F is the shipping number.")
+table.insert(a, "I need to acquire some [2222]. 3CF1G is the shipping number.")
+table.insert(a, "I need to acquire some yeast. 2DF0F is the shipping number.")
+table.insert(a, "I need to acquire some Frozen Cherries. 4QGCG is the shipping number.")
+table.insert(a, "I need to acquire some [5555]. 3CF0F is the shipping number.")
+table.insert(a, "I need to acquire some honey. QGC4F is the shipping number.")
+table.insert(b, "I have acquired some [1111].")
+table.insert(b, "I have acquired some [2222].")
+table.insert(b, "I have acquired some yeast.")
+table.insert(b, "I have acquired Frozen Cherries.")
+table.insert(b, "I have acquired some [5555].")
+table.insert(b, "I have acquired some honey.")
+
+
 
 function Init(Quest)
-	AddQuestStep(Quest, 1, "I need to acquire some Frozen Cherries. 4QGCG is the shipping number.", 1, 100, "I must collect the needed ingredients for Mav Boilfist. I will need to refer to the overflow shipping manifest she gave me to determine where the items are located.", 770) 
-	AddQuestStep(Quest, 2, "I need to acquire some yeast. 2DF0F is the shipping number.", 1, 100, "I must collect the needed ingredients for Mav Boilfist. I will need to refer to the overflow shipping manifest she gave me to determine where the items are located.", 342) 
-	AddQuestStep(Quest, 3, "I need to acquire some honey. QGC4F is the shipping number.", 1, 100, "I must collect the needed ingredients for Mav Boilfist. I will need to refer to the overflow shipping manifest she gave me to determine where the items are located.", 357) 
-	AddQuestStepCompleteAction(Quest, 1, "Step1_Complete_FoundCherries")
-	AddQuestStepCompleteAction(Quest, 2, "Step2_Complete_FoundYeast")
-	AddQuestStepCompleteAction(Quest, 3, "Step3_Complete_FoundHoney")
+    if item1 == nil then
+        item1 = 4
+        item2 = 3
+        item3 = 6
+    end
+	AddQuestStep(Quest, 1, a[item1] , 1, 100, "I must collect the needed ingredients for Mav Boilfist. I will need to refer to the overflow shipping manifest she gave me to determine where the items are located.", c[item1]) 
+	AddQuestStep(Quest, 2, a[item2] , 1, 100, "I must collect the needed ingredients for Mav Boilfist. I will need to refer to the overflow shipping manifest she gave me to determine where the items are located.", c[item2]) 
+	AddQuestStep(Quest, 3, a[item3] , 1, 100, "I must collect the needed ingredients for Mav Boilfist. I will need to refer to the overflow shipping manifest she gave me to determine where the items are located.", c[item3]) 
+	AddQuestStepCompleteAction(Quest, 1, "Step1_Complete")
+	AddQuestStepCompleteAction(Quest, 2, "Step2_Complete")
+	AddQuestStepCompleteAction(Quest, 3, "Step3_Complete")
 end
 
 function Accepted(Quest, QuestGiver, Player)
@@ -32,22 +61,22 @@ function Accepted(Quest, QuestGiver, Player)
 	
 	PlayFlavor(QuestGiver, "voiceover/english/tutorial_revamp/mav_boilfist/qey_village03/quests/mav_boilfist/mav_boilfist010.mp3", "", "", 2473952435, 2751712477, Player)
 	AddConversationOption(conversation, "I'll go look for them.")
-	StartConversation(conversation, QuestGiver, Player, "It shouldn't be too hard. The orders you're looking for are #4QGCG, #2DF0F, and #QGC4F.")
+	StartConversation(conversation, QuestGiver, Player, "It shouldn't be too hard. The orders you're looking for are " .. d[item1] ..", " .. d[item2] ..", " .. d[item2] )
 end
 
 function Declined(Quest, QuestGiver, Player)
 end
 
-function Step1_Complete_FoundCherries(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 1, "I have acquired Frozen Cherries.")
+function Step1_Complete(Quest, QuestGiver, Player)
+	UpdateQuestStepDescription(Quest, 1, b[item1] )
 	
 	if QuestIsComplete(Player, AFamilyRecipe) then
 		FoundAllItems(Quest, QuestGiver, Player)
 	end
 end
 
-function Step2_Complete_FoundYeast(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 2, "I have acquired some yeast.")
+function Step2_Complete(Quest, QuestGiver, Player)
+	UpdateQuestStepDescription(Quest, 2, b[item2] )
 	
 	if QuestIsComplete(Player, AFamilyRecipe) then
 		FoundAllItems(Quest, QuestGiver, Player)
@@ -55,7 +84,7 @@ function Step2_Complete_FoundYeast(Quest, QuestGiver, Player)
 end
 
 function Step3_Complete_FoundHoney(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 3, "I have acquired some honey.")
+	UpdateQuestStepDescription(Quest, 3, b[item3])
 	
 	if QuestIsComplete(Player, AFamilyRecipe) then
 		FoundAllItems(Quest, QuestGiver, Player)
@@ -84,10 +113,10 @@ end
 
 function Reload(Quest, QuestGiver, Player, Step)
 	if Step == 1 then
-		Step1_Complete_FoundCherries(Quest, QuestGiver, Player)
+		Step1_Complete(Quest, QuestGiver, Player)
 	elseif Step == 2 then
-		Step2_Complete_FoundYeast(Quest, QuestGiver, Player)
+		Step2_Complete(Quest, QuestGiver, Player)
 	elseif Step == 3 then
-		Step3_Complete_FoundHoney(Quest, QuestGiver, Player)
+		Step3_Complete(Quest, QuestGiver, Player)
 	end
 end

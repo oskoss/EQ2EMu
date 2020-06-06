@@ -11,7 +11,7 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "I need to kill centipedes, or crawlers, for Moyna is use as bait.", 10, 100, "I must kill ten centipedes in the Forest Ruins and gather their remains for use as bait.", 1, 1960026)
+	AddQuestStepKill(Quest, 1, "I need to kill centipedes, or crawlers, for Moyna is use as bait.", 10, 100, "I must kill ten centipedes in the Forest Ruins and gather their remains for use as bait.", 0, 1960026)
 	AddQuestStepCompleteAction(Quest, 1, "step1_completed_killedCentipedes")
 end
 
@@ -28,10 +28,9 @@ function Declined(Quest, QuestGiver, Player)
 end
 
 function step1_completed_killedCentipedes(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 1, "I've killed ten centipedes for Moyna.")
+    UpdateQuestStepDescription(Quest, 1, "I've killed ten centipedes for Moyna.")
 	UpdateQuestTaskGroupDescription(Quest, 1, "I've killed ten centipedes and gathered their remains for Moyna's bait.")
 	UpdateQuestZone(Quest, "Graystone Yard")
-
 	AddQuestStepChat(Quest, 2, "I must speak with tacklemaster Moyna.", 1, "I must return to tacklemaster Moyna in the Graystone Yard for my payment", 0, 2350020) 
 	AddQuestStepCompleteAction(Quest, 2, "QuestComplete")
 end
@@ -45,7 +44,7 @@ function QuestComplete(Quest, QuestGiver, Player)
 end
 
 function Reload(Quest, QuestGiver, Player, Step)
-	if step == 1 then
+	if Step == 1 then
 		step1_completed_killedCentipedes(Quest, QuestGiver, Player)
 	end
 end

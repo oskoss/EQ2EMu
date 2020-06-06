@@ -3,12 +3,14 @@
     Script Purpose   :    
     Script Author    :    vo1d
     Script Date      :    2019.11.02
-    Script Notes     :    
-
+    Script Notes     :    Added quest item for completion the quest.
+    Modified by      :    premierio015
+    Modified Date    :    18.05.2020
     Zone             :    Outpost of the Overlord
     Quest Giver      :    Charles Arker
     Preceded by      :    None
     Followed by      :    In the Name of Honor
+  
 --]]
 
 
@@ -32,7 +34,8 @@ end
 function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "Received the first parchment pieces.")
 	UpdateQuestTaskGroupDescription(Quest, 1, "I've received the initial pieces of parchment from Charles Arker.")
-
+        GiveQuestItem(Quest, Player, "I've recieved the initial pieces of parchment from Charles Arker.", 10316)
+        
 	AddQuestStep(Quest, 2, "I should take a look at these parchment scraps given to me by Charles Arker to get some more clues on where to gather more.", 1, 100, "The Tunarians have probably hidden the rest of this parchment and they feel secure.  It will be up to me to shatter their security.", 11)
 	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
 end

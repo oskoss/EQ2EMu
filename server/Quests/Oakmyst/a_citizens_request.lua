@@ -8,11 +8,16 @@
 	Quest Giver: Lieutenant Charlin
 	Preceded by: Cause for Investigation (cause_for_investigation.lua)
 	Followed by: An Important Meeting (an_important_meeting.lua)
+	Modified   :5/6/2020
+	Modified by: Ememjr
+	Notes      : Updated NPC ID's
+	
+	
 --]]
 
 
 function Init(Quest)
-	AddQuestStepChat(Quest, 1, "I need to speak with Bardrian Vorsuth on the docks in western Oakmyst Forest.", 1, "Lieutenant Charlin has asked that I head to the docks in Oakmyst Forest on his behalf.", 0, 1950082)
+	AddQuestStepChat(Quest, 1, "I need to speak with Bardrian Vorsuth on the docks in western Oakmyst Forest.", 1, "Lieutenant Charlin has asked that I head to the docks in Oakmyst Forest on his behalf.", 0, 1950060)
 	AddQuestStepCompleteAction(Quest, 1, "Step1_Complete_SpokeWithBardrian")
 end
 
@@ -31,7 +36,7 @@ end
 function Step1_Complete_SpokeWithBardrian(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have spoken with Bardrian Vorsuth.")
 	
-	AddQuestStepChat(Quest, 2, "I need to bring the news of the machine back to Lieutenant Charlin.", 1, "Lieutenant Charlin has asked that I head to the docks in Oakmyst Forest on his behalf.", 0, 1950015) 
+	AddQuestStepChat(Quest, 2, "I need to bring the news of the machine back to Lieutenant Charlin.", 1, "Lieutenant Charlin has asked that I head to the docks in Oakmyst Forest on his behalf.", 0, 1950008) 
 	AddQuestStepCompleteAction(Quest, 2, "Step2_Complete_SpokeWithCharlin")
 end
 
@@ -45,7 +50,7 @@ end
 function Step3_Complete_FoundMachine(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 3, "I have found another machine.")
 	
-	AddQuestStepChat(Quest, 4, "I need to tell Lieutenant Charlin of my find.", 1, "Lieutenant Charlin has asked that I head to the docks in Oakmyst Forest on his behalf.", 0, 1950015) 
+	AddQuestStepChat(Quest, 4, "I need to tell Lieutenant Charlin of my find.", 1, "Lieutenant Charlin has asked that I head to the docks in Oakmyst Forest on his behalf.", 0, 1950008) 
 	AddQuestStepCompleteAction(Quest, 4, "QuestComplete")
 end
 

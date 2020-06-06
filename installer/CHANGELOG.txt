@@ -1,7 +1,14 @@
-V0.1 - Initial Creation. Basic functions.
+V0.1   - Initial Creation. Basic functions.
 
-V0.2 - Included more udpate options, cleaned up some unneeded code.
+V0.2   - Included more udpate options, cleaned up some unneeded code.
 
-V0.3 - Added Options.bat, permits cleaning/updating of the db.
+V0.3   - Added Options.bat, permits cleaning/updating of the db.
 
-V0.4 - Added Partial update of Database (all but guilds/character data). Made it so all windows close once done. Updated all files.
+V0.4   - Added Partial update of Database (all but guilds/character data). Made it so all windows close once done. Updated all files.
+
+V0.5   - Added option to send BUG reports from player server to me. Corrected HTTPS certificate issue (no longer checks if cert is valid).
+
+V0.5.1 - Made EXE updates default to off. Since EXEs are hit and miss with stability sticking with stable EXEs unless you want the newest bells whistles, and possibly crashes.
+         Added option to update structs. Forced on with EXE check. Added option to options.bat to check/update struct files.
+
+V0.5.2 - Updated the installed DB to current. Added a generic fix SQL import for various fixes that might be needed.

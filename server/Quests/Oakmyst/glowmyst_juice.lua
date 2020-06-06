@@ -8,6 +8,9 @@
 	Quest Giver: Toppa Doppster
 	Preceded by: None
 	Followed by: None
+	Modified by: Ememjr
+	      Date : 5/7/2020
+	     Notes : Updated NPC ID
 --]]
 
 
@@ -31,7 +34,7 @@ end
 function step1_complete_killedBeetles(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have collected the fluid sacs.")
 	
-	AddQuestStepChat(Quest, 2, "I need to give these fluid sacs to Toppa", 1, "Toppa would like me to collect some glowmyst juice for her friends.", 146, 1950007) 
+	AddQuestStepChat(Quest, 2, "I need to give these fluid sacs to Toppa", 1, "Toppa would like me to collect some glowmyst juice for her friends.", 146, 1950005) 
 	AddQuestStepCompleteAction(Quest, 2, "Quest_Complete")
 end
 
