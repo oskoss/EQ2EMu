@@ -3490,6 +3490,8 @@ int32 Player::GetTSXP() {
 }
 
 bool Player::AddXP(int32 xp_amount){
+	xp_amount += ((xp_amount) * stats[ITEM_STAT_COMBATEXPMOD]) / 100;
+
 	float current_xp_percent = ((float)GetXP()/(float)GetNeededXP())*100;
 	float miniding_min_percent = ((int)(current_xp_percent/10)+1)*10;
 	while((xp_amount + GetXP()) >= GetNeededXP()){
@@ -3513,6 +3515,8 @@ bool Player::AddXP(int32 xp_amount){
 }
 
 bool Player::AddTSXP(int32 xp_amount){
+	xp_amount += ((xp_amount)*stats[ITEM_STAT_TRADESKILLEXPMOD]) / 100;
+
 	float current_xp_percent = ((float)GetTSXP()/(float)GetNeededTSXP())*100;
 	float miniding_min_percent = ((int)(current_xp_percent/10)+1)*10;
 	while((xp_amount + GetTSXP()) >= GetNeededTSXP()){

@@ -1974,7 +1974,7 @@ void World::PopulateTOVStatMap() {
 	tov_itemstat_conversion[24] = TOV_ITEM_STAT_HATEGAINMOD;
 	tov_itemstat_conversion[25] = TOV_ITEM_STAT_COMBATEXPMOD;
 	tov_itemstat_conversion[26] = TOV_ITEM_STAT_TRADESKILLEXPMOD;
-	tov_itemstat_conversion[27] = TOV_ITEM_STAT_ACHIEVEMENTEXPMOD	;
+	tov_itemstat_conversion[27] = TOV_ITEM_STAT_ACHIEVEMENTEXPMOD;
 	tov_itemstat_conversion[28] = TOV_ITEM_STAT_SIZEMOD;
 	tov_itemstat_conversion[29] = TOV_ITEM_STAT_DPS;
 	tov_itemstat_conversion[30] = 698;
