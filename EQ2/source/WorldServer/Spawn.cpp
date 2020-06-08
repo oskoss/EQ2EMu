@@ -2647,7 +2647,10 @@ bool Spawn::CalculateChange(){
 			else {
 				SetX(nx + tar_vx, false);
 				SetZ(nz + tar_vz, false);
-				SetY(ny + tar_vy, false);
+				if ( IsWidget() )
+					SetY(ny + tar_vy, false, true);
+				else
+					SetY(ny + tar_vy, false);
 			}
 
 			if (GetZone()->Grid != nullptr) {
