@@ -2098,6 +2098,10 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 
 		if (EngagedInCombat())
 			temp_activity_status += ACTIVITY_STATUS_INCOMBAT_1188;
+
+		// if this is either a boat or lift let the client be manipulated by the object
+		if (appearance.icon == 28 || appearance.icon == 12)
+			temp_activity_status += ACTIVITY_STATUS_ISTRANSPORT_1188;
 	}
 	else
 	{
