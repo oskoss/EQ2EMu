@@ -936,8 +936,11 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	case OP_SysClient: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SysClient", opcode, opcode);
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
+
+		if (!ready_for_updates)
+			database.loadCharacterProperties(this);
+
 		ready_for_updates = true;
-		database.loadCharacterProperties(this);
 		break;
 	}
 	case OP_MapRequest: {

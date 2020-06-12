@@ -1705,6 +1705,18 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 			if (val)
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "GM Vision Enabled!");
 		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_LUADEBUG))
+		{
+			int8 val = atoi(prop_value);
+			if (val)
+			{
+				client->SetLuaDebugClient(true);
+				if (lua_interface)
+					lua_interface->UpdateDebugClients(client);
+
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You will now receive LUA error messages.");
+			}
+		}
 	}
 
 	return true;

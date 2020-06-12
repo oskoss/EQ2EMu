@@ -2890,6 +2890,29 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					else
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "GM Vision Disabled!");
 				}
+				else if (strcmp(sep->arg[0], "luadebug") == 0)
+				{
+					client->SetLuaDebugClient(onOff);
+#if defined(__GNUC__)
+					database.insertCharacterProperty(client, CHAR_PROPERTY_LUADEBUG, (onOff) ? (char*)"1" : (char*)"0");
+#else
+					database.insertCharacterProperty(client, CHAR_PROPERTY_LUADEBUG, (onOff) ? "1" : "0");
+#endif
+
+					if (onOff)
+					{
+						if (lua_interface)
+							lua_interface->UpdateDebugClients(client);
+
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You will now receive LUA error messages.");
+					}
+					else
+					{
+						if (lua_interface)
+							lua_interface->RemoveDebugClients(client);
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You will no longer receive LUA error messages.");
+					}
+				}
 			}
 			break;
 		}

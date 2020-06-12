@@ -105,6 +105,7 @@ using namespace std;
 #define CHAR_PROPERTY_FLYMODE		"modify_flymode"
 #define CHAR_PROPERTY_INVUL			"modify_invul"
 #define CHAR_PROPERTY_GMVISION		"modify_gmvision"
+#define CHAR_PROPERTY_LUADEBUG		"modify_luadebug"
 
 
 struct StartingItem{
