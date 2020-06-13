@@ -160,6 +160,7 @@ Widget*	Widget::Copy(){
 	new_spawn->SetOpenX(GetOpenX());
 	new_spawn->SetOpenZ(GetOpenZ());
 	new_spawn->SetMultiFloorLift(multi_floor_lift);
+	new_spawn->SetSoundsDisabled(IsSoundsDisabled());
 	return new_spawn;
 }
 

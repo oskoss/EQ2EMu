@@ -1059,6 +1059,9 @@ public:
 
 	int32	GetPickupItemID() { return pickup_item_id; }
 	int32	GetPickupUniqueItemID() { return pickup_unique_item_id; }
+
+	bool	IsSoundsDisabled() { return disable_sounds; }
+	void	SetSoundsDisabled(bool val) { disable_sounds = val; }
 protected:
 
 	bool	send_spawn_changes;
@@ -1140,6 +1143,8 @@ private:
 	int16 m_spawnAnimLeeway;
 
 	Mutex m_Update;
+
+	bool disable_sounds;
 };
 
 #endif

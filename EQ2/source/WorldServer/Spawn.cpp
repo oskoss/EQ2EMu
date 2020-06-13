@@ -106,6 +106,7 @@ Spawn::Spawn(){
 	has_spawn_proximities = false;
 	pickup_item_id = 0;
 	pickup_unique_item_id = 0;
+	disable_sounds = false;
 }
 
 Spawn::~Spawn(){

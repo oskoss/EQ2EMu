@@ -7061,7 +7061,8 @@ void Client::ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destin
 			SimpleMessage(CHANNEL_COLOR_YELLOW, destination->message.c_str());
 	}
 	else if (transport_list.size() > 0) {
-		PlaySound("mariner_bell");
+		if (!spawn->IsSoundsDisabled())
+			PlaySound("mariner_bell");
 
 		PacketStruct* packet = configReader.getStruct("WS_TeleportList", GetVersion());
 		if (packet) {

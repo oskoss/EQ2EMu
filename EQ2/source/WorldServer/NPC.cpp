@@ -92,6 +92,7 @@ NPC::NPC(NPC* old_npc){
 		SetPower(GetTotalPower());
 		ChangePrimaryWeapon();
 		ChangeSecondaryWeapon();
+		SetSoundsDisabled(old_npc->IsSoundsDisabled());
 	}
 }
 
