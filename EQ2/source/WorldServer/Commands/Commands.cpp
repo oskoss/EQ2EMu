@@ -2774,6 +2774,46 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 			break;
 		}
+		case COMMAND_HOUSE_DEPOSIT:
+		{
+			PrintSep(sep, "COMMAND_HOUSE_DEPOSIT");
+			// arg0 = ??? (set to 3)
+			// arg1 = coin (in copper)
+			// arg2 = status? (not implemented yet)
+			PlayerHouse* ph = world.GetPlayerHouseByInstanceID(client->GetCurrentZone()->GetInstanceID());
+			if (ph && sep && sep->IsNumber(1))
+			{
+				int64 outVal = strtoull(sep->arg[1], NULL, 0);
+				if (client->GetPlayer()->RemoveCoins(outVal))
+				{
+					char query[256];
+					map<string,Deposit>::iterator itr = ph->depositsMap.find(string(client->GetPlayer()->GetName()));
+					if (itr != ph->depositsMap.end())
+					{
+						snprintf(query, 256, "update character_house_deposits set timestamp = %u, amount = amount + %I64u, last_amount = %I64u where house_id = %u and instance_id = %u and name='%s'", Timer::GetUnixTimeStamp(), outVal, outVal, ph->house_id, ph->instance_id, client->GetPlayer()->GetName());
+					}
+					else
+						snprintf(query, 256, "insert into character_house_deposits set timestamp = %u, house_id = %u, instance_id = %u, name='%s', amount = %I64u", Timer::GetUnixTimeStamp(), ph->house_id, ph->instance_id, client->GetPlayer()->GetName(), outVal);
+
+					if (database.RunQuery(query, strnlen(query, 256)))
+					{
+						ph->escrow_coins += outVal;
+						database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins);
+
+						database.LoadDeposits(ph);
+						client->PlaySound("coin_cha_ching");
+						HouseZone* hz = world.GetHouseZone(ph->house_id);
+						ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetPlayer()->GetID());
+					}
+					else
+					{
+						client->GetPlayer()->AddCoins(outVal);
+						client->SimpleMessage(CHANNEL_COLOR_RED, "Deposit failed!");
+					}
+				}
+			}
+			break;
+		}
 		case COMMAND_HOUSE:
 		{
 			if (sep && sep->IsNumber(0))
@@ -2781,7 +2821,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				int32 unique_id = atoi(sep->arg[0]);
 				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
 				HouseZone* hz = 0;
-
+					
 				if (ph)
 					hz = world.GetHouseZone(ph->house_id);
 				// there is a arg[1] that is true/false, but not sure what it is for investigate more later

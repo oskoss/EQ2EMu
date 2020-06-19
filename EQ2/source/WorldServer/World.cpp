@@ -1856,7 +1856,7 @@ void World::AddPlayerHouse(int32 char_id, int32 house_id, int64 unique_id, int32
 		ph->escrow_status = escrow_status;
 		ph->upkeep_due = upkeep_due;
 		ph->player_name = player_name;
-
+		database.LoadDeposits(ph);
 		m_playerHouses[house_id][char_id] = ph;
 	}
 	MPlayerHouses.releasewritelock(__FUNCTION__, __LINE__);
@@ -1942,8 +1942,6 @@ vector<PlayerHouse*> World::GetAllPlayerHousesByHouseID(int32 house_id) {
 
 	return ret;
 }
-
-
 
 void World::PopulateTOVStatMap() {
 	//This function populates a map that converts changed CoE to ToV stats

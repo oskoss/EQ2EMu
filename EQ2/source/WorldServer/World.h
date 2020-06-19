@@ -191,6 +191,15 @@ struct HouseZone {
 	float		exit_heading;
 };
 
+struct Deposit {
+	int32 timestamp;
+	int64 amount;
+	int64 last_amount;
+	int32 status;
+	int32 last_status;
+	string name;
+};
+
 struct PlayerHouse {
 	int32 house_id;
 	int64 unique_id;
@@ -199,6 +208,8 @@ struct PlayerHouse {
 	int64 escrow_coins;
 	int32 escrow_status;
 	string player_name;
+	list<Deposit> deposits;
+	map<string, Deposit> depositsMap;
 };
 
 // Constants for STATs counters

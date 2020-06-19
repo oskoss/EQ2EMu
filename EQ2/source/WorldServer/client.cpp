@@ -1883,10 +1883,27 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 						break;
 					}
 				}
-
-				// TODO: Need support for upkeep_status, but alas status_points are not implemented!
-				if (!hz->upkeep_coin || hz->upkeep_coin && player->RemoveCoins(hz->upkeep_coin)) // TODO: Need option to take from bank if player does not have enough coin on them
+				int64 coinReq = hz->upkeep_coin;
+				int64 tmpRecoverCoins = 0;
+				bool escrowChange = false;
+				if (ph->escrow_coins && coinReq >= ph->escrow_coins) // more required to upkeep than in escrow, subtract what we have left
 				{
+					escrowChange = true;
+					tmpRecoverCoins = ph->escrow_coins;
+					coinReq -= ph->escrow_coins;
+				}
+				else if (ph->escrow_coins && coinReq && coinReq <= ph->escrow_coins)
+				{
+					escrowChange = true;
+					// more than enough in escrow, subtract and make our cost 0!
+					ph->escrow_coins -= coinReq;
+					coinReq = 0;
+				}
+				// TODO: Need support for upkeep_status, but alas status_points are not implemented!
+				if (!coinReq || coinReq && player->RemoveCoins(coinReq)) // TODO: Need option to take from bank if player does not have enough coin on them
+				{
+					if (escrowChange)
+						database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins);
 					ph->upkeep_due = upkeep_due;
 					database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
 					//ClientPacketFunctions::SendHousingList(this);
@@ -1895,6 +1912,10 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				}
 				else
 				{
+					// recover the escrow we were going to use but could not spend due to lack of funds
+					if (tmpRecoverCoins)
+						ph->escrow_coins += tmpRecoverCoins;
+
 					SimpleMessage(CHANNEL_COLOR_YELLOW, "You do not have enough money to pay for upkeep.");
 					PlaySound("buy_failed");
 				}

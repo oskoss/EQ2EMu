@@ -880,6 +880,7 @@ private:
 #define COMMAND_HOUSE					515
 #define COMMAND_MOVE_ITEM				516
 #define COMMAND_PICKUP					517
+#define COMMAND_HOUSE_DEPOSIT			518
 
 #define GET_AA_XML						751
 #define ADD_AA							752

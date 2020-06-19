@@ -49,6 +49,7 @@
 #include "Titles.h"
 #include "Rules/Rules.h"
 #include "Languages.h"
+#include "World.h"
 
 using namespace std;
 
@@ -503,7 +504,9 @@ public:
 	int64				AddPlayerHouse(int32 char_id, int32 house_id, int32 instance_id, int32 upkeep_due);
 	void				SetHouseUpkeepDue(int32 char_id, int32 house_id, int32 instance_id, int32 upkeep_due);
 	void				RemovePlayerHouse(int32 char_id, int32 house_id);
+	void				UpdateHouseEscrow(int32 house_id, int32 instance_id, int64 amount);
 	void				LoadPlayerHouses();
+	void				LoadDeposits(PlayerHouse* house);
 
 	/* World */
 	bool				CheckBannedIPs(const char* loginIP);

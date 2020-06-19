@@ -31,6 +31,13 @@ void WorldDatabase::SetHouseUpkeepDue(int32 char_id, int32 house_id, int32 insta
 }
 
 
+void WorldDatabase::UpdateHouseEscrow(int32 house_id, int32 instance_id, int64 amount) {
+	Query query;
+	string update = string("UPDATE character_houses set escrow_coins = %I64u where house_id = %u and instance_id = %u");
+	query.RunQuery2(Q_UPDATE, update.c_str(), amount, house_id, instance_id);
+}
+
+
 void WorldDatabase::RemovePlayerHouse(int32 char_id, int32 house_id) {
 }
 
@@ -42,6 +49,39 @@ void WorldDatabase::LoadPlayerHouses() {
 	if (result && mysql_num_rows(result) > 0) {
 		while ((row = mysql_fetch_row(result))) {
 			world.AddPlayerHouse(atoul(row[1]), atoul(row[2]), atoi64(row[0]), atoul(row[3]), atoul(row[4]), atoi64(row[5]), atoul(row[6]), row[7]);
+		}
+	}
+}
+
+void WorldDatabase::LoadDeposits(PlayerHouse* ph)
+{
+	if (!ph)
+		return;
+	ph->deposits.clear();
+	ph->depositsMap.clear();
+
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "select timestamp, amount, last_amount, status, last_status, name from character_house_deposits where house_id = %u and instance_id = %u order by timestamp asc", ph->house_id, ph->instance_id);
+
+	if (result && mysql_num_rows(result) > 0) {
+		while ((row = mysql_fetch_row(result))) {
+			Deposit d;
+			d.timestamp = atoul(row[0]);
+
+			int64 outVal = strtoull(row[1], NULL, 0);
+			d.amount = outVal;
+
+			outVal = strtoull(row[2], NULL, 0);
+			d.last_amount = outVal;
+
+			d.status = atoul(row[3]);
+			d.last_status = atoul(row[4]);
+
+			d.name = string(row[5]);
+
+			ph->deposits.push_back(d);
+			ph->depositsMap.insert(make_pair(d.name, d));
 		}
 	}
 }

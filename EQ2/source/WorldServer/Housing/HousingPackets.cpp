@@ -132,7 +132,6 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 
 		packet->setDataByName("escrow_balance_coins", ph->escrow_coins);
 		packet->setDataByName("escrow_balance_status", ph->escrow_status);
-
 		// temp - set priv level to owner for now
 		packet->setDataByName("privlage_level", 4);
 		// temp - set house type to personal house for now
@@ -146,6 +145,23 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 			packet->setDataByName("num_access", 0);
 			packet->setDataByName("public_access_level", 1);
 			packet->setDataByName("num_history", 0);
+
+			// allows deposits to be seen
+			packet->setDataByName("unknown3", ph->deposits.size() ? 1 : 0);
+
+			packet->setArrayLengthByName("num_deposit", ph->deposits.size());
+			list<Deposit>::iterator itr;
+			int d = 0;
+			for (itr = ph->deposits.begin(); itr != ph->deposits.end(); itr++)
+			{
+				packet->setArrayDataByName("deposit_name", itr->name.c_str(), d);
+				packet->setArrayDataByName("deposit_total_coin", itr->amount, d);
+				packet->setArrayDataByName("deposit_time_stamp", itr->timestamp, d);
+				packet->setArrayDataByName("deposit_last_coin", itr->last_amount, d);
+				packet->setArrayDataByName("deposit_total_status", itr->status, d);
+				packet->setArrayDataByName("deposit_last_status", itr->last_status, d);
+				d++;
+			}
 		}
 
 		client->QueuePacket(packet->serialize());
@@ -182,7 +198,7 @@ void ClientPacketFunctions::SendHouseVisitWindow(Client* client, vector<PlayerHo
 		client->QueuePacket(packet->serialize());
 	}
 	safe_delete(packet);
-}
+}	
 
 /*
 <Struct Name="WS_DisplayVisitScreen" ClientVersion="1193" OpcodeName="OP_DisplayInnVisitScreenMsg">
