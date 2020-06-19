@@ -1891,6 +1891,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					escrowChange = true;
 					tmpRecoverCoins = ph->escrow_coins;
 					coinReq -= ph->escrow_coins;
+					ph->escrow_coins = 0;
 				}
 				else if (ph->escrow_coins && coinReq && coinReq <= ph->escrow_coins)
 				{
