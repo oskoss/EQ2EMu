@@ -200,6 +200,33 @@ struct Deposit {
 	string name;
 };
 
+struct HouseHistory {
+	HouseHistory()
+	{
+		timestamp = 0;
+		amount = 0;
+		name = string("");
+		reason = string("");
+		status = 0;
+		pos_flag = 0;
+	}
+	HouseHistory(int32 in_timestamp, int64 in_amount, string in_name, string in_reason, int32 in_status, int8 in_pos_flag)
+	{
+		timestamp = in_timestamp;
+		amount = in_amount;
+		name = in_name;
+		reason = in_reason;
+		status = in_status;
+		pos_flag = in_pos_flag;
+	}
+	int32 timestamp;
+	int64 amount;
+	string name;
+	string reason;
+	int32 status;
+	int8 pos_flag;
+};
+
 struct PlayerHouse {
 	int32 house_id;
 	int64 unique_id;
@@ -210,6 +237,7 @@ struct PlayerHouse {
 	string player_name;
 	list<Deposit> deposits;
 	map<string, Deposit> depositsMap;
+	list<HouseHistory> history;
 };
 
 // Constants for STATs counters
@@ -530,6 +558,8 @@ public:
 	PlayerHouse* GetPlayerHouseByInstanceID(int32 instance_id);
 	vector<PlayerHouse*> GetAllPlayerHouses(int32 char_id);
 	vector<PlayerHouse*> GetAllPlayerHousesByHouseID(int32 house_id);
+
+	void ReloadHouseData(PlayerHouse* ph);
 
 	PlayerGroupManager* GetGroupManager() { return &m_playerGroupManager; }
 

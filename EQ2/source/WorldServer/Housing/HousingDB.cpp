@@ -62,7 +62,7 @@ void WorldDatabase::LoadDeposits(PlayerHouse* ph)
 
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "select timestamp, amount, last_amount, status, last_status, name from character_house_deposits where house_id = %u and instance_id = %u order by timestamp asc", ph->house_id, ph->instance_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "select timestamp, amount, last_amount, status, last_status, name from character_house_deposits where house_id = %u and instance_id = %u order by timestamp asc limit 255", ph->house_id, ph->instance_id);
 
 	if (result && mysql_num_rows(result) > 0) {
 		while ((row = mysql_fetch_row(result))) {
@@ -84,4 +84,48 @@ void WorldDatabase::LoadDeposits(PlayerHouse* ph)
 			ph->depositsMap.insert(make_pair(d.name, d));
 		}
 	}
+}
+
+void WorldDatabase::LoadHistory(PlayerHouse* ph)
+{
+	if (!ph)
+		return;
+	ph->history.clear();
+
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "select timestamp, amount, status, reason, name, pos_flag from character_house_history where house_id = %u and instance_id = %u order by timestamp asc limit 255", ph->house_id, ph->instance_id);
+
+	if (result && mysql_num_rows(result) > 0) {
+		while ((row = mysql_fetch_row(result))) {
+			HouseHistory h;
+			h.timestamp = atoul(row[0]);
+
+			int64 outVal = strtoull(row[1], NULL, 0);
+			h.amount = outVal;
+
+			h.status = atoul(row[2]);
+
+			h.reason = string(row[3]);
+			h.name = string(row[4]);
+
+			h.pos_flag = atoul(row[5]);
+
+			ph->history.push_back(h);
+		}
+	}
+}
+
+
+void WorldDatabase::AddHistory(PlayerHouse* house, char* name, char* reason, int32 timestamp, int64 amount, int32 status, int8 pos_flag)
+{
+	if (!house)
+		return;
+
+	HouseHistory h(Timer::GetUnixTimeStamp(), amount, string(name), string(reason), status, pos_flag);
+	house->history.push_back(h);
+
+	Query query;
+	string insert = string("INSERT INTO character_house_history (timestamp, house_id, instance_id, name, amount, status, reason, pos_flag) VALUES (%u, %u, %u, '%s', %I64u, %u, '%s', %u) ");
+	query.RunQuery2(Q_INSERT, insert.c_str(), timestamp, house->house_id, house->instance_id, name, amount, status, reason, pos_flag);
 }

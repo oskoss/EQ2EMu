@@ -1856,10 +1856,16 @@ void World::AddPlayerHouse(int32 char_id, int32 house_id, int64 unique_id, int32
 		ph->escrow_status = escrow_status;
 		ph->upkeep_due = upkeep_due;
 		ph->player_name = player_name;
-		database.LoadDeposits(ph);
+		ReloadHouseData(ph);
 		m_playerHouses[house_id][char_id] = ph;
 	}
 	MPlayerHouses.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void World::ReloadHouseData(PlayerHouse* ph)
+{
+	database.LoadDeposits(ph);
+	database.LoadHistory(ph);
 }
 
 PlayerHouse* World::GetPlayerHouseByHouseID(int32 char_id, int32 house_id) {

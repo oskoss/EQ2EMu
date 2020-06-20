@@ -1903,8 +1903,11 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				// TODO: Need support for upkeep_status, but alas status_points are not implemented!
 				if (!coinReq || coinReq && player->RemoveCoins(coinReq)) // TODO: Need option to take from bank if player does not have enough coin on them
 				{
+					database.AddHistory(ph, GetPlayer()->GetName(), "Paid Upkeep", Timer::GetUnixTimeStamp(), hz->upkeep_coin, 0, 0);
+
 					if (escrowChange)
 						database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins);
+
 					ph->upkeep_due = upkeep_due;
 					database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
 					//ClientPacketFunctions::SendHousingList(this);

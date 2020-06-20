@@ -507,6 +507,8 @@ public:
 	void				UpdateHouseEscrow(int32 house_id, int32 instance_id, int64 amount);
 	void				LoadPlayerHouses();
 	void				LoadDeposits(PlayerHouse* house);
+	void				LoadHistory(PlayerHouse* house);
+	void				AddHistory(PlayerHouse* house, char* name, char* reason, int32 timestamp, int64 amount = 0, int32 status = 0, int8 pos_flag = 0);
 
 	/* World */
 	bool				CheckBannedIPs(const char* loginIP);

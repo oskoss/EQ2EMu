@@ -146,8 +146,8 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 			packet->setDataByName("public_access_level", 1);
 			packet->setDataByName("num_history", 0);
 
-			// allows deposits to be seen
-			packet->setDataByName("unknown3", ph->deposits.size() ? 1 : 0);
+			// allows deposits/history to be seen -- at this point seems plausible supposed to be 'inside_house'..?
+			packet->setDataByName("unknown3", (ph->deposits.size() || ph->history.size()) ? 1 : 0);
 
 			packet->setArrayLengthByName("num_deposit", ph->deposits.size());
 			list<Deposit>::iterator itr;
@@ -160,6 +160,21 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 				packet->setArrayDataByName("deposit_last_coin", itr->last_amount, d);
 				packet->setArrayDataByName("deposit_total_status", itr->status, d);
 				packet->setArrayDataByName("deposit_last_status", itr->last_status, d);
+				d++;
+			}
+
+
+			packet->setArrayLengthByName("num_history", ph->history.size());
+			list<HouseHistory>::iterator hitr;
+			d = 0;
+			for (hitr = ph->history.begin(); hitr != ph->history.end(); hitr++)
+			{
+				packet->setArrayDataByName("history_name", hitr->name.c_str(), d);
+				packet->setArrayDataByName("history_coins", hitr->amount, d);
+				packet->setArrayDataByName("history_status", hitr->status, d);
+				packet->setArrayDataByName("history_time_stamp", hitr->timestamp, d);
+				packet->setArrayDataByName("history_reason", hitr->reason.c_str(), d);
+				packet->setArrayDataByName("history_add_flag", hitr->pos_flag, d);
 				d++;
 			}
 		}
