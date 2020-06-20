@@ -488,7 +488,7 @@ int EQ2Emu_lua_GiveLoot(lua_State* state) {
 		return 0;
 	Spawn* entity = lua_interface->GetSpawn(state);
 	Spawn* player = lua_interface->GetSpawn(state, 2);
-	if (entity && entity->IsEntity() && player && player->IsPlayer()) {
+	if (entity && player && player->IsPlayer()) {
 		int32 coins = lua_interface->GetInt32Value(state, 3);
 		vector<Item*>* items = 0;
 		int i = 0;
