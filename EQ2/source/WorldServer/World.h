@@ -116,6 +116,10 @@ struct TransportDestination{
 	int32	map_y;
 	int32	faction_id;
 	int32	faction_value;
+
+	int32	expansion_flag;
+	int32	min_client_version;
+	int32	max_client_version;
 };
 
 struct LocationTransportDestination{

@@ -6963,7 +6963,7 @@ void ZoneServer::AddLocationTransporter(int32 zone_id, string message, float tri
 	MTransporters.unlock();
 }
 
-void ZoneServer::AddTransporter(int32 transport_id, int8 type, string name, string message, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y){
+void ZoneServer::AddTransporter(int32 transport_id, int8 type, string name, string message, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y, int32 expansion_flag, int32 min_client_version, int32 max_client_version){
 	TransportDestination* transport = new TransportDestination;
 	transport->type = type;
 	transport->display_name = name;
@@ -6985,18 +6985,37 @@ void ZoneServer::AddTransporter(int32 transport_id, int8 type, string name, stri
 	transport->map_x = map_x;
 	transport->map_y = map_y;
 
+	transport->expansion_flag = expansion_flag;
+	transport->min_client_version = min_client_version;
+	transport->max_client_version = max_client_version;
+
 	MTransporters.lock();
 	transporters[transport_id].push_back(transport);
 	MTransporters.unlock();
 }
 
-vector<TransportDestination*>* ZoneServer::GetTransporters(int32 transport_id){
-	vector<TransportDestination*>* ret = 0;
+void ZoneServer::GetTransporters(vector<TransportDestination*>* returnList, Client* client, int32 transport_id){
+	if (!returnList)
+		return;
+
 	MTransporters.lock();
-	if(transporters.count(transport_id) > 0)
-		ret = &transporters[transport_id];
+	if (transporters.count(transport_id) > 0)
+	{
+		vector<TransportDestination*> list;
+		for (int i = 0; i < transporters[transport_id].size(); i++)
+		{
+			if (transporters[transport_id][i]->min_client_version && client->GetVersion() < transporters[transport_id][i]->min_client_version)
+				continue;
+			else if (transporters[transport_id][i]->max_client_version && client->GetVersion() > transporters[transport_id][i]->max_client_version)
+				continue;
+
+			if (database.CheckExpansionFlags(this, transporters[transport_id][i]->expansion_flag))
+			{
+				returnList->push_back(transporters[transport_id][i]);
+			}
+		}
+	}
 	MTransporters.unlock();
-	return ret;
 }
 
 MutexList<LocationTransportDestination*>* ZoneServer::GetLocationTransporters(int32 zone_id){

@@ -333,7 +333,7 @@ void Widget::ProcessUse(){
 }
 
 void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
-	vector<TransportDestination*>* destinations = 0;
+	vector<TransportDestination*> destinations;
 	//The following check disables the use of doors and other widgets if the player does not meet the quest requirements
 	//If this is from a script ignore this check (client will be null)
 
@@ -349,9 +349,9 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 	}
 
 	if (client && GetTransporterID() > 0)
-		destinations = GetZone()->GetTransporters(GetTransporterID());
-	if (destinations)
-		client->ProcessTeleport(this, destinations, GetTransporterID());
+		GetZone()->GetTransporters(&destinations, client, GetTransporterID());
+	if (destinations.size())
+		client->ProcessTeleport(this, &destinations, GetTransporterID());
 	else if (overrideWidgetType == WIDGET_TYPE_DOOR || overrideWidgetType == WIDGET_TYPE_LIFT){
 		Widget* widget = this;
 		if (!action_spawn && action_spawn_id > 0){

@@ -45,11 +45,11 @@ EQ2Packet* Object::serialize(Player* player, int16 version){
 }
 
 void Object::HandleUse(Client* client, string command){
-	vector<TransportDestination*>* destinations = 0;
+	vector<TransportDestination*> destinations;
 	if(GetTransporterID() > 0)
-		destinations = GetZone()->GetTransporters(GetTransporterID());
-	if(destinations)
-		client->ProcessTeleport(this, destinations, GetTransporterID());
+		GetZone()->GetTransporters(&destinations, client, GetTransporterID());
+	if(destinations.size())
+		client->ProcessTeleport(this, &destinations, GetTransporterID());
 	else if (client && command.length() > 0 && appearance.show_command_icon == 1 && MeetsSpawnAccessRequirements(client->GetPlayer())){
 		EntityCommand* entity_command = FindEntityCommand(command);
 		if (entity_command)

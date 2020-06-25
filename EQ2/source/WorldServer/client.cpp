@@ -7160,17 +7160,15 @@ void Client::ProcessTeleportLocation(EQApplicationPacket* app) {
 			int32 unique_id = packet->getType_int32_ByName("unique_id");
 			string zone_name = packet->getType_EQ2_16BitString_ByName("zone_name").data;
 			int32 cost = packet->getType_int32_ByName("cost");
-			vector<TransportDestination*>* destinations = 0;
+			vector<TransportDestination*> destinations;
 			TransportDestination* destination = 0;
 			if (spawn && spawn == transport_spawn && spawn->GetTransporterID() > 0)
-				destinations = GetCurrentZone()->GetTransporters(spawn->GetTransporterID());
-			if (destinations) {
-				vector<TransportDestination*>::iterator itr;
-				for (itr = destinations->begin(); itr != destinations->end(); itr++) {
-					if ((*itr)->unique_id == unique_id && (*itr)->display_name == zone_name && (*itr)->cost == cost) {
-						destination = *itr;
-						break;
-					}
+				GetCurrentZone()->GetTransporters(&destinations, this, spawn->GetTransporterID());
+			vector<TransportDestination*>::iterator itr;
+			for (itr = destinations.begin(); itr != destinations.end(); itr++) {
+				if ((*itr)->unique_id == unique_id && (*itr)->display_name == zone_name && (*itr)->cost == cost) {
+					destination = *itr;
+					break;
 				}
 			}
 			if (!destination)

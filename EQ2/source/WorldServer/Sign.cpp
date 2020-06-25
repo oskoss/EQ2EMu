@@ -221,7 +221,7 @@ void Sign::SetSignDistance(float val){
 }
 void Sign::HandleUse(Client* client, string command)
 {
-	vector<TransportDestination*>* destinations = 0;
+	vector<TransportDestination*> destinations;
 
 	//The following check disables the use of doors and other widgets if the player does not meet the quest requirements
 	//If this is from a script ignore this check (client will be null)
@@ -234,11 +234,11 @@ void Sign::HandleUse(Client* client, string command)
 	}
 
 	if( GetTransporterID() > 0 )
-		destinations = GetZone()->GetTransporters(GetTransporterID());
+		GetZone()->GetTransporters(&destinations, client, GetTransporterID());
 
-	if( destinations )
+	if( destinations.size() )
 	{
-		client->ProcessTeleport(this, destinations, GetTransporterID());
+		client->ProcessTeleport(this, &destinations, GetTransporterID());
 	}
 	else if( sign_type == SIGN_TYPE_ZONE && GetSignZoneID() > 0 )
 	{

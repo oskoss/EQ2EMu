@@ -1012,8 +1012,8 @@ public:
 
 	/* Transporters */
 	void AddLocationTransporter(int32 zone_id, string message, float trigger_x, float trigger_y, float trigger_z, float trigger_radius, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, int32 cost, int32 unique_id);
-	void AddTransporter(int32 transport_id, int8 type, string name, string message, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y);
-	vector<TransportDestination*>* GetTransporters(int32 transport_id);
+	void AddTransporter(int32 transport_id, int8 type, string name, string message, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y, int32 expansion_flag, int32 min_client_version, int32 max_client_version);
+	void GetTransporters(vector<TransportDestination*>* returnList, Client* client, int32 transport_id);
 	MutexList<LocationTransportDestination*>* GetLocationTransporters(int32 zone_id);
 	void DeleteGlobalTransporters();
 	///<summary></summary>
