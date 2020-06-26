@@ -881,7 +881,7 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 	NPC* npc = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.disable_sounds\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 													"FROM spawn s\n"
 													"INNER JOIN spawn_npcs npc\n"
 													"ON s.id = npc.spawn_id\n"
@@ -1027,6 +1027,8 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		int8 disableSounds = atoul(row[76]);
 		npc->SetSoundsDisabled(disableSounds);
 
+		npc->SetMerchantLevelRange(atoul(row[77]), atoul(row[78]));
+
 		zone->AddNPC(id, npc);
 		total++;
 		LogWrite(NPC__DEBUG, 5, "NPC", "---Loading NPC: '%s' (%u)", npc->appearance.name, id);
@@ -1045,7 +1047,7 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 	Sign* sign = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.disable_sounds\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_signs ss\n"
 												  "ON s.id = ss.spawn_id\n"
@@ -1113,6 +1115,8 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 		int8 disableSounds = atoul(row[29]);
 		sign->SetSoundsDisabled(disableSounds);
 
+		sign->SetMerchantLevelRange(atoul(row[30]), atoul(row[31]));
+
 		zone->AddSign(id, sign);
 		total++;
 
@@ -1128,7 +1132,7 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 	Widget* widget = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.expansion_flag, s.disable_sounds\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.expansion_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_widgets sw\n"
 												  "ON s.id = sw.spawn_id\n"
@@ -1210,6 +1214,8 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 		int8 disableSounds = atoul(row[34]);
 		widget->SetSoundsDisabled(disableSounds);
 
+		widget->SetMerchantLevelRange(atoul(row[35]), atoul(row[36]));
+
 		zone->AddWidget(id, widget);
 		total++;
 
@@ -1225,7 +1231,7 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 	Object* object = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.expansion_flag, s.disable_sounds\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.expansion_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_objects so\n"
 												  "ON s.id = so.spawn_id\n"
@@ -1279,6 +1285,8 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 
 		int8 disableSounds = atoul(row[20]);
 		object->SetSoundsDisabled(disableSounds);
+
+		object->SetMerchantLevelRange(atoul(row[21]), atoul(row[22]));
 
 		zone->AddObject(id, object);
 		total++;
@@ -3087,8 +3095,8 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 
 		int32 new_spawn_id = GetNextSpawnIDInZone(spawn->GetZone()->GetZoneID());
 
-		query.RunQuery2(Q_INSERT, "insert into spawn (id, name, race, model_type, size, targetable, show_name, command_primary, command_secondary, visual_state, attackable, show_level, show_command_icon, display_hand_icon, faction_id, collision_radius, hp, power, prefix, suffix, last_name, is_instanced_spawn) values(%u, '%s', %i, %i, %i, %i, %i, %u, %u, %i, %i, %i, %i, %i, %u, %i, %u, %u, '%s', '%s', '%s', %u)",
-			new_spawn_id, name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->GetSize(), spawn->appearance.targetable, spawn->appearance.display_name, spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, 0, spawn->appearance.pos.collision_radius, spawn->GetTotalHP(), spawn->GetTotalPower(), prefix.c_str(), suffix.c_str(), last_name.c_str(), isInstanceType);
+		query.RunQuery2(Q_INSERT, "insert into spawn (id, name, race, model_type, size, targetable, show_name, command_primary, command_secondary, visual_state, attackable, show_level, show_command_icon, display_hand_icon, faction_id, collision_radius, hp, power, prefix, suffix, last_name, is_instanced_spawn, merchant_min_level, merchant_max_level) values(%u, '%s', %i, %i, %i, %i, %i, %u, %u, %i, %i, %i, %i, %i, %u, %i, %u, %u, '%s', '%s', '%s', %u, %u, %u)",
+			new_spawn_id, name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->GetSize(), spawn->appearance.targetable, spawn->appearance.display_name, spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, 0, spawn->appearance.pos.collision_radius, spawn->GetTotalHP(), spawn->GetTotalPower(), prefix.c_str(), suffix.c_str(), last_name.c_str(), isInstanceType, spawn->GetMerchantMinLevel(), spawn->GetMerchantMaxLevel());
 
 		if( new_spawn_id > 0 )
 			spawn->SetDatabaseID(new_spawn_id); // use the new zone_id range
@@ -3119,19 +3127,19 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 	}
 	else{
 		if(spawn->IsNPC()){
-			query.RunQuery2(Q_UPDATE, "update spawn_npcs, spawn set name='%s', min_level=%i, max_level=%i, enc_level=%i, race=%i, model_type=%i, class_=%i, gender=%i, show_name=%i, attackable=%i, show_level=%i, targetable=%i, show_command_icon=%i, display_hand_icon=%i, hair_type_id=%i, facial_hair_type_id=%i, wing_type_id=%i, chest_type_id=%i, legs_type_id=%i, soga_hair_type_id=%i, soga_facial_hair_type_id=%i, soga_model_type=%i, size=%i, hp=%u, heroic_flag=%i, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, action_state=%i, mood_state=%i, initial_state=%i, activity_status=%i, alignment=%i, faction_id=%u, hide_hood=%i, emote_state=%i, suffix ='%s', prefix='%s', last_name='%s' where spawn_npcs.spawn_id = spawn.id and spawn.id = %u",
+			query.RunQuery2(Q_UPDATE, "update spawn_npcs, spawn set name='%s', min_level=%i, max_level=%i, enc_level=%i, race=%i, model_type=%i, class_=%i, gender=%i, show_name=%i, attackable=%i, show_level=%i, targetable=%i, show_command_icon=%i, display_hand_icon=%i, hair_type_id=%i, facial_hair_type_id=%i, wing_type_id=%i, chest_type_id=%i, legs_type_id=%i, soga_hair_type_id=%i, soga_facial_hair_type_id=%i, soga_model_type=%i, size=%i, hp=%u, heroic_flag=%i, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, action_state=%i, mood_state=%i, initial_state=%i, activity_status=%i, alignment=%i, faction_id=%u, hide_hood=%i, emote_state=%i, suffix ='%s', prefix='%s', last_name='%s', merchant_min_level = %u, merchant_max_level = %u where spawn_npcs.spawn_id = spawn.id and spawn.id = %u",
 				name.c_str(), spawn->GetLevel(), spawn->GetLevel(), spawn->appearance.encounter_level, spawn->GetRace(), spawn->GetModelType(),
 				spawn->GetAdventureClass(), spawn->GetGender(), spawn->appearance.display_name, spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.targetable, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, ((NPC*)spawn)->features.hair_type, 
 				((NPC*)spawn)->features.hair_face_type, ((NPC*)spawn)->features.wing_type, ((NPC*)spawn)->features.chest_type, ((NPC*)spawn)->features.legs_type, ((NPC*)spawn)->features.soga_hair_type, ((NPC*)spawn)->features.soga_hair_face_type, spawn->appearance.soga_model_type, spawn->GetSize(), 
 				spawn->GetTotalHP(), spawn->appearance.heroic_flag, spawn->GetTotalPower(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), 
 				spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->GetActionState(), spawn->GetMoodState(), spawn->GetInitialState(), 
 				spawn->GetActivityStatus(), ((NPC*)spawn)->GetAlignment(), spawn->GetFactionID(), spawn->appearance.hide_hood, spawn->appearance.emote_state, 
-				suffix.c_str(), prefix.c_str(), last_name.c_str(), spawn->GetDatabaseID());
+				suffix.c_str(), prefix.c_str(), last_name.c_str(), spawn->GetMerchantMinLevel(), spawn->GetMerchantMaxLevel(), spawn->GetDatabaseID());
 		}
 		else if(spawn->IsObject()){
-			query.RunQuery2(Q_UPDATE, "update spawn_objects, spawn set name='%s', model_type=%i, show_name=%i, targetable=%i, size=%i, command_primary=%u, command_secondary=%u, visual_state=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, collision_radius=%i, hp = %u, power = %u, device_id = %i where spawn_objects.spawn_id = spawn.id and spawn.id = %u",
+			query.RunQuery2(Q_UPDATE, "update spawn_objects, spawn set name='%s', model_type=%i, show_name=%i, targetable=%i, size=%i, command_primary=%u, command_secondary=%u, visual_state=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, collision_radius=%i, hp = %u, power = %u, device_id = %i, merchant_min_level = %u, merchant_max_level = %u where spawn_objects.spawn_id = spawn.id and spawn.id = %u",
 				name.c_str(), spawn->GetModelType(), spawn->appearance.display_name, spawn->appearance.targetable, spawn->GetSize(), spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon,
-				spawn->GetCollisionRadius(), spawn->GetTotalHP(), spawn->GetTotalPower(), ((Object*)spawn)->GetDeviceID(), spawn->GetDatabaseID());
+				spawn->GetCollisionRadius(), spawn->GetTotalHP(), spawn->GetTotalPower(), ((Object*)spawn)->GetDeviceID(), spawn->GetMerchantMinLevel(), spawn->GetMerchantMaxLevel(), spawn->GetDatabaseID());
 		}
 		else if(spawn->IsWidget()){
 			Widget* widget = (Widget*)spawn;
@@ -3139,25 +3147,25 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 			char* closeSound = 0;
 			if (widget->GetOpenSound() != NULL) openSound = (char*)widget->GetOpenSound(); else openSound = (char*)string("0").c_str();
 			if (widget->GetCloseSound() != NULL) closeSound = (char*)widget->GetCloseSound(); else closeSound = (char*)string("0").c_str();
-			query.RunQuery2(Q_UPDATE, "update spawn_widgets, spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s',widget_id = %u,widget_x = %f,widget_y = %f,widget_z = %f,include_heading = %u,include_location = %u,icon = %u,type='%s',open_heading = %f,closed_heading = %f,open_x = %f,open_y = %f,open_z = %f,action_spawn_id = %u,open_sound_file='%s',close_sound_file='%s',open_duration = %u,close_x = %f,close_y=%f,close_z=%f,linked_spawn_id = %u,house_id = %u where spawn_widgets.spawn_id = spawn.id and spawn.id = %u",
+			query.RunQuery2(Q_UPDATE, "update spawn_widgets, spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s',widget_id = %u,widget_x = %f,widget_y = %f,widget_z = %f,include_heading = %u,include_location = %u,icon = %u,type='%s',open_heading = %f,closed_heading = %f,open_x = %f,open_y = %f,open_z = %f,action_spawn_id = %u,open_sound_file='%s',close_sound_file='%s',open_duration = %u,close_x = %f,close_y=%f,close_z=%f,linked_spawn_id = %u,house_id = %u, merchant_min_level = %u, merchant_max_level = %u where spawn_widgets.spawn_id = spawn.id and spawn.id = %u",
 				name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->appearance.display_name, spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, spawn->GetSize(),
 				spawn->GetTotalHP(), spawn->GetTotalPower(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->GetFactionID(), 
 				suffix.c_str(), prefix.c_str(), last_name.c_str(), widget->GetWidgetID(), widget->GetX(), widget->GetY(), widget->GetZ(), widget->GetIncludeHeading(), widget->GetIncludeLocation(), widget->GetIconValue(), Widget::GetWidgetTypeNameByTypeID(widget->GetWidgetType()).c_str(),
 				widget->GetOpenHeading(), widget->GetClosedHeading(), widget->GetOpenX(), widget->GetOpenY(), widget->GetOpenZ(), 
 				widget->GetActionSpawnID(), openSound, closeSound,widget->GetOpenDuration(),
 				widget->GetCloseX(),widget->GetCloseY(),widget->GetCloseZ(),widget->GetLinkedSpawnID(),widget->GetHouseID(),
-				spawn->GetDatabaseID());
+				spawn->GetMerchantMinLevel(), spawn->GetMerchantMaxLevel(), spawn->GetDatabaseID());
 		}
 		else if(spawn->IsSign()){
 			Sign* sign = (Sign*)spawn;
-			query.RunQuery2(Q_UPDATE, "update spawn_signs, spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s', type='%s', zone_id = %u, widget_id = %u, title='%s', widget_x = %f, widget_y = %f, widget_z = %f, icon = %u, description='%s', sign_distance = %f, zone_x = %f, zone_y = %f, zone_z = %f, zone_heading = %f, include_heading = %u, include_location = %u where spawn_signs.spawn_id = spawn.id and spawn.id = %u",
+			query.RunQuery2(Q_UPDATE, "update spawn_signs, spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s', type='%s', zone_id = %u, widget_id = %u, title='%s', widget_x = %f, widget_y = %f, widget_z = %f, icon = %u, description='%s', sign_distance = %f, zone_x = %f, zone_y = %f, zone_z = %f, zone_heading = %f, include_heading = %u, include_location = %u, merchant_min_level = %u, merchant_max_level = %u where spawn_signs.spawn_id = spawn.id and spawn.id = %u",
 				name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->appearance.display_name, spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, spawn->GetSize(),
 				spawn->GetTotalHP(), spawn->GetTotalPower(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->GetFactionID(),
 				suffix.c_str(), prefix.c_str(), last_name.c_str(), sign->GetSignType(), sign->GetSignZoneID(), 
 				sign->GetWidgetID(), sign->GetSignTitle(), sign->GetWidgetX(), sign->GetWidgetY(), sign->GetWidgetZ(), 
 				sign->GetIconValue(), sign->GetSignDescription(), sign->GetSignDistance(), sign->GetSignZoneX(), 
 				sign->GetSignZoneY(), sign->GetSignZoneZ(), sign->GetSignZoneHeading(), sign->GetIncludeHeading(), 
-				sign->GetIncludeLocation(), spawn->GetDatabaseID());
+				sign->GetIncludeLocation(), spawn->GetMerchantMinLevel(), spawn->GetMerchantMaxLevel(), spawn->GetDatabaseID());
 		}
 	}
 	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
@@ -5894,7 +5902,7 @@ bool WorldDatabase::LoadSign(ZoneServer* zone, int32 spawn_id) {
 	Sign* sign = 0;
 	int32 id = 0;
 	DatabaseResult result;
-	database_new.Select(&result, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state\n"
+	database_new.Select(&result, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_signs ss\n"
 								 "ON ss.spawn_id = s.id\n"
@@ -5945,6 +5953,11 @@ bool WorldDatabase::LoadSign(ZoneServer* zone, int32 spawn_id) {
 		sign->SetSizeOffset(result.GetInt8(25));
 		sign->appearance.display_hand_icon = result.GetInt8(26);
 		sign->SetVisualState(result.GetInt16(27));
+
+		sign->SetSoundsDisabled(result.GetInt8(28));
+
+		sign->SetMerchantLevelRange(result.GetInt32(29), result.GetInt32(30));
+
 		zone->AddSign(id, sign);
 
 
@@ -5960,7 +5973,7 @@ bool WorldDatabase::LoadWidget(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon\n"
+	database_new.Select(&result, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_widgets sw\n"
 								 "ON sw.spawn_id = s.id\n"
@@ -6018,6 +6031,10 @@ bool WorldDatabase::LoadWidget(ZoneServer* zone, int32 spawn_id) {
 		widget->SetCloseX(result.GetFloat(30));
 		widget->SetCloseZ(result.GetFloat(31));
 		widget->appearance.display_hand_icon = result.GetInt8(32);
+
+		widget->SetSoundsDisabled(result.GetInt8(33));
+
+		widget->SetMerchantLevelRange(result.GetInt32(34), result.GetInt32(35));
 		zone->AddWidget(id, widget);
 
 		LogWrite(WIDGET__DEBUG, 0, "Widget", "Loaded Widget: '%s' (%u).", widget->appearance.name, spawn_id);
@@ -6033,7 +6050,7 @@ bool WorldDatabase::LoadObject(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id\n"
+	database_new.Select(&result, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_objects so\n"
 								 "ON so.spawn_id = s.id\n"
@@ -6070,6 +6087,9 @@ bool WorldDatabase::LoadObject(ZoneServer* zone, int32 spawn_id) {
 		object->SetTransporterID(result.GetInt32(16));
 		object->SetSizeOffset(result.GetInt8(17));
 		object->SetDeviceID(result.GetInt8(18));
+		object->SetSoundsDisabled(result.GetInt8(19));
+
+		object->SetMerchantLevelRange(result.GetInt32(20), result.GetInt32(21));
 		zone->AddObject(id, object);
 
 		LogWrite(OBJECT__DEBUG, 0, "Object", "Loaded Object: '%s' (%u).", object->appearance.name, spawn_id);
@@ -6179,7 +6199,7 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 										
-	database_new.Select(&result, "SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name\n"
+	database_new.Select(&result, "SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_npcs npc\n"
 								 "ON npc.spawn_id = s.id\n"
@@ -6301,6 +6321,10 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		npc->SetPrefixTitle(result.GetString(72));
 		npc->SetSuffixTitle(result.GetString(73));
 		npc->SetLastName(result.GetString(74));
+
+		npc->SetSoundsDisabled(result.GetInt8(75));
+
+		npc->SetMerchantLevelRange(result.GetInt32(76), result.GetInt32(77));
 
 		zone->AddNPC(id, npc);
 

@@ -874,6 +874,10 @@ public:
 	int32	GetMerchantID();
 	void	SetMerchantType(int8 val);
 	int8	GetMerchantType();
+	void	SetMerchantLevelRange(int32 minLvl = 0, int32 maxLvl = 0);
+	bool	IsClientInMerchantLevelRange(Client* ent, bool sendMessageIfDenied = true);
+	int32	GetMerchantMinLevel();
+	int32	GetMerchantMaxLevel();
 	void	SetQuestsRequired(map<int32, vector<int16>* >* quests);
 	void	SetQuestsRequired(int32 quest_id, int16 quest_step);
 	void	SetRequiredHistory(int32 event_id, int32 value1, int32 value2);
@@ -1086,6 +1090,9 @@ protected:
 	int32			last_attacker;
 	int32			merchant_id;
 	int8			merchant_type;
+	int32			merchant_min_level;
+	int32			merchant_max_level;
+
 	int32			transporter_id;
 	int32			pickup_item_id;
 	int32			pickup_unique_item_id;

@@ -151,6 +151,8 @@ Commands::Commands(){
 	spawn_set_values["suffix"] = SPAWN_SET_VALUE_SUFFIX;
 	spawn_set_values["lastname"] = SPAWN_SET_VALUE_LASTNAME;
 	spawn_set_values["expansion_flag"] = SPAWN_SET_VALUE_EXPANSION_FLAG;
+	spawn_set_values["merchant_min_level"] = SPAWN_SET_VALUE_MERCHANT_MIN_LEVEL;
+	spawn_set_values["merchant_max_level"] = SPAWN_SET_VALUE_MERCHANT_MAX_LEVEL;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -486,12 +488,30 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				// nothing to do must reload spawns
 				break;
 			}
+			case SPAWN_SET_VALUE_MERCHANT_MIN_LEVEL: {
+				sprintf(tmp, "%i", target->GetMerchantMinLevel());
+				target->SetMerchantLevelRange(atoul(value), target->GetMerchantMaxLevel());
+				break;
+			}
+			case SPAWN_SET_VALUE_MERCHANT_MAX_LEVEL: {
+				sprintf(tmp, "%i", target->GetMerchantMaxLevel());
+				target->SetMerchantLevelRange(target->GetMerchantMinLevel(), atoul(value));
+				break;
+			}
 
 			*temp_value = string(tmp);
 		}
 	}
 	else{
 		switch(type){
+		case SPAWN_SET_VALUE_MERCHANT_MIN_LEVEL: {
+			target->SetMerchantLevelRange(atoul(value), target->GetMerchantMaxLevel());
+			break;
+		}
+		case SPAWN_SET_VALUE_MERCHANT_MAX_LEVEL: {
+			target->SetMerchantLevelRange(target->GetMerchantMinLevel(), atoul(value));
+			break;
+		}
 		case SPAWN_SET_VALUE_EXPANSION_FLAG: {
 
 			if (target->GetDatabaseID() > 0)
@@ -3647,7 +3667,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if(set_type > 0)
 				{
 					// check if spawn set is NOT a char update, or not location, or isn't a number
-					if(!(set_type >= SPAWN_SET_VALUE_PREFIX) && !(set_type <= SPAWN_SET_VALUE_EXPANSION_FLAG) && set_type != SPAWN_SET_VALUE_NAME && ((set_type < SPAWN_SET_VALUE_SPAWN_SCRIPT) || (set_type > SPAWN_SET_VALUE_SUB_TITLE)) && set_type != SPAWN_SET_VALUE_LOCATION && sep->IsNumber(1) == false)
+					if(!(set_type >= SPAWN_SET_VALUE_PREFIX) && !(set_type <= SPAWN_SET_VALUE_MERCHANT_MAX_LEVEL) && set_type != SPAWN_SET_VALUE_NAME && ((set_type < SPAWN_SET_VALUE_SPAWN_SCRIPT) || (set_type > SPAWN_SET_VALUE_SUB_TITLE)) && set_type != SPAWN_SET_VALUE_LOCATION && sep->IsNumber(1) == false)
 					{
 						client->SimpleMessage(CHANNEL_COLOR_RED, "Invalid value for set command.");
 					}
@@ -8649,7 +8669,7 @@ void Commands::Command_SendMerchantWindow(Client* client, Seperator* sep, bool s
 	Spawn* spawn = client->GetPlayer()->GetTarget();
 	if(spawn) {
 		client->SetMerchantTransaction(spawn);
-		if (spawn->GetMerchantID() > 0){
+		if (spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(client)){
 			client->SendHailCommand(spawn);
 			//MerchantFactionMultiplier* multiplier = world.GetMerchantMultiplier(spawn->GetMerchantID());
 			//if(!multiplier || (multiplier && client->GetPlayer()->GetFactions()->GetFactionValue(multiplier->faction_id) >= multiplier->faction_min)){

@@ -129,6 +129,7 @@ Widget*	Widget::Copy(){
 		new_spawn->size = size;
 	new_spawn->SetMerchantID(merchant_id);
 	new_spawn->SetMerchantType(merchant_type);
+	new_spawn->SetMerchantLevelRange(GetMerchantMinLevel(), GetMerchantMaxLevel());
 	new_spawn->SetPrimaryCommands(&primary_command_list);
 	new_spawn->primary_command_list_id = primary_command_list_id;
 	new_spawn->SetSecondaryCommands(&secondary_command_list);

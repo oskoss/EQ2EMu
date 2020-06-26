@@ -42,6 +42,9 @@ Spawn::Spawn(){
 	group_id = 0;
 	size_offset = 0;
 	merchant_id = 0;
+	merchant_type = 0;
+	merchant_min_level = 0;
+	merchant_max_level = 0;
 	memset(&appearance, 0, sizeof(AppearanceData)); 
 	memset(&basic_info, 0, sizeof(BasicInfoStruct)); 
 	appearance.encounter_level =6;
@@ -1605,12 +1608,44 @@ int32 Spawn::GetMerchantID(){
 	return merchant_id;
 }
 
-void Spawn::SetMerchantType(int8 val){
+void Spawn::SetMerchantType(int8 val) {
 	merchant_type = val;
 }
 
-int8 Spawn::GetMerchantType(){
+int8 Spawn::GetMerchantType() {
 	return merchant_type;
+}
+
+void Spawn::SetMerchantLevelRange(int32 minLvl, int32 maxLvl) {
+	merchant_min_level = minLvl;
+	merchant_max_level = maxLvl;
+}
+
+int32 Spawn::GetMerchantMinLevel() {
+	return merchant_min_level;
+}
+
+int32 Spawn::GetMerchantMaxLevel() {
+	return merchant_max_level;
+}
+
+bool Spawn::IsClientInMerchantLevelRange(Client* client, bool sendMessageIfDenied)
+{
+	if (!client)
+		return false;
+
+	if (GetMerchantMinLevel() && client->GetPlayer()->GetLevel() < GetMerchantMinLevel())
+	{
+		client->Message(CHANNEL_COLOR_RED, "You are unable to interact with this merchant due to a minimum level %u allowed.", GetMerchantMinLevel());
+		return false;
+	}
+	else if (GetMerchantMaxLevel() && client->GetPlayer()->GetLevel() > GetMerchantMaxLevel())
+	{
+		client->Message(CHANNEL_COLOR_RED, "You are unable to interact with this merchant due to a maximum level %u allowed.", GetMerchantMaxLevel());
+		return false;
+	}
+	
+	return true;
 }
 
 void Spawn::SetQuestsRequired(map<int32, vector<int16>* >* quests){

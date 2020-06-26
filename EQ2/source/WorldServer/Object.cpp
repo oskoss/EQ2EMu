@@ -61,6 +61,7 @@ Object*	Object::Copy(){
 	Object* new_spawn = new Object();
 	new_spawn->SetMerchantID(merchant_id);
 	new_spawn->SetMerchantType(merchant_type);
+	new_spawn->SetMerchantLevelRange(GetMerchantMinLevel(), GetMerchantMaxLevel());
 	if(GetSizeOffset() > 0){
 		int8 offset = GetSizeOffset()+1;
 		sint32 tmp_size = size + (rand()%offset - rand()%offset);

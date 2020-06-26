@@ -55,6 +55,7 @@ NPC::NPC(NPC* old_npc){
 			size = old_npc->size;
 		SetMerchantID(old_npc->GetMerchantID());
 		SetMerchantType(old_npc->GetMerchantType());
+		SetMerchantLevelRange(old_npc->GetMerchantMinLevel(), old_npc->GetMerchantMaxLevel());
 		SetPrimaryCommands(&old_npc->primary_command_list);
 		SetSecondaryCommands(&old_npc->secondary_command_list);
 		appearance_id = old_npc->appearance_id;

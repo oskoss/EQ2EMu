@@ -5589,7 +5589,7 @@ float Client::CalculateSellMultiplier(int32 merchant_id) {
 void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 	Spawn* spawn = GetMerchantTransaction();
 	Guild* guild = GetPlayer()->GetGuild();
-	if (spawn && spawn->GetMerchantID() > 0) {
+	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
 		int32 total_sell_price = 0;
 		int32 total_status_sell_price = 0; //for status
 		float multiplier = CalculateBuyMultiplier(spawn->GetMerchantID());
@@ -5653,7 +5653,7 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 
 void Client::BuyBack(int32 item_id, int16 quantity) {
 	Spawn* spawn = GetMerchantTransaction();
-	if (spawn && spawn->GetMerchantID() > 0) {
+	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
 		deque<BuyBackItem*>::iterator itr;
 		BuyBackItem* buyback = 0;
 		BuyBackItem* closest = 0;
@@ -5720,7 +5720,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 	// Get the merchant we are buying from
 	Spawn* spawn = GetMerchantTransaction();
 	// Make sure the spawn has a merchant list
-	if (spawn && spawn->GetMerchantID() > 0) {
+	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
 		int32 total_buy_price = 0;
 		float multiplier = CalculateBuyMultiplier(spawn->GetMerchantID());
 		int32 sell_price = 0;
@@ -6074,7 +6074,7 @@ void Client::SendAchievementUpdate(bool first_login) {
 
 void Client::SendBuyMerchantList(bool sell) {
 	Spawn* spawn = GetMerchantTransaction();
-	if (spawn && spawn->GetMerchantID() > 0) {
+	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
 		vector<MerchantItemInfo>* items = world.GetMerchantItemList(spawn->GetMerchantID(), spawn->GetMerchantType(), player);
 		if (items) {
 			PacketStruct* packet = configReader.getStruct("WS_UpdateMerchant", GetVersion());
@@ -6191,7 +6191,7 @@ void Client::SendBuyMerchantList(bool sell) {
 
 void Client::SendSellMerchantList(bool sell) {
 	Spawn* spawn = GetMerchantTransaction();
-	if (spawn && spawn->GetMerchantID() > 0) {
+	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
 		map<int32, Item*>* items = player->GetItemList();
 		if (items) {
 			PacketStruct* packet = configReader.getStruct("WS_UpdateMerchant", GetVersion());
@@ -6275,7 +6275,7 @@ void Client::SendSellMerchantList(bool sell) {
 
 void Client::SendBuyBackList(bool sell) {
 	Spawn* spawn = GetMerchantTransaction();
-	if (spawn && spawn->GetMerchantID() > 0) {
+	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
 		deque<BuyBackItem*>::iterator itr;
 		int i = 0;
 		Item* master_item = 0;
