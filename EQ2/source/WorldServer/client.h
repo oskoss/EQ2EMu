@@ -422,6 +422,9 @@ public:
 	bool PopulateHouseSpawnFinalize();
 
 	void SendMoveObjectMode(Spawn* spawn, uint8 placementMode, float unknown2_3=0.0f);
+
+	void SetTemporaryTransportID(int32 id) { temporary_transport_id = id; }
+	int32 GetTemporaryTransportID() { return temporary_transport_id; }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -521,6 +524,8 @@ private:
 	Spawn* tempPlacementSpawn;
 	int32 placement_unique_item_id;
 	bool hasOwnerOrEditAccess;
+
+	int32 temporary_transport_id;
 };
 
 class ClientList {

@@ -9438,6 +9438,9 @@ int EQ2Emu_lua_RemovePrimaryEntityCommand(lua_State* state)
 
 
 int EQ2Emu_lua_SendUpdateDefaultCommand(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	float distance = lua_interface->GetFloatValue(state, 2);
 	string command = lua_interface->GetStringValue(state, 3);
@@ -9445,6 +9448,74 @@ int EQ2Emu_lua_SendUpdateDefaultCommand(lua_State* state) {
 
 	if (spawn) {
 		spawn->GetZone()->SendUpdateDefaultCommand(spawn, command.c_str(), distance, player);
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_SendTransporters(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	Spawn* player = lua_interface->GetSpawn(state, 2);
+	int32 transport_id = lua_interface->GetInt32Value(state, 3);
+
+	if (spawn && player && transport_id && player->IsPlayer()) {
+		Client* client = 0;
+		if (player && player->IsPlayer())
+			client = player->GetZone()->GetClientBySpawn(player);
+
+		if (!client)
+			return 0;
+
+		vector<TransportDestination*> destinations;
+		player->GetZone()->GetTransporters(&destinations, client, transport_id);
+
+		if (destinations.size())
+		{
+			client->SetTemporaryTransportID(transport_id);
+			client->ProcessTeleport(spawn, &destinations, transport_id);
+		}
+		else
+			client->Message(CHANNEL_COLOR_RED, "There are no transporters available (ID: %u)", transport_id);
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_SetTemporaryTransportID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* player = lua_interface->GetSpawn(state);
+	int32 transport_id = lua_interface->GetInt32Value(state, 2);
+
+	if (player && player->IsPlayer()) {
+		Client* client = 0;
+		if (player && player->IsPlayer())
+			client = player->GetZone()->GetClientBySpawn(player);
+
+		if (!client)
+			return 0;
+
+		client->SetTemporaryTransportID(transport_id);
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_GetTemporaryTransportID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	if (player && player->IsPlayer()) {
+		Client* client = 0;
+		if (player && player->IsPlayer())
+			client = player->GetZone()->GetClientBySpawn(player);
+
+		if (!client)
+			return 0;
+
+		lua_interface->SetInt32Value(state, client->GetTemporaryTransportID());
+		return 1;
 	}
 	return 0;
 }

@@ -48,8 +48,11 @@ void Object::HandleUse(Client* client, string command){
 	vector<TransportDestination*> destinations;
 	if(GetTransporterID() > 0)
 		GetZone()->GetTransporters(&destinations, client, GetTransporterID());
-	if(destinations.size())
+	if (destinations.size())
+	{
+		client->SetTemporaryTransportID(0);
 		client->ProcessTeleport(this, &destinations, GetTransporterID());
+	}
 	else if (client && command.length() > 0 && appearance.show_command_icon == 1 && MeetsSpawnAccessRequirements(client->GetPlayer())){
 		EntityCommand* entity_command = FindEntityCommand(command);
 		if (entity_command)

@@ -194,6 +194,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	tempPlacementSpawn = nullptr;
 	placement_unique_item_id = 0;
 	SetHasOwnerOrEditAccess(false);
+	temporary_transport_id = 0;
 }
 
 Client::~Client() {
@@ -7162,8 +7163,8 @@ void Client::ProcessTeleportLocation(EQApplicationPacket* app) {
 			int32 cost = packet->getType_int32_ByName("cost");
 			vector<TransportDestination*> destinations;
 			TransportDestination* destination = 0;
-			if (spawn && spawn == transport_spawn && spawn->GetTransporterID() > 0)
-				GetCurrentZone()->GetTransporters(&destinations, this, spawn->GetTransporterID());
+			if (this->GetTemporaryTransportID() || (spawn && spawn == transport_spawn && spawn->GetTransporterID()))
+				GetCurrentZone()->GetTransporters(&destinations, this, this->GetTemporaryTransportID() ? this->GetTemporaryTransportID() : spawn->GetTransporterID());
 			vector<TransportDestination*>::iterator itr;
 			for (itr = destinations.begin(); itr != destinations.end(); itr++) {
 				if ((*itr)->unique_id == unique_id && (*itr)->display_name == zone_name && (*itr)->cost == cost) {
@@ -7171,6 +7172,9 @@ void Client::ProcessTeleportLocation(EQApplicationPacket* app) {
 					break;
 				}
 			}
+
+			SetTemporaryTransportID(0);
+
 			if (!destination)
 				SimpleMessage(CHANNEL_COLOR_RED, "Error processing transport.");
 			else {

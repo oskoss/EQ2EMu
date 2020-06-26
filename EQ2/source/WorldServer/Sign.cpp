@@ -239,6 +239,7 @@ void Sign::HandleUse(Client* client, string command)
 
 	if( destinations.size() )
 	{
+		client->SetTemporaryTransportID(0);
 		client->ProcessTeleport(this, &destinations, GetTransporterID());
 	}
 	else if( sign_type == SIGN_TYPE_ZONE && GetSignZoneID() > 0 )

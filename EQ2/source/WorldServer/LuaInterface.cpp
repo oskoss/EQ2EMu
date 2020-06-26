@@ -1032,6 +1032,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetAccessToEntityCommand", EQ2Emu_lua_SetAccessToEntityCommand);
 	lua_register(state, "RemovePrimaryEntityCommand", EQ2Emu_lua_RemovePrimaryEntityCommand);
 	lua_register(state, "SendUpdateDefaultCommand", EQ2Emu_lua_SendUpdateDefaultCommand);
+
+	lua_register(state, "SendTransporters", EQ2Emu_lua_SendTransporters);
+	lua_register(state, "SetTemporaryTransportID", EQ2Emu_lua_SetTemporaryTransportID);
+	lua_register(state, "GetTemporaryTransportID", EQ2Emu_lua_GetTemporaryTransportID);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

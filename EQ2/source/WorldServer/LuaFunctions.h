@@ -429,4 +429,9 @@ int EQ2Emu_lua_SetSeeHide(lua_State* state);
 int EQ2Emu_lua_SetAccessToEntityCommand(lua_State* state);
 int EQ2Emu_lua_RemovePrimaryEntityCommand(lua_State* state);
 int EQ2Emu_lua_SendUpdateDefaultCommand(lua_State* state);
+
+
+int EQ2Emu_lua_SendTransporters(lua_State* state);
+int EQ2Emu_lua_SetTemporaryTransportID(lua_State* state);
+int EQ2Emu_lua_GetTemporaryTransportID(lua_State* state);
 #endif

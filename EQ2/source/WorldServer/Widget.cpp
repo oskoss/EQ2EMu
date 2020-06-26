@@ -350,7 +350,10 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 	}
 
 	if (client && GetTransporterID() > 0)
+	{
+		client->SetTemporaryTransportID(0);
 		GetZone()->GetTransporters(&destinations, client, GetTransporterID());
+	}
 	if (destinations.size())
 		client->ProcessTeleport(this, &destinations, GetTransporterID());
 	else if (overrideWidgetType == WIDGET_TYPE_DOOR || overrideWidgetType == WIDGET_TYPE_LIFT){
