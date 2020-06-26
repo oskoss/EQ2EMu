@@ -120,6 +120,13 @@ struct TransportDestination{
 	int32	expansion_flag;
 	int32	min_client_version;
 	int32	max_client_version;
+
+	int32	flight_path_id;
+
+	int16	mount_id;
+	int8	mount_red_color;
+	int8	mount_green_color;
+	int8	mount_blue_color;
 };
 
 struct LocationTransportDestination{
@@ -357,6 +364,7 @@ struct GlobalLoot {
 #define TRANSPORT_TYPE_LOCATION		0
 #define TRANSPORT_TYPE_ZONE			1
 #define TRANSPORT_TYPE_GENERIC		2
+#define TRANSPORT_TYPE_FLIGHT		3
 
 class ZoneList {
 	public:

@@ -528,8 +528,10 @@ public:
 			loot_items.push_back(item);
 		}
 	}
-	void SetMount(int16 val, bool setUpdateFlags = true) {
-		if(val == 0){
+
+	void SetMount(int16 mount_id, int8 red = 0xFF, int8 green = 0xFF, int8 blue = 0xFF, bool setUpdateFlags = true)
+	{
+		if (mount_id == 0) {
 			EQ2_Color color;
 			color.red = 0;
 			color.green = 0;
@@ -537,8 +539,18 @@ public:
 			SetMountColor(&color);
 			SetMountSaddleColor(&color);
 		}
-		SetInfo(&features.mount_model_type, val, setUpdateFlags); 
+		else
+		{
+			EQ2_Color color;
+			color.red = red;
+			color.green = green;
+			color.blue = blue;
+			SetMountColor(&color);
+			SetMountSaddleColor(&color);
+		}
+		SetInfo(&features.mount_model_type, mount_id, setUpdateFlags);
 	}
+
 	void SetEquipment(Item* item, int8 slot = 255);
 	void SetEquipment(int8 slot, int16 type, int8 red, int8 green, int8 blue, int8 h_r, int8 h_g, int8 h_b){
 		SetInfo(&equipment.equip_id[slot], type);

@@ -4819,7 +4819,7 @@ void WorldDatabase::LoadTransporters(ZoneServer* zone){
 	zone->DeleteGlobalTransporters();
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT transport_id, transport_type, display_name, message, destination_zone_id, destination_x, destination_y, destination_z, destination_heading, trigger_location_zone_id, trigger_location_x, trigger_location_y, trigger_location_z, trigger_radius, cost, id, min_level, max_level, quest_req, quest_step_req, quest_completed, map_x, map_y, expansion_flag, min_client_version, max_client_version FROM transporters ORDER BY transport_id");
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT transport_id, transport_type, display_name, message, destination_zone_id, destination_x, destination_y, destination_z, destination_heading, trigger_location_zone_id, trigger_location_x, trigger_location_y, trigger_location_z, trigger_radius, cost, id, min_level, max_level, quest_req, quest_step_req, quest_completed, map_x, map_y, expansion_flag, min_client_version, max_client_version, flight_path_id, mount_id, mount_red_color, mount_green_color, mount_blue_color FROM transporters ORDER BY transport_id");
 	if(result){
 		while(result && (row = mysql_fetch_row(result))){
 			LogWrite(TRANSPORT__DEBUG, 5, "Transport", "---Loading Transporter ID: %u, transport_type: %s", row[0], row[1]);
@@ -4835,12 +4835,15 @@ void WorldDatabase::LoadTransporters(ZoneServer* zone){
 			string message = "";
 			if(row[3])
 				message = string(row[3]);
+
 			if(row[1] && strcmp(row[1], "Zone") == 0)
-				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_ZONE, name, message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]));
+				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_ZONE, name, message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]), atoul(row[26]), atoul(row[27]), atoul(row[28]), atoul(row[29]), atoul(row[30]));
+			else if (row[1] && strcmp(row[1], "Flight") == 0)
+				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_FLIGHT, name, message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]), atoul(row[26]), atoul(row[27]), atoul(row[28]), atoul(row[29]), atoul(row[30]));
 			else if(row[1] && strcmp(row[1], "Location") == 0)
 				zone->AddLocationTransporter(atoul(row[9]), message, atof(row[10]), atof(row[11]), atof(row[12]), atof(row[13]), atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]));
 			else
-				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_GENERIC, "", message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]));
+				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_GENERIC, "", message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]), atoul(row[26]), atoul(row[27]), atoul(row[28]), atoul(row[29]), atoul(row[30]));
 			total++;
 		}
 	}

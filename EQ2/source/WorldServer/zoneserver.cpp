@@ -6963,7 +6963,9 @@ void ZoneServer::AddLocationTransporter(int32 zone_id, string message, float tri
 	MTransporters.unlock();
 }
 
-void ZoneServer::AddTransporter(int32 transport_id, int8 type, string name, string message, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y, int32 expansion_flag, int32 min_client_version, int32 max_client_version){
+void ZoneServer::AddTransporter(int32 transport_id, int8 type, string name, string message, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, 
+	int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y, int32 expansion_flag, int32 min_client_version, 
+	int32 max_client_version, int32 flight_path_id, int16 mount_id, int8 mount_red_color, int8 mount_green_color, int8 mount_blue_color){
 	TransportDestination* transport = new TransportDestination;
 	transport->type = type;
 	transport->display_name = name;
@@ -6988,6 +6990,13 @@ void ZoneServer::AddTransporter(int32 transport_id, int8 type, string name, stri
 	transport->expansion_flag = expansion_flag;
 	transport->min_client_version = min_client_version;
 	transport->max_client_version = max_client_version;
+
+	transport->flight_path_id = flight_path_id;
+
+	transport->mount_id = mount_id;
+	transport->mount_red_color = mount_red_color;
+	transport->mount_green_color = mount_green_color;
+	transport->mount_blue_color = mount_blue_color;
 
 	MTransporters.lock();
 	transporters[transport_id].push_back(transport);

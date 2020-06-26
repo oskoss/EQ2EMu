@@ -8517,17 +8517,7 @@ int EQ2Emu_lua_StartAutoMount(lua_State* state) {
 		return 0;
 	}
 
-	client->SetPendingFlightPath(path);
-
-	((Player*)player)->SetTempMount(((Entity*)player)->GetMount());
-	((Player*)player)->SetTempMountColor(((Entity*)player)->GetMountColor());
-	((Player*)player)->SetTempMountSaddleColor(((Entity*)player)->GetMountSaddleColor());
-
-	PacketStruct* packet = configReader.getStruct("WS_ReadyForTakeOff", client->GetVersion());
-	if (packet) {
-		client->QueuePacket(packet->serialize());
-		safe_delete(packet);
-	}
+	client->SendFlightAutoMount(path);
 
 	return 0;
 }

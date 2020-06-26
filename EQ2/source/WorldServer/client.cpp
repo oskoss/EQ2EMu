@@ -7062,9 +7062,15 @@ void Client::ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destin
 	}
 	if (transport_list.size() == 0 && destination) {
 		if (destination->destination_zone_id == 0 || destination->destination_zone_id == GetCurrentZone()->GetZoneID()) {
-			EQ2Packet* app = GetPlayer()->Move(destination->destination_x, destination->destination_y, destination->destination_z, GetVersion());
-			if (app)
-				QueuePacket(app);
+
+			if (destination->type == TRANSPORT_TYPE_FLIGHT)
+				SendFlightAutoMount(destination->flight_path_id, destination->mount_id, destination->mount_red_color, destination->mount_green_color, destination->mount_blue_color);
+			else
+			{
+				EQ2Packet* app = GetPlayer()->Move(destination->destination_x, destination->destination_y, destination->destination_z, GetVersion());
+				if (app)
+					QueuePacket(app);
+			}
 		}
 		else {
 			ZoneServer* new_zone = zone_list.Get(destination->destination_zone_id);
@@ -7180,9 +7186,15 @@ void Client::ProcessTeleportLocation(EQApplicationPacket* app) {
 			else {
 				if (cost == 0 || player->RemoveCoins(cost)) {
 					if (destination->destination_zone_id == 0 || destination->destination_zone_id == GetCurrentZone()->GetZoneID()) {
-						EQ2Packet* outapp = GetPlayer()->Move(destination->destination_x, destination->destination_y, destination->destination_z, GetVersion());
-						if (outapp)
-							QueuePacket(outapp);
+
+						if (destination->type == TRANSPORT_TYPE_FLIGHT)
+							SendFlightAutoMount(destination->flight_path_id, destination->mount_id, destination->mount_red_color, destination->mount_green_color, destination->mount_blue_color);
+						else
+						{
+							EQ2Packet* outapp = GetPlayer()->Move(destination->destination_x, destination->destination_y, destination->destination_z, GetVersion());
+							if (outapp)
+								QueuePacket(outapp);
+						}
 					}
 					else {
 						GetPlayer()->SetX(destination->destination_x);
@@ -8824,4 +8836,22 @@ void Client::SendMoveObjectMode(Spawn* spawn, uint8 placementMode, float unknown
 	packet->setDataByName("CoEunknown", 0xFFFFFFFF);
 	QueuePacket(packet->serialize());
 	safe_delete(packet);
+}
+
+void Client::SendFlightAutoMount(int32 path_id, int16 mount_id, int8 mount_red_color, int8 mount_green_color, int8 mount_blue_color)
+{
+	SetPendingFlightPath(path_id);
+
+	((Player*)player)->SetTempMount(((Entity*)player)->GetMount());
+	((Player*)player)->SetTempMountColor(((Entity*)player)->GetMountColor());
+	((Player*)player)->SetTempMountSaddleColor(((Entity*)player)->GetMountSaddleColor());
+
+	PacketStruct* packet = configReader.getStruct("WS_ReadyForTakeOff", GetVersion());
+	if (packet) {
+		QueuePacket(packet->serialize());
+		safe_delete(packet);
+	}
+
+	if (mount_id)
+		((Entity*)GetPlayer())->SetMount(mount_id, mount_red_color, mount_green_color, mount_blue_color);
 }

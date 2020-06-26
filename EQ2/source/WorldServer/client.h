@@ -423,6 +423,8 @@ public:
 
 	void SendMoveObjectMode(Spawn* spawn, uint8 placementMode, float unknown2_3=0.0f);
 
+	void SendFlightAutoMount(int32 path_id, int16 mount_id = 0, int8 mount_red_color = 0xFF, int8 mount_green_color = 0xFF, int8 mount_blue_color=0xFF);
+
 	void SetTemporaryTransportID(int32 id) { temporary_transport_id = id; }
 	int32 GetTemporaryTransportID() { return temporary_transport_id; }
 private:
