@@ -40,7 +40,6 @@
 ThreadReturnType EQ2ConsoleListener(void *tmp);
 void CatchSignal(int sig_num);
 void UpdateWindowTitle(char* iNewTitle);
-void WelcomeHeader();
 
 #define PORT		9000
 #define LOGIN_PORT	9100
@@ -70,6 +69,8 @@ public:
 	~NetConnection() { }
 
 	bool ReadLoginINI();
+	void WelcomeHeader();
+
 	bool LoginServerInfo;
 	bool UpdateStats;
 	char* GetLoginInfo(int16* oPort);

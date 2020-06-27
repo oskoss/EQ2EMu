@@ -132,8 +132,13 @@ struct sockaddr_in address;
 		fcntl(sock, F_SETFL, O_NONBLOCK);
 	#endif
 	//moved these because on windows the output was delayed and causing the console window to look bad
-	LogWrite(WORLD__DEBUG, 0, "World", "Starting factory Reader");
-	LogWrite(WORLD__DEBUG, 0, "World", "Starting factory Writer");
+#ifdef LOGIN
+		LogWrite(LOGIN__DEBUG, 0, "Login", "Starting factory Reader");
+		LogWrite(LOGIN__DEBUG, 0, "Login", "Starting factory Writer");
+#elif WORLD
+		LogWrite(WORLD__DEBUG, 0, "World", "Starting factory Reader");
+		LogWrite(WORLD__DEBUG, 0, "World", "Starting factory Writer");
+#endif
 	#ifdef WIN32
 		_beginthread(EQStreamFactoryReaderLoop,0, this);
 		_beginthread(EQStreamFactoryWriterLoop,0, this);
@@ -297,7 +302,12 @@ void EQStreamFactory::CheckTimeout(bool remove_all)
 				//give it a little time for everybody to finish with it
 			} else {
 				//everybody is done, we can delete it now
+
+#ifdef LOGIN
+				LogWrite(LOGIN__DEBUG, 0, "Login", "Removing connection...");
+#else
 				LogWrite(WORLD__DEBUG, 0, "World", "Removing connection...");
+#endif
 				map<string,EQStream *>::iterator temp=stream_itr;
 				stream_itr++;
 				//let whoever has the stream outside delete it

@@ -73,6 +73,9 @@ int main(int argc, char** argv){
 
 	LogStart();
 
+	LogParseConfigs();
+	net.WelcomeHeader();
+
 	srand(time(NULL));
 
 	if(!net.ReadLoginConfig())
@@ -161,20 +164,23 @@ void NetConnection::HitKey(int keyhit)
 		world_list.ListWorldsToConsole();
 		break;
 	}
-	case '1':
-		world_list.SendWorldChanged(1, true);
+	case 'v':
+	case 'V':
+	{
+		printf("========Version Info=========\n");
+		printf("%s %s\n", EQ2EMU_MODULE, CURRENT_VERSION);
+		printf("Last Compiled on %s %s\n", COMPILE_DATE, COMPILE_TIME);
+		printf("=============================\n\n");
 		break;
-	case '2':
-		world_list.SendWorldChanged(1, false);
-		break;
+	}
 	case 'H':
 	case 'h': {
-		printf("============================\n");
+		printf("===========Help=============\n");
 		printf("Available Commands:\n");
 		printf("l = Listing of World Servers\n");
 		printf("v = Login Version\n");
 //		printf("0 = Kick all connected world servers\n");
-		printf("============================\n");
+		printf("============================\n\n");
 		break;
 	}
 	default:
@@ -283,11 +289,60 @@ void NetConnection::UpdateWindowTitle(char* iNewTitle) {
 #ifdef WIN32
 	char tmp[500];
 	if (iNewTitle) {
-		snprintf(tmp, sizeof(tmp), "%s", iNewTitle);
+		snprintf(tmp, sizeof(tmp), "Login: %s", iNewTitle);
 	}
 	else {
-		snprintf(tmp, sizeof(tmp), "%i Server(s), %i Client(s) Connected", net.numservers, net.numclients);
+		snprintf(tmp, sizeof(tmp), "%s, Version: %s: %i Server(s), %i Client(s) Connected", EQ2EMU_MODULE, CURRENT_VERSION, net.numservers, net.numclients);
 	}
 	SetConsoleTitle(tmp);
 #endif
+}
+
+void NetConnection::WelcomeHeader()
+{
+#ifdef _WIN32
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(console, FOREGROUND_WHITE_BOLD);
+#endif
+	printf("Module: %s, Version: %s", EQ2EMU_MODULE, CURRENT_VERSION);
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_YELLOW_BOLD);
+#endif
+	printf("\n\nCopyright (C) 2007-2020 EQ2Emulator. https://www.eq2emu.com \n\n");
+	printf("EQ2Emulator is free software: you can redistribute it and/or modify\n");
+	printf("it under the terms of the GNU General Public License as published by\n");
+	printf("the Free Software Foundation, either version 3 of the License, or\n");
+	printf("(at your option) any later version.\n\n");
+	printf("EQ2Emulator is distributed in the hope that it will be useful,\n");
+	printf("but WITHOUT ANY WARRANTY; without even the implied warranty of\n");
+	printf("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n");
+	printf("GNU General Public License for more details.\n\n");
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_GREEN_BOLD);
+#endif
+	printf(" /$$$$$$$$  /$$$$$$   /$$$$$$  /$$$$$$$$                        \n");
+	printf("| $$_____/ /$$__  $$ /$$__  $$| $$_____/                        \n");
+	printf("| $$      | $$  \\ $$|__/  \\ $$| $$       /$$$$$$/$$$$  /$$   /$$\n");
+	printf("| $$$$$   | $$  | $$  /$$$$$$/| $$$$$   | $$_  $$_  $$| $$  | $$\n");
+	printf("| $$__/   | $$  | $$ /$$____/ | $$__/   | $$ \\ $$ \\ $$| $$  | $$\n");
+	printf("| $$      | $$/$$ $$| $$      | $$      | $$ | $$ | $$| $$  | $$\n");
+	printf("| $$$$$$$$|  $$$$$$/| $$$$$$$$| $$$$$$$$| $$ | $$ | $$|  $$$$$$/\n");
+	printf("|________/ \\____ $$$|________/|________/|__/ |__/ |__/ \\______/ \n");
+	printf("                \\__/                                            \n\n");
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_MAGENTA_BOLD);
+#endif
+	printf(" Website     : https://eq2emu.com \n");
+	printf(" Wiki        : http://eq2emu.com:3001/ \n");
+	printf(" Git         : http://git.eq2emu.com \n");
+	printf(" Discord     : https://discord.gg/j92Ay9H \n\n");
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_WHITE_BOLD);
+#endif
+	printf("For more detailed logging, modify 'Level' param the log_config.xml file.\n\n");
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_WHITE);
+#endif
+
+	fflush(stdout);
 }

@@ -48,7 +48,7 @@ Client::Client(EQStream* ieqnc) {
 	lsadmin = 0;
 	worldadmin = 0;
 	lsstatus = 0;
-	origversion = version = 0;
+	version = 0;
 	kicked = false;
 	verified = false;
 	memset(bannedreason, 0, sizeof(bannedreason));
@@ -168,12 +168,6 @@ bool Client::Process() {
 
 					LogWrite(LOGIN__DEBUG, 0, "Login", "Client Version Provided: %i", version);
 
-					// Image 2020 Notes
-					// we keep the original version for special packets like char creation to pass to world server
-					origversion = version;
-					// forced version to 60085 for now since those structures seem to work best for steam AoM 12133L Aug 17 2015 11:19:13 build
-					version = 60085;
-
 				if (EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
 					LogWrite(LOGIN__ERROR, 0, "Login", "Incompatible client version provided: %i", version);
 					SendLoginDenied();
@@ -181,7 +175,7 @@ bool Client::Process() {
 				}
 				
 						if(EQOpcodeManager.count(GetOpcodeVersion(version)) > 0 && getConnection()){
-						getConnection()->SetClientVersion(GetOrigVersion());
+						getConnection()->SetClientVersion(GetVersion());
 						EQ2_16BitString username = packet->getType_EQ2_16BitString_ByName("username");
 						EQ2_16BitString password = packet->getType_EQ2_16BitString_ByName("password");
 						LoginAccount* acct = database.LoadAccount(username.data.c_str(),password.data.c_str(), net.IsAllowingAccountCreation());
@@ -231,7 +225,7 @@ bool Client::Process() {
 			case OP_AllWSDescRequestMsg:{				
 				SendWorldList();
 				needs_world_list = false;
-				database.LoadCharacters(GetLoginAccount(), GetOrigVersion());				
+				database.LoadCharacters(GetLoginAccount(), GetVersion());				
 				SendCharList();				
 				break;
 										}
@@ -259,7 +253,7 @@ bool Client::Process() {
 				break;
 			}
 			case OP_CreateCharacterRequestMsg:{
-				PacketStruct* packet = configReader.getStruct("CreateCharacter", GetOrigVersion());
+				PacketStruct* packet = configReader.getStruct("CreateCharacter", GetVersion());
 
 				playWaitTimer = new Timer ( 15000 );
 				playWaitTimer->Start ( );
@@ -276,7 +270,7 @@ bool Client::Process() {
 					else
 					{
 						ServerPacket* outpack = new ServerPacket(ServerOP_CharacterCreate, app->size+sizeof(int16));
-						int16 out_version = GetOrigVersion();
+						int16 out_version = GetVersion();
 						memcpy(outpack->pBuffer, &out_version, sizeof(int16));
 						memcpy(outpack->pBuffer + sizeof(int16), app->pBuffer, app->size);
 						uchar* tmp = outpack->pBuffer;
@@ -366,14 +360,11 @@ bool Client::Process() {
 				break;
 											  }
 			default: {
-				char* name = (char*)app->GetOpcodeName();
-				if(name)
-					cout << name;
+				const char* name = app->GetOpcodeName();
+				if (name)
+					LogWrite(OPCODE__DEBUG, 1, "Opcode", "%s Received %04X (%i)", name, app->GetRawOpcode(), app->GetRawOpcode());
 				else
-					cout << "Unknown";
-				cout << " Packet: OPCode: 0x" << hex << setw(2) << setfill('0') << app->GetOpcode() << dec << ", size: " << setw(5) << setfill(' ') << app->Size() << " from " << GetAccountName() << endl;
-				if (app->Size() < 128)
-					DumpPacket(app);
+					LogWrite(OPCODE__DEBUG, 1, "Opcode", "Received %04X (%i)", app->GetRawOpcode(), app->GetRawOpcode());
 					 }
 			}
 			delete app;
@@ -421,7 +412,7 @@ void Client::CharacterApproved(int32 server_id,int32 char_id)
 		if(!world_server)
 			return;
 
-		PacketStruct* packet = configReader.getStruct("LS_CreateCharacterReply", GetOrigVersion());
+		PacketStruct* packet = configReader.getStruct("LS_CreateCharacterReply", GetVersion());
 		if(packet){
 			packet->setDataByName("account_id", GetAccountID());
 			packet->setDataByName("unknown", 0xFFFFFFFF);
@@ -433,7 +424,7 @@ void Client::CharacterApproved(int32 server_id,int32 char_id)
 			database.SaveCharacter(createRequest, GetLoginAccount(),char_id);
 
 			// refresh characters for this account
-			database.LoadCharacters(GetLoginAccount(), GetOrigVersion());
+			database.LoadCharacters(GetLoginAccount(), GetVersion());
 			
 			SendCharList();
 		}
@@ -500,8 +491,8 @@ void Client::SendCharList(){
 	safe_delete(packet);*/
 	LogWrite(LOGIN__INFO, 0, "Login", "[%s] sending character list.", GetAccountName());
 	LS_CharSelectList list;
-	list.loadData(GetAccountID(), GetLoginAccount()->charlist, GetOrigVersion()); 
-	EQ2Packet* outapp = list.serialize(GetOrigVersion());
+	list.loadData(GetAccountID(), GetLoginAccount()->charlist, GetVersion()); 
+	EQ2Packet* outapp = list.serialize(GetVersion());
 //	DumpPacket(outapp);
 	QueuePacket(outapp);
 
@@ -524,7 +515,7 @@ void Client::SendLoginDenied(){
 }
 
 void Client::SendLoginAccepted() {
-	PacketStruct* packet = configReader.getStruct("LS_LoginReplyMsg", GetOrigVersion());
+	PacketStruct* packet = configReader.getStruct("LS_LoginReplyMsg", GetVersion());
 	int i = 0;
 	if (packet)
 	{
@@ -559,7 +550,7 @@ void Client::SendLoginAccepted() {
 void Client::SendWorldList(){
 	EQ2Packet* pack = world_list.MakeServerListPacket(lsadmin, version);
 	EQ2Packet* dupe = pack->Copy();
-	DumpPacket(dupe->pBuffer,dupe->size);
+	//DumpPacket(dupe->pBuffer,dupe->size);
 	QueuePacket(dupe);
 	return;
 }
@@ -704,7 +695,7 @@ void ClientList::Process() {
 			struct in_addr	in;
 			in.s_addr = client->getConnection()->GetRemoteIP();
 			net.numclients--;
-			cout << Timer::GetCurrentTime2() << " Removing client from ip: " << inet_ntoa(in) << " port: " << ntohs(client->getConnection()->GetRemotePort()) << " Name: " << client->GetAccountName() << endl;
+			LogWrite(LOGIN__INFO, 0, "Login", "Removing client from ip: %s on port %i, Account Name: %s", inet_ntoa(in), ntohs(client->getConnection()->GetRemotePort()), client->GetAccountName());
 			client->getConnection()->SetState(CLOSED);
 			net.UpdateWindowTitle();
 			client_list.erase(client);

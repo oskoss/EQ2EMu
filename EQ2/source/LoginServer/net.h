@@ -60,6 +60,7 @@ public:
 
 	bool	IsAllowingAccountCreation() { return allowAccountCreation; }
 
+	void	WelcomeHeader();
 protected:
 	friend class LWorld;
 	bool	Uplink_WrongVersion;

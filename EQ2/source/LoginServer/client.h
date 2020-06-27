@@ -44,7 +44,6 @@ public:
 			account_id = in_account->getLoginAccountID();
 	}
 	int16	GetVersion(){ return version; }
-	int16	GetOrigVersion(){ return origversion; }
 	char*	GetKey()   { return key; }
 	void	SetKey(char* in_key) { strcpy(key,in_key); }
 	int32	GetIP()    { return ip; }
@@ -95,7 +94,6 @@ private:
 	bool	start;
 	bool	needs_world_list;
 	int16	version;
-	int16	origversion;
 	char	bannedreason[30];
 	eLoginMode LoginMode;
 	PacketStruct* createRequest;

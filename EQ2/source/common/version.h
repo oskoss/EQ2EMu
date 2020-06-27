@@ -18,6 +18,8 @@
     along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "LogTypes.h"
+
 #ifndef VERSION_H
 #define VERSION_H
 
@@ -36,9 +38,9 @@
 #endif
 
 #if defined(LOGIN)
-#define CURRENT_VERSION	"0.8.1-gemini2"
+#define CURRENT_VERSION	"0.8.1-cancer1"
 #elif defined(WORLD)
-#define CURRENT_VERSION	"0.8.1-gemini2"
+#define CURRENT_VERSION	"0.8.1-cancer1"
 #else
 #define CURRENT_VERSION	"0.7.3-dev"
 #endif
@@ -52,4 +54,3 @@
 #endif
 
 #endif
-

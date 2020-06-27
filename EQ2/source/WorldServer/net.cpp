@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 	LogStart();
 
 	LogParseConfigs();
-	WelcomeHeader();
+	net.WelcomeHeader();
 
 	LogWrite(INIT__INFO, 0, "Init", "Starting EQ2Emulator WorldServer...");
 	//int32 server_startup = time(NULL);
@@ -963,17 +963,17 @@ void ZoneAuth::RemoveAuth(ZoneAuthRequest *zar) {
 	}
 }
 
-void WelcomeHeader()
+void NetConnection::WelcomeHeader()
 {
-	#ifdef _WIN32
-		HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleTextAttribute(console, FOREGROUND_WHITE_BOLD);
-	#endif
+#ifdef _WIN32
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(console, FOREGROUND_WHITE_BOLD);
+#endif
 	printf("Module: %s, Version: %s", EQ2EMU_MODULE, CURRENT_VERSION);
-	#ifdef _WIN32
-		SetConsoleTextAttribute(console, FOREGROUND_YELLOW_BOLD);
-	#endif
-	printf("\n\nCopyright (C) 2007-2011 EQ2Emulator. http://eq2emulator.net/ \n\n");
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_YELLOW_BOLD);
+#endif
+	printf("\n\nCopyright (C) 2007-2020 EQ2Emulator. https://www.eq2emu.com \n\n");
 	printf("EQ2Emulator is free software: you can redistribute it and/or modify\n");
 	printf("it under the terms of the GNU General Public License as published by\n");
 	printf("the Free Software Foundation, either version 3 of the License, or\n");
@@ -982,9 +982,9 @@ void WelcomeHeader()
 	printf("but WITHOUT ANY WARRANTY; without even the implied warranty of\n");
 	printf("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n");
 	printf("GNU General Public License for more details.\n\n");
-	#ifdef _WIN32
-		SetConsoleTextAttribute(console, FOREGROUND_GREEN_BOLD);
-	#endif
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_GREEN_BOLD);
+#endif
 	printf(" /$$$$$$$$  /$$$$$$   /$$$$$$  /$$$$$$$$                        \n");
 	printf("| $$_____/ /$$__  $$ /$$__  $$| $$_____/                        \n");
 	printf("| $$      | $$  \\ $$|__/  \\ $$| $$       /$$$$$$/$$$$  /$$   /$$\n");
@@ -994,20 +994,20 @@ void WelcomeHeader()
 	printf("| $$$$$$$$|  $$$$$$/| $$$$$$$$| $$$$$$$$| $$ | $$ | $$|  $$$$$$/\n");
 	printf("|________/ \\____ $$$|________/|________/|__/ |__/ |__/ \\______/ \n");
 	printf("                \\__/                                            \n\n");
-	#ifdef _WIN32
-		SetConsoleTextAttribute(console, FOREGROUND_MAGENTA_BOLD);
-	#endif
-	printf(" Website     : http://eq2emulator.net \n");
-	printf(" Forums      : http://eq2emulator.net/phpBB3/ \n");
-	printf(" Contributors: http://eq2emulator.net/wiki/index.php/Developer:Contributors \n");
-	printf(" SVN         : http://svn.eq2emulator.net/svn/eq2server \n\n");
-	#ifdef _WIN32
-		SetConsoleTextAttribute(console, FOREGROUND_WHITE_BOLD);
-	#endif
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_MAGENTA_BOLD);
+#endif
+	printf(" Website     : https://eq2emu.com \n");
+	printf(" Wiki        : http://eq2emu.com:3001/ \n");
+	printf(" Git         : http://git.eq2emu.com \n");
+	printf(" Discord     : https://discord.gg/j92Ay9H \n\n");
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_WHITE_BOLD);
+#endif
 	printf("For more detailed logging, modify 'Level' param the log_config.xml file.\n\n");
-	#ifdef _WIN32
-		SetConsoleTextAttribute(console, FOREGROUND_WHITE);
-	#endif
+#ifdef _WIN32
+	SetConsoleTextAttribute(console, FOREGROUND_WHITE);
+#endif
 
 	fflush(stdout);
 }
