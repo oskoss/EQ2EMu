@@ -71,6 +71,8 @@ public:
 	int32	request_num;
 	LinkedList<DelayQue*> delay_que;
 	void SendPlayFailed(int8 response);
+
+	void StartDisconnectTimer();
 private:
 	string	pending_play_char_name;
 	int32	pending_play_char_id;

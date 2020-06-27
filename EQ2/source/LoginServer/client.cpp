@@ -101,8 +101,13 @@ bool Client::Process() {
 		safe_delete(playWaitTimer);
 		start = true;
 	}
-	//if(disconnectTimer && disconnectTimer->Check())
-	//	getConnection()->SendDisconnect();
+	
+	if (disconnectTimer && disconnectTimer->Check())
+	{
+		safe_delete(disconnectTimer);
+		getConnection()->SendDisconnect();
+	}
+	
 	if (!kicked) {
 		/************ Get all packets from packet manager out queue and process them ************/
 		EQApplicationPacket *app = 0;
@@ -504,6 +509,7 @@ void Client::SendLoginDeniedBadVersion(){
 	ls_response->unknown03 = 0xFFFFFFFF;
 	ls_response->unknown04 = 0xFFFFFFFF;
 	QueuePacket(app);
+	StartDisconnectTimer();
 }
 void Client::SendLoginDenied(){
 	EQ2Packet* app = new EQ2Packet(OP_LoginReplyMsg, 0, sizeof(LS_LoginResponse));
@@ -512,6 +518,7 @@ void Client::SendLoginDenied(){
 	ls_response->unknown03 = 0xFFFFFFFF;
 	ls_response->unknown04 = 0xFFFFFFFF;
 	QueuePacket(app);
+	StartDisconnectTimer();
 }
 
 void Client::SendLoginAccepted() {
@@ -588,8 +595,6 @@ void Client::WorldResponse(int32 worldid, int8 response, char* ip_address, int32
 		EQ2Packet* outapp = response_packet->serialize();
 		QueuePacket(outapp);
 		safe_delete(response_packet);
-		disconnectTimer = new Timer(1000);
-		disconnectTimer->Start();
 	}
 	return;
 }
@@ -701,5 +706,14 @@ void ClientList::Process() {
 			client_list.erase(client);
 		}
 		MClientList.releasewritelock();
+	}
+}
+
+
+void Client::StartDisconnectTimer() {
+	if (!disconnectTimer)
+	{
+		disconnectTimer = new Timer(1000);
+		disconnectTimer->Start();
 	}
 }
