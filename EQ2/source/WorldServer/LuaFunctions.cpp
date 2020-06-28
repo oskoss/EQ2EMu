@@ -917,6 +917,28 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_AddItem(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 item_id = lua_interface->GetInt32Value(state, 2);
+	int16 quantity = lua_interface->GetInt32Value(state, 3);
+
+	// default of 1 quantity to add
+	if (quantity == 0)
+		quantity = 1;
+
+	if (spawn && spawn->IsPlayer()) {
+		Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
+		if (client && item_id > 0) {
+			lua_interface->SetBooleanValue(state, client->AddItem(item_id, quantity));
+			return 1;
+		}
+	}
+
+	lua_interface->SetBooleanValue(state, false);
+	return 1;
+}
 
 int EQ2Emu_lua_SummonItem(lua_State* state) {
 	if (!lua_interface)

@@ -693,6 +693,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SpellDamage", EQ2Emu_lua_SpellDamage);
 	lua_register(state, "CastSpell", EQ2Emu_lua_CastSpell);	
 	lua_register(state, "SpellHeal", EQ2Emu_lua_SpellHeal);
+	lua_register(state, "AddItem", EQ2Emu_lua_AddItem);
 	lua_register(state, "SummonItem", EQ2Emu_lua_SummonItem);
 	lua_register(state, "RemoveItem", EQ2Emu_lua_RemoveItem);
 	lua_register(state, "HasItem", EQ2Emu_lua_HasItem);

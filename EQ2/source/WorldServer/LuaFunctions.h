@@ -130,6 +130,8 @@ int EQ2Emu_lua_ModifyHP(lua_State* state);
 int EQ2Emu_lua_ModifyTotalPower(lua_State* state);
 int EQ2Emu_lua_ModifyTotalHP(lua_State* state);
 int EQ2Emu_lua_SpellHeal(lua_State* state);
+
+int EQ2Emu_lua_AddItem(lua_State* state);
 int EQ2Emu_lua_SummonItem(lua_State* state);
 int EQ2Emu_lua_RemoveItem(lua_State* state);
 int EQ2Emu_lua_HasItem(lua_State* state);
