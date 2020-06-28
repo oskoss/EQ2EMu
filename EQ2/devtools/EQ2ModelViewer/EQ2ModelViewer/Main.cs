@@ -15,6 +15,7 @@ using Buffer = SlimDX.Direct3D11.Buffer;
 using Everquest2.Util;
 using Everquest2.Visualization;
 using System.IO;
+using SlimDX.DirectInput;
 
 namespace EQ2ModelViewer
 {
@@ -51,6 +52,8 @@ namespace EQ2ModelViewer
             CleanUp();
         }
 
+        private Key hitKey = Key.NoConvert;
+        double timestamp = 0;
         private CameraClass camera;
         private void frmMain_Load(object sender, EventArgs e)
         {
@@ -165,6 +168,51 @@ namespace EQ2ModelViewer
                                 else if (input.IsKeyPressed(SlimDX.DirectInput.Key.Escape))
                                 {
                                     SelectedModel = null;
+                                }
+
+                                if (input.IsKeyPressed(SlimDX.DirectInput.Key.LeftControl))
+                                {
+                                    if (hitKey == Key.NoConvert)
+                                    {
+                                        if (input.IsKeyPressed(SlimDX.DirectInput.Key.R))
+                                            hitKey = Key.R;
+                                        else if (input.IsKeyPressed(SlimDX.DirectInput.Key.T))
+                                            hitKey = Key.T;
+                                        else if (input.IsKeyPressed(SlimDX.DirectInput.Key.Y))
+                                            hitKey = Key.Y;
+                                    }
+                                    double curTime = (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
+                                    if ((curTime - timestamp) > 50)
+                                    {
+                                        if (hitKey == Key.R)
+                                        {
+                                            if (input.IsKeyReleased(SlimDX.DirectInput.Key.R))
+                                                hitKey = Key.NoConvert;
+                                            SelectedModel.Rotation += new Vector3(0.01f, 0.0f, 0.0f);
+                                            timestamp = curTime;
+                                        }
+                                        else if (hitKey == Key.T)
+                                        {
+                                            if (input.IsKeyReleased(SlimDX.DirectInput.Key.T))
+                                                hitKey = Key.NoConvert;
+                                            SelectedModel.Rotation += new Vector3(0.0f, 0.01f, 0.0f);
+                                            timestamp = curTime;
+                                        }
+                                        else if (hitKey == Key.Y)
+                                        {
+                                            if (input.IsKeyReleased(SlimDX.DirectInput.Key.Y))
+                                                hitKey = Key.NoConvert;
+                                            SelectedModel.Rotation += new Vector3(0.0f, 0.0f, 0.01f);
+                                            timestamp = curTime;
+                                        }
+
+                                        if (SelectedModel.Rotation.X > 360.0f)
+                                            SelectedModel.Rotation.X = 0.0f;
+                                        if (SelectedModel.Rotation.Y > 360.0f)
+                                            SelectedModel.Rotation.Y = 0.0f;
+                                        if (SelectedModel.Rotation.Z > 360.0f)
+                                            SelectedModel.Rotation.Z = 0.0f;
+                                    }
                                 }
                             }
                         }
