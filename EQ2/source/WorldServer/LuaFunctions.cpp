@@ -952,13 +952,19 @@ int EQ2Emu_lua_SummonItem(lua_State* state) {
 int EQ2Emu_lua_RemoveItem(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	int32 item_id = lua_interface->GetInt32Value(state, 2);
+	int16 quantity = lua_interface->GetInt16Value(state, 3);
+
+	// default of 1 to remove
+	if (quantity == 0)
+		quantity = 1;
+
 	Client* client;
 	Item* item;
 
 	if (spawn && spawn->IsPlayer() && item_id > 0) {
 		if ((client = spawn->GetZone()->GetClientBySpawn(spawn))) {
 			if ((item = client->GetPlayer()->item_list.GetItemFromID(item_id))) {
-				if (client->RemoveItem(item, 1)) {
+				if (client->RemoveItem(item, quantity)) {
 					lua_interface->SetBooleanValue(state, true);
 					return 1;
 				}
