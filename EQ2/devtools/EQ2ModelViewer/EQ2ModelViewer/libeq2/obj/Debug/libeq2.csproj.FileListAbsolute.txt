@@ -35,3 +35,16 @@ D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\lib
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.dll
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.pdb
 D:\github\Maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.csproj.CoreCompileInputs.cache
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\bin\Debug\libeq2.dll
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\bin\Debug\libeq2.pdb
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\bin\Debug\ICSharpCode.SharpZipLib.dll
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\bin\Debug\Spart.dll
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\bin\Debug\Spart.pdb
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\bin\Debug\Spart.xml
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.csprojAssemblyReference.cache
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\Everquest2.Properties.Resources.resources
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.csproj.GenerateResource.cache
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.csproj.CoreCompileInputs.cache
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.csproj.CopyComplete
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.dll
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\libeq2\obj\Debug\libeq2.pdb

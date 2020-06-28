@@ -5,3 +5,6 @@ D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spa
 D:\github\maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Release\Spart.dll
 D:\github\Maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Release\Spart.csproj.CoreCompileInputs.cache
 D:\github\Maps\ModelViewer_SAVE\EQ2ModelViewer\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Release\Spart.csprojAssemblyReference.cache
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\Spart\bin\Release\Spart.dll
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Release\Spart.csproj.CoreCompileInputs.cache
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Release\Spart.dll

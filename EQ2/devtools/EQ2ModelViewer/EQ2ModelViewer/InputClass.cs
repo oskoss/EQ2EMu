@@ -134,6 +134,11 @@ namespace EQ2ModelViewer
         {
             return m_KeyboardState.IsPressed(key);
         }
+        
+        public bool IsKeyReleased(Key key)
+        {
+            return m_KeyboardState.IsReleased(key);
+        }
         public bool IsDeletePressed()
         {
             return m_KeyboardState.IsPressed(Key.Delete);
