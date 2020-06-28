@@ -165,13 +165,23 @@ bool Client::Process() {
 			switch(app->GetOpcode())
 			{
 			case OP_LoginRequestMsg:{
-//				DumpPacket(app);
+				DumpPacket(app);
 				PacketStruct* packet = configReader.getStruct("LS_LoginRequest", 1);
 				if(packet->LoadPacketData(app->pBuffer,app->size)){
-					version = packet->getType_int32_ByName("version");
+					version = packet->getType_int16_ByName("version");
+					LogWrite(LOGIN__DEBUG, 0, "Login", "Classic Client Version Provided: %i", version);
+
+					if (version == 0 || EQOpcodeManager.count(GetOpcodeVersion(version)) == 0)
+					{
+						safe_delete(packet);
+						packet = configReader.getStruct("LS_LoginRequest", 1212);
+						if (packet->LoadPacketData(app->pBuffer, app->size)) {
+							version = packet->getType_int32_ByName("version");
+						}
+					}
 					//[7:19 PM] Kirmmin: Well, I very quickly learned that unknown3 in LS_LoginRequest packet is the same value as cl_eqversion in the eq2_defaults.ini file.
 
-					LogWrite(LOGIN__DEBUG, 0, "Login", "Client Version Provided: %i", version);
+					LogWrite(LOGIN__DEBUG, 0, "Login", "New Client Version Provided: %i", version);
 
 				if (EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
 					LogWrite(LOGIN__ERROR, 0, "Login", "Incompatible client version provided: %i", version);
@@ -537,6 +547,7 @@ void Client::SendLoginAccepted() {
 		packet->setDataByName("class_flag", 0x7FFFFFE);
 		packet->setMediumStringByName("username", GetAccountName());
 		packet->setMediumStringByName("password", GetAccountName());
+
 		packet->setDataByName("unknown5", 0x7C);
 		packet->setDataByName("unknown7", 0xFF6FFFBF);
 
