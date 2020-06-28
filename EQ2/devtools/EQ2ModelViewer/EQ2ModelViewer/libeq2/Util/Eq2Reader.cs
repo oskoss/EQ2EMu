@@ -68,13 +68,10 @@ namespace Everquest2.Util
         public virtual VeBase ReadObject()
         {
             long startPos = BaseStream.Position;
+
             // Read class name
             string className = ReadString();
 
-            if ( this.BaseStream.Position == 5272)
-            {
-                int test = 0;
-            }
             if (className.Length < 1)
                 return null;
 
@@ -324,17 +321,17 @@ namespace Everquest2.Util
 
                 if (curChar == 0)
                 {
-                    ReadByte();
+                    byte val = ReadByte();
                     curChar = (char)PeekChar();
                 }
                 bool isStr = Char.IsLetterOrDigit(curChar);
                 if (!isStr || override_)
                 {
-                    ReadChar();
-                    char[] chars_ = ReadChars((int)curChar);
+                    byte val = ReadByte();
+                    char[] chars_ = ReadChars(val);
                     for(int i=0;i<chars_.Length;i++)
                     {
-                        if (i == 0 && !Char.IsLetterOrDigit(chars_[i]))
+                        if (i == 0 && chars_[i] != '/' && chars_[i] != '.' && chars_[i] != '_' && !Char.IsLetterOrDigit(chars_[i]))
                         {
                             this.BaseStream.Position = pos;
                             break;
