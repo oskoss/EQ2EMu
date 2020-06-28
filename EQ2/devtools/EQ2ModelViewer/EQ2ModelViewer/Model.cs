@@ -73,10 +73,15 @@ namespace EQ2ModelViewer
                         string path = meshes[i][j];
 
                         path = baseDir + path.Replace("/", "\\");
-                        //                        if (path.Contains("\\flora\\"))
-                            if (path.Contains("\\accessories\\"))
+                        //                       if (path.Contains("\\flora\\"))
+                        if (path.Contains("\\accessories\\"))
                         {
                             Console.WriteLine("Model: skipping loading of model (Accessories suck!)" + path);
+                            return false;
+                        }
+                        else if (path.Contains("\\flora\\") && (path.Contains("leaves") || path.Contains("top00")))
+                        {
+                            Console.WriteLine("Model: skipping loading of model (Leaves and Tree Tops suck!)" + path);
                             return false;
                         }
                         string[] texture = frmMain.GetTextureFile(((VeMeshGeometryNode)item).shaderPaletteNames, baseDir);
@@ -237,11 +242,6 @@ namespace EQ2ModelViewer
                         float tv = model.texCoords[0][model.indices[index]].V;
 
                         mesh.AddData(i, x, y, z, nx, ny, nz, tu, tv);
-                    }
-
-                    if (model.indices.Length < 1 || model.normals.Length < 1 || model.vertices.Length < 1)
-                    {
-                        int test = 0;
                     }
 
                     m_meshes.Add(mesh);
