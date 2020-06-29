@@ -32,16 +32,20 @@ extern LoginDatabase database;
 extern LWorldList world_list;
 
 
-void LoginDatabase::SetZoneInformation(int32 server_id, int32 zone_id, PacketStruct* packet){	
+void LoginDatabase::SetZoneInformation(int32 server_id, int32 zone_id, int32 version, PacketStruct* packet){	
 	if(packet){
 		Query query;
-		MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT name, description from ls_world_zones where server_id=%i and zone_id=%i", server_id, zone_id);
+		MYSQL_RES* result = 0;
+		
+		if ( version >= 1212 )
+			result = query.RunQuery2(Q_SELECT, "SELECT name, description from ls_world_zones where server_id=%i and zone_id=%i", server_id, zone_id);
+
 		MYSQL_ROW row;
 		if(result && (row = mysql_fetch_row(result))) {
-			if(row[0])
-				packet->setMediumStringByName("zone", row[0]);
-			else
-				packet->setMediumStringByName("zone", " ");
+				if (row[0])
+					packet->setMediumStringByName("zone", row[0]);
+				else
+					packet->setMediumStringByName("zone", " ");
 			if(row[1])
 				packet->setMediumStringByName("zonedesc", row[1]);
 			else
@@ -49,13 +53,39 @@ void LoginDatabase::SetZoneInformation(int32 server_id, int32 zone_id, PacketStr
 		}
 		else{
 			Query query2;
-			MYSQL_RES* result2 = query2.RunQuery2(Q_SELECT, "SELECT name, description from zones where id=%i", zone_id);
+			MYSQL_RES* result2 = 0;
+
+			if (version < 1212)
+				result2 = query2.RunQuery2(Q_SELECT, "SELECT file, description from zones where id=%i", zone_id);
+			else
+				result2 = query2.RunQuery2(Q_SELECT, "SELECT name, description from zones where id=%i", zone_id);
+
 			MYSQL_ROW row2;
 			if(result2 && (row2 = mysql_fetch_row(result2))) {
-				if(row2[0])
-					packet->setMediumStringByName("zone", row2[0]);
+
+				if (version < 1212)
+				{
+					if (row2[0])
+					{
+						int len = strlen(row2[0]);
+						char* zoneName = new char[len + 2];
+						strncpy(zoneName, row2[0], len);
+						zoneName[len] = 0x2E;
+						zoneName[len + 1] = 0x30;
+
+						packet->setMediumStringByName("zone", zoneName);
+						safe_delete_array(zoneName);
+					}
+					else
+						packet->setMediumStringByName("zone", ".0");
+				}
 				else
-					packet->setMediumStringByName("zone", " ");
+				{
+					if (row2[0])
+						packet->setMediumStringByName("zone", row2[0]);
+					else
+						packet->setMediumStringByName("zone", " ");
+				}
 				if(row2[1])
 					packet->setMediumStringByName("zonedesc", row2[1]);
 				else
@@ -124,7 +154,7 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 			player->packet->setDataByName("deity", atoi(row[6]));
 			player->packet->setDataByName("body_size", atof(row[7]));
 			player->packet->setDataByName("body_age", atof(row[8]));
-			SetZoneInformation(atoi(row[1]), atoi(row[9]), player->packet);
+			SetZoneInformation(atoi(row[1]), atoi(row[9]), version, player->packet);
 			player->packet->setDataByName("level", atoi(row[10]));
 			player->packet->setDataByName("soga_wing_type", atoi(row[11]));
 			player->packet->setDataByName("soga_chest_type", atoi(row[12]));

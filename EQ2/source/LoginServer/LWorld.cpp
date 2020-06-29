@@ -753,7 +753,6 @@ LWorldList::LWorldList() {
 	else
 		OutLink = 0;
 
-	ServerListData = NULL;
 	UpdateServerList = true;
 	#ifdef WIN32
 		_beginthread(ServerUpdateLoop, 0, this);
@@ -1113,10 +1112,12 @@ vector<PacketStruct*>* LWorldList::GetServerListUpdate(int16 version){
 EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 
 	// if the latest world list has already been loaded, just return the string
-	if(!UpdateServerList && ServerListData)
-		return ServerListData;
-	
 	MWorldMap.readlock();
+	if (!UpdateServerList && ServerListData.count(version))
+	{
+		MWorldMap.releasereadlock();
+		return ServerListData[version];
+	}
 
 	LWorld* world = 0;
 	uchar num_servers[2];
@@ -1148,8 +1149,8 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 			ServerNum++;
 			packet->setArrayDataByName("id", world->GetID(), ServerNum-1);
 
-			if (version < 1096)
-				packet->setDataByName("allowed_races", 0x0007FFFF, ServerNum - 1); // no Freeblood and Aerakyn race
+			if (version < 1212)
+				packet->setArrayDataByName("allowed_races", 0xFFFFFFFF, ServerNum - 1);
 			else if (version < 60006)
 				packet->setArrayDataByName("allowed_races", 0x000FFFFF, ServerNum - 1); // + Freeblood
 			else
@@ -1160,6 +1161,7 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 			packet->setArrayDataByName("name", world->GetName(), ServerNum-1);
 			packet->setArrayDataByName("name2", world->GetName(), ServerNum-1);
 			packet->setArrayDataByName("feature_set",0, ServerNum-1);
+
 			packet->setArrayDataByName("load", world->GetWorldStatus(), ServerNum-1);
 			if(world->IsLocked())
 				packet->setArrayDataByName("locked", 1, ServerNum - 1);
@@ -1168,17 +1170,28 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 				packet->setArrayDataByName("tag", 0, ServerNum - 1);
 			else
 				packet->setArrayDataByName("tag", 1, ServerNum - 1);
+
+			if ( version < 1212 )
+				packet->setArrayDataByName("unknown", ServerNum, ServerNum - 1);
 		}
 	}
 
 	EQ2Packet* pack = packet->serialize();
-	safe_delete(ServerListData);
-	ServerListData = pack;
+	printf("WorldList:\n");
+	DumpPacket(pack->pBuffer, pack->size);
+	if (ServerListData.count(version))
+	{
+		map<int32, EQ2Packet*>::iterator it = ServerListData.find(version);
+		EQ2Packet* tmpPack = ServerListData[version];
+		safe_delete(tmpPack);
+		ServerListData.erase(it);
+	}
+	ServerListData.insert(make_pair(version, pack));
 	MWorldMap.releasereadlock();
 
 	SetUpdateServerList( false );
 
-	return ServerListData;
+	return ServerListData[version];
 }
 
 void LWorldList::SendWorldStatus(LWorld* chat, char* adminname) {

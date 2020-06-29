@@ -67,7 +67,7 @@ public:
 	TableQuery* GetLatestTableQuery(int32 server_ip, char* name, int16 version);
 	bool VerifyDataTable(char* name);
 	sint16 GetDataVersion(char* name);
-	void SetZoneInformation(int32 server_id, int32 zone_id, PacketStruct* packet);
+	void SetZoneInformation(int32 server_id, int32 zone_id, int32 version, PacketStruct* packet);
 	string GetZoneDescription(char* name);
 	string GetColumnNames(char* name);
 	TableDataQuery* GetTableDataQuery(int32 server_ip, char* name, int16 version);

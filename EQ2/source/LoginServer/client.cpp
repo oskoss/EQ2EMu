@@ -176,7 +176,7 @@ bool Client::Process() {
 						safe_delete(packet);
 						packet = configReader.getStruct("LS_LoginRequest", 1212);
 						if (packet->LoadPacketData(app->pBuffer, app->size)) {
-							version = packet->getType_int32_ByName("version");
+							version = packet->getType_int16_ByName("version");
 						}
 					}
 					//[7:19 PM] Kirmmin: Well, I very quickly learned that unknown3 in LS_LoginRequest packet is the same value as cl_eqversion in the eq2_defaults.ini file.
@@ -279,6 +279,7 @@ bool Client::Process() {
 					LWorld* world_server = world_list.FindByID(packet->getType_int32_ByName("server_id"));
 					if(!world_server)
 					{
+						DumpPacket(app->pBuffer, app->size);
 						cout << GetAccountName() << " attempted creation of character with an invalid server id of: " << packet->getType_int32_ByName("server_id") << "\n";
 						break;
 					}
@@ -508,7 +509,7 @@ void Client::SendCharList(){
 	LS_CharSelectList list;
 	list.loadData(GetAccountID(), GetLoginAccount()->charlist, GetVersion()); 
 	EQ2Packet* outapp = list.serialize(GetVersion());
-//	DumpPacket(outapp);
+	DumpPacket(outapp->pBuffer, outapp->size);
 	QueuePacket(outapp);
 
 }
@@ -560,6 +561,8 @@ void Client::SendLoginAccepted() {
 		packet->setDataByName("unknown8", 0xFF, 1);
 
 		EQ2Packet* outapp = packet->serialize();
+		printf("Out struct:\n");
+		DumpPacket(outapp->pBuffer, outapp->size);
 		QueuePacket(outapp);
 		safe_delete(packet);
 	}

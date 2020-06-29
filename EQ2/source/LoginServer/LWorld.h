@@ -212,7 +212,7 @@ private:
 
 	// holds the world server list so we don't have to create it for every character
 	// logging in
-	EQ2Packet* ServerListData;
+	map<int32,EQ2Packet*> ServerListData;
 	bool UpdateServerList;
 };
 #endif
