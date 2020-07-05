@@ -3405,7 +3405,13 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 	LogWrite(PLAYER__DEBUG, 0, "Player", "Adding default zone for race: %i, class: %i for char_id: %u (choice: %i)", race_id, class_id, char_id, choice);
 
 	// first, check to see if there is a starting_zones record for this race/class/choice combo (now using extended Archetype/BaseClass/Class combos
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT `name` FROM starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id IN (%i, %i, %i, 255) AND race_id IN (%i, 255) AND choice IN (%i, 255)", 
+	MYSQL_RES* result = 0;
+	
+	if ( class_id == 0 )
+		result = query.RunQuery2(Q_SELECT, "SELECT `name` FROM starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id = 255 AND race_id IN (%i, 255) AND choice = %u",
+			race_id, choice);
+		else
+			result = query.RunQuery2(Q_SELECT, "SELECT `name` FROM starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id IN (%i, %i, %i, 255) AND race_id IN (%i, 255) AND choice IN (%i, 255)",
 		classes.GetBaseClass(class_id), classes.GetSecondaryBaseClass(class_id), class_id, race_id, choice);
 
 	// TODO: verify client version so clients do not crash trying to enter zones they do not own (paks)
@@ -3416,8 +3422,13 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 
 		if( result && (row = mysql_fetch_row(result)) )
 			zone_name = string(row[0]);
-		query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z, starting_zones sz SET c.current_zone_id = z.id, c.x = z.safe_x, c.y = z.safe_y, c.z = z.safe_z, c.starting_city = %i WHERE z.id = sz.zone_id AND sz.class_id IN (%i, %i, %i, 255) AND sz.race_id IN (%i, 255) AND sz.choice IN (%i, 255) AND c.id = %u", 
-			choice, classes.GetBaseClass(class_id), classes.GetSecondaryBaseClass(class_id), class_id, race_id, choice, char_id);
+
+		if (class_id == 0)
+			query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z, starting_zones sz SET c.current_zone_id = z.id, c.x = z.safe_x, c.y = z.safe_y, c.z = z.safe_z, c.starting_city = z.id WHERE z.id = sz.zone_id AND sz.class_id = 255 AND sz.race_id IN (%i, 255) AND sz.choice = %u AND c.id = %u",
+				race_id, choice, char_id);
+		else
+			query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z, starting_zones sz SET c.current_zone_id = z.id, c.x = z.safe_x, c.y = z.safe_y, c.z = z.safe_z, c.starting_city = %i WHERE z.id = sz.zone_id AND sz.class_id IN (%i, %i, %i, 255) AND sz.race_id IN (%i, 255) AND sz.choice IN (%i, 255) AND c.id = %u", 
+				choice, classes.GetBaseClass(class_id), classes.GetSecondaryBaseClass(class_id), class_id, race_id, choice, char_id);
 
 		if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
 			LogWrite(PLAYER__ERROR, 0, "Player", "Error in UpdateStartingZone custom starting_zones, query: '%s': %s", query.GetQuery(), query.GetError());
