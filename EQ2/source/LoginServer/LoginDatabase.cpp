@@ -63,7 +63,7 @@ void LoginDatabase::SetZoneInformation(int32 server_id, int32 zone_id, int32 ver
 			MYSQL_ROW row2;
 			if(result2 && (row2 = mysql_fetch_row(result2))) {
 
-				if (version < 1212)
+				if (version != 546 && version < 1212)
 				{
 					if (row2[0])
 					{
@@ -169,8 +169,13 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 				player->packet->setDataByName("last_played", atol(row[20]));
 			if(version >= 887)
 				player->packet->setDataByName("version", 6);
+			else if ( version == 546 )
+				player->packet->setDataByName("version", 11);
 			else
 				player->packet->setDataByName("version", 5);
+
+			player->packet->setDataByName("client_version", GetVersion());
+
 			player->packet->setDataByName("account_id", acct->getLoginAccountID());
 			player->packet->setDataByName("account_id2", acct->getLoginAccountID());
 			
@@ -182,6 +187,7 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 			player->packet->setDataByName("soga_hair_face_type", atoi(row[24]));
 
 			player->packet->setDataByName("soga_race_type", atoi(row[25]));
+
 			player->packet->setDataByName("race_type", atoi(row[26]));
 
 			player->packet->setDataByName("unknown3", 57);

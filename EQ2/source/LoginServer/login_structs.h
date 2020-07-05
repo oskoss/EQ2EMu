@@ -35,11 +35,19 @@ struct LS_OLDPlayCharacterRequest{
 	int32	character_id;
 	EQ2_16BitString name;
 };
+struct LS_CharListAccountInfoDoF {
+	int32	account_id;
+	int32	unknown1;
+	int16	unknown2;
+	int8	unknown3;
+};
+
 struct LS_CharListAccountInfo{
 	int32	account_id;
 	int32	unknown1;
 	int16	unknown2;
 	int32	unknown3;
+	// DoF does not have the following data
 	int8	unknown4;
 	int32	unknown5[4];
 	int16	unknown6;
