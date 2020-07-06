@@ -174,7 +174,7 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 			else
 				player->packet->setDataByName("version", 5);
 
-			player->packet->setDataByName("client_version", GetVersion());
+			player->packet->setDataByName("client_version", version);
 
 			player->packet->setDataByName("account_id", acct->getLoginAccountID());
 			player->packet->setDataByName("account_id2", acct->getLoginAccountID());
