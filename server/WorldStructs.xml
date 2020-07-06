@@ -333,6 +333,14 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown" Type="int8" Size="1" />
 <Data ElementName="unix_time" Type="int32" Size="1" />
 </Struct>
+<Struct Name="WS_GameWorldTime" ClientVersion="289" OpcodeName="OP_GameWorldTimeMsg">
+<Data ElementName="year" Type="int16" Size="1" />
+<Data ElementName="month" Type="int8" Size="1" />
+<Data ElementName="day" Type="int8" Size="1" />
+<Data ElementName="hour" Type="int8" Size="1" />
+<Data ElementName="minute" Type="int8" Size="1" />
+<Data ElementName="unknown" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_GameWorldTime" ClientVersion="1193" OpcodeName="OP_GameWorldTimeMsg">
 <Data ElementName="year" Type="int16" Size="1" />
 <Data ElementName="month" Type="int8" Size="1" />
@@ -10750,7 +10758,7 @@ to zero and treated like placeholders." />
 <Data ElementName="haste" Type="float" Size="1" />
 <Data ElementName="increase_max_power" Type="float" Size="1" />
 <Data ElementName="increase_max_power2" Type="float" Size="1" /> <!-- used when bonus is applied to both health & power -->
-<Data ElementName="unknown130" Type="float" Size="1" />
+<Data ElementName="unknown131" Type="float" Size="1" />
 <Data ElementName="drunk" Type="float" Size="1" />
 <Data ElementName="unknown133" Type="float" Size="1" />
 <Data ElementName="hate_mod" Type="float" Size="1" />
@@ -10758,15 +10766,16 @@ to zero and treated like placeholders." />
 <Data ElementName="tradeskill_effects_bonus" Type="float" Size="1" />
 <Data ElementName="unknown137" Type="float" Size="1" />
 <Data ElementName="unknown138" Type="float" Size="1" />
+<Data ElementName="unknown139" Type="float" Size="1" />
 <Data ElementName="dps" Type="float" Size="1" />
 <Data ElementName="unknown141" Type="float" Size="1" />
 <Data ElementName="unknown142" Type="float" Size="1" />
-<Data ElementName="unknown142x" Type="float" Size="1" />
 <Data ElementName="base_avoidance" Type="float" Size="1" />
 <Data ElementName="unknown144" Type="float" Size="1" />
 <Data ElementName="uncontested_riposte_pve" Type="float" Size="1" />
 <Data ElementName="uncontested_parry_pve" Type="float" Size="1" />
 <Data ElementName="unknown147" Type="float" Size="1" />
+<Data ElementName="unknown148" Type="float" Size="1" />
 <Data ElementName="melee_ae" Type="float" Size="1" />
 <Data ElementName="multi_attack" Type="float" Size="1" /> 
 <Data ElementName="spell_multi_attack" Type="float" Size="1" /> <!-- spell_doublecast -->
@@ -10787,7 +10796,6 @@ to zero and treated like placeholders." />
 <Data ElementName="casting_speed" Type="float" Size="1" />
 <Data ElementName="spell_reuse_speed" Type="float" Size="1" />
 <Data ElementName="unknown168" Type="float" Size="1" />
-<Data ElementName="unknown168x" Type="float" Size="1" />
 <Data ElementName="decrease_falling_dmg" Type="float" Size="1" />
 <Data ElementName="unknown170" Type="float" Size="1" />
 <Data ElementName="unknown171" Type="float" Size="1" />
@@ -10800,8 +10808,8 @@ to zero and treated like placeholders." />
 <Data ElementName="loot_coin" Type="float" Size="1" />
 <Data ElementName="mitigation_increase" Type="float" Size="1" />
 <Data ElementName="unknown180" Type="float" Size="1" />
+<Data ElementName="unknown181" Type="float" Size="1" />
 <Data ElementName="strikethrough" Type="float" Size="1" />
-<Data ElementName="unknown182" Type="float" Size="1" />
 <Data ElementName="accuracy" Type="float" Size="1" />
 <Data ElementName="unknown184" Type="float" Size="1" />
 <Data ElementName="unknown185" Type="float" Size="1" />
@@ -10815,9 +10823,9 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown193" Type="float" Size="1" />
 <Data ElementName="unknown194" Type="float" Size="1" />
 <Data ElementName="unknown195" Type="float" Size="1" />
-<Data ElementName="unknown197" Type="float" Size="1" />
+<Data ElementName="unknown196" Type="float" Size="1" />
+<Data ElementName="unknown197" Type ="float" Size="1" />
 <Data ElementName="pvp_crit_mit" Type ="float" Size="1" />
-<Data ElementName="unknown199x" Type ="float" Size="1" />
 <Data ElementName="unknown199" Type ="float" Size="1" />
 <Data ElementName="unknown200" Type ="float" Size="1" />
 <Data ElementName="unknown201" Type ="float" Size="1" />
@@ -10862,14 +10870,14 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown240" Type ="float" Size="1" />
 <Data ElementName="unknown241" Type ="float" Size="1" />
 <Data ElementName="unknown242" Type ="float" Size="1" />
-<Data ElementName="uncontested_riposte_gear_cap" Type ="float" Size="1" />
-<Data ElementName="uncontested_dodge_gear_cap" Type ="float" Size="1" />
-<Data ElementName="uncontested_parry_gear_cap" Type ="float" Size="1" />
+<Data ElementName="unknown243" Type ="float" Size="1" />
+<Data ElementName="unknown244" Type ="float" Size="1" />
+<Data ElementName="unknown245" Type ="float" Size="1" />
 <Data ElementName="unknown246" Type ="float" Size="1" />
 <Data ElementName="unknown247" Type ="float" Size="1" />
-<Data ElementName="unknown248" Type ="float" Size="1" />
-<Data ElementName="unknown249" Type ="float" Size="1" />
-<Data ElementName="unknown250" Type ="float" Size="1" />
+<Data ElementName="uncontested_riposte_gear_cap" Type ="float" Size="1" />
+<Data ElementName="uncontested_parry_gear_cap" Type ="float" Size="1" />
+<Data ElementName="uncontested_dodge_gear_cap" Type ="float" Size="1" />
 <Data ElementName="unknown251" Type ="float" Size="1" />
 <Data ElementName="unknown252" Type ="float" Size="1" />
 <Data ElementName="unknown253" Type ="float" Size="1" />
@@ -11024,17 +11032,30 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown408" Type="float" Size="1" />
 <Data ElementName="unknown409" Type ="float" Size="1" />
 <Data ElementName="unknown410" Type="float" Size="1" />
+<Data ElementName="unknown411" Type="float" Size="1" />
+<Data ElementName="unknown412" Type="float" Size="1" />
+<Data ElementName="unknown413" Type="float" Size="1" />
+<Data ElementName="unknown414" Type="float" Size="1" />
+<Data ElementName="unknown415" Type ="float" Size="1" />
+<Data ElementName="unknown416" Type="float" Size="1" />
+<Data ElementName="unknown417" Type="float" Size="1" />
+<Data ElementName="unknown418" Type="float" Size="1" />
+<Data ElementName="unknown419" Type ="float" Size="1" />
+<Data ElementName="unknown420" Type="float" Size="1" />
+<Data ElementName="unknown421" Type="float" Size="1" />
+<Data ElementName="unknown422" Type="float" Size="1" />
 <Data ElementName="durability_mod" Type="float" Size="1" />
 <Data ElementName="durability_add" Type="float" Size="1" />
 <Data ElementName="progress_mod" Type="float" Size="1" />
 <Data ElementName="progress_add" Type="float" Size="1" />
 <Data ElementName="success_mod" Type="float" Size="1" />
 <Data ElementName="crit_success_mod" Type="float" Size="1" />
-<Data ElementName="unknown417" Type="float" Size="1" />
+<Data ElementName="unknown429" Type="float" Size="1" />
 <Data ElementName="rare_harvest_chance" Type="float" Size="1" />
 <Data ElementName="max_crafting" Type="float" Size="1" />
 <Data ElementName="component_refund" Type="float" Size="1" />
-<Data ElementName="unknown421" Type="float" Size="1" />
+<Data ElementName="unknown433" Type="float" Size="1" />
+<Data ElementName="refine_quantity_mod" Type="float" Size="1" />
 <Data ElementName="ex_durability_mod" Type="float" Size="1" />
 <Data ElementName="ex_durability_add" Type="float" Size="1" />
 <Data ElementName="ex_crit_success_mod" Type="float" Size="1" />
@@ -11042,35 +11063,22 @@ to zero and treated like placeholders." />
 <Data ElementName="ex_progress_mod" Type="float" Size="1" />
 <Data ElementName="ex_progress_add" Type="float" Size="1" />
 <Data ElementName="ex_success_mod" Type="float" Size="1" />
-<Data ElementName="unknown430" Type="float" Size="1" />
-<Data ElementName="unknown431" Type="float" Size="1" />
-<Data ElementName="unknown432" Type="float" Size="1" />
-<Data ElementName="unknown433" Type="float" Size="1" />
-<Data ElementName="unknown434" Type="float" Size="1" />
-<Data ElementName="unknown435" Type="float" Size="1" />
-<Data ElementName="unknown436" Type="float" Size="1" />
-<Data ElementName="unknown437" Type="float" Size="1" />
-<Data ElementName="unknown438" Type="float" Size="1" />
-<Data ElementName="unknown439" Type="float" Size="1" />
-<Data ElementName="unknown440" Type="float" Size="1" />
-<Data ElementName="unknown441" Type="float" Size="1" />
-<Data ElementName="unknown442x" Type="float" Size="1" />
-<Data ElementName="unknown443x" Type="float" Size="1" />
-<Data ElementName="unknown444x" Type="float" Size="1" />
-<Data ElementName="unknown445x" Type="float" Size="1" />
-<Data ElementName="unknown446x" Type="float" Size="1" />
-<Data ElementName="unknown447x" Type="float" Size="1" />
-<Data ElementName="unknown448x" Type="float" Size="1" />
-<Data ElementName="unknown449x" Type="float" Size="1" />
-<Data ElementName="unknown450x" Type="float" Size="1" />
-<Data ElementName="unknown451x" Type="float" Size="1" />
-<Data ElementName="unknown452x" Type="float" Size="1" />
-<Data ElementName="unknown453x" Type="float" Size="1" />
-<Data ElementName="unknown454x" Type="float" Size="1" />
-<Data ElementName="unknown180" Type="int8" Size="1" />
-<Data ElementName="unknown524" Type="int8" Size="1" />
-<Data ElementName="unknown181a" Type="int8" Size="1" />
-<Data ElementName="unknown181b" Type="int8" Size="1" />
+<Data ElementName="unknown423a" Type="float" Size="1" />
+<Data ElementName="unknown424a" Type="float" Size="1" />
+<Data ElementName="unknown425a" Type="float" Size="1" />
+<Data ElementName="unknown426a" Type="float" Size="1" />
+<Data ElementName="unknown427a" Type="float" Size="1" />
+<Data ElementName="unknown428a" Type="float" Size="1" />
+<Data ElementName="unknown429a" Type="float" Size="1" />
+<Data ElementName="unknown430a" Type="float" Size="1" />
+<Data ElementName="unknown431a" Type="float" Size="1" />
+<Data ElementName="unknown432a" Type="float" Size="1" />
+<Data ElementName="unknown433a" Type="float" Size="1" />
+<Data ElementName="unknown434a" Type="int8" Size="1" />
+<Data ElementName="unknown435a" Type="int8" Size="1" />
+<Data ElementName="unknown436a" Type="int8" Size="1" />
+<Data ElementName="unknown437a" Type="int8" Size="1" />
+<Data ElementName="unknown438a" Type="int8" Size="4" />
 <Data ElementName="unknown442" Type ="float" Size="1" />
 <Data ElementName="unknown443" Type ="float" Size="1" />
 <Data ElementName="unknown444" Type ="float" Size="1" />
@@ -11182,12 +11190,48 @@ to zero and treated like placeholders." />
 <Data ElementName="merc_unknown21cc" Type="int8" Size="4" />
 <Data ElementName="rain" Type="float" Size="1" />
 <Data ElementName="rain2" Type="float" Size="1" />
-<Data ElementName="unknownx527" Type="int8" Size="9" />
+<Data ElementName="unknownx527_1" Type="int32" Size="1" />
+<Data ElementName="unknownx527_2" Type="int32" Size="1" />
+<Data ElementName="unknownx527" Type="int8" Size="1" />
 <Data ElementName="house_zone" Type="char" Size="48" />
-<Data ElementName="unknownx526" Type="int8" Size="132" />
+<Data ElementName="unknownx526_1" Type="int32" Size="1" />
+<Data ElementName="unknownx526_2" Type="int32" Size="1" />
+<Data ElementName="unknownx526_3" Type="int32" Size="1" />
+<Data ElementName="unknownx526_4" Type="int32" Size="1" />
+<Data ElementName="unknownx526_5" Type="int32" Size="1" />
+<Data ElementName="unknownx526_6" Type="int32" Size="1" />
+<Data ElementName="unknownx526_7" Type="int32" Size="1" />
+<Data ElementName="unknownx526_8" Type="int32" Size="1" />
+<Data ElementName="unknownx526_9" Type="int32" Size="1" />
+<Data ElementName="unknownx526_10" Type="int32" Size="1" />
+<Data ElementName="unknownx526_11" Type="int32" Size="1" />
+<Data ElementName="unknownx526_12" Type="int32" Size="1" />
+<Data ElementName="unknownx526_13" Type="int32" Size="1" />
+<Data ElementName="unknownx526_14" Type="int32" Size="1" />
+<Data ElementName="unknownx526_15" Type="int32" Size="1" />
+<Data ElementName="unknownx526_16" Type="int32" Size="1" />
+<Data ElementName="unknownx526_17" Type="int32" Size="1" />
+<Data ElementName="unknownx526_18" Type="int32" Size="1" />
+<Data ElementName="unknownx526_19" Type="int32" Size="1" />
+<Data ElementName="unknownx526_20" Type="int32" Size="1" />
+<Data ElementName="unknownx526_21" Type="int32" Size="1" />
+<Data ElementName="unknownx526_22" Type="int32" Size="1" />
+<Data ElementName="unknownx526_23" Type="int32" Size="1" />
+<Data ElementName="unknownx526_24" Type="int32" Size="1" />
+<Data ElementName="unknownx526_25" Type="int32" Size="1" />
+<Data ElementName="unknownx526_26" Type="int32" Size="1" />
+<Data ElementName="unknownx526_27" Type="int32" Size="1" />
+<Data ElementName="unknownx526_28" Type="int32" Size="1" />
+<Data ElementName="unknownx526_29" Type="int32" Size="1" />
+<Data ElementName="unknownx526_30" Type="int32" Size="1" />
+<Data ElementName="unknownx526_31" Type="int32" Size="1" />
+<Data ElementName="unknownx526_32" Type="int32" Size="1" />
+<Data ElementName="unknownx526_33" Type="int32" Size="1" />
 <Data ElementName="status_points" Type="int32" Size="1" />
 <Data ElementName="guild_status" Type="int32" Size="1" />
-<Data ElementName="unknown187" Type="int8" Size="11" />
+<Data ElementName="unknownx526_34" Type="int32" Size="1" />
+<Data ElementName="unknownx526_35" Type="int32" Size="1" />
+<Data ElementName="unknown187" Type="int8" Size="3" />
 <Data ElementName="bind_zone" Type="char" Size="32" />
 <Data ElementName="unknown188" Type="int8" Size="52" />
 </Struct>
