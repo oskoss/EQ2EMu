@@ -530,10 +530,18 @@ int32 LoginDatabase::CheckServerAccount(char* name, char* passwd){
 	MYSQL_ROW row;
 	query.escaped_name = getEscapeString(name);
 	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT password, id from login_worldservers where account='%s'", query.escaped_name);
+
+	LogWrite(LOGIN__INFO, 0, "Login", "WorldServer CheckServerAccount Account=%s\nSHA=%s", (char*)query.escaped_name, passwd);
 	if(result && mysql_num_rows(result) == 1){
 		row = mysql_fetch_row(result);
-		if(memcmp(row[0], passwd, 1) == 0)
+
+		LogWrite(LOGIN__INFO, 0, "Login", "WorldServer CheckServerAccountResult Account=%s\nPassword=%s", (char*)query.escaped_name, (row && row[0]) ? row[0] : "(NULL)");
+
+		if (memcmp(row[0], passwd, strnlen(passwd, 256)) == 0)
+		{
+			LogWrite(LOGIN__INFO, 0, "Login", "WorldServer CheckServerAccountResultMatch Account=%s", (char*)query.escaped_name);
 			id = atoi(row[1]);
+		}
 	}
 	return id;
 }
