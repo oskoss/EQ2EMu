@@ -537,7 +537,7 @@ int32 LoginDatabase::CheckServerAccount(char* name, char* passwd){
 
 		LogWrite(LOGIN__INFO, 0, "Login", "WorldServer CheckServerAccountResult Account=%s\nPassword=%s", (char*)query.escaped_name, (row && row[0]) ? row[0] : "(NULL)");
 
-		if (memcmp(row[0], passwd, strnlen(passwd, 256)) == 0)
+		if (memcmp(row[0], passwd, strnlen(row[0], 256)) == 0)
 		{
 			LogWrite(LOGIN__INFO, 0, "Login", "WorldServer CheckServerAccountResultMatch Account=%s", (char*)query.escaped_name);
 			id = atoi(row[1]);
