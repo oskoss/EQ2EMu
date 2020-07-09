@@ -529,7 +529,7 @@ int32 LoginDatabase::CheckServerAccount(char* name, char* passwd){
 	Query query;
 	MYSQL_ROW row;
 	query.escaped_name = getEscapeString(name);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT password, id from login_worldservers where account='%s'", query.escaped_name);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT lower(password), id from login_worldservers where account='%s'", query.escaped_name);
 
 	LogWrite(LOGIN__INFO, 0, "Login", "WorldServer CheckServerAccount Account=%s\nSHA=%s", (char*)query.escaped_name, passwd);
 	if(result && mysql_num_rows(result) == 1){
