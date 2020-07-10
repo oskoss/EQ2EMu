@@ -7021,7 +7021,7 @@ void ZoneServer::GetTransporters(vector<TransportDestination*>* returnList, Clie
 			else if (transporters[transport_id][i]->max_client_version && client->GetVersion() > transporters[transport_id][i]->max_client_version)
 				continue;
 
-			if (database.CheckExpansionFlags(this, transporters[transport_id][i]->expansion_flag))
+			if (database.CheckExpansionFlags(this, transporters[transport_id][i]->expansion_flag) && database.CheckHolidayFlags(this, transporters[transport_id][i]->holiday_flag))
 			{
 				returnList->push_back(transporters[transport_id][i]);
 			}
