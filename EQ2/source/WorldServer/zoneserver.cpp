@@ -151,6 +151,7 @@ ZoneServer::ZoneServer(const char* name) {
 	dawn_minute = 0;
 	reloading_spellprocess = false;
 	expansion_flag = 0;
+	holiday_flag = 0;
 	MMasterZoneLock = new CriticalSection(MUTEX_ATTRIBUTE_RECURSIVE);
 	
 	Grid = nullptr;
@@ -6964,7 +6965,7 @@ void ZoneServer::AddLocationTransporter(int32 zone_id, string message, float tri
 }
 
 void ZoneServer::AddTransporter(int32 transport_id, int8 type, string name, string message, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, 
-	int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y, int32 expansion_flag, int32 min_client_version, 
+	int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y, int32 expansion_flag, int32 holiday_flag, int32 min_client_version, 
 	int32 max_client_version, int32 flight_path_id, int16 mount_id, int8 mount_red_color, int8 mount_green_color, int8 mount_blue_color){
 	TransportDestination* transport = new TransportDestination;
 	transport->type = type;
@@ -6988,6 +6989,8 @@ void ZoneServer::AddTransporter(int32 transport_id, int8 type, string name, stri
 	transport->map_y = map_y;
 
 	transport->expansion_flag = expansion_flag;
+	transport->holiday_flag = holiday_flag;
+
 	transport->min_client_version = min_client_version;
 	transport->max_client_version = max_client_version;
 

@@ -881,7 +881,7 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 	NPC* npc = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 													"FROM spawn s\n"
 													"INNER JOIN spawn_npcs npc\n"
 													"ON s.id = npc.spawn_id\n"
@@ -899,7 +899,8 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		memcpy(&npc->appearance, appearance, sizeof(AppearanceData));
 		*/
 		int32 npcXpackFlag = atoul(row[75]);
-		if (!CheckExpansionFlags(zone, npcXpackFlag))
+		int32 npcHolidayFlag = atoul(row[76]);
+		if (!CheckExpansionFlags(zone, npcXpackFlag) || !CheckHolidayFlags(zone, npcHolidayFlag))
 			continue;
 
 		id = atoul(row[0]);
@@ -1022,12 +1023,12 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->SetSuffixTitle(row[73]);
 		npc->SetLastName(row[74]);
 
-		// xpack value handled at top at position 75
+		// xpack+holiday value handled at top at position 75+76
 
-		int8 disableSounds = atoul(row[76]);
+		int8 disableSounds = atoul(row[77]);
 		npc->SetSoundsDisabled(disableSounds);
 
-		npc->SetMerchantLevelRange(atoul(row[77]), atoul(row[78]));
+		npc->SetMerchantLevelRange(atoul(row[78]), atoul(row[79]));
 
 		zone->AddNPC(id, npc);
 		total++;
@@ -1047,7 +1048,7 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 	Sign* sign = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_signs ss\n"
 												  "ON s.id = ss.spawn_id\n"
@@ -1061,7 +1062,8 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 
 	while(result && (row = mysql_fetch_row(result))){
 		int32 signXpackFlag = atoul(row[28]);
-		if (!CheckExpansionFlags(zone, signXpackFlag))
+		int32 signHolidayFlag = atoul(row[29]);
+		if (!CheckExpansionFlags(zone, signXpackFlag) || !CheckHolidayFlags(zone, signHolidayFlag))
 			continue;
 
 		id = atoul(row[0]);
@@ -1110,12 +1112,12 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 		sign->appearance.display_hand_icon = atoi(row[26]);
 		sign->SetVisualState(atoi(row[27]));
 
-		// xpack value handled at top at position 28
+		// xpack+holiday value handled at top at position 28+29
 
-		int8 disableSounds = atoul(row[29]);
+		int8 disableSounds = atoul(row[30]);
 		sign->SetSoundsDisabled(disableSounds);
 
-		sign->SetMerchantLevelRange(atoul(row[30]), atoul(row[31]));
+		sign->SetMerchantLevelRange(atoul(row[31]), atoul(row[32]));
 
 		zone->AddSign(id, sign);
 		total++;
@@ -1132,7 +1134,7 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 	Widget* widget = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.expansion_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_widgets sw\n"
 												  "ON s.id = sw.spawn_id\n"
@@ -1145,7 +1147,8 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 												  zone->GetZoneID());
 	while(result && (row = mysql_fetch_row(result))){
 		int32 widgetXpackFlag = atoul(row[33]);
-		if (!CheckExpansionFlags(zone, widgetXpackFlag))
+		int32 widgetHolidayFlag = atoul(row[34]);
+		if (!CheckExpansionFlags(zone, widgetXpackFlag) || !CheckHolidayFlags(zone, widgetHolidayFlag))
 			continue;
 
 		id = atoul(row[0]);
@@ -1209,12 +1212,12 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 		widget->SetCloseZ(atof(row[31]));
 		widget->appearance.display_hand_icon = atoi(row[32]);
 
-		// xpack value handled at top at position 33
+		// xpack+holiday value handled at top at position 33+34
 
-		int8 disableSounds = atoul(row[34]);
+		int8 disableSounds = atoul(row[35]);
 		widget->SetSoundsDisabled(disableSounds);
 
-		widget->SetMerchantLevelRange(atoul(row[35]), atoul(row[36]));
+		widget->SetMerchantLevelRange(atoul(row[36]), atoul(row[37]));
 
 		zone->AddWidget(id, widget);
 		total++;
@@ -1231,7 +1234,7 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 	Object* object = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.expansion_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_objects so\n"
 												  "ON s.id = so.spawn_id\n"
@@ -1303,7 +1306,7 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 	GroundSpawn* spawn = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.expansion_flag, s.disable_sounds\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.expansion_flag, s.holiday_flag, s.disable_sounds\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_ground sg\n"
 												  "ON s.id = sg.spawn_id\n"
@@ -1317,7 +1320,8 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 	while(result && (row = mysql_fetch_row(result))){
 
 		int32 gsXpackFlag = atoul(row[21]);
-		if (!CheckExpansionFlags(zone, gsXpackFlag))
+		int32 gsHolidayFlag = atoul(row[22]);
+		if (!CheckExpansionFlags(zone, gsXpackFlag) || !CheckHolidayFlags(zone, gsHolidayFlag))
 			continue;
 
 		id = atoul(row[0]);
@@ -1356,9 +1360,9 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 		spawn->SetCollectionSkill(row[19]);
 		spawn->SetSizeOffset(atoi(row[20]));
 
-		// xpack value handled at top at position 21
+		// xpack+holiday value handled at top at position 21+22
 
-		int8 disableSounds = atoul(row[22]);
+		int8 disableSounds = atoul(row[23]);
 		spawn->SetSoundsDisabled(disableSounds);
 
 		zone->AddGroundSpawn(id, spawn);
@@ -4830,7 +4834,7 @@ void WorldDatabase::LoadTransporters(ZoneServer* zone){
 	zone->DeleteGlobalTransporters();
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT transport_id, transport_type, display_name, message, destination_zone_id, destination_x, destination_y, destination_z, destination_heading, trigger_location_zone_id, trigger_location_x, trigger_location_y, trigger_location_z, trigger_radius, cost, id, min_level, max_level, quest_req, quest_step_req, quest_completed, map_x, map_y, expansion_flag, min_client_version, max_client_version, flight_path_id, mount_id, mount_red_color, mount_green_color, mount_blue_color FROM transporters ORDER BY transport_id");
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT transport_id, transport_type, display_name, message, destination_zone_id, destination_x, destination_y, destination_z, destination_heading, trigger_location_zone_id, trigger_location_x, trigger_location_y, trigger_location_z, trigger_radius, cost, id, min_level, max_level, quest_req, quest_step_req, quest_completed, map_x, map_y, expansion_flag, holiday_flag, min_client_version, max_client_version, flight_path_id, mount_id, mount_red_color, mount_green_color, mount_blue_color FROM transporters ORDER BY transport_id");
 	if(result){
 		while(result && (row = mysql_fetch_row(result))){
 			LogWrite(TRANSPORT__DEBUG, 5, "Transport", "---Loading Transporter ID: %u, transport_type: %s", row[0], row[1]);
@@ -4848,13 +4852,13 @@ void WorldDatabase::LoadTransporters(ZoneServer* zone){
 				message = string(row[3]);
 
 			if(row[1] && strcmp(row[1], "Zone") == 0)
-				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_ZONE, name, message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]), atoul(row[26]), atoul(row[27]), atoul(row[28]), atoul(row[29]), atoul(row[30]));
+				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_ZONE, name, message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]), atoul(row[26]), atoul(row[27]), atoul(row[28]), atoul(row[29]), atoul(row[30]), atoul(row[31]));
 			else if (row[1] && strcmp(row[1], "Flight") == 0)
-				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_FLIGHT, name, message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]), atoul(row[26]), atoul(row[27]), atoul(row[28]), atoul(row[29]), atoul(row[30]));
+				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_FLIGHT, name, message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]), atoul(row[26]), atoul(row[27]), atoul(row[28]), atoul(row[29]), atoul(row[30]), atoul(row[31]));
 			else if(row[1] && strcmp(row[1], "Location") == 0)
 				zone->AddLocationTransporter(atoul(row[9]), message, atof(row[10]), atof(row[11]), atof(row[12]), atof(row[13]), atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]));
 			else
-				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_GENERIC, "", message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]), atoul(row[26]), atoul(row[27]), atoul(row[28]), atoul(row[29]), atoul(row[30]));
+				zone->AddTransporter(atoul(row[0]), TRANSPORT_TYPE_GENERIC, "", message, atoul(row[4]), atof(row[5]), atof(row[6]), atof(row[7]), atof(row[8]), atoul(row[14]), atoul(row[15]), atoi(row[16]), atoi(row[17]), atoul(row[18]), atoi(row[19]), atoul(row[20]), atoul(row[21]), atoul(row[22]), atoul(row[23]), atoul(row[24]), atoul(row[25]), atoul(row[26]), atoul(row[27]), atoul(row[28]), atoul(row[29]), atoul(row[30]), atoul(row[31]));
 			total++;
 		}
 	}
@@ -6119,7 +6123,7 @@ bool WorldDatabase::LoadGroundSpawn(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.expansion_flag\n"
+	database_new.Select(&result, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_ground sg\n"
 								 "ON sg.spawn_id = s.id\n"
@@ -6777,6 +6781,23 @@ bool WorldDatabase::CheckExpansionFlags(ZoneServer* zone, int32 spawnXpackFlag)
 		return false;
 	// zone expansion flag fails, then if global expansion flag set, we see if that bit operand doesn't match, skip mob then
 	else if (zoneXpackFlag == 0 && globalXpackFlag > 0 && (spawnXpackFlag & globalXpackFlag) == 0)
+		return false;
+
+	return true;
+}
+
+bool WorldDatabase::CheckHolidayFlags(ZoneServer* zone, int32 spawnHolidayFlag)
+{
+	if (spawnHolidayFlag == 0)
+		return true;
+
+	int32 globalHolidayFlag = rule_manager.GetGlobalRule(R_Expansion, GlobalHolidayFlag)->GetInt32();
+	int32 zoneHolidayFlag = zone->GetHolidayFlag();
+	// zone expansion flag takes priority
+	if (zoneHolidayFlag > 0 && (spawnHolidayFlag & zoneHolidayFlag) == 0)
+		return false;
+	// zone expansion flag fails, then if global expansion flag set, we see if that bit operand doesn't match, skip mob then
+	else if (zoneHolidayFlag == 0 && globalHolidayFlag > 0 && (spawnHolidayFlag & globalHolidayFlag) == 0)
 		return false;
 
 	return true;

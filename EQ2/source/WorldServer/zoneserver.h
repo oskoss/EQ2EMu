@@ -569,6 +569,9 @@ public:
 	int32	GetExpansionFlag() { return expansion_flag; }
 	void	SetExpansionFlag(int32 val) { expansion_flag = val; }
 
+	int32	GetHolidayFlag() { return holiday_flag; }
+	void	SetHolidayFlag(int32 val) { holiday_flag = val; }
+
 	void	RemoveClientImmediately(Client* client);
 
 	void	ClearHate(Entity* entity);
@@ -855,6 +858,7 @@ private:
 	int		dawn_minute;
 	int32	spawn_delete_timer;
 	int32	expansion_flag;
+	int32	holiday_flag;
 	map<int16, PacketStruct*> versioned_pos_structs;
 	map<int16, PacketStruct*> versioned_info_structs;
 	map<int16, PacketStruct*> versioned_vis_structs;
@@ -1013,7 +1017,7 @@ public:
 	/* Transporters */
 	void AddLocationTransporter(int32 zone_id, string message, float trigger_x, float trigger_y, float trigger_z, float trigger_radius, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, int32 cost, int32 unique_id);
 	void AddTransporter(int32 transport_id, int8 type, string name, string message, int32 destination_zone_id, float destination_x, float destination_y, float destination_z, float destination_heading, 
-		int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y, int32 expansion_flag, int32 min_client_version,
+		int32 cost, int32 unique_id, int8 min_level, int8 max_level, int32 quest_req, int16 quest_step_req, int32 quest_complete, int32 map_x, int32 map_y, int32 expansion_flag, int32 holiday_flag, int32 min_client_version,
 		int32 max_client_version, int32 flight_path_id, int16 mount_id, int8 mount_red_color, int8 mount_green_color, int8 mount_blue_color);
 	void GetTransporters(vector<TransportDestination*>* returnList, Client* client, int32 transport_id);
 	MutexList<LocationTransportDestination*>* GetLocationTransporters(int32 zone_id);

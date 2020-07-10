@@ -151,6 +151,7 @@ Commands::Commands(){
 	spawn_set_values["suffix"] = SPAWN_SET_VALUE_SUFFIX;
 	spawn_set_values["lastname"] = SPAWN_SET_VALUE_LASTNAME;
 	spawn_set_values["expansion_flag"] = SPAWN_SET_VALUE_EXPANSION_FLAG;
+	spawn_set_values["holiday_flag"] = SPAWN_SET_VALUE_HOLIDAY_FLAG;
 	spawn_set_values["merchant_min_level"] = SPAWN_SET_VALUE_MERCHANT_MIN_LEVEL;
 	spawn_set_values["merchant_max_level"] = SPAWN_SET_VALUE_MERCHANT_MAX_LEVEL;
 
@@ -196,7 +197,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 		return false;
 	int32 val = 0;
 	try{
-		if(type != SPAWN_SET_VALUE_NAME && !(type >= SPAWN_SET_VALUE_SPAWN_SCRIPT && type <= SPAWN_SET_VALUE_SUB_TITLE) && !(type >= SPAWN_SET_VALUE_PREFIX && type <= SPAWN_SET_VALUE_EXPANSION_FLAG))
+		if(type != SPAWN_SET_VALUE_NAME && !(type >= SPAWN_SET_VALUE_SPAWN_SCRIPT && type <= SPAWN_SET_VALUE_SUB_TITLE) && !(type >= SPAWN_SET_VALUE_PREFIX && type <= SPAWN_SET_VALUE_EXPANSION_FLAG || type == SPAWN_SET_VALUE_HOLIDAY_FLAG))
 			val = atoul(value);
 	}
 	catch(...){
@@ -484,7 +485,8 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				client->GetCurrentZone()->SendUpdateTitles(target);
 				break;
 			}
-			case SPAWN_SET_VALUE_EXPANSION_FLAG: {
+			case SPAWN_SET_VALUE_EXPANSION_FLAG:
+			case SPAWN_SET_VALUE_HOLIDAY_FLAG: {
 				// nothing to do must reload spawns
 				break;
 			}
@@ -518,6 +520,19 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			{
 				char query[256];
 				snprintf(query, 256, "update spawn set expansion_flag=%i where id=%i", atoul(value), target->GetDatabaseID());
+				if (database.RunQuery(query, strnlen(query, 256)))
+				{
+					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
+				}
+			}
+			break;
+		}
+		case SPAWN_SET_VALUE_HOLIDAY_FLAG: {
+
+			if (target->GetDatabaseID() > 0)
+			{
+				char query[256];
+				snprintf(query, 256, "update spawn set holiday_flag=%i where id=%i", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
 					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
@@ -3676,9 +3691,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						string name = string(spawn->GetName());
 						if(SetSpawnCommand(client, spawn, set_type, sep->arg[1]))
 						{
-							if (set_type == SPAWN_SET_VALUE_EXPANSION_FLAG)
+							if (set_type == SPAWN_SET_VALUE_EXPANSION_FLAG || set_type == SPAWN_SET_VALUE_HOLIDAY_FLAG)
 							{
-								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "A /reload spawns is required to properly update the spawns with the xpack flag.");
+								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "A /reload spawns is required to properly update the spawns with the xpack/holiday flag.");
 							}
 							else if(set_type == SPAWN_SET_VALUE_NAME)
 							{
@@ -3694,9 +3709,20 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set '%s' to '%s' for spawn '%s'", sep->arg[0], sep->arg[1], name.c_str());
 							}
 
-							if(set_type != SPAWN_SET_VALUE_FACTION && set_type != SPAWN_SET_VALUE_EXPANSION_FLAG)
+							switch (set_type)
 							{
-								client->GetCurrentZone()->ApplySetSpawnCommand(client, spawn, set_type, sep->arg[1]);
+								case SPAWN_SET_VALUE_EXPANSION_FLAG:
+								case SPAWN_SET_VALUE_HOLIDAY_FLAG:
+								case SPAWN_SET_VALUE_FACTION:
+								{
+									// not applicable
+									break;
+								}
+								default:
+								{
+									client->GetCurrentZone()->ApplySetSpawnCommand(client, spawn, set_type, sep->arg[1]);
+									break;
+								}
 							}
 						
 							if((set_type >= SPAWN_SET_VALUE_RESPAWN && set_type <=SPAWN_SET_VALUE_LOCATION) || (set_type >= SPAWN_SET_VALUE_EXPIRE && set_type <=SPAWN_SET_VALUE_Z_OFFSET) || (set_type == SPAWN_SET_VALUE_PITCH || set_type == SPAWN_SET_VALUE_ROLL))

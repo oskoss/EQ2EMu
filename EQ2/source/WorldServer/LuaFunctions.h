@@ -421,6 +421,8 @@ int EQ2Emu_lua_CheckLOSByCoordinates(lua_State* state);
 
 int EQ2Emu_lua_SetZoneExpansionFlag(lua_State* state);
 int EQ2Emu_lua_GetZoneExpansionFlag(lua_State* state);
+int EQ2Emu_lua_SetZoneHolidayFlag(lua_State* state);
+int EQ2Emu_lua_GetZoneHolidayFlag(lua_State* state);
 
 int EQ2Emu_lua_AddSpawnProximity(lua_State* state);
 

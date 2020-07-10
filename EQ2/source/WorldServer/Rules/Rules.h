@@ -162,6 +162,7 @@ enum RuleType {
 	SpawnDeleteTimer,
 
 	GlobalExpansionFlag,
+	GlobalHolidayFlag,
 
 	DatabaseVersion
 };

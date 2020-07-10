@@ -1023,6 +1023,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 
 	lua_register(state, "SetZoneExpansionFlag", EQ2Emu_lua_SetZoneExpansionFlag);
 	lua_register(state, "GetZoneExpansionFlag", EQ2Emu_lua_GetZoneExpansionFlag);
+	lua_register(state, "SetZoneHolidayFlag", EQ2Emu_lua_SetZoneHolidayFlag);
+	lua_register(state, "GetZoneHolidayFlag", EQ2Emu_lua_GetZoneHolidayFlag);
 
 	lua_register(state, "AddSpawnProximity", EQ2Emu_lua_AddSpawnProximity);
 

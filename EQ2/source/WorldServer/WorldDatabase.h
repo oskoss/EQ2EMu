@@ -583,6 +583,7 @@ public:
 	void				LoadChestTraps();
 
 	bool				CheckExpansionFlags(ZoneServer* zone, int32 spawnXpackFlag);
+	bool				CheckHolidayFlags(ZoneServer* zone, int32 spawnHolidayFlag);
 	void				GetHouseSpawnInstanceData(ZoneServer* zone, Spawn* spawn);
 	int32				FindHouseInstanceSpawn(Spawn* spawn);
 private:
