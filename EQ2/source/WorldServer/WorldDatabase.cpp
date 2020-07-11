@@ -6793,10 +6793,10 @@ bool WorldDatabase::CheckHolidayFlags(ZoneServer* zone, int32 spawnHolidayFlag)
 
 	int32 globalHolidayFlag = rule_manager.GetGlobalRule(R_Expansion, GlobalHolidayFlag)->GetInt32();
 	int32 zoneHolidayFlag = zone->GetHolidayFlag();
-	// zone expansion flag takes priority
+	// zone holiday flag takes priority
 	if (zoneHolidayFlag > 0 && (spawnHolidayFlag & zoneHolidayFlag) == 0)
 		return false;
-	// zone expansion flag fails, then if global expansion flag set, we see if that bit operand doesn't match, skip mob then
+	// zone holiday flag fails, then if global expansion flag set, we see if that bit operand doesn't match, skip mob then
 	else if (zoneHolidayFlag == 0 && globalHolidayFlag > 0 && (spawnHolidayFlag & globalHolidayFlag) == 0)
 		return false;
 
