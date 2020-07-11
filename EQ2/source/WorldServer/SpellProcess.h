@@ -328,7 +328,7 @@ public:
 	/// <param name='luaspell'>LuaSpell to get the targets for</param>
 	static void GetSpellTargets(LuaSpell* luaspell);
 
-	static void GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell* luaspell);
+	static void GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell* luaspell, bool bypassSpellChecks=false, bool bypassRangeChecks=false);
 
 	/// <summary>Gets targets for a true aoe spell (not an encounter ae) and adds them to the LuaSpell targets array</summary>
 	/// <param name='luaspell'>LuaSpell to get the targets for</param>

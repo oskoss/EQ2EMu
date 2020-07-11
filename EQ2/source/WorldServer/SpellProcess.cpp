@@ -1727,7 +1727,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 					if ((target->IsPlayer() && luaspell->caster->IsPlayer() && target != luaspell->caster && ((Player*)target)->GetGroupMemberInfo() != NULL && ((Player*)luaspell->caster)->GetGroupMemberInfo() != NULL
 						&& ((Player*)target)->GetGroupMemberInfo()->group_id == ((Player*)luaspell->caster)->GetGroupMemberInfo()->group_id))
 					{
-
+						GetPlayerGroupTargets((Player*)target, caster, luaspell, true, false);
 					}//TODO: NEED RAID SUPPORT
 
 					// NPC LOGIC:
@@ -1737,7 +1737,9 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 					}
 					else
 					{
+						// add self
 						target = NULL;
+						luaspell->targets.push_back(caster->GetID());
 						luaspell->initial_target = 0;
 					}
 				}
@@ -2012,9 +2014,9 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 		LogWrite(SPELL__WARNING, 0, "Spell", "Warning in %s: Size of targets array is %u", __FUNCTION__, luaspell->targets.size());
 }
 
-void SpellProcess::GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell* luaspell)
+void SpellProcess::GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell* luaspell, bool bypassSpellChecks, bool bypassRangeChecks)
 {
-	if (luaspell->spell->GetSpellData()->group_spell > 0 || luaspell->spell->GetSpellData()->icon_backdrop == 312)
+	if (bypassSpellChecks || luaspell->spell->GetSpellData()->group_spell > 0 || luaspell->spell->GetSpellData()->icon_backdrop == 312)
 	{
 		if (((Player*)target)->GetGroupMemberInfo())
 		{
@@ -2028,7 +2030,7 @@ void SpellProcess::GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell
 					continue;
 				else if (info && info->client &&
 					info->client->GetPlayer()->GetZone() == ((Player*)target)->GetZone() && info->client->GetPlayer()->Alive()
-					&& caster->GetDistance((Entity*)info->client->GetPlayer()) <= luaspell->spell->GetSpellData()->range)
+					&& (bypassRangeChecks || caster->GetDistance((Entity*)info->client->GetPlayer()) <= luaspell->spell->GetSpellData()->range))
 				{
 					luaspell->targets.push_back(info->client->GetPlayer()->GetID());
 				}
