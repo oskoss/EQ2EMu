@@ -1249,7 +1249,8 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 	while(result && (row = mysql_fetch_row(result))){
 
 		int32 objXpackFlag = atoul(row[19]);
-		if (!CheckExpansionFlags(zone, objXpackFlag))
+		int32 objHolidayFlag = atoul(row[20]);
+		if (!CheckExpansionFlags(zone, objXpackFlag) || !CheckHolidayFlags(zone, objHolidayFlag))
 			continue;
 
 		id = atoul(row[0]);
@@ -1286,10 +1287,10 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 
 		// xpack value handled at top at position 19
 
-		int8 disableSounds = atoul(row[20]);
+		int8 disableSounds = atoul(row[21]);
 		object->SetSoundsDisabled(disableSounds);
 
-		object->SetMerchantLevelRange(atoul(row[21]), atoul(row[22]));
+		object->SetMerchantLevelRange(atoul(row[22]), atoul(row[23]));
 
 		zone->AddObject(id, object);
 		total++;
