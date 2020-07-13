@@ -1086,6 +1086,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload mail");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload guilds");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload locations");
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload rules");
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload transporters");
 		break;
 	}
 	case COMMAND_RELOADSTRUCTS: {
@@ -1163,6 +1165,18 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Locations...");
 		client->GetPlayer()->GetZone()->RemoveLocationGrids();
 		database.LoadLocationGrids(client->GetPlayer()->GetZone());
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
+		break;
+	}
+	case COMMAND_RELOAD_RULES: {
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Rules...");
+		database.LoadRuleSets(true);
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
+		break;
+	}
+	case COMMAND_RELOAD_TRANSPORTERS: {
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Transporters in your current zone...");
+		database.LoadTransporters(client->GetCurrentZone());
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
 		break;
 	}

@@ -234,6 +234,9 @@ public:
 	RuleManager();
 	virtual ~RuleManager();
 
+	void Init();
+	void Flush(bool reinit=false);
+
 	void LoadCodedDefaultsIntoRuleSet(RuleSet *rule_set);
 
 	bool AddRuleSet(RuleSet *rule_set);

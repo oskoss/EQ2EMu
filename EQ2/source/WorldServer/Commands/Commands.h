@@ -885,6 +885,9 @@ private:
 #define COMMAND_PICKUP					517
 #define COMMAND_HOUSE_DEPOSIT			518
 
+#define COMMAND_RELOAD_RULES			519
+#define COMMAND_RELOAD_TRANSPORTERS		520
+
 #define GET_AA_XML						751
 #define ADD_AA							752
 #define COMMIT_AA_PROFILE				753				

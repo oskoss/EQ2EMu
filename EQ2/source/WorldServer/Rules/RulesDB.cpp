@@ -43,11 +43,14 @@ void WorldDatabase::LoadGlobalRuleSet() {
 		LogWrite(RULESYS__ERROR, 0, "Rules", "Error loading global rule set. A rule set with ID %u does not exist.", rule_set_id);
 }
 
-void WorldDatabase::LoadRuleSets() {
+void WorldDatabase::LoadRuleSets(bool reload) {
 	RuleSet *rule_set;
 	Query query;
 	MYSQL_ROW row;
 	MYSQL_RES *res;
+
+	if (reload)
+		rule_manager.Flush(true);
 
 	/* first load the coded defaults in */
 	rule_manager.LoadCodedDefaultsIntoRuleSet(rule_manager.GetGlobalRuleSet());

@@ -1,0 +1,2 @@
+insert into commands set type=1, command='reload',subcommand='rules',handler=519,required_status=100;
+insert into commands set type=1, command='reload',subcommand='transporters',handler=520,required_status=100;

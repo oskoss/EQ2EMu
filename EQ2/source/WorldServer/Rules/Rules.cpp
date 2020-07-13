@@ -170,7 +170,16 @@ RuleManager::RuleManager() {
 	m_global_rule_set.SetName("RuleManager::global_rule_set");
 	m_zone_rule_sets.SetName("RuleManager::zone_rule_sets");
 
-	#define RULE_INIT(category, type, value) rules[category][type] = new Rule(category, type, value, #category ":" #type)
+	Init();
+}
+
+RuleManager::~RuleManager() {
+	Flush();
+}
+
+void RuleManager::Init()
+{
+#define RULE_INIT(category, type, value) rules[category][type] = new Rule(category, type, value, #category ":" #type)
 
 	/* CLIENT */
 	RULE_INIT(R_Client, ShowWelcomeScreen, "0");
@@ -214,7 +223,7 @@ RuleManager::RuleManager() {
 	//RULE_INIT(R_Spawn, SpeedRatio, "0");		// was 1280/7.5 and 600/7.5 until it became 300.
 
 	/* TIMER */
-	
+
 	/* UI */
 	RULE_INIT(R_UI, MaxWhoResults, "20");
 	RULE_INIT(R_UI, MaxWhoOverrideStatus, "200");
@@ -261,7 +270,7 @@ RuleManager::RuleManager() {
 	RULE_INIT(R_World, SendPaperdollImagesToLogin, "1");			// default: true
 	RULE_INIT(R_World, TreasureChestDisabled, "0");					// default: false
 	//INSERT INTO `ruleset_details`(`id`, `ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (NULL, '1', 'R_World', '', '', '')
-	
+
 	/* ZONE */
 	RULE_INIT(R_Zone, MaxPlayers, "100");
 	RULE_INIT(R_Zone, MinZoneLevelOverrideStatus, "1");
@@ -296,20 +305,26 @@ RuleManager::RuleManager() {
 	RULE_INIT(R_Expansion, GlobalHolidayFlag, "0");
 
 	RULE_INIT(R_World, DatabaseVersion, "0");
-	#undef RULE_INIT
+#undef RULE_INIT
 }
 
-RuleManager::~RuleManager() {
-	map<int32, map<int32, Rule *> >::iterator itr;
-	map<int32, Rule *>::iterator itr2;
+void RuleManager::Flush(bool reinit)
+{
+	map<int32, map<int32, Rule*> >::iterator itr;
+	map<int32, Rule*>::iterator itr2;
 
 	for (itr = rules.begin(); itr != rules.end(); itr++) {
 		for (itr2 = itr->second.begin(); itr2 != itr->second.end(); itr2++)
 			safe_delete(itr2->second);
 	}
 
+	rules.clear();
+
 	ClearRuleSets();
 	ClearZoneRuleSets();
+
+	if (reinit)
+		Init();
 }
 
 void RuleManager::LoadCodedDefaultsIntoRuleSet(RuleSet *rule_set) {

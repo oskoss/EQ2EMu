@@ -472,7 +472,7 @@ public:
 
 	/* Rules */
 	void LoadGlobalRuleSet();
-	void LoadRuleSets();
+	void LoadRuleSets(bool reload=false);
 	void LoadRuleSetDetails(RuleSet *rule_set);
 
 	/* Titles */
