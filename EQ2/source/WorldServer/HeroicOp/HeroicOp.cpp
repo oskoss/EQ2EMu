@@ -55,7 +55,7 @@ void HeroicOP::SetTarget(int32 val) {
 bool HeroicOP::UpdateHeroicOP(int16 icon) {
 	bool ret = false;
 	vector<HeroicOPStarter*>::iterator itr;
-	vector<vector<HeroicOPStarter*>::iterator> temp;
+	vector<HeroicOPStarter*> temp;
 	HeroicOPStarter* starter = 0;
 
 	// If no wheel is set we are dealing with a starter chain still.
@@ -67,14 +67,17 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 			if (starter->abilities[m_currentStage] == icon)
 				ret = true;
 			else
-				temp.push_back(itr);
+				temp.push_back(*itr);
 		}
 		
 		if (ret) {
 			// ret = true so we had a match, first thing to do is remove those that didn't match
-			vector<vector<HeroicOPStarter*>::iterator>::iterator remove_itr;
+			vector<HeroicOPStarter*>::iterator remove_itr;
 			for (remove_itr = temp.begin(); remove_itr != temp.end(); remove_itr++)
-				starters.erase(*remove_itr);
+			{
+				std::vector<HeroicOPStarter*>::iterator it = std::find(starters.begin(), starters.end(), *remove_itr);
+				starters.erase(it);
+			}
 
 			// now advance the current stage
 			m_currentStage++;
