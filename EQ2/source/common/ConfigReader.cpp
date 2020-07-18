@@ -74,11 +74,17 @@ PacketStruct* ConfigReader::getStruct(const char* name, int16 version){
 	if(struct_versions){
 		vector<PacketStruct*>::iterator iter;
 		for(iter = struct_versions->begin(); iter != struct_versions->end(); iter++){
-			if(!latest_version || ( (*iter)->GetVersion() > latest_version->GetVersion() && (*iter)->GetVersion() <= version) )
+			if((*iter)->GetVersion() <= version && (!latest_version || (*iter)->GetVersion() > latest_version->GetVersion()))
 				latest_version = *iter;
+		}		
+		if (latest_version) {
+			if(strlen(latest_version->GetOpcodeType()) == 0 || latest_version->GetOpcode() != OP_Unknown)
+				new_latest_version = new PacketStruct(latest_version, version);
+			else {
+				cout << "here: " << latest_version->GetOpcodeType() << endl;
+				LogWrite(PACKET__ERROR, 0, "Packet", "Could not find valid opcode for Packet Struct '%s' and client version %d", latest_version->GetOpcodeType(), version);
+			}
 		}
-		if(latest_version)
-			new_latest_version = new PacketStruct(latest_version, version);
 			
 	}
 	MStructs.unlock();
@@ -174,6 +180,9 @@ void ConfigReader::loadDataStruct(PacketStruct* packet, XMLNode parentNode, bool
 			const char* if_not_variable = parentNode.getChildNode("Data", x).getAttribute("IfVariableNotSet");
 			const char* if_equals_variable = parentNode.getChildNode("Data", x).getAttribute("IfVariableEquals");
 			const char* if_not_equals_variable = parentNode.getChildNode("Data", x).getAttribute("IfVariableNotEquals");
+			const char* optional = parentNode.getChildNode("Data", x).getAttribute("Optional");
+			const char* if_flag_not_set_variable = parentNode.getChildNode("Data", x).getAttribute("IfFlagNotSet");
+			const char* if_flag_set_variable = parentNode.getChildNode("Data", x).getAttribute("IfFlagSet");
 
 			//const char* type2criteria = parentNode.getChildNode("Data", x).getAttribute("Type2Criteria");	// JA: LE added to PacketAnalyzer for Items parsing - 12.2012
 			//const char* criteria = parentNode.getChildNode("Data", x).getAttribute("Criteria");				// JA: LE added to PacketAnalyzer for Items parsing - 12.2012
@@ -227,6 +236,9 @@ void ConfigReader::loadDataStruct(PacketStruct* packet, XMLNode parentNode, bool
 							ds2->SetIfNotSetVariable(ds->GetIfNotSetVariable());
 							ds2->SetIfEqualsVariable(ds->GetIfEqualsVariable());
 							ds2->SetIfNotEqualsVariable(ds->GetIfNotEqualsVariable());
+							ds2->SetIfFlagNotSetVariable(ds->GetIfFlagNotSetVariable());
+							ds2->SetIfFlagSetVariable(ds->GetIfFlagSetVariable());
+							ds2->SetIsOptional(ds->IsOptional());							
 							packet->add(ds2);
 						}
 					}
@@ -280,6 +292,10 @@ void ConfigReader::loadDataStruct(PacketStruct* packet, XMLNode parentNode, bool
 			ds->SetIfNotSetVariable(if_not_variable);
 			ds->SetIfEqualsVariable(if_equals_variable);
 			ds->SetIfNotEqualsVariable(if_not_equals_variable);
+			ds->SetIfFlagNotSetVariable(if_flag_not_set_variable);
+			ds->SetIfFlagSetVariable(if_flag_set_variable);
+			if (optional && strlen(optional) > 0 && (strcmp("true", optional) == 0 || strcmp("TRUE", optional) == 0 || strcmp("True", optional) == 0))
+				ds->SetIsOptional(true);
 			packet->add(ds);
 		}
 }

@@ -156,6 +156,7 @@ int EQ2Emu_lua_AddLootItem(lua_State* state);
 int EQ2Emu_lua_RemoveLootItem(lua_State* state);
 int EQ2Emu_lua_AddLootCoin(lua_State* state);
 int EQ2Emu_lua_GiveLoot(lua_State* state);
+int EQ2Emu_lua_AddLootToObject(lua_State* state);
 int EQ2Emu_lua_HasPendingLoot(lua_State* state);
 int EQ2Emu_lua_HasPendingLootItem(lua_State* state);
 int EQ2Emu_lua_CreateConversation(lua_State* state);
@@ -415,6 +416,14 @@ int EQ2Emu_lua_GetSpellID(lua_State* state);
 int EQ2Emu_lua_StartTransmute(lua_State* state);
 int EQ2Emu_lua_CompleteTransmute(lua_State* state);
 int EQ2Emu_lua_ProcHate(lua_State* state);
+
+int EQ2Emu_lua_DisplayText(lua_State* state);
+int EQ2Emu_lua_ShowLootWindow(lua_State* state);
+int EQ2Emu_lua_GetRandomSpawnByID(lua_State* state);
+int EQ2Emu_lua_AddPrimaryEntityCommandAllSpawns(lua_State* state);
+int EQ2Emu_lua_InstructionWindow(lua_State* state);
+int EQ2Emu_lua_ShowWindow(lua_State* state);
+int EQ2Emu_lua_FlashWindow(lua_State* state);
 
 int EQ2Emu_lua_CheckLOS(lua_State* state);
 int EQ2Emu_lua_CheckLOSByCoordinates(lua_State* state);

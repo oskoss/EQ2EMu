@@ -165,8 +165,8 @@ public:
 	void	SendPlayerDeathWindow();
 	float	DistanceFrom(Client* client);
 	void	SendDefaultGroupOptions();
-	bool	HandleLootItem(Entity* entity, int32 item_id);
-	bool	HandleLootItem(Entity* entity, Item* item);
+	bool	HandleLootItem(Spawn* entity, int32 item_id);
+	bool	HandleLootItem(Spawn* entity, Item* item);
 	void	HandleLoot(EQApplicationPacket* app);
 	void	HandleSkillInfoRequest(EQApplicationPacket* app);
 	void	HandleExamineInfoRequest(EQApplicationPacket* app);
@@ -241,10 +241,10 @@ public:
 	void	Save();
 	bool	remove_from_list;
 	void	CloseLoot();
-	void	SendPendingLoot(int32 total_coins, Entity* entity);
-	void	Loot(int32 total_coins, vector<Item*>* items, Entity* entity);
-	void	Loot(Entity* entity, bool attemptDisarm=true);
-	void	OpenChest(Entity* entity, bool attemptDisarm=true);
+	void	SendPendingLoot(int32 total_coins, Spawn* entity);
+	void	Loot(int32 total_coins, vector<Item*>* items, Spawn* entity);
+	void	Loot(Spawn* entity, bool attemptDisarm=true);
+	void	OpenChest(Spawn* entity, bool attemptDisarm=true);
 	void	CastGroupOrSelf(Entity* source, uint32 spellID, uint32 spellTier=1, float restrictiveRadius=0.0f);
 	void	CheckPlayerQuestsKillUpdate(Spawn* spawn);
 	void	CheckPlayerQuestsChatUpdate(Spawn* spawn);
@@ -252,6 +252,7 @@ public:
 	void	CheckPlayerQuestsSpellUpdate(Spell* spell);
 	void	CheckPlayerQuestsLocationUpdate();
 	void	AddPendingQuest(Quest* quest);
+	void	AcceptQuest(int32 id);
 	Quest*	GetPendingQuest(int32 id);
 	void	RemovePendingQuest(Quest* quest);
 	void	SetPlayerQuest(Quest* quest, map<int32, int32>* progress);

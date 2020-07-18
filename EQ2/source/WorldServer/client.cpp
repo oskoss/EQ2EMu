@@ -317,7 +317,8 @@ void Client::SendLoginInfo() {
 
 	ClientPacketFunctions::SendLoginAccepted(this);
 
-	//ClientPacketFunctions::SendAbilities ( this );
+	ClientPacketFunctions::SendAbilities ( this );
+
 	ClientPacketFunctions::SendCommandNamePacket(this);
 
 	ClientPacketFunctions::SendQuickBarInit(this);
@@ -341,8 +342,12 @@ void Client::SendLoginInfo() {
 	database.LoadPlayerMail(this);
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 	SendQuestJournal(true);
-	master_aa_list.DisplayAA(this, 0, 3);
-	SendCollectionList();
+
+	if (version > 546) // right version? possibly not!
+		master_aa_list.DisplayAA(this, 0, 3);
+
+	if (version > 283)
+		SendCollectionList();
 	SendBiography();
 
 	map<int32, Quest*>::iterator itr;
@@ -371,13 +376,14 @@ void Client::SendLoginInfo() {
 		guild->SendAllGuildEvents(this);
 		guild->SendGuildMemberList(this);
 	}*/
-
-	LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Faction Updates...");
-	EQ2Packet* outapp = player->GetFactions()->FactionUpdate(GetVersion());
-	if (outapp) {
-		LogWrite(CCLIENT__PACKET, 0, "Client", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
-		//DumpPacket(outapp);
-		QueuePacket(outapp);
+	if (version > 283) {
+		LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Faction Updates...");
+		EQ2Packet* outapp = player->GetFactions()->FactionUpdate(GetVersion());
+		if (outapp) {
+			LogWrite(CCLIENT__PACKET, 0, "Client", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
+			//DumpPacket(outapp);
+			QueuePacket(outapp);
+		}
 	}
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Command List...");
@@ -575,11 +581,13 @@ void Client::HandlePlayerRevive(int32 point_id)
 	zone_desc = GetCurrentZone()->GetZoneDescription();
 	Message(CHANNEL_COLOR_REVIVE, "Reviving in %s at %s.", zone_desc.c_str(), location_name);
 	player->SetSpawnType(4);
-	packet = configReader.getStruct("WS_CancelMoveObjectMode", GetVersion());
-	if (packet)
-	{
-		QueuePacket(packet->serialize());
-		safe_delete(packet);
+	if (version > 283) {
+		packet = configReader.getStruct("WS_CancelMoveObjectMode", GetVersion());
+		if (packet)
+		{
+			QueuePacket(packet->serialize());
+			safe_delete(packet);
+		}
 	}
 
 	packet = configReader.getStruct("WS_TeleportWithinZone", GetVersion());
@@ -596,7 +604,10 @@ void Client::HandlePlayerRevive(int32 point_id)
 	if (packet)
 	{
 		packet->setDataByName("spawn_id", 0xFFFFFFFF);
-		packet->setDataByName("unknown2", 255);
+		packet->setDataByName("speed", 32);
+		packet->setDataByName("unknown2", 0);
+		//DoF Merge: old value and speed wasn't included
+		//packet->setDataByName("unknown2", 255);
 		QueuePacket(packet->serialize());
 		safe_delete(packet);
 	}
@@ -632,15 +643,23 @@ void Client::SendCharInfo() {
 		packet->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(player));
 		packet->setDataByName("size", .56);
 		packet->setDataByName("unknown2", 255);
+		packet->setDataByName("speed", player->GetSpeed());
+		packet->setDataByName("air_speed", player->GetAirSpeed());
 		EQ2Packet* app = packet->serialize();
 		QueuePacket(app);
 		safe_delete(packet);
+
 	}
+	if (version <= 283) {
+		//le: hack to allow client time to zone in, it gets stuck on Loading UI Resources if we go too fast, need to figure it out.  Probably something it doesnt like with ExamineInfo packets
+		Sleep(2000);
+	}
+	//sending bad spawn packet?
 
 	//SendAchievementsList();
 	ClientPacketFunctions::SendCharacterSheet(this);
 	ClientPacketFunctions::SendTraitList(this);// moved from below
-	//ClientPacketFunctions::SendAbilities(this);
+	ClientPacketFunctions::SendAbilities(this);
 
 	ClientPacketFunctions::SendSkillBook(this);
 	if (!player->IsResurrecting()) {
@@ -690,13 +709,16 @@ void Client::SendCharInfo() {
 			QueuePacket(items->at(i)->serialize(GetVersion(), false, GetPlayer()));
 	}
 	safe_delete(items);
-	SendTitleUpdate();
+	if (version > 283) {
+		SendTitleUpdate();
+	}
 
 	GetPlayer()->ChangePrimaryWeapon();
 	GetPlayer()->ChangeSecondaryWeapon();
 	GetPlayer()->ChangeRangedWeapon();
 	database.LoadBuyBacks(this);
-	master_aa_list.DisplayAA(this, 0, 0);
+	if (version > 546)
+		master_aa_list.DisplayAA(this, 0, 0);
 
 	string zone_motd = GetCurrentZone()->GetZoneMOTD();
 	if (zone_motd.length() > 0 && zone_motd[0] != ' ') {
@@ -748,14 +770,17 @@ void Client::SendCharInfo() {
 		}
 	}
 
-	ClientPacketFunctions::SendHousingList(this);
+	if (version > 546)
+		ClientPacketFunctions::SendHousingList(this);
 }
 
 void Client::SendZoneSpawns() {
 	//Allows us to place spawns almost anywhere
-	uchar blah[] = { 0x00,0x3C,0x1C,0x46,0x00,0x3C,0x1C,0x46,0x00,0x3C,0x1C,0x46 };
-	EQ2Packet* app = new EQ2Packet(OP_MoveableObjectPlacementCriteri, blah, sizeof(blah));
-	QueuePacket(app);
+	if (version > 283) {
+		uchar blah[] = { 0x00,0x3C,0x1C,0x46,0x00,0x3C,0x1C,0x46,0x00,0x3C,0x1C,0x46 };
+		EQ2Packet* app = new EQ2Packet(OP_MoveableObjectPlacementCriteri, blah, sizeof(blah));
+		QueuePacket(app);
+	}
 
 	ClientPacketFunctions::SendSkillSlotMappings(this);
 	ClientPacketFunctions::SendGameWorldTime(this);
@@ -778,20 +803,22 @@ void Client::SendZoneInfo() {
 	if (zone) {
 		EQ2Packet* packet = zone->GetZoneInfoPacket(this);
 		QueuePacket(packet);
-		PacketStruct* fog_packet = configReader.getStruct("WS_FogInit", GetVersion());
+		if (version > 283) {
+			PacketStruct* fog_packet = configReader.getStruct("WS_FogInit", GetVersion());
 
-		LogWrite(CCLIENT__PACKET, 0, "Client", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
+			LogWrite(CCLIENT__PACKET, 0, "Client", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
 #if EQDEBUG >= 9
-		fog_packet->PrintPacket();
+			fog_packet->PrintPacket();
 #endif
 
-		if (fog_packet) {
-			database.LoadFogInit(zone->GetZoneFile(), fog_packet);
-			QueuePacket(fog_packet->serialize());
-			safe_delete(fog_packet);
-		}
+			if (fog_packet) {
+				database.LoadFogInit(zone->GetZoneFile(), fog_packet);
+				QueuePacket(fog_packet->serialize());
+				safe_delete(fog_packet);
+			}
 
-		zone->SendFlightPathsPackets(this);
+			zone->SendFlightPathsPackets(this);
+		}
 	}
 	/*
 	uchar blah[] ={0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x01,0x00,0x00,0x00,0x00
@@ -857,10 +884,16 @@ void Client::SendDefaultGroupOptions() {
 	6 - group autolock
 	7 - solo autolock
 	*/
-	uchar blah7[] = { 0x01,0x01,0x01,0x01,0x00,0x00,0x00 };
-	EQ2Packet* app7 = new EQ2Packet(OP_DefaultGroupOptionsMsg, blah7, sizeof(blah7));
-	QueuePacket(app7);
-
+	PacketStruct* default_options = configReader.getStruct("WS_DefaultGroupOptions", GetVersion());
+	if (default_options) {
+		default_options->setDataByName("loot_method", 1);
+		default_options->setDataByName("loot_items_rarity", 1);
+		default_options->setDataByName("auto_split_coin", 1);
+		default_options->setDataByName("default_yell_method", 1);
+		EQ2Packet* app7 = default_options->serialize();
+		QueuePacket(app7);
+		safe_delete(default_options);
+	}
 }
 
 bool Client::HandlePacket(EQApplicationPacket* app) {
@@ -904,7 +937,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			// test the original location of Version for clients older than 1212
 			version = request->getType_int16_ByName("version");
 
-			if (version >= 1212 || EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
+			if (version == 0 || version >= 1212 || EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
 				// must be new client data version method, re-fetch the packet
 				safe_delete(request);
 				request = configReader.getStruct("LoginByNumRequest", 1212);
@@ -937,6 +970,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	case OP_SysClient: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SysClient", opcode, opcode);
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
+		GetPlayer()->SetFullyLoggedIn(true);
 
 		if (!ready_for_updates)
 			database.loadCharacterProperties(this);
@@ -1120,10 +1154,16 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			int16 icon = macro_update->getType_int16_ByName("icon");
 			string name = macro_update->getType_EQ2_8BitString_ByName("name").data;
 			int8 count = macro_update->getType_int8_ByName("macro_count");
-			for (int8 i = 0; i < count; i++) {
-				char tmp_command[15] = { 0 };
-				sprintf(tmp_command, "command_%i", i);
-				update->push_back(macro_update->getType_EQ2_16BitString_ByName(tmp_command).data);
+
+			if (GetVersion() <= 283) {
+				update->push_back(macro_update->getType_EQ2_8BitString_ByName("command").data);
+			}
+			else {
+				for (int8 i = 0; i < count; i++) {
+					char tmp_command[15] = { 0 };
+					sprintf(tmp_command, "command_%i", i);
+					update->push_back(macro_update->getType_EQ2_16BitString_ByName(tmp_command).data);
+				}
 			}
 			if (name.length() == 0)
 				database.UpdateCharacterMacro(GetCharacterID(), number, 0, icon, update);
@@ -1279,6 +1319,11 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			EQ2Packet* outapp = new EQ2Packet(OP_CampAbortedMsg, 0, 0);
 			QueuePacket(outapp);
 		}
+		break;
+	}
+	case OP_DoneLoadingUIResourcesMsg: {
+		EQ2Packet* app = new EQ2Packet(OP_DoneLoadingUIResourcesMsg, 0, 0);
+		QueuePacket(app);
 		break;
 	}
 	case OP_DoneLoadingZoneResourcesMsg: {
@@ -1477,14 +1522,26 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		GetCurrentZone()->GetTradeskillMgr()->StopCrafting(this);
 		break;
 	}
-							   //case OP_SignalMsg:{
-							   //	LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SignalMsg", opcode, opcode);
-							   //	//if(app->size == 25 && app->pBuffer[0] == 0x17 && app->pBuffer[24] == 0x79)
-							   //	//	GetPlayer()->ModifySpellStatus(0, 66, true);
-							   //	if(connected && player->GetHP() == 0)
-							   //		DisplayDeadWindow();
-							   //	break;
-							   //				  }
+	case OP_SignalMsg: {
+		PacketStruct* packet = configReader.getStruct("WS_Signal", GetVersion());
+		if (packet) {
+			packet->LoadPacketData(app->pBuffer, app->size);
+			EQ2_16BitString str = packet->getType_EQ2_16BitString_ByName("signal");
+			if (str.size > 0) {
+				if (strcmp(str.data.c_str(), "sys_client_avatar_ready") == 0) {
+					GetPlayer()->SetFullyLoggedIn(true);
+					ready_for_updates = true;
+					GetPlayer()->SendSpawnChanges(true);
+				}
+				const char* zone_script = world.GetZoneScript(player->GetZone()->GetZoneID());
+				if (zone_script && lua_interface)
+				{
+					lua_interface->RunZoneScript(zone_script, "signal_changed", player->GetZone(), player, 0, str.data.c_str());
+				}
+			}
+		}
+		break;
+	}
 	case OP_EntityVerbsRequestMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_EntityVerbsRequestMsg", opcode, opcode);
 		HandleVerbRequest(app);
@@ -1582,8 +1639,31 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_PredictionUpdateMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_PredictionUpdateMsg", opcode, opcode);
-		EQ2Packet* app = new EQ2Packet(OP_PredictionUpdateMsg, 0, 0);
-		QueuePacket(app);
+		if (version <= 546) {
+			int8 offset = 9;
+			if (app->pBuffer[0] == 0xFF)
+				offset += 2;
+			if (app->size > offset) {
+				if (player->IsCasting()) {
+					float distance = 0;
+					float x = player->GetX();
+					float y = player->GetY();
+					float z = player->GetZ();
+					player->PrepareIncomingMovementPacket(app->size - offset, app->pBuffer + offset, version);
+					distance = player->GetDistance(x, y, z, false);
+					if (distance > .5)
+						current_zone->Interrupted(player, 0, SPELL_ERROR_INTERRUPTED, false, true);
+				}
+				else
+					player->PrepareIncomingMovementPacket(app->size - offset, app->pBuffer + offset, version);
+				//DumpPacket(app);
+			}
+		}
+		else {
+			EQ2Packet* app = new EQ2Packet(OP_PredictionUpdateMsg, 0, 0);
+			QueuePacket(app);
+			LogWrite(CCLIENT__PACKET, 0, "Client", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
+		}
 		break;
 	}
 	case OP_RemoteCmdMsg: {
@@ -2171,7 +2251,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	return ret;
 }
 
-bool Client::HandleLootItem(Entity* entity, Item* item) {
+bool Client::HandleLootItem(Spawn* entity, Item* item) {
 	if (!item) {
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to find item to loot!");
 		return false;
@@ -2219,7 +2299,7 @@ bool Client::HandleLootItem(Entity* entity, Item* item) {
 	return false;
 }
 
-bool Client::HandleLootItem(Entity* entity, int32 item_id) {
+bool Client::HandleLootItem(Spawn* entity, int32 item_id) {
 	if (!entity) {
 		return false;
 	}
@@ -2294,17 +2374,17 @@ void Client::HandleLoot(EQApplicationPacket* app) {
 					if (packet) {
 						packet->LoadPacketData(app->pBuffer, app->size);
 						item_id = packet->getType_int32_ByName("item_id");
-						HandleLootItem((Entity*)spawn, item_id);
+						HandleLootItem(spawn, item_id);
 						safe_delete(packet);
 					}
 				}
 				EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 				if (outapp)
 					QueuePacket(outapp);
-				Loot((Entity*)spawn);
-				if (!((Entity*)spawn)->HasLoot()) {
+				Loot(spawn);
+				if (!spawn->HasLoot()) {
 					CloseLoot();
-					if (((Entity*)spawn)->IsNPC())
+					if (spawn->IsNPC())
 						GetCurrentZone()->RemoveDeadSpawn(spawn);
 				}
 			}
@@ -2387,6 +2467,13 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 	//DumpPacket(app);
 
 	int8 type = app->pBuffer[0];
+	//283: item: 0, effect: 1, recipe: 2, spell: 3
+	if (version <= 283) {
+		if (type == 1)
+			type = 4;
+		else if (type == 2)
+			type = 5;
+	}
 	if (type == 3) {
 		Spell* spell = 0;
 		bool trait_display;
@@ -2398,6 +2485,11 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		int32 id = request->getType_int32_ByName("id");
 		int32 tier = request->getType_int32_ByName("tier");
 		int32 trait_tier = request->getType_int32_ByName("unknown_id");
+		bool display = true;
+		if (version <= 283 && request->getType_int8_ByName("display") == 1) // this is really requesting a partial packet
+			display = false;
+		else if (version <= 546)
+			display = request->getType_int8_ByName("display");
 		//printf("Type: (%i) Tier: (%u) Unknown ID: (%u) Item ID: (%u)\n",type,tier,trait_tier,id);
 
 		if (trait_tier != 0xFFFFFFFF) {
@@ -2414,7 +2506,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 
 		if (spell && sent_spell_details.count(id) == 0) {
 			sent_spell_details[id] = true;
-			EQ2Packet* app = spell->SerializeSpell(this, false, trait_display);
+			EQ2Packet* app = spell->SerializeSpell(this, display, trait_display);
 			//DumpPacket(app);
 			QueuePacket(app);
 		}
@@ -2522,7 +2614,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		}
 		request->LoadPacketData(app->pBuffer, app->size);
 		int32 id = request->getType_int32_ByName("id");
-		//int16 unknown5 = request->getType_sint16_ByName("unknown5");
+		int16 display = request->getType_int8_ByName("partial_info");
 		SpellEffects* effect = player->GetSpellEffect(id);
 		//printf("Type: (%i) Unknown5: (%i) Item ID: (%u)\n",type,unknown5,id);
 		if (effect) {
@@ -2530,7 +2622,10 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 			Spell* spell = master_spell_list.GetSpell(id, tier);
 			if (spell && sent_spell_details.count(id) == 0) {
 				sent_spell_details[id] = true;
-				EQ2Packet* app = spell->SerializeSpecialSpell(this, false, 0x00, 0x81);
+				int8 type = 0;
+				if (version <= 283)
+					type = 1;
+				EQ2Packet* app = spell->SerializeSpecialSpell(this, false, type, 0x81);
 				//DumpPacket(app);
 				QueuePacket(app);
 			}
@@ -3862,7 +3957,9 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	// to when you are actually able to select traits.
 	QueuePacket(GetPlayer()->GetPlayerInfo()->serialize(GetVersion()));
 	QueuePacket(master_trait_list.GetTraitListPacket(this));
-	master_aa_list.DisplayAA(this, 0, 0);
+
+	if (version > 546)
+		master_aa_list.DisplayAA(this, 0, 0);
 
 	if (GetPlayer()->SpawnedBots.size() > 0) {
 		map<int32, int32>::iterator itr;
@@ -4069,7 +4166,7 @@ void Client::ChangeTSLevel(int16 old_level, int16 new_level) {
 	QueuePacket(master_trait_list.GetTraitListPacket(this));
 }
 
-void Client::SendPendingLoot(int32 total_coins, Entity* entity) {
+void Client::SendPendingLoot(int32 total_coins, Spawn* entity) {
 	if (entity)
 		Loot(total_coins, player->GetPendingLootItems(entity->GetID()), entity);
 }
@@ -4119,7 +4216,7 @@ string Client::GetCoinMessage(int32 total_coins) {
 	return message;
 }
 
-void Client::Loot(int32 total_coins, vector<Item*>* items, Entity* entity) {
+void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 	if (!entity) {
 		CloseLoot();
 		return;
@@ -4152,73 +4249,126 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Entity* entity) {
 	if (packet) {
 		vector<Item*>::iterator itr;
 		int32 packet_size = 0;
-		if (items && items->size() > 0) {
-			packet->setDataByName("loot_count", items->size());
-			packet->setDataByName("display", 1);
-		}
-		packet->setDataByName("unknown2", 1);
-		if (version >= 1096)
-			packet->setDataByName("unknown3", 0x78);
-		else
-			packet->setDataByName("unknown3", 0x3C);
-
-		packet->setDataByName("loot_id", entity->GetID());
-		EQ2Packet* tmpPacket = packet->serialize();
-		packet_size += tmpPacket->size;
+		EQ2Packet* outapp = 0;
 		uchar* data = 0;
-		if (items && items->size() > 0) {
-			data = new uchar[items->size() * 1000 + packet_size];
-			memset(data, 0, items->size() * 1000 + packet_size);
-		}
-		else {
-			data = new uchar[packet_size];
-			memset(data, 0, packet_size);
-		}
-		uchar* ptr = data;
-		memcpy(ptr, tmpPacket->pBuffer, tmpPacket->size);
-		ptr += tmpPacket->size;
-		safe_delete(tmpPacket);
-		Item* item = 0;
-		if (items && items->size() > 0) {
-			for (itr = items->begin(); itr != items->end(); itr++) {
-				item = *itr;
-				memcpy(ptr, &item->details.item_id, sizeof(int32));
-				ptr += sizeof(int32);
-				packet_size += sizeof(int32);
-
-				tmpPacket = item->serialize(GetVersion(), true, GetPlayer(), false, 1, 0, false, true);
-
-				int8 offset = 0;
-				if (GetVersion() >= 1188) {
-					offset = 13;
+		if (GetVersion() >= 284) {
+			if (GetVersion() > 546) {
+				if (items && items->size() > 0) {
+					packet->setDataByName("loot_count", items->size());
+					packet->setDataByName("display", 1);
 				}
-				else if (GetVersion() >= 860) {
-					offset = 11;
+				packet->setDataByName("loot_type", 1);
+				if (version >= 1096)
+					packet->setDataByName("lotto_timeout", 0x78);
+				else
+					packet->setDataByName("lotto_timeout", 0x3C);
+
+				packet->setDataByName("loot_id", entity->GetID());
+				EQ2Packet* tmpPacket = packet->serialize();
+				packet_size += tmpPacket->size;
+				if (items && items->size() > 0) {
+					data = new uchar[items->size() * 1000 + packet_size];
+					memset(data, 0, items->size() * 1000 + packet_size);
 				}
 				else {
-					offset = 10;
+					data = new uchar[packet_size];
+					memset(data, 0, packet_size);
 				}
-
-				memcpy(ptr, tmpPacket->pBuffer + offset, tmpPacket->size - offset);
-				ptr += tmpPacket->size - offset;
-				packet_size += tmpPacket->size - offset;
-
+				uchar* ptr = data;
+				memcpy(ptr, tmpPacket->pBuffer, tmpPacket->size);
+				ptr += tmpPacket->size;
 				safe_delete(tmpPacket);
+				Item* item = 0;
+				if (items && items->size() > 0) {
+					for (itr = items->begin(); itr != items->end(); itr++) {
+						item = *itr;
+						memcpy(ptr, &item->details.item_id, sizeof(int32));
+						ptr += sizeof(int32);
+						packet_size += sizeof(int32);
+
+						tmpPacket = item->serialize(GetVersion(), true, GetPlayer(), false, 1, 0, false, true);
+
+						int8 offset = 0;
+						if (GetVersion() >= 1188) {
+							offset = 13;
+						}
+						else if (GetVersion() >= 860) {
+							offset = 11;
+						}
+						else if (GetVersion() <= 546) {
+							offset = 19;
+						}
+						else {
+							offset = 10;
+						}
+
+						memcpy(ptr, tmpPacket->pBuffer + offset, tmpPacket->size - offset);
+						ptr += tmpPacket->size - offset;
+						packet_size += tmpPacket->size - offset;
+
+						safe_delete(tmpPacket);
+					}
+				}
+				packet_size -= sizeof(int32);
+				memcpy(data, &packet_size, sizeof(int32));
+				packet_size += sizeof(int32);
+				outapp = new EQ2Packet(OP_ClientCmdMsg, data, packet_size);
+			}
+			else {
+				if (items->size() > 0) {
+					packet->setArrayLengthByName("loot_count", items->size());
+					Item* item = 0;
+					if (items && items->size() > 0) {
+						int i = 0;
+						for (itr = items->begin(); itr != items->end(); itr++) {
+							item = *itr;
+							packet->setArrayDataByName("loot_id", item->details.item_id, i);
+							packet->setItemArrayDataByName("item", item, GetPlayer(), i, 0, 2, true);
+							i++;
+						}
+					}
+					packet->setDataByName("display", 1);
+				}
+				packet->setDataByName("loot_type", 1); // normal
+				packet->setDataByName("lotto_timeout", 0x3c); // 60 seconds
+				packet->setDataByName("spawn_id", entity->GetID());
+				outapp = packet->serialize();
 			}
 		}
-		packet_size -= sizeof(int32);
-		memcpy(data, &packet_size, sizeof(int32));
-		packet_size += sizeof(int32);
-		EQ2Packet* outapp = new EQ2Packet(OP_ClientCmdMsg, data, packet_size);
-		//DumpPacket(outapp);
-		QueuePacket(outapp);
+		else {
+			if (items && items->size() > 0) {
+				packet->setArrayLengthByName("loot_count", items->size());
+				for (int i = 0; i < items->size(); i++) {
+					Item* item = (*items)[i];
+					packet->setArrayDataByName("name", item->name.c_str(), i);
+					packet->setArrayDataByName("item_id", item->details.item_id, i);
+					packet->setArrayDataByName("count", item->details.count, i);
+					packet->setArrayDataByName("icon", item->details.icon, i);
+					if (item->generic_info.skill_req1 > 0 && item->generic_info.skill_req1 < 0xFFFFFFFF)
+						packet->setArrayDataByName("ability_id", item->generic_info.skill_req1, i);
+					else if (item->generic_info.skill_req2 > 0 && item->generic_info.skill_req2 < 0xFFFFFFFF)
+						packet->setArrayDataByName("ability_id", item->generic_info.skill_req2, i);
+					else
+						packet->setArrayDataByName("ability_id", 0xFFFFFFFF, i);
+				}
+			}
+			packet->setDataByName("object_id", entity->GetID());
+			packet->setDataByName("unknown3", 1);
+			packet->setDataByName("unknown4", 1);
+			packet->setDataByName("unknown5", 60);
+			outapp = packet->serialize();
+		}
+		if (outapp) {
+			DumpPacket(outapp);
+			QueuePacket(outapp);
+		}
 		safe_delete_array(data);
 		safe_delete(packet);
 	}
 
 }
 
-void Client::Loot(Entity* entity, bool attemptDisarm) {
+void Client::Loot(Spawn* entity, bool attemptDisarm) {
 	if (entity->IsNPC() && ((NPC*)entity)->Brain()->CheckLootAllowed(GetPlayer())) {
 		int32 total_coins = entity->GetLootCoins();
 		entity->LockLoot();
@@ -4232,7 +4382,7 @@ void Client::Loot(Entity* entity, bool attemptDisarm) {
 
 }
 
-void Client::OpenChest(Entity* entity, bool attemptDisarm)
+void Client::OpenChest(Spawn* entity, bool attemptDisarm)
 {
 	if (!entity)
 		return;
@@ -4284,7 +4434,7 @@ void Client::OpenChest(Entity* entity, bool attemptDisarm)
 			{
 				if (disarmSkill->CheckDisarmSkill(entity->GetLevel(), chest_difficulty) < 1)
 				{
-					CastGroupOrSelf(entity, nextTrap.spell_id, nextTrap.spell_tier,
+					CastGroupOrSelf(entity && entity->IsEntity() ? (Entity*)entity : 0, nextTrap.spell_id, nextTrap.spell_tier,
 						rule_manager.GetGlobalRule(R_Loot, ChestTriggerRadiusGroup)->GetFloat());
 					Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
 				}
@@ -4298,7 +4448,7 @@ void Client::OpenChest(Entity* entity, bool attemptDisarm)
 			}
 			else // no disarm skill, always fail
 			{
-				CastGroupOrSelf(entity, nextTrap.spell_id, nextTrap.spell_tier,
+				CastGroupOrSelf(entity && entity->IsEntity() ? (Entity*)entity : 0, nextTrap.spell_id, nextTrap.spell_tier,
 					rule_manager.GetGlobalRule(R_Loot, ChestTriggerRadiusGroup)->GetFloat());
 				Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
 			}
@@ -4711,10 +4861,15 @@ void Client::CheckPlayerQuestsSpellUpdate(Spell* spell) {
 }
 
 void Client::AddPendingQuest(Quest* quest) {
-	player->pending_quests[quest->GetQuestID()] = quest;
-	EQ2Packet* outapp = quest->OfferQuest(GetVersion(), player);
-	//DumpPacket(outapp);
-	QueuePacket(outapp);
+	if (version <= 283) { //this client doesn't ask if you want the quest, so auto accept
+		AcceptQuest(quest->GetQuestID());
+	}
+	else {
+		player->pending_quests[quest->GetQuestID()] = quest;
+		EQ2Packet* outapp = quest->OfferQuest(GetVersion(), player);
+		//DumpPacket(outapp);
+		QueuePacket(outapp);
+	}
 }
 
 Quest* Client::GetActiveQuest(int32 quest_id) {
@@ -4725,6 +4880,23 @@ Quest* Client::GetActiveQuest(int32 quest_id) {
 	}
 
 	return 0;
+}
+
+void Client::AcceptQuest(int32 id) {
+	Quest* quest = GetPendingQuest(id);
+	if (quest) {
+		RemovePendingQuest(quest);
+		AddPlayerQuest(quest);
+		GetCurrentZone()->SendQuestUpdates(this);
+
+		// If character has already completed this quest once update the given date in the database
+		if (GetPlayer()->GetCompletedPlayerQuests()->count(id) > 0) {
+			Quest* quest2 = GetPlayer()->GetCompletedQuest(id);
+			if (quest2)
+				quest->SetCompleteCount(quest2->GetCompleteCount());
+			database.SaveCharRepeatableQuest(this, id, quest->GetCompleteCount());
+		}
+	}
 }
 
 Quest* Client::GetPendingQuest(int32 id) {
@@ -5401,16 +5573,22 @@ bool Client::AddItem(Item* item) {
 	if (!item) {
 		return false;
 	}
-	if (item->IsBag())
+	if (item->IsBag()) {
+		if (GetVersion() <= 283 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
+			item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
 		item->details.bag_id = item->details.unique_id;
+	}
 	if (player->AddItem(item)) {
 		EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 		if (outapp) {
+			//DumpPacket(outapp);
 			QueuePacket(outapp);
 			//resend bag desc with new item name added	
-			outapp = player->SendBagUpdate(item->details.inv_slot_id, GetVersion());
-			if (outapp)
+			outapp = player->SendBagUpdate(item->details.unique_id, GetVersion());
+			if (outapp) {
+				//DumpPacket(outapp);
 				QueuePacket(outapp);
+			}
 			/*EQ2Packet* app = item->serialize(client->GetVersion(), false);
 			DumpPacket(app);
 			client->QueuePacket(app);
@@ -8263,7 +8441,7 @@ void Client::SendLastNameConfirmation() {
 		packet->setDataByName("accept_text", "Yes");
 		packet->setDataByName("accept_command", "confirmedlastname");
 		packet->setDataByName("cancel_text", "No");
-		packet->setDataByName("unknown2", 50);
+		packet->setDataByName("max_length", 50);
 		packet->setDataByName("unknown4", 1);
 		packet->setDataByName("unknown5", 1);
 		QueuePacket(packet->serialize());
@@ -8619,21 +8797,41 @@ void Client::MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32
 {
 	static const int8 oversized = 255;
 	int16 opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd);
-	int32 size = info_size + pos_size + vis_size + 11;
+	int32 size = info_size + pos_size + vis_size + 8;
+	if (version > 283) //version 283 and below uses an overload for size, not always 4 bytes
+		size += 3;
 	size += CheckOverLoadSize(info_size);
 	size += CheckOverLoadSize(pos_size);
 	size += CheckOverLoadSize(vis_size);
-
+	if (version <= 283 && size >= 255) {//1 byte to 3 for overloaded val
+		size += 2;
+	}
 	uchar* tmp = new uchar[size];
 	uchar* ptr = tmp;
 
 	memset(tmp, 0, size);
-
-	size -= 4;
-	memcpy(ptr, &size, sizeof(int32));
-	size += 4;
-	ptr += sizeof(int32);
-
+	if (version <= 283) {
+		if (size >= 255) {
+			size -= 3;
+			memcpy(ptr, &oversized, sizeof(int8));
+			ptr += sizeof(int8);
+			memcpy(ptr, &size, sizeof(int16));
+			ptr += sizeof(int16);
+			size += 3;
+		}
+		else {
+			size -= 1;
+			memcpy(ptr, &size, sizeof(int8));
+			ptr += sizeof(int8);
+			size += 1;
+		}
+	}
+	else {
+		size -= 4;
+		memcpy(ptr, &size, sizeof(int32));
+		ptr += sizeof(int32);
+		size += 4;
+	}
 	memcpy(ptr, &oversized, sizeof(int8));
 	ptr += sizeof(int8);
 
@@ -8670,8 +8868,10 @@ void Client::MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32
 
 	EQ2Packet* packet = new EQ2Packet(OP_ClientCmdMsg, tmp, size);
 
-	//	DumpPacket(packet->pBuffer, packet->size);
 	if (packet) {
+		/*char blah[64];
+		snprintf(blah, 64, "Sending %i", current_time);
+		SimpleMessage(4, blah);*/
 		QueuePacket(packet);
 	}
 

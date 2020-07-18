@@ -54,26 +54,40 @@ EQPacket::EQPacket(const uint16 op, const unsigned char *buf, uint32 len)
 		}
 	}
 }
-int8 EQ2Packet::PreparePacket(int16 MaxLen){
+
+const char* EQ2Packet::GetOpcodeName() {
+	int16 OpcodeVersion = GetOpcodeVersion(version);
+	if (EQOpcodeManager.count(OpcodeVersion) > 0)
+		return EQOpcodeManager[OpcodeVersion]->EmuToName(login_op);
+	else
+		return NULL;
+}
+
+int8 EQ2Packet::PreparePacket(int16 MaxLen) {
 	int16 OpcodeVersion = GetOpcodeVersion(version);
 
 	// stops a crash for incorrect version
-	if(EQOpcodeManager.count(OpcodeVersion) == 0)
+	if (EQOpcodeManager.count(OpcodeVersion) == 0)
 	{
-		LogWrite(PACKET__ERROR, 0, "Packet", "Version %i is not listed in the opcodes table.",version);
+		LogWrite(PACKET__ERROR, 0, "Packet", "Version %i is not listed in the opcodes table.", version);
 		return -1;
 	}
 
 	packet_prepared = true;
 
 	int16 login_opcode = EQOpcodeManager[OpcodeVersion]->EmuToEQ(login_op);
+	if (login_opcode == 0xcdcd)
+	{
+		LogWrite(PACKET__ERROR, 0, "Packet", "Version %i is not listed in the opcodes table for opcode %s", version, EQOpcodeManager[OpcodeVersion]->EmuToName(login_op));
+		return -1;
+	}
 	int8 offset = 0;
 	//one of the int16s is for the seq, other is for the EQ2 opcode and compressed flag (OP_Packet is the header, not the opcode)
 	int32 new_size = size + sizeof(int16) + sizeof(int8);
 	bool oversized = false;
-	if(login_opcode != 2){
-		new_size+=sizeof(int8); //for opcode
-		if(login_opcode >= 255){
+	if (login_opcode != 2) {
+		new_size += sizeof(int8); //for opcode
+		if (login_opcode >= 255) {
 			new_size += sizeof(int16);
 			oversized = true;
 		}
@@ -81,10 +95,10 @@ int8 EQ2Packet::PreparePacket(int16 MaxLen){
 			login_opcode = ntohs(login_opcode);
 	}
 	uchar* new_buffer = new uchar[new_size];
-	memset(new_buffer,0,new_size);
+	memset(new_buffer, 0, new_size);
 	uchar* ptr = new_buffer + sizeof(int16); // sequence is first
-	if(login_opcode != 2){
-		if(oversized){
+	if (login_opcode != 2) {
+		if (oversized) {
 			ptr += sizeof(int8); //compressed flag
 			int8 addon = 0xff;
 			memcpy(ptr, &addon, sizeof(int8));
@@ -93,7 +107,7 @@ int8 EQ2Packet::PreparePacket(int16 MaxLen){
 		memcpy(ptr, &login_opcode, sizeof(int16));
 		ptr += sizeof(int16);
 	}
-	else{
+	else {
 		memcpy(ptr, &login_opcode, sizeof(int8));
 		ptr += sizeof(int8);
 	}
@@ -104,6 +118,7 @@ int8 EQ2Packet::PreparePacket(int16 MaxLen){
 	size = new_size;
 	return offset;
 }
+
 uint32 EQProtocolPacket::serialize(unsigned char *dest, int8 offset) const
 {
 	if (opcode>0xff)  {
@@ -270,7 +285,7 @@ bool EQ2Packet::AppCombine(EQ2Packet* rhs){
 		safe_delete(rhs);
 		result=true;
 	}
-	else if((size + rhs->size + 6) < 255){
+	else if (rhs->size > 2 && size > 2 && (size + rhs->size + 6) < 255) {
 		int32 tmp_size = size - 2;
 		int32 tmp_size2 = rhs->size - 2;
 		opcode=OP_AppCombined;

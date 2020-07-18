@@ -1018,6 +1018,15 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "CompleteTransmute", EQ2Emu_lua_CompleteTransmute);
 	lua_register(state, "ProcHate", EQ2Emu_lua_ProcHate);
 
+	lua_register(state, "GetRandomSpawnByID", EQ2Emu_lua_GetRandomSpawnByID);
+	lua_register(state, "AddLootToObject", EQ2Emu_lua_AddLootToObject);
+	lua_register(state, "ShowLootWindow", EQ2Emu_lua_ShowLootWindow);
+	lua_register(state, "AddPrimaryEntityCommandAllSpawns", EQ2Emu_lua_AddPrimaryEntityCommandAllSpawns);
+	lua_register(state, "InstructionWindow", EQ2Emu_lua_InstructionWindow);
+	lua_register(state, "ShowWindow", EQ2Emu_lua_ShowWindow);
+	lua_register(state, "FlashWindow", EQ2Emu_lua_FlashWindow);
+	lua_register(state, "DisplayText", EQ2Emu_lua_DisplayText);
+
 	lua_register(state, "CheckLOS", EQ2Emu_lua_CheckLOS);
 	lua_register(state, "CheckLOSByCoordinates", EQ2Emu_lua_CheckLOSByCoordinates);
 
@@ -1645,7 +1654,7 @@ bool LuaInterface::RunSpawnScript(string script_name, const char* function_name,
 		return false;
 }
 
-bool LuaInterface::RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn, int32 grid_id)  {
+bool LuaInterface::RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn, int32 grid_id, const char* signal) {
 	if (!zone)
 		return false;
 	lua_State* state = GetZoneScript(script_name.c_str(), true, true);
@@ -1659,7 +1668,7 @@ bool LuaInterface::RunZoneScript(string script_name, const char* function_name, 
 			return false;
 		}
 		lua_getglobal(state, function_name);
-		if (!lua_isfunction(state, lua_gettop(state))){
+		if (!lua_isfunction(state, lua_gettop(state))) {
 			lua_pop(state, 1);
 			mutex->releasereadlock(__FUNCTION__);
 			UseZoneScript(script_name.c_str(), state, false);
@@ -1673,6 +1682,10 @@ bool LuaInterface::RunZoneScript(string script_name, const char* function_name, 
 		}
 		if (grid_id > 0) {
 			SetInt32Value(state, grid_id);
+			num_params++;
+		}
+		if (signal) {
+			SetStringValue(state, signal);
 			num_params++;
 		}
 		if (!CallZoneScript(state, num_params)) {

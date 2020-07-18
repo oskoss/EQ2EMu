@@ -2198,22 +2198,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[0] && sep->IsNumber(0))
 				quest_id = atoul(sep->arg[0]);
 			if(quest_id > 0){
-				Quest* quest = client->GetPendingQuest(quest_id);
-				if(quest){
-					client->RemovePendingQuest(quest);
-					client->AddPlayerQuest(quest);
-					client->GetCurrentZone()->SendQuestUpdates(client);
-
-					// If character has already completed this quest once update the given date in the database
-					if (client->GetPlayer()->GetCompletedPlayerQuests()->count(quest_id) > 0) {
-						Quest* quest2 = client->GetPlayer()->GetCompletedQuest(quest_id);
-						if (quest2)
-							quest->SetCompleteCount(quest2->GetCompleteCount());
-
-						database.SaveCharRepeatableQuest(client, quest_id, quest->GetCompleteCount());
-						
-					}
-				}
+				client->AcceptQuest(quest_id);
 			}
 			break;
 								  }
@@ -2754,6 +2739,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 		}
 		case COMMAND_KNOWLEDGEWINDOWSORT: {
+			if (client->GetVersion() <= 546)
+				break;
+
 			if (sep && sep->GetArgNumber() == 4)
 			{
 				int32 book = atoul(sep->arg[0]); // 0 - spells, 1 - combat, 2 - abilities, 3 - tradeskill
@@ -4434,27 +4422,29 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 void Commands::Command_AcceptAdvancement(Client* client, Seperator* sep)
 {
 	 Player *player = client->GetPlayer();
-	TraitData* trait = master_trait_list.GetTrait(atoul(sep->arg[0]));
+	 if (sep && sep->IsSet(0)) {
+		 TraitData* trait = master_trait_list.GetTrait(atoul(sep->arg[0]));
 
-	// Check to see if this is a trait or grandmaster training (traits are always new spells, training is always upgrades)
-	if (!player->HasSpell(trait->spellID, 0, true)) 
-	{
-		Spell* spell = master_spell_list.GetSpell(trait->spellID, trait->tier);
-		player->AddSpellBookEntry(trait->spellID, trait->tier, player->GetFreeSpellBookSlot(spell->GetSpellData()->spell_book_type), spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
-	}
-	else 
-	{
-		Spell* spell = master_spell_list.GetSpell(trait->spellID, trait->tier);
-		int8 old_slot = player->GetSpellSlot(spell->GetSpellID());
-		player->RemoveSpellBookEntry(spell->GetSpellID());
-		player->AddSpellBookEntry(spell->GetSpellID(), spell->GetSpellTier(), old_slot, spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
-		player->UnlockSpell(spell);
-		client->SendSpellUpdate(spell);
-	}
+		 // Check to see if this is a trait or grandmaster training (traits are always new spells, training is always upgrades)
+		 if (!player->HasSpell(trait->spellID, 0, true))
+		 {
+			 Spell* spell = master_spell_list.GetSpell(trait->spellID, trait->tier);
+			 player->AddSpellBookEntry(trait->spellID, trait->tier, player->GetFreeSpellBookSlot(spell->GetSpellData()->spell_book_type), spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
+		 }
+		 else
+		 {
+			 Spell* spell = master_spell_list.GetSpell(trait->spellID, trait->tier);
+			 int8 old_slot = player->GetSpellSlot(spell->GetSpellID());
+			 player->RemoveSpellBookEntry(spell->GetSpellID());
+			 player->AddSpellBookEntry(spell->GetSpellID(), spell->GetSpellTier(), old_slot, spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
+			 player->UnlockSpell(spell);
+			 client->SendSpellUpdate(spell);
+		 }
 
-	// Spell book update
-	client->QueuePacket(player->GetSpellBookUpdatePacket(client->GetVersion()));
-	client->QueuePacket(master_trait_list.GetTraitListPacket(client));
+		 // Spell book update
+		 client->QueuePacket(player->GetSpellBookUpdatePacket(client->GetVersion()));
+		 client->QueuePacket(master_trait_list.GetTraitListPacket(client));
+	 }
 }
 
 /* 
@@ -4473,8 +4463,8 @@ void Commands::Command_AFK(Client* client, Seperator* sep)
 
 	if (player->get_character_flag(CF_AFK))
 	{
-		//LogWrite(MISC__TODO, 1, "TODO", "player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK); <-- need to find this");
-		player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK);
+		LogWrite(MISC__TODO, 1, "TODO", "player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK); <-- need to find this");
+		/*player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK); <-- need to find this */
 
 		if (sep && sep->argplus[0])
 			player->SetAwayMessage("I am away from the keyboard, " + string(sep->argplus[0]));
@@ -4493,8 +4483,8 @@ void Commands::Command_AFK(Client* client, Seperator* sep)
 
 		player->GetZone()->SimpleMessage(CHANNEL_COLOR_YELLOW, message.c_str(), player, 30);
 	}
-	else
-		player->SetActivityStatus(player->GetActivityStatus() - ACTIVITY_STATUS_AFK);
+	/*else
+		player->SetActivityStatus(player->GetActivityStatus() - ACTIVITY_STATUS_AFK); <-- need to find this */
 }
 
 /* 
@@ -8360,6 +8350,847 @@ void Commands::Command_TellChannel(Client *client, Seperator *sep) {
 }
 
 void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
+	Seperator* sep = new Seperator(command_parms->data.c_str(), ' ', 50, 500, true);
+	if (sep->IsSet(0)) {
+		if (atoi(sep->arg[0]) == 1) {
+			PacketStruct* packet2 = configReader.getStruct("WS_SpellGainedMsg", client->GetVersion());
+			if (packet2) {
+				packet2->setDataByName("spell_type", 2);
+				packet2->setDataByName("spell_id", 8308);
+				packet2->setDataByName("spell_name", "Sprint");
+				packet2->setDataByName("add_silently", 0);
+				packet2->setDataByName("tier", 1);
+				packet2->setDataByName("blah1", 1);
+				packet2->setDataByName("blah2", 1);
+				EQ2Packet* outapp = packet2->serialize();
+				DumpPacket(outapp);
+				client->QueuePacket(outapp);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 2) {
+			PacketStruct* packet2 = configReader.getStruct("WS_GuildUpdate", client->GetVersion());
+			if (packet2) {
+				packet2->setDataByName("guild_name", "Test");
+				packet2->setDataByName("guild_motd", "Test MOTD");
+				packet2->setDataByName("guild_id", 1234);
+				packet2->setDataByName("guild_level", 1);
+				packet2->setDataByName("unknown", 2);
+				packet2->setDataByName("unknown2", 3);
+				packet2->setDataByName("exp_current", 1);
+				packet2->setDataByName("exp_to_next_level", 4);
+				EQ2Packet* outapp = packet2->serialize();
+				DumpPacket(outapp);
+				client->QueuePacket(outapp);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 3) {
+			PacketStruct* packet2 = configReader.getStruct("WS_JoinGuildNotify", client->GetVersion());
+			if (packet2) {
+				packet2->setDataByName("guild_id", 1234);
+				packet2->setDataByName("character_id", 1);
+				packet2->setDataByName("account_id", 2);
+				packet2->setDataByName("guild_level", 1);
+				packet2->setDataByName("name", "Test");
+				packet2->setDataByName("unknown2", 0);
+				packet2->setDataByName("unknown3", 1);
+				packet2->setDataByName("adventure_class", 6);
+				packet2->setDataByName("adventure_level", 7);
+				packet2->setDataByName("tradeskill_class", 4);
+				packet2->setDataByName("tradeskill_level", 5);
+				packet2->setDataByName("rank", 0);
+				packet2->setDataByName("member_flags", 2);
+				packet2->setDataByName("join_date", 1591112273);
+				packet2->setDataByName("guild_status", 2);
+				packet2->setDataByName("last_login", 1591132273);
+				packet2->setDataByName("recruiter_id", 1);
+				packet2->setDataByName("points", 2345);
+				packet2->setDataByName("note", "note");
+				packet2->setMediumStringByName("officer_note", "O note");
+				packet2->setMediumStringByName("zone", "Blah");
+
+				EQ2Packet* outapp = packet2->serialize();
+				DumpPacket(outapp);
+				client->QueuePacket(outapp);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 5) {
+			client->GetPlayer()->GetTarget();
+			int16 offset = atoi(sep->arg[2]);
+			int32 value1 = atol(sep->arg[4]);
+			EQ2Packet* outapp = client->GetPlayer()->GetPlayerInfo()->serialize(client->GetVersion(), offset, value1);
+			client->QueuePacket(outapp);
+		}
+		else if (atoi(sep->arg[0]) == 6) {
+			Spawn* spawn = client->GetPlayer()->GetTarget();
+			if (!spawn)
+				spawn = client->GetPlayer();
+			else if (spawn->IsEntity())
+				((Entity*)spawn)->SetSpeed(atof(sep->arg[4]));
+			spawn->RunToLocation(atof(sep->arg[1]), atof(sep->arg[2]), atof(sep->arg[3]));
+		}
+		else if (atoi(sep->arg[0]) == 7) {
+			int32 id = 0;
+			Spawn* spawn = client->GetCurrentZone()->GetSpawn(7720001);
+			if (spawn) {
+				spawn->SetX(client->GetPlayer()->GetX() + .5, false);
+				spawn->SetY(client->GetPlayer()->GetY(), false);
+				spawn->SetZ(client->GetPlayer()->GetZ() + .5, false);
+				float heading = client->GetPlayer()->GetHeading() + 180;
+				if (heading > 360)
+					heading -= 360;
+				spawn->SetLevel(5);
+				spawn->SetAdventureClass(4);
+				spawn->SetHeading(heading, false);
+				spawn->SetSpawnOrigX(spawn->GetX());
+				spawn->SetSpawnOrigY(spawn->GetY());
+				spawn->SetSpawnOrigZ(spawn->GetZ());
+				spawn->SetSpawnOrigHeading(spawn->GetHeading());
+				spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				spawn->appearance.targetable = 1;
+				if (spawn->IsNPC() && spawn->GetTotalHP() == 0) {
+					spawn->SetTotalHP(spawn->GetLevel() * 15);
+					spawn->SetHP(spawn->GetTotalHP());
+				}
+				if (spawn->GetTotalPower() == 0) {
+					spawn->SetTotalPower(spawn->GetLevel() * 15);
+					spawn->SetPower(spawn->GetTotalPower());
+				}
+				int16 offset = atoi(sep->arg[1]);
+				int32 value1 = atol(sep->arg[2]);
+				sprintf(spawn->appearance.name, "Offset %i", offset);
+				EQ2Packet* ret = spawn->spawn_serialize(client->GetPlayer(), client->GetVersion(), offset, value1);
+				DumpPacket(ret);
+				client->QueuePacket(ret);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 8) {
+			int32 id = atoi(sep->arg[1]);
+			Spawn* spawn = client->GetCurrentZone()->GetSpawn(id);
+			if (spawn) {
+				spawn->SetX(client->GetPlayer()->GetX() + .5, false);
+				spawn->SetY(client->GetPlayer()->GetY(), false);
+				spawn->SetZ(client->GetPlayer()->GetZ() + .5, false);
+				float heading = client->GetPlayer()->GetHeading() + 180;
+				if (heading > 360)
+					heading -= 360;
+				spawn->SetLevel(5);
+				spawn->SetAdventureClass(4);
+				spawn->SetHeading(heading, false);
+				spawn->SetSpawnOrigX(spawn->GetX());
+				spawn->SetSpawnOrigY(spawn->GetY());
+				spawn->SetSpawnOrigZ(spawn->GetZ());
+				spawn->SetSpawnOrigHeading(spawn->GetHeading());
+				spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				spawn->appearance.targetable = 1;
+				if (spawn->IsNPC() && spawn->GetTotalHP() == 0) {
+					spawn->SetTotalHP(spawn->GetLevel() * 15);
+					spawn->SetHP(spawn->GetTotalHP());
+				}
+				if (spawn->GetTotalPower() == 0) {
+					spawn->SetTotalPower(spawn->GetLevel() * 15);
+					spawn->SetPower(spawn->GetTotalPower());
+				}
+				int16 offset = atoi(sep->arg[2]);
+				int16 offset2 = atoi(sep->arg[3]);
+				int32 value1 = atol(sep->arg[4]);
+				int16 offset3 = 0;
+				int16 offset4 = 0;
+				int32 value2 = 0;
+				if (sep->IsSet(7)) {
+					offset3 = atoi(sep->arg[5]);
+					offset4 = atoi(sep->arg[6]);
+					value2 = atol(sep->arg[7]);
+				}
+				sprintf(spawn->appearance.name, "Offset %i to %i", offset, offset2);
+				EQ2Packet* ret = spawn->spawn_serialize(client->GetPlayer(), client->GetVersion(), offset, value1, offset2, offset3, offset4, value2);
+				DumpPacket(ret);
+				client->QueuePacket(ret);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 9) {
+			Item* item = master_item_list.GetItem(70007);
+			EQ2Packet* app = item->serialize(client->GetVersion(), true, client->GetPlayer());
+			if (sep->IsSet(2)) {
+				int8 offset = atoi(sep->arg[1]);
+				uchar* ptr2 = app->pBuffer;
+				ptr2 += offset;
+				if (sep->IsNumber(2)) {
+					int32 value1 = atol(sep->arg[2]);
+					if (value1 > 0xFFFF)
+						memcpy(ptr2, (uchar*)&value1, 4);
+					else if (value1 > 0xFF)
+						memcpy(ptr2, (uchar*)&value1, 2);
+					else
+						memcpy(ptr2, (uchar*)&value1, 1);
+				}
+				else {
+					int8 len = strlen(sep->arg[2]);
+					memcpy(ptr2, (uchar*)&len, 1);
+					ptr2 += 1;
+					memcpy(ptr2, sep->arg[2], len);
+				}
+			}
+			if (sep->IsSet(4)) {
+				int8 offset = atoi(sep->arg[3]);
+				uchar* ptr2 = app->pBuffer;
+				ptr2 += offset;
+				if (sep->IsNumber(4)) {
+					int32 value1 = atol(sep->arg[4]);
+					if (value1 > 0xFFFF)
+						memcpy(ptr2, (uchar*)&value1, 4);
+					else if (value1 > 0xFF)
+						memcpy(ptr2, (uchar*)&value1, 2);
+					else
+						memcpy(ptr2, (uchar*)&value1, 1);
+				}
+				else {
+					int8 len = strlen(sep->arg[4]);
+					memcpy(ptr2, (uchar*)&len, 1);
+					ptr2 += 1;
+					memcpy(ptr2, sep->arg[4], len);
+				}
+			}
+			DumpPacket(app);
+			client->QueuePacket(app);
+		}
+		else if (atoi(sep->arg[0]) == 10) {
+			PacketStruct* packet2 = configReader.getStruct("WS_QuestJournalUpdate", client->GetVersion());
+			if (packet2) {
+				packet2->setArrayLengthByName("num_quests", 1);
+				packet2->setArrayDataByName("active", 1);
+				packet2->setArrayDataByName("name", "Archetype Selection");
+				packet2->setArrayDataByName("quest_type", "Hallmark");
+				packet2->setArrayDataByName("quest_zone", "Hallmark");
+				packet2->setArrayDataByName("journal_updated", 1);
+				packet2->setArrayDataByName("quest_id", 5);
+				packet2->setArrayDataByName("day", 19);
+				packet2->setArrayDataByName("month", 6);
+				packet2->setArrayDataByName("year", 20);
+				packet2->setArrayDataByName("level", 2);
+				packet2->setArrayDataByName("encounter_level", 4);
+				packet2->setArrayDataByName("difficulty", 3);
+				packet2->setArrayDataByName("visible", 1);
+				packet2->setDataByName("visible_quest_id", 5);
+				packet2->setDataByName("player_crc", 2900677088);
+				packet2->setDataByName("player_name", "LethalEncounter");
+				EQ2Packet* app = packet2->serialize();
+				if (sep->IsSet(2)) {
+					int8 offset = atoi(sep->arg[1]);
+					uchar* ptr2 = app->pBuffer;
+					ptr2 += offset;
+					if (sep->IsNumber(2)) {
+						int32 value1 = atol(sep->arg[2]);
+						if (value1 > 0xFFFF)
+							memcpy(ptr2, (uchar*)&value1, 4);
+						else if (value1 > 0xFF)
+							memcpy(ptr2, (uchar*)&value1, 2);
+						else
+							memcpy(ptr2, (uchar*)&value1, 1);
+					}
+					else {
+						int8 len = strlen(sep->arg[2]);
+						memcpy(ptr2, (uchar*)&len, 1);
+						ptr2 += 1;
+						memcpy(ptr2, sep->arg[2], len);
+					}
+				}
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 11) {
+			PacketStruct* packet2 = configReader.getStruct("WS_QuestJournalReply", client->GetVersion());
+			if (packet2) {
+				packet2->setDataByName("quest_id", 5);
+				packet2->setDataByName("player_crc", 2900677088);
+				packet2->setDataByName("name", "Archetype Selection");
+				packet2->setDataByName("description", "I have reported my profession to Garven Tralk");
+				packet2->setDataByName("type", "Hallmark");
+				packet2->setDataByName("complete_header", "To complete this quest, I must do the following tasks:");
+				packet2->setDataByName("day", 19);
+				packet2->setDataByName("month", 6);
+				packet2->setDataByName("year", 20);
+				packet2->setDataByName("level", 2);
+				packet2->setDataByName("encounter_level", 4);
+				packet2->setDataByName("difficulty", 3);
+				packet2->setDataByName("time_obtained", Timer::GetUnixTimeStamp());
+				packet2->setDataByName("timer_start", Timer::GetUnixTimeStamp());
+				packet2->setDataByName("timer_duration", 300);
+				packet2->setDataByName("timer_running", 1);
+				packet2->setArrayLengthByName("task_groups_completed", 0);
+				packet2->setArrayLengthByName("num_task_groups", 1);
+				packet2->setArrayDataByName("task_group", "I need to talk to Garven Tralk");
+				packet2->setSubArrayLengthByName("num_tasks", 1);
+				packet2->setSubArrayDataByName("task", "I need to talk to Garven Tralk");
+				packet2->setSubArrayLengthByName("num_updates", 1);
+				packet2->setSubArrayDataByName("update_currentval", 0);
+				packet2->setSubArrayDataByName("update_maxval", 1);
+				packet2->setSubArrayDataByName("icon", 11);
+
+				packet2->setArrayDataByName("waypoint", 0xFFFFFFFF);
+				packet2->setDataByName("journal_updated", 1);
+				EQ2Packet* app = packet2->serialize();
+				if (sep->IsSet(2)) {
+					int16 offset = atoi(sep->arg[1]);
+					uchar* ptr2 = app->pBuffer;
+					ptr2 += offset;
+					if (sep->IsNumber(2)) {
+						int32 value1 = atol(sep->arg[2]);
+						if (value1 > 0xFFFF)
+							memcpy(ptr2, (uchar*)&value1, 4);
+						else if (value1 > 0xFF)
+							memcpy(ptr2, (uchar*)&value1, 2);
+						else
+							memcpy(ptr2, (uchar*)&value1, 1);
+					}
+					else {
+						int16 len = strlen(sep->arg[2]);
+						memcpy(ptr2, (uchar*)&len, 2);
+						ptr2 += 2;
+						memcpy(ptr2, sep->arg[2], len);
+					}
+				}
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 12) {
+			PacketStruct* packet2 = configReader.getStruct("WS_QuestJournalReply", client->GetVersion());
+			if (packet2) {
+				packet2->setDataByName("quest_id", 5);
+				packet2->setDataByName("player_crc", 2900677088);
+				packet2->setDataByName("name", "Archetype Selection");
+				packet2->setDataByName("description", "I have reported my profession to Garven Tralk.");
+				packet2->setDataByName("type", "Hallmark");
+				packet2->setDataByName("complete_header", "To complete this quest, I must do the following tasks:");
+				packet2->setDataByName("day", 19);
+				packet2->setDataByName("month", 6);
+				packet2->setDataByName("year", 20);
+				packet2->setDataByName("level", 2);
+				packet2->setDataByName("encounter_level", 4);
+				packet2->setDataByName("difficulty", 3);
+				packet2->setDataByName("time_obtained", Timer::GetUnixTimeStamp());
+				packet2->setDataByName("timer_start", Timer::GetUnixTimeStamp());
+				packet2->setDataByName("timer_duration", 300);
+				packet2->setDataByName("timer_running", 1);
+				packet2->setArrayLengthByName("task_groups_completed", 0);
+				packet2->setArrayLengthByName("num_task_groups", 1);
+				packet2->setArrayDataByName("task_group", "I need to talk to Garven Tralk");
+				packet2->setSubArrayLengthByName("num_tasks", 1);
+				packet2->setSubArrayDataByName("task", "I need to talk to Garven Tralk");
+				packet2->setSubArrayLengthByName("num_updates", 1);
+				packet2->setSubArrayDataByName("update_currentval", 0);
+				packet2->setSubArrayDataByName("update_maxval", 1);
+				packet2->setSubArrayDataByName("icon", 11);
+
+				packet2->setArrayDataByName("waypoint", 0xFFFFFFFF);
+				packet2->setDataByName("journal_updated", 1);
+				packet2->setSubstructDataByName("reward_data", "unknown1", 255);
+				packet2->setSubstructDataByName("reward_data", "reward", "Quest Reward!");
+				packet2->setSubstructDataByName("reward_data", "unknown2", 0x3f);
+				packet2->setSubstructDataByName("reward_data", "coin", 150);
+				packet2->setSubstructDataByName("reward_data", "status_points", 5);
+				packet2->setSubstructDataByName("reward_data", "exp_bonus", 10);
+				packet2->setSubstructArrayLengthByName("reward_data", "num_rewards", 1);
+				packet2->setSubstructArrayDataByName("reward_data", "reward_id", 123);
+				Item* item = master_item_list.GetItem(152755);
+				packet2->setArrayDataByName("reward_id", item->details.item_id);
+				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, -1);
+				/*packet2->setSubstructDataByName("item", "unique_id", 567);
+				packet2->setSubstructDataByName("item", "broker_item_id", 0xFFFFFFFFFFFFFFFF);
+				packet2->setSubstructDataByName("item", "icon", 0xe7);
+				packet2->setSubstructDataByName("item", "tier", 4);
+				packet2->setSubstructDataByName("item", "flags", 0x60);
+				packet2->setSubstructArrayLengthByName("item", "stat_count", 1);
+				packet2->setSubstructDataByName("item", "stat_type", 1);
+				packet2->setSubstructDataByName("item", "stat_subtype", 2);
+				packet2->setSubstructDataByName("item", "value", 3);
+				packet2->setSubstructDataByName("item", "condition", 100);
+				packet2->setSubstructDataByName("item", "weight", 1);
+				packet2->setSubstructDataByName("item", "skill_req1", 0xacafa99e);
+				packet2->setSubstructDataByName("item", "skill_req2", 0xacafa99e);
+				packet2->setSubstructDataByName("item", "skill_min", 1);
+				packet2->setSubstructArrayLengthByName("item", "class_count", 3);
+				packet2->setSubstructDataByName("item", "adventure_class", 1);
+				packet2->setSubstructDataByName("item", "adventure_class", 11, 0, 1);
+				packet2->setSubstructDataByName("item", "adventure_class", 0x1f, 0, 2);
+				packet2->setSubstructDataByName("item", "tradeskill_class", 255);
+				packet2->setSubstructDataByName("item", "tradeskill_class", 255, 0, 1);
+				packet2->setSubstructDataByName("item", "tradeskill_class", 255, 0, 2);
+				packet2->setSubstructDataByName("item", "level", 0x1e);
+				packet2->setSubstructDataByName("item", "level", 100, 0, 1);
+				packet2->setSubstructDataByName("item", "level", 100, 0, 2);
+				packet2->setSubstructDataByName("item_footer", "name", "Footman Gloves");*/
+				//packet2->PrintPacket();
+				EQ2Packet* app = packet2->serialize();
+				if (sep->IsSet(2)) {
+					int16 offset = atoi(sep->arg[1]);
+					uchar* ptr2 = app->pBuffer;
+					ptr2 += offset;
+					if (sep->IsNumber(2)) {
+						int32 value1 = atol(sep->arg[2]);
+						if (value1 > 0xFFFF)
+							memcpy(ptr2, (uchar*)&value1, 4);
+						else if (value1 > 0xFF)
+							memcpy(ptr2, (uchar*)&value1, 2);
+						else
+							memcpy(ptr2, (uchar*)&value1, 1);
+					}
+					else {
+						int16 len = strlen(sep->arg[2]);
+						memcpy(ptr2, (uchar*)&len, 2);
+						ptr2 += 2;
+						memcpy(ptr2, sep->arg[2], len);
+					}
+				}
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 13) {
+			PacketStruct* packet2 = configReader.getStruct("WS_OnScreenMsg", client->GetVersion());
+			if (packet2 && sep->IsSet(7)) {
+				packet2->setDataByName("unknown", atoi(sep->arg[1]));
+				char blah[128];
+				sprintf(blah, "\\#6EFF6EYou get better at \12\\#C8FFC8%s\\#6EFF6E! (7/15)", sep->arg[2]);
+				packet2->setDataByName("text", blah);
+				packet2->setDataByName("message_type", sep->arg[3]);
+				packet2->setDataByName("size", atof(sep->arg[4]));
+				packet2->setDataByName("red", atoi(sep->arg[5]));
+				packet2->setDataByName("green", atoi(sep->arg[6]));
+				packet2->setDataByName("blue", atoi(sep->arg[7]));
+				EQ2Packet* app = packet2->serialize();
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 14) {
+			PacketStruct* packet2 = configReader.getStruct("WS_InstructionWindow", client->GetVersion());
+			if (packet2 && sep->IsSet(3)) {
+				packet2->setDataByName("open_seconds_min", atof(sep->arg[1]));
+				packet2->setDataByName("open_seconds_max", atof(sep->arg[2]));
+				packet2->setDataByName("voice_sync", atoi(sep->arg[3]));
+				packet2->setDataByName("text", "Welcome to Norrath, the world of EverQuest II. Left click on the help button at any time for more detailed help and information.");
+				packet2->setDataByName("voice", "voiceover/english/narrator/boat_06p_tutorial02/narrator_001_63779ca0.mp3");
+				packet2->setArrayLengthByName("num_goals", 1);
+				//packet2->setArrayDataByName("goal_text", )
+				packet2->setSubArrayLengthByName("num_tasks", 1);
+				packet2->setSubArrayDataByName("task_text", "continue");
+				packet2->setDataByName("complete_sound", "click");
+				packet2->setDataByName("signal", "introduction");
+				packet2->setDataByName("voice_key1", 0xcda65173);
+				packet2->setDataByName("voice_key2", 0x984bfc6d);
+				EQ2Packet* app = packet2->serialize();
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+				packet2 = configReader.getStruct("WS_ShowWindow", client->GetVersion());
+				packet2->setDataByName("window", "MainHUD.StartMenu");
+				packet2->setDataByName("show", 1);
+				app = packet2->serialize();
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+
+				packet2 = configReader.getStruct("WS_FlashWindow", client->GetVersion());
+				packet2->setDataByName("window", "MainHUD.StartMenu.help");
+				packet2->setDataByName("flash_seconds", 10);
+				app = packet2->serialize();
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 15) {
+			PacketStruct* packet2 = configReader.getStruct("WS_UpdateLoot", client->GetVersion());
+			if (packet2) {
+				packet2->setArrayLengthByName("loot_count", 1);
+				packet2->setArrayDataByName("name", "Test");
+				packet2->setArrayDataByName("item_id", 1234);
+				packet2->setArrayDataByName("count", 1);
+				packet2->setArrayDataByName("icon", 258);
+				packet2->setArrayDataByName("ability_id", 0xFFFFFFFF);
+				Spawn* spawn = client->GetPlayer()->GetTarget();
+				if (spawn)
+					packet2->setDataByName("object_id", client->GetPlayer()->GetIDWithPlayerSpawn(spawn));
+				packet2->setDataByName("unknown3", 1);
+				packet2->setDataByName("unknown4", 1);
+				packet2->setDataByName("unknown5", 60);
+				EQ2Packet* app = packet2->serialize();
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 16 && sep->IsNumber(1)) {
+			char blah[32];
+			sprintf(blah, "Testing: %i", atoi(sep->arg[1]));
+			client->SimpleMessage(atoi(sep->arg[1]), blah);
+		}
+		else if (atoi(sep->arg[0]) == 17 && sep->IsNumber(2)) {
+			if (sep->IsSet(2)) {
+				int16 offset = atoi(sep->arg[1]);
+				if (sep->IsNumber(2)) {
+					int32 value1 = atol(sep->arg[2]);
+					client->QueuePacket(client->GetPlayer()->GetPlayerInfo()->serialize(client->GetVersion(), offset, value1));
+					cout << "Sent" << endl;
+				}
+			}
+		}
+		else if (atoi(sep->arg[0]) == 18) {
+			PacketStruct* packet2 = configReader.getStruct("WS_QuestRewardPackMsg", client->GetVersion());
+			if (packet2) {
+				packet2->setSubstructDataByName("reward_data", "unknown1", 255);
+				packet2->setSubstructDataByName("reward_data", "reward", "Quest Reward!");
+				packet2->setSubstructDataByName("reward_data", "coin", 150);
+				packet2->setSubstructDataByName("reward_data", "status_points", 5);
+				packet2->setSubstructDataByName("reward_data", "exp_bonus", 10);
+				packet2->setSubstructArrayLengthByName("reward_data", "num_rewards", 4);
+				Item* item = new Item(master_item_list.GetItem(36212));
+				packet2->setArrayDataByName("reward_id", item->details.item_id);
+				item->stack_count = 20;
+				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, -1);
+				safe_delete(item);
+				item = new Item(master_item_list.GetItem(36685));
+				item->stack_count = 20;
+				packet2->setArrayDataByName("reward_id", item->details.item_id);
+				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 1, 0, -1);
+				safe_delete(item);
+				item = master_item_list.GetItem(1414);
+				packet2->setArrayDataByName("reward_id", item->details.item_id);
+				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 2, 0, -1);
+				item = master_item_list.GetItem(75057);
+				packet2->setArrayDataByName("reward_id", item->details.item_id);
+				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 3, 0, -1);
+				EQ2Packet* app = packet2->serialize();
+				if (sep->IsSet(2)) {
+					int16 offset = atoi(sep->arg[1]);
+					uchar* ptr2 = app->pBuffer;
+					ptr2 += offset;
+					if (sep->IsNumber(2)) {
+						int32 value1 = atol(sep->arg[2]);
+						if (value1 > 0xFFFF)
+							memcpy(ptr2, (uchar*)&value1, 4);
+						else if (value1 > 0xFF)
+							memcpy(ptr2, (uchar*)&value1, 2);
+						else
+							memcpy(ptr2, (uchar*)&value1, 1);
+					}
+					else {
+						int16 len = strlen(sep->arg[2]);
+						memcpy(ptr2, (uchar*)&len, 2);
+						ptr2 += 2;
+						memcpy(ptr2, sep->arg[2], len);
+					}
+				}
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 19) {
+			PacketStruct* packet2 = configReader.getStruct("WS_UpdateLoot", client->GetVersion());
+			Spawn* spawn = client->GetPlayer()->GetTarget();
+			if (packet2 && spawn) {
+				Item* item = master_item_list.GetItem(130053);
+				packet2->setArrayLengthByName("loot_count", 1);
+				packet2->setArrayDataByName("loot_id", item->details.item_id);
+				packet2->setArrayDataByName("unknown2", 1);
+				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, 2, true);
+				packet2->setDataByName("display", 1);
+				packet2->setDataByName("unknown2b", 1);
+				packet2->setDataByName("unknown3", 0x3c);
+				packet2->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(spawn));
+				packet2->PrintPacket();
+				EQ2Packet* app = packet2->serialize();
+				if (sep->IsSet(2)) {
+					int16 offset = atoi(sep->arg[1]);
+					int16 offset2 = 0;
+					int32 value1 = 0;
+					if (sep->IsSet(3)) {
+						offset2 = atoi(sep->arg[2]);
+						value1 = atol(sep->arg[3]);
+					}
+					else
+						value1 = atol(sep->arg[2]);
+					int16 offset3 = 0;
+					int16 offset4 = 0;
+					int32 value2 = 0;
+					if (sep->IsSet(6)) {
+						offset3 = atoi(sep->arg[4]);
+						offset4 = atoi(sep->arg[5]);
+						value2 = atol(sep->arg[6]);
+					}
+					offset--;
+					if (offset2 > 0 && offset2 >= offset) {
+						offset2--;
+						uchar* ptr2 = app->pBuffer;
+						ptr2 += offset;
+						for (int i = offset; i <= offset2; i++) {
+							if (value1 > 0xFFFF) {
+								memcpy(ptr2, (uchar*)&value1, 4);
+								i += 3;
+								ptr2 += 3;
+							}
+							else if (value1 > 0xFF) {
+								memcpy(ptr2, (uchar*)&value1, 2);
+								i++;
+								ptr2++;
+							}
+							else
+								memcpy(ptr2, (uchar*)&value1, 1);
+							ptr2++;
+						}
+					}
+					if (offset4 > 0 && offset4 >= offset3) {
+						offset3--;
+						offset4--;
+						uchar* ptr2 = app->pBuffer;
+						ptr2 += offset3;
+						for (int i = offset3; i <= offset4; i++) {
+							if (value2 > 0xFFFF) {
+								memcpy(ptr2, (uchar*)&value2, 4);
+								i += 3;
+								ptr2 += 3;
+							}
+							else if (value2 > 0xFF) {
+								memcpy(ptr2, (uchar*)&value2, 2);
+								i++;
+								ptr2++;
+							}
+							else
+								memcpy(ptr2, (uchar*)&value2, 1);
+							ptr2++;
+						}
+					}
+				}
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 20) {
+			uchar blah[] = { 0x09,0x01,0x00,0x00,0xff,0xc9,0x01,0x03,0x00,0x4d,0xf0,0x00,0x00,0x01
+	,0x00,0x00,0x00,0x4d,0xf0,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xd7
+	,0x05,0x01,0x40,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+	,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x64,0x0a,0x8c,0x5a,0xf1,0xd2,0x8c,0x5a,0xf1
+	,0xd2,0x01,0x01,0x00,0xff,0x1e,0x00,0x01,0x03,0x03,0x00,0x00,0x00,0x03,0x07
+	,0x07,0x00,0x10,0x74,0x68,0x72,0x65,0x61,0x64,0x62,0x61,0x72,0x65,0x20,0x74,0x75
+	,0x6e,0x69,0x63,0x00,0x00,0x4e,0xf0,0x00,0x00,0x01,0x00,0x04,0x00,0x4e,0xf0,0x00
+	,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x0a,0x00,0x01,0x60,0x00,0x00,0x00
+	,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+	,0x00,0x64,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x03
+	,0x00,0x00,0x00,0x05,0x04,0x04,0x00,0x00,0x00,0x00,0x09,0x73,0x6d,0x61,0x6c,0x6c
+	,0x20,0x62,0x61,0x67,0x00,0x00,0x4f,0xf0,0x00,0x00,0x01,0x00,0x04,0x00,0x4f,0xf0
+	,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x02,0x01,0x01,0x60,0x01,0x00
+	,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+	,0x00,0x00,0x64,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00
+	,0x03,0x00,0x00,0x00,0x00,0x00,0x0c,0x57,0x61,0x75,0x6c,0x6f,0x6e,0x27,0x73,0x20
+	,0x48,0x61,0x74,0x00,0x00,0x01,0x01,0x00,0x00,0x00,0x3c,0x00,0x00,0x00,0x0d,0x00
+	,0x00,0x00 };
+			EQ2Packet* app = new EQ2Packet(OP_ClientCmdMsg, blah, sizeof(blah));
+			if (sep->IsSet(2)) {
+				int16 offset = atoi(sep->arg[1]);
+				uchar* ptr2 = app->pBuffer;
+				ptr2 += offset;
+				if (sep->IsNumber(2)) {
+					int32 value1 = atol(sep->arg[2]);
+					if (value1 > 0xFFFF)
+						memcpy(ptr2, (uchar*)&value1, 4);
+					else if (value1 > 0xFF)
+						memcpy(ptr2, (uchar*)&value1, 2);
+					else
+						memcpy(ptr2, (uchar*)&value1, 1);
+				}
+				else {
+					int16 len = strlen(sep->arg[2]);
+					memcpy(ptr2, (uchar*)&len, 2);
+					ptr2 += 2;
+					memcpy(ptr2, sep->arg[2], len);
+				}
+			}
+			DumpPacket(app);
+			client->QueuePacket(app);
+		}
+	}
+
+	else if (atoi(sep->arg[0]) == 21) {
+		PacketStruct* packet2 = configReader.getStruct("WS_OfferQuest", client->GetVersion());
+		if (packet2) {
+			packet2->setDataByName("unknown0", 255);
+			packet2->setDataByName("reward", "New Quest");
+			packet2->setDataByName("title", "Title");
+			packet2->setDataByName("description", "description");
+			packet2->setDataByName("quest_difficulty", 3);
+			packet2->setDataByName("unknown1", 5);
+			packet2->setDataByName("level", 3);
+			packet2->setDataByName("coin", 150);
+			packet2->setDataByName("status_points", 5);
+			packet2->setDataByName("exp_bonus", 10);
+			packet2->setArrayLengthByName("num_rewards", 1);
+			Item* item = new Item(master_item_list.GetItem(36212));
+			packet2->setArrayDataByName("reward_id", item->details.item_id);
+			item->stack_count = 20;
+			packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, -1);
+			safe_delete(item);
+			char accept[35] = { 0 };
+			char decline[35] = { 0 };
+			sprintf(accept, "q_accept_pending_quest %u", 0);
+			sprintf(decline, "q_deny_pending_quest %u", 0);
+			packet2->setDataByName("accept_command", accept);
+			packet2->setDataByName("decline_command", decline);
+			EQ2Packet* app = packet2->serialize();
+			if (sep->IsSet(2)) {
+				int16 offset = atoi(sep->arg[1]);
+				uchar* ptr2 = app->pBuffer;
+				ptr2 += offset;
+				if (sep->IsNumber(2)) {
+					int32 value1 = atol(sep->arg[2]);
+					if (value1 > 0xFFFF)
+						memcpy(ptr2, (uchar*)&value1, 4);
+					else if (value1 > 0xFF)
+						memcpy(ptr2, (uchar*)&value1, 2);
+					else
+						memcpy(ptr2, (uchar*)&value1, 1);
+				}
+				else {
+					int16 len = strlen(sep->arg[2]);
+					memcpy(ptr2, (uchar*)&len, 2);
+					ptr2 += 2;
+					memcpy(ptr2, sep->arg[2], len);
+				}
+			}
+			DumpPacket(app);
+			client->QueuePacket(app);
+			safe_delete(packet2);
+		}
+	}
+	else if (atoi(sep->arg[0]) == 22) { //same as 21, but 8bit string
+		PacketStruct* packet2 = configReader.getStruct("WS_OfferQuest", client->GetVersion());
+		if (packet2) {
+			packet2->setDataByName("unknown0", 255);
+			packet2->setDataByName("reward", "New Quest");
+			packet2->setDataByName("title", "Title");
+			packet2->setDataByName("description", "description");
+			packet2->setDataByName("quest_difficulty", 3);
+			packet2->setDataByName("unknown1", 5);
+			packet2->setDataByName("level", 3);
+			packet2->setDataByName("coin", 150);
+			packet2->setDataByName("status_points", 5);
+			packet2->setDataByName("exp_bonus", 10);
+			packet2->setArrayLengthByName("num_rewards", 1);
+			Item* item = new Item(master_item_list.GetItem(36212));
+			packet2->setArrayDataByName("reward_id", item->details.item_id);
+			item->stack_count = 20;
+			packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, -1);
+			safe_delete(item);
+			char accept[35] = { 0 };
+			char decline[35] = { 0 };
+			sprintf(accept, "q_accept_pending_quest %u", 0);
+			sprintf(decline, "q_deny_pending_quest %u", 0);
+			packet2->setDataByName("accept_command", accept);
+			packet2->setDataByName("decline_command", decline);
+			EQ2Packet* app = packet2->serialize();
+			if (sep->IsSet(2)) {
+				int16 offset = atoi(sep->arg[1]);
+				uchar* ptr2 = app->pBuffer;
+				ptr2 += offset;
+				if (sep->IsNumber(2)) {
+					int32 value1 = atol(sep->arg[2]);
+					if (value1 > 0xFFFF)
+						memcpy(ptr2, (uchar*)&value1, 4);
+					else if (value1 > 0xFF)
+						memcpy(ptr2, (uchar*)&value1, 2);
+					else
+						memcpy(ptr2, (uchar*)&value1, 1);
+				}
+				else {
+					int8 len = strlen(sep->arg[2]);
+					memcpy(ptr2, (uchar*)&len, 1);
+					ptr2 += 1;
+					memcpy(ptr2, sep->arg[2], len);
+				}
+			}
+			DumpPacket(app);
+			client->QueuePacket(app);
+			safe_delete(packet2);
+		}
+	}
+	else {
+			PacketStruct* packet2 = configReader.getStruct("WS_ExamineSpellInfo", client->GetVersion());
+			if (packet2) {
+				packet2->setSubstructDataByName("info_header", "show_name", 1);
+				packet2->setSubstructDataByName("info_header", "unknown", 7);
+				packet2->setSubstructDataByName("info_header", "unknown2", 1);
+				packet2->setSubstructDataByName("info_header", "unknown3", 1);
+				packet2->setSubstructDataByName("info_header", "unknown4", 1);
+				packet2->setSubstructDataByName("info_header", "unknown5", 1);
+				packet2->setSubstructDataByName("info_header", "unknown6", "Testing");
+				packet2->setSubstructDataByName("info_header", "unknown7", "Testing");
+				packet2->setSubstructDataByName("info_header", "unknown8", 66);
+				packet2->setSubstructDataByName("info_header", "title", "Blah Title Blah");
+				packet2->setSubstructDataByName("info_header", "title_text", "Blah Blah");
+				packet2->setSubstructDataByName("info_header", "title_text2", "Blah Blah2");
+				packet2->setSubstructDataByName("info_header", "show_popup", 1);
+				packet2->setSubstructDataByName("info_header", "packettype", 3);
+				packet2->setSubstructDataByName("spell_info", "skill_name", "Testing");
+				packet2->setSubstructDataByName("spell_info", "level", 19);
+				packet2->setSubstructDataByName("spell_info", "tier", 1);
+				packet2->setSubstructDataByName("spell_info", "health_cost", 5);
+				packet2->setSubstructDataByName("spell_info", "min_class_skill_req", 3); 
+				packet2->setSubstructDataByName("spell_info", "mana_cost", 6);
+				packet2->setSubstructDataByName("spell_info", "req_concentration", 7);
+				packet2->setSubstructDataByName("spell_info", "cast_time", 200);
+				packet2->setSubstructDataByName("spell_info", "recovery", 220);
+				packet2->setSubstructDataByName("spell_info", "recast", 280);
+				packet2->setSubstructDataByName("spell_info", "beneficial", 1);
+				packet2->setSubstructDataByName("spell_info", "maintained", 1);
+				packet2->setSubstructDataByName("spell_info", "spell_book_type", 1);
+				packet2->setSubstructDataByName("spell_info", "quality", 3);
+
+				packet2->setSubstructDataByName("spell_info", "test_1a", 1);
+				packet2->setSubstructDataByName("spell_info", "test_1b", 1);
+				packet2->setSubstructDataByName("spell_info", "test_1c", 1);
+				packet2->setSubstructDataByName("spell_info", "test_1d", 1);
+				packet2->setSubstructDataByName("spell_info", "test_2a", 2);
+				packet2->setSubstructDataByName("spell_info", "test_2b", 2);
+				packet2->setSubstructDataByName("spell_info", "test_2c", 2);
+				packet2->setSubstructDataByName("spell_info", "test_2d", 2);
+				packet2->setSubstructDataByName("spell_info", "test_3", 3);
+				packet2->setSubstructDataByName("spell_info", "test_4", 4);
+				packet2->setSubstructDataByName("spell_info", "test_5", 5);
+				packet2->setSubstructDataByName("spell_info", "test_6", 6);
+				packet2->setSubstructDataByName("spell_info", "min_class_skill_req", 1);
+				packet2->setSubstructDataByName("spell_info", "min_class_skill_rec", 30123);
+				packet2->setSubstructDataByName("spell_info", "num_reagents", 1);
+				packet2->setSubstructArrayLengthByName("spell_info", "num_reagents", 1);
+				packet2->setArrayDataByName("reagent", "Alcohol");
+				packet2->setArrayDataByName("consumed", "123");
+				packet2->setSubstructDataByName("spell_info", "class_skill", 52);
+				packet2->setSubstructDataByName("spell_info", "id", 8308);
+				packet2->setSubstructDataByName("spell_info", "icon", 303);
+				packet2->setSubstructDataByName("spell_info", "icon2", 0xFFFF);
+				packet2->setSubstructDataByName("spell_info", "icontype", 317);
+				packet2->setSubstructDataByName("spell_info", "type", 2);
+				packet2->setSubstructDataByName("spell_info", "spell_text_color", 255);
+				packet2->setSubstructDataByName("spell_info", "duration1", 600);
+				packet2->setSubstructDataByName("spell_info", "duration2", 600);
+				packet2->setSubstructDataByName("spell_info", "name", "Sprint");
+				packet2->setSubstructDataByName("spell_info", "description", "Test description");
+				EQ2Packet* outapp = packet2->serialize();
+				DumpPacket(outapp);
+				client->QueuePacket(outapp);
+				safe_delete(packet2);
+			}
+		}
+	return;
 	PacketStruct* p = configReader.getStruct("WS_EqTargetItemCmd", client->GetVersion());
 	if (!p) return;
 

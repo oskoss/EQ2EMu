@@ -9297,6 +9297,308 @@ int EQ2Emu_lua_ProcHate(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_AddLootToObject(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* object = lua_interface->GetSpawn(state);
+	Spawn* player = lua_interface->GetSpawn(state, 2);
+	if (object && player && player->IsPlayer()) {
+		int32 coins = lua_interface->GetInt32Value(state, 3);
+		vector<Item*>* items = 0;
+		int i = 0;
+		int32 item_id = 0;
+		while ((item_id = lua_interface->GetInt32Value(state, 4 + i))) {
+			if (items == 0)
+				items = new vector<Item*>;
+			if (master_item_list.GetItem(item_id))
+				items->push_back(master_item_list.GetItem(item_id));
+			i++;
+		}
+		Client* client = 0;
+		client = object->GetZone()->GetClientBySpawn(player);
+		if (client) {
+			((Player*)player)->AddPendingLootItems(object->GetID(), items);
+		}
+		safe_delete(items);
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_DisplayText(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	int8 type = lua_interface->GetInt8Value(state, 2);
+	string text = lua_interface->GetStringValue(state, 3);
+	Client* client = 0;
+	if (player && player->IsPlayer())
+		client = player->GetZone()->GetClientBySpawn(player);
+	if (!client || text.length() == 0) {
+		lua_interface->LogError("%s: LUA DisplayText required parameters not given", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	client->SimpleMessage(type, text.c_str());
+	return 0;
+}
+
+int EQ2Emu_lua_ShowLootWindow(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	Spawn* spawn = lua_interface->GetSpawn(state, 2);
+	Client* client = 0;
+	if (player && player->IsPlayer())
+		client = player->GetZone()->GetClientBySpawn(player);
+	if (!client || !spawn) {
+		lua_interface->LogError("%s: LUA ShowLootWindow required parameters not given", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	vector<Item*>* items = ((Player*)player)->GetPendingLootItems(spawn->GetID());
+	if (!items) {
+		lua_interface->LogError("%s: LUA ShowLootWindow has no items", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	client->Loot(0, items, spawn);
+	/*PacketStruct* packet2 = configReader.getStruct("WS_UpdateLoot", client->GetVersion());
+	if (packet2) {
+		packet2->setArrayLengthByName("loot_count", items->size());
+		for(int i=0;i< items->size();i++){
+			Item* item = (*items)[0];
+			packet2->setArrayDataByName("name", item->name.c_str(), i);
+			packet2->setArrayDataByName("item_id", item->details.item_id, i);
+			packet2->setArrayDataByName("count", item->details.count, i);
+			packet2->setArrayDataByName("icon", item->details.icon, i);
+			if(item->generic_info.skill_req1 > 0 && item->generic_info.skill_req1 < 0xFFFFFFFF)
+				packet2->setArrayDataByName("ability_id", item->generic_info.skill_req1, i);
+			else if (item->generic_info.skill_req2 > 0 && item->generic_info.skill_req2 < 0xFFFFFFFF)
+				packet2->setArrayDataByName("ability_id", item->generic_info.skill_req2, i);
+			else
+				packet2->setArrayDataByName("ability_id", 0xFFFFFFFF, i);
+		}
+		packet2->setDataByName("object_id", spawn->GetID());
+		packet2->setDataByName("unknown3", 1);
+		packet2->setDataByName("unknown4", 1);
+		packet2->setDataByName("unknown5", 60);
+		EQ2Packet* app = packet2->serialize();
+		DumpPacket(app);
+		client->QueuePacket(app);
+		safe_delete(packet2);
+	}*/
+	return 0;
+}
+
+int EQ2Emu_lua_GetRandomSpawnByID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawnref = lua_interface->GetSpawn(state);
+	int32 spawn_id = lua_interface->GetInt32Value(state, 2);
+	if (spawn_id > 0 && spawnref) {
+		vector<Spawn*> spawns = spawnref->GetZone()->GetSpawnsByID(spawn_id);
+		if (spawns.size() == 0) {
+			lua_interface->LogError("%s: LUA EQ2Emu_lua_GetRandomSpawnByID command error: GetSpawnsByID returned no spawns", lua_interface->GetScriptName(state));
+			return 0;
+		}
+		Spawn* spawn = 0;
+		int16 index = MakeRandomInt(0, spawns.size());
+		if (index >= spawns.size() || index < 0)
+			index = 0;
+		spawn = spawns[index];
+		lua_interface->SetSpawnValue(state, spawn);
+		return 1;
+	}
+	else {
+		lua_interface->LogError("%s: LUA GetRandomSpawnByID required parameters not given", lua_interface->GetScriptName(state));
+	}
+
+	return 0;
+}
+
+int EQ2Emu_lua_AddPrimaryEntityCommandAllSpawns(lua_State* state) {
+	Spawn* player = lua_interface->GetSpawn(state);
+	int32 spawn_id = lua_interface->GetInt32Value(state, 2);
+	string name = lua_interface->GetStringValue(state, 3);
+	float distance = lua_interface->GetFloatValue(state, 4);
+	string command = lua_interface->GetStringValue(state, 5);
+	string error_text = lua_interface->GetStringValue(state, 6);
+	int16 cast_time = lua_interface->GetInt16Value(state, 7);
+	int32 spell_visual = lua_interface->GetInt32Value(state, 8);
+	if (spawn_id && player && player->IsPlayer() && name.length() > 0) {
+		if (distance == 0)
+			distance = 10.0f;
+		if (command.length() == 0)
+			command = name;
+		vector<Spawn*> spawns = player->GetZone()->GetSpawnsByID(spawn_id);
+		if (spawns.size() == 0) {
+			lua_interface->LogError("%s: LUA AddPrimaryEntityCommandAllSpawns command error: GetSpawnsByID returned no spawns", lua_interface->GetScriptName(state));
+			return 0;
+		}
+		Spawn* spawn = 0;
+		for (vector<Spawn*>::iterator itr = spawns.begin(); itr != spawns.end(); itr++) {
+			spawn = *itr;
+			if (spawn) {
+				spawn->AddPrimaryEntityCommand(name.c_str(), distance, command.c_str(), error_text.c_str(), cast_time, spell_visual);
+				player->GetZone()->SendUpdateDefaultCommand(spawn, command.c_str(), distance);
+			}
+		}
+
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_InstructionWindow(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Client* client = 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	float duration = lua_interface->GetFloatValue(state, 2);
+	string text = lua_interface->GetStringValue(state, 3);
+	string voice = lua_interface->GetStringValue(state, 4);
+	int32 voice_key1 = lua_interface->GetInt32Value(state, 5);
+	int32 voice_key2 = lua_interface->GetInt32Value(state, 6);
+	string signal = lua_interface->GetStringValue(state, 7);
+	string goal1 = lua_interface->GetStringValue(state, 8);
+	string task1 = lua_interface->GetStringValue(state, 9);
+	string goal2 = lua_interface->GetStringValue(state, 10);
+	string task2 = lua_interface->GetStringValue(state, 11);
+	string goal3 = lua_interface->GetStringValue(state, 12);
+	string task3 = lua_interface->GetStringValue(state, 13);
+	string goal4 = lua_interface->GetStringValue(state, 14);
+	string task4 = lua_interface->GetStringValue(state, 15);
+
+	if (!player) {
+		lua_interface->LogError("LUA InstructionWindow command error: spawn is not valid");
+		return 0;
+	}
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("LUA InstructionWindow command error: spawn is not a player");
+		return 0;
+	}
+	if (player->GetZone())
+		client = player->GetZone()->GetClientBySpawn(player);
+
+	if (!client) {
+		lua_interface->LogError("LUA InstructionWindow command error: could not find client");
+		return 0;
+	}
+	if (text.length() == 0 || task1.length() == 0 || signal.length() == 0) {
+		lua_interface->LogError("LUA InstructionWindow required parameters not given");
+		return 0;
+	}
+	if (duration >= 0 && duration < 2)
+		duration = 2;
+	PacketStruct* packet = configReader.getStruct("WS_InstructionWindow", client->GetVersion());
+	if (packet) {
+		packet->setDataByName("open_seconds_max", duration);
+		packet->setDataByName("text", text.c_str());
+		packet->setDataByName("voice", voice.c_str());
+		int8 num_goals = 1;
+		if (task2.length() > 0)
+			num_goals++;
+		if (task3.length() > 0)
+			num_goals++;
+		if (task4.length() > 0)
+			num_goals++;
+		packet->setArrayLengthByName("num_goals", num_goals);
+		for (int8 i = 0; i < num_goals; i++) {
+			packet->setSubArrayLengthByName("num_tasks", 1, i);
+		}
+		if (goal1.length() > 0)
+			packet->setArrayDataByName("goal_text", goal1.c_str());
+		if (goal2.length() > 0)
+			packet->setArrayDataByName("goal_text", goal2.c_str(), 1);
+		if (goal3.length() > 0)
+			packet->setArrayDataByName("goal_text", goal3.c_str(), 2);
+		if (goal4.length() > 0)
+			packet->setArrayDataByName("goal_text", goal4.c_str(), 3);
+		packet->setSubArrayDataByName("task_text", task1.c_str());
+		if (task2.length() > 0)
+			packet->setSubArrayDataByName("task_text", task2.c_str(), 1);
+		if (task3.length() > 0)
+			packet->setSubArrayDataByName("task_text", task3.c_str(), 2);
+		if (task4.length() > 0)
+			packet->setSubArrayDataByName("task_text", task4.c_str(), 3);
+		packet->setDataByName("complete_sound", "click");
+		packet->setDataByName("signal", signal.c_str());
+		packet->setDataByName("voice_key1", voice_key1);
+		packet->setDataByName("voice_key2", voice_key2);
+		client->QueuePacket(packet->serialize());
+		safe_delete(packet);
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_ShowWindow(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Client* client = 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	string window = lua_interface->GetStringValue(state, 2);
+	int8 show = lua_interface->GetInt8Value(state, 3);
+	if (!player) {
+		lua_interface->LogError("LUA ShowWindow command error: spawn is not valid");
+		return 0;
+	}
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("LUA ShowWindow command error: spawn is not a player");
+		return 0;
+	}
+	if (player->GetZone())
+		client = player->GetZone()->GetClientBySpawn(player);
+
+	if (!client) {
+		lua_interface->LogError("LUA ShowWindow command error: could not find client");
+		return 0;
+	}
+	if (window.length() == 0) {
+		lua_interface->LogError("LUA ShowWindow required parameters not given");
+		return 0;
+	}
+	PacketStruct* packet = configReader.getStruct("WS_ShowWindow", client->GetVersion());
+	if (packet) {
+		packet->setDataByName("window", window.c_str());
+		packet->setDataByName("show", show);
+		client->QueuePacket(packet->serialize());
+		safe_delete(packet);
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_FlashWindow(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Client* client = 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	string window = lua_interface->GetStringValue(state, 2);
+	float flash_seconds = lua_interface->GetFloatValue(state, 3);
+	if (!player) {
+		lua_interface->LogError("LUA FlashWindow command error: spawn is not valid");
+		return 0;
+	}
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("LUA FlashWindow command error: spawn is not a player");
+		return 0;
+	}
+	if (player->GetZone())
+		client = player->GetZone()->GetClientBySpawn(player);
+
+	if (!client) {
+		lua_interface->LogError("LUA FlashWindow command error: could not find client");
+		return 0;
+	}
+	if (window.length() == 0) {
+		lua_interface->LogError("LUA FlashWindow required parameters not given");
+		return 0;
+	}
+	PacketStruct* packet = configReader.getStruct("WS_FlashWindow", client->GetVersion());
+	if (packet) {
+		packet->setDataByName("window", window.c_str());
+		packet->setDataByName("flash_seconds", flash_seconds);
+		client->QueuePacket(packet->serialize());
+		safe_delete(packet);
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_CheckLOS(lua_State* state) {
 	if (!lua_interface)
 		return 0;

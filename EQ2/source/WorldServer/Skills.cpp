@@ -319,18 +319,21 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 	PacketStruct* packet = configReader.getStruct("WS_UpdateSkillBook", version);
 	if(packet){
 		if(packet_count < skills.size()){
-			if(!orig_packet){
-				int16 size = 21*skills.size()+8;
+			int16 size = 21 * skills.size() + 8;
+			if (version <= 283) {
+				size = 12 * skills.size()+6;
+			}
+			if(!orig_packet){				
 				xor_packet = new uchar[size];
 				orig_packet = new uchar[size];
 				memset(xor_packet, 0, size);
 				memset(orig_packet, 0, size);
+				orig_packet_size = size;
 			}
 			else{
-				int16 size = 21*skills.size()+8;
 				uchar* tmp = new uchar[size];
 				memset(tmp, 0, size);
-				memcpy(tmp, orig_packet, 21*packet_count+8);
+				memcpy(tmp, orig_packet, orig_packet_size);
 				safe_delete_array(orig_packet);
 				orig_packet = tmp;
 				safe_delete_array(xor_packet);
@@ -368,8 +371,12 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 				i++;
 			}
 		}
-		EQ2Packet* ret = packet->serializeCountPacket(version, 1, orig_packet, xor_packet);
+		int8 offset = 1;
+		if (version <= 283)
+			offset = 0;
+		EQ2Packet* ret = packet->serializeCountPacket(version, offset, orig_packet, xor_packet);
 		//packet->PrintPacket();
+		//DumpPacket(orig_packet, orig_packet_size);
 		//DumpPacket(ret);
 		safe_delete(packet);
 		return ret;

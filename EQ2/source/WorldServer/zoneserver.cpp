@@ -1808,8 +1808,8 @@ Spawn* ZoneServer::FindSpawn(Player* searcher, const char* name){
 	return closest;
 }
 
-void ZoneServer::AddChangedSpawn(Spawn* spawn){
-	if(!spawn || (spawn->IsPlayer() && !spawn->info_changed && !spawn->vis_changed))
+void ZoneServer::AddChangedSpawn(Spawn* spawn) {
+	if (!spawn || (spawn->IsPlayer() && !spawn->info_changed && !spawn->vis_changed) || (spawn->IsPlayer() && ((Player*)spawn)->IsFullyLoggedIn() == false))
 		return;
 	if (changed_spawns.count(spawn->GetID()) == 0)
 		changed_spawns.Add(spawn->GetID());
@@ -2608,10 +2608,11 @@ void ZoneServer::AddSpawnGroupLocation(int32 group_id, int32 location_id, int32 
 	MSpawnGroupAssociation.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-void ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char* message){
+bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char* message){
+
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Enter %s", __FUNCTION__);
 	if(!npc)
-		return;
+		return false;
 
 	const char* script = npc->GetSpawnScript();
 	if ( script == nullptr || strlen(script) < 1 )
@@ -2651,7 +2652,10 @@ void ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 			}
 		}
 	}
+
+	bool result = false;
 	if(lua_interface && script){
+		result = true; // default to true, if we don't match a switch case, return false in default case
 		switch(type){
 			case SPAWN_SCRIPT_SPAWN:{
 				lua_interface->RunSpawnScript(script, "spawn", npc);
@@ -2727,9 +2731,16 @@ void ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 				lua_interface->RunSpawnScript(script, "prespawn", npc);
 				break;
 			}
+			default:
+			{
+				result = false;
+				break;
+			}
 		}
 	}
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
+
+	return result;
 }
 
 void ZoneServer::DeleteTransporters() {
@@ -3138,16 +3149,60 @@ void ZoneServer::SimpleMessage(int8 type, const char* message, Spawn* from, floa
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, int16 channel, const char* message, float distance, const char* channel_name, bool show_bubble, int32 language){
-	if((!distance || from->GetDistance(client->GetPlayer()) <= distance) && (!from || !client->GetPlayer()->IsIgnored(from->GetName()))){
+void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, int16 channel, const char* message, float distance, const char* channel_name, bool show_bubble, int32 language) {
+	if ((!distance || from->GetDistance(client->GetPlayer()) <= distance) && (!from || !client->GetPlayer()->IsIgnored(from->GetName()))) {
+		if (client->GetVersion() <= 283) {
+			switch (channel) {
+			case CHANNEL_SAY: {
+				channel = CLASSIC_CLIENT_CHANNEL_SAY;
+				break;
+			}
+			case CHANNEL_SHOUT: {
+				channel = CLASSIC_CLIENT_CHANNEL_SHOUT;
+				break;
+			}
+			case CHANNEL_EMOTE: {
+				channel = CLASSIC_CLIENT_CHANNEL_EMOTE;
+				break;
+			}
+			case CHANNEL_GROUP: {
+				channel = CLASSIC_CLIENT_CHANNEL_GROUP;
+				break;
+			}
+			case CHANNEL_RAID: {
+				channel = CLASSIC_CLIENT_CHANNEL_RAID;
+				break;
+			}
+			case CHANNEL_GUILD: {
+				channel = CLASSIC_CLIENT_CHANNEL_GUILD;
+				break;
+			}
+			case CHANNEL_OFFICER: {
+				channel = CLASSIC_CLIENT_CHANNEL_OFFICER;
+				break;
+			}
+			case CHANNEL_SAYTARGET: {
+				channel = CLASSIC_CLIENT_CHANNEL_SAYTARGET;
+				break;
+			}
+			case CHANNEL_TELL: {
+				channel = CLASSIC_CLIENT_CHANNEL_TELL;
+				break;
+			}
+			case CHANNEL_OOC: {
+				channel = CLASSIC_CLIENT_CHANNEL_OOC;
+				break;
+			}
+			}
+		}
 		PacketStruct* packet = configReader.getStruct("WS_HearChat", client->GetVersion());
-		if(packet){
-			if(from)
+		if (packet) {
+			if (from)
 				packet->setMediumStringByName("from", from->GetName());
-			if(client->GetPlayer() != from)
+			if (client->GetPlayer() != from)
 				packet->setMediumStringByName("to", client->GetPlayer()->GetName());
 			packet->setDataByName("channel", channel);
-			if(from && ((from == client->GetPlayer()) || (client->GetPlayer()->WasSentSpawn(from->GetID()) && !client->GetPlayer()->WasSpawnRemoved(from))))
+			if (from && ((from == client->GetPlayer()) || (client->GetPlayer()->WasSentSpawn(from->GetID()) && !client->GetPlayer()->WasSpawnRemoved(from))))
 				packet->setDataByName("from_spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(from));
 			else
 				packet->setDataByName("from_spawn_id", 0xFFFFFFFF);
@@ -3161,9 +3216,11 @@ void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, 
 				packet->setDataByName("understood", 1);
 
 			show_bubble == true ? packet->setDataByName("show_bubble", 1) : packet->setDataByName("show_bubble", 0);
-			if(channel_name)
+			if (channel_name)
 				packet->setMediumStringByName("channel_name", channel_name);
-			client->QueuePacket(packet->serialize());
+			EQ2Packet* outapp = packet->serialize();
+			DumpPacket(outapp);
+			client->QueuePacket(outapp);
 			safe_delete(packet);
 		}
 	}
@@ -4454,16 +4511,16 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 	safe_delete(encounter);
 }
 
-void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, int8 type2, int8 damage_type, int16 damage, const char* spell_name){
+void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, int8 type2, int8 damage_type, int16 damage, const char* spell_name) {
 	//Scat: was set but never being used anywhere. i see references to 0xFFFFFFFF below so could be old code not used anymore
 	//int32 attacker_id = 0xFFFFFFFF;
 	//if(attacker)
 	//	attacker_id = attacker->GetID();
 	PacketStruct* packet = 0;
 	Client* client = 0;
-	if(attacker && victim && victim->IsPlayer() && victim->GetTarget() == 0){
+	if (attacker && victim && victim->IsPlayer() && victim->GetTarget() == 0) {
 		client = GetClientBySpawn(victim);
-		if(client)
+		if (client)
 			client->TargetSpawn(attacker);
 	}
 
@@ -4471,61 +4528,104 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(!client || (client->GetPlayer() != attacker && client->GetPlayer() != victim && ((attacker && client->GetPlayer()->WasSentSpawn(attacker->GetID()) == false) || (victim && client->GetPlayer()->WasSentSpawn(victim->GetID()) == false))))
+		if (!client || (client->GetPlayer() != attacker && client->GetPlayer() != victim && ((attacker && client->GetPlayer()->WasSentSpawn(attacker->GetID()) == false) || (victim && client->GetPlayer()->WasSentSpawn(victim->GetID()) == false))))
 			continue;
-		if((attacker && client->GetPlayer()->WasSpawnRemoved(attacker)) || (victim && client->GetPlayer()->WasSpawnRemoved(victim)))
+		if ((attacker && client->GetPlayer()->WasSpawnRemoved(attacker)) || (victim && client->GetPlayer()->WasSpawnRemoved(victim)))
 			continue;
-		if(attacker && attacker->GetDistance(client->GetPlayer()) > 50)
+		if (attacker && attacker->GetDistance(client->GetPlayer()) > 50)
 			continue;
-		if(victim && victim->GetDistance(client->GetPlayer()) > 50)
+		if (victim && victim->GetDistance(client->GetPlayer()) > 50)
 			continue;
-		switch(type1){
-			case DAMAGE_PACKET_TYPE_SIPHON_SPELL:
-			case DAMAGE_PACKET_TYPE_SIPHON_SPELL2:
-				packet = configReader.getStruct("WS_HearSiphonSpellDamage", client->GetVersion());
-				break;
-			case DAMAGE_PACKET_TYPE_MULTIPLE_DAMAGE:
+		switch (type1) {
+		case DAMAGE_PACKET_TYPE_SIPHON_SPELL:
+		case DAMAGE_PACKET_TYPE_SIPHON_SPELL2:
+			packet = configReader.getStruct("WS_HearSiphonSpellDamage", client->GetVersion());
+			break;
+		case DAMAGE_PACKET_TYPE_MULTIPLE_DAMAGE:
+			if (client->GetVersion() > 283)
 				packet = configReader.getStruct("WS_HearMultipleDamage", client->GetVersion());
-				break;
-			case DAMAGE_PACKET_TYPE_SIMPLE_CRIT_DMG:
-			case DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE:
+			else
 				packet = configReader.getStruct("WS_HearSimpleDamage", client->GetVersion());
-				break;
-			case DAMAGE_PACKET_TYPE_SPELL_DAMAGE2:
-			case DAMAGE_PACKET_TYPE_SPELL_DAMAGE3:
-			case DAMAGE_PACKET_TYPE_SPELL_CRIT_DMG:
-			case DAMAGE_PACKET_TYPE_SPELL_DAMAGE:
+			break;
+		case DAMAGE_PACKET_TYPE_SIMPLE_CRIT_DMG:
+		case DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE:
+			packet = configReader.getStruct("WS_HearSimpleDamage", client->GetVersion());
+			break;
+		case DAMAGE_PACKET_TYPE_SPELL_DAMAGE2:
+		case DAMAGE_PACKET_TYPE_SPELL_DAMAGE3:
+		case DAMAGE_PACKET_TYPE_SPELL_CRIT_DMG:
+		case DAMAGE_PACKET_TYPE_SPELL_DAMAGE:
+			if (client->GetVersion() > 283)
 				packet = configReader.getStruct("WS_HearSpellDamage", client->GetVersion());
-				if (packet)
-					packet->setSubstructDataByName("header", "unknown", 5);
-				break;
-			case DAMAGE_PACKET_TYPE_RANGE_DAMAGE:
-				packet = configReader.getStruct("WS_HearRangeDamage", client->GetVersion());
-				break;
-			case DAMAGE_PACKET_TYPE_RANGE_SPELL_DMG:
-			case DAMAGE_PACKET_TYPE_RANGE_SPELL_DMG2:
-				packet = configReader.getStruct("WS_HearRangeDamage", client->GetVersion());
-				break;
-			default:
-				LogWrite(ZONE__ERROR, 0, "Zone", "Unknown Damage Packet type: %i in ZoneServer::SendDamagePacket.", type1);
-				MClientList.releasereadlock(__FUNCTION__, __LINE__);
-				return;
+			else
+				packet = configReader.getStruct("WS_HearSimpleDamage", client->GetVersion());
+			if (packet)
+				packet->setSubstructDataByName("header", "unknown", 5);
+			break;
+		case DAMAGE_PACKET_TYPE_RANGE_DAMAGE:
+			packet = configReader.getStruct("WS_HearRangeDamage", client->GetVersion());
+			break;
+		case DAMAGE_PACKET_TYPE_RANGE_SPELL_DMG:
+		case DAMAGE_PACKET_TYPE_RANGE_SPELL_DMG2:
+			packet = configReader.getStruct("WS_HearRangeDamage", client->GetVersion());
+			break;
+		default:
+			LogWrite(ZONE__ERROR, 0, "Zone", "Unknown Damage Packet type: %i in ZoneServer::SendDamagePacket.", type1);
+			MClientList.releasereadlock(__FUNCTION__, __LINE__);
+			return;
 		}
 
-		if(packet){
-			packet->setSubstructDataByName("header", "packet_type", type1);
-			packet->setSubstructDataByName("header", "result_type", type2);
-			if(!attacker)
+		if (packet) {
+			if (client->GetVersion() >= 284) {
+				packet->setSubstructDataByName("header", "packet_type", type1);
+				packet->setSubstructDataByName("header", "result_type", type2);
+			}
+			else {
+				switch (type2) {
+				case DAMAGE_PACKET_RESULT_MISS:
+					packet->setSubstructDataByName("header", "result_type", 1);
+					break;
+				case DAMAGE_PACKET_RESULT_DODGE:
+					packet->setSubstructDataByName("header", "result_type", 2);
+					break;
+				case DAMAGE_PACKET_RESULT_PARRY:
+					packet->setSubstructDataByName("header", "result_type", 3);
+					break;
+				case DAMAGE_PACKET_RESULT_RIPOSTE:
+					packet->setSubstructDataByName("header", "result_type", 4);
+					break;
+				case DAMAGE_PACKET_RESULT_BLOCK:
+					packet->setSubstructDataByName("header", "result_type", 5);
+					break;
+				case DAMAGE_PACKET_RESULT_INVULNERABLE:
+					packet->setSubstructDataByName("header", "result_type", 7);
+					break;
+				case DAMAGE_PACKET_RESULT_RESIST:
+					packet->setSubstructDataByName("header", "result_type", 9);
+					break;
+				case DAMAGE_PACKET_RESULT_REFLECT:
+					packet->setSubstructDataByName("header", "result_type", 10);
+					break;
+				case DAMAGE_PACKET_RESULT_IMMUNE:
+					packet->setSubstructDataByName("header", "result_type", 11);
+					break;
+				}
+				packet->setSubstructDataByName("header", "normal_hit", 1);
+				packet->setSubstructDataByName("header", "defender_proxy", client->GetPlayer()->GetIDWithPlayerSpawn(victim));
+			}
+			if (!attacker)
 				packet->setSubstructDataByName("header", "attacker", 0xFFFFFFFF);
 			else
 				packet->setSubstructDataByName("header", "attacker", client->GetPlayer()->GetIDWithPlayerSpawn(attacker));
-			packet->setSubstructDataByName("header", "defender", client->GetPlayer()->GetIDWithPlayerSpawn(victim));			
+			packet->setSubstructDataByName("header", "defender", client->GetPlayer()->GetIDWithPlayerSpawn(victim));
 			packet->setDataByName("damage_type", damage_type);
 			packet->setDataByName("damage", damage);
-			if(spell_name)
-				packet->setSmallStringByName("spell_name", spell_name);
+			if (spell_name) {
+				packet->setDataByName("spell", 1);
+				packet->setDataByName("spell_name", spell_name);
+			}
 			EQ2Packet* app = packet->serialize();
-		    //DumpPacket(app);
+			//DumpPacket(app);
 			client->QueuePacket(app);
 			safe_delete(packet);
 			packet = 0;
@@ -4847,10 +4947,10 @@ EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 	packet->setSmallStringByName("upload_page", "test_upload.m");
 	packet->setSmallStringByName("upload_key", "dsya987yda9");
 	packet->setSmallStringByName("zone", GetZoneFile());
-	packet->setSmallStringByName("zone2", GetZoneName());
+	//packet->setSmallStringByName("zone2", GetZoneName());
 
-	if ( strlen(GetZoneSkyFile()) > 0 )
-		packet->setSmallStringByName("zone_unknown2", GetZoneSkyFile()); // used for the sky map
+	//if ( strlen(GetZoneSkyFile()) > 0 )
+	//	packet->setSmallStringByName("zone_unknown2", GetZoneSkyFile()); // used for the sky map
 
 	packet->setSmallStringByName("zone_desc", GetZoneDescription());
 	packet->setSmallStringByName("char_name", client->GetPlayer()->GetName());
@@ -5872,9 +5972,10 @@ void ZoneServer::ProcessAggroChecks(Spawn* spawn) {
 		CheckEnemyList((NPC*)spawn);
 }
 
-void ZoneServer::SendUpdateTitles(Client *client, Title *suffix, Title *prefix) {
+void ZoneServer::SendUpdateTitles(Client* client, Title* suffix, Title* prefix) {
 	assert(client);
-	SendUpdateTitles(client->GetPlayer(), suffix, prefix);
+	if (client->GetVersion() > 546)
+		SendUpdateTitles(client->GetPlayer(), suffix, prefix);
 }
 
 void ZoneServer::SendUpdateTitles(Spawn *spawn, Title *suffix, Title *prefix) {

@@ -136,6 +136,13 @@ EQStream::EQStream(sockaddr_in addr){
 	client_version = 0;
 	received_packets = 0;
 	sent_packets = 0;
+
+#ifdef WRITE_PACKETS
+	write_packets = 0;
+	char write_packets_filename[64];
+	snprintf(write_packets_filename, sizeof(write_packets_filename), "PacketLog%i.log", Timer::GetCurrentTime2());
+	write_packets = fopen(write_packets_filename, "w+");
+#endif
 }
 
 EQProtocolPacket* EQStream::ProcessEncryptedData(uchar* data, int32 size, int16 opcode){
@@ -203,7 +210,12 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 				DumpPacket(newpacket);
 #endif
 				EQApplicationPacket* ap = newpacket->MakeApplicationPacket(2);
+				if (ap->version == 0)
+					ap->version = client_version;
 				InboundQueuePush(ap);
+#ifdef WRITE_PACKETS
+				WritePackets(ap->GetOpcodeName(), p->pBuffer + 1 + offset, length, false);
+#endif
 				safe_delete(newpacket);
 			}
 			else
@@ -318,6 +330,11 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 								printf( "OP_AppCombined Here2:\n");
 								DumpPacket(ap);
 #endif
+								if (ap->version == 0)
+									ap->version = client_version;
+#ifdef WRITE_PACKETS
+								WritePackets(ap->GetOpcodeName(), p->pBuffer + processed + offset, subpacket_length, false);
+#endif
 								InboundQueuePush(ap);
 								safe_delete(newpacket);
 							}						
@@ -375,7 +392,12 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						EQProtocolPacket* newpacket = ProcessEncryptedPacket(p);
 						MCombineQueueLock.unlock();
 						if(newpacket){
-							EQApplicationPacket *ap = newpacket->MakeApplicationPacket(2);
+							EQApplicationPacket* ap = newpacket->MakeApplicationPacket(2);
+							if (ap->version == 0)
+								ap->version = client_version;
+#ifdef WRITE_PACKETS
+							WritePackets(ap->GetOpcodeName(), p->pBuffer, p->size, false);
+#endif
 							InboundQueuePush(ap);
 							safe_delete(newpacket);
 						}
@@ -435,7 +457,13 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 									MCombineQueueLock.lock();
 									EQProtocolPacket* p2 = ProcessEncryptedData(oversize_buffer, oversize_offset, p->opcode);
 									MCombineQueueLock.unlock();
-									EQApplicationPacket *ap = p2->MakeApplicationPacket(2);
+									EQApplicationPacket* ap = p2->MakeApplicationPacket(2);
+									ap->copyInfo(p);
+									if (ap->version == 0)
+										ap->version = client_version;
+#ifdef WRITE_PACKETS
+									WritePackets(ap->GetOpcodeName(), oversize_buffer, oversize_offset, false);
+#endif
 									ap->copyInfo(p);
 									InboundQueuePush(ap);
 									safe_delete(p2);
@@ -623,24 +651,15 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 				//EQApplicationPacket *ap = p->MakeApplicationPacket(app_opcode_size);
 				//InboundQueuePush(ap);
 
-				printf("!!!!!!!!!GarbageBEFORE Packet!!!!!!!!!!!!!:\n");
-				DumpPacket(p->pBuffer, p->size);
-				LogWrite(PACKET__INFO, 0, "Packet", "Received unknown packet type");
-				crypto->RC4Decrypt(p->pBuffer, p->size);
-				LogWrite(PACKET__ERROR, 0, "Packet", "Garbage packet?!:");
-				printf("!!!!!!!!!GarbageAFTER Packet!!!!!!!!!!!!!:\n");
-				DumpPacket(p->pBuffer, p->size);
-
-				if (oversize_buffer) {
-					printf("!!!!!!!!!OverSizedBufferExists: %i, %i, %i!!!!!!!!!!!!!:\n", oversize_offset, p->size, oversize_length);
-				}
-
-				if (lastp)
-				{
-					printf("!!!!!!!!!PREVIOUSPACKET!!!!!!!!!!!!!:\n");
-					DumpPacket(lastp->pBuffer, lastp->size);
-				}
+				EQApplicationPacket* ap = p->MakeApplicationPacket(app_opcode_size);
+				if (ap->version == 0)
+					ap->version = client_version;
+#ifdef WRITE_PACKETS
+				WritePackets(ap->GetOpcodeName(), p->pBuffer, p->size, false);
+#endif
 				//InboundQueuePush(ap);
+				LogWrite(PACKET__INFO, 0, "Packet", "Received unknown packet type, not adding to inbound queue");
+				safe_delete(ap);
 				//SendDisconnect();
 				break;
 		}
@@ -763,6 +782,70 @@ void EQStream::UnPreparePacket(EQ2Packet* app){
 	}
 }
 
+#ifdef WRITE_PACKETS
+char EQStream::GetChar(uchar in)
+{
+	if (in < ' ' || in > '~')
+		return '.';
+	return (char)in;
+}
+void EQStream::WriteToFile(char* pFormat, ...) {
+	va_list args;
+	va_start(args, pFormat);
+	vfprintf(write_packets, pFormat, args);
+	va_end(args);
+}
+
+void EQStream::WritePackets(const char* opcodeName, uchar* data, int32 size, bool outgoing) {
+	MWritePackets.lock();
+	struct in_addr ip_addr;
+	ip_addr.s_addr = remote_ip;
+	char timebuffer[80];
+	time_t rawtime;
+	struct tm* timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	strftime(timebuffer, 80, "%m/%d/%Y %H:%M:%S", timeinfo);
+	if (outgoing)
+		WriteToFile("-- %s --\n%s\nSERVER -> %s\n", opcodeName, timebuffer, inet_ntoa(ip_addr));
+	else
+		WriteToFile("-- %s --\n%s\n%s -> SERVER\n", opcodeName, timebuffer, inet_ntoa(ip_addr));
+	int i;
+	int nLines = size / 16;
+	int nExtra = size % 16;
+	uchar* pPtr = data;
+	for (i = 0; i < nLines; i++)
+	{
+		WriteToFile("%4.4X:\t%2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %2.2X %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n", i * 16, pPtr[0], pPtr[1], pPtr[2], pPtr[3], pPtr[4], pPtr[5], pPtr[6], pPtr[7], pPtr[8], pPtr[9], pPtr[10], pPtr[11], pPtr[12], pPtr[13], pPtr[14], pPtr[15], GetChar(pPtr[0]), GetChar(pPtr[1]), GetChar(pPtr[2]), GetChar(pPtr[3]), GetChar(pPtr[4]), GetChar(pPtr[5]), GetChar(pPtr[6]), GetChar(pPtr[7]), GetChar(pPtr[8]), GetChar(pPtr[9]), GetChar(pPtr[10]), GetChar(pPtr[11]), GetChar(pPtr[12]), GetChar(pPtr[13]), GetChar(pPtr[14]), GetChar(pPtr[15]));
+		pPtr += 16;
+	}
+	if (nExtra)
+	{
+		WriteToFile("%4.4X\t", nLines * 16);
+		for (i = 0; i < nExtra; i++)
+		{
+			WriteToFile("%2.2X ", pPtr[i]);
+		}
+		for (i; i < 16; i++)
+			WriteToFile("   ");
+		for (i = 0; i < nExtra; i++)
+		{
+			WriteToFile("%c", GetChar(pPtr[i]));
+		}
+		WriteToFile("\n");
+	}
+	WriteToFile("\n\n");
+	fflush(write_packets);
+	MWritePackets.unlock();
+}
+
+void EQStream::WritePackets(EQ2Packet* app, bool outgoing) {
+	if (app->version == 0)
+		app->version = client_version;
+	WritePackets(app->GetOpcodeName(), app->pBuffer, app->size, outgoing);
+}
+#endif
+
 void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 	app->setVersion(client_version);
 	compressed_offset = 0;
@@ -780,6 +863,10 @@ void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 #ifdef LE_DEBUG
 	printf( "After Prepare in %s, line %i:\n", __FUNCTION__, __LINE__);
 	DumpPacket(app);
+#endif
+#ifdef WRITE_PACKETS
+	if (!app->eq2_compressed && !app->packet_encrypted)
+		WritePackets(app, true);
 #endif
 
 	if(!app->eq2_compressed && app->size>128){

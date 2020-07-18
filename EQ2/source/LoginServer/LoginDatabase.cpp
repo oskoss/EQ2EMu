@@ -130,6 +130,20 @@ void LoginDatabase::SetServerZoneDescriptions(int32 server_id, map<int32, LoginZ
 	}
 }
 
+//this is really just for the version that doesn't send the server id in its play request
+int32 LoginDatabase::GetServer(int32 accountID, int32 charID, string name) {
+	int32 id = 0;
+	Query query;
+	MYSQL_ROW row;
+	query.escaped_name = getEscapeString(name.c_str());
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT server_id from login_characters where account_id=%i and char_id=%i and name='%s'", accountID, charID, query.escaped_name);
+	if (result && mysql_num_rows(result) == 1) {
+		row = mysql_fetch_row(result);
+		id = atoi(row[0]);
+	}
+	return id;
+}
+
 void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 	if(acct != NULL)
 		acct->flushCharacters ( );
@@ -144,7 +158,11 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 		MYSQL_ROW row3;
 		while ((row = mysql_fetch_row(result))) {
 			CharSelectProfile* player = new CharSelectProfile(version);
-			id = atoul(row[0]);
+			id = atoul(row[0]);		
+			//for (int i = 0; i < 10; i++)
+			//	player->packet->setDataByName("hair_type", 0, i);
+			//player->packet->setDataByName("test23", 413);
+			//player->packet->setDataByName("test24", 414);
 			player->packet->setDataByName("charid", id);
 			player->packet->setDataByName("server_id", atoul(row[1]));
 			player->packet->setMediumStringByName("name", row[2]);
@@ -156,10 +174,22 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 			player->packet->setDataByName("body_age", atof(row[8]));
 			SetZoneInformation(atoi(row[1]), atoi(row[9]), version, player->packet);
 			player->packet->setDataByName("level", atoi(row[10]));
-			player->packet->setDataByName("soga_wing_type", atoi(row[11]));
-			player->packet->setDataByName("soga_chest_type", atoi(row[12]));
-			player->packet->setDataByName("soga_legs_type", atoi(row[13]));
-			player->packet->setDataByName("soga_hair_type", atoi(row[14]));
+			if(atoi(row[11]) > 0)
+				player->packet->setDataByName("soga_wing_type", atoi(row[11]));
+			else
+				player->packet->setDataByName("soga_wing_type", atoi(row[17]));
+			if(atoi(row[12]) > 0)
+				player->packet->setDataByName("soga_chest_type", atoi(row[12]));
+			else
+				player->packet->setDataByName("soga_chest_type", atoi(row[16]));
+			if(atoi(row[13]) > 0)
+				player->packet->setDataByName("soga_legs_type", atoi(row[13]));
+			else
+				player->packet->setDataByName("soga_legs_type", atoi(row[15]));
+			if(atoi(row[14]) > 0)
+				player->packet->setDataByName("soga_hair_type", atoi(row[14]));
+			else
+				player->packet->setDataByName("soga_hair_type", atoi(row[18]));
 			player->packet->setDataByName("legs_type", atoi(row[15]));
 			player->packet->setDataByName("chest_type", atoi(row[16]));
 			player->packet->setDataByName("wing_type", atoi(row[17]));
@@ -167,15 +197,12 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 			player->packet->setDataByName("created_date", atol(row[19]));
 			if (row[20])
 				player->packet->setDataByName("last_played", atol(row[20]));
-			if(version >= 887)
-				player->packet->setDataByName("version", 6);
-			else if ( version == 546 )
+			if(version == 546)
 				player->packet->setDataByName("version", 11);
+			else if(version >= 887)
+				player->packet->setDataByName("version", 6);
 			else
 				player->packet->setDataByName("version", 5);
-
-			player->packet->setDataByName("client_version", version);
-
 			player->packet->setDataByName("account_id", acct->getLoginAccountID());
 			player->packet->setDataByName("account_id2", acct->getLoginAccountID());
 			
@@ -184,10 +211,14 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 			if(row[22])
 				player->packet->setMediumStringByName("server_name", row[22]);
 			player->packet->setDataByName("hair_face_type", atoi(row[23]));
-			player->packet->setDataByName("soga_hair_face_type", atoi(row[24]));
-
-			player->packet->setDataByName("soga_race_type", atoi(row[25]));
-
+			if(atoi(row[24]) > 0)				
+				player->packet->setDataByName("soga_hair_face_type", atoi(row[24]));
+			else
+				player->packet->setDataByName("soga_hair_face_type", atoi(row[23]));
+			if(atoi(row[25]) > 0)
+				player->packet->setDataByName("soga_race_type", atoi(row[25]));
+			else
+				player->packet->setDataByName("soga_race_type", atoi(row[26]));
 			player->packet->setDataByName("race_type", atoi(row[26]));
 
 			player->packet->setDataByName("unknown3", 57);
@@ -206,7 +237,16 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 				for(int i=0;(row3 = mysql_fetch_row(result3)) && i<24; i++){
 					player->packet->setEquipmentByName("equip", atoi(row3[1]), atoi(row3[2]), atoi(row3[3]), atoi(row3[4]), atoi(row3[5]), atoi(row3[6]), atoi(row3[7]), atoi(row3[0]));
 				}
-			}
+			}			
+			player->packet->setDataByName("mount", 1377);
+			player->packet->setDataByName("mount_color1", 57);
+			/*
+			enum NetAppearance::NetAppearanceFlags
+			{
+				NAF_INVISIBLE=1,
+				NAF_SHOW_HOOD=2
+			};
+			*/
 			acct->addCharacter(player);
 		}
 	}
@@ -264,9 +304,18 @@ void LoginDatabase::LoadAppearanceData(int32 char_id, PacketStruct* char_select_
 		if(atoi(row[1]) == 0)
 			char_select_packet->setColorByName(row[0], atoi(row[2]), atoi(row[3]), atoi(row[4]));
 		else{
-			char_select_packet->setDataByName(row[0], atoi(row[2]),0);
-			char_select_packet->setDataByName(row[0], atoi(row[3]),1);
-			char_select_packet->setDataByName(row[0], atoi(row[4]),2);
+			if (char_select_packet->GetVersion() <= 283)
+			{
+				char_select_packet->setDataByName(row[0], atoi(row[2]) * 2.5, 0);
+				char_select_packet->setDataByName(row[0], atoi(row[3]) * 2.5, 1);
+				char_select_packet->setDataByName(row[0], atoi(row[4]) * 2.5, 2);
+			}
+			else
+			{
+				char_select_packet->setDataByName(row[0], atoi(row[2]), 0);
+				char_select_packet->setDataByName(row[0], atoi(row[3]), 1);
+				char_select_packet->setDataByName(row[0], atoi(row[4]), 2);
+			}
 		}
 	}
 }
@@ -288,7 +337,7 @@ void LoginDatabase::DeactivateCharID(int32 server_id, int32 char_id, int32 excep
 	query.RunQuery2(Q_UPDATE, "update login_characters set deleted=1 where char_id=%u and server_id=%u and id!=%u",char_id,server_id,exception_id);
 }
 
-int32 LoginDatabase::SaveCharacter(PacketStruct* create, LoginAccount* acct, int32 world_charid){
+int32 LoginDatabase::SaveCharacter(PacketStruct* create, LoginAccount* acct, int32 world_charid, int32 client_version){
 	int32 ret_id = 0;
 	Query query;
 	string create_char = 
@@ -326,55 +375,74 @@ int32 LoginDatabase::SaveCharacter(PacketStruct* create, LoginAccount* acct, int
 	//mark any remaining characters with same id as deleted (creates problems if world deleted their db and started assigning new char ids)
 	DeactivateCharID(create->getType_int32_ByName("server_id"), world_charid, last_insert_id);
 	int32 char_id = last_insert_id;
-	SaveCharacterColors(char_id,"skin_color", create->getType_EQ2_Color_ByName("skin_color"));
-	SaveCharacterColors(char_id,"eye_color", create->getType_EQ2_Color_ByName("eye_color"));
-	SaveCharacterColors(char_id,"hair_color1", create->getType_EQ2_Color_ByName("hair_color1"));
-	SaveCharacterColors(char_id,"hair_color2", create->getType_EQ2_Color_ByName("hair_color2"));
-	SaveCharacterColors(char_id,"hair_highlight", create->getType_EQ2_Color_ByName("hair_highlight"));
-	SaveCharacterColors(char_id,"hair_type_color", create->getType_EQ2_Color_ByName("hair_type_color"));
-	SaveCharacterColors(char_id,"hair_type_highlight_color", create->getType_EQ2_Color_ByName("hair_type_highlight_color"));
-	SaveCharacterColors(char_id,"hair_face_color", create->getType_EQ2_Color_ByName("hair_face_color"));
-	SaveCharacterColors(char_id,"hair_face_highlight_color", create->getType_EQ2_Color_ByName("hair_face_highlight_color"));
-	SaveCharacterColors(char_id,"wing_color1", create->getType_EQ2_Color_ByName("wing_color1"));
-	SaveCharacterColors(char_id,"wing_color2", create->getType_EQ2_Color_ByName("wing_color2"));
-	SaveCharacterColors(char_id,"shirt_color", create->getType_EQ2_Color_ByName("shirt_color"));
-	SaveCharacterColors(char_id,"unknown_chest_color", create->getType_EQ2_Color_ByName("unknown_chest_color"));
-	SaveCharacterColors(char_id,"pants_color", create->getType_EQ2_Color_ByName("pants_color"));
-	SaveCharacterColors(char_id,"unknown_legs_color", create->getType_EQ2_Color_ByName("unknown_legs_color"));
-	SaveCharacterColors(char_id,"unknown9", create->getType_EQ2_Color_ByName("unknown9"));
-	SaveCharacterFloats(char_id,"eye_type", create->getType_float_ByName("eyes2",0), create->getType_float_ByName("eyes2",1), create->getType_float_ByName("eyes2",2));
-	SaveCharacterFloats(char_id,"ear_type", create->getType_float_ByName("ears",0), create->getType_float_ByName("ears",1), create->getType_float_ByName("ears",2));
-	SaveCharacterFloats(char_id,"eye_brow_type", create->getType_float_ByName("eye_brows",0), create->getType_float_ByName("eye_brows",1), create->getType_float_ByName("eye_brows",2));
-	SaveCharacterFloats(char_id,"cheek_type", create->getType_float_ByName("cheeks",0), create->getType_float_ByName("cheeks",1), create->getType_float_ByName("cheeks",2));
-	SaveCharacterFloats(char_id,"lip_type", create->getType_float_ByName("lips",0), create->getType_float_ByName("lips",1), create->getType_float_ByName("lips",2));
-	SaveCharacterFloats(char_id,"chin_type", create->getType_float_ByName("chin",0), create->getType_float_ByName("chin",1), create->getType_float_ByName("chin",2));
-	SaveCharacterFloats(char_id,"nose_type", create->getType_float_ByName("nose",0), create->getType_float_ByName("nose",1), create->getType_float_ByName("nose",2));
-	SaveCharacterFloats(char_id,"body_size", create->getType_float_ByName("body_size",0), 0, 0);
+	if (client_version <= 283) {
+		SaveCharacterFloats(char_id, "skin_color", create->getType_float_ByName("skin_color", 0), create->getType_float_ByName("skin_color", 1), create->getType_float_ByName("skin_color", 2));
+		SaveCharacterFloats(char_id, "eye_color", create->getType_float_ByName("eye_color", 0), create->getType_float_ByName("eye_color", 1), create->getType_float_ByName("eye_color", 2));
+		SaveCharacterFloats(char_id, "hair_color1", create->getType_float_ByName("hair_color1", 0), create->getType_float_ByName("hair_color1", 1), create->getType_float_ByName("hair_color1", 2));
+		SaveCharacterFloats(char_id, "hair_color2", create->getType_float_ByName("hair_color2", 0), create->getType_float_ByName("hair_color2", 1), create->getType_float_ByName("hair_color2", 2));
+		SaveCharacterFloats(char_id, "hair_highlight", create->getType_float_ByName("hair_highlight", 0), create->getType_float_ByName("hair_highlight", 1), create->getType_float_ByName("hair_highlight", 2));
+		SaveCharacterFloats(char_id, "hair_type_color", create->getType_float_ByName("hair_type_color", 0), create->getType_float_ByName("hair_type_color", 1), create->getType_float_ByName("hair_type_color", 2));
+		SaveCharacterFloats(char_id, "hair_type_highlight_color", create->getType_float_ByName("hair_type_highlight_color", 0), create->getType_float_ByName("hair_type_highlight_color", 1), create->getType_float_ByName("hair_type_highlight_color", 2));
+		SaveCharacterFloats(char_id, "hair_type_color", create->getType_float_ByName("hair_type_color", 0), create->getType_float_ByName("hair_type_color", 1), create->getType_float_ByName("hair_type_color", 2));
+		SaveCharacterFloats(char_id, "hair_type_highlight_color", create->getType_float_ByName("hair_type_highlight_color", 0), create->getType_float_ByName("hair_type_highlight_color", 1), create->getType_float_ByName("hair_type_highlight_color", 2));
+		SaveCharacterFloats(char_id, "hair_face_color", create->getType_float_ByName("hair_face_color", 0), create->getType_float_ByName("hair_face_color", 1), create->getType_float_ByName("hair_face_color", 2));
+		SaveCharacterFloats(char_id, "hair_face_highlight_color", create->getType_float_ByName("hair_face_highlight_color", 0), create->getType_float_ByName("hair_face_highlight_color", 1), create->getType_float_ByName("hair_face_highlight_color", 2));
+		SaveCharacterFloats(char_id, "shirt_color", create->getType_float_ByName("shirt_color", 0), create->getType_float_ByName("shirt_color", 1), create->getType_float_ByName("shirt_color", 2));
+		SaveCharacterFloats(char_id, "unknown_chest_color", create->getType_float_ByName("unknown_chest_color", 0), create->getType_float_ByName("unknown_chest_color", 1), create->getType_float_ByName("unknown_chest_color", 2));
+		SaveCharacterFloats(char_id, "pants_color", create->getType_float_ByName("pants_color", 0), create->getType_float_ByName("pants_color", 1), create->getType_float_ByName("pants_color", 2));
+		SaveCharacterFloats(char_id, "unknown_legs_color", create->getType_float_ByName("unknown_legs_color", 0), create->getType_float_ByName("unknown_legs_color", 1), create->getType_float_ByName("unknown_legs_color", 2));
+		SaveCharacterFloats(char_id, "unknown9", create->getType_float_ByName("unknown9", 0), create->getType_float_ByName("unknown9", 1), create->getType_float_ByName("unknown9", 2));
+	}
+	else {
+		SaveCharacterColors(char_id, "skin_color", create->getType_EQ2_Color_ByName("skin_color"));
+		SaveCharacterColors(char_id, "eye_color", create->getType_EQ2_Color_ByName("eye_color"));
+		SaveCharacterColors(char_id, "hair_color1", create->getType_EQ2_Color_ByName("hair_color1"));
+		SaveCharacterColors(char_id, "hair_color2", create->getType_EQ2_Color_ByName("hair_color2"));
+		SaveCharacterColors(char_id, "hair_highlight", create->getType_EQ2_Color_ByName("hair_highlight"));
+		SaveCharacterColors(char_id, "hair_type_color", create->getType_EQ2_Color_ByName("hair_type_color"));
+		SaveCharacterColors(char_id, "hair_type_highlight_color", create->getType_EQ2_Color_ByName("hair_type_highlight_color"));
+		SaveCharacterColors(char_id, "hair_face_color", create->getType_EQ2_Color_ByName("hair_face_color"));
+		SaveCharacterColors(char_id, "hair_face_highlight_color", create->getType_EQ2_Color_ByName("hair_face_highlight_color"));
+		SaveCharacterColors(char_id, "wing_color1", create->getType_EQ2_Color_ByName("wing_color1"));
+		SaveCharacterColors(char_id, "wing_color2", create->getType_EQ2_Color_ByName("wing_color2"));
+		SaveCharacterColors(char_id, "shirt_color", create->getType_EQ2_Color_ByName("shirt_color"));
+		SaveCharacterColors(char_id, "unknown_chest_color", create->getType_EQ2_Color_ByName("unknown_chest_color"));
+		SaveCharacterColors(char_id, "pants_color", create->getType_EQ2_Color_ByName("pants_color"));
+		SaveCharacterColors(char_id, "unknown_legs_color", create->getType_EQ2_Color_ByName("unknown_legs_color"));
+		SaveCharacterColors(char_id, "unknown9", create->getType_EQ2_Color_ByName("unknown9"));		
 
-	SaveCharacterColors(char_id,"soga_skin_color", create->getType_EQ2_Color_ByName("soga_skin_color"));
-	SaveCharacterColors(char_id,"soga_eye_color", create->getType_EQ2_Color_ByName("soga_eye_color"));
-	SaveCharacterColors(char_id,"soga_hair_color1", create->getType_EQ2_Color_ByName("soga_hair_color1"));
-	SaveCharacterColors(char_id,"soga_hair_color2", create->getType_EQ2_Color_ByName("soga_hair_color2"));
-	SaveCharacterColors(char_id,"soga_hair_highlight", create->getType_EQ2_Color_ByName("soga_hair_highlight"));
-	SaveCharacterColors(char_id,"soga_hair_type_color", create->getType_EQ2_Color_ByName("soga_hair_type_color"));
-	SaveCharacterColors(char_id,"soga_hair_type_highlight_color", create->getType_EQ2_Color_ByName("soga_hair_type_highlight_color"));
-	SaveCharacterColors(char_id,"soga_hair_face_color", create->getType_EQ2_Color_ByName("soga_hair_face_color"));
-	SaveCharacterColors(char_id,"soga_hair_face_highlight_color", create->getType_EQ2_Color_ByName("soga_hair_face_highlight_color"));
-	SaveCharacterColors(char_id,"soga_wing_color1", create->getType_EQ2_Color_ByName("soga_wing_color1"));
-	SaveCharacterColors(char_id,"soga_wing_color2", create->getType_EQ2_Color_ByName("soga_wing_color2"));
-	SaveCharacterColors(char_id,"soga_shirt_color", create->getType_EQ2_Color_ByName("soga_shirt_color"));
-	SaveCharacterColors(char_id,"soga_unknown_chest_color", create->getType_EQ2_Color_ByName("soga_unknown_chest_color"));
-	SaveCharacterColors(char_id,"soga_pants_color", create->getType_EQ2_Color_ByName("soga_pants_color"));
-	SaveCharacterColors(char_id,"soga_unknown_legs_color", create->getType_EQ2_Color_ByName("soga_unknown_legs_color"));
-	SaveCharacterColors(char_id,"soga_unknown13", create->getType_EQ2_Color_ByName("soga_unknown13"));
-	SaveCharacterFloats(char_id,"soga_eye_type", create->getType_float_ByName("soga_eyes2",0), create->getType_float_ByName("soga_eyes2",1), create->getType_float_ByName("soga_eyes2",2));
-	SaveCharacterFloats(char_id,"soga_ear_type", create->getType_float_ByName("soga_ears",0), create->getType_float_ByName("soga_ears",1), create->getType_float_ByName("soga_ears",2));
-	SaveCharacterFloats(char_id,"soga_eye_brow_type", create->getType_float_ByName("soga_eye_brows",0), create->getType_float_ByName("soga_eye_brows",1), create->getType_float_ByName("soga_eye_brows",2));
-	SaveCharacterFloats(char_id,"soga_cheek_type", create->getType_float_ByName("soga_cheeks",0), create->getType_float_ByName("soga_cheeks",1), create->getType_float_ByName("soga_cheeks",2));
-	SaveCharacterFloats(char_id,"soga_lip_type", create->getType_float_ByName("soga_lips",0), create->getType_float_ByName("soga_lips",1), create->getType_float_ByName("soga_lips",2));
-	SaveCharacterFloats(char_id,"soga_chin_type", create->getType_float_ByName("soga_chin",0), create->getType_float_ByName("soga_chin",1), create->getType_float_ByName("soga_chin",2));
-	SaveCharacterFloats(char_id,"soga_nose_type", create->getType_float_ByName("soga_nose",0), create->getType_float_ByName("soga_nose",1), create->getType_float_ByName("soga_nose",2));
-
+		SaveCharacterColors(char_id, "soga_skin_color", create->getType_EQ2_Color_ByName("soga_skin_color"));
+		SaveCharacterColors(char_id, "soga_eye_color", create->getType_EQ2_Color_ByName("soga_eye_color"));
+		SaveCharacterColors(char_id, "soga_hair_color1", create->getType_EQ2_Color_ByName("soga_hair_color1"));
+		SaveCharacterColors(char_id, "soga_hair_color2", create->getType_EQ2_Color_ByName("soga_hair_color2"));
+		SaveCharacterColors(char_id, "soga_hair_highlight", create->getType_EQ2_Color_ByName("soga_hair_highlight"));
+		SaveCharacterColors(char_id, "soga_hair_type_color", create->getType_EQ2_Color_ByName("soga_hair_type_color"));
+		SaveCharacterColors(char_id, "soga_hair_type_highlight_color", create->getType_EQ2_Color_ByName("soga_hair_type_highlight_color"));
+		SaveCharacterColors(char_id, "soga_hair_face_color", create->getType_EQ2_Color_ByName("soga_hair_face_color"));
+		SaveCharacterColors(char_id, "soga_hair_face_highlight_color", create->getType_EQ2_Color_ByName("soga_hair_face_highlight_color"));
+		SaveCharacterColors(char_id, "soga_wing_color1", create->getType_EQ2_Color_ByName("soga_wing_color1"));
+		SaveCharacterColors(char_id, "soga_wing_color2", create->getType_EQ2_Color_ByName("soga_wing_color2"));
+		SaveCharacterColors(char_id, "soga_shirt_color", create->getType_EQ2_Color_ByName("soga_shirt_color"));
+		SaveCharacterColors(char_id, "soga_unknown_chest_color", create->getType_EQ2_Color_ByName("soga_unknown_chest_color"));
+		SaveCharacterColors(char_id, "soga_pants_color", create->getType_EQ2_Color_ByName("soga_pants_color"));
+		SaveCharacterColors(char_id, "soga_unknown_legs_color", create->getType_EQ2_Color_ByName("soga_unknown_legs_color"));
+		SaveCharacterColors(char_id, "soga_unknown13", create->getType_EQ2_Color_ByName("soga_unknown13"));
+		SaveCharacterFloats(char_id, "soga_eye_type", create->getType_float_ByName("soga_eyes2", 0), create->getType_float_ByName("soga_eyes2", 1), create->getType_float_ByName("soga_eyes2", 2));
+		SaveCharacterFloats(char_id, "soga_ear_type", create->getType_float_ByName("soga_ears", 0), create->getType_float_ByName("soga_ears", 1), create->getType_float_ByName("soga_ears", 2));
+		SaveCharacterFloats(char_id, "soga_eye_brow_type", create->getType_float_ByName("soga_eye_brows", 0), create->getType_float_ByName("soga_eye_brows", 1), create->getType_float_ByName("soga_eye_brows", 2));
+		SaveCharacterFloats(char_id, "soga_cheek_type", create->getType_float_ByName("soga_cheeks", 0), create->getType_float_ByName("soga_cheeks", 1), create->getType_float_ByName("soga_cheeks", 2));
+		SaveCharacterFloats(char_id, "soga_lip_type", create->getType_float_ByName("soga_lips", 0), create->getType_float_ByName("soga_lips", 1), create->getType_float_ByName("soga_lips", 2));
+		SaveCharacterFloats(char_id, "soga_chin_type", create->getType_float_ByName("soga_chin", 0), create->getType_float_ByName("soga_chin", 1), create->getType_float_ByName("soga_chin", 2));
+		SaveCharacterFloats(char_id, "soga_nose_type", create->getType_float_ByName("soga_nose", 0), create->getType_float_ByName("soga_nose", 1), create->getType_float_ByName("soga_nose", 2));
+	}
+	SaveCharacterFloats(char_id, "eye_type", create->getType_float_ByName("eyes2", 0), create->getType_float_ByName("eyes2", 1), create->getType_float_ByName("eyes2", 2));
+	SaveCharacterFloats(char_id, "ear_type", create->getType_float_ByName("ears", 0), create->getType_float_ByName("ears", 1), create->getType_float_ByName("ears", 2));
+	SaveCharacterFloats(char_id, "eye_brow_type", create->getType_float_ByName("eye_brows", 0), create->getType_float_ByName("eye_brows", 1), create->getType_float_ByName("eye_brows", 2));
+	SaveCharacterFloats(char_id, "cheek_type", create->getType_float_ByName("cheeks", 0), create->getType_float_ByName("cheeks", 1), create->getType_float_ByName("cheeks", 2));
+	SaveCharacterFloats(char_id, "lip_type", create->getType_float_ByName("lips", 0), create->getType_float_ByName("lips", 1), create->getType_float_ByName("lips", 2));
+	SaveCharacterFloats(char_id, "chin_type", create->getType_float_ByName("chin", 0), create->getType_float_ByName("chin", 1), create->getType_float_ByName("chin", 2));
+	SaveCharacterFloats(char_id, "nose_type", create->getType_float_ByName("nose", 0), create->getType_float_ByName("nose", 1), create->getType_float_ByName("nose", 2));
+	SaveCharacterFloats(char_id, "body_size", create->getType_float_ByName("body_size", 0), 0, 0);
 	return ret_id;
 }
 

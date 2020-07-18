@@ -46,7 +46,8 @@ Spawn::Spawn(){
 	merchant_min_level = 0;
 	merchant_max_level = 0;
 	memset(&appearance, 0, sizeof(AppearanceData)); 
-	memset(&basic_info, 0, sizeof(BasicInfoStruct)); 
+	memset(&basic_info, 0, sizeof(BasicInfoStruct));
+	appearance.pos.state = 0x4080;
 	appearance.encounter_level =6;
 	size = 32;
 	appearance.pos.collision_radius = 32;
@@ -206,8 +207,22 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 
 	if (IsPlayer())
 		appearance.pos.grid_id = 0xFFFFFFFF;
-	if (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1){
-		if (!IsGroundSpawn()){
+
+	if (IsPlayer())
+		vis_packet->setDataByName("player", 1);
+	if (version <= 546) {
+		vis_packet->setDataByName("targetable", appearance.targetable);
+		vis_packet->setDataByName("show_name", appearance.display_name);
+		vis_packet->setDataByName("attackable", appearance.attackable);
+		if (IsPlayer()) {
+			if (((Player*)this)->IsGroupMember(player))
+				vis_packet->setDataByName("group_member", 1);
+		}
+
+	}
+
+	if (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1) {
+		if (!IsGroundSpawn()) {
 			int8 arrow_color = ARROW_COLOR_WHITE;
 			sint8 npc_con = player->GetFactions()->GetCon(faction_id);
 
@@ -218,20 +233,41 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 
 			if (appearance.attackable == 1)
 				arrow_color = player->GetArrowColor(GetLevel());
+			/*if (version <= 283) {
+				if (GetMerchantID() > 0)
+					arrow_color += 7;
+				else {
+					if (primary_command_list.size() > 0) {
+						int16 len = strlen(primary_command_list[0]->command.c_str());
+						if(len >= 4 && strncmp(primary_command_list[0]->command.c_str(), "bank", 4) == 0)
+							arrow_color += 14;
+						else if (len >= 4 && strncmp(primary_command_list[0]->command.c_str(), "hail", 4) == 0)
+							arrow_color += 21;
+						else if (len >= 6 && strncmp(primary_command_list[0]->command.c_str(), "attack", 6) == 0) {
+							if (arrow_color > 5)
+								arrow_color = 34;
+							else
+								arrow_color += 29;
+						}
+					}
+				}
+			}*/
 			vis_packet->setDataByName("arrow_color", arrow_color);
 			vis_packet->setDataByName("locked_no_loot", appearance.locked_no_loot);
 			if (player->GetArrowColor(GetLevel()) == ARROW_COLOR_GRAY)
 				if (npc_con == -4)
 					npc_con = -3;
 			vis_packet->setDataByName("npc_con", npc_con);
-			if (appearance.attackable == 1 && IsNPC() && (player->GetFactions()->GetCon(faction_id) <= -4 || ((NPC*)this)->Brain()->GetHate(player) > 1))
+			if (appearance.attackable == 1 && IsNPC() && (player->GetFactions()->GetCon(faction_id) <= -4 || ((NPC*)this)->Brain()->GetHate(player) > 1)) {
 				vis_packet->setDataByName("npc_hate", ((NPC*)this)->Brain()->GetHatePercentage(player));
+				vis_packet->setDataByName("show_difficulty_arrows", 1);
+			}
 			int8 quest_flag = player->CheckQuestFlag(this);
 			if (version < 1188 && quest_flag >= 16)
 				quest_flag = 1;
-			vis_packet->setDataByName("quest_flag",quest_flag);
-			if( player->CheckQuestsKillUpdate(this, false)){
-			vis_packet->setDataByName("name_quest_icon", 1);
+			vis_packet->setDataByName("quest_flag", quest_flag);
+			if (player->CheckQuestsKillUpdate(this, false)) {
+				vis_packet->setDataByName("name_quest_icon", 1);
 			}
 		}
 	}
@@ -249,13 +285,17 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 		if (appearance.show_command_icon == 1)
 			vis_flags += 2;
 		if (this == player) {
+			//if (version <= 283) {
+			//	vis_flags = 1;
+			//}
+			//else
 			vis_flags += 1;
 		}
 	}
 	else if (req_quests_override > 0)
 	{
 		//Check to see if there's an override value set
-			vis_flags = req_quests_override & 0xFF;
+		vis_flags = req_quests_override & 0xFF;
 	}
 
 	if (player->HasGMVision())
@@ -266,6 +306,9 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 			vis_flags += 4;
 	}
 
+	if (version <= 546 && vis_flags > 0)
+		vis_flags = 1;
+	
 	vis_packet->setDataByName("vis_flags", vis_flags);
 
 
@@ -275,7 +318,6 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 		if ((req_quests_override & 256) > 0)
 			vis_packet->setDataByName("hand_flag", 1);
 	}
-
 }
 
 void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
@@ -329,7 +371,7 @@ void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
 		footer->setDataByName("spawn_type", 3);
 }
 
-EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
+EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, int32 value, int16 offset2, int16 offset3, int16 offset4, int32 value2) {
 	// If spawn is NPC AND is pet && owner is a player && owner is the player passed to this function && player's char sheet pet id is 0
 	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer() && player == ((NPC*)this)->GetOwner() && player->GetInfoStruct()->pet_id == 0) {
 		((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->pet_id = player->spawn_id;
@@ -343,7 +385,7 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
 	}
 	else {
 		player->spawn_index++;
-		if(player->spawn_index == 255)
+		if (player->spawn_index == 255)
 			player->spawn_index++; //just so we dont have to worry about overloading
 		index = player->spawn_index;
 		player->player_spawn_index_map[this] = index;
@@ -362,17 +404,17 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
 	header->ResetData();
 	InitializeHeaderPacketData(player, header, index);
 
-	PacketStruct* footer;
-	if(IsWidget())
+	PacketStruct* footer = 0;
+	if (IsWidget())
 		footer = player->GetWidgetFooterStruct();
-	else if(IsSign())
+	else if (IsSign())
 		footer = player->GetSignFooterStruct();
-	else
+	else if (version > 546)
 		footer = player->GetSpawnFooterStruct();
-
-	footer->ResetData();
-	InitializeFooterPacketData(player, footer);
-
+	if (footer) {
+		footer->ResetData();
+		InitializeFooterPacketData(player, footer);
+	}
 	PacketStruct* vis_struct = player->GetSpawnVisStruct();
 	PacketStruct* info_struct = player->GetSpawnInfoStruct();
 	PacketStruct* pos_struct = player->GetSpawnPosStruct();
@@ -389,7 +431,35 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
 	pos_struct->ResetData();
 	InitializePosPacketData(player, pos_struct);
 
-	string* vis_data= vis_struct->serializeString();
+	if (version <= 283) {
+		if (offset == 777) {
+			info_struct->setDataByName("name", "This is a really long name\n");
+			info_struct->setDataByName("last_name", "This is a really long LAST name\n");
+			info_struct->setDataByName("name_suffix", "This is a really long SUFFIX\n");
+			info_struct->setDataByName("name_prefix", "This is a really long PREFIX\n");
+			info_struct->setDataByName("unknown", "This is a really long UNKNOWN\n");
+			info_struct->setDataByName("second_suffix", "This is a really long 2nd SUFFIX\n");
+		}
+		//info_struct->setDataByName("unknown2", 3, 0); // level
+		//info_struct->setDataByName("unknown2", 1, 1); //unknown, two down arrows
+		//info_struct->setDataByName("unknown2", 1, 2); //unknown
+		//info_struct->setDataByName("unknown2", 1, 3); //unknown
+		//info_struct->setDataByName("unknown2", 1, 4); //solo fight
+		//info_struct->setDataByName("unknown2", 1, 5); //unknown
+		//info_struct->setDataByName("unknown2", 1, 6);  //unknown
+		//info_struct->setDataByName("unknown2", 1, 7); //merchant
+		//info_struct->setDataByName("unknown2", 1, 8);  //unknown
+		//info_struct->setDataByName("unknown2", 1, 9); //unknown
+		//info_struct->setDataByName("unknown2", 1, 10);
+		//112: 00 00 00 01 02 03 04 05 - 06 07 08 09 0A 00 00 00 | ................ merchant, x4
+		//112: 00 00 00 01 02 03 04 05 - 00 00 00 00 00 00 00 00 | ................ x4, epic, indifferent
+		//info_struct->setDataByName("body_size", 42); 
+		//for(int i=0;i<8;i++)
+		//	info_struct->setDataByName("persistent_spell_visuals", 329, i);
+		//info_struct->setDataByName("persistent_spell_levels", 20);
+	}
+
+	string* vis_data = vis_struct->serializeString();
 	string* pos_data = pos_struct->serializeString();
 	string* info_data = info_struct->serializeString();
 
@@ -399,7 +469,7 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
 	player->AddSpawnPosPacketForXOR(id, (uchar*)pos_data->c_str(), pos_data->length());
 	player->AddSpawnVisPacketForXOR(id, (uchar*)vis_data->c_str(), vis_data->length());
 	player->AddSpawnInfoPacketForXOR(id, (uchar*)info_data->c_str(), info_data->length());
-	
+
 	uchar* ptr = part2;
 	memcpy(ptr, pos_data->c_str(), pos_data->length());
 	ptr += pos_data->length();
@@ -411,41 +481,142 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version){
 	player->vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	string* part1 = header->serializeString();
-	string* part3 = footer->serializeString();
+	string* part3 = 0;
+	if (footer)
+		part3 = footer->serializeString();
 
-	uchar tmp[900];
-	int32 origPart2Size = part2_size;
-	part2_size = Pack(tmp, part2, part2_size, 900, version);
-	int32 total_size = part1->length() + part2_size + part3->length() + 3;
+	//uchar blah7[] = {0x01,0x01,0x00,0x00,0x01,0x01,0x00,0x01,0x01,0x00 };
+		//uchar blah7[] = { 0x03,0x01,0x00,0x01,0x01,0x01,0x00,0x01,0x01,0x00 }; base
+		//uchar blah7[] = { 0x03,0x00,0x00,0x01,0x01,0x01,0x00,0x01,0x01,0x00 }; //no change
+		//uchar blah7[] = { 0x03,0x00,0x00,0x00,0x01,0x01,0x00,0x01,0x01,0x00 }; //blue instead of green
+		//uchar blah7[] = { 0x03,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x01,0x00 }; //no change
+		//uchar blah7[] = { 0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x01,0x00 }; //not selectable
+		//uchar blah7[] = { 0x03,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x01,0x00 }; //no change
+		//uchar blah7[] = { 0x03,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00 }; //no longer have the two down arrows
+		//uchar blah7[] = { 0x01,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00 }; //arrow color green instead of white/gray
+		//memcpy(part2 + 77, blah7, sizeof(blah7));
 
-	uchar* final_packet = new uchar[total_size + 4];
+
+
+
+
+		//DumpPacket(part2, 885);	
+	if (offset > 0) {
+		if (offset4 > 0 && offset4 >= offset3) {
+			uchar* ptr2 = (uchar*)part2;
+			ptr2 += offset3;
+			while (offset4 >= offset3) {
+				int8 jumpsize = 1;
+				if (value2 > 0xFFFF) {
+					memcpy(ptr2, (uchar*)&value2, 4);
+					jumpsize = 4;
+				}
+				else if (value2 > 0xFF) {
+					memcpy(ptr2, (uchar*)&value2, 2);
+					jumpsize = 2;
+				}
+				else {
+					memcpy(ptr2, (uchar*)&value2, 1);
+					jumpsize = 1;
+				}
+				ptr2 += jumpsize;
+				offset4 -= jumpsize;
+			}
+		}
+		if (offset2 > 0 && offset2 >= offset) {
+			uchar* ptr2 = (uchar*)part2;
+			ptr2 += offset;
+			while (offset2 >= offset) {
+				int8 jumpsize = 1;
+				if (value > 0xFFFF) {
+					memcpy(ptr2, (uchar*)&value, 4);
+					jumpsize = 4;
+				}
+				else if (value > 0xFF) {
+					memcpy(ptr2, (uchar*)&value, 2);
+					jumpsize = 2;
+				}
+				else
+					memcpy(ptr2, (uchar*)&value, 1);
+				ptr2 += jumpsize;
+				offset2 -= jumpsize;
+			}
+		}
+		else {
+			uchar* ptr2 = (uchar*)part2;
+			ptr2 += offset;
+			if (value > 0xFFFF)
+				memcpy(ptr2, (uchar*)&value, 4);
+			else if (value > 0xFF)
+				memcpy(ptr2, (uchar*)&value, 2);
+			else
+				memcpy(ptr2, (uchar*)&value, 1);
+		}
+		cout << "setting offset: " << offset << " to: " << value << endl;
+	}
+	if (offset > 0)
+		DumpPacket(part2, part2_size);
+	uchar tmp[1100];
+	bool reverse = (version > 283);
+	part2_size = Pack(tmp, part2, part2_size, 1100, version, reverse);
+	int32 total_size = part1->length() + part2_size + 3;
+	if (part3)
+		total_size += part3->length();
+	int32 final_packet_size = total_size + 1;
+
+	if (version > 283)
+		final_packet_size += 3;
+	else {
+		if (final_packet_size >= 255) {
+			final_packet_size += 2;
+		}
+	}
+	uchar* final_packet = new uchar[final_packet_size];
 	ptr = final_packet;
-	memcpy(ptr, &total_size, sizeof(total_size));
-	ptr += sizeof(total_size);
+	if (version <= 283) {
+		if ((final_packet_size - total_size) > 1) {
+			memcpy(ptr, &oversized_packet, sizeof(oversized_packet));
+			ptr += sizeof(oversized_packet);
+			memcpy(ptr, &total_size, 2);
+			ptr += 2;
+		}
+		else {
+			memcpy(ptr, &total_size, 1);
+			ptr += 1;
+		}
+	}
+	else {
+		memcpy(ptr, &total_size, sizeof(total_size));
+		ptr += sizeof(total_size);
+	}
 
 	memcpy(ptr, &oversized_packet, sizeof(oversized_packet));
 	ptr += sizeof(oversized_packet);
-
+	if (opcode == 0) {
+		opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateGhostCmd);
+	}
 	memcpy(ptr, &opcode, sizeof(opcode));
 	ptr += sizeof(opcode);
-	
+
 	memcpy(ptr, part1->c_str(), part1->length());
 	ptr += part1->length();
 
+
 	memcpy(ptr, tmp, part2_size);
 	ptr += part2_size;
-	
-	memcpy(ptr, part3->c_str(), part3->length());
+
+	if (part3)
+		memcpy(ptr, part3->c_str(), part3->length());
 	delete[] part2;
 
-//	printf("%s (%i): p1: %i, p2:% i (%i), p3:% i, ts: %i\n", GetName(), GetID(), part1->length(), part2_size, origPart2Size, part3->length(), total_size);
+	//	printf("%s (%i): p1: %i, p2:% i (%i), p3:% i, ts: %i\n", GetName(), GetID(), part1->length(), part2_size, origPart2Size, part3->length(), total_size);
 
-	EQ2Packet* ret = new EQ2Packet(OP_ClientCmdMsg, final_packet, total_size + 4);
+	EQ2Packet* ret = new EQ2Packet(OP_ClientCmdMsg, final_packet, final_packet_size);
 	delete[] final_packet;
 
 	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 
-  	return ret;
+	return ret;
 }
 
 uchar* Spawn::spawn_info_changes(Player* player, int16 version){
@@ -594,7 +765,7 @@ uchar* Spawn::spawn_pos_changes(Player* player, int16 version) {
 
 
 	uchar* tmp;
-	if (IsPlayer())
+	if (IsPlayer() && version > 283)
 		tmp = new uchar[size + 14];
 	else
 		tmp = new uchar[size + 10];
@@ -607,7 +778,7 @@ uchar* Spawn::spawn_pos_changes(Player* player, int16 version) {
 	if (version >= 1188)
 		size += 1;
 
-	if(IsPlayer())
+	if(IsPlayer() && version > 546)
 		size += 4;
 	size-=sizeof(int32);
 	size+=CheckOverLoadSize(index);
@@ -620,7 +791,7 @@ uchar* Spawn::spawn_pos_changes(Player* player, int16 version) {
 
 	// extra byte in coe+ clients, 0 for NPC's 1 for Players
 	int8 x = 0;
-	if(IsPlayer()){
+	if (IsPlayer() && version > 546) {
 		if (version >= 1188) {
 			// set x to 1 and add it to the packet
 			x = 1;
@@ -664,16 +835,40 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 	int32 tmp_pos_packet_size = pos_packet_size;
 	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 
-	int32 size = info_size + tmp_pos_packet_size + vis_size + 11;
+	int32 size = info_size + tmp_pos_packet_size + vis_size + 8;
+	if (version >= 284)
+		size += 3;
+	else if (version <= 283 && size >= 255) {//1 byte to 3 for overloaded val
+		size += 2;
+	}
 	static const int8 oversized = 255;
 	int16 opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd);
 	uchar* tmp = new uchar[size];
 	memset(tmp, 0, size);
 	uchar* ptr = tmp;
-	size -=4;
-	memcpy(ptr, &size, sizeof(int32));
-	size +=4;
-	ptr += sizeof(int32);
+	if (version >= 284) {
+		size -= 4;
+		memcpy(ptr, &size, sizeof(int32));
+		size += 4;
+		ptr += sizeof(int32);
+	}
+	else {
+		if (size >= 255) {
+			memcpy(ptr, &oversized, sizeof(int8));
+			ptr += sizeof(int8);
+			size -= 3;
+			memcpy(ptr, &size, sizeof(int16));
+			size += 3;
+			ptr += 3;
+		}
+		else {
+			size -= 1;
+			memcpy(ptr, &size, sizeof(int8));
+			ptr += sizeof(int8);
+			size += 1;
+			ptr += 1;
+		}
+	}
 	memcpy(ptr, &oversized, sizeof(int8));
 	ptr += sizeof(int8);
 	memcpy(ptr, &opcode_val, sizeof(int16));
@@ -682,6 +877,7 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 	ptr += info_size;
 	memcpy(ptr, pos_changes, tmp_pos_packet_size);
 	EQ2Packet* ret_packet = new EQ2Packet(OP_ClientCmdMsg, tmp, size);
+	DumpPacket(ret_packet);
 	delete[] tmp;
 	delete[] pos_changes;
 	return ret_packet;
@@ -726,19 +922,42 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 	tmp_pos_packet_size = pos_packet_size;
 	tmp_vis_packet_size = vis_packet_size;
 
-	int32 size = info_packet_size + pos_packet_size + vis_packet_size + 11;
+	int32 size = info_packet_size + pos_packet_size + vis_packet_size + 8;
+	if (version >= 284)
+		size += 3;
+	else if (version <= 283 && size >= 255) {//1 byte to 3 for overloaded val
+		size += 2;
+	}
 	uchar* tmp = new uchar[size];
 	memset(tmp, 0, size);
 	uchar* ptr = tmp;
-	size -=4;
-	memcpy(ptr, &size, sizeof(int32));
-	size +=4;
-	ptr += sizeof(int32);
+	if (version >= 284) {
+		size -= 4;
+		memcpy(ptr, &size, sizeof(int32));
+		size += 4;
+		ptr += sizeof(int32);
+	}
+	else {
+		if (size >= 255) {
+			memcpy(ptr, &oversized, sizeof(int8));
+			ptr += sizeof(int8);
+			size -= 3;
+			memcpy(ptr, &size, sizeof(int16));
+			size += 3;
+			ptr += 3;
+		}
+		else {
+			size -= 1;
+			memcpy(ptr, &size, sizeof(int8));
+			ptr += sizeof(int8);
+			size += 1;
+		}
+	}
 	memcpy(ptr, &oversized, sizeof(int8));
 	ptr += sizeof(int8);
 	memcpy(ptr, &opcode_val, sizeof(int16));
 	ptr += sizeof(int16);
-	if (IsPlayer() == false){ //this isnt sent for player updates, it is sent on position update
+	if (IsPlayer() == false || version <= 546) { //this isnt sent for player updates, it is sent on position update
 		//int32 time = Timer::GetCurrentTime2();
 		packet_num = Timer::GetCurrentTime2();
 		memcpy(ptr, &packet_num, sizeof(int32));
@@ -937,7 +1156,7 @@ uchar* Spawn::spawn_pos_changes_ex(Player* player, int16 version) {
 		size += 1;
 	}
 
-	if (IsPlayer()) {
+	if (IsPlayer() && version > 546) {
 		size += 4;
 	}
 
@@ -953,17 +1172,18 @@ uchar* Spawn::spawn_pos_changes_ex(Player* player, int16 version) {
 	// extra byte in coe+ clients, 0 for NPC's 1 for Players
 	int8 x = 0;
 
-	if (version >= 1188) {
+	if (version > 546) {
 		if (IsPlayer()) {
-			x = 1;
-			memcpy(ptr, &x, sizeof(int8));
-			ptr += sizeof(int8);
-
+			if (version >= 1188) {
+				x = 1;
+				memcpy(ptr, &x, sizeof(int8));
+				ptr += sizeof(int8);
+			}
 			int32 now = Timer::GetCurrentTime2();
 			memcpy(ptr, &now, sizeof(int32));
 			ptr += sizeof(int32);
 		}
-		else {
+		else if (version >= 1188) {
 			memcpy(ptr, &x, sizeof(int8));
 			ptr += sizeof(int8);
 		}
@@ -1719,16 +1939,16 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 		packet->setDataByName("pos_size_multiplier", 32); //32 is normal
 	}
 	else {
-			if (size == 0)
-				size = 32;
+		if (size == 0)
+			size = 32;
 
-			packet->setDataByName("pos_collision_radius", appearance.pos.collision_radius > 0 ? appearance.pos.collision_radius : 32);
+		packet->setDataByName("pos_collision_radius", appearance.pos.collision_radius > 0 ? appearance.pos.collision_radius : 32);
 
-			if (!IsPlayer())
-				packet->setDataByName("pos_size", size > 0 ? (((float)size) / 32.0f) : 1.0f);
-			else
-				packet->setDataByName("pos_size", 1.0f);
+		packet->setDataByName("pos_size", 1.0f);
 
+		if (!IsPlayer())
+			packet->setDataByName("pos_size_ratio", size > 0 ? (((float)size) / 32) : 1);
+		else
 			packet->setDataByName("pos_size_ratio", 1.0f);
 	}
 	packet->setDataByName("pos_state", appearance.pos.state);
@@ -1760,9 +1980,53 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 	}
 
 	if (IsPlayer()) {
-		packet->setDataByName("pos_x_velocity", static_cast<sint16>(GetSpeedX() * 32));
-		packet->setDataByName("pos_y_velocity", static_cast<sint16>(GetSpeedY() * 32));
-		packet->setDataByName("pos_z_velocity", static_cast<sint16>(GetSpeedZ() * 32));
+		packet->setDataByName("pos_swim_speed_modifier", 20);
+		packet->setDataByName("pos_x_velocity", TransformFromFloat(GetSpeedX(), 5));
+		packet->setDataByName("pos_y_velocity", TransformFromFloat(GetSpeedY(), 5));
+		packet->setDataByName("pos_z_velocity", TransformFromFloat(GetSpeedZ(), 5));
+	}
+
+	if (appearance.pos.X2 == 0 && appearance.pos.Y2 == 0 && appearance.pos.Z2 && (appearance.pos.X != 0 || appearance.pos.Y != 0 || appearance.pos.Z != 0)) {
+		appearance.pos.X2 = appearance.pos.X;
+		appearance.pos.Y2 = appearance.pos.Y;
+		appearance.pos.Z2 = appearance.pos.Z;
+	}
+	if (appearance.pos.X3 == 0 && appearance.pos.Y3 == 0 && appearance.pos.Z3 && (appearance.pos.X != 0 || appearance.pos.Y != 0 || appearance.pos.Z != 0)) {
+		appearance.pos.X3 = appearance.pos.X;
+		appearance.pos.Y3 = appearance.pos.Y;
+		appearance.pos.Z3 = appearance.pos.Z;
+	}
+	//Transform To/From Float bits (original client)
+	//pos_loc_offset[3]: 5
+	//pos_x_velocity: 5
+	//pos_y_velocity: 5
+	//pos_z_velocity: 5
+	//pos_heading1: 6
+	//pos_heading2: 6
+	//pos_speed: 8
+	//pos_dest_loc_offset[3]: 5
+	//pos_dest_loc_offset2[3]: 5
+	//pos_heading_speed: 5
+	//pos_move_type: 5 (speed_modifier)
+	//pos_swim_speed_modifier: 5
+	//pos_side_speed: 8
+	//pos_vert_speed: 8
+	//pos_requested_pitch: 6
+	//pos_requested_pitch_speed: 5
+	//pos_pitch: 6
+	//pos_collision_radius: 5
+	//pos_size: 5
+	//actor_stop_range: 5
+	//this is for original box client, destinations used to be offsets
+	if (appearance.pos.X2 != 0 || appearance.pos.Y2 != 0 || appearance.pos.Z2 != 0) {
+		packet->setDataByName("pos_dest_loc_offset", TransformFromFloat(appearance.pos.X2 - appearance.pos.X, 5));
+		packet->setDataByName("pos_dest_loc_offset", TransformFromFloat(appearance.pos.Y2 - appearance.pos.Y, 5), 1);
+		packet->setDataByName("pos_dest_loc_offset", TransformFromFloat(appearance.pos.Z2 - appearance.pos.Z, 5), 2);
+	}
+	if (appearance.pos.X3 != 0 || appearance.pos.Y3 != 0 || appearance.pos.Z3 != 0) {
+		packet->setDataByName("pos_dest_loc_offset2", TransformFromFloat(appearance.pos.X3 - appearance.pos.X, 5));
+		packet->setDataByName("pos_dest_loc_offset2", TransformFromFloat(appearance.pos.Y3 - appearance.pos.Y, 5), 1);
+		packet->setDataByName("pos_dest_loc_offset2", TransformFromFloat(appearance.pos.Z3 - appearance.pos.Z, 5), 2);
 	}
 
 	bool bSendSpeed = true;
@@ -1868,24 +2132,48 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 
 	if(!spawnHiddenFromClient && (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1)){
 		appearance.locked_no_loot = 1; //for now
-		if(!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign()){
+		if (!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign()) {
 			int8 percent = 0;
-			if(GetHP() > 0)
-				percent = (int8)(((float)GetHP()/GetTotalHP()) * 100);
-			if(percent < 100){
- 				packet->setDataByName("hp_remaining", 100 ^ percent);
+			if (GetHP() > 0)
+				percent = (int8)(((float)GetHP() / GetTotalHP()) * 100);
+			if (version >= 284) {
+				if (percent < 100) {
+					packet->setDataByName("hp_remaining", 100 ^ percent);
+				}
+				else
+					packet->setDataByName("hp_remaining", 0);
 			}
-			else
-				packet->setDataByName("hp_remaining", 0);
-			if(GetTotalPower() > 0){
-				percent = (int8)(((float)GetPower()/GetTotalPower()) * 100);
-				if(percent > 0)
+			else {
+				if (percent > 100)
+					percent = 100;
+				packet->setDataByName("hp_remaining", percent);
+			}
+			if (GetTotalPower() > 0) {
+				percent = (int8)(((float)GetPower() / GetTotalPower()) * 100);
+				if (percent > 0)
 					packet->setDataByName("power_percent", percent);
 				else
 					packet->setDataByName("power_percent", 0);
 			}
 		}
 	}
+
+	if (version <= 546) {
+		packet->setDataByName("name", appearance.name);
+		for (int8 i = 0; i < 8; i++)
+			packet->setDataByName("unknown1", 0xFF, i);
+		if (appearance.show_level == 0)
+			packet->setDataByName("hide_health", 1);
+	}
+	if (GetHP() <= 0 && IsEntity())
+		packet->setDataByName("corpse", 1);
+	if (!IsPlayer())
+		packet->setDataByName("npc", 1);
+	if (GetMerchantID() > 0)
+		packet->setDataByName("merchant", 1);
+	if (EngagedInCombat())
+		packet->setDataByName("in_combat", 1);
+
 	packet->setDataByName("level", (int8)GetLevel());
 	packet->setDataByName("unknown4", (int8)GetLevel());
 	packet->setDataByName("difficulty", appearance.encounter_level); //6);
@@ -2143,9 +2431,32 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	{
 		temp_activity_status = appearance.activity_status;
 
-		// WE ARE UNSURE OF THESE OLD CLIENT VALUES USED AS TEMP PLACEHOLDERS FOR NEWER CLIENTS
-		if ((appearance.activity_status & ACTIVITY_STATUS_AFK) > 0)
-			temp_activity_status -= ACTIVITY_STATUS_AFK;
+		if (version <= 546) {
+			temp_activity_status = 0xFF;
+			if (MeetsSpawnAccessRequirements(spawn))
+				packet->setDataByName("hand_icon", appearance.display_hand_icon);
+			else {
+				if ((req_quests_override & 256) > 0)
+					packet->setDataByName("hand_icon", 1);
+			}
+
+			if (IsPlayer()) {
+				if (((Player*)this)->get_character_flag(CF_AFK))
+					packet->setDataByName("afk", 1);
+				if ((appearance.activity_status & ACTIVITY_STATUS_ROLEPLAYING) > 0)
+					packet->setDataByName("roleplaying", 1);
+				if ((appearance.activity_status & ACTIVITY_STATUS_ANONYMOUS) > 0)
+					packet->setDataByName("anonymous", 1);
+				if ((appearance.activity_status & ACTIVITY_STATUS_LINKDEAD) > 0)
+					packet->setDataByName("linkdead", 1);
+				if ((appearance.activity_status & ACTIVITY_STATUS_CAMPING) > 0)
+					packet->setDataByName("camping", 1);
+				if ((appearance.activity_status & ACTIVITY_STATUS_LFG) > 0)
+					packet->setDataByName("lfg", 1);
+			}
+			if ((appearance.activity_status & ACTIVITY_STATUS_SOLID) > 0)
+				packet->setDataByName("solid", 1);
+		}
 
 	}
 
@@ -2156,12 +2467,12 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 		if (((Player*)this)->GetFollowTarget())
 			packet->setDataByName("follow_target", ((((Player*)this)->GetIDWithPlayerSpawn(((Player*)this)->GetFollowTarget()) * -1) - 1));
 		else
-			packet->setDataByName("follow_target", 0);
+			packet->setDataByName("follow_target", 0xFFFFFFFF);
 	}
 	if (GetTarget() && GetTarget()->GetTargetable())
 		packet->setDataByName("target_id", ((spawn->GetIDWithPlayerSpawn(GetTarget()) * -1) - 1));
 	else
-		packet->setDataByName("target_id", 0);
+		packet->setDataByName("target_id", 0xFFFFFFFF);
 
 	//Send spell effects for target window
 	if(IsEntity()){
@@ -3249,6 +3560,49 @@ void Spawn::CalculateNewFearpoint()
 			AddRunningLocation(Node.x, Node.y, Node.z, GetSpeed(), 0, true, true, "", true);
 		}
 	}
+}
+
+Item* Spawn::LootItem(int32 id) {
+	Item* ret = 0;
+	vector<Item*>::iterator itr;
+	MLootItems.lock();
+	for (itr = loot_items.begin(); itr != loot_items.end(); itr++) {
+		if ((*itr)->details.item_id == id) {
+			ret = *itr;
+			loot_items.erase(itr);
+			break;
+		}
+	}
+	MLootItems.unlock();
+	return ret;
+}
+
+int32 Spawn::GetLootItemID() {
+	int32 ret = 0;
+	vector<Item*>::iterator itr;
+	MLootItems.lock();
+	for (itr = loot_items.begin(); itr != loot_items.end(); itr++) {
+		ret = (*itr)->details.item_id;
+		break;
+	}
+	MLootItems.unlock();
+	return ret;
+}
+
+bool Spawn::HasLootItemID(int32 id) {
+	bool ret = false;
+
+	vector<Item*>::iterator itr;
+	MLootItems.readlock(__FUNCTION__, __LINE__);
+	for (itr = loot_items.begin(); itr != loot_items.end(); itr++) {
+		if ((*itr)->details.item_id == id) {
+			ret = true;
+			break;
+		}
+	}
+	MLootItems.releasereadlock(__FUNCTION__, __LINE__);
+
+	return ret;
 }
 
 void Spawn::CheckProximities()

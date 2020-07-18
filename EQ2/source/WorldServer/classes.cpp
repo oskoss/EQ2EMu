@@ -133,29 +133,31 @@ int8 Classes::GetSecondaryBaseClass(int8 class_id){
 }
 
 int8 Classes::GetTSBaseClass(int8 class_id) {
-	class_id += 42;
 	int8 ret = 0;	
-	if(class_id >= ARTISAN)
-		ret = ARTISAN;
+	if (class_id + 42 >= ARTISAN)
+		ret = ARTISAN - 44;
+	else
+		ret = class_id;
 
-	LogWrite(WORLD__DEBUG, 5, "World", "%s returning base tradeskill class ID: %i", __FUNCTION__, ret - 44);
-	return ret - 44;
+	LogWrite(WORLD__DEBUG, 5, "World", "%s returning base tradeskill class ID: %i", __FUNCTION__, ret);
+	return ret;
 }
 
 int8 Classes::GetSecondaryTSBaseClass(int8 class_id) {
-	class_id += 42;
-	int8 ret = 0;
-	if (class_id == ARTISAN)
-		ret = ARTISAN;
-	if (class_id >= CRAFTSMAN && class_id < OUTFITTER)
-		ret = CRAFTSMAN;
-	if (class_id >= OUTFITTER && class_id < SCHOLAR)
-		ret = OUTFITTER;
-	if (class_id >= SCHOLAR)
-		ret = SCHOLAR;
+	int8 ret = class_id + 42;
+	if (ret == ARTISAN)
+		ret = ARTISAN - 44;
+	else if (ret >= CRAFTSMAN && ret < OUTFITTER)
+		ret = CRAFTSMAN - 44;
+	else if (ret >= OUTFITTER && ret < SCHOLAR)
+		ret = OUTFITTER - 44;
+	else if (ret >= SCHOLAR)
+		ret = SCHOLAR - 44;
+	else
+		ret = class_id;
 
-	LogWrite(WORLD__DEBUG, 5, "World", "%s returning secondary tradeskill class ID: %i", __FUNCTION__, ret - 44);
-	return ret - 44;
+	LogWrite(WORLD__DEBUG, 5, "World", "%s returning secondary tradeskill class ID: %i", __FUNCTION__, ret);
+	return ret;
 }
 
 sint8 Classes::GetClassID(const char* name){

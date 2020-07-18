@@ -33,7 +33,7 @@ public:
 	int8	LoginKey[10];	
 	int8	ClientSession[25];
 	bool	Process();
-	void	SaveErrorsToDB(EQApplicationPacket* app, char* type);
+	void	SaveErrorsToDB(EQApplicationPacket* app, char* type, int32 version);
 	void	CharacterApproved(int32 server_id,int32 char_id);
 	void	CharacterRejected(int8 reason_number);
 	EQStream* getConnection() { return eqnc; }

@@ -283,7 +283,7 @@ public:
 	
 	EQ2Packet* GetZoneInfoPacket(Client* client);
 	Spawn*	FindSpawn(Player* searcher, const char* name);
-	void	CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn = 0, const char* message = 0);
+	bool	CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn = 0, const char* message = 0);
 	void	SendSpawnVisualState(Spawn* spawn, int16 type);
 	void	SendSpellFailedPacket(Client* client, int16 error);
 	void	SendInterruptPacket(Spawn* interrupted, LuaSpell* spell);

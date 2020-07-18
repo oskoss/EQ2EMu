@@ -765,7 +765,7 @@ public:
 	vector<EntityCommand*>* GetSecondaryCommands() {return &secondary_command_list;}
 	EntityCommand* FindEntityCommand(string command, bool primaryOnly=false);
 	virtual EQ2Packet* serialize(Player* player, int16 version);
-	EQ2Packet* spawn_serialize(Player* player, int16 version);
+	EQ2Packet* spawn_serialize(Player* player, int16 version, int16 offset = 0, int32 value = 0, int16 offset2 = 0, int16 offset3 = 0, int16 offset4 = 0, int32 value2 = 0);
 	EQ2Packet* spawn_update_packet(Player* player, int16 version, bool override_changes = false, bool override_vis_changes = false);
 	EQ2Packet* player_position_update_packet(Player* player, int16 version);
 	uchar* spawn_info_changes(Player* spawn, int16 version);
@@ -808,6 +808,55 @@ public:
 	void			SetYOffset(float new_y_offset) { y_offset = new_y_offset; }
 	float			GetZOffset() { return z_offset; }
 	void			SetZOffset(float new_z_offset) { z_offset = new_z_offset; }
+
+	bool HasTrapTriggered() {
+		return trap_triggered;
+	}
+	void SetTrapTriggered(bool triggered) {
+		trap_triggered = triggered;
+	}
+	void AddLootItem(int32 id, int16 charges = 1) {
+		Item* master_item = master_item_list.GetItem(id);
+		if (master_item) {
+			Item* item = new Item(master_item);
+			item->details.count = charges;
+			loot_items.push_back(item);
+		}
+	}
+	bool HasLoot() {
+		if (loot_items.size() == 0 && loot_coins == 0)
+			return false;
+		return true;
+	}
+	bool HasLootItemID(int32 id);
+	int32 GetLootItemID();
+	Item* LootItem(int32 id);
+	vector<Item*>* GetLootItems() {
+		return &loot_items;
+	}
+	void LockLoot() {
+		MLootItems.lock();
+	}
+	void UnlockLoot() {
+		MLootItems.unlock();
+	}
+	int32 GetLootCoins() {
+		return loot_coins;
+	}
+	void SetLootCoins(int32 val) {
+		loot_coins = val;
+	}
+	void AddLootCoins(int32 coins) {
+		loot_coins += coins;
+	}
+
+	void ClearLootList() {
+		vector<Item*>::iterator itr;
+		for (itr = loot_items.begin(); itr != loot_items.end(); itr++)
+			safe_delete(*itr);
+
+		loot_items.clear();
+	}
 
 	Spawn*			GetTarget();
 	void			SetTarget(Spawn* spawn);
@@ -1103,8 +1152,12 @@ protected:
 	MutexList<SpawnProximity*> spawn_proximities;
 
 	void CheckProximities();
-private:	
+private:		
+	vector<Item*>	loot_items;
+	int32			loot_coins;
+	bool			trap_triggered;
 	deque<MovementLocation*>* movement_locations;
+	Mutex			MLootItems;
 	Mutex*			MMovementLocations;
 	Mutex*			MSpawnGroup;
 	int8			size_offset;

@@ -56,6 +56,33 @@ struct LS_LoginResponse{
 	int16	unknown12;
 };
 #pragma pack()
+enum EQ2_EquipmentSlot {
+	slot_primary=0,
+	slot_secondary=1,
+	slot_head=2,
+	slot_chest=3,
+	slot_shoulders=4,
+	slot_forearms=5,
+	slot_hands=6,
+	slot_legs=7,
+	slot_feet=8,
+	slot_left_ring=9,
+	slot_right_ring=10,
+	slot_ears=11,
+	slot_neck=12,
+	slot_left_wrist=13,
+	slot_right_wrist=14,
+	slot_ranged=15,
+	slot_ammo=16,
+	slot_waist=17,
+	slot_activate1=18,
+	slot_activate2=19,
+	slot_textures=20,
+	slot_hair=21,
+	slot_beard=22,
+	slot_naked_chest=23,
+	slot_naked_legs=24
+};
 struct EQ2_EquipmentItem{
 	int16		type;
 	EQ2_Color	color;
@@ -166,6 +193,7 @@ struct AppearanceData {
 	int8			icon;
 	int8            hide_hood;
 	int8			show_level;
+
 	int8			locked_no_loot;
 	int8			quest_flag;
 	int8			heroic_flag;
@@ -223,6 +251,40 @@ struct Player_Update{
 /*0144*/	float	speed_y;
 /*0148*/	float	speed_z;
 };
+struct Player_Update283 {
+	/*0000*/	int32	activity;
+	/*0004*/	int32	movement_mode; // 1
+	/*0008*/	float	direction1;
+	/*0012*/	float	desiredpitch;
+	/*0016*/	float	desired_heading_speed;
+	/*0020*/	float	desired_pitch_speed;
+	/*0024*/	float	collision_radius;
+	/*0028*/	float	collision_scale;
+	/*0032*/	float	temp_scale;
+	/*0036*/	float	speed_modifier;
+	/*0040*/	float	swim_speed_modifier;
+	/*0044*/	float	speed;
+	/*0048*/	float	side_speed;
+	/*0052*/	float	vert_speed;
+	/*0056*/	float	orig_x;
+	/*0060*/	float	orig_y;
+	/*0064*/	float	orig_z;
+	/*0068*/	float	orig_x2;
+	/*0072*/	float	orig_y2;
+	/*0076*/	float	orig_z2;
+	/*0080*/	int32	face_actor_id;
+	/*0084*/	int32	face_actor_range;
+	/*0088*/	int32	grid_location;
+	/*0092*/	float	x;
+	/*0096*/	float	y;
+	/*0100*/	float	z;
+	/*0104*/	float	direction2;
+	/*0108*/	float	pitch;
+	/*0112*/	float	roll;
+	/*0116*/	float	speed_x;
+	/*0120*/	float	speed_y;
+	/*0124*/	float	speed_z;
+};//0128
 struct Player_Update1096{
 /*0000*/	int32	activity;
 /*0004*/	float	unknown2; // 1

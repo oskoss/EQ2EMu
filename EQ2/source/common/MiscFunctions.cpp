@@ -422,7 +422,7 @@ bool Unpack(int32 srcLen, uchar* data, uchar* dst, int16 dstLen, int16 version, 
     return srcLen <= 0;
 }
 
-int32 Pack(uchar* data, uchar* src, int16 srcLen, int16 dstLen, int16 version) {
+int32 Pack(uchar* data, uchar* src, int16 srcLen, int16 dstLen, int16 version, bool reverse) {
 	int16	real_pos = 4;
     int32	pos     = 0;
     int32	code    = 0;
@@ -430,17 +430,22 @@ int32 Pack(uchar* data, uchar* src, int16 srcLen, int16 dstLen, int16 version) {
     int		codeLen = 0;
     int8	zeroLen = 0;
 	memset(data,0,dstLen);
-
+	if (version > 1 && version <= 283)
+		reverse = false;
     while(pos < srcLen) {
         if(src[pos] || codeLen) {
             if(!codeLen) {
-                if(zeroLen > 5) {
+                /*if(zeroLen > 5) {
 					data[real_pos++] = zeroLen;
                     zeroLen = 0;
                 }
 				else if(zeroLen >= 1 && zeroLen<=5){
 					for(;zeroLen>0;zeroLen--)
 						codeLen++;
+				}*/
+				if (zeroLen) {
+					data[real_pos++] = zeroLen;
+					zeroLen = 0;
 				}
                 codePos = real_pos;
                 code    = 0;
@@ -472,7 +477,8 @@ int32 Pack(uchar* data, uchar* src, int16 srcLen, int16 dstLen, int16 version) {
     } else if(zeroLen) {
         data[real_pos++] = zeroLen;
     }
-	Reverse(data + 4, real_pos - 4);
+	if(reverse)
+		Reverse(data + 4, real_pos - 4);
     int32 dataLen = real_pos - 4;
 	memcpy(&data[0], &dataLen, sizeof(int32));
     return dataLen + 4;
@@ -528,6 +534,15 @@ void Encode(uchar* dst, uchar* src, int16 len) {
     memcpy(dst, data, len);
 	safe_delete_array(data);
 }
+
+float TransformToFloat(sint16 data, int8 bits) {
+	return (float)(data / (float)(1 << bits));
+}
+
+sint16 TransformFromFloat(float data, int8 bits) {
+	return (sint16)(data * (1 << bits));
+}
+
 void	SetColor(EQ2_Color* color, long data){
 	memcpy(color, &data, sizeof(EQ2_Color));
 }
@@ -794,20 +809,22 @@ int16 GetItemPacketType(int32 version) {
 		item_version = 0x3EFE;
 	else if (version >= 1188)
 		item_version = 0x3DFE;
-	else if(version >= 1096)
+	else if (version >= 1096)
 		item_version = 0x35FE;
-	else if(version >= 1027)
+	else if (version >= 1027)
 		item_version = 0x31FE;
-	else if(version >= 1008)
+	else if (version >= 1008)
 		item_version = 0x2CFE;
-	else if(version >= 927)
+	else if (version >= 927)
 		item_version = 0x23FE;
-	else if(version >= 893)
+	else if (version >= 893)
 		item_version = 0x22FE;
-	else if(version >= 860)
+	else if (version >= 860)
 		item_version = 0x20FE;
-	else
+	else if (version > 546)
 		item_version = 0x1CFE;
+	else
+		item_version = 0;
 
 	return item_version;
 }

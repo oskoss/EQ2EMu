@@ -1682,16 +1682,40 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	packet->setSubstructDataByName("header_info", "unknown21", 0x00000000);
 	packet->setSubstructDataByName("header_info", "condition", generic_info.condition);
 	packet->setSubstructDataByName("header_info", "weight", generic_info.weight);
-	if(generic_info.skill_req1 == 0)
-		packet->setSubstructDataByName("header_info", "skill_req1", 0xFFFFFFFF);
-	else
-		packet->setSubstructDataByName("header_info", "skill_req1", generic_info.skill_req1);
-	if(generic_info.skill_req2 == 0)
-		packet->setSubstructDataByName("header_info", "skill_req2", 0xFFFFFFFF);
-	else
-		packet->setSubstructDataByName("header_info", "skill_req2", generic_info.skill_req2);
+	if (packet->GetVersion() <= 283) { //orig client only has one skill
+		if (generic_info.skill_req1 == 0 || generic_info.skill_req1 == 0xFFFFFFFF) {
+			if (generic_info.skill_req2 != 0 && generic_info.skill_req2 != 0xFFFFFFFF) {
+				packet->setSubstructDataByName("header_info", "skill_req1", generic_info.skill_req2);
+			}
+			else {
+				packet->setSubstructDataByName("header_info", "skill_req1", 0xFFFFFFFF);
+			}
+		}
+		else {
+			packet->setSubstructDataByName("header_info", "skill_req1", generic_info.skill_req1);
+		}
+	}
+	else {
+		if (generic_info.skill_req1 == 0)
+			packet->setSubstructDataByName("header_info", "skill_req1", 0xFFFFFFFF);
+		else
+			packet->setSubstructDataByName("header_info", "skill_req1", generic_info.skill_req1);
+		if (generic_info.skill_req2 == 0)
+			packet->setSubstructDataByName("header_info", "skill_req2", 0xFFFFFFFF);
+		else
+			packet->setSubstructDataByName("header_info", "skill_req2", generic_info.skill_req2);
+	}
 	if(generic_info.skill_min != 0)
 		packet->setSubstructDataByName("header_info", "skill_min", generic_info.skill_min);
+	if (client->GetVersion() <= 283) {
+		string flags;
+		if (CheckFlag(NO_TRADE))
+			flags += "NO-TRADE   ";
+		if (CheckFlag(NO_VALUE))
+			flags += "NO-VALUE   ";
+		if(flags.length() > 0)
+			packet->setSubstructDataByName("header_info", "flag_names", flags.c_str());
+	}
 	if(generic_info.adventure_classes > 0 || generic_info.tradeskill_classes > 0 || item_level_overrides.size() > 0){
 		//int64 classes = 0;
 		int16 tmp_level = 0;
@@ -1785,7 +1809,10 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			classes = 36024082983773912;
 		
 	}
-
+	if (client->GetVersion() <= 283 && generic_info.adventure_default_level > 0) {
+		packet->setSubstructDataByName("header_info", "skill_min", (generic_info.adventure_default_level-1)*5+1);
+		packet->setSubstructDataByName("header_info", "skill_recommended", details.recommended_level * 5);
+	}
 	packet->setSubstructDataByName("footer", "recommended_level", details.recommended_level);
 	if(generic_info.adventure_default_level > 0){
 		packet->setSubstructDataByName("footer", "required_level", generic_info.adventure_default_level);
@@ -1799,6 +1826,14 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		packet->setSubstructArrayLengthByName("header_info", "slot_count", slot_data.size());
 		for(int32 i=0;i<slot_data.size();i++){
 			int8 slot = slot_data[i];
+			if (client->GetVersion() <= 283) {
+				if (slot > EQ2_EARS_SLOT_1 && slot <= EQ2_WAIST_SLOT) //they added a second ear slot later, adjust for only 1 original slot
+					slot -= 1;
+				else if (slot == EQ2_FOOD_SLOT)
+					slot = EQ2_ORIG_FOOD_SLOT;
+				else if(slot == EQ2_DRINK_SLOT)
+					slot = EQ2_ORIG_DRINK_SLOT;
+			}
 			packet->setArrayDataByName("slot", slot, i);
 		}
 	}
@@ -1810,95 +1845,130 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		switch(generic_info.item_type){
 			case ITEM_TYPE_WEAPON:{
 				if(weapon_info){
-					packet->setDataByName("wield_type", weapon_info->wield_type);
-					packet->setDataByName("damage_low1", weapon_info->damage_low1);
-					packet->setDataByName("damage_high1", weapon_info->damage_high1);
-					packet->setDataByName("damage_low2", weapon_info->damage_low2);
-					packet->setDataByName("damage_high2", weapon_info->damage_high2);
-					packet->setDataByName("damage_low3", weapon_info->damage_low3);
-					packet->setDataByName("damage_high3", weapon_info->damage_high3);
-					packet->setDataByName("damage_type", weapon_type);
-					packet->setDataByName("delay", weapon_info->delay);
-					packet->setDataByName("rating", weapon_info->rating);
+					if (client->GetVersion() <= 283) {
+						packet->setSubstructDataByName("details", "wield_type", weapon_info->wield_type);
+						packet->setSubstructDataByName("details", "damage_low1", weapon_info->damage_low1);
+						packet->setSubstructDataByName("details", "damage_high1", weapon_info->damage_high1);
+						packet->setSubstructDataByName("details", "damage_low2", weapon_info->damage_low2);
+						packet->setSubstructDataByName("details", "damage_high2", weapon_info->damage_high2);
+						packet->setSubstructDataByName("details", "damage_type", weapon_type);
+						packet->setSubstructDataByName("details", "delay", weapon_info->delay);
+					}
+					else {
+						packet->setDataByName("wield_type", weapon_info->wield_type);
+						packet->setDataByName("damage_low1", weapon_info->damage_low1);
+						packet->setDataByName("damage_high1", weapon_info->damage_high1);
+						packet->setDataByName("damage_low2", weapon_info->damage_low2);
+						packet->setDataByName("damage_high2", weapon_info->damage_high2);
+						packet->setDataByName("damage_low3", weapon_info->damage_low3);
+						packet->setDataByName("damage_high3", weapon_info->damage_high3);
+						packet->setDataByName("damage_type", weapon_type);
+						packet->setDataByName("delay", weapon_info->delay);
+						packet->setDataByName("rating", weapon_info->rating);
+					}
 				}
 				break;
 			}
 			case ITEM_TYPE_RANGED:{
 				if(ranged_info){
-					packet->setDataByName("damage_low1", ranged_info->weapon_info.damage_low1);
-					packet->setDataByName("damage_high1", ranged_info->weapon_info.damage_high1);
-					packet->setDataByName("damage_low2", ranged_info->weapon_info.damage_low2);
-					packet->setDataByName("damage_high2", ranged_info->weapon_info.damage_high2);
-					packet->setDataByName("damage_low3", ranged_info->weapon_info.damage_low3);
-					packet->setDataByName("damage_high3", ranged_info->weapon_info.damage_high3);
-					packet->setDataByName("delay", ranged_info->weapon_info.delay);
-					packet->setDataByName("range_low", ranged_info->range_low);
-					packet->setDataByName("range_high", ranged_info->range_high);
-					packet->setDataByName("rating", ranged_info->weapon_info.rating);
+					if (client->GetVersion() <= 283) {
+						packet->setSubstructDataByName("details", "damage_low1", ranged_info->weapon_info.damage_low1);
+						packet->setSubstructDataByName("details", "damage_high1", ranged_info->weapon_info.damage_high1);
+						packet->setSubstructDataByName("details", "damage_low2", ranged_info->weapon_info.damage_low2);
+						packet->setSubstructDataByName("details", "damage_high2", ranged_info->weapon_info.damage_high2);
+						packet->setSubstructDataByName("details", "delay", ranged_info->weapon_info.delay);
+						packet->setSubstructDataByName("details", "range_low", ranged_info->range_low);
+						packet->setSubstructDataByName("details", "range_high", ranged_info->range_high);
+					}
+					else {
+						packet->setDataByName("damage_low1", ranged_info->weapon_info.damage_low1);
+						packet->setDataByName("damage_high1", ranged_info->weapon_info.damage_high1);
+						packet->setDataByName("damage_low2", ranged_info->weapon_info.damage_low2);
+						packet->setDataByName("damage_high2", ranged_info->weapon_info.damage_high2);
+						packet->setDataByName("damage_low3", ranged_info->weapon_info.damage_low3);
+						packet->setDataByName("damage_high3", ranged_info->weapon_info.damage_high3);
+						packet->setDataByName("delay", ranged_info->weapon_info.delay);
+						packet->setDataByName("range_low", ranged_info->range_low);
+						packet->setDataByName("range_high", ranged_info->range_high);
+						packet->setDataByName("rating", ranged_info->weapon_info.rating);
+					}
 				}
 				break;
 			}
 			case ITEM_TYPE_SHIELD:
 			case ITEM_TYPE_ARMOR:{
 				if(armor_info){
-					packet->setDataByName("mitigation_low", armor_info->mitigation_low);
-					packet->setDataByName("mitigation_high", armor_info->mitigation_high);
+					if (client->GetVersion() <= 283) {
+						packet->setSubstructDataByName("details", "mitigation_low", armor_info->mitigation_low);
+						packet->setSubstructDataByName("details", "mitigation_high", armor_info->mitigation_high);
+					}
+					else {
+						packet->setDataByName("mitigation_low", armor_info->mitigation_low);
+						packet->setDataByName("mitigation_high", armor_info->mitigation_high);
+					}
 				}
 				break;
 			}
 			case ITEM_TYPE_BAG:{
 				if(bag_info){
-					int16 free_slots=bag_info->num_slots;
-					if(player){
-						Item* bag = player->GetPlayerItemList()->GetItemFromUniqueID(details.unique_id, true);
-						if(bag && bag->IsBag()){
-							vector<Item*>* bag_items = player->GetPlayerItemList()->GetItemsInBag(bag);
-							if(bag_items->size() > bag->bag_info->num_slots){
-								free_slots = 0;
-								packet->setArrayLengthByName("num_names", bag->bag_info->num_slots);
-							}
-							else{
-								free_slots = bag->bag_info->num_slots - bag_items->size();
-								packet->setArrayLengthByName("num_names", bag_items->size());
-							}
-							vector<Item*>::iterator itr;
-							int16 i = 0;
-							Item* tmp_bag_item = 0;
-							for(itr = bag_items->begin(); itr != bag_items->end();itr++){
-								tmp_bag_item = *itr;
-								if(tmp_bag_item && tmp_bag_item->details.slot_id < bag->bag_info->num_slots){
-									packet->setArrayDataByName("item_name", tmp_bag_item->name.c_str(), i);
-									i++;
-								}
-							}
-							safe_delete(bag_items);
-						}
+					if (client->GetVersion() <= 283) {
+						if (bag_info->num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
+							bag_info->num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
+						packet->setSubstructDataByName("details", "num_slots", bag_info->num_slots);
+						packet->setSubstructDataByName("details", "weight_reduction", bag_info->weight_reduction);
 					}
-					packet->setDataByName("num_slots", bag_info->num_slots);
-					packet->setDataByName("num_empty", free_slots);
-					packet->setDataByName("weight_reduction", bag_info->weight_reduction);
-					packet->setDataByName("item_score", 2);
-					//packet->setDataByName("unknown5", 0x1e50a86f);
-					//packet->setDataByName("unknown6", 0x2c17f61d);
-					//1 armorer
-					//2 weaponsmith
-					//4 tailor
-					//16 jeweler 
-					//32 sage
-					//64 alchemist
-					//120 all scholars
-					//250 all craftsman
- 					//int8 blah[] = {0x00,0x00,0x01,0x01,0xb6,0x01,0x01};
-					//int8 blah[] = {0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
-   					int8 blah[] = {0xd8,0x66,0x9b,0x6d,0xb6,0xfb,0x7f};
-					for(int8 i=0;i<sizeof(blah);i++)
-						packet->setSubstructDataByName("footer", "footer_unknown_0", blah[i], 0, i);
-					
+					else {
+						int16 free_slots = bag_info->num_slots;
+						if (player) {
+							Item* bag = player->GetPlayerItemList()->GetItemFromUniqueID(details.unique_id, true);
+							if (bag && bag->IsBag()) {
+								vector<Item*>* bag_items = player->GetPlayerItemList()->GetItemsInBag(bag);
+								if (bag_items->size() > bag->bag_info->num_slots) {
+									free_slots = 0;
+									packet->setArrayLengthByName("num_names", bag->bag_info->num_slots);
+								}
+								else {
+									free_slots = bag->bag_info->num_slots - bag_items->size();
+									packet->setArrayLengthByName("num_names", bag_items->size());
+								}
+								vector<Item*>::iterator itr;
+								int16 i = 0;
+								Item* tmp_bag_item = 0;
+								for (itr = bag_items->begin(); itr != bag_items->end(); itr++) {
+									tmp_bag_item = *itr;
+									if (tmp_bag_item && tmp_bag_item->details.slot_id < bag->bag_info->num_slots) {
+										packet->setArrayDataByName("item_name", tmp_bag_item->name.c_str(), i);
+										i++;
+									}
+								}
+								safe_delete(bag_items);
+							}
+						}
+						packet->setDataByName("num_slots", bag_info->num_slots);
+						packet->setDataByName("num_empty", free_slots);
+						packet->setDataByName("weight_reduction", bag_info->weight_reduction);
+						packet->setDataByName("item_score", 2);
+						//packet->setDataByName("unknown5", 0x1e50a86f);
+						//packet->setDataByName("unknown6", 0x2c17f61d);
+						//1 armorer
+						//2 weaponsmith
+						//4 tailor
+						//16 jeweler 
+						//32 sage
+						//64 alchemist
+						//120 all scholars
+						//250 all craftsman
+						//int8 blah[] = {0x00,0x00,0x01,0x01,0xb6,0x01,0x01};
+						//int8 blah[] = {0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+						int8 blah[] = { 0xd8,0x66,0x9b,0x6d,0xb6,0xfb,0x7f };
+						for (int8 i = 0; i < sizeof(blah); i++)
+							packet->setSubstructDataByName("footer", "footer_unknown_0", blah[i], 0, i);
+					}
 				}
 				break;
 			}
 			case ITEM_TYPE_FOOD:{
-				if(food_info){
+				if(food_info && client->GetVersion() >=284){
 					packet->setDataByName("food_type", food_info->type);
 					packet->setDataByName("level", food_info->level);
 					packet->setDataByName("duration", food_info->duration);
@@ -1910,7 +1980,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				if(skill_info->spell_id > 0){
 					Spell* spell = master_spell_list.GetSpell(skill_info->spell_id, skill_info->spell_tier);
 					if(spell){
-						if(player) {
+						if(player && client->GetVersion() >= 284) {
 							packet->setSubstructDataByName("header_info", "footer_type", 0);
 							
 							spell->SetPacketInformation(packet, player->GetZone()->GetClientBySpawn(player));
@@ -1926,8 +1996,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 							packet->setDataByName("require_previous", 0);
 							
 						}
-						else {
-							
+						else {							
 							spell->SetPacketInformation(packet);
 						}
 
@@ -1937,7 +2006,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				break;
 			}
 			case ITEM_TYPE_BAUBLE:{
-				if(bauble_info){
+				if(bauble_info && client->GetVersion() >= 284){
 					packet->setDataByName("cast", bauble_info->cast);
 					packet->setDataByName("recovery", bauble_info->recovery);
 					packet->setDataByName("duration", bauble_info->duration);
@@ -1953,7 +2022,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				break;
 			}
 			case ITEM_TYPE_THROWN:{
-				if(thrown_info){
+				if(thrown_info && client->GetVersion() >= 284){
 					packet->setDataByName("range", thrown_info->range);
 					packet->setDataByName("damage_modifier", thrown_info->damage_modifier);
 					packet->setDataByName("hit_bonus", thrown_info->hit_bonus);
@@ -1962,7 +2031,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				break;
 			}
 			case ITEM_TYPE_HOUSE:{
-				if(houseitem_info){
+				if(houseitem_info && client->GetVersion() >= 284){
 					packet->setDataByName("status_rent_reduction", houseitem_info->status_rent_reduction);
 					packet->setDataByName("coin_rent_reduction", houseitem_info->coin_rent_reduction);
 					packet->setDataByName("house_only", houseitem_info->house_only);
@@ -1970,7 +2039,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				break;
 			}
 			case ITEM_TYPE_BOOK:{
-				if(book_info){
+				if(book_info && client->GetVersion() >= 284){
 					packet->setDataByName("language", book_info->language);
 					packet->setMediumStringByName("author", book_info->author.data.c_str());
 					packet->setMediumStringByName("title", book_info->title.data.c_str());
@@ -2001,22 +2070,23 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			}
 			case ITEM_TYPE_ADORNMENT:{
 				//Adornements
-				packet->setDataByName("item_types",adornment_info->item_types);
-				packet->setDataByName("duration", adornment_info->duration); // need to calcualte for remaining duration
-				packet->setDataByName("slot_type", adornment_info->slot_type);
-				packet->setDataByName("footer_set_name", "test footer set name");
-				packet->setArrayLengthByName("footer_set_bonus_list_count", 1);// list of the bonus items
+				if (client->GetVersion() >= 284) {
+					packet->setDataByName("item_types", adornment_info->item_types);
+					packet->setDataByName("duration", adornment_info->duration); // need to calcualte for remaining duration
+					packet->setDataByName("slot_type", adornment_info->slot_type);
+					packet->setDataByName("footer_set_name", "test footer set name");
+					packet->setArrayLengthByName("footer_set_bonus_list_count", 1);// list of the bonus items
 					packet->setArrayDataByName("footer_set_bonus_items_needed", 2, 0);  //this is nember of items needed for granteing that  stat //name,value,array
 					packet->setSubArrayLengthByName("footer_set_bonus_stats_count", 2, 0);//name,value,array,subarray
-						packet->setSubArrayDataByName("set_stat_type", 5, 0,0);
-						packet->setSubArrayDataByName("set_stat_subtype", 1, 0, 0);
-						packet->setSubArrayDataByName("set_value", 25000, 0, 0);
+					packet->setSubArrayDataByName("set_stat_type", 5, 0, 0);
+					packet->setSubArrayDataByName("set_stat_subtype", 1, 0, 0);
+					packet->setSubArrayDataByName("set_value", 25000, 0, 0);
+				}
 						
-			}
-			
+			}			
 			case ITEM_TYPE_HOUSE_CONTAINER:{
 				//House Containers
-				if(housecontainer_info){
+				if(housecontainer_info && client->GetVersion() >= 284){
 					packet->setDataByName("allowed_types", housecontainer_info->allowed_types);
 					packet->setDataByName("num_slots", housecontainer_info->num_slots);
 					packet->setDataByName("broker_commission", housecontainer_info->broker_commission);
@@ -2120,10 +2190,13 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 
 PacketStruct* Item::PrepareItem(int16 version, bool merchant_item, bool loot_item){
 	PacketStruct* packet = 0;
-	if(loot_item)
+	if(loot_item && version > 546)
 		packet = configReader.getStruct("WS_LootItemGeneric", version);
-	else{
-		switch(generic_info.item_type){
+	else{		
+		int8 tmpType = generic_info.item_type;
+		if (version <= 283 && generic_info.item_type > ITEM_TYPE_RECIPE)
+			tmpType = 0;
+		switch(tmpType){
 			case ITEM_TYPE_WEAPON:{
 				if(merchant_item)
 					packet = configReader.getStruct("WS_MerchantItemWeapon", version);
@@ -2236,6 +2309,8 @@ PacketStruct* Item::PrepareItem(int16 version, bool merchant_item, bool loot_ite
 					packet = configReader.getStruct("WS_ItemGeneric", version);
 			}
 		}
+		if (packet && loot_item)
+			packet->AddFlag("loot");
 	}
 	if(!packet){
 		LogWrite(ITEM__ERROR, 0, "Item", "Unhandled Item type: %i", (int)generic_info.item_type);
@@ -2248,6 +2323,10 @@ EQ2Packet* Item::serialize(int16 version, bool show_name, Player* player, bool i
 	PacketStruct* packet = PrepareItem(version, merchant_item, loot_item);
 	if(!packet)
 		return 0;
+	if (version <= 546) {
+		include_twice = false;
+		packet_type = 0;
+	}
 	if(include_twice && IsBag() == false && IsBauble() == false && IsFood() == false)
 		serialize(packet, show_name, player, packet_type, 0x80, loot_item);
 	else
@@ -2270,8 +2349,24 @@ EQ2Packet* Item::serialize(int16 version, bool show_name, Player* player, bool i
 	if(include_twice && IsBag() == false && IsBauble() == false && IsFood() == false){
 		memcpy(out_ptr, (uchar*)generic_string_data->c_str() + 13, generic_string_data->length() -13);
 	}
-	int32 size2 = size-4;
-	memcpy(out_data, &size2, sizeof(int32));
+	int32 size2 = size;
+	if (version <= 283) {
+		uchar* out_ptr2 = out_data;
+		if (size2 >= 0xFF) {
+			size2 -= 3;			
+			out_ptr2[0] = 0xFF;
+			out_ptr2 += sizeof(int8);
+			memcpy(out_ptr2, &size2, sizeof(int16));
+		}
+		else {
+			size2 -= 1;
+			out_ptr2[0] = size2;
+		}
+	}
+	else {
+		size2 -= 4;
+		memcpy(out_data, &size2, sizeof(int32));
+	}
 	EQ2Packet* outapp = new EQ2Packet(OP_ClientCmdMsg, out_data, size);
 	//DumpPacket(outapp);
 	safe_delete(packet);
@@ -2971,6 +3066,7 @@ EQ2Packet* PlayerItemList::serialize(Player* player, int16 version){
 #endif
 		packet->setDataByName("equip_flag",0);
 		app = packet->serializeCountPacket(version, 1, orig_packet, xor_packet);
+		DumpPacket(app);
 		safe_delete(packet);
 	}
 	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
@@ -2983,15 +3079,20 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 	if (!packet || !player)
 		return;
 	client = player->GetZone()->GetClientBySpawn(player);
-	
-	
+	if (!client)
+		return;
 	
 	int32 menu_data = 3;
-
 	if(item->slot_data.size() > 0)
-		menu_data -= ITEM_MENU_TYPE_GENERIC;
-	if(item->details.num_slots > 0)
+		menu_data -= ITEM_MENU_TYPE_GENERIC;	
+
+	if (item->details.num_slots > 0) {
+		if (packet->GetVersion() <= 283 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
+			item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
 		menu_data += ITEM_MENU_TYPE_BAG;
+		if (item->details.num_free_slots == item->details.num_slots)
+			menu_data += ITEM_MENU_TYPE_EMPTY_BAG;
+	}
 	if (item->details.item_id == 21355) {
 		//menu_data += ITEM_MENU_TYPE_GENERIC;
 		//menu_data += ITEM_MENU_TYPE_EQUIP;
@@ -3006,7 +3107,7 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 		//menu_data += ITEM_MENU_TYPE_BROKEN;
 	}
 	if (item->details.item_id == 21356) {
-		menu_data += ITEM_MENU_TYPE_TEST15;
+		//menu_data += ITEM_MENU_TYPE_TEST15;
 		menu_data += ITEM_MENU_TYPE_ATTUNED;
 		menu_data += ITEM_MENU_TYPE_ATTUNEABLE;
 		menu_data += ITEM_MENU_TYPE_BOOK;
@@ -3034,11 +3135,10 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 	}
 	if(item->IsSkill()){
 		Spell* spell = master_spell_list.GetSpell(item->skill_info->spell_id, item->skill_info->spell_tier);
-		if (spell && spell->ScribeAllowed(player))
-			
+		if (spell && spell->ScribeAllowed(player))			
 			menu_data += ITEM_MENU_TYPE_SCRIBE;
 		else
-			menu_data += ITEM_MENU_TYPE_INVALID;
+			menu_data += ITEM_MENU_TYPE_INSUFFICIENT_KNOWLEDGE;
 	}
 	if(item->IsRecipeBook()){
 		//TODO: Add check to allow scribe
@@ -3050,19 +3150,41 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 	}
 	if (item->generic_info.item_type == 18){
 		menu_data += ITEM_MENU_TYPE_UNPACK; 
-		packet->setSubstructArrayDataByName("items", "unknown3", ITEM_MENU_TYPE2_UNPACK, 0, i);
+		packet->setSubstructArrayDataByName("flag_names", "unknown3", ITEM_MENU_TYPE2_UNPACK, 0, i);
 	}
 
 	if(item->generic_info.condition == 0)
 		menu_data += ITEM_MENU_TYPE_BROKEN;
-	if(item->CheckFlag(ATTUNED) || item->CheckFlag(NO_TRADE))
-		menu_data += ITEM_MENU_TYPE_ATTUNED;
-	else if(item->CheckFlag(ATTUNEABLE))
-		menu_data += ITEM_MENU_TYPE_ATTUNEABLE;
+	if (client->GetVersion() <= 283){
+		string flags;
+		if (item->CheckFlag(NO_TRADE))
+			flags += "NO-TRADE   ";
+		if (item->CheckFlag(NO_VALUE))
+			flags += "NO-VALUE   ";
+		if (flags.length() > 0)
+			packet->setSubstructArrayDataByName("items", "flag_names", flags.c_str(), 0, i);
+	}
+
+	if (item->CheckFlag(ATTUNED) || item->CheckFlag(NO_TRADE)) {
+		if (client->GetVersion() <= 283)
+			menu_data += ORIG_ITEM_MENU_TYPE_ATTUNED;
+		else
+			menu_data += ITEM_MENU_TYPE_ATTUNED;
+	}
+	else if (item->CheckFlag(ATTUNEABLE)) {
+		if (client->GetVersion() <= 283)
+			menu_data += ORIG_ITEM_MENU_TYPE_ATTUNEABLE;
+		else
+			menu_data += ITEM_MENU_TYPE_ATTUNEABLE;
+	}
 	if (item->generic_info.usable == 1)
 		menu_data += ITEM_MENU_TYPE_USE;
-	if (item->details.count > 0 && item->stack_count > 1)
-		menu_data += ITEM_MENU_TYPE_DISPLAY_CHARGES;
+	if (item->details.count > 0 && item->stack_count > 1) {
+		if (client->GetVersion() <= 283)
+			menu_data += ORIG_ITEM_MENU_TYPE_STACKABLE;
+		else
+			menu_data += ITEM_MENU_TYPE_DISPLAY_CHARGES;
+	}
 	// Added the if (overflow) so mouseover examines work properly
 	if (overflow)
 		packet->setSubstructArrayDataByName("items", "unique_id", item->details.item_id, 0, i);
@@ -3351,12 +3473,15 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 		PacketStruct* packet2 = configReader.getStruct("Substruct_Item", version);
 		packet_size = packet2->GetTotalPacketSize();
 		safe_delete(packet2);
-		packet->setArrayLengthByName("item_count", NUM_SLOTS);
+		int8 num_slots = NUM_SLOTS;
+		if (version <= 564)
+			num_slots = 22;
+		packet->setArrayLengthByName("item_count", num_slots);
 		if(!orig_packet){
-			xor_packet = new uchar[packet_size*NUM_SLOTS];
-			orig_packet = new uchar[packet_size*NUM_SLOTS];
-			memset(xor_packet, 0, packet_size*NUM_SLOTS);
-			memset(orig_packet, 0, packet_size*NUM_SLOTS);
+			xor_packet = new uchar[packet_size* num_slots];
+			orig_packet = new uchar[packet_size* num_slots];
+			memset(xor_packet, 0, packet_size* num_slots);
+			memset(orig_packet, 0, packet_size* num_slots);
 		}
 		MEquipmentItems.lock();
 		int32 menu_data = 3;
@@ -3366,31 +3491,56 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 			if(item && item->details.item_id > 0){
 				if(item->slot_data.size() > 0)
 					menu_data -= ITEM_MENU_TYPE_GENERIC;
-				if(item->details.num_slots > 0)
+				if (item->details.num_slots > 0) {
+					if (packet->GetVersion() <= 283 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
+						item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
 					menu_data += ITEM_MENU_TYPE_BAG;
+					if (item->details.num_free_slots == item->details.num_slots)
+						menu_data += ITEM_MENU_TYPE_EMPTY_BAG;
+				}
 				if(item->IsSkill())
 					menu_data += ITEM_MENU_TYPE_SCRIBE;
 				if(item->generic_info.condition == 0)
 					menu_data += ITEM_MENU_TYPE_BROKEN2;
 				else if (item->generic_info.condition <= 20)
 					menu_data += ITEM_MENU_TYPE_DAMAGED;
-				if(item->CheckFlag(ATTUNED) || item->CheckFlag(NO_TRADE))
-					menu_data += ITEM_MENU_TYPE_ATTUNED;
-				else if(item->CheckFlag(ATTUNEABLE))
-					menu_data += ITEM_MENU_TYPE_ATTUNEABLE;
+				if (item->CheckFlag(ATTUNED) || item->CheckFlag(NO_TRADE)) {
+					if (version <= 283)
+						menu_data += ORIG_ITEM_MENU_TYPE_ATTUNED;
+					else
+						menu_data += ITEM_MENU_TYPE_ATTUNED;
+				}
+				else if (item->CheckFlag(ATTUNEABLE)) {
+					if (version <= 283)
+						menu_data += ORIG_ITEM_MENU_TYPE_ATTUNEABLE;
+					else
+						menu_data += ITEM_MENU_TYPE_ATTUNEABLE;
+				}
 				if (item->generic_info.usable == 1)
 					menu_data += ITEM_MENU_TYPE_USE;
 				if (item->IsFood())
 				{
-					menu_data += ITEM_MENU_TYPE_CONSUME;
-					if (player && ((item->IsFoodFood() && player->get_character_flag(CF_FOOD_AUTO_CONSUME)) || (item->IsFoodDrink() && player->get_character_flag(CF_DRINK_AUTO_CONSUME))))
-						menu_data += ITEM_MENU_TYPE_CONSUME_OFF;
+					if (version <= 283) {						
+						if (item->IsFoodDrink())
+							menu_data += ORIG_ITEM_MENU_TYPE_DRINK;
+						else
+							menu_data += ORIG_ITEM_MENU_TYPE_FOOD;
+					}
+					else {
+						menu_data += ITEM_MENU_TYPE_CONSUME;
+						if (player && ((item->IsFoodFood() && player->get_character_flag(CF_FOOD_AUTO_CONSUME)) || (item->IsFoodDrink() && player->get_character_flag(CF_DRINK_AUTO_CONSUME))))
+							menu_data += ITEM_MENU_TYPE_CONSUME_OFF;
+					}
 				}
 				packet->setSubstructArrayDataByName("items", "unique_id", item->details.unique_id, 0, i);
 				packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id, 0, i);
 				packet->setSubstructArrayDataByName("items", "inv_slot_id", item->details.inv_slot_id, 0, i);
-				if(item->details.count > 0 && item->stack_count > 1)
-					menu_data += ITEM_MENU_TYPE_DISPLAY_CHARGES;
+				if (item->details.count > 0 && item->stack_count > 1) {
+					if (version <= 283)
+						menu_data += ORIG_ITEM_MENU_TYPE_STACKABLE;
+					else
+						menu_data += ITEM_MENU_TYPE_DISPLAY_CHARGES;
+				}
 				packet->setSubstructArrayDataByName("items", "menu_type", menu_data, 0, i);
 				packet->setSubstructArrayDataByName("items", "icon", item->details.icon, 0, i);
 				packet->setSubstructArrayDataByName("items", "slot_id", item->details.slot_id, 0, i);

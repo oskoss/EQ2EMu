@@ -42,7 +42,7 @@ public:
 	char* GetServerAccountName(int32 id);
 	bool  VerifyDelete(int32 account_id, int32 character_id, const char* name);
 	void SetServerZoneDescriptions(int32 server_id, map<int32, LoginZoneUpdate> zone_descriptions);
-
+	int32 GetServer(int32 accountID, int32 charID, string name);
 	void LoadCharacters(LoginAccount* acct, int16 version);
 	void CheckCharacterTimeStamps(LoginAccount* acct);
 	string GetCharacterName(int32 char_id , int32 server_id);
@@ -50,7 +50,7 @@ public:
 	void SaveCharacterFloats(int32 char_id, char* type, float float1, float float2, float float3);
 	int16 GetAppearanceID(string name);
 	void DeactivateCharID(int32 server_id, int32 char_id, int32 exception_id);
-	int32 SaveCharacter(PacketStruct* create, LoginAccount* acct, int32 world_charid);
+	int32 SaveCharacter(PacketStruct* create, LoginAccount* acct, int32 world_charid, int32 client_version);
 	void LoadAppearanceData(int32 char_id, PacketStruct* char_select_packet);
 	bool UpdateCharacterTimeStamp(int32 account_id, int32 character_id, int32 timestamp_update, int32 server_id);
 	bool UpdateCharacterLevel(int32 account_id, int32 character_id, int8 in_level, int32 server_id);

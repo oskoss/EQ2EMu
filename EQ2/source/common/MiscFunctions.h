@@ -48,6 +48,10 @@ sint16  storeInt16String(uchar* buffer, int16 buffer_size, string in_str);
 sint16   storeInt8String(uchar* buffer, int16 buffer_size, string in_str);
 int		MakeRandomInt(int low, int high);
 float	MakeRandomFloat(float low, float high);
+
+float TransformToFloat(sint16 data, int8 bits);
+sint16 TransformFromFloat(float data, int8 bits);
+
 int32	GenerateEQ2Color(float r, float g, float b);
 int32	GenerateEQ2Color(float* rgb[3]);
 void	SetColor(EQ2_Color* color, long data);
@@ -56,7 +60,7 @@ int8	MakeInt8(uchar* data, int16* size);
 int8	MakeInt8(float* input);
 bool	Unpack(int32 srcLen, uchar* data, uchar* dst, int16 dstLen, int16 version = 0, bool reverse = true);
 bool	Unpack(uchar* data, uchar* dst, int16 dstLen, int16 version = 0, bool reverse = true);
-int32	Pack(uchar* data, uchar* src, int16 srcLen, int16 dstLen, int16 version = 0);
+int32	Pack(uchar* data, uchar* src, int16 srcLen, int16 dstLen, int16 version = 0, bool reverse = true);
 void	Reverse(uchar* input, int32 srcLen);
 void	Encode(uchar* dst, uchar* src, int16 len);
 void	Decode(uchar* dst, uchar* src, int16 len);

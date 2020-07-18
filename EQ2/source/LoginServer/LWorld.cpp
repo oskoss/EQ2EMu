@@ -1142,37 +1142,50 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 	PacketStruct* packet = configReader.getStruct("LS_WorldList", version);
 	packet->setArrayLengthByName("num_worlds", tmpCount);
 
-	string world_data;	
-	for( map_list = worldmap.begin(); map_list != worldmap.end(); map_list++) {
+	string world_data;
+	for (map_list = worldmap.begin(); map_list != worldmap.end(); map_list++) {
 		LWorld* world = map_list->second;
 		if ((world->IsInit || (world->ShowDown() && world->ShowDownActive())) && world->GetType() == World) {
 			ServerNum++;
-			packet->setArrayDataByName("id", world->GetID(), ServerNum-1);
+			packet->setArrayDataByName("id", world->GetID(), ServerNum - 1);
 
-			if (version < 1212)
-				packet->setArrayDataByName("allowed_races", 0xFFFFFFFF, ServerNum - 1);
-			else if (version < 60006)
-				packet->setArrayDataByName("allowed_races", 0x000FFFFF, ServerNum - 1); // + Freeblood
+			if (version <= 283) {
+				packet->setArrayDataByName("name", world->GetName(), ServerNum - 1);
+				if (!world->ShowDown())
+					packet->setArrayDataByName("online", 1, ServerNum - 1);
+				if (world->IsLocked())
+					packet->setArrayDataByName("locked", 1, ServerNum - 1);
+				packet->setArrayDataByName("unknown2", 1, ServerNum - 1);
+				packet->setArrayDataByName("unknown3", 1, ServerNum - 1);
+				packet->setArrayDataByName("load", world->GetWorldStatus(), ServerNum - 1);
+			}
 			else
-				packet->setArrayDataByName("allowed_races", 0x001FFFFF, ServerNum - 1);	// + Aerakyn
+			{
+				if (version < 1212)
+					packet->setArrayDataByName("allowed_races", 0xFFFFFFFF, ServerNum - 1);
+				else if (version < 60006)
+					packet->setArrayDataByName("allowed_races", 0x000FFFFF, ServerNum - 1); // + Freeblood
+				else
+					packet->setArrayDataByName("allowed_races", 0x001FFFFF, ServerNum - 1);	// + Aerakyn
 
-			packet->setArrayDataByName("number_online_flag", 1, ServerNum-1);
-			packet->setArrayDataByName("num_players", world->GetPlayerNum(), ServerNum-1);
-			packet->setArrayDataByName("name", world->GetName(), ServerNum-1);
-			packet->setArrayDataByName("name2", world->GetName(), ServerNum-1);
-			packet->setArrayDataByName("feature_set",0, ServerNum-1);
+				packet->setArrayDataByName("number_online_flag", 1, ServerNum - 1);
+				packet->setArrayDataByName("num_players", world->GetPlayerNum(), ServerNum - 1);
+				packet->setArrayDataByName("name", world->GetName(), ServerNum - 1);
+				packet->setArrayDataByName("name2", world->GetName(), ServerNum - 1);
+				packet->setArrayDataByName("feature_set", 0, ServerNum - 1);
 
-			packet->setArrayDataByName("load", world->GetWorldStatus(), ServerNum-1);
-			if(world->IsLocked())
-				packet->setArrayDataByName("locked", 1, ServerNum - 1);
+				packet->setArrayDataByName("load", world->GetWorldStatus(), ServerNum - 1);
+				if (world->IsLocked())
+					packet->setArrayDataByName("locked", 1, ServerNum - 1);
 
-			if(world->ShowDown())
-				packet->setArrayDataByName("tag", 0, ServerNum - 1);
-			else
-				packet->setArrayDataByName("tag", 1, ServerNum - 1);
+				if (world->ShowDown())
+					packet->setArrayDataByName("tag", 0, ServerNum - 1);
+				else
+					packet->setArrayDataByName("tag", 1, ServerNum - 1);
 
-			if ( version < 1212 )
-				packet->setArrayDataByName("unknown", ServerNum, ServerNum - 1);
+				if (version < 1212)
+					packet->setArrayDataByName("unknown", ServerNum, ServerNum - 1);
+			}
 		}
 	}
 
@@ -1189,7 +1202,7 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 	ServerListData.insert(make_pair(version, pack));
 	MWorldMap.releasereadlock();
 
-	SetUpdateServerList( false );
+	SetUpdateServerList(false);
 
 	return ServerListData[version];
 }

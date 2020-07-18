@@ -220,7 +220,7 @@ public:
 	bool			CallItemScript(lua_State* state, int8 num_parameters);
 	bool			RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn = 0, const char* message = 0);
 	bool			CallSpawnScript(lua_State* state, int8 num_parameters);
-	bool			RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn = 0, int32 grid_id = 0);
+	bool			RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn = 0, int32 grid_id = 0, const char* signal = 0);
 	bool			CallZoneScript(lua_State* state, int8 num_parameters);
 	void			ResetFunctionStack(lua_State* state);
 	void			DestroySpells();

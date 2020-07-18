@@ -2,6 +2,44 @@
 <Struct Name="WS_SpawnStruct_Header" ClientVersion="1">
 <Data ElementName="index" Type="int16" Size="1" OversizedValue="255" />
 <Data ElementName="spawn_id" Type="int32" Size="1" />
+<Data ElementName="command_list" Type="int8" Size="1" />
+<Data ElementName="command_list_array" Type="Array" ArraySizeVariable="command_list">
+	<Data ElementName="command_list_name" Type="EQ2_16Bit_String" />
+	<Data ElementName="command_list_max_distance" Type="float" Size="1" />
+	<Data ElementName="command_list_error" Type="EQ2_16Bit_String" Size="1" />
+	<Data ElementName="command_list_command" Type="EQ2_16Bit_String" />
+</Data>
+<Data ElementName="default_command" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="max_distance" Type="float" Size="1" />
+<Data ElementName="group_size" Type="int8" Size="1" />
+<Data ElementName="group_array" Type="Array" ArraySizeVariable="group_size">
+	<Data ElementName="group_spawn_id" Type="int32" />
+</Data>
+<Data ElementName="time_stamp" Type="int32" Size="1" />
+</Struct>
+<Struct Name="WS_SpawnStruct_Header" ClientVersion="546">
+<Data ElementName="index" Type="int16" Size="1" OversizedValue="255" />
+<Data ElementName="spawn_id" Type="int32" Size="1" />
+<Data ElementName="spawn_anim" Type="int16" Size="1" />
+<Data ElementName="unknown2" Type="int32" Size="1" />
+<Data ElementName="command_list" Type="int8" Size="1" />
+<Data ElementName="command_list_array" Type="Array" ArraySizeVariable="command_list">
+	<Data ElementName="command_list_name" Type="EQ2_16Bit_String" />
+	<Data ElementName="command_list_max_distance" Type="float" Size="1" />
+	<Data ElementName="command_list_error" Type="EQ2_16Bit_String" Size="1" />
+	<Data ElementName="command_list_command" Type="EQ2_16Bit_String" />
+</Data>
+<Data ElementName="default_command" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="max_distance" Type="float" Size="1" />
+<Data ElementName="group_size" Type="int8" Size="1" />
+<Data ElementName="group_array" Type="Array" ArraySizeVariable="group_size">
+	<Data ElementName="group_spawn_id" Type="int32" />
+</Data>
+<Data ElementName="time_stamp" Type="int32" Size="1" />
+</Struct>
+<Struct Name="WS_SpawnStruct_Header" ClientVersion="547">
+<Data ElementName="index" Type="int16" Size="1" OversizedValue="255" />
+<Data ElementName="spawn_id" Type="int32" Size="1" />
 <Data ElementName="spawn_anim" Type="int16" Size="1" />
 <Data ElementName="unknown2" Type="int32" Size="1" />
 <Data ElementName="crc" Type="int32" Size="1" />
@@ -45,7 +83,69 @@
 </Data>
 <Data ElementName="time_stamp" Type="int32" Size="1" />
 </Struct>
-<Struct Name="Substruct_SpawnPositionStruct" ClientVersion="1" >
+<Struct Name="Substruct_SpawnPositionStruct" ClientVersion="1" Comment="77 bytes">
+<Data ElementName="pos_grid_id" Type="int32" Size="1" />      
+<Data ElementName="pos_loc_offset" Type="sint16" Size="3" />  <!-- 0x4 -->
+<Data ElementName="pos_x_velocity" Type="sint16" Size="1" /> <!-- 0x0a -->
+<Data ElementName="pos_y_velocity" Type="sint16" Size="1" /> <!-- 0x0c -->
+<Data ElementName="pos_z_velocity" Type="sint16" Size="1" />   <!-- 0x0e -->
+<Data ElementName="pos_heading1" Type="sint16" Size="1" />    <!-- 0x10 -->
+<Data ElementName="pos_heading2" Type="sint16" Size="1" />    <!-- 0x12 -->
+<Data ElementName="pos_speed" Type="sint16" Size="1" />        <!-- 0x14 -->
+<Data ElementName="pos_state" Type="int32" Size="1" />        <!-- 0x16 -->
+<Data ElementName="pos_movement_mode" Type="int8" Size="1" /> <!-- 0x1a -->
+<Data ElementName="pos_dest_loc_offset" Type="sint16" Size="3" /> <!-- 0x1b -->
+<Data ElementName="pos_dest_loc_offset2" Type="sint16" Size="3" /> <!-- 0x21 -->
+<Data ElementName="pos_heading_speed" Type="sint16" Size="1" /> <!-- 0x27 -->
+<Data ElementName="pos_move_type" Type="sint16" Size="1" /> <!-- 0x29 -->
+<Data ElementName="pos_swim_speed_modifier" Type="sint16" Size="1" /> <!-- 0x2b -->
+<Data ElementName="pos_side_speed" Type="sint16" Size="1" /> <!-- 0x2d -->
+<Data ElementName="pos_vert_speed" Type="sint16" Size="1" /> <!-- 0x2f -->
+<Data ElementName="pos_requested_pitch" Type="sint16" Size="1" /> <!-- 0x31 -->
+<Data ElementName="pos_requested_pitch_speed" Type="sint16" Size="1" /> <!-- 0x33 -->
+<Data ElementName="pos_x" Type="float" Size="1" /> <!-- 0x35 -->
+<Data ElementName="pos_y" Type="float" Size="1" /> <!-- 0x39 -->
+<Data ElementName="pos_z" Type="float" Size="1" /> <!-- 0x3d -->
+<Data ElementName="pos_pitch" Type="sint16" Size="1" /> <!-- 0x41 -->
+<Data ElementName="pos_collision_radius" Type="sint16" Size="1" /> <!-- 0x43 -->
+<Data ElementName="pos_size" Type="sint16" Size="1" /> <!-- 0x45 -->
+<Data ElementName="face_actor_id" Type="int32" Size="1" /> <!-- 0x47 -->
+<Data ElementName="actor_stop_range" Type="sint16" Size="1" /> <!-- 0x4b -->
+</Struct>
+<Struct Name="Substruct_SpawnPositionStruct" ClientVersion="546" Comment="88 bytes">
+<Data ElementName="pos_grid_id" Type="int32" Size="1" />      
+<Data ElementName="pos_loc_offset" Type="sint16" Size="3" />  <!-- 0x4 -->
+<Data ElementName="pos_x_velocity" Type="sint16" Size="1" /> <!-- 0x0a -->
+<Data ElementName="pos_y_velocity" Type="sint16" Size="1" /> <!-- 0x0c -->
+<Data ElementName="pos_z_velocity" Type="sint16" Size="1" />   <!-- 0x0e -->
+<Data ElementName="pos_heading1" Type="sint16" Size="1" />    <!-- 0x10 -->
+<Data ElementName="pos_heading2" Type="sint16" Size="1" />    <!-- 0x12 -->
+<Data ElementName="pos_speed" Type="sint16" Size="1" />        <!-- 0x14 -->
+<Data ElementName="pos_state" Type="int32" Size="1" />        <!-- 0x16 -->
+<Data ElementName="pos_movement_mode" Type="int8" Size="1" /> <!-- 0x1a -->
+<Data ElementName="pos_unknown1" Type="int8" Size="1" /> <!-- 0x1b -->
+<Data ElementName="pos_dest_loc_offset" Type="sint16" Size="3" /> <!-- 0x1c -->
+<Data ElementName="pos_dest_loc_offset2" Type="sint16" Size="3" /> <!-- 0x22 -->
+<Data ElementName="pos_heading_speed" Type="sint16" Size="1" /> <!-- 0x28 -->
+<Data ElementName="pos_move_type" Type="sint16" Size="1" /> <!-- 0x2a -->
+<Data ElementName="pos_swim_speed_modifier" Type="sint16" Size="1" /> <!-- 0x2c -->
+<Data ElementName="pos_side_speed" Type="sint16" Size="1" /> <!-- 0x2e -->
+<Data ElementName="pos_vert_speed" Type="sint16" Size="1" /> <!-- 0x30 -->
+<Data ElementName="pos_requested_pitch" Type="sint16" Size="1" /> <!-- 0x32 -->
+<Data ElementName="pos_requested_pitch_speed" Type="sint16" Size="1" /> <!-- 0x34 -->
+<Data ElementName="pos_unknown2" Type="int8" Size="6" /> <!-- 0x36 -->
+<Data ElementName="pos_x" Type="float" Size="1" /> <!-- 0x3c -->
+<Data ElementName="pos_y" Type="float" Size="1" /> <!-- 0x40 -->
+<Data ElementName="pos_z" Type="float" Size="1" /> <!-- 0x44 -->
+<Data ElementName="pos_pitch" Type="sint16" Size="1" /> <!-- 0x48 -->
+<Data ElementName="pos_collision_radius" Type="sint16" Size="1" /> <!-- 0x4a -->
+<Data ElementName="pos_size" Type="sint16" Size="1" /> <!-- 0x4c -->
+<Data ElementName="pos_unknown3" Type="sint16" Size="1" /> <!-- 0x4e -->
+<Data ElementName="face_actor_id" Type="int32" Size="1" /> <!-- 0x50 -->
+<Data ElementName="actor_stop_range" Type="sint16" Size="1" /> <!-- 0x54 -->
+<Data ElementName="pos_unknown4" Type="sint16" Size="1" /> <!-- 0x56 -->
+</Struct>
+<Struct Name="Substruct_SpawnPositionStruct" ClientVersion="547">
 <Data ElementName="pos_grid_id" Type="int32" Size="1" />
 <Data ElementName="pos_x" Type="float" Size="1" />
 <Data ElementName="pos_y" Type="float" Size="1" />
@@ -251,7 +351,211 @@
 <Data ElementName="pos_roll" Type="sint16" />
 <Data ElementName="unknown12" Type="int16" Size="2" />
 </Struct>
-<Struct Name="Substruct_SpawnInfoStruct" ClientVersion="1" >
+<Struct Name="Substruct_SpawnInfoStruct" ClientVersion="1" Comment="796 bytes">
+<Data ElementName="hp_remaining" Type="int32" Size="1" /> <!-- 0 -->
+<Data ElementName="power_percent" Type="int32" Size="1" /> <!-- 4 -->
+<Data ElementName="follow_target" Type="int32" Size="1" /> <!-- 12 -->
+<Data ElementName="target_id" Type="int32" Size="1" /> <!-- 8 -->
+<Data ElementName="unknown1" Type="int8" Size="8" /> <!-- 16 -->
+<Data ElementName="corpse" Type="int8" Size="1" /> <!-- 24 -->
+<Data ElementName="class" Type="int8" Size="1" /> <!-- 25 -->
+<Data ElementName="level" Type="int8" Size="1" /> <!-- 26 -->
+<Data ElementName="difficulty" Type="int8" Size="1" /> <!-- 27 -->
+<Data ElementName="unknown3" Type="int8" Size="1" /> <!-- 28 -->
+<Data ElementName="heroic_flag" Type="int8" Size="1" /> <!-- 29 -->
+<Data ElementName="npc" Type="int8" Size="1" /> <!-- 30 -->
+<Data ElementName="unknown6" Type="int8" Size="1" /> <!-- 31 -->
+<Data ElementName="unknown7" Type="int8" Size="1" /> <!-- 32 -->
+<Data ElementName="merchant" Type="int8" Size="1" /> <!-- 33 -->
+<Data ElementName="unknown9" Type="int8" Size="1" /> <!-- 34 -->
+<Data ElementName="unknown10" Type="int8" Size="1" /> <!-- 35 -->
+<Data ElementName="no_arrow_color_or_highlight" Type="int8" Size="1" /> <!-- 36 -->
+<Data ElementName="no_arrow_color_or_healthbar" Type="int8" Size="1" /> <!-- 37 -->
+<Data ElementName="hand_icon" Type="int8" Size="1" /> <!-- 38   127 -->
+<Data ElementName="hide_health" Type="int8" Size="1" /> <!-- 39 -->
+<Data ElementName="unknown15" Type="int8" Size="1" /> <!-- 40 -->
+<Data ElementName="house_icon" Type="int8" Size="1" /> <!-- 41 -->
+<Data ElementName="in_combat" Type="int8" Size="1" /> <!-- 42 -->
+<Data ElementName="afk" Type="int8" Size="1" /> <!-- 43 -->
+<Data ElementName="roleplaying" Type="int8" Size="1" /> <!-- 44 -->
+<Data ElementName="anonymous" Type="int8" Size="1" /> <!-- 45 -->
+<Data ElementName="linkdead" Type="int8" Size="1" /> <!-- 46 -->
+<Data ElementName="camping" Type="int8" Size="1" /> <!-- 47 -->
+<Data ElementName="lfg" Type="int8" Size="1" /> <!-- 48 -->
+<Data ElementName="solid_object" Type="int8" Size="1" /> <!-- 49 -->
+<Data ElementName="unknown25" Type="int8" Size="1" /> <!-- 50 -->
+<Data ElementName="unknown26" Type="int8" Size="1" /> <!-- 51 -->
+<Data ElementName="unknown27" Type="int8" Size="1" /> <!-- 52 -->
+<Data ElementName="unknown28" Type="int8" Size="1" /> <!-- 53 -->
+<Data ElementName="activity_status" Type="int32" Size="1" /> <!-- 54, not really used in this version -->
+<Data ElementName="model_type" Type="int16" Size="1" /> <!-- 58 -->
+<Data ElementName="skin_color" Type="EQ2_Color" Size="1" /> <!-- 60 -->
+<Data ElementName="eye_color" Type="EQ2_Color" Size="1" /> <!-- 63 -->
+<Data ElementName="equipment_types" Type="int16" Size="21" /> <!-- 66 -->
+<Data ElementName="hair_type_id" Type="int16" Size="1" />
+<Data ElementName="facial_hair_type_id" Type="int16" Size="1" />
+<Data ElementName="chest_type_id" Type="int16" Size="1" />
+<Data ElementName="legs_type_id" Type="int16" Size="1" />
+<Data ElementName="equipment_colors" Type="EQ2_Color" Size="21" /> <!-- 116 -->
+<Data ElementName="hair_type_color" Type="EQ2_Color" />
+<Data ElementName="hair_face_color" Type="EQ2_Color" />
+<Data ElementName="chest_type_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="legs_type_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="equipment_highlights" Type="EQ2_Color" Size="21" /> <!-- 191 -->
+<Data ElementName="hair_type_highlight_color" Type="EQ2_Color" />
+<Data ElementName="hair_face_highlight_color" Type="EQ2_Color" />
+<Data ElementName="chest_type_highlight_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="legs_type_highlight_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="skull_type" Type="sint8" Size="3" /> <!-- 266 -->
+<Data ElementName="eye_type" Type="sint8" Size="3" /> <!-- 269 -->
+<Data ElementName="ear_type" Type="sint8" Size="3" /> <!-- 272 -->
+<Data ElementName="eye_brow_type" Type="sint8" Size="3" /> <!-- 275 -->
+<Data ElementName="cheek_type" Type="sint8" Size="3" /> <!-- 278 -->
+<Data ElementName="lip_type" Type="sint8" Size="3" /> <!-- 281 -->
+<Data ElementName="chin_type" Type="sint8" Size="3" /> <!-- 284 -->
+<Data ElementName="nose_type" Type="sint8" Size="3" /> <!-- 287 -->
+<Data ElementName="body_size" Type="sint8" Size="1" /> <!-- 290 -->
+<Data ElementName="bump_size" Type="sint8" Size="1" /> <!-- 291 -->
+<Data ElementName="mount_type" Type="int16" Size="1" /> <!-- 292 -->
+<Data ElementName="mount_color" Type="EQ2_Color" /> <!-- 294 -->
+<Data ElementName="mount_saddle_color" Type="EQ2_Color" /> <!-- 297 -->
+<Data ElementName="hair_color1" Type="EQ2_Color" /> <!-- 300 -->
+<Data ElementName="hair_color2" Type="EQ2_Color" /> <!-- 303 -->
+<Data ElementName="hair_highlight" Type="EQ2_Color" /> <!-- 306 -->
+<Data ElementName="flags" Type="int8" Size="1" /><!-- 309 1 == invisible, 2 == show_hood, 8 == crouch -->
+<Data ElementName="temporary_scale" Type="float" Size="1" /> <!-- 310 -->
+<Data ElementName="name" Type="char" Size="64" /> <!-- 314 -->
+<Data ElementName="last_name" Type="char" Size="64" /> <!-- 378 -->
+<Data ElementName="name_suffix" Type="char" Size="64" /> <!-- 442 -->
+<Data ElementName="name_prefix" Type="char" Size="64" /> <!-- 506 -->
+<Data ElementName="unknown31" Type="char" Size="64" /> <!-- 570 -->
+<Data ElementName="second_suffix" Type="char" Size="64" /> <!-- 634 -->
+<Data ElementName="persistent_spell_visuals" Type="int16" Size="8" /> <!-- 698 -->
+<Data ElementName="persistent_spell_levels" Type="int8" Size="8" /> <!-- 714 -->
+<Data ElementName="unknown32" Type="int8" Size="64" /> <!-- 722 -->
+<Data ElementName="action_state" Type="int16" Size="1" /> <!-- 786 -->
+<Data ElementName="visual_state" Type="int16" Size="1" /> <!-- 788 -->
+<Data ElementName="mood_state" Type="int16" Size="1" /> <!-- 790 -->
+<Data ElementName="emote_state" Type="int16" Size="1" /> <!-- 792 -->
+<Data ElementName="race" Type="int8" Size="1" /> <!-- 794 -->
+<Data ElementName="gender" Type="int8" Size="1" /> <!-- 795 -->
+</Struct>
+<Struct Name="Substruct_SpawnInfoStruct" ClientVersion="546" >
+<Data ElementName="hp_remaining" Type="int32" Size="1" /> <!-- 0 -->
+<Data ElementName="power_percent" Type="int32" Size="1" /> <!-- 4 -->
+<Data ElementName="spells" Substruct="Substruct_TargetSpellEffects" Size="30" /> <!-- 8 -->
+<Data ElementName="follow_target" Type="int32" Size="1" /> <!-- 278 -->
+<Data ElementName="target_id" Type="int32" Size="1" /> <!-- 282 -->
+<Data ElementName="unknown5" Type="int8" Size="8" /> <!-- 286 -->
+<Data ElementName="corpse" Type="int8" Size="1" /> <!-- 295 -->
+<Data ElementName="class" Type="int8" Size="1" /> <!-- 296 -->
+<Data ElementName="effective_level" Type="int8" Size="1" />
+<Data ElementName="level" Type="int8" Size="1" /> <!-- 297 -->
+<Data ElementName="difficulty" Type="int8" Size="1" /> <!-- 298 -->
+<Data ElementName="unknown6" Type="int8" Size="1" /> <!-- 299 -->
+<Data ElementName="heroic_flag" Type="int8" Size="1" /> <!-- 300 -->
+<Data ElementName="npc" Type="int8" Size="1" /> <!-- 301 -->
+<Data ElementName="unknown7" Type="int8" Size="1" /> <!-- 303 -->
+<Data ElementName="unknown8" Type="int8" Size="1" /> <!-- 303 -->
+<Data ElementName="merchant" Type="int8" Size="1" /> <!-- 304 -->
+<Data ElementName="unknown9" Type="int8" Size="1" /> <!-- 305 -->
+<Data ElementName="unknown10" Type="int8" Size="1" /> <!-- 306 -->
+<Data ElementName="no_arrow_color_or_highlight" Type="int8" Size="1" /> <!-- 307 -->
+<Data ElementName="no_arrow_color_or_healthbar" Type="int8" Size="1" /> <!-- 308 -->
+<Data ElementName="hand_icon" Type="int8" Size="1" /> <!-- 309   127 -->
+<Data ElementName="hide_health" Type="int8" Size="1" /> <!-- 310 -->
+<Data ElementName="unknown11" Type="int8" Size="1" /> <!-- 311 -->
+<Data ElementName="house_icon" Type="int8" Size="1" /> <!-- 312 -->
+<Data ElementName="in_combat" Type="int8" Size="1" /> <!-- 313 -->
+<Data ElementName="afk" Type="int8" Size="1" /> <!-- 314 -->
+<Data ElementName="roleplaying" Type="int8" Size="1" /> <!-- 315 -->
+<Data ElementName="anonymous" Type="int8" Size="1" /> <!-- 316 -->
+<Data ElementName="linkdead" Type="int8" Size="1" /> <!-- 317 -->
+<Data ElementName="camping" Type="int8" Size="1" /> <!-- 318 -->
+<Data ElementName="lfg" Type="int8" Size="1" /> <!-- 319 -->
+<Data ElementName="solid_object" Type="int8" Size="1" /> <!-- 320 -->
+<Data ElementName="unknown12" Type="int8" Size="1" /> <!-- 321 -->
+<Data ElementName="unknown13" Type="int8" Size="1" /> <!-- 322 -->
+<Data ElementName="unknown14" Type="int8" Size="1" /> <!-- 323 -->
+<Data ElementName="unknown15" Type="int8" Size="1" /> <!-- 324 -->
+<Data ElementName="unknown16" Type="int8" Size="1" /> <!-- 325 -->
+<Data ElementName="unknown17" Type="int8" Size="1" /> <!-- 326 -->
+<Data ElementName="activity_status" Type="int32" Size="1" /> <!-- 327 -->
+<Data ElementName="model_type" Type="int16" Size="1" /> <!-- 331 -->
+<Data ElementName="soga_model_type" Type="int16" Size="1" /> <!-- 333 -->
+<Data ElementName="skin_color" Type="EQ2_Color" Size="1" /> <!-- 335 -->
+<Data ElementName="eye_color" Type="EQ2_Color" Size="1" /> <!-- 338 -->
+<Data ElementName="soga_eye_color" Type="EQ2_Color" /> <!-- 341 -->
+<Data ElementName="soga_skin_color" Type="EQ2_Color" /> <!-- 344 -->
+<Data ElementName="equipment_types" Type="int16" Size="23" /> <!-- 347 -->
+<Data ElementName="hair_type_id" Type="int16" Size="1" /> <!-- 393 -->
+<Data ElementName="facial_hair_type_id" Type="int16" Size="1" /> <!-- 395 -->
+<Data ElementName="chest_type_id" Type="int16" Size="1" /> <!-- 397 -->
+<Data ElementName="legs_type_id" Type="int16" Size="1" /> <!-- 399 -->
+<Data ElementName="soga_hair_type_id" Type="int16" Size="1" /> <!-- 401 -->
+<Data ElementName="soga_facial_hair_type_id" Type="int16" Size="1" /> <!-- 403 -->
+<Data ElementName="equipment_colors" Type="EQ2_Color" Size="23" /> <!-- 405 -->
+<Data ElementName="hair_type_color" Type="EQ2_Color" /> <!-- 474 -->
+<Data ElementName="hair_face_color" Type="EQ2_Color" /> <!-- 477 -->
+<Data ElementName="chest_type_color" Type="EQ2_Color" Size="1" /> <!-- 480 -->
+<Data ElementName="legs_type_color" Type="EQ2_Color" Size="1" /> <!-- 483 -->
+<Data ElementName="equipment_highlights" Type="EQ2_Color" Size="23" /> <!-- 486 -->
+<Data ElementName="hair_type_highlight_color" Type="EQ2_Color" /> <!-- 555 -->
+<Data ElementName="hair_face_highlight_color" Type="EQ2_Color" /> <!-- 558 -->
+<Data ElementName="chest_type_highlight_color" Type="EQ2_Color" Size="1" /> <!-- 561 -->
+<Data ElementName="legs_type_highlight_color" Type="EQ2_Color" Size="1" /> <!-- 564 -->
+<Data ElementName="soga_hair_type_color" Type="EQ2_Color" /> <!-- 567 -->
+<Data ElementName="soga_hair_type_highlight_color" Type="EQ2_Color" /> <!-- 570 -->
+<Data ElementName="soga_hair_face_color" Type="EQ2_Color" /> <!-- 573 -->
+<Data ElementName="soga_hair_face_highlight_color" Type="EQ2_Color" /> <!-- 576 -->
+<Data ElementName="skull_type" Type="sint8" Size="3" /> <!-- 579 -->
+<Data ElementName="eye_type" Type="sint8" Size="3" /> <!-- 582 -->
+<Data ElementName="ear_type" Type="sint8" Size="3" /> <!-- 585 -->
+<Data ElementName="eye_brow_type" Type="sint8" Size="3" /> <!-- 588 -->
+<Data ElementName="cheek_type" Type="sint8" Size="3" /> <!-- 591 -->
+<Data ElementName="lip_type" Type="sint8" Size="3" /> <!-- 594 -->
+<Data ElementName="chin_type" Type="sint8" Size="3" /> <!-- 597 -->
+<Data ElementName="nose_type" Type="sint8" Size="3" /> <!-- 600 -->
+<Data ElementName="body_size" Type="sint8" Size="1" /> <!-- 603 -->
+<Data ElementName="bump_size" Type="sint8" Size="1" /> <!-- 604 -->
+<Data ElementName="soga_skull_type" Type="sint8" Size="3" /> <!-- 605 -->
+<Data ElementName="soga_eye_type" Type="sint8" Size="3" /> <!-- 608 -->
+<Data ElementName="ear_type" Type="sint8" Size="3" /> <!-- 611 -->
+<Data ElementName="soga_eye_brow_type" Type="sint8" Size="3" /> <!-- 614 -->
+<Data ElementName="soga_cheek_type" Type="sint8" Size="3" /> <!-- 617 -->
+<Data ElementName="soga_lip_type" Type="sint8" Size="3" /> <!-- 620 -->
+<Data ElementName="soga_chin_type" Type="sint8" Size="3" /> <!-- 623 -->
+<Data ElementName="soga_nose_type" Type="sint8" Size="3" /> <!-- 626 -->
+<Data ElementName="soga_body_size" Type="sint8" Size="1" /> <!-- 629 -->
+<Data ElementName="soga_bump_size" Type="sint8" Size="1" /> <!-- 630 -->
+<Data ElementName="mount_type" Type="int16" Size="1" /> <!-- 631 -->
+<Data ElementName="mount_color" Type="EQ2_Color" /> <!-- 633 -->
+<Data ElementName="mount_saddle_color" Type="EQ2_Color" /> <!-- 636 -->
+<Data ElementName="hair_color1" Type="EQ2_Color" /> <!-- 639 -->
+<Data ElementName="hair_color2" Type="EQ2_Color" /> <!-- 642 -->
+<Data ElementName="hair_highlight" Type="EQ2_Color" /> <!-- 645 -->
+<Data ElementName="soga_hair_color1" Type="EQ2_Color" /> <!-- 648 -->
+<Data ElementName="soga_hair_color2" Type="EQ2_Color" /> <!-- 651 -->
+<Data ElementName="soga_hair_highlight" Type="EQ2_Color" /> <!-- 654 -->
+<Data ElementName="unknown" Type="int8" Size="6" /> <!-- 657 -->
+<Data ElementName="flags" Type="int8" Size="1" /><!-- 663 1 == invisible, 2 == show_hood, 8 == crouch -->
+<Data ElementName="unknown" Type="int8" Size="3" /> <!-- 664 -->
+<Data ElementName="temporary_scale" Type="float" Size="1" /> <!-- 667 -->
+<Data ElementName="name" Type="char" Size="64" /> <!-- 671 -->
+<Data ElementName="last_name" Type="char" Size="64" /> <!-- 735 -->
+<Data ElementName="name_suffix" Type="char" Size="64" /> <!-- 799 -->
+<Data ElementName="name_prefix" Type="char" Size="64" /> <!-- 863 -->
+<Data ElementName="unknown31" Type="char" Size="64" /> <!--927-->
+<Data ElementName="second_suffix" Type="char" Size="64" /> <!-- 991 -->
+<Data ElementName="persistent_spell_visuals" Type="int16" Size="8" /> <!-- 1055 -->
+<Data ElementName="persistent_spell_levels" Type="int8" Size="8" /> <!-- 1071 -->
+<Data ElementName="action_state" Type="int16" Size="1" /> <!-- 1079 -->
+<Data ElementName="visual_state" Type="int16" Size="1" /> <!-- 1081 -->
+<Data ElementName="mood_state" Type="int16" Size="1" /> <!-- 1083 -->
+<Data ElementName="emote_state" Type="int16" Size="1" /> <!-- 1085 -->
+<Data ElementName="race" Type="int8" Size="1" /> <!-- 1087 -->
+<Data ElementName="gender" Type="int8" Size="1" /> <!-- 1088 --></Struct>
+<Struct Name="Substruct_SpawnInfoStruct" ClientVersion="547" >
 <Data ElementName="hp_remaining" Type="int8" Size="1" />
 <Data ElementName="unknown2a" Type="int8" Size="3" />
 <Data ElementName="power_percent" Type="int8" Size="1" />
@@ -334,7 +638,7 @@
 <Data ElementName="visual_state" Type="int16" Size="1" />
 <Data ElementName="mood_state" Type="int16" Size="1" />
 <Data ElementName="race" Type="int8" Size="1" />
-<Data ElementName="gender" Type="int8" Size="1" />
+<Data ElementName="gender" Type="int8" Size="1" /> <!-- total 722 -->
 </Struct>
 <Struct Name="Substruct_SpawnInfoStruct" ClientVersion="860" >
 <Data ElementName="hp_remaining" Type="int8" Size="1" />
@@ -2071,6 +2375,12 @@
 <Data ElementName="spawn_type" Type="int8" Size="1" />
 </Struct>
 <Struct Name="WS_WidgetSpawnStruct_Footer" ClientVersion="1">
+<Data ElementName="widget_id" Type="int32" Size="1" />
+<Data ElementName="widget_x" Type="float" Size="1" />
+<Data ElementName="widget_y" Type="float" Size="1" />
+<Data ElementName="widget_z" Type="float" Size="1" />
+</Struct>
+<Struct Name="WS_WidgetSpawnStruct_Footer" ClientVersion="547">
 <Data ElementName="name" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="unknown1" Type="float" Size="1" />
 <Data ElementName="unknown2" Type="float" Size="1" />
@@ -2117,6 +2427,16 @@
 <Data ElementName="widget_z" Type="float" Size="1" />
 </Struct>
 <Struct Name="WS_SignWidgetSpawnStruct_Footer" ClientVersion="1">
+<Data ElementName="widget_id" Type="int32" Size="1" />
+<Data ElementName="widget_x" Type="float" Size="1" />
+<Data ElementName="widget_y" Type="float" Size="1" />
+<Data ElementName="widget_z" Type="float" Size="1" />
+<Data ElementName="title" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="sign_distance" Type="float" Size="1" />
+<Data ElementName="show" Type="int16" Size="1" />
+</Struct>
+<Struct Name="WS_SignWidgetSpawnStruct_Footer" ClientVersion="547">
 <Data ElementName="name" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="unknown1a" Type="float" Size="1" />
 <Data ElementName="unknown1b" Type="float" Size="1" />
@@ -2175,7 +2495,38 @@
 	<Data ElementName="unkString" Type="EQ2_16Bit_String" />
 </Data>
 </Struct>
-<Struct Name="Substruct_SpawnVisualizationInfoStruct" ClientVersion="1">
+<Struct Name="Substruct_SpawnVisualizationInfoStruct" ClientVersion="1" Comment="12 bytes">
+<Data ElementName="arrow_color" Type="int8" Size="1" /> <!-- 1-6 arrow colors, 7-13 merchant, 14-20 bank, 21-28 hail, 29-34 attack, 35-43 window icons, 46 saw, 47 house -->
+<Data ElementName="locked_no_loot" Type="int8" Size="1" />
+<Data ElementName="npc_con" Type="sint8" Size="1" />
+<Data ElementName="group_member" Type="int8" Size="1" />
+<Data ElementName="vis_flags" Type="int8" Size="1" />
+<Data ElementName="targetable" Type="int8" Size="1" />
+<Data ElementName="red_glow" Type="int8" Size="1" />
+<Data ElementName="show_name" Type="int8" Size="1" />
+<Data ElementName="attackable" Type="int8" Size="1" />
+<Data ElementName="unknown10" Type="int8" Size="1" />
+<Data ElementName="unknown11" Type="int8" Size="1" />
+<Data ElementName="unknown12" Type="int8" Size="1" />
+</Struct>
+<Struct Name="Substruct_SpawnVisualizationInfoStruct" ClientVersion="546" Comment="78 bytes">
+<Data ElementName="arrow_color" Type="int8" Size="1" />
+<Data ElementName="locked_no_loot" Type="int8" Size="1" />
+<Data ElementName="npc_con" Type="sint8" Size="1" />
+<Data ElementName="quest_flag" Type="int8" Size="1" />
+<Data ElementName="unknown1" Type="int8" Size="1" />
+<Data ElementName="vis_flags" Type="int8" Size="1" />
+<Data ElementName="targetable" Type="int8" Size="1" />
+<Data ElementName="red_glow" Type="int8" Size="1" />
+<Data ElementName="show_name" Type="int8" Size="1" />
+<Data ElementName="attackable" Type="int8" Size="1" />
+<Data ElementName="unknown2" Type="int8" Size="1" />
+<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="unknown4" Type="int8" Size="1" />
+<Data ElementName="unknown5" Type="int8" Size="1" />
+<Data ElementName="guild" Type="int8" Size="64" />
+</Struct>
+<Struct Name="Substruct_SpawnVisualizationInfoStruct" ClientVersion="547">
 <Data ElementName="arrow_color" Type="int8" Size="1" />
 <Data ElementName="locked_no_loot" Type="int8" Size="1" />
 <Data ElementName="npc_con" Type="sint8" Size="1" />
@@ -2247,7 +2598,6 @@
 <Data ElementName="tag2" Type="int8" Size="1" />
 <Data ElementName="unknown2" Type="int8" Size="3" />
 </Struct>
-
 <Struct Name="Substruct_SpawnVisualizationInfoStruct" ClientVersion="60055">
 <Data ElementName="unknown" Type="int32" Size="1" />
 <Data ElementName="arrow_color" Type="int8" Size="1" />
@@ -2268,8 +2618,17 @@
 <Data ElementName="tag2" Type="int8" Size="1" />
 <Data ElementName="unknown3" Type="int8" Size="1" />
 </Struct>
-
 <Struct Name="WS_SpawnStruct" ClientVersion="1">
+<Data ElementName="position" Substruct="Substruct_SpawnPositionStruct" Size="1" />
+<Data ElementName="vis" Substruct="Substruct_SpawnVisualizationInfoStruct" Size="1" />
+<Data ElementName="info" Substruct="Substruct_SpawnInfoStruct" Size="1" />
+</Struct>
+<Struct Name="WS_SpawnStruct" ClientVersion="546">
+<Data ElementName="position" Substruct="Substruct_SpawnPositionStruct" Size="1" />
+<Data ElementName="vis" Substruct="Substruct_SpawnVisualizationInfoStruct" Size="1" />
+<Data ElementName="info" Substruct="Substruct_SpawnInfoStruct" Size="1" />
+</Struct>
+<Struct Name="WS_SpawnStruct" ClientVersion="547">
 <Data ElementName="position" Substruct="Substruct_SpawnPositionStruct" Size="1" />
 <Data ElementName="vis" Substruct="Substruct_SpawnVisualizationInfoStruct" Size="1" />
 <Data ElementName="info" Substruct="Substruct_SpawnInfoStruct" Size="1" />

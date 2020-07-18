@@ -138,6 +138,7 @@ private:
 	Mutex MSkillUpdates;
 	int16 packet_count;
 	uchar* orig_packet;
+	int16 orig_packet_size;
 	uchar* xor_packet;
 	map<int32, Skill*> skills;
 	map<string, Skill*> name_skill_map;

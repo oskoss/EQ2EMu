@@ -116,13 +116,14 @@ void ClientPacketFunctions::SendSkillBook ( Client* client ){
 }
 
 // Jabantiz: Attempt to get the char trait list working
-void ClientPacketFunctions::SendTraitList ( Client* client ){
-	EQ2Packet* traitApp = master_trait_list.GetTraitListPacket(client);
-	//DumpPacket(traitApp);
-	if (traitApp){
-		client->QueuePacket(traitApp);
+void ClientPacketFunctions::SendTraitList(Client* client) {
+	if (client->GetVersion() >= 547) {
+		EQ2Packet* traitApp = master_trait_list.GetTraitListPacket(client);
+		//DumpPacket(traitApp);
+		if (traitApp) {
+			client->QueuePacket(traitApp);
+		}
 	}
-
 }
 
 void ClientPacketFunctions::SendAbilities ( Client* client ){
@@ -166,31 +167,37 @@ void ClientPacketFunctions::SendQuickBarInit ( Client* client ){
 void ClientPacketFunctions::SendCharacterMacros(Client* client) {
 	LogWrite(PACKET__DEBUG, 0, "Packet", "Sending Character Macro packet (WS_MacroInit, %i)", client->GetVersion());
 	map<int8, vector<MacroData*> >* macros = database.LoadCharacterMacros(client->GetCharacterID());
-	if(macros) {
+	if (macros) {
 		PacketStruct* macro_packet = configReader.getStruct("WS_MacroInit", client->GetVersion());
-		if(macro_packet) {
+		if (macro_packet) {
 			map<int8, vector<MacroData*> >::iterator itr;
 			macro_packet->setArrayLengthByName("macro_count", macros->size());
 			int8 x = 0;
-			for(itr=macros->begin();itr!=macros->end();itr++, x++) {
+			for (itr = macros->begin(); itr != macros->end(); itr++, x++) {
 				macro_packet->setArrayDataByName("number", itr->first, x);
-				if(itr->second.size() > 0) {
+				if (itr->second.size() > 0) {
 					LogWrite(PACKET__DEBUG, 5, "Packet", "Loading Macro %i, name: %s", itr->first, itr->second[0]->name.c_str());
 					macro_packet->setArrayDataByName("name", itr->second[0]->name.c_str(), x);
 				}
-				char tmp_details_count[25] = {0};
-				sprintf(tmp_details_count, "macro_details_count_%i", x);
-				macro_packet->setArrayLengthByName(tmp_details_count, itr->second.size());	
-				for(int8 i=0;i<itr->second.size();i++) {
-					char tmp_command[15] = {0};
-					sprintf(tmp_command, "command%i", x);
-					LogWrite(PACKET__DEBUG, 5, "Packet", "\tLoading Command %i: %s", itr->first, x, itr->second[i]->text.c_str());
-					macro_packet->setArrayDataByName(tmp_command, itr->second[i]->text.c_str(), i);
+				if (client->GetVersion() > 283) {
+					char tmp_details_count[25] = { 0 };
+					sprintf(tmp_details_count, "macro_details_count_%i", x);
+					macro_packet->setArrayLengthByName(tmp_details_count, itr->second.size());
+					for (int8 i = 0; i < itr->second.size(); i++) {
+						char tmp_command[15] = { 0 };
+						sprintf(tmp_command, "command%i", x);
+						LogWrite(PACKET__DEBUG, 5, "Packet", "\tLoading Command %i: %s", itr->first, x, itr->second[i]->text.c_str());
+						macro_packet->setArrayDataByName(tmp_command, itr->second[i]->text.c_str(), i);
+					}
+					macro_packet->setArrayDataByName("unknown2", 2, x);
+					macro_packet->setArrayDataByName("unknown3", 0xFFFFFFFF, x);
 				}
-				macro_packet->setArrayDataByName("unknown2", 2, x);
+				else {
+					if (itr->second.size() > 0)
+						macro_packet->setArrayDataByName("command", itr->second[0]->text.c_str(), x);
+				}
 				macro_packet->setArrayDataByName("icon", itr->second[0]->icon, x);
 				client->GetPlayer()->macro_icons[itr->first] = itr->second[0]->icon;
-				macro_packet->setArrayDataByName("unknown3", 0xFFFFFFFF, x);
 			}
 			EQ2Packet* packet = macro_packet->serialize();
 			client->QueuePacket(packet);

@@ -246,22 +246,22 @@ bool Client::Process() {
 										}
 			case OP_LsClientCrashlogReplyMsg:{
 //				DumpPacket(app);
-				SaveErrorsToDB(app, "Crash Log");
+				SaveErrorsToDB(app, "Crash Log", GetVersion());
 				break;
 											 }
 			case OP_LsClientVerifylogReplyMsg:{
 //				DumpPacket(app);
-				SaveErrorsToDB(app, "Verify Log");
+				SaveErrorsToDB(app, "Verify Log", GetVersion());
 				break;
 											  }
 			case OP_LsClientAlertlogReplyMsg:{
 //				DumpPacket(app);
-				SaveErrorsToDB(app, "Alert Log");
+				SaveErrorsToDB(app, "Alert Log", GetVersion());
 				break;
 											 }
 			case OP_LsClientBaselogReplyMsg:{
 //				DumpPacket(app);
-				SaveErrorsToDB(app, "Base Log");
+				SaveErrorsToDB(app, "Base Log", GetVersion());
 				break;
 											}
 			case OP_AllCharactersDescRequestMsg:{
@@ -270,6 +270,7 @@ bool Client::Process() {
 			case OP_CreateCharacterRequestMsg:{
 				PacketStruct* packet = configReader.getStruct("CreateCharacter", GetVersion());
 
+				DumpPacket(app);
 				playWaitTimer = new Timer ( 15000 );
 				playWaitTimer->Start ( );
 				cout << "Char Create Request From: " << GetAccountName() << "....";
@@ -289,8 +290,13 @@ bool Client::Process() {
 						int16 out_version = GetVersion();
 						memcpy(outpack->pBuffer, &out_version, sizeof(int16));
 						memcpy(outpack->pBuffer + sizeof(int16), app->pBuffer, app->size);
-						uchar* tmp = outpack->pBuffer;
-						tmp+=7;
+						uchar* tmp = outpack->pBuffer;	
+						
+						if(out_version<=283)	
+							tmp+=2;	
+						else	
+							tmp += 7;
+						
 						int32 account_id = GetAccountID();
 						memcpy(tmp, &account_id, sizeof(int32));
 						world_server->SendPacket(outpack);
@@ -312,7 +318,12 @@ bool Client::Process() {
 
 				if(request && request->LoadPacketData(app->pBuffer,app->size)){
 					char_id = request->getType_int32_ByName("char_id");
-					server_id = request->getType_int32_ByName("server_id");
+					if (GetVersion() <= 283) {	
+						server_id = database.GetServer(GetAccountID(), char_id, request->getType_EQ2_16BitString_ByName("name").data);	
+					}	
+					else {	
+						server_id = request->getType_int32_ByName("server_id");	
+					}
 					LWorld* world = world_list.FindByID(server_id);
 					string name = database.GetCharacterName(char_id,server_id);
 					if(world && name.length() > 0){
@@ -394,16 +405,25 @@ bool Client::Process() {
 	return true;
 }
 
-void Client::SaveErrorsToDB(EQApplicationPacket* app, char* type){
+void Client::SaveErrorsToDB(EQApplicationPacket* app, char* type, int32 version){
 	int32 size = 0;
-	memcpy(&size, app->pBuffer + sizeof(int32), sizeof(int32));
+	z_stream zstream;
+	if (version >= 284) {
+		memcpy(&size, app->pBuffer + sizeof(int32), sizeof(int32));
+		zstream.next_in = app->pBuffer + 8;
+		zstream.avail_in = app->size - 8;
+	}
+	else { //box set
+		size = 0xFFFF;
+		zstream.next_in = app->pBuffer + 2;
+		zstream.avail_in = app->size - 2;
+	}
 	size++;
 	char* message = new char[size];
 	memset(message, 0, size);
-	z_stream zstream;
+	
 	int zerror = 0;
-	zstream.next_in		= app->pBuffer + 8;
-	zstream.avail_in	= app->size - 8;
+	
 	zstream.next_out	= (BYTE*)message;
 	zstream.avail_out	= size;
 	zstream.zalloc    = Z_NULL;
@@ -437,7 +457,7 @@ void Client::CharacterApproved(int32 server_id,int32 char_id)
 			EQ2Packet* outapp = packet->serialize();
 			QueuePacket(outapp);
 			safe_delete(packet);
-			database.SaveCharacter(createRequest, GetLoginAccount(),char_id);
+			database.SaveCharacter(createRequest, GetLoginAccount(),char_id, GetVersion());
 
 			// refresh characters for this account
 			database.LoadCharacters(GetLoginAccount(), GetVersion());
@@ -571,7 +591,7 @@ void Client::SendLoginAccepted() {
 void Client::SendWorldList(){
 	EQ2Packet* pack = world_list.MakeServerListPacket(lsadmin, version);
 	EQ2Packet* dupe = pack->Copy();
-	//DumpPacket(dupe->pBuffer,dupe->size);
+	DumpPacket(dupe->pBuffer,dupe->size);
 	QueuePacket(dupe);
 	return;
 }

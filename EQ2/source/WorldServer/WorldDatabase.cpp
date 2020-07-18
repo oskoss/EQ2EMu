@@ -2011,8 +2011,11 @@ void WorldDatabase::UpdateRandomize(int32 spawn_id, sint32 value) {
 int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 	Query query;
 	int8 race_id = create->getType_int8_ByName("race");
-	int8 class_id = create->getType_int8_ByName("class");//Normal server
-	//int8 class_id = 0; //CLassic Server Only
+	int8 orig_class_id = create->getType_int8_ByName("class");//Normal server
+	int8 class_id = orig_class_id;
+	if ( create->GetVersion() <= 546 )
+		class_id = 0; //Classic Server Only
+
 	int8 gender_id = create->getType_int8_ByName("gender");
 	sint16 auto_admin_status = 0;
 
@@ -2053,7 +2056,7 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 						create->getType_int32_ByName("server_id"), 
 						create->getType_EQ2_16BitString_ByName("name").data.c_str(), 
 						race_id, 
-						class_id, 
+						orig_class_id,
 						gender_id, 
 						create->getType_int8_ByName("deity"), 
 						create->getType_float_ByName("body_size"), 

@@ -1,21 +1,21 @@
-/*  
-    EQ2Emulator:  Everquest II Server Emulator
-    Copyright (C) 2007  EQ2EMulator Development Team (http://www.eq2emulator.net)
+/*
+	EQ2Emulator:  Everquest II Server Emulator
+	Copyright (C) 2007  EQ2EMulator Development Team (http://www.eq2emulator.net)
 
-    This file is part of EQ2Emulator.
+	This file is part of EQ2Emulator.
 
-    EQ2Emulator is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	EQ2Emulator is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    EQ2Emulator is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	EQ2Emulator is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef __EQ2_PACKETSTRUCT__
 #define __EQ2_PACKETSTRUCT__
@@ -29,7 +29,7 @@
 class Item;
 class Player;
 #endif
-extern map<int16,OpcodeManager*>EQOpcodeManager;
+extern map<int16, OpcodeManager*>EQOpcodeManager;
 using namespace std;
 
 #define DATA_STRUCT_NONE				0
@@ -52,7 +52,7 @@ using namespace std;
 #define DATA_STRUCT_ITEM				17
 #define DATA_STRUCT_SINT64				18
 
-class DataStruct{
+class DataStruct {
 public:
 	DataStruct();
 	DataStruct(DataStruct* data_struct);
@@ -78,40 +78,53 @@ public:
 	void	SetIfNotSetVariable(const char* variable);
 	void	SetIfEqualsVariable(const char* variable);
 	void	SetIfNotEqualsVariable(const char* variable);
+	void	SetIfFlagSetVariable(const char* variable);
+	void	SetIfFlagNotSetVariable(const char* variable);
 	void	SetIsSet(bool val);
-	
+	void	SetIsOptional(bool val);
+
 	int8	GetPackedIndex();
-	const char*	GetPackedSizeVariable();
-	const char*	GetArraySizeVariable();
+	const char* GetPackedSizeVariable();
+	const char* GetArraySizeVariable();
 	int8	GetDefaultValue();
 	int8	GetOversized();
 	int8	GetOversizedByte();
 	int8	GetMaxArraySize();
 	int8	GetType();
 	int8	GetType2();
-	const char*	GetName();
+	const char* GetName();
 	string	GetStringName();
 	int32	GetLength();
 	bool	AddToStruct();
 	int8	GetAddType();
 	int32	GetItemSize();
 	bool	GetIfSet();
-	const char*	GetIfSetVariable();
+	const char* GetIfSetVariable();
 	bool	GetIfNotSet();
-	const char*	GetIfNotSetVariable();
+	const char* GetIfNotSetVariable();
 	bool	GetIfEquals();
-	const char*	GetIfEqualsVariable();
+	const char* GetIfEqualsVariable();
 	bool	GetIfNotEquals();
-	const char*	GetIfNotEqualsVariable();
+	const char* GetIfNotEqualsVariable();
+	bool	GetIfFlagSet();
+	const char* GetIfFlagSetVariable();
+	bool	GetIfFlagNotSet();
+	const char* GetIfFlagNotSetVariable();
 	bool	IsSet();
+	bool	IsOptional();
 	int32 GetDataSizeInBytes();
 
 private:
 	bool	is_set;
 	bool	if_not_set;
+	bool	optional;
 	bool	if_set;
 	bool	if_not_equals;
 	bool	if_equals;
+	bool	if_flag_set;
+	bool	if_flag_not_set;
+	string	if_flag_not_set_variable;
+	string	if_flag_set_variable;
 	string	if_not_equals_variable;
 	string	if_equals_variable;
 	string	if_not_set_variable;
@@ -129,7 +142,7 @@ private:
 	int32	length;
 	int32	item_size;
 };
-class PacketStruct : public DataBuffer{
+class PacketStruct : public DataBuffer {
 public:
 	PacketStruct();
 	PacketStruct(PacketStruct* packet, bool sub);
@@ -148,73 +161,73 @@ public:
 	void setMediumString(DataStruct* data_struct, const char* text, int32 index = 0);
 	void setLargeString(DataStruct* data_struct, const char* text, int32 index = 0);
 	void renameSubstructArray(const char* substruct, int32 index);
-	template<class Data> void setSubstructSubstructDataByName(const char* substruct_name1, const char* substruct_name2, const char* name, Data data, int32 substruct_index1 = 0, int32 substruct_index2 = 0, int32 index = 0){
-		char tmp[15] = {0};
-		sprintf(tmp,"_%i_%i",substruct_index1, substruct_index2);
+	template<class Data> void setSubstructSubstructDataByName(const char* substruct_name1, const char* substruct_name2, const char* name, Data data, int32 substruct_index1 = 0, int32 substruct_index2 = 0, int32 index = 0) {
+		char tmp[15] = { 0 };
+		sprintf(tmp, "_%i_%i", substruct_index1, substruct_index2);
 		string name2 = string(substruct_name1).append("_").append(substruct_name2).append("_").append(name).append(tmp);
 		setData(findStruct(name2.c_str(), index), data, index);
 	}
-	template<class Data> void setSubstructDataByName(const char* substruct_name, const char* name, Data data, int32 substruct_index = 0, int32 index = 0){
-		char tmp[10] = {0};
-		sprintf(tmp,"_%i",substruct_index);
+	template<class Data> void setSubstructDataByName(const char* substruct_name, const char* name, Data data, int32 substruct_index = 0, int32 index = 0) {
+		char tmp[10] = { 0 };
+		sprintf(tmp, "_%i", substruct_index);
 		string name2 = string(substruct_name).append("_").append(name).append(tmp);
 		setData(findStruct(name2.c_str(), index), data, index);
 	}
-	template<class Data> void setSubstructColorByName(const char* substruct_name, const char* name, Data data, int32 substruct_index = 0, int32 index = 0){
-		char tmp[10] = {0};
-		sprintf(tmp,"_%i",substruct_index);
+	template<class Data> void setSubstructColorByName(const char* substruct_name, const char* name, Data data, int32 substruct_index = 0, int32 index = 0) {
+		char tmp[10] = { 0 };
+		sprintf(tmp, "_%i", substruct_index);
 		string name2 = string(substruct_name).append("_").append(name).append(tmp);
 		setColor(findStruct(name2.c_str(), index), data, index);
 	}
-	template<class Data> void setSubstructArrayDataByName(const char* substruct_name, const char* name, Data data, int32 index = 0, int32 substruct_index = 0){
-		char tmp[10] = {0};
-		sprintf(tmp,"_%i",substruct_index);
+	template<class Data> void setSubstructArrayDataByName(const char* substruct_name, const char* name, Data data, int32 index = 0, int32 substruct_index = 0) {
+		char tmp[10] = { 0 };
+		sprintf(tmp, "_%i", substruct_index);
 		string name2 = string(substruct_name).append("_").append(name).append(tmp);
 		setData(findStruct(name2.c_str(), substruct_index, index), data, index);
 	}
-	template<class Data> void setSubstructArrayColorByName(const char* substruct_name, const char* name, Data data, int32 substruct_index = 0, int32 index = 0){
-		char tmp[10] = {0};
-		sprintf(tmp,"_%i",substruct_index);
+	template<class Data> void setSubstructArrayColorByName(const char* substruct_name, const char* name, Data data, int32 substruct_index = 0, int32 index = 0) {
+		char tmp[10] = { 0 };
+		sprintf(tmp, "_%i", substruct_index);
 		string name2 = string(substruct_name).append("_").append(name).append(tmp);
 		setColor(findStruct(name2.c_str(), index, substruct_index), data, index);
 	}
-	template<class Data> void setDataByName(const char* name, Data data, int32 index = 0, bool use_second_type = false){
+	template<class Data> void setDataByName(const char* name, Data data, int32 index = 0, bool use_second_type = false) {
 		setData(findStruct(name, index), data, index, use_second_type);
 	}
-	template<class Data> void setDataByName(const char* name, Data* data, int32 index = 0, bool use_second_type = false){
+	template<class Data> void setDataByName(const char* name, Data* data, int32 index = 0, bool use_second_type = false) {
 		setData(findStruct(name, index), data, index, use_second_type);
 	}
-	template<class Data> void setSubArrayDataByName(const char* name, Data data, int32 index1 = 0, int32 index2 = 0, int32 index3 = 0){
-		char tmp[20] = {0};
-		sprintf(tmp,"%i_%i", index1, index2);
+	template<class Data> void setSubArrayDataByName(const char* name, Data data, int32 index1 = 0, int32 index2 = 0, int32 index3 = 0) {
+		char tmp[20] = { 0 };
+		sprintf(tmp, "%i_%i", index1, index2);
 		string name2 = string(name).append(tmp);
 		setData(findStruct(name2.c_str(), index2, index3), data, index3);
 	}
-	template<class Data> void setArrayDataByName(const char* name, Data data, int32 index1 = 0, int32 index2 = 0, bool use_second_type = false){
-		char tmp[10] = {0};
-		sprintf(tmp,"_%i",index1);
+	template<class Data> void setArrayDataByName(const char* name, Data data, int32 index1 = 0, int32 index2 = 0, bool use_second_type = false) {
+		char tmp[10] = { 0 };
+		sprintf(tmp, "_%i", index1);
 		string name2 = string(name).append(tmp);
 		setData(findStruct(name2.c_str(), index1, index2), data, index2, use_second_type);
 	}
-	void setArrayAddToPacketByName(const char* name, bool new_val, int32 index1 = 0, int32 index2 = 0){
-		char tmp[10] = {0};
-		sprintf(tmp,"_%i",index1);
+	void setArrayAddToPacketByName(const char* name, bool new_val, int32 index1 = 0, int32 index2 = 0) {
+		char tmp[10] = { 0 };
+		sprintf(tmp, "_%i", index1);
 		string name2 = string(name).append(tmp);
 		DataStruct* data = findStruct(name2.c_str(), index2);
-		if(data)
+		if (data)
 			data->SetAddToStruct(new_val);
 	}
-	void setAddToPacketByName(const char* name, bool new_val, int32 index = 0){
+	void setAddToPacketByName(const char* name, bool new_val, int32 index = 0) {
 		DataStruct* data = findStruct(name, index);
-		if(data)
+		if (data)
 			data->SetAddToStruct(new_val);
 	}
-	void setAddTypePacketByName(const char* name, int8 new_val, int32 index = 0){
+	void setAddTypePacketByName(const char* name, int8 new_val, int32 index = 0) {
 		DataStruct* data = findStruct(name, index);
-		if(data)
+		if (data)
 			data->SetAddType(new_val);
 	}
-	const char*	GetOpcodeType();
+	const char* GetOpcodeType();
 	bool	IsSubPacket();
 	void	IsSubPacket(bool new_val);
 	int32	GetSubPacketSize();
@@ -276,29 +289,30 @@ public:
 	void setData(DataStruct* data_struct, EQ2_16BitString* input_string, int32 index, bool use_second_type = false);
 	void setData(DataStruct* data_struct, EQ2_32BitString* input_string, int32 index, bool use_second_type = false);
 
-	template<class Data> void setData(DataStruct* data_struct, Data* data, int32 index, bool use_second_type = false){
+	template<class Data> void setData(DataStruct* data_struct, Data* data, int32 index, bool use_second_type = false) {
 		if (!data_struct)
 			return;
+		data_struct->SetIsOptional(false);
 		int8 type_to_use = (use_second_type) ? data_struct->GetType2() : data_struct->GetType();
-		if(type_to_use >= DATA_STRUCT_EQ2_8BIT_STRING && type_to_use <= DATA_STRUCT_EQ2_32BIT_STRING){
-			if(type_to_use == DATA_STRUCT_EQ2_8BIT_STRING){
-					setSmallString(data_struct, data, index);
+		if (type_to_use >= DATA_STRUCT_EQ2_8BIT_STRING && type_to_use <= DATA_STRUCT_EQ2_32BIT_STRING) {
+			if (type_to_use == DATA_STRUCT_EQ2_8BIT_STRING) {
+				setSmallString(data_struct, data, index);
 			}
-			else if(type_to_use == DATA_STRUCT_EQ2_16BIT_STRING){
-					setMediumString(data_struct, data, index);
+			else if (type_to_use == DATA_STRUCT_EQ2_16BIT_STRING) {
+				setMediumString(data_struct, data, index);
 			}
-			else{
-					setLargeString(data_struct, data, index);
+			else {
+				setLargeString(data_struct, data, index);
 			}
 		}
 		else {
-			if(data_struct && index == 0 && data_struct->GetLength() > 1){
-				if(type_to_use == DATA_STRUCT_CHAR){
-					for(int32 i=0;data && i<data_struct->GetLength() && i < strlen(data);i++)
+			if (data_struct && index == 0 && data_struct->GetLength() > 1) {
+				if (type_to_use == DATA_STRUCT_CHAR) {
+					for (int32 i = 0; data && i < data_struct->GetLength() && i < strlen(data); i++)
 						setData(data_struct, data[i], i);
 				}
-				else{
-					for(int32 i=0;i<data_struct->GetLength();i++)
+				else {
+					for (int32 i = 0; i < data_struct->GetLength(); i++)
 						setData(data_struct, data[i], i);
 				}
 			}
@@ -306,8 +320,9 @@ public:
 				setData(data_struct, *data, index);
 		}
 	}
-	template<class Data> void setData(DataStruct* data_struct, Data data, int32 index, bool use_second_type = false){
-		if(data_struct && index < data_struct->GetLength()){
+	template<class Data> void setData(DataStruct* data_struct, Data data, int32 index, bool use_second_type = false) {
+		if (data_struct && index < data_struct->GetLength()) {
+			data_struct->SetIsOptional(false);
 			int8 type_to_use = (use_second_type) ? data_struct->GetType2() : data_struct->GetType();
 			if (use_second_type) {
 				// Need to figure out why type2 always seems to be 205
@@ -315,123 +330,124 @@ public:
 				//type_to_use = DATA_STRUCT_SINT16; // 9;
 				data_struct->SetType(type_to_use);
 			}
-			switch(type_to_use){
-				case DATA_STRUCT_INT8:
-					setDataType(data_struct, (int8)data, index);
-					break;
-				case DATA_STRUCT_INT16:
-					setDataType(data_struct, (int16)data, index);
-					break;
-				case DATA_STRUCT_INT32:
-					setDataType(data_struct, (int32)data, index);
-					break;
-				case DATA_STRUCT_INT64:
-					setDataType(data_struct, (int64)data, index);
-					break;
-				case DATA_STRUCT_SINT8:
-					setDataType(data_struct, (sint8)data, index);
-					break;
-				case DATA_STRUCT_SINT16:
-					setDataType(data_struct, (sint16)data, index);
-					break;
-				case DATA_STRUCT_SINT32:
-					setDataType(data_struct, (sint32)data, index);
-					break;
-				case DATA_STRUCT_SINT64:
-					setDataType(data_struct, (sint64)data, index);
-					break;
-				case DATA_STRUCT_CHAR:
-					setDataType(data_struct, (char)data, index);
-					break;
-				case DATA_STRUCT_FLOAT:
-					setDataType(data_struct, (float)data, index);
-					break;
-				case DATA_STRUCT_DOUBLE:
-					setDataType(data_struct, (double)data, index);
-					break;
-				case DATA_STRUCT_COLOR:
-					setColor(data_struct, *((EQ2_Color*)&data), index);
-					break;
-				case DATA_STRUCT_EQUIPMENT:
-					setEquipmentByName(data_struct, *((EQ2_EquipmentItem*)&data), index);
-					break;
-				case DATA_STRUCT_ITEM:
-					break;
+			switch (type_to_use) {
+			case DATA_STRUCT_INT8:
+				setDataType(data_struct, (int8)data, index);
+				break;
+			case DATA_STRUCT_INT16:
+				setDataType(data_struct, (int16)data, index);
+				break;
+			case DATA_STRUCT_INT32:
+				setDataType(data_struct, (int32)data, index);
+				break;
+			case DATA_STRUCT_INT64:
+				setDataType(data_struct, (int64)data, index);
+				break;
+			case DATA_STRUCT_SINT8:
+				setDataType(data_struct, (sint8)data, index);
+				break;
+			case DATA_STRUCT_SINT16:
+				setDataType(data_struct, (sint16)data, index);
+				break;
+			case DATA_STRUCT_SINT32:
+				setDataType(data_struct, (sint32)data, index);
+				break;
+			case DATA_STRUCT_SINT64:
+				setDataType(data_struct, (sint64)data, index);
+				break;
+			case DATA_STRUCT_CHAR:
+				setDataType(data_struct, (char)data, index);
+				break;
+			case DATA_STRUCT_FLOAT:
+				setDataType(data_struct, (float)data, index);
+				break;
+			case DATA_STRUCT_DOUBLE:
+				setDataType(data_struct, (double)data, index);
+				break;
+			case DATA_STRUCT_COLOR:
+				setColor(data_struct, *((EQ2_Color*)&data), index);
+				break;
+			case DATA_STRUCT_EQUIPMENT:
+				setEquipmentByName(data_struct, *((EQ2_EquipmentItem*)&data), index);
+				break;
+			case DATA_STRUCT_ITEM:
+				break;
 			}
 		}
 	}
 
-	template<class Data> void setSubArrayLengthByName(const char* name, Data data, int32 index1 = 0, int32 index2 = 0){
-		char tmp[10] = {0};
-		sprintf(tmp,"_%i",index1);
+	template<class Data> void setSubArrayLengthByName(const char* name, Data data, int32 index1 = 0, int32 index2 = 0) {
+		char tmp[10] = { 0 };
+		sprintf(tmp, "_%i", index1);
 		string name2 = string(name).append(tmp);
 		DataStruct* data_struct = findStruct(name2.c_str(), index2);
 		setData(data_struct, data, index2);
-		UpdateArrayByArrayLength(data_struct, index2, data);	
+		UpdateArrayByArrayLength(data_struct, index2, data);
 	}
-	template<class Data> void setArrayLengthByName(const char* name, Data data, int32 index = 0){
+	template<class Data> void setArrayLengthByName(const char* name, Data data, int32 index = 0) {
 		DataStruct* data_struct = findStruct(name, index);
 		setData(data_struct, data, index);
-		UpdateArrayByArrayLength(data_struct, index, data);	
+		UpdateArrayByArrayLength(data_struct, index, data);
 	}
-	template<class Data> void setSubstructArrayLengthByName(const char* substruct_name, const char* name, Data data, int32 substruct_index = 0, int32 index = 0){
-		char tmp[10] = {0};
-		sprintf(tmp,"_%i",substruct_index);
+	template<class Data> void setSubstructArrayLengthByName(const char* substruct_name, const char* name, Data data, int32 substruct_index = 0, int32 index = 0) {
+		char tmp[10] = { 0 };
+		sprintf(tmp, "_%i", substruct_index);
 		string name2 = string(substruct_name).append("_").append(name).append(tmp);
 
 		DataStruct* data_struct = findStruct(name2.c_str(), index);
 		setData(data_struct, data, index);
-		UpdateArrayByArrayLength(data_struct, index, data);	
+		UpdateArrayByArrayLength(data_struct, index, data);
 	}
 	void UpdateArrayByArrayLengthName(const char* name, int32 index, int32 size);
 	void UpdateArrayByArrayLength(DataStruct* data_struct, int32 index, int32 size);
 	bool StructLoadData(DataStruct* data_struct, void* data, int32 len, bool useType2 = false);
 	bool LoadPacketData(uchar* data, int32 data_len);
-	
-	void setColorByName(const char* name, EQ2_Color* data, int32 index = 0){
-		if(data)
+	bool CheckFlagExists(const char* name);
+
+	void setColorByName(const char* name, EQ2_Color* data, int32 index = 0) {
+		if (data)
 			setColorByName(name, data->red, data->green, data->blue, index);
 	}
-	void setColorByName(const char* name, EQ2_Color data, int32 index = 0){
+	void setColorByName(const char* name, EQ2_Color data, int32 index = 0) {
 		setColorByName(name, data.red, data.green, data.blue, index);
 	}
-	void setColor(DataStruct* data_struct, EQ2_Color data, int32 index = 0){
-		if(data_struct){
+	void setColor(DataStruct* data_struct, EQ2_Color data, int32 index = 0) {
+		if (data_struct) {
 			EQ2_Color* ptr = (EQ2_Color*)struct_data[data_struct];
 			ptr[index] = data;
 		}
 	}
-	void setColorByName(const char* name, int8 red, int8 green, int8 blue, int32 index = 0){
+	void setColorByName(const char* name, int8 red, int8 green, int8 blue, int32 index = 0) {
 		setColor(findStruct(name, index), red, green, blue, index);
 	}
 	void setColor(DataStruct* data, int8 red, int8 green, int8 blue, int32 index);
-	void setEquipmentByName(DataStruct* data_struct, EQ2_EquipmentItem data, int32 index = 0){
-		if(data_struct){
+	void setEquipmentByName(DataStruct* data_struct, EQ2_EquipmentItem data, int32 index = 0) {
+		if (data_struct) {
 			EQ2_EquipmentItem* ptr = (EQ2_EquipmentItem*)struct_data[data_struct];
 			ptr[index] = data;
 		}
 	}
 #ifdef WORLD	
-	void setItem(DataStruct* ds, Item* item, Player* player, int32 index, sint8 offset = 0);
-	void setItemByName(const char* name, Item* item, Player* player, int32 index = 0, sint8 offset = 0);
-	void setItemArrayDataByName(const char* name, Item* item, Player* player, int32 index1 = 0, int32 index2 = 0, sint8 offset = 0);
+	void setItem(DataStruct* ds, Item* item, Player* player, int32 index, sint8 offset = 0, bool loot_item = false);
+	void setItemByName(const char* name, Item* item, Player* player, int32 index = 0, sint8 offset = 0, bool loot_item = false);
+	void setItemArrayDataByName(const char* name, Item* item, Player* player, int32 index1 = 0, int32 index2 = 0, sint8 offset = 0, bool loot_item = false);
 #endif
-	void setEquipmentByName(const char* name, EQ2_EquipmentItem data, int32 index = 0){
+	void setEquipmentByName(const char* name, EQ2_EquipmentItem data, int32 index = 0) {
 		setEquipmentByName(findStruct(name, index), data, index);
 	}
-	void setEquipmentByName(const char* name, EQ2_EquipmentItem* data, int32 size){
+	void setEquipmentByName(const char* name, EQ2_EquipmentItem* data, int32 size) {
 		DataStruct* data_struct = findStruct(name, 0);
-		if(data_struct){
-			for(int32 i=0;i<size;i++)
+		if (data_struct) {
+			for (int32 i = 0; i < size; i++)
 				setEquipmentByName(data_struct, data[i], i);
 		}
 	}
-	void setEquipmentByName(const char* name, int32 type, int8 c_red, int8 c_blue, int8 c_green, int8 h_red, int8 h_blue, int8 h_green, int32 index = 0){
-		setEquipment(findStruct(name,index), type, c_red, c_blue, c_green, h_red, h_blue, h_green, index);
+	void setEquipmentByName(const char* name, int32 type, int8 c_red, int8 c_blue, int8 c_green, int8 h_red, int8 h_blue, int8 h_green, int32 index = 0) {
+		setEquipment(findStruct(name, index), type, c_red, c_blue, c_green, h_red, h_blue, h_green, index);
 	}
 	void setEquipment(DataStruct* data, int16 type, int8 c_red, int8 c_blue, int8 c_green, int8 h_red, int8 h_blue, int8 h_green, int32 index);
 	void remove(DataStruct* data);
-	vector<DataStruct*>* getStructs(){ return &structs; }
+	vector<DataStruct*>* getStructs() { return &structs; }
 	DataStruct* findStruct(const char* name, int32 index);
 	DataStruct* findStruct(const char* name, int32 index1, int32 index2);
 	void remove(const char* name);
@@ -442,12 +458,12 @@ public:
 	EQ2Packet* serialize();
 	EQ2Packet* serializeCountPacket(int16 version, int8 offset = 0, uchar* orig_packet = 0, uchar* xor_packet = 0);
 	string* serializeString();
-	int32 GetVersion(){ return version; }
-	void SetVersion(int32 in_version){ version = in_version; }
+	int32 GetVersion() { return version; }
+	void SetVersion(int32 in_version) { version = in_version; }
 	bool SetOpcode(const char* new_opcode);
-	EmuOpcode GetOpcode(){ return opcode; }
-	const char* GetName(){ return name.c_str(); }
-	void SetName(const char* in_name){ name = string(in_name); }
+	EmuOpcode GetOpcode() { return opcode; }
+	const char* GetName() { return name.c_str(); }
+	void SetName(const char* in_name) { name = string(in_name); }
 	bool LoadedSuccessfully() { return loadedSuccessfully; }
 	bool IsStringValueType(string in_name, int32 index);
 	bool IsColorValueType(string in_name, int32 index);
@@ -459,6 +475,7 @@ public:
 	vector<DataStruct*> GetDataStructs();
 	void AddPackedData();
 	void ResetData();
+	void AddFlag(const char* name);
 
 private:
 	PacketStruct* parent;
@@ -471,6 +488,7 @@ private:
 	int16 version;
 	int16 client_version;
 	vector<PacketStruct*> arrays;
+	vector<string> flags;
 	map<DataStruct*, void*> struct_data;
 	map<int8, string> packed_data;
 	map<string, DataStruct*> struct_map;
@@ -479,4 +497,3 @@ private:
 	vector<PacketStruct*> orig_packets;
 };
 #endif
-

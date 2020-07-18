@@ -38,6 +38,9 @@
 #include "Crypto.h"
 #include "zlib.h"
 #include "timer.h"
+#ifdef WRITE_PACKETS
+#include <stdarg.h>
+#endif
 
 using namespace std;
 
@@ -164,6 +167,15 @@ class EQStream {
 		uint8 active_users;	//how many things are actively using this
 		Mutex MInUse;
 
+#ifdef WRITE_PACKETS
+		FILE* write_packets = NULL;
+		char GetChar(uchar in);
+		void WriteToFile(char* pFormat, ...);
+		void WritePackets(const char* opcodeName, uchar* data, int32 size, bool outgoing);
+		void WritePackets(EQ2Packet* app, bool outgoing);
+		Mutex MWritePackets;
+#endif
+
 		EQStreamState State;
 		Mutex MState;
 
@@ -249,6 +261,10 @@ class EQStream {
 			for (oop = OutOfOrderpackets.begin(); oop != OutOfOrderpackets.end(); oop++){
 				safe_delete(oop->second);
 			}
+#ifdef WRITE_PACKETS			
+			if (write_packets)
+				fclose(write_packets);
+#endif
 		}
 		inline void SetFactory(EQStreamFactory *f) { Factory=f; }
 		void init(bool resetSession = true);

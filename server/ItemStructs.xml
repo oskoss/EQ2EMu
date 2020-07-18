@@ -1,5 +1,73 @@
 <EQ2Emulator>
 <Struct Name="Substruct_BaseItemDescription" ClientVersion="1" >
+	<Data ElementName="unknownblah" Type="int8" Size="3" />
+    <Data ElementName="unique_id" Type="int32" Size="1" />
+    <Data ElementName="icon" Type="int16" Size="1" />
+    <Data ElementName="flag_names" Type="EQ2_8Bit_String" Size="1" />
+    <Data ElementName="unknown8_1" Type="int8" Size="17" />
+    <Data ElementName="stat_count" Type="int8" />
+    <Data ElementName="stat_array" Type="Array" ArraySizeVariable="stat_count">
+      <Data ElementName="stat_type" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+      <Data ElementName="stat_subtype" Type="sint16" OversizedValue="127" OversizedByte="127" Size="1" />
+      <Data ElementName="value" Type="sint16" OversizedValue="127" OversizedByte="127" Size="1" />
+      <Data ElementName="stat_name" Type="EQ2_8Bit_String" Size="1" />
+    </Data>
+    <Data ElementName="stat_string_count" Type="int8" />
+    <Data ElementName="stat_string_array" Type="Array" ArraySizeVariable="stat_string_count">
+      <Data ElementName="stat_string" Type="EQ2_8Bit_String" Size="1" />
+      <Data ElementName="adornment_flag" Type="int8" Size="1" />
+      <Data ElementName="adornment_array" Type="Array" ArraySizeVariable="adornment_flag">
+        <Data ElementName="adornment_unknown" Type="int8" Size="1" />
+      </Data>
+      <Data ElementName="stat_description" Type="EQ2_16Bit_String" Size="1" />
+    </Data>
+    <Data ElementName="condition" Type="int8" Size="1" />   
+	<Data ElementName="weight" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+	<Data ElementName="skill_req1" Type="int32" Size="1" />
+    <Data ElementName="skill_min" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+	<Data ElementName="skill_recommended" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />	
+    <Data ElementName="slot_count" Type="int8" />
+    <Data ElementName="slot_array" Type="Array" ArraySizeVariable="slot_count">
+      <Data ElementName="slot" Type="int8" Size="1" />
+    </Data>
+  </Struct>
+<Struct Name="Substruct_BaseItemDescription" ClientVersion="546" >
+    <Data ElementName="unknown" Type="int8" Size="1" />
+    <Data ElementName="unique_id" Type="int32" Size="1" />
+    <Data ElementName="broker_item_id" Type="int64" Size="1" />   
+    <Data ElementName="icon" Type="int16" Size="1" />
+    <Data ElementName="tier" Type="int8" Size="1" />
+    <Data ElementName="flags" Type="int32" Size="1" />
+    <Data ElementName="unknown8_1" Type="int8" Size="15" />
+    <Data ElementName="stat_count" Type="int8" />
+    <Data ElementName="stat_array" Type="Array" ArraySizeVariable="stat_count">
+      <Data ElementName="stat_type" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+      <Data ElementName="stat_subtype" Type="sint16" OversizedValue="127" OversizedByte="127" Size="1" />
+      <Data ElementName="value" Type="sint16" OversizedValue="127" OversizedByte="127" Size="1" />
+      <Data ElementName="stat_name" Type="EQ2_8Bit_String" Size="1" />
+    </Data>
+    <Data ElementName="stat_string_count" Type="int8" />
+    <Data ElementName="stat_string_array" Type="Array" ArraySizeVariable="stat_string_count">
+      <Data ElementName="stat_string" Type="EQ2_8Bit_String" Size="1" />
+    </Data>
+    <Data ElementName="condition" Type="int8" Size="1" />
+    <Data ElementName="weight" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+    <Data ElementName="skill_req1" Type="int32" Size="1" />
+    <Data ElementName="skill_req2" Type="int32" Size="1" />
+    <Data ElementName="skill_min" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+    <Data ElementName="class_count" Type="int8" />
+    <Data ElementName="class_array" Type="Array" ArraySizeVariable="class_count">
+      <Data ElementName="adventure_class" Type="int8" Size="1" />
+      <Data ElementName="tradeskill_class" Type="int8" Size="1" />
+      <Data ElementName="level" Type="int16" Size="1" />
+    </Data>
+    <Data ElementName="slot_count" Type="int8" />
+    <Data ElementName="slot_array" Type="Array" ArraySizeVariable="slot_count">
+      <Data ElementName="slot" Type="int8" Size="1" />
+    </Data>
+    <Data ElementName="footer_type" Type="int32" Size="1" />
+  </Struct>
+  <Struct Name="Substruct_BaseItemDescription" ClientVersion="547" >
     <Data ElementName="creator_flag" Type="int8" Size="1" />
     <Data ElementName="creator" Type="EQ2_8Bit_String" Size="1" />
     <Data ElementName="adornment" Type="EQ2_16Bit_String" Size="1" />
@@ -957,6 +1025,21 @@
 <Data ElementName="bag_id" Type="int32" Size="1" />
 <Data ElementName="inv_slot_id" Type="int32" Size="1" />
 <Data ElementName="menu_type" Type="int32" Size="1" />
+<Data ElementName="slot_id" Type="int8" Size="1" />
+<Data ElementName="index" Type="int16" Size="1" />
+<Data ElementName="icon" Type="int16" Size="1" />
+<Data ElementName="count" Type="int8" Size="1" />
+<Data ElementName="level" Type="int8" Size="1" />
+<Data ElementName="tier" Type="int8" Size="1" />
+<Data ElementName="num_slots" Type="int8" Size="1" />
+<Data ElementName="item_id" Type="sint32" Size="1" />
+<Data ElementName="name" Type="char" Size="81" />
+</Struct>
+<Struct Name="Substruct_Item" ClientVersion="547" >
+<Data ElementName="unique_id" Type="int32" Size="1" />
+<Data ElementName="bag_id" Type="int32" Size="1" />
+<Data ElementName="inv_slot_id" Type="int32" Size="1" />
+<Data ElementName="menu_type" Type="int32" Size="1" />
 <Data ElementName="index" Type="int16" Size="1" />
 <Data ElementName="icon" Type="int16" Size="1" />
 <Data ElementName="slot_id" Type="int8" Size="1" />
@@ -1208,6 +1291,20 @@
 <Data ElementName="unknown6" Type="int8" Size="16" />
 </Struct>
 <Struct Name="Substruct_ItemFooter" ClientVersion="1" >
+<Data ElementName="name" Type="EQ2_8Bit_String" Size="1" />
+<Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
+</Struct>
+<Struct Name="Substruct_ItemFooter" ClientVersion="546" >
+<Data ElementName="num_effects" Type="int8" Size="1"  IfFlagNotSet="loot" /> 
+<Data ElementName="effect_array" Type="Array" ArraySizeVariable="num_effects" IfFlagNotSet="loot">
+	<Data ElementName="subbulletflag" Type="int8" Size = "1" />
+	<Data ElementName="effect" Type="EQ2_16Bit_String" Size="1" />
+	<Data ElementName="percentage" Type="int8" Size = "1" />
+</Data>
+<Data ElementName="name" Type="EQ2_8Bit_String" Size="1" />
+<Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
+</Struct>
+<Struct Name="Substruct_ItemFooter" ClientVersion="547" >
 <Data ElementName="num_effects" Type="int8" IfVariableNotSet="header_info_header_unknown_0_0,header_unknown_0" />
 <Data ElementName="effect_array" Type="Array" ArraySizeVariable="num_effects">
 	<Data ElementName="subbulletflag" Type="int8" Size = "1" />
@@ -3686,6 +3783,16 @@
 <Data ElementName="info" Substruct="Substruct_BaseItemDescription" Size="1" />
 <Data ElementName="item_type" Type="int8" Size="1" />
 </Struct>
+<Struct Name="Substruct_ItemDescription" ClientVersion="546" >
+<Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
+<Data ElementName="info" Substruct="Substruct_BaseItemDescription" Size="1" />
+<Data ElementName="item_type" Type="int8" Size="1" />
+</Struct>
+<Struct Name="Substruct_ItemDescription" ClientVersion="547" >
+<Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
+<Data ElementName="info" Substruct="Substruct_BaseItemDescription" Size="1" />
+<Data ElementName="item_type" Type="int8" Size="1" />
+</Struct>
 <Struct Name="Substruct_ItemDescription" ClientVersion="860" >
 <Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
 <Data ElementName="info" Substruct="Substruct_BaseItemDescription" Size="1" />
@@ -3810,6 +3917,10 @@
 <Data ElementName="header" SubStruct="Substruct_QuestItemDescription" Size="1" />
 </Struct>
 <Struct Name="Substruct_LootItemDescription" ClientVersion="1" >
+<Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
+<Data ElementName="info" Substruct="Substruct_BaseItemDescription" Size="1" />
+</Struct>
+<Struct Name="Substruct_LootItemDescription" ClientVersion="546" >
 <Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
 <Data ElementName="info" Substruct="Substruct_BaseItemDescription" Size="1" />
 </Struct>
@@ -3953,6 +4064,14 @@
 </Data>
 <Data ElementName="equip_flag" Type="int8" Size="1" />
 </Struct>
+<Struct Name="WS_UpdateInventory" ClientVersion="547" OpcodeName="OP_UpdateInventoryMsg" >
+<Data ElementName="item_count" Type="int16" />
+<Data ElementName="packed_size" Type="int32" />
+<Data ElementName="item_array" Type="Array" ArraySizeVariable="item_count">
+  <Data ElementName="items" Substruct="Substruct_Item" Size="1" />
+</Data>
+<Data ElementName="equip_flag" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_UpdateInventory" ClientVersion="893" OpcodeName="OP_UpdateInventoryMsg" >
 <Data ElementName="item_count" Type="int16" />
 <Data ElementName="packed_size" Type="int32" />
@@ -4045,7 +4164,30 @@
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
-<Struct Name="WS_ItemRange" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Struct Name="WS_ItemGeneric" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemGeneric" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemRange" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="damage_low1" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_high1" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_low2" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_high2" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_low3" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_high3" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="delay" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="range_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="range_high" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_type" Type="int8" Size="1" />
+<Data ElementName="rating" Type="float" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemRange" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="damage_low1" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
 <Data ElementName="damage_high1" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
@@ -4068,7 +4210,15 @@
 <Data ElementName="damage_type" Type="int32" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
-<Struct Name="WS_ItemWeapon" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Struct Name="WS_ItemThrown" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="range" Type="sint32" Size="1" />
+<Data ElementName="damage_modifier" Type="sint32" Size="1" />
+<Data ElementName="hit_bonus" Type="float" Size="1" />
+<Data ElementName="damage_type" Type="int32" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemWeapon" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="wield_type" Type="int8" Size="1" />
 <Data ElementName="damage_low1" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
@@ -4082,13 +4232,39 @@
 <Data ElementName="rating" Type="float" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
-<Struct Name="WS_ItemArmor" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Struct Name="WS_ItemArmor" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="mitigation_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
 <Data ElementName="mitigation_high" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
-<Struct Name="WS_ItemShield" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Struct Name="WS_ItemShield" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="mitigation_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="mitigation_high" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemWeapon" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="wield_type" Type="int8" Size="1" />
+<Data ElementName="damage_low1" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="damage_high1" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="damage_low2" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="damage_high2" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="damage_low3" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="damage_high3" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="delay" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="damage_type" Type="int8" Size="1" />
+<Data ElementName="rating" Type="float" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemArmor" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="mitigation_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="mitigation_high" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemShield" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="mitigation_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
 <Data ElementName="mitigation_high" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
@@ -4117,7 +4293,111 @@
 </Data>
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
+<Struct Name="WS_ItemWeaponDetails"  ClientVersion="1">
+<Data ElementName="wield_type" Type="int8" Size="1" />
+<Data ElementName="damage_low1" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="damage_high1" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="damage_low2" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="damage_high2" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
+<Data ElementName="delay" Type="int8" Size="1" />
+<Data ElementName="damage_type" Type="int8" Size="1" />
+</Struct>
+<Struct Name="WS_ItemRangeDetails"  ClientVersion="1">
+<Data ElementName="damage_low1" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_high1" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_low2" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_high2" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="delay" Type="int8" Size="1"/>
+<Data ElementName="range_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+
+<Data ElementName="damage_type" Type="int8" Size="1" />
+</Struct>
+<Struct Name="WS_ItemArmorDetails" ClientVersion="1">
+<Data ElementName="mitigation_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="mitigation_high" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+</Struct>
+<Struct Name="WS_ItemShieldDetails" ClientVersion="1">
+<Data ElementName="mitigation_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="mitigation_high" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+</Struct>
+<Struct Name="WS_ItemBagDetails"  ClientVersion="1">
+<Data ElementName="num_slots" Type="int8" Size="1" />
+<Data ElementName="weight_reduction" Type="int8" Size="1" />
+</Struct>
+<Struct Name="WS_ItemRecipeBookDetails" ClientVersion="1">
+<Data ElementName="num_recipes" Type="int16" Size="1" OversizedValue="127" />
+<Data ElementName="recipe_array" Type="Array" ArraySizeVariable="num_recipes">
+	<Data ElementName="recipe_name" Type="EQ2_8Bit_String" Size="1" />
+</Data>
+</Struct>
+<Struct Name="WS_ItemWeapon" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="details" Substruct="WS_ItemWeaponDetails" Size="1" />
+<Data ElementName="range_filler" Substruct="WS_ItemRangeDetails" Size="1" />
+<Data ElementName="armor_filler" Substruct="WS_ItemArmorDetails" Size="1" />
+<Data ElementName="shield_filler" Substruct="WS_ItemShieldDetails" Size="1" />
+<Data ElementName="bag_filler" Substruct="WS_ItemBagDetails" Size="1" />
+<Data ElementName="skill_filler" Substruct="WS_SpellInfo" Size="1" />
+<Data ElementName="recipe_filler" Substruct="WS_ItemRecipeBookDetails" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemRange" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="details" Substruct="WS_ItemRangeDetails" Size="1" />
+<Data ElementName="armor_filler" Substruct="WS_ItemArmorDetails" Size="1" />
+<Data ElementName="shield_filler" Substruct="WS_ItemShieldDetails" Size="1" />
+<Data ElementName="bag_filler" Substruct="WS_ItemBagDetails" Size="1" />
+<Data ElementName="skill_filler" Substruct="WS_SpellInfo" Size="1" />
+<Data ElementName="recipe_filler" Substruct="WS_ItemRecipeBookDetails" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemArmor" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="details" Substruct="WS_ItemArmorDetails" Size="1" />
+<Data ElementName="shield_filler" Substruct="WS_ItemShieldDetails" Size="1" />
+<Data ElementName="bag_filler" Substruct="WS_ItemBagDetails" Size="1" />
+<Data ElementName="skill_filler" Substruct="WS_SpellInfo" Size="1" />
+<Data ElementName="recipe_filler" Substruct="WS_ItemRecipeBookDetails" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemShield" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="details" Substruct="WS_ItemShieldDetails" Size="1" />
+<Data ElementName="bag_filler" Substruct="WS_ItemBagDetails" Size="1" />
+<Data ElementName="skill_filler" Substruct="WS_SpellInfo" Size="1" />
+<Data ElementName="recipe_filler" Substruct="WS_ItemRecipeBookDetails" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
 <Struct Name="WS_ItemBag" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="details" Substruct="WS_ItemBagDetails" Size="1" />
+<Data ElementName="skill_filler" Substruct="WS_SpellInfo" Size="1" />
+<Data ElementName="recipe_filler" Substruct="WS_ItemRecipeBookDetails" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemSkill" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="spell_info" Substruct="WS_SpellInfo" Size="1" />
+<Data ElementName="recipe_filler" Substruct="WS_ItemRecipeBookDetails" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemRecipeBook" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="details" Substruct="WS_ItemRecipeBookDetails" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemBag" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="num_slots" Type="int8" Size="1" />
+<Data ElementName="num_empty" Type="int8" Size="1" />
+<Data ElementName="weight_reduction" Type="int16" Size="1" />
+<Data ElementName="num_names" Type="int8" Size="1" />
+<Data ElementName="name_array" Type="Array" ArraySizeVariable="num_names">
+	<Data ElementName="item_name" Type="EQ2_8Bit_String" Size="1" />
+</Data>
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemBag" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="num_slots" Type="int8" Size="1" />
 <Data ElementName="num_empty" Type="int8" Size="1" />
@@ -4130,6 +4410,18 @@
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemFood" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="food_type" Type="int8" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemFood" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="food_type" Type="int8" Size="1" />
+<Data ElementName="level" Type="int8" Size="1" />
+<Data ElementName="duration" Type="float" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemFood" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="food_type" Type="int8" Size="1" />
 <Data ElementName="level" Type="int8" Size="1" />
@@ -4149,7 +4441,7 @@
 <Data ElementName="display_until_cancelled" Type="int8" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
-<Struct Name="WS_ItemSkill" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Struct Name="WS_ItemSkill" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="spell_info" Substruct="WS_SpellInfo" Size="1" />
 <Data ElementName="scribed" Type="int8" Size="1" />
@@ -4170,7 +4462,7 @@
 <Data ElementName="fence_commission" Type="int16" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
-<Struct Name="WS_ItemRecipeBook" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Struct Name="WS_ItemRecipeBook" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="num_recipes" Type="int16" Size="1" OversizedValue="127" />
 <Data ElementName="recipe_array" Type="Array" ArraySizeVariable="num_recipes">
@@ -8017,6 +8309,10 @@
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_LootItemGeneric" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_LootItemDescription" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_LootItemGeneric" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_LootItemDescription" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>

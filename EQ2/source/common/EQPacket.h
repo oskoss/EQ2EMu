@@ -144,6 +144,7 @@ public:
 		return new_packet;
 	}
 	int8 PreparePacket(int16 MaxLen);
+	const char* GetOpcodeName();
 	EmuOpcode login_op;
 };
 class EQApplicationPacket : public EQPacket {

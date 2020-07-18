@@ -315,8 +315,8 @@ class PlayerInfo {
 public:
 	~PlayerInfo();
 	PlayerInfo(Player* in_player);
-	
-	EQ2Packet* serialize(int16 version);
+
+	EQ2Packet* serialize(int16 version, int16 modifyPos = 0, int32 modifyValue = 0);
 	PacketStruct* serialize2(int16 version);
 	EQ2Packet* serialize3(PacketStruct* packet, int16 version);
 	EQ2Packet* serializePet(int16 version);
@@ -442,6 +442,8 @@ public:
 	bool CanEquipItem(Item* item);
 	void SetEquippedItemAppearances();
 	vector<EQ2Packet*>	UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version);
+	int8 ConvertSlotToClient(int8 slot, int16 version);
+	int8 ConvertSlotFromClient(int8 slot, int16 version);
 	EQ2Packet* SwapEquippedItems(int8 slot1, int8 slot2, int16 version);
 	EQ2Packet*	RemoveInventoryItem(int8 bag_slot, int8 slot);
 	EQ2Packet*	SendInventoryUpdate(int16 version);
@@ -554,6 +556,8 @@ public:
 	void	SetSpawnDeleteTime(int32 id, int32 time);
 	int32	GetSpawnDeleteTime(int32 id);
 	void	ClearEverything();
+	bool	IsFullyLoggedIn();
+	void	SetFullyLoggedIn(bool val);
 	bool	IsResurrecting();
 	void	SetResurrecting(bool val);
 	int8	GetArrowColor(int8 spawn_level);
@@ -875,6 +879,7 @@ private:
 	Spawn*              combat_target;
 	int32				char_id;
 	bool				quickbar_updated;
+	bool				fully_logged_in;
 	bool				resurrecting;
 	PlayerInfo*			info;
 	vector<SpellBookEntry*> spells;
