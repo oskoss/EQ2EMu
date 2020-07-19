@@ -1496,18 +1496,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 
 			//DumpPacket(orig_packet, size);
 			size = Pack(tmp, orig_packet, size, size, version, reverse);
-			/*PacketStruct* control_packet = configReader.getStruct("WS_SetControlGhost", version);
-			if (control_packet) {
-				control_packet->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(player));
-				control_packet->setDataByName("speed", player->GetSpeed());
-				control_packet->setDataByName("air_speed", player->GetAirSpeed());
-				control_packet->setDataByName("size", 0.51);
-				control_packet->setDataByName("unknown2", 1);
-				Client* client = player->GetZone()->GetClientBySpawn(player);
-				if (client)
-					client->QueuePacket(control_packet->serialize());
-				safe_delete(control_packet);
-			}*/
 		}
 		else {
 			memcpy(changes, (uchar*)data->c_str(), size);
@@ -1539,6 +1527,21 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			}
 			size = Pack(tmp, changes, size, size, version, reverse);
 			//DumpPacket(tmp, size);
+		}
+
+		if (GetVersion() > 546)
+		{
+			PacketStruct* control_packet = configReader.getStruct("WS_SetControlGhost", version);
+			if (control_packet) {
+				control_packet->setDataByName("spawn_id", 0xFFFFFFFF);
+				control_packet->setDataByName("speed", player->GetSpeed());
+				control_packet->setDataByName("air_speed", player->GetAirSpeed());
+				control_packet->setDataByName("size", 0.51);
+				Client* client = player->GetZone()->GetClientBySpawn(player);
+				if (client)
+					client->QueuePacket(control_packet->serialize());
+				safe_delete(control_packet);
+			}
 		}
 
 		EQ2Packet* ret_packet = new EQ2Packet(OP_UpdateCharacterSheetMsg, tmp, size);
