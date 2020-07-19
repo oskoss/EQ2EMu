@@ -2120,7 +2120,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 	packet->setDataByName("pos_roll", appearance.pos.Roll);
 }
 
-void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
+void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	int16 version = packet->GetVersion();
 
 	bool spawnHiddenFromClient = false;
@@ -2130,7 +2130,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	if (radius != 0 && (Spawn*)spawn != this && this->IsPlayer() && !spawn->CanSeeInvis((Entity*)this))
 		spawnHiddenFromClient = true;
 
-	if(!spawnHiddenFromClient && (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1)){
+	if (!spawnHiddenFromClient && (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1)) {
 		appearance.locked_no_loot = 1; //for now
 		if (!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign()) {
 			int8 percent = 0;
@@ -2178,7 +2178,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	packet->setDataByName("unknown4", (int8)GetLevel());
 	packet->setDataByName("difficulty", appearance.encounter_level); //6);
 	packet->setDataByName("heroic_flag", appearance.heroic_flag);
- 	if(!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign())
+	if (!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign())
 		packet->setDataByName("interaction_flag", 12); //this makes NPCs head turn to look at you
 
 	packet->setDataByName("class", appearance.adventure_class);
@@ -2202,16 +2202,16 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	}
 
 	packet->setDataByName("model_type", model_type);
-	if(appearance.soga_model_type == 0)
+	if (appearance.soga_model_type == 0)
 		packet->setDataByName("soga_model_type", model_type);
 	else
 		packet->setDataByName("soga_model_type", sogaModelType);
 
-	if(GetTempActionState() >= 0)
+	if (GetTempActionState() >= 0)
 		packet->setDataByName("action_state", GetTempActionState());
 	else
 		packet->setDataByName("action_state", appearance.action_state);
-	if(GetTempVisualState() >= 0)
+	if (GetTempVisualState() >= 0)
 		packet->setDataByName("visual_state", GetTempVisualState());
 	else
 		packet->setDataByName("visual_state", appearance.visual_state);
@@ -2220,14 +2220,14 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	packet->setDataByName("gender", appearance.gender);
 	packet->setDataByName("race", appearance.race);
 	packet->setDataByName("gender", appearance.gender);
-	if(IsEntity()){
+	if (IsEntity()) {
 		Entity* entity = ((Entity*)this);
 		packet->setDataByName("combat_voice", entity->GetCombatVoice());
 		packet->setDataByName("emote_voice", entity->GetEmoteVoice());
-		for(int i=0;i<25;i++){
-			if(i == 2){ //don't send helm if hidden flag
-				if(IsPlayer()){
-					if(((Player*)this)->get_character_flag(CF_HIDE_HELM)){
+		for (int i = 0; i < 25; i++) {
+			if (i == 2) { //don't send helm if hidden flag
+				if (IsPlayer()) {
+					if (((Player*)this)->get_character_flag(CF_HIDE_HELM)) {
 						packet->setDataByName("equipment_types", 0, i);
 						packet->setColorByName("equipment_colors", 0, i);
 						packet->setColorByName("equipment_highlights", 0, i);
@@ -2243,9 +2243,9 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 					}
 				}
 			}
-			else if(i == 19){ //don't send cloak if hidden
-				if(IsPlayer()){
-					if(!((Player*)this)->get_character_flag(CF_SHOW_CLOAK)){
+			else if (i == 19) { //don't send cloak if hidden
+				if (IsPlayer()) {
+					if (!((Player*)this)->get_character_flag(CF_SHOW_CLOAK)) {
 						packet->setDataByName("equipment_types", 0, i);
 						packet->setColorByName("equipment_colors", 0, i);
 						packet->setColorByName("equipment_highlights", 0, i);
@@ -2291,8 +2291,8 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 		packet->setDataByName("legs_type_id", entity->features.legs_type);
 		packet->setDataByName("soga_hair_type_id", entity->features.soga_hair_type);
 		packet->setDataByName("facial_hair_type_id", entity->features.hair_face_type);
-		packet->setDataByName("soga_facial_hair_type_id", entity->features.soga_hair_face_type);		
-		for(int i=0;i<3;i++){
+		packet->setDataByName("soga_facial_hair_type_id", entity->features.soga_hair_face_type);
+		for (int i = 0; i < 3; i++) {
 			packet->setDataByName("eye_type", entity->features.eye_type[i], i);
 			packet->setDataByName("ear_type", entity->features.ear_type[i], i);
 			packet->setDataByName("eye_brow_type", entity->features.eye_brow_type[i], i);
@@ -2309,7 +2309,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 			packet->setDataByName("soga_nose_type", entity->features.soga_nose_type[i], i);
 		}
 		packet->setColorByName("skin_color", entity->features.skin_color);
-		packet->setColorByName("eye_color", entity->features.eye_color);		
+		packet->setColorByName("eye_color", entity->features.eye_color);
 		packet->setColorByName("hair_type_color", entity->features.hair_type_color);
 		packet->setColorByName("hair_type_highlight_color", entity->features.hair_type_highlight_color);
 		packet->setColorByName("hair_face_color", entity->features.hair_face_color);
@@ -2331,7 +2331,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 
 		packet->setDataByName("body_age", entity->features.body_age);
 	}
-	else{
+	else {
 		EQ2_Color empty;
 		empty.red = 255;
 		empty.blue = 255;
@@ -2341,15 +2341,15 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 		packet->setColorByName("soga_skin_color", empty);
 		packet->setColorByName("soga_eye_color", empty);
 	}
-	if(appearance.icon == 0){
-		if(appearance.attackable == 1)
+	if (appearance.icon == 0) {
+		if (appearance.attackable == 1)
 			appearance.icon = 0;
-		else if(appearance.encounter_level > 0)
+		else if (appearance.encounter_level > 0)
 			appearance.icon = 4;
 		else
 			appearance.icon = 6;
 	}
-	
+
 	// If Coe+ clients modify the values before we send
 	// if not then just send the value we have.
 	int8 temp_icon = appearance.icon;
@@ -2381,12 +2381,12 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 	packet->setDataByName("icon", temp_icon);//appearance.icon);
 
 	int32 temp_activity_status = 0;
-	
+
 	if (!Alive() && GetTotalHP() > 0 && !IsObject() && !IsGroundSpawn())
 		temp_activity_status = 1;
 
 	temp_activity_status += (IsNPC() || IsObject() || IsGroundSpawn()) ? 1 << 1 : 0;
-	if (version >= 1188) {
+	if (version >= 546) {
 		if (IsGroundSpawn() || GetShowHandIcon())
 			temp_activity_status += ACTIVITY_STATUS_INTERACTABLE_1188;
 
@@ -2426,38 +2426,39 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet){
 		// if this is either a boat or lift let the client be manipulated by the object
 		if (appearance.icon == 28 || appearance.icon == 12)
 			temp_activity_status += ACTIVITY_STATUS_ISTRANSPORT_1188;
+
+		// for some reason Spawns are using different flags??  all NPCs were getting LFG before this was here
+		if (IsEntity() && version <= 546)
+			temp_activity_status = 0;
 	}
 	else
 	{
 		temp_activity_status = appearance.activity_status;
 
-		if (version <= 546) {
-			temp_activity_status = 0xFF;
-			if (MeetsSpawnAccessRequirements(spawn))
-				packet->setDataByName("hand_icon", appearance.display_hand_icon);
-			else {
-				if ((req_quests_override & 256) > 0)
-					packet->setDataByName("hand_icon", 1);
-			}
-
-			if (IsPlayer()) {
-				if (((Player*)this)->get_character_flag(CF_AFK))
-					packet->setDataByName("afk", 1);
-				if ((appearance.activity_status & ACTIVITY_STATUS_ROLEPLAYING) > 0)
-					packet->setDataByName("roleplaying", 1);
-				if ((appearance.activity_status & ACTIVITY_STATUS_ANONYMOUS) > 0)
-					packet->setDataByName("anonymous", 1);
-				if ((appearance.activity_status & ACTIVITY_STATUS_LINKDEAD) > 0)
-					packet->setDataByName("linkdead", 1);
-				if ((appearance.activity_status & ACTIVITY_STATUS_CAMPING) > 0)
-					packet->setDataByName("camping", 1);
-				if ((appearance.activity_status & ACTIVITY_STATUS_LFG) > 0)
-					packet->setDataByName("lfg", 1);
-			}
-			if ((appearance.activity_status & ACTIVITY_STATUS_SOLID) > 0)
-				packet->setDataByName("solid", 1);
+		temp_activity_status = 0xFF;
+		if (MeetsSpawnAccessRequirements(spawn))
+			packet->setDataByName("hand_icon", appearance.display_hand_icon);
+		else {
+			if ((req_quests_override & 256) > 0)
+				packet->setDataByName("hand_icon", 1);
 		}
 
+		if (IsPlayer()) {
+			if (((Player*)this)->get_character_flag(CF_AFK))
+				packet->setDataByName("afk", 1);
+			if ((appearance.activity_status & ACTIVITY_STATUS_ROLEPLAYING) > 0)
+				packet->setDataByName("roleplaying", 1);
+			if ((appearance.activity_status & ACTIVITY_STATUS_ANONYMOUS) > 0)
+				packet->setDataByName("anonymous", 1);
+			if ((appearance.activity_status & ACTIVITY_STATUS_LINKDEAD) > 0)
+				packet->setDataByName("linkdead", 1);
+			if ((appearance.activity_status & ACTIVITY_STATUS_CAMPING) > 0)
+				packet->setDataByName("camping", 1);
+			if ((appearance.activity_status & ACTIVITY_STATUS_LFG) > 0)
+				packet->setDataByName("lfg", 1);
+		}
+		if ((appearance.activity_status & ACTIVITY_STATUS_SOLID) > 0)
+			packet->setDataByName("solid_object", 1);
 	}
 
 	packet->setDataByName("activity_status", temp_activity_status); //appearance.activity_status);
