@@ -1529,7 +1529,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			//DumpPacket(tmp, size);
 		}
 
-		if (GetVersion() > 546)
+		if (GetVersion() >= 546)
 		{
 			PacketStruct* control_packet = configReader.getStruct("WS_SetControlGhost", version);
 			if (control_packet) {
