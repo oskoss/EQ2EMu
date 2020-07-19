@@ -104,6 +104,8 @@ bool ChatChannel::LeaveChannel(Client *client) {
 		for (itr = clients.begin(); itr != clients.end(); itr++) {
 			if ((to_client = zone_list.GetClientByCharID(*itr)) == NULL)
 				continue;
+			if (to_client == client) // don't need to send to self.
+				continue;
 
 			if ((packet_struct = configReader.getStruct("WS_ChatChannelUpdate", to_client->GetVersion())) == NULL)
 				continue;
