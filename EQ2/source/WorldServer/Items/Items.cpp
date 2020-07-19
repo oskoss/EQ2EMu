@@ -3149,8 +3149,8 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 		menu_data += ITEM_MENU_TYPE_HOUSE;
 	}
 	if (item->generic_info.item_type == 18){
-		menu_data += ITEM_MENU_TYPE_UNPACK; 
-		packet->setSubstructArrayDataByName("flag_names", "unknown3", ITEM_MENU_TYPE2_UNPACK, 0, i);
+		menu_data += ITEM_MENU_TYPE_UNPACK;
+		packet->setSubstructArrayDataByName("items", "unknown3", ITEM_MENU_TYPE2_UNPACK, 0, i);
 	}
 
 	if(item->generic_info.condition == 0)
