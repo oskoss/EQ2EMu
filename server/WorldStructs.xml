@@ -506,6 +506,15 @@ to zero and treated like placeholders." />
 <Data ElementName="command" Type="EQ2_8Bit_String" />
 <Data ElementName="icon" Type="int16" Size="1" /> 
 </Struct>
+<Struct Name="WS_MacroUpdate" ClientVersion="546" OpcodeName="OP_MacroUpdateMsg" > 
+<Data ElementName="number" Type="int8" />
+<Data ElementName="name" Type="EQ2_8Bit_String" />
+<Data ElementName="macro_count" Type="int8" />
+<Data ElementName="macro_array" Type="Array" ArraySizeVariable="macro_count"> 
+   <Data ElementName="command" Type="EQ2_16Bit_String" />
+</Data>
+<Data ElementName="icon" Type="int16" Size="1" /> 
+</Struct>
 <Struct Name="WS_MacroUpdate" ClientVersion="547" OpcodeName="OP_MacroUpdateMsg" > 
 <Data ElementName="number" Type="int8" />
 <Data ElementName="name" Type="EQ2_8Bit_String" />
@@ -7062,15 +7071,6 @@ to zero and treated like placeholders." />
 <Data ElementName="player_name" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="used_quests" Type="int16" Size="1" />
 </Struct>
-<Struct Name="WS_MacroUpdate" ClientVersion="546" OpcodeName="OP_MacroUpdateMsg" > 
-<Data ElementName="number" Type="int8" />
-<Data ElementName="name" Type="EQ2_8Bit_String" />
-<Data ElementName="macro_count" Type="int8" />
-<Data ElementName="macro_array" Type="Array" ArraySizeVariable="macro_count"> 
-   <Data ElementName="command" Type="EQ2_16Bit_String" />
-</Data>
-<Data ElementName="icon" Type="int16" Size="1" /> 
-</Struct>
 <Struct Name="WS_QuestJournalUpdate" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqQuestJournalUpdateCmd" >
 <Data ElementName="num_quests" Type="int16" />
 <Data ElementName="quests_array" Type="Array" ArraySizeVariable="num_quests">
@@ -7188,7 +7188,6 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown4a" Type="int8" Size="1" />
 <Data ElementName="max_quests" Type="int8" Size="1" />
 </Struct>
-
 <Struct Name="WS_OfferQuest" ClientVersion="1" OpcodeName="OP_OfferQuestMsg" >
 <Data ElementName="unknown" Type="int8" Size="11" />
 <Data ElementName="min_coin" Type="int64" Size="1" />
