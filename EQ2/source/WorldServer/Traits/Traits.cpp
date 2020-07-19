@@ -172,6 +172,10 @@ EQ2Packet* MasterTraitList::GetTraitListPacket (Client* client)
 	}
 
 	PacketStruct* packet = configReader.getStruct("WS_TraitsList", version);
+
+	if (packet == NULL)
+		return NULL;
+
 	packet->setArrayLengthByName("num_traits", num_traits);
 
 	for (itr = SortedTraitList.begin(); itr != SortedTraitList.end(); itr++) {
