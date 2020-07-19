@@ -845,7 +845,6 @@ void Quest::SetQuestID(int32 in_id){
 }
 
 EQ2Packet* Quest::OfferQuest(int16 version, Player* player){
-	return 0;
 	PacketStruct* packet = configReader.getStruct("WS_OfferQuest", version);
 	if(packet){	
 		packet->setDataByName("reward", "Quest Reward!");
