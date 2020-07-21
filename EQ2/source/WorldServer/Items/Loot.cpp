@@ -452,7 +452,7 @@ NPC* Entity::DropChest() {
 
 	int8 highest_tier = 0;
 	vector<Item*>::iterator itr;	
-	for (itr = GetLootItems()->begin(); itr != GetLootItems()->end(); ) {
+	for (itr = ((Spawn*)this)->GetLootItems()->begin(); itr != ((Spawn*)this)->GetLootItems()->end(); ) {
 		if ((*itr)->details.tier >= ITEM_TAG_UNCOMMON) {
 			if ((*itr)->details.tier > highest_tier)
 				highest_tier = (*itr)->details.tier;
@@ -460,7 +460,7 @@ NPC* Entity::DropChest() {
 			// Add the item to the chest
 			chest->AddLootItem((*itr)->details.item_id, (*itr)->details.count);
 			// Remove the item from the corpse
-			itr = GetLootItems()->erase(itr);
+			itr = ((Spawn*)this)->GetLootItems()->erase(itr);
 		}
 		else
 			itr++;

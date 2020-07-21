@@ -39,6 +39,8 @@ extern RuleManager rule_manager;
 extern World world;
 
 Spawn::Spawn(){ 
+	loot_coins = 0;
+	trap_triggered = false;
 	group_id = 0;
 	size_offset = 0;
 	merchant_id = 0;
@@ -114,6 +116,10 @@ Spawn::Spawn(){
 }
 
 Spawn::~Spawn(){
+	vector<Item*>::iterator itr;
+	for (itr = loot_items.begin(); itr != loot_items.end(); itr++)
+		safe_delete(*itr);
+
 	RemovePrimaryCommands();
 
 	for(int32 i=0;i<secondary_command_list.size();i++){

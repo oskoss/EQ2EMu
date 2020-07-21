@@ -2029,9 +2029,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								client->Message(CHANNEL_COLOR_YELLOW, "%u - %s", *list_itr, table->name.c_str());
 						}
 					}
-					Entity* target = (Entity*)spawn;
-					client->Message(CHANNEL_COLOR_YELLOW, "Coins being carried: %u", target->GetLootCoins());
-					vector<Item*>* items = target->GetLootItems();
+					client->Message(CHANNEL_COLOR_YELLOW, "Coins being carried: %u", spawn->GetLootCoins());
+					vector<Item*>* items = spawn->GetLootItems();
 					if (items) {
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn is carrying the following items: ");
 						vector<Item*>::iterator itr;
@@ -2050,8 +2049,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_LOOT_SETCOIN:{
 			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity() && sep && sep->arg[0] && sep->IsNumber(0)){
-				Entity* target = (Entity*)spawn;
-				target->SetLootCoins(atoul(sep->arg[0]));
+				spawn->SetLootCoins(atoul(sep->arg[0]));
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully set coins.");
 			}
 			else
@@ -2061,11 +2059,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_LOOT_ADDITEM:{
 			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity() && sep && sep->arg[0] && sep->IsNumber(0)){
-				Entity* target = (Entity*)spawn;
 				int16 charges = 1;
 				if(sep->arg[1] && sep->IsNumber(1))
 					charges = atoi(sep->arg[1]);
-				target->AddLootItem(atoul(sep->arg[0]), charges);
+				spawn->AddLootItem(atoul(sep->arg[0]), charges);
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully added item.");
 			}
 			else
@@ -2075,8 +2072,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_LOOT_REMOVEITEM:{
 			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity() && sep && sep->arg[0] && sep->IsNumber(0)){
-				Entity* target = (Entity*)spawn;
-				target->LootItem(atoul(sep->arg[0]));
+				spawn->LootItem(atoul(sep->arg[0]));
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully removed item.");
 			}
 			else
@@ -2095,10 +2091,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(cmdTarget && cmdTarget->IsEntity()){
 				if (cmdTarget->GetDistance(client->GetPlayer()) <= rule_manager.GetGlobalRule(R_Loot, LootRadius)->GetFloat()){
 					if (!rule_manager.GetGlobalRule(R_Loot, AutoDisarmChest)->GetBool() && command->handler == COMMAND_DISARM )
-						client->OpenChest((Entity*)cmdTarget, true);
+						client->OpenChest(cmdTarget, true);
 					else
-						client->Loot((Entity*)cmdTarget, rule_manager.GetGlobalRule(R_Loot, AutoDisarmChest)->GetBool());
-					if (!((Entity*)cmdTarget)->HasLoot()){
+						client->Loot(cmdTarget, rule_manager.GetGlobalRule(R_Loot, AutoDisarmChest)->GetBool());
+					if (!(cmdTarget)->HasLoot()){
 						if (((Entity*)cmdTarget)->IsNPC())
 							client->GetCurrentZone()->RemoveDeadSpawn(cmdTarget);
 					}

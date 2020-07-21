@@ -48,8 +48,6 @@ Entity::Entity(){
 	memset(&melee_combat_data, 0, sizeof(CombatData));
 	memset(&ranged_combat_data, 0, sizeof(CombatData));
 	memset(&info_struct, 0, sizeof(InfoStruct));
-	loot_coins = 0;
-	trap_triggered = false;
 	memset(&features, 0, sizeof(CharFeatures));
 	memset(&equipment, 0, sizeof(EQ2_Equipment));
 	pet = 0;
@@ -89,9 +87,6 @@ Entity::Entity(){
 }
 
 Entity::~Entity(){
-	vector<Item*>::iterator itr;
-	for(itr = loot_items.begin(); itr != loot_items.end(); itr++)
-		safe_delete(*itr);
 	MutexList<BonusValues*>::iterator itr2 = bonus_list.begin();
 	while(itr2.Next())
 		safe_delete(itr2.value);
@@ -691,49 +686,6 @@ SpellEffects* Entity::GetSpellEffect(int32 id, Entity* caster) {
 
 InfoStruct* Entity::GetInfoStruct(){ 
 	return &info_struct; 
-}
-
-Item* Entity::LootItem(int32 id){
-	Item* ret = 0;
-	vector<Item*>::iterator itr;
-	MLootItems.lock();
-	for(itr = loot_items.begin(); itr != loot_items.end(); itr++){
-		if((*itr)->details.item_id == id){
-			ret = *itr;
-			loot_items.erase(itr);
-			break;
-		}
-	}
-	MLootItems.unlock();
-	return ret;
-}
-
-int32 Entity::GetLootItemID(){
-	int32 ret = 0;
-	vector<Item*>::iterator itr;
-	MLootItems.lock();
-	for(itr = loot_items.begin(); itr != loot_items.end(); itr++){
-		ret = (*itr)->details.item_id;
-		break;
-	}
-	MLootItems.unlock();
-	return ret;
-}
-
-bool Entity::HasLootItemID(int32 id) {
-	bool ret = false;
-
-	vector<Item*>::iterator itr;
-	MLootItems.readlock(__FUNCTION__, __LINE__);
-	for (itr = loot_items.begin(); itr != loot_items.end(); itr++) {
-		if ((*itr)->details.item_id == id) {
-			ret = true;
-			break;
-		}
-	}
-	MLootItems.releasereadlock(__FUNCTION__, __LINE__);
-
-	return ret;
 }
 
 Skill* Entity::GetSkillByName(const char* name, bool check_update){

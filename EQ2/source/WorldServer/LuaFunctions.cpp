@@ -467,7 +467,7 @@ int EQ2Emu_lua_RemoveLootItem(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	if (spawn && spawn->IsEntity()) {
 		int32 item_id = lua_interface->GetInt32Value(state, 2);
-		((Entity*)spawn)->LootItem(item_id);
+		spawn->LootItem(item_id);
 	}
 	return 0;
 }

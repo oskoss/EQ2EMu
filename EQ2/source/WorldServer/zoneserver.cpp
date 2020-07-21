@@ -4312,12 +4312,12 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 		NPC* chest = 0;
 
 		if (!((NPC*)dead)->Brain()->PlayerInEncounter()) {
-			((NPC*)dead)->SetLootCoins(0);
-			((NPC*)dead)->GetLootItems()->clear();
+			dead->SetLootCoins(0);
+			dead->GetLootItems()->clear();
 		}
 
 		// If dead has loot attempt to drop a chest
-		if (((NPC*)dead)->HasLoot()) {
+		if (dead->HasLoot()) {
 			chest = ((NPC*)dead)->DropChest();
 		}
 
@@ -5744,7 +5744,7 @@ void ZoneServer::AddDeadSpawn(Spawn* spawn, int32 timer){
 	else if(timer != 0xFFFFFFFF)
 		dead_spawns.insert(make_pair(spawn->GetID(), Timer::GetCurrentTime2() + timer));
 	else{
-		if(spawn->IsEntity() && ((Entity*)spawn)->HasLoot()){
+		if(spawn->IsEntity() && spawn->HasLoot()){
 			dead_spawns.insert(make_pair(spawn->GetID(), Timer::GetCurrentTime2() + (15000 * spawn->GetLevel() + 240000)));
 			SendUpdateDefaultCommand(spawn, "loot", 10);
 		}

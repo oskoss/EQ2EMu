@@ -488,47 +488,6 @@ public:
 
 	bool	IsCasting();
 	void	IsCasting(bool val);
-	bool HasLoot(){
-		if(loot_items.size() == 0 && loot_coins == 0)
-			return false;
-		return true;
-	}
-	bool HasLootItemID(int32 id);
-	int32 GetLootItemID();
-	Item*	LootItem(int32 id);
-	vector<Item*>* GetLootItems(){
-		return &loot_items;
-	}
-	void LockLoot(){
-		MLootItems.lock();
-	}
-	void UnlockLoot(){
-		MLootItems.unlock();
-	}
-	int32 GetLootCoins(){
-		return loot_coins;
-	}
-	void SetLootCoins(int32 val){
-		loot_coins = val;
-	}
-	void AddLootCoins(int32 coins){
-		loot_coins += coins;
-	}
-	bool HasTrapTriggered() {
-		return trap_triggered;
-	}
-	void SetTrapTriggered(bool triggered) {
-		trap_triggered = triggered;
-	}
-	void AddLootItem(int32 id, int16 charges = 1){
-		Item* master_item = master_item_list.GetItem(id);
-		if(master_item){
-			Item* item = new Item(master_item);
-			item->details.count = charges;
-			loot_items.push_back(item);
-		}
-	}
-
 	void SetMount(int16 mount_id, int8 red = 0xFF, int8 green = 0xFF, int8 blue = 0xFF, bool setUpdateFlags = true)
 	{
 		if (mount_id == 0) {
@@ -837,14 +796,6 @@ public:
 
 	void CustomizeAppearance(PacketStruct* packet);
 
-	void ClearLootList() {
-		vector<Item*>::iterator itr;
-		for (itr = loot_items.begin(); itr != loot_items.end(); itr++)
-			safe_delete(*itr);
-
-		loot_items.clear();
-	}
-
 	Trade* trade;
 
 	// Keep track of entities that hate this spawn.
@@ -865,9 +816,6 @@ private:
 	map<int8, MutexList<LuaSpell*>*> control_effects;
 	map<int8, MutexList<LuaSpell*>*> immunities;
 	float	max_speed;
-	vector<Item*>	loot_items;
-	int32			loot_coins;
-	bool			trap_triggered;
 	int8	deity;
 	sint16	regen_hp_rate;
 	sint16	regen_power_rate;
@@ -884,7 +832,6 @@ private:
 	Mutex   MMaintainedSpells;
 	Mutex   MSpellEffects;
 	vector<DetrimentalEffects> detrimental_spell_effects;
-	Mutex	MLootItems;
 	// Pointers for the 4 types of pets (Summon, Charm, Deity, Cosmetic)
 	Entity*	pet;
 	Entity* charmedPet;

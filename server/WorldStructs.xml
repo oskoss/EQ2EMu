@@ -6962,16 +6962,16 @@ to zero and treated like placeholders." />
 <Struct Name="WS_UpdateLoot" ClientVersion="882" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateLootCmd" >
 <Data ElementName="loot_count" Type="int16" />
 <Data ElementName="display" Type="int16" />
-<Data ElementName="unknown2" Type="int32" />
-<Data ElementName="unknown3" Type="int32" />
+<Data ElementName="loot_type" Type="int32" />
+<Data ElementName="lotto_timeout" Type="int32" />
 <Data ElementName="loot_id" Type="int32" />
 </Struct>
 <Struct Name="WS_UpdateLoot" ClientVersion="60114" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateLootCmd" >
 <Data ElementName="loot_count" Type="int16" />
 <Data ElementName="display" Type="int8" />
 <Data ElementName="unknown_605_1_MJ" Type="int8" />
-<Data ElementName="unknown2" Type="int32" />
-<Data ElementName="unknown3" Type="int32" />
+<Data ElementName="loot_type" Type="int32" />
+<Data ElementName="lotto_timeout" Type="int32" />
 <Data ElementName="loot_id" Type="int32" />
 </Struct>
 <Struct Name="WS_LootType" ClientVersion="1" OpcodeName="OP_LootItemsRequestMsg" >
