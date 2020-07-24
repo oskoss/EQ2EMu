@@ -146,6 +146,7 @@ public:
 	bool	IsReadyForSpawns(){ return ready_for_spawns; }
 	bool	IsReadyForUpdates() { return ready_for_updates; }
 	bool	IsZoning(){ return client_zoning; }
+	void	SetReadyForUpdates();
 	void	SetReadyForSpawns(bool val);
 	void	QueuePacket(EQ2Packet* app, bool attemptedCombine=false);
 	void	SendLoginInfo();

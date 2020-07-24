@@ -970,12 +970,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	case OP_SysClient: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SysClient", opcode, opcode);
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
-		GetPlayer()->SetFullyLoggedIn(true);
-
-		if (!ready_for_updates)
-			database.loadCharacterProperties(this);
-
-		ready_for_updates = true;
+		SetReadyForUpdates();
 		break;
 	}
 	case OP_MapRequest: {
@@ -1529,8 +1524,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			EQ2_16BitString str = packet->getType_EQ2_16BitString_ByName("signal");
 			if (str.size > 0) {
 				if (strcmp(str.data.c_str(), "sys_client_avatar_ready") == 0) {
-					GetPlayer()->SetFullyLoggedIn(true);
-					ready_for_updates = true;
+					SetReadyForUpdates();
 					GetPlayer()->SendSpawnChanges(true);
 				}
 				const char* zone_script = world.GetZoneScript(player->GetZone()->GetZoneID());
@@ -7496,6 +7490,15 @@ void Client::SearchStore(int32 page) {
 		}
 	}
 
+}
+
+void Client::SetReadyForUpdates() {
+	GetPlayer()->SetFullyLoggedIn(true);
+
+	if (!ready_for_updates)
+		database.loadCharacterProperties(this);
+
+	ready_for_updates = true;
 }
 
 void Client::SetReadyForSpawns(bool val) {

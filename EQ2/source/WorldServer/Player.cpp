@@ -54,6 +54,7 @@ Player::Player(){
 	spawn_index = 0;
 	info = 0;
 	movement_packet = 0;
+	fully_logged_in = false;
 	last_movement_activity = 0;
 	//speed = 0;
 	packet_num = 0;
