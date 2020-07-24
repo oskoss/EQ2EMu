@@ -2392,7 +2392,9 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		temp_activity_status = 1;
 
 	temp_activity_status += (IsNPC() || IsObject() || IsGroundSpawn()) ? 1 << 1 : 0;
-	if (version >= 546) {
+	
+	if ( version >= 546)
+	{
 		if (IsGroundSpawn() || GetShowHandIcon())
 			temp_activity_status += ACTIVITY_STATUS_INTERACTABLE_1188;
 
@@ -2430,11 +2432,18 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 			temp_activity_status += ACTIVITY_STATUS_INCOMBAT_1188;
 
 		// if this is either a boat or lift let the client be manipulated by the object
+		// doesn't work for DoF client version 546
 		if (appearance.icon == 28 || appearance.icon == 12)
+		{
 			temp_activity_status += ACTIVITY_STATUS_ISTRANSPORT_1188;
 
+			if ( version == 546 )
+				packet->setDataByName("is_transport", 1);
+		}
+
 		// for some reason Spawns are using different flags??  all NPCs were getting LFG before this was here
-		if (IsEntity() && version <= 546)
+		// ground spawns seem to behave the same way, LFG ground spawn anyone??
+		if ((IsEntity() || IsGroundSpawn()) && version <= 546)
 			temp_activity_status = 0;
 	}
 	else
