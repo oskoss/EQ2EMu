@@ -2451,6 +2451,11 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		temp_activity_status = appearance.activity_status;
 
 		temp_activity_status = 0xFF;
+
+		// this only partially fixes lifts in classic 283 client if you move just as the lift starts to move
+		if (appearance.icon == 28 || appearance.icon == 12)
+			packet->setDataByName("is_transport", 1);
+
 		if (MeetsSpawnAccessRequirements(spawn))
 			packet->setDataByName("hand_icon", appearance.display_hand_icon);
 		else {

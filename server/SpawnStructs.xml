@@ -373,7 +373,7 @@
 <Data ElementName="no_arrow_color_or_healthbar" Type="int8" Size="1" /> <!-- 37 -->
 <Data ElementName="hand_icon" Type="int8" Size="1" /> <!-- 38   127 -->
 <Data ElementName="hide_health" Type="int8" Size="1" /> <!-- 39 -->
-<Data ElementName="unknown15" Type="int8" Size="1" /> <!-- 40 -->
+<Data ElementName="is_transport" Type="int8" Size="1" /> <!-- 40 -->
 <Data ElementName="house_icon" Type="int8" Size="1" /> <!-- 41 -->
 <Data ElementName="in_combat" Type="int8" Size="1" /> <!-- 42 -->
 <Data ElementName="afk" Type="int8" Size="1" /> <!-- 43 -->
