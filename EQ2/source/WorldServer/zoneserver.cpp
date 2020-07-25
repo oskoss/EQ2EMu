@@ -5850,14 +5850,22 @@ void ZoneServer::FindSpawn(Client* client, char* regSearchStr)
 	}
 
 	string resString = string(regSearchStr);
-	std::regex pre_re_check("^[a-zA-Z0-9_\s]+$");
-	bool output = std::regex_match(resString, pre_re_check);
-	if (output)
+	try
 	{
-		string newStr(".*");
-		newStr.append(regSearchStr);
-		newStr.append(".*");
-		resString = newStr;
+		std::regex pre_re_check("^[a-zA-Z0-9_ ]+$");
+		bool output = std::regex_match(resString, pre_re_check);
+		if (output)
+		{
+			string newStr(".*");
+			newStr.append(regSearchStr);
+			newStr.append(".*");
+			resString = newStr;
+		}
+	}
+	catch (...)
+	{
+		client->SimpleMessage(CHANNEL_COLOR_RED, "Try/Catch ZoneServer::FindSpawn(Client*, char* regSearchStr) failure.");
+		return;
 	}
 	client->Message(CHANNEL_COLOR_WHITE, "RegEx Search Spawn List: %s", regSearchStr);
 	client->Message(CHANNEL_COLOR_WHITE, "Database ID | Spawn Name | X , Y , Z");
@@ -5865,12 +5873,20 @@ void ZoneServer::FindSpawn(Client* client, char* regSearchStr)
 	map<int32, Spawn*>::iterator itr;
 	MSpawnList.readlock(__FUNCTION__, __LINE__);
 	int32 spawnsFound = 0;
-	std::regex re(resString);
+	std::regex re(resString, std::regex_constants::icase);
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		Spawn* spawn = itr->second;
-		if (!spawn)
+		if (!spawn || !spawn->GetName())
 			continue;
-		bool output = std::regex_match(string(spawn->GetName()), re);
+		bool output = false;
+		try {
+			output = std::regex_match(string(spawn->GetName()), re);
+		}
+		catch (...)
+		{
+			continue;
+		}
+
 		if (output)
 		{
 			client->Message(CHANNEL_COLOR_WHITE, "%i | %s | %f , %f , %f", spawn->GetDatabaseID(), spawn->GetName(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
