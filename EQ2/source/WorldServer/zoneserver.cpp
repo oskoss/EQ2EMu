@@ -5661,20 +5661,44 @@ void ZoneServer::HandleEmote(Client* originator, string name) {
 	}
 
 	Client* client = 0;
-	Emote* emote = visual_states.FindEmote(name);
-	if(!emote){
+	Emote* origEmote = visual_states.FindEmote(name, originator->GetVersion());
+	if(!origEmote){
 		originator->Message(CHANNEL_COLOR_YELLOW, "Unable to find emote '%s'.  If this should be a valid emote be sure to submit a /bug report.", name.c_str());
 		return;
 	}
+	Emote* emote = origEmote;
+
 	PacketStruct* packet = 0;
 	char* emoteResponse = 0;
 	vector<Client*>::iterator client_itr;
 	
+	int32 cur_client_version = originator->GetVersion();
+	map<int32, Emote*> emote_version_range;
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
 		if(!client || (client && client->GetPlayer()->IsIgnored(originator->GetPlayer()->GetName())))
 			continue;
+
+		// establish appropriate emote for the version used by the client
+		if (client->GetVersion() != originator->GetVersion())
+		{
+			map<int32, Emote*>::iterator rangeitr = emote_version_range.find(client->GetVersion());
+			if (rangeitr == emote_version_range.end())
+			{
+				Emote* tmp_new_emote = visual_states.FindEmote(name, client->GetVersion());
+				if (tmp_new_emote)
+				{
+					emote_version_range.insert(make_pair(client->GetVersion(), tmp_new_emote));
+					emote = tmp_new_emote;
+				} // else its missing just use the current clients default
+			}
+			else // we have an existing emote already cached
+				emote = rangeitr->second;
+		}
+		else // since the client and originator client match use the original emote
+			emote = origEmote;
+
 		packet = configReader.getStruct("WS_CannedEmote", client->GetVersion());
 		if(packet){
 			packet->setDataByName("spawn_id" , client->GetPlayer()->GetIDWithPlayerSpawn(originator->GetPlayer()));

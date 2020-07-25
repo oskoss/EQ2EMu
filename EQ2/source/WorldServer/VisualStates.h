@@ -17,6 +17,7 @@
     You should have received a copy of the GNU General Public License
     along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "../common/Log.h"
 #include <map>
 
 using namespace std;
@@ -47,7 +48,6 @@ private:
 	int id;
 	string name;
 };
-
 class Emote{
 public:
 	Emote(char* in_name, int in_visual_state, char* in_message, char* in_targeted_message){
@@ -74,6 +74,97 @@ private:
 	string message;
 	string targeted_message;
 };
+class VersionRange {
+public:
+	VersionRange(int32 in_min_version, int32 in_max_version)
+	{
+		min_version = in_min_version;
+		max_version = in_max_version;
+	}
+	int32 GetMinVersion() { return min_version; }
+	int32 GetMaxVersion() { return max_version; }
+private:
+	int32 min_version;
+	int32 max_version;
+};
+
+class EmoteVersionRange {
+public:
+	EmoteVersionRange(char* in_name)
+	{
+		name = string(in_name);
+	}
+
+	~EmoteVersionRange()
+	{
+		map<VersionRange*, Emote*>::iterator itr;
+		for (itr = version_map.begin(); itr != version_map.end(); itr++)
+		{
+			VersionRange* range = itr->first;
+			Emote* emote = itr->second;
+			delete range;
+			delete emote;
+		}
+
+		version_map.clear();
+	}
+
+	void AddVersionRange(int32 min_version, int32 max_version,
+		char* in_name, int in_visual_state, char* in_message, char* in_targeted_message)
+	{
+		map<VersionRange*, Emote*>::iterator itr = FindVersionRange(min_version, max_version);
+		if (itr != version_map.end())
+		{
+			VersionRange* range = itr->first;
+			LogWrite(WORLD__ERROR, 0, "Emotes Table Error: Duplicate emote mapping of %s with range min %u max %u, Existing found with range min %u max %u\n", name.c_str(), min_version, max_version, range->GetMinVersion(), range->GetMaxVersion());
+			return;
+		}
+
+		version_map.insert(make_pair(new VersionRange(min_version, max_version), new Emote(in_name, in_visual_state, in_message, in_targeted_message)));
+	}
+
+	map<VersionRange*, Emote*>::iterator FindVersionRange(int32 min_version, int32 max_version)
+	{
+		map<VersionRange*, Emote*>::iterator itr;
+		for (itr = version_map.begin(); itr != version_map.end(); itr++)
+		{
+			VersionRange* range = itr->first;
+			// if min and max version are both in range
+			if (range->GetMinVersion() <= min_version && max_version <= range->GetMaxVersion())
+				return itr;
+			// if the min version is in range, but max range is 0
+			else if (range->GetMinVersion() <= min_version && range->GetMaxVersion() == 0)
+				return itr;
+			// if min version is 0 and max_version has a cap
+			else if (range->GetMinVersion() == 0 && max_version <= range->GetMaxVersion())
+				return itr;
+		}
+
+		return version_map.end();
+	}
+
+	map<VersionRange*, Emote*>::iterator FindEmoteVersion(int32 version)
+	{
+		map<VersionRange*, Emote*>::iterator itr;
+		for (itr = version_map.begin(); itr != version_map.end(); itr++)
+		{
+			VersionRange* range = itr->first;
+			// if min and max version are both in range
+			if (version >= range->GetMinVersion() && (range->GetMaxVersion() == 0 || version <= range->GetMaxVersion()))
+				return itr;
+		}
+
+		return version_map.end();
+	}
+
+	const char* GetName() { return name.c_str(); }
+	string GetNameString() { return name; }
+
+	map<VersionRange*, Emote*>::iterator GetRangeEnd() { return version_map.end(); }
+private:
+	map<VersionRange*, Emote*> version_map;
+	string name;
+};
 
 class VisualStates
 {
@@ -88,7 +179,7 @@ public:
 	}
 
 	void ClearEmotes(){
-		map<string, Emote*>::iterator map_list;
+		map<string, EmoteVersionRange*>::iterator map_list;
 		for(map_list = emoteMap.begin(); map_list != emoteMap.end(); map_list++ )
 			safe_delete(map_list->second);
 		emoteMap.clear();
@@ -111,17 +202,33 @@ public:
 		return 0;
 	}
 
-	void InsertEmote(Emote* emote){
-		emoteMap[emote->GetNameString()] = emote;
+	void InsertEmoteRange(EmoteVersionRange* emote) {
+		emoteMap[emote->GetName()] = emote;
 	}
 
-	Emote* FindEmote(string var){
-		if(emoteMap.count(var) > 0)
+	EmoteVersionRange* FindEmoteRange(string var) {
+		if (emoteMap.count(var) > 0)
+		{
 			return emoteMap[var];
+		}
+		return 0;
+	}
+
+	Emote* FindEmote(string var, int32 version){
+		if (emoteMap.count(var) > 0)
+		{
+			map<VersionRange*,Emote*>::iterator itr = emoteMap[var]->FindEmoteVersion(version);
+
+			if (itr != emoteMap[var]->GetRangeEnd())
+			{
+				Emote* emote = itr->second;
+				return emote;
+			}
+		}
 		return 0;
 	}
 private:
 	map<string,VisualState*> visualStateMap;
-	map<string,Emote*> emoteMap;
+	map<string,EmoteVersionRange*> emoteMap;
 };
 
