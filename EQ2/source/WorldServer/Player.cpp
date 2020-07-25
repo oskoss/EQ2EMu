@@ -579,7 +579,7 @@ void PlayerInfo::SetAccountAge(int16 age){
 
 EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyValue) {
 	player->CalculateBonuses();
-	info_struct->heat = 15;
+/*	info_struct->heat = 15;
 	info_struct->heat_base = 13;
 	info_struct->divine = 14;
 	info_struct->divine_base = 11;
@@ -588,7 +588,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 	info_struct->coin_copper = 1;
 	info_struct->coin_silver = 2;
 	info_struct->coin_gold = 3;
-	info_struct->coin_plat = 4;
+	info_struct->coin_plat = 4;*/
 
 	int8 blah1 = 90;
 	int8 blah2 = 120;
