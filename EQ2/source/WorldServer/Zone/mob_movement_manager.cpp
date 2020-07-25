@@ -587,6 +587,13 @@ void MobMovementManager::RotateTo(Entity *who, float to, MobMovementMode mob_mov
 {
 	MobListMutex.readlock();
 	auto iter = _impl->Entries.find(who);
+
+	if (iter == _impl->Entries.end())
+	{
+		MobListMutex.releasereadlock();
+		return; // does not exist in navigation
+	}
+
 	auto &ent = (*iter);
 
 	if (true != ent.second.Commands.empty()) {
@@ -608,6 +615,13 @@ void MobMovementManager::Teleport(Entity *who, float x, float y, float z, float 
 {
 	MobListMutex.readlock();
 	auto iter = _impl->Entries.find(who);
+
+	if (iter == _impl->Entries.end())
+	{
+		MobListMutex.releasereadlock();
+		return; // does not exist in navigation
+	}
+
 	auto &ent = (*iter);
 
 	ent.second.Commands.clear();
@@ -633,6 +647,13 @@ void MobMovementManager::NavigateTo(Entity *who, float x, float y, float z, MobM
 	}
 	MobListMutex.readlock();
 	auto iter = _impl->Entries.find(who);
+
+	if (iter == _impl->Entries.end())
+	{
+		MobListMutex.releasereadlock();
+		return; // does not exist in navigation
+	}
+
 	auto &ent = (*iter);
 	auto &nav = ent.second.NavTo;
 
@@ -693,6 +714,13 @@ void MobMovementManager::StopNavigation(Entity *who)
 {
 	MobListMutex.readlock();
 	auto iter = _impl->Entries.find(who);
+
+	if (iter == _impl->Entries.end())
+	{
+		MobListMutex.releasereadlock();
+		return; // does not exist in navigation
+	}
+
 	auto &ent = (*iter);
 	auto &nav = ent.second.NavTo;
 
@@ -728,6 +756,13 @@ void MobMovementManager::DisruptNavigation(Entity* who)
 {
 	MobListMutex.readlock();
 	auto iter = _impl->Entries.find(who);
+
+	if (iter == _impl->Entries.end())
+	{
+		MobListMutex.releasereadlock();
+		return; // does not exist in navigation
+	}
+
 	auto& ent = (*iter);
 	auto& nav = ent.second.NavTo;
 
@@ -786,6 +821,13 @@ void MobMovementManager::UpdatePath(Entity *who, float x, float y, float z, MobM
 	if (!who->GetZone()->zonemap /*|| !zone->HasWaterMap()*/) {
 		MobListMutex.readlock();
 		auto iter = _impl->Entries.find(who);
+
+		if (iter == _impl->Entries.end())
+		{
+			MobListMutex.releasereadlock();
+			return; // does not exist in navigation
+		}
+
 		auto &ent = (*iter);
 
 		PushMoveTo(ent.second, x, y, z, mob_movement_mode);
@@ -833,6 +875,13 @@ void MobMovementManager::UpdatePathGround(Entity *who, float x, float y, float z
 
 	MobListMutex.readlock();
 	auto eiter = _impl->Entries.find(who);
+
+	if (eiter == _impl->Entries.end())
+	{
+		MobListMutex.releasereadlock();
+		return; // does not exist in navigation
+	}
+
 	auto &ent  = (*eiter);
 
 	if (route.size() == 0) {
@@ -960,6 +1009,13 @@ void MobMovementManager::UpdatePathUnderwater(Entity *who, float x, float y, flo
 {
 	MobListMutex.readlock();
 	auto eiter = _impl->Entries.find(who);
+
+	if (eiter == _impl->Entries.end())
+	{
+		MobListMutex.releasereadlock();
+		return; // does not exist in navigation
+	}
+
 	auto &ent  = (*eiter);
 	if (/*zone->watermap->InLiquid(who->GetPosition()) && zone->watermap->InLiquid(glm::vec3(x, y, z)) &&*/
 		who->GetZone()->zonemap->CheckLoS(glm::vec3(who->GetX(),who->GetZ(),who->GetY()), glm::vec3(x, y, z))) {
@@ -1081,6 +1137,13 @@ void MobMovementManager::UpdatePathBoat(Entity *who, float x, float y, float z, 
 {
 	MobListMutex.readlock();
 	auto eiter = _impl->Entries.find(who);
+
+	if (eiter == _impl->Entries.end())
+	{
+		MobListMutex.releasereadlock();
+		return; // does not exist in navigation
+	}
+
 	auto &ent  = (*eiter);
 
 	PushSwimTo(ent.second, x, y, z, mode);
@@ -1188,6 +1251,13 @@ void MobMovementManager::HandleStuckBehavior(Entity *who, float x, float y, floa
 	}
 
 	auto eiter = _impl->Entries.find(who);
+
+	if (eiter == _impl->Entries.end())
+	{
+		MobListMutex.releasereadlock();
+		return; // does not exist in navigation
+	}
+
 	auto &ent = (*eiter);
 
 	switch (sb) {
