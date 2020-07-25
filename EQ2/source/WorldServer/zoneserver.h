@@ -345,8 +345,9 @@ public:
 	void	CheckTransporters(Client* client);
 	
 	void	WritePlayerStatistics();
-	
+
 	bool	SendRadiusSpawnInfo(Client* client, float radius);
+	void	FindSpawn(Client* client, char* regSearchStr);
 
 	volatile bool	spawnthread_active;
 	volatile bool	combatthread_active;

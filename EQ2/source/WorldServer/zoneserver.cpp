@@ -25,6 +25,7 @@ using namespace std;
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <regex>
 #include "Commands/Commands.h"
 #include "Zone/pathfinder_interface.h"
 
@@ -5838,6 +5839,47 @@ bool ZoneServer::SendRadiusSpawnInfo(Client* client, float radius) {
 	}
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
+}
+
+void ZoneServer::FindSpawn(Client* client, char* regSearchStr)
+{
+	if (!regSearchStr || strlen(regSearchStr) < 1)
+	{
+		client->SimpleMessage(CHANNEL_COLOR_RED, "Bad ZoneServer::FindSpawn(Client*, char* regSearchStr) attempt, regSearchStr is NULL or empty.");
+		return;
+	}
+
+	string resString = string(regSearchStr);
+	std::regex pre_re_check("^[a-zA-Z0-9_\s]+$");
+	bool output = std::regex_match(resString, pre_re_check);
+	if (output)
+	{
+		string newStr(".*");
+		newStr.append(regSearchStr);
+		newStr.append(".*");
+		resString = newStr;
+	}
+	client->Message(CHANNEL_COLOR_WHITE, "RegEx Search Spawn List: %s", regSearchStr);
+	client->Message(CHANNEL_COLOR_WHITE, "Database ID | Spawn Name | X , Y , Z");
+	client->Message(CHANNEL_COLOR_WHITE, "========================");
+	map<int32, Spawn*>::iterator itr;
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	int32 spawnsFound = 0;
+	std::regex re(resString);
+	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+		Spawn* spawn = itr->second;
+		if (!spawn)
+			continue;
+		bool output = std::regex_match(string(spawn->GetName()), re);
+		if (output)
+		{
+			client->Message(CHANNEL_COLOR_WHITE, "%i | %s | %f , %f , %f", spawn->GetDatabaseID(), spawn->GetName(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
+			spawnsFound++;
+		}
+	}
+	client->Message(CHANNEL_COLOR_WHITE, "========================", spawnsFound);
+	client->Message(CHANNEL_COLOR_WHITE, "%u Results Found.", spawnsFound);
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 
