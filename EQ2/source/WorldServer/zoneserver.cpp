@@ -25,6 +25,7 @@ using namespace std;
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <regex>
 #include "Commands/Commands.h"
 #include "Zone/pathfinder_interface.h"
 
@@ -5661,20 +5662,44 @@ void ZoneServer::HandleEmote(Client* originator, string name) {
 	}
 
 	Client* client = 0;
-	Emote* emote = visual_states.FindEmote(name);
-	if(!emote){
+	Emote* origEmote = visual_states.FindEmote(name, originator->GetVersion());
+	if(!origEmote){
 		originator->Message(CHANNEL_COLOR_YELLOW, "Unable to find emote '%s'.  If this should be a valid emote be sure to submit a /bug report.", name.c_str());
 		return;
 	}
+	Emote* emote = origEmote;
+
 	PacketStruct* packet = 0;
 	char* emoteResponse = 0;
 	vector<Client*>::iterator client_itr;
 	
+	int32 cur_client_version = originator->GetVersion();
+	map<int32, Emote*> emote_version_range;
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
 		if(!client || (client && client->GetPlayer()->IsIgnored(originator->GetPlayer()->GetName())))
 			continue;
+
+		// establish appropriate emote for the version used by the client
+		if (client->GetVersion() != originator->GetVersion())
+		{
+			map<int32, Emote*>::iterator rangeitr = emote_version_range.find(client->GetVersion());
+			if (rangeitr == emote_version_range.end())
+			{
+				Emote* tmp_new_emote = visual_states.FindEmote(name, client->GetVersion());
+				if (tmp_new_emote)
+				{
+					emote_version_range.insert(make_pair(client->GetVersion(), tmp_new_emote));
+					emote = tmp_new_emote;
+				} // else its missing just use the current clients default
+			}
+			else // we have an existing emote already cached
+				emote = rangeitr->second;
+		}
+		else // since the client and originator client match use the original emote
+			emote = origEmote;
+
 		packet = configReader.getStruct("WS_CannedEmote", client->GetVersion());
 		if(packet){
 			packet->setDataByName("spawn_id" , client->GetPlayer()->GetIDWithPlayerSpawn(originator->GetPlayer()));
@@ -5814,6 +5839,63 @@ bool ZoneServer::SendRadiusSpawnInfo(Client* client, float radius) {
 	}
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
+}
+
+void ZoneServer::FindSpawn(Client* client, char* regSearchStr)
+{
+	if (!regSearchStr || strlen(regSearchStr) < 1)
+	{
+		client->SimpleMessage(CHANNEL_COLOR_RED, "Bad ZoneServer::FindSpawn(Client*, char* regSearchStr) attempt, regSearchStr is NULL or empty.");
+		return;
+	}
+
+	string resString = string(regSearchStr);
+	try
+	{
+		std::regex pre_re_check("^[a-zA-Z0-9_ ]+$");
+		bool output = std::regex_match(resString, pre_re_check);
+		if (output)
+		{
+			string newStr(".*");
+			newStr.append(regSearchStr);
+			newStr.append(".*");
+			resString = newStr;
+		}
+	}
+	catch (...)
+	{
+		client->SimpleMessage(CHANNEL_COLOR_RED, "Try/Catch ZoneServer::FindSpawn(Client*, char* regSearchStr) failure.");
+		return;
+	}
+	client->Message(CHANNEL_COLOR_WHITE, "RegEx Search Spawn List: %s", regSearchStr);
+	client->Message(CHANNEL_COLOR_WHITE, "Database ID | Spawn Name | X , Y , Z");
+	client->Message(CHANNEL_COLOR_WHITE, "========================");
+	map<int32, Spawn*>::iterator itr;
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	int32 spawnsFound = 0;
+	std::regex re(resString, std::regex_constants::icase);
+	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+		Spawn* spawn = itr->second;
+		if (!spawn || !spawn->GetName())
+			continue;
+		bool output = false;
+		try {
+			output = std::regex_match(string(spawn->GetName()), re);
+		}
+		catch (...)
+		{
+			continue;
+		}
+
+		if (output)
+		{
+			client->Message(CHANNEL_COLOR_WHITE, "%i | %s | %f , %f , %f", spawn->GetDatabaseID(), spawn->GetName(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
+			spawnsFound++;
+		}
+	}
+	client->Message(CHANNEL_COLOR_WHITE, "========================", spawnsFound);
+	client->Message(CHANNEL_COLOR_WHITE, "%u Results Found.", spawnsFound);
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 

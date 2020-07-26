@@ -468,6 +468,8 @@ public:
 	void Command_DeclineResurrection(Client* client, Seperator* set);
 	void Command_TargetItem(Client* client, Seperator* set);
 
+	void Command_FindSpawn(Client* client, Seperator* set);
+
 	// Bot Commands
 	void Command_Bot(Client* client, Seperator* sep);
 	void Command_Bot_Create(Client* client, Seperator* sep);
@@ -898,6 +900,8 @@ private:
 
 #define COMMAND_RELOAD_RULES			519
 #define COMMAND_RELOAD_TRANSPORTERS		520
+
+#define COMMAND_FINDSPAWN				521
 
 #define GET_AA_XML						751
 #define ADD_AA							752

@@ -1,0 +1,1 @@
+insert into commands set handler=521,command='findspawn',required_status=200,subcommand='';

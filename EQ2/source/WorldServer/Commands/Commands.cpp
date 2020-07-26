@@ -4379,6 +4379,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case SAVE_AA_PROFILE			: { Save_AA_Profile(client, sep); break; }
 		case COMMAND_TARGETITEM			: { Command_TargetItem(client, sep); break; }
 
+		case COMMAND_FINDSPAWN: { Command_FindSpawn(client, sep); break; }
 
 
 		default: 
@@ -10217,4 +10218,8 @@ void Commands::Command_TargetItem(Client* client, Seperator* sep) {
 			Transmute::HandleConfirmResponse(client, client->GetPlayer(), reinterpret_cast<int32&>(item_id));
 		}
 	}
+}
+
+void Commands::Command_FindSpawn(Client* client, Seperator* sep) {
+	client->GetCurrentZone()->FindSpawn(client, (char*)sep->argplus[0]);
 }

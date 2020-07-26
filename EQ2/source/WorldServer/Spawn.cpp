@@ -2391,7 +2391,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		temp_activity_status = 1;
 
 	temp_activity_status += (IsNPC() || IsObject() || IsGroundSpawn()) ? 1 << 1 : 0;
-	if (version > 546) {
+	if (version >= 1188) {
 		if (IsGroundSpawn() || GetShowHandIcon())
 			temp_activity_status += ACTIVITY_STATUS_INTERACTABLE_1188;
 
@@ -2429,14 +2429,22 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 			temp_activity_status += ACTIVITY_STATUS_INCOMBAT_1188;
 
 		// if this is either a boat or lift let the client be manipulated by the object
+		// doesn't work for DoF client version 546
 		if (appearance.icon == 28 || appearance.icon == 12)
+		{
 			temp_activity_status += ACTIVITY_STATUS_ISTRANSPORT_1188;
+		}
 	}
 	else
 	{
 		temp_activity_status = appearance.activity_status;
 		if(IsNPC())
 			temp_activity_status = 0xFF;
+
+		// this only partially fixes lifts in classic 283 client if you move just as the lift starts to move
+		if (appearance.icon == 28 || appearance.icon == 12)
+			packet->setDataByName("is_transport", 1);
+
 		if (MeetsSpawnAccessRequirements(spawn))
 			packet->setDataByName("hand_icon", appearance.display_hand_icon);
 		else {

@@ -429,11 +429,17 @@ void WorldDatabase::LoadVisualStates()
 	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u visual states", total);
 
 	total = 0;
-	result = query2.RunQuery2(Q_SELECT, "SELECT name, visual_state_id, message, targeted_message FROM emotes");
+	result = query2.RunQuery2(Q_SELECT, "SELECT name, visual_state_id, message, targeted_message, min_version_range, max_version_range FROM emotes");
 	while(result && (row = mysql_fetch_row(result)))
 	{
-		Emote* emote = new Emote(row[0], atoi(row[1]), row[2], row[3]);
-		visual_states.InsertEmote(emote);
+		EmoteVersionRange* range = 0;
+		if ((range = visual_states.FindEmoteRange(string(row[0]))) == NULL)
+		{
+			range = new EmoteVersionRange(row[0]);
+			visual_states.InsertEmoteRange(range);
+		}
+		
+		range->AddVersionRange(atoul(row[4]),atoul(row[5]), row[0], atoi(row[1]), row[2], row[3]);
 		total++;
 		LogWrite(WORLD__DEBUG, 5, "World", "---Loading emote state: '%s' (%i)", row[1], atoi(row[0]));
 	}
