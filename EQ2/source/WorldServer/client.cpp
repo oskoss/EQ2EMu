@@ -1652,6 +1652,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				}
 				else
 					player->PrepareIncomingMovementPacket(app->size - offset, app->pBuffer + offset, version);
+				player_pos_changed = true;
 				//DumpPacket(app);
 			}
 		}

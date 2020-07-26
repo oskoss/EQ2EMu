@@ -978,7 +978,6 @@ public:
 	int16				size;
 	int32				faction_id;
 	int8				oversized_packet; //0xff
-	int16				opcode;
 	int32				id;
 	int8				unknown1;
 	int32				unknown2;

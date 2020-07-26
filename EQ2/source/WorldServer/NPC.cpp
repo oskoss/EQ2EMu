@@ -140,7 +140,6 @@ void NPC::Initialize(){
 }
 
 EQ2Packet* NPC::serialize(Player* player, int16 version){
-	opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateGhostCmd);
 	return spawn_serialize(player, version);
 }
 

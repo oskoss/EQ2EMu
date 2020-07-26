@@ -113,7 +113,6 @@ Spawn::Spawn(){
 	pickup_item_id = 0;
 	pickup_unique_item_id = 0;
 	disable_sounds = false;
-	opcode = 0;
 }
 
 Spawn::~Spawn(){
@@ -599,7 +598,14 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 
 	memcpy(ptr, &oversized_packet, sizeof(oversized_packet));
 	ptr += sizeof(oversized_packet);
-	opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateGhostCmd);
+
+	int16 opcode = 0;
+	if(IsWidget())
+		opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateWidgetCmd);
+	else if(IsSign())
+		opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateSignWidgetCmd);
+	else
+		opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateGhostCmd);
 	memcpy(ptr, &opcode, sizeof(opcode));
 	ptr += sizeof(opcode);
 
@@ -878,6 +884,10 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 	ptr += sizeof(int8);
 	memcpy(ptr, &opcode_val, sizeof(int16));
 	ptr += sizeof(int16);
+	if (version <= 283) {
+		int32 timestamp = Timer::GetCurrentTime2();
+		memcpy(ptr, &timestamp, sizeof(int32));
+	}
 	ptr += sizeof(int32);
 	ptr += info_size;
 	memcpy(ptr, pos_changes, tmp_pos_packet_size);
@@ -2590,11 +2600,13 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		Spawn* boat = 0;
 		if(boat_id > 0)
 			boat = GetZone()->GetSpawnByID(boat_id, isSpawnListLocked);
-		if(boat){
+
+		//TODO: MAYBE do this for real boats, not lifts... GetWidgetTypeNameByTypeID
+		/*if(boat){
 			SetX(boat->GetX() + player->GetBoatX());
 			SetY(boat->GetY() + player->GetBoatY());
 			SetZ(boat->GetZ() + player->GetBoatZ());
-		}
+		}*/
 		return;
 	}
 
@@ -3464,6 +3476,8 @@ void Spawn::CopySpawnAppearance(Spawn* spawn){
 
 void Spawn::SetY(float y, bool updateFlags, bool disableYMapCheck)
 {
+	if (IsPlayer())
+		cout << "sdfsd\n";
 	SetPos(&appearance.pos.Y, y, updateFlags);
 	if (!disableYMapCheck)
 		FixZ();

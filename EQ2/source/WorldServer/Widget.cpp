@@ -69,8 +69,7 @@ int32 Widget::GetWidgetID(){
 	return widget_id;
 }
 
-EQ2Packet* Widget::serialize(Player* player, int16 version){
-	opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateWidgetCmd);
+EQ2Packet* Widget::serialize(Player* player, int16 version){	
 	return spawn_serialize(player, version);
 }
 

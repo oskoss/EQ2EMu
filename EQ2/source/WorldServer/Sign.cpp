@@ -59,7 +59,6 @@ int32 Sign::GetWidgetID(){
 }
 
 EQ2Packet* Sign::serialize(Player* player, int16 version){
-	opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateSignWidgetCmd);
 	return spawn_serialize(player, version);
 }
 

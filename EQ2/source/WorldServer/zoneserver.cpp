@@ -3154,46 +3154,30 @@ void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, 
 	if ((!distance || from->GetDistance(client->GetPlayer()) <= distance) && (!from || !client->GetPlayer()->IsIgnored(from->GetName()))) {
 		if (client->GetVersion() <= 283) {
 			switch (channel) {
-			case CHANNEL_SAY: {
-				channel = CLASSIC_CLIENT_CHANNEL_SAY;
-				break;
-			}
-			case CHANNEL_SHOUT: {
-				channel = CLASSIC_CLIENT_CHANNEL_SHOUT;
-				break;
-			}
-			case CHANNEL_EMOTE: {
-				channel = CLASSIC_CLIENT_CHANNEL_EMOTE;
-				break;
-			}
-			case CHANNEL_GROUP: {
-				channel = CLASSIC_CLIENT_CHANNEL_GROUP;
-				break;
-			}
-			case CHANNEL_RAID: {
-				channel = CLASSIC_CLIENT_CHANNEL_RAID;
-				break;
-			}
-			case CHANNEL_GUILD: {
-				channel = CLASSIC_CLIENT_CHANNEL_GUILD;
-				break;
-			}
-			case CHANNEL_OFFICER: {
-				channel = CLASSIC_CLIENT_CHANNEL_OFFICER;
-				break;
-			}
-			case CHANNEL_SAYTARGET: {
-				channel = CLASSIC_CLIENT_CHANNEL_SAYTARGET;
-				break;
-			}
-			case CHANNEL_TELL: {
-				channel = CLASSIC_CLIENT_CHANNEL_TELL;
-				break;
-			}
-			case CHANNEL_OOC: {
-				channel = CLASSIC_CLIENT_CHANNEL_OOC;
-				break;
-			}
+				case CHANNEL_GROUP: {
+					channel = CLASSIC_CLIENT_CHANNEL_GROUP;
+					break;
+				}
+				case CHANNEL_RAID: {
+					channel = CLASSIC_CLIENT_CHANNEL_RAID;
+					break;
+				}
+				case CHANNEL_GUILD: {
+					channel = CLASSIC_CLIENT_CHANNEL_GUILD;
+					break;
+				}
+				case CHANNEL_SAYTARGET: {
+					channel = CLASSIC_CLIENT_CHANNEL_SAYTARGET;
+					break;
+				}
+				case CHANNEL_TELL: {
+					channel = CLASSIC_CLIENT_CHANNEL_TELL;
+					break;
+				}
+				case CHANNEL_OOC: {
+					channel = CLASSIC_CLIENT_CHANNEL_OOC;
+					break;
+				}
 			}
 		}
 		PacketStruct* packet = configReader.getStruct("WS_HearChat", client->GetVersion());
