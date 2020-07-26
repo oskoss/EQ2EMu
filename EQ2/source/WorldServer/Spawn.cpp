@@ -113,6 +113,7 @@ Spawn::Spawn(){
 	pickup_item_id = 0;
 	pickup_unique_item_id = 0;
 	disable_sounds = false;
+	opcode = 0;
 }
 
 Spawn::~Spawn(){
@@ -598,9 +599,7 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 
 	memcpy(ptr, &oversized_packet, sizeof(oversized_packet));
 	ptr += sizeof(oversized_packet);
-	if (opcode == 0) {
-		opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateGhostCmd);
-	}
+	opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateGhostCmd);
 	memcpy(ptr, &opcode, sizeof(opcode));
 	ptr += sizeof(opcode);
 
@@ -2392,7 +2391,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		temp_activity_status = 1;
 
 	temp_activity_status += (IsNPC() || IsObject() || IsGroundSpawn()) ? 1 << 1 : 0;
-	if (version >= 546) {
+	if (version > 546) {
 		if (IsGroundSpawn() || GetShowHandIcon())
 			temp_activity_status += ACTIVITY_STATUS_INTERACTABLE_1188;
 
@@ -2432,16 +2431,12 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		// if this is either a boat or lift let the client be manipulated by the object
 		if (appearance.icon == 28 || appearance.icon == 12)
 			temp_activity_status += ACTIVITY_STATUS_ISTRANSPORT_1188;
-
-		// for some reason Spawns are using different flags??  all NPCs were getting LFG before this was here
-		if (IsEntity() && version <= 546)
-			temp_activity_status = 0;
 	}
 	else
 	{
 		temp_activity_status = appearance.activity_status;
-
-		temp_activity_status = 0xFF;
+		if(IsNPC())
+			temp_activity_status = 0xFF;
 		if (MeetsSpawnAccessRequirements(spawn))
 			packet->setDataByName("hand_icon", appearance.display_hand_icon);
 		else {

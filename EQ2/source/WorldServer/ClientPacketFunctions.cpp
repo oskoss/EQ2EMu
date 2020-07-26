@@ -227,9 +227,11 @@ void ClientPacketFunctions::SendMOTD ( Client* client ){
 }
 
 void ClientPacketFunctions::SendUpdateSpellBook ( Client* client ){
-	EQ2Packet* app = client->GetPlayer()->GetSpellBookUpdatePacket(client->GetVersion());
-	if(app)
-		client->QueuePacket(app);
+	if(client->IsReadyForSpawns()){
+		EQ2Packet* app = client->GetPlayer()->GetSpellBookUpdatePacket(client->GetVersion());
+		if(app)
+			client->QueuePacket(app);
+	}
 	client->GetPlayer()->UnlockAllSpells(true);
 }
 

@@ -284,6 +284,12 @@ int GetItemNameCrc(string item_name){
 	const char *src = item_name.c_str();
 	uLong crc = crc32(0L, Z_NULL, 0);    
     crc = crc32(crc, (unsigned const char *)src,strlen(src)) + 1;
-return sint32(crc) * -1;
+	return sint32(crc) * -1;
+}
 
+unsigned int GetNameCrc(string name) {
+	const char* src = name.c_str();
+	uLong crc = crc32(0L, Z_NULL, 0);
+	crc = crc32(crc, (unsigned const char*)src, strlen(src)) + 1;
+	return int32(crc)-1;
 }

@@ -1271,6 +1271,8 @@ void MasterSpellList::AddSpell(int32 id, int8 tier, Spell* spell){
 Spell* MasterSpellList::GetSpell(int32 id, int8 tier){
 	if (spell_list.count(id) > 0 && spell_list[id].count(tier) > 0)
 		return spell_list[id][tier];
+	else if (spell_list.count(id) > 0 && tier == 0 && spell_list[id].count(1) > 0)
+		return spell_list[id][1];
 	return 0;
 }
 

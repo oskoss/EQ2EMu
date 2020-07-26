@@ -1366,7 +1366,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					int32 spell_id = atol(sep->arg[1]);
 					LogWrite(COMMAND__DEBUG, 5, "Command", "Unknown Spell ID: %u", spell_id);
 					int8 tier = client->GetPlayer()->GetSpellTier(spell_id);
-					EQ2Packet* outapp = master_spell_list.GetSpecialSpellPacket(spell_id, tier, client, true, 0x00);
+					int8 type = 0;
+					if (client->GetVersion() <= 283)
+						type = 1;
+					EQ2Packet* outapp = master_spell_list.GetSpecialSpellPacket(spell_id, tier, client, true, type);
 					if (outapp){
 						client->QueuePacket(outapp);
 					}
@@ -8972,151 +8975,251 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				safe_delete(packet2);
 			}
 		}
-		else if (atoi(sep->arg[0]) == 20) {
-			uchar blah[] = { 0x09,0x01,0x00,0x00,0xff,0xc9,0x01,0x03,0x00,0x4d,0xf0,0x00,0x00,0x01
-	,0x00,0x00,0x00,0x4d,0xf0,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xd7
-	,0x05,0x01,0x40,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-	,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x64,0x0a,0x8c,0x5a,0xf1,0xd2,0x8c,0x5a,0xf1
-	,0xd2,0x01,0x01,0x00,0xff,0x1e,0x00,0x01,0x03,0x03,0x00,0x00,0x00,0x03,0x07
-	,0x07,0x00,0x10,0x74,0x68,0x72,0x65,0x61,0x64,0x62,0x61,0x72,0x65,0x20,0x74,0x75
-	,0x6e,0x69,0x63,0x00,0x00,0x4e,0xf0,0x00,0x00,0x01,0x00,0x04,0x00,0x4e,0xf0,0x00
-	,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x0a,0x00,0x01,0x60,0x00,0x00,0x00
-	,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-	,0x00,0x64,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x03
-	,0x00,0x00,0x00,0x05,0x04,0x04,0x00,0x00,0x00,0x00,0x09,0x73,0x6d,0x61,0x6c,0x6c
-	,0x20,0x62,0x61,0x67,0x00,0x00,0x4f,0xf0,0x00,0x00,0x01,0x00,0x04,0x00,0x4f,0xf0
-	,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x02,0x01,0x01,0x60,0x01,0x00
-	,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-	,0x00,0x00,0x64,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00
-	,0x03,0x00,0x00,0x00,0x00,0x00,0x0c,0x57,0x61,0x75,0x6c,0x6f,0x6e,0x27,0x73,0x20
-	,0x48,0x61,0x74,0x00,0x00,0x01,0x01,0x00,0x00,0x00,0x3c,0x00,0x00,0x00,0x0d,0x00
-	,0x00,0x00 };
-			EQ2Packet* app = new EQ2Packet(OP_ClientCmdMsg, blah, sizeof(blah));
-			if (sep->IsSet(2)) {
-				int16 offset = atoi(sep->arg[1]);
-				uchar* ptr2 = app->pBuffer;
-				ptr2 += offset;
-				if (sep->IsNumber(2)) {
-					int32 value1 = atol(sep->arg[2]);
-					if (value1 > 0xFFFF)
-						memcpy(ptr2, (uchar*)&value1, 4);
-					else if (value1 > 0xFF)
-						memcpy(ptr2, (uchar*)&value1, 2);
-					else
-						memcpy(ptr2, (uchar*)&value1, 1);
-				}
-				else {
-					int16 len = strlen(sep->arg[2]);
-					memcpy(ptr2, (uchar*)&len, 2);
-					ptr2 += 2;
-					memcpy(ptr2, sep->arg[2], len);
+		else if (atoi(sep->arg[0]) == 21) {
+			PacketStruct* packet2 = configReader.getStruct("WS_OfferQuest", client->GetVersion());
+			if (packet2) {
+				packet2->setDataByName("unknown0", 255);
+				packet2->setDataByName("reward", "New Quest");
+				packet2->setDataByName("title", "Title");
+				packet2->setDataByName("description", "description");
+				packet2->setDataByName("quest_difficulty", 3);
+				packet2->setDataByName("unknown1", 5);
+				packet2->setDataByName("level", 3);
+				packet2->setDataByName("coin", 150);
+				packet2->setDataByName("status_points", 5);
+				packet2->setDataByName("exp_bonus", 10);
+				packet2->setArrayLengthByName("num_rewards", 1);
+				Item* item = new Item(master_item_list.GetItem(36212));
+				packet2->setArrayDataByName("reward_id", item->details.item_id);
+				item->stack_count = 20;
+				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, -1);
+				safe_delete(item);
+				char accept[35] = { 0 };
+				char decline[35] = { 0 };
+				sprintf(accept, "q_accept_pending_quest %u", 0);
+				sprintf(decline, "q_deny_pending_quest %u", 0);
+				packet2->setDataByName("accept_command", accept);
+				packet2->setDataByName("decline_command", decline);
+				EQ2Packet* app = packet2->serialize();
+				if (sep->IsSet(2)) {
+					int16 offset = atoi(sep->arg[1]);
+					uchar* ptr2 = app->pBuffer;
+					ptr2 += offset;
+					if (sep->IsNumber(2)) {
+						int32 value1 = atol(sep->arg[2]);
+						if (value1 > 0xFFFF)
+							memcpy(ptr2, (uchar*)&value1, 4);
+						else if (value1 > 0xFF)
+							memcpy(ptr2, (uchar*)&value1, 2);
+						else
+							memcpy(ptr2, (uchar*)&value1, 1);
+					}
+					DumpPacket(app);
+					client->QueuePacket(app);
+					safe_delete(packet2);
 				}
 			}
-			DumpPacket(app);
-			client->QueuePacket(app);
 		}
-	}
+		else if (atoi(sep->arg[0]) == 22) { //same as 21, but 8bit string
+			PacketStruct* packet2 = configReader.getStruct("WS_OfferQuest", client->GetVersion());
+			if (packet2) {
+				packet2->setDataByName("unknown0", 255);
+				packet2->setDataByName("reward", "New Quest");
+				packet2->setDataByName("title", "Title");
+				packet2->setDataByName("description", "description");
+				packet2->setDataByName("quest_difficulty", 3);
+				packet2->setDataByName("unknown1", 5);
+				packet2->setDataByName("level", 3);
+				packet2->setDataByName("coin", 150);
+				packet2->setDataByName("status_points", 5);
+				packet2->setDataByName("exp_bonus", 10);
+				packet2->setArrayLengthByName("num_rewards", 1);
+				Item* item = new Item(master_item_list.GetItem(36212));
+				packet2->setArrayDataByName("reward_id", item->details.item_id);
+				item->stack_count = 20;
+				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, -1);
+				safe_delete(item);
+				char accept[35] = { 0 };
+				char decline[35] = { 0 };
+				sprintf(accept, "q_accept_pending_quest %u", 0);
+				sprintf(decline, "q_deny_pending_quest %u", 0);
+				packet2->setDataByName("accept_command", accept);
+				packet2->setDataByName("decline_command", decline);
+				EQ2Packet* app = packet2->serialize();
+				if (sep->IsSet(2)) {
+					int16 offset = atoi(sep->arg[1]);
+					uchar* ptr2 = app->pBuffer;
+					ptr2 += offset;
+					if (sep->IsNumber(2)) {
+						int32 value1 = atol(sep->arg[2]);
+						if (value1 > 0xFFFF)
+							memcpy(ptr2, (uchar*)&value1, 4);
+						else if (value1 > 0xFF)
+							memcpy(ptr2, (uchar*)&value1, 2);
+						else
+							memcpy(ptr2, (uchar*)&value1, 1);
+					}
+					else {
+						int8 len = strlen(sep->arg[2]);
+						memcpy(ptr2, (uchar*)&len, 1);
+						ptr2 += 1;
+						memcpy(ptr2, sep->arg[2], len);
+					}
+				}
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
+			}
+		}	
+		else if (atoi(sep->arg[0]) == 23) {
+			if (client->GetPlayer()->GetTarget()) {
+				PacketStruct* packet2 = configReader.getStruct("WS_UpdateMerchant", client->GetVersion());
+				if (packet2) {
+					Spawn* target = client->GetPlayer()->GetTarget();
+					packet2->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(target));
+					Item* item = new Item(master_item_list.GetItem(12565));
+					int8 i = 0;
+					packet2->setArrayLengthByName("num_items", 1);
+					packet2->setArrayDataByName("item_name", item->name.c_str(), i);
+					packet2->setArrayDataByName("item_id", item->details.item_id, i);
+					packet2->setArrayDataByName("stack_size", item->stack_count, i);
+					packet2->setArrayDataByName("icon", item->details.icon, i);
+					int8 tmp_level = 0;
+					if (item->generic_info.adventure_default_level > 0)
+						tmp_level = item->generic_info.adventure_default_level;
+					else
+						tmp_level = item->generic_info.tradeskill_default_level;
+					packet2->setArrayDataByName("level", tmp_level, i);
+					packet2->setArrayDataByName("tier", item->details.tier, i);
+					packet2->setArrayDataByName("item_id2", item->details.item_id, i);
+					int8 item_difficulty = client->GetPlayer()->GetArrowColor(tmp_level);
+					if (item_difficulty != ARROW_COLOR_WHITE && item_difficulty != ARROW_COLOR_RED && item_difficulty != ARROW_COLOR_GRAY)
+						item_difficulty = ARROW_COLOR_WHITE;
+					item_difficulty -= 6;
+					if (item_difficulty < 0)
+						item_difficulty *= -1;
+					packet2->setArrayDataByName("item_difficulty", item_difficulty, i);
+					packet2->setArrayDataByName("quantity", 2, i);
+					packet2->setArrayDataByName("unknown5", 255, i);
+					packet2->setArrayDataByName("stack_size2", item->stack_count, i);
+					packet2->setArrayDataByName("description", item->description.c_str(), i);
+					packet2->setDataByName("type", 2);
+					EQ2Packet* app = packet2->serialize();
+					if (sep->IsSet(2)) {
+						int16 offset = atoi(sep->arg[1]);
+						uchar* ptr2 = app->pBuffer;
+						ptr2 += offset;
+						if (sep->IsNumber(2)) {
+							int32 value1 = atol(sep->arg[2]);
+							if (value1 > 0xFFFF)
+								memcpy(ptr2, (uchar*)&value1, 4);
+							else if (value1 > 0xFF)
+								memcpy(ptr2, (uchar*)&value1, 2);
+							else
+								memcpy(ptr2, (uchar*)&value1, 1);
+						}
+						else {
+							int8 len = strlen(sep->arg[2]);
+							memcpy(ptr2, (uchar*)&len, 1);
+							ptr2 += 1;
+							memcpy(ptr2, sep->arg[2], len);
+						}
+					}
+					DumpPacket(app);
+					client->QueuePacket(app);
+					safe_delete(packet2);
+				}
+			}
+		}
+		else if (atoi(sep->arg[0]) == 24) {
+			PacketStruct* packet2 = configReader.getStruct("WS_TintWidgetsMsg", client->GetVersion());
+			if (packet2) {
+				if (sep->IsSet(4)) {
+					int32 id = atoul(sep->arg[1]);
+					packet2->setDataByName("object_id", id);
+					packet2->setDataByName("tint_red", atoi(sep->arg[2]));
+					packet2->setDataByName("tint_green", atoi(sep->arg[3]));
+					packet2->setDataByName("tint_blue", atoi(sep->arg[4]));
+					EQ2Packet* app = packet2->serialize();
+					DumpPacket(app);
+					client->QueuePacket(app);
+					safe_delete(packet2);
+				}
+			}
+		}
+		else if (atoi(sep->arg[0]) == 25) {
+			if (sep->IsSet(1)) {
+				Widget* new_spawn = new Widget();
+				int32 id = atoul(sep->arg[1]);
+				new_spawn->SetWidgetID(id);
+				EQ2Packet* ret = new_spawn->serialize(client->GetPlayer(), client->GetVersion());
+				client->QueuePacket(ret);
+				int8 index = client->GetPlayer()->GetIndexForSpawn(new_spawn);
+				PacketStruct* packet2 = configReader.getStruct("WS_DestroyGhostCmd", client->GetVersion());
+				if (packet2) {
+					packet2->setDataByName("spawn_index", index);
+					packet2->setDataByName("delete", 1);
+					EQ2Packet* app = packet2->serialize();
+					client->QueuePacket(app);
+					safe_delete(packet2);
+				}
+			}
+		}
+		else if (atoi(sep->arg[0]) == 26) {
+			if (sep->IsSet(4)) {
+				Widget* new_spawn = new Widget();
+				int32 id = atoul(sep->arg[1]);
+				new_spawn->SetWidgetID(id);
+				float x = atof(sep->arg[2]);
+				float y = atof(sep->arg[3]);
+				float z = atof(sep->arg[4]);
+				new_spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				new_spawn->SetWidgetX(x);
+				new_spawn->SetWidgetY(y);
+				new_spawn->SetWidgetZ(z);
+				new_spawn->SetX(x);
+				new_spawn->SetY(y);
+				new_spawn->SetZ(z);
+				EQ2Packet* ret = new_spawn->serialize(client->GetPlayer(), client->GetVersion());
+				client->QueuePacket(ret);
+			}
+		}
+		else if (atoi(sep->arg[0]) == 27) {
+			Spawn* target = client->GetPlayer()->GetTarget();
+			PacketStruct* packet2 = configReader.getStruct("WS_HearSimpleDamage", client->GetVersion());
+			if (packet2 && target && sep->IsSet(2)) {
+				packet2->setSubstructDataByName("header", "defender", client->GetPlayer()->GetIDWithPlayerSpawn(target));
+				packet2->setSubstructDataByName("header", "defender_proxy", client->GetPlayer()->GetIDWithPlayerSpawn(target));
+				packet2->setSubstructDataByName("header", "attacker", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
+				packet2->setSubstructDataByName("header", "normal_hit", 1);
+				packet2->setDataByName("damage_type", atoi(sep->arg[1]));
+				packet2->setDataByName("damage", atoi(sep->arg[2]));
 
-	else if (atoi(sep->arg[0]) == 21) {
-		PacketStruct* packet2 = configReader.getStruct("WS_OfferQuest", client->GetVersion());
-		if (packet2) {
-			packet2->setDataByName("unknown0", 255);
-			packet2->setDataByName("reward", "New Quest");
-			packet2->setDataByName("title", "Title");
-			packet2->setDataByName("description", "description");
-			packet2->setDataByName("quest_difficulty", 3);
-			packet2->setDataByName("unknown1", 5);
-			packet2->setDataByName("level", 3);
-			packet2->setDataByName("coin", 150);
-			packet2->setDataByName("status_points", 5);
-			packet2->setDataByName("exp_bonus", 10);
-			packet2->setArrayLengthByName("num_rewards", 1);
-			Item* item = new Item(master_item_list.GetItem(36212));
-			packet2->setArrayDataByName("reward_id", item->details.item_id);
-			item->stack_count = 20;
-			packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, -1);
-			safe_delete(item);
-			char accept[35] = { 0 };
-			char decline[35] = { 0 };
-			sprintf(accept, "q_accept_pending_quest %u", 0);
-			sprintf(decline, "q_deny_pending_quest %u", 0);
-			packet2->setDataByName("accept_command", accept);
-			packet2->setDataByName("decline_command", decline);
-			EQ2Packet* app = packet2->serialize();
-			if (sep->IsSet(2)) {
-				int16 offset = atoi(sep->arg[1]);
-				uchar* ptr2 = app->pBuffer;
-				ptr2 += offset;
-				if (sep->IsNumber(2)) {
-					int32 value1 = atol(sep->arg[2]);
-					if (value1 > 0xFFFF)
-						memcpy(ptr2, (uchar*)&value1, 4);
-					else if (value1 > 0xFF)
-						memcpy(ptr2, (uchar*)&value1, 2);
-					else
-						memcpy(ptr2, (uchar*)&value1, 1);
+				EQ2Packet* app = packet2->serialize();
+				if (sep->IsSet(4)) {
+					int16 offset = atoi(sep->arg[3]);
+					uchar* ptr2 = app->pBuffer;
+					ptr2 += offset;
+					if (sep->IsNumber(4)) {
+						int32 value1 = atol(sep->arg[4]);
+						if (value1 > 0xFFFF)
+							memcpy(ptr2, (uchar*)&value1, 4);
+						else if (value1 > 0xFF)
+							memcpy(ptr2, (uchar*)&value1, 2);
+						else
+							memcpy(ptr2, (uchar*)&value1, 1);
+					}
+					else {
+						int8 len = strlen(sep->arg[4]);
+						memcpy(ptr2, (uchar*)&len, 1);
+						ptr2 += 1;
+						memcpy(ptr2, sep->arg[4], len);
+					}
 				}
-				else {
-					int16 len = strlen(sep->arg[2]);
-					memcpy(ptr2, (uchar*)&len, 2);
-					ptr2 += 2;
-					memcpy(ptr2, sep->arg[2], len);
-				}
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
 			}
-			DumpPacket(app);
-			client->QueuePacket(app);
-			safe_delete(packet2);
-		}
-	}
-	else if (atoi(sep->arg[0]) == 22) { //same as 21, but 8bit string
-		PacketStruct* packet2 = configReader.getStruct("WS_OfferQuest", client->GetVersion());
-		if (packet2) {
-			packet2->setDataByName("unknown0", 255);
-			packet2->setDataByName("reward", "New Quest");
-			packet2->setDataByName("title", "Title");
-			packet2->setDataByName("description", "description");
-			packet2->setDataByName("quest_difficulty", 3);
-			packet2->setDataByName("unknown1", 5);
-			packet2->setDataByName("level", 3);
-			packet2->setDataByName("coin", 150);
-			packet2->setDataByName("status_points", 5);
-			packet2->setDataByName("exp_bonus", 10);
-			packet2->setArrayLengthByName("num_rewards", 1);
-			Item* item = new Item(master_item_list.GetItem(36212));
-			packet2->setArrayDataByName("reward_id", item->details.item_id);
-			item->stack_count = 20;
-			packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, -1);
-			safe_delete(item);
-			char accept[35] = { 0 };
-			char decline[35] = { 0 };
-			sprintf(accept, "q_accept_pending_quest %u", 0);
-			sprintf(decline, "q_deny_pending_quest %u", 0);
-			packet2->setDataByName("accept_command", accept);
-			packet2->setDataByName("decline_command", decline);
-			EQ2Packet* app = packet2->serialize();
-			if (sep->IsSet(2)) {
-				int16 offset = atoi(sep->arg[1]);
-				uchar* ptr2 = app->pBuffer;
-				ptr2 += offset;
-				if (sep->IsNumber(2)) {
-					int32 value1 = atol(sep->arg[2]);
-					if (value1 > 0xFFFF)
-						memcpy(ptr2, (uchar*)&value1, 4);
-					else if (value1 > 0xFF)
-						memcpy(ptr2, (uchar*)&value1, 2);
-					else
-						memcpy(ptr2, (uchar*)&value1, 1);
-				}
-				else {
-					int8 len = strlen(sep->arg[2]);
-					memcpy(ptr2, (uchar*)&len, 1);
-					ptr2 += 1;
-					memcpy(ptr2, sep->arg[2], len);
-				}
-			}
-			DumpPacket(app);
-			client->QueuePacket(app);
-			safe_delete(packet2);
 		}
 	}
 	else {

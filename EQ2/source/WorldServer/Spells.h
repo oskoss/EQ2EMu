@@ -282,6 +282,7 @@ struct SpellData{
 	int8	savage_bar_slot;
 	int32	soe_spell_crc;
 	int8	spell_type;
+	int32	spell_name_crc;
 };
 class Spell{
 public:

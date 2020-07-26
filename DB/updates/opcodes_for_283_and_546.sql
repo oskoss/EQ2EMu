@@ -803,3 +803,4 @@ INSERT INTO `opcodes` (`version_range1`, `version_range2`, `name`, `opcode`) VAL
 INSERT INTO `opcodes` (`version_range1`, `version_range2`, `name`, `opcode`) VALUES (284, 546, 'OP_EqGuildBankEventActionCmd', 492);
 INSERT INTO `opcodes` (`version_range1`, `version_range2`, `name`, `opcode`) VALUES (284, 546, 'OP_EqGuildBankExamineInfoCmd', 493);
 INSERT INTO `opcodes` (`version_range1`, `version_range2`, `name`, `opcode`) VALUES (284, 546, 'OP_EqHearSpellNoLandCmd', 494);
+UPDATE eq2emu.opcodes SET opcode='67' WHERE  NAME='OP_ChangeZoneMsg' AND version_range2=546;

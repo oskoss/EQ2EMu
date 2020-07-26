@@ -278,7 +278,8 @@ void Client::SendLoginInfo() {
 		world.UpdateServerStatistic(STAT_SERVER_ACCEPTED_CONNECTION, 1);
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Populate Skill Map...");
 		PopulateSkillMap();
-
+		Spell* spell = master_spell_list.GetSpell(1571882540, 1);
+		SendSpellUpdate(spell);
 		// JA: Check client version and move player to valid zone if current client does not support last saved zone (loading SF client on DoV saved zone) IT CAN HAPPEN!
 		LogWrite(MISC__TODO, 1, "TODO", "Check client version at login, move char if invalid zone file");
 	}
@@ -663,7 +664,8 @@ void Client::SendCharInfo() {
 
 	ClientPacketFunctions::SendSkillBook(this);
 	if (!player->IsResurrecting()) {
-		ClientPacketFunctions::SendUpdateSpellBook(this);
+		if(GetVersion() > 546) //we will send this later on for 546 and below
+			ClientPacketFunctions::SendUpdateSpellBook(this);
 	}
 	else {
 		player->SetResurrecting(false);
@@ -898,7 +900,8 @@ void Client::SendDefaultGroupOptions() {
 
 bool Client::HandlePacket(EQApplicationPacket* app) {
 	bool ret = true;
-
+	//cout << "INCOMING PACKET!!!!!!!: " << app->GetOpcodeName() << endl;
+	//DumpPacket(app);
 #if EQDEBUG >= 9
 	LogWrite(PACKET__DEBUG, 9, "Packet", "[EQDEBUG] Received Packet:");
 	DumpPacket(app, true);
@@ -1322,6 +1325,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		break;
 	}
 	case OP_DoneLoadingUIResourcesMsg: {
+		ClientPacketFunctions::SendUpdateSpellBook(this);
 		EQ2Packet* app = new EQ2Packet(OP_DoneLoadingUIResourcesMsg, 0, 0);
 		QueuePacket(app);
 		break;
@@ -3097,7 +3101,7 @@ void Client::SendSpellUpdate(Spell* spell) {
 		int8 xxx = spell->GetSpellData()->is_aa;
 		packet->setDataByName("spell_type", spell->GetSpellData()->type);
 		packet->setDataByName("spell_id", spell->GetSpellID());
-		packet->setDataByName("unique_id", spell->GetSpellTier());
+		packet->setDataByName("unique_id", spell->GetSpellData()->spell_name_crc);
 		packet->setDataByName("spell_name", spell->GetName());
 		packet->setDataByName("unknown", xxx);
 		packet->setDataByName("display_spell_tier", 1);
@@ -3502,7 +3506,6 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Zone Request Denied! No 'new_zone' value");
 		return;
 	}
-
 	client_zoning = true;
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting player Resurrecting to 'true'", __FUNCTION__);
 	player->SetResurrecting(true);
@@ -3566,7 +3569,14 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Sending to zone_auth.AddAuth...", __FUNCTION__);
 	zone_auth.AddAuth(new ZoneAuthRequest(GetAccountID(), player->GetName(), key));
-
+	if (version > 283) {
+		PacketStruct* packet = configReader.getStruct("WS_CancelMoveObjectMode", version);
+		if (packet)
+		{
+			QueuePacket(packet->serialize());
+			safe_delete(packet);
+		}
+	}
 }
 
 void Client::Zone(const char* new_zone, bool set_coords)
@@ -6339,10 +6349,17 @@ void Client::SendBuyMerchantList(bool sell) {
 						packet->setArrayDataByName("station_cash", ItemInfo.price_stationcash, i);
 					}
 				}
-				if (sell)
-					packet->setDataByName("type", 130);
-				else
-					packet->setDataByName("type", 2);
+				if (GetVersion() <= 546) {
+					//buy is 0 so dont need to set it
+					if (sell)
+						packet->setDataByName("type", 1);
+				}
+				else {
+					if (sell)
+						packet->setDataByName("type", 130);
+					else
+						packet->setDataByName("type", 2);
+				}
 				EQ2Packet* outapp = packet->serialize();
 				//	DumpPacket(outapp);
 				QueuePacket(outapp);
@@ -6356,12 +6373,17 @@ void Client::SendBuyMerchantList(bool sell) {
 			PacketStruct* packet = configReader.getStruct("WS_UpdateMerchant", GetVersion());
 			if (packet) {
 				packet->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(spawn));
-
-				if (sell)
-					packet->setDataByName("type", 130);
-				else
-					packet->setDataByName("type", 2);
-
+				if (GetVersion() <= 546) {
+					//buy is 0 so dont need to set it
+					if (sell)
+						packet->setDataByName("type", 1);
+				}
+				else {
+					if (sell)
+						packet->setDataByName("type", 130);
+					else
+						packet->setDataByName("type", 2);
+				}
 				EQ2Packet* outapp = packet->serialize();
 				QueuePacket(outapp);
 				safe_delete(packet);
@@ -6437,10 +6459,15 @@ void Client::SendSellMerchantList(bool sell) {
 					if (GetVersion() <= 1096)
 						packet->setArrayDataByName("description", item->description.c_str(), i);
 				}
-				if (sell)
-					packet->setDataByName("type", 129);
-				else
+				if (GetVersion() <= 546) {
 					packet->setDataByName("type", 1);
+				}
+				else {
+					if (sell)
+						packet->setDataByName("type", 129);
+					else
+						packet->setDataByName("type", 1);
+				}
 				packet->setDataByName("unknown8a", 16256, 6);
 				packet->setDataByName("unknown8a", 16256, 10);
 				//packet->PrintPacket();
@@ -6456,6 +6483,8 @@ void Client::SendSellMerchantList(bool sell) {
 }
 
 void Client::SendBuyBackList(bool sell) {
+	if (GetVersion() <= 546) //this wasn't added until LU37 on July 31st 2007, well after the DoF client
+		return;
 	Spawn* spawn = GetMerchantTransaction();
 	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
 		deque<BuyBackItem*>::iterator itr;
@@ -6558,7 +6587,12 @@ void Client::SendRepairList() {
 				if (GetVersion() <= 1096)
 					packet->setArrayDataByName("description", item->description.c_str(), i);
 			}
-			packet->setDataByName("type", 96);
+			if (GetVersion() <= 546) {
+				packet->setDataByName("type", 16);
+			}
+			else {
+				packet->setDataByName("type", 96);
+			}
 			EQ2Packet* outapp = packet->serialize();
 			QueuePacket(outapp);
 			safe_delete(packet);
@@ -6621,7 +6655,12 @@ void Client::ShowLottoWindow() {
 			//	packet->setArrayDataByName("quantity", item->details.count);
 			packet->setArrayDataByName("stack_size2", item->details.count);
 			packet->setArrayDataByName("description", item->description.c_str());
-			packet->setDataByName("type", 0x00000102);
+			if (GetVersion() <= 546) {
+				packet->setDataByName("type", 128);
+			}
+			else {
+				packet->setDataByName("type", 0x00000102);
+			}
 			QueuePacket(packet->serialize());
 			safe_delete(packet);
 		}
@@ -6724,18 +6763,22 @@ void Client::PlayLotto(int32 price, int32 ticket_item_id) {
 }
 
 void Client::SendGuildCreateWindow() {
-	Spawn* spawn = GetPlayer()->GetTarget();
-	if (spawn) {
-		PacketStruct* packet = configReader.getStruct("WS_UpdateMerchant", GetVersion());
-		if (packet) {
-			packet->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(spawn));
-			packet->setArrayLengthByName("num_items", 0);
-			packet->setDataByName("type", 0x00008000);
-			QueuePacket(packet->serialize());
-			safe_delete(packet);
+	if (GetVersion() <= 546) {
+		SimpleMessage(0, "Not implemented on this client...yet?");
+	}
+	else {
+		Spawn* spawn = GetPlayer()->GetTarget();
+		if (spawn) {
+			PacketStruct* packet = configReader.getStruct("WS_UpdateMerchant", GetVersion());
+			if (packet) {
+				packet->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(spawn));
+				packet->setArrayLengthByName("num_items", 0);
+				packet->setDataByName("type", 0x00008000);
+				QueuePacket(packet->serialize());
+				safe_delete(packet);
+			}
 		}
 	}
-
 }
 
 void Client::AddBuyBack(int32 unique_id, int32 item_id, int16 quantity, int32 price, bool save_needed) {
@@ -8601,6 +8644,9 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 		firstlogin = zar->isFirstLogin();
 		LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
 		if (database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)) {
+			GetPlayer()->vis_changed = false;
+			GetPlayer()->info_changed = false;
+
 			bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
 			if (pvp_allowed)
 				this->GetPlayer()->SetAttackable(1);

@@ -1733,7 +1733,7 @@ void PacketStruct::serializePacket(bool clear) {
 			opcode_val = EQOpcodeManager[OpcodeVersion]->EmuToEQ(sub_opcode);
 		if (opcode_val == 0)
 			LogWrite(PACKET__ERROR, 0, "Packet", "PACKET NOT SENT CORRECTLY!  Unable to get Emu Opcode from: '%s'", GetOpcodeType());
-		if (opcode_val == EQOpcodeManager[OpcodeVersion]->EmuToEQ(OP_EqExamineInfoCmd) && client_version > 283)
+		if (opcode_val == EQOpcodeManager[OpcodeVersion]->EmuToEQ(OP_EqExamineInfoCmd) && client_version > 546)
 			size += (size - 9);
 		if (client_version <= 283) {
 			if (size >= 255) {

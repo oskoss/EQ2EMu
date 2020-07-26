@@ -145,6 +145,15 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown11" Type="int32" Size="1" />
 <Data ElementName="unknown12" Type="int8" Size="1" />
 </Struct>
+<Struct Name="LS_LoginResponse" ClientVersion="546" OpcodeName="OP_LoginReplyMsg">
+<Data ElementName="reply_code" Type="int8" Size="1" />
+<Data ElementName="unknown" Type="int16" Size="1" />
+<Data ElementName="unknown01" Type="int8" Size="1" />
+<Data ElementName="unknown03" Type="sint32" Size="1" />
+<Data ElementName="unknown04" Type="sint32" Size="1" />
+<Data ElementName="unknown15" Type="int8" Size="11" />
+<Data ElementName="unknown02" Type="int8" Size="1" />
+</Struct>
 <Struct Name="LS_LoginResponse" ClientVersion="1096" OpcodeName="OP_LoginReplyMsg">
 <Data ElementName="reply_code" Type="int8" Size="1" />
 <Data ElementName="unknown01" Type="int8" Size="22" />
@@ -2791,6 +2800,14 @@ to zero and treated like placeholders." />
 <Data ElementName="normal_hit" Type="int16" /> <!-- if this is 0, then client shows melee attack upon successful spell -->
 <Data ElementName="unknown1" Type="int32" />
 </Struct>
+<Struct Name="WS_HearDamage_Header" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearCombatCmd">
+<Data ElementName="attacker" Type="int32" />
+<Data ElementName="defender" Type="int32" />
+<Data ElementName="defender_proxy" Type="int32" />
+<Data ElementName="result_type" Type="int8" />
+<Data ElementName="combat_chat_method" Type="int32" /> <!-- should probably always be 0 -->
+<Data ElementName="normal_hit" Type="int16" /> <!-- if this is 0, then client shows melee attack upon successful spell -->
+</Struct>
 <Struct Name="WS_HearDamage_Header" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearCombatCmd">
 <Data ElementName="packet_type" Type="int8" />
 <Data ElementName="result_type" Type="int8" />
@@ -2809,6 +2826,13 @@ to zero and treated like placeholders." />
 <Data ElementName="header" Substruct="WS_HearDamage_Header" Size="1" />
 <Data ElementName="damage" Type="int32" />
 <Data ElementName="damage_type" Type="int8" />
+<Data ElementName="spell" Type="int8" />
+<Data ElementName="spell_name" Type="EQ2_16Bit_String" Size="1" />
+</Struct>
+<Struct Name="WS_HearSimpleDamage" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearCombatCmd">
+<Data ElementName="header" Substruct="WS_HearDamage_Header" Size="1" />
+<Data ElementName="damage_type" Type="int8" />
+<Data ElementName="damage" Type="int16" />
 <Data ElementName="spell" Type="int8" />
 <Data ElementName="spell_name" Type="EQ2_16Bit_String" Size="1" />
 </Struct>
@@ -4704,12 +4728,12 @@ to zero and treated like placeholders." />
 <Data ElementName="range" Type="float" Size="1" />
 <Data ElementName="duration1" Type="int32" Size="1" />
 <Data ElementName="duration2" Type="int32" Size="1" />
-<Data ElementName="unknown9" Type="int8" Size="1" />
-<Data ElementName="duration_flag" Type="int8" Size="1" />
+<Data ElementName="unknown9" Type="int8" Size="1" /> <!-- UpdateCount -->
+<Data ElementName="duration_flag" Type="int8" Size="1" /> <!-- DoesNotExpire -->
 <Data ElementName="target" Type="int8" Size="1" />
 <Data ElementName="can_effect_raid" Type="int8" Size="1" />
 <Data ElementName="affect_only_group_members" Type="int8" Size="1" />
-<Data ElementName="group_spell" Type="int8" Size="1" />
+<Data ElementName="group_spell" Type="int8" Size="1" /> <!-- this is actually Maintained flag -->
 <Data ElementName="resistibility" Type="float" Size="1" />
 <Data ElementName="name" Type="EQ2_8Bit_String" Size="1" />
 <Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
@@ -6278,6 +6302,12 @@ to zero and treated like placeholders." />
 <Data ElementName="id" Type="int32" />
 <Data ElementName="unknown5" Type="int16" />
 </Struct>
+<Struct Name="WS_ExamineInfoItemRequest" ClientVersion="546" >
+<Data ElementName="type" Type="int8" Size="1" />
+<Data ElementName="id" Type="int32" />
+<Data ElementName="unique_id" Type="int32" />
+<Data ElementName="unknown5" Type="int16" />
+</Struct>
 <Struct Name="WS_ExamineInfoRequest" ClientVersion="1" >
 <Data ElementName="type" Type="int8" Size="1" />
 <Data ElementName="id" Type="int32" />
@@ -6323,6 +6353,13 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown5" Type="int16" />
 </Struct>
 <Struct Name="WS_ExamineInfoItemLinkRequest" ClientVersion="1" >
+<Data ElementName="type" Type="int8" Size="1" />
+<Data ElementName="unique_id" Type="int32" />
+<Data ElementName="item_id" Type="int32" />
+<Data ElementName="unknown5" Type="int8" />
+<Data ElementName="show_popup" Type="int8" />
+</Struct>
+<Struct Name="WS_ExamineInfoItemLinkRequest" ClientVersion="547" >
 <Data ElementName="type" Type="int8" Size="1" />
 <Data ElementName="unknown" Type="int32" Size="3" />
 <Data ElementName="unique_id" Type="int32" />
@@ -9038,6 +9075,12 @@ to zero and treated like placeholders." />
 	<Data ElementName="unknown10" Type="int8" Size="1" />
 </Data>
 </Struct>
+<Struct Name="WS_TintWidgetsMsg" ClientVersion="1" OpcodeName="OP_TintWidgetsMsg" >
+<Data ElementName="object_id" Type="int32" />
+<Data ElementName="tint_red" Type="int8" Size="1" />
+<Data ElementName="tint_green" Type="int8" Size="1" />
+<Data ElementName="tint_blue" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_SetRemoteCmdsMsg" ClientVersion="1" OpcodeName="OP_SetRemoteCmdsMsg" >
 <Data ElementName="num_commands" Type="int16" />
 <Data ElementName="commands_array" Type="Array" ArraySizeVariable="num_commands">
@@ -9053,6 +9096,62 @@ to zero and treated like placeholders." />
 <Data ElementName="arguments" Type="EQ2_16Bit_String" Size="1" />
 </Struct>
 <Struct Name="WS_UpdateMerchant" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateMerchantCmd">
+<Data ElementName="spawn_id" Type="int32" />
+<Data ElementName="num_items" Type="int16" />
+<Data ElementName="item_array" Type="Array" ArraySizeVariable="num_items">
+	<Data ElementName="item_name" Type="EQ2_8Bit_String" Size="1" />
+	<Data ElementName="price" Type="int64" />
+	<Data ElementName="item_id" Type="sint32" />
+	<Data ElementName="unique_item_id" Type="sint32" />
+	<Data ElementName="stack_size" Type="int16" />
+	<Data ElementName="icon" Type="int16" />
+	<Data ElementName="item_difficulty" Type="int8" />
+	<Data ElementName="level" Type="int8" />
+	<Data ElementName="unknown4" Type="int8" />
+	<Data ElementName="quantity" Type="int8" />
+	<Data ElementName="unknown5" Type="int8" />
+	<Data ElementName="tier" Type="int8" />
+	<Data ElementName="status" Type="int32" />
+	<Data ElementName="item_id2" Type="sint32" />
+	<Data ElementName="stack_size2" Type="int16" />
+	<Data ElementName="unknown7" Type="int8" Size="4" />
+  <Data ElementName="num_tokens" Type="int8" Size =" 1" />
+  <Data ElementName="token_array" Type="Array" ArraySizeVariable="num_tokens">
+    <Data ElementName="token_icon" Type="int16" Size =" 1" />
+    <Data ElementName="token_qty" Type="int16" Size =" 1" />
+    <Data ElementName="token_id" Type="sint32" Size =" 1" />
+    <Data ElementName="token_id2" Type="sint32" Size =" 1" />
+    <Data ElementName="token_name" Type="EQ2_16Bit_String" Size =" 1" />
+  </Data>
+	<Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
+</Data>
+<Data ElementName="type" Type="int32" />
+</Struct>
+<Struct Name="WS_UpdateMerchant" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateMerchantCmd">
+<Data ElementName="spawn_id" Type="int32" />
+<Data ElementName="num_items" Type="int16" />
+<Data ElementName="item_array" Type="Array" ArraySizeVariable="num_items">
+	<Data ElementName="item_name" Type="EQ2_8Bit_String" Size="1" />
+	<Data ElementName="price" Type="int64" />
+	<Data ElementName="item_id" Type="sint32" />
+	<Data ElementName="unique_item_id" Type="sint32" />
+	<Data ElementName="stack_size" Type="int16" />
+	<Data ElementName="icon" Type="int16" />	
+	<Data ElementName="level" Type="int8" />
+	<Data ElementName="display_flags" Type="int8" /> <!-- 1==red -->
+	<Data ElementName="item_difficulty" Type="int8" />	
+	<Data ElementName="quantity" Type="int8" />
+	<Data ElementName="unknown5" Type="int8" />
+	<Data ElementName="tier" Type="int8" />
+	<Data ElementName="status" Type="int32" />
+	<Data ElementName="item_id2" Type="sint32" />
+	<Data ElementName="stack_size2" Type="int16" />
+	<Data ElementName="status2" Type="int32" Size="1" />	
+</Data>
+<Data ElementName="type" Type="int8" /> <!-- 0==buy, 1==sell, 16==repair, 128==goblin game -->
+<Data ElementName="unknown" Type="int8" Size="2" />
+</Struct>
+<Struct Name="WS_UpdateMerchant" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateMerchantCmd">
 <Data ElementName="spawn_id" Type="int32" />
 <Data ElementName="num_items" Type="int16" />
 <Data ElementName="item_array" Type="Array" ArraySizeVariable="num_items">
