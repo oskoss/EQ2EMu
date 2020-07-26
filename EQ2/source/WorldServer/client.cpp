@@ -278,8 +278,6 @@ void Client::SendLoginInfo() {
 		world.UpdateServerStatistic(STAT_SERVER_ACCEPTED_CONNECTION, 1);
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Populate Skill Map...");
 		PopulateSkillMap();
-		Spell* spell = master_spell_list.GetSpell(1571882540, 1);
-		SendSpellUpdate(spell);
 		// JA: Check client version and move player to valid zone if current client does not support last saved zone (loading SF client on DoV saved zone) IT CAN HAPPEN!
 		LogWrite(MISC__TODO, 1, "TODO", "Check client version at login, move char if invalid zone file");
 	}
