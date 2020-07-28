@@ -6056,8 +6056,11 @@ void ZoneServer::SendUpdateTitles(Spawn *spawn, Title *suffix, Title *prefix) {
 	for (itr = clients.begin(); itr != clients.end(); itr++) {
 		current_client = *itr;
 
+		if (current_client->GetVersion() <= 546)
+			continue;
+
 		if (!(packet = configReader.getStruct("WS_UpdateTitle", current_client->GetVersion())))
-			break;
+			continue;
 
 		packet->setDataByName("player_id", current_client->GetPlayer()->GetIDWithPlayerSpawn(spawn));
 		packet->setDataByName("player_name", spawn->GetName());
