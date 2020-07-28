@@ -9736,26 +9736,25 @@ to zero and treated like placeholders." />
 <Data ElementName="page" Type="int32" Size="1" />
 </Struct>
 <Struct Name="WS_EqShowBook" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqShowBookCmd" >
+<Data ElementName="book_title" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="page_text" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="book_type" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="language" Type="int8" Size="1" />
+<Data ElementName="unknown2" Type="int8" Size="1" /> <!-- isbook? -->
+</Struct>
+<Struct Name="WS_EqShowBook" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqShowBookCmd" >
 <Data ElementName="spawn_id" Type="int32" Size="1" />
 <Data ElementName="book_title" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="unknown" Type="int16" Size="1" />
 <Data ElementName="book_type" Type="EQ2_16Bit_String" Size="1" />
-<Data ElementName="unknown2" Type="int8" Size="1" />
-<Data ElementName="unknown3" Type="int16" Size="1" />
-<Data ElementName="unknown4" Type="int32" Size="1" />
-<Data ElementName="unknown5" Type="int8" Size="1" />
+<Data ElementName="unknown2" Type="int16" Size="1" />
 <Data ElementName="num_pages" Type="int8" Size="1" />
-<Data ElementName="page_array" Type="Array" ArraySizeVariable="num_pages">
-  <Data ElementName="page_text" Type="EQ2_16Bit_String" Size="1" />
-  <Data ElementName="page_text_valign" Type="int8" Size="1" />
-  <Data ElementName="page_text_halign" Type="int8" Size="1" />
-  <Data ElementName="num_images" Type="int8" Size="1" />
-  <Data ElementName="image_array" Type="Array" ArraySizeVariable="num_images">
-    <Data ElementName="image_file" Type="EQ2_16Bit_String" Size="1" />
-    <Data ElementName="unknown6" Type="int8" Size="1" />
-    <Data ElementName="image_id" Type="int8" Size="1" />
-    <Data ElementName="unknown7" Type="int8" Size="12" />
-  </Data>
+<Data ElementName="cover_page" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="book_page_array" Type="Array" ArraySizeVariable="num_pages">
+	<Data ElementName="unknown1_array" Type="int8" Size="1" />
+	<Data ElementName="unknown2_array" Type="int8" Size="1" />
+	<Data ElementName="unknown3_array" Type="int8" Size="1" />
+	<Data ElementName="page_text" Type="EQ2_16Bit_String" Size="1" />
 </Data>
 </Struct>
 <Struct Name="WS_EqShowBook" ClientVersion="1096" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqShowBookCmd" >
