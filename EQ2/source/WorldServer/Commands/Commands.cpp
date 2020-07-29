@@ -1187,44 +1187,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				Item* item = client->GetPlayer()->item_list.GetItemFromIndex(item_index);
 				if (item) {
 					Spawn* spawn = cmdTarget;
-					int8 numpages = item->book_pages.size();
-					
-					string page1 = string(item->book_pages[0]->page_text.data);
-					PacketStruct* packet = configReader.getStruct("WS_EqShowBook", client->GetVersion());
-					string title = item->name;
-					
-					
-					
-					if (packet) {
-							packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
-							packet->setDataByName("book_title", title.c_str());
-							packet->setDataByName("book_type", "simple");
-							packet->setDataByName("unknown2", 1);
-							packet->setDataByName("unknown5", 1, 4);
-							packet->setArrayLengthByName("num_pages", numpages);
-							for (int8 pages = 1; pages <= numpages; pages++) {
-
-								int8 pagenum = int8(item->book_pages[pages - 1]->page);
-								string page = string(item->book_pages[pages-1]->page_text.data);
-								int8 valign = int8(item->book_pages[pages - 1]->valign);
-								int8 halign = int8(item->book_pages[pages - 1]->halign);
-								packet->setArrayDataByName("page_text", page.c_str(), pagenum -1);
-								packet->setArrayDataByName("page_text_valign", valign , pagenum - 1);
-								packet->setArrayDataByName("page_text_halign", halign, pagenum - 1);
-
-								// Need to add support for images
-							}
-							client->QueuePacket(packet->serialize());
-							safe_delete(packet);
-					}
-
-					
+					client->SendShowBook(client->GetPlayer(), item->name, item->book_pages);
 					break;
 				}
 			}
-			}
-
-}
+		}
+		break;
+	}
 		case COMMAND_USEABILITY:{
 			if (sep && sep->arg[0][0] && sep->IsNumber(0)) {
 				if (client->GetPlayer()->GetHP() == 0) {
@@ -3476,7 +3445,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 			break;
 									 }
-		case COMMAND_SPAWN_DETAILS:{
+		case COMMAND_SPAWN_DETAILS: {
 			Spawn* spawn = cmdTarget;
 			if (sep && sep->arg[0][0]) {
 				if (cmdTarget)
@@ -3496,7 +3465,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						glm::vec3 targPos(cmdTarget->GetX(), cmdTarget->GetZ(), cmdTarget->GetY());
 
 						float bestZ = client->GetPlayer()->FindDestGroundZ(targPos, cmdTarget->GetYOffset());
-							client->Message(CHANNEL_COLOR_YELLOW, "Best Z for %s is %f", spawn->GetName(), bestZ);
+						client->Message(CHANNEL_COLOR_YELLOW, "Best Z for %s is %f", spawn->GetName(), bestZ);
 						break;
 					}
 					else if (ToLower(string(sep->arg[0])) == "pathto")
@@ -3518,15 +3487,15 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					break;
 				}
 			}
-			if(spawn){
+			if (spawn) {
 				const char* type = "NPC";
-				if(spawn->IsObject())
+				if (spawn->IsObject())
 					type = "Object";
-				else if(spawn->IsSign())
+				else if (spawn->IsSign())
 					type = "Sign";
-				else if(spawn->IsWidget())
+				else if (spawn->IsWidget())
 					type = "Widget";
-				else if(spawn->IsGroundSpawn())
+				else if (spawn->IsGroundSpawn())
 					type = "GroundSpawn";
 				client->Message(CHANNEL_COLOR_YELLOW, "Name: %s, %s ID: %u", spawn->GetName(), type, spawn->GetDatabaseID());
 				client->Message(CHANNEL_COLOR_YELLOW, "Last Name: %s, Sub-Title: %s, Prefix: %s, Suffix: %s", spawn->GetLastName(), spawn->GetSubTitle(), spawn->GetPrefixTitle(), spawn->GetSuffixTitle());
@@ -3539,7 +3508,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->Message(CHANNEL_COLOR_YELLOW, "Collision Radius: %i, Size: %i, Difficulty: %i, Heroic: %i", spawn->GetCollisionRadius(), spawn->GetSize(), spawn->GetEncounterLevel(), spawn->GetHeroic());
 				client->Message(CHANNEL_COLOR_YELLOW, "Targetable: %i, Show Name: %i, Attackable: %i, Show Level: %i", spawn->GetTargetable(), spawn->GetShowName(), spawn->GetAttackable(), spawn->GetShowLevel());
 				client->Message(CHANNEL_COLOR_YELLOW, "Show Command Icon: %i, Display Hand Icon: %i", spawn->GetShowCommandIcon(), spawn->GetShowHandIcon());
-				if(spawn->IsEntity()){
+				if (spawn->IsEntity()) {
 					client->Message(CHANNEL_COLOR_YELLOW, "Facial Hair Type: %i, Hair Type: %i, Chest Type: %i, Legs Type: %i", ((Entity*)spawn)->GetFacialHairType(), ((Entity*)spawn)->GetHairType(), ((Entity*)spawn)->GetChestType(), ((Entity*)spawn)->GetLegsType());
 					client->Message(CHANNEL_COLOR_YELLOW, "Soga Facial Hair Type: %i, Soga Hair Type: %i, Wing Type: %i", ((Entity*)spawn)->GetSogaFacialHairType(), ((Entity*)spawn)->GetSogaHairType(), ((Entity*)spawn)->GetWingType());
 				}
@@ -3550,97 +3519,79 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if (spawn->IsNPC())
 					client->Message(CHANNEL_COLOR_YELLOW, "Randomize: %u", ((NPC*)spawn)->GetRandomize());
 
-				PacketStruct* packet = configReader.getStruct("WS_EqShowBook", client->GetVersion());
-				if (packet) {
-					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
+				string details;
+				details += "\\#0000FFName:	" + string(spawn->GetName()) + "\n";
+				details += "Type:	" + string(type) + "\n";
+				details += "ID:	" + to_string(spawn->GetDatabaseID()) + "\n";
+				details += "Last Name:	" + string(spawn->GetLastName()) + "\n";
+				details += "Sub-Title:	" + string(spawn->GetSubTitle()) + "\n";
+				details += "Prefix:	" + string(spawn->GetPrefixTitle()) + "\n";
+				details += "Suffix:	" + string(spawn->GetSuffixTitle()) + "\n";
+				details += "Race:		" + to_string(spawn->GetRace()) + "\n";
+				details += "Class:		" + to_string(spawn->GetAdventureClass()) + "\n";
+				details += "Gender:		" + to_string(spawn->GetGender()) + "\n";
+				details += "Level:		" + to_string(spawn->GetLevel()) + "\n";
+				details += "HP:		" + to_string(spawn->GetHP()) + "\n";
+				details += "Power:		" + to_string(spawn->GetPower()) + "\n";
+				details += "Difficulty:		" + to_string(spawn->GetEncounterLevel()) + "\n";
+				details += "Heroic:		" + to_string(spawn->GetHeroic()) + "\n";
+				details += "Group ID:		" + to_string(spawn->GetSpawnGroupID()) + "\n";
+				details += "Faction ID:		" + to_string(spawn->GetFactionID()) + "\n";
+				details += "Merchant ID:	" + to_string(spawn->GetMerchantID()) + "\n";
+				details += "Transport ID:	" + to_string(spawn->GetTransporterID()) + "\n";
+				details += "Location ID:	" + to_string(spawn->GetSpawnLocationID()) + "\n";
+				char x[16];
+				sprintf(x, "%.2f", spawn->GetX());
+				char y[16];
+				sprintf(y, "%.2f", spawn->GetY());
+				char z[16];
+				sprintf(z, "%.2f", spawn->GetZ());
+				details += "Location:	" + string(x) + ", " + string(y) + ", " + string(z) + "\n";
 
-					string title = string(spawn->GetName()) + "(" + to_string(spawn->GetDatabaseID()) + ")";
-					packet->setDataByName("book_title", title.c_str());
-					packet->setDataByName("book_type", "simple");
-					packet->setDataByName("unknown2", 1);
-					packet->setDataByName("unknown5", 1, 4);
-					packet->setArrayLengthByName("num_pages", 4);
-					string details;
-					details += "\\#0000FFName:	" + string(spawn->GetName()) + "\n";
-					details += "Type:	" + string(type) + "\n";
-					details += "ID:	" + to_string(spawn->GetDatabaseID()) + "\n";
-					details += "Last Name:	" + string(spawn->GetLastName()) + "\n";
-					details += "Sub-Title:	" + string(spawn->GetSubTitle()) + "\n";
-					details += "Prefix:	" + string(spawn->GetPrefixTitle()) + "\n";
-					details += "Suffix:	" + string(spawn->GetSuffixTitle()) + "\n";
-					details += "Race:		" + to_string(spawn->GetRace()) + "\n";
-					details += "Class:		" + to_string(spawn->GetAdventureClass()) + "\n";
-					details += "Gender:		" + to_string(spawn->GetGender()) + "\n";
-					details += "Level:		" + to_string(spawn->GetLevel()) + "\n";
-					details += "HP:		" + to_string(spawn->GetHP()) + "\n";
-					details += "Power:		" + to_string(spawn->GetPower()) + "\n";
-					details += "Difficulty:		" + to_string(spawn->GetEncounterLevel()) + "\n";
-					details += "Heroic:		" + to_string(spawn->GetHeroic()) + "\n";
-					details += "Group ID:		" + to_string(spawn->GetSpawnGroupID()) + "\n";
-					details += "Faction ID:		" + to_string(spawn->GetFactionID()) + "\n";
-					details += "Merchant ID:	" + to_string(spawn->GetMerchantID()) + "\n";
-					details += "Transport ID:	" + to_string(spawn->GetTransporterID()) + "\n";
-					details += "Location ID:	" + to_string(spawn->GetSpawnLocationID()) + "\n";
-					char x[16];
-					sprintf(x, "%.2f", spawn->GetX());
-					char y[16];
-					sprintf(y, "%.2f", spawn->GetY());
-					char z[16];
-					sprintf(z, "%.2f", spawn->GetZ());
-					details += "Location:	" + string(x) + ", " + string(y) + ", " + string(z) + "\n";
-					
-					string details2;
-					details2 += "Heading:		" + to_string(spawn->GetHeading()) + "\n";
-					details2 += "Grid ID:		" + to_string(spawn->GetLocation()) + "\n";
-					details2 += "Size:		" + to_string(spawn->GetSize()) + "\n";
-					details2 += "Collision Radius:	" + to_string(spawn->GetCollisionRadius()) + "\n";
-					details2 += "Respawn Time:	" + to_string(spawn->GetRespawnTime()) + "\n";
-					details2 += "Targetable:		" + to_string(spawn->GetTargetable()) + "\n";
-					details2 += "Show Name:	" + to_string(spawn->GetShowName()) + "\n";
-					details2 += "Attackable:		" + to_string(spawn->GetAttackable()) + "\n";
-					details2 += "Show Level:		" + to_string(spawn->GetShowLevel()) + "\n";
-					details2 += "Show Command Icon:	" + to_string(spawn->GetShowCommandIcon()) + "\n";
-					details2 += "Display Hand Icon:	" + to_string(spawn->GetShowHandIcon()) + "\n";
-					details2 += "Model Type:		" + to_string(spawn->GetModelType()) + "\n";
-					details2 += "Soga Race Type:	" + to_string(spawn->GetSogaModelType()) + "\n";
-					details2 += "Primary Command ID:	" + to_string(spawn->GetPrimaryCommandListID()) + "\n";
-					details2 += "Secondary Cmd ID:	" + to_string(spawn->GetSecondaryCommandListID()) + "\n";
-					details2 += "Visual State:		" + to_string(spawn->GetVisualState()) + "\n";
-					details2 += "Action State:	" + to_string(spawn->GetActionState()) + "\n";
-					details2 += "Mood State:		" + to_string(spawn->GetMoodState()) + "\n";
-					details2 += "Initial State:		" + to_string(spawn->GetInitialState()) + "\n";
-					details2 += "Activity Status:	" + to_string(spawn->GetActivityStatus()) + "\n";
-					details2 += "Emote State:		" + to_string(spawn->GetEmoteState()) + "\n";
+				string details2;
+				details2 += "Heading:		" + to_string(spawn->GetHeading()) + "\n";
+				details2 += "Grid ID:		" + to_string(spawn->GetLocation()) + "\n";
+				details2 += "Size:		" + to_string(spawn->GetSize()) + "\n";
+				details2 += "Collision Radius:	" + to_string(spawn->GetCollisionRadius()) + "\n";
+				details2 += "Respawn Time:	" + to_string(spawn->GetRespawnTime()) + "\n";
+				details2 += "Targetable:		" + to_string(spawn->GetTargetable()) + "\n";
+				details2 += "Show Name:	" + to_string(spawn->GetShowName()) + "\n";
+				details2 += "Attackable:		" + to_string(spawn->GetAttackable()) + "\n";
+				details2 += "Show Level:		" + to_string(spawn->GetShowLevel()) + "\n";
+				details2 += "Show Command Icon:	" + to_string(spawn->GetShowCommandIcon()) + "\n";
+				details2 += "Display Hand Icon:	" + to_string(spawn->GetShowHandIcon()) + "\n";
+				details2 += "Model Type:		" + to_string(spawn->GetModelType()) + "\n";
+				details2 += "Soga Race Type:	" + to_string(spawn->GetSogaModelType()) + "\n";
+				details2 += "Primary Command ID:	" + to_string(spawn->GetPrimaryCommandListID()) + "\n";
+				details2 += "Secondary Cmd ID:	" + to_string(spawn->GetSecondaryCommandListID()) + "\n";
+				details2 += "Visual State:		" + to_string(spawn->GetVisualState()) + "\n";
+				details2 += "Action State:	" + to_string(spawn->GetActionState()) + "\n";
+				details2 += "Mood State:		" + to_string(spawn->GetMoodState()) + "\n";
+				details2 += "Initial State:		" + to_string(spawn->GetInitialState()) + "\n";
+				details2 += "Activity Status:	" + to_string(spawn->GetActivityStatus()) + "\n";
+				details2 += "Emote State:		" + to_string(spawn->GetEmoteState()) + "\n";
 
-					string details3;
-					details3 += "Pitch:	" + to_string(spawn->GetPitch()) + "\n";
-					details3 += "Roll:	" + to_string(spawn->GetRoll()) + "\n";
-					details3 += "Hide Hood:	" + to_string(spawn->appearance.hide_hood) + "\n";
+				string details3;
+				details3 += "Pitch:	" + to_string(spawn->GetPitch()) + "\n";
+				details3 += "Roll:	" + to_string(spawn->GetRoll()) + "\n";
+				details3 += "Hide Hood:	" + to_string(spawn->appearance.hide_hood) + "\n";
 
-					string details4;
-					if (spawn->IsEntity()) {
-						details4 += "Facial Hair Type:	" + to_string(((Entity*)spawn)->GetFacialHairType()) + "\n";
-						details4 += "Hair Type:		" + to_string(((Entity*)spawn)->GetHairType()) + "\n";
-						details4 += "Chest Type:		" + to_string(((Entity*)spawn)->GetChestType()) + "\n";
-						details4 += "Legs Type:		" + to_string(((Entity*)spawn)->GetLegsType()) + "\n";
-						details4 += "Soga Facial Hair Type:	" + to_string(((Entity*)spawn)->GetSogaFacialHairType()) + "\n";
-						details4 += "Soga Hair Type:	" + to_string(((Entity*)spawn)->GetSogaHairType()) + "\n";
-						details4 += "Wing Type:		" + to_string(((Entity*)spawn)->GetWingType()) + "\n";
-						if (spawn->IsNPC()) {
-							details4 += "\nRandomize:		" + to_string(((NPC*)spawn)->GetRandomize()) + "\n";
-						}
+				string details4;
+				if (spawn->IsEntity()) {
+					details4 += "Facial Hair Type:	" + to_string(((Entity*)spawn)->GetFacialHairType()) + "\n";
+					details4 += "Hair Type:		" + to_string(((Entity*)spawn)->GetHairType()) + "\n";
+					details4 += "Chest Type:		" + to_string(((Entity*)spawn)->GetChestType()) + "\n";
+					details4 += "Legs Type:		" + to_string(((Entity*)spawn)->GetLegsType()) + "\n";
+					details4 += "Soga Facial Hair Type:	" + to_string(((Entity*)spawn)->GetSogaFacialHairType()) + "\n";
+					details4 += "Soga Hair Type:	" + to_string(((Entity*)spawn)->GetSogaHairType()) + "\n";
+					details4 += "Wing Type:		" + to_string(((Entity*)spawn)->GetWingType()) + "\n";
+					if (spawn->IsNPC()) {
+						details4 += "\nRandomize:		" + to_string(((NPC*)spawn)->GetRandomize()) + "\n";
 					}
-					
-					//details2 += "" + to_string() + "\n";
-
-					packet->setArrayDataByName("page_text", details.c_str());
-					packet->setArrayDataByName("page_text", details2.c_str(), 1);
-					packet->setArrayDataByName("page_text", details3.c_str(), 2);
-					packet->setArrayDataByName("page_text", details4.c_str(), 3);
-
-					client->QueuePacket(packet->serialize());
-					safe_delete(packet);
 				}
+
+				string title = string(spawn->GetName()) + "(" + to_string(spawn->GetDatabaseID()) + ")";
+				client->SendShowBook(client->GetPlayer(), title, 4, details, details2, details3, details4);
 			}
 			else {
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Syntax: /spawn details (radius)");

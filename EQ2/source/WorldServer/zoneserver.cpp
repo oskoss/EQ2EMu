@@ -6058,6 +6058,9 @@ void ZoneServer::SendUpdateTitles(Spawn *spawn, Title *suffix, Title *prefix) {
 	for (itr = clients.begin(); itr != clients.end(); itr++) {
 		current_client = *itr;
 
+		if (current_client->GetVersion() <= 546)
+			continue;
+
 		if (!(packet = configReader.getStruct("WS_UpdateTitle", current_client->GetVersion())))
 			continue;
 

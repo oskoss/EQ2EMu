@@ -668,117 +668,85 @@ void Commands::Command_Bot_Settings(Client* client, Seperator* sep) {
 void Commands::Command_Bot_Help(Client* client, Seperator* sep) {
 	if (sep && sep->IsSet(0)) {
 		if (strncasecmp("race", sep->arg[0], 4) == 0) {
-			PacketStruct* packet = configReader.getStruct("WS_EqShowBook", client->GetVersion());
-			if (packet) {
-				packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
-
-				string title = "Race ID's";
-				packet->setDataByName("book_title", title.c_str());
-				packet->setDataByName("book_type", "simple");
-				packet->setDataByName("unknown2", 1);
-				packet->setDataByName("unknown5", 1, 4);
-				packet->setArrayLengthByName("num_pages", 1);
-
-				string details;
-				details += "0\tBarbarian\n";
-				details += "1\tDark Elf\n";
-				details += "2\tDwarf\n";
-				details += "3\tErudite\n";
-				details += "4\tFroglok\n";
-				details += "5\tGnome\n";
-				details += "6\tHalf Elf\n";
-				details += "7\tHalfling\n";
-				details += "8\tHigh Elf\n";
-				details += "9\tHuman\n";
-				details += "10\tIksar\n";
-				details += "11\tKerra\n";
-				details += "12\tOgre\n";
-				details += "13\tRatonga\n";
-				details += "14\tTroll\n";
-				details += "15\tWood Elf\n";
-				details += "16\tFae\n";
-				details += "17\tArasai\n";
-				details += "18\tSarnak\n";
-				details += "19\tVampire\n";
-				details += "20\tAerakyn\n";
-				
-				packet->setArrayDataByName("page_text", details.c_str());
-
-				client->QueuePacket(packet->serialize());
-				safe_delete(packet);
-			}
-
+			string title = "Race ID's";
+			string details;
+			details += "0\tBarbarian\n";
+			details += "1\tDark Elf\n";
+			details += "2\tDwarf\n";
+			details += "3\tErudite\n";
+			details += "4\tFroglok\n";
+			details += "5\tGnome\n";
+			details += "6\tHalf Elf\n";
+			details += "7\tHalfling\n";
+			details += "8\tHigh Elf\n";
+			details += "9\tHuman\n";
+			details += "10\tIksar\n";
+			details += "11\tKerra\n";
+			details += "12\tOgre\n";
+			details += "13\tRatonga\n";
+			details += "14\tTroll\n";
+			details += "15\tWood Elf\n";
+			details += "16\tFae\n";
+			details += "17\tArasai\n";
+			details += "18\tSarnak\n";
+			details += "19\tVampire\n";
+			details += "20\tAerakyn\n";
+			client->SendShowBook(client->GetPlayer(), title, 1, details);
 			return;
 		}
 		else if (strncasecmp("class", sep->arg[0], 5) == 0) {
-			PacketStruct* packet = configReader.getStruct("WS_EqShowBook", client->GetVersion());
-			if (packet) {
-				packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
+			string title = "Class ID's";
+			string details;
+			details += "0\tCOMMONER\n";
+			details += "1\tFIGHTER\n";
+			details += "2\tWARRIOR\n";
+			details += "3\tGUARDIAN\n";
+			details += "4\tBERSERKER\n";
+			details += "5\tBRAWLER\n";
+			details += "6\tMONK\n";
+			details += "7\tBRUISER\n";
+			details += "8\tCRUSADER\n";
+			details += "9\tSHADOWKNIGHT\n";
+			details += "10\tPALADIN\n";
+			details += "11\tPRIEST\n";
+			details += "12\tCLERIC\n";
+			details += "13\tTEMPLAR\n";
+			details += "14\tINQUISITOR\n";
+			details += "15\tDRUID\n";
+			details += "16\tWARDEN\n";
+			details += "17\tFURY\n";
+			details += "18\tSHAMAN\n";
+			details += "19\tMYSTIC\n";
+			details += "20\tDEFILER\n";
 
-				string title = "Class ID's";
-				packet->setDataByName("book_title", title.c_str());
-				packet->setDataByName("book_type", "simple");
-				packet->setDataByName("unknown2", 1);
-				packet->setDataByName("unknown5", 1, 4);
-				packet->setArrayLengthByName("num_pages", 3);
+			string details2 = "21\tMAGE\n";
+			details2 += "22\tSORCERER\n";
+			details2 += "23\tWIZARD\n";
+			details2 += "24\tWARLOCK\n";
+			details2 += "25\tENCHANTER\n";
+			details2 += "26\tILLUSIONIST\n";
+			details2 += "27\tCOERCER\n";
+			details2 += "28\tSUMMONER\n";
+			details2 += "29\tCONJUROR\n";
+			details2 += "30\tNECROMANCER\n";
+			details2 += "31\tSCOUT\n";
+			details2 += "32\tROGUE\n";
+			details2 += "33\tSWASHBUCKLER\n";
+			details2 += "34\tBRIGAND\n";
+			details2 += "35\tBARD\n";
+			details2 += "36\tTROUBADOR\n";
+			details2 += "37\tDIRGE\n";
+			details2 += "38\tPREDATOR\n";
+			details2 += "39\tRANGER\n";
+			details2 += "40\tASSASSIN\n";
 
-				string details;
-				details += "0\tCOMMONER\n";
-				details += "1\tFIGHTER\n";
-				details += "2\tWARRIOR\n";
-				details += "3\tGUARDIAN\n";
-				details += "4\tBERSERKER\n";
-				details += "5\tBRAWLER\n";
-				details += "6\tMONK\n";
-				details += "7\tBRUISER\n";
-				details += "8\tCRUSADER\n";
-				details += "9\tSHADOWKNIGHT\n";
-				details += "10\tPALADIN\n";
-				details += "11\tPRIEST\n";
-				details += "12\tCLERIC\n";
-				details += "13\tTEMPLAR\n";
-				details += "14\tINQUISITOR\n";
-				details += "15\tDRUID\n";
-				details += "16\tWARDEN\n";
-				details += "17\tFURY\n";
-				details += "18\tSHAMAN\n";
-				details += "19\tMYSTIC\n";
-				details += "20\tDEFILER\n";
-				
-				string details2 = "21\tMAGE\n";
-				details2 += "22\tSORCERER\n";
-				details2 += "23\tWIZARD\n";
-				details2 += "24\tWARLOCK\n";
-				details2 += "25\tENCHANTER\n";
-				details2 += "26\tILLUSIONIST\n";
-				details2 += "27\tCOERCER\n";
-				details2 += "28\tSUMMONER\n";
-				details2 += "29\tCONJUROR\n";
-				details2 += "30\tNECROMANCER\n";
-				details2 += "31\tSCOUT\n";
-				details2 += "32\tROGUE\n";
-				details2 += "33\tSWASHBUCKLER\n";
-				details2 += "34\tBRIGAND\n";
-				details2 += "35\tBARD\n";
-				details2 += "36\tTROUBADOR\n";
-				details2 += "37\tDIRGE\n";
-				details2 += "38\tPREDATOR\n";
-				details2 += "39\tRANGER\n";
-				details2 += "40\tASSASSIN\n";
-				
-				string details3 = "\\#FF0000Following aren't implemented yet.\\#000000\n";
-				details3 += "41\tANIMALIST\n";
-				details3 += "42\tBEASTLORD\n";
-				details3 += "43\tSHAPER\n";
-				details3 += "44\tCHANNELER\n";
+			string details3 = "\\#FF0000Following aren't implemented yet.\\#000000\n";
+			details3 += "41\tANIMALIST\n";
+			details3 += "42\tBEASTLORD\n";
+			details3 += "43\tSHAPER\n";
+			details3 += "44\tCHANNELER\n";
 
-				packet->setArrayDataByName("page_text", details.c_str());
-				packet->setArrayDataByName("page_text", details2.c_str(), 1);
-				packet->setArrayDataByName("page_text", details3.c_str(), 2);
-
-				client->QueuePacket(packet->serialize());
-				safe_delete(packet);
-			}
+			client->SendShowBook(client->GetPlayer(), title, 3, details, details2, details3);
 			return;
 		}
 	}

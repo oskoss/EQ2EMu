@@ -76,7 +76,6 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "../common/EQ2_Common_Structs.h"
 #include "net.h"
 #include "../common/MiscFunctions.h"
-#include "Items/Items.h"
 #include "Skills.h"
 #include "LuaInterface.h"
 #include "Quests.h"
@@ -9105,4 +9104,137 @@ void Client::SendFlightAutoMount(int32 path_id, int16 mount_id, int8 mount_red_c
 
 	if (mount_id)
 		((Entity*)GetPlayer())->SetMount(mount_id, mount_red_color, mount_green_color, mount_blue_color);
+}
+
+void Client::SendShowBook(Spawn* sender, string title, int8 num_pages, ...)
+{
+	if (!sender)
+	{
+		LogWrite(CCLIENT__ERROR, 0, "Client", "SendShowBook missing sender for Player %s, book title %s", GetPlayer()->GetName(), title);
+		return;
+	}
+
+	PacketStruct* packet = configReader.getStruct("WS_EqShowBook", GetVersion());
+	if (!packet) {
+		LogWrite(CCLIENT__ERROR, 0, "Client", "WS_EqShowBook missing for version %u", GetVersion());
+		return;
+	}
+	packet->setDataByName("spawn_id", GetPlayer()->GetIDWithPlayerSpawn(sender));
+	packet->setDataByName("book_title", title.c_str());
+	packet->setDataByName("book_type", "simple");
+	packet->setDataByName("unknown2", 1);
+
+	if (GetVersion() > 546)
+		packet->setDataByName("unknown5", 1, 4);
+
+	packet->setArrayLengthByName("num_pages", num_pages);
+
+	va_list args;
+	va_start(args, num_pages);
+	std::string endString("");
+	for (int8 p = 0; p < num_pages; p++)
+	{
+		std::string page = va_arg(args, string);
+		switch (GetVersion())
+		{
+			// release client
+			case 283:
+			{
+				endString.append(page);
+				break;
+			}
+			// DoF trial
+			case 546:
+			{
+				if (p == 0)
+					packet->setDataByName("cover_page", page.c_str());
+				else
+					packet->setArrayDataByName("page_text", page.c_str(), p - 1);
+				break;
+			}
+			// all other clients
+			default:
+			{
+				packet->setArrayDataByName("page_text", page.c_str(), p);
+				break;
+			}
+		}
+	}
+
+	if (GetVersion() == 283)
+	{
+		packet->setDataByName("page_text", endString.c_str());
+	}
+
+	va_end(args);
+
+	QueuePacket(packet->serialize());
+	safe_delete(packet);
+}
+
+void Client::SendShowBook(Spawn* sender, string title, vector<Item::BookPage*> pages)
+{
+	if (!sender)
+	{
+		LogWrite(CCLIENT__ERROR, 0, "Client", "SendShowBook missing sender for Player %s, book title %s", GetPlayer()->GetName(), title);
+		return;
+	}
+
+	PacketStruct* packet = configReader.getStruct("WS_EqShowBook", GetVersion());
+	if (!packet) {
+		LogWrite(CCLIENT__ERROR, 0, "Client", "WS_EqShowBook missing for version %u", GetVersion());
+		return;
+	}
+	packet->setDataByName("spawn_id", GetPlayer()->GetIDWithPlayerSpawn(sender));
+	packet->setDataByName("book_title", title.c_str());
+	packet->setDataByName("book_type", "simple");
+	packet->setDataByName("unknown2", 1);
+
+	if (GetVersion() > 546)
+		packet->setDataByName("unknown5", 1, 4);
+
+	packet->setArrayLengthByName("num_pages", pages.size());
+
+	std::string endString("");
+	for (int8 p = 0; p < pages.size(); p++)
+	{
+		Item::BookPage* page = pages[p];
+		std::string pageText = string(page->page_text.data);
+		switch (GetVersion())
+		{
+			// release client
+		case 283:
+		{
+			endString.append(pageText);
+			break;
+		}
+		// DoF trial
+		case 546:
+		{
+			if (p == 0)
+				packet->setDataByName("cover_page", pageText.c_str());
+			else
+				packet->setArrayDataByName("page_text", pageText.c_str(), p - 1);
+			break;
+		}
+		// all other clients
+		default:
+		{
+			int8 valign = int8(page->valign);
+			int8 halign = int8(page->halign);
+			packet->setArrayDataByName("page_text", pageText.c_str(), p);
+			packet->setArrayDataByName("page_text_valign", valign, p);
+			packet->setArrayDataByName("page_text_halign", halign, p);
+			break;
+		}
+		}
+	}
+
+	if (GetVersion() == 283)
+	{
+		packet->setDataByName("page_text", endString.c_str());
+	}
+
+	QueuePacket(packet->serialize());
+	safe_delete(packet);
 }
