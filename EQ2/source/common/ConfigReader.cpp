@@ -78,17 +78,16 @@ PacketStruct* ConfigReader::getStruct(const char* name, int16 version){
 				latest_version = *iter;
 		}		
 		if (latest_version) {
-			if(strlen(latest_version->GetOpcodeType()) == 0 || latest_version->GetOpcode() != OP_Unknown)
-				new_latest_version = new PacketStruct(latest_version, version);
-			else {
-				cout << "here: " << latest_version->GetOpcodeType() << endl;
-				LogWrite(PACKET__ERROR, 0, "Packet", "Could not find valid opcode for Packet Struct '%s' and client version %d", latest_version->GetOpcodeType(), version);
+			if (latest_version->GetOpcode() != OP_Unknown && latest_version->GetOpcodeValue(version) == 0xFFFF) {
+				LogWrite(PACKET__ERROR, 0, "Packet", "Could not find valid opcode for Packet Struct '%s' and client version %d", latest_version->GetName(), version);
 			}
+			else if(strlen(latest_version->GetOpcodeType()) == 0 || latest_version->GetOpcode() != OP_Unknown)
+				new_latest_version = new PacketStruct(latest_version, version);
 		}
 			
 	}
 	MStructs.unlock();
-	if(!new_latest_version)
+	if(!new_latest_version && !latest_version)
 		LogWrite(PACKET__ERROR, 0, "Packet", "Could not find struct named '%s'", name);
 	return new_latest_version;
 }

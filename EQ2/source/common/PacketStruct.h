@@ -462,6 +462,7 @@ public:
 	void SetVersion(int32 in_version) { version = in_version; }
 	bool SetOpcode(const char* new_opcode);
 	EmuOpcode GetOpcode() { return opcode; }
+	int16 GetOpcodeValue(int16 client_version);
 	const char* GetName() { return name.c_str(); }
 	void SetName(const char* in_name) { name = string(in_name); }
 	bool LoadedSuccessfully() { return loadedSuccessfully; }

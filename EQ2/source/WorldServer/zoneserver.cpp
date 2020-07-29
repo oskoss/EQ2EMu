@@ -4527,7 +4527,7 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 			packet = configReader.getStruct("WS_HearSiphonSpellDamage", client->GetVersion());
 			break;
 		case DAMAGE_PACKET_TYPE_MULTIPLE_DAMAGE:
-			if (client->GetVersion() > 283)
+			if (client->GetVersion() > 546)
 				packet = configReader.getStruct("WS_HearMultipleDamage", client->GetVersion());
 			else
 				packet = configReader.getStruct("WS_HearSimpleDamage", client->GetVersion());
@@ -4540,7 +4540,7 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 		case DAMAGE_PACKET_TYPE_SPELL_DAMAGE3:
 		case DAMAGE_PACKET_TYPE_SPELL_CRIT_DMG:
 		case DAMAGE_PACKET_TYPE_SPELL_DAMAGE:
-			if (client->GetVersion() > 283)
+			if (client->GetVersion() > 546)
 				packet = configReader.getStruct("WS_HearSpellDamage", client->GetVersion());
 			else
 				packet = configReader.getStruct("WS_HearSimpleDamage", client->GetVersion());
@@ -4561,9 +4561,11 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 		}
 
 		if (packet) {
-			if (client->GetVersion() >= 284) {
+			if (client->GetVersion() > 546) {
 				packet->setSubstructDataByName("header", "packet_type", type1);
 				packet->setSubstructDataByName("header", "result_type", type2);
+				packet->setDataByName("damage_type", damage_type);
+				packet->setDataByName("damage", damage);
 			}
 			else {
 				switch (type2) {
@@ -4595,16 +4597,16 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 					packet->setSubstructDataByName("header", "result_type", 11);
 					break;
 				}
-				packet->setSubstructDataByName("header", "normal_hit", 1);
+				packet->setArrayLengthByName("num_dmg", 1);
 				packet->setSubstructDataByName("header", "defender_proxy", client->GetPlayer()->GetIDWithPlayerSpawn(victim));
+				packet->setArrayDataByName("damage_type", damage_type);
+				packet->setArrayDataByName("damage", damage);
 			}
 			if (!attacker)
 				packet->setSubstructDataByName("header", "attacker", 0xFFFFFFFF);
 			else
 				packet->setSubstructDataByName("header", "attacker", client->GetPlayer()->GetIDWithPlayerSpawn(attacker));
-			packet->setSubstructDataByName("header", "defender", client->GetPlayer()->GetIDWithPlayerSpawn(victim));
-			packet->setDataByName("damage_type", damage_type);
-			packet->setDataByName("damage", damage);
+			packet->setSubstructDataByName("header", "defender", client->GetPlayer()->GetIDWithPlayerSpawn(victim));			
 			if (spell_name) {
 				packet->setDataByName("spell", 1);
 				packet->setDataByName("spell_name", spell_name);
@@ -6057,7 +6059,7 @@ void ZoneServer::SendUpdateTitles(Spawn *spawn, Title *suffix, Title *prefix) {
 		current_client = *itr;
 
 		if (!(packet = configReader.getStruct("WS_UpdateTitle", current_client->GetVersion())))
-			break;
+			continue;
 
 		packet->setDataByName("player_id", current_client->GetPlayer()->GetIDWithPlayerSpawn(spawn));
 		packet->setDataByName("player_name", spawn->GetName());

@@ -424,6 +424,7 @@ int EQ2Emu_lua_AddPrimaryEntityCommandAllSpawns(lua_State* state);
 int EQ2Emu_lua_InstructionWindow(lua_State* state);
 int EQ2Emu_lua_ShowWindow(lua_State* state);
 int EQ2Emu_lua_FlashWindow(lua_State* state);
+int EQ2Emu_lua_EnableGameEvent(lua_State* state);
 
 int EQ2Emu_lua_CheckLOS(lua_State* state);
 int EQ2Emu_lua_CheckLOSByCoordinates(lua_State* state);

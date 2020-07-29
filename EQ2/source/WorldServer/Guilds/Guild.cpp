@@ -703,7 +703,8 @@ bool Guild::AddNewGuildMember(Client *client, const char *invited_by, int8 rank)
 		SendGuildBankEventList(client);
 		SendAllGuildEvents(client);
 		SendGuildMemberList(client);
-		client->GetCurrentZone()->SendUpdateTitles(client->GetPlayer());
+		if(client->GetVersion() > 546)
+			client->GetCurrentZone()->SendUpdateTitles(client->GetPlayer());
 
 		if (invited_by) {
 			AddNewGuildEvent(GUILD_EVENT_MEMBER_JOINS, "%s has accepted %s's invitation to join %s.", Timer::GetUnixTimeStamp(), true, player->GetName(), invited_by, GetName());

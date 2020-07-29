@@ -9133,14 +9133,11 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 			}
 		}
 		else if (atoi(sep->arg[0]) == 24) {
-			PacketStruct* packet2 = configReader.getStruct("WS_TintWidgetsMsg", client->GetVersion());
+			PacketStruct* packet2 = configReader.getStruct("WS_EnableGameEvent", client->GetVersion());
 			if (packet2) {
-				if (sep->IsSet(4)) {
-					int32 id = atoul(sep->arg[1]);
-					packet2->setDataByName("object_id", id);
-					packet2->setDataByName("tint_red", atoi(sep->arg[2]));
-					packet2->setDataByName("tint_green", atoi(sep->arg[3]));
-					packet2->setDataByName("tint_blue", atoi(sep->arg[4]));
+				if (sep->IsSet(2)) {
+					packet2->setDataByName("event_name", sep->arg[1]);
+					packet2->setDataByName("enabled", atoi(sep->arg[2]));					
 					EQ2Packet* app = packet2->serialize();
 					DumpPacket(app);
 					client->QueuePacket(app);
@@ -9192,10 +9189,11 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				packet2->setSubstructDataByName("header", "defender", client->GetPlayer()->GetIDWithPlayerSpawn(target));
 				packet2->setSubstructDataByName("header", "defender_proxy", client->GetPlayer()->GetIDWithPlayerSpawn(target));
 				packet2->setSubstructDataByName("header", "attacker", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
-				packet2->setSubstructDataByName("header", "normal_hit", 1);
-				packet2->setDataByName("damage_type", atoi(sep->arg[1]));
-				packet2->setDataByName("damage", atoi(sep->arg[2]));
-
+				packet2->setArrayLengthByName("num_dmg", 1);				
+				packet2->setArrayDataByName("damage_type", atoi(sep->arg[1]));
+				packet2->setArrayDataByName("damage", atoi(sep->arg[2]));
+				packet2->setDataByName("spell", 1);
+				packet2->setDataByName("spell_name", "Testing");
 				EQ2Packet* app = packet2->serialize();
 				if (sep->IsSet(4)) {
 					int16 offset = atoi(sep->arg[3]);
@@ -9215,6 +9213,26 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 						memcpy(ptr2, (uchar*)&len, 1);
 						ptr2 += 1;
 						memcpy(ptr2, sep->arg[4], len);
+					}
+				}
+				if (sep->IsSet(6)) {
+					int16 offset = atoi(sep->arg[5]);
+					uchar* ptr2 = app->pBuffer;
+					ptr2 += offset;
+					if (sep->IsNumber(6)) {
+						int32 value1 = atol(sep->arg[6]);
+						if (value1 > 0xFFFF)
+							memcpy(ptr2, (uchar*)&value1, 4);
+						else if (value1 > 0xFF)
+							memcpy(ptr2, (uchar*)&value1, 2);
+						else
+							memcpy(ptr2, (uchar*)&value1, 1);
+					}
+					else {
+						int8 len = strlen(sep->arg[6]);
+						memcpy(ptr2, (uchar*)&len, 1);
+						ptr2 += 1;
+						memcpy(ptr2, sep->arg[6], len);
 					}
 				}
 				DumpPacket(app);

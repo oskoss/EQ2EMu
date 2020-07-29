@@ -1025,6 +1025,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "InstructionWindow", EQ2Emu_lua_InstructionWindow);
 	lua_register(state, "ShowWindow", EQ2Emu_lua_ShowWindow);
 	lua_register(state, "FlashWindow", EQ2Emu_lua_FlashWindow);
+	lua_register(state, "EnableGameEvent", EQ2Emu_lua_EnableGameEvent);
 	lua_register(state, "DisplayText", EQ2Emu_lua_DisplayText);
 
 	lua_register(state, "CheckLOS", EQ2Emu_lua_CheckLOS);

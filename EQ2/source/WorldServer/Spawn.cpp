@@ -3476,8 +3476,6 @@ void Spawn::CopySpawnAppearance(Spawn* spawn){
 
 void Spawn::SetY(float y, bool updateFlags, bool disableYMapCheck)
 {
-	if (IsPlayer())
-		cout << "sdfsd\n";
 	SetPos(&appearance.pos.Y, y, updateFlags);
 	if (!disableYMapCheck)
 		FixZ();

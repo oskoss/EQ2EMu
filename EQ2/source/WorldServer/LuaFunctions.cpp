@@ -9563,6 +9563,35 @@ int EQ2Emu_lua_ShowWindow(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_EnableGameEvent(lua_State* state) {
+	//See GameEvents.txt for options that can be used for this function
+	if (!lua_interface)
+		return 0;
+	Client* client = 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	string event_name = lua_interface->GetStringValue(state, 2);
+	int8 enabled = lua_interface->GetInt8Value(state, 3);
+	if (!player || !player->IsPlayer()) {
+		lua_interface->LogError("LUA EnableGameEvent error: player is not valid");
+		return 0;
+	}
+	if (player->GetZone())
+		client = player->GetZone()->GetClientBySpawn(player);
+
+	if (!client) {
+		lua_interface->LogError("LUA EnableGameEvent error: could not find client");
+		return 0;
+	}
+	PacketStruct* packet = configReader.getStruct("WS_EnableGameEvent", client->GetVersion());
+	if (packet) {
+		packet->setDataByName("event_name", event_name.c_str());
+		packet->setDataByName("enabled", enabled);
+		client->QueuePacket(packet->serialize());
+		safe_delete(packet);
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_FlashWindow(lua_State* state) {
 	if (!lua_interface)
 		return 0;

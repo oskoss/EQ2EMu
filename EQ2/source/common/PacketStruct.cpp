@@ -1553,6 +1553,34 @@ int32 PacketStruct::GetArraySizeByName(const char* name, int32 index) {
 	return GetArraySize(ds1, index);
 }
 
+int16 PacketStruct::GetOpcodeValue(int16 client_version) {
+	int16 opcode = 0xFFFF;
+	bool client_cmd = false;
+#ifndef LOGIN
+	if (GetOpcode() == OP_ClientCmdMsg && strlen(GetOpcodeType()) > 0 && !IsSubPacket())
+		client_cmd = true;
+#endif
+	if (client_cmd) {
+		EmuOpcode sub_opcode = EQOpcodeManager[0]->NameSearch(GetOpcodeType());
+		int16 opcode_val = 0;
+		if (sub_opcode != OP_Unknown) { //numbers should be used at OpcodeTypes, define them!
+			int16 OpcodeVersion = GetOpcodeVersion(client_version);
+			if(EQOpcodeManager.count(OpcodeVersion) > 0)
+				opcode = EQOpcodeManager[OpcodeVersion]->EmuToEQ(sub_opcode);
+		}		
+	}
+	else {
+		int16 OpcodeVersion = GetOpcodeVersion(client_version);
+		if (EQOpcodeManager.count(OpcodeVersion) > 0)
+			opcode = EQOpcodeManager[OpcodeVersion]->EmuToEQ(GetOpcode());
+	}
+#ifndef LOGIN
+	if(opcode == 0)
+		opcode = 0xFFFF;
+#endif
+	return opcode;
+}
+
 void PacketStruct::serializePacket(bool clear) {
 	if (clear)
 		Clear();
@@ -1717,22 +1745,11 @@ void PacketStruct::serializePacket(bool clear) {
 	}
 #ifndef LOGIN
 	if (client_cmd) {
-		EmuOpcode sub_opcode = EQOpcodeManager[0]->NameSearch(GetOpcodeType());
-		int16 opcode_val = 0;
-		if (sub_opcode == OP_Unknown) {
-			try {
-				opcode_val = atoi(GetOpcodeType());
-			}
-			catch (...) {}
-		}
+		int16 opcode_val = GetOpcodeValue(client_version);		
 		Clear();
 		int32 size = client_data.length() + 3; //gotta add the opcode and oversized
 		int8 oversized = 0xFF;
 		int16 OpcodeVersion = GetOpcodeVersion(client_version);
-		if (opcode_val == 0)
-			opcode_val = EQOpcodeManager[OpcodeVersion]->EmuToEQ(sub_opcode);
-		if (opcode_val == 0)
-			LogWrite(PACKET__ERROR, 0, "Packet", "PACKET NOT SENT CORRECTLY!  Unable to get Emu Opcode from: '%s'", GetOpcodeType());
 		if (opcode_val == EQOpcodeManager[OpcodeVersion]->EmuToEQ(OP_EqExamineInfoCmd) && client_version > 546)
 			size += (size - 9);
 		if (client_version <= 283) {

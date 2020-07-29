@@ -328,6 +328,10 @@ to zero and treated like placeholders." />
 <Data ElementName="window" Type="EQ2_16Bit_String" />
 <Data ElementName="show" Type="int8" Size="1" />
 </Struct>
+<Struct Name="WS_EnableGameEvent" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqEnableGameEventCmd">
+<Data ElementName="event_name" Type="EQ2_16Bit_String" />
+<Data ElementName="enabled" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_FlashWindow" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqFlashWindowCmd">
 <Data ElementName="window" Type="EQ2_16Bit_String" />
 <Data ElementName="flash_seconds" Type="float" Size="1" />
@@ -2797,8 +2801,6 @@ to zero and treated like placeholders." />
 <Data ElementName="defender_proxy" Type="int32" />
 <Data ElementName="result_type" Type="int8" />
 <Data ElementName="combat_chat_method" Type="int32" /> <!-- should probably always be 0 -->
-<Data ElementName="normal_hit" Type="int16" /> <!-- if this is 0, then client shows melee attack upon successful spell -->
-<Data ElementName="unknown1" Type="int32" />
 </Struct>
 <Struct Name="WS_HearDamage_Header" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearCombatCmd">
 <Data ElementName="attacker" Type="int32" />
@@ -2806,7 +2808,6 @@ to zero and treated like placeholders." />
 <Data ElementName="defender_proxy" Type="int32" />
 <Data ElementName="result_type" Type="int8" />
 <Data ElementName="combat_chat_method" Type="int32" /> <!-- should probably always be 0 -->
-<Data ElementName="normal_hit" Type="int16" /> <!-- if this is 0, then client shows melee attack upon successful spell -->
 </Struct>
 <Struct Name="WS_HearDamage_Header" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearCombatCmd">
 <Data ElementName="packet_type" Type="int8" />
@@ -2824,15 +2825,28 @@ to zero and treated like placeholders." />
 </Struct>
 <Struct Name="WS_HearSimpleDamage" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearCombatCmd">
 <Data ElementName="header" Substruct="WS_HearDamage_Header" Size="1" />
-<Data ElementName="damage" Type="int32" />
-<Data ElementName="damage_type" Type="int8" />
+<Data ElementName="num_dmg" Type="int8" />
+<Data ElementName="siphon_type" Type="int8" />
+<Data ElementName="unknown1" Type="int32" />
+<Data ElementName="dmg_array" Type="Array" ArraySizeVariable="num_dmg">
+	<Data ElementName="damage" Type="int32" />
+	<Data ElementName="damage_type" Type="int8" />
+</Data>
 <Data ElementName="spell" Type="int8" />
 <Data ElementName="spell_name" Type="EQ2_16Bit_String" Size="1" />
 </Struct>
 <Struct Name="WS_HearSimpleDamage" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearCombatCmd">
 <Data ElementName="header" Substruct="WS_HearDamage_Header" Size="1" />
-<Data ElementName="damage_type" Type="int8" />
-<Data ElementName="damage" Type="int16" />
+<Data ElementName="num_dmg" Type="int8" />
+<Data ElementName="siphon_type" Type="int8" />
+<Data ElementName="dmg_array" Type="Array" ArraySizeVariable="num_dmg">
+	<Data ElementName="damage_type" Type="int8" />
+	<Data ElementName="damage" Type="int16" />
+	<Data ElementName="unknown1" Type="int8" />
+	<Data ElementName="unknown2" Type="int8" />
+	<Data ElementName="crit_flag" Type="int8" /> <!-- 4==crit -->
+	<Data ElementName="unknown4" Type="int8" />
+</Data>
 <Data ElementName="spell" Type="int8" />
 <Data ElementName="spell_name" Type="EQ2_16Bit_String" Size="1" />
 </Struct>
