@@ -60,7 +60,7 @@ bool OpcodeManager::LoadOpcodesMap(map<string, uint16>* eq, OpcodeSetStrategy *s
 		res = eq->find(op_name);
 		if(res == eq->end()) {
 			LogWrite(OPCODE__WARNING, 1, "Opcode", "Opcode %s is missing from the opcodes table.", op_name);
-			s->Set(emu_op, 0);
+			s->Set(emu_op, 0xFFFF);
 			continue;	//continue to give them a list of all missing opcodes
 		}
 		

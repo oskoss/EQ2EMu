@@ -375,7 +375,7 @@ int32 LoginDatabase::SaveCharacter(PacketStruct* create, LoginAccount* acct, int
 	//mark any remaining characters with same id as deleted (creates problems if world deleted their db and started assigning new char ids)
 	DeactivateCharID(create->getType_int32_ByName("server_id"), world_charid, last_insert_id);
 	int32 char_id = last_insert_id;
-	if (client_version <= 283) {
+	if (client_version <= 546) {
 		SaveCharacterFloats(char_id, "skin_color", create->getType_float_ByName("skin_color", 0), create->getType_float_ByName("skin_color", 1), create->getType_float_ByName("skin_color", 2));
 		SaveCharacterFloats(char_id, "eye_color", create->getType_float_ByName("eye_color", 0), create->getType_float_ByName("eye_color", 1), create->getType_float_ByName("eye_color", 2));
 		SaveCharacterFloats(char_id, "hair_color1", create->getType_float_ByName("hair_color1", 0), create->getType_float_ByName("hair_color1", 1), create->getType_float_ByName("hair_color1", 2));
