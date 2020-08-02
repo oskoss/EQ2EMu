@@ -53,7 +53,7 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown3" Type="int16" />
 <Data ElementName="unknown4" Type="int32" />
 </Struct>
-<Struct Name="LS_LoginRequest" ClientVersion="1212" OpcodeName="OP_LoginRequestMsg">
+<Struct Name="LS_LoginRequest" ClientVersion="1208" OpcodeName="OP_LoginRequestMsg">
 <Data ElementName="accesscode" Type="EQ2_16BitString" />
 <Data ElementName="unknown1" Type="EQ2_16BitString" />
 <Data ElementName="username" Type="EQ2_16BitString" />
@@ -272,17 +272,17 @@ to zero and treated like placeholders." />
 <Data ElementName="eye_color" Type="sint8" Size="3" />
 <Data ElementName="equip" Type="EQ2_EquipmentItem" Size="23" />
 <Data ElementName="hair_type" Type="int16" Size="1" />
-<Data ElementName="hair_type_color" Type="EQ2_Color" Size="1" />
-<Data ElementName="hair_type_highlight_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="hair_type_color" Type="sint8" Size="3" />
+<Data ElementName="hair_type_highlight_color" Type="sint8" Size="3" />
 <Data ElementName="hair_face_type" Type="int16" Size="1" />
-<Data ElementName="hair_face_color" Type="EQ2_Color" Size="1" />
-<Data ElementName="hair_face_highlight_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="hair_face_color" Type="sint8" Size="3" />
+<Data ElementName="hair_face_highlight_color" Type="sint8" Size="3" />
 <Data ElementName="chest_type" Type="int16" Size="1" />
-<Data ElementName="shirt_color" Type="EQ2_Color" Size="1" />
-<Data ElementName="unknown_chest_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="shirt_color" Type="sint8" Size="3" />
+<Data ElementName="unknown_chest_color" Type="sint8" Size="3" />
 <Data ElementName="legs_type" Type="int16" Size="1" />
-<Data ElementName="pants_color" Type="EQ2_Color" Size="1" />
-<Data ElementName="unknown_legs_color" Type="EQ2_Color" Size="1" />
+<Data ElementName="pants_color" Type="sint8" Size="3" />
+<Data ElementName="unknown_legs_color" Type="sint8" Size="3" />
 <Data ElementName="unknown9" Type="sint8" Size="3" />
 <Data ElementName="eye_type" Type="sint8" Size="3" />
 <Data ElementName="ear_type" Type="sint8" Size="3" />

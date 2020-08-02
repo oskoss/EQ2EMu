@@ -121,7 +121,7 @@ to zero and treated like placeholders." />
 <Data ElementName="version"  Type="int16" />
 <Data ElementName="unknown2"  Type="int32" Size="5" />
 </Struct>
-<Struct Name="LoginByNumRequest" ClientVersion="1212" >
+<Struct Name="LoginByNumRequest" ClientVersion="1208" >
 <Data ElementName="account_id"  Type="int32" />
 <Data ElementName="access_code"  Type="int32" />
 <Data ElementName="unknown1"  Type="int32" />
