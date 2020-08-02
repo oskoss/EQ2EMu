@@ -898,6 +898,7 @@ void LWorldList::Process() {
 		LogWrite(LOGIN__INFO, 0, "Login", "New Server connection: %s port %i", inet_ntoa(in), ntohs(newtcp->GetrPort()));
 		net.numservers++;
 		net.UpdateWindowTitle();
+		world_list.UpdateWorldList();
 	}
 	map<int32,LWorld*>::iterator map_list;
 	for( map_list = worldmap.begin(); map_list != worldmap.end(); ) {

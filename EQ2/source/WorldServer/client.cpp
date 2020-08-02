@@ -937,10 +937,10 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			// test the original location of Version for clients older than 1212
 			version = request->getType_int16_ByName("version");
 
-			if (version == 0 || version >= 1212 || EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
+			if (version == 0 || version >= 1208 || EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
 				// must be new client data version method, re-fetch the packet
 				safe_delete(request);
-				request = configReader.getStruct("LoginByNumRequest", 1212);
+				request = configReader.getStruct("LoginByNumRequest", 1208);
 
 				if (request && request->LoadPacketData(app->pBuffer, app->size)) {
 					// Xinux suggests using an INT16 here. Our first new version = 57000

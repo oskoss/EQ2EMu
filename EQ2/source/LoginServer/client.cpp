@@ -167,17 +167,19 @@ bool Client::Process() {
 			case OP_LoginRequestMsg:{
 				DumpPacket(app);
 				PacketStruct* packet = configReader.getStruct("LS_LoginRequest", 1);
-				if(packet->LoadPacketData(app->pBuffer,app->size)){
+				if(packet && packet->LoadPacketData(app->pBuffer,app->size)){
 					version = packet->getType_int16_ByName("version");
 					LogWrite(LOGIN__DEBUG, 0, "Login", "Classic Client Version Provided: %i", version);
 
 					if (version == 0 || EQOpcodeManager.count(GetOpcodeVersion(version)) == 0)
 					{
 						safe_delete(packet);
-						packet = configReader.getStruct("LS_LoginRequest", 1212);
-						if (packet->LoadPacketData(app->pBuffer, app->size)) {
+						packet = configReader.getStruct("LS_LoginRequest", 1208);
+						if (packet && packet->LoadPacketData(app->pBuffer, app->size)) {
 							version = packet->getType_int16_ByName("version");
 						}
+						else
+							break;
 					}
 					//[7:19 PM] Kirmmin: Well, I very quickly learned that unknown3 in LS_LoginRequest packet is the same value as cl_eqversion in the eq2_defaults.ini file.
 
