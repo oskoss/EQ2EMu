@@ -3748,15 +3748,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(spawn && !spawn->IsPlayer()){
 				if(spawn->GetSpawnLocationID() > 0){
 					if(database.RemoveSpawnFromSpawnLocation(spawn)){
-						bool delete_spawn = false;
-						if(sep && sep->arg[0][0] && sep->IsNumber(0)){
-							if(atoi(sep->arg[0]) == 1)
-								delete_spawn = true;
-						}
-						if(delete_spawn)
-							client->GetCurrentZone()->RemoveSpawn(false, spawn, true, false);
-						else
-							spawn->SetSpawnLocationID(0);
+						client->GetCurrentZone()->RemoveSpawn(false, spawn, true, false);
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully removed spawn from zone");
 					}
 					else
@@ -3768,7 +3760,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			else{
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Syntax: /spawn remove");
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "This command is used for removing the targeted NPC or Object from the zone.");
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Optionally, you can supply a 1 after the command to despawn it as well.  IE /spawn remove 1");
 			}
 			break;
 								  }
