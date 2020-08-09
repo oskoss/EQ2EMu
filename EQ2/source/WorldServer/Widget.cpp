@@ -387,7 +387,6 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 	else if (client && m_houseID > 0 && strncasecmp("access", command.c_str(), 6) == 0) {
 		// Used a door to enter a house
 		HouseZone* hz = world.GetHouseZone(m_houseID);
-		int32 id = client->GetPlayer()->GetIDWithPlayerSpawn(this);
 		PlayerHouse* ph = 0;
 		if (hz)
 			ph = world.GetPlayerHouseByHouseID(client->GetPlayer()->GetCharacterID(), hz->id);
@@ -396,12 +395,12 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 			if ( m_houseID && client->GetCurrentZone()->GetInstanceType() != Instance_Type::PERSONAL_HOUSE_INSTANCE )
 				ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
 
-			ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, id);
+			ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, 0);
 			client->GetCurrentZone()->SendHouseItems(client);
 		}
 		else {
 			if (hz)
-				ClientPacketFunctions::SendHousePurchace(client, hz, id);
+				ClientPacketFunctions::SendHousePurchace(client, hz, 0);
 		}
 	}
 	else if (client && strncasecmp("access", command.c_str(), 6) == 0 && GetZone()->GetInstanceType() > 0) {
