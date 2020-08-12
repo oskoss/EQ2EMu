@@ -1168,6 +1168,21 @@ bool TCPConnection::ProcessReceivedDataAsOldPackets(char* errbuf) {
 
 void TCPConnection::ProcessNetworkLayerPacket(ServerPacket* pack) {
 	int8 opcode = pack->pBuffer[0];
+
+
+	/** disabling RELAY capabilities, this functionality is poorly implemented
+		even if such a feature needs to be re-used need authentication BEFORE allowing relay to take place
+		secondly we need to protect the LS accepting new connections as bogus data can be passed to open
+		fake TCP connections
+		opcode 0 is OK, that is Keep-Alive
+	**/
+
+	if (opcode > 0)
+	{
+		Disconnect();
+		return;
+	}
+
 	int8* data = &pack->pBuffer[1];
 	switch (opcode) {
 		case 0: {
