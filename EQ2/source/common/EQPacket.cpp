@@ -498,6 +498,16 @@ uint32 flag_offset=0;
 	if (length>2 && buffer[flag_offset]==0x5a)  {
 		LogWrite(PACKET__DEBUG, 0, "Packet", "In Decompress 1");
 		newlen=Inflate(const_cast<unsigned char *>(buffer+flag_offset+1),length-(flag_offset+1)-2,newbuf+flag_offset,newbufsize-flag_offset)+2;
+
+		// something went bad with zlib
+		if (newlen == -1)
+		{
+			LogWrite(PACKET__ERROR, 0, "Packet", "Debug Bad Inflate!");
+			DumpPacket(buffer, length);
+			memcpy(newbuf, buffer, length);
+			return length;
+		}
+
 		newbuf[newlen++]=buffer[length-2];
 		newbuf[newlen++]=buffer[length-1];
 	} else if (length>2 && buffer[flag_offset]==0xa5) {

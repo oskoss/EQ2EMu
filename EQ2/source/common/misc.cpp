@@ -132,7 +132,10 @@ int i;
 			cout << "'" << endl;
 		}
 		
-		if (zerror == -4 && zstream.msg == 0)
+		if (zerror == Z_DATA_ERROR || zerror == Z_ERRNO)
+			return -1;
+
+		if (zerror == Z_MEM_ERROR && zstream.msg == 0)
 		{
 			return 0;
 		}
