@@ -3546,10 +3546,16 @@ int EQ2Emu_lua_SendMessage(lua_State* state) {
 		Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
 		if (client) {
 			if (color_str.length() > 0) {
+				// leave for backwards compat, but all future should just use the number
 				if (strncasecmp(color_str.c_str(), "red", 3) == 0)
 					color = CHANNEL_COLOR_RED;
 				else if (strncasecmp(color_str.c_str(), "yellow", 6) == 0)
 					color = CHANNEL_COLOR_YELLOW;
+				else
+				{
+					// use a number to specify the channel as per Commands/Commands.h defines
+					color = (int8)atoul(color_str.c_str());
+				}
 			}
 			client->SimpleMessage(color, message.c_str());
 		}
