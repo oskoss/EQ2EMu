@@ -2655,7 +2655,17 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		//data = master_aa_list.GetAltAdvancement(id);
 		//LogWrite(WORLD__INFO, 0, "World", "SOE Spell CRC: %u", data->spell_crc);
 		//spell = master_spell_list.GetSpellByCRC(data->spell_crc);
-		spell = master_spell_list.GetSpell(id, 1);
+		spell = master_spell_list.GetSpell(id, tier);
+
+		if (!spell)
+			spell = master_spell_list.GetSpell(id, 1);
+
+		if (!spell)
+		{
+			LogWrite(WORLD__ERROR, 0, "WORLD", "FAILED Examine Info Request-> Spell ID: %u, tier: %i", spell->GetSpellID(), tier);
+			return;
+		}
+
 		//if (spell && sent_spell_details.count(spell->GetSpellID()) == 0) {
 		sent_spell_details[spell->GetSpellID()] = true;
 		//	EQ2Packet* app = spell->SerializeAASpell(this,tier, data, false, GetItemPacketType(GetVersion()), 0x04);
