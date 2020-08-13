@@ -18763,9 +18763,11 @@ to zero and treated like placeholders." />
 <Data ElementName="body_age" Type="float" />
 </Struct>
 <Struct Name="WS_PerformCameraShakeMsg" ClientVersion="1" OpcodeName="OP_PerformCameraShakeMsg">
-	<Data ElementName="unknown1" Type="int16" />
-	<Data ElementName="unknown2" Type="int16" />
-	<Data ElementName="unknown3" Type="int8" />
+	<Data ElementName="intensity" Type="float" /> <!-- client supported range is 0.01 - 1.0 -->
+</Struct>
+<Struct Name="WS_PerformCameraShakeMsg" ClientVersion="547" OpcodeName="OP_PerformCameraShakeMsg">
+	<Data ElementName="intensity" Type="float" /> <!-- client supported range is 0.01 - 1.0 -->
+	<Data ElementName="direction" Type="int8" /> <!-- 0 = up/down camera shake, 1 = all around shake of camera -->
 </Struct>
 <Struct Name="WS_CommitAATemplate" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_CommitAATemplate" >
 <Data ElementName="unknown1" Type="int32" Size="3"/>

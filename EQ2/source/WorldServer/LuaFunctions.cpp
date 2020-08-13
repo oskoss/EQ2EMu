@@ -177,12 +177,20 @@ int	EQ2Emu_lua_PerformCameraShake(lua_State* state) {
 		lua_interface->LogError("LUA PerformCameraShake command error: could not find client");
 		return 0;
 	}
-	int16 value1 = lua_interface->GetInt16Value(state, 2);
-	int16 value2 = lua_interface->GetInt16Value(state, 3);
+	float intensity = lua_interface->GetFloatValue(state, 2);
+	int8 direction = lua_interface->GetInt8Value(state, 3);
 	PacketStruct* packet = configReader.getStruct("WS_PerformCameraShakeMsg", client->GetVersion());
 	if (packet) {
-		packet->setDataByName("unknown1", value1);
-		packet->setDataByName("unknown2", value2);
+		/* Client Intensity Logic (does not restrict service side, but expect .01 - 1.0 range)
+			v1 = *(float *)(a1 + 4);
+				if ( v1 > 0.0 )
+				 v2 = fminf(v1, 1.0);
+			    else
+				 v2 = 0.1;
+		*/
+		packet->setDataByName("intensity", intensity);
+		if ( client->GetVersion() > 546 )
+			packet->setDataByName("direction", direction);
 		client->QueuePacket(packet->serialize());
 		safe_delete(packet);
 	}
