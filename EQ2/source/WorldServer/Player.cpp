@@ -2792,7 +2792,7 @@ EQ2Packet* Player::GetSpellBookUpdatePacket(int16 version) {
 					packet->setSubstructArrayDataByName("spells", "icon", (spell->GetSpellIcon() * -1) - 1, 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "icon_type", spell->GetSpellIconBackdrop(), 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "icon2", spell->GetSpellIconHeroicOp(), 0, ptr);
-					packet->setSubstructArrayDataByName("spells", "unique_id", GetNameCrc(spell->GetName()), 0, ptr);
+					packet->setSubstructArrayDataByName("spells", "unique_id", (spell_entry->tier + 1) * -1, 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "charges", 255, 0, ptr);
 
 					// Beastlord and Channeler spell support
