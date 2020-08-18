@@ -286,11 +286,12 @@ void Client::SendLoginInfo() {
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Skills for player '%s'...", player->GetName());
 	int32 count = database.LoadCharacterSkills(GetCharacterID(), player);
-	if (count == 0) {
-		LogWrite(CCLIENT__WARNING, 0, "Client", "No character skills found!");
-		database.UpdateStartingSkills(GetCharacterID(), player->GetAdventureClass(), player->GetRace());
-		database.LoadCharacterSkills(GetCharacterID(), player);
-	}
+
+	LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Spells for player '%s'...", player->GetName());
+	count = database.LoadCharacterSpells(GetCharacterID(), player);
+	
+	// get the latest character starting skills / spells, may have been updated after character creation
+	world.SyncCharacterAbilities(this);
 
 	count = database.LoadCharacterTitles(GetCharacterID(), player);
 	if (count == 0) {
@@ -303,12 +304,6 @@ void Client::SendLoginInfo() {
 	if (count == 0)
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "No character languages loaded!");
 
-	count = database.LoadCharacterSpells(GetCharacterID(), player);
-	if (count == 0) {
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "No character spells found!");
-		database.UpdateStartingSpells(GetCharacterID(), player->GetAdventureClass(), player->GetRace());
-		database.LoadCharacterSpells(GetCharacterID(), player);
-	}
 	count = database.LoadPlayerRecipeBooks(GetCharacterID(), player);
 	if (count == 0)
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "No character recipe books found!");
@@ -2486,6 +2481,9 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 			display = false;
 		else if (version <= 546)
 			display = request->getType_int8_ByName("display");
+		else if (version > 546)
+			display = false; // clients default is false otherwise it pops up a window when hovering over the knowledge book abilities
+
 		//printf("Type: (%i) Tier: (%u) Unknown ID: (%u) Item ID: (%u)\n",type,tier,trait_tier,id);
 
 		if (trait_tier != 0xFFFFFFFF) {
