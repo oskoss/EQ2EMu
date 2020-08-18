@@ -368,6 +368,31 @@ struct GlobalLoot {
 #define TRANSPORT_TYPE_GENERIC		2
 #define TRANSPORT_TYPE_FLIGHT		3
 
+
+// structs MUST start with class_id and race_id, in that order as int8's
+struct StartingStructHeader
+{
+	int8 class_id;
+	int8 race_id;
+};
+
+struct StartingSkill
+{
+	StartingStructHeader header;
+	int32 skill_id;
+	int16 current_val;
+	int16 max_val;
+	int32 progress; // what is this for..?
+};
+
+struct StartingSpell
+{
+	StartingStructHeader header;
+	int32 spell_id;
+	int8 tier;
+	int32 knowledge_slot;
+};
+
 class ZoneList {
 	public:
 	ZoneList();
@@ -578,6 +603,14 @@ public:
 	PlayerGroupManager* GetGroupManager() { return &m_playerGroupManager; }
 
 	bool CheckTempBugCRC(char* msg);
+
+	void SyncCharacterAbilities(Client* client);
+
+	void LoadStartingLists();
+	void PurgeStartingLists();
+	map<int8, map<int8, StartingSkill>*> starting_skills;
+	map<int8, map<int8, StartingSpell>*> starting_spells;
+	Mutex MStartingLists;
 private:
 	//void RemovePlayerFromGroup(PlayerGroup* group, GroupMemberInfo* info, bool erase = true);
 	//void DeleteGroupMember(GroupMemberInfo* info);

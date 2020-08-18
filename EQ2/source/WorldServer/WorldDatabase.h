@@ -586,6 +586,11 @@ public:
 	bool				CheckHolidayFlags(ZoneServer* zone, int32 spawnHolidayFlag);
 	void				GetHouseSpawnInstanceData(ZoneServer* zone, Spawn* spawn);
 	int32				FindHouseInstanceSpawn(Spawn* spawn);
+
+	/* Starting Character Abilities */
+
+	void				LoadStartingSkills(World* world);
+	void				LoadStartingSpells(World* world);
 private:
 	DatabaseNew			database_new;
 	map<int32, string>	zone_names;

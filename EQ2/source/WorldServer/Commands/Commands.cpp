@@ -1088,6 +1088,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload locations");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload rules");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload transporters");
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload startabilities");
 		break;
 	}
 	case COMMAND_RELOADSTRUCTS: {
@@ -1177,6 +1178,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 	case COMMAND_RELOAD_TRANSPORTERS: {
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Transporters in your current zone...");
 		database.LoadTransporters(client->GetCurrentZone());
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
+		break;
+	}
+	case COMMAND_RELOAD_STARTABILITIES: {
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Starting Skills/Spells...");
+		world.PurgeStartingLists();
+		world.LoadStartingLists();
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
 		break;
 	}

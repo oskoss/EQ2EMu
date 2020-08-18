@@ -125,6 +125,8 @@ World::~World(){
 	m_houseZones.clear();
 
 	tov_itemstat_conversion.clear();
+
+	PurgeStartingLists();
 }
 
 void World::init(){
@@ -153,6 +155,8 @@ void World::init(){
 	LogWrite(WORLD__DEBUG, 1, "World", "-Loading `visual_states`...");
 	database.LoadVisualStates();
 	LogWrite(WORLD__DEBUG, 1, "World", "-Load `visual states` complete!");
+
+	LoadStartingLists();
 
 	LogWrite(WORLD__DEBUG, 1, "World", "-Setting system parameters...");
 	Variable* var = variables.FindVariable("gametime");
@@ -2129,3 +2133,124 @@ int64 World::GetThreadUsageCPUTime(){
 #else
 
 #endif
+
+
+void World::SyncCharacterAbilities(Client* client)
+{
+	MStartingLists.readlock();
+
+	int8 baseClass = classes.GetBaseClass(client->GetPlayer()->GetAdventureClass());
+	int8 secondaryClass = classes.GetSecondaryBaseClass(client->GetPlayer()->GetAdventureClass());
+	int8 actualClass = client->GetPlayer()->GetAdventureClass();
+	int8 baseRace = client->GetPlayer()->GetRace();
+
+	bool reloadSpells = false;
+
+	map<int8, map<int8, StartingSkill>*>::iterator skill_itr = starting_skills.begin();
+	map<int8, map<int8, StartingSpell>*>::iterator spell_itr = starting_spells.begin();
+	bool isComplete = false;
+	do
+	{
+		bool isProcessing = false;
+		if (skill_itr != starting_skills.end())
+		{
+			isProcessing = true;
+
+			if ((skill_itr->first & baseRace) == baseRace)
+			{
+				map<int8, StartingSkill>::iterator child_itr;
+				for (child_itr = skill_itr->second->begin(); child_itr != skill_itr->second->end(); child_itr++)
+				{
+					if ((skill_itr->first & baseClass) == baseClass ||
+						(skill_itr->first & secondaryClass) == secondaryClass ||
+						(skill_itr->first & actualClass) == actualClass)
+					{
+						if (!client->GetPlayer()->skill_list.HasSkill(child_itr->second.skill_id))
+						{
+							Query query;
+							LogWrite(PLAYER__DEBUG, 0, "Player", "Adding skill %i for race: %i, class: %i for char_id: %u", child_itr->second.skill_id, baseRace, baseClass, client->GetCharacterID());
+							query.AddQueryAsync(client->GetCharacterID(), &database, Q_INSERT, "INSERT IGNORE INTO character_skills (char_id, skill_id, current_val, max_val) VALUES (%u, %u, %u, %u)",
+								client->GetCharacterID(), child_itr->second.skill_id, child_itr->second.current_val, child_itr->second.max_val);
+
+							client->GetPlayer()->AddSkill(child_itr->second.skill_id, child_itr->second.current_val, child_itr->second.max_val);
+						}
+					}
+				}
+			}
+			skill_itr++;
+		}
+
+		if (spell_itr != starting_spells.end())
+		{
+			isProcessing = true;
+
+			if ((spell_itr->first & baseRace) == baseRace)
+			{
+				map<int8, StartingSpell>::iterator child_itr;
+				for (child_itr = spell_itr->second->begin(); child_itr != spell_itr->second->end(); child_itr++)
+				{
+					if ((spell_itr->first & baseClass) == baseClass ||
+						(spell_itr->first & secondaryClass) == secondaryClass ||
+						(spell_itr->first & actualClass) == actualClass)
+					{
+						if (!client->GetPlayer()->HasSpell(child_itr->second.spell_id, child_itr->second.tier, true))
+						{
+							Query query;
+							LogWrite(PLAYER__DEBUG, 0, "Player", "Adding spell %i for race: %i, class: %i for char_id: %u", child_itr->second.spell_id, baseRace, baseClass, client->GetCharacterID());
+							query.AddQueryAsync(client->GetCharacterID(), &database, Q_INSERT, "INSERT IGNORE INTO character_spells (char_id, spell_id, tier, knowledge_slot) VALUES (%u, %u, %u, %u)",
+								client->GetCharacterID(), child_itr->second.spell_id, child_itr->second.tier, child_itr->second.knowledge_slot);
+
+							// reload spells, we don't know the spellbook or timer info
+							reloadSpells = true;
+						}
+					}
+				}
+			}
+			spell_itr++;
+		}
+
+		if (!isProcessing)
+			isComplete = true;
+
+	} while (!isComplete);
+
+	MStartingLists.releasereadlock();
+
+	if (reloadSpells)
+		database.LoadCharacterSpells(client->GetCharacterID(), client->GetPlayer());
+}
+
+void World::LoadStartingLists()
+{
+	LogWrite(WORLD__DEBUG, 1, "World", "-Loading `starting_skills`...");
+	database.LoadStartingSkills(this);
+
+	LogWrite(WORLD__DEBUG, 1, "World", "-Loading `starting_spells`...");
+	database.LoadStartingSpells(this);
+}
+
+void World::PurgeStartingLists()
+{
+	MStartingLists.writelock();
+
+	map<int8, map<int8, StartingSkill>*>::iterator skill_itr;
+
+	for (skill_itr = starting_skills.begin(); skill_itr != starting_skills.end(); skill_itr++)
+	{
+		map<int8, StartingSkill>* tmpMap = skill_itr->second;
+		safe_delete(tmpMap);
+	}
+	starting_skills.clear();
+
+
+	map<int8, map<int8, StartingSpell>*>::iterator spell_itr;
+
+	for (spell_itr = starting_spells.begin(); spell_itr != starting_spells.end(); spell_itr++)
+	{
+		map<int8, StartingSpell>* tmpMap = spell_itr->second;
+		safe_delete(tmpMap);
+	}
+	starting_spells.clear();
+
+	MStartingLists.releasewritelock();
+}

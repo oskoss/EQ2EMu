@@ -191,10 +191,16 @@ int32 WorldDatabase::LoadCharacterSpells(int32 char_id, Player* player)
 			if(new_spell_id == old_spell_id)
 				continue;
 
+			old_spell_id = new_spell_id;
+
 			LogWrite(SPELL__DEBUG, 5, "Spells", "\tLoading SpellID: %u, tier: %i, slot: %i, type: %u linked_timer_id: %u", new_spell_id, atoi(row[1]), atoi(row[2]), atoul(row[3]), atoul(row[4]));
 
-			player->AddSpellBookEntry(new_spell_id, atoi(row[1]), atoi(row[2]), atoul(row[3]), atoul(row[4]));
-			old_spell_id = new_spell_id;
+			int8 tier = atoi(row[1]);
+
+			if (player->HasSpell(new_spell_id, tier, true))
+				continue;
+
+			player->AddSpellBookEntry(new_spell_id, tier, atoi(row[2]), atoul(row[3]), atoul(row[4]));
 		}
 	}
 
@@ -6857,4 +6863,94 @@ int32 WorldDatabase::FindHouseInstanceSpawn(Spawn* spawn)
 	}
 
 	return 0;
+}
+
+
+void WorldDatabase::LoadStartingSkills(World* world)
+{
+	world->MStartingLists.writelock();
+
+	int32 total = 0;
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT race_id, class_id, skill_id, current_val, max_val, progress FROM starting_skills");
+
+	if (result)
+	{
+		if (mysql_num_rows(result) > 0)
+		{
+			Skill* skill = 0;
+
+			while (result && (row = mysql_fetch_row(result)))
+			{
+
+				StartingSkill skill;
+				skill.header.race_id = atoul(row[0]);
+				skill.header.class_id = atoul(row[1]);
+				skill.skill_id = atoul(row[2]);
+				skill.current_val = atoul(row[3]);
+				skill.max_val = atoul(row[4]);
+
+				if (!world->starting_skills.count(skill.header.race_id))
+				{
+					map<int8, StartingSkill>* skills = new map<int8, StartingSkill>();
+					skills->insert(make_pair(skill.header.class_id, skill));
+					world->starting_skills.insert(make_pair(skill.header.race_id, skills));
+				}
+				else
+				{
+					world->starting_skills[skill.header.race_id]->insert(make_pair(skill.header.class_id, skill));
+				}
+				total++;
+			}
+		}
+	}
+	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u Starting Skill(s)", total);
+
+	world->MStartingLists.releasewritelock();
+}
+
+
+void WorldDatabase::LoadStartingSpells(World* world)
+{
+	world->MStartingLists.writelock();
+
+	int32 total = 0;
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT race_id, class_id, spell_id, tier, knowledge_slot FROM starting_spells");
+
+	if (result)
+	{
+		if (mysql_num_rows(result) > 0)
+		{
+			Skill* skill = 0;
+
+			while (result && (row = mysql_fetch_row(result)))
+			{
+
+				StartingSpell spell;
+				spell.header.race_id = atoul(row[0]);
+				spell.header.class_id = atoul(row[1]);
+				spell.spell_id = atoul(row[2]);
+				spell.tier = atoul(row[3]);
+				spell.knowledge_slot = atoul(row[4]);
+
+				if (!world->starting_spells.count(spell.header.race_id))
+				{
+					map<int8, StartingSpell>* spells = new map<int8, StartingSpell>();
+					spells->insert(make_pair(spell.header.class_id, spell));
+					world->starting_spells.insert(make_pair(spell.header.race_id, spells));
+				}
+				else
+				{
+					world->starting_spells[spell.header.race_id]->insert(make_pair(spell.header.class_id, spell));
+				}
+				total++;
+			}
+		}
+	}
+	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u Starting Spell(s)", total);
+
+	world->MStartingLists.releasewritelock();
 }
