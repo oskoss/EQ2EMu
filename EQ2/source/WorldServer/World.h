@@ -608,8 +608,8 @@ public:
 
 	void LoadStartingLists();
 	void PurgeStartingLists();
-	map<int8, map<int8, StartingSkill>*> starting_skills;
-	map<int8, map<int8, StartingSpell>*> starting_spells;
+	multimap<int8, multimap<int8, StartingSkill>*> starting_skills;
+	multimap<int8, multimap<int8, StartingSpell>*> starting_spells;
 	Mutex MStartingLists;
 private:
 	//void RemovePlayerFromGroup(PlayerGroup* group, GroupMemberInfo* info, bool erase = true);

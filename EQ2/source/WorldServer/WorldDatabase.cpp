@@ -6893,13 +6893,14 @@ void WorldDatabase::LoadStartingSkills(World* world)
 
 				if (!world->starting_skills.count(skill.header.race_id))
 				{
-					map<int8, StartingSkill>* skills = new map<int8, StartingSkill>();
+					multimap<int8, StartingSkill>* skills = new multimap<int8, StartingSkill>();
 					skills->insert(make_pair(skill.header.class_id, skill));
 					world->starting_skills.insert(make_pair(skill.header.race_id, skills));
 				}
 				else
 				{
-					world->starting_skills[skill.header.race_id]->insert(make_pair(skill.header.class_id, skill));
+					multimap<int8, multimap<int8, StartingSkill>*>::const_iterator skills = world->starting_skills.find(skill.header.race_id);
+					skills->second->insert(make_pair(skill.header.class_id, skill));
 				}
 				total++;
 			}
@@ -6938,13 +6939,14 @@ void WorldDatabase::LoadStartingSpells(World* world)
 
 				if (!world->starting_spells.count(spell.header.race_id))
 				{
-					map<int8, StartingSpell>* spells = new map<int8, StartingSpell>();
+					multimap<int8, StartingSpell>* spells = new multimap<int8, StartingSpell>();
 					spells->insert(make_pair(spell.header.class_id, spell));
 					world->starting_spells.insert(make_pair(spell.header.race_id, spells));
 				}
 				else
 				{
-					world->starting_spells[spell.header.race_id]->insert(make_pair(spell.header.class_id, spell));
+					multimap<int8, multimap<int8, StartingSpell>*>::iterator spells = world->starting_spells.find(spell.header.race_id);
+					spells->second->insert(make_pair(spell.header.class_id, spell));
 				}
 				total++;
 			}

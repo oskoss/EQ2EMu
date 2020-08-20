@@ -2146,9 +2146,10 @@ void World::SyncCharacterAbilities(Client* client)
 
 	bool reloadSpells = false;
 
-	map<int8, map<int8, StartingSkill>*>::iterator skill_itr = starting_skills.begin();
-	map<int8, map<int8, StartingSpell>*>::iterator spell_itr = starting_spells.begin();
+	multimap<int8, multimap<int8, StartingSkill>*>::iterator skill_itr = starting_skills.begin();
+	multimap<int8, multimap<int8, StartingSpell>*>::iterator spell_itr = starting_spells.begin();
 	bool isComplete = false;
+	int8 wait_iterations = 0; // wait 5 iterations and give up if db takes too long
 	do
 	{
 		bool isProcessing = false;
@@ -2158,12 +2159,12 @@ void World::SyncCharacterAbilities(Client* client)
 
 			if ((skill_itr->first & baseRace) == baseRace)
 			{
-				map<int8, StartingSkill>::iterator child_itr;
+				multimap<int8, StartingSkill>::iterator child_itr;
 				for (child_itr = skill_itr->second->begin(); child_itr != skill_itr->second->end(); child_itr++)
 				{
-					if ((skill_itr->first & baseClass) == baseClass ||
-						(skill_itr->first & secondaryClass) == secondaryClass ||
-						(skill_itr->first & actualClass) == actualClass)
+					if ((child_itr->first & baseClass) == baseClass ||
+						(child_itr->first & secondaryClass) == secondaryClass ||
+						(child_itr->first & actualClass) == actualClass)
 					{
 						if (!client->GetPlayer()->skill_list.HasSkill(child_itr->second.skill_id))
 						{
@@ -2186,18 +2187,19 @@ void World::SyncCharacterAbilities(Client* client)
 
 			if ((spell_itr->first & baseRace) == baseRace)
 			{
-				map<int8, StartingSpell>::iterator child_itr;
+				multimap<int8, StartingSpell>::iterator child_itr;
 				for (child_itr = spell_itr->second->begin(); child_itr != spell_itr->second->end(); child_itr++)
 				{
-					if ((spell_itr->first & baseClass) == baseClass ||
-						(spell_itr->first & secondaryClass) == secondaryClass ||
-						(spell_itr->first & actualClass) == actualClass)
+					if ((child_itr->first & baseClass) == baseClass ||
+						(child_itr->first & secondaryClass) == secondaryClass ||
+						(child_itr->first & actualClass) == actualClass)
 					{
 						if (!client->GetPlayer()->HasSpell(child_itr->second.spell_id, child_itr->second.tier, true))
 						{
 							Query query;
 							LogWrite(PLAYER__DEBUG, 0, "Player", "Adding spell %i for race: %i, class: %i for char_id: %u", child_itr->second.spell_id, baseRace, baseClass, client->GetCharacterID());
-							query.AddQueryAsync(client->GetCharacterID(), &database, Q_INSERT, "INSERT IGNORE INTO character_spells (char_id, spell_id, tier, knowledge_slot) VALUES (%u, %u, %u, %u)",
+							// knowledge_slot is a signed int in the DB
+							query.AddQueryAsync(client->GetCharacterID(), &database, Q_INSERT, "INSERT IGNORE INTO character_spells (char_id, spell_id, tier, knowledge_slot) VALUES (%u, %u, %u, %i)",
 								client->GetCharacterID(), child_itr->second.spell_id, child_itr->second.tier, child_itr->second.knowledge_slot);
 
 							// reload spells, we don't know the spellbook or timer info
@@ -2209,8 +2211,17 @@ void World::SyncCharacterAbilities(Client* client)
 			spell_itr++;
 		}
 
+		// poor mans async kill just in case, we don't want a client stuck here, they can get the spells on next zone
 		if (!isProcessing)
-			isComplete = true;
+		{
+			bool isDBActive = database.IsActiveQuery(client->GetCharacterID());
+			if (isDBActive && wait_iterations < 5)
+			{
+				wait_iterations++;
+			}
+			else
+				isComplete = true;
+		}
 
 	} while (!isComplete);
 
@@ -2233,21 +2244,21 @@ void World::PurgeStartingLists()
 {
 	MStartingLists.writelock();
 
-	map<int8, map<int8, StartingSkill>*>::iterator skill_itr;
+	multimap<int8, multimap<int8, StartingSkill>*>::iterator skill_itr;
 
 	for (skill_itr = starting_skills.begin(); skill_itr != starting_skills.end(); skill_itr++)
 	{
-		map<int8, StartingSkill>* tmpMap = skill_itr->second;
+		multimap<int8, StartingSkill>* tmpMap = skill_itr->second;
 		safe_delete(tmpMap);
 	}
 	starting_skills.clear();
 
 
-	map<int8, map<int8, StartingSpell>*>::iterator spell_itr;
+	multimap<int8, multimap<int8, StartingSpell>*>::iterator spell_itr;
 
 	for (spell_itr = starting_spells.begin(); spell_itr != starting_spells.end(); spell_itr++)
 	{
-		map<int8, StartingSpell>* tmpMap = spell_itr->second;
+		multimap<int8, StartingSpell>* tmpMap = spell_itr->second;
 		safe_delete(tmpMap);
 	}
 	starting_spells.clear();
