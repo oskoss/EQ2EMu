@@ -2157,14 +2157,17 @@ void World::SyncCharacterAbilities(Client* client)
 		{
 			isProcessing = true;
 
-			if ((skill_itr->first & baseRace) == baseRace)
+			// race = 255 is wildcard all, otherwise needs to match the race id
+			if (skill_itr->first == 255 || skill_itr->first == baseRace)
 			{
 				multimap<int8, StartingSkill>::iterator child_itr;
 				for (child_itr = skill_itr->second->begin(); child_itr != skill_itr->second->end(); child_itr++)
 				{
-					if ((child_itr->first & baseClass) == baseClass ||
-						(child_itr->first & secondaryClass) == secondaryClass ||
-						(child_itr->first & actualClass) == actualClass)
+					// class = 255 is wildcard all, otherwise needs to match the class id
+					if (child_itr->first == 255 ||
+						child_itr->first == baseClass ||
+						child_itr->first == secondaryClass ||
+						child_itr->first == actualClass)
 					{
 						if (!client->GetPlayer()->skill_list.HasSkill(child_itr->second.skill_id))
 						{
@@ -2185,14 +2188,17 @@ void World::SyncCharacterAbilities(Client* client)
 		{
 			isProcessing = true;
 
-			if ((spell_itr->first & baseRace) == baseRace)
+			// race = 255 is wildcard all, otherwise needs to match the race id
+			if (spell_itr->first == 255 || spell_itr->first == baseRace)
 			{
 				multimap<int8, StartingSpell>::iterator child_itr;
 				for (child_itr = spell_itr->second->begin(); child_itr != spell_itr->second->end(); child_itr++)
 				{
-					if ((child_itr->first & baseClass) == baseClass ||
-						(child_itr->first & secondaryClass) == secondaryClass ||
-						(child_itr->first & actualClass) == actualClass)
+					// class = 255 is wildcard all, otherwise needs to match the class id
+					if (child_itr->first == 255 ||
+						child_itr->first == baseClass ||
+						child_itr->first == secondaryClass ||
+						child_itr->first == actualClass)
 					{
 						if (!client->GetPlayer()->HasSpell(child_itr->second.spell_id, child_itr->second.tier, true))
 						{
