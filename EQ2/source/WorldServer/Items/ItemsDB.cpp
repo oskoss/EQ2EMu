@@ -196,8 +196,8 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	if (result->GetInt8Str("lore_equip") == 1)
 		item->generic_info.item_flags += LORE_EQUIP;
 
-	if (result->GetInt8Str("flags_16384") == 1)
-		item->generic_info.item_flags += FLAGS_16384;
+	if (result->GetInt8Str("no_transmute") == 1)
+		item->generic_info.item_flags += NO_TRANSMUTE;
 
 	if (result->GetInt8Str("flags_32768") == 1)
 		item->generic_info.item_flags += FLAGS_32768;
@@ -226,8 +226,8 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	if (result->GetInt8Str("refined") == 1)
 		item->generic_info.item_flags2 += REFINED;
 
-	if (result->GetInt8Str("flags2_256") == 1)
-		item->generic_info.item_flags2 += FLAGS2_256;
+	if (result->GetInt8Str("no_salvage") == 1)
+		item->generic_info.item_flags2 += NO_SALVAGE;
 
 	
 

@@ -64,7 +64,7 @@ bool Transmute::ItemIsTransmutable(Item* item) {
 	//Item level > 0 AND Item is not LORE_EQUP, LORE, NO_VALUE etc AND item rarity is >= 5
 		//(4 is treasured but the rarity used for journeyman spells)
 	//I think flag 16384 is NO-TRANSMUTE but not positive
-	const int32 disqualifyFlags = NO_ZONE | NO_VALUE | TEMPORARY | NO_DESTROY | FLAGS_16384;
+	const int32 disqualifyFlags = NO_ZONE | NO_VALUE | TEMPORARY | NO_DESTROY | NO_TRANSMUTE;
 	const int32 disqualityFlags2 = ORNATE;
 	if (item->generic_info.adventure_default_level > 0
 		&& (item->generic_info.item_flags & disqualifyFlags) == 0

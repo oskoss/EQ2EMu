@@ -133,7 +133,7 @@ extern MasterItemList master_item_list;
 #define EVIL_ONLY		2048
 #define STACK_LORE		4096  
 #define LORE_EQUIP		8192  
-#define FLAGS_16384		16384
+#define NO_TRANSMUTE	16384
 #define FLAGS_32768		32768
 
 #define ORNATE			1
@@ -144,7 +144,7 @@ extern MasterItemList master_item_list;
 #define NO_REPAIR		32
 #define ETHERAL			64
 #define REFINED			128
-#define FLAGS2_256		256 //not used at this time
+#define NO_SALVAGE		256 //not used at this time
 #define FLAGS2_512		512//not used at this time
 #define FLAGS2_1024		1024//not used at this time
 #define FLAGS2_2048		2048//not used at this time

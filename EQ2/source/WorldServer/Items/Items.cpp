@@ -1293,8 +1293,8 @@ bool Item::CheckFlag2(int32 flag){
 			value = FLAGS2_1024;
 		else if (flag_val >= FLAGS2_512)
 			value = FLAGS2_512;
-		else if (flag_val >= FLAGS2_256)
-			value = FLAGS2_256;
+		else if (flag_val >= NO_SALVAGE)
+			value = NO_SALVAGE;
 		else if (flag_val >= REFINED)
 			value = REFINED;
 		else if (flag_val >= ETHERAL)
@@ -1326,8 +1326,8 @@ bool Item::CheckFlag(int32 flag){
 	while(flag_val>0){
 		if (flag_val >= FLAGS_32768) //change this
 			value = FLAGS_32768;
-		else if (flag_val >= FLAGS_16384) //change this
-			value = FLAGS_16384;
+		else if (flag_val >= NO_TRANSMUTE) //change this
+			value = NO_TRANSMUTE;
 		else if (flag_val >= LORE_EQUIP) //change this
 			value = LORE_EQUIP;
 		else if (flag_val >= STACK_LORE) //change this
