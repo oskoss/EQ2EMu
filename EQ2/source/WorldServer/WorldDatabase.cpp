@@ -1530,7 +1530,7 @@ bool WorldDatabase::loadCharacter(const char* ch_name, int32 account_id, Client*
 	MYSQL_ROW row, row4;
 	int32 id = 0;
 	query.escaped_name = getEscapeString(ch_name);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, current_zone_id, x, y, z, heading, admin_status, race, model_type, class, deity, level, gender, tradeskill_class, tradeskill_level, wing_type, hair_type, chest_type, legs_type, soga_wing_type, soga_hair_type, soga_chest_type, soga_legs_type, 0xFFFFFFFF - crc32(name), facial_hair_type, soga_facial_hair_type,instance_id,last_saved, DATEDIFF(curdate(), created_date) as accage FROM characters where name='%s' and account_id=%i AND deleted = 0", query.escaped_name, account_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, current_zone_id, x, y, z, heading, admin_status, race, model_type, class, deity, level, gender, tradeskill_class, tradeskill_level, wing_type, hair_type, chest_type, legs_type, soga_wing_type, soga_hair_type, soga_chest_type, soga_legs_type, 0xFFFFFFFF - crc32(name), facial_hair_type, soga_facial_hair_type, instance_id, group_id, last_saved, DATEDIFF(curdate(), created_date) as accage FROM characters where name='%s' and account_id=%i AND deleted = 0", query.escaped_name, account_id);
 	// no character found
 	if ( result == NULL ) {
 		LogWrite(PLAYER__ERROR, 0, "Player", "Error loading character for '%s'", ch_name);
@@ -1578,6 +1578,10 @@ bool WorldDatabase::loadCharacter(const char* ch_name, int32 account_id, Client*
 		client->GetPlayer()->features.hair_face_type = atoi(row[24]);
 		client->GetPlayer()->features.soga_hair_face_type = atoi(row[25]);
 		int32 instanceid = atoi(row[26]);
+
+		int32 groupid = atoi(row[27]);
+		client->SetRejoinGroupID(groupid);
+
 		int32 zoneid = atoul(row[1]);
 /*
 JA Notes on SOGA: I think there are many more settings to add than were commented out here,
@@ -1596,11 +1600,11 @@ SOGA chars looked ok in LoginServer screen tho... odd.
 
 
 
-		int32 lastsavedtime = atoi(row[27]);
+		int32 lastsavedtime = atoi(row[28]);
 		client->SetLastSavedTimeStamp(lastsavedtime);
 
-		if (row[28])
-			client->GetPlayer()->GetPlayerInfo()->SetAccountAge(atoi(row[28]));
+		if (row[29])
+			client->GetPlayer()->GetPlayerInfo()->SetAccountAge(atoi(row[29]));
 
 		LoadCharacterFriendsIgnoreList(client->GetPlayer());
 		MYSQL_RES* result4 = query4.RunQuery2(Q_SELECT, "SELECT `guild_id` FROM `guild_members` WHERE `char_id`=%u", id);
@@ -3697,7 +3701,7 @@ void WorldDatabase::Save(Client* client){
 	int32 zone_id = 0;
 	if(client->GetCurrentZone())
 		zone_id = client->GetCurrentZone()->GetZoneID();
-	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update characters set current_zone_id=%u, x=%f, y=%f, z=%f, heading=%f, level=%i,instance_id=%i,last_saved=%i, `class`=%i, `tradeskill_level`=%i, `tradeskill_class`=%i where id = %u", zone_id, player->GetX(), player->GetY(), player->GetZ(), player->GetHeading(), player->GetLevel(), instance_id, client->GetLastSavedTimeStamp(), client->GetPlayer()->GetAdventureClass(), client->GetPlayer()->GetTSLevel(), client->GetPlayer()->GetTradeskillClass(), client->GetCharacterID());
+	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update characters set current_zone_id=%u, x=%f, y=%f, z=%f, heading=%f, level=%i,instance_id=%i,last_saved=%i, `class`=%i, `tradeskill_level`=%i, `tradeskill_class`=%i, `group_id`=%u where id = %u", zone_id, player->GetX(), player->GetY(), player->GetZ(), player->GetHeading(), player->GetLevel(), instance_id, client->GetLastSavedTimeStamp(), client->GetPlayer()->GetAdventureClass(), client->GetPlayer()->GetTSLevel(), client->GetPlayer()->GetTradeskillClass(), client->GetPlayer()->GetGroupMemberInfo() ? client->GetPlayer()->GetGroupMemberInfo()->group_id : 0, client->GetCharacterID());
 	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %u, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s' where char_id = %u",
 		player->GetHP(), player->GetPower(), player->GetStrBase(), player->GetStaBase(), player->GetAgiBase(), player->GetWisBase(), player->GetIntBase(), player->GetHeatResistanceBase(), player->GetColdResistanceBase(), player->GetMagicResistanceBase(),
 		player->GetMentalResistanceBase(), player->GetDivineResistanceBase(), player->GetDiseaseResistanceBase(), player->GetPoisonResistanceBase(), player->GetCoinsCopper(), player->GetCoinsSilver(), player->GetCoinsGold(), player->GetCoinsPlat(), player->GetTotalHPBase(), player->GetTotalPowerBase(), player->GetXP(), player->GetNeededXP(), player->GetXPDebt(), player->GetXPVitality(), player->GetTSXP(), player->GetNeededTSXP(), player->GetTSXPVitality(), player->GetBankCoinsCopper(),

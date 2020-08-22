@@ -194,6 +194,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	placement_unique_item_id = 0;
 	SetHasOwnerOrEditAccess(false);
 	temporary_transport_id = 0;
+	rejoin_group_id = 0;
 }
 
 Client::~Client() {
@@ -201,6 +202,7 @@ Client::~Client() {
 		if (player->GetGroupMemberInfo() && (player->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0)
 			world.GetGroupManager()->RemoveGroupMember(player->GetGroupMemberInfo()->group_id, player);
 		world.GetGroupManager()->ClearPendingInvite(player);
+
 	}
 	if (lua_interface)
 		lua_interface->RemoveDebugClients(this);
@@ -3506,6 +3508,17 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Zone Request Denied! No 'new_zone' value");
 		return;
 	}
+
+	// block out the member info for the group
+	if (this->GetPlayer()->GetGroupMemberInfo())
+	{
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(this->GetPlayer()->GetGroupMemberInfo()->group_id);
+		group->MGroupMembers.writelock();
+		this->GetPlayer()->GetGroupMemberInfo()->client = 0;
+		this->GetPlayer()->GetGroupMemberInfo()->member = 0;
+		group->MGroupMembers.releasewritelock();
+	}
+
 	client_zoning = true;
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting player Resurrecting to 'true'", __FUNCTION__);
 	player->SetResurrecting(true);
@@ -8693,7 +8706,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 				new_client_login = true;
 				GetCurrentZone()->AddClient(this); //add to zones client list
 
-				world.RejoinGroup(this);
+				world.RejoinGroup(this, rejoin_group_id);
 				zone_list.AddClientToMap(player->GetName(), this);
 			}
 			else {

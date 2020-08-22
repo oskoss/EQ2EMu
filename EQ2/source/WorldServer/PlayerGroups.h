@@ -83,6 +83,7 @@ public:
 	void GroupChatMessage(Spawn* from, const char* message);
 	void MakeLeader(Entity* new_leader);
 
+	Mutex MGroupMembers;				// Mutex for the group members
 private:
 	int32					m_id;		// ID of this group
 	deque<GroupMemberInfo*>	m_members;	// List of members in this group
@@ -139,6 +140,9 @@ public:
 	/// <param name='group_id'>ID of the group to send updates to</param>
 	/// <param name='exclude'>Client* to exclude from the update, usually the one that triggers the update</param>
 	void SendGroupUpdate(int32 group_id, Client* exclude = 0);
+
+
+	PlayerGroup* GetGroup(int32 group_id);
 
 	/// <summary>
 	/// Gets the group members for the given group, be sure to call GroupLock() before calling this and ReleaseGroupLock() after you 

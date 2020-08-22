@@ -1459,27 +1459,59 @@ void World::SendGroupQuests(PlayerGroup* group, Client* client){
 	}
 }*/
 
-void World::RejoinGroup(Client* client){
-	/*map<GroupMemberInfo*, int32>::iterator itr;
-	GroupMemberInfo* found = 0;
+void World::RejoinGroup(Client* client, int32 group_id){
+	if (!group_id) // no need if no group id!
+		return;
+
+	world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+	PlayerGroup* group = world.GetGroupManager()->GetGroup(group_id);
+	deque<GroupMemberInfo*>* members = 0;
+	if (group)
+		members = group->GetMembers();
+
 	string name = string(client->GetPlayer()->GetName());
-	MGroups.readlock(__FUNCTION__, __LINE__);
-	PlayerGroup* group = 0;
-	for(int i = player_groups.size()-1;!found && i >= 0;i--){
-		group = player_groups[i];
-		for(int x=group->members.size()-1;x>=0; x--){
-			if(group->members[x]->name == name){
-				found = group->members[x];
-				break;
-			}
+	if (!members)
+	{
+		// group does not exist!
+
+		Query query;
+		query.AddQueryAsync(client->GetCharacterID(), &database, Q_INSERT, "UPDATE characters set group_id = 0 where id = %u",
+			client->GetCharacterID());
+		LogWrite(PLAYER__ERROR, 0, "Player", "Group did not exist for player %s to group id %i, async query to group_id = 0.", name.c_str(), group_id);
+		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+		return;
+	}
+	deque<GroupMemberInfo*>::iterator itr;
+	GroupMemberInfo* info = 0;
+
+	bool match = false;
+	group->MGroupMembers.writelock();
+	for (itr = members->begin(); itr != members->end(); itr++) {
+
+		info = *itr;
+
+		if (info && info->name == name)
+		{
+			info->client = client;
+			info->member = client->GetPlayer();
+			client->GetPlayer()->SetGroup(group);
+			client->GetPlayer()->SetGroupMemberInfo(info);
+			client->GetPlayer()->UpdateGroupMemberInfo();
+			LogWrite(PLAYER__DEBUG, 0, "Player", "Identified group match for player %s to group id %u", name.c_str(), group_id);
+			match = true;
+			break;
 		}
 	}
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
-	if(found){
-		found->client = client;
-		client->GetPlayer()->SetGroup(found->group);
-		client->GetPlayer()->SetGroupMemberInfo(found);
-	}*/
+	group->MGroupMembers.releasewritelock();
+
+	// must be done after cause it needs a readlock
+	if (match)
+		group->SendGroupUpdate();
+
+	if (!match)
+		LogWrite(PLAYER__ERROR, 0, "Player", "Identified group match for player %s to group id %u, however the player name was not present in the group!  May be an old group id that has been re-used.", name.c_str(), group_id);
+	
+	world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 }
 
 

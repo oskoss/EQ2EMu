@@ -1,0 +1,1 @@
+alter table characters add column group_id int(10) unsigned not null default '0';
