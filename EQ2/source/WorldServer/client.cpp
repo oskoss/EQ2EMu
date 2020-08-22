@@ -3512,11 +3512,13 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 	// block out the member info for the group
 	if (this->GetPlayer()->GetGroupMemberInfo())
 	{
+		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 		PlayerGroup* group = world.GetGroupManager()->GetGroup(this->GetPlayer()->GetGroupMemberInfo()->group_id);
 		group->MGroupMembers.writelock();
 		this->GetPlayer()->GetGroupMemberInfo()->client = 0;
 		this->GetPlayer()->GetGroupMemberInfo()->member = 0;
 		group->MGroupMembers.releasewritelock();
+		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 	}
 
 	client_zoning = true;

@@ -31,6 +31,7 @@ extern ZoneList	zone_list;
 
 PlayerGroup::PlayerGroup(int32 id) {
 	m_id = id;
+	MGroupMembers.SetName("MGroupMembers");
 }
 
 PlayerGroup::~PlayerGroup() {
