@@ -83,3 +83,4 @@ D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Deb
 D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Debug\Spart.csproj.CopyComplete
 D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Debug\Spart.dll
 D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Debug\Spart.pdb
+D:\github\eq2emu_public\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\Spart\obj\Debug\Spart.csprojAssemblyReference.cache
