@@ -397,7 +397,7 @@ namespace EQ2ModelViewer
                     Eq2Reader reader = new Eq2Reader(new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Read));
                     VeNode venode = reader.ReadNodeObject();
 
-                    CheckNode(dirName, venode);
+                    CheckNode(dirName, venode, false);
 
                     //MessageBox.Show("Done!");
 
@@ -411,18 +411,17 @@ namespace EQ2ModelViewer
         float scale = 0;
         UInt32 widgetID;
         UInt32 GridID;
-        bool flipStatus = false;
-        private void CheckNode(string temp, object item)
+        private void CheckNode(string temp, object item, bool parentXform)
         {
             if (item is VeMeshGeometryNode)
             {
                 widgetID = ((VeNode)item).WidgetID;
 
                 // testing antonica spires which are not oriented correctly
-                if ( widgetID == 2990295910 )
-                {
-                    int test = 0;
-                }
+                //if ( widgetID == 2990295910 )
+                // testing tutorial_island02 boat
+                //if (widgetID == 1253219127)
+
                 Model model = new Model();
                 model.Initialize(Graphics.Device, (VeMeshGeometryNode)item, temp);
                 model.Position.X = x;
@@ -450,47 +449,53 @@ namespace EQ2ModelViewer
                 }
                 else if (item is VeXformNode)
                 {
-                    VeNode tmp = (VeNode)item;
-
-                    //resets yaw/pitch/roll to 0,0,0 for next mesh (like antonica spires)
-                    if ( tmp.nodeFlags == 1409875968)
-                    {
-                        if (flipStatus)
-                            flipStatus = false;
-                        else
-                            flipStatus = true;
-                    }
+                    VeXformNode tmp = (VeXformNode)item;
                     x1 = ((VeXformNode)item).position[0];
                     y1 = ((VeXformNode)item).position[1];
                     z1 = ((VeXformNode)item).position[2];
 
-                    if (flipStatus)
+                    if (parentXform)
                     {
-                        yaw = 0;
-                        pitch = 0;
-                        roll = 0;
-                        scale = ((VeXformNode)item).scale;
+                        yaw += (((VeXformNode)item).orientation[0]) * (3.141592654f / 180.0f);
+                        pitch += (((VeXformNode)item).orientation[1]) * (3.141592654f / 180.0f);
+                        roll += (((VeXformNode)item).orientation[2]) * (3.141592654f / 180.0f);
                     }
                     else
                     {
                         yaw = (((VeXformNode)item).orientation[0]) * (3.141592654f / 180.0f);
                         pitch = (((VeXformNode)item).orientation[1]) * (3.141592654f / 180.0f);
                         roll = (((VeXformNode)item).orientation[2]) * (3.141592654f / 180.0f);
-                        scale = ((VeXformNode)item).scale;
                     }
+                    scale = ((VeXformNode)item).scale;
 
                     x += x1;
                     y += y1;
                     z += z1;
                 }
+
                 if (item != null)
                 {
+
+                    float old_x = x, old_y = y, old_z = z;
+                    float old_yaw = yaw, old_pitch = pitch, old_roll = roll;
+                    float old_scale = scale;
+
                     System.Collections.IEnumerator enumerator = ((VeNode)item).EnumerateChildren();
+                    bool parentBool = item is VeXformNode;
                     while (enumerator.MoveNext())
                     {
-                        CheckNode(temp, enumerator.Current);
+                        CheckNode(temp, enumerator.Current, parentBool);
                     }
-                    flipStatus = false;
+
+                    x = old_x;
+                    y = old_y;
+                    z = old_z;
+                    yaw = old_yaw;
+                    pitch = old_pitch;
+                    roll = old_roll;
+                    scale = old_scale;
+                    
+
                     x -= x1;
                     y -= y1;
                     z -= z1;
