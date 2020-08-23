@@ -255,3 +255,15 @@
 /server/Maps/qey_village06.EQ2Map filter=lfs diff=lfs merge=lfs -text
 /server/Maps/qey_village06_revamp.EQ2Map filter=lfs diff=lfs merge=lfs -text
 /EQ2/devtools/EQ2ModelViewer/EQ2ModelViewer/bin/Debug/loaded.txt filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp02_dun_lair_of_scale_epic01_seeing.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp02_dun_lair_of_scale_epic02_hallowed.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp02_dun_shrines_of_sky_epic01_vaults.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp03_dun_castle_mistmoore_epic01_coffinchamber.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp03_dun_crushbone_keep_epic01_throne.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp03_dun_crushbone_keep_epic02_boss.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp08_dun_skyshrine_courtyard01.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp08_dun_skyshrine_courtyard01_scorched.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp08_dun_skyshrine_courtyard01_scorched_arcane.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp08_dun_skyshrine_courtyard01_scorched_capital.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp08_dun_skyshrine_courtyard01_scorched_market.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/exp10_dun_shissartemple01_forgotten.EQ2Map filter=lfs diff=lfs merge=lfs -text
