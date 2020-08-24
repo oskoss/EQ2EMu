@@ -997,7 +997,7 @@ void Entity::AddHate(Entity* attacker, sint32 hate) {
 	if (attacker->GetThreatTransfer() && hate > 0) {
 		Spawn* transfer_target = (Entity*)GetZone()->GetSpawnByID(attacker->GetThreatTransfer()->Target);
 		if (transfer_target && transfer_target->IsEntity()) {
-			sint32 transfered_hate = hate * (GetThreatTransfer()->Amount / 100);
+			sint32 transfered_hate = hate * (attacker->GetThreatTransfer()->Amount / 100);
 			hate -= transfered_hate;
 			this->AddHate((Entity*)transfer_target, transfered_hate);
 		}
