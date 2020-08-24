@@ -2662,7 +2662,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 
 		if (!spell)
 		{
-			LogWrite(WORLD__ERROR, 0, "WORLD", "FAILED Examine Info Request-> Spell ID: %u, tier: %i", spell->GetSpellID(), tier);
+			LogWrite(WORLD__ERROR, 0, "WORLD", "FAILED Examine Info Request-> Spell ID: %u, tier: %i", id, tier);
 			return;
 		}
 
