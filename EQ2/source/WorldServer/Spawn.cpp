@@ -1962,9 +1962,12 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 		packet->setDataByName("pos_size", 1.0f);
 
 		if (!IsPlayer())
-			packet->setDataByName("pos_size_ratio", size > 0 ? (((float)size) / 32) : 1);
+			packet->setDataByName("pos_size", size > 0 ? (((float)size) / 32.0f) : 1.0f); // float not an integer
 		else
-			packet->setDataByName("pos_size_ratio", 1.0f);
+			packet->setDataByName("pos_size", 1.0f);
+
+		// please do not remove!  This makes it so NPCs for example do not resize large/small when you are in combat with them!
+		packet->setDataByName("pos_size_ratio", 1.0f);
 	}
 	packet->setDataByName("pos_state", appearance.pos.state);
 
