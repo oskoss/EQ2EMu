@@ -7463,8 +7463,8 @@ int EQ2Emu_lua_RemoveThreatTransfer(lua_State* state) {
 
 	if (((Entity*)spawn)->GetThreatTransfer() && ((Entity*)spawn)->GetThreatTransfer()->Spell == spell) {
 		ThreatTransfer* transfer = ((Entity*)spawn)->GetThreatTransfer();
-		safe_delete(transfer);
 		((Entity*)spawn)->SetThreatTransfer(0);
+		safe_delete(transfer);
 	}
 
 	return 0;
