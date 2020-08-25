@@ -241,6 +241,7 @@ public:
 	void			AddUserDataPtr(LUAUserData* data);
 	void			DeleteUserDataPtrs(bool all);
 	void			DeletePendingSpells(bool all);
+	void			DeletePendingSpell(LuaSpell* spell);
 	Mutex*			GetSpawnScriptMutex(const char* name);
 	Mutex*			GetItemScriptMutex(const char* name);
 	Mutex*			GetZoneScriptMutex(const char* name);

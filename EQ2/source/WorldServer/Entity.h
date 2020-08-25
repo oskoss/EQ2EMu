@@ -276,6 +276,7 @@ struct Proc {
 	LuaSpell*	spell;
 	Item*		item;
 	float		chance;
+	int32		spellid;
 };
 
 #define PROC_TYPE_OFFENSIVE				1

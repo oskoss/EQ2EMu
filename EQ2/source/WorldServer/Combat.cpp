@@ -1267,6 +1267,7 @@ void Entity::AddProc(int8 type, float chance, Item* item, LuaSpell* spell) {
 	proc->chance = chance;
 	proc->item = item;
 	proc->spell = spell;
+	proc->spellid = spell->spell->GetSpellID();
 	m_procList[type].push_back(proc);
 	MProcList.releasewritelock(__FUNCTION__, __LINE__);
 }
@@ -1286,8 +1287,8 @@ void Entity::RemoveProc(Item* item, LuaSpell* spell) {
 			Proc* proc = *itr;
 
 			if ((item && proc->item == item) || (spell && proc->spell == spell)) {
-				safe_delete(*itr);
 				itr = proc_itr->second.erase(itr);
+				safe_delete(proc);
 			}
 			else
 				itr++;
@@ -1408,8 +1409,8 @@ void Entity::ClearProcs() {
 	for (proc_itr = m_procList.begin(); proc_itr != m_procList.end(); proc_itr++) {
 		itr = proc_itr->second.begin();
 		while (itr != proc_itr->second.end()) {
-				safe_delete(*itr);
-				itr = proc_itr->second.erase(itr);
+			safe_delete(*itr);
+			itr = proc_itr->second.erase(itr);
 		}
 		proc_itr->second.clear();
 	}

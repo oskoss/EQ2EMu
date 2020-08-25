@@ -20,6 +20,7 @@
 #include "LuaInterface.h"
 #include "LuaFunctions.h"
 #include "WorldDatabase.h"
+#include "SpellProcess.h"
 #include "../common/Log.h"
 
 #ifndef WIN32
@@ -519,7 +520,10 @@ LuaSpell* LuaInterface::GetCurrentSpell(lua_State* state) {
 bool LuaInterface::CallSpellProcess(LuaSpell* spell, int8 num_parameters) {
 	if(shutting_down || !spell || !spell->caster)
 		return false;
+
+	MSpells.lock();
 	current_spells[spell->state] = spell;
+	MSpells.unlock();
 	if(lua_pcall(spell->state, num_parameters, 0, 0) != 0){
 		LogError("Error running %s", lua_tostring(spell->state, -1));
 		lua_pop(spell->state, 1);
@@ -605,6 +609,7 @@ lua_State* LuaInterface::LoadLuaFile(const char* name) {
 void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool can_delete) {
 	if(shutting_down)
 		return;
+
 	if(call_remove_function){
 		lua_getglobal(spell->state, "remove");
 		LUASpawnWrapper* spawn_wrapper = new LUASpawnWrapper();
@@ -623,13 +628,19 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 		else
 			lua_pushlightuserdata(spell->state, 0);
 
+		MSpells.lock();
 		current_spells[spell->state] = spell;
+		MSpells.unlock();
 		lua_pcall(spell->state, 2, 0, 0);
 	}
 	if (can_delete) {
-		MSpellDelete.lock();
-		spells_pending_delete[spell] = Timer::GetCurrentTime2() + 10000;
-		MSpellDelete.unlock();
+		AddPendingSpellDelete(spell);
+	}
+	if (spell->caster)
+	{
+		spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(spell, false);
+		spell->caster->RemoveProc(0, spell);
+		spell->caster->RemoveMaintainedSpell(spell);
 	}
 }
 
@@ -1078,21 +1089,31 @@ void LuaInterface::AddUserDataPtr(LUAUserData* data) {
 
 void LuaInterface::DeletePendingSpells(bool all) {
 	MSpellDelete.lock();
-	if(spells_pending_delete.size() > 0){
+	if (spells_pending_delete.size() > 0) {
 		int32 time = Timer::GetCurrentTime2();
 		map<LuaSpell*, int32>::iterator itr;
 		vector<LuaSpell*> tmp_deletes;
 		vector<LuaSpell*>::iterator del_itr;
-		for(itr = spells_pending_delete.begin(); itr != spells_pending_delete.end(); itr++){
-			if(all || time >= itr->second)
+		for (itr = spells_pending_delete.begin(); itr != spells_pending_delete.end(); itr++) {
+			if (all || time >= itr->second)
 				tmp_deletes.push_back(itr->first);
 		}
 		LuaSpell* spell = 0;
-		for(del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++){
+		for (del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++) {
 			spell = *del_itr;
 			spells_pending_delete.erase(spell);
 			safe_delete(spell);
 		}
+	}
+	MSpellDelete.unlock();
+}
+
+void LuaInterface::DeletePendingSpell(LuaSpell* spell) {
+	MSpellDelete.lock();
+	if (spells_pending_delete.size() > 0) {
+		map<LuaSpell*, int32>::iterator itr = spells_pending_delete.find(spell);
+		if (itr != spells_pending_delete.end())
+			spells_pending_delete.erase(itr);
 	}
 	MSpellDelete.unlock();
 }
@@ -1399,6 +1420,9 @@ LuaSpell* LuaInterface::GetSpell(const char* name)  {
 		new_spell->slot_pos = 0;
 		new_spell->damage_remaining = 0;
 		new_spell->effect_bitmask = 0;
+		new_spell->caster = 0;
+		new_spell->initial_target = 0;
+		new_spell->spell = 0;
 		return new_spell;
 	}
 	else{
@@ -1706,7 +1730,8 @@ bool LuaInterface::RunZoneScript(string script_name, const char* function_name, 
 
 void LuaInterface::AddPendingSpellDelete(LuaSpell* spell) {
 	MSpellDelete.lock();
-	spells_pending_delete[spell] = Timer::GetCurrentTime2() + 10000;
+	if ( spells_pending_delete.count(spell) == 0 )
+		spells_pending_delete[spell] = Timer::GetCurrentTime2() + 10000;
 	MSpellDelete.unlock();
 }
 

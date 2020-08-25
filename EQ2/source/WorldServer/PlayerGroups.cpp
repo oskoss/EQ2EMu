@@ -597,13 +597,23 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 			if (!caster->GetMaintainedSpellBySlot(0))
 				continue;
 
+			caster->GetMaintainedMutex()->readlock(__FUNCTION__, __LINE__);
 			// go through the player's maintained spells
 			me = caster->GetMaintainedSpells();
-			caster->GetMaintainedMutex()->readlock(__FUNCTION__, __LINE__);
-			for (i = 0; i < NUM_MAINTAINED_EFFECTS; i++){
+			for (i = 0; i < NUM_MAINTAINED_EFFECTS; i++) {
 				if (me[i].spell_id == 0xFFFFFFFF)
 					continue;
 				luaspell = me[i].spell;
+
+				if (!luaspell)
+					continue;
+				
+				if (!luaspell->caster)
+				{
+					LogWrite(PLAYER__ERROR, 0, "Player", "Bad luaspell, caster is NULL, spellid: %u", me[i].spell_id);
+					continue;
+				}
+
 				spell = luaspell->spell;
 
 				if (spell && spell->GetSpellData()->group_spell && spell->GetSpellData()->friendly_spell &&
@@ -628,8 +638,8 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 							has_effect = true;
 
 						// Check if player is within range of the caster
-						if (group_member->GetZone() != caster->GetZone() || caster->GetDistance(group_member) > spell->GetSpellData()->radius){
-							if (has_effect){
+						if (group_member->GetZone() != caster->GetZone() || caster->GetDistance(group_member) > spell->GetSpellData()->radius) {
+							if (has_effect) {
 								group_member->RemoveSpellEffect(luaspell);
 								group_member->RemoveSpellBonus(luaspell);
 								group_member->RemoveSkillBonus(spell->GetSpellID());
@@ -639,14 +649,14 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 										client->QueuePacket(packet);
 								}
 								//Also remove group buffs from pet
-								if (group_member->HasPet()){
+								if (group_member->HasPet()) {
 									pet = group_member->GetPet();
 									charmed_pet = group_member->GetCharmedPet();
-									if (pet){
+									if (pet) {
 										pet->RemoveSpellEffect(luaspell);
 										pet->RemoveSpellBonus(luaspell);
 									}
-									if (charmed_pet){
+									if (charmed_pet) {
 										charmed_pet->RemoveSpellEffect(luaspell);
 										charmed_pet->RemoveSpellBonus(luaspell);
 									}
@@ -665,7 +675,7 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 						pet = 0;
 						charmed_pet = 0;
 
-						if (group_member->HasPet()){
+						if (group_member->HasPet()) {
 							pet = group_member->GetPet();
 							charmed_pet = group_member->GetCharmedPet();
 						}
@@ -676,9 +686,6 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 						if (charmed_pet)
 							charmed_pet->AddSpellEffect(luaspell);
 
-
-						//add group member to list of targets for caster's spell if true
-						new_target_list.push_back(group_member->GetID());
 						if (pet)
 							new_target_list.push_back(pet->GetID());
 						if (charmed_pet)
@@ -687,7 +694,7 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 
 						// look for a spell bonus on caster's spell
 						sb_list = caster->GetAllSpellBonuses(luaspell);
-						for (int32 x = 0; x < sb_list->size(); x++){
+						for (int32 x = 0; x < sb_list->size(); x++) {
 							bv = sb_list->at(x);
 							group_member->AddSpellBonus(luaspell, bv->type, bv->value, bv->class_req, bv->race_req, bv->faction_req);
 							if (pet)

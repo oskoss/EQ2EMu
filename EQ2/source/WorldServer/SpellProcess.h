@@ -347,7 +347,8 @@ public:
 
 	/// <summary>Removes a spell script timer from the list</summary>
 	/// <param name='timer'>Timer to remove</param>
-	void RemoveSpellScriptTimer(SpellScriptTimer* timer);
+	void RemoveSpellScriptTimer(SpellScriptTimer* timer, bool locked=false);
+	void RemoveSpellScriptTimerBySpell(LuaSpell* spell, bool clearPendingDeletes=true);
 
 	/// <summary>Checks the spell script timers</summary>
 	void CheckSpellScriptTimers();

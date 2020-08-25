@@ -366,6 +366,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell){
 				if (spell->caster && spell->caster->IsPlayer())
 					SendSpellBookUpdate(spell->caster->GetZone()->GetClientBySpawn(spell->caster));
 			}
+			spell->caster->RemoveProc(0, spell);
 			spell->caster->RemoveMaintainedSpell(spell);
 			CheckRemoveTargetFromSpell(spell, false);
 			ZoneServer* zone = spell->caster->GetZone();
@@ -854,6 +855,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 						caster->GetZone()->TriggerCharSheetTimer();
 				}
 
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				safe_delete(lua_spell);
 				return;
 			}
@@ -880,6 +882,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 					
 					// make sure to release the lock before we return out
 					zone->GetTradeskillMgr()->ReleaseReadLock(__FUNCTION__, __LINE__);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -890,6 +893,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			{
 				LogWrite(SPELL__DEBUG, 1, "Spell", "%s cannot cast a tradeskill spell (%s) while not crafting.", caster->GetName(), spell->GetName());
 				zone->SendSpellFailedPacket(client, SPELL_ERROR_ONLY_WHEN_CRAFTING);
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				safe_delete(lua_spell);
 				return;
 			}
@@ -899,6 +903,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "%s cannot see target %s.", caster->GetName(), target->GetName());
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_CANT_SEE_TARGET);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -907,6 +912,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "%s cannot cast (mezzed or stunned).", caster->GetName());
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_CANNOT_CAST_STUNNED);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -915,6 +921,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "%s cannot cast (stifled).", caster->GetName());
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_CANNOT_CAST_STIFFLED);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -923,6 +930,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "%s cannot cast (feared).", caster->GetName());
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_CANNOT_CAST_FEARED);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -931,6 +939,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "Queuing spell for %s.", caster->GetName());
 			CheckSpellQueue(spell, caster);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -943,6 +952,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			{
 				LogWrite(SPELL__DEBUG, 1, "Spell", "%s: No target.", spell->GetName());
 				zone->SendSpellFailedPacket(client, SPELL_ERROR_NO_ELIGIBLE_TARGET);
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				safe_delete(lua_spell);
 				return;
 			}
@@ -979,6 +989,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			{
 				LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Too far.", spell->GetName());
 				zone->SendSpellFailedPacket(client, SPELL_ERROR_TOO_FAR_AWAY);
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				safe_delete(lua_spell);
 				return;
 			}
@@ -987,6 +998,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			{
 				LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Too close.", spell->GetName());
 				zone->SendSpellFailedPacket(client, SPELL_ERROR_TOO_CLOSE);
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				safe_delete(lua_spell);
 				return;
 			}
@@ -1002,6 +1014,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				{
 					LogWrite(SPELL__DEBUG, 1, "Spell", "%s: No target or not groundspawn.", spell->GetName());
 					zone->SendSpellFailedPacket(client, SPELL_ERROR_NO_ELIGIBLE_TARGET);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -1026,6 +1039,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				{
 					LogWrite(SPELL__DEBUG, 1, "Spell", "%s: No target.", spell->GetName());
 					zone->SendSpellFailedPacket(client, SPELL_ERROR_NO_ELIGIBLE_TARGET);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -1043,6 +1057,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 					if (((NPC*)target)->GetOwner()->IsNPC())
 					{
 						zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_A_FRIEND);
+						lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 						safe_delete(lua_spell);
 						return;
 					}
@@ -1053,6 +1068,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				else
 				{
 					zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_A_FRIEND);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -1069,6 +1085,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				{
 					LogWrite(SPELL__DEBUG, 1, "Spell", "%s: No target.", spell->GetName());
 					zone->SendSpellFailedPacket(client, SPELL_ERROR_NO_ELIGIBLE_TARGET);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -1077,6 +1094,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				{
 					LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Not an Enemy (Target: %s).", spell->GetName(), target->GetName());
 					zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_AN_ENEMY);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -1085,6 +1103,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				{
 					LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target is not alive (Target: %s).", spell->GetName(), target->GetName());
 					zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ALIVE);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -1093,6 +1112,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				{
 					LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target is invulnerable (Target: %s).", spell->GetName(), target->GetName());
 					zone->SendSpellFailedPacket(client, SPELL_ERROR_TARGET_INVULNERABLE);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -1104,6 +1124,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 					{
 						LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target (%s) is player and not attackable.", spell->GetName(), target->GetName());
 						zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_AN_ENEMY);
+						lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 						safe_delete(lua_spell);
 						return;
 					}
@@ -1112,6 +1133,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				if (target->IsPet() && ((NPC*)target)->GetOwner() && ((NPC*)target)->GetOwner() == caster) {
 					LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target (%s) is casters pet and not attackable by caster.", spell->GetName(), target->GetName());
 					zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_AN_ENEMY);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -1121,6 +1143,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if (lua_spell->targets.size() == 0 && spell->GetSpellData()->max_aoe_targets == 0) 
 		{
 			LogWrite(SPELL__ERROR, 0, "Spell", "SpellProcess::ProcessSpell Unable to find any spell targets for spell '%s'.", spell->GetName());
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -1130,11 +1153,13 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			if(target->Alive())
 			{
 				zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_DEAD);
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				safe_delete(lua_spell);
 				return;
 			}
 			if(target->IsPlayer() && zone->GetClientBySpawn(target)->GetCurrentRez()->active){
 				zone->SendSpellFailedPacket(client, SPELL_ERROR_ALREADY_CAST);
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				safe_delete(lua_spell);
 				return;
 			}
@@ -1143,6 +1168,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if(!CheckPower(lua_spell)) 
 		{
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_POWER);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -1150,6 +1176,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if (!CheckHP(lua_spell)) 
 		{ 
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_HEALTH);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return; 
 		}
@@ -1157,6 +1184,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if (!CheckSavagery(lua_spell))
 		{
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_SAVAGERY);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -1164,6 +1192,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if (!CheckDissonance(lua_spell))
 		{
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_DISSONANCE);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -1171,6 +1200,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if (!CheckConcentration(lua_spell)) 
 		{
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_CONC);
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			safe_delete(lua_spell);
 			return;
 		}
@@ -1186,6 +1216,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 				if (!result) {
 					zone->SendSpellFailedPacket(client, error);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 					safe_delete(lua_spell);
 					return;
 				}
@@ -1227,6 +1258,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		{
 			if(!CastProcessedSpell(lua_spell))
 			{
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				safe_delete(lua_spell);
 				return;
 			}
@@ -2090,17 +2122,53 @@ void SpellProcess::AddSpellScriptTimer(SpellScriptTimer* timer) {
 	MSpellScriptTimers.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-void SpellProcess::RemoveSpellScriptTimer(SpellScriptTimer* timer) {
+void SpellProcess::RemoveSpellScriptTimer(SpellScriptTimer* timer, bool locked) {
+	if (m_spellScriptList.size() == 0)
+		return;
+
 	vector<SpellScriptTimer*>::iterator itr;
-	MSpellScriptTimers.writelock(__FUNCTION__, __LINE__);
+	if(!locked)
+		MSpellScriptTimers.writelock(__FUNCTION__, __LINE__);
 	for (itr = m_spellScriptList.begin(); itr != m_spellScriptList.end(); itr++) {
 		if ((*itr) == timer) {
+			SpellScriptTimer* timer = *itr;
 			if ((*itr) && (*itr)->deleteWhenDone && lua_interface) {
 				lua_interface->AddPendingSpellDelete(timer->spell);
 			}
 			m_spellScriptList.erase(itr);
+			safe_delete(timer);
 			break;
 		}
+	}
+
+	if(!locked)
+		MSpellScriptTimers.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void SpellProcess::RemoveSpellScriptTimerBySpell(LuaSpell* spell, bool clearPendingDeletes) {
+	vector<SpellScriptTimer*>::iterator itr;
+	MSpellScriptTimers.writelock(__FUNCTION__, __LINE__);
+
+	if (lua_interface && clearPendingDeletes)
+		lua_interface->DeletePendingSpell(spell);
+
+	if (m_spellScriptList.size() == 0)
+	{
+		MSpellScriptTimers.releasewritelock(__FUNCTION__, __LINE__);
+		return;
+	}
+
+	for (itr = m_spellScriptList.begin(); itr != m_spellScriptList.end(); ) {
+		if ((*itr)->spell == spell)
+		{
+			vector<SpellScriptTimer*>::iterator cur = itr;
+			SpellScriptTimer* timer = *itr;
+			m_spellScriptList.erase(cur);
+			safe_delete(timer);
+			break;
+		}
+		else
+			itr++;
 	}
 	MSpellScriptTimers.releasewritelock(__FUNCTION__, __LINE__);
 }
@@ -2109,19 +2177,18 @@ void SpellProcess::CheckSpellScriptTimers() {
 	vector<SpellScriptTimer*>::iterator itr;
 	vector<SpellScriptTimer*> temp_list;
 	
-	MSpellScriptTimers.readlock(__FUNCTION__, __LINE__);
+	MSpellScriptTimers.writelock(__FUNCTION__, __LINE__);
 	for (itr = m_spellScriptList.begin(); itr != m_spellScriptList.end(); itr++) {
 		if (Timer::GetCurrentTime2() >= (*itr)->time) {
 			temp_list.push_back((*itr));
 			ProcessSpell((*itr)->spell, false, (*itr)->customFunction.c_str(), (*itr));
 		}
 	}
-	MSpellScriptTimers.releasereadlock(__FUNCTION__, __LINE__);
 
 	for (itr = temp_list.begin(); itr != temp_list.end(); itr++) {
-		RemoveSpellScriptTimer(*itr);
-		safe_delete(*itr);
+		RemoveSpellScriptTimer(*itr, true);
 	}
+	MSpellScriptTimers.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 bool SpellProcess::SpellScriptTimersHasSpell(LuaSpell* spell) {
@@ -2191,6 +2258,9 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 						if (remove_spawn){
 							spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 							for (target_itr = targets->begin(); target_itr != targets->end(); target_itr++){
+								((Entity*)remove_spawn)->RemoveProc(0, spell);
+								((Entity*)remove_spawn)->RemoveMaintainedSpell(spell);
+
 								if (remove_spawn->GetID() == (*target_itr)){
 									targets->erase(target_itr);
 									if (remove_spawn->IsEntity())
