@@ -360,7 +360,7 @@ public:
 
 	MutexList<LuaSpell*>* GetActiveSpells() { return &active_spells; }
 
-	void RemoveTargetFromSpell(LuaSpell* spell, Spawn* target, bool targetMutexLocked=false);
+	void RemoveTargetFromSpell(LuaSpell* spell, Spawn* target);
 	void CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete = true);
 
 	/// <summary>Adds a solo HO to the SpellProcess</summary>
@@ -394,7 +394,7 @@ private:
 	int32 last_checked_time;
 	vector<SpellScriptTimer*> m_spellScriptList;
 	Mutex MSpellScriptTimers;
-	map<LuaSpell*, vector<Spawn*>*> remove_target_list;
+	map<LuaSpell*, vector<int32>*> remove_target_list;
 	Mutex MRemoveTargetList;
 	vector<LuaSpell*> SpellCancelList;
 	Mutex MSpellCancelList;
