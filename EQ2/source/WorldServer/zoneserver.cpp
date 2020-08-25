@@ -161,6 +161,7 @@ ZoneServer::ZoneServer(const char* name) {
 	strcpy(zonesky_file,"");
 	
 	reloading = true;
+	watchdogTimestamp = Timer::GetCurrentTime2();
 }
 
 ZoneServer::~ZoneServer() {
@@ -309,12 +310,19 @@ void ZoneServer::Init()
 	_beginthread(ZoneLoop, 0, this);
 	_beginthread(SpawnLoop, 0, this);
 #else
-	pthread_t thread;
-	pthread_create(&thread, NULL, ZoneLoop, this);
-	pthread_detach(thread);
-	pthread_t thread2;
-	pthread_create(&thread2, NULL, SpawnLoop, this);
-	pthread_detach(thread2);
+	pthread_create(&ZoneThread, NULL, ZoneLoop, this);
+	pthread_detach(ZoneThread);
+	pthread_create(&SpawnThread, NULL, SpawnLoop, this);
+	pthread_detach(SpawnThread);
+#endif
+}
+
+void ZoneServer::CancelThreads() {
+#ifdef WIN32
+	LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung, however CancelThreads is unsupported for WIN32.", GetZoneName());
+#else
+	pthread_cancel(ZoneThread);
+	pthread_cancel(SpawnThread);
 #endif
 }
 
@@ -1249,11 +1257,13 @@ void ZoneServer::RemoveDamagedSpawn(Spawn* spawn){
 bool ZoneServer::Process()
 {
 	MMasterZoneLock->lock(); //Changing this back to a recursive lock to fix a possible /reload spells crash with multiple zones running - Foof
+	SetWatchdogTime(Timer::GetCurrentTime2());
 #ifndef NO_CATCH
 	try
 	{
 #endif
 			while (zoneID == 0) { //this is loaded by world
+				SetWatchdogTime(Timer::GetCurrentTime2());
 				Sleep(10);
 			}
 
@@ -1324,6 +1334,7 @@ bool ZoneServer::Process()
 
 			while (zonemap != nullptr && zonemap->IsMapLoading())
 			{
+				SetWatchdogTime(Timer::GetCurrentTime2());
 				// Client loop
 				ClientProcess();
 				Sleep(10);
@@ -6593,13 +6604,17 @@ ThreadReturnType SpawnLoop(void* tmp) {
 #ifndef NO_CATCH
 	}
 	catch(...) {
+		zs->spawnthread_active = false;
+		zs->initial_spawn_threads_active = 0;
 		LogWrite(ZONE__ERROR, 0, "Zone",  "Error Processing SpawnLoop, shutting down zone '%s'...", zs->GetZoneName());
 		try{
 			zs->Shutdown();
 		}
 		catch(...){
 			LogWrite(ZONE__ERROR, 0, "Zone",  "Error Processing SpawnLoop while shutting down zone '%s'...", zs->GetZoneName());
+			throw;
 		}
+		throw;
 	}
 #endif
 	THREAD_RETURN(NULL);

@@ -484,6 +484,8 @@ class ZoneList {
 	void ShutDownZones();
 	void ReloadMail();
 	void ReloadSpawns();
+
+	void WatchdogHeartbeat();
 private:
 	Mutex				MClientList;
 	Mutex				MZoneList;
@@ -649,6 +651,8 @@ private:
 	Timer guilds_timer;
 	Timer lotto_players_timer;
 	Timer group_buff_updates;
+
+	Timer watchdog_timer;
 
 	map<int32, HouseZone*> m_houseZones;
 	// Map <house id, map<char id, player house>>

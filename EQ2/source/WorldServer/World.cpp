@@ -87,7 +87,7 @@ extern LoginServer loginserver;
 extern World world;
 extern RuleManager rule_manager;
 
-World::World() : save_time_timer(300000), time_tick_timer(3000), vitality_timer(3600000), player_stats_timer(60000), server_stats_timer(60000), /*remove_grouped_player(30000),*/ guilds_timer(60000), lotto_players_timer(500) {
+World::World() : save_time_timer(300000), time_tick_timer(3000), vitality_timer(3600000), player_stats_timer(60000), server_stats_timer(60000), /*remove_grouped_player(30000),*/ guilds_timer(60000), lotto_players_timer(500), watchdog_timer(10000) {
 	save_time_timer.Start();
 	time_tick_timer.Start();
 	vitality_timer.Start();
@@ -96,6 +96,7 @@ World::World() : save_time_timer(300000), time_tick_timer(3000), vitality_timer(
 	//remove_grouped_player.Start();
 	guilds_timer.Start();
 	lotto_players_timer.Start();
+	watchdog_timer.Start();
 	xp_rate = -1;
 	ts_xp_rate = -1;
 	vitality_frequency = 0xFFFFFFFF;
@@ -268,6 +269,8 @@ void World::Process(){
 		SaveGuilds();
 	if (lotto_players_timer.Check())
 		CheckLottoPlayers();
+	if(watchdog_timer.Check())
+		zone_list.WatchdogHeartbeat();
 }
 
 vector<Variable*>* World::GetClientVariables(){
@@ -2303,3 +2306,39 @@ void World::PurgeStartingLists()
 
 	MStartingLists.releasewritelock();
 }
+
+void ZoneList::WatchdogHeartbeat()
+{
+	list<ZoneServer*>::iterator zone_iter;
+	ZoneServer* tmp = 0;
+	MZoneList.writelock(__FUNCTION__, __LINE__);
+
+	bool match = false;
+	for (zone_iter = zlist.begin(); zone_iter != zlist.end(); zone_iter++)
+	{
+		tmp = *zone_iter;
+		if (tmp)
+		{
+			int32 curTime = Timer::GetCurrentTime2();
+			sint64 diff = (sint64)curTime - (sint64)tmp->GetWatchdogTime();
+			if (diff > 60000)
+			{
+				tmp->SetWatchdogTime(Timer::GetCurrentTime2()); // reset so we don't continuously flood this heartbeat
+				LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i.. attempting to cancel threads...", tmp->GetZoneName(), diff);
+				tmp->CancelThreads();
+				MZoneList.releasewritelock(__FUNCTION__, __LINE__);
+				safe_delete(tmp);
+				match = true;
+				break;
+			}
+			else if (diff > 30000 && !tmp->isZoneShuttingDown())
+			{
+				LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i.. attempting shutdown", tmp->GetZoneName(), diff);
+				tmp->Shutdown();
+			}
+		}
+	}
+	if(!match)
+		MZoneList.releasewritelock(__FUNCTION__, __LINE__);
+}
+

@@ -641,7 +641,16 @@ public:
 	void SendHouseItems(Client* client);
 
 	MutexMap<int32, int32>							house_object_database_lookup;						// 1st int32 = model type, 2nd int32 = spawn id
+
+	int32 GetWatchdogTime() { return watchdogTimestamp; }
+	void SetWatchdogTime(int32 time) { watchdogTimestamp = time; }
+	void CancelThreads();
 private:
+#ifndef WIN32
+	pthread_t ZoneThread;
+	pthread_t SpawnThread;
+#endif
+
 	/* Private Functions */
 	void	AddTransporter(LocationTransportDestination* loc);
 	void	CheckDeadSpawnRemoval();
@@ -912,6 +921,7 @@ private:
 	// Map <transport if, map name>
 	map<int32, string> m_transportMaps;
 	
+	int32 watchdogTimestamp;
 public:
 	Spawn*				GetSpawn(int32 id);
 
