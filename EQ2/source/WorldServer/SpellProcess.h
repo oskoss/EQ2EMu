@@ -360,7 +360,7 @@ public:
 
 	MutexList<LuaSpell*>* GetActiveSpells() { return &active_spells; }
 
-	void RemoveTargetFromSpell(LuaSpell* spell, Spawn* target);
+	void RemoveTargetFromSpell(LuaSpell* spell, Spawn* target, bool targetMutexLocked=false);
 	void CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete = true);
 
 	/// <summary>Adds a solo HO to the SpellProcess</summary>
