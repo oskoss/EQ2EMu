@@ -2326,6 +2326,7 @@ void ZoneList::WatchdogHeartbeat()
 				tmp->SetWatchdogTime(Timer::GetCurrentTime2()); // reset so we don't continuously flood this heartbeat
 				LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i.. attempting to cancel threads...", tmp->GetZoneName(), diff);
 				tmp->CancelThreads();
+				zlist.erase(zone_iter);
 				MZoneList.releasewritelock(__FUNCTION__, __LINE__);
 				safe_delete(tmp);
 				match = true;
