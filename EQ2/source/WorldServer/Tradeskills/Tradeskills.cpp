@@ -165,7 +165,7 @@ void TradeskillMgr::Process() {
 
 			PacketStruct* packet = configReader.getStruct("WS_UpdateCreateItem", client->GetVersion());
 			if (packet) {
-				packet->setDataByName("spawn_id", client->GetPlayer()->player_spawn_reverse_id_map[tradeskill->table]);
+				packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(tradeskill->table));
 				packet->setDataByName("effect", effect);
 				packet->setDataByName("total_durability", tradeskill->currentDurability);
 				packet->setDataByName("total_progress", tradeskill->currentProgress);

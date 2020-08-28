@@ -114,6 +114,7 @@ Player::Player(){
 	pos_mutex.SetName("Player::pos_mutex");
 	vis_mutex.SetName("Player::vis_mutex");
 	info_mutex.SetName("Player::info_mutex");
+	index_mutex.SetName("Player::index_mutex");
 	m_playerSpawnQuestsRequired.SetName("Player::player_spawn_quests_required");
 	m_playerSpawnHistoryRequired.SetName("Player::player_spawn_history_required");
 	gm_vision = false;
@@ -165,11 +166,13 @@ Player::~Player(){
 	DeleteMail();
 	world.RemoveLottoPlayer(GetCharacterID());
 	safe_delete(info);
+	index_mutex.writelock(__FUNCTION__, __LINE__);
 	player_spawn_index_map.clear();
 	player_spawn_map.clear();
 	player_spawn_reverse_id_map.clear();
 	player_removed_spawns.clear();
 	player_spawn_id_map.clear();
+	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	info_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_info_packet_list.clear();
@@ -2932,11 +2935,13 @@ SpellEffects* Player::GetSpellEffects() {
 }
 
 void Player::ClearEverything(){
+	index_mutex.writelock(__FUNCTION__, __LINE__);
 	player_removed_spawns.clear();
 	player_spawn_map.clear();
 	player_spawn_index_map.clear();
 	player_spawn_id_map.clear();
 	player_spawn_reverse_id_map.clear();
+	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
 	map<int32, vector<int32>*>::iterator itr;
 	m_playerSpawnQuestsRequired.writelock(__FUNCTION__, __LINE__);
 	for (itr = player_spawn_quests_required.begin(); itr != player_spawn_quests_required.end(); itr++){
@@ -3803,42 +3808,76 @@ void Player::CalculateLocation(){
 }
 
 Spawn* Player::GetSpawnByIndex(int16 index){
+	Spawn* spawn = 0;
+
+	index_mutex.readlock(__FUNCTION__, __LINE__);
 	if(player_spawn_map.count(index) > 0)
-		return player_spawn_map[index];
-	else
-		return 0;
+		spawn = player_spawn_map[index];
+	index_mutex.releasereadlock(__FUNCTION__, __LINE__);
+
+	return spawn;
 }
 
-int16 Player::GetIndexForSpawn(Spawn* spawn){
+int16 Player::GetIndexForSpawn(Spawn* spawn) {
+	int16 val = 0;
+
+	index_mutex.readlock(__FUNCTION__, __LINE__);
 	if(player_spawn_index_map.count(spawn) > 0)
-		return player_spawn_index_map[spawn];
-	else
-		return 0;
+		val = player_spawn_index_map[spawn];
+	index_mutex.releasereadlock(__FUNCTION__, __LINE__);
+
+	return val;
 }
 
 bool Player::WasSpawnRemoved(Spawn* spawn){
+	bool wasRemoved = false;
+
+	index_mutex.readlock(__FUNCTION__, __LINE__);
 	if(player_removed_spawns.count(spawn) > 0)
-		return true;
-	else
-		return false;
+		wasRemoved = true;
+	index_mutex.releasereadlock(__FUNCTION__, __LINE__);
+
+	return wasRemoved;
 }
 
 void Player::RemoveSpawn(Spawn* spawn)
 {
 	LogWrite(PLAYER__DEBUG, 3, "Player", "Remove Spawn '%s' (%u)", spawn->GetName(), spawn->GetID());
+
+	info_mutex.writelock(__FUNCTION__, __LINE__);
+	pos_mutex.writelock(__FUNCTION__, __LINE__);
+	vis_mutex.writelock(__FUNCTION__, __LINE__);
+
+	index_mutex.writelock(__FUNCTION__, __LINE__);
+
 	player_removed_spawns[spawn] = 1;
 
+	if (player_spawn_index_map[spawn] && player_spawn_map.count(player_spawn_index_map[spawn]) > 0)
+		player_spawn_map.erase(player_spawn_index_map[spawn]);
+
+	if (player_spawn_index_map.count(spawn) > 0)
+		player_spawn_index_map.erase(spawn);
+
+	if (player_spawn_id_map.count(spawn->GetID()) && player_spawn_id_map[spawn->GetID()] == spawn)
+		player_spawn_id_map.erase(spawn->GetID());
+
+	if (player_spawn_reverse_id_map.count(spawn))
+		player_spawn_reverse_id_map.erase(spawn);
+
 	int32 id = spawn->GetID();
-	info_mutex.writelock(__FUNCTION__, __LINE__);
-	spawn_info_packet_list.erase(id);
+	if (spawn_info_packet_list.count(id))
+		spawn_info_packet_list.erase(id);
+
+	if (spawn_pos_packet_list.count(id))
+		spawn_pos_packet_list.erase(id);
+
+	if (spawn_vis_packet_list.count(id))
+		spawn_vis_packet_list.erase(id);
+
+	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
+
 	info_mutex.releasewritelock(__FUNCTION__, __LINE__);
-
-	pos_mutex.writelock(__FUNCTION__, __LINE__);
-	spawn_pos_packet_list.erase(id);
 	pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
-
-	vis_mutex.writelock(__FUNCTION__, __LINE__);
-	spawn_vis_packet_list.erase(id);
 	vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -4524,8 +4563,10 @@ bool Player::CanReceiveQuest(int32 quest_id){
 }
 
 void Player::ClearRemovedSpawn(Spawn* spawn){
+	index_mutex.writelock(__FUNCTION__, __LINE__);
 	if(player_removed_spawns.count(spawn) > 0)
 		player_removed_spawns.erase(spawn);
+	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 bool Player::ShouldSendSpawn(Spawn* spawn){
@@ -4896,10 +4937,13 @@ void Player::ResetSavedSpawns(){
 	spawn_pos_packet_list.clear();
 	pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
+	index_mutex.writelock(__FUNCTION__, __LINE__);
 	player_spawn_reverse_id_map.clear();
 	player_spawn_id_map.clear();
 	player_spawn_map.clear();
 	player_spawn_index_map.clear();
+	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
+
 	m_playerSpawnQuestsRequired.writelock(__FUNCTION__, __LINE__);
 	player_spawn_quests_required.clear();
 	m_playerSpawnQuestsRequired.releasewritelock(__FUNCTION__, __LINE__);

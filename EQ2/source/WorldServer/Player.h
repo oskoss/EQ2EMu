@@ -569,22 +569,74 @@ public:
 	void	ClearRemovedSpawn(Spawn* spawn);
 	bool	ShouldSendSpawn(Spawn* spawn);
 
-	map<int16, Spawn*>* GetPlayerSpawnMap(){
-		return &player_spawn_map;
-	}
-	map<Spawn*, int16>* GetPlayerSpawnIndexMap(){
-		return &player_spawn_index_map;
-	}
 	Spawn* GetSpawnWithPlayerID(int32 id){
+		Spawn* spawn = 0;
+
+		index_mutex.readlock(__FUNCTION__, __LINE__);
 		if (player_spawn_id_map.count(id) > 0)
-			return player_spawn_id_map[id];
-		return 0;
+			spawn = player_spawn_id_map[id];
+		index_mutex.releasereadlock(__FUNCTION__, __LINE__);
+		return spawn;
 	}
 	int32 GetIDWithPlayerSpawn(Spawn* spawn){
+		int32 id = 0;
+
+		index_mutex.readlock(__FUNCTION__, __LINE__);
 		if (player_spawn_reverse_id_map.count(spawn) > 0)
-			return player_spawn_reverse_id_map[spawn];
-		return 0;
+			id = player_spawn_reverse_id_map[spawn];
+		index_mutex.releasereadlock(__FUNCTION__, __LINE__);
+		return id;
 	}
+
+	void SetSpawnMap(Spawn* spawn)
+	{
+		index_mutex.writelock(__FUNCTION__, __LINE__);
+		spawn_id += 1;
+		int32 tmp_id = spawn_id;
+		player_spawn_id_map[tmp_id] = spawn;
+
+		if(player_spawn_reverse_id_map.count(spawn))
+			player_spawn_reverse_id_map.erase(spawn);
+
+		player_spawn_reverse_id_map.insert(make_pair(spawn,tmp_id));
+		index_mutex.releasewritelock(__FUNCTION__, __LINE__);
+	}
+
+	void SetSpawnMapIndex(Spawn* spawn, int16 index)
+	{
+		index_mutex.writelock(__FUNCTION__, __LINE__);
+		if (player_spawn_map.count(index))
+			player_spawn_map[index] = spawn;
+		else
+			player_spawn_map[index] = spawn;
+		index_mutex.releasewritelock(__FUNCTION__, __LINE__);
+	}
+
+	int16 SetSpawnMapAndIndex(Spawn* spawn)
+	{
+		int16 new_index = 0;
+		index_mutex.writelock(__FUNCTION__, __LINE__);
+		spawn_index += 1;
+		if (spawn_index == 255)
+			spawn_index += 1; //just so we dont have to worry about overloading
+
+		new_index = spawn_index;
+
+		if (player_spawn_index_map.count(spawn))
+			player_spawn_index_map.erase(spawn);
+
+		player_spawn_index_map.insert(make_pair(spawn,new_index));
+
+		if (player_spawn_map.count(new_index))
+			player_spawn_map[new_index] = spawn;
+		else
+			player_spawn_map.insert(make_pair(new_index, spawn));
+
+		index_mutex.releasewritelock(__FUNCTION__, __LINE__);
+
+		return new_index;
+	}
+
 	PacketStruct*	GetQuestJournalPacket(bool all_quests, int16 version, int32 crc, int32 current_quest_id);
 	void			RemoveQuest(int32 id, bool delete_quest);
 	vector<Quest*>* CheckQuestsChatUpdate(Spawn* spawn);
@@ -602,10 +654,6 @@ public:
 	void AddHistoryRequiredSpawn(Spawn* spawn, int32 event_id);
 	int16				spawn_index;
 	int32				spawn_id;
-	map<Spawn*, int16>	player_spawn_index_map;
-	map<int16, Spawn*>	player_spawn_map;
-	map<int32, Spawn*>	player_spawn_id_map;
-	map<Spawn*, int32>	player_spawn_reverse_id_map;
 	map<int32, vector<int32>*>  player_spawn_quests_required;
 	map<int32, vector<int32>*>   player_spawn_history_required;
 	Mutex				m_playerSpawnQuestsRequired;
@@ -817,6 +865,7 @@ public:
 	Mutex info_mutex;
 	Mutex pos_mutex;
 	Mutex vis_mutex;
+	Mutex index_mutex;
 
 	void SetTempMount(int32 id) { tmp_mount_model = id; }
 	int32 GetTempMount() { return tmp_mount_model; }
@@ -864,7 +913,6 @@ private:
 	map<Spawn*, bool>	current_quest_flagged;
 	PlayerFaction		factions;
 	map<int32, Quest*>	completed_quests;
-	map<Spawn*, int8>	player_removed_spawns;
 	bool				charsheet_changed;
 	map<int32, string>	spawn_vis_packet_list;
 	map<int32, string>	spawn_info_packet_list;
@@ -965,6 +1013,12 @@ private:
 	EQ2_Color tmp_mount_saddle_color;
 
 	bool gm_vision;
+
+	map<Spawn*, int16>	player_spawn_index_map;
+	map<int16, Spawn*>	player_spawn_map;
+	map<int32, Spawn*>	player_spawn_id_map;
+	map<Spawn*, int32>	player_spawn_reverse_id_map;
+	map<Spawn*, int8>	player_removed_spawns;
 };
 #pragma pack()
 #endif

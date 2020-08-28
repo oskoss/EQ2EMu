@@ -298,6 +298,8 @@ public:
 	void RemovePrimaryEntityCommand(const char* command);
 	bool SetPermissionToEntityCommand(EntityCommand* command, Player* player, bool permissionValue);
 
+	void RemoveSpawnFromPlayer(Player* player);
+
 	void AddSecondaryEntityCommand(const char* name, float distance, const char* command, const char* error_text, int16 cast_time, int32 spell_visual){
 		secondary_command_list.push_back(CreateEntityCommand(name, distance, command, error_text, cast_time, spell_visual));
 	}

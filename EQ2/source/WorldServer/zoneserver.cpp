@@ -1055,9 +1055,7 @@ void ZoneServer::CheckSpawnRange(Spawn* spawn){
 }
 
 void ZoneServer::PrepareSpawnID(Player* player, Spawn* spawn){
-	player->spawn_id++;
-	player->player_spawn_id_map[player->spawn_id] = spawn;
-	player->player_spawn_reverse_id_map[spawn] = player->spawn_id;
+	player->SetSpawnMap(spawn);
 }
 
 void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
@@ -1071,24 +1069,24 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 
 	Spawn* spawn = 0;
 	map<float, vector<Spawn*>* > closest_spawns;
-	if(spawn_range_map.count(client) > 0) {
-		if(initial_login || client->IsConnected()) {
+	if (spawn_range_map.count(client) > 0) {
+		if (initial_login || client->IsConnected()) {
 			MutexMap<int32, float >::iterator spawn_iter = spawn_range_map.Get(client)->begin();
-			while(spawn_iter.Next()) {
+			while (spawn_iter.Next()) {
 				spawn = GetSpawnByID(spawn_iter->first, true);
-				if(spawn && spawn->GetPrivateQuestSpawn()) {
-					if(!spawn->IsPrivateSpawn())
+				if (spawn && spawn->GetPrivateQuestSpawn()) {
+					if (!spawn->IsPrivateSpawn())
 						spawn->AddAllowAccessSpawn(spawn);
-					if(spawn->MeetsSpawnAccessRequirements(client->GetPlayer())) {
-						if(spawn->IsPrivateSpawn() && !spawn->AllowedAccess(client->GetPlayer()))
+					if (spawn->MeetsSpawnAccessRequirements(client->GetPlayer())) {
+						if (spawn->IsPrivateSpawn() && !spawn->AllowedAccess(client->GetPlayer()))
 							spawn->AddAllowAccessSpawn(client->GetPlayer());
 					}
-					else if(spawn->AllowedAccess(client->GetPlayer()))
+					else if (spawn->AllowedAccess(client->GetPlayer()))
 						spawn->RemoveSpawnAccess(client->GetPlayer());
 				}
-				if(spawn && spawn != client->GetPlayer() && client->GetPlayer()->ShouldSendSpawn(spawn)) {
-					if((!initial_login && spawn_iter->second <= SEND_SPAWN_DISTANCE) || (initial_login && (spawn_iter->second <= (SEND_SPAWN_DISTANCE/2) || spawn->IsWidget()))) {
-						if(closest_spawns.count(spawn_iter->second) == 0)
+				if (spawn && spawn != client->GetPlayer() && client->GetPlayer()->ShouldSendSpawn(spawn)) {
+					if ((!initial_login && spawn_iter->second <= SEND_SPAWN_DISTANCE) || (initial_login && (spawn_iter->second <= (SEND_SPAWN_DISTANCE / 2) || spawn->IsWidget()))) {
+						if (closest_spawns.count(spawn_iter->second) == 0)
 							closest_spawns[spawn_iter->second] = new vector<Spawn*>();
 						closest_spawns[spawn_iter->second]->push_back(spawn);
 						PrepareSpawnID(client->GetPlayer(), spawn);
@@ -1098,15 +1096,19 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 		}
 		vector<Spawn*>::iterator spawn_iter2;
 		map<float, vector<Spawn*>* >::iterator itr;
-		for(itr = closest_spawns.begin(); itr != closest_spawns.end(); itr++) {
-			for(spawn_iter2 = itr->second->begin(); spawn_iter2 != itr->second->end(); spawn_iter2++) {
+		for (itr = closest_spawns.begin(); itr != closest_spawns.end(); ) {
+			for (spawn_iter2 = itr->second->begin(); spawn_iter2 != itr->second->end(); spawn_iter2++) {
 				spawn = *spawn_iter2;
 				client->GetPlayer()->ClearRemovedSpawn(spawn);
 				SendSpawn(spawn, client);
-				if(client->ShouldTarget() && client->GetCombineSpawn() == spawn)
+				if (client->ShouldTarget() && client->GetCombineSpawn() == spawn)
 					client->TargetSpawn(spawn);
 			}
-			delete itr->second;
+			vector<Spawn*>* vect = itr->second;
+			map<float, vector<Spawn*>* >::iterator tmpitr = itr;
+			itr++;
+			closest_spawns.erase(tmpitr);
+			safe_delete(vect);
 		}
 	}
 
@@ -1215,8 +1217,20 @@ void ZoneServer::DelayedSpawnRemoval(bool force_delete_all) {
 
 void ZoneServer::AddPendingDelete(Spawn* spawn) {
 	MSpawnDeleteList.writelock(__FUNCTION__, __LINE__);
-	if(spawn_delete_list.count(spawn) == 0)
+	if (spawn_delete_list.count(spawn) == 0)
 		spawn_delete_list.insert(make_pair(spawn, Timer::GetCurrentTime2() + spawn_delete_timer)); //give other threads up to 30 seconds to stop using this spawn reference
+	MSpawnDeleteList.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void ZoneServer::RemovePendingDelete(Spawn* spawn) {
+	if (!spawn)
+		return;
+
+	MSpawnDeleteList.writelock(__FUNCTION__, __LINE__);
+	if (spawn_delete_list.count(spawn) > 0)
+	{
+		spawn_delete_list.erase(spawn);
+	}
 	MSpawnDeleteList.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -2144,7 +2158,6 @@ Spawn* ZoneServer::ProcessSpawnLocation(SpawnLocation* spawnlocation, bool respa
 			if (!spawn)
 			{
 				LogWrite(ZONE__ERROR, 0, "Zone", "Error adding spawn to zone");
-				safe_delete(spawn);
 				continue;
 			}
 
@@ -3672,12 +3685,10 @@ bool ZoneServer::SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* pac
 	LogWrite(ZONE__DEBUG, 7, "Zone", "%s: Processing SendRemoveSpawn for spawn index %u (%s)...cur_id: %i, wasremoved:: %i", client->GetPlayer()->GetName(), index, spawn->GetName(), cur_id, wasRemoved);
 	if(packet && index > 0 && !wasRemoved)
 	{
+		packet->ResetData();
+
 		packet->setDataByName("spawn_index", index);
-		client->GetPlayer()->GetPlayerSpawnMap()->erase(index);
-		client->GetPlayer()->GetPlayerSpawnIndexMap()->erase(spawn);
-		client->GetPlayer()->player_spawn_id_map.erase(cur_id);
-		client->GetPlayer()->player_spawn_reverse_id_map.erase(spawn);
-		client->GetPlayer()->RemoveSpawn(spawn); // sets it as removed
+		spawn->RemoveSpawnFromPlayer(client->GetPlayer());
 
 		if(delete_spawn)
 			packet->setDataByName("delete", 1);	
@@ -3921,6 +3932,8 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 
 	safe_delete(packet);
 
+	bool alreadyDeletedSpawn = false;
+
 	if(respawn && !spawn->IsPlayer() && spawn->GetRespawnTime() > 0 && spawn->GetSpawnLocationID() > 0)
 	{
 		LogWrite(ZONE__DEBUG, 3, "Zone", "Handle NPC Respawn for '%s'.", spawn->GetName());
@@ -3942,12 +3955,14 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 				spawn->GetRespawnTime(),spawn->GetZone()->GetInstanceID());
 			}
 			safe_delete(spawn);
+			alreadyDeletedSpawn = true;
 		}
 		else
 		{
 			int32 spawnLocationID = spawn->GetSpawnLocationID();
 			int32 spawnRespawnTime = spawn->GetRespawnTime();
 			safe_delete(spawn);
+			alreadyDeletedSpawn = true;
 			respawn_timers.Put(spawnLocationID, Timer::GetCurrentTime2() + spawnRespawnTime * 1000);
 		}
 	}
@@ -3955,7 +3970,7 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 	// Do we really need the mutex locks and check to dead_spawns as we remove it from dead spawns at the start of this function
 	if (lock && !respawn)
 		MDeadSpawns.readlock(__FUNCTION__, __LINE__);
-	if(!respawn && delete_spawn && dead_spawns.count(spawn->GetID()) == 0)
+	if(!alreadyDeletedSpawn && !respawn && delete_spawn && dead_spawns.count(spawn->GetID()) == 0)
 		AddPendingDelete(spawn);
 	if (lock && !respawn)
 		MDeadSpawns.releasereadlock(__FUNCTION__, __LINE__);
@@ -6277,12 +6292,18 @@ void ZoneServer::HidePrivateSpawn(Spawn* spawn) {
 	Client* client = 0;	
 	Player* player = 0;
 	PacketStruct* packet = 0;
+	int32 packet_version = 0;
 	MutexList<Client*>::iterator itr = connected_clients.begin();
 	while (itr->Next()) {
 		client = itr->value;
 		player = client->GetPlayer();
 		if (player->WasSentSpawn(spawn->GetID()) && !player->WasSpawnRemoved(spawn)) {
-			packet = configReader.getStruct("WS_DestroyGhostCmd", client->GetVersion());
+			if (!packet || packet_version != client->GetVersion()) {
+				safe_delete(packet);
+				packet_version = client->GetVersion();
+				packet = configReader.getStruct("WS_DestroyGhostCmd", packet_version);
+			}
+
 			SendRemoveSpawn(client, spawn, packet);
 			if(spawn_range_map.count(client) > 0)
 				spawn_range_map.Get(client)->erase(spawn->GetID());
@@ -6291,6 +6312,8 @@ void ZoneServer::HidePrivateSpawn(Spawn* spawn) {
 				player->SetTarget(0);
 		}
 	}
+
+	safe_delete(packet);
 }
 
 SpawnLocation* ZoneServer::GetSpawnLocation(int32 id) {

@@ -40,7 +40,7 @@ void ClientPacketFunctions::SendHeroicOPUpdate(Client* client, HeroicOP* ho) {
 	PacketStruct* packet = configReader.getStruct("WS_HeroicOpportunity", client->GetVersion());
 	Spell* spell = 0;
 	if (packet) {
-		packet->setDataByName("id", client->GetPlayer()->player_spawn_reverse_id_map[client->GetPlayer()]);
+		packet->setDataByName("id", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
 		if (ho->GetWheel()) {
 			spell = master_spell_list.GetSpell(ho->GetWheel()->spell_id, 1);
 			if (!spell) {

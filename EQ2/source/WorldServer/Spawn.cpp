@@ -198,7 +198,9 @@ void Spawn::InitializeHeaderPacketData(Player* player, PacketStruct* header, int
 		vector<Spawn*>::iterator itr;
 		int i = 0;
 		for (itr = spawn_group_list->begin(); itr != spawn_group_list->end(); itr++, i++){
-			header->setArrayDataByName("group_spawn_id", player->GetIDWithPlayerSpawn((*itr)), i);
+			int32 idx = 0;
+			idx = player->GetIDWithPlayerSpawn((*itr));
+			header->setArrayDataByName("group_spawn_id", idx, i);
 		}
 		MSpawnGroup->releasereadlock(__FUNCTION__, __LINE__);
 	}
@@ -383,29 +385,21 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 		((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->pet_id = player->spawn_id;
 		player->SetCharSheetChanged(true);
 	}
+	m_Update.writelock(__FUNCTION__, __LINE__);
 
-	int16 index;
-	if (player->player_spawn_index_map.count(this) > 0) {
-		index = player->player_spawn_index_map[this];
-		player->player_spawn_map[index] = this;
+	int16 index = 0;
+	if ((index = player->GetIndexForSpawn(this)) > 0) {
+		player->SetSpawnMapIndex(this, index);
 	}
 	else {
-		player->spawn_index++;
-		if (player->spawn_index == 255)
-			player->spawn_index++; //just so we dont have to worry about overloading
-		index = player->spawn_index;
-		player->player_spawn_index_map[this] = index;
-		player->player_spawn_map[index] = this;
+		index = player->SetSpawnMapAndIndex(this);
 	}
 
 	// Jabantiz - [Bug] Client Crash on Revive
-	if (player->player_spawn_reverse_id_map.count(this) == 0) {
-		int32 spawn_id = ++player->spawn_id;
-		player->player_spawn_id_map[spawn_id] = this;
-		player->player_spawn_reverse_id_map[this] = spawn_id;
+	if (player->GetIDWithPlayerSpawn(this) == 0) {
+		player->SetSpawnMap(this);
 	}
 
-	m_Update.writelock(__FUNCTION__, __LINE__);
 	PacketStruct* header = player->GetSpawnHeaderStruct();
 	header->ResetData();
 	InitializeHeaderPacketData(player, header, index);
@@ -562,6 +556,7 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 	}
 	if (offset > 0)
 		DumpPacket(part2, part2_size);
+
 	uchar tmp[1100];
 	bool reverse = (version > 283);
 	part2_size = Pack(tmp, part2, part2_size, 1100, version, reverse);
@@ -631,7 +626,7 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 }
 
 uchar* Spawn::spawn_info_changes(Player* player, int16 version){
-	int16 index = player->player_spawn_index_map[this];
+	int16 index = player->GetIndexForSpawn(this);
 
 	PacketStruct* packet = player->GetSpawnInfoStruct();
 
@@ -688,7 +683,7 @@ uchar* Spawn::spawn_info_changes(Player* player, int16 version){
 
 uchar* Spawn::spawn_vis_changes(Player* player, int16 version){
 	PacketStruct* vis_struct = player->GetSpawnVisStruct();
-	int16 index = player->player_spawn_index_map[this];
+	int16 index = player->GetIndexForSpawn(this);
 
 	player->vis_mutex.writelock(__FUNCTION__, __LINE__);
 	uchar* orig_packet = player->GetSpawnVisPacketForXOR(id);
@@ -995,7 +990,7 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 }
 
 uchar* Spawn::spawn_info_changes_ex(Player* player, int16 version) {
-	int16 index = player->player_spawn_index_map[this];
+	int16 index = player->GetIndexForSpawn(this);
 
 	PacketStruct* packet = player->GetSpawnInfoStruct();
 
@@ -1059,7 +1054,7 @@ uchar* Spawn::spawn_info_changes_ex(Player* player, int16 version) {
 
 uchar* Spawn::spawn_vis_changes_ex(Player* player, int16 version) {
 	PacketStruct* vis_struct = player->GetSpawnVisStruct();
-	int16 index = player->player_spawn_index_map[this];
+	int16 index = player->GetIndexForSpawn(this);
 
 	player->vis_mutex.writelock(__FUNCTION__, __LINE__);
 
@@ -3744,4 +3739,11 @@ bool Spawn::SetPermissionToEntityCommand(EntityCommand* command, Player* player,
 	}
 
 	return false;
+}
+
+void Spawn::RemoveSpawnFromPlayer(Player* player)
+{
+	m_Update.writelock(__FUNCTION__, __LINE__);
+	player->RemoveSpawn(this); // sets it as removed
+	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 }
