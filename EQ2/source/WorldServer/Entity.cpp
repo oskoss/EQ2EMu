@@ -1370,11 +1370,11 @@ float Entity::GetSpeed() {
 	if (EngagedInCombat() && GetMaxSpeed() > 0.0f)
 		ret = GetMaxSpeed();
 
-	if (IsStealthed() || IsInvis())
+	if ((IsStealthed() || IsInvis()) && stats.count(ITEM_STAT_STEALTHINVISSPEEDMOD))
 		ret += stats[ITEM_STAT_STEALTHINVISSPEEDMOD];
-	else if (EngagedInCombat())
+	else if (EngagedInCombat() && stats.count(ITEM_STAT_OFFENSIVESPEED))
 		ret += stats[ITEM_STAT_OFFENSIVESPEED];
-	else
+	else if (stats.count(ITEM_STAT_SPEED) && stats.count(ITEM_STAT_MOUNTSPEED))
 		ret += max(stats[ITEM_STAT_SPEED], stats[ITEM_STAT_MOUNTSPEED]);
 
 	ret *= speed_multiplier;
