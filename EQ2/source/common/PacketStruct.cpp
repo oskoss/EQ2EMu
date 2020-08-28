@@ -450,11 +450,20 @@ PacketStruct::~PacketStruct() {
 }
 
 void PacketStruct::deleteDataStructs(vector<DataStruct*>* data_structs) {
+	if ( !data_structs || data_structs->size() == 0 )
+	return;
+
 	DataStruct* data = 0;
 	vector<DataStruct*>::iterator itr;
 	for (itr = data_structs->begin(); itr != data_structs->end(); itr++) {
 		data = *itr;
 		void* ptr = GetStructPointer(data);
+
+		// stop the struct_data from growing with old data/ptr info, memory leaking and eventual buffer overflow (crash)
+		map<DataStruct*, void*>::iterator datastr = struct_data.find(data);
+		if (datastr != struct_data.end())
+			struct_data.erase(datastr);
+
 		switch (data->GetType()) {
 		case DATA_STRUCT_EQ2_8BIT_STRING: {
 			EQ2_8BitString* real_ptr = (EQ2_8BitString*)ptr;
