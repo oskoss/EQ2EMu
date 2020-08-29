@@ -6656,6 +6656,10 @@ void Commands::Command_Pet(Client* client, Seperator* sep)
 	//LogWrite(MISC__TODO, 1, "Command", "TODO-Command: Pet Commands");
 	//client->Message(CHANNEL_COLOR_YELLOW, "Pets are not yet implemented.");
 
+
+	if (!sep || !sep->arg[0])
+		return; // should have sep->arg[0] filled
+
 	if (strcmp(sep->arg[0], "hide") == 0) {
 		// doing /pet hide will toggle the hide status on all the pets that can be hidden
 		Entity* pet = client->GetPlayer()->GetDeityPet();
