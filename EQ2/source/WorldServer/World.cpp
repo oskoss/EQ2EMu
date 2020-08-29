@@ -2324,17 +2324,19 @@ void ZoneList::WatchdogHeartbeat()
 			if (diff > 60000)
 			{
 				tmp->SetWatchdogTime(Timer::GetCurrentTime2()); // reset so we don't continuously flood this heartbeat
-				LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i.. attempting to cancel threads...", tmp->GetZoneName(), diff);
+				LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. attempting to cancel threads...", tmp->GetZoneName(), diff);
+#ifndef WIN32
 				tmp->CancelThreads();
 				zlist.erase(zone_iter);
-				MZoneList.releasewritelock(__FUNCTION__, __LINE__);
 				safe_delete(tmp);
+#endif
+				MZoneList.releasewritelock(__FUNCTION__, __LINE__);
 				match = true;
 				break;
 			}
 			else if (diff > 30000 && !tmp->isZoneShuttingDown())
 			{
-				LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i.. attempting shutdown", tmp->GetZoneName(), diff);
+				LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. attempting shutdown", tmp->GetZoneName(), diff);
 				tmp->Shutdown();
 			}
 		}
