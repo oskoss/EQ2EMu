@@ -793,7 +793,7 @@ public:
 
 	GroupMemberInfo* GetGroupMemberInfo() { return group_member_info; }
 	void SetGroupMemberInfo(GroupMemberInfo* info) { group_member_info = info; }
-	void UpdateGroupMemberInfo();
+	void UpdateGroupMemberInfo(bool inGroupMgrLock=false, bool groupMembersLocked=false);
 
 	void CustomizeAppearance(PacketStruct* packet);
 

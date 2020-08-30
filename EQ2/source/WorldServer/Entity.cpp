@@ -2347,23 +2347,20 @@ void Entity::RemoveSafefallSpell(LuaSpell* spell){
 		((Player*)this)->SetPlayerControlFlag(4, 32, false);
 }
 
-void Entity::UpdateGroupMemberInfo() {
-	if (!group_member_info)
+void Entity::UpdateGroupMemberInfo(bool inGroupMgrLock, bool groupMembersLocked) {
+	if (!group_member_info || group_id == 0)
 		return;
 
-	group_member_info->class_id = GetAdventureClass();
-	group_member_info->hp_max = GetTotalHP();
-	group_member_info->hp_current = GetHP();
-	group_member_info->level_max = GetLevel();
-	group_member_info->level_current = GetLevel();
-	group_member_info->name = string(GetName());
-	group_member_info->power_current = GetPower();
-	group_member_info->power_max = GetTotalPower();
-	group_member_info->race_id = GetRace();
-	if (GetZone())
-		group_member_info->zone = GetZone()->GetZoneDescription();
-	else
-		group_member_info->zone = "Unknown";
+	if(!inGroupMgrLock)
+		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+
+	PlayerGroup* group = world.GetGroupManager()->GetGroup(group_id);
+
+	if (group)
+		group->UpdateGroupMemberInfo(this, groupMembersLocked);
+
+	if(!inGroupMgrLock)
+		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 }
 
 #include "WorldDatabase.h"

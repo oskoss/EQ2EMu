@@ -1338,6 +1338,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		if (!IsReadyForSpawns())
 			SetReadyForSpawns(true);
 		SendCharInfo();
+		world.RejoinGroup(this, rejoin_group_id);
 		pos_update.Start();
 		quest_pos_timer.Start();
 		break;
@@ -3513,9 +3514,6 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 		return;
 	}
 
-	// block out the member info for the group
-	TempRemoveGroup();
-
 	client_zoning = true;
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting player Resurrecting to 'true'", __FUNCTION__);
 	player->SetResurrecting(true);
@@ -3542,6 +3540,9 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 		player->UpdateGroupMemberInfo();
 		world.GetGroupManager()->SendGroupUpdate(player->GetGroupMemberInfo()->group_id, this);
 	}
+
+	// block out the member info for the group
+	TempRemoveGroup();
 
 	UpdateTimeStampFlag(ZONE_UPDATE_FLAG);
 
@@ -8703,7 +8704,6 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 				new_client_login = true;
 				GetCurrentZone()->AddClient(this); //add to zones client list
 
-				world.RejoinGroup(this, rejoin_group_id);
 				zone_list.AddClientToMap(player->GetName(), this);
 			}
 			else {

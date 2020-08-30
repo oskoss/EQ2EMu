@@ -1499,7 +1499,7 @@ void World::RejoinGroup(Client* client, int32 group_id){
 			info->member = client->GetPlayer();
 			client->GetPlayer()->SetGroup(group);
 			client->GetPlayer()->SetGroupMemberInfo(info);
-			client->GetPlayer()->UpdateGroupMemberInfo();
+			client->GetPlayer()->UpdateGroupMemberInfo(true, true);
 			LogWrite(PLAYER__DEBUG, 0, "Player", "Identified group match for player %s to group id %u", name.c_str(), group_id);
 			match = true;
 			break;

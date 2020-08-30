@@ -62,10 +62,10 @@ bool PlayerGroup::AddMember(Entity* member) {
 		gmi->client = 0;
 
 	member->SetGroupMemberInfo(gmi);
-	member->UpdateGroupMemberInfo();
-
+	member->group_id = gmi->group_id;
 	MGroupMembers.writelock();
 	m_members.push_back(gmi);
+	member->UpdateGroupMemberInfo(true, true);
 	MGroupMembers.releasewritelock();
 
 	SendGroupUpdate();
@@ -257,13 +257,14 @@ void PlayerGroupManager::NewGroup(Entity* leader) {
 
 	// Create a new group with the valid ID we got from above
 	PlayerGroup* new_group = new PlayerGroup(m_nextGroupID);
+
+	// Add the new group to the list (need to do this first, AddMember needs ref to the PlayerGroup ptr -> UpdateGroupMemberInfo)
+	m_groups[m_nextGroupID] = new_group;
+
 	// Add the leader to the group
 	new_group->AddMember(leader);
 
 	leader->GetGroupMemberInfo()->leader = true;
-
-	// Add the new group to the list
-	m_groups[m_nextGroupID] = new_group;
 
 	MGroups.releasewritelock(__FUNCTION__, __LINE__);
 }
@@ -767,4 +768,32 @@ void PlayerGroup::RemoveClientReference(Client* remove) {
 		}
 	}
 	MGroupMembers.releasewritelock();
+}
+
+void PlayerGroup::UpdateGroupMemberInfo(Entity* ent, bool groupMembersLocked) {
+	Player* player = (Player*)ent;
+
+	if (!player || !player->GetGroupMemberInfo())
+		return;
+
+	if(!groupMembersLocked)
+		MGroupMembers.writelock();
+
+	GroupMemberInfo* group_member_info = player->GetGroupMemberInfo();
+	player->GetGroupMemberInfo()->class_id = player->GetAdventureClass();
+	group_member_info->hp_max = player->GetTotalHP();
+	group_member_info->hp_current = player->GetHP();
+	group_member_info->level_max = player->GetLevel();
+	group_member_info->level_current = player->GetLevel();
+	group_member_info->name = string(player->GetName());
+	group_member_info->power_current = player->GetPower();
+	group_member_info->power_max = player->GetTotalPower();
+	group_member_info->race_id = player->GetRace();
+	if (player->GetZone())
+		group_member_info->zone = player->GetZone()->GetZoneDescription();
+	else
+		group_member_info->zone = "Unknown";
+
+	if(!groupMembersLocked)
+		MGroupMembers.releasewritelock();
 }

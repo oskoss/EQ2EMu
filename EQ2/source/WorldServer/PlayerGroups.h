@@ -84,6 +84,7 @@ public:
 	void MakeLeader(Entity* new_leader);
 
 	void RemoveClientReference(Client* remove);
+	void UpdateGroupMemberInfo(Entity* ent, bool groupMembersLocked=false);
 
 	Mutex MGroupMembers;				// Mutex for the group members
 private:
