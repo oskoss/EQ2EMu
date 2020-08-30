@@ -842,6 +842,20 @@ public:
 	void UnlockLoot() {
 		MLootItems.unlock();
 	}
+	void ClearLoot() {
+
+		MLootItems.lock();
+		vector<Item*>::iterator itr;
+		for (itr = loot_items.begin(); itr != loot_items.end();) {
+			Item* itm = *itr;
+			itr++;
+			safe_delete(itm);
+		}
+
+		loot_items.clear();
+
+		MLootItems.unlock();
+	}
 	int32 GetLootCoins() {
 		return loot_coins;
 	}

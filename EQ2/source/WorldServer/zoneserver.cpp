@@ -4324,7 +4324,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 
 		if (!((NPC*)dead)->Brain()->PlayerInEncounter()) {
 			dead->SetLootCoins(0);
-			dead->GetLootItems()->clear();
+			dead->ClearLoot();
 		}
 
 		// If dead has loot attempt to drop a chest
