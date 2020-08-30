@@ -73,7 +73,7 @@ NPC::NPC(NPC* old_npc){
 		SetTotalPowerBase(old_npc->GetTotalPowerBase());		
 		faction_id = old_npc->faction_id;
 		movement_interrupted = false;
-		SetQuestsRequired(old_npc->GetQuestsRequired());
+		old_npc->SetQuestsRequired(this);
 		SetTransporterID(old_npc->GetTransporterID());
 
 		SetAttackType(old_npc->GetAttackType());

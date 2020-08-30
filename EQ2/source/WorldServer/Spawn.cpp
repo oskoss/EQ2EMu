@@ -113,6 +113,7 @@ Spawn::Spawn(){
 	pickup_item_id = 0;
 	pickup_unique_item_id = 0;
 	disable_sounds = false;
+	has_quests_required = false;
 }
 
 Spawn::~Spawn(){
@@ -125,6 +126,8 @@ Spawn::~Spawn(){
 	for(int32 i=0;i<secondary_command_list.size();i++){
 		safe_delete(secondary_command_list[i]);
 	}
+	secondary_command_list.clear();
+
 	RemoveSpawnFromGroup();
 	if (MMovementLocations)
 		MMovementLocations->writelock(__FUNCTION__, __LINE__);
@@ -142,13 +145,19 @@ Spawn::~Spawn(){
 	MMovementLoop.lock();
 	for (int32 i = 0; i < movement_loop.size(); i++)
 		safe_delete(movement_loop.at(i));
+	movement_loop.clear();
 	MMovementLoop.unlock();
+
+	m_requiredHistory.writelock(__FUNCTION__, __LINE__);
+	required_history.clear();
+	m_requiredHistory.releasewritelock(__FUNCTION__, __LINE__);
 
 	map<int32, vector<int16>* >::iterator rq_itr;
 	m_requiredQuests.writelock(__FUNCTION__, __LINE__);
 	for (rq_itr = required_quests.begin(); rq_itr != required_quests.end(); rq_itr++){
 		safe_delete(rq_itr->second);
 	}
+	required_quests.clear();
 	m_requiredQuests.releasewritelock(__FUNCTION__, __LINE__);
 
 	// just in case to make sure data is destroyed
@@ -1878,21 +1887,23 @@ bool Spawn::IsClientInMerchantLevelRange(Client* client, bool sendMessageIfDenie
 	return true;
 }
 
-void Spawn::SetQuestsRequired(map<int32, vector<int16>* >* quests){
-	if(quests){
+void Spawn::SetQuestsRequired(Spawn* new_spawn){
+	m_requiredQuests.writelock(__FUNCTION__, __LINE__);
+	if(required_quests.size() > 0){
 		map<int32, vector<int16>* >::iterator itr;
-		for(itr = quests->begin(); itr != quests->end(); itr++){
+		for(itr = required_quests.begin(); itr != required_quests.end(); itr++){
 			vector<int16>* quest_steps = itr->second;
 			for (int32 i = 0; i < quest_steps->size(); i++)
-				SetQuestsRequired(itr->first, quest_steps->at(i));
+				new_spawn->SetQuestsRequired(itr->first, quest_steps->at(i));
 		}
 	}
+	m_requiredQuests.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 void Spawn::SetQuestsRequired(int32 quest_id, int16 quest_step){
 	m_requiredQuests.writelock(__FUNCTION__, __LINE__);
 	if (required_quests.count(quest_id) == 0)
-		required_quests[quest_id] = new vector<int16>;
+		required_quests.insert(make_pair(quest_id, new vector<int16>));
 	else{
 		for (int32 i = 0; i < required_quests[quest_id]->size(); i++){
 			if (required_quests[quest_id]->at(i) == quest_step){
@@ -1901,8 +1912,15 @@ void Spawn::SetQuestsRequired(int32 quest_id, int16 quest_step){
 			}
 		}
 	}
+
+	has_quests_required = true;
 	required_quests[quest_id]->push_back(quest_step);
 	m_requiredQuests.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+bool Spawn::HasQuestsRequired()
+{
+	return has_quests_required;
 }
 
 void Spawn::SetRequiredHistory(int32 event_id, int32 value1, int32 value2){
@@ -1913,10 +1931,6 @@ void Spawn::SetRequiredHistory(int32 event_id, int32 value1, int32 value2){
 	m_requiredHistory.writelock(__FUNCTION__, __LINE__);
 	required_history[event_id] = set_value;
 	m_requiredHistory.releasewritelock(__FUNCTION__, __LINE__);
-}
-
-map<int32, vector<int16>* >* Spawn::GetQuestsRequired(){
-	return &required_quests;
 }
 
 void Spawn::SetTransporterID(int32 id){

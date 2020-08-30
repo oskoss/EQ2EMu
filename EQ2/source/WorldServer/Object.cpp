@@ -87,7 +87,7 @@ Object*	Object::Copy(){
 	new_spawn->SetTotalPower(GetTotalPower());
 	new_spawn->SetHP(GetHP());
 	new_spawn->SetPower(GetPower());
-	new_spawn->SetQuestsRequired(GetQuestsRequired());
+	SetQuestsRequired(new_spawn);
 	new_spawn->SetTransporterID(GetTransporterID());
 	new_spawn->SetDeviceID(GetDeviceID());
 	new_spawn->SetSoundsDisabled(IsSoundsDisabled());

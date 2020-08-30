@@ -47,7 +47,7 @@ public:
 		new_spawn->SetAttemptsPerHarvest(num_attempts_per_harvest);
 		new_spawn->SetGroundSpawnEntryID(groundspawn_id);
 		new_spawn->SetCollectionSkill(collection_skill.c_str());
-		new_spawn->SetQuestsRequired(GetQuestsRequired());
+		SetQuestsRequired(new_spawn);
 		new_spawn->forceMapCheck = forceMapCheck;
 		return new_spawn;
 	}

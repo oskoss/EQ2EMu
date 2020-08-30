@@ -943,10 +943,10 @@ public:
 	bool	IsClientInMerchantLevelRange(Client* ent, bool sendMessageIfDenied = true);
 	int32	GetMerchantMinLevel();
 	int32	GetMerchantMaxLevel();
-	void	SetQuestsRequired(map<int32, vector<int16>* >* quests);
+	void	SetQuestsRequired(Spawn* new_spawn);
 	void	SetQuestsRequired(int32 quest_id, int16 quest_step);
+	bool	HasQuestsRequired();
 	void	SetRequiredHistory(int32 event_id, int32 value1, int32 value2);
-	map<int32, vector<int16>* >*	GetQuestsRequired();
 	void	SetTransporterID(int32 id);
 	int32	GetTransporterID();
 	bool	MeetsSpawnAccessRequirements(Player* player);
@@ -1132,6 +1132,7 @@ public:
 	void	SetSoundsDisabled(bool val) { disable_sounds = val; }
 protected:
 
+	bool	has_quests_required;
 	bool	send_spawn_changes;
 	bool	invulnerable;
 	bool	attack_resume_needed;
