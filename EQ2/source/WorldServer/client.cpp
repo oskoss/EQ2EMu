@@ -199,10 +199,14 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 
 Client::~Client() {
 	if (current_zone && player) {
-		if (player->GetGroupMemberInfo() && (player->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0)
-			world.GetGroupManager()->RemoveGroupMember(player->GetGroupMemberInfo()->group_id, player);
+		if (player->GetGroupMemberInfo())
+		{
+			if ((player->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0)
+				world.GetGroupManager()->RemoveGroupMember(player->GetGroupMemberInfo()->group_id, player);
+			else
+				TempRemoveGroup();
+		}
 		world.GetGroupManager()->ClearPendingInvite(player);
-
 	}
 	if (lua_interface)
 		lua_interface->RemoveDebugClients(this);
@@ -3510,16 +3514,7 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 	}
 
 	// block out the member info for the group
-	if (this->GetPlayer()->GetGroupMemberInfo())
-	{
-		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
-		PlayerGroup* group = world.GetGroupManager()->GetGroup(this->GetPlayer()->GetGroupMemberInfo()->group_id);
-		group->MGroupMembers.writelock();
-		this->GetPlayer()->GetGroupMemberInfo()->client = 0;
-		this->GetPlayer()->GetGroupMemberInfo()->member = 0;
-		group->MGroupMembers.releasewritelock();
-		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
-	}
+	TempRemoveGroup();
 
 	client_zoning = true;
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting player Resurrecting to 'true'", __FUNCTION__);
@@ -9260,4 +9255,21 @@ void Client::SendShowBook(Spawn* sender, string title, vector<Item::BookPage*> p
 
 	QueuePacket(packet->serialize());
 	safe_delete(packet);
+}
+
+void Client::TempRemoveGroup()
+{
+	if (this->GetPlayer()->GetGroupMemberInfo())
+	{
+		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(this->GetPlayer()->GetGroupMemberInfo()->group_id);
+		group->MGroupMembers.writelock();
+		this->GetPlayer()->GetGroupMemberInfo()->client = 0;
+		this->GetPlayer()->GetGroupMemberInfo()->member = 0;
+		group->MGroupMembers.releasewritelock();
+
+		group->RemoveClientReference(this);
+
+		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+	}
 }

@@ -435,6 +435,8 @@ public:
 	int32 GetTemporaryTransportID() { return temporary_transport_id; }
 
 	void SetRejoinGroupID(int32 id) { rejoin_group_id = id; }
+
+	void TempRemoveGroup();
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

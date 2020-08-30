@@ -83,6 +83,8 @@ public:
 	void GroupChatMessage(Spawn* from, const char* message);
 	void MakeLeader(Entity* new_leader);
 
+	void RemoveClientReference(Client* remove);
+
 	Mutex MGroupMembers;				// Mutex for the group members
 private:
 	int32					m_id;		// ID of this group
@@ -177,7 +179,6 @@ public:
 	void UpdateGroupBuffs();
 
 	bool IsInGroup(int32 group_id, Entity* member);
-
 	// TODO: Any function below this comment
 	bool IsSpawnInGroup(int32 group_id, string name); // used in follow
 	Player* GetGroupLeader(int32 group_id);

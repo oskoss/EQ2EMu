@@ -753,3 +753,18 @@ bool PlayerGroupManager::IsInGroup(int32 group_id, Entity* member) {
 
 	return ret;
 }
+
+void PlayerGroup::RemoveClientReference(Client* remove) {
+	deque<GroupMemberInfo*>::iterator itr;
+	MGroupMembers.writelock();
+	for (itr = m_members.begin(); itr != m_members.end(); itr++) {
+		GroupMemberInfo* gmi = *itr;
+		if (gmi->client && gmi->client == remove)
+		{
+			gmi->client = 0;
+			gmi->member = 0;
+			break;
+		}
+	}
+	MGroupMembers.releasewritelock();
+}
