@@ -11,5 +11,9 @@
 
 
 function cast(Caster, Target)
-BreatheUnderwater(Spawn, true)
+BreatheUnderwater(Target, true)
+end
+
+function remove(Caster, Target)
+BreatheUnderwater(Target, false)
 end
