@@ -12,7 +12,7 @@
 
 function Init(Quest)
     	SetQuestFeatherColor(Quest, 2)
-        AddQuestStepKill(Quest, 1, "I need to help clean up the area.", 1, 100, "The Gods have asked that i help with cleanup around the mythical hall.", 2693, 1970017)
+        AddQuestStepKill(Quest, 1, "I need to help clean up the area.", 1, 100, "The Gods have asked that i help with clean up around the mythical hall.", 2693, 1970017)
 end
 
 function Accepted(Quest, QuestGiver, Player)

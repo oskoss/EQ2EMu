@@ -6,9 +6,7 @@
                    : 
 --]]
 
-function cast(Caster, Target, DmgType, MinVal, MaxVal, MinPwr, MaxPwr)
- -- Inflicts 30 - 51 mental damage on target encounter
-SpellDamage(Target, DmgType, MinVal, MaxVal)
-  -- Increases power of group members (AE) by 25 - 42
-        SpellHeal(Power, MinPwr, MaxPwr)
+
+function cast(Caster, Target)
+
 end
