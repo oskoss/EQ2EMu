@@ -147,14 +147,6 @@ public:
 
 	PlayerGroup* GetGroup(int32 group_id);
 
-	/// <summary>
-	/// Gets the group members for the given group, be sure to call GroupLock() before calling this and ReleaseGroupLock() after you 
-	/// are done with the list.  This is for reading purposes only, the list should never be altered using this function
-	/// </summary>
-	/// <param name='group_id'>ID of the group who's members we want</param>
-	/// <returns>deque pointer of the members in the group</returns>
-	deque<GroupMemberInfo*>* GetGroupMembers(int32 group_id);
-
 	/// <summary>Read locks the group list, no changes to the list should be made when using this</summary>
 	/// <param name='function'>Name of the function called from, used for better debugging in the event of a deadlock</param>
 	/// <param name='line'>Line number that this was called from, used for better debugging in the event of a deadlock</param>

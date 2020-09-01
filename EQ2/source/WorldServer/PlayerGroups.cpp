@@ -124,40 +124,40 @@ void PlayerGroup::Disband() {
 
 void PlayerGroup::SendGroupUpdate(Client* exclude) {
 	deque<GroupMemberInfo*>::iterator itr;
-	MGroupMembers.readlock();
+	MGroupMembers.readlock(__FUNCTION__, __LINE__);
 	for (itr = m_members.begin(); itr != m_members.end(); itr++) {
 		GroupMemberInfo* gmi = *itr;
 		if (gmi->client && gmi->client != exclude && !gmi->client->IsZoning())
 			gmi->client->GetPlayer()->SetCharSheetChanged(true);
 	}
-	MGroupMembers.releasereadlock();
+	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 void PlayerGroup::SimpleGroupMessage(const char* message) {
 	deque<GroupMemberInfo*>::iterator itr;
-	MGroupMembers.readlock();
+	MGroupMembers.readlock(__FUNCTION__, __LINE__);
 	for(itr = m_members.begin(); itr != m_members.end(); itr++) {
 		GroupMemberInfo* info = *itr;
 		if(info->client)
 			info->client->SimpleMessage(CHANNEL_GROUP, message);
 	}
-	MGroupMembers.releasereadlock();
+	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 void PlayerGroup::GroupChatMessage(Spawn* from, const char* message) {
 	deque<GroupMemberInfo*>::iterator itr;
-	MGroupMembers.readlock();
+	MGroupMembers.readlock(__FUNCTION__, __LINE__);
 	for(itr = m_members.begin(); itr != m_members.end(); itr++) {
 		GroupMemberInfo* info = *itr;
 		if(info && info->client && info->client->GetCurrentZone())
 			info->client->GetCurrentZone()->HandleChatMessage(info->client, from, 0, CHANNEL_GROUP_SAY, message, 0);
 	}
-	MGroupMembers.releasereadlock();
+	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 void PlayerGroup::MakeLeader(Entity* new_leader) {
 	deque<GroupMemberInfo*>::iterator itr;
-	MGroupMembers.readlock();
+	MGroupMembers.readlock(__FUNCTION__, __LINE__);
 	for (itr = m_members.begin(); itr != m_members.end(); itr++) {
 		GroupMemberInfo* info = *itr;
 		if (info->leader) {
@@ -165,7 +165,7 @@ void PlayerGroup::MakeLeader(Entity* new_leader) {
 			break;
 		}
 	}
-	MGroupMembers.releasereadlock();
+	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 
 	new_leader->GetGroupMemberInfo()->leader = true;
 	SendGroupUpdate();
@@ -412,13 +412,6 @@ PlayerGroup* PlayerGroupManager::GetGroup(int32 group_id) {
 	return 0;
 }
 
-deque<GroupMemberInfo*>* PlayerGroupManager::GetGroupMembers(int32 group_id) {
-	if (m_groups.count(group_id) > 0)
-		return m_groups[group_id]->GetMembers();
-
-	return 0;
-}
-
 void PlayerGroupManager::ClearPendingInvite(Entity* member) {
 	MPendingInvites.writelock(__FUNCTION__, __LINE__);
 
@@ -503,7 +496,7 @@ void PlayerGroupManager::SendGroupQuests(int32 group_id, Client* client) {
 	GroupMemberInfo* info = 0;
 	MGroups.readlock(__FUNCTION__, __LINE__);
 	if (m_groups.count(group_id) > 0) {
-		m_groups[group_id]->MGroupMembers.readlock();
+		m_groups[group_id]->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 		deque<GroupMemberInfo*>* members = m_groups[group_id]->GetMembers();
 		deque<GroupMemberInfo*>::iterator itr;
 		for (itr = members->begin(); itr != members->end(); itr++) {
@@ -514,7 +507,7 @@ void PlayerGroupManager::SendGroupQuests(int32 group_id, Client* client) {
 				client->SendQuestJournal(false, info->client);
 			}
 		}
-		m_groups[group_id]->MGroupMembers.releasereadlock();
+		m_groups[group_id]->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 	MGroups.releasereadlock(__FUNCTION__, __LINE__);
 }
@@ -586,7 +579,7 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 		/* loop through the group members and see if any of them have any maintained spells that are group buffs and friendly.
 		if so, update the list of targets and apply/remove effects as needed */
 
-		group->MGroupMembers.readlock();
+		group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 		for (member_itr = group->GetMembers()->begin(); member_itr != group->GetMembers()->end(); member_itr++) {
 			if ((*member_itr)->client)
 				caster = (*member_itr)->client->GetPlayer();
@@ -729,7 +722,7 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 			}
 			caster->GetMaintainedMutex()->releasereadlock(__FUNCTION__, __LINE__);
 		}
-		group->MGroupMembers.releasereadlock();
+		group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 }
 
@@ -739,7 +732,7 @@ bool PlayerGroupManager::IsInGroup(int32 group_id, Entity* member) {
 	MGroups.readlock(__FUNCTION__, __LINE__);
 
 	if (m_groups.count(group_id) > 0) {
-		m_groups[group_id]->MGroupMembers.readlock();
+		m_groups[group_id]->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 		deque<GroupMemberInfo*>* members = m_groups[group_id]->GetMembers();
 		for (int8 i = 0; i < members->size(); i++) {
 			if (member == members->at(i)->member) {
@@ -747,7 +740,7 @@ bool PlayerGroupManager::IsInGroup(int32 group_id, Entity* member) {
 				break;
 			}
 		}
-		m_groups[group_id]->MGroupMembers.releasereadlock();
+		m_groups[group_id]->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 
 	MGroups.releasereadlock(__FUNCTION__, __LINE__);

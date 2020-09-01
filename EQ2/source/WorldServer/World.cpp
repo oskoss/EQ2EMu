@@ -1702,11 +1702,17 @@ void World::CreateGuild(const char* guild_name, Client* leader, int32 group_id) 
 	if (leader && group_id > 0) {
 		GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
-		deque<GroupMemberInfo*>* members = GetGroupManager()->GetGroupMembers(group_id);
-		for (itr = members->begin(); itr != members->end(); itr++) {
-			gmi = *itr;
-			if (gmi->client && gmi->client != leader && !gmi->client->GetPlayer()->GetGuild())
-				guild->InvitePlayer(gmi->client, leader->GetPlayer()->GetName());
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(group_id);
+		if (group)
+		{
+			group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+			deque<GroupMemberInfo*>* members = group->GetMembers();
+			for (itr = members->begin(); itr != members->end(); itr++) {
+				gmi = *itr;
+				if (gmi->client && gmi->client != leader && !gmi->client->GetPlayer()->GetGuild())
+					guild->InvitePlayer(gmi->client, leader->GetPlayer()->GetName());
+			}
+			group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 		}
 
 		GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);

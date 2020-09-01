@@ -1162,7 +1162,7 @@ protected:
 	int32			pickup_item_id;
 	int32			pickup_unique_item_id;
 	map<int32, vector<int16>* > required_quests;
-	map<int32, LUAHistory> required_history;
+	map<int32, LUAHistory*> required_history;
 	EquipmentItemList equipment_list;
 
 	MutexList<SpawnProximity*> spawn_proximities;

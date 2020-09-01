@@ -120,6 +120,7 @@ Spawn::~Spawn(){
 	vector<Item*>::iterator itr;
 	for (itr = loot_items.begin(); itr != loot_items.end(); itr++)
 		safe_delete(*itr);
+	loot_items.clear();
 
 	RemovePrimaryCommands();
 
@@ -149,11 +150,15 @@ Spawn::~Spawn(){
 	MMovementLoop.unlock();
 
 	m_requiredHistory.writelock(__FUNCTION__, __LINE__);
+	map<int32, LUAHistory*>::iterator lua_itr;
+	for (lua_itr = required_history.begin(); lua_itr != required_history.end(); lua_itr++) {
+		safe_delete(lua_itr->second);
+	}
 	required_history.clear();
 	m_requiredHistory.releasewritelock(__FUNCTION__, __LINE__);
 
-	map<int32, vector<int16>* >::iterator rq_itr;
 	m_requiredQuests.writelock(__FUNCTION__, __LINE__);
+	map<int32, vector<int16>* >::iterator rq_itr;
 	for (rq_itr = required_quests.begin(); rq_itr != required_quests.end(); rq_itr++){
 		safe_delete(rq_itr->second);
 	}
@@ -1924,12 +1929,19 @@ bool Spawn::HasQuestsRequired()
 }
 
 void Spawn::SetRequiredHistory(int32 event_id, int32 value1, int32 value2){
-	LUAHistory set_value;
-	set_value.Value = value1;
-	set_value.Value2 = value2;
-	set_value.SaveNeeded = false;
+	LUAHistory* set_value = new LUAHistory();
+	set_value->Value = value1;
+	set_value->Value2 = value2;
+	set_value->SaveNeeded = false;
 	m_requiredHistory.writelock(__FUNCTION__, __LINE__);
-	required_history[event_id] = set_value;
+	if (required_history.count(event_id) == 0)
+		required_history.insert(make_pair(event_id, set_value));
+	else
+	{
+		LUAHistory* tmp_value = required_history[event_id];
+		required_history[event_id] = set_value;
+		safe_delete(tmp_value);
+	}
 	m_requiredHistory.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -3210,12 +3222,12 @@ bool Spawn::MeetsSpawnAccessRequirements(Player* player){
 	//Now check if the player meets all history requirements
 	m_requiredHistory.readlock(__FUNCTION__, __LINE__);
 	if (required_history.size() > 0){
-		map<int32, LUAHistory>::iterator itr;
+		map<int32, LUAHistory*>::iterator itr;
 		for (itr = required_history.begin(); itr != required_history.end(); itr++){
 			player->AddHistoryRequiredSpawn(this, itr->first);
 			LUAHistory* player_history = player->GetLUAHistory(itr->first);
 			if (player_history){
-				if (player_history->Value != itr->second.Value || player_history->Value2 != itr->second.Value2)
+				if (player_history->Value != itr->second->Value || player_history->Value2 != itr->second->Value2)
 					ret = false;
 			}
 			else

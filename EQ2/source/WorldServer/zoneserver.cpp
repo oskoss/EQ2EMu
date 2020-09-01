@@ -4127,24 +4127,30 @@ void ZoneServer::SendCalculatedXP(Player* player, Spawn* victim){
 		if (player->GetGroupMemberInfo()) {
 			world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
-			deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(player->GetGroupMemberInfo()->group_id);
-			deque<GroupMemberInfo*>::iterator itr;
-			for (itr = members->begin(); itr != members->end(); itr++) {
-				GroupMemberInfo* gmi = *itr;
-				if (gmi->client) {
-					Player* group_member = gmi->client->GetPlayer();
-					float xp = group_member->CalculateXP(victim) / members->size();
-					if (xp > 0) {
-						int16 level = group_member->GetLevel();
-						if (group_member->AddXP((int32)xp)) {
-							gmi->client->Message(CHANNEL_COLOR_EXP, "You gain %u experience!", (int32)xp);
-							LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u experience (GroupID %u)", group_member->GetName(), (int32)xp, player->GetGroupMemberInfo()->group_id);
-							if(group_member->GetLevel() != level)
-								gmi->client->ChangeLevel(level, group_member->GetLevel());
-							group_member->SetCharSheetChanged(true);
+			PlayerGroup* group = world.GetGroupManager()->GetGroup(player->GetGroupMemberInfo()->group_id);
+			if (group)
+			{
+				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+				deque<GroupMemberInfo*>* members = group->GetMembers();
+				deque<GroupMemberInfo*>::iterator itr;
+				for (itr = members->begin(); itr != members->end(); itr++) {
+					GroupMemberInfo* gmi = *itr;
+					if (gmi->client) {
+						Player* group_member = gmi->client->GetPlayer();
+						float xp = group_member->CalculateXP(victim) / members->size();
+						if (xp > 0) {
+							int16 level = group_member->GetLevel();
+							if (group_member->AddXP((int32)xp)) {
+								gmi->client->Message(CHANNEL_COLOR_EXP, "You gain %u experience!", (int32)xp);
+								LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u experience (GroupID %u)", group_member->GetName(), (int32)xp, player->GetGroupMemberInfo()->group_id);
+								if (group_member->GetLevel() != level)
+									gmi->client->ChangeLevel(level, group_member->GetLevel());
+								group_member->SetCharSheetChanged(true);
+							}
 						}
 					}
 				}
+				group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 			}
 
 			world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
@@ -6030,18 +6036,26 @@ void ZoneServer::SendEpicMobDeathToGuild(Player* killer, Spawn* victim) {
 			world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
 			deque<GroupMemberInfo*>::iterator itr;
-			deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(killer->GetGroupMemberInfo()->group_id);
-			for (itr = members->begin(); itr != members->end(); itr++) {
-				GroupMemberInfo* gmi = *itr;
-				if (gmi->client) {
-					Player* group_member = gmi->client->GetPlayer();
-					if (group_member->GetGuild()) {
-						Guild* guild = group_member->GetGuild();
-						string message = Guild::GetEpicMobDeathMessage(group_member->GetName(), victim->GetName());
-						guild->AddNewGuildEvent(GUILD_EVENT_KILLS_EPIC_MONSTER, message.c_str(), Timer::GetUnixTimeStamp());
-						guild->SendMessageToGuild(GUILD_EVENT_KILLS_EPIC_MONSTER, message.c_str());
+
+
+			PlayerGroup* group = world.GetGroupManager()->GetGroup(killer->GetGroupMemberInfo()->group_id);
+			if (group)
+			{
+				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+				deque<GroupMemberInfo*>* members = group->GetMembers();
+				for (itr = members->begin(); itr != members->end(); itr++) {
+					GroupMemberInfo* gmi = *itr;
+					if (gmi->client) {
+						Player* group_member = gmi->client->GetPlayer();
+						if (group_member->GetGuild()) {
+							Guild* guild = group_member->GetGuild();
+							string message = Guild::GetEpicMobDeathMessage(group_member->GetName(), victim->GetName());
+							guild->AddNewGuildEvent(GUILD_EVENT_KILLS_EPIC_MONSTER, message.c_str(), Timer::GetUnixTimeStamp());
+							guild->SendMessageToGuild(GUILD_EVENT_KILLS_EPIC_MONSTER, message.c_str());
+						}
 					}
 				}
+				group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 			}
 
 			world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);

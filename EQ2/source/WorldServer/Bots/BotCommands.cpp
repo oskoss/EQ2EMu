@@ -40,12 +40,18 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 					if (client->GetPlayer()->AttackAllowed(target)) {
 						GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
 						if (gmi) {
-							deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(gmi->group_id);
-							deque<GroupMemberInfo*>::iterator itr;
-							for (itr = members->begin(); itr != members->end(); itr++) {
-								if ((*itr)->member->IsBot() && ((Bot*)(*itr)->member)->GetOwner() == client->GetPlayer()) {
-									((Bot*)(*itr)->member)->SetCombatTarget(target->GetID());
+							PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+							if (group)
+							{
+								group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+								deque<GroupMemberInfo*>* members = group->GetMembers();
+								deque<GroupMemberInfo*>::iterator itr;
+								for (itr = members->begin(); itr != members->end(); itr++) {
+									if ((*itr)->member->IsBot() && ((Bot*)(*itr)->member)->GetOwner() == client->GetPlayer()) {
+										((Bot*)(*itr)->member)->SetCombatTarget(target->GetID());
+									}
 								}
+								group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 							}
 						}
 					}
@@ -97,13 +103,19 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 				return;
 			}
 
-			deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(gmi->group_id);
-			for (int8 i = 0; i < members->size(); i++) {
-				GroupMemberInfo* gmi2 = members->at(i);
-				if (gmi2->member->IsBot() && ((Bot*)gmi2->member)->GetOwner() == client->GetPlayer()) {
-					((Bot*)gmi2->member)->SetMainTank(target);
-					client->Message(CHANNEL_COMMAND_TEXT, "Setting main tank for %s to %s", gmi2->member->GetName(), target->GetName());
+			PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+			if (group)
+			{
+				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+				deque<GroupMemberInfo*>* members = group->GetMembers();
+				for (int8 i = 0; i < members->size(); i++) {
+					GroupMemberInfo* gmi2 = members->at(i);
+					if (gmi2->member->IsBot() && ((Bot*)gmi2->member)->GetOwner() == client->GetPlayer()) {
+						((Bot*)gmi2->member)->SetMainTank(target);
+						client->Message(CHANNEL_COMMAND_TEXT, "Setting main tank for %s to %s", gmi2->member->GetName(), target->GetName());
+					}
 				}
+				group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 			}
 			return;
 		}
@@ -132,16 +144,22 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 				GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
 				if (gmi) {
 					Player* player = client->GetPlayer();
-					deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(gmi->group_id);
-					for (int8 i = 0; i < members->size(); i++) {
-						Entity* member = members->at(i)->member;
-						if (member->IsBot() && ((Bot*)member)->GetOwner() == player) {
-							member->appearance.pos.grid_id = player->appearance.pos.grid_id;
-							member->SetX(player->GetX());
-							member->SetY(player->GetY());
-							member->SetZ(player->GetZ());
-							client->Message(CHANNEL_COLOR_YELLOW, "Summoning %s.", member->GetName());
+					PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+					if (group)
+					{
+						group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+						deque<GroupMemberInfo*>* members = group->GetMembers();
+						for (int8 i = 0; i < members->size(); i++) {
+							Entity* member = members->at(i)->member;
+							if (member->IsBot() && ((Bot*)member)->GetOwner() == player) {
+								member->appearance.pos.grid_id = player->appearance.pos.grid_id;
+								member->SetX(player->GetX());
+								member->SetY(player->GetY());
+								member->SetZ(player->GetZ());
+								client->Message(CHANNEL_COLOR_YELLOW, "Summoning %s.", member->GetName());
+							}
 						}
+						group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 					}
 					return;
 				}

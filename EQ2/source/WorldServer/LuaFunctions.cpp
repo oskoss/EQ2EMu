@@ -3926,12 +3926,18 @@ int EQ2Emu_lua_GetGroup(lua_State* state) {
 		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
 		deque<GroupMemberInfo*>::iterator itr;
-		deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(((Player*)spawn)->GetGroupMemberInfo()->group_id);
-		GroupMemberInfo* info = 0;
-		for (itr = members->begin(); itr != members->end(); itr++) {
-			info = *itr;
-			if (info->client)
-				groupMembers.push_back(info->client->GetPlayer());
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(((Player*)spawn)->GetGroupMemberInfo()->group_id);
+		if (group)
+		{
+			group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+			deque<GroupMemberInfo*>* members = group->GetMembers();
+			GroupMemberInfo* info = 0;
+			for (itr = members->begin(); itr != members->end(); itr++) {
+				info = *itr;
+				if (info->client)
+					groupMembers.push_back(info->client->GetPlayer());
+			}
+			group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 		}
 
 		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
@@ -7681,10 +7687,16 @@ int EQ2Emu_lua_StartHeroicOpportunity(lua_State* state) {
 				world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
 				deque<GroupMemberInfo*>::iterator itr;
-				deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(((Entity*)caster)->GetGroupMemberInfo()->group_id);
-				for (itr = members->begin(); itr != members->end(); itr++) {
-					if ((*itr)->client)
-						ClientPacketFunctions::SendHeroicOPUpdate((*itr)->client, ho);
+				PlayerGroup* group = world.GetGroupManager()->GetGroup(((Entity*)caster)->GetGroupMemberInfo()->group_id);
+				if (group)
+				{
+					group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+					deque<GroupMemberInfo*>* members = group->GetMembers();
+					for (itr = members->begin(); itr != members->end(); itr++) {
+						if ((*itr)->client)
+							ClientPacketFunctions::SendHeroicOPUpdate((*itr)->client, ho);
+					}
+					group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 				}
 
 				world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);

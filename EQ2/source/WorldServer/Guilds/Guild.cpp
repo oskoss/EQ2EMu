@@ -1059,35 +1059,41 @@ bool Guild::AddPointsToGroup(Client *client, float points, const char *comment, 
 
 	mMembers.readlock(__FUNCTION__, __LINE__);
 	world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
-	
-	group_members = world.GetGroupManager()->GetGroupMembers(client->GetPlayer()->GetGroupMemberInfo()->group_id);
-	for (itr = group_members->begin(); itr != group_members->end(); itr++) {
-		gmi = *itr;
 
-		if (!gmi->client)
-			continue;
+	PlayerGroup* group = world.GetGroupManager()->GetGroup(client->GetPlayer()->GetGroupMemberInfo()->group_id);
+	if (group)
+	{
+		group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+		deque<GroupMemberInfo*>* group_members = group->GetMembers();
+		for (itr = group_members->begin(); itr != group_members->end(); itr++) {
+			gmi = *itr;
 
-		if (gmi->client->GetPlayer()->GetGuild() != this) {
-			LogWrite(GUILD__DEBUG, 0, "Guilds", "PlayerID: %i not in guild to receive group points! Skipping...", gmi->client->GetPlayer()->GetCharacterID());
-			continue;
+			if (!gmi->client)
+				continue;
+
+			if (gmi->client->GetPlayer()->GetGuild() != this) {
+				LogWrite(GUILD__DEBUG, 0, "Guilds", "PlayerID: %i not in guild to receive group points! Skipping...", gmi->client->GetPlayer()->GetCharacterID());
+				continue;
+			}
+
+			if (!(gm = members[gmi->client->GetCharacterID()]) || !permissions.Get(gm->rank)->Get(GUILD_PERMISSIONS_RECEIVE_POINTS)) {
+				LogWrite(GUILD__DEBUG, 0, "Guilds", "PlayerID: %i not allowed to receive points! Skipping...", gm->character_id);
+				continue;
+			}
+
+			gm->points += points;
+			character_ids.push_back(gm->character_id);
+
+			AddPointHistory(gm, Timer::GetUnixTimeStamp(), client->GetPlayer()->GetName(), points, comment);
+			gmi->client->Message(CHANNEL_COLOR_GUILD_MSGS, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
+			LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild: %s", GetName());
+			LogWrite(GUILD__DEBUG, 0, "Guilds", "\tAwarded By: %s +%.1f pts to Player: %s", client->GetPlayer()->GetName(), points, gm->name);
+
+			LogWrite(MISC__TODO, 1, "TODO", "Comment that this is temporary?\n%s, %s, %i", __FILE__, __FUNCTION__, __LINE__);
+			SendGuildMember(gm); //tmp
+
 		}
-
-		if (!(gm = members[gmi->client->GetCharacterID()]) || !permissions.Get(gm->rank)->Get(GUILD_PERMISSIONS_RECEIVE_POINTS)) {
-			LogWrite(GUILD__DEBUG, 0, "Guilds", "PlayerID: %i not allowed to receive points! Skipping...", gm->character_id);
-			continue;
-		}
-
-		gm->points += points;
-		character_ids.push_back(gm->character_id);
-
-		AddPointHistory(gm, Timer::GetUnixTimeStamp(), client->GetPlayer()->GetName(), points, comment);
-		gmi->client->Message(CHANNEL_COLOR_GUILD_MSGS, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
-		LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild: %s", GetName());
-		LogWrite(GUILD__DEBUG, 0, "Guilds", "\tAwarded By: %s +%.1f pts to Player: %s", client->GetPlayer()->GetName(), points, gm->name);
-
-		LogWrite(MISC__TODO, 1, "TODO", "Comment that this is temporary?\n%s, %s, %i", __FILE__, __FUNCTION__, __LINE__);
-		SendGuildMember(gm); //tmp
-
+		group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 
 	world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
@@ -1342,7 +1348,7 @@ void Guild::AddGuildEvent(int64 event_id, int32 type, const char *description, i
 	GuildEvent *ge;
 
 	assert(description);
-	assert(event_filters.Get(type)->Get(GUILD_EVENT_FILTER_CATEGORY_RETAIN_HISTORY));
+//	assert(event_filters.Get(type)->Get(GUILD_EVENT_FILTER_CATEGORY_RETAIN_HISTORY));
 	assert(guild_events.size() < GUILD_MAX_EVENTS);
 
 	ge = new GuildEvent;

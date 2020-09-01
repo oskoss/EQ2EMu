@@ -4731,15 +4731,21 @@ void Commands::Command_Follow(Client* client, Seperator* sep)
 
 		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
-		deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(gmi->group_id);
-		// Loop through the group members
-		for (itr = members->begin(); itr != members->end(); itr++) {
-			// If a group member matches a target
-			if ((*itr)->member == client->GetPlayer()->GetTarget()) {
-				// toggle the flag and break the loop
-				targetInGroup = true;
-				break;
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+		if (group)
+		{
+			group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+			deque<GroupMemberInfo*>* members = group->GetMembers();
+			// Loop through the group members
+			for (itr = members->begin(); itr != members->end(); itr++) {
+				// If a group member matches a target
+				if ((*itr)->member == client->GetPlayer()->GetTarget()) {
+					// toggle the flag and break the loop
+					targetInGroup = true;
+					break;
+				}
 			}
+			group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 		}
 
 		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);

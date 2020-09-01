@@ -395,13 +395,19 @@ void Brain::AddToEncounter(Entity* entity) {
 		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
 		deque<GroupMemberInfo*>::iterator itr;
-		deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(group_id);
-		for (itr = members->begin(); itr != members->end(); itr++) {
-			if ((*itr)->client)
-			{
-				m_encounter.push_back((*itr)->client->GetPlayer()->GetID());
-				m_encounter_playerlist.insert(make_pair((*itr)->client->GetPlayer()->GetCharacterID(), (*itr)->client->GetPlayer()->GetID()));
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(group_id);
+		if (group)
+		{
+			group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+			deque<GroupMemberInfo*>* members = group->GetMembers();
+			for (itr = members->begin(); itr != members->end(); itr++) {
+				if ((*itr)->client)
+				{
+					m_encounter.push_back((*itr)->client->GetPlayer()->GetID());
+					m_encounter_playerlist.insert(make_pair((*itr)->client->GetPlayer()->GetCharacterID(), (*itr)->client->GetPlayer()->GetID()));
+				}
 			}
+			group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 		}
 
 		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);

@@ -4505,17 +4505,23 @@ void Client::CastGroupOrSelf(Entity* source, uint32 spellID, uint32 spellTier, f
 		GroupMemberInfo* gmi = GetPlayer()->GetGroupMemberInfo();
 		if (gmi && gmi->group_id)
 		{
-			deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(gmi->group_id);
-			for (int8 i = 0; i < members->size(); i++) {
-				Entity* member = members->at(i)->member;
+			PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+			if (group)
+			{
+				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+				deque<GroupMemberInfo*>* members = group->GetMembers();
+				for (int8 i = 0; i < members->size(); i++) {
+					Entity* member = members->at(i)->member;
 
-				if (!member->Alive() || (member->GetZone() != source->GetZone()))
-					continue;
-				// if we have a radius provided then check if the group member is outside the radius or not
-				if (restrictiveRadius > 0.0f && member->GetDistance(source) > restrictiveRadius)
-					continue;
+					if (!member->Alive() || (member->GetZone() != source->GetZone()))
+						continue;
+					// if we have a radius provided then check if the group member is outside the radius or not
+					if (restrictiveRadius > 0.0f && member->GetDistance(source) > restrictiveRadius)
+						continue;
 
-				spellProcess->CastInstant(spell, source, (Entity*)GetPlayer());
+					spellProcess->CastInstant(spell, source, (Entity*)GetPlayer());
+				}
+				group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 			}
 		}
 		else

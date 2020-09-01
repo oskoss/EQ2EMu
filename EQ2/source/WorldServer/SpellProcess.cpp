@@ -256,10 +256,16 @@ void SpellProcess::Process(){
 
 				world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 				deque<GroupMemberInfo*>::iterator itr2;
-				deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(itr->first);
-				for (itr2 = members->begin(); itr2 != members->end(); itr2++) {
-					if ((*itr2)->client)
-						ClientPacketFunctions::SendHeroicOPUpdate((*itr2)->client, itr->second);
+				PlayerGroup* group = world.GetGroupManager()->GetGroup(itr->first);
+				if (group)
+				{
+					group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+					deque<GroupMemberInfo*>* members = group->GetMembers();
+					for (itr2 = members->begin(); itr2 != members->end(); itr2++) {
+						if ((*itr2)->client)
+							ClientPacketFunctions::SendHeroicOPUpdate((*itr2)->client, itr->second);
+					}
+					group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 				}
 				world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 
@@ -1508,10 +1514,16 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 
 					world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 					deque<GroupMemberInfo*>::iterator itr;
-					deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(group_id);
-					for (itr = members->begin(); itr != members->end(); itr++) {
-						if ((*itr)->client)
-							ClientPacketFunctions::SendHeroicOPUpdate((*itr)->client, ho);
+					PlayerGroup* group = world.GetGroupManager()->GetGroup(group_id);
+					if (group)
+					{
+						group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+						deque<GroupMemberInfo*>* members = group->GetMembers();
+						for (itr = members->begin(); itr != members->end(); itr++) {
+							if ((*itr)->client)
+								ClientPacketFunctions::SendHeroicOPUpdate((*itr)->client, ho);
+						}
+						group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 					}
 					world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 
@@ -1822,26 +1834,32 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
 						// get group members
-						deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(((Entity*)caster)->GetGroupMemberInfo()->group_id);
-						deque<GroupMemberInfo*>::iterator itr;
-
-						// iterate through list of group members
-						for (itr = members->begin(); itr != members->end(); itr++) 
+						PlayerGroup* group = world.GetGroupManager()->GetGroup(((Entity*)caster)->GetGroupMemberInfo()->group_id);
+						if (group)
 						{
-							// get group member player info
-							Entity* group_member = (*itr)->member;
+							group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+							deque<GroupMemberInfo*>* members = group->GetMembers();
+							deque<GroupMemberInfo*>::iterator itr;
 
-							// if the group member is in the casters zone, and is alive
-							if (group_member->GetZone() == luaspell->caster->GetZone() && group_member->Alive()){
-								luaspell->targets.push_back(group_member->GetID());
-								if (group_member->HasPet()){
-									Entity* pet = group_member->GetPet();
-									if (!pet)
-										pet = group_member->GetCharmedPet();
-									if (pet)
-										luaspell->targets.push_back(pet->GetID());
+							// iterate through list of group members
+							for (itr = members->begin(); itr != members->end(); itr++)
+							{
+								// get group member player info
+								Entity* group_member = (*itr)->member;
+
+								// if the group member is in the casters zone, and is alive
+								if (group_member->GetZone() == luaspell->caster->GetZone() && group_member->Alive()) {
+									luaspell->targets.push_back(group_member->GetID());
+									if (group_member->HasPet()) {
+										Entity* pet = group_member->GetPet();
+										if (!pet)
+											pet = group_member->GetCharmedPet();
+										if (pet)
+											luaspell->targets.push_back(pet->GetID());
+									}
 								}
 							}
+							group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 						}
 
 						world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
@@ -1981,17 +1999,23 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
 						deque<GroupMemberInfo*>::iterator itr;
-						deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(((Player*)target)->GetGroupMemberInfo()->group_id);
-
-						// iterate through players group members
-						for (itr = members->begin(); itr != members->end(); itr++) 
+						PlayerGroup* group = world.GetGroupManager()->GetGroup(((Player*)target)->GetGroupMemberInfo()->group_id);
+						if (group)
 						{
-							Entity* group_member = (*itr)->member;
+							group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+							deque<GroupMemberInfo*>* members = group->GetMembers();
 
-							// if the group member is in the same zone as caster, and group member is alive, and group member is within distance
-							if (group_member->GetZone() == caster->GetZone() && group_member->Alive() && caster->GetDistance(group_member) <= data->range
-								&& (group_member == target || !group_member->IsAOEImmune()))
-								luaspell->targets.push_back(group_member->GetID()); // add as target
+							// iterate through players group members
+							for (itr = members->begin(); itr != members->end(); itr++)
+							{
+								Entity* group_member = (*itr)->member;
+
+								// if the group member is in the same zone as caster, and group member is alive, and group member is within distance
+								if (group_member->GetZone() == caster->GetZone() && group_member->Alive() && caster->GetDistance(group_member) <= data->range
+									&& (group_member == target || !group_member->IsAOEImmune()))
+									luaspell->targets.push_back(group_member->GetID()); // add as target
+							}
+							group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 						}
 
 						world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
@@ -2023,14 +2047,20 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 
 						deque<GroupMemberInfo*>::iterator itr;
-						deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(((Player*)target)->GetGroupMemberInfo()->group_id);
-						Entity* group_member = 0;
-						for(itr = members->begin(); itr != members->end(); itr++) {
-							group_member = (*itr)->member;
-							//Check if group member is in the same zone in range of the spell and dead
-							if(group_member->GetZone() == target->GetZone() && !group_member->Alive() && target->GetDistance(group_member) <= data->radius){
-								luaspell->targets.push_back(group_member->GetID());
+						PlayerGroup* group = world.GetGroupManager()->GetGroup(((Player*)target)->GetGroupMemberInfo()->group_id);
+						if (group)
+						{
+							group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+							deque<GroupMemberInfo*>* members = group->GetMembers();
+							Entity* group_member = 0;
+							for (itr = members->begin(); itr != members->end(); itr++) {
+								group_member = (*itr)->member;
+								//Check if group member is in the same zone in range of the spell and dead
+								if (group_member->GetZone() == target->GetZone() && !group_member->Alive() && target->GetDistance(group_member) <= data->radius) {
+									luaspell->targets.push_back(group_member->GetID());
+								}
 							}
+							group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 						}
 
 						world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
@@ -2053,20 +2083,26 @@ void SpellProcess::GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell
 	{
 		if (((Player*)target)->GetGroupMemberInfo())
 		{
-			deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(((Player*)target)->GetGroupMemberInfo()->group_id);
-			deque<GroupMemberInfo*>::iterator itr;
-			GroupMemberInfo* info = 0;
+			PlayerGroup* group = world.GetGroupManager()->GetGroup(((Player*)target)->GetGroupMemberInfo()->group_id);
+			if (group)
+			{
+				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+				deque<GroupMemberInfo*>* members = group->GetMembers();
+				deque<GroupMemberInfo*>::iterator itr;
+				GroupMemberInfo* info = 0;
 
-			for (itr = members->begin(); itr != members->end(); itr++) {
-				info = *itr;
-				if (info == ((Player*)target)->GetGroupMemberInfo())
-					continue;
-				else if (info && info->client &&
-					info->client->GetPlayer()->GetZone() == ((Player*)target)->GetZone() && info->client->GetPlayer()->Alive()
-					&& (bypassRangeChecks || caster->GetDistance((Entity*)info->client->GetPlayer()) <= luaspell->spell->GetSpellData()->range))
-				{
-					luaspell->targets.push_back(info->client->GetPlayer()->GetID());
+				for (itr = members->begin(); itr != members->end(); itr++) {
+					info = *itr;
+					if (info == ((Player*)target)->GetGroupMemberInfo())
+						continue;
+					else if (info && info->client &&
+						info->client->GetPlayer()->GetZone() == ((Player*)target)->GetZone() && info->client->GetPlayer()->Alive()
+						&& (bypassRangeChecks || caster->GetDistance((Entity*)info->client->GetPlayer()) <= luaspell->spell->GetSpellData()->range))
+					{
+						luaspell->targets.push_back(info->client->GetPlayer()->GetID());
+					}
 				}
+				group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 			}
 		}
 	}
@@ -2365,10 +2401,16 @@ void SpellProcess::KillHOBySpawnID(int32 spawn_id) {
 
 			world.GetGroupManager()->GroupLock(__FUNCTION__ , __LINE__);
 			deque<GroupMemberInfo*>::iterator itr3;
-			deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(itr2->first);
-			for (itr3 = members->begin(); itr3 != members->end(); itr3++) {
-				if ((*itr3)->client)
-					ClientPacketFunctions::SendHeroicOPUpdate((*itr3)->client, itr2->second);
+			PlayerGroup* group = world.GetGroupManager()->GetGroup(itr2->first);
+			if (group)
+			{
+				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+				deque<GroupMemberInfo*>* members = group->GetMembers();
+				for (itr3 = members->begin(); itr3 != members->end(); itr3++) {
+					if ((*itr3)->client)
+						ClientPacketFunctions::SendHeroicOPUpdate((*itr3)->client, itr2->second);
+				}
+				group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 			}
 			world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 

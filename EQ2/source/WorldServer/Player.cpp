@@ -148,10 +148,13 @@ Player::~Player(){
 		}
 	}
 
+	mLUAHistory.writelock();
 	map<int32, LUAHistory*>::iterator itr4;
 	for (itr4 = m_charLuaHistory.begin(); itr4 != m_charLuaHistory.end(); itr4++) {
 		safe_delete(itr4->second);
 	}
+	m_charLuaHistory.clear();
+	mLUAHistory.releasewritelock();
 
 	safe_delete_array(movement_packet);
 	safe_delete_array(old_movement_packet);
@@ -4824,95 +4827,101 @@ void Player::SetGroupInformation(PacketStruct* packet){
 
 	world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 	if (GetGroupMemberInfo()) {
-		deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(GetGroupMemberInfo()->group_id);
-		deque<GroupMemberInfo*>::iterator itr;
-		GroupMemberInfo* info = 0;
-		int x = 0;
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(GetGroupMemberInfo()->group_id);
+		if (group)
+		{
+			group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+			deque<GroupMemberInfo*>* members = group->GetMembers();
+			deque<GroupMemberInfo*>::iterator itr;
+			GroupMemberInfo* info = 0;
+			int x = 0;
 
-		for (itr = members->begin(); itr != members->end(); itr++) {
-			info = *itr;
+			for (itr = members->begin(); itr != members->end(); itr++) {
+				info = *itr;
 
-			if (info == GetGroupMemberInfo()) {
-				if (info->leader)
-					packet->setDataByName("group_leader_id", 0xFFFFFFFF);	// If this player is the group leader then fill this element with FF FF FF FF
+				if (info == GetGroupMemberInfo()) {
+					if (info->leader)
+						packet->setDataByName("group_leader_id", 0xFFFFFFFF);	// If this player is the group leader then fill this element with FF FF FF FF
 
-				continue;
-			}
-			else {
-				if (info->leader)
-					packet->setDataByName("group_leader_id", x);			// If leader is some one else then fill with the slot number they are in
-			}
+					continue;
+				}
+				else {
+					if (info->leader)
+						packet->setDataByName("group_leader_id", x);			// If leader is some one else then fill with the slot number they are in
+				}
 
-			member = info->member;
+				member = info->member;
 
-			if (member && member->GetZone() == GetZone()) {
-				packet->setSubstructDataByName("group_members", "unknown3", 1, x);
-				packet->setSubstructDataByName("group_members", "spawn_id", GetIDWithPlayerSpawn(member), x);
-				
-				if (member->HasPet()) {
-					if (member->GetPet())
-						packet->setSubstructDataByName("group_members", "pet_id", GetIDWithPlayerSpawn(member->GetPet()), x);
+				if (member && member->GetZone() == GetZone()) {
+					packet->setSubstructDataByName("group_members", "unknown3", 1, x);
+					packet->setSubstructDataByName("group_members", "spawn_id", GetIDWithPlayerSpawn(member), x);
+
+					if (member->HasPet()) {
+						if (member->GetPet())
+							packet->setSubstructDataByName("group_members", "pet_id", GetIDWithPlayerSpawn(member->GetPet()), x);
+						else
+							packet->setSubstructDataByName("group_members", "pet_id", GetIDWithPlayerSpawn(member->GetCharmedPet()), x);
+					}
 					else
-						packet->setSubstructDataByName("group_members", "pet_id", GetIDWithPlayerSpawn(member->GetCharmedPet()), x);
+						packet->setSubstructDataByName("group_members", "pet_id", 0xFFFFFFFF, x);
+
+					//Send detriment counts as 255 if all dets of that type are incurable
+					det_count = member->GetTraumaCount();
+					if (det_count > 0) {
+						if (!member->HasCurableDetrimentType(DET_TYPE_TRAUMA))
+							det_count = 255;
+					}
+					packet->setSubstructDataByName("group_members", "trauma_count", det_count, x);
+
+					det_count = member->GetArcaneCount();
+					if (det_count > 0) {
+						if (!member->HasCurableDetrimentType(DET_TYPE_ARCANE))
+							det_count = 255;
+					}
+					packet->setSubstructDataByName("group_members", "arcane_count", det_count, x);
+
+					det_count = member->GetNoxiousCount();
+					if (det_count > 0) {
+						if (!member->HasCurableDetrimentType(DET_TYPE_NOXIOUS))
+							det_count = 255;
+					}
+					packet->setSubstructDataByName("group_members", "noxious_count", det_count, x);
+
+					det_count = member->GetElementalCount();
+					if (det_count > 0) {
+						if (!member->HasCurableDetrimentType(DET_TYPE_ELEMENTAL))
+							det_count = 255;
+					}
+					packet->setSubstructDataByName("group_members", "elemental_count", det_count, x);
+
+					det_count = member->GetCurseCount();
+					if (det_count > 0) {
+						if (!member->HasCurableDetrimentType(DET_TYPE_CURSE))
+							det_count = 255;
+					}
+					packet->setSubstructDataByName("group_members", "curse_count", det_count, x);
 				}
-				else
+				else {
+					packet->setSubstructDataByName("group_members", "unknown3", 2, x);
 					packet->setSubstructDataByName("group_members", "pet_id", 0xFFFFFFFF, x);
-
-				//Send detriment counts as 255 if all dets of that type are incurable
-				det_count = member->GetTraumaCount();
-				if (det_count > 0) {
-					if(!member->HasCurableDetrimentType(DET_TYPE_TRAUMA))
-						det_count = 255;
+					//packet->setSubstructDataByName("group_members", "unknown5", 1, x, 1); // unknown5 > 1 = name is blue
 				}
-				packet->setSubstructDataByName("group_members", "trauma_count", det_count, x);
 
-				det_count = member->GetArcaneCount();
-				if (det_count > 0) {
-					if (!member->HasCurableDetrimentType(DET_TYPE_ARCANE))
-						det_count = 255;
-				}
-				packet->setSubstructDataByName("group_members", "arcane_count", det_count, x);
+				packet->setSubstructDataByName("group_members", "name", info->name.c_str(), x);
+				packet->setSubstructDataByName("group_members", "hp_current", info->hp_current, x);
+				packet->setSubstructDataByName("group_members", "hp_max", info->hp_max, x);
+				packet->setSubstructDataByName("group_members", "power_current", info->power_current, x);
+				packet->setSubstructDataByName("group_members", "power_max", info->power_max, x);
+				packet->setSubstructDataByName("group_members", "level_current", info->level_current, x);
+				packet->setSubstructDataByName("group_members", "level_max", info->level_max, x);
+				packet->setSubstructDataByName("group_members", "zone", info->zone.c_str(), x);
+				packet->setSubstructDataByName("group_members", "race_id", info->race_id, x);
+				packet->setSubstructDataByName("group_members", "class_id", info->class_id, x);
 
-				det_count = member->GetNoxiousCount();
-				if (det_count > 0) {
-					if (!member->HasCurableDetrimentType(DET_TYPE_NOXIOUS))
-						det_count = 255;
-				}
-				packet->setSubstructDataByName("group_members", "noxious_count", det_count, x);
-
-				det_count = member->GetElementalCount();
-				if (det_count > 0) {
-					if (!member->HasCurableDetrimentType(DET_TYPE_ELEMENTAL))
-						det_count = 255;
-				}
-				packet->setSubstructDataByName("group_members", "elemental_count", det_count, x);
-
-				det_count = member->GetCurseCount();
-				if (det_count > 0) {
-					if (!member->HasCurableDetrimentType(DET_TYPE_CURSE))
-						det_count = 255;
-				}
-				packet->setSubstructDataByName("group_members", "curse_count", det_count, x);
+				x++;
 			}
-			else {
-				packet->setSubstructDataByName("group_members", "unknown3", 2, x);
-				packet->setSubstructDataByName("group_members", "pet_id", 0xFFFFFFFF, x);
-				//packet->setSubstructDataByName("group_members", "unknown5", 1, x, 1); // unknown5 > 1 = name is blue
-			}
-
-			packet->setSubstructDataByName("group_members", "name", info->name.c_str(), x);
-			packet->setSubstructDataByName("group_members", "hp_current", info->hp_current, x);
-			packet->setSubstructDataByName("group_members", "hp_max", info->hp_max, x);
-			packet->setSubstructDataByName("group_members", "power_current", info->power_current, x);
-			packet->setSubstructDataByName("group_members", "power_max", info->power_max, x);
-			packet->setSubstructDataByName("group_members", "level_current", info->level_current, x);
-			packet->setSubstructDataByName("group_members", "level_max", info->level_max, x);
-			packet->setSubstructDataByName("group_members", "zone", info->zone.c_str(), x);
-			packet->setSubstructDataByName("group_members", "race_id", info->race_id, x);
-			packet->setSubstructDataByName("group_members", "class_id", info->class_id, x);
-
-			x++;
 		}
+		group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 	//packet->PrintPacket();
 	world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
@@ -5878,16 +5887,20 @@ void Player::SendControlFlagUpdates(Client* client){
 }
 
 void Player::LoadLUAHistory(int32 event_id, LUAHistory* history) {
+	mLUAHistory.writelock();
 	if (m_charLuaHistory.count(event_id) > 0) {
 		LogWrite(PLAYER__ERROR, 0, "Player", "Attempted to added a dupicate event (%u) to character LUA history", event_id);
 		safe_delete(history);
+		mLUAHistory.releasewritelock();
 		return;
 	}
 
-	m_charLuaHistory[event_id] = history;
+	m_charLuaHistory.insert(make_pair(event_id,history));
+	mLUAHistory.releasewritelock();
 }
 
 void Player::SaveLUAHistory() {
+	mLUAHistory.readlock();
 	LogWrite(PLAYER__DEBUG, 0, "Player", "Saving LUA History for Player: '%s'", GetName());
 
 	map<int32, LUAHistory*>::iterator itr;
@@ -5897,29 +5910,36 @@ void Player::SaveLUAHistory() {
 			itr->second->SaveNeeded = false;
 		}
 	}
+	mLUAHistory.releasereadlock();
 }
 
 void Player::UpdateLUAHistory(int32 event_id, int32 value, int32 value2) {
+	mLUAHistory.writelock();
 	LUAHistory* hd = 0;
 
 	if (m_charLuaHistory.count(event_id) > 0)
 		hd = m_charLuaHistory[event_id];
 	else {
 		hd = new LUAHistory;
-		m_charLuaHistory[event_id] = hd;
+		m_charLuaHistory.insert(make_pair(event_id,hd));
 	}
 
 	hd->Value = value;
 	hd->Value2 = value2;
 	hd->SaveNeeded = true;
 	SendHistoryRequiredSpawns(event_id);
+	mLUAHistory.releasewritelock();
 }
 
 LUAHistory* Player::GetLUAHistory(int32 event_id) {
 	LUAHistory* ret = 0;
 
+	mLUAHistory.readlock();
+
 	if (m_charLuaHistory.count(event_id) > 0)
 		ret = m_charLuaHistory[event_id];
+
+	mLUAHistory.releasereadlock();
 
 	return ret;
 }

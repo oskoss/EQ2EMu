@@ -1007,6 +1007,7 @@ private:
 	map<int8, map<int8, vector<HistoryData*> > > m_characterHistory;
 
 	map<int32, LUAHistory*> m_charLuaHistory;
+	Mutex mLUAHistory;
 
 	int32 tmp_mount_model;
 	EQ2_Color tmp_mount_color;

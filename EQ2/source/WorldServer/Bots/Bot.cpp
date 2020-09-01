@@ -300,20 +300,27 @@ Spell* Bot::GetHealSpell() {
 	// There was a heal spell so find a group member that needs healing
 	int8 threshold = GetHealThreshold();
 	GroupMemberInfo* gmi = GetGroupMemberInfo();
-	deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(gmi->group_id);
-	for (int8 i = 0; i < members->size(); i++) {
-		Entity* member = members->at(i)->member;
+	PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+	if (group)
+	{
+		group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+		deque<GroupMemberInfo*>* members = group->GetMembers();
+		for (int8 i = 0; i < members->size(); i++) {
+			Entity* member = members->at(i)->member;
 
-		if (!member->Alive())
-			continue;
+			if (!member->Alive())
+				continue;
 
-		int8 percent = (int8)(((float)member->GetHP() / member->GetTotalHP()) * 100);
-		if (percent <= threshold) {
-			if (spell) {
-				SetTarget(member);
-				return spell;
+			int8 percent = (int8)(((float)member->GetHP() / member->GetTotalHP()) * 100);
+			if (percent <= threshold) {
+				if (spell) {
+					SetTarget(member);
+					group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+					return spell;
+				}
 			}
 		}
+		group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 
 
@@ -384,19 +391,26 @@ Spell* Bot::GetHoTWardSpell() {
 	// There was a spell so find a group member that needs healing
 	int8 threshold = GetHealThreshold();
 	GroupMemberInfo* gmi = GetGroupMemberInfo();
-	deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(gmi->group_id);
-	for (int8 i = 0; i < members->size(); i++) {
-		Entity* member = members->at(i)->member;
-		int8 percent = 0;
-		if (member->GetHP() > 0)
-			percent = (int8)(((float)member->GetHP() / member->GetTotalHP()) * 100);
+	PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+	if (group)
+	{
+		group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+		deque<GroupMemberInfo*>* members = group->GetMembers();
+		for (int8 i = 0; i < members->size(); i++) {
+			Entity* member = members->at(i)->member;
+			int8 percent = 0;
+			if (member->GetHP() > 0)
+				percent = (int8)(((float)member->GetHP() / member->GetTotalHP()) * 100);
 
-		if (percent <= 99 && percent > threshold) {
-			if (spell) {
-				SetTarget(member);
-				return spell;
+			if (percent <= 99 && percent > threshold) {
+				if (spell) {
+					SetTarget(member);
+					group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+					return spell;
+				}
 			}
 		}
+		group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 
 	return 0;
@@ -489,17 +503,23 @@ Spell* Bot::GetRezSpell() {
 		return 0;
 
 	Entity* target = 0;
-	deque<GroupMemberInfo*>* members = world.GetGroupManager()->GetGroupMembers(gmi->group_id);
-	for (int8 i = 0; i < members->size(); i++) {
-		Entity* member = members->at(i)->member;
-		if (member && !member->Alive() && member->IsPlayer()) {
-			PendingResurrection* rez = members->at(i)->client->GetCurrentRez();
-			if (rez->active)
-				continue;
+	PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+	if (group)
+	{
+		group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+		deque<GroupMemberInfo*>* members = group->GetMembers();
+		for (int8 i = 0; i < members->size(); i++) {
+			Entity* member = members->at(i)->member;
+			if (member && !member->Alive() && member->IsPlayer()) {
+				PendingResurrection* rez = members->at(i)->client->GetCurrentRez();
+				if (rez->active)
+					continue;
 
-			target = member;
-			break;
+				target = member;
+				break;
+			}
 		}
+		group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 
 	if (!target)
