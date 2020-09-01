@@ -1387,6 +1387,7 @@ void Entity::CheckProcs(int8 type, Spawn* target) {
 			tmpProc->chance = proc->chance;
 			tmpProc->item = proc->item;
 			tmpProc->spell = proc->spell;
+			tmpProc->spellid = proc->spellid;
 			tmpList.push_back(tmpProc);
 		}
 	}
@@ -1394,9 +1395,10 @@ void Entity::CheckProcs(int8 type, Spawn* target) {
 
 
 	vector<Proc*>::iterator proc_itr;
-	for (proc_itr = tmpList.begin(); proc_itr != tmpList.end(); proc_itr++) {
+	for (proc_itr = tmpList.begin(); proc_itr != tmpList.end();) {
 		Proc* tmpProc = *proc_itr;
 		CastProc(tmpProc, type, target);
+		proc_itr++;
 		safe_delete(tmpProc);
 	}
 }

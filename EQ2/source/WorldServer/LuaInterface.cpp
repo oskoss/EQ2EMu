@@ -633,6 +633,17 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 		MSpells.unlock();
 		lua_pcall(spell->state, 2, 0, 0);
 	}
+
+	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+	for (int8 i = 0; i < spell->targets.size(); i++) {
+		Spawn* target = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
+		if (!target || !target->IsEntity())
+			continue;
+
+		((Entity*)target)->RemoveProc(0, spell);
+	}
+	spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+
 	if (can_delete) {
 		AddPendingSpellDelete(spell);
 	}
