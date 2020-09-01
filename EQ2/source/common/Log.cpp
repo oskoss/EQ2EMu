@@ -213,11 +213,12 @@ static void WriteQueuedLogs(int count) {
 			break;	
 	}
 
-	mlogqs.releasewritelock();
-
 	//if we have no logs to write, we're done
 	if ((logq = pending_head.next) == &pending_tail)
+	{
+		mlogqs.releasewritelock();
 		return;
+	}
 
 	while (logq != &pending_tail) {
 		if (log_type_info[logq->log_type].console) {
@@ -255,6 +256,8 @@ static void WriteQueuedLogs(int count) {
 
 		tmp = logq;
 		logq = logq->next;
+
+		mlogqs.releasewritelock();
 
 		free(tmp->text);
 		free(tmp);
