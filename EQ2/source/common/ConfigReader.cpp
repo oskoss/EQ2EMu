@@ -212,9 +212,9 @@ void ConfigReader::loadDataStruct(PacketStruct* packet, XMLNode parentNode, bool
 					vector<DataStruct*>* structs = substruct_packet->getStructs();
 					DataStruct* ds = 0;
 					int i = 0;
-					char tmp[10] = {0};
+					char tmp[12] = {0};
 					for(i=0;i<num_size;i++){
-						sprintf(tmp,"%i",i);
+						snprintf(tmp, sizeof(tmp)-1, "%i", i);
 						for(itr=structs->begin();itr!=structs->end();itr++) {
 							ds = *itr;
 							string new_name;

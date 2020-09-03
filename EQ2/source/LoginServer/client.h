@@ -49,7 +49,7 @@ public:
 	int32	GetIP()    { return ip; }
 	int16	GetPort()  { return port; }
 	int32	GetAccountID() { return account_id; }
-	char*	GetAccountName(){ return (char*)account_name.c_str(); }
+	const char*	GetAccountName(){ return (char*)account_name.c_str(); }
 	void	SetAccountName(const char* name){ account_name = string(name); }
 	void	ProcessLogin(char* name, char* pass,int seq=0);
 	void	QueuePacket(EQ2Packet* app);
