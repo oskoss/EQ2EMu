@@ -2843,6 +2843,7 @@ void Spawn::ResetMovement(){
 	for(itr = movement_loop.begin(); itr != movement_loop.end(); itr++){
 		safe_delete(*itr);
 	}
+	movement_loop.clear();
 	MMovementLoop.unlock();
 	resume_movement = true;
 	movement_index = 0;
@@ -2919,7 +2920,11 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 	if(speed == 0)
 		return;
 
-	((Entity*)this)->SetSpeed(speed);
+	if ( IsEntity() )
+		((Entity*)this)->SetSpeed(speed);
+	else
+		this->SetSpeed(speed);
+
 	MovementLocation* current_location = 0;
 
 	float distance = GetDistance(x, y, z, distance_away != 0);
