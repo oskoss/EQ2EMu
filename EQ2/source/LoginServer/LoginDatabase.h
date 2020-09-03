@@ -61,7 +61,7 @@ public:
 	int32 GetRaceID(char* name);
 	void UpdateRaceID(char* name);
 	bool DeleteCharacter(int32 account_id, int32 character_id, int32 server_id);
-	void SaveClientLog(char* type, char* message, char* player_name, int16 version);
+	void SaveClientLog(const char* type, const char* message, const char* player_name, int16 version);
 	bool CheckVersion(char* version);
 	void GetLatestTableVersions(LatestTableVersions* table_versions);
 	TableQuery* GetLatestTableQuery(int32 server_ip, char* name, int16 version);

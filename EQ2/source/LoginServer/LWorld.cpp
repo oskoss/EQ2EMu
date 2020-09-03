@@ -396,8 +396,8 @@ bool LWorld::Process() {
 			if (pack->size != sizeof(ServerLSInfo_Struct)) {
 				this->Kick(ERROR_BADVERSION);
 				ret = false;
-				struct in_addr  in;
-				in.s_addr = GetIP();
+				//struct in_addr  in;
+				//in.s_addr = GetIP();
 			}
 			else {
 				ServerLSInfo_Struct* lsi = (ServerLSInfo_Struct*) pack->pBuffer;
@@ -406,14 +406,14 @@ bool LWorld::Process() {
 					cout << "To allow all world server versions to login, run query on your login database (alternatively replacing * with the database version if preferred): insert into login_versions set version = '*';" << endl;
 					this->Kick(ERROR_BADVERSION);
 					ret = false;
-					struct in_addr  in;
-					in.s_addr = GetIP();
+					//struct in_addr  in;
+					//in.s_addr = GetIP();
 				}
 				else if (!SetupWorld(lsi->name, lsi->address, lsi->account, lsi->password, lsi->serverversion)) {
 					this->Kick(ERROR_BADPASSWORD);
 					ret = false;
-					struct in_addr  in;
-					in.s_addr = GetIP();
+					//struct in_addr  in;
+					//in.s_addr = GetIP();
 				}
 				else{
 					isAuthenticated = true;
@@ -461,8 +461,8 @@ bool LWorld::Process() {
 			}
 			ServerSyncWorldList_Struct* sswls = (ServerSyncWorldList_Struct*) pack->pBuffer;
 			if (!CheckServerName(sswls->name)) {
-				struct in_addr  in;
-				in.s_addr = sswls->ip;
+				//struct in_addr  in;
+				//in.s_addr = sswls->ip;
 				break; // Someone needs to tell the other login server to update it's exe!
 			}
 			LWorld* world = world_list.FindByLink(this->Link, sswls->RemoteID);
@@ -621,7 +621,7 @@ void LWorld::SendPacket(ServerPacket* pack) {
 	}
 }
 
-void LWorld::Message(char* to, char* message, ...) {
+void LWorld::Message(const char* to, const char* message, ...) {
 	va_list argptr;
 	char buffer[256];
 
@@ -637,7 +637,7 @@ void LWorld::Message(char* to, char* message, ...) {
 	delete pack;
 }
 
-void LWorld::Kick(char* message, bool iSetKickedFlag) {
+void LWorld::Kick(const char* message, bool iSetKickedFlag) {
 	if (iSetKickedFlag)
 		kicked = true;
 	if (message) {
@@ -649,10 +649,10 @@ void LWorld::Kick(char* message, bool iSetKickedFlag) {
 	if (Link && GetRemoteID() == 0)
 		Link->Disconnect();
 }
-bool LWorld::CheckServerName(char* name) {
+bool LWorld::CheckServerName(const char* name) {
 	if (strlen(name) < 10)
 		return false;
-	for (int i=0; i<strlen(name); i++) {
+	for (size_t i=0; i<strlen(name); i++) {
 		if (!((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= 'A' && name[i] <= 'Z') || (name[i] >= '0' && name[i] <= '9') || name[i] == ' ' || name[i] == '\'' || name[i] == '-' || name[i] == '(' || name[i] == ')' || name[i] == '[' || name[i] == ']' || name[i] == '/' || name[i] == '.' || name[i] == ',' || name[i] == '_' || name[i] == '+' || name[i] == '=' || name[i] == ':' || name[i] == '~'))
 			return false;
 	}
@@ -819,6 +819,7 @@ void LWorldList::KickGhostIP(int32 ip, LWorld* NotMe, int16 iClientPort) {
 				in.s_addr = world->GetIP();
 				//				cout << "Removing GhostIP LWorld(" << world->GetID() << ") from ip: " << inet_ntoa(in) << " port: " << (int16)(world->GetPort());
 				if (!world->Connected())
+				{
 					//					cout << " (it wasnt connected)";
 					//				cout << endl;
 					if (NotMe) {
@@ -826,6 +827,7 @@ void LWorldList::KickGhostIP(int32 ip, LWorld* NotMe, int16 iClientPort) {
 						cout << "NotMe(" << NotMe->GetID() << ") = " << inet_ntoa(in) << ":" << NotMe->GetPort() << " (" << NotMe->GetClientPort() << ")" << endl;
 					}
 					world->Kick("Ghost IP kick");
+				}
 			}
 		}
 	}
@@ -839,8 +841,8 @@ void LWorldList::KickGhost(ConType in_type, int32 in_accountid, LWorld* ButNotMe
 		LWorld* world = map_list->second;
 		if (!world->IsKicked() && world->GetType() == in_type && world != ButNotMe && (in_accountid == 0 || world->GetAccountID() == in_accountid)) {
 			if (world->GetIP() != 0) {
-				struct in_addr  in;
-				in.s_addr = world->GetIP();
+				//struct in_addr  in;
+				//in.s_addr = world->GetIP();
 				//				cout << "Removing GhostAcc LWorld(" << world->GetID() << ") from ip: " << inet_ntoa(in) << " port: " << (int16)(world->GetPort()) << endl;
 			}
 			if (world->GetType() == Login && world->IsOutgoingUplink()) {
@@ -915,8 +917,8 @@ void LWorldList::Process() {
 			continue;
 		}
 		else if (!world->Process()) {
-			struct in_addr  in;
-			in.s_addr = world->GetIP();
+			//struct in_addr  in;
+			//in.s_addr = world->GetIP();
 			if (world->GetAccountID() == 0 || !(world->ShowDown()) || world->GetType() == Chat) {
 				map_list++;
 				worldmap.erase ( account_id );
@@ -1120,8 +1122,7 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 		return ServerListData[version];
 	}
 
-	LWorld* world = 0;
-	uchar num_servers[2];
+	//LWorld* world = 0;
 	int32 ServerNum = 0;
 	/*	while(iterator.MoreElements()){
 	world = iterator.GetData();
@@ -1191,8 +1192,11 @@ EQ2Packet* LWorldList::MakeServerListPacket(int8 lsadmin, int16 version) {
 	}
 
 	EQ2Packet* pack = packet->serialize();
+	#ifdef DEBUG
+	//Only dump these for people trying to debug this...
 	printf("WorldList:\n");
 	DumpPacket(pack->pBuffer, pack->size);
+	#endif
 	if (ServerListData.count(version))
 	{
 		map<int32, EQ2Packet*>::iterator it = ServerListData.find(version);

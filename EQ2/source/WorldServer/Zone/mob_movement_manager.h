@@ -86,6 +86,7 @@ public:
 		MobListMutex.writelock();
 		RunningCommandProcess = status;
 		MobListMutex.releasewritelock();
+		return true;
 	}
 private:
 	MobMovementManager(const MobMovementManager&);
