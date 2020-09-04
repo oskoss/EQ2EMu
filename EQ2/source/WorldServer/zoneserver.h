@@ -258,7 +258,7 @@ public:
 	
 	int16	SetSpawnTargetable(Spawn* spawn, float distance);
 	int16	SetSpawnTargetable(int32 spawn_id);
-	void	ApplySetSpawnCommand(Client* client, Spawn* target, int8 type, char* value);
+	void	ApplySetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value);
 	void	SetSpawnCommand(Spawn* spawn, int8 type, char* value, Client* client = 0);
 	void	SetSpawnCommand(int32 spawn_id, int8 type, char* value, Client* client = 0);
 	void	AddLoot(NPC* npc);

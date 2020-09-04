@@ -3708,7 +3708,7 @@ void ZoneServer::SetSpawnCommand(int32 spawn_id, int8 type, char* value, Client*
 	LogWrite(MISC__TODO, 1, "TODO", "%s does nothing!\n%s, %i", __FUNCTION__, __FILE__, __LINE__);
 }
 
-void ZoneServer::ApplySetSpawnCommand(Client* client, Spawn* target, int8 type, char* value){
+void ZoneServer::ApplySetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value){
 	// This will apply the /spawn set command to all the spawns in the zone with the same DB ID, we do not want to set
 	// location values (x, y, z, heading, grid) for all spawns in the zone with the same DB ID, only the targeted spawn
 	if(type == SPAWN_SET_VALUE_SPAWNENTRY_SCRIPT || type == SPAWN_SET_VALUE_SPAWNLOCATION_SCRIPT || (type >= SPAWN_SET_VALUE_X && type <= SPAWN_SET_VALUE_LOCATION) ||

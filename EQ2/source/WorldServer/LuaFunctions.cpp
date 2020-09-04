@@ -236,9 +236,11 @@ int EQ2Emu_lua_SpawnSet(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string variable = lua_interface->GetStringValue(state, 2);
 	string value = lua_interface->GetStringValue(state, 3);
+	bool no_update = lua_interface->GetBooleanValue(state, 4); // send update is true by default in SetSpawnCommand, so allow user to specify 'true' to disable send update.
+	bool temporary_flag = lua_interface->GetBooleanValue(state, 5); // default false as originally designed, allow user to set temporary_flag true to not update DB
 	int32 type = commands.GetSpawnSetType(variable);
 	if (type != 0xFFFFFFFF && value.length() > 0 && spawn)
-		commands.SetSpawnCommand(0, spawn, type, value.c_str());
+		commands.SetSpawnCommand(0, spawn, type, value.c_str(), !no_update, temporary_flag);
 	return 0;
 }
 
@@ -895,13 +897,14 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 	Spawn* target = lua_interface->GetSpawn(state, 4);
 	int8 crit_mod = lua_interface->GetInt32Value(state, 5);
 	bool no_calcs = lua_interface->GetInt32Value(state, 6) == 1;
+	string custom_spell_name = lua_interface->GetStringValue(state, 7);//custom spell name
 	lua_interface->ResetFunctionStack(state);
 	if (caster && caster->IsEntity()) {
 		bool success = false;
 		luaspell->resisted = false;
 		if (target) {
 			float distance = caster->GetDistance(target, true);
-			if (((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs))
+			if (((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs, custom_spell_name))
 				success = true;
 		}
 		if (luaspell->targets.size() > 0) {
@@ -911,7 +914,7 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 			for (int32 i = 0; i < luaspell->targets.size(); i++) {
 				if ((target = zone->GetSpawnByID(luaspell->targets[i]))) {
 					float distance = caster->GetDistance(target, true);
-					((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs);
+					((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs, custom_spell_name);
 				}
 			}
 			luaspell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
