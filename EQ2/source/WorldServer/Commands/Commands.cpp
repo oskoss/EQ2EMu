@@ -3697,9 +3697,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							{
 								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "A /reload spawns is required to properly update the spawns with the xpack/holiday flag.");
 							}
-							else if(set_type == SPAWN_SET_VALUE_NAME)
+							else if (set_type == SPAWN_SET_VALUE_NAME)
 							{
 								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "New name will not be effective until zone reload.");
+							}
+							else if (set_type == SPAWN_SET_SKIN_COLOR)
+							{
+								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set skin_color to R G B: %s.", sep->argplus[1]);
 							}
 							else if(set_type == SPAWN_SET_VALUE_LOCATION)
 							{
