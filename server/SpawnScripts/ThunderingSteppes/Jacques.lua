@@ -154,5 +154,5 @@ function dlg_5_1(NPC, Spawn)
 end
 
 function dlg_6_1(NPC, Spawn)
-	OfferQuest(NPC, Player, WatchYourStepInTheTSPartIV)
+	OfferQuest(NPC, Spawn, WatchYourStepInTheTSPartIV)
 end
