@@ -2844,13 +2844,7 @@ int EQ2Emu_lua_OfferQuest(lua_State* state) {
 		Quest* master_quest = master_quest_list.GetQuest(quest_id);
 		if (master_quest) {
 			Client* client = player->GetZone()->GetClientBySpawn(player);
-			if(!client) {
-				lua_interface->LogError("%s: LUA OfferQuest command error: client is not set", lua_interface->GetScriptName(state));
-			}
 			Quest* quest = new Quest(master_quest);
-			if(!quest) {
-				lua_interface->LogError("%s: LUA OfferQuest command error: new Quest() failed.", lua_interface->GetScriptName(state));
-			}
 			if (client && quest) {
 				client->AddPendingQuest(quest);
 				if (npc)
@@ -2858,11 +2852,7 @@ int EQ2Emu_lua_OfferQuest(lua_State* state) {
 				else
 					quest->SetQuestGiver(0);
 			}
-		} else {
-			lua_interface->LogError("%s: LUA OfferQuest command error: failed to get quest %d", lua_interface->GetScriptName(state), quest_id);
 		}
-	} else {
-		lua_interface->LogError("%s: LUA OfferQuest command error: player is not set or bad quest id %p %d", lua_interface->GetScriptName(state), player, quest_id);
 	}
 	return 0;
 }

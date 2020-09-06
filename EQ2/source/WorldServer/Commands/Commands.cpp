@@ -875,7 +875,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 						((Entity*)target)->SetSkinColor(clr);
 						Query replaceSkinQuery;
 						replaceSkinQuery.AddQueryAsync(0, &database, Q_DELETE, "delete from npc_appearance where spawn_id=%u and type='skin_color'", target->GetDatabaseID());
-						replaceSkinQuery.AddQueryAsync(0, &database, Q_DELETE, "insert into npc_appearance set spawn_id=%u, type='skin_color', red=%u, green=%u, blue=%u", target->GetDatabaseID(), clr.red, clr.green, clr.blue);
+						replaceSkinQuery.AddQueryAsync(0, &database, Q_INSERT, "insert into npc_appearance set spawn_id=%u, type='skin_color', red=%u, green=%u, blue=%u", target->GetDatabaseID(), clr.red, clr.green, clr.blue);
 					}
 					safe_delete(skinsep);
 				}
@@ -4577,7 +4577,7 @@ void Commands::Command_CancelMaintained(Client* client, Seperator* sep)
 	//	if (spell && spell->GetSpellData()->friendly_spell)  -- NOTE::You can cancel hostile maintained spells, 
 		                                                     // just not spelleffects/dets - Foof
 		//{
-			if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell))
+			if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell, "canceled"))
 				client->Message(CHANNEL_COLOR_RED, "The maintained spell could not be cancelled.");
 	//	}
 		//else

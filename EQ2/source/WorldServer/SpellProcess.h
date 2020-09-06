@@ -254,11 +254,11 @@ public:
 	/// <summary>Remove the given spell for the given caster from the SpellProcess</summary>
 	/// <param name='caster'>The spawn to remove the spell for</param>
 	/// <param name='spell'>The spell to remove</param>
-	bool DeleteCasterSpell(Spawn* caster, Spell* spell);
+	bool DeleteCasterSpell(Spawn* caster, Spell* spell, string reason = "");
 
 	/// <summary>Remove the given spell from the ZpellProcess</summary>
 	/// <param name='spell'>LuaSpell to remove</param>
-	bool DeleteCasterSpell(LuaSpell* spell);
+	bool DeleteCasterSpell(LuaSpell* spell, string reason="");
 
 	/// <summary>Interrupt the spell</summary>
 	/// <param name='interrupt'>InterruptStruct that contains all the info</param>

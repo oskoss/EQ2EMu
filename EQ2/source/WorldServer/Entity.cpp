@@ -1135,7 +1135,7 @@ void Entity::DismissPet(NPC* pet, bool from_death) {
 	// Remove the spell maintained spell
 	Spell* spell = master_spell_list.GetSpell(pet->GetPetSpellID(), pet->GetPetSpellTier());
 	if (spell)
-		GetZone()->GetSpellProcess()->DeleteCasterSpell(this, spell);
+		GetZone()->GetSpellProcess()->DeleteCasterSpell(this, spell, from_death == true ? (string)"pet_death" : (string)"canceled");
 
 	if (pet->GetPetType() == PET_TYPE_CHARMED) {
 		PetOwner->SetCharmedPet(0);
@@ -1292,7 +1292,7 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 			if (!ward->keepWard) {
 				hasSpellBeenRemoved = true;
 				RemoveWard(spell->spell->GetSpellID());
-				GetZone()->GetSpellProcess()->DeleteCasterSpell(spell);
+				GetZone()->GetSpellProcess()->DeleteCasterSpell(spell, "purged");
 			}
 		}
 		else {
@@ -1344,7 +1344,7 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 		if (shouldRemoveSpell && !hasSpellBeenRemoved)
 		{
 			RemoveWard(spell->spell->GetSpellID());
-			GetZone()->GetSpellProcess()->DeleteCasterSpell(spell);
+			GetZone()->GetSpellProcess()->DeleteCasterSpell(spell, "purged");
 		}
 
 		// Reset ward pointer

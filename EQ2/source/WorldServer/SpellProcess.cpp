@@ -132,7 +132,7 @@ void SpellProcess::Process(){
 				if (spell->spell->GetSpellData()->call_frequency > 0 && !ProcessSpell(spell, false))
 					active_spells.Remove(spell, true, 2000);
 				else if ((spell->timer.GetDuration() * spell->num_calls) >= spell->spell->GetSpellData()->duration1 * 100)
-					DeleteCasterSpell(spell);
+					DeleteCasterSpell(spell, "expired");
 			}
 			else
 				CheckRemoveTargetFromSpell(spell);
@@ -151,7 +151,7 @@ void SpellProcess::Process(){
 
 		itr = tmpList.begin();
 		while (itr != tmpList.end()) {
-			DeleteCasterSpell(*itr);
+			DeleteCasterSpell(*itr, "canceled");
 			itr++;
 		}
 	}
@@ -342,7 +342,7 @@ void SpellProcess::CheckInterrupt(InterruptStruct* interrupt){
 		entity->GetZone()->SendSpellFailedPacket(client, interrupt->error_code);
 }
 
-bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell){
+bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell, string reason){
 
 	bool ret = false;
 	// need to use size(true) to get pending updates to the list as well
@@ -352,7 +352,7 @@ bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell){
 		while (itr.Next()){
 			lua_spell = itr->value;
 			if (lua_spell->spell == spell && lua_spell->caster == caster) {
-				ret = DeleteCasterSpell(lua_spell);
+				ret = DeleteCasterSpell(lua_spell, reason);
 				break;
 			}
 		}
@@ -360,7 +360,7 @@ bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell){
 	return ret;
 }
 
-bool SpellProcess::DeleteCasterSpell(LuaSpell* spell){
+bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason){
 	bool ret = false;
 	Spawn* target = 0;
 	if(spell) {
@@ -403,7 +403,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell){
 			ret = true;
 		}
 		if(lua_interface)
-			lua_interface->RemoveSpell(spell, true, SpellScriptTimersHasSpell(spell));	
+			lua_interface->RemoveSpell(spell, true, SpellScriptTimersHasSpell(spell), reason);
 	}
 	return ret;
 }
@@ -848,7 +848,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		//If this spell is the toggle cast type and is being toggled off, do this now
 		if (spell->GetSpellData()->cast_type == SPELL_CAST_TYPE_TOGGLE)
 		{
-			bool ret_val = DeleteCasterSpell(caster, spell);
+			bool ret_val = DeleteCasterSpell(caster, spell, "purged");
 
 			if (ret_val)
 			{
@@ -1643,7 +1643,7 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 			if (spell->spell->GetSpellData()->persist_though_death)
 				continue;
 			if(spell->caster == spawn){
-				DeleteCasterSpell(spell);
+				DeleteCasterSpell(spell, "expired");
 				continue;
 			}
 
@@ -2324,7 +2324,7 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 		safe_delete(remove_targets);
 		MRemoveTargetList.releasewritelock(__FUNCTION__, __LINE__);
 		if (should_delete)
-			DeleteCasterSpell(spell);
+			DeleteCasterSpell(spell, "purged");
 	}
 }
 

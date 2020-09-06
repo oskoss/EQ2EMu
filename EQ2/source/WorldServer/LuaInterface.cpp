@@ -606,7 +606,7 @@ lua_State* LuaInterface::LoadLuaFile(const char* name) {
 	return 0;
 }
 
-void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool can_delete) {
+void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool can_delete, string reason) {
 	if(shutting_down)
 		return;
 
@@ -628,10 +628,15 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 		else
 			lua_pushlightuserdata(spell->state, 0);
 
+		if (spell->caster && !spell->caster->Alive())
+			reason = "dead";
+
+		lua_pushstring(spell->state, (char*)reason.c_str());
+
 		MSpells.lock();
 		current_spells[spell->state] = spell;
 		MSpells.unlock();
-		lua_pcall(spell->state, 2, 0, 0);
+		lua_pcall(spell->state, 3, 0, 0);
 	}
 
 	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
