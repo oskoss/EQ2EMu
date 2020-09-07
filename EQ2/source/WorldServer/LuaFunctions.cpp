@@ -2584,12 +2584,25 @@ int EQ2Emu_lua_SetStepComplete(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
+	if (!player || !player->IsPlayer()) {
+		lua_interface->LogError("%s: LUA SetStepComplete command error: player is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
+	if (quest_id <= 0) {
+		lua_interface->LogError("%s: LUA SetStepComplete command error: quest_id is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	} else if ((((Player*)player)->player_quests.count(quest_id) <= 0)) {
+		lua_interface->LogError("%s: LUA SetStepComplete command error: player does not have quest", lua_interface->GetScriptName(state));
+		return 0;
+	}
 	int32 step = lua_interface->GetInt32Value(state, 3);
-	if (player && player->IsPlayer() && quest_id > 0 && step > 0 && (((Player*)player)->player_quests.count(quest_id) > 0)) {
+	if (step > 0) {
 		Client* client = player->GetZone()->GetClientBySpawn(player);
 		if (client)
 			client->AddPendingQuestUpdate(quest_id, step);
+	} else {
+		lua_interface->LogError("%s: LUA SetStepComplete command error: step is not valid", lua_interface->GetScriptName(state));
 	}
 	return 0;
 }
@@ -2727,10 +2740,16 @@ int EQ2Emu_lua_HasQuest(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
+	if(!player || !player->IsPlayer()) {
+		lua_interface->LogError("%s: LUA HasQuest command error: player is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
-	if (player && player->IsPlayer() && quest_id > 0) {
+	if (quest_id > 0) {
 		lua_interface->SetBooleanValue(state, (((Player*)player)->player_quests.count(quest_id) > 0));
 		return 1;
+	} else {
+		lua_interface->LogError("%s: LUA HasQuest command error: quest_id is not valid", lua_interface->GetScriptName(state));
 	}
 	return 0;
 }
