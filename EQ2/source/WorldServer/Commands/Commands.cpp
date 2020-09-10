@@ -1432,6 +1432,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							item->save_needed = true;
 							client->QueuePacket(item->serialize(client->GetVersion(), false, client->GetPlayer()));
 						}
+						else
+							LogWrite(PLAYER__ERROR, 0, "Command", "%s: Item %s (%i) attempted to be used, however display_charges is 0.", client->GetPlayer()->GetName(), item->name.c_str(), item->details.item_id);
 					}
 				}
 			}
