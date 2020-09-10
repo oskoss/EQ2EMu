@@ -379,6 +379,7 @@ public:
 
 	void AddSpellCancel(LuaSpell* spell);
 
+	void DeleteSpell(LuaSpell* spell);
 private:
 	/// <summary>Sends the spell data to the lua script</summary>
 	/// <param name='spell'>LuaSpell to call the lua script for</param>
