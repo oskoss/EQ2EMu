@@ -5617,9 +5617,9 @@ Spell* ZoneServer::GetSpell(Entity* caster){
 	return spell;
 }
 
-void ZoneServer::ProcessSpell(Spell* spell, Entity* caster, Spawn* target, bool lock, bool harvest_spell){
+void ZoneServer::ProcessSpell(Spell* spell, Entity* caster, Spawn* target, bool lock, bool harvest_spell, LuaSpell* customSpell, int16 custom_cast_time){
 	if(spellProcess)
-		spellProcess->ProcessSpell(this, spell, caster, target, lock, harvest_spell);
+		spellProcess->ProcessSpell(this, spell, caster, target, lock, harvest_spell, customSpell, custom_cast_time);
 }
 
 void ZoneServer::ProcessEntityCommand(EntityCommand* entity_command, Entity* caster, Spawn* target, bool lock) {

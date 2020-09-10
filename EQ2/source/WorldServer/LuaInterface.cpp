@@ -649,6 +649,10 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 	}
 	spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 
+	// we need to make sure all memory is purged for a copied spell, its only used once
+	if (spell->spell->IsCopiedSpell())
+		can_delete = true;
+
 	if (can_delete) {
 		AddPendingSpellDelete(spell);
 	}
@@ -1076,6 +1080,14 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SendTransporters", EQ2Emu_lua_SendTransporters);
 	lua_register(state, "SetTemporaryTransportID", EQ2Emu_lua_SetTemporaryTransportID);
 	lua_register(state, "GetTemporaryTransportID", EQ2Emu_lua_GetTemporaryTransportID);
+
+	lua_register(state, "SetAlignment", EQ2Emu_lua_SetAlignment);
+	lua_register(state, "GetAlignment", EQ2Emu_lua_GetAlignment);
+
+	lua_register(state, "GetSpell", EQ2Emu_lua_GetSpell);
+	lua_register(state, "GetSpellData", EQ2Emu_lua_GetSpellData);
+	lua_register(state, "SetSpellData", EQ2Emu_lua_SetSpellData);
+	lua_register(state, "CastCustomSpell", EQ2Emu_lua_CastCustomSpell);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
@@ -1118,6 +1130,7 @@ void LuaInterface::DeletePendingSpells(bool all) {
 		for (del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++) {
 			spell = *del_itr;
 			spells_pending_delete.erase(spell);
+
 			safe_delete(spell);
 		}
 	}
@@ -1254,17 +1267,36 @@ Skill* LuaInterface::GetSkill(lua_State* state, int8 arg_num) {
 	Skill* ret = 0;
 	if (lua_islightuserdata(state, arg_num)) {
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
-		if(!data || !data->IsCorrectlyInitialized()){
+		if (!data || !data->IsCorrectlyInitialized()) {
 			LogError("%s: GetSkill error while processing %s", GetScriptName(state), lua_tostring(state, 0));
 		}
-		else if(!data->IsSkill()){
+		else if (!data->IsSkill()) {
 			lua_Debug ar;
- 			lua_getstack (state, 1, &ar);
+			lua_getstack(state, 1, &ar);
 			lua_getinfo(state, "Sln", &ar);
 			LogError("%s: Invalid data type used for GetSkill in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
 		}
 		else
 			ret = data->skill;
+	}
+	return ret;
+}
+
+LuaSpell* LuaInterface::GetSpell(lua_State* state, int8 arg_num) {
+	LuaSpell* ret = 0;
+	if (lua_islightuserdata(state, arg_num)) {
+		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
+		if (!data || !data->IsCorrectlyInitialized()) {
+			LogError("%s: GetSpell error while processing %s", GetScriptName(state), lua_tostring(state, 0));
+		}
+		else if (!data->IsSpell()) {
+			lua_Debug ar;
+			lua_getstack(state, 1, &ar);
+			lua_getinfo(state, "Sln", &ar);
+			LogError("%s: Invalid data type used for GetSpell in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
+		}
+		else
+			ret = data->spell;
 	}
 	return ret;
 }
@@ -1411,6 +1443,13 @@ void LuaInterface::SetZoneValue(lua_State* state, ZoneServer* zone) {
 	lua_pushlightuserdata(state, zone_wrapper);
 }
 
+void LuaInterface::SetSpellValue(lua_State* state, LuaSpell* spell) {
+	LUASpellWrapper* spell_wrapper = new LUASpellWrapper();
+	spell_wrapper->spell = spell;
+	AddUserDataPtr(spell_wrapper);
+	lua_pushlightuserdata(state, spell_wrapper);
+}
+
 LuaSpell* LuaInterface::GetSpell(const char* name)  {
 	string lua_script = string(name);
 	if (lua_script.find(".lua") == string::npos)
@@ -1421,7 +1460,7 @@ LuaSpell* LuaInterface::GetSpell(const char* name)  {
 		LuaSpell* spell = spells[lua_script];
 		LuaSpell* new_spell = new LuaSpell;
 		new_spell->state = spell->state;
-		new_spell->file_name = spell->file_name;
+		new_spell->file_name = string(spell->file_name);
 		new_spell->timer = spell->timer;
 		new_spell->timer.Disable();
 		new_spell->resisted = false;
@@ -1794,6 +1833,10 @@ bool LUAUserData::IsSkill() {
 	return false;
 }
 
+bool LUAUserData::IsSpell() {
+	return false;
+}
+
 LUAConversationOptionWrapper::LUAConversationOptionWrapper(){
 	correctly_initialized = true;
 }
@@ -1847,5 +1890,13 @@ LUASkillWrapper::LUASkillWrapper() {
 }
 
 bool LUASkillWrapper::IsSkill() {
+	return true;
+}
+
+LUASpellWrapper::LUASpellWrapper() {
+	correctly_initialized = true;
+}
+
+bool LUASpellWrapper::IsSpell() {
 	return true;
 }

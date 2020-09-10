@@ -28,6 +28,8 @@
 #include "../common/Mutex.h"
 #include "AltAdvancement/AltAdvancement.h"
 
+#include "../LUA/lua.hpp"
+
 #define SPELL_TARGET_SELF			0
 #define SPELL_TARGET_ENEMY			1
 #define SPELL_TARGET_GROUP_AE		2
@@ -289,6 +291,7 @@ public:
 	~Spell();
 	Spell();
 	Spell(SpellData* in_spell);
+	Spell(Spell* host_spell);
 	EQ2Packet* SerializeSpell(Client* client, bool display, bool trait_display = false, int8 packet_type = 0, int8 sub_packet_type = 0, const char* struct_name = 0);
 	EQ2Packet* SerializeSpecialSpell(Client* client, bool display, int8 packet_type = 0, int8 sub_packet_type = 0);
 	EQ2Packet* SerializeAASpell(Client* client,int8 tier, AltAdvanceData* data, bool display, bool trait_display = false, int8 packet_type = 0, int8 sub_packet_type = 0, const char* struct_name = 0);
@@ -313,6 +316,8 @@ public:
 	int16 GetSavageryRequired(Spawn* spawn);
 	int16 GetDissonanceRequired(Spawn* spawn);
 	SpellData* GetSpellData();
+	bool GetSpellData(lua_State* state, std::string field);
+	bool SetSpellData(lua_State* state, std::string field, int8 fieldArg);
 	bool ScribeAllowed(Player* player);
 	vector<LUAData*>* GetLUAData();
 	vector <LevelArray*>* GetSpellLevels();
@@ -324,6 +329,7 @@ public:
 	bool IsDamageSpell();
 	bool IsControlSpell();
 	bool IsOffenseSpell();
+	bool IsCopiedSpell();
 	void ModifyCastTime(Entity* caster);
 	bool CastWhileStunned();
 	bool CastWhileMezzed();
@@ -331,15 +337,18 @@ public:
 	bool CastWhileFeared();
 
 
-
 	vector<SpellDisplayEffect*> effects;
 	vector<LUAData*> lua_data;
+
+	void LockSpellInfo() { MSpellInfo.lock(); }
+	void UnlockSpellInfo() { MSpellInfo.unlock(); }
 private:
 	bool heal_spell;
 	bool buff_spell;
 	bool damage_spell;
 	bool control_spell;
 	bool offense_spell;
+	bool copied_spell;
 
 	SpellData* spell;
 	

@@ -783,20 +783,25 @@ Spawn* SpellProcess::GetSpellTarget(Entity* caster){
 	return target;
 }
 
-void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, Spawn* target, bool lock, bool harvest_spell)
+void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, Spawn* target, bool lock, bool harvest_spell, LuaSpell* customSpell, int16 custom_cast_time)
 {
-	if(spell && caster)
+	if((customSpell != 0 || spell != 0) && caster)
 	{
 
 		Client* client = 0;
-		int8 target_type = spell->GetSpellData()->target_type;
 		//int16 version = 0;
 
 		LuaSpell* lua_spell = 0;
 
-		if(lua_interface)
+		if (customSpell)
+		{
+			lua_spell = customSpell;
+			spell = lua_spell->spell;
+		}
+		else if(lua_interface)
 			lua_spell = lua_interface->GetSpell(spell->GetSpellData()->lua_script.c_str());
 
+		// this will only hit if customSpell is null and we go through the lua_interface
 		if(!lua_spell)
 		{
 			string lua_script = spell->GetSpellData()->lua_script;
@@ -813,6 +818,8 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 		if (!target)
 			target = caster;
+
+		int8 target_type = spell->GetSpellData()->target_type;
 
 		lua_spell->caster = caster;
 		lua_spell->spell = spell;
@@ -1235,6 +1242,9 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		else
 			LogWrite(SPELL__DEBUG, 1, "Spell", "Unable to do precast check as there was no lua_interface");
 		
+		if (custom_cast_time > 0)
+			spell->GetSpellData()->cast_time = custom_cast_time;
+
 		//Apply casting speed mod
 		spell->ModifyCastTime(caster);
 

@@ -38,9 +38,9 @@
 #endif
 
 #if defined(LOGIN)
-#define CURRENT_VERSION	"0.8.1-virgo1"
+#define CURRENT_VERSION	"0.8.1-virgo2"
 #elif defined(WORLD)
-#define CURRENT_VERSION	"0.8.1-virgo1"
+#define CURRENT_VERSION	"0.8.1-virgo2"
 #else
 #define CURRENT_VERSION	"0.7.3-dev"
 #endif

@@ -106,6 +106,7 @@ public:
 	virtual bool IsZone();
 	virtual bool IsItem();
 	virtual bool IsSkill();
+	virtual bool IsSpell();
 	bool correctly_initialized;
 	Item* item;
 	ZoneServer* zone;
@@ -114,6 +115,7 @@ public:
 	vector<OptionWindowOption>* option_window_option;
 	Quest* quest;
 	Skill* skill;
+	LuaSpell* spell;
 };
 
 class LUAConversationOptionWrapper : public LUAUserData{
@@ -158,6 +160,12 @@ public:
 	bool IsSkill();
 };
 
+class LUASpellWrapper : public LUAUserData {
+public:
+	LUASpellWrapper();
+	bool IsSpell();
+};
+
 class LuaInterface {
 public:
 	LuaInterface();
@@ -176,6 +184,7 @@ public:
 	Quest*			GetQuest(lua_State* state, int8 arg_num = 1);
 	ZoneServer*		GetZone(lua_State* state, int8 arg_num = 1);
 	Skill*			GetSkill(lua_State* state, int8 arg_num = 1);
+	LuaSpell*		GetSpell(lua_State* state, int8 arg_num = 1);
 	vector<ConversationOption>*	GetConversation(lua_State* state, int8 arg_num = 1);
 	vector<OptionWindowOption>* GetOptionWindow(lua_State* state, int8 arg_num = 1);
 	int8			GetInt8Value(lua_State* state, int8 arg_num = 1);
@@ -198,6 +207,7 @@ public:
 	void			SetItemValue(lua_State* state, Item* item);
 	void			SetQuestValue(lua_State* state, Quest* quest);
 	void			SetZoneValue(lua_State* state, ZoneServer* zone);
+	void			SetSpellValue(lua_State* state, LuaSpell* spell);
 	void			SetConversationValue(lua_State* state, vector<ConversationOption>* conversation);
 	void			SetOptionWindowValue(lua_State* state, vector<OptionWindowOption>* optionWindow);
 
