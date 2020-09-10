@@ -155,7 +155,7 @@ Spell::Spell(Spell* host_spell)
 	}
 
 	vector<LUAData*>::iterator luaitr;
-	for (luaitr = lua_data.begin(); luaitr != lua_data.end(); luaitr++) {
+	for (luaitr = host_spell->lua_data.begin(); luaitr != host_spell->lua_data.end(); luaitr++) {
 		LUAData* data = *luaitr;
 		AddSpellLuaData(data->type, data->int_value, data->int_value2, data->float_value, data->float_value2, data->bool_value, string(data->string_value), string(data->string_value2), string(data->string_helper));
 	}
