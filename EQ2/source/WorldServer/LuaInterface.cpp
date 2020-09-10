@@ -1131,6 +1131,9 @@ void LuaInterface::DeletePendingSpells(bool all) {
 			spell = *del_itr;
 			spells_pending_delete.erase(spell);
 
+			if (spell->spell->IsCopiedSpell())
+				safe_delete(spell->spell);
+
 			safe_delete(spell);
 		}
 	}

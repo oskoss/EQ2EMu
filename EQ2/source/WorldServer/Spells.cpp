@@ -51,7 +51,87 @@ Spell::Spell(Spell* host_spell)
 	spell = new SpellData;
 
 	if (host_spell->GetSpellData())
-		memcpy(spell, host_spell->GetSpellData(), sizeof(SpellData));
+	{
+		spell->affect_only_group_members = host_spell->GetSpellData()->affect_only_group_members;
+		spell->call_frequency = host_spell->GetSpellData()->call_frequency;
+		spell->can_effect_raid = host_spell->GetSpellData()->can_effect_raid;
+		spell->casting_flags = host_spell->GetSpellData()->casting_flags;
+		spell->cast_time = host_spell->GetSpellData()->cast_time;
+		spell->cast_type = host_spell->GetSpellData()->cast_type;
+		spell->cast_while_moving = host_spell->GetSpellData()->cast_while_moving;
+		spell->class_skill = host_spell->GetSpellData()->class_skill;
+		spell->control_effect_type = host_spell->GetSpellData()->control_effect_type;
+		spell->description = EQ2_16BitString(host_spell->GetSpellData()->description);
+		spell->det_type = host_spell->GetSpellData()->det_type;
+		spell->display_spell_tier = host_spell->GetSpellData()->display_spell_tier;
+
+		spell->dissonance_req = host_spell->GetSpellData()->dissonance_req;
+		spell->dissonance_req_percent = host_spell->GetSpellData()->dissonance_req_percent;
+		spell->dissonance_upkeep = host_spell->GetSpellData()->dissonance_upkeep;
+		spell->duration1 = host_spell->GetSpellData()->duration1;
+		spell->duration2 = host_spell->GetSpellData()->duration2;
+		spell->duration_until_cancel = host_spell->GetSpellData()->duration_until_cancel;
+		spell->effect_message = string(host_spell->GetSpellData()->effect_message);
+		spell->fade_message = string(host_spell->GetSpellData()->fade_message);
+
+		spell->friendly_spell = host_spell->GetSpellData()->friendly_spell;
+		spell->group_spell = host_spell->GetSpellData()->group_spell;
+
+		spell->hit_bonus = host_spell->GetSpellData()->hit_bonus;
+
+		spell->hp_req = host_spell->GetSpellData()->hp_req;
+		spell->hp_req_percent = host_spell->GetSpellData()->hp_req_percent;
+		spell->hp_upkeep = host_spell->GetSpellData()->hp_upkeep;
+
+		spell->icon = host_spell->GetSpellData()->icon;
+		spell->icon_backdrop = host_spell->GetSpellData()->icon_backdrop;
+
+		spell->icon_heroic_op = host_spell->GetSpellData()->icon_heroic_op;
+
+		spell->id = host_spell->GetSpellData()->id;
+
+		spell->incurable = host_spell->GetSpellData()->incurable;
+		spell->interruptable = host_spell->GetSpellData()->interruptable;
+		spell->is_aa = host_spell->GetSpellData()->is_aa;
+
+		spell->is_active = host_spell->GetSpellData()->is_active;
+		spell->linked_timer = host_spell->GetSpellData()->linked_timer;
+		spell->lua_script = string(host_spell->GetSpellData()->lua_script);
+
+		spell->mastery_skill = host_spell->GetSpellData()->mastery_skill;
+		spell->max_aoe_targets = host_spell->GetSpellData()->max_aoe_targets;
+
+		spell->min_range = host_spell->GetSpellData()->min_range;
+		spell->name = EQ2_8BitString(host_spell->GetSpellData()->name);
+		spell->not_maintained = host_spell->GetSpellData()->not_maintained;
+		spell->num_levels = host_spell->GetSpellData()->num_levels;
+		spell->persist_though_death = host_spell->GetSpellData()->persist_though_death;
+		spell->power_by_level = host_spell->GetSpellData()->power_by_level;
+		spell->power_req = host_spell->GetSpellData()->power_req;
+		spell->power_req_percent = host_spell->GetSpellData()->power_req_percent;
+		spell->power_upkeep = host_spell->GetSpellData()->power_upkeep;
+		spell->radius = host_spell->GetSpellData()->radius;
+		spell->range = host_spell->GetSpellData()->range;
+		spell->recast = host_spell->GetSpellData()->recast;
+		spell->recovery = host_spell->GetSpellData()->recovery;
+		spell->req_concentration = host_spell->GetSpellData()->req_concentration;
+		spell->resistibility = host_spell->GetSpellData()->resistibility;
+		spell->savagery_req = host_spell->GetSpellData()->savagery_req;
+		spell->savagery_req_percent = host_spell->GetSpellData()->savagery_req_percent;
+		spell->savagery_upkeep = host_spell->GetSpellData()->savagery_upkeep;
+		spell->savage_bar = host_spell->GetSpellData()->savage_bar;
+		spell->savage_bar_slot = host_spell->GetSpellData()->savage_bar_slot;
+		spell->soe_spell_crc = host_spell->GetSpellData()->soe_spell_crc;
+		spell->spell_book_type = host_spell->GetSpellData()->spell_book_type;
+		spell->spell_name_crc = host_spell->GetSpellData()->spell_name_crc;
+		spell->spell_type = host_spell->GetSpellData()->spell_type;
+		spell->spell_visual = host_spell->GetSpellData()->spell_visual;
+		spell->success_message = string(host_spell->GetSpellData()->success_message);
+		spell->target_type = host_spell->GetSpellData()->target_type;
+		spell->tier = host_spell->GetSpellData()->tier;
+		spell->ts_loc_index = host_spell->GetSpellData()->ts_loc_index;
+		spell->type = host_spell->GetSpellData()->type;
+	}
 
 	heal_spell = host_spell->IsHealSpell();
 	buff_spell = host_spell->IsBuffSpell();
