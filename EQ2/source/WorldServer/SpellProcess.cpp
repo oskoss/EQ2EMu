@@ -2443,6 +2443,8 @@ void SpellProcess::AddSpellCancel(LuaSpell* spell){
 
 void SpellProcess::DeleteSpell(LuaSpell* spell)
 {
+	RemoveSpellFromQueue(spell->spell, spell->caster);
+
 	if (spell->spell->IsCopiedSpell())
 		safe_delete(spell->spell);
 
