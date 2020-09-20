@@ -409,7 +409,7 @@ bool ZoneList::HandleGlobalChatMessage(Client* from, char* to, int16 channel, co
 		return false;
 	}
 
-	if(channel == CHANNEL_TELL){
+	if(channel == CHANNEL_PRIVATE_TELL){
 		Client* find_client = zone_list.GetClientByCharName(to);
 		if(!find_client || find_client->GetPlayer()->IsIgnored(from->GetPlayer()->GetName()))
 			return false;
@@ -419,50 +419,15 @@ bool ZoneList::HandleGlobalChatMessage(Client* from, char* to, int16 channel, co
 		}
 		else
 		{
-			PacketStruct* packet = configReader.getStruct("WS_HearChat", from->GetVersion());
-			if(packet){
-				packet->setMediumStringByName("from", from->GetPlayer()->GetName());
-				packet->setMediumStringByName("to", find_client->GetPlayer()->GetName());
-				packet->setDataByName("channel", CHANNEL_TELL);
-				packet->setDataByName("from_spawn_id", 0xFFFFFFFF);
-				packet->setDataByName("to_spawn_id", 0xFFFFFFFF);
-				packet->setDataByName("unknown2", 1, 1);
-				packet->setDataByName("show_bubble", 1);
-				packet->setDataByName("understood", 1);
-				packet->setDataByName("time", 2); 
-				packet->setMediumStringByName("message", message);
-				if(channel_name)
-					packet->setMediumStringByName("channel_name", channel_name);
-				EQ2Packet* outpacket = packet->serialize();
-				//DumpPacket(outpacket);
-				find_client->QueuePacket(outpacket->Copy());
-				from->QueuePacket(outpacket);
-				safe_delete(packet);
-			}
+			find_client->HandleTellMessage(from, message);
+			from->HandleTellMessage(from, message);			
 			if (find_client->GetPlayer()->get_character_flag(CF_AFK)) {
-				PacketStruct* packet2 = configReader.getStruct("WS_HearChat", from->GetVersion());
-				if (packet2) {
-					packet2->setMediumStringByName("from", find_client->GetPlayer()->GetName());
-					packet2->setMediumStringByName("to", from->GetPlayer()->GetName());
-					packet2->setDataByName("channel", CHANNEL_TELL);
-					packet2->setDataByName("from_spawn_id", 0xFFFFFFFF);
-					packet2->setDataByName("to_spawn_id", 0xFFFFFFFF);
-					packet2->setDataByName("unknown2", 1, 1);
-					packet2->setDataByName("show_bubble", 1);
-					packet2->setDataByName("understood", 1);
-					packet2->setDataByName("time", 2);
-					packet2->setMediumStringByName("message", find_client->GetPlayer()->GetAwayMessage().c_str());
-					if (channel_name)
-						packet2->setMediumStringByName("channel_name", channel_name);
-					EQ2Packet* outpacket = packet2->serialize();
-					from->QueuePacket(outpacket->Copy());
-					find_client->QueuePacket(outpacket);
-					safe_delete(packet2);
-				}
+				find_client->HandleTellMessage(find_client, find_client->GetPlayer()->GetAwayMessage().c_str());
+				from->HandleTellMessage(find_client, find_client->GetPlayer()->GetAwayMessage().c_str());
 			}
 		}
 	}
-	else if(channel == CHANNEL_GROUP) {
+	else if(channel == CHANNEL_GROUP_SAY) {
 		GroupMemberInfo* gmi = from->GetPlayer()->GetGroupMemberInfo();
 		if(gmi)
 			world.GetGroupManager()->GroupMessage(gmi->group_id, message);

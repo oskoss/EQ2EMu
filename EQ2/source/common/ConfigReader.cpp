@@ -78,7 +78,7 @@ PacketStruct* ConfigReader::getStruct(const char* name, int16 version){
 				latest_version = *iter;
 		}		
 		if (latest_version) {
-			if (latest_version->GetOpcode() != OP_Unknown && latest_version->GetOpcodeValue(version) == 0xFFFF) {
+			if (latest_version->GetOpcode() != OP_Unknown && (latest_version->GetOpcodeValue(version) == 0xFFFF || latest_version->GetOpcodeValue(version)==0xCDCD)) {
 				LogWrite(PACKET__ERROR, 0, "Packet", "Could not find valid opcode for Packet Struct '%s' and client version %d", latest_version->GetName(), version);
 			}
 			else if(strlen(latest_version->GetOpcodeType()) == 0 || latest_version->GetOpcode() != OP_Unknown)

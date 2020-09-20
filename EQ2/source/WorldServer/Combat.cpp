@@ -156,14 +156,14 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 			// Distance is less then min weapon range
 			if(distance < weapon->ranged_info->range_low) {
 				if (client)
-					client->SimpleMessage(CHANNEL_COLOR_COMBAT, "Your target is too close! Move back!");
+					client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "Your target is too close! Move back!");
 				LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: range attack, target to close");
 				return false;
 			}
 			// Distance is greater then max weapon range
 			if  (distance > (weapon->ranged_info->range_high + ammo->thrown_info->range)) {
 				if (client)
-					client->SimpleMessage(CHANNEL_COLOR_COMBAT, "Your target is too far away! Move closer!");
+					client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "Your target is too far away! Move closer!");
 				LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: range attack, target is to far");
 				return false;
 			}
@@ -414,7 +414,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 				string success_message = spell->GetSpellData()->success_message;
 				if(success_message.find("%t") < 0xFFFFFFFF)
 					success_message.replace(success_message.find("%t"), 2, victim->GetName());
-				client->Message(CHANNEL_COLOR_SPELL, success_message.c_str());
+				client->Message(CHANNEL_YOU_CAST, success_message.c_str());
 				//commented out the following line as it was causing a duplicate message EmemJR 5/4/2019
 				//GetZone()->SendDamagePacket(this, victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, hit_result, damage_type, 0, spell->GetName()); 
 			}
@@ -423,7 +423,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 			string effect_message = spell->GetSpellData()->effect_message;
 			if(effect_message.find("%t") < 0xFFFFFFFF)
 				effect_message.replace(effect_message.find("%t"), 2, victim->GetName());
-			GetZone()->SimpleMessage(CHANNEL_COLOR_SPELL_EFFECT, effect_message.c_str(), victim, 50);
+			GetZone()->SimpleMessage(CHANNEL_SPELLS, effect_message.c_str(), victim, 50);
 		}
 	}
 	else {
@@ -506,13 +506,13 @@ bool Entity::ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32
 			if(client) {
 				if(success_msg.find("%t") < 0xFFFFFFFF)
 					success_msg.replace(success_msg.find("%t"), 2, victim->GetName());
-				client->Message(CHANNEL_COLOR_SPELL, success_msg.c_str());
+				client->Message(CHANNEL_YOU_CAST, success_msg.c_str());
 			}
 		}
 		if (effect_msg.length() > 0) {
 			if(effect_msg.find("%t") < 0xFFFFFFFF)
 				effect_msg.replace(effect_msg.find("%t"), 2, victim->GetName());
-			GetZone()->SimpleMessage(CHANNEL_COLOR_SPELL_EFFECT, effect_msg.c_str(), victim, 50);
+			GetZone()->SimpleMessage(CHANNEL_SPELLS, effect_msg.c_str(), victim, 50);
 		}
 	}
 	else {

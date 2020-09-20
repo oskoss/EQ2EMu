@@ -696,6 +696,12 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetSpawnGroupID", EQ2Emu_lua_GetSpawnGroupID);
 	lua_register(state, "GetSpawnLocationID", EQ2Emu_lua_GetSpawnLocationID);
 	lua_register(state, "GetSpawnLocationPlacementID", EQ2Emu_lua_GetSpawnLocationPlacementID);
+	lua_register(state, "CreateSpawnList", EQ2Emu_lua_CreateSpawnList);
+	lua_register(state, "AddSpawnToSpawnList", EQ2Emu_lua_AddSpawnToSpawnList);
+	lua_register(state, "RemoveSpawnFromSpawnList", EQ2Emu_lua_RemoveSpawnFromSpawnList);
+	lua_register(state, "GetSpawnListBySpawnID", EQ2Emu_lua_GetSpawnListBySpawnID);
+	lua_register(state, "GetSpawnFromList", EQ2Emu_lua_GetSpawnFromList);
+	lua_register(state, "GetSpawnListSize", EQ2Emu_lua_GetSpawnListSize);	
 	lua_register(state, "SetFactionID", EQ2Emu_lua_SetFactionID);
 	lua_register(state, "GetFactionID", EQ2Emu_lua_GetFactionID);
 	lua_register(state, "GetFactionAmount", EQ2Emu_lua_GetFactionAmount);
@@ -735,14 +741,17 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "IsPlayer", EQ2Emu_lua_IsPlayer);
 	lua_register(state, "FaceTarget", EQ2Emu_lua_FaceTarget);
 	lua_register(state, "MoveToLocation", EQ2Emu_lua_MoveToLocation);
+	lua_register(state, "ClearRunningLocations", EQ2Emu_lua_ClearRunningLocations);
 	lua_register(state, "Shout", EQ2Emu_lua_Shout);
 	lua_register(state, "Say", EQ2Emu_lua_Say);
 	lua_register(state, "SayOOC", EQ2Emu_lua_SayOOC);
 	lua_register(state, "Emote", EQ2Emu_lua_Emote);
-	lua_register(state, "MovementLoopAddLocation", EQ2Emu_lua_MovementLoopAdd);
+	lua_register(state, "MovementLoopAdd", EQ2Emu_lua_MovementLoopAdd);
 	lua_register(state, "GetCurrentZoneSafeLocation", EQ2Emu_lua_GetCurrentZoneSafeLocation);
 	lua_register(state, "AddTimer", EQ2Emu_lua_AddTimer);
 	lua_register(state, "Harvest", EQ2Emu_lua_Harvest);
+	lua_register(state, "SetAttackable", EQ2Emu_lua_SetAttackable);
+
 	
 	lua_register(state, "AddSpellBonus", EQ2Emu_lua_AddSpellBonus);
 	lua_register(state, "RemoveSpellBonus", EQ2Emu_lua_RemoveSpellBonus);
@@ -781,6 +790,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "PlayVoice", EQ2Emu_lua_PlayVoice);
 	lua_register(state, "PlayAnimation", EQ2Emu_lua_PlayAnimation);
 	lua_register(state, "AddLootItem", EQ2Emu_lua_AddLootItem);
+	lua_register(state, "HasLootItem", EQ2Emu_lua_HasLootItem);
 	lua_register(state, "RemoveLootItem", EQ2Emu_lua_RemoveLootItem);
 	lua_register(state, "AddLootCoin", EQ2Emu_lua_AddLootCoin);
 	lua_register(state, "GiveLoot", EQ2Emu_lua_GiveLoot);
@@ -796,13 +806,15 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "CloseConversation", EQ2Emu_lua_CloseConversation);
 	lua_register(state, "CloseItemConversation", EQ2Emu_lua_CloseItemConversation);
 	//lua_register(state, "StartItemConversation", EQ2Emu_lua_StartItemConversation);
-	lua_register(state, "StartDialogConversation", EQ2Emu_lua_StartDialogConversation);
+	lua_register(state, "StartDialogConversation", EQ2Emu_lua_StartDialogConversation);	
+	lua_register(state, "SendStateCommand", EQ2Emu_lua_SendStateCommand);
 	lua_register(state, "SpawnSet", EQ2Emu_lua_SpawnSet);
 	lua_register(state, "SpawnSetByDistance", EQ2Emu_lua_SpawnSetByDistance);
 	lua_register(state, "SpawnMove", EQ2Emu_lua_SpawnMove);
 	lua_register(state, "KillSpawn", EQ2Emu_lua_KillSpawn); 
 	lua_register(state, "KillSpawnByDistance", EQ2Emu_lua_KillSpawnByDistance);
 	lua_register(state, "Despawn", EQ2Emu_lua_Despawn);
+	lua_register(state, "ChangeHandIcon", EQ2Emu_lua_ChangeHandIcon);
 	lua_register(state, "IsBindAllowed", EQ2Emu_lua_IsBindAllowed);
 	lua_register(state, "IsGateAllowed", EQ2Emu_lua_IsGateAllowed);
 	lua_register(state, "Bind", EQ2Emu_lua_Bind);
@@ -858,6 +870,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "AddQuestStepProgressAction", EQ2Emu_lua_AddQuestStepProgressAction);
 	lua_register(state, "SetQuestCompleteAction", EQ2Emu_lua_SetQuestCompleteAction);
 	lua_register(state, "GiveQuestReward", EQ2Emu_lua_GiveQuestReward);
+	lua_register(state, "GiveImmediateQuestReward", EQ2Emu_lua_GiveImmediateQuestReward);
 	lua_register(state, "UpdateQuestStepDescription", EQ2Emu_lua_UpdateQuestStepDescription);
 	lua_register(state, "UpdateQuestDescription", EQ2Emu_lua_UpdateQuestDescription);
 	lua_register(state, "UpdateQuestZone", EQ2Emu_lua_UpdateQuestZone);
@@ -1045,10 +1058,15 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "ShowLootWindow", EQ2Emu_lua_ShowLootWindow);
 	lua_register(state, "AddPrimaryEntityCommandAllSpawns", EQ2Emu_lua_AddPrimaryEntityCommandAllSpawns);
 	lua_register(state, "InstructionWindow", EQ2Emu_lua_InstructionWindow);
+	lua_register(state, "InstructionWindowClose", EQ2Emu_lua_InstructionWindowClose);
+	lua_register(state, "InstructionWindowGoal", EQ2Emu_lua_InstructionWindowGoal);
 	lua_register(state, "ShowWindow", EQ2Emu_lua_ShowWindow);
 	lua_register(state, "FlashWindow", EQ2Emu_lua_FlashWindow);
 	lua_register(state, "EnableGameEvent", EQ2Emu_lua_EnableGameEvent);
+	lua_register(state, "GetTutorialStep", EQ2Emu_lua_GetTutorialStep);
+	lua_register(state, "SetTutorialStep", EQ2Emu_lua_SetTutorialStep);
 	lua_register(state, "DisplayText", EQ2Emu_lua_DisplayText);
+	lua_register(state, "GiveExp", EQ2Emu_lua_GiveExp);
 
 	lua_register(state, "CheckLOS", EQ2Emu_lua_CheckLOS);
 	lua_register(state, "CheckLOSByCoordinates", EQ2Emu_lua_CheckLOSByCoordinates);
@@ -1184,6 +1202,25 @@ vector<ConversationOption>*	LuaInterface::GetConversation(lua_State* state, int8
 		}
 		else
 			ret = data->conversation_options;
+	}
+	return ret;
+}
+
+vector<Spawn*>* LuaInterface::GetSpawnList(lua_State* state, int8 arg_num) {
+	vector<Spawn*>* ret = 0;
+	if (lua_islightuserdata(state, arg_num)) {
+		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
+		if (!data || !data->IsCorrectlyInitialized()) {
+			LogError("%s: GetSpawnList error while processing %s", GetScriptName(state), lua_tostring(state, -1));
+		}
+		else if (!data->IsSpawnList()) {
+			lua_Debug ar;
+			lua_getstack(state, 1, &ar);
+			lua_getinfo(state, "Sln", &ar);
+			LogError("%s: Invalid data type used for GetSpawnList in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
+		}
+		else
+			ret = data->spawn_list;
 	}
 	return ret;
 }
@@ -1362,6 +1399,13 @@ void LuaInterface::SetSpawnValue(lua_State* state, Spawn* spawn) {
 	spawn_wrapper->spawn = spawn;
 	AddUserDataPtr(spawn_wrapper);
 	lua_pushlightuserdata(state, spawn_wrapper);
+}
+
+void LuaInterface::SetSpawnListValue(lua_State* state, vector<Spawn*>* spawnList) {
+	LUASpawnListWrapper* spawnList_wrapper = new LUASpawnListWrapper();
+	spawnList_wrapper->spawn_list = spawnList;
+	AddUserDataPtr(spawnList_wrapper);
+	lua_pushlightuserdata(state, spawnList_wrapper);
 }
 
 void LuaInterface::SetConversationValue(lua_State* state, vector<ConversationOption>* conversation) {
@@ -1690,7 +1734,7 @@ bool LuaInterface::RunSpawnScript(string script_name, const char* function_name,
 		return false;
 }
 
-bool LuaInterface::RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn, int32 grid_id, const char* signal) {
+bool LuaInterface::RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn, int32 int32_arg1, const char* str_arg1, Spawn* spawn_arg1, int32 int32_arg2, const char* str_arg2, Spawn* spawn_arg2) {
 	if (!zone)
 		return false;
 	lua_State* state = GetZoneScript(script_name.c_str(), true, true);
@@ -1716,12 +1760,28 @@ bool LuaInterface::RunZoneScript(string script_name, const char* function_name, 
 			SetSpawnValue(state, spawn);
 			num_params++;
 		}
-		if (grid_id > 0) {
-			SetInt32Value(state, grid_id);
+		if (int32_arg1 > 0) {
+			SetInt32Value(state, int32_arg1);
 			num_params++;
 		}
-		if (signal) {
-			SetStringValue(state, signal);
+		if (str_arg1) {
+			SetStringValue(state, str_arg1);
+			num_params++;
+		}
+		if (spawn_arg1) {
+			SetSpawnValue(state, spawn_arg1);
+			num_params++;
+		}
+		if (int32_arg2 > 0) {
+			SetInt32Value(state, int32_arg2);
+			num_params++;
+		}
+		if (str_arg2) {
+			SetStringValue(state, str_arg2);
+			num_params++;
+		}
+		if (spawn_arg2) {
+			SetSpawnValue(state, spawn_arg2);
 			num_params++;
 		}
 		if (!CallZoneScript(state, num_params)) {
@@ -1755,6 +1815,7 @@ LUAUserData::LUAUserData(){
 	skill = 0;
 	option_window_option = 0;
 	item = 0;
+	spawn_list = 0;
 }
 
 bool LUAUserData::IsCorrectlyInitialized(){
@@ -1762,6 +1823,10 @@ bool LUAUserData::IsCorrectlyInitialized(){
 }
 
 bool LUAUserData::IsConversationOption(){
+	return false;
+}
+
+bool LUAUserData::IsSpawnList() {
 	return false;
 }
 
@@ -1794,6 +1859,14 @@ LUAConversationOptionWrapper::LUAConversationOptionWrapper(){
 }
 
 bool LUAConversationOptionWrapper::IsConversationOption(){
+	return true;
+}
+
+LUASpawnListWrapper::LUASpawnListWrapper() {
+	correctly_initialized = true;
+}
+
+bool LUASpawnListWrapper::IsSpawnList() {
 	return true;
 }
 

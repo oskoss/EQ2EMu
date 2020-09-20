@@ -381,7 +381,7 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 						item->details.count = reward_total;
 
 						// chat box update for normal item (todo: verify output text)
-						client->Message(CHANNEL_COLOR_HARVEST, "You %s %i \\aITEM %u %u:%s\\/a from the %s.", GetHarvestMessageName(true).c_str(), item->details.count, item->details.item_id, item->details.unique_id, item->name.c_str(), GetName());
+						client->Message(CHANNEL_HARVESTING, "You %s %i %s from the %s.", GetHarvestMessageName(true).c_str(), item->details.count, item->CreateItemLink(GetVersion(), true).c_str(), GetName());
 						// add Normal item to player inventory
 						client->AddItem(item);
 						//Check if the player has a harvesting quest for this
@@ -410,12 +410,12 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 
 								// send Rare harvest message to client
 								sprintf(tmp, "\\#FFFF6ERare item found!\12%s: \\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item_rare->details.count, item_rare->name.c_str());
-								client->Message(CHANNEL_COLOR_HARVEST, "You have found a rare item!");
+								client->Message(CHANNEL_HARVESTING, "You have found a rare item!");
 								client->SendPopupMessage(11, tmp, "ui_harvested_rare", 2.25, 0xFF, 0xFF, 0xFF);
 								client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_RARES_HARVESTED, item_rare->details.count);
 
 								// chat box update for rare item (todo: verify output text)
-								client->Message(CHANNEL_COLOR_HARVEST, "You %s %i \\aITEM %u %u:%s\\/a from the %s.", GetHarvestMessageName(true).c_str(), item_rare->details.count, item_rare->details.item_id, item_rare->details.unique_id, item_rare->name.c_str(), GetName());
+								client->Message(CHANNEL_HARVESTING, "You %s %i %s from the %s.", GetHarvestMessageName(true).c_str(), item_rare->details.count, item->CreateItemLink(GetVersion(), true).c_str(), GetName());
 								// add Rare item to player inventory
 								client->AddItem(item_rare);
 								//Check if the player has a harvesting quest for this
@@ -428,7 +428,7 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 
 							// send Rare harvest message to client
 							sprintf(tmp, "\\#FFFF6ERare item found!\12%s: \\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item->details.count, item->name.c_str());
-							client->Message(CHANNEL_COLOR_HARVEST, "You have found a rare item!");
+							client->Message(CHANNEL_HARVESTING, "You have found a rare item!");
 							client->SendPopupMessage(11, tmp, "ui_harvested_rare", 2.25, 0xFF, 0xFF, 0xFF);
 							client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_RARES_HARVESTED, item->details.count);
 						}
@@ -452,13 +452,13 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 				else {
 					// if no item harvested
 					LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "No item_harvested");
-					client->Message(CHANNEL_COLOR_HARVEST, "You failed to %s anything from %s.", GetHarvestMessageName(true, true).c_str(), GetName());
+					client->Message(CHANNEL_HARVESTING, "You failed to %s anything from %s.", GetHarvestMessageName(true, true).c_str(), GetName());
 				}
 			}
 			else {
 				// if no harvest type
 				LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "No harvest_type");
-				client->Message(CHANNEL_COLOR_HARVEST, "You failed to %s anything from %s.", GetHarvestMessageName(true, true).c_str(), GetName());
+				client->Message(CHANNEL_HARVESTING, "You failed to %s anything from %s.", GetHarvestMessageName(true, true).c_str(), GetName());
 			}
 		}
 	} // cycle through num_attempts_per_harvest

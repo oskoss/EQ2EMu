@@ -203,7 +203,11 @@ void Spawn::InitializeHeaderPacketData(Player* player, PacketStruct* header, int
 				header->setArrayDataByName("command_list_command", primary_command_list[i]->command.c_str(), i);
 			}
 		}
-		header->setMediumStringByName("default_command", primary_command_list[0]->command.c_str());
+		if (header->GetVersion() <= 546) {
+			header->setMediumStringByName("default_command", primary_command_list[0]->name.c_str());
+		}
+		else
+			header->setMediumStringByName("default_command", primary_command_list[0]->command.c_str());
 		header->setDataByName("max_distance", primary_command_list[0]->distance);
 	}
 	if (spawn_group_list && MSpawnGroup){
@@ -236,6 +240,8 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 		vis_packet->setDataByName("targetable", appearance.targetable);
 		vis_packet->setDataByName("show_name", appearance.display_name);
 		vis_packet->setDataByName("attackable", appearance.attackable);
+		if(appearance.attackable == 1)
+			vis_packet->setDataByName("attackable_icon", 1); 
 		if (IsPlayer()) {
 			if (((Player*)this)->IsGroupMember(player))
 				vis_packet->setDataByName("group_member", 1);
@@ -255,7 +261,7 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 
 			if (appearance.attackable == 1)
 				arrow_color = player->GetArrowColor(GetLevel());
-			/*if (version <= 283) {
+			if (version <= 283) {
 				if (GetMerchantID() > 0)
 					arrow_color += 7;
 				else {
@@ -273,9 +279,12 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 						}
 					}
 				}
-			}*/
+			}
 			vis_packet->setDataByName("arrow_color", arrow_color);
-			vis_packet->setDataByName("locked_no_loot", appearance.locked_no_loot);
+			if (appearance.attackable == 0)
+				vis_packet->setDataByName("locked_no_loot", 1);
+			else
+				vis_packet->setDataByName("locked_no_loot", appearance.locked_no_loot);
 			if (player->GetArrowColor(GetLevel()) == ARROW_COLOR_GRAY)
 				if (npc_con == -4)
 					npc_con = -3;
@@ -339,6 +348,9 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 	else {
 		if ((req_quests_override & 256) > 0)
 			vis_packet->setDataByName("hand_flag", 1);
+	}
+	if (version == 546 && GetMerchantID() > 0) {
+		vis_packet->setDataByName("guild", "<Merchant>");
 	}
 }
 
@@ -712,7 +724,7 @@ uchar* Spawn::spawn_vis_changes(Player* player, int16 version){
 		safe_delete(xor_vis_packet);
 		xor_vis_packet = player->SetTempVisPacketForXOR(size);
 	}
-	if(orig_packet){
+	if(orig_packet){		
 		memcpy(xor_vis_packet, (uchar*)data->c_str(), size);
 		Encode(xor_vis_packet, orig_packet, size);
 	}
@@ -1025,7 +1037,9 @@ uchar* Spawn::spawn_info_changes_ex(Player* player, int16 version) {
 
 	uchar* orig_packet = player->GetSpawnInfoPacketForXOR(id);
 
-	if (orig_packet) {
+	if (orig_packet) {		
+		//if (!IsPlayer() && this->EngagedInCombat())
+			//packet->PrintPacket();
 		memcpy(xor_info_packet, (uchar*)data->c_str(), size);
 		Encode(xor_info_packet, orig_packet, size);
 	}
@@ -1087,7 +1101,9 @@ uchar* Spawn::spawn_vis_changes_ex(Player* player, int16 version) {
 		xor_vis_packet = player->SetTempVisPacketForXOR(size);
 	}
 
-	if (orig_packet) {
+	if (orig_packet) {		
+		//if (!IsPlayer() && this->EngagedInCombat())
+		//	vis_struct->PrintPacket();
 		memcpy(xor_vis_packet, (uchar*)data->c_str(), size);
 		Encode(xor_vis_packet, orig_packet, size);
 	}
@@ -1151,6 +1167,8 @@ uchar* Spawn::spawn_pos_changes_ex(Player* player, int16 version) {
 	}
 
 	if (orig_packet) {
+		//if (!IsPlayer() && this->EngagedInCombat())
+		//	packet->PrintPacket();
 		memcpy(xor_pos_packet, (uchar*)data->c_str(), size);
 		Encode(xor_pos_packet, orig_packet, size);
 	}
@@ -2204,18 +2222,19 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		if (appearance.show_level == 0)
 			packet->setDataByName("hide_health", 1);
 	}
-	if (GetHP() <= 0 && IsEntity())
+	if (GetHP() <= 0 && IsEntity()) {
 		packet->setDataByName("corpse", 1);
+		packet->setDataByName("loot_icon", 1); 
+	}
 	if (!IsPlayer())
 		packet->setDataByName("npc", 1);
 	if (GetMerchantID() > 0)
-		packet->setDataByName("merchant", 1);
-	if (EngagedInCombat())
-		packet->setDataByName("in_combat", 1);
-
+		packet->setDataByName("merchant", 1);		
+	packet->setDataByName("effective_level", (int8)GetLevel());
 	packet->setDataByName("level", (int8)GetLevel());
 	packet->setDataByName("unknown4", (int8)GetLevel());
 	packet->setDataByName("difficulty", appearance.encounter_level); //6);
+	packet->setDataByName("unknown6", 1);
 	packet->setDataByName("heroic_flag", appearance.heroic_flag);
 	if (!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign())
 		packet->setDataByName("interaction_flag", 12); //this makes NPCs head turn to look at you
@@ -2512,6 +2531,9 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 			packet->setDataByName("follow_target", ((((Player*)this)->GetIDWithPlayerSpawn(((Player*)this)->GetFollowTarget()) * -1) - 1));
 		else
 			packet->setDataByName("follow_target", 0xFFFFFFFF);
+	}
+	else if (!IsPet()) {
+		packet->setDataByName("follow_target", 0xFFFFFFFF);
 	}
 	if (GetTarget() && GetTarget()->GetTargetable())
 		packet->setDataByName("target_id", ((spawn->GetIDWithPlayerSpawn(GetTarget()) * -1) - 1));

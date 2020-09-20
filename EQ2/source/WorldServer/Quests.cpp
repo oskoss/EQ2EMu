@@ -955,6 +955,7 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 		packet->setDataByName("month", month);
 		packet->setDataByName("year", year);
 		packet->setDataByName("level", level);
+		packet->setDataByName("visible", 1);		
 		/* To get the quest timer to work you need to set unknown, index 4 to 1 and the time stamp
 		to the current time + the time in seconds you want to show in the journal*/
 		if (m_timestamp > 0) {
@@ -1076,8 +1077,9 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 					packet->setSubArrayLengthByName("num_tasks", task_group[primary_order[i]->GetTaskGroup()].size(), index);
 					packet->setSubArrayLengthByName("num_updates", task_group[primary_order[i]->GetTaskGroup()].size(), index);
 					map_data_count += task_group[primary_order[i]->GetTaskGroup()].size();
-					if (task_group[primary_order[i]->GetTaskGroup()].size() > 0)
-						packet->setDataByName("bullets", 1);
+					if (task_group[primary_order[i]->GetTaskGroup()].size() > 0) {
+						packet->setDataByName("bullets", 1);						
+					}
 					for (int32 x = 0; x < task_group[primary_order[i]->GetTaskGroup()].size(); x++) {
 						step = task_group[primary_order[i]->GetTaskGroup()].at(x);
 						if (!step)
@@ -1087,12 +1089,14 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 						packet->setSubArrayDataByName("task_completed", 1, index, x);
 						packet->setSubArrayDataByName("index", x, index, x);
 						packet->setSubArrayDataByName("update_currentval", step->GetQuestCurrentQuantity(), index, x);
+						if(step->GetQuestCurrentQuantity() > 0)
+							packet->setDataByName("journal_updated", 1);
 						packet->setSubArrayDataByName("update_maxval", step->GetQuestNeededQuantity(), index, x);
 						if (step->GetUpdateTargetName())
 							packet->setSubArrayDataByName("update_target_name", step->GetUpdateTargetName(), index, x);
 						packet->setSubArrayDataByName("icon", step->GetIcon(), index, x);
 						if (updateStep && step == updateStep) {
-							packet->setDataByName("update", 1);
+							packet->setDataByName("update", 1);							
 							//	packet->setDataByName("unknown5d", 1);
 							if (!quest_failure)
 								packet->setDataByName("onscreen_update", 1);
@@ -1154,6 +1158,8 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 							packet->setSubArrayDataByName("task_completed", 0, index, x);
 						packet->setSubArrayDataByName("index", x, index, x);
 						packet->setSubArrayDataByName("update_currentval", step->GetQuestCurrentQuantity(), index, x);
+						if (step->GetQuestCurrentQuantity() > 0)
+							packet->setDataByName("journal_updated", 1);
 						packet->setSubArrayDataByName("update_maxval", step->GetQuestNeededQuantity(), index, x);
 						packet->setSubArrayDataByName("icon", step->GetIcon(), index, x);
 						if (step->GetUpdateTargetName())
@@ -1180,7 +1186,7 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 				else {
 					if (task_group_names.count(secondary_order[i]) > 0) {
 						step = secondary_order[i];
-						if (updateStep && step == updateStep) {
+						if (updateStep && step == updateStep) {							
 							packet->setDataByName("update", 1);
 							if (!quest_failure)
 								packet->setDataByName("onscreen_update", 1);

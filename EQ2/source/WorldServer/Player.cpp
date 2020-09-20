@@ -48,6 +48,7 @@ extern MasterTitlesList master_titles_list;
 extern MasterLanguagesList master_languages_list;
 
 Player::Player(){
+	tutorial_step = 0;
 	char_id = 0;
 	group = 0;
 	appearance.pos.grid_id = 0;
@@ -194,6 +195,8 @@ Player::~Player(){
 	safe_delete(spawn_info_struct);
 	safe_delete(spawn_vis_struct);
 	safe_delete(spawn_pos_struct);
+	ClearPendingSelectableItemRewards(0, true);
+	ClearPendingItemRewards();
 }
 
 EQ2Packet* Player::serialize(Player* player, int16 version){
@@ -245,7 +248,7 @@ void PlayerInfo::CalculateXPPercentages(){
 	if(info_struct->xp_needed > 0){
 		float percentage = ((double)info_struct->xp / info_struct->xp_needed) * 1000;
 		info_struct->xp_yellow = (int16)percentage;
-		info_struct->xp_blue = (int16)(100-((ceil(percentage/100) - (percentage/100)) * 100));
+		info_struct->xp_blue = (int16)((percentage-info_struct->xp_yellow)*1000);
 		info_struct->xp_blue_vitality_bar = 0;
 		info_struct->xp_yellow_vitality_bar = 0;
 		if(player->GetXPVitality() > 0){
@@ -264,7 +267,7 @@ void PlayerInfo::CalculateTSXPPercentages(){
 	if(info_struct->ts_xp_needed > 0){
 		float percentage = ((double)info_struct->ts_xp / info_struct->ts_xp_needed) * 1000;
 		info_struct->tradeskill_exp_yellow = (int16)percentage;
-		info_struct->tradeskill_exp_blue = (int16)(100-((ceil(percentage/100) - (percentage/100)) * 100));
+		info_struct->tradeskill_exp_blue = (int16)((percentage - info_struct->tradeskill_exp_yellow) * 1000);
 		/*info_struct->xp_blue_vitality_bar = 0;
 		info_struct->xp_yellow_vitality_bar = 0;
 		if(player->GetXPVitality() > 0){
@@ -978,20 +981,26 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("decrease_falling_dmg", 169);
 
 
-		info_struct->xp_blue = 12;
-		info_struct->xp_yellow = 16;
-		info_struct->weight = 50;
 		info_struct->max_weight = 200;
 		//packet->setDataByName("auto_attack", 1);
 		//492
-
-		packet->setDataByName("exp_yellow", info_struct->xp_yellow);
-		packet->setDataByName("exp_blue", info_struct->xp_blue);
-		packet->setDataByName("tradeskill_exp_yellow", info_struct->tradeskill_exp_yellow);
-		packet->setDataByName("tradeskill_exp_blue", info_struct->tradeskill_exp_blue);
-
-
-
+		if (version <= 546) {
+			packet->setDataByName("exp_yellow", info_struct->xp_yellow / 10);
+			packet->setDataByName("exp_blue", info_struct->xp_blue/10);
+		}
+		else {
+			packet->setDataByName("exp_yellow", info_struct->xp_yellow);
+			packet->setDataByName("exp_blue", info_struct->xp_blue);
+		}
+		
+		if (version <= 546) {
+			packet->setDataByName("tradeskill_exp_yellow", info_struct->tradeskill_exp_yellow / 10);
+			packet->setDataByName("tradeskill_exp_blue", info_struct->tradeskill_exp_blue / 10);
+		}
+		else {
+			packet->setDataByName("tradeskill_exp_yellow", info_struct->tradeskill_exp_yellow);
+			packet->setDataByName("tradeskill_exp_blue", info_struct->tradeskill_exp_blue);
+		}		
 
 		packet->setDataByName("attack", info_struct->cur_attack);
 		packet->setDataByName("attack_base", info_struct->attack_base);
@@ -999,9 +1008,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("mitigation_skill1", info_struct->mitigation_skill1);
 		packet->setDataByName("mitigation_skill2", info_struct->mitigation_skill2);
 		packet->setDataByName("mitigation_skill3", info_struct->mitigation_skill3);
-
-
-
 
 		packet->setDataByName("mitigation_max", info_struct->max_mitigation);
 
@@ -1709,7 +1715,9 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 
 			if (item->GetItemScript() && lua_interface)
 				lua_interface->RunItemScript(item->GetItemScript(), "unequipped", item, this);
-
+			const char* zone_script = world.GetZoneScript(GetZone()->GetZoneID());
+			if (zone_script && lua_interface)
+				lua_interface->RunZoneScript(zone_script, "item_unequipped", GetZone(), this, item->details.item_id, item->name.c_str(), 0, item->details.unique_id);
 			item->save_needed = true;
 			EQ2Packet* outapp = item_list.serialize(this, version);
 			if (outapp) {
@@ -1920,9 +1928,9 @@ bool Player::CanEquipItem(Item* item) {
 						if (item->CheckLevel(GetAdventureClass(), GetTradeskillClass(), GetLevel()))
 							return true;
 						else
-							client->Message(CHANNEL_COLOR_RED, "You must be at least level %u to equip \\aITEM %u 0:%s\\/a.", item->generic_info.adventure_default_level, item->details.item_id, item->name.c_str());
+							client->Message(CHANNEL_COLOR_RED, "You must be at least level %u to equip %s.", item->generic_info.adventure_default_level, item->CreateItemLink(client->GetVersion()).c_str());
 					else
-						client->Message(CHANNEL_COLOR_RED, "Your class may not equip \\aITEM %u 0:%s\\/a.", item->details.item_id, item->name.c_str());
+						client->Message(CHANNEL_COLOR_RED, "Your class may not equip %s.", item->CreateItemLink(client->GetVersion()).c_str());
 				}
 				else
 					client->SimpleMessage(0, "You lack the skill required to equip this item.");
@@ -1994,6 +2002,9 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 slot_id) {
 			item->save_needed = true;
 			packets.push_back(item->serialize(version, false));
 			SetEquipment(item);
+			const char* zone_script = world.GetZoneScript(GetZone()->GetZoneID());
+			if (zone_script && lua_interface)
+				lua_interface->RunZoneScript(zone_script, "item_equipped", GetZone(), this, item->details.item_id, item->name.c_str(), 0, item->details.unique_id);
 			int32 bag_id = item->details.inv_slot_id;
 			if (item->generic_info.condition == 0) {
 				Client* client = GetZone()->GetClientBySpawn(this);
@@ -2001,7 +2012,7 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 slot_id) {
 
 					LogWrite(MISC__TODO, 1, "TODO", "Send popup text in red 'Some of your equipment is broken!'\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 
-					client->Message(CHANNEL_COLOR_RED, "Your \\aITEM %u %u:%s\\/a is worn out and will not be effective until repaired.", item->details.item_id, item->details.unique_id, item->name.c_str());
+					client->Message(CHANNEL_COLOR_RED, "Your %s is worn out and will not be effective until repaired.", item->CreateItemLink(GetVersion(), true).c_str());
 				}
 			}
 			packets.push_back(equipment_list.serialize(version, this));
@@ -3753,6 +3764,7 @@ bool Player::AddXP(int32 xp_amount){
 	if(current_xp_percent >= miniding_min_percent){
 		SetHP(GetTotalHP());
 		SetPower(GetTotalPower());
+		GetZone()->SendCastSpellPacket(332, this, this); //send mini level up spell effect
 	}
 	return true;
 }
@@ -3980,7 +3992,7 @@ vector<Quest*>* Player::CheckQuestsSpellUpdate(Spell* spell) {
 	return quest_updates;
 }
 
-PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int32 crc, int32 current_quest_id){
+PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int32 crc, int32 current_quest_id, bool updated){
 	PacketStruct* packet = configReader.getStruct("WS_QuestJournalUpdate", version);
 	Quest* quest = 0;
 	if(packet){
@@ -4035,7 +4047,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 				if(!all_quests && !itr->second->GetUpdateRequired())
 					continue;
 				quest = itr->second;
-				if(!quest->GetDeleted())
+				if(!quest->GetDeleted() && !quest->GetCompleted())
 					packet->setArrayDataByName("active", 1, i);
 				packet->setArrayDataByName("name", quest->GetName(), i);
 				packet->setArrayDataByName("quest_type", quest->GetType(), i);
@@ -4047,9 +4059,10 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 					packet->setArrayDataByName("turned_in", 1, i);
 					packet->setArrayDataByName("completed", 1, i);
 					packet->setArrayDataByName("visible", 1, i);
-					display_status += QUEST_DISPLAY_STATUS_COMPLETED;
-					packet->setArrayDataByName("unknown3", 1, i);
+					display_status += QUEST_DISPLAY_STATUS_COMPLETED;					
 				}
+				if (updated)
+					packet->setArrayDataByName("quest_updated", 1, i);
 				packet->setArrayDataByName("quest_id", quest->GetQuestID(), i);
 				packet->setArrayDataByName("day", quest->GetDay(), i);
 				packet->setArrayDataByName("month", quest->GetMonth(), i);
@@ -4091,7 +4104,6 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 				if (itr->second->IsRepeatable())
 					packet->setArrayDataByName("repeatable", 1, i);
 				
-				packet->setArrayDataByName("visible", 0, i);
 				packet->setArrayDataByName("display_status", display_status, i);
 				i++;
 			}
@@ -4113,7 +4125,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 	return packet;
 }
 
-PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 crc) {
+PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 crc, bool updated) {
 	if (!quest)
 		return 0;
 
@@ -4125,7 +4137,7 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 		packet->setArrayDataByName("quest_zones_zone", quest->GetType());
 		packet->setArrayDataByName("quest_zones_zone_id", 0);
 		
-		if(!quest->GetDeleted())
+		if(!quest->GetDeleted() && !quest->GetCompleted())
 			packet->setArrayDataByName("active", 1);
 
 		packet->setArrayDataByName("name", quest->GetName());
@@ -4138,17 +4150,14 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 			packet->setArrayDataByName("completed", 1);
 		if(quest->GetTurnedIn()) {
 			packet->setArrayDataByName("turned_in", 1);
-			packet->setArrayDataByName("completed", 1);
-			packet->setArrayDataByName("visible", 1);
+			packet->setArrayDataByName("completed", 1);			
 			display_status += QUEST_DISPLAY_STATUS_COMPLETED;
-			packet->setArrayDataByName("unknown3", 1);
 		}
 		packet->setArrayDataByName("quest_id", quest->GetQuestID());
 		packet->setArrayDataByName("day", quest->GetDay());
 		packet->setArrayDataByName("month", quest->GetMonth());
 		packet->setArrayDataByName("year", quest->GetYear());
 		packet->setArrayDataByName("level", quest->GetQuestLevel());
-
 		int8 difficulty = 0;
 		string category = quest->GetType();
 		if(category == "Tradeskill")
@@ -4187,10 +4196,9 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 		if (quest->IsRepeatable())
 			packet->setArrayDataByName("repeatable", 1);
 
-		packet->setArrayDataByName("visible", 0);
 		packet->setArrayDataByName("display_status", display_status);
-		
-		packet->setDataByName("unknown3", 1);
+		if (updated)
+			packet->setDataByName("quest_updated", 1);
 		packet->setDataByName("visible_quest_id", quest->GetQuestID());
 		packet->setDataByName("player_crc", crc);
 		packet->setDataByName("player_name", GetName());

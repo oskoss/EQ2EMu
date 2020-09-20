@@ -1565,28 +1565,36 @@ int32 PacketStruct::GetArraySizeByName(const char* name, int32 index) {
 int16 PacketStruct::GetOpcodeValue(int16 client_version) {
 	int16 opcode = 0xFFFF;
 	bool client_cmd = false;
+	int16 OpcodeVersion = 0;
 #ifndef LOGIN
 	if (GetOpcode() == OP_ClientCmdMsg && strlen(GetOpcodeType()) > 0 && !IsSubPacket())
 		client_cmd = true;
 #endif
 	if (client_cmd) {
 		EmuOpcode sub_opcode = EQOpcodeManager[0]->NameSearch(GetOpcodeType());
-		int16 opcode_val = 0;
 		if (sub_opcode != OP_Unknown) { //numbers should be used at OpcodeTypes, define them!
-			int16 OpcodeVersion = GetOpcodeVersion(client_version);
-			if(EQOpcodeManager.count(OpcodeVersion) > 0)
+			OpcodeVersion = GetOpcodeVersion(client_version);
+			if (EQOpcodeManager.count(OpcodeVersion) > 0) {
 				opcode = EQOpcodeManager[OpcodeVersion]->EmuToEQ(sub_opcode);
+				if (opcode == 0xCDCD) {
+					LogWrite(PACKET__ERROR, 0, "Packet", "Could not find valid opcode for opcode: %s and client_version: %i", EQOpcodeManager[OpcodeVersion]->EmuToName(sub_opcode), client_version);
+				}
+			}
 		}		
 	}
 	else {
-		int16 OpcodeVersion = GetOpcodeVersion(client_version);
-		if (EQOpcodeManager.count(OpcodeVersion) > 0)
+		OpcodeVersion = GetOpcodeVersion(client_version);
+		if (EQOpcodeManager.count(OpcodeVersion) > 0) {
 			opcode = EQOpcodeManager[OpcodeVersion]->EmuToEQ(GetOpcode());
+			if (opcode == 0xCDCD) {
+				LogWrite(PACKET__ERROR, 0, "Packet", "Could not find valid opcode for opcode: %s and client_version: %i", EQOpcodeManager[OpcodeVersion]->EmuToName(GetOpcode()), client_version);
+			}
+		}
 	}
 #ifndef LOGIN
 	if(opcode == 0)
 		opcode = 0xFFFF;
-#endif
+#endif	
 	return opcode;
 }
 
@@ -1754,7 +1762,7 @@ void PacketStruct::serializePacket(bool clear) {
 	}
 #ifndef LOGIN
 	if (client_cmd) {
-		int16 opcode_val = GetOpcodeValue(client_version);		
+		int16 opcode_val = GetOpcodeValue(client_version);			
 		Clear();
 		int32 size = client_data.length() + 3; //gotta add the opcode and oversized
 		int8 oversized = 0xFF;
@@ -2541,8 +2549,8 @@ void PacketStruct::setItem(DataStruct* ds, Item* item, Player* player, int32 ind
 		//DumpPacket((uchar*)generic_string_data->c_str() + (9 + offset), size);
 		//without these it will prompt for your character name
 		if (offset == 0 || offset == -1 || offset == 2) {
-			if (client_version <= 546 && item->stack_count > 0)
-				out_data[0] = item->stack_count;
+			if (client_version <= 546 && item->details.count > 0)
+				out_data[0] = item->details.count;
 			else
 				out_data[0] = 1;
 		}

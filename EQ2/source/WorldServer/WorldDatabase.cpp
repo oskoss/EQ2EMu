@@ -4039,7 +4039,7 @@ void WorldDatabase::LoadPlayerMail(Client* client, bool new_only) {
 			result = query.RunQuery2(Q_SELECT, "SELECT `id`, `player_to_id`, `player_from`, `subject`, `mail_body`, `already_read`, `mail_type`, `coin_copper`, `coin_silver`, `coin_gold`, `coin_plat`, `stack`, `postage_cost`, `attachment_cost`, `char_item_id`, `time_sent`, `expire_time` FROM `character_mail` WHERE `player_to_id`=%u", client->GetCharacterID());
 		if (result && mysql_num_rows(result) > 0) {
 			MYSQL_ROW row;
-			client->SimpleMessage(CHANNEL_COLOR_MAIL, "You've got mail! :)");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "You've got mail! :)");
 			while (result && (row = mysql_fetch_row(result))) {
 				Mail* mail = new Mail;
 				mail->mail_id = atoul(row[0]);

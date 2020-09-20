@@ -763,6 +763,8 @@ Item::Item(Item* in_item){
 	save_needed = true;
 	SetItem(in_item);
 	details.unique_id = master_item_list.NextUniqueID();
+	if (IsBag())
+		details.bag_id = details.unique_id;
 	generic_info.condition = 100;
 	spell_id = in_item->spell_id;
 	spell_tier = in_item->spell_tier;
@@ -1499,6 +1501,8 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	}
 	if(show_name)
 		packet->setSubstructSubstructDataByName("header", "info_header", "show_name", show_name);
+	if (packet_type == 20)
+		cout << "";
 	if(packet_type == 0)
 		packet->setSubstructSubstructDataByName("header", "info_header", "packettype", GetItemPacketType(packet->GetVersion()));
 	else
@@ -3423,8 +3427,11 @@ bool EquipmentItemList::AddItem(int8 slot, Item* item){
 	if(item){
 		MEquipmentItems.lock();
 		SetItem(slot, item);
-		if(item->details.unique_id == 0)
+		if (item->details.unique_id == 0) {
 			GetItem(slot)->details.unique_id = MasterItemList::NextUniqueID();
+			if (item->IsBag())
+				item->details.bag_id = item->details.unique_id;
+		}
 		MEquipmentItems.unlock();
 		return true;
 	}
@@ -3682,8 +3689,15 @@ int8 EquipmentItemList::GetSlotByItem(Item* item) {
 	return slot;
 }
 
-string Item::CreateItemLink(bool bUseUniqueID) {
+string Item::CreateItemLink(int16 client_Version, bool bUseUniqueID) {
 	ostringstream ss;
-	ss << "\\aITEM " << details.item_id << ' ' << (bUseUniqueID ? details.unique_id : 0) << ':' << name << "\\/a";
+	if(client_Version > 546)
+		ss << "\\aITEM " << details.item_id << ' ' << (bUseUniqueID ? details.unique_id : 0) << ':' << name << "\\/a";
+	else {
+		if(bUseUniqueID)
+			ss << "\\aITEM " << details.item_id << ' ' << details.unique_id << ':' << name << "\\/a";
+		else
+			ss << "\\aITEM " << details.item_id << ' ' << name << ':' << name << "\\/a";
+	}
 	return ss.str();
 }

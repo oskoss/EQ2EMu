@@ -375,7 +375,7 @@
 <Data ElementName="hide_health" Type="int8" Size="1" /> <!-- 39 -->
 <Data ElementName="is_transport" Type="int8" Size="1" /> <!-- 40 -->
 <Data ElementName="house_icon" Type="int8" Size="1" /> <!-- 41 -->
-<Data ElementName="in_combat" Type="int8" Size="1" /> <!-- 42 -->
+<Data ElementName="loot_icon" Type="int8" Size="1" /> <!-- 42 -->
 <Data ElementName="afk" Type="int8" Size="1" /> <!-- 43 -->
 <Data ElementName="roleplaying" Type="int8" Size="1" /> <!-- 44 -->
 <Data ElementName="anonymous" Type="int8" Size="1" /> <!-- 45 -->
@@ -455,9 +455,9 @@
 <Data ElementName="unknown6" Type="int8" Size="1" /> <!-- 299 -->
 <Data ElementName="heroic_flag" Type="int8" Size="1" /> <!-- 300 -->
 <Data ElementName="npc" Type="int8" Size="1" /> <!-- 301 -->
-<Data ElementName="unknown7" Type="int8" Size="1" /> <!-- 303 -->
-<Data ElementName="unknown8" Type="int8" Size="1" /> <!-- 303 -->
-<Data ElementName="merchant" Type="int8" Size="1" /> <!-- 304 -->
+<Data ElementName="unknown7" Type="int8" Size="1" /> <!-- 302 -->
+<Data ElementName="merchant" Type="int8" Size="1" /> <!-- 303 -->
+<Data ElementName="unknown8" Type="int8" Size="1" /> <!-- 304 -->
 <Data ElementName="unknown9" Type="int8" Size="1" /> <!-- 305 -->
 <Data ElementName="unknown10" Type="int8" Size="1" /> <!-- 306 -->
 <Data ElementName="no_arrow_color_or_highlight" Type="int8" Size="1" /> <!-- 307 -->
@@ -466,7 +466,7 @@
 <Data ElementName="hide_health" Type="int8" Size="1" /> <!-- 310 -->
 <Data ElementName="is_transport" Type="int8" Size="1" /> <!-- 311 -->
 <Data ElementName="house_icon" Type="int8" Size="1" /> <!-- 312 -->
-<Data ElementName="in_combat" Type="int8" Size="1" /> <!-- 313 -->
+<Data ElementName="loot_icon" Type="int8" Size="1" /> <!-- 313 -->
 <Data ElementName="afk" Type="int8" Size="1" /> <!-- 314 -->
 <Data ElementName="roleplaying" Type="int8" Size="1" /> <!-- 315 -->
 <Data ElementName="anonymous" Type="int8" Size="1" /> <!-- 316 -->
@@ -554,7 +554,8 @@
 <Data ElementName="mood_state" Type="int16" Size="1" /> <!-- 1083 -->
 <Data ElementName="emote_state" Type="int16" Size="1" /> <!-- 1085 -->
 <Data ElementName="race" Type="int8" Size="1" /> <!-- 1087 -->
-<Data ElementName="gender" Type="int8" Size="1" /> <!-- 1088 --></Struct>
+<Data ElementName="gender" Type="int8" Size="1" /> <!-- 1088 -->
+</Struct>
 <Struct Name="Substruct_SpawnInfoStruct" ClientVersion="547" >
 <Data ElementName="hp_remaining" Type="int8" Size="1" />
 <Data ElementName="unknown2a" Type="int8" Size="3" />
@@ -2505,7 +2506,7 @@
 <Data ElementName="red_glow" Type="int8" Size="1" />
 <Data ElementName="show_name" Type="int8" Size="1" />
 <Data ElementName="attackable" Type="int8" Size="1" />
-<Data ElementName="unknown10" Type="int8" Size="1" />
+<Data ElementName="attackable_icon" Type="int8" Size="1" />
 <Data ElementName="unknown11" Type="int8" Size="1" />
 <Data ElementName="unknown12" Type="int8" Size="1" />
 </Struct>
@@ -2520,7 +2521,7 @@
 <Data ElementName="red_glow" Type="int8" Size="1" />
 <Data ElementName="show_name" Type="int8" Size="1" />
 <Data ElementName="attackable" Type="int8" Size="1" />
-<Data ElementName="unknown2" Type="int8" Size="1" />
+<Data ElementName="attackable_icon" Type="int8" Size="1" />
 <Data ElementName="unknown3" Type="int8" Size="1" />
 <Data ElementName="unknown4" Type="int8" Size="1" />
 <Data ElementName="unknown5" Type="int8" Size="1" />

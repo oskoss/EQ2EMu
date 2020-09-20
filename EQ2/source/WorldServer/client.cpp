@@ -159,6 +159,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	UpdateWindowTitle(0);
 	num_active_failures = 0;
 	player = new Player();
+	player->SetClient(this);
 	combine_spawn = 0;
 	lua_debug = false;
 	ready_for_spawns = false;
@@ -340,7 +341,7 @@ void Client::SendLoginInfo() {
 	database.LoadCharacterQuests(this);
 	database.LoadPlayerMail(this);
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
-	SendQuestJournal(true);
+	SendQuestJournal(true, 0, false);
 
 	if (version > 546) // right version? possibly not!
 		master_aa_list.DisplayAA(this, 0, 3);
@@ -494,7 +495,7 @@ void Client::HandlePlayerRevive(int32 point_id)
 		safe_delete(packet);
 	}
 
-	SimpleMessage(CHANNEL_COLOR_REVIVE, "You regain consciousness!");
+	SimpleMessage(CHANNEL_NARRATIVE, "You regain consciousness!");
 	packet = configReader.getStruct("WS_Resurrected", GetVersion());
 	if (packet)
 	{
@@ -578,7 +579,7 @@ void Client::HandlePlayerRevive(int32 point_id)
 	}
 
 	zone_desc = GetCurrentZone()->GetZoneDescription();
-	Message(CHANNEL_COLOR_REVIVE, "Reviving in %s at %s.", zone_desc.c_str(), location_name);
+	Message(CHANNEL_NARRATIVE, "Reviving in %s at %s.", zone_desc.c_str(), location_name);
 	player->SetSpawnType(4);
 	if (version > 283) {
 		packet = configReader.getStruct("WS_CancelMoveObjectMode", GetVersion());
@@ -723,7 +724,7 @@ void Client::SendCharInfo() {
 	string zone_motd = GetCurrentZone()->GetZoneMOTD();
 	if (zone_motd.length() > 0 && zone_motd[0] != ' ') {
 		string zone_motd_send = "Zone MOTD: " + zone_motd;
-		SimpleMessage(CHANNEL_COLOR_WHITE, zone_motd_send.c_str());
+		SimpleMessage(CHANNEL_NARRATIVE, zone_motd_send.c_str());
 	}
 	const char* zone_script = world.GetZoneScript(GetCurrentZone()->GetZoneID());
 	if (zone_script && lua_interface)
@@ -1682,7 +1683,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	case OP_CancelSpellCast: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_CancelSpellCast", opcode, opcode);
 		current_zone->Interrupted(player, 0, 0, true);
-		SimpleMessage(CHANNEL_COLOR_SPELL_INTERRUPT, "You stop casting.");
+		SimpleMessage(CHANNEL_SPELLS_OTHER, "You stop casting.");
 		break;
 	}
 	case OP_UpdatePositionMsg: {
@@ -1766,8 +1767,8 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				Guild* guild = guild_list.GetGuild(packet->getType_int32_ByName("guild_id"));
 				Client* recruiter = zone_list.GetClientByCharName(recruiter_name);
 				if (recruiter && guild) {
-					Message(CHANNEL_COLOR_GUILD_EVENT, "Contact request sent to %s of %s.", recruiter->GetPlayer()->GetName(), guild->GetName());
-					recruiter->Message(CHANNEL_COLOR_GUILD_EVENT, "%s [%u %s], [0 Unskilled] (%s) is requesting to speak to YOU about joining the guild.", player->GetName(), player->GetLevel(), classes.GetClassNameCase(player->GetAdventureClass()).c_str(), races.GetRaceNameCase(player->GetRace()));
+					Message(CHANNEL_GUILD_EVENT, "Contact request sent to %s of %s.", recruiter->GetPlayer()->GetName(), guild->GetName());
+					recruiter->Message(CHANNEL_GUILD_EVENT, "%s [%u %s], [0 Unskilled] (%s) is requesting to speak to YOU about joining the guild.", player->GetName(), player->GetLevel(), classes.GetClassNameCase(player->GetAdventureClass()).c_str(), races.GetRaceNameCase(player->GetRace()));
 					recruiter->PlaySound("ui_guild_page");
 				}
 			}
@@ -2256,15 +2257,13 @@ bool Client::HandleLootItem(Spawn* entity, Item* item) {
 	}
 	if (player->item_list.HasFreeSlot() || player->item_list.CanStack(item)) {
 		if (player->item_list.AssignItemToFreeSlot(item)) {
-			int8 type = CHANNEL_COLOR_LOOT;
-			if (GetVersion() >= 973 && GetVersion() <= 1000)
-				type = CHANNEL_COLOR_NEW_LOOT;
-			else if (GetVersion() >= 973)
-				type = CHANNEL_COLOR_NEWEST_LOOT;
-			if (entity)
-				Message(type, "You loot \\aITEM %u 0:%s\\/a from the corpse of %s", item->details.item_id, item->name.c_str(), entity->GetName());
-			else
-				Message(type, "You found a \\aITEM %u 0:%s\\/a", item->details.item_id, item->name.c_str());
+			int8 type = CHANNEL_LOOT;
+			if (entity) {
+				Message(type, "You loot %s from the corpse of %s", item->CreateItemLink(GetVersion()).c_str(), entity->GetName());
+			}
+			else {
+				Message(type, "You found a %s.", item->CreateItemLink(GetVersion()).c_str());
+			}
 			Guild* guild = player->GetGuild();
 			if (guild && item->details.tier >= ITEM_TAG_LEGENDARY) {
 				char adjective[32];
@@ -2282,8 +2281,8 @@ bool Client::HandleLootItem(Spawn* entity, Item* item) {
 					strncpy(adjective, "Legendary", sizeof(adjective) - 1);
 					type = GUILD_EVENT_LOOTS_LEGENDARY_ITEM;
 				}
-				guild->AddNewGuildEvent(type, "%s has looted the %s \\aITEM %u 0:%s\\/a", Timer::GetUnixTimeStamp(), true, player->GetName(), adjective, item->details.item_id, item->name.c_str());
-				guild->SendMessageToGuild(type, "%s has looted the %s \\aITEM %u 0:%s\\/a", player->GetName(), adjective, item->details.item_id, item->name.c_str());
+				guild->AddNewGuildEvent(type, "%s has looted the %s %s", Timer::GetUnixTimeStamp(), true, player->GetName(), adjective, item->CreateItemLink(GetVersion()).c_str());
+				guild->SendMessageToGuild(type, "%s has looted the %s %s", player->GetName(), adjective, item->CreateItemLink(GetVersion()).c_str());
 			}
 			CheckPlayerQuestsItemUpdate(item);
 			return true;
@@ -2381,7 +2380,7 @@ void Client::HandleLoot(EQApplicationPacket* app) {
 					QueuePacket(outapp);
 				Loot(spawn);
 				if (!spawn->HasLoot()) {
-					CloseLoot();
+					CloseLoot(loot_id);
 					if (spawn->IsNPC())
 						GetCurrentZone()->RemoveDeadSpawn(spawn);
 				}
@@ -3089,17 +3088,223 @@ ZoneServer* Client::GetCurrentZone() {
 	return current_zone;
 }
 
+int8 Client::GetMessageChannelColor(int8 channel_type) {
+	if (GetVersion() >= 973 && GetVersion() <= 1000) {
+		if (channel_type == CHANNEL_LOOT)
+			return CHANNEL_COLOR_NEW_LOOT;
+	}
+	else if (GetVersion() >= 973) {
+		if (channel_type == CHANNEL_LOOT)
+			return CHANNEL_COLOR_NEWEST_LOOT;
+	}
+	if (GetVersion() <= 283) {
+		if (channel_type <=12)
+			return channel_type;
+		switch (channel_type) {
+			case CHANNEL_GROUP_CHAT:
+			case CHANNEL_GROUP_SAY:
+			case CHANNEL_RAID_SAY:
+			case CHANNEL_GUILD_CHAT:
+			case CHANNEL_GUILD_SAY:
+			case CHANNEL_OFFICER_SAY:
+			case CHANNEL_GUILD_MOTD:
+				return channel_type - 1;
+			case CHANNEL_PRIVATE_CHAT:
+			case CHANNEL_NONPLAYER_TELL:
+				return channel_type - 5;
+			case CHANNEL_PRIVATE_TELL:
+			case CHANNEL_TELL_FROM_CS:
+				return channel_type - 6;
+			case CHANNEL_CHAT_CHANNEL_TEXT:
+			case CHANNEL_OUT_OF_CHARACTER:
+			case CHANNEL_AUCTION:
+			case CHANNEL_CUSTOM_CHANNEL:
+			case CHANNEL_CHARACTER_TEXT:
+			case CHANNEL_REWARD:
+			case CHANNEL_DEATH:
+			case CHANNEL_PET_CHAT:
+			case CHANNEL_SKILL:
+				return channel_type - 7;
+			case CHANNEL_SPELLS:
+			case CHANNEL_YOU_CAST:
+			case CHANNEL_YOU_FAIL:
+				return channel_type - 8;
+			case CHANNEL_FRIENDLY_CAST:
+			case CHANNEL_FRIENDLY_FAIL:
+			case CHANNEL_OTHER_CAST:
+			case CHANNEL_OTHER_FAIL:
+			case CHANNEL_HOSTILE_CAST:
+			case CHANNEL_HOSTILE_FAIL:
+			case CHANNEL_WORN_OFF:
+			case CHANNEL_SPELLS_OTHER:
+				return channel_type - 9;
+			case CHANNEL_COMBAT:
+				return channel_type - 15;
+			case CHANNEL_HEROIC_OPPORTUNITY:
+			case CHANNEL_NON_MELEE_DAMAGE:
+			case CHANNEL_DAMAGE_SHIELD:
+				return channel_type - 16;
+			case CHANNEL_MELEE_COMBAT:
+			case CHANNEL_WARNINGS:
+			case CHANNEL_YOU_HIT:
+			case CHANNEL_YOU_MISS:
+			case CHANNEL_ATTACKER_HITS:
+			case CHANNEL_ATTACKER_MISSES:
+				return channel_type - 18;
+			case CHANNEL_OTHER_HIT:
+			case CHANNEL_OTHER_MISSES:
+			case CHANNEL_CRITICAL_HIT:
+				return channel_type - 22;
+			case CHANNEL_OTHER:
+			case CHANNEL_MONEY_SPLIT:
+			case CHANNEL_LOOT:
+				return channel_type - 30;
+			case CHANNEL_COMMAND_TEXT:
+			case CHANNEL_BROADCAST:
+			case CHANNEL_WHO:
+			case CHANNEL_COMMANDS:
+			case CHANNEL_MERCHANT:
+			case CHANNEL_MERCHANT_BUY_SELL:
+			case CHANNEL_CONSIDER_MESSAGE:
+			case CHANNEL_CON_MINUS_2:
+			case CHANNEL_CON_MINUS_1:
+			case CHANNEL_CON_0:
+			case CHANNEL_CON_1:
+			case CHANNEL_CON_2:
+				return channel_type - 31;
+			default: {
+				return CHANNEL_DEFAULT;
+			}
+		}
+	}
+	else if (GetVersion() <= 546) {
+		if (channel_type < 20)
+			return channel_type;
+		switch (channel_type) {
+			case CHANNEL_GUILD_MOTD:
+			case CHANNEL_GUILD_MEMBER_ONLINE:
+			case CHANNEL_GUILD_EVENT:
+				return channel_type + 1;
+			case CHANNEL_PRIVATE_CHAT:
+			case CHANNEL_NONPLAYER_TELL:
+				return channel_type - 1;
+			case CHANNEL_PRIVATE_TELL:
+			case CHANNEL_TELL_FROM_CS:
+			case CHANNEL_ARENA:
+			case CHANNEL_CHAT_CHANNEL_TEXT:
+			case CHANNEL_OUT_OF_CHARACTER:
+			case CHANNEL_AUCTION:
+			case CHANNEL_CUSTOM_CHANNEL:
+			case CHANNEL_CHARACTER_TEXT:
+			case CHANNEL_REWARD:
+			case CHANNEL_DEATH:
+			case CHANNEL_PET_CHAT:
+			case CHANNEL_SKILL:
+			case CHANNEL_FACTION:
+			case CHANNEL_SPELLS:
+			case CHANNEL_YOU_CAST:
+			case CHANNEL_YOU_FAIL:
+				return channel_type - 2;			 
+			case CHANNEL_FRIENDLY_CAST:
+			case CHANNEL_FRIENDLY_FAIL:
+			case CHANNEL_OTHER_CAST:
+			case CHANNEL_OTHER_FAIL:
+			case CHANNEL_HOSTILE_CAST:
+			case CHANNEL_HOSTILE_FAIL:
+			case CHANNEL_WORN_OFF:
+			case CHANNEL_SPELLS_OTHER:
+			case CHANNEL_HEAL_SPELLS:
+			case CHANNEL_HEALS:
+			case CHANNEL_FRIENDLY_HEALS:
+			case CHANNEL_OTHER_HEALS:
+			case CHANNEL_HOSTILE_HEALS:
+				return channel_type - 3;
+			case CHANNEL_COMBAT:
+			case CHANNEL_GENERAL_COMBAT:
+			case CHANNEL_HEROIC_OPPORTUNITY:
+			case CHANNEL_NON_MELEE_DAMAGE:
+			case CHANNEL_DAMAGE_SHIELD:
+			case CHANNEL_WARD:
+				return channel_type - 4;
+			case CHANNEL_MELEE_COMBAT:
+			case CHANNEL_WARNINGS:
+			case CHANNEL_YOU_HIT:
+			case CHANNEL_YOU_MISS:
+			case CHANNEL_ATTACKER_HITS:
+			case CHANNEL_ATTACKER_MISSES:
+			case CHANNEL_YOUR_PET_HITS:
+			case CHANNEL_YOUR_PET_MISSES:
+			case CHANNEL_ATTACKER_HITS_PET:
+			case CHANNEL_ATTACKER_MISSES_PET:
+			case CHANNEL_OTHER_HIT:
+			case CHANNEL_OTHER_MISSES:
+				return channel_type - 5;
+			case CHANNEL_OTHER:
+			case CHANNEL_MONEY_SPLIT:
+			case CHANNEL_LOOT:
+				return channel_type - 14;
+			case CHANNEL_COMMAND_TEXT:
+			case CHANNEL_BROADCAST:
+			case CHANNEL_WHO:
+			case CHANNEL_COMMANDS:
+			case CHANNEL_MERCHANT:
+			case CHANNEL_MERCHANT_BUY_SELL:
+			case CHANNEL_CONSIDER_MESSAGE:
+			case CHANNEL_CON_MINUS_2:
+			case CHANNEL_CON_MINUS_1:
+			case CHANNEL_CON_0:
+			case CHANNEL_CON_1:
+			case CHANNEL_CON_2:
+			case CHANNEL_TRADESKILLS:
+			case CHANNEL_HARVESTING:
+			case CHANNEL_HARVESTING_WARNINGS:
+				return channel_type - 15;
+			default: {
+				return CHANNEL_DEFAULT;
+			}
+		}
+	}
+	else {
+		switch (channel_type) {
+			default: {
+				return channel_type;
+			}
+		}
+	}	
+	return channel_type;
+}
+
+void Client::HandleTellMessage(Client* from, const char* message) {
+	if (!from || GetPlayer()->IsIgnored(from->GetPlayer()->GetName()))
+		return;
+	PacketStruct* packet = configReader.getStruct("WS_HearChat", GetVersion());
+	if (packet) {
+		packet->setDataByName("from", from->GetPlayer()->GetName());
+		packet->setDataByName("to", GetPlayer()->GetName());
+		packet->setDataByName("channel", GetMessageChannelColor(CHANNEL_PRIVATE_TELL));
+		packet->setDataByName("from_spawn_id", 0xFFFFFFFF);
+		packet->setDataByName("to_spawn_id", 0xFFFFFFFF);
+		packet->setDataByName("unknown2", 1, 1);
+		packet->setDataByName("show_bubble", 1);
+		packet->setDataByName("understood", 1);
+		packet->setDataByName("time", 2);
+		packet->setMediumStringByName("message", message);
+		EQ2Packet* outpacket = packet->serialize();
+		QueuePacket(outpacket);			
+		safe_delete(packet);
+	}
+}
+
 void Client::SimpleMessage(int8 color, const char* message) {
 	PacketStruct* command_packet = configReader.getStruct("WS_DisplayText", GetVersion());
 	if (command_packet) {
-		command_packet->setDataByName("color", color);
+		command_packet->setDataByName("color", GetMessageChannelColor(color));//convert this to the correct client type (different clients have different chat numbers)
 		command_packet->setMediumStringByName("text", message);
 		command_packet->setDataByName("unknown02", 0x00ff);
 		EQ2Packet* outapp = command_packet->serialize();
 		QueuePacket(outapp);
 		safe_delete(command_packet);
 	}
-
 }
 
 void Client::SendSpellUpdate(Spell* spell) {
@@ -3133,9 +3338,8 @@ void Client::Message(int8 type, const char* message, ...) {
 
 	va_start(argptr, message);
 	vsnprintf(buffer, sizeof(buffer), message, argptr);
-	va_end(argptr);
+	va_end(argptr);	
 	SimpleMessage(type, buffer);
-
 }
 
 void Client::Disconnect(bool send_disconnect)
@@ -3801,10 +4005,10 @@ void Client::HandleVerbRequest(EQApplicationPacket* app) {
 
 void Client::SkillChanged(Skill* skill, int16 previous_value, int16 new_value) {
 	if (previous_value != new_value) {
-		Message(CHANNEL_COLOR_SKILL, "You get %s at %s (%i/%i).", new_value > previous_value ? "better" : "worse", skill->name.data.c_str(), new_value, skill->max_val);
+		Message(CHANNEL_SKILL, "You get %s at %s (%i/%i).", new_value > previous_value ? "better" : "worse", skill->name.data.c_str(), new_value, skill->max_val);
 		char tmp[200] = { 0 };
 		sprintf(tmp, "\\#6EFF6EYou get %s at \12\\#C8FFC8%s\\#6EFF6E! (%i/%i)", new_value > previous_value ? "better" : "worse", skill->name.data.c_str(), new_value, skill->max_val);
-		SendPopupMessage(6, tmp, new_value > previous_value ? "skill_up" : "skill_down", 2.75, 0xFF, 0xFF, 0xFF);
+		SendPopupMessage(6, tmp, new_value > previous_value ? "skill_up" : "skill_down", 2.75f, 0xFF, 0xFF, 0xFF);
 	}
 
 }
@@ -3871,6 +4075,7 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 		QueuePacket(level_update->serialize());
 		safe_delete(level_update);
 		GetCurrentZone()->StartZoneSpawnsForLevelThread(this);
+		GetCurrentZone()->SendCastSpellPacket(322, player, player); //send level up spell effect
 		//GetCurrentZone()->SendAllSpawnsForLevelChange(this);
 	}
 
@@ -3922,7 +4127,7 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	UpdateTimeStampFlag(LEVEL_UPDATE_FLAG);
 	GetPlayer()->SetCharSheetChanged(true);
 
-	Message(CHANNEL_COLOR_EXP, "You are now level %i!", new_level);
+	Message(CHANNEL_REWARD, "You are now level %i!", new_level);
 	LogWrite(WORLD__DEBUG, 0, "World", "Player: %s leveled from %u to %u", GetPlayer()->GetName(), old_level, new_level);
 	int16 new_skill_cap = 5 * new_level;
 	PlayerSkillList* player_skills = player->GetSkills();
@@ -4041,7 +4246,7 @@ void Client::ChangeTSLevel(int16 old_level, int16 new_level) {
 
 	UpdateTimeStampFlag(LEVEL_UPDATE_FLAG);
 	GetPlayer()->SetCharSheetChanged(true);
-	Message(CHANNEL_COLOR_WHITE, "Your tradeskill level is now %i!", new_level);
+	Message(CHANNEL_NARRATIVE, "Your tradeskill level is now %i!", new_level);
 	LogWrite(WORLD__DEBUG, 0, "World", "Player: %s leveled from %u to %u", GetPlayer()->GetName(), old_level, new_level);
 
 	PlayerSkillList* player_skills = player->GetSkills();
@@ -4195,13 +4400,29 @@ void Client::SendPendingLoot(int32 total_coins, Spawn* entity) {
 		Loot(total_coins, player->GetPendingLootItems(entity->GetID()), entity);
 }
 
-void Client::CloseLoot() {
-	PacketStruct* packet = configReader.getStruct("WS_CloseWindow", GetVersion());
-	packet->setDataByName("window_id", 4);
-	EQ2Packet* outapp = packet->serialize();
-	//DumpPacket(outapp);
-	QueuePacket(outapp);
-	safe_delete(packet);
+void Client::CloseLoot(int32 spawn_id) {
+	if (GetVersion() > 546) {
+		PacketStruct* packet = configReader.getStruct("WS_CloseWindow", GetVersion());
+		if (packet) {
+			packet->setDataByName("window_id", 4);
+			EQ2Packet* outapp = packet->serialize();
+			if (outapp) {
+				//DumpPacket(outapp);
+				QueuePacket(outapp);
+			}
+			safe_delete(packet);
+		}
+	}
+	else if(spawn_id > 0){
+		PacketStruct* packet = configReader.getStruct("WS_StoppedLooting", GetVersion());
+		if (packet) {
+			packet->setDataByName("spawn_id", spawn_id);
+			EQ2Packet* outapp = packet->serialize();
+			if (outapp)
+				QueuePacket(outapp);
+			safe_delete(packet);
+		}
+	}
 }
 
 string Client::GetCoinMessage(int32 total_coins) {
@@ -4242,7 +4463,7 @@ string Client::GetCoinMessage(int32 total_coins) {
 
 void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 	if (!entity) {
-		CloseLoot();
+		CloseLoot(0);
 		return;
 	}
 	if (total_coins > 0) {
@@ -4258,17 +4479,12 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 		message.append(GetCoinMessage(total_coins));
 		if (entity->GetHP() == 0)
 			message.append(" from the corpse of ").append(entity->GetName());
-		int8 type = CHANNEL_COLOR_LOOT;
-		if (GetVersion() >= 1208)
-			type = CHANNEL_LOOT;
-		else if (GetVersion() >= 973)
-			type = CHANNEL_COLOR_NEW_LOOT;
-
+		int8 type = CHANNEL_LOOT;
 
 		SimpleMessage(type, message.c_str());
 	}
 	if (!items || items->size() == 0)
-		CloseLoot();
+		CloseLoot(entity->GetID());
 	PacketStruct* packet = configReader.getStruct("WS_UpdateLoot", GetVersion());
 	if (packet) {
 		vector<Item*>::iterator itr;
@@ -4339,7 +4555,7 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 				outapp = new EQ2Packet(OP_ClientCmdMsg, data, packet_size);
 			}
 			else {
-				if (items->size() > 0) {
+				if (items && items->size() > 0) {
 					packet->setArrayLengthByName("loot_count", items->size());
 					Item* item = 0;
 					if (items && items->size() > 0) {
@@ -4460,11 +4676,11 @@ void Client::OpenChest(Spawn* entity, bool attemptDisarm)
 				{
 					CastGroupOrSelf(entity && entity->IsEntity() ? (Entity*)entity : 0, nextTrap.spell_id, nextTrap.spell_tier,
 						rule_manager.GetGlobalRule(R_Loot, ChestTriggerRadiusGroup)->GetFloat());
-					Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
+					Message(CHANNEL_NARRATIVE, "You trigger the trap on %s!", modelName.c_str());
 				}
 				else
 				{
-					Message(CHANNEL_COLOR_WHITE, "You disarm the trap on %s", modelName.c_str());
+					Message(CHANNEL_NARRATIVE, "You disarm the trap on %s", modelName.c_str());
 				}
 
 				// despite fail/succeed we should always try to increase skill if disarm is available
@@ -4474,7 +4690,7 @@ void Client::OpenChest(Spawn* entity, bool attemptDisarm)
 			{
 				CastGroupOrSelf(entity && entity->IsEntity() ? (Entity*)entity : 0, nextTrap.spell_id, nextTrap.spell_tier,
 					rule_manager.GetGlobalRule(R_Loot, ChestTriggerRadiusGroup)->GetFloat());
-				Message(CHANNEL_COLOR_WHITE, "You trigger the trap on %s!", modelName.c_str());
+				Message(CHANNEL_NARRATIVE, "You trigger the trap on %s!", modelName.c_str());
 			}
 		}
 	}
@@ -4639,7 +4855,7 @@ void Client::BankWithdrawal(int64 amount) {
 				sprintf(withdrawal_data, "(%u Plat %u Gold %u Silver %u Copper in the bank now.)", GetPlayer()->GetInfoStruct()->bank_coin_plat,
 					GetPlayer()->GetInfoStruct()->bank_coin_gold, GetPlayer()->GetInfoStruct()->bank_coin_silver, GetPlayer()->GetInfoStruct()->bank_coin_copper);
 				withdrawal.append(withdrawal_data);
-				SimpleMessage(CHANNEL_COLOR_REVIVE, withdrawal.c_str());
+				SimpleMessage(CHANNEL_NARRATIVE, withdrawal.c_str());
 			}
 		}
 		else
@@ -4722,7 +4938,7 @@ void Client::BankDeposit(int64 amount) {
 				sprintf(deposit_data, "(%u Plat %u Gold %u Silver %u Copper in the bank now.)", GetPlayer()->GetInfoStruct()->bank_coin_plat,
 					GetPlayer()->GetInfoStruct()->bank_coin_gold, GetPlayer()->GetInfoStruct()->bank_coin_silver, GetPlayer()->GetInfoStruct()->bank_coin_copper);
 				deposit.append(deposit_data);
-				SimpleMessage(CHANNEL_COLOR_REVIVE, deposit.c_str());
+				SimpleMessage(CHANNEL_NARRATIVE, deposit.c_str());
 			}
 		}
 		else
@@ -4890,8 +5106,9 @@ void Client::CheckPlayerQuestsSpellUpdate(Spell* spell) {
 	safe_delete(quest_failures);
 }
 
-void Client::AddPendingQuest(Quest* quest) {
-	if (version <= 283) { //this client doesn't ask if you want the quest, so auto accept
+void Client::AddPendingQuest(Quest* quest, bool forced) {
+	if (version <= 283 || forced) { //this client doesn't ask if you want the quest, so auto accept
+		player->pending_quests[quest->GetQuestID()] = quest;
 		AcceptQuest(quest->GetQuestID());
 	}
 	else {
@@ -4959,7 +5176,8 @@ void Client::SetPlayerQuest(Quest* quest, map<int32, int32>* progress) {
 				lua_interface->CallQuestFunction(quest, "Reload", player, step->GetStepID());
 		}
 	}
-
+	if (lua_interface)
+		lua_interface->CallQuestFunction(quest, "CurrentStep", player, step->GetStepID());
 }
 
 void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets) {
@@ -5007,12 +5225,12 @@ void Client::RemovePlayerQuest(int32 id, bool send_update, bool delete_quest) {
 			GetCurrentZone()->SendSpawnChangesByDBID(player->player_quests[id]->GetQuestGiver(), this, false, true);
 		if (send_update) {
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
-			SendQuestJournal();
+			SendQuestJournal(false, 0, true);
 		}
 		player->RemoveQuest(id, delete_quest);
 		if (send_update) {
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
-			SendQuestJournal();
+			SendQuestJournal(false, 0, true);
 			GetCurrentZone()->SendAllSpawnsForVisChange(this);
 		}
 	}
@@ -5050,7 +5268,7 @@ void Client::SendQuestFailure(Quest* quest) {
 			step = failures->at(i);
 			QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player, step, 1, false, true));
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
-			SendQuestJournal();
+			SendQuestJournal(false, 0, true);
 		}
 		failures->clear();
 	}
@@ -5061,19 +5279,22 @@ void Client::SendQuestUpdate(Quest* quest) {
 	vector<QuestStep*>* updates = quest->GetQuestUpdates();
 	if (updates) {
 		QuestStep* step = 0;
+		bool updated = false;
 		for (int32 i = 0; i < updates->size(); i++) {
 			step = updates->at(i);
 			if (lua_interface && step->Complete() && quest->GetCompleteAction(step->GetStepID()))
 				lua_interface->CallQuestFunction(quest, quest->GetCompleteAction(step->GetStepID()), player);
 			if (step->WasUpdated()) {
-				SendQuestJournal();
+				SendQuestJournal(false, 0, true);
 				QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player, step));
 			}
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 
 		}
-		if (lua_interface && quest->GetCompleted() && quest->GetCompleteAction())
+		if (lua_interface && quest->GetCompleted() && quest->GetCompleteAction()) {
 			lua_interface->CallQuestFunction(quest, quest->GetCompleteAction(), player);
+			SendQuestJournalUpdate(quest, false);
+		}
 		if (quest->GetCompleted()) {
 			if (quest->GetQuestReturnNPC() > 0)
 				GetCurrentZone()->SendSpawnChangesByDBID(quest->GetQuestReturnNPC(), this, false, true);
@@ -5086,10 +5307,10 @@ void Client::SendQuestUpdate(Quest* quest) {
 
 }
 
-void Client::SendQuestJournal(bool all_quests, Client* client) {
+void Client::SendQuestJournal(bool all_quests, Client* client, bool updated) {
 	if (!client)
 		client = this;
-	PacketStruct* packet = player->GetQuestJournalPacket(all_quests, GetVersion(), GetNameCRC(), current_quest_id);
+	PacketStruct* packet = player->GetQuestJournalPacket(all_quests, GetVersion(), GetNameCRC(), current_quest_id, updated);
 	if (packet) {
 		EQ2Packet* outapp = packet->serialize();
 		//DumpPacket(outapp);
@@ -5098,8 +5319,8 @@ void Client::SendQuestJournal(bool all_quests, Client* client) {
 	}
 }
 
-void Client::SendQuestJournalUpdate(Quest* quest) {
-	PacketStruct* packet = player->GetQuestJournalPacket(quest, GetVersion(), GetNameCRC());
+void Client::SendQuestJournalUpdate(Quest* quest, bool updated) {
+	PacketStruct* packet = player->GetQuestJournalPacket(quest, GetVersion(), GetNameCRC(), updated);
 	if (packet) {
 		QueuePacket(packet->serialize());
 		safe_delete(packet);
@@ -5181,6 +5402,10 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 			else
 				player->GetFactions()->DecreaseFaction(faction_id, (amount * -1));
 		}
+		if (player->GetGuild()) {
+			player->GetInfoStruct()->status_points += quest->GetStatusPoints();
+			player->SetCharSheetChanged(true);
+		}
 	}
 	else {
 		MPendingQuestAccept.lock();
@@ -5192,7 +5417,103 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 
 }
 
-void Client::DisplayQuestComplete(Quest* quest) {
+void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards, vector<Item*>* selectable_rewards, map<int32, sint32>* factions, const char* header, int32 status_points, const char* text) {
+	if (coin == 0 && (!rewards || rewards->size() == 0) && (!selectable_rewards || selectable_rewards->size() == 0) && (!factions || factions->size() == 0) && status_points == 0 && text == 0 && (!quest || (quest->GetCoinsReward() == 0 && quest->GetCoinsRewardMax() == 0))) {
+		return;//nothing to give
+	}
+	PacketStruct* packet2 = configReader.getStruct("WS_QuestRewardPackMsg", GetVersion());
+	if (packet2) {
+		int32 source_id = 0;
+		if (quest)
+			source_id = quest->GetQuestID();
+		int64 rewarded_coin = 0;
+		if (quest) {
+			if (quest->GetCoinsReward() > 0) {
+				if (quest->GetCoinsRewardMax() > 0)
+					rewarded_coin = MakeRandomInt(quest->GetCoinsReward(), quest->GetCoinsRewardMax());
+				else
+					rewarded_coin = quest->GetCoinsReward();
+			}
+			quest->SetGeneratedCoin(rewarded_coin);
+		}
+		if (rewarded_coin > coin)
+			coin = rewarded_coin;
+		if (!quest) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+			player->AddCoins(coin);
+			PlaySound("coin_cha_ching");
+		}
+		packet2->setSubstructDataByName("reward_data", "unknown1", 255);
+		packet2->setSubstructDataByName("reward_data", "reward", header);
+		packet2->setSubstructDataByName("reward_data", "coin", coin);
+		if (player->GetGuild()) {
+			if (!quest) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+				player->GetInfoStruct()->status_points += status_points;
+				player->SetCharSheetChanged(true);
+			}
+			packet2->setSubstructDataByName("reward_data", "status_points", status_points);
+		}
+		if(text)
+			packet2->setSubstructDataByName("reward_data", "text", text);
+		if(rewards){
+			packet2->setSubstructArrayLengthByName("reward_data", "num_rewards", rewards->size());
+			for (int i = 0; i < rewards->size(); i++) {
+				Item* item = rewards->at(i);
+				if (item) {
+					packet2->setArrayDataByName("reward_id", item->details.item_id, i);
+					packet2->setItemArrayDataByName("item", item, player, i, 0, -1);
+				}
+				if(!quest) //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+					player->AddPendingItemReward(item); //item reference will be deleted after the player accepts it
+			}
+		}
+		if (selectable_rewards) {
+			packet2->setSubstructArrayLengthByName("reward_data", "num_select_rewards", selectable_rewards->size());
+			for (int i = 0; i < selectable_rewards->size(); i++) {
+				Item* item = selectable_rewards->at(i);
+				if (item) {
+					packet2->setArrayDataByName("select_reward_id", item->details.item_id, i);
+					packet2->setItemArrayDataByName("select_item", item, player, i, 0, -1);
+					if (!quest) //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+						player->AddPendingSelectableItemReward(source_id, item); //item reference will be deleted after the player selects one
+				}
+			}
+		}
+		if (factions) {
+			map<int32, sint32>::iterator itr;
+			map<Faction*, signed int> factions_map;
+			for (itr = factions->begin(); itr != factions->end(); itr++) {
+				Faction* faction = master_faction_list.GetFaction(itr->first);
+				if (faction)
+					factions_map[faction] = itr->second;
+			}
+			packet2->setSubstructArrayLengthByName("reward_data", "num_factions", factions_map.size());
+			map<Faction*, signed int>::iterator faction_itr;
+			int8 i = 0;
+			for (faction_itr = factions_map.begin(); faction_itr != factions_map.end(); faction_itr++) {
+				packet2->setArrayDataByName("faction_name", faction_itr->first->name.c_str(), i);
+				sint32 amount = faction_itr->second;
+				packet2->setArrayDataByName("amount", amount, i);
+				if (!quest) { //this entire function is for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+					if (amount > 0)
+						player->GetFactions()->IncreaseFaction(faction_itr->first->id, amount);
+					else
+						player->GetFactions()->DecreaseFaction(faction_itr->first->id, (amount * -1));
+				}
+				i++;
+			}
+		}
+		QueuePacket(packet2->serialize());
+		safe_delete(packet2);
+	}
+}
+
+void Client::DisplayQuestComplete(Quest* quest) {	
+	if (!quest)
+		return;
+	if (GetVersion() <= 546) {
+		DisplayQuestRewards(quest, 0, quest->GetRewardItems(), quest->GetSelectableRewardItems(), quest->GetRewardFactions(), "Quest Reward!", quest->GetStatusPoints());
+		return;
+	}
 	PacketStruct* packet = configReader.getStruct("WS_QuestComplete", GetVersion());
 	if (packet) {
 		packet->setDataByName("title", "Quest Reward!");
@@ -5268,60 +5589,60 @@ void Client::DisplayQuestComplete(Quest* quest) {
 }
 
 void Client::DisplayRandomizeFeatures(int32 flags) {
-	SimpleMessage(CHANNEL_COLOR_WHITE, "Showing Active Randomize Features:");
+	SimpleMessage(CHANNEL_NARRATIVE, "Showing Active Randomize Features:");
 	if (flags > 0) {
 		if (flags & RANDOMIZE_GENDER)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Gender");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Gender");
 		if (flags & RANDOMIZE_RACE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Race");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Race");
 		if (flags & RANDOMIZE_MODEL_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Model");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Model");
 		if (flags & RANDOMIZE_FACIAL_HAIR_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Facial Hair");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Facial Hair");
 		if (flags & RANDOMIZE_HAIR_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Hair");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Hair");
 		if (flags & RANDOMIZE_WING_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Wing");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Wing");
 		if (flags & RANDOMIZE_CHEEK_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Cheek");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Cheek");
 		if (flags & RANDOMIZE_CHIN_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Chin");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Chin");
 		if (flags & RANDOMIZE_EAR_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Ear");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Ear");
 		if (flags & RANDOMIZE_EYE_BROW_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Eyebrow");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Eyebrow");
 		if (flags & RANDOMIZE_EYE_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Eye");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Eye");
 		if (flags & RANDOMIZE_LIP_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Lip");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Lip");
 		if (flags & RANDOMIZE_NOSE_TYPE)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Nose");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Nose");
 		if (flags & RANDOMIZE_EYE_COLOR)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Eye Color");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Eye Color");
 		if (flags & RANDOMIZE_HAIR_COLOR1)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Hair Color1");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Hair Color1");
 		if (flags & RANDOMIZE_HAIR_COLOR2)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Hair Color2");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Hair Color2");
 		if (flags & RANDOMIZE_HAIR_HIGHLIGHT)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Hair Color Highlights");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Hair Color Highlights");
 		if (flags & RANDOMIZE_HAIR_FACE_COLOR)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Facial Hair Color");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Facial Hair Color");
 		if (flags & RANDOMIZE_HAIR_FACE_HIGHLIGHT_COLOR)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Facial Hair Color Highlights");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Facial Hair Color Highlights");
 		if (flags & RANDOMIZE_HAIR_TYPE_COLOR)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Hair Type Color");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Hair Type Color");
 		if (flags & RANDOMIZE_HAIR_TYPE_HIGHLIGHT_COLOR)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Hair Type Highlights");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Hair Type Highlights");
 		if (flags & RANDOMIZE_SKIN_COLOR)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Skin Color");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Skin Color");
 		if (flags & RANDOMIZE_WING_COLOR1)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Wing Color1");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Wing Color1");
 		if (flags & RANDOMIZE_WING_COLOR2)
-			SimpleMessage(CHANNEL_COLOR_WHITE, "- Wing Color2");
+			SimpleMessage(CHANNEL_NARRATIVE, "- Wing Color2");
 	}
 	else
 	{
-		SimpleMessage(CHANNEL_COLOR_WHITE, "- No Randomization Set.");
+		SimpleMessage(CHANNEL_NARRATIVE, "- No Randomization Set.");
 	}
 
 }
@@ -5343,7 +5664,7 @@ void Client::GiveQuestReward(Quest* quest) {
 		int16 level = player->GetLevel();
 		int32 xp = quest->GetExpReward();
 		if (player->AddXP(xp)) {
-			Message(CHANNEL_COLOR_EXP, "You gain %u experience!", (int32)xp);
+			Message(CHANNEL_REWARD, "You gain %u experience!", (int32)xp);
 			if (player->GetLevel() != level)
 				ChangeLevel(level, player->GetLevel());
 			player->SetCharSheetChanged(true);
@@ -5353,7 +5674,7 @@ void Client::GiveQuestReward(Quest* quest) {
 		int8 ts_level = player->GetTSLevel();
 		int32 xp = quest->GetTSExpReward();
 		if (player->AddTSXP(xp)) {
-			Message(CHANNEL_COLOR_EXP, "You gain %u tradeskill experience!", (int32)xp);
+			Message(CHANNEL_REWARD, "You gain %u tradeskill experience!", (int32)xp);
 			if (player->GetTSLevel() != ts_level)
 				ChangeTSLevel(ts_level, player->GetTSLevel());
 			player->SetCharSheetChanged(true);
@@ -5392,9 +5713,7 @@ void Client::GiveQuestReward(Quest* quest) {
 			message.append(tmp);
 		}
 		message.append("for completing ").append(quest->GetName());
-		int8 type = CHANNEL_COLOR_LOOT;
-		if (GetVersion() >= 973)
-			type = CHANNEL_COLOR_NEW_LOOT;
+		int8 type = CHANNEL_LOOT;
 		SimpleMessage(type, message.c_str());
 	}
 	if (quest->GetQuestGiver() > 0)
@@ -5605,8 +5924,7 @@ bool Client::AddItem(Item* item) {
 	}
 	if (item->IsBag()) {
 		if (GetVersion() <= 283 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
-			item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
-		item->details.bag_id = item->details.unique_id;
+			item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;		
 	}
 	if (player->AddItem(item)) {
 		EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
@@ -5656,8 +5974,6 @@ bool Client::AddItemToBank(Item* item) {
 	if (!item) {
 		return false;
 	}
-	if (item->IsBag())
-		item->details.bag_id = item->details.unique_id;
 	if (player->AddItemToBank(item)) {
 		EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 		if (outapp) {
@@ -5835,9 +6151,9 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 				guild->AddEXPCurrent((total_status_sell_price / 10), true);
 			}
 			if (quantity > 1)
-				Message(CHANNEL_COLOR_MERCHANT, "You sell %i \\aITEM %u 0:%s\\/a to %s for %s.", quantity, master_item->details.item_id, master_item->name.c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
+				Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %i %s to %s for %s.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
 			else
-				Message(CHANNEL_COLOR_MERCHANT, "You sell \\aITEM %u 0:%s\\/a to %s for %s.", master_item->details.item_id, master_item->name.c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
+				Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %s to %s for %s.", master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
 			player->AddCoins(total_sell_price);
 			AddBuyBack(unique_id, item_id, quantity, sell_price);
 			if (quantity >= item->details.count) {
@@ -5974,9 +6290,9 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 					if (player->RemoveCoins(total_buy_price)) {
 						item->SetMaxSellValue(sell_price);
 						if (quantity > 1)
-							Message(CHANNEL_COLOR_MERCHANT, "You buy %i \\aITEM %u 0:%s\\/a from %s for%s.", quantity, master_item->details.item_id, master_item->name.c_str(), spawn->GetName(), GetCoinMessage(total_buy_price).c_str());
+							Message(CHANNEL_MERCHANT_BUY_SELL, "You buy %i %s from %s for%s.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_buy_price).c_str());
 						else
-							Message(CHANNEL_COLOR_MERCHANT, "You buy \\aITEM %u 0:%s\\/a from %s for%s.", master_item->details.item_id, master_item->name.c_str(), spawn->GetName(), GetCoinMessage(total_buy_price).c_str());
+							Message(CHANNEL_MERCHANT_BUY_SELL, "You buy %s from %s for%s.", master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_buy_price).c_str());
 						AddItem(item);
 						CheckPlayerQuestsItemUpdate(item);
 						if (item && total_available < 0xFFFF) {
@@ -5992,7 +6308,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 							PlayLotto(total_buy_price, item->details.item_id);
 					}
 					else {
-						Message(CHANNEL_COLOR_RED, "You do not have enough coin to purchase \\aITEM %u 0:%s\\/a.", master_item->details.item_id, master_item->name.c_str());
+						Message(CHANNEL_COLOR_RED, "You do not have enough coin to purchase %s.", master_item->CreateItemLink(GetVersion()).c_str());
 						GetCurrentZone()->SendSpellFailedPacket(this, SPELL_ERROR_NOT_ENOUGH_COIN);
 						PlaySound("buy_failed");
 					}
@@ -6072,9 +6388,9 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 							player->RemoveCoins(ItemInfo->price_coins * quantity);
 							item->SetMaxSellValue(sell_price);
 							if (quantity > 1)
-								Message(CHANNEL_COLOR_MERCHANT, "You buy %i \\aITEM %u 0:%s\\/a from %s for%s.", quantity, master_item->details.item_id, master_item->name.c_str(), spawn->GetName(), GetCoinMessage(ItemInfo->price_coins * quantity).c_str());
+								Message(CHANNEL_MERCHANT_BUY_SELL, "You buy %i %s from %s for%s.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(ItemInfo->price_coins * quantity).c_str());
 							else
-								Message(CHANNEL_COLOR_MERCHANT, "You buy \\aITEM %u 0:%s\\/a from %s for%s.", master_item->details.item_id, master_item->name.c_str(), spawn->GetName(), GetCoinMessage(ItemInfo->price_coins * quantity).c_str());
+								Message(CHANNEL_MERCHANT_BUY_SELL, "You buy %s from %s for%s.", master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(ItemInfo->price_coins * quantity).c_str());
 							AddItem(item);
 							CheckPlayerQuestsItemUpdate(item);
 							if (item && total_available < 0xFFFF) {
@@ -6088,13 +6404,13 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 
 						}
 						else {
-							Message(CHANNEL_COLOR_RED, "You do not have enough coin to purchase \\aITEM %u 0:%s\\/a.", master_item->details.item_id, master_item->name.c_str());
+							Message(CHANNEL_COLOR_RED, "You do not have enough coin to purchase %s.", master_item->CreateItemLink(GetVersion()).c_str());
 							GetCurrentZone()->SendSpellFailedPacket(this, SPELL_ERROR_NOT_ENOUGH_COIN);
 							PlaySound("buy_failed");
 						}
 					}
 					else {
-						Message(CHANNEL_COLOR_RED, "You do not have enough coin to purchase \\aITEM %u 0:%s\\/a.", master_item->details.item_id, master_item->name.c_str());
+						Message(CHANNEL_COLOR_RED, "You do not have enough coin to purchase %s.", master_item->CreateItemLink(GetVersion()).c_str());
 						GetCurrentZone()->SendSpellFailedPacket(this, SPELL_ERROR_NOT_ENOUGH_COIN);
 						PlaySound("buy_failed");
 					}
@@ -6119,14 +6435,14 @@ void Client::RepairItem(int32 item_id) {
 				QueuePacket(player->GetEquipmentList()->serialize(GetVersion()));
 				QueuePacket(player->SendInventoryUpdate(GetVersion()));
 				QueuePacket(item->serialize(version, false, player));
-				Message(CHANNEL_COLOR_MERCHANT, "You give %s %s to repair your \\aITEM %u 0:%s\\/a.", spawn->GetName(), GetCoinMessage(repair_cost).c_str(), item->details.item_id, item->name.c_str());
+				Message(CHANNEL_MERCHANT, "You give %s %s to repair your %s.", spawn->GetName(), GetCoinMessage(repair_cost).c_str(), item->CreateItemLink(GetVersion()).c_str());
 				PlaySound("coin_cha_ching");
 				if (spawn->GetMerchantType() & MERCHANT_TYPE_REPAIR)
 					SendRepairList();
 			}
 			else {
 				LogWrite(MISC__TODO, 1, "TODO", " Send pop up that says 'Not enough coin.'\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-				Message(CHANNEL_COLOR_MERCHANT, "You do not have enough coin to repair \\aITEM %u 0:%s\\/a.", item->details.item_id, item->name.c_str());
+				Message(CHANNEL_MERCHANT, "You do not have enough coin to repair %s.", item->CreateItemLink(GetVersion()).c_str());
 				PlaySound("buy_failed");
 			}
 		}
@@ -6144,14 +6460,14 @@ void Client::RepairAllItems() {
 			for (itr = repairable_items->begin(); itr != repairable_items->end(); itr++)
 				total_cost += (*itr)->CalculateRepairCost();
 			if (player->RemoveCoins((int32)total_cost)) {
-				Message(CHANNEL_COLOR_MERCHANT, "You give %s to repair all of your items.", GetCoinMessage((int32)total_cost).c_str());
+				Message(CHANNEL_MERCHANT, "You give %s to repair all of your items.", GetCoinMessage((int32)total_cost).c_str());
 				for (itr = repairable_items->begin(); itr != repairable_items->end(); itr++) {
 					Item* item = *itr;
 					if (item) {
 						item->generic_info.condition = 100;
 						item->save_needed = true;
 						QueuePacket(item->serialize(version, false, player));
-						Message(CHANNEL_COLOR_YELLOW, "Repaired: \\aITEM %u 0:%s\\/a.", item->details.item_id, item->name.c_str());
+						Message(CHANNEL_COLOR_YELLOW, "Repaired: %s.", item->CreateItemLink(GetVersion()).c_str());
 					}
 				}
 				QueuePacket(player->GetEquipmentList()->serialize(GetVersion()));
@@ -6162,7 +6478,7 @@ void Client::RepairAllItems() {
 			}
 			else {
 				LogWrite(MISC__TODO, 1, "TODO", "Send pop up that says 'Not enough coin.'\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-				SimpleMessage(CHANNEL_COLOR_MERCHANT, "You do not have enough coin to repair all of your items.");
+				SimpleMessage(CHANNEL_MERCHANT, "You do not have enough coin to repair all of your items.");
 				PlaySound("buy_failed");
 			}
 		}
@@ -6903,7 +7219,7 @@ void Client::SendMailList() {
 		}
 	}
 	else
-		SimpleMessage(CHANNEL_COLOR_MAIL, "You are currently not in a mail transaction.");
+		SimpleMessage(CHANNEL_NARRATIVE, "You are currently not in a mail transaction.");
 
 }
 
@@ -6952,7 +7268,7 @@ void Client::DisplayMailMessage(int32 mail_id) {
 			}
 		}
 		else
-			SimpleMessage(CHANNEL_COLOR_MAIL, "You are currently not in a mail transaction.");
+			SimpleMessage(CHANNEL_NARRATIVE, "You are currently not in a mail transaction.");
 	}
 
 }
@@ -6979,7 +7295,7 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 					if (mail_window.coin_copper + mail_window.coin_silver + mail_window.coin_gold + mail_window.coin_plat == 0)
 						ids = database.GetAllPlayerIDs();
 					else
-						SimpleMessage(CHANNEL_COLOR_MAIL, "You may not mail gifts to multiple players.");
+						SimpleMessage(CHANNEL_NARRATIVE, "You may not mail gifts to multiple players.");
 				}
 				else {
 					ids = new vector<int32>;
@@ -7028,7 +7344,7 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 							Client* to_client = zone_list.GetClientByCharID(player_to_id);
 							if (to_client) {
 								to_client->GetPlayer()->AddMail(mail);
-								to_client->SimpleMessage(CHANNEL_COLOR_MAIL, "You've got mail! :)");
+								to_client->SimpleMessage(CHANNEL_NARRATIVE, "You've got mail! :)");
 							}
 							database.SavePlayerMail(mail);
 							mail_window.coin_copper = 0;
@@ -7076,28 +7392,28 @@ bool Client::AddMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) {
 			if (copper > 0) {
 				if (player->RemoveCoins(copper)) {
 					mail_window.coin_copper += copper;
-					Message(CHANNEL_COLOR_MAIL, "You add %u copper to the mail window.", copper);
+					Message(CHANNEL_NARRATIVE, "You add %u copper to the mail window.", copper);
 					ret = true;
 				}
 			}
 			else if (silver > 0) {
 				if (player->RemoveCoins(silver * 100)) {
 					mail_window.coin_silver += silver;
-					Message(CHANNEL_COLOR_MAIL, "You add %u silver to the mail window.", silver);
+					Message(CHANNEL_NARRATIVE, "You add %u silver to the mail window.", silver);
 					ret = true;
 				}
 			}
 			else if (gold > 0) {
 				if (player->RemoveCoins(gold * 10000)) {
 					mail_window.coin_gold += gold;
-					Message(CHANNEL_COLOR_MAIL, "You add %u gold to the mail window.", gold);
+					Message(CHANNEL_NARRATIVE, "You add %u gold to the mail window.", gold);
 					ret = true;
 				}
 			}
 			else if (plat > 0) {
 				if (player->RemoveCoins(plat * 1000000)) {
 					mail_window.coin_plat += plat;
-					Message(CHANNEL_COLOR_MAIL, "You add %u platinum to the mail window.", plat);
+					Message(CHANNEL_NARRATIVE, "You add %u platinum to the mail window.", plat);
 					ret = true;
 				}
 			}
@@ -7114,12 +7430,12 @@ bool Client::AddMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) {
 				QueuePacket(packet->serialize());
 			}
 			else
-				SimpleMessage(CHANNEL_COLOR_MAIL, "You don't have that much money.");
+				SimpleMessage(CHANNEL_NARRATIVE, "You don't have that much money.");
 			safe_delete(packet);
 		}
 	}
 	else
-		SimpleMessage(CHANNEL_COLOR_MAIL, "You are currently not in a mail transaction.");
+		SimpleMessage(CHANNEL_NARRATIVE, "You are currently not in a mail transaction.");
 
 	return ret;
 }
@@ -7132,25 +7448,25 @@ bool Client::RemoveMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) 
 			if (copper > 0) {
 				player->AddCoins(copper);
 				mail_window.coin_copper -= copper;
-				Message(CHANNEL_COLOR_MAIL, "You remove %u copper from the mail window.", copper);
+				Message(CHANNEL_NARRATIVE, "You remove %u copper from the mail window.", copper);
 				ret = true;
 			}
 			else if (silver > 0) {
 				player->AddCoins(silver * 100);
 				mail_window.coin_silver -= silver;
-				Message(CHANNEL_COLOR_MAIL, "You remove %u silver from the mail window.", silver);
+				Message(CHANNEL_NARRATIVE, "You remove %u silver from the mail window.", silver);
 				ret = true;
 			}
 			else if (gold > 0) {
 				player->AddCoins(gold * 10000);
 				mail_window.coin_gold -= gold;
-				Message(CHANNEL_COLOR_MAIL, "You remove %u gold from the mail window.", gold);
+				Message(CHANNEL_NARRATIVE, "You remove %u gold from the mail window.", gold);
 				ret = true;
 			}
 			else if (plat > 0) {
 				player->AddCoins(plat * 1000000);
 				mail_window.coin_plat -= plat;
-				Message(CHANNEL_COLOR_MAIL, "You remove %u platinum from the mail window.", plat);
+				Message(CHANNEL_NARRATIVE, "You remove %u platinum from the mail window.", plat);
 				ret = true;
 			}
 			if (ret) {
@@ -7168,7 +7484,7 @@ bool Client::RemoveMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) 
 		}
 	}
 	else
-		SimpleMessage(CHANNEL_COLOR_MAIL, "You are currently not in a mail transaction.");
+		SimpleMessage(CHANNEL_NARRATIVE, "You are currently not in a mail transaction.");
 
 	return ret;
 }
@@ -7223,12 +7539,12 @@ void Client::TakeMailAttachments(int32 mail_id) {
 		}
 	}
 	else
-		SimpleMessage(CHANNEL_COLOR_MAIL, "You are currently not in a mail transaction.");
+		SimpleMessage(CHANNEL_NARRATIVE, "You are currently not in a mail transaction.");
 
 }
 
 void Client::CancelSendMail() {
-	SimpleMessage(CHANNEL_COLOR_MAIL, "You cancel sending a letter.");
+	SimpleMessage(CHANNEL_NARRATIVE, "You cancel sending a letter.");
 	player->AddCoins(mail_window.coin_copper + (mail_window.coin_silver * 100) + (mail_window.coin_gold * 10000) + (mail_window.coin_plat * 1000000));
 	mail_window.coin_copper = 0;
 	mail_window.coin_silver = 0;

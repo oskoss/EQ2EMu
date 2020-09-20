@@ -100,6 +100,7 @@ public:
 	virtual ~LUAUserData(){};
 	virtual bool IsCorrectlyInitialized();
 	virtual bool IsConversationOption();
+	virtual bool IsSpawnList();
 	virtual bool IsOptionWindow();
 	virtual bool IsSpawn();
 	virtual bool IsQuest();
@@ -112,6 +113,7 @@ public:
 	Spawn* spawn;
 	vector<ConversationOption>* conversation_options;
 	vector<OptionWindowOption>* option_window_option;
+	vector<Spawn*>* spawn_list;
 	Quest* quest;
 	Skill* skill;
 };
@@ -120,6 +122,13 @@ class LUAConversationOptionWrapper : public LUAUserData{
 public:
 	LUAConversationOptionWrapper();
 	bool IsConversationOption();
+};
+
+class LUASpawnListWrapper: public LUAUserData{
+public:
+	LUASpawnListWrapper();
+	~LUASpawnListWrapper() { safe_delete(spawn_list); }
+	bool IsSpawnList();
 };
 
 class LUAOptionWindowWrapper : public LUAUserData {
@@ -177,6 +186,7 @@ public:
 	ZoneServer*		GetZone(lua_State* state, int8 arg_num = 1);
 	Skill*			GetSkill(lua_State* state, int8 arg_num = 1);
 	vector<ConversationOption>*	GetConversation(lua_State* state, int8 arg_num = 1);
+	vector<Spawn*>* GetSpawnList(lua_State* state, int8 arg_num = 1);
 	vector<OptionWindowOption>* GetOptionWindow(lua_State* state, int8 arg_num = 1);
 	int8			GetInt8Value(lua_State* state, int8 arg_num = 1);
 	int16			GetInt16Value(lua_State* state, int8 arg_num = 1);
@@ -198,6 +208,7 @@ public:
 	void			SetItemValue(lua_State* state, Item* item);
 	void			SetQuestValue(lua_State* state, Quest* quest);
 	void			SetZoneValue(lua_State* state, ZoneServer* zone);
+	void			SetSpawnListValue(lua_State* state, vector<Spawn*>* spawnList);
 	void			SetConversationValue(lua_State* state, vector<ConversationOption>* conversation);
 	void			SetOptionWindowValue(lua_State* state, vector<OptionWindowOption>* optionWindow);
 
@@ -220,7 +231,7 @@ public:
 	bool			CallItemScript(lua_State* state, int8 num_parameters);
 	bool			RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn = 0, const char* message = 0);
 	bool			CallSpawnScript(lua_State* state, int8 num_parameters);
-	bool			RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn = 0, int32 grid_id = 0, const char* signal = 0);
+	bool			RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn = 0, int32 int32_arg1 = 0, const char* str_arg1 = 0, Spawn* spawn_arg1 = 0, int32 int32_arg2 = 0, const char* str_arg2 = 0, Spawn* spawn_arg2 = 0);
 	bool			CallZoneScript(lua_State* state, int8 num_parameters);
 	void			ResetFunctionStack(lua_State* state);
 	void			DestroySpells();

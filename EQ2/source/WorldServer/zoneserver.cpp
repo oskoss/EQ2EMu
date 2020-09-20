@@ -1892,7 +1892,7 @@ void ZoneServer::ProcessDrowning(){
 		for(itr = dead_list.begin(); itr != dead_list.end(); itr++){
 			RemoveDrowningVictim((*itr)->GetPlayer());
 			KillSpawn(false, (*itr)->GetPlayer(), 0);
-			(*itr)->SimpleMessage(CHANNEL_COLOR_WHITE, "You are sleeping with the fishes!  Glug, glug...");
+			(*itr)->SimpleMessage(CHANNEL_NARRATIVE, "You are sleeping with the fishes!  Glug, glug...");
 		}
 	}
 }
@@ -3174,43 +3174,15 @@ void ZoneServer::SimpleMessage(int8 type, const char* message, Spawn* from, floa
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, int16 channel, const char* message, float distance, const char* channel_name, bool show_bubble, int32 language) {
+void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, int16 channel, const char* message, float distance, const char* channel_name, bool show_bubble, int32 language) {	
 	if ((!distance || from->GetDistance(client->GetPlayer()) <= distance) && (!from || !client->GetPlayer()->IsIgnored(from->GetName()))) {
-		if (client->GetVersion() <= 283) {
-			switch (channel) {
-				case CHANNEL_GROUP: {
-					channel = CLASSIC_CLIENT_CHANNEL_GROUP;
-					break;
-				}
-				case CHANNEL_RAID: {
-					channel = CLASSIC_CLIENT_CHANNEL_RAID;
-					break;
-				}
-				case CHANNEL_GUILD: {
-					channel = CLASSIC_CLIENT_CHANNEL_GUILD;
-					break;
-				}
-				case CHANNEL_SAYTARGET: {
-					channel = CLASSIC_CLIENT_CHANNEL_SAYTARGET;
-					break;
-				}
-				case CHANNEL_TELL: {
-					channel = CLASSIC_CLIENT_CHANNEL_TELL;
-					break;
-				}
-				case CHANNEL_OOC: {
-					channel = CLASSIC_CLIENT_CHANNEL_OOC;
-					break;
-				}
-			}
-		}
 		PacketStruct* packet = configReader.getStruct("WS_HearChat", client->GetVersion());
 		if (packet) {
 			if (from)
 				packet->setMediumStringByName("from", from->GetName());
 			if (client->GetPlayer() != from)
 				packet->setMediumStringByName("to", client->GetPlayer()->GetName());
-			packet->setDataByName("channel", channel);
+			packet->setDataByName("channel", client->GetMessageChannelColor(channel));
 			if (from && ((from == client->GetPlayer()) || (client->GetPlayer()->WasSentSpawn(from->GetID()) && !client->GetPlayer()->WasSpawnRemoved(from))))
 				packet->setDataByName("from_spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(from));
 			else
@@ -3988,7 +3960,7 @@ Spawn* ZoneServer::GetClosestSpawn(Spawn* spawn, int32 spawn_id){
 	MSpawnList.readlock(__FUNCTION__, __LINE__);
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		test_spawn = itr->second;
-		if(test_spawn && test_spawn->GetDatabaseID() == spawn_id){
+		if(test_spawn && test_spawn != spawn && test_spawn->GetDatabaseID() == spawn_id){
 			test_distance = test_spawn->GetDistance(spawn);
 			if(test_distance < closest_distance){
 				closest_distance = test_distance;
@@ -4141,7 +4113,7 @@ void ZoneServer::SendCalculatedXP(Player* player, Spawn* victim){
 						if (xp > 0) {
 							int16 level = group_member->GetLevel();
 							if (group_member->AddXP((int32)xp)) {
-								gmi->client->Message(CHANNEL_COLOR_EXP, "You gain %u experience!", (int32)xp);
+								gmi->client->Message(CHANNEL_REWARD, "You gain %u experience!", (int32)xp);
 								LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u experience (GroupID %u)", group_member->GetName(), (int32)xp, player->GetGroupMemberInfo()->group_id);
 								if (group_member->GetLevel() != level)
 									gmi->client->ChangeLevel(level, group_member->GetLevel());
@@ -4163,7 +4135,7 @@ void ZoneServer::SendCalculatedXP(Player* player, Spawn* victim){
 					return;
 				int16 level = player->GetLevel();
 				if (player->AddXP((int32)xp)) {
-					client->Message(CHANNEL_COLOR_EXP, "You gain %u XP!", (int32)xp);
+					client->Message(CHANNEL_REWARD, "You gain %u XP!", (int32)xp);
 					LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u experience.", player->GetName(), (int32)xp);
 					if(player->GetLevel() != level)
 						client->ChangeLevel(level, player->GetLevel());
@@ -4189,9 +4161,9 @@ void ZoneServer::ProcessFaction(Spawn* spawn, Client* client)
 			faction = master_faction_list.GetFaction(spawn->GetFactionID());
 
 			if(faction && update_result)
-				client->Message(CHANNEL_COLOR_FACTION, "Your faction standing with %s got worse.", faction->name.c_str());
+				client->Message(CHANNEL_FACTION, "Your faction standing with %s got worse.", faction->name.c_str());
 			else if(faction)
-				client->Message(CHANNEL_COLOR_FACTION, "Your faction standing with %s could not possibly get any worse.", faction->name.c_str());
+				client->Message(CHANNEL_FACTION, "Your faction standing with %s could not possibly get any worse.", faction->name.c_str());
 
 			factions = master_faction_list.GetHostileFactions(spawn->GetFactionID());
 
@@ -4207,9 +4179,9 @@ void ZoneServer::ProcessFaction(Spawn* spawn, Client* client)
 						faction = master_faction_list.GetFaction(*itr);
 
 						if(faction && update_result)
-							client->Message(CHANNEL_COLOR_FACTION, "Your faction standing with %s got better.", faction->name.c_str());
+							client->Message(CHANNEL_FACTION, "Your faction standing with %s got better.", faction->name.c_str());
 						else if(faction)
-							client->Message(CHANNEL_COLOR_FACTION, "Your faction standing with %s could not possibly get any better.", faction->name.c_str());
+							client->Message(CHANNEL_FACTION, "Your faction standing with %s could not possibly get any better.", faction->name.c_str());
 					}
 				}
 			}
@@ -4229,9 +4201,9 @@ void ZoneServer::ProcessFaction(Spawn* spawn, Client* client)
 					faction = master_faction_list.GetFaction(*itr);
 
 					if(faction && update_result)
-						client->Message(CHANNEL_COLOR_FACTION, "Your faction standing with %s got worse.", faction->name.c_str());
+						client->Message(CHANNEL_FACTION, "Your faction standing with %s got worse.", faction->name.c_str());
 					else if(faction)
-						client->Message(CHANNEL_COLOR_FACTION, "Your faction standing with %s could not possibly get any worse.", faction->name.c_str());
+						client->Message(CHANNEL_FACTION, "Your faction standing with %s could not possibly get any worse.", faction->name.c_str());
 				}
 			}
 		}
@@ -4374,7 +4346,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 						if (xp > 0) {
 							int16 level = spawn->GetLevel();
 							if (((Player*)spawn)->AddXP((int32)xp)) {
-								client->Message(CHANNEL_COLOR_EXP, "You gain %u XP!", (int32)xp);
+								client->Message(CHANNEL_REWARD, "You gain %u XP!", (int32)xp);
 								LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u experience.", spawn->GetName(), (int32)xp);
 								if (spawn->GetLevel() != level)
 									client->ChangeLevel(level, spawn->GetLevel());
@@ -4449,6 +4421,9 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 
 		// Call the spawn scripts death() function
 		CallSpawnScript(dead, SPAWN_SCRIPT_DEATH, killer);
+		const char* zone_script = world.GetZoneScript(this->GetZoneID());
+		if (zone_script && lua_interface)
+			lua_interface->RunZoneScript(zone_script, "spawn_killed", this, dead, 0, 0, killer);
 	}
 	
 	int32 victim_id = dead->GetID();
@@ -4797,7 +4772,7 @@ void ZoneServer::SendCastSpellPacket(LuaSpell* spell, Entity* caster){
 	safe_delete(packet);
 }
 
-void ZoneServer::SendCastSpellPacket(int32 spell_visual, Spawn* target) {
+void ZoneServer::SendCastSpellPacket(int32 spell_visual, Spawn* target, Spawn* caster) {
 	if (target) {
 		vector<Client*>::iterator client_itr;
 
@@ -4808,15 +4783,22 @@ void ZoneServer::SendCastSpellPacket(int32 spell_visual, Spawn* target) {
 				continue;
 			PacketStruct* packet = configReader.getStruct("WS_HearCastSpell", client->GetVersion());
 			if (packet) {
-				packet->setDataByName("spawn_id", 0xFFFFFFFF);
+				if (!caster) {
+					packet->setDataByName("spawn_id", 0xFFFFFFFF);
+					packet->setDataByName("invoker_id", 0xFFFFFFFF);
+				}
+				else {
+					int32 caster_id = client->GetPlayer()->GetIDWithPlayerSpawn(caster);
+					packet->setDataByName("spawn_id", caster_id);
+					packet->setDataByName("invoker_id", caster_id);
+				}
 				packet->setArrayLengthByName("num_targets", 1);
 				packet->setArrayDataByName("target", client->GetPlayer()->GetIDWithPlayerSpawn(target));
-				packet->setDataByName("spell_id", 0xFFFFFFFF);
 				packet->setDataByName("spell_visual", spell_visual);
 				packet->setDataByName("cast_time", 0);
 				packet->setDataByName("spell_id", 0);
 				packet->setDataByName("spell_level", 0);
-				packet->setDataByName("spell_tier", 0);
+				packet->setDataByName("spell_tier", 1);
 				client->QueuePacket(packet->serialize());
 				safe_delete(packet);
 			}
@@ -5623,6 +5605,12 @@ void ZoneServer::ProcessSpell(Spell* spell, Entity* caster, Spawn* target, bool 
 }
 
 void ZoneServer::ProcessEntityCommand(EntityCommand* entity_command, Entity* caster, Spawn* target, bool lock) {
+	if (target && target->GetSpawnScript()) {
+		Player* player = 0;
+		if (caster && caster->IsPlayer())
+			player = (Player*)caster;
+		CallSpawnScript(target, SPAWN_SCRIPT_CUSTOM, player, entity_command->command.c_str());
+	}
 	if (spellProcess)
 		spellProcess->ProcessEntityCommand(this, entity_command, caster, target, lock);
 }
@@ -5885,9 +5873,9 @@ void ZoneServer::FindSpawn(Client* client, char* regSearchStr)
 		client->SimpleMessage(CHANNEL_COLOR_RED, "Try/Catch ZoneServer::FindSpawn(Client*, char* regSearchStr) failure.");
 		return;
 	}
-	client->Message(CHANNEL_COLOR_WHITE, "RegEx Search Spawn List: %s", regSearchStr);
-	client->Message(CHANNEL_COLOR_WHITE, "Database ID | Spawn Name | X , Y , Z");
-	client->Message(CHANNEL_COLOR_WHITE, "========================");
+	client->Message(CHANNEL_NARRATIVE, "RegEx Search Spawn List: %s", regSearchStr);
+	client->Message(CHANNEL_NARRATIVE, "Database ID | Spawn Name | X , Y , Z");
+	client->Message(CHANNEL_NARRATIVE, "========================");
 	map<int32, Spawn*>::iterator itr;
 	MSpawnList.readlock(__FUNCTION__, __LINE__);
 	int32 spawnsFound = 0;
@@ -5907,12 +5895,12 @@ void ZoneServer::FindSpawn(Client* client, char* regSearchStr)
 
 		if (output)
 		{
-			client->Message(CHANNEL_COLOR_WHITE, "%i | %s | %f , %f , %f", spawn->GetDatabaseID(), spawn->GetName(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
+			client->Message(CHANNEL_NARRATIVE, "%i | %s | %f , %f , %f", spawn->GetDatabaseID(), spawn->GetName(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
 			spawnsFound++;
 		}
 	}
-	client->Message(CHANNEL_COLOR_WHITE, "========================", spawnsFound);
-	client->Message(CHANNEL_COLOR_WHITE, "%u Results Found.", spawnsFound);
+	client->Message(CHANNEL_NARRATIVE, "========================", spawnsFound);
+	client->Message(CHANNEL_NARRATIVE, "%u Results Found.", spawnsFound);
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
@@ -6169,11 +6157,11 @@ void ZoneServer::SetRain(float val) {
 		client->GetPlayer()->SetCharSheetChanged(true);
 		if( val >= 0.75 && !weather_signaled )
 		{
-			client->SimpleMessage(CHANNEL_COLOR_WHITE, "It starts to rain.");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "It starts to rain.");
 		}
 		else if( val < 0.75 && weather_signaled ) 
 		{
-			client->SimpleMessage(CHANNEL_COLOR_WHITE, "It stops raining.");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "It stops raining.");
 		}
 	}
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
@@ -6526,7 +6514,7 @@ void ZoneServer::ResurrectSpawn(Spawn* spawn, Client* client) {
 			}
 
 			safe_delete(packet);
-			client->SimpleMessage(CHANNEL_COLOR_REVIVE, "You regain consciousness!");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "You regain consciousness!");
 		}
 	}
 	spawn->SendSpawnChanges(true);

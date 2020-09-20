@@ -151,6 +151,8 @@ public:
 	void	SetReadyForSpawns(bool val);
 	void	QueuePacket(EQ2Packet* app, bool attemptedCombine=false);
 	void	SendLoginInfo();
+	int8	GetMessageChannelColor(int8 channel_type);
+	void	HandleTellMessage(Client* from, const char* message);
 	void	SimpleMessage(int8 color, const char* message);
 	void	Message(int8 type, const char* message, ...);
 	void	SendSpellUpdate(Spell* spell);
@@ -242,7 +244,7 @@ public:
 	bool	UpdateQuickbarNeeded();
 	void	Save();
 	bool	remove_from_list;
-	void	CloseLoot();
+	void	CloseLoot(int32 spawn_id);
 	void	SendPendingLoot(int32 total_coins, Spawn* entity);
 	void	Loot(int32 total_coins, vector<Item*>* items, Spawn* entity);
 	void	Loot(Spawn* entity, bool attemptDisarm=true);
@@ -253,18 +255,19 @@ public:
 	void	CheckPlayerQuestsItemUpdate(Item* item);
 	void	CheckPlayerQuestsSpellUpdate(Spell* spell);
 	void	CheckPlayerQuestsLocationUpdate();
-	void	AddPendingQuest(Quest* quest);
+	void	AddPendingQuest(Quest* quest, bool forced = false);
 	void	AcceptQuest(int32 id);
 	Quest*	GetPendingQuest(int32 id);
 	void	RemovePendingQuest(Quest* quest);
 	void	SetPlayerQuest(Quest* quest, map<int32, int32>* progress);
 	void	AddPlayerQuest(Quest* quest, bool call_accepted = true, bool send_packets = true);
 	void	RemovePlayerQuest(int32 id, bool send_update = true, bool delete_quest = true);
-	void	SendQuestJournal(bool all_quests = false, Client* client = 0);
+	void	SendQuestJournal(bool all_quests = false, Client* client = 0, bool updated = true);
 	void	SendQuestUpdate(Quest* quest);
 	void	SendQuestFailure(Quest* quest);
 	void	SendQuestUpdateStep(Quest* quest, int32 step, bool display_quest_helper = true);
 	void	SendQuestUpdateStepImmediately(Quest* quest, int32 step, bool display_quest_helper = true);
+	void	DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards=0, vector<Item*>* selectable_rewards=0, map<int32, sint32>* factions=0, const char* header="Quest Reward!", int32 status_points=0, const char* text=0);
 	void	DisplayQuestComplete(Quest* quest);
 	void	DisplayRandomizeFeatures(int32 features);
 	void	AcceptQuestReward(Quest* quest, int32 item_id);
@@ -329,6 +332,7 @@ public:
 	void	SearchStore(int32 page);
 	void	SetPlayer(Player* new_player){
 		player = new_player;
+		player->SetClient(this);
 	}
 	void	AddPendingQuestReward(Quest* quest);
 	void	AddPendingQuestUpdate(int32 quest_id, int32 step_id, int32 progress = 0xFFFFFFFF);
@@ -379,7 +383,7 @@ public:
 
 	bool GetInitialSpawnsSent() { return initial_spawns_sent; }
 
-	void SendQuestJournalUpdate(Quest* quest);
+	void SendQuestJournalUpdate(Quest* quest, bool updated=true);
 
 	void AddQuestTimer(int32 quest_id);
 

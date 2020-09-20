@@ -845,7 +845,6 @@ public:
 	int32					spell_id;
 	int8					spell_tier;
 	string					item_script;
-
 	void AddEffect(string effect, int8 percentage, int8 subbulletflag);
 	void AddBookPage(int8 page, string page_text,int8 valign, int8 halign);
 	int32 GetMaxSellValue();
@@ -910,7 +909,7 @@ public:
 	void SetItemScript(string name);
 	const char*	GetItemScript();
 	int32 CalculateRepairCost();
-	string CreateItemLink(bool bUseUniqueID);
+	string CreateItemLink(int16 client_Version, bool bUseUniqueID=false);
 
 	void SetItemType(int8 in_type);
 	void serialize(PacketStruct* packet, bool show_name = false, Player* player = 0, int16 packet_type = 0, int8 subtype = 0, bool loot_item = false);

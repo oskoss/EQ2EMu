@@ -37,52 +37,12 @@ extern map<int16,OpcodeManager*>EQOpcodeManager;
 #define CHANNEL_COLOR_RED				3
 #define CHANNEL_COLOR_CHAT_RELATIONSHIP	4
 #define CHANNEL_COLOR_YELLOW			5
-#define CHANNEL_COLOR_REVIVE			12
-#define CHANNEL_COLOR_MAIL				12
-#define CHANNEL_COLOR_WHITE				12
-#define CHANNEL_COLOR_GROUP				15
-#define CHANNEL_COLOR_GUILD				18
-#define CHANNEL_COLOR_GUILD_MOTD		20
-#define CHANNEL_COLOR_GUILD_EVENT		22
-#define CHANNEL_COLOR_EXP				36
-#define CHANNEL_COLOR_SKILL				39
-#define CHANNEL_COLOR_FACTION			40
-#define CHANNEL_COLOR_SPELL_EFFECT		42
-#define CHANNEL_COLOR_SPELL				47
-#define CHANNEL_COLOR_SPELL_INTERRUPT	52
-#define CHANNEL_COLOR_SPELL_FADE		51
-#define CHANNEL_COLOR_COMBAT			60
-#define CHANNEL_COLOR_LOOT				81
 #define CHANNEL_COLOR_NEW_LOOT			84
 #define CHANNEL_COLOR_NEWEST_LOOT		89
-#define CHANNEL_COLOR_MERCHANT			88
-#define CHANNEL_COLOR_GROUP_INVITE		89
-#define CHANNEL_COLOR_GUILD_MSGS		94
-#define CHANNEL_COLOR_HARVEST			96
 
 #define UPDATE_COLOR_WHITE				254  // For UpdateText
 
-#define CHANNEL_SAY			8
-#define CHANNEL_SHOUT		9
-#define CHANNEL_EMOTE		10
-#define CHANNEL_GROUP		15
-#define CHANNEL_RAID		16
-#define CHANNEL_GUILD		18
-#define CHANNEL_OFFICER		19
-#define CHANNEL_SAYTARGET	25 // you say to xxx
-#define CHANNEL_TELL		28 // you tell xxx
-#define CHANNEL_OOC			32
-//#define CHANNEL_AUCTION		30
-
-#define CLASSIC_CLIENT_CHANNEL_GROUP		14
-#define CLASSIC_CLIENT_CHANNEL_RAID			15
-#define CLASSIC_CLIENT_CHANNEL_GUILD		17
-#define CLASSIC_CLIENT_CHANNEL_SAYTARGET	21 // you say to xxx
-#define CLASSIC_CLIENT_CHANNEL_TELL			22 // you tell xxx
-#define CLASSIC_CLIENT_CHANNEL_OOC			25
-#define CLASSIC_CLIENT_CHANNEL_AUCTION		26
-#define CLASSIC_CLIENT_CHANNEL_BROADCAST	61
-
+#define CHANNEL_ALL_TEXT					0
 #define CHANNEL_GAME_TEXT					1
 #define CHANNEL_DEFAULT						2
 #define CHANNEL_ERROR						3
@@ -94,7 +54,7 @@ extern map<int16,OpcodeManager*>EQOpcodeManager;
 #define CHANNEL_SHOUT						9
 #define CHANNEL_EMOTE						10
 #define CHANNEL_YELL						11
-#define CHANNEL_NARRATIVE					12
+#define CHANNEL_NARRATIVE					12 //white
 #define CHANNEL_NONPLAYER_SAY				13
 #define CHANNEL_GROUP_CHAT					14
 #define CHANNEL_GROUP_SAY					15 // Use this for group chat
@@ -116,7 +76,7 @@ extern map<int16,OpcodeManager*>EQOpcodeManager;
 #define CHANNEL_CHAT_CHANNEL_TEXT			31
 #define CHANNEL_OUT_OF_CHARACTER			32
 #define CHANNEL_AUCTION						33
-// 34 is nothing, message with 34 as type will not show on client
+#define CHANNEL_CUSTOM_CHANNEL				34 // 34 is nothing, message with 34 as type will not show on client
 #define CHANNEL_CHARACTER_TEXT				35
 #define CHANNEL_REWARD						36
 #define CHANNEL_DEATH						37

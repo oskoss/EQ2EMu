@@ -395,7 +395,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell){
 						string fade_message = spell->spell->GetSpellData()->fade_message;
 						if(fade_message.find("%t") != string::npos)
 							fade_message.replace(fade_message.find("%t"), 2, target->GetName());
-						client->Message(CHANNEL_COLOR_SPELL_FADE, fade_message.c_str());
+						client->Message(CHANNEL_SPELLS_OTHER, fade_message.c_str());
 					}
 				}
 			}
@@ -1388,7 +1388,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 					string success_message = spell->spell->GetSpellData()->success_message;
 					if(success_message.find("%t") != string::npos)
 						success_message.replace(success_message.find("%t"), 2, spell->caster->GetName());
-					client->Message(CHANNEL_COLOR_SPELL, success_message.c_str());
+					client->Message(CHANNEL_SPELLS, success_message.c_str());
 				}
 			}
 			if(spell->spell->GetSpellData()->effect_message.length() > 0){
@@ -1397,7 +1397,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 					effect_message.replace(effect_message.find("%t"), 2, target->GetName());
 				if (effect_message.find("%c") != string::npos)
 					effect_message.replace(effect_message.find("%c"), 2, spell->caster->GetName());
-				spell->caster->GetZone()->SimpleMessage(CHANNEL_COLOR_SPELL_EFFECT, effect_message.c_str(), target, 50);
+				spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, effect_message.c_str(), target, 50);
 			}
 			target->GetZone()->CallSpawnScript(target, SPAWN_SCRIPT_CASTED_ON, spell->caster, spell->spell->GetName());
 		}
@@ -1613,7 +1613,7 @@ void SpellProcess::Interrupted(Entity* caster, Spawn* interruptor, int16 error_c
 			if(interruptor && interruptor->IsPlayer())
 			{
 				client = interruptor->GetZone()->GetClientBySpawn(interruptor);
-				client->Message(CHANNEL_COLOR_SPELL_INTERRUPT, "You interrupt %s's ability to cast!", interruptor->GetName());
+				client->Message(CHANNEL_SPELLS_OTHER, "You interrupt %s's ability to cast!", interruptor->GetName());
 			}
 			
 		}

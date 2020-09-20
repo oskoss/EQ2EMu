@@ -78,9 +78,9 @@ void Brain::Think() {
 
 			// Set the NPC's target to the most hated entity if it is not already.
 			if (m_body->GetTarget() != target) {
-				m_body->SetTarget(target);
-				m_body->FaceTarget(target);
+				m_body->SetTarget(target);				
 			}
+			m_body->FaceTarget(target);
 
 			// Check to see if the NPC has exceeded the max chase distance
 			if (run_back_distance > MAX_CHASE_DISTANCE) {
@@ -91,9 +91,9 @@ void Brain::Think() {
 				{
 					// Target is a client so send encounter break messages
 					if (m_body->HasSpawnGroup())
-						client->SimpleMessage(CHANNEL_COLOR_WHITE, "This encounter will no longer give encounter rewards.");
+						client->SimpleMessage(CHANNEL_NARRATIVE, "This encounter will no longer give encounter rewards.");
 					else
-						client->Message(CHANNEL_COLOR_WHITE, "%s is no longer worth any experience or treasure.", m_body->GetName());
+						client->Message(CHANNEL_NARRATIVE, "%s is no longer worth any experience or treasure.", m_body->GetName());
 				}
 				// Clear the hate list for this NPC
 				ClearHate();

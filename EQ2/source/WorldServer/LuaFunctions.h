@@ -21,6 +21,17 @@
 #define LUA_FUNCTIONS_H
 
 #include "../LUA/lua.hpp"
+#include <vector>
+#include <string>
+#include <map>
+using namespace std;
+
+vector<string> ParseString(string strVal, char delim=',');
+vector<unsigned int> ParseStringToInt32(string strVal, char delim=',');
+map<string, signed int> ParseStringMap(string strVal, char delim=',');
+map<unsigned int, unsigned short> ParseIntMap(string strVal, char delim = ',');
+map<unsigned int, signed int> ParseSInt32Map(string strVal, char delim = ',');
+
 
 //Sets
 int EQ2Emu_lua_SetCurrentHP(lua_State* state);
@@ -91,6 +102,12 @@ int EQ2Emu_lua_GetStrBase(lua_State* state);
 int EQ2Emu_lua_GetAgiBase(lua_State* state);
 int EQ2Emu_lua_GetLootCoin(lua_State* state);
 int EQ2Emu_lua_GetSpawn(lua_State* state);
+int EQ2Emu_lua_GetSpawnFromList(lua_State* state);
+int EQ2Emu_lua_GetSpawnListSize(lua_State* state);
+int EQ2Emu_lua_CreateSpawnList(lua_State* state);
+int EQ2Emu_lua_AddSpawnToSpawnList(lua_State* state);
+int EQ2Emu_lua_RemoveSpawnFromSpawnList(lua_State* state);
+int EQ2Emu_lua_GetSpawnListBySpawnID(lua_State* state); 
 int EQ2Emu_lua_GetVariableValue(lua_State* state);
 int EQ2Emu_lua_GetCoinMessage(lua_State* state);
 int EQ2Emu_lua_GetSpawnByGroupID(lua_State* state);
@@ -113,6 +130,8 @@ int EQ2Emu_lua_GetItemType(lua_State* state);
 int EQ2Emu_lua_GetSpellName(lua_State* state);
 
 //Misc
+int EQ2Emu_lua_SetAttackable(lua_State* state);
+int EQ2Emu_lua_SendStateCommand(lua_State* state);
 int EQ2Emu_lua_SpawnSet(lua_State* state);
 int EQ2Emu_lua_KillSpawn(lua_State* state); 
 int EQ2Emu_lua_KillSpawnByDistance(lua_State* state);
@@ -120,6 +139,7 @@ int EQ2Emu_lua_SpawnSetByDistance(lua_State* state);
 int EQ2Emu_lua_SetRequiredQuest(lua_State* state);
 int EQ2Emu_lua_SetRequiredHistory(lua_State* state);
 int EQ2Emu_lua_Despawn(lua_State* state);
+int EQ2Emu_lua_ChangeHandIcon(lua_State* state);
 int EQ2Emu_lua_AddHate(lua_State* state);
 int EQ2Emu_lua_GetZone(lua_State* state);
 int EQ2Emu_lua_GetZoneName(lua_State* state);
@@ -141,6 +161,7 @@ int EQ2Emu_lua_CastSpell(lua_State* state);
 int EQ2Emu_lua_SpellDamage(lua_State* state);
 int EQ2Emu_lua_FaceTarget(lua_State* state);
 int EQ2Emu_lua_MoveToLocation(lua_State* state);
+int EQ2Emu_lua_ClearRunningLocations(lua_State* state);
 int EQ2Emu_lua_Say(lua_State* state);
 int EQ2Emu_lua_Shout(lua_State* state);
 int EQ2Emu_lua_SayOOC(lua_State* state);
@@ -153,6 +174,7 @@ int EQ2Emu_lua_PlaySound(lua_State* state);
 int EQ2Emu_lua_PlayVoice(lua_State* state);
 int EQ2Emu_lua_PlayAnimation(lua_State* state);
 int EQ2Emu_lua_AddLootItem(lua_State* state);
+int EQ2Emu_lua_HasLootItem(lua_State* state);
 int EQ2Emu_lua_RemoveLootItem(lua_State* state);
 int EQ2Emu_lua_AddLootCoin(lua_State* state);
 int EQ2Emu_lua_GiveLoot(lua_State* state);
@@ -229,6 +251,7 @@ int EQ2Emu_lua_AddQuestStepCompleteAction(lua_State* state);
 int EQ2Emu_lua_AddQuestStepProgressAction(lua_State* state);
 int EQ2Emu_lua_SetQuestCompleteAction(lua_State* state);
 int EQ2Emu_lua_GiveQuestReward(lua_State* state);
+int EQ2Emu_lua_GiveImmediateQuestReward(lua_State* state);
 int EQ2Emu_lua_UpdateQuestTaskGroupDescription(lua_State* state);
 int EQ2Emu_lua_UpdateQuestStepDescription(lua_State* state);
 int EQ2Emu_lua_UpdateQuestDescription(lua_State* state);
@@ -417,14 +440,19 @@ int EQ2Emu_lua_StartTransmute(lua_State* state);
 int EQ2Emu_lua_CompleteTransmute(lua_State* state);
 int EQ2Emu_lua_ProcHate(lua_State* state);
 
+int EQ2Emu_lua_GiveExp(lua_State* state);
 int EQ2Emu_lua_DisplayText(lua_State* state);
 int EQ2Emu_lua_ShowLootWindow(lua_State* state);
 int EQ2Emu_lua_GetRandomSpawnByID(lua_State* state);
 int EQ2Emu_lua_AddPrimaryEntityCommandAllSpawns(lua_State* state);
 int EQ2Emu_lua_InstructionWindow(lua_State* state);
+int EQ2Emu_lua_InstructionWindowClose(lua_State* state);
+int EQ2Emu_lua_InstructionWindowGoal(lua_State* state);
 int EQ2Emu_lua_ShowWindow(lua_State* state);
 int EQ2Emu_lua_FlashWindow(lua_State* state);
 int EQ2Emu_lua_EnableGameEvent(lua_State* state);
+int EQ2Emu_lua_GetTutorialStep(lua_State* state);
+int EQ2Emu_lua_SetTutorialStep(lua_State* state);
 
 int EQ2Emu_lua_CheckLOS(lua_State* state);
 int EQ2Emu_lua_CheckLOSByCoordinates(lua_State* state);

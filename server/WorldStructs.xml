@@ -358,6 +358,9 @@ to zero and treated like placeholders." />
 <Data ElementName="completed_voice_key1" Type="int32" Size="1" />
 <Data ElementName="completed_voice_key2" Type="int32" Size="1" />
 </Struct>
+<Struct Name="WS_InstructionWindowGoal" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqInstructionWindowGoalCmd">
+<Data ElementName="goal_num" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_OnScreenMsg" ClientVersion="1" OpcodeName="OP_OnscreenMsgMsg">
 <Data ElementName="text" Type="EQ2_16Bit_String" />
 <Data ElementName="message_type" Type="EQ2_16Bit_String" />
@@ -366,7 +369,7 @@ to zero and treated like placeholders." />
 <Data ElementName="green" Type="int8" Size="1" />
 <Data ElementName="blue" Type="int8" Size="1" />
 </Struct>
-<Struct Name="WS_OnScreenMsg" ClientVersion="547" OpcodeName="OP_OnscreenMsgMsg">
+<Struct Name="WS_OnScreenMsg" ClientVersion="546" OpcodeName="OP_OnscreenMsgMsg">
 <Data ElementName="unknown" Type="int8" Size="1" />
 <Data ElementName="text" Type="EQ2_16Bit_String" />
 <Data ElementName="message_type" Type="EQ2_16Bit_String" />
@@ -6970,7 +6973,10 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown4" Type="int8" Size="1" />
 <Data ElementName="unknown5" Type="int8" Size="1" />
 </Struct>
-<Struct Name="WS_CloseWindow" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqCloseWindowCmd" >
+<Struct Name="WS_StoppedLooting" ClientVersion="1" OpcodeName="OP_StoppedLootingMsg" >
+<Data ElementName="spawn_id" Type="int32" />
+</Struct>
+<Struct Name="WS_CloseWindow" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqCloseWindowCmd" >
 <Data ElementName="window_id" Type="int16" />
 <Data ElementName="index" Type="int8" />
 </Struct>
@@ -7116,7 +7122,8 @@ to zero and treated like placeholders." />
 	<Data ElementName="difficulty" Type="int8" Size="1" />
 	<Data ElementName="visible" Type="int8" Size="1" />
 </Data>
-<Data ElementName="unknown3" Type="int8" Size="2" />
+<Data ElementName="quest_updated" Type="int8" Size="1" />
+<Data ElementName="collapsed" Type="int8" Size="1" />
 <Data ElementName="visible_quest_id" Type="int32" Size="1" />
 <Data ElementName="player_crc" Type="int32" Size="1" />
 <Data ElementName="player_name" Type="EQ2_16Bit_String" Size="1" />

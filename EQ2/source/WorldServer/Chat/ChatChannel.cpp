@@ -142,7 +142,7 @@ bool ChatChannel::TellChannel(Client *client, const char *message, const char* n
 			packet_struct->setDataByName("from", name2);
 
 		packet_struct->setDataByName("to", to_client->GetPlayer()->GetName());
-		packet_struct->setDataByName("channel", 34);
+		packet_struct->setDataByName("channel", to_client->GetMessageChannelColor(CHANNEL_CUSTOM_CHANNEL));
 		packet_struct->setDataByName("language", 0);
 		packet_struct->setDataByName("message", message);
 		packet_struct->setDataByName("channel_name", name);
@@ -170,7 +170,7 @@ bool ChatChannel::TellChannelClient(Client* to_client, const char* message, cons
 		packet_struct->setDataByName("to_spawn_id", 0xFFFFFFFF);
 		packet_struct->setDataByName("from", name2);
 		packet_struct->setDataByName("to", to_client->GetPlayer()->GetName());
-		packet_struct->setDataByName("channel", 34);
+		packet_struct->setDataByName("channel", to_client->GetMessageChannelColor(CHANNEL_CUSTOM_CHANNEL));
 		packet_struct->setDataByName("language", 0);
 		packet_struct->setDataByName("message", message);
 		packet_struct->setDataByName("channel_name", name);

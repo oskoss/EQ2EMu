@@ -368,7 +368,7 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	else {
 		item->details.count = qty;
 		// use CHANNEL_COLOR_CHAT_RELATIONSHIP as that is the same value (4) as it is in a log for this message
-		client->Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "You created \\aITEM %u 0:%s\\/a.", item->details.item_id, item->name.c_str());
+		client->Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "You created %s.", item->CreateItemLink(client->GetVersion()).c_str());
 		client->AddItem(item);
 		//Check for crafting quest updates
 		int8 update_amt = 0;
@@ -383,7 +383,7 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	if (xp > 0) {
 		int16 level = client->GetPlayer()->GetTSLevel();
 		if (client->GetPlayer()->AddTSXP((int32)xp)) {
-			client->Message(CHANNEL_COLOR_EXP, "You gain %u Tradeskill XP!", (int32)xp);
+			client->Message(CHANNEL_REWARD, "You gain %u Tradeskill XP!", (int32)xp);
 			LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u tradeskill experience.", client->GetPlayer()->GetName(), (int32)xp);
 			if(client->GetPlayer()->GetTSLevel() != level)
 				client->ChangeTSLevel(level, client->GetPlayer()->GetTSLevel());
@@ -431,7 +431,7 @@ void TradeskillMgr::CheckTradeskillEvent(Client* client, int16 icon) {
 	tradeskillList[client]->eventCountered = countered;
 
 	// send the success or fail message to the client
-	client->Message(CHANNEL_COLOR_WHITE, "You %s %s.", countered ? "successfully countered" : "failed to counter", tradeskillList[client]->CurrentEvent->Name);
+	client->Message(CHANNEL_NARRATIVE, "You %s %s.", countered ? "successfully countered" : "failed to counter", tradeskillList[client]->CurrentEvent->Name);
 	
 	// unlock the list and send the result packet
 	m_tradeskills.releasewritelock(__FUNCTION__, __LINE__);

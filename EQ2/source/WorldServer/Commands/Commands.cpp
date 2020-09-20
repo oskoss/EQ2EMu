@@ -1425,7 +1425,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						Recipe* recipe_book = new Recipe(master_recipebook_list.GetRecipeBooks(item->details.item_id));
 						// if valid recipe book and the player doesn't have it
 						if (recipe_book && recipe_book->GetLevel() > client->GetPlayer()->GetTSLevel()) {
-							client->Message(CHANNEL_COLOR_WHITE, "Your tradeskill level is not high enough to scribe this book.");
+							client->Message(CHANNEL_NARRATIVE, "Your tradeskill level is not high enough to scribe this book.");
 							safe_delete(recipe_book);
 						}
 						else if (recipe_book && !(client->GetPlayer()->GetRecipeBookList()->HasRecipeBook(item->details.item_id))) {
@@ -1456,7 +1456,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 									Recipe* recipe = new Recipe(master_recipe_list.GetRecipe((*itr)->GetID()));
 									client->GetPlayer()->GetRecipeList()->AddRecipe(recipe);
 									database.SavePlayerRecipe(client->GetPlayer(), recipe->GetID());
-									client->Message(CHANNEL_COLOR_WHITE, "Recipe: \"%s\" put in recipe book.", recipe->GetName());
+									client->Message(CHANNEL_NARRATIVE, "Recipe: \"%s\" put in recipe book.", recipe->GetName());
 
 									if (packet && client->GetRecipeListSent()) {
 										packet->setArrayDataByName("id", recipe->GetID(), i);
@@ -1487,7 +1487,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						}
 						else {
 							if (recipe_book)
-								client->Message(CHANNEL_COLOR_WHITE, "You have already learned all you can from this item.");
+								client->Message(CHANNEL_NARRATIVE, "You have already learned all you can from this item.");
 							safe_delete(recipe_book);
 						}
 						
@@ -1665,7 +1665,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						 }
 		case COMMAND_TELL:{
 			if(sep && sep->arg[0] && sep->argplus[1]){
-				if(!zone_list.HandleGlobalChatMessage(client, sep->arg[0], CHANNEL_TELL, sep->argplus[1]))
+				if(!zone_list.HandleGlobalChatMessage(client, sep->arg[0], CHANNEL_PRIVATE_TELL, sep->argplus[1]))
 					client->Message(CHANNEL_COLOR_RED,"Unable to find client %s",sep->arg[0]);
 			}else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /tell {character_name} {message}");
@@ -1688,7 +1688,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_OOC:{
 			//For now ooc will be the global chat channel, eventually when we create more channels we will create a global chat channel
 			if(sep && sep->arg[0][0])
-				zone_list.HandleGlobalChatMessage(client, 0, CHANNEL_OOC, sep->argplus[0]);
+				zone_list.HandleGlobalChatMessage(client, 0, CHANNEL_OUT_OF_CHARACTER, sep->argplus[0]);
 			else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /ooc {message}");
 			break;
@@ -2277,7 +2277,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					world.GetGroupManager()->GroupMessage(group_id, "%s has left the group.", client->GetPlayer()->GetName());
 				}
 
-				client->SimpleMessage(CHANNEL_COLOR_GROUP, "You have left the group");
+				client->SimpleMessage(CHANNEL_GROUP_CHAT, "You have left the group");
 			}
 
 			break;
@@ -2396,10 +2396,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(send_kicked_message)
 				world.GetGroupManager()->GroupMessage(group_id, "%s was kicked from the group.", kicked->GetName());
 			else
-				client->Message(CHANNEL_COLOR_GROUP, "You kicked %s from the group", kicked->GetName());
+				client->Message(CHANNEL_GROUP_CHAT, "You kicked %s from the group", kicked->GetName());
 
 			if (kicked_client)
-				kicked_client->SimpleMessage(CHANNEL_COLOR_GROUP, "You were kicked from the group");
+				kicked_client->SimpleMessage(CHANNEL_GROUP_CHAT, "You were kicked from the group");
 				
 			break;
 		}
@@ -2432,13 +2432,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				int8 result = world.GetGroupManager()->AcceptInvite(client->GetPlayer());
 
 				if (result == 0)
-					client->SimpleMessage(CHANNEL_GROUP, "You have joined the group.");
+					client->SimpleMessage(CHANNEL_GROUP_CHAT, "You have joined the group.");
 				else if (result == 1)
-					client->SimpleMessage(CHANNEL_GROUP, "You do not have a pending invite.");
+					client->SimpleMessage(CHANNEL_GROUP_CHAT, "You do not have a pending invite.");
 				else if (result == 2)
-					client->SimpleMessage(CHANNEL_GROUP, "Unable to join group - could not find leader.");
+					client->SimpleMessage(CHANNEL_GROUP_CHAT, "Unable to join group - could not find leader.");
 				else
-					client->SimpleMessage(CHANNEL_GROUP, "Unable to join group - unknown error.");
+					client->SimpleMessage(CHANNEL_GROUP_CHAT, "Unable to join group - unknown error.");
 			}
 			break;
 		}
@@ -2984,7 +2984,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 			if(type == 0){
 				if(incombat)
-					client->SimpleMessage(CHANNEL_COLOR_COMBAT, "You stop fighting.");
+					client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
 				player->InCombat(false);
 				player->InCombat(false, true);
 				player->SetRangeAttack(false);
@@ -2995,12 +2995,12 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if(incombat && player->GetRangeAttack()){
 						player->SetRangeAttack(false);
 						player->InCombat(false, true);
-						client->SimpleMessage(CHANNEL_COLOR_COMBAT, "You stop fighting.");
+						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
 					}
 					else{
 						player->SetRangeAttack(true);
 						player->InCombat(true, true);
-						client->SimpleMessage(CHANNEL_COLOR_COMBAT, "You start fighting.");
+						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You start fighting.");
 					}
 				}
 				else {
@@ -3008,7 +3008,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					player->SetRangeAttack(false);
 					player->InCombat(true);
 					if(!incombat)
-						client->SimpleMessage(CHANNEL_COLOR_COMBAT, "You start fighting.");
+						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You start fighting.");
 				}
 				/*else
 					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You cannot attack that!");*/
@@ -3050,6 +3050,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				int8 quantity = atoi(sep->arg[1]);
 				client->BuyItem(item_id, quantity);
 			}
+			else
+				Command_SendMerchantWindow(client, sep);
 			break;
 								  }
 		case COMMAND_MERCHANT_SELL:{
@@ -3151,9 +3153,33 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->AcceptQuestReward(quest, item_id);
 				break;
 			}
-
+			bool collectedItems = false;
 			if (collection = player->GetPendingCollectionReward())
 				client->AcceptCollectionRewards(collection, selectable_item_id);
+			else if (client->GetPlayer()->HasPendingItemRewards()) {
+				vector<Item*> items = client->GetPlayer()->GetPendingItemRewards();
+				if (items.size() > 0) {
+					collectedItems = true;
+					for (int i = 0; i < items.size(); i++) {
+						client->GetPlayer()->AddItem(new Item(items[i]));
+					}
+					client->GetPlayer()->ClearPendingItemRewards();
+				}
+				map<int32, Item*> selectable_item = client->GetPlayer()->GetPendingSelectableItemReward(item_id);
+				if (selectable_item.size() > 0) {
+					collectedItems = true;
+					map<int32, Item*>::iterator itr;
+					for (itr = selectable_item.begin(); itr != selectable_item.end(); itr++) {
+						client->GetPlayer()->AddItem(new Item(itr->second));
+						client->GetPlayer()->ClearPendingSelectableItemRewards(itr->first);
+					}
+				}
+			}
+			if (collectedItems) {
+				EQ2Packet* outapp = client->GetPlayer()->SendInventoryUpdate(client->GetVersion());
+				if (outapp)
+					client->QueuePacket(outapp);
+			}
 			else
 				LogWrite(COMMAND__ERROR, 0, "Command", "Error in COMMAND_ACCEPT_REWARD. No pending quest or collection reward was found (unknown=%u).", unknown);
 			break;
@@ -4758,7 +4784,7 @@ void Commands::Command_Follow(Client* client, Seperator* sep)
 		client->GetPlayer()->changed = true;
 	}
 	else
-		client->Message(CHANNEL_COLOR_WHITE, "You must first select a group member to follow.");
+		client->Message(CHANNEL_NARRATIVE, "You must first select a group member to follow.");
 }
 
 /* 
@@ -4904,7 +4930,7 @@ void Commands::Command_Guild(Client* client, Seperator* sep)
 					if (target->IsPlayer())
 						guild->InvitePlayer(client, target->GetName());
 					else
-						client->Message(CHANNEL_COLOR_WHITE, "%s is not a player.", target->GetName());
+						client->Message(CHANNEL_NARRATIVE, "%s is not a player.", target->GetName());
 				}
 			}
 		}
@@ -4925,7 +4951,7 @@ void Commands::Command_Guild(Client* client, Seperator* sep)
 				Client* client_inviter = pgi->invited_by->GetZone()->GetClientBySpawn(pgi->invited_by);
 
 				if (client_inviter)
-					client_inviter->Message(CHANNEL_COLOR_WHITE, "%s has declined your invitation to join %s.", client->GetPlayer()->GetName(), pgi->guild->GetName());
+					client_inviter->Message(CHANNEL_NARRATIVE, "%s has declined your invitation to join %s.", client->GetPlayer()->GetName(), pgi->guild->GetName());
 			}
 			client->SetPendingGuildInvite(0);
 		}
@@ -4936,7 +4962,7 @@ void Commands::Command_Guild(Client* client, Seperator* sep)
 			if (!guild_list.GetGuild(guild_name))
 				world.CreateGuild(guild_name, client, client->GetPlayer()->GetGroupMemberInfo() ? client->GetPlayer()->GetGroupMemberInfo()->group_id : 0);
 			else
-				client->SimpleMessage(CHANNEL_COLOR_WHITE, "A guild with that name already exists.");
+				client->SimpleMessage(CHANNEL_NARRATIVE, "A guild with that name already exists.");
 		}
 		else if (strncmp(command, "search", length) == 0)
 			client->ShowGuildSearchWindow();
@@ -5034,7 +5060,7 @@ void Commands::Command_GuildSay(Client* client, Seperator* sep)
 			guild->HandleGuildSay(client, sep->argplus[0]);
 	}
 	else
-		client->SimpleMessage(CHANNEL_COLOR_WHITE, "You are not a member of a guild");
+		client->SimpleMessage(CHANNEL_NARRATIVE, "You are not a member of a guild");
 }
 
 /* 
@@ -5052,7 +5078,7 @@ void Commands::Command_OfficerSay(Client* client, Seperator* sep)
 			guild->HandleOfficerSay(client, sep->argplus[0]);
 	}
 	else
-		client->SimpleMessage(CHANNEL_COLOR_WHITE, "You are not a member of a guild");
+		client->SimpleMessage(CHANNEL_NARRATIVE, "You are not a member of a guild");
 }
 
 /* 
@@ -5697,12 +5723,12 @@ void Commands::Command_Languages(Client* client, Seperator* sep)
 	list<Language*>* languages = client->GetPlayer()->GetPlayerLanguages()->GetAllLanguages();
 	list<Language*>::iterator itr;
 	Language* language;
-	client->Message(CHANNEL_COLOR_WHITE, "You know the following languages:");
+	client->Message(CHANNEL_NARRATIVE, "You know the following languages:");
 
 	for(itr = languages->begin(); itr != languages->end(); itr++)
 	{
 		language = *itr;
-		client->Message(CHANNEL_COLOR_WHITE, "%s", language->GetName());
+		client->Message(CHANNEL_NARRATIVE, "%s", language->GetName());
 	}
 }
 
@@ -5728,7 +5754,7 @@ void Commands::Command_SetLanguage(Client* client, Seperator* sep)
 			{
 				database.SaveCharacterCurrentLang(0, client->GetCharacterID(), client);
 				client->SendLanguagesUpdate(0);
-				client->Message(CHANNEL_COLOR_WHITE, "You are now speaking %s", value);
+				client->Message(CHANNEL_NARRATIVE, "You are now speaking %s", value);
 			}
 			else
 			{
@@ -5737,10 +5763,10 @@ void Commands::Command_SetLanguage(Client* client, Seperator* sep)
 					Language* language = player->GetPlayerLanguages()->GetLanguageByName(value);
 					database.SaveCharacterCurrentLang(language->GetID(), client->GetCharacterID(), client);
 					client->SendLanguagesUpdate(language->GetID());
-					client->Message(CHANNEL_COLOR_WHITE, "You are now speaking %s", language->GetName());
+					client->Message(CHANNEL_NARRATIVE, "You are now speaking %s", language->GetName());
 				}
 				else
-					client->Message(CHANNEL_COLOR_WHITE, "You do not know how to speak %s", value);
+					client->Message(CHANNEL_NARRATIVE, "You do not know how to speak %s", value);
 			}
 		}
 		else
@@ -5753,12 +5779,12 @@ void Commands::Command_SetLanguage(Client* client, Seperator* sep)
 				Language* language = player->GetPlayerLanguages()->GetLanguage(id);
 				database.SaveCharacterCurrentLang(id, client->GetCharacterID(), client);
 				client->SendLanguagesUpdate(id);
-				client->Message(CHANNEL_COLOR_WHITE, "You are now speaking %s", language->GetName());
+				client->Message(CHANNEL_NARRATIVE, "You are now speaking %s", language->GetName());
 			}
 			else
 			{
 				Language* language = master_languages_list.GetLanguage(id);
-				client->Message(CHANNEL_COLOR_WHITE, "You do not know how to speak %s", language->GetName());
+				client->Message(CHANNEL_NARRATIVE, "You do not know how to speak %s", language->GetName());
 			}
 		}
 	}
@@ -5770,10 +5796,10 @@ void Commands::Command_SetLanguage(Client* client, Seperator* sep)
 		if(id > 0)
 		{
 			Language* language = player->GetPlayerLanguages()->GetLanguage(id);
-			client->Message(CHANNEL_COLOR_WHITE, "You are currently speaking %s ", language->GetName());
+			client->Message(CHANNEL_NARRATIVE, "You are currently speaking %s ", language->GetName());
 		}
 		else
-			client->Message(CHANNEL_COLOR_WHITE, "You are currently speaking Common");
+			client->Message(CHANNEL_NARRATIVE, "You are currently speaking Common");
 	}
 }
 
@@ -7576,11 +7602,11 @@ void Commands::Command_TitleList(Client* client)
 	Title* title;
 	int16 i = 0;
 
-	client->Message(CHANNEL_COLOR_WHITE, "Listing available titles:");
+	client->Message(CHANNEL_NARRATIVE, "Listing available titles:");
 	for(itr = titles->begin(); itr != titles->end(); itr++)
 	{
 		title = *itr;
-		client->Message(CHANNEL_COLOR_WHITE, "%i: type=[%s] title=[%s]", i, title->GetPrefix() ? "Prefix":"Suffix", title->GetName());
+		client->Message(CHANNEL_NARRATIVE, "%i: type=[%s] title=[%s]", i, title->GetPrefix() ? "Prefix":"Suffix", title->GetName());
 		i++;
 	}
 
@@ -7679,9 +7705,9 @@ void Commands::Command_Toggle_AutoConsume(Client* client, Seperator* sep)
 			player->SetCharSheetChanged(true);
 			client->QueuePacket(player->GetEquipmentList()->serialize(client->GetVersion(), player));
 			if (flag == 1)
-				client->Message(CHANNEL_COLOR_WHITE, "You decide to eat immediately whenever you become hungry.");
+				client->Message(CHANNEL_NARRATIVE, "You decide to eat immediately whenever you become hungry.");
 			else
-				client->Message(CHANNEL_COLOR_WHITE, "You decide to ignore the hunger.");
+				client->Message(CHANNEL_NARRATIVE, "You decide to ignore the hunger.");
 		}
 		else
 		{
@@ -7689,9 +7715,9 @@ void Commands::Command_Toggle_AutoConsume(Client* client, Seperator* sep)
 			player->SetCharSheetChanged(true);
 			client->QueuePacket(player->GetEquipmentList()->serialize(client->GetVersion(), player));
 			if (flag == 1)
-				client->Message(CHANNEL_COLOR_WHITE, "You decide to drink immediately whenever you become thirsty.");
+				client->Message(CHANNEL_NARRATIVE, "You decide to drink immediately whenever you become thirsty.");
 			else
-				client->Message(CHANNEL_COLOR_WHITE, "You decide to ignore the thirst.");
+				client->Message(CHANNEL_NARRATIVE, "You decide to ignore the thirst.");
 		}
 	}
 }
@@ -8275,17 +8301,17 @@ void Commands::Command_JoinChannel(Client * client, Seperator *sep) {
 	}
 
 	if (chat.IsInChannel(client, channel_name)) {
-		client->Message(CHANNEL_COLOR_WHITE, "You are already in '%s'.", channel_name);
+		client->Message(CHANNEL_NARRATIVE, "You are already in '%s'.", channel_name);
 		return;
 	}
 
 	if (chat.HasPassword(channel_name)) {
 		if (password == NULL) {
-			client->Message(CHANNEL_COLOR_WHITE, "Unable to join '%s': That channel is password protected.", channel_name);
+			client->Message(CHANNEL_NARRATIVE, "Unable to join '%s': That channel is password protected.", channel_name);
 			return;
 		}
 		if (!chat.PasswordMatches(channel_name, password)) {
-			client->Message(CHANNEL_COLOR_WHITE, "Unable to join '%s': The password is not correc.t", channel_name);
+			client->Message(CHANNEL_NARRATIVE, "Unable to join '%s': The password is not correc.t", channel_name);
 			return;
 		}
 	}
@@ -8377,9 +8403,8 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 			}
 		}
 		else if (atoi(sep->arg[0]) == 5) {
-			client->GetPlayer()->GetTarget();
-			int16 offset = atoi(sep->arg[2]);
-			int32 value1 = atol(sep->arg[4]);
+			int16 offset = atoi(sep->arg[0]);
+			int32 value1 = atol(sep->arg[1]);
 			EQ2Packet* outapp = client->GetPlayer()->GetPlayerInfo()->serialize(client->GetVersion(), offset, value1);
 			client->QueuePacket(outapp);
 		}
@@ -8465,67 +8490,39 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 					value2 = atol(sep->arg[7]);
 				}
 				sprintf(spawn->appearance.name, "Offset %i to %i", offset, offset2);
+				spawn->AddPrimaryEntityCommand("attack", 10000, "attack","", 0, 0);
 				EQ2Packet* ret = spawn->spawn_serialize(client->GetPlayer(), client->GetVersion(), offset, value1, offset2, offset3, offset4, value2);
 				DumpPacket(ret);
 				client->QueuePacket(ret);
 			}
 		}
 		else if (atoi(sep->arg[0]) == 9) {
-			Item* item = master_item_list.GetItem(70007);
-			EQ2Packet* app = item->serialize(client->GetVersion(), true, client->GetPlayer());
-			if (sep->IsSet(2)) {
-				int8 offset = atoi(sep->arg[1]);
-				uchar* ptr2 = app->pBuffer;
-				ptr2 += offset;
-				if (sep->IsNumber(2)) {
-					int32 value1 = atol(sep->arg[2]);
-					if (value1 > 0xFFFF)
-						memcpy(ptr2, (uchar*)&value1, 4);
-					else if (value1 > 0xFF)
-						memcpy(ptr2, (uchar*)&value1, 2);
-					else
-						memcpy(ptr2, (uchar*)&value1, 1);
+			Spawn* spawn = client->GetPlayer()->GetTarget();
+			if (spawn) {	
+				if (sep->IsSet(3)) {
+					int32 amount = (int32)atoi(sep->arg[3]);
+					spawn->SetActivityStatus(amount);
 				}
-				else {
-					int8 len = strlen(sep->arg[2]);
-					memcpy(ptr2, (uchar*)&len, 1);
-					ptr2 += 1;
-					memcpy(ptr2, sep->arg[2], len);
+				if (sep->IsSet(2)) {
+					int8 amount = (int8)atoi(sep->arg[2]);
+					spawn->SetLockedNoLoot(amount);
+				}
+				if (sep->IsSet(1)) {
+					sint8 amount = (sint8)atoi(sep->arg[1]);
+					spawn->AddIconValue(amount);
 				}
 			}
-			if (sep->IsSet(4)) {
-				int8 offset = atoi(sep->arg[3]);
-				uchar* ptr2 = app->pBuffer;
-				ptr2 += offset;
-				if (sep->IsNumber(4)) {
-					int32 value1 = atol(sep->arg[4]);
-					if (value1 > 0xFFFF)
-						memcpy(ptr2, (uchar*)&value1, 4);
-					else if (value1 > 0xFF)
-						memcpy(ptr2, (uchar*)&value1, 2);
-					else
-						memcpy(ptr2, (uchar*)&value1, 1);
-				}
-				else {
-					int8 len = strlen(sep->arg[4]);
-					memcpy(ptr2, (uchar*)&len, 1);
-					ptr2 += 1;
-					memcpy(ptr2, sep->arg[4], len);
-				}
-			}
-			DumpPacket(app);
-			client->QueuePacket(app);
 		}
 		else if (atoi(sep->arg[0]) == 10) {
 			PacketStruct* packet2 = configReader.getStruct("WS_QuestJournalUpdate", client->GetVersion());
 			if (packet2) {
 				packet2->setArrayLengthByName("num_quests", 1);
 				packet2->setArrayDataByName("active", 1);
-				packet2->setArrayDataByName("name", "Archetype Selection");
+				packet2->setArrayDataByName("name", "Tasks aboard the Far Journey");
 				packet2->setArrayDataByName("quest_type", "Hallmark");
 				packet2->setArrayDataByName("quest_zone", "Hallmark");
 				packet2->setArrayDataByName("journal_updated", 1);
-				packet2->setArrayDataByName("quest_id", 5);
+				packet2->setArrayDataByName("quest_id", 524);
 				packet2->setArrayDataByName("day", 19);
 				packet2->setArrayDataByName("month", 6);
 				packet2->setArrayDataByName("year", 20);
@@ -8533,7 +8530,7 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				packet2->setArrayDataByName("encounter_level", 4);
 				packet2->setArrayDataByName("difficulty", 3);
 				packet2->setArrayDataByName("visible", 1);
-				packet2->setDataByName("visible_quest_id", 5);
+				packet2->setDataByName("visible_quest_id", 524);
 				packet2->setDataByName("player_crc", 2900677088);
 				packet2->setDataByName("player_name", "LethalEncounter");
 				EQ2Packet* app = packet2->serialize();
@@ -9409,7 +9406,7 @@ void Commands::Command_LeaveChannel(Client *client, Seperator *sep) {
 	channel_name = sep->arg[0];
 
 	if (!chat.IsInChannel(client, channel_name))
-		client->Message(CHANNEL_COLOR_WHITE, "Unable to leave '%s': You are not in the channel.", channel_name);
+		client->Message(CHANNEL_NARRATIVE, "Unable to leave '%s': You are not in the channel.", channel_name);
 	else if (!chat.LeaveChannel(client, channel_name))
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "There was an internal error preventing you from leaving that channel MUAHAHA");
 }
@@ -9747,9 +9744,9 @@ void Commands::Command_ConsumeFood(Client* client, Seperator* sep) {
 			if(item->GetItemScript() && lua_interface){
 				lua_interface->RunItemScript(item->GetItemScript(), "cast", item, client->GetPlayer());
 				if (slot == 22)
-					client->Message(CHANNEL_COLOR_WHITE, "You eat a %s.", item->name.c_str());
+					client->Message(CHANNEL_NARRATIVE, "You eat a %s.", item->name.c_str());
 				else
-					client->Message(CHANNEL_COLOR_WHITE, "You drink a %s.", item->name.c_str());
+					client->Message(CHANNEL_NARRATIVE, "You drink a %s.", item->name.c_str());
 			}
 		}
 

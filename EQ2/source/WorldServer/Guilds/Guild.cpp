@@ -689,9 +689,9 @@ bool Guild::AddNewGuildMember(Client *client, const char *invited_by, int8 rank)
 		player->SetSubTitle(subtitle.c_str());
 
 		if (invited_by)
-			client->SimpleMessage(CHANNEL_COLOR_WHITE, "You accept the invite into the guild.");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "You accept the invite into the guild.");
 		else {
-			client->SimpleMessage(CHANNEL_COLOR_WHITE, "You have formed the guild.");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "You have formed the guild.");
 			LogWrite(GUILD__DEBUG, 0, "Guilds", "New Guild formed: %s", GetName());
 		}
 
@@ -911,7 +911,7 @@ bool Guild::InvitePlayer(Client *client, const char *name, bool send_packet) {
 	assert(name);
 
 	if (!(client_invite = zone_list.GetClientByCharName(string(name)))) {
-		client->Message(CHANNEL_COLOR_WHITE, "%s couldn't be found.", name);
+		client->Message(CHANNEL_NARRATIVE, "%s couldn't be found.", name);
 		LogWrite(GUILD__WARNING, 0, "Guilds", "Attempted to invite %s to guild %s: Player Not Found", name, GetName());
 		return false;
 	}
@@ -919,13 +919,13 @@ bool Guild::InvitePlayer(Client *client, const char *name, bool send_packet) {
 	player_invite = client_invite->GetPlayer();
 
 	if (player_invite->GetGuild()) {
-		client->Message(CHANNEL_COLOR_WHITE, "%s is already in a guild.", player_invite->GetName());
+		client->Message(CHANNEL_NARRATIVE, "%s is already in a guild.", player_invite->GetName());
 		LogWrite(GUILD__WARNING, 0, "Guilds", "Attempted to invite %s to guild %s: Already in a guild", player_invite->GetName(), GetName());
 		return false;
 	}
 
 	if (client_invite->GetPendingGuildInvite()->guild) {
-		client->Message(CHANNEL_COLOR_WHITE, "%s is already considering joining a guild.", player_invite->GetName());
+		client->Message(CHANNEL_NARRATIVE, "%s is already considering joining a guild.", player_invite->GetName());
 		LogWrite(GUILD__WARNING, 0, "Guilds", "Attempted to invite %s to guild %s: Pending Invite elsewhere", player_invite->GetName(), GetName());
 		return false;
 	}
@@ -939,7 +939,7 @@ bool Guild::InvitePlayer(Client *client, const char *name, bool send_packet) {
 	packet->setMediumStringByName("guild_name", GetName());
 	client_invite->QueuePacket(packet->serialize());
 
-	client->Message(CHANNEL_COLOR_WHITE, "You have invited %s to join %s.", player_invite->GetName(), GetName());
+	client->Message(CHANNEL_NARRATIVE, "You have invited %s to join %s.", player_invite->GetName(), GetName());
 	LogWrite(GUILD__DEBUG, 0, "Guilds", "%s invited %s to guild %s", client->GetPlayer()->GetName(), player_invite->GetName(), GetName());
 
 	client_invite->SetPendingGuildInvite(this, client->GetPlayer());
@@ -972,7 +972,7 @@ bool Guild::AddPointsToAll(Client *client, float points, const char *comment, bo
 		AddPointHistory(gm, Timer::GetUnixTimeStamp(), client->GetPlayer()->GetName(), points, comment);
 		if ((client_to = zone_list.GetClientByCharID(gm->character_id)))
 		{
-			client_to->Message(CHANNEL_COLOR_GUILD_MSGS, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
+			client_to->Message(CHANNEL_GUILD_CHAT, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
 			LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild: %s", GetName());
 			LogWrite(GUILD__DEBUG, 0, "Guilds", "\tAwarded By: %s +%.1f pts to Player: %s", client->GetPlayer()->GetName(), points, gm->name);
 		}
@@ -982,7 +982,7 @@ bool Guild::AddPointsToAll(Client *client, float points, const char *comment, bo
 	}
 	mMembers.releasereadlock(__FUNCTION__, __LINE__);
 
-	client->Message(CHANNEL_COLOR_GUILD_MSGS, "Points modified for %u guild members.", character_ids.size());
+	client->Message(CHANNEL_GUILD_CHAT, "Points modified for %u guild members.", character_ids.size());
 	if (send_packet) {
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "%s modified points for %u members. Reason: %s", client->GetPlayer()->GetName(), character_ids.size(), points, comment);
 		SendGuildModification(points, &character_ids);
@@ -1020,7 +1020,7 @@ bool Guild::AddPointsToAllOnline(Client *client, float points, const char *comme
 		character_ids.push_back(gm->character_id);
 
 		AddPointHistory(gm, Timer::GetUnixTimeStamp(), client->GetPlayer()->GetName(), points, comment);
-		client_to->Message(CHANNEL_COLOR_GUILD_MSGS, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
+		client_to->Message(CHANNEL_GUILD_CHAT, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild: %s", GetName());
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "\tAwarded By: %s +%.1f pts to Player: %s", client->GetPlayer()->GetName(), points, gm->name);
 
@@ -1030,7 +1030,7 @@ bool Guild::AddPointsToAllOnline(Client *client, float points, const char *comme
 	}
 	mMembers.releasereadlock(__FUNCTION__, __LINE__);
 
-	client->Message(CHANNEL_COLOR_GUILD_MSGS, "Points modified for %u guild members.", character_ids.size());
+	client->Message(CHANNEL_GUILD_CHAT, "Points modified for %u guild members.", character_ids.size());
 	if (send_packet) {
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "%s modified points for %u members. Reason: %s", client->GetPlayer()->GetName(), character_ids.size(), points, comment);
 		SendGuildModification(points, &character_ids);
@@ -1052,7 +1052,7 @@ bool Guild::AddPointsToGroup(Client *client, float points, const char *comment, 
 	assert(client);
 
 	if (!client->GetPlayer()->GetGroupMemberInfo()) {
-		client->SimpleMessage(CHANNEL_COLOR_GUILD_MSGS, "Cannot assign points because you aren't in a group.");
+		client->SimpleMessage(CHANNEL_GUILD_CHAT, "Cannot assign points because you aren't in a group.");
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "%s tried to assign points for group and failed: Not in a group", client->GetPlayer()->GetName());
 		return false;
 	}
@@ -1085,7 +1085,7 @@ bool Guild::AddPointsToGroup(Client *client, float points, const char *comment, 
 			character_ids.push_back(gm->character_id);
 
 			AddPointHistory(gm, Timer::GetUnixTimeStamp(), client->GetPlayer()->GetName(), points, comment);
-			gmi->client->Message(CHANNEL_COLOR_GUILD_MSGS, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
+			gmi->client->Message(CHANNEL_GUILD_CHAT, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
 			LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild: %s", GetName());
 			LogWrite(GUILD__DEBUG, 0, "Guilds", "\tAwarded By: %s +%.1f pts to Player: %s", client->GetPlayer()->GetName(), points, gm->name);
 
@@ -1099,7 +1099,7 @@ bool Guild::AddPointsToGroup(Client *client, float points, const char *comment, 
 	world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 	mMembers.releasereadlock(__FUNCTION__, __LINE__);
 
-	client->Message(CHANNEL_COLOR_GUILD_MSGS, "Points modified for %u guild members.", character_ids.size());
+	client->Message(CHANNEL_GUILD_CHAT, "Points modified for %u guild members.", character_ids.size());
 	if (send_packet) {
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "%s modified points for %u members. Reason: %s", client->GetPlayer()->GetName(), character_ids.size(), points, comment);
 		SendGuildModification(points, &character_ids);
@@ -1114,7 +1114,7 @@ bool Guild::AddPointsToRaid(Client *client, float points, const char *comment, b
 
 	assert(client);	
 	LogWrite(MISC__TODO, 1, "TODO", "Implement Raiding\n%s, %s, %i", __FILE__, __FUNCTION__, __LINE__);
-	client->SimpleMessage(CHANNEL_COLOR_GUILD_MSGS, "Cannot assign points because you aren't in a raid.");
+	client->SimpleMessage(CHANNEL_GUILD_CHAT, "Cannot assign points because you aren't in a raid.");
 	return false;
 }
 
@@ -1134,7 +1134,7 @@ bool Guild::AddPointsToGuildMember(Client *client, float points, const char *nam
 	if (!permissions.Get(gm->rank)->Get(GUILD_PERMISSIONS_RECEIVE_POINTS)) {
 		mMembers.releasereadlock(__FUNCTION__, __LINE__);
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "PlayerID: %i not allowed to receive points! Skipping...", gm->character_id);
-		client->Message(CHANNEL_COLOR_GUILD_MSGS, "%s does not have permission to receive guild points.", gm->name);
+		client->Message(CHANNEL_GUILD_CHAT, "%s does not have permission to receive guild points.", gm->name);
 		return false;
 	}
 
@@ -1142,13 +1142,13 @@ bool Guild::AddPointsToGuildMember(Client *client, float points, const char *nam
 	character_ids.push_back(gm->character_id);
 
 	if ((client_to = zone_list.GetClientByCharID(gm->character_id))) {
-		client_to->Message(CHANNEL_COLOR_GUILD_MSGS, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
+		client_to->Message(CHANNEL_GUILD_CHAT, "%s increased your guild member points by %.1f.", client->GetPlayer()->GetName(), points);
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild: %s", GetName());
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "\tAwarded By: %s +%.1f pts to Player: %s", client->GetPlayer()->GetName(), points, gm->name);
 	}
 
 	LogWrite(GUILD__DEBUG, 0, "Guilds", "%s modified points for 1 guild member. Reason: %s", client->GetPlayer()->GetName(), comment);
-	client->SimpleMessage(CHANNEL_COLOR_GUILD_MSGS, "Points modified for 1 guild member.");
+	client->SimpleMessage(CHANNEL_GUILD_CHAT, "Points modified for 1 guild member.");
 	AddPointHistory(gm, Timer::GetUnixTimeStamp(), client->GetPlayer()->GetName(), points, comment);
 
 	if (send_packet) {
@@ -1271,12 +1271,12 @@ bool Guild::ChangeMemberFlag(Client *client, int8 member_flag, int8 value, bool 
 		case GUILD_MEMBER_FLAGS_NOTIFY_LOGINS: {
 			if (value > 0 && !(gm->member_flags & GUILD_MEMBER_FLAGS_NOTIFY_LOGINS)) {
 				gm->member_flags += GUILD_MEMBER_FLAGS_NOTIFY_LOGINS;
-				client->SimpleMessage(CHANNEL_COLOR_GUILD_MSGS, "Guild online notifications are now enabled.");
+				client->SimpleMessage(CHANNEL_GUILD_CHAT, "Guild online notifications are now enabled.");
 				ret = true;
 			}
 			else if (value == 0 && gm->member_flags & GUILD_MEMBER_FLAGS_NOTIFY_LOGINS) {
 				gm->member_flags -= GUILD_MEMBER_FLAGS_NOTIFY_LOGINS;
-				client->SimpleMessage(CHANNEL_COLOR_GUILD_MSGS, "Guild online notifications are now disabled.");
+				client->SimpleMessage(CHANNEL_GUILD_CHAT, "Guild online notifications are now disabled.");
 				ret = true;
 			}
 			break;
@@ -1284,12 +1284,12 @@ bool Guild::ChangeMemberFlag(Client *client, int8 member_flag, int8 value, bool 
 		case GUILD_MEMBER_FLAGS_DONT_GENERATE_EVENTS: {
 			if (value > 1 && !(gm->member_flags & GUILD_MEMBER_FLAGS_DONT_GENERATE_EVENTS)) {
 				gm->member_flags += GUILD_MEMBER_FLAGS_DONT_GENERATE_EVENTS;
-				client->SimpleMessage(CHANNEL_COLOR_GUILD_MSGS, "Guild events are now disabled for this character.");
+				client->SimpleMessage(CHANNEL_GUILD_CHAT, "Guild events are now disabled for this character.");
 				ret = true;
 			}
 			else if (value == 0 && gm->member_flags & GUILD_MEMBER_FLAGS_DONT_GENERATE_EVENTS) {
 				gm->member_flags -= GUILD_MEMBER_FLAGS_DONT_GENERATE_EVENTS;
-				client->SimpleMessage(CHANNEL_COLOR_GUILD_MSGS, "Guild events are now enabled for this character.");
+				client->SimpleMessage(CHANNEL_GUILD_CHAT, "Guild events are now enabled for this character.");
 				ret = true;
 			}
 			break;
@@ -1499,7 +1499,7 @@ int8 Guild::GetRecruitingLookingForPacketValue() {
 void Guild::SendGuildMOTD(Client* client) {
 
 	if (client && strlen(motd) > 0)
-		client->Message(CHANNEL_COLOR_GUILD_MOTD, "Guild MOTD: %s", motd);
+		client->Message(CHANNEL_GUILD_MOTD, "Guild MOTD: %s", motd);
 
 	LogWrite(GUILD__DEBUG, 1, "Guilds", "Sent guild MOTD.\n'%s'", motd);
 }
@@ -2201,7 +2201,7 @@ void Guild::HandleGuildSay(Client* sender, const char* message) {
 		return;
 
 	if (!permissions.Get(gm->rank)->Get(GUILD_PERMISSIONS_SPEAK_IN_GUILD_CHAT)) {
-		sender->SimpleMessage(CHANNEL_COLOR_WHITE, "You do not have permission to speak in guild chat.");
+		sender->SimpleMessage(CHANNEL_NARRATIVE, "You do not have permission to speak in guild chat.");
 		return;
 	}
 
@@ -2211,7 +2211,7 @@ void Guild::HandleGuildSay(Client* sender, const char* message) {
 			continue;
 			
 		if (permissions.Get(itr->second->rank)->Get(GUILD_PERMISSIONS_SEE_GUILD_CHAT))
-			client->GetCurrentZone()->HandleChatMessage(client, sender->GetPlayer(), client->GetPlayer()->GetName(), CHANNEL_GUILD, message, 0, 0, false);
+			client->GetCurrentZone()->HandleChatMessage(client, sender->GetPlayer(), client->GetPlayer()->GetName(), CHANNEL_GUILD_SAY, message, 0, 0, false);
 	}
 	mMembers.releasereadlock(__FUNCTION__, __LINE__);
 	LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild Say");
@@ -2230,7 +2230,7 @@ void Guild::HandleOfficerSay(Client* sender, const char* message) {
 		return;
 
 	if (!permissions.Get(gm->rank)->Get(GUILD_PERMISSIONS_SPEAK_IN_OFFICER_CHAT)) {
-		sender->SimpleMessage(CHANNEL_COLOR_WHITE, "You do not have permission to speak in officer chat.");
+		sender->SimpleMessage(CHANNEL_NARRATIVE, "You do not have permission to speak in officer chat.");
 		return;
 	}
 				
@@ -2240,7 +2240,7 @@ void Guild::HandleOfficerSay(Client* sender, const char* message) {
 			continue;
 
 		if (permissions.Get(itr->second->rank)->Get(GUILD_PERMISSIONS_SEE_OFFICER_CHAT))
-			client->GetCurrentZone()->HandleChatMessage(client, sender->GetPlayer(), client->GetPlayer()->GetName(), CHANNEL_OFFICER, message, 0, 0, false);
+			client->GetCurrentZone()->HandleChatMessage(client, sender->GetPlayer(), client->GetPlayer()->GetName(), CHANNEL_OFFICER_SAY, message, 0, 0, false);
 	}
 	mMembers.releasereadlock(__FUNCTION__, __LINE__);
 	LogWrite(GUILD__DEBUG, 0, "Guilds", "Officer Say");
@@ -2263,7 +2263,7 @@ void Guild::SendMessageToGuild(int8 event_type, const char* message, ...) {
 			continue;
 
 		if (event_filters.Get(itr->second->rank)->Get(GUILD_EVENT_FILTER_CATEGORY_BROADCAST))
-			client->SimpleMessage(CHANNEL_COLOR_GUILD_EVENT, buffer);
+			client->SimpleMessage(CHANNEL_GUILD_EVENT, buffer);
 	}
 	mMembers.releasereadlock(__FUNCTION__, __LINE__);
 	LogWrite(GUILD__DEBUG, 0, "Guilds", "Sent message to entire guild.");

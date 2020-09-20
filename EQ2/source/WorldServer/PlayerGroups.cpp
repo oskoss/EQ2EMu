@@ -139,7 +139,7 @@ void PlayerGroup::SimpleGroupMessage(const char* message) {
 	for(itr = m_members.begin(); itr != m_members.end(); itr++) {
 		GroupMemberInfo* info = *itr;
 		if(info->client)
-			info->client->SimpleMessage(CHANNEL_GROUP, message);
+			info->client->SimpleMessage(CHANNEL_GROUP_CHAT, message);
 	}
 	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 }

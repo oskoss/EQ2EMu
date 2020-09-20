@@ -388,7 +388,8 @@ public:
 	//int8	GetMaxArtLevel(){ return info->GetInfo()->max_art_level; }
 	//int8	GetArtLevel(){ return info->GetInfo()->art_level; }
 
-
+	Client* GetClient() { return client; }
+	void SetClient(Client* client) { this->client = client; }
 	PlayerInfo* GetPlayerInfo();
 	void SetCharSheetChanged(bool val);
 	bool GetCharSheetChanged();
@@ -421,6 +422,12 @@ public:
 	}
 	float GetSideSpeed() {
 		return appearance.pos.SideSpeed;
+	}
+	int8 GetTutorialStep() {
+		return tutorial_step;
+	}
+	void SetTutorialStep(int8 val) {
+		tutorial_step = val;
 	}
 	void	AddMaintainedSpell(LuaSpell* spell);
 	void	AddSpellEffect(LuaSpell* spell);
@@ -568,6 +575,7 @@ public:
 	void	RemoveSpawn(Spawn* spawn);
 	void	ClearRemovedSpawn(Spawn* spawn);
 	bool	ShouldSendSpawn(Spawn* spawn);
+	Client* client = 0;
 
 	Spawn* GetSpawnWithPlayerID(int32 id){
 		Spawn* spawn = 0;
@@ -637,7 +645,7 @@ public:
 		return new_index;
 	}
 
-	PacketStruct*	GetQuestJournalPacket(bool all_quests, int16 version, int32 crc, int32 current_quest_id);
+	PacketStruct*	GetQuestJournalPacket(bool all_quests, int16 version, int32 crc, int32 current_quest_id, bool updated = true);
 	void			RemoveQuest(int32 id, bool delete_quest);
 	vector<Quest*>* CheckQuestsChatUpdate(Spawn* spawn);
 	vector<Quest*>* CheckQuestsItemUpdate(Item* item);
@@ -654,6 +662,7 @@ public:
 	void AddHistoryRequiredSpawn(Spawn* spawn, int32 event_id);
 	int16				spawn_index;
 	int32				spawn_id;
+	int8 tutorial_step;
 	map<int32, vector<int32>*>  player_spawn_quests_required;
 	map<int32, vector<int32>*>   player_spawn_history_required;
 	Mutex				m_playerSpawnQuestsRequired;
@@ -739,6 +748,66 @@ public:
 	PlayerAchievementUpdateList * GetAchievementUpdateList() { return &achievement_update_list; }
 	void				SetPendingCollectionReward(Collection *collection) { pending_collection_reward = collection; }
 	Collection *		GetPendingCollectionReward() { return pending_collection_reward; }
+	void AddPendingSelectableItemReward(int32 source_id, Item* item) {
+		if (pending_selectable_item_rewards.count(source_id) == 0)
+			pending_selectable_item_rewards[source_id] = vector<Item*>();
+		pending_selectable_item_rewards[source_id].push_back(item);
+	}
+	void AddPendingItemReward(Item* item) { 
+		pending_item_rewards.push_back(item);
+	}
+	bool HasPendingItemRewards() { return (pending_item_rewards.size() > 0 || pending_selectable_item_rewards.size() > 0); }
+	vector<Item*> GetPendingItemRewards() { return pending_item_rewards; }
+	map<int32, Item*> GetPendingSelectableItemReward(int32 item_id) { //since the client sends the selected item id, we need to have the associated source and remove all of them.  Yes, there is an edge case if multiple sources have the same Item in them, but limited on what the client sends (just a single item id)
+		map<int32, Item*> ret;
+		if (pending_selectable_item_rewards.size() > 0) {
+			map<int32, vector<Item*>>::iterator map_itr;
+			for (map_itr = pending_selectable_item_rewards.begin(); map_itr != pending_selectable_item_rewards.end(); map_itr++) {
+				vector<Item*>::iterator itr;
+				for (itr = map_itr->second.begin(); itr != map_itr->second.end(); itr++) {
+					if ((*itr)->details.item_id == item_id) {
+						ret[map_itr->first] = *itr;
+						break;
+					}
+				}
+				if (ret.size() > 0)
+					break;
+			}			
+		}
+		return map<int32, Item*>();
+	}
+	void ClearPendingSelectableItemRewards(int32 source_id, bool all = false) { 
+		if (pending_selectable_item_rewards.size() > 0) {
+			map<int32, vector<Item*>>::iterator map_itr;
+			if (all) {
+				for (map_itr = pending_selectable_item_rewards.begin(); map_itr != pending_selectable_item_rewards.end(); map_itr++) {
+					vector<Item*>::iterator itr;
+					for (itr = map_itr->second.begin(); itr != map_itr->second.end(); itr++) {
+						safe_delete(*itr);
+					}
+				}
+				pending_selectable_item_rewards.clear();
+			}
+			else {
+				if (pending_selectable_item_rewards.count(source_id) > 0) {
+					vector<Item*>::iterator itr;
+					for (itr = pending_selectable_item_rewards[source_id].begin(); itr != pending_selectable_item_rewards[source_id].end(); itr++) {
+						safe_delete(*itr);
+					}
+					pending_selectable_item_rewards.erase(source_id);
+				}
+			}			
+		}
+	}	
+	void ClearPendingItemRewards() { //the client doesn't send any reference to where the pending rewards came from, so if they collect one, we should just them all of them at once
+		if (pending_item_rewards.size() > 0) {
+			vector<Item*>::iterator itr;
+			for (itr = pending_item_rewards.begin(); itr != pending_item_rewards.end(); itr++) {
+				safe_delete(*itr);
+			}
+			pending_item_rewards.clear();
+		}
+	}
 	void RemoveSpellBookEntry(int32 spell_id, bool remove_passives_from_list = true);
 	void ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 maxlvl_only, int32 book_type);
 
@@ -844,7 +913,7 @@ public:
 	///<summary>Get all the spells the player has with the given id</summary>
 	vector<Spell*> GetSpellBookSpellsByTimer(int32 timerID);
 
-	PacketStruct* GetQuestJournalPacket(Quest* quest, int16 version, int32 crc);
+	PacketStruct* GetQuestJournalPacket(Quest* quest, int16 version, int32 crc, bool updated = true);
 
 	void SetSpawnInfoStruct(PacketStruct* packet) { safe_delete(spawn_info_struct); spawn_info_struct = packet; }
 	void SetSpawnVisStruct(PacketStruct* packet) { safe_delete(spawn_vis_struct); spawn_vis_struct = packet; }
@@ -967,6 +1036,8 @@ private:
 	Guild*				guild;
 	PlayerCollectionList collection_list;
 	Collection *		pending_collection_reward;
+	vector<Item*>		pending_item_rewards;
+	map<int32, vector<Item*>>		pending_selectable_item_rewards;
 	PlayerTitlesList	player_titles_list;
 	PlayerRecipeList	recipe_list;
 	PlayerLanguagesList	player_languages_list;
