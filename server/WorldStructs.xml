@@ -600,7 +600,8 @@ to zero and treated like placeholders." />
 		<Data ElementName="unknown2" Type="float" Size="2" />		
 	</Data>
 </Data>
-<Data ElementName="unknown3" Type="float" Size="3" />
+<Data ElementName="unknown3" Type="float" Size="2" />
+<Data ElementName="underworld" Type="float" Size="1" />
 <Data ElementName="zone_flags" Type="int32" Size="1" />
 <Data ElementName="num_adv" Type="int32" Size="1" />
 <Data ElementName="adv_array" Type="Array" ArraySizeVariable="num_adv">
