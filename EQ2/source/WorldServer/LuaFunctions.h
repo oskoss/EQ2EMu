@@ -476,4 +476,12 @@ int EQ2Emu_lua_SendUpdateDefaultCommand(lua_State* state);
 int EQ2Emu_lua_SendTransporters(lua_State* state);
 int EQ2Emu_lua_SetTemporaryTransportID(lua_State* state);
 int EQ2Emu_lua_GetTemporaryTransportID(lua_State* state);
+
+int EQ2Emu_lua_GetAlignment(lua_State* state);
+int EQ2Emu_lua_SetAlignment(lua_State* state);
+
+int EQ2Emu_lua_GetSpell(lua_State* state);
+int EQ2Emu_lua_GetSpellData(lua_State* state);
+int EQ2Emu_lua_SetSpellData(lua_State* state);
+int EQ2Emu_lua_CastCustomSpell(lua_State* state);
 #endif

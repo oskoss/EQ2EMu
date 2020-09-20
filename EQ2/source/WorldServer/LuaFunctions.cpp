@@ -37,6 +37,7 @@
 #include "Transmute.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include <sstream> 
+#include <boost/algorithm/string.hpp>
 
 extern MasterFactionList master_faction_list;
 extern WorldDatabase database;
@@ -353,9 +354,11 @@ int EQ2Emu_lua_SpawnSet(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string variable = lua_interface->GetStringValue(state, 2);
 	string value = lua_interface->GetStringValue(state, 3);
+	bool no_update = lua_interface->GetBooleanValue(state, 4); // send update is true by default in SetSpawnCommand, so allow user to specify 'true' to disable send update.
+	bool temporary_flag = lua_interface->GetBooleanValue(state, 5); // default false as originally designed, allow user to set temporary_flag true to not update DB
 	int32 type = commands.GetSpawnSetType(variable);
 	if (type != 0xFFFFFFFF && value.length() > 0 && spawn)
-		commands.SetSpawnCommand(0, spawn, type, value.c_str());
+		commands.SetSpawnCommand(0, spawn, type, value.c_str(), !no_update, temporary_flag);
 	return 0;
 }
 
@@ -1116,13 +1119,14 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 	Spawn* target = lua_interface->GetSpawn(state, 4);
 	int8 crit_mod = lua_interface->GetInt32Value(state, 5);
 	bool no_calcs = lua_interface->GetInt32Value(state, 6) == 1;
+	string custom_spell_name = lua_interface->GetStringValue(state, 7);//custom spell name
 	lua_interface->ResetFunctionStack(state);
 	if (caster && caster->IsEntity()) {
 		bool success = false;
 		luaspell->resisted = false;
 		if (target) {
 			float distance = caster->GetDistance(target, true);
-			if (((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs))
+			if (((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs, custom_spell_name))
 				success = true;
 		}
 		if (luaspell->targets.size() > 0) {
@@ -1132,7 +1136,7 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 			for (int32 i = 0; i < luaspell->targets.size(); i++) {
 				if ((target = zone->GetSpawnByID(luaspell->targets[i]))) {
 					float distance = caster->GetDistance(target, true);
-					((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs);
+					((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs, custom_spell_name);
 				}
 			}
 			luaspell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
@@ -1424,6 +1428,7 @@ int EQ2Emu_lua_CastSpell(lua_State* state) {
 	int32 spell_id = lua_interface->GetInt32Value(state, 2);
 	int8 spell_tier = lua_interface->GetInt8Value(state, 3);
 	Spawn* caster = lua_interface->GetSpawn(state, 4);
+	int16 custom_cast_time = lua_interface->GetInt16Value(state, 5);
 
 	if (!target) {
 		lua_interface->LogError("%s: LUA CastSpell command error: target is not a valid spawn", lua_interface->GetScriptName(state));
@@ -1451,7 +1456,7 @@ int EQ2Emu_lua_CastSpell(lua_State* state) {
 	if (!caster)
 		caster = target;
 
-	target->GetZone()->ProcessSpell(master_spell_list.GetSpell(spell_id, spell_tier), (Entity*)caster, (Entity*)target);
+	target->GetZone()->ProcessSpell(master_spell_list.GetSpell(spell_id, spell_tier), (Entity*)caster, (Entity*)target, true, false, NULL, custom_cast_time);
 	return 0;
 }
 
@@ -2802,12 +2807,25 @@ int EQ2Emu_lua_SetStepComplete(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
+	if (!player || !player->IsPlayer()) {
+		lua_interface->LogError("%s: LUA SetStepComplete command error: player is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
+	if (quest_id <= 0) {
+		lua_interface->LogError("%s: LUA SetStepComplete command error: quest_id is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	} else if ((((Player*)player)->player_quests.count(quest_id) <= 0)) {
+		lua_interface->LogError("%s: LUA SetStepComplete command error: player does not have quest", lua_interface->GetScriptName(state));
+		return 0;
+	}
 	int32 step = lua_interface->GetInt32Value(state, 3);
-	if (player && player->IsPlayer() && quest_id > 0 && step > 0 && (((Player*)player)->player_quests.count(quest_id) > 0)) {
+	if (step > 0) {
 		Client* client = player->GetZone()->GetClientBySpawn(player);
 		if (client)
 			client->AddPendingQuestUpdate(quest_id, step);
+	} else {
+		lua_interface->LogError("%s: LUA SetStepComplete command error: step is not valid", lua_interface->GetScriptName(state));
 	}
 	return 0;
 }
@@ -2945,10 +2963,16 @@ int EQ2Emu_lua_HasQuest(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
+	if(!player || !player->IsPlayer()) {
+		lua_interface->LogError("%s: LUA HasQuest command error: player is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
-	if (player && player->IsPlayer() && quest_id > 0) {
+	if (quest_id > 0) {
 		lua_interface->SetBooleanValue(state, (((Player*)player)->player_quests.count(quest_id) > 0));
 		return 1;
+	} else {
+		lua_interface->LogError("%s: LUA HasQuest command error: quest_id is not valid", lua_interface->GetScriptName(state));
 	}
 	return 0;
 }
@@ -3063,8 +3087,15 @@ int EQ2Emu_lua_OfferQuest(lua_State* state) {
 		Quest* master_quest = master_quest_list.GetQuest(quest_id);
 		if (master_quest) {
 			Client* client = player->GetZone()->GetClientBySpawn(player);
+			if (!client) {
+				lua_interface->LogError("%s: LUA OfferQuest command error: client is not set", lua_interface->GetScriptName(state));
+			}
 			Quest* quest = new Quest(master_quest);
-			if (client && quest) {				
+			if (!quest) {
+				lua_interface->LogError("%s: LUA OfferQuest command error: new Quest() failed.", lua_interface->GetScriptName(state));
+			}
+			if (client && quest) {
+				client->AddPendingQuest(quest);
 				if (npc)
 					quest->SetQuestGiver(npc->GetDatabaseID());
 				else
@@ -3072,6 +3103,12 @@ int EQ2Emu_lua_OfferQuest(lua_State* state) {
 				client->AddPendingQuest(quest, forced);
 			}
 		}
+		else {
+			lua_interface->LogError("%s: LUA OfferQuest command error: failed to get quest %d", lua_interface->GetScriptName(state), quest_id);
+		}
+	}
+	else {
+		lua_interface->LogError("%s: LUA OfferQuest command error: player is not set or bad quest id %p %d", lua_interface->GetScriptName(state), player, quest_id);
 	}
 	return 0;
 }
@@ -10370,5 +10407,173 @@ int EQ2Emu_lua_GetTemporaryTransportID(lua_State* state) {
 		lua_interface->SetInt32Value(state, client->GetTemporaryTransportID());
 		return 1;
 	}
+	return 0;
+}
+
+int EQ2Emu_lua_SetAlignment(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	sint32 alignment = lua_interface->GetSInt32Value(state, 2);
+	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
+
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA SetAlignment command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!spawn->IsEntity()) {
+		lua_interface->LogError("%s: LUA SetAlignment command error: spawn is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (alignment < SCHAR_MIN || alignment > SCHAR_MAX)
+	{
+		lua_interface->LogError("%s: LUA SetAlignment command error: alignment value beyond supported min: %i and max: %i", lua_interface->GetScriptName(state), SCHAR_MIN, SCHAR_MAX);
+		return 0;
+	}
+
+	if (spell && spell->targets.size() > 0) {
+		ZoneServer* zone = spell->caster->GetZone();
+		for (int8 i = 0; i < spell->targets.size(); i++) {
+			Spawn* target = zone->GetSpawnByID(spell->targets.at(i));
+			if (target->IsEntity()) {
+				((Entity*)target)->GetInfoStruct()->alignment = (sint8)alignment;
+				if (target->IsPlayer())
+					((Player*)target)->SetCharSheetChanged(true);
+			}
+		}
+	}
+	else {
+		((Entity*)spawn)->GetInfoStruct()->alignment = (sint8)alignment;
+		if (spawn->IsPlayer())
+			((Player*)spawn)->SetCharSheetChanged(true);
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_GetAlignment(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA SetAlignment command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!spawn->IsEntity()) {
+		lua_interface->LogError("%s: LUA SetAlignment command error: spawn is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	lua_interface->SetInt32Value(state, ((Entity*)spawn)->GetAlignment());
+	return 1;
+}
+
+
+int EQ2Emu_lua_GetSpell(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	int32 spell_id = lua_interface->GetInt32Value(state);
+	int8 spell_tier = lua_interface->GetInt8Value(state, 2);
+	if (spell_id > 0) {
+
+		if (spell_tier == 0)
+			spell_tier = 1;
+
+		Spell* spell = master_spell_list.GetSpell(spell_id, spell_tier);
+		LuaSpell* lua_spell = 0;
+		if (lua_interface)
+			lua_spell = lua_interface->GetSpell(spell->GetSpellData()->lua_script.c_str());
+
+		if (!lua_spell)
+			return 0;
+
+		lua_spell->spell = new Spell(spell);
+
+		lua_interface->SetSpellValue(state, lua_spell);
+		return 1;
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_GetSpellData(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetSpell(state);
+	string field = lua_interface->GetStringValue(state, 2);
+
+	if (!spell) {
+		lua_interface->LogError("%s: Spell not given in GetSpellData!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spell->spell || !spell->spell->GetSpellData()) {
+		lua_interface->LogError("%s: Inner Spell or SpellData not given in GetSpellData!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	boost::to_lower(field);
+
+
+	return spell->spell->GetSpellData(state, field);
+}
+
+
+int EQ2Emu_lua_SetSpellData(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetSpell(state);
+	string field = lua_interface->GetStringValue(state, 2);
+	int8 fieldArg = 3; // field value after the initial set
+
+	if (!spell) {
+		lua_interface->LogError("%s: Spell not given in SetSpellData!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spell->spell || !spell->spell->GetSpellData()) {
+		lua_interface->LogError("%s: Inner Spell or SpellData not given in SetSpellData!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	boost::to_lower(field);
+
+	bool valSet = false;
+
+	spell->spell->SetSpellData(state, field, fieldArg);
+
+	return valSet;
+}
+
+
+int EQ2Emu_lua_CastCustomSpell(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetSpell(state);
+	Spawn* caster = lua_interface->GetSpawn(state, 2);
+	Spawn* target = lua_interface->GetSpawn(state, 3);
+
+	if (!target) {
+		lua_interface->LogError("%s: LUA CastCustomSpell command error: target is not a valid spawn", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!target->IsEntity()) {
+		lua_interface->LogError("%s: LUA CastCustomSpell command error: target (%s) is not an entity", lua_interface->GetScriptName(state), target->GetName());
+		return 0;
+	}
+
+	if (!spell) {
+		lua_interface->LogError("%s: LUA CastCustomSpell command error: spell is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (caster && !caster->IsEntity()) {
+		lua_interface->LogError("%s: LUA CastSpell command error: caster (%s) is not an entity", lua_interface->GetScriptName(state), caster->GetName());
+		return 0;
+	}
+
+	target->GetZone()->ProcessSpell(NULL, (Entity*)caster, (Entity*)target, true, false, spell, 0);
 	return 0;
 }

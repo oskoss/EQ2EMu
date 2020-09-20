@@ -258,7 +258,7 @@ public:
 	
 	int16	SetSpawnTargetable(Spawn* spawn, float distance);
 	int16	SetSpawnTargetable(int32 spawn_id);
-	void	ApplySetSpawnCommand(Client* client, Spawn* target, int8 type, char* value);
+	void	ApplySetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value);
 	void	SetSpawnCommand(Spawn* spawn, int8 type, char* value, Client* client = 0);
 	void	SetSpawnCommand(int32 spawn_id, int8 type, char* value, Client* client = 0);
 	void	AddLoot(NPC* npc);
@@ -368,7 +368,7 @@ public:
 	void	RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast = true);
 	void	Interrupted(Entity* caster, Spawn* interruptor, int16 error_code, bool cancel = false, bool from_movement = false);
 	Spell*	GetSpell(Entity* caster);
-	void	ProcessSpell(Spell* spell, Entity* caster, Spawn* target = 0, bool lock = true, bool harvest_spell = false);
+	void	ProcessSpell(Spell* spell, Entity* caster, Spawn* target = 0, bool lock = true, bool harvest_spell = false, LuaSpell* customSpell = 0, int16 custom_cast_time = 0);
 	void	ProcessEntityCommand(EntityCommand* entity_command, Entity* caster, Spawn* target, bool lock = true);
 	void	AddPlayerTracking(Player* player);
 	void	RemovePlayerTracking(Player* player, int8 mode);

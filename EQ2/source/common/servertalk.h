@@ -637,7 +637,7 @@ struct ZoneUpdate_Struct{
 };
 
 struct ZoneUpdateList_Struct{
-	sint16	total_updates;
+	uint16	total_updates;
 	char data[0];
 };
 

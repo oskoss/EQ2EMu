@@ -229,7 +229,7 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 			player->packet->setColorByName("unknown14", 0xFF, 0xFF, 0xFF);
 
 			uchar tmp[] = {0xFF, 0xFF, 0xFF, 0x61, 0x00, 0x2C, 0x04, 0xA5, 0x09, 0x02, 0x0F, 0x00, 0x00};
-			for(int y=0;y<sizeof(tmp);y++)
+			for(size_t y=0;y<sizeof(tmp);y++)
 				player->packet->setDataByName("unknown11", tmp[y], y);
 
 			MYSQL_RES* result3 = query2.RunQuery2(Q_SELECT, "SELECT slot, equip_type, red, green, blue, highlight_red, highlight_green, highlight_blue from login_equipment where login_characters_id=%i order by slot",id);
@@ -623,7 +623,7 @@ void LoginDatabase::GetServerAccounts(vector<LWorld*>* server_list){
 		server_list->push_back(world);
 	}
 }
-void LoginDatabase::SaveClientLog(char* type, char* message, char* player_name, int16 version){
+void LoginDatabase::SaveClientLog(const char* type, const char* message, const char* player_name, int16 version){
 	Query query;
 	query.escaped_data1 = getEscapeString(message);
 	query.escaped_name = getEscapeString(player_name);

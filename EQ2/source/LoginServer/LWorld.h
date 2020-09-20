@@ -50,11 +50,11 @@ public:
 	LWorld(TCPConnection* in_RemoteLink, int32 in_ip, int32 in_RemoteID, int32 in_accountid, char* in_accountname, char* in_worldname, char* in_address, sint32 in_status, int32 in_adminid, bool in_showdown, int8 in_authlevel, bool in_placeholder, int32 iLinkWorldID);
     ~LWorld();
 
-	static bool CheckServerName(char* name);
+	static bool CheckServerName(const char* name);
 	
 	bool	Process();
 	void	SendPacket(ServerPacket* pack);
-	void	Message(char* to, char* message, ...);
+	void	Message(const char* to, const char* message, ...);
 
 	bool	SetupWorld(char* in_worldname, char* in_worldaddress, char* in_account, char* in_password, char* in_version);
 	void	UpdateStatus(sint32 in_status, sint32 in_players, sint32 in_zones) {
@@ -91,7 +91,7 @@ public:
 	int8			GetWorldStatus();
 
 	void			ChangeToPlaceholder();
-	void			Kick(char* message = ERROR_GHOST, bool iSetKickedFlag = true);
+	void			Kick(const char* message = ERROR_GHOST, bool iSetKickedFlag = true);
 	inline bool		IsKicked()				{ return kicked; }
 	inline bool		IsNeverKick()			{ return pNeverKick; }
 	inline  ConType	GetType()				{ return ptype; }

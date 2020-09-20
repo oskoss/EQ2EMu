@@ -24,12 +24,14 @@
 #include "Traits/Traits.h"
 #include "AltAdvancement/AltAdvancement.h"
 #include <cmath>
+#include "LuaInterface.h"
 
 extern ConfigReader configReader;
 extern WorldDatabase database;
 extern MasterTraitList master_trait_list;
 extern MasterAAList master_aa_list;
 extern MasterSpellList master_spell_list;
+extern LuaInterface* lua_interface;
 
 Spell::Spell(){
 	spell = new SpellData;
@@ -38,6 +40,127 @@ Spell::Spell(){
 	damage_spell = false;
 	control_spell = false;
 	offense_spell = false;
+	copied_spell = false;
+	MSpellInfo.SetName("Spell::MSpellInfo");
+}
+
+Spell::Spell(Spell* host_spell)
+{
+	copied_spell = true;
+
+	spell = new SpellData;
+
+	if (host_spell->GetSpellData())
+	{
+		spell->affect_only_group_members = host_spell->GetSpellData()->affect_only_group_members;
+		spell->call_frequency = host_spell->GetSpellData()->call_frequency;
+		spell->can_effect_raid = host_spell->GetSpellData()->can_effect_raid;
+		spell->casting_flags = host_spell->GetSpellData()->casting_flags;
+		spell->cast_time = host_spell->GetSpellData()->cast_time;
+		spell->cast_type = host_spell->GetSpellData()->cast_type;
+		spell->cast_while_moving = host_spell->GetSpellData()->cast_while_moving;
+		spell->class_skill = host_spell->GetSpellData()->class_skill;
+		spell->control_effect_type = host_spell->GetSpellData()->control_effect_type;
+		spell->description = EQ2_16BitString(host_spell->GetSpellData()->description);
+		spell->det_type = host_spell->GetSpellData()->det_type;
+		spell->display_spell_tier = host_spell->GetSpellData()->display_spell_tier;
+
+		spell->dissonance_req = host_spell->GetSpellData()->dissonance_req;
+		spell->dissonance_req_percent = host_spell->GetSpellData()->dissonance_req_percent;
+		spell->dissonance_upkeep = host_spell->GetSpellData()->dissonance_upkeep;
+		spell->duration1 = host_spell->GetSpellData()->duration1;
+		spell->duration2 = host_spell->GetSpellData()->duration2;
+		spell->duration_until_cancel = host_spell->GetSpellData()->duration_until_cancel;
+		spell->effect_message = string(host_spell->GetSpellData()->effect_message);
+		spell->fade_message = string(host_spell->GetSpellData()->fade_message);
+
+		spell->friendly_spell = host_spell->GetSpellData()->friendly_spell;
+		spell->group_spell = host_spell->GetSpellData()->group_spell;
+
+		spell->hit_bonus = host_spell->GetSpellData()->hit_bonus;
+
+		spell->hp_req = host_spell->GetSpellData()->hp_req;
+		spell->hp_req_percent = host_spell->GetSpellData()->hp_req_percent;
+		spell->hp_upkeep = host_spell->GetSpellData()->hp_upkeep;
+
+		spell->icon = host_spell->GetSpellData()->icon;
+		spell->icon_backdrop = host_spell->GetSpellData()->icon_backdrop;
+
+		spell->icon_heroic_op = host_spell->GetSpellData()->icon_heroic_op;
+
+		spell->id = host_spell->GetSpellData()->id;
+
+		spell->incurable = host_spell->GetSpellData()->incurable;
+		spell->interruptable = host_spell->GetSpellData()->interruptable;
+		spell->is_aa = host_spell->GetSpellData()->is_aa;
+
+		spell->is_active = host_spell->GetSpellData()->is_active;
+		spell->linked_timer = host_spell->GetSpellData()->linked_timer;
+		spell->lua_script = string(host_spell->GetSpellData()->lua_script);
+
+		spell->mastery_skill = host_spell->GetSpellData()->mastery_skill;
+		spell->max_aoe_targets = host_spell->GetSpellData()->max_aoe_targets;
+
+		spell->min_range = host_spell->GetSpellData()->min_range;
+		spell->name = EQ2_8BitString(host_spell->GetSpellData()->name);
+		spell->not_maintained = host_spell->GetSpellData()->not_maintained;
+		spell->num_levels = host_spell->GetSpellData()->num_levels;
+		spell->persist_though_death = host_spell->GetSpellData()->persist_though_death;
+		spell->power_by_level = host_spell->GetSpellData()->power_by_level;
+		spell->power_req = host_spell->GetSpellData()->power_req;
+		spell->power_req_percent = host_spell->GetSpellData()->power_req_percent;
+		spell->power_upkeep = host_spell->GetSpellData()->power_upkeep;
+		spell->radius = host_spell->GetSpellData()->radius;
+		spell->range = host_spell->GetSpellData()->range;
+		spell->recast = host_spell->GetSpellData()->recast;
+		spell->recovery = host_spell->GetSpellData()->recovery;
+		spell->req_concentration = host_spell->GetSpellData()->req_concentration;
+		spell->resistibility = host_spell->GetSpellData()->resistibility;
+		spell->savagery_req = host_spell->GetSpellData()->savagery_req;
+		spell->savagery_req_percent = host_spell->GetSpellData()->savagery_req_percent;
+		spell->savagery_upkeep = host_spell->GetSpellData()->savagery_upkeep;
+		spell->savage_bar = host_spell->GetSpellData()->savage_bar;
+		spell->savage_bar_slot = host_spell->GetSpellData()->savage_bar_slot;
+		spell->soe_spell_crc = host_spell->GetSpellData()->soe_spell_crc;
+		spell->spell_book_type = host_spell->GetSpellData()->spell_book_type;
+		spell->spell_name_crc = host_spell->GetSpellData()->spell_name_crc;
+		spell->spell_type = host_spell->GetSpellData()->spell_type;
+		spell->spell_visual = host_spell->GetSpellData()->spell_visual;
+		spell->success_message = string(host_spell->GetSpellData()->success_message);
+		spell->target_type = host_spell->GetSpellData()->target_type;
+		spell->tier = host_spell->GetSpellData()->tier;
+		spell->ts_loc_index = host_spell->GetSpellData()->ts_loc_index;
+		spell->type = host_spell->GetSpellData()->type;
+	}
+
+	heal_spell = host_spell->IsHealSpell();
+	buff_spell = host_spell->IsBuffSpell();
+	damage_spell = host_spell->IsDamageSpell();;
+	control_spell = host_spell->IsControlSpell();
+	offense_spell = host_spell->IsOffenseSpell();
+
+	host_spell->LockSpellInfo();
+	std::vector<LevelArray*>::iterator itr;
+	for (itr = host_spell->levels.begin(); itr != host_spell->levels.end(); itr++)
+	{
+		LevelArray* lvlArray = *itr;
+		AddSpellLevel(lvlArray->adventure_class, lvlArray->tradeskill_class, lvlArray->spell_level);
+	}
+
+	std::vector<SpellDisplayEffect*>::iterator sdeitr;
+	for (sdeitr = host_spell->effects.begin(); sdeitr != host_spell->effects.end(); sdeitr++)
+	{
+		SpellDisplayEffect* sde = *sdeitr;
+		AddSpellEffect(sde->percentage, sde->subbullet, sde->description);
+	}
+
+	vector<LUAData*>::iterator luaitr;
+	for (luaitr = host_spell->lua_data.begin(); luaitr != host_spell->lua_data.end(); luaitr++) {
+		LUAData* data = *luaitr;
+		AddSpellLuaData(data->type, data->int_value, data->int_value2, data->float_value, data->float_value2, data->bool_value, string(data->string_value), string(data->string_value2), string(data->string_helper));
+	}
+	host_spell->UnlockSpellInfo();
+
 	MSpellInfo.SetName("Spell::MSpellInfo");
 }
 
@@ -48,6 +171,7 @@ Spell::Spell(SpellData* in_spell){
 	damage_spell = false;
 	control_spell = false;
 	offense_spell = false;
+	copied_spell = false;
 	MSpellInfo.SetName("Spell::MSpellInfo");
 }
 
@@ -1158,6 +1282,735 @@ SpellData* Spell::GetSpellData(){
 	return spell;
 }
 
+bool Spell::GetSpellData(lua_State* state, std::string field)
+{
+	if (!lua_interface)
+		return false;
+
+	bool valSet = false;
+
+	if (field == "spell_book_type")
+	{
+		lua_interface->SetInt32Value(state, GetSpellData()->spell_book_type);
+		valSet = true;
+	}
+	else if (field == "icon")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->icon);
+		valSet = true;
+	}
+	else if (field == "icon_heroic_op")
+	{
+		lua_interface->SetInt32Value(state, GetSpellData()->icon_heroic_op);
+		valSet = true;
+	}
+	else if (field == "icon_backdrop")
+	{
+		lua_interface->SetInt32Value(state, GetSpellData()->icon_backdrop);
+		valSet = true;
+	}
+	else if (field == "type")
+	{
+		lua_interface->SetInt32Value(state, GetSpellData()->type);
+		valSet = true;
+	}
+	else if (field == "class_skill")
+	{
+		lua_interface->SetInt32Value(state, GetSpellData()->class_skill);
+		valSet = true;
+	}
+	else if (field == "mastery_skill")
+	{
+		lua_interface->SetInt32Value(state, GetSpellData()->mastery_skill);
+		valSet = true;
+	}
+	else if (field == "ts_loc_index")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->ts_loc_index);
+		valSet = true;
+	}
+	else if (field == "num_levels")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->num_levels);
+		valSet = true;
+	}
+	else if (field == "tier")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->tier);
+		valSet = true;
+	}
+	else if (field == "hp_req")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->hp_req);
+		valSet = true;
+	}
+	else if (field == "hp_upkeep")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->hp_upkeep);
+		valSet = true;
+	}
+	else if (field == "power_req")
+	{
+		lua_interface->SetFloatValue(state, GetSpellData()->power_req);
+		valSet = true;
+	}
+	else if (field == "power_by_level")
+	{
+		lua_interface->SetBooleanValue(state, GetSpellData()->power_by_level);
+		valSet = true;
+	}
+	else if (field == "power_upkeep")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->power_upkeep);
+		valSet = true;
+	}
+	else if (field == "savagery_req")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->savagery_req);
+		valSet = true;
+	}
+	else if (field == "savagery_upkeep")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->savagery_upkeep);
+		valSet = true;
+	}
+	else if (field == "dissonance_req")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->dissonance_req);
+		valSet = true;
+	}
+	else if (field == "dissonance_upkeep")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->dissonance_upkeep);
+		valSet = true;
+	}
+	else if (field == "target_type")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->target_type);
+		valSet = true;
+	}
+	else if (field == "cast_time")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->cast_time);
+		valSet = true;
+	}
+	else if (field == "recovery")
+	{
+		lua_interface->SetFloatValue(state, GetSpellData()->recovery);
+		valSet = true;
+	}
+	else if (field == "recast")
+	{
+		lua_interface->SetFloatValue(state, GetSpellData()->recast);
+		valSet = true;
+	}
+	else if (field == "linked_timer")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->linked_timer);
+		valSet = true;
+	}
+	else if (field == "radius")
+	{
+		lua_interface->SetFloatValue(state, GetSpellData()->radius);
+		valSet = true;
+	}
+	else if (field == "max_aoe_targets")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->max_aoe_targets);
+		valSet = true;
+	}
+	else if (field == "friendly_spell")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->friendly_spell);
+		valSet = true;
+	}
+	else if (field == "req_concentration")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->req_concentration);
+		valSet = true;
+	}
+	else if (field == "range")
+	{
+		lua_interface->SetFloatValue(state, GetSpellData()->range);
+		valSet = true;
+	}
+	else if (field == "duration1")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->duration1);
+		valSet = true;
+	}
+	else if (field == "duration2")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->duration2);
+		valSet = true;
+	}
+	else if (field == "resistibility")
+	{
+		lua_interface->SetFloatValue(state, GetSpellData()->resistibility);
+		valSet = true;
+	}
+	else if (field == "duration_until_cancel")
+	{
+		lua_interface->SetBooleanValue(state, GetSpellData()->duration_until_cancel);
+		valSet = true;
+	}
+	else if (field == "power_req_percent")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->power_req_percent);
+		valSet = true;
+	}
+	else if (field == "hp_req_percent")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->hp_req_percent);
+		valSet = true;
+	}
+	else if (field == "savagery_req_percent")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->savagery_req_percent);
+		valSet = true;
+	}
+	else if (field == "dissonance_req_percent")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->dissonance_req_percent);
+		valSet = true;
+	}
+	else if (field == "name")
+	{
+		lua_interface->SetStringValue(state, GetSpellData()->name.data.c_str());
+		valSet = true;
+	}
+	else if (field == "description")
+	{
+		lua_interface->SetStringValue(state, GetSpellData()->description.data.c_str());
+		valSet = true;
+	}
+	else if (field == "success_message")
+	{
+		lua_interface->SetStringValue(state, GetSpellData()->success_message.c_str());
+		valSet = true;
+	}
+	else if (field == "fade_message")
+	{
+		lua_interface->SetStringValue(state, GetSpellData()->fade_message.c_str());
+		valSet = true;
+	}
+	else if (field == "cast_type")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->cast_type);
+		valSet = true;
+	}
+	else if (field == "lua_script")
+	{
+		lua_interface->SetStringValue(state, GetSpellData()->lua_script.c_str());
+		valSet = true;
+	}
+	else if (field == "interruptable")
+	{
+		lua_interface->SetBooleanValue(state, GetSpellData()->interruptable);
+		valSet = true;
+	}
+	else if (field == "spell_visual")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->spell_visual);
+		valSet = true;
+	}
+	else if (field == "effect_message")
+	{
+		lua_interface->SetStringValue(state, GetSpellData()->effect_message.c_str());
+		valSet = true;
+	}
+	else if (field == "min_range")
+	{
+		lua_interface->SetFloatValue(state, GetSpellData()->min_range);
+		valSet = true;
+	}
+	else if (field == "can_effect_raid")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->can_effect_raid);
+		valSet = true;
+	}
+	else if (field == "affect_only_group_members")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->affect_only_group_members);
+		valSet = true;
+	}
+	else if (field == "group_spell")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->group_spell);
+		valSet = true;
+	}
+	else if (field == "hit_bonus")
+	{
+		lua_interface->SetFloatValue(state, GetSpellData()->hit_bonus);
+		valSet = true;
+	}
+	else if (field == "display_spell_tier")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->display_spell_tier);
+		valSet = true;
+	}
+	else if (field == "is_active")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->is_active);
+		valSet = true;
+	}
+	else if (field == "det_type")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->det_type);
+		valSet = true;
+	}
+	else if (field == "incurable")
+	{
+		lua_interface->SetBooleanValue(state, GetSpellData()->incurable);
+		valSet = true;
+	}
+	else if (field == "control_effect_type")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->control_effect_type);
+		valSet = true;
+	}
+	else if (field == "casting_flags")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->casting_flags);
+		valSet = true;
+	}
+	else if (field == "cast_while_moving")
+	{
+		lua_interface->SetBooleanValue(state, GetSpellData()->cast_while_moving);
+		valSet = true;
+	}
+	else if (field == "persist_though_death")
+	{
+		lua_interface->SetBooleanValue(state, GetSpellData()->persist_though_death);
+		valSet = true;
+	}
+	else if (field == "not_maintained")
+	{
+		lua_interface->SetBooleanValue(state, GetSpellData()->not_maintained);
+		valSet = true;
+	}
+	else if (field == "is_aa")
+	{
+		lua_interface->SetBooleanValue(state, GetSpellData()->is_aa);
+		valSet = true;
+	}
+	else if (field == "savage_bar")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->savage_bar);
+		valSet = true;
+	}
+	else if (field == "savage_bar_slot")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->savage_bar_slot);
+		valSet = true;
+	}
+	else if (field == "soe_spell_crc")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->soe_spell_crc);
+		valSet = true;
+	}
+	else if (field == "spell_type")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->spell_type);
+		valSet = true;
+	}
+	else if (field == "spell_name_crc")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->spell_name_crc);
+		valSet = true;
+	}
+
+	return valSet;
+}
+
+bool Spell::SetSpellData(lua_State* state, std::string field, int8 fieldArg)
+{
+	if (!lua_interface)
+		return false;
+
+	bool valSet = false;
+
+	if (field == "spell_book_type")
+	{
+		int32 spell_book_type = lua_interface->GetInt32Value(state, fieldArg);
+		GetSpellData()->spell_book_type = spell_book_type;
+		valSet = true;
+	}
+	else if (field == "icon")
+	{
+		sint16 icon = lua_interface->GetSInt32Value(state, fieldArg);
+		GetSpellData()->icon = icon;
+		valSet = true;
+	}
+	else if (field == "icon_heroic_op")
+	{
+		int16 icon_heroic_op = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->icon_heroic_op = icon_heroic_op;
+		valSet = true;
+	}
+	else if (field == "icon_backdrop")
+	{
+		int16 icon_backdrop = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->icon_backdrop = icon_backdrop;
+		valSet = true;
+	}
+	else if (field == "type")
+	{
+		int16 type = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->type = type;
+		valSet = true;
+	}
+	else if (field == "class_skill")
+	{
+		int32 class_skill = lua_interface->GetInt32Value(state, fieldArg);
+		GetSpellData()->class_skill = class_skill;
+		valSet = true;
+	}
+	else if (field == "mastery_skill")
+	{
+		int32 mastery_skill = lua_interface->GetInt32Value(state, fieldArg);
+		GetSpellData()->mastery_skill = mastery_skill;
+		valSet = true;
+	}
+	else if (field == "ts_loc_index")
+	{
+		int8 ts_loc_index = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->ts_loc_index = ts_loc_index;
+		valSet = true;
+	}
+	else if (field == "num_levels")
+	{
+		int8 num_levels = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->num_levels = num_levels;
+		valSet = true;
+	}
+	else if (field == "tier")
+	{
+		int8 tier = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->tier = tier;
+		valSet = true;
+	}
+	else if (field == "hp_req")
+	{
+		int16 hp_req = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->hp_req = hp_req;
+		valSet = true;
+	}
+	else if (field == "hp_upkeep")
+	{
+		int16 hp_upkeep = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->hp_upkeep = hp_upkeep;
+		valSet = true;
+	}
+	else if (field == "power_req")
+	{
+		float power_req = lua_interface->GetFloatValue(state, fieldArg);
+		GetSpellData()->power_req = power_req;
+		valSet = true;
+	}
+	else if (field == "power_by_level")
+	{
+		bool power_by_level = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->power_by_level = power_by_level;
+		valSet = true;
+	}
+	else if (field == "power_upkeep")
+	{
+		int16 power_upkeep = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->power_upkeep = power_upkeep;
+		valSet = true;
+	}
+	else if (field == "savagery_req")
+	{
+		int16 savagery_req = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->savagery_req = savagery_req;
+		valSet = true;
+	}
+	else if (field == "savagery_upkeep")
+	{
+		int16 savagery_upkeep = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->savagery_upkeep = savagery_upkeep;
+		valSet = true;
+	}
+	else if (field == "dissonance_req")
+	{
+		int16 dissonance_req = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->dissonance_req = dissonance_req;
+		valSet = true;
+	}
+	else if (field == "dissonance_upkeep")
+	{
+		int16 dissonance_upkeep = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->dissonance_upkeep = dissonance_upkeep;
+		valSet = true;
+	}
+	else if (field == "target_type")
+	{
+		int16 target_type = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->target_type = target_type;
+		valSet = true;
+	}
+	else if (field == "cast_time")
+	{
+		int16 cast_time = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->cast_time = cast_time;
+		valSet = true;
+	}
+	else if (field == "recovery")
+	{
+		float recovery = lua_interface->GetFloatValue(state, fieldArg);
+		GetSpellData()->recovery = recovery;
+		valSet = true;
+	}
+	else if (field == "recast")
+	{
+		float recast = lua_interface->GetFloatValue(state, fieldArg);
+		GetSpellData()->recast = recast;
+		valSet = true;
+	}
+	else if (field == "linked_timer")
+	{
+		int32 linked_timer = lua_interface->GetInt32Value(state, fieldArg);
+		GetSpellData()->linked_timer = linked_timer;
+		valSet = true;
+	}
+	else if (field == "radius")
+	{
+		float radius = lua_interface->GetFloatValue(state, fieldArg);
+		GetSpellData()->radius = radius;
+		valSet = true;
+	}
+	else if (field == "max_aoe_targets")
+	{
+		int16 max_aoe_targets = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->max_aoe_targets = max_aoe_targets;
+		valSet = true;
+	}
+	else if (field == "friendly_spell")
+	{
+		int8 friendly_spell = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->friendly_spell = friendly_spell;
+		valSet = true;
+	}
+	else if (field == "req_concentration")
+	{
+		int16 req_concentration = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->req_concentration = req_concentration;
+		valSet = true;
+	}
+	else if (field == "range")
+	{
+		float range = lua_interface->GetFloatValue(state, fieldArg);
+		GetSpellData()->range = range;
+		valSet = true;
+	}
+	else if (field == "duration1")
+	{
+		sint32 duration = lua_interface->GetSInt32Value(state, fieldArg);
+		GetSpellData()->duration1 = duration;
+		valSet = true;
+	}
+	else if (field == "duration2")
+	{
+		sint32 duration = lua_interface->GetSInt32Value(state, fieldArg);
+		GetSpellData()->duration2 = duration;
+		valSet = true;
+	}
+	else if (field == "resistibility")
+	{
+		float resistibility = lua_interface->GetFloatValue(state, fieldArg);
+		GetSpellData()->resistibility = resistibility;
+		valSet = true;
+	}
+	else if (field == "duration_until_cancel")
+	{
+		bool duration_until_cancel = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->duration_until_cancel = duration_until_cancel;
+		valSet = true;
+	}
+	else if (field == "power_req_percent")
+	{
+		int8 power_req_percent = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->power_req_percent = power_req_percent;
+		valSet = true;
+	}
+	else if (field == "hp_req_percent")
+	{
+		int8 hp_req_percent = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->hp_req_percent = hp_req_percent;
+		valSet = true;
+	}
+	else if (field == "savagery_req_percent")
+	{
+		int8 savagery_req_percent = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->savagery_req_percent = savagery_req_percent;
+		valSet = true;
+	}
+	else if (field == "dissonance_req_percent")
+	{
+		int8 dissonance_req_percent = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->dissonance_req_percent = dissonance_req_percent;
+		valSet = true;
+	}
+	else if (field == "name")
+	{
+		string name = lua_interface->GetStringValue(state, fieldArg);
+		GetSpellData()->name.data = name;
+		valSet = true;
+	}
+	else if (field == "description")
+	{
+		string description = lua_interface->GetStringValue(state, fieldArg);
+		GetSpellData()->description.data = description;
+		valSet = true;
+	}
+	else if (field == "success_message")
+	{
+		string success_message = lua_interface->GetStringValue(state, fieldArg);
+		GetSpellData()->success_message = success_message;
+		valSet = true;
+	}
+	else if (field == "fade_message")
+	{
+		string fade_message = lua_interface->GetStringValue(state, fieldArg);
+		GetSpellData()->fade_message = fade_message;
+		valSet = true;
+	}
+	else if (field == "cast_type")
+	{
+		int8 cast_type = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->cast_type = cast_type;
+		valSet = true;
+	}
+	else if (field == "cast_type")
+	{
+		int32 call_frequency = lua_interface->GetInt32Value(state, fieldArg);
+		GetSpellData()->call_frequency = call_frequency;
+		valSet = true;
+	}
+	else if (field == "interruptable")
+	{
+		bool interruptable = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->interruptable = interruptable;
+		valSet = true;
+	}
+	else if (field == "spell_visual")
+	{
+		int32 spell_visual = lua_interface->GetInt32Value(state, fieldArg);
+		GetSpellData()->spell_visual = spell_visual;
+		valSet = true;
+	}
+	else if (field == "effect_message")
+	{
+		string effect_message = lua_interface->GetStringValue(state, fieldArg);
+		GetSpellData()->effect_message = effect_message;
+		valSet = true;
+	}
+	else if (field == "min_range")
+	{
+		float min_range = lua_interface->GetFloatValue(state, fieldArg);
+		GetSpellData()->min_range = min_range;
+		valSet = true;
+	}
+	else if (field == "can_effect_raid")
+	{
+		int8 can_effect_raid = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->can_effect_raid = can_effect_raid;
+		valSet = true;
+	}
+	else if (field == "affect_only_group_members")
+	{
+		int8 affect_only_group_members = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->affect_only_group_members = affect_only_group_members;
+		valSet = true;
+	}
+	else if (field == "group_spell")
+	{
+		int8 group_spell = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->group_spell = group_spell;
+		valSet = true;
+	}
+	else if (field == "hit_bonus")
+	{
+		float hit_bonus = lua_interface->GetFloatValue(state, fieldArg);
+		GetSpellData()->hit_bonus = hit_bonus;
+		valSet = true;
+	}
+	else if (field == "display_spell_tier")
+	{
+		int8 display_spell_tier = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->display_spell_tier = display_spell_tier;
+		valSet = true;
+	}
+	else if (field == "is_active")
+	{
+		int8 is_active = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->is_active = is_active;
+		valSet = true;
+	}
+	else if (field == "det_type")
+	{
+		int8 det_type = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->det_type = det_type;
+		valSet = true;
+	}
+	else if (field == "incurable")
+	{
+		bool incurable = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->incurable = incurable;
+		valSet = true;
+	}
+	else if (field == "control_effect_type")
+	{
+		int8 control_effect_type = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->control_effect_type = control_effect_type;
+		valSet = true;
+	}
+	else if (field == "casting_flags")
+	{
+		int32 casting_flags = lua_interface->GetInt32Value(state, fieldArg);
+		GetSpellData()->casting_flags = casting_flags;
+		valSet = true;
+	}
+	else if (field == "cast_while_moving")
+	{
+		bool cast_while_moving = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->cast_while_moving = cast_while_moving;
+		valSet = true;
+	}
+	else if (field == "persist_though_death")
+	{
+		bool persist_though_death = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->persist_though_death = persist_though_death;
+		valSet = true;
+	}
+	else if (field == "not_maintained")
+	{
+		bool not_maintained = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->not_maintained = not_maintained;
+		valSet = true;
+	}
+	else if (field == "is_aa")
+	{
+		bool is_aa = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->is_aa = is_aa;
+		valSet = true;
+	}
+	else if (field == "savage_bar")
+	{
+		int8 savage_bar = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->savage_bar = savage_bar;
+		valSet = true;
+	}
+	else if (field == "spell_type")
+	{
+		int8 spell_type = lua_interface->GetInt8Value(state, fieldArg);
+		GetSpellData()->spell_type = spell_type;
+		valSet = true;
+	}
+
+	return valSet;
+}
 int16 Spell::GetSpellIcon(){
 	if (spell)
 		return spell->icon;
@@ -1191,8 +2044,12 @@ bool Spell::IsControlSpell(){
 	return control_spell;
 }
 
-bool Spell::IsOffenseSpell(){
+bool Spell::IsOffenseSpell() {
 	return offense_spell;
+}
+
+bool Spell::IsCopiedSpell() {
+	return copied_spell;
 }
 
 void Spell::ModifyCastTime(Entity* caster){

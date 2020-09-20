@@ -171,7 +171,7 @@ public:
 	/// <param name='target'>The target(Spawn) of the spell</param>
 	/// <param name='lock'>??? not currently used</param>
 	/// <param name='harvest_spell'>Is this a harvest spell?</param>
-	void ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, Spawn* target = 0, bool lock = true, bool harvest_spell = false);
+	void ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, Spawn* target = 0, bool lock = true, bool harvest_spell = false, LuaSpell* customSpell = 0, int16 custom_cast_time = 0);
 
 	/// <summary>Cast an EntityCommand (right click menu)</summary>
 	/// <param name='zone'>The current ZoneServer</param>
@@ -254,11 +254,11 @@ public:
 	/// <summary>Remove the given spell for the given caster from the SpellProcess</summary>
 	/// <param name='caster'>The spawn to remove the spell for</param>
 	/// <param name='spell'>The spell to remove</param>
-	bool DeleteCasterSpell(Spawn* caster, Spell* spell);
+	bool DeleteCasterSpell(Spawn* caster, Spell* spell, string reason = "");
 
 	/// <summary>Remove the given spell from the ZpellProcess</summary>
 	/// <param name='spell'>LuaSpell to remove</param>
-	bool DeleteCasterSpell(LuaSpell* spell);
+	bool DeleteCasterSpell(LuaSpell* spell, string reason="");
 
 	/// <summary>Interrupt the spell</summary>
 	/// <param name='interrupt'>InterruptStruct that contains all the info</param>
@@ -379,6 +379,7 @@ public:
 
 	void AddSpellCancel(LuaSpell* spell);
 
+	void DeleteSpell(LuaSpell* spell);
 private:
 	/// <summary>Sends the spell data to the lua script</summary>
 	/// <param name='spell'>LuaSpell to call the lua script for</param>

@@ -107,6 +107,7 @@ public:
 	virtual bool IsZone();
 	virtual bool IsItem();
 	virtual bool IsSkill();
+	virtual bool IsSpell();
 	bool correctly_initialized;
 	Item* item;
 	ZoneServer* zone;
@@ -116,6 +117,7 @@ public:
 	vector<Spawn*>* spawn_list;
 	Quest* quest;
 	Skill* skill;
+	LuaSpell* spell;
 };
 
 class LUAConversationOptionWrapper : public LUAUserData{
@@ -167,6 +169,12 @@ public:
 	bool IsSkill();
 };
 
+class LUASpellWrapper : public LUAUserData {
+public:
+	LUASpellWrapper();
+	bool IsSpell();
+};
+
 class LuaInterface {
 public:
 	LuaInterface();
@@ -179,12 +187,13 @@ public:
 	bool			LoadSpawnScript(const char* name);
 	bool			LoadZoneScript(string name);
 	bool			LoadZoneScript(const char* name);
-	void			RemoveSpell(LuaSpell* spell, bool call_remove_function = true, bool can_delete = true);
+	void			RemoveSpell(LuaSpell* spell, bool call_remove_function = true, bool can_delete = true, string reason = "");
 	Spawn*			GetSpawn(lua_State* state, int8 arg_num = 1);
 	Item*			GetItem(lua_State* state, int8 arg_num = 1);
 	Quest*			GetQuest(lua_State* state, int8 arg_num = 1);
 	ZoneServer*		GetZone(lua_State* state, int8 arg_num = 1);
 	Skill*			GetSkill(lua_State* state, int8 arg_num = 1);
+	LuaSpell*		GetSpell(lua_State* state, int8 arg_num = 1);
 	vector<ConversationOption>*	GetConversation(lua_State* state, int8 arg_num = 1);
 	vector<Spawn*>* GetSpawnList(lua_State* state, int8 arg_num = 1);
 	vector<OptionWindowOption>* GetOptionWindow(lua_State* state, int8 arg_num = 1);
@@ -209,6 +218,7 @@ public:
 	void			SetQuestValue(lua_State* state, Quest* quest);
 	void			SetZoneValue(lua_State* state, ZoneServer* zone);
 	void			SetSpawnListValue(lua_State* state, vector<Spawn*>* spawnList);
+	void			SetSpellValue(lua_State* state, LuaSpell* spell);
 	void			SetConversationValue(lua_State* state, vector<ConversationOption>* conversation);
 	void			SetOptionWindowValue(lua_State* state, vector<OptionWindowOption>* optionWindow);
 

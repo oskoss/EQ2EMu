@@ -154,6 +154,7 @@ Commands::Commands(){
 	spawn_set_values["holiday_flag"] = SPAWN_SET_VALUE_HOLIDAY_FLAG;
 	spawn_set_values["merchant_min_level"] = SPAWN_SET_VALUE_MERCHANT_MIN_LEVEL;
 	spawn_set_values["merchant_max_level"] = SPAWN_SET_VALUE_MERCHANT_MAX_LEVEL;
+	spawn_set_values["skin_color"] = SPAWN_SET_SKIN_COLOR;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -197,7 +198,9 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 		return false;
 	int32 val = 0;
 	try{
-		if(type != SPAWN_SET_VALUE_NAME && !(type >= SPAWN_SET_VALUE_SPAWN_SCRIPT && type <= SPAWN_SET_VALUE_SUB_TITLE) && !(type >= SPAWN_SET_VALUE_PREFIX && type <= SPAWN_SET_VALUE_EXPANSION_FLAG || type == SPAWN_SET_VALUE_HOLIDAY_FLAG))
+		if(type != SPAWN_SET_VALUE_NAME && 
+			!(type >= SPAWN_SET_VALUE_SPAWN_SCRIPT && type <= SPAWN_SET_VALUE_SUB_TITLE) && !(type >= SPAWN_SET_VALUE_PREFIX && type <= SPAWN_SET_VALUE_EXPANSION_FLAG || type == SPAWN_SET_VALUE_HOLIDAY_FLAG)
+			&& type != SPAWN_SET_SKIN_COLOR)
 			val = atoul(value);
 	}
 	catch(...){
@@ -205,7 +208,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			client->Message(CHANNEL_COLOR_RED, "Invalid numeric spawn value: %s", value);
 		return false;
 	}
-	if(temporary && temp_value){
+	if(temporary){
 		char tmp[128] = {0};
 		switch(type){
 			case SPAWN_SET_VALUE_NAME:{
@@ -500,8 +503,26 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				target->SetMerchantLevelRange(target->GetMerchantMinLevel(), atoul(value));
 				break;
 			}
+			case SPAWN_SET_SKIN_COLOR: {
+				if (target->IsNPC())
+				{
+					Seperator* skinsep = new Seperator(value, ' ', 3, 500, true);
+					if (skinsep->IsNumber(0) && skinsep->IsNumber(1) && skinsep->IsNumber(2))
+					{
+						EQ2_Color clr;
+						clr.red = atoul(skinsep->arg[0]);
+						clr.green = atoul(skinsep->arg[1]);
+						clr.blue = atoul(skinsep->arg[2]);
 
-			*temp_value = string(tmp);
+						((Entity*)target)->SetSkinColor(clr);
+					}
+					safe_delete(skinsep);
+				}
+				break;
+			}
+
+			if(temp_value)
+				*temp_value = string(tmp);
 		}
 	}
 	else{
@@ -838,7 +859,28 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				else
 					target->SetSpawnScript(value);
 				break;
-												   }
+			}
+
+			case SPAWN_SET_SKIN_COLOR: {
+				if (target->IsNPC())
+				{
+					Seperator* skinsep = new Seperator(value, ' ', 3, 500, true);
+					if (skinsep->IsNumber(0) && skinsep->IsNumber(1) && skinsep->IsNumber(2))
+					{
+						EQ2_Color clr;
+						clr.red = atoul(skinsep->arg[0]);
+						clr.green = atoul(skinsep->arg[1]);
+						clr.blue = atoul(skinsep->arg[2]);
+
+						((Entity*)target)->SetSkinColor(clr);
+						Query replaceSkinQuery;
+						replaceSkinQuery.AddQueryAsync(0, &database, Q_DELETE, "delete from npc_appearance where spawn_id=%u and type='skin_color'", target->GetDatabaseID());
+						replaceSkinQuery.AddQueryAsync(0, &database, Q_INSERT, "insert into npc_appearance set spawn_id=%u, type='skin_color', red=%u, green=%u, blue=%u", target->GetDatabaseID(), clr.red, clr.green, clr.blue);
+					}
+					safe_delete(skinsep);
+				}
+				break;
+			}
 		}
 	}
 	return true;
@@ -1390,6 +1432,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							item->save_needed = true;
 							client->QueuePacket(item->serialize(client->GetVersion(), false, client->GetPlayer()));
 						}
+						else
+							LogWrite(PLAYER__ERROR, 0, "Command", "%s: Item %s (%i) attempted to be used, however display_charges is 0.", client->GetPlayer()->GetName(), item->name.c_str(), item->details.item_id);
 					}
 				}
 			}
@@ -3675,15 +3719,19 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					else
 					{
 						string name = string(spawn->GetName());
-						if(SetSpawnCommand(client, spawn, set_type, sep->arg[1]))
+						if(SetSpawnCommand(client, spawn, set_type, sep->argplus[1]))
 						{
 							if (set_type == SPAWN_SET_VALUE_EXPANSION_FLAG || set_type == SPAWN_SET_VALUE_HOLIDAY_FLAG)
 							{
 								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "A /reload spawns is required to properly update the spawns with the xpack/holiday flag.");
 							}
-							else if(set_type == SPAWN_SET_VALUE_NAME)
+							else if (set_type == SPAWN_SET_VALUE_NAME)
 							{
 								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "New name will not be effective until zone reload.");
+							}
+							else if (set_type == SPAWN_SET_SKIN_COLOR)
+							{
+								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set skin_color to R G B: %s.", sep->argplus[1]);
 							}
 							else if(set_type == SPAWN_SET_VALUE_LOCATION)
 							{
@@ -3706,7 +3754,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								}
 								default:
 								{
-									client->GetCurrentZone()->ApplySetSpawnCommand(client, spawn, set_type, sep->arg[1]);
+									client->GetCurrentZone()->ApplySetSpawnCommand(client, spawn, set_type, sep->argplus[1]);
 									break;
 								}
 							}
@@ -4557,7 +4605,7 @@ void Commands::Command_CancelMaintained(Client* client, Seperator* sep)
 	//	if (spell && spell->GetSpellData()->friendly_spell)  -- NOTE::You can cancel hostile maintained spells, 
 		                                                     // just not spelleffects/dets - Foof
 		//{
-			if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell))
+			if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell, "canceled"))
 				client->Message(CHANNEL_COLOR_RED, "The maintained spell could not be cancelled.");
 	//	}
 		//else

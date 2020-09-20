@@ -133,7 +133,7 @@ function dlg_3_1(NPC, Spawn)
 end
 
 function dlg_4_1(NPC, Spawn)
-	OfferQuest(NPC, Player, WatchYourStepInTheTSPartIII)
+	OfferQuest(NPC, Spawn, WatchYourStepInTheTSPartIII)
 end
 	
 function dlg_4_2(NPC, Spawn)
@@ -154,5 +154,5 @@ function dlg_5_1(NPC, Spawn)
 end
 
 function dlg_6_1(NPC, Spawn)
-	OfferQuest(NPC, Player, WatchYourStepInTheTSPartIV)
+	OfferQuest(NPC, Spawn, WatchYourStepInTheTSPartIV)
 end

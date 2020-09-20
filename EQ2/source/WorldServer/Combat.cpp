@@ -545,7 +545,7 @@ bool Entity::ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32
 	return true;
 }
 
-bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string heal_type, int32 low_heal, int32 high_heal, int8 crit_mod, bool no_calcs){
+bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string heal_type, int32 low_heal, int32 high_heal, int8 crit_mod, bool no_calcs, string custom_spell_name){
 	 if(!target || !luaspell || !luaspell->spell)
 		return false;
 
@@ -673,7 +673,7 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 
 	target->GetZone()->TriggerCharSheetTimer();
 	if (heal_amt > 0)
-		GetZone()->SendHealPacket(this, target, type, heal_amt, luaspell->spell->GetName());
+		GetZone()->SendHealPacket(this, target, type, heal_amt, custom_spell_name.length() > 0 ? (char*)custom_spell_name.c_str() : luaspell->spell->GetName());
 	CheckProcs(PROC_TYPE_HEALING, target);
 	CheckProcs(PROC_TYPE_BENEFICIAL, target);
 
