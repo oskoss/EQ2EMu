@@ -4959,6 +4959,8 @@ EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 	packet->setDataByName("x", client->GetPlayer()->GetX());
 	packet->setDataByName("y", client->GetPlayer()->GetY());
 	packet->setDataByName("z", client->GetPlayer()->GetZ());
+
+	packet->setDataByName("underworld", underworld);
 	
 	// unknown3 can prevent screen shots from being taken if
 	//packet->setDataByName("unknown3", 2094661567, 1);			// Screenshots allowed with this value
