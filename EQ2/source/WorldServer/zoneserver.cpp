@@ -3884,7 +3884,7 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
 
-		if (client) {
+		if (client && (client->GetVersion() > 283 || !client->IsZoning() || client->GetPlayer() != spawn)) { //don't send destroy ghost of 283 client when zoning
 			if (client->IsConnected() && (!packet || packet_version != client->GetVersion()))
 			{
 				safe_delete(packet);
