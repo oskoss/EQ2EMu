@@ -256,6 +256,7 @@ end
 function Reload(Quest, QuestGiver, Player, Step)
 	if Step == 1 then
 		Step2Init(Quest, QuestGiver, Player)
+		CurrentStep(Quest, QuestGiver, Player)
 	elseif Step == 2 then
 		Step3Init(Quest, QuestGiver, Player)
 	elseif Step == 3 then
