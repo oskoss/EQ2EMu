@@ -591,7 +591,7 @@ void Commands::Command_Bot_Inv(Client* client, Seperator* sep) {
 				Item* item = bot->GetEquipmentList()->GetItem(i);
 				if (item) {
 					//\\aITEM %u %u:%s\\/a
-					item_list += to_string(i) + ":\t" + item->CreateItemLink(GetVersion(), true) + "\n";
+					item_list += to_string(i) + ":\t" + item->CreateItemLink(client->GetVersion(), true) + "\n";
 				}
 			}
 

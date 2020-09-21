@@ -221,7 +221,7 @@ void Transmute::CompleteTransmutation(Client* client, Player* player) {
 		if (item2) item2 = new Item(item2);
 	}
 
-	client->Message(89, "You transmute %s and create: ", item->CreateItemLink(GetVersion(), false).c_str());
+	client->Message(89, "You transmute %s and create: ", item->CreateItemLink(client->GetVersion(), false).c_str());
 
 	player->item_list.RemoveItem(item, true);
 
@@ -232,7 +232,7 @@ void Transmute::CompleteTransmutation(Client* client, Player* player) {
 
 	if (item1) {
 		item1->details.count = 1;
-		client->Message(89, "     %s", item1->CreateItemLink(GetVersion(), false).c_str());
+		client->Message(89, "     %s", item1->CreateItemLink(client->GetVersion(), false).c_str());
 		client->AddItem(item1);
 
 		if (packet) {
@@ -248,7 +248,7 @@ void Transmute::CompleteTransmutation(Client* client, Player* player) {
 
 	if (item2) {
 		item2->details.count = 1;
-		client->Message(89, "     %s", item2->CreateItemLink(GetVersion(), false).c_str());
+		client->Message(89, "     %s", item2->CreateItemLink(client->GetVersion(), false).c_str());
 		client->AddItem(item2);
 
 		if (packet) {

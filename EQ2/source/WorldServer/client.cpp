@@ -5008,6 +5008,8 @@ void Client::CheckQuestQueue() {
 	for (itr = quest_queue.begin(); itr != quest_queue.end(); itr++) {
 		queued_quest = *itr;
 		SendQuestUpdateStepImmediately(queued_quest->quest, queued_quest->step, queued_quest->display_quest_helper);
+		//if(queued_quest->quest && queued_quest->quest->GetTurnedIn()) //update the journal so the old quest isn't the one displayed in the client's quest helper
+		//	SendQuestJournal();
 		safe_delete(queued_quest);
 	}
 	quest_queue.clear();
@@ -5419,7 +5421,10 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 
 void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards, vector<Item*>* selectable_rewards, map<int32, sint32>* factions, const char* header, int32 status_points, const char* text) {
 	if (coin == 0 && (!rewards || rewards->size() == 0) && (!selectable_rewards || selectable_rewards->size() == 0) && (!factions || factions->size() == 0) && status_points == 0 && text == 0 && (!quest || (quest->GetCoinsReward() == 0 && quest->GetCoinsRewardMax() == 0))) {
-		return;//nothing to give
+		if (quest)
+			text = quest->GetName();
+		else
+			return;//nothing to give
 	}
 	PacketStruct* packet2 = configReader.getStruct("WS_QuestRewardPackMsg", GetVersion());
 	if (packet2) {
@@ -5511,7 +5516,7 @@ void Client::DisplayQuestComplete(Quest* quest) {
 	if (!quest)
 		return;
 	if (GetVersion() <= 546) {
-		DisplayQuestRewards(quest, 0, quest->GetRewardItems(), quest->GetSelectableRewardItems(), quest->GetRewardFactions(), "Quest Reward!", quest->GetStatusPoints());
+		DisplayQuestRewards(quest, 0, quest->GetRewardItems(), quest->GetSelectableRewardItems(), quest->GetRewardFactions(), "Quest Complete!", quest->GetStatusPoints());
 		return;
 	}
 	PacketStruct* packet = configReader.getStruct("WS_QuestComplete", GetVersion());
@@ -5718,8 +5723,7 @@ void Client::GiveQuestReward(Quest* quest) {
 	}
 	if (quest->GetQuestGiver() > 0)
 		GetCurrentZone()->SendSpawnChangesByDBID(quest->GetQuestGiver(), this, false, true);
-	RemovePlayerQuest(quest->GetQuestID(), true, false);
-
+	RemovePlayerQuest(quest->GetQuestID(), true, false);	
 }
 
 void Client::DisplayConversation(int32 conversation_id, int32 spawn_id, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2) {

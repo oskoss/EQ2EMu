@@ -2012,7 +2012,7 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 slot_id) {
 
 					LogWrite(MISC__TODO, 1, "TODO", "Send popup text in red 'Some of your equipment is broken!'\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 
-					client->Message(CHANNEL_COLOR_RED, "Your %s is worn out and will not be effective until repaired.", item->CreateItemLink(GetVersion(), true).c_str());
+					client->Message(CHANNEL_COLOR_RED, "Your %s is worn out and will not be effective until repaired.", item->CreateItemLink(client->GetVersion(), true).c_str());
 				}
 			}
 			packets.push_back(equipment_list.serialize(version, this));

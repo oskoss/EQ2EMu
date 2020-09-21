@@ -107,7 +107,7 @@ function quest_completed(NPC, player)
 end
 
 function drop_anchor(NPC, player)
-	PlayFlavor(NPC, "voiceover/english/captain_varlos/boat_06p_tutorial02/varlos_0_026.mp3", "Ingrid! Swing the lead and prepare to drop anchor!", 3011518245, 3851752713)
+	PlayFlavor(NPC, "voiceover/english/captain_varlos/boat_06p_tutorial02/varlos_0_026.mp3", "Ingrid! Swing the lead and prepare to drop anchor!", "", 3011518245, 3851752713)
 end
 
 function ready_to_go_ashore(NPC, player)

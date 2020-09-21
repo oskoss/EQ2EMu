@@ -3095,7 +3095,6 @@ int EQ2Emu_lua_OfferQuest(lua_State* state) {
 				lua_interface->LogError("%s: LUA OfferQuest command error: new Quest() failed.", lua_interface->GetScriptName(state));
 			}
 			if (client && quest) {
-				client->AddPendingQuest(quest);
 				if (npc)
 					quest->SetQuestGiver(npc->GetDatabaseID());
 				else

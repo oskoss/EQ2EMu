@@ -381,7 +381,7 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 						item->details.count = reward_total;
 
 						// chat box update for normal item (todo: verify output text)
-						client->Message(CHANNEL_HARVESTING, "You %s %i %s from the %s.", GetHarvestMessageName(true).c_str(), item->details.count, item->CreateItemLink(GetVersion(), true).c_str(), GetName());
+						client->Message(CHANNEL_HARVESTING, "You %s %i %s from the %s.", GetHarvestMessageName(true).c_str(), item->details.count, item->CreateItemLink(client->GetVersion(), true).c_str(), GetName());
 						// add Normal item to player inventory
 						client->AddItem(item);
 						//Check if the player has a harvesting quest for this
@@ -415,7 +415,7 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 								client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_RARES_HARVESTED, item_rare->details.count);
 
 								// chat box update for rare item (todo: verify output text)
-								client->Message(CHANNEL_HARVESTING, "You %s %i %s from the %s.", GetHarvestMessageName(true).c_str(), item_rare->details.count, item->CreateItemLink(GetVersion(), true).c_str(), GetName());
+								client->Message(CHANNEL_HARVESTING, "You %s %i %s from the %s.", GetHarvestMessageName(true).c_str(), item_rare->details.count, item->CreateItemLink(client->GetVersion(), true).c_str(), GetName());
 								// add Rare item to player inventory
 								client->AddItem(item_rare);
 								//Check if the player has a harvesting quest for this
