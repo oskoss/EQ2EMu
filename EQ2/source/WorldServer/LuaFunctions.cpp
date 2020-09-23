@@ -10615,6 +10615,7 @@ int EQ2Emu_lua_GetSpellDataIndex(lua_State* state) {
 		return 0;
 	LuaSpell* spell = lua_interface->GetSpell(state);
 	int8 idx = lua_interface->GetInt32Value(state, 2);
+	bool secondfield = lua_interface->GetBooleanValue(state, 3);
 
 	if (!spell) {
 		lua_interface->LogError("%s: Spell not given in GetSpellDataIndex!", lua_interface->GetScriptName(state));
@@ -10639,14 +10640,18 @@ int EQ2Emu_lua_GetSpellDataIndex(lua_State* state) {
 	{
 	case 0:
 	{
-		lua_interface->SetSInt32Value(state, data->int_value);
-		lua_interface->SetSInt32Value(state, data->int_value2);
+		if(!secondfield)
+			lua_interface->SetSInt32Value(state, data->int_value);
+		else
+			lua_interface->SetSInt32Value(state, data->int_value2);
 		break;
 	}
 	case 1:
 	{
-		lua_interface->SetFloatValue(state, data->float_value);
-		lua_interface->SetFloatValue(state, data->float_value2);
+		if (!secondfield)
+			lua_interface->SetFloatValue(state, data->float_value);
+		else
+			lua_interface->SetFloatValue(state, data->float_value2);
 		break;
 	}
 	case 2:
@@ -10656,8 +10661,10 @@ int EQ2Emu_lua_GetSpellDataIndex(lua_State* state) {
 	}
 	case 3:
 	{
-		lua_interface->SetStringValue(state, data->string_value.c_str());
-		lua_interface->SetStringValue(state, data->string_value2.c_str());
+		if (!secondfield)
+			lua_interface->SetStringValue(state, data->string_value.c_str());
+		else
+			lua_interface->SetStringValue(state, data->string_value2.c_str());
 		break;
 	}
 	default:
