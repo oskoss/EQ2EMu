@@ -869,7 +869,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			//version = client->GetVersion();
 		}
 
-		if (!customSpell)
+		if (!customSpell && !lua_spell->spell->IsCopiedSpell())
 		{
 			lua_getglobal(lua_spell->state, "customspell");
 			if (lua_isfunction(lua_spell->state, lua_gettop(lua_spell->state))) {
