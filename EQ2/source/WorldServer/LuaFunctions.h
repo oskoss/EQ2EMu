@@ -487,4 +487,7 @@ int EQ2Emu_lua_CastCustomSpell(lua_State* state);
 
 int EQ2Emu_lua_SetSpellDataIndex(lua_State* state);
 int EQ2Emu_lua_GetSpellDataIndex(lua_State* state);
+
+int EQ2Emu_lua_SetSpellDisplayEffect(lua_State* state);
+int EQ2Emu_lua_GetSpellDisplayEffect(lua_State* state);
 #endif

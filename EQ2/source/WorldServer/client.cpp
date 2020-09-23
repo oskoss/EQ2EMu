@@ -2504,8 +2504,20 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 			trait_display = false;
 		}
 
+		// if we can't find it on the master spell list, see if it is a custom spell
+		if (!spell)
+		{
+			lua_interface->FindCustomSpellLock();
+			LuaSpell* tmpSpell = lua_interface->FindCustomSpell(id);
+			if (tmpSpell)
+				spell = tmpSpell->spell;
+			lua_interface->FindCustomSpellUnlock();
+		}
+
 		if (spell && sent_spell_details.count(id) == 0) {
-			sent_spell_details[id] = true;
+			if (!spell->IsCopiedSpell())
+				sent_spell_details[id] = true;
+
 			EQ2Packet* app = spell->SerializeSpell(this, display, trait_display);
 			//DumpPacket(app);
 			QueuePacket(app);
@@ -2620,8 +2632,21 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (effect) {
 			int8 tier = effect->tier;
 			Spell* spell = master_spell_list.GetSpell(id, tier);
+
+			// if we can't find it on the master spell list, see if it is a custom spell
+			if (!spell)
+			{
+				lua_interface->FindCustomSpellLock();
+				LuaSpell* tmpSpell = lua_interface->FindCustomSpell(id);
+				EQ2Packet* pack = 0;
+				if (tmpSpell)
+					spell = tmpSpell->spell;
+				lua_interface->FindCustomSpellUnlock();
+			}
+
 			if (spell && sent_spell_details.count(id) == 0) {
-				sent_spell_details[id] = true;
+				if (!spell->IsCopiedSpell())
+					sent_spell_details[id] = true;
 				int8 type = 0;
 				if (version <= 283)
 					type = 1;
@@ -2666,12 +2691,22 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 
 		if (!spell)
 		{
+			lua_interface->FindCustomSpellLock();
+			LuaSpell* tmpSpell = lua_interface->FindCustomSpell(id);
+			if (tmpSpell)
+				spell = tmpSpell->spell;
+			lua_interface->FindCustomSpellUnlock();
+		}
+
+		if (!spell)
+		{
 			LogWrite(WORLD__ERROR, 0, "WORLD", "FAILED Examine Info Request-> Spell ID: %u, tier: %i", id, tier);
 			return;
 		}
 
 		//if (spell && sent_spell_details.count(spell->GetSpellID()) == 0) {
-		sent_spell_details[spell->GetSpellID()] = true;
+		if (!spell->IsCopiedSpell())
+			sent_spell_details[spell->GetSpellID()] = true;
 		//	EQ2Packet* app = spell->SerializeAASpell(this,tier, data, false, GetItemPacketType(GetVersion()), 0x04);
 		EQ2Packet* app = master_spell_list.GetAASpellPacket(id, tier, this, false, 0x4F);//0x45 change version to match client
 		/////////////////////////////////////////GetAASpellPacket(int32 id, int8 tier, Client* client, bool display, int8 packet_type) {

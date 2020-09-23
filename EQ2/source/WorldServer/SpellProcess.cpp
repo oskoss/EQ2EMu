@@ -2446,7 +2446,10 @@ void SpellProcess::DeleteSpell(LuaSpell* spell)
 	RemoveSpellFromQueue(spell->spell, spell->caster);
 
 	if (spell->spell->IsCopiedSpell())
+	{
+		lua_interface->RemoveCustomSpell(spell->spell->GetSpellID());
 		safe_delete(spell->spell);
+	}
 
 	safe_delete(spell);
 }

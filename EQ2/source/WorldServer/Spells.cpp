@@ -52,6 +52,15 @@ Spell::Spell(Spell* host_spell)
 
 	if (host_spell->GetSpellData())
 	{
+		// try inheriting an existing custom spell id, otherwise obtain the new highest number on the spell list
+		int32 tmpid = lua_interface->GetFreeCustomSpellID();
+		if (tmpid)
+			spell->id = tmpid;
+		else
+		{
+			spell->id = master_spell_list.GetNewMaxSpellID();
+		}
+
 		spell->affect_only_group_members = host_spell->GetSpellData()->affect_only_group_members;
 		spell->call_frequency = host_spell->GetSpellData()->call_frequency;
 		spell->can_effect_raid = host_spell->GetSpellData()->can_effect_raid;
@@ -87,8 +96,6 @@ Spell::Spell(Spell* host_spell)
 		spell->icon_backdrop = host_spell->GetSpellData()->icon_backdrop;
 
 		spell->icon_heroic_op = host_spell->GetSpellData()->icon_heroic_op;
-
-		spell->id = host_spell->GetSpellData()->id;
 
 		spell->incurable = host_spell->GetSpellData()->incurable;
 		spell->interruptable = host_spell->GetSpellData()->interruptable;
@@ -2096,6 +2103,7 @@ bool Spell::ScribeAllowed(Player* player){
 }
 
 MasterSpellList::MasterSpellList(){
+	max_spell_id = 0;
 	MMasterSpellList.SetName("MasterSpellList::MMasterSpellList");
 }
 
@@ -2122,6 +2130,10 @@ void MasterSpellList::AddSpell(int32 id, int8 tier, Spell* spell){
 	spell_list[id][tier] = spell;
 	spell_name_map[spell->GetName()] = spell;
 	spell_soecrc_map[spell->GetSpellData()->soe_spell_crc] = spell;
+
+	if (id > max_spell_id)
+		max_spell_id = id;
+
 	MMasterSpellList.unlock();
 }
 
@@ -2147,12 +2159,50 @@ Spell* MasterSpellList::GetSpellByCRC(int32 spell_crc){
 
 EQ2Packet* MasterSpellList::GetSpellPacket(int32 id, int8 tier, Client* client, bool display, int8 packet_type){
 	Spell* spell = GetSpell(id, tier);
+
+	// if we can't find it on the master spell list, see if it is a custom spell
+	if (!spell)
+	{
+		lua_interface->FindCustomSpellLock();
+		LuaSpell* tmpSpell = lua_interface->FindCustomSpell(id);
+		EQ2Packet* pack = 0;
+		if (tmpSpell)
+		{
+			spell = tmpSpell->spell;
+			pack = spell->SerializeSpell(client, display, packet_type);
+		}
+
+		lua_interface->FindCustomSpellUnlock();
+		return pack;
+	}
+
 	if(spell)
 		return spell->SerializeSpell(client, display, packet_type);
 	return 0;
 }
 EQ2Packet* MasterSpellList::GetAASpellPacket(int32 id, int8 tier, Client* client, bool display, int8 packet_type) {
 	Spell* spell = GetSpell(id, (tier == 0 ? 1 : tier));
+
+	// if we can't find it on the master spell list, see if it is a custom spell
+	if (!spell)
+	{
+		lua_interface->FindCustomSpellLock();
+		LuaSpell* tmpSpell = lua_interface->FindCustomSpell(id);
+		EQ2Packet* pack = 0;
+		if (tmpSpell)
+		{
+			spell = tmpSpell->spell;
+			// TODO: this isn't a tested thing yet... need to add custom spells to alt advancement?
+			AltAdvanceData* data = master_aa_list.GetAltAdvancement(id);
+
+			if(data)
+				pack = spell->SerializeAASpell(client, tier, data, display, false, packet_type);
+		}
+
+		lua_interface->FindCustomSpellUnlock();
+		return pack;
+	}
+
 	//Spell* spell2= GetSpell(id, (tier +1));
 	AltAdvanceData* data = master_aa_list.GetAltAdvancement(id);
 	if (spell)
@@ -2162,6 +2212,23 @@ EQ2Packet* MasterSpellList::GetAASpellPacket(int32 id, int8 tier, Client* client
 
 EQ2Packet* MasterSpellList::GetSpecialSpellPacket(int32 id, int8 tier, Client* client, bool display, int8 packet_type){
 	Spell* spell = GetSpell(id, tier);
+
+	// if we can't find it on the master spell list, see if it is a custom spell
+	if (!spell)
+	{
+		lua_interface->FindCustomSpellLock();
+		LuaSpell* tmpSpell = lua_interface->FindCustomSpell(id);
+		EQ2Packet* pack = 0;
+		if (tmpSpell)
+		{
+			spell = tmpSpell->spell;
+			pack = spell->SerializeSpecialSpell(client, display, packet_type, 0x81);
+		}
+
+		lua_interface->FindCustomSpellUnlock();
+		return pack;
+	}
+
 	if(spell)
 		return spell->SerializeSpecialSpell(client, display, packet_type, 0x81);
 	return 0;

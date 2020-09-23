@@ -47,6 +47,8 @@ LuaInterface::LuaInterface() {
 	MLUAUserData.SetName("LuaInterface::MLUAUserData");
 	MLUAMain.SetName("LuaInterface::MLUAMain");
 	MItemScripts.SetName("LuaInterface::MItemScripts");
+	MSpellDelete.SetName("LuaInterface::MSpellDelete");
+	MCustomSpell.SetName("LuaInterface::MCustomSpell");
 	user_data_timer = new Timer(20000);
 	user_data_timer->Start();
 	spell_delete_timer = new Timer(5000);
@@ -1109,6 +1111,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 
 	lua_register(state, "SetSpellDataIndex", EQ2Emu_lua_SetSpellDataIndex);
 	lua_register(state, "GetSpellDataIndex", EQ2Emu_lua_GetSpellDataIndex);
+
+	lua_register(state, "SetSpellDisplayEffect", EQ2Emu_lua_SetSpellDisplayEffect);
+	lua_register(state, "GetSpellDisplayEffect", EQ2Emu_lua_GetSpellDisplayEffect);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
@@ -1153,7 +1158,10 @@ void LuaInterface::DeletePendingSpells(bool all) {
 			spells_pending_delete.erase(spell);
 
 			if (spell->spell->IsCopiedSpell())
+			{
+				RemoveCustomSpell(spell->spell->GetSpellID());
 				safe_delete(spell->spell);
+			}
 
 			safe_delete(spell);
 		}
@@ -1854,6 +1862,48 @@ void LuaInterface::AddPendingSpellDelete(LuaSpell* spell) {
 	if ( spells_pending_delete.count(spell) == 0 )
 		spells_pending_delete[spell] = Timer::GetCurrentTime2() + 10000;
 	MSpellDelete.unlock();
+}
+
+void LuaInterface::AddCustomSpell(LuaSpell* spell)
+{
+	MCustomSpell.writelock();
+	custom_spells[spell->spell->GetSpellID()] = spell;
+	MCustomSpell.releasewritelock();
+}
+
+void LuaInterface::RemoveCustomSpell(int32 id)
+{
+	MCustomSpell.writelock();
+	map<int32, LuaSpell*>::iterator itr = custom_spells.find(id);
+	if (itr != custom_spells.end())
+	{
+		custom_spells.erase(itr);
+		custom_free_spell_ids.push_front(id);
+	}
+	MCustomSpell.releasewritelock();
+}
+
+// prior to calling FindCustomSpell you should call FindCustomSpellLock and after FindCustomSpellUnlock
+LuaSpell* LuaInterface::FindCustomSpell(int32 id)
+{
+	LuaSpell* spell = 0;
+	map<int32, LuaSpell*>::iterator itr = custom_spells.find(id);
+	if (itr != custom_spells.end())
+		spell = itr->second;
+	return spell;
+}
+
+int32 LuaInterface::GetFreeCustomSpellID()
+{ 
+	int32 id = 0;
+	MCustomSpell.writelock();
+	if (!custom_free_spell_ids.empty())
+	{
+		id = custom_free_spell_ids.front();
+		custom_free_spell_ids.pop_front();
+	}
+	MCustomSpell.releasewritelock();
+	return id;
 }
 
 LUAUserData::LUAUserData(){
