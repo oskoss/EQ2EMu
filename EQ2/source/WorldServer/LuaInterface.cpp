@@ -477,7 +477,7 @@ bool LuaInterface::LoadZoneScript(string name) {
 	return LoadZoneScript(name.c_str());
 }
 
-void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast, const char* function, SpellScriptTimer* timer) {
+void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast, const char* function, SpellScriptTimer* timer, bool passLuaSpell) {
 	if (function)
 		lua_getglobal(spell->state, function);
 	else if (precast)
@@ -486,6 +486,9 @@ void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool preca
 		lua_getglobal(spell->state, "cast");
 	else
 		lua_getglobal(spell->state, "tick");
+
+	if(passLuaSpell)
+		SetSpellValue(spell->state, spell);
 
 	Spawn* temp_spawn = 0;
 	if (timer && timer->caster && spell->caster)
@@ -1716,7 +1719,6 @@ bool LuaInterface::RunItemScript(string script_name, const char* function_name, 
 			UseItemScript(script_name.c_str(), state, false);
 			return false;
 		}
-		lua_getglobal(state, function_name);
 		lua_getglobal(state, function_name);
 		if (!lua_isfunction(state, lua_gettop(state))){
 			lua_pop(state, 1);
