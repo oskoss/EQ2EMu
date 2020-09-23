@@ -232,6 +232,27 @@ struct FlightPathLocation {
 	float	Z;
 };
 
+struct ZoneInfoSlideStructInfo {
+	float unknown1[2];
+	int32 unknown2[2];
+	int32 unknown3;
+	int32 unknown4;
+	char slide[128];
+	char voiceover[128];
+	int32 key1;
+	int32 key2;
+};
+struct ZoneInfoSlideStructTransitionInfo {
+	int32 transition_x;
+	int32 transition_y;
+	float transition_zoom;
+	float transition_time;
+};
+struct ZoneInfoSlideStruct {
+	ZoneInfoSlideStructInfo* info;
+	vector<ZoneInfoSlideStructTransitionInfo*> slide_transition_info;
+};
+
 class SPGrid;
 
 // need to attempt to clean this up and add xml comments, remove unused code, find a logical way to sort the functions maybe by get/set/process/add etc...
@@ -243,6 +264,10 @@ public:
 	void		Init();
 	bool		Process();
 	bool		SpawnProcess();
+
+	ZoneInfoSlideStruct* GenerateSlideStruct(float unknown1a, float unknown1b, int32 unknown2a, int32 unknown2b, int32 unknown3, int32 unknown4, const char* slide, const char* voiceover, int32 key1, int32 key2);
+	void AddZoneInfoSlideStructTransitionInfo(ZoneInfoSlideStruct* info, int32 x, int32 y, float zoom, float transition_time);	
+	vector<ZoneInfoSlideStruct*>* GenerateTutorialSlides();
 	
 	void	LoadRevivePoints(vector<RevivePoint*>* revive_points);
 	vector<RevivePoint*>* GetRevivePoints(Client* client);

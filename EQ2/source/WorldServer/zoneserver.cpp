@@ -4925,6 +4925,113 @@ int16 ZoneServer::SetSpawnTargetable(int32 spawn_id){
 	return ret_val;
 }
 
+ZoneInfoSlideStruct* ZoneServer::GenerateSlideStruct(float unknown1a, float unknown1b, int32 unknown2a, int32 unknown2b, int32 unknown3, int32 unknown4, const char* slide, const char* voiceover, int32 key1, int32 key2) {
+	ZoneInfoSlideStructInfo* info = new ZoneInfoSlideStructInfo();
+	memset(info, 0, sizeof(ZoneInfoSlideStructInfo));
+	info->unknown1[0] = unknown1a;
+	info->unknown1[1] = unknown1b;
+	info->unknown2[0] = unknown2a;
+	info->unknown2[1] = unknown2b;
+	info->unknown3 = unknown3;
+	info->unknown4 = unknown4;
+	int8 length = strlen(slide);
+	if (length >= 128)
+		length = 127;
+	strncpy(info->slide, slide, length);
+	length = strlen(voiceover);
+	if (length >= 128)
+		length = 127;
+	strncpy(info->voiceover, voiceover, length);
+	info->key1 = key1;
+	info->key2 = key2;
+	ZoneInfoSlideStruct* ret = new ZoneInfoSlideStruct();
+	ret->info = info;
+	return ret;
+}
+
+void ZoneServer::AddZoneInfoSlideStructTransitionInfo(ZoneInfoSlideStruct* info, int32 x, int32 y, float zoom, float transition_time) {
+	ZoneInfoSlideStructTransitionInfo* transition_info = new ZoneInfoSlideStructTransitionInfo();
+	transition_info->transition_x = x;
+	transition_info->transition_y = y;
+	transition_info->transition_zoom = zoom;
+	transition_info->transition_time = transition_time;
+	info->slide_transition_info.push_back(transition_info);
+}
+
+vector<ZoneInfoSlideStruct*>* ZoneServer::GenerateTutorialSlides() {
+	vector<ZoneInfoSlideStruct*>* slides = new vector<ZoneInfoSlideStruct*>();
+	ZoneInfoSlideStruct* slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt01_final001.dds", "voiceover/english/antonia_intro/antonia_intro_001_64.mp3", 2519553957, 1010319376);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 495, 1, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 495, 1.5, 16);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt02_final001.dds", "voiceover/english/antonia_intro/antonia_intro_002_64.mp3", 567178266, 3055063399);
+	AddZoneInfoSlideStructTransitionInfo(slide, 600, 365, 1.60000002384186, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 800, 370, 1.39999997615814, 9);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 420, 1.20000004768372, 8);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt03_final001.dds", "voiceover/english/antonia_intro/antonia_intro_003_64.mp3", 3171561318, 593374281);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 420, 1.20000004768372, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 750, 320, 1.60000002384186, 10);
+	AddZoneInfoSlideStructTransitionInfo(slide, 575, 265, 2.29999995231628, 10);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt04_final001.dds", "voiceover/english/antonia_intro/antonia_intro_004_64.mp3", 1959944485, 4285605574);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 420, 2.5, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 420, 1.70000004768372, 8);
+	AddZoneInfoSlideStructTransitionInfo(slide, 675, 390, 2.20000004768372, 11);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt05_final001.dds", "voiceover/english/antonia_intro/antonia_intro_005_64.mp3", 609693392, 260295215);
+	AddZoneInfoSlideStructTransitionInfo(slide, 750, 500, 2.79999995231628, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 720, 300, 2.5, 9);
+	AddZoneInfoSlideStructTransitionInfo(slide, 975, 270, 2.20000004768372, 9);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt06_final001.dds", "voiceover/english/antonia_intro/antonia_intro_006_64.mp3", 3056613203, 775201556);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 495, 1.89999997615814, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 475, 1, 24);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt07_final001.dds", "voiceover/english/antonia_intro/antonia_intro_007_64.mp3", 3113327662, 1299367895);
+	AddZoneInfoSlideStructTransitionInfo(slide, 1400, 420, 2.40000009536743, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 1200, 375, 1.70000004768372, 7);
+	AddZoneInfoSlideStructTransitionInfo(slide, 800, 225, 2.29999995231628, 7);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt08_final001.dds", "voiceover/english/antonia_intro/antonia_intro_008_64.mp3", 2558791235, 2674773065);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 495, 1, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 495, 1.5, 27);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt09_final001.dds", "voiceover/english/antonia_intro/antonia_intro_009_64.mp3", 4029296401, 1369011033);
+	AddZoneInfoSlideStructTransitionInfo(slide, 715, 305, 2.40000009536743, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 730, 325, 1.79999995231628, 6);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 395, 1.5, 5);
+	AddZoneInfoSlideStructTransitionInfo(slide, 1360, 330, 1.79999995231628, 9);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt10_final001.dds", "voiceover/english/antonia_intro/antonia_intro_010_64.mp3", 3055524517, 3787058332);
+	AddZoneInfoSlideStructTransitionInfo(slide, 670, 675, 2.20000004768372, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 710, 390, 1.79999995231628, 7);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 415, 1.60000002384186, 5.5);
+	AddZoneInfoSlideStructTransitionInfo(slide, 1250, 675, 1.79999995231628, 8);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt11_final001.dds", "voiceover/english/antonia_intro/antonia_intro_011_64.mp3", 3525586740, 812068950);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 495, 1, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 495, 2, 19);
+	slides->push_back(slide);
+
+	slide = GenerateSlideStruct(0.5, 0.5, 15, 15, 1842, 1012, "images/slideshows/boat_06p_tutorial02/lore_chapt12_final001.dds", "voiceover/english/antonia_intro/antonia_intro_012_64.mp3", 3493874350, 2037661816);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 495, 2, 0);
+	AddZoneInfoSlideStructTransitionInfo(slide, 920, 495, 1, 43);
+	slides->push_back(slide);
+
+	return slides;
+}
+
 EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 	client_spawn_map.Put(client->GetPlayer(), client);
 	PacketStruct* packet = configReader.getStruct("WS_ZoneInfo", client->GetVersion());
@@ -4959,6 +5066,38 @@ EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 	packet->setDataByName("x", client->GetPlayer()->GetX());
 	packet->setDataByName("y", client->GetPlayer()->GetY());
 	packet->setDataByName("z", client->GetPlayer()->GetZ());
+
+	if (client->GetVersion() == 546 && (GetZoneFile() && strcmp("boat_06p_tutorial02", GetZoneFile()) == 0) && client->GetPlayer()->GetX() == this->GetSafeX() && client->GetPlayer()->GetY() == this->GetSafeY() && client->GetPlayer()->GetZ() == this->GetSafeZ()) { //basically the only time the player will see this is if their zone in coords are the exact same as the safe coords (they haven't moved)		
+		vector<ZoneInfoSlideStruct*>* slides = GenerateTutorialSlides();
+		if (slides) {
+			packet->setArrayLengthByName("num_slides", slides->size());
+			ZoneInfoSlideStruct* slide = 0;
+			for (int8 i = 0; i < slides->size(); i++) {
+				slide = slides->at(i);
+				packet->setArrayDataByName("unknown1", slide->info->unknown1[0], i, 0);
+				packet->setArrayDataByName("unknown1", slide->info->unknown1[1], i, 1);
+				packet->setArrayDataByName("unknown2", slide->info->unknown2[0], i, 0);
+				packet->setArrayDataByName("unknown2", slide->info->unknown2[1], i, 1);
+				packet->setArrayDataByName("unknown3", slide->info->unknown3, i);
+				packet->setArrayDataByName("unknown4", slide->info->unknown4, i);
+				packet->setArrayDataByName("slide", slide->info->slide, i);
+				packet->setArrayDataByName("voiceover", slide->info->voiceover, i);
+				packet->setArrayDataByName("key1", slide->info->key1, i);
+				packet->setArrayDataByName("key2", slide->info->key2, i);
+				packet->setSubArrayLengthByName("num_transitions", slide->slide_transition_info.size(), i);
+				for (int8 x = 0; x < slide->slide_transition_info.size(); x++) {
+					packet->setSubArrayDataByName("transition_x", slide->slide_transition_info[x]->transition_x, i, x);
+					packet->setSubArrayDataByName("transition_y", slide->slide_transition_info[x]->transition_y, i, x);
+					packet->setSubArrayDataByName("transition_zoom", slide->slide_transition_info[x]->transition_zoom, i, x);
+					packet->setSubArrayDataByName("transition_time", slide->slide_transition_info[x]->transition_time, i, x);
+					safe_delete(slide->slide_transition_info[x]);
+				}
+				safe_delete(slide->info);
+				safe_delete(slide);
+			}
+		}
+		safe_delete(slides);
+	}
 
 	packet->setDataByName("underworld", underworld);
 	
@@ -5068,7 +5207,7 @@ EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 	packet->setArrayDataByName("adv_name", "nektulos_mini02", 7);
 	packet->setArrayDataByName("adv_id", 1, 7);
 	packet->setArrayDataByName("adv_name", "nektulos_mini03", 8);
-	packet->setArrayDataByName("adv_id", 2, 8);
+	packet->setArrayDataByName("adv_id", 2, 8);	
 
 
 

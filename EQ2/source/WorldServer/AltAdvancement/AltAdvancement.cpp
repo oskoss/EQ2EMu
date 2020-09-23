@@ -254,6 +254,8 @@ void MasterAAList::DisplayAA(Client* client,int8 newtemplate,int8 changemode) {
 	vector<TreeNodeData*>::iterator itr_tree3;
 	map <int8, vector<TreeNodeData*> > Nodes;
 	vector<TreeNodeData*> TreeNodeList = master_tree_nodes.GetTreeNodes();
+	if (TreeNodeList.size() == 0)
+		return;
 	vector<vector<vector<AAEntry> > > AAEntryList ;
 	Query query;
 	MYSQL_ROW row;

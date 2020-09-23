@@ -594,10 +594,12 @@ to zero and treated like placeholders." />
 	<Data ElementName="voiceover" Type="EQ2_8Bit_String" />
 	<Data ElementName="key1" Type="int32" Size="1" />
 	<Data ElementName="key2" Type="int32" Size="1" />
-	<Data ElementName="num_unknown" Type="int8" Size="1" />
-	<Data ElementName="unknown_array" Type="Array" ArraySizeVariable="num_unknown">
-		<Data ElementName="unknown1" Type="int32" Size="2" />
-		<Data ElementName="unknown2" Type="float" Size="2" />		
+	<Data ElementName="num_transitions" Type="int8" Size="1" />
+	<Data ElementName="transitions_array" Type="Array" ArraySizeVariable="num_transitions">
+		<Data ElementName="transition_x" Type="int32" Size="1" />
+		<Data ElementName="transition_y" Type="int32" Size="1" />
+		<Data ElementName="transition_zoom" Type="float" Size="1" />
+		<Data ElementName="transition_time" Type="float" Size="1" />
 	</Data>
 </Data>
 <Data ElementName="unknown3" Type="float" Size="2" />
@@ -629,8 +631,26 @@ to zero and treated like placeholders." />
 <Data ElementName="minute" Type="int8" Size="1" />
 <Data ElementName="seconds" Type="int8" Size="1" />
 <Data ElementName="unknown7" Type="float" Size="2" />
-<Data ElementName="unknown8" Type="int8" Size="1" />
-<Data ElementName="unknown9" Type="float" Size="3" />
+<Data ElementName="num_slides" Type="int8" Size="1" />
+<Data ElementName="slide_array" Type="Array" ArraySizeVariable="num_slides">
+	<Data ElementName="unknown1" Type="float" Size="2" />
+	<Data ElementName="unknown2" Type="int32" Size="2" />
+	<Data ElementName="unknown3" Type="int32" Size="1" />
+	<Data ElementName="unknown4" Type="int32" Size="1" />
+	<Data ElementName="slide" Type="EQ2_8Bit_String" />
+	<Data ElementName="voiceover" Type="EQ2_8Bit_String" />
+	<Data ElementName="key1" Type="int32" Size="1" />
+	<Data ElementName="key2" Type="int32" Size="1" />
+	<Data ElementName="num_transitions" Type="int8" Size="1" />
+	<Data ElementName="transitions_array" Type="Array" ArraySizeVariable="num_transitions">
+		<Data ElementName="transition_x" Type="int32" Size="1" />
+		<Data ElementName="transition_y" Type="int32" Size="1" />
+		<Data ElementName="transition_zoom" Type="float" Size="1" />
+		<Data ElementName="transition_time" Type="float" Size="1" />
+	</Data>
+</Data>
+<Data ElementName="unknown9" Type="float" Size="2" />
+<Data ElementName="underworld" Type="float" Size="1" />
 <Data ElementName="zone_flags" Type="int32" Size="1" />
 <Data ElementName="num_adv" Type="int32" Size="1" />
 <Data ElementName="adv_array" Type="Array" ArraySizeVariable="num_adv">
