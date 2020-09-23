@@ -1106,6 +1106,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetSpellData", EQ2Emu_lua_GetSpellData);
 	lua_register(state, "SetSpellData", EQ2Emu_lua_SetSpellData);
 	lua_register(state, "CastCustomSpell", EQ2Emu_lua_CastCustomSpell);
+
+	lua_register(state, "SetSpellDataIndex", EQ2Emu_lua_SetSpellDataIndex);
+	lua_register(state, "GetSpellDataIndex", EQ2Emu_lua_GetSpellDataIndex);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

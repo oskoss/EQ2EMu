@@ -484,4 +484,7 @@ int EQ2Emu_lua_GetSpell(lua_State* state);
 int EQ2Emu_lua_GetSpellData(lua_State* state);
 int EQ2Emu_lua_SetSpellData(lua_State* state);
 int EQ2Emu_lua_CastCustomSpell(lua_State* state);
+
+int EQ2Emu_lua_SetSpellDataIndex(lua_State* state);
+int EQ2Emu_lua_GetSpellDataIndex(lua_State* state);
 #endif

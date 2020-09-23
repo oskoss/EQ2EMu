@@ -10545,6 +10545,128 @@ int EQ2Emu_lua_SetSpellData(lua_State* state) {
 	return valSet;
 }
 
+int EQ2Emu_lua_SetSpellDataIndex(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetSpell(state);
+	int8 idx = lua_interface->GetInt32Value(state, 2);
+
+	if (!spell) {
+		lua_interface->LogError("%s: Spell not given in SetSpellDataIndex!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spell->spell || !spell->spell->GetSpellData()) {
+		lua_interface->LogError("%s: Inner Spell or SpellData not given in SetSpellDataIndex!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (spell->spell->lua_data.size() <= idx)
+	{
+		lua_interface->LogError("%s: lua_data size %i <= %i (idx passed) SetSpellDataIndex!", lua_interface->GetScriptName(state), spell->spell->lua_data.size(), idx);
+		return 0;
+	}
+
+	bool setVal = true;
+
+	LUAData* data = spell->spell->lua_data[idx];
+
+	switch (data->type)
+	{
+	case 0:
+	{
+		sint32 value = lua_interface->GetSInt32Value(state, 3);
+		sint32 value2 = lua_interface->GetSInt32Value(state, 4);
+		data->int_value = value;
+		data->int_value2 = value2;
+		break;
+	}
+	case 1:
+	{
+		float value = lua_interface->GetFloatValue(state, 3);
+		float value2 = lua_interface->GetFloatValue(state, 4);
+		data->float_value = value;
+		data->float_value2 = value2;
+		break;
+	}
+	case 2:
+	{
+		bool value = lua_interface->GetBooleanValue(state, 3);
+		data->bool_value = value;
+		break;
+	}
+	case 3:
+	{
+		string value = lua_interface->GetStringValue(state, 3);
+		string value2 = lua_interface->GetStringValue(state, 4);
+		data->string_value = value;
+		data->string_value2 = value2;
+		break;
+	}
+	default:
+		setVal = false;
+	}
+
+	return setVal;
+}
+
+
+int EQ2Emu_lua_GetSpellDataIndex(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetSpell(state);
+	int8 idx = lua_interface->GetInt32Value(state, 2);
+
+	if (!spell) {
+		lua_interface->LogError("%s: Spell not given in GetSpellDataIndex!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spell->spell || !spell->spell->GetSpellData()) {
+		lua_interface->LogError("%s: Inner Spell or SpellData not given in GetSpellDataIndex!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (spell->spell->lua_data.size() <= idx)
+	{
+		lua_interface->LogError("%s: lua_data size %i <= %i (idx passed) GetSpellDataIndex!", lua_interface->GetScriptName(state), spell->spell->lua_data.size(), idx);
+		return 0;
+	}
+
+	bool setVal = true;
+
+	LUAData* data = spell->spell->lua_data[idx];
+
+	switch (data->type)
+	{
+	case 0:
+	{
+		lua_interface->SetSInt32Value(state, data->int_value);
+		lua_interface->SetSInt32Value(state, data->int_value2);
+		break;
+	}
+	case 1:
+	{
+		lua_interface->SetFloatValue(state, data->float_value);
+		lua_interface->SetFloatValue(state, data->float_value2);
+		break;
+	}
+	case 2:
+	{
+		lua_interface->SetBooleanValue(state, data->bool_value);
+		break;
+	}
+	case 3:
+	{
+		lua_interface->SetStringValue(state, data->string_value.c_str());
+		lua_interface->SetStringValue(state, data->string_value2.c_str());
+		break;
+	}
+	default:
+		setVal = false;
+	}
+
+	return setVal;
+}
+
 
 int EQ2Emu_lua_CastCustomSpell(lua_State* state) {
 	if (!lua_interface)
