@@ -3003,7 +3003,7 @@ void ClientList::Process() {
 	for (client_iter = client_list.begin(); client_iter != client_list.end(); client_iter++) {
 		client = *client_iter;
 		// have a sanity check because the client list can sometimes obtain null client pointers
-		if (!client || (!client->Process() || client->remove_from_list)) {
+		if (!client || client->remove_from_list || (!client->Process())) { // if we should be removing from list, don't process any further
 			erase_iter = client_iter;
 			break;
 		}
