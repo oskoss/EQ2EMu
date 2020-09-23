@@ -5067,7 +5067,7 @@ EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 	packet->setDataByName("y", client->GetPlayer()->GetY());
 	packet->setDataByName("z", client->GetPlayer()->GetZ());
 
-	if (client->GetVersion() == 546 && (GetZoneFile() && strcmp("boat_06p_tutorial02", GetZoneFile()) == 0) && client->GetPlayer()->GetX() == this->GetSafeX() && client->GetPlayer()->GetY() == this->GetSafeY() && client->GetPlayer()->GetZ() == this->GetSafeZ()) { //basically the only time the player will see this is if their zone in coords are the exact same as the safe coords (they haven't moved)		
+	if ((GetZoneFile() && strcmp("boat_06p_tutorial02", GetZoneFile()) == 0) && client->GetPlayer()->GetX() == this->GetSafeX() && client->GetPlayer()->GetY() == this->GetSafeY() && client->GetPlayer()->GetZ() == this->GetSafeZ()) { //basically the only time the player will see this is if their zone in coords are the exact same as the safe coords (they haven't moved)		
 		vector<ZoneInfoSlideStruct*>* slides = GenerateTutorialSlides();
 		if (slides) {
 			packet->setArrayLengthByName("num_slides", slides->size());

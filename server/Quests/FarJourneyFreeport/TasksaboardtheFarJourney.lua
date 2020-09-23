@@ -109,6 +109,7 @@ function CurrentStep(Quest, QuestGiver, Player)
 			spawn = GetSpawnFromList(spawns, i-1)
 			if spawn then
 				ChangeHandIcon(spawn, 1)
+				SpawnSet(NPC, "targetable", 1, true, true)
 			end
 			i = i + 1
 		until spawn == Nil
@@ -255,6 +256,7 @@ end
 function Reload(Quest, QuestGiver, Player, Step)
 	if Step == 1 then
 		Step2Init(Quest, QuestGiver, Player)
+		CurrentStep(Quest, QuestGiver, Player)
 	elseif Step == 2 then
 		Step3Init(Quest, QuestGiver, Player)
 	elseif Step == 3 then

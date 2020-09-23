@@ -7,7 +7,12 @@
 --]]
 
 function spawn(NPC)
+	ChangeHandIcon(NPC, 0)
+	SpawnSet(NPC, "targetable", 0, true, true)
+end
 
+function respawn(NPC)
+	spawn(NPC)
 end
 
 function open(NPC, Player)
@@ -20,6 +25,8 @@ function open(NPC, Player)
 		SetTutorialStep(player, 16)
 	else
 		DisplayText(Player, 12, "This box is empty.")
+		ChangeHandIcon(NPC, 0)
+		SpawnSet(NPC, "targetable", 0, true, true)
 	end
 end
 
