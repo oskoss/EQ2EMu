@@ -558,8 +558,8 @@ void Client::HandlePlayerRevive(int32 point_id)
 
 	if (revive_point && revive_point->zone_id != GetCurrentZone()->GetZoneID() && revive_point->zone_id != 0)
 	{
-		string* zone_name = database.GetZoneName(revive_point->zone_id);
-		if (!zone_name || zone_name->length() == 0)
+		string zone_name = database.GetZoneName(revive_point->zone_id);
+		if (zone_name.length() == 0)
 		{
 			LogWrite(CCLIENT__WARNING, 0, "Client", "Unable to zone player to revive zone ID '%u', using current zone's safe coords.", revive_point->zone_id);
 			x = GetCurrentZone()->GetSafeX();
@@ -573,9 +573,8 @@ void Client::HandlePlayerRevive(int32 point_id)
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Sending player to revive zone ID '%u', using current zone's safe coords.", revive_point->zone_id);
 			location_name = revive_point->location_name.c_str();
 			player->ClearEverything();
-			Zone(zone_name->c_str(), false);
+			Zone(zone_name.c_str(), false);
 		}
-		safe_delete(zone_name);
 	}
 
 	zone_desc = GetCurrentZone()->GetZoneDescription();

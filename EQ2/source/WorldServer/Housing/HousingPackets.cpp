@@ -80,8 +80,9 @@ void ClientPacketFunctions::SendHousingList(Client* client) {
 		name.append("'s ");
 		name.append(hz->name);
 		packet->setArrayDataByName("house_id", ph->unique_id, i);
-		string* zone_name = database.GetZoneName(hz->zone_id);
-		packet->setArrayDataByName("zone", zone_name->c_str(), i);
+		string zone_name = database.GetZoneName(hz->zone_id);
+		if(zone_name.length() > 0)
+			packet->setArrayDataByName("zone", zone_name.c_str(), i);
 		packet->setArrayDataByName("house_city", hz->name.c_str(), i);
 		packet->setArrayDataByName("house_address", "", i); // need this pulled from live
 		packet->setArrayDataByName("house_description", name.c_str(), i);

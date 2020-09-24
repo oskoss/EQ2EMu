@@ -2562,9 +2562,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 							 }
 		case COMMAND_ZONE:{
-			string* zonename = 0;
 			int32 instanceID = 0;
-			const char* zone = 0;
+			string zone;
 			int32 zone_id = 0;
 			bool listSearch = false;
 			bool isInstance = false;
@@ -2629,10 +2628,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if(sep->IsNumber(0))
 					{
 						zone_id = atoul(sep->arg[0]);
-						zonename = database.GetZoneName(zone_id);
+						string zonename = database.GetZoneName(zone_id);
 
-						if(zonename)
-							zone = zonename->c_str();
+						if(zonename.length() > 0)
+							zone = zonename;
 					}
 					else
 						zone = sep->arg[0];
@@ -2653,24 +2652,25 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 			if(!listSearch)
 			{
-				if(!zone)
+				if(zone.length() == 0)
 					client->Message(CHANNEL_COLOR_RED, "Error: Invalid Zone");
 				else if(instanceID != client->GetCurrentZone()->GetInstanceID() || 
 					zone_id != client->GetCurrentZone()->GetZoneID())
 				{
-					if(database.VerifyZone(zone))
+					const char* zonestr = zone.c_str();
+					if(database.VerifyZone(zonestr))
 					{
-						if(client->CheckZoneAccess(zone))
+						if(client->CheckZoneAccess(zonestr))
 						{
-							client->Message(CHANNEL_COLOR_YELLOW,"Zoning to %s...", zone);
+							client->Message(CHANNEL_COLOR_YELLOW,"Zoning to %s...", zonestr);
 							if(isInstance)
 								client->Zone(instanceID,true,true);
 							else
-								client->Zone(zone);
+								client->Zone(zonestr);
 						}
 					}
 					else
-						client->Message(CHANNEL_COLOR_RED, "Error: Zone '%s' not found.  To get a list type /zone list", zone);
+						client->Message(CHANNEL_COLOR_RED, "Error: Zone '%s' not found.  To get a list type /zone list", zonestr);
 				}
 				else
 					client->Message(CHANNEL_COLOR_RED, "Error: You are already in that zone!");
@@ -2708,7 +2708,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Syntax: /zone list [partial zone name]");
 				}
 			}
-			safe_delete(zonename);
 			break;
 		}
 		case COMMAND_USE: {

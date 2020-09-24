@@ -554,12 +554,11 @@ ZoneServer* ZoneList::Get(int32 id, bool loadZone) {
 	if(ret)
 		tmp = ret;
 	else if (loadZone) {
-		string* zonename = database.GetZoneName(id);
-		if(zonename){
-			tmp = new ZoneServer(zonename->c_str());
+		string zonename = database.GetZoneName(id);
+		if(zonename.length() >0){
+			tmp = new ZoneServer(zonename.c_str());
 			database.LoadZoneInfo(tmp);
 			tmp->Init();
-			safe_delete(zonename);
 		}
 	}
 	return tmp;
@@ -604,9 +603,9 @@ ZoneServer* ZoneList::GetByInstanceID(int32 id, int32 zone_id) {
 	if(ret)
 		tmp = ret;
 	else if ( zone_id > 0 ){
-		string* zonename = database.GetZoneName(zone_id);
-		if(zonename){
-			tmp = new ZoneServer(zonename->c_str());
+		string zonename = database.GetZoneName(zone_id);
+		if(zonename.length() > 0){
+			tmp = new ZoneServer(zonename.c_str());
 
 			// the player is trying to preload an already existing instance but it isn't loaded
 			if ( id > 0 )
@@ -614,7 +613,6 @@ ZoneServer* ZoneList::GetByInstanceID(int32 id, int32 zone_id) {
 
 			database.LoadZoneInfo(tmp);
 			tmp->Init();
-			safe_delete(zonename);
 		}
 	}
 	return tmp;

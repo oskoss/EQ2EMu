@@ -87,13 +87,14 @@ void EQStreamFactory::Close()
 {
 	CheckTimeout(true);
 	Stop();
-
+	if (sock != -1) {
 #ifdef WIN32
-	closesocket(sock);
+		closesocket(sock);
 #else
-	close(sock);
+		close(sock);
 #endif
-	sock=-1;
+		sock = -1;
+	}
 }
 bool EQStreamFactory::Open()
 {
@@ -121,7 +122,7 @@ struct sockaddr_in address;
 	}
 
 	if (bind(sock, (struct sockaddr *) &address, sizeof(address)) < 0) {
-		close(sock);
+		//close(sock);
 		sock=-1;
 		return false;
 	}

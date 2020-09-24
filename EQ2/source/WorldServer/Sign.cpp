@@ -245,11 +245,10 @@ void Sign::HandleUse(Client* client, string command)
 	{
 		if( GetSignDistance() == 0 || client->GetPlayer()->GetDistance(this) <= GetSignDistance() )
 		{
-			string* name = database.GetZoneName(GetSignZoneID());
-
-			if( name )
+			string name = database.GetZoneName(GetSignZoneID());
+			if( name.length() >0 )
 			{
-				if( !client->CheckZoneAccess(name->c_str()) )
+				if( !client->CheckZoneAccess(name.c_str()) )
 					return;
 
 				// determine if the coordinates should be set (returns false if they should)
@@ -275,10 +274,8 @@ void Sign::HandleUse(Client* client, string command)
 				if ( !client->TryZoneInstance(GetSignZoneID(), zone_coords_invalid) )
 				{
 					LogWrite(SIGN__DEBUG, 0, "Sign", "Sending client to instance of zone_id: %u", GetSignZoneID());
-					client->Zone(name->c_str(), zone_coords_invalid);
+					client->Zone(name.c_str(), zone_coords_invalid);
 				}
-
-				safe_delete(name);
 			}
 			else
 			{

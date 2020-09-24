@@ -129,7 +129,7 @@ public:
 
 	void PingNewDB();
 
-	string*	GetZoneName(int32 id);
+	string	GetZoneName(int32 id);
 	string	GetZoneDescription(int32 id);
 	int32	LoadCharacterSkills(int32 char_id, Player* player);
 	void	DeleteCharacterSkill(int32 char_id, Skill* skill);

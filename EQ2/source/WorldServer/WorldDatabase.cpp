@@ -3500,8 +3500,13 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 		return;
  	}
 
-	if(query.GetAffectedRows() > 0)
-		LogWrite(PLAYER__DEBUG, 0, "Player", "Setting New Character Starting Zone to '%s' due to no valid options!", GetZoneName(1)->c_str());
+	if (query.GetAffectedRows() > 0) {
+		string zone_name = GetZoneName(1);
+		if(zone_name.length() > 0)
+			LogWrite(PLAYER__DEBUG, 0, "Player", "Setting New Character Starting Zone to '%s' due to no valid options!", zone_name.c_str());
+		else
+			LogWrite(PLAYER__DEBUG, 0, "Player", "Unable to set New Character Starting Zone due to no valid options!");
+	}
 
 	return;
 }
@@ -3635,11 +3640,9 @@ string WorldDatabase::GetZoneDescription(int32 id){
 	return ret;
 }
 
-string* WorldDatabase::GetZoneName(int32 id){
-	string* ret = new string;
+string WorldDatabase::GetZoneName(int32 id){
 	if (zone_names.count(id) > 0){
-		ret->assign(zone_names[id]);
-		return ret;
+		return zone_names[id];
 	}
 	Query query;
 	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT `name` FROM zones where `id` = %u", id);
@@ -3647,9 +3650,9 @@ string* WorldDatabase::GetZoneName(int32 id){
 		MYSQL_ROW row;
 		row = mysql_fetch_row(result);
 		zone_names[id] = row[0];
-		ret->assign(zone_names[id]);
+		return zone_names[id];
 	}
-	return ret;
+	return string("");
 }
 
 bool WorldDatabase::VerifyZone(const char* name){
@@ -3929,6 +3932,21 @@ void WorldDatabase::LoadZoneScriptData() {
 
 					world.AddZoneScript(zone_id, zone_script.c_str());
 					total++;
+				}
+				else if (zone_id > 0) {
+					
+					string tmpScript;
+					tmpScript.append("ZoneScripts/");
+					string zonename = GetZoneName(zone_id);
+					tmpScript.append(zonename);
+					tmpScript.append(".lua");
+					struct stat buffer;
+					bool fileExists = (stat(tmpScript.c_str(), &buffer) == 0);
+					if (fileExists)
+					{
+						LogWrite(LUA__INFO, 0, "LUA", "No zonescript file described in the database, overriding with ZoneScript %s for Zone ID %u", (char*)tmpScript.c_str(), zone_id);
+						world.AddZoneScript(zone_id, tmpScript.c_str());
+					}
 				}
 			}
 		}

@@ -415,21 +415,17 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 		packet->setDataByName("max_weight", info_struct->max_weight);
 		packet->setDataByName("pet_name", info_struct->pet_name);
 		packet->setDataByName("status_points", info_struct->status_points);
-		string* bind_name = 0;
-		if(bind_zone_id > 0)
-			bind_name = database.GetZoneName(bind_zone_id);
-		if(bind_name){
-			packet->setDataByName("bind_zone", bind_name->c_str());
-			safe_delete(bind_name);
+		if(bind_zone_id > 0){
+			string bind_name = database.GetZoneName(bind_zone_id);
+			if (bind_name.length() > 0)
+				packet->setDataByName("bind_zone", bind_name.c_str());
 		}
 		else
 			packet->setDataByName("bind_zone", "None");
-		string* house_name = 0;
-		if(house_zone_id > 0)
-			house_name = database.GetZoneName(house_zone_id);
-		if(house_name){
-			packet->setDataByName("house_zone", house_name->c_str());
-			safe_delete(house_name);
+		if(house_zone_id > 0){
+			string house_name = database.GetZoneName(house_zone_id);
+			if (house_name.length() > 0)
+				packet->setDataByName("house_zone", house_name.c_str());
 		}
 		else
 			packet->setDataByName("house_zone", "None");
@@ -922,22 +918,18 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("status_points", 999999);// info_struct->status_points);
 		packet->setDataByName("guild_status", 888888);
 		//unknown_1096_44_MJ
-		string* house_name = 0;
-		if (house_zone_id > 0)
-			house_name = database.GetZoneName(house_zone_id);
-		if (house_name) {
-			packet->setDataByName("house_zone", house_name->c_str());
-			safe_delete(house_name);
+		if (house_zone_id > 0){
+			string house_name = database.GetZoneName(house_zone_id);
+			if(house_name.length() > 0)
+				packet->setDataByName("house_zone", house_name.c_str());
 		}
 		else
 			packet->setDataByName("house_zone", "abcdefghijklmnopqrst");
-		//unknown_1096_45_MJ
-		string* bind_name = 0;
-		if (bind_zone_id > 0)
-			bind_name = database.GetZoneName(bind_zone_id);
-		if (bind_name) {
-			packet->setDataByName("bind_zone", bind_name->c_str());
-			safe_delete(bind_name);
+		//unknown_1096_45_MJ		
+		if (bind_zone_id > 0){
+			string bind_name = database.GetZoneName(bind_zone_id);
+			if(bind_name.length() > 0)
+				packet->setDataByName("bind_zone", bind_name.c_str());
 		}
 		else
 			packet->setDataByName("bind_zone", "abcdefghijklmnopqrst");

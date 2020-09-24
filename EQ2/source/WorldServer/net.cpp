@@ -350,7 +350,7 @@ int main(int argc, char** argv) {
 	}
 
 	LogWrite(WORLD__INFO, 0, "World", "Total World startup time: %u seconds.", Timer::GetUnixTimeStamp() - t_total);
-
+	int ret_code = 0;
 	if (eqsf.Open(net.GetWorldPort())) {
 		if (strlen(net.GetWorldAddress()) == 0)
 			LogWrite(NET__INFO, 0, "Net", "World server listening on port %i", net.GetWorldPort());
@@ -362,133 +362,135 @@ int main(int argc, char** argv) {
 	}
 	else {
 		LogWrite(NET__ERROR, 0, "Net", "Failed to open port %i.", net.GetWorldPort());
-		return 1;
+		ret_code = 1;
 	}
+	Timer* TimeoutTimer = 0;
+	if (ret_code == 0) {
+		Timer InterserverTimer(INTERSERVER_TIMER); // does MySQL pings and auto-reconnect
+		InterserverTimer.Trigger();
+		TimeoutTimer = new Timer(5000);
+		TimeoutTimer->Start();
+		EQStream* eqs = 0;
+		UpdateWindowTitle(0);
+		LogWrite(ZONE__INFO, 0, "Zone", "Starting static zones...");
+		database.LoadSpecialZones();
+		map<EQStream*, int32> connecting_clients;
+		map<EQStream*, int32>::iterator cc_itr;
 
-	Timer InterserverTimer(INTERSERVER_TIMER); // does MySQL pings and auto-reconnect
-	InterserverTimer.Trigger();
-	Timer* TimeoutTimer = new Timer(5000);
-	TimeoutTimer->Start();
-	EQStream* eqs = 0;
-	UpdateWindowTitle(0);
-	LogWrite(ZONE__INFO, 0, "Zone", "Starting static zones...");
-	database.LoadSpecialZones();
-	map<EQStream*, int32> connecting_clients;
-	map<EQStream*, int32>::iterator cc_itr;
+		// Check to see if a global channel is enabled, if so try to connect to it
+		if (rule_manager.GetGlobalRule(R_World, IRCGlobalEnabled)->GetBool()) {
+			LogWrite(CHAT__INFO, 0, "IRC", "Starting global IRC server...");
+			// Set the irc nick name to: ServerName[IRCBot]
+			string world_name = net.GetWorldName();
+			// Remove all white spaces from the server name
+			world_name.erase(std::remove(world_name.begin(), world_name.end(), ' '), world_name.end());
+			string nick = world_name + string("[IRCBot]");
+			// Connect the global server
+			irc.ConnectToGlobalServer(rule_manager.GetGlobalRule(R_World, IRCAddress)->GetString(), rule_manager.GetGlobalRule(R_World, IRCPort)->GetInt16(), nick.c_str());
+		}
 
-	// Check to see if a global channel is enabled, if so try to connect to it
-	if (rule_manager.GetGlobalRule(R_World, IRCGlobalEnabled)->GetBool()) {
-		LogWrite(CHAT__INFO, 0, "IRC", "Starting global IRC server...");
-		// Set the irc nick name to: ServerName[IRCBot]
-		string world_name = net.GetWorldName();
-		// Remove all white spaces from the server name
-		world_name.erase(std::remove(world_name.begin(), world_name.end(), ' '), world_name.end());
-		string nick = world_name + string("[IRCBot]");
-		// Connect the global server
-		irc.ConnectToGlobalServer(rule_manager.GetGlobalRule(R_World, IRCAddress)->GetString(), rule_manager.GetGlobalRule(R_World, IRCPort)->GetInt16(), nick.c_str());
-	}
-
-	// JohnAdams - trying to make multi-char console input
-	LogWrite(WORLD__DEBUG, 0, "Thread", "Starting console command thread...");
-	#ifdef WIN32
-					_beginthread(EQ2ConsoleListener, 0, NULL);
-	#else
-					/*pthread_t thread;
-					pthread_create(&thread, NULL, &EQ2ConsoleListener, NULL);
-					pthread_detach(thread);*/
-	#endif
-	//
-
-	// just before starting loops, announce how to get console help
-	LogWrite(WORLD__INFO, 0, "Console", "Type 'help' or '?' and press enter for menu options.");
-
-
-	std::chrono::time_point<std::chrono::system_clock> frame_prev = std::chrono::system_clock::now();
-	while(RunLoops) {
-		Timer::SetCurrentTime();
-		std::chrono::time_point<std::chrono::system_clock> frame_now = std::chrono::system_clock::now();
-		frame_time = std::chrono::duration_cast<std::chrono::duration<double>>(frame_now - frame_prev).count();
-		frame_prev = frame_now;
-		
-#ifndef NO_CATCH
-		try
-		{
-#endif
-			while ((eqs = eqsf.Pop())) {
-				struct in_addr	in;
-				in.s_addr = eqs->GetRemoteIP();
-				LogWrite(NET__DEBUG, 0, "Net", "New client from ip: %s port: %i", inet_ntoa(in), ntohs(eqs->GetRemotePort()));
-
-				// JA: Check for BannedIPs
-				if (rule_manager.GetGlobalRule(R_World, UseBannedIPsTable)->GetInt8() == 1)
-				{
-					LogWrite(WORLD__DEBUG, 0, "World", "Checking inbound connection %s against BannedIPs table", inet_ntoa(in));
- 					if (database.CheckBannedIPs(inet_ntoa(in)))
-					{ 
- 						LogWrite(WORLD__DEBUG, 0, "World", "Connection from %s FAILED banned IPs check.  Closing connection.", inet_ntoa(in));
- 						eqs->Close(); // JA: If the inbound IP is on the banned table, close the EQStream.
- 					}
-				}
-
-				if(eqs && eqs->CheckActive() && client_list.ContainsStream(eqs) == false){
-					LogWrite(NET__DEBUG, 0, "Net", "Adding new client...");
-					Client* client = new Client(eqs);
-					client_list.Add(client);
-				}
-				else if(eqs && !client_list.ContainsStream(eqs)){
-					LogWrite(NET__DEBUG, 0, "Net", "Adding client to waiting list...");
-					connecting_clients[eqs] = Timer::GetCurrentTime2();
-				}
-			}
-			if(connecting_clients.size() > 0){
-				for(cc_itr = connecting_clients.begin(); cc_itr!=connecting_clients.end(); cc_itr++){
-					if(cc_itr->first && cc_itr->first->CheckActive() && client_list.ContainsStream(cc_itr->first) == false){
-						LogWrite(NET__DEBUG, 0, "Net", "Removing client from waiting list...");
-						Client* client = new Client(cc_itr->first);
-						client_list.Add(client);
-						connecting_clients.erase(cc_itr);
-						break;
-					}
-					else if(Timer::GetCurrentTime2() >= (cc_itr->second + 10000)){
-						connecting_clients.erase(cc_itr);
-						break;
-					}
-				}
-			}
-			world.Process();
-			client_list.Process();
-			loginserver.Process();
-			if(TimeoutTimer->Check()){
-				eqsf.CheckTimeout();
-			}
-			if (InterserverTimer.Check()) {
-				InterserverTimer.Start();
-				database.ping();
-				database.PingNewDB();
-				database.PingAsyncDatabase();
-
-				if (net.LoginServerInfo && loginserver.Connected() == false && loginserver.CanReconnect()) {
-					LogWrite(WORLD__DEBUG, 0, "Thread", "Starting autoinit loginserver thread...");
+		// JohnAdams - trying to make multi-char console input
+		LogWrite(WORLD__DEBUG, 0, "Thread", "Starting console command thread...");
 #ifdef WIN32
-					_beginthread(AutoInitLoginServer, 0, NULL);
+		_beginthread(EQ2ConsoleListener, 0, NULL);
 #else
-					pthread_t thread;
-					pthread_create(&thread, NULL, &AutoInitLoginServer, NULL);
-					pthread_detach(thread);
+		/*pthread_t thread;
+		pthread_create(&thread, NULL, &EQ2ConsoleListener, NULL);
+		pthread_detach(thread);*/
 #endif
-				}
-			}
+		//
+
+		// just before starting loops, announce how to get console help
+		LogWrite(WORLD__INFO, 0, "Console", "Type 'help' or '?' and press enter for menu options.");
+
+
+		std::chrono::time_point<std::chrono::system_clock> frame_prev = std::chrono::system_clock::now();
+		while (RunLoops) {
+			Timer::SetCurrentTime();
+			std::chrono::time_point<std::chrono::system_clock> frame_now = std::chrono::system_clock::now();
+			frame_time = std::chrono::duration_cast<std::chrono::duration<double>>(frame_now - frame_prev).count();
+			frame_prev = frame_now;
+
 #ifndef NO_CATCH
-		}
-		catch(...) {
-			LogWrite(WORLD__ERROR, 0, "World", "Exception caught in net main loop!");
-		}
+			try
+			{
 #endif
-		if (numclients == 0) {
-			Sleep(10);
-			continue;
+				while ((eqs = eqsf.Pop())) {
+					struct in_addr	in;
+					in.s_addr = eqs->GetRemoteIP();
+					LogWrite(NET__DEBUG, 0, "Net", "New client from ip: %s port: %i", inet_ntoa(in), ntohs(eqs->GetRemotePort()));
+
+					// JA: Check for BannedIPs
+					if (rule_manager.GetGlobalRule(R_World, UseBannedIPsTable)->GetInt8() == 1)
+					{
+						LogWrite(WORLD__DEBUG, 0, "World", "Checking inbound connection %s against BannedIPs table", inet_ntoa(in));
+						if (database.CheckBannedIPs(inet_ntoa(in)))
+						{
+							LogWrite(WORLD__DEBUG, 0, "World", "Connection from %s FAILED banned IPs check.  Closing connection.", inet_ntoa(in));
+							eqs->Close(); // JA: If the inbound IP is on the banned table, close the EQStream.
+						}
+					}
+
+					if (eqs && eqs->CheckActive() && client_list.ContainsStream(eqs) == false) {
+						LogWrite(NET__DEBUG, 0, "Net", "Adding new client...");
+						Client* client = new Client(eqs);
+						client_list.Add(client);
+					}
+					else if (eqs && !client_list.ContainsStream(eqs)) {
+						LogWrite(NET__DEBUG, 0, "Net", "Adding client to waiting list...");
+						connecting_clients[eqs] = Timer::GetCurrentTime2();
+					}
+				}
+				if (connecting_clients.size() > 0) {
+					for (cc_itr = connecting_clients.begin(); cc_itr != connecting_clients.end(); cc_itr++) {
+						if (cc_itr->first && cc_itr->first->CheckActive() && client_list.ContainsStream(cc_itr->first) == false) {
+							LogWrite(NET__DEBUG, 0, "Net", "Removing client from waiting list...");
+							Client* client = new Client(cc_itr->first);
+							client_list.Add(client);
+							connecting_clients.erase(cc_itr);
+							break;
+						}
+						else if (Timer::GetCurrentTime2() >= (cc_itr->second + 10000)) {
+							connecting_clients.erase(cc_itr);
+							break;
+						}
+					}
+				}
+				world.Process();
+				client_list.Process();
+				loginserver.Process();
+				if (TimeoutTimer->Check()) {
+					eqsf.CheckTimeout();
+				}
+				if (InterserverTimer.Check()) {
+					InterserverTimer.Start();
+					database.ping();
+					database.PingNewDB();
+					database.PingAsyncDatabase();
+
+					if (net.LoginServerInfo && loginserver.Connected() == false && loginserver.CanReconnect()) {
+						LogWrite(WORLD__DEBUG, 0, "Thread", "Starting autoinit loginserver thread...");
+#ifdef WIN32
+						_beginthread(AutoInitLoginServer, 0, NULL);
+#else
+						pthread_t thread;
+						pthread_create(&thread, NULL, &AutoInitLoginServer, NULL);
+						pthread_detach(thread);
+#endif
+					}
+				}
+#ifndef NO_CATCH
+			}
+			catch (...) {
+				LogWrite(WORLD__ERROR, 0, "World", "Exception caught in net main loop!");
+			}
+#endif
+			if (numclients == 0) {
+				Sleep(10);
+				continue;
+			}
+			Sleep(1);
 		}
-		Sleep(1);
 	}
 	LogWrite(WORLD__DEBUG, 0, "World", "The world is ending!");
 
@@ -515,7 +517,7 @@ int main(int argc, char** argv) {
 
 	LogWrite(WORLD__INFO, 0, "World", "Exiting... we hope you enjoyed your flight.");
 	LogStop();
-	return 0;
+	return ret_code;
 }
 
 ThreadReturnType ItemLoad (void* tmp)
