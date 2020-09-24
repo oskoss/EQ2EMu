@@ -760,6 +760,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "Say", EQ2Emu_lua_Say);
 	lua_register(state, "SayOOC", EQ2Emu_lua_SayOOC);
 	lua_register(state, "Emote", EQ2Emu_lua_Emote);
+	lua_register(state, "MovementLoopAddLocation", EQ2Emu_lua_MovementLoopAdd); // do not remove this function, it is already heavily used by the content team
 	lua_register(state, "MovementLoopAdd", EQ2Emu_lua_MovementLoopAdd);
 	lua_register(state, "GetCurrentZoneSafeLocation", EQ2Emu_lua_GetCurrentZoneSafeLocation);
 	lua_register(state, "AddTimer", EQ2Emu_lua_AddTimer);
