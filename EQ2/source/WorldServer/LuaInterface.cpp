@@ -47,6 +47,8 @@ LuaInterface::LuaInterface() {
 	MLUAUserData.SetName("LuaInterface::MLUAUserData");
 	MLUAMain.SetName("LuaInterface::MLUAMain");
 	MItemScripts.SetName("LuaInterface::MItemScripts");
+	MSpellDelete.SetName("LuaInterface::MSpellDelete");
+	MCustomSpell.SetName("LuaInterface::MCustomSpell");
 	user_data_timer = new Timer(20000);
 	user_data_timer->Start();
 	spell_delete_timer = new Timer(5000);
@@ -475,7 +477,7 @@ bool LuaInterface::LoadZoneScript(string name) {
 	return LoadZoneScript(name.c_str());
 }
 
-void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast, const char* function, SpellScriptTimer* timer) {
+void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast, const char* function, SpellScriptTimer* timer, bool passLuaSpell) {
 	if (function)
 		lua_getglobal(spell->state, function);
 	else if (precast)
@@ -484,6 +486,9 @@ void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool preca
 		lua_getglobal(spell->state, "cast");
 	else
 		lua_getglobal(spell->state, "tick");
+
+	if(passLuaSpell)
+		SetSpellValue(spell->state, spell);
 
 	Spawn* temp_spawn = 0;
 	if (timer && timer->caster && spell->caster)
@@ -636,7 +641,8 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 		MSpells.lock();
 		current_spells[spell->state] = spell;
 		MSpells.unlock();
-		lua_pcall(spell->state, 3, 0, 0);
+		lua_pcall(spell->state, 3, 0, 0); 
+		ResetFunctionStack(spell->state);
 	}
 
 	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
@@ -755,6 +761,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "Say", EQ2Emu_lua_Say);
 	lua_register(state, "SayOOC", EQ2Emu_lua_SayOOC);
 	lua_register(state, "Emote", EQ2Emu_lua_Emote);
+	lua_register(state, "MovementLoopAddLocation", EQ2Emu_lua_MovementLoopAdd); // do not remove this function, it is already heavily used by the content team
 	lua_register(state, "MovementLoopAdd", EQ2Emu_lua_MovementLoopAdd);
 	lua_register(state, "GetCurrentZoneSafeLocation", EQ2Emu_lua_GetCurrentZoneSafeLocation);
 	lua_register(state, "AddTimer", EQ2Emu_lua_AddTimer);
@@ -1106,6 +1113,12 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetSpellData", EQ2Emu_lua_GetSpellData);
 	lua_register(state, "SetSpellData", EQ2Emu_lua_SetSpellData);
 	lua_register(state, "CastCustomSpell", EQ2Emu_lua_CastCustomSpell);
+
+	lua_register(state, "SetSpellDataIndex", EQ2Emu_lua_SetSpellDataIndex);
+	lua_register(state, "GetSpellDataIndex", EQ2Emu_lua_GetSpellDataIndex);
+
+	lua_register(state, "SetSpellDisplayEffect", EQ2Emu_lua_SetSpellDisplayEffect);
+	lua_register(state, "GetSpellDisplayEffect", EQ2Emu_lua_GetSpellDisplayEffect);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
@@ -1150,7 +1163,10 @@ void LuaInterface::DeletePendingSpells(bool all) {
 			spells_pending_delete.erase(spell);
 
 			if (spell->spell->IsCopiedSpell())
+			{
+				RemoveCustomSpell(spell->spell->GetSpellID());
 				safe_delete(spell->spell);
+			}
 
 			safe_delete(spell);
 		}
@@ -1706,7 +1722,6 @@ bool LuaInterface::RunItemScript(string script_name, const char* function_name, 
 			return false;
 		}
 		lua_getglobal(state, function_name);
-		lua_getglobal(state, function_name);
 		if (!lua_isfunction(state, lua_gettop(state))){
 			lua_pop(state, 1);
 			mutex->releasereadlock(__FUNCTION__);
@@ -1851,6 +1866,48 @@ void LuaInterface::AddPendingSpellDelete(LuaSpell* spell) {
 	if ( spells_pending_delete.count(spell) == 0 )
 		spells_pending_delete[spell] = Timer::GetCurrentTime2() + 10000;
 	MSpellDelete.unlock();
+}
+
+void LuaInterface::AddCustomSpell(LuaSpell* spell)
+{
+	MCustomSpell.writelock();
+	custom_spells[spell->spell->GetSpellID()] = spell;
+	MCustomSpell.releasewritelock();
+}
+
+void LuaInterface::RemoveCustomSpell(int32 id)
+{
+	MCustomSpell.writelock();
+	map<int32, LuaSpell*>::iterator itr = custom_spells.find(id);
+	if (itr != custom_spells.end())
+	{
+		custom_spells.erase(itr);
+		custom_free_spell_ids.push_front(id);
+	}
+	MCustomSpell.releasewritelock();
+}
+
+// prior to calling FindCustomSpell you should call FindCustomSpellLock and after FindCustomSpellUnlock
+LuaSpell* LuaInterface::FindCustomSpell(int32 id)
+{
+	LuaSpell* spell = 0;
+	map<int32, LuaSpell*>::iterator itr = custom_spells.find(id);
+	if (itr != custom_spells.end())
+		spell = itr->second;
+	return spell;
+}
+
+int32 LuaInterface::GetFreeCustomSpellID()
+{ 
+	int32 id = 0;
+	MCustomSpell.writelock();
+	if (!custom_free_spell_ids.empty())
+	{
+		id = custom_free_spell_ids.front();
+		custom_free_spell_ids.pop_front();
+	}
+	MCustomSpell.releasewritelock();
+	return id;
 }
 
 LUAUserData::LUAUserData(){

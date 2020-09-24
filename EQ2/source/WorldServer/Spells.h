@@ -388,6 +388,14 @@ public:
 	/// <param name='error_value'>Value for the error</param>
 	void AddSpellError(int16 version, int8 error_index, int16 error_value);
 
+	int32 GetNewMaxSpellID() { 
+		int32 id = 0;
+		MMasterSpellList.lock();
+		max_spell_id++;
+		id = max_spell_id;
+		MMasterSpellList.unlock();
+		return id; 
+	}
 private:
 	/// <summary>Helper function that gets the closest version in the spell_errors map that is less then or equal to the given version</summary>
 	/// <param name='version'>Client version</param>
@@ -395,6 +403,7 @@ private:
 	int16 GetClosestVersion(int16 version);
 	// map <version, map<error_index, error_value> >
 	map<int16, map<int8, int16> > spell_errors;
+	int32 max_spell_id;
 };
 #endif
 

@@ -10492,6 +10492,8 @@ int EQ2Emu_lua_GetSpell(lua_State* state) {
 
 		lua_spell->spell = new Spell(spell);
 
+		lua_interface->AddCustomSpell(lua_spell);
+
 		lua_interface->SetSpellValue(state, lua_spell);
 		return 1;
 	}
@@ -10545,7 +10547,215 @@ int EQ2Emu_lua_SetSpellData(lua_State* state) {
 	return valSet;
 }
 
+int EQ2Emu_lua_SetSpellDataIndex(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetSpell(state);
+	int8 idx = lua_interface->GetInt32Value(state, 2);
 
+	if (!spell) {
+		lua_interface->LogError("%s: Spell not given in SetSpellDataIndex!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spell->spell || !spell->spell->GetSpellData()) {
+		lua_interface->LogError("%s: Inner Spell or SpellData not given in SetSpellDataIndex!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (spell->spell->lua_data.size() <= idx)
+	{
+		lua_interface->LogError("%s: lua_data size %i <= %i (idx passed) SetSpellDataIndex!", lua_interface->GetScriptName(state), spell->spell->lua_data.size(), idx);
+		return 0;
+	}
+
+	bool setVal = true;
+
+	LUAData* data = spell->spell->lua_data[idx];
+
+	switch (data->type)
+	{
+	case 0:
+	{
+		sint32 value = lua_interface->GetSInt32Value(state, 3);
+		sint32 value2 = lua_interface->GetSInt32Value(state, 4);
+		data->int_value = value;
+		data->int_value2 = value2;
+		break;
+	}
+	case 1:
+	{
+		float value = lua_interface->GetFloatValue(state, 3);
+		float value2 = lua_interface->GetFloatValue(state, 4);
+		data->float_value = value;
+		data->float_value2 = value2;
+		break;
+	}
+	case 2:
+	{
+		bool value = lua_interface->GetBooleanValue(state, 3);
+		data->bool_value = value;
+		break;
+	}
+	case 3:
+	{
+		string value = lua_interface->GetStringValue(state, 3);
+		string value2 = lua_interface->GetStringValue(state, 4);
+		data->string_value = value;
+		data->string_value2 = value2;
+		break;
+	}
+	default:
+		setVal = false;
+	}
+
+	return setVal;
+}
+
+
+int EQ2Emu_lua_GetSpellDataIndex(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetSpell(state);
+	int8 idx = lua_interface->GetInt32Value(state, 2);
+	bool secondfield = lua_interface->GetBooleanValue(state, 3);
+
+	if (!spell) {
+		lua_interface->LogError("%s: Spell not given in GetSpellDataIndex!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spell->spell || !spell->spell->GetSpellData()) {
+		lua_interface->LogError("%s: Inner Spell or SpellData not given in GetSpellDataIndex!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (spell->spell->lua_data.size() <= idx)
+	{
+		lua_interface->LogError("%s: lua_data size %i <= %i (idx passed) GetSpellDataIndex!", lua_interface->GetScriptName(state), spell->spell->lua_data.size(), idx);
+		return 0;
+	}
+
+	bool setVal = true;
+
+	LUAData* data = spell->spell->lua_data[idx];
+
+	switch (data->type)
+	{
+	case 0:
+	{
+		if(!secondfield)
+			lua_interface->SetSInt32Value(state, data->int_value);
+		else
+			lua_interface->SetSInt32Value(state, data->int_value2);
+		break;
+	}
+	case 1:
+	{
+		if (!secondfield)
+			lua_interface->SetFloatValue(state, data->float_value);
+		else
+			lua_interface->SetFloatValue(state, data->float_value2);
+		break;
+	}
+	case 2:
+	{
+		lua_interface->SetBooleanValue(state, data->bool_value);
+		break;
+	}
+	case 3:
+	{
+		if (!secondfield)
+			lua_interface->SetStringValue(state, data->string_value.c_str());
+		else
+			lua_interface->SetStringValue(state, data->string_value2.c_str());
+		break;
+	}
+	default:
+		setVal = false;
+	}
+
+	return setVal;
+}
+
+
+int EQ2Emu_lua_SetSpellDisplayEffect(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetSpell(state);
+	int8 idx = lua_interface->GetInt32Value(state, 2);
+	string field = lua_interface->GetStringValue(state, 3);
+
+	boost::to_lower(field);
+
+	if (!spell) {
+		lua_interface->LogError("%s: Spell not given in SetSpellDisplayEffect!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spell->spell || !spell->spell->GetSpellData()) {
+		lua_interface->LogError("%s: Inner Spell or SpellData not given in SetSpellDisplayEffect!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (spell->spell->effects.size() <= idx)
+	{
+		lua_interface->LogError("%s: lua_data size %i <= %i (idx passed) SetSpellDisplayEffect!", lua_interface->GetScriptName(state), spell->spell->lua_data.size(), idx);
+		return 0;
+	}
+
+	// do we need to lock? eh probably not this should only be used before use of the custom spell
+	SpellDisplayEffect* effect = spell->spell->effects[idx];
+
+	if (field == "description")
+		effect->description = string(lua_interface->GetStringValue(state, 4));
+	else if (field == "bullet")
+		effect->subbullet = lua_interface->GetInt8Value(state, 4);
+	else if (field == "percentage")
+		effect->percentage = lua_interface->GetInt8Value(state, 4);
+	else // no match
+		return 0;
+
+
+	return 1;
+}
+
+int EQ2Emu_lua_GetSpellDisplayEffect(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetSpell(state);
+	int8 idx = lua_interface->GetInt32Value(state, 2);
+	string field = lua_interface->GetStringValue(state, 3);
+
+	boost::to_lower(field);
+
+	if (!spell) {
+		lua_interface->LogError("%s: Spell not given in GetSpellDisplayEffect!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spell->spell || !spell->spell->GetSpellData()) {
+		lua_interface->LogError("%s: Inner Spell or SpellData not given in GetSpellDisplayEffect!", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (spell->spell->effects.size() <= idx)
+	{
+		lua_interface->LogError("%s: lua_data size %i <= %i (idx passed) GetSpellDisplayEffect!", lua_interface->GetScriptName(state), spell->spell->lua_data.size(), idx);
+		return 0;
+	}
+
+	// do we need to lock? eh probably not this should only be used before use of the custom spell
+	SpellDisplayEffect* effect = spell->spell->effects[idx];
+
+	if (field == "description")
+		lua_interface->SetStringValue(state, effect->description.c_str());
+	else if (field == "bullet")
+		lua_interface->SetInt32Value(state, effect->subbullet);
+	else if (field == "percentage")
+		lua_interface->SetInt32Value(state, effect->percentage);
+	else // no match
+		return 0;
+
+
+	return 1;
+}
 int EQ2Emu_lua_CastCustomSpell(lua_State* state) {
 	if (!lua_interface)
 		return 0;

@@ -475,6 +475,28 @@ bool SpellProcess::CastInstant(Spell* spell, Entity* caster, Entity* target, boo
 	lua_spell->initial_target = target->GetID();
 	GetSpellTargets(lua_spell);
 
+	if (!lua_spell->spell->IsCopiedSpell())
+	{
+		lua_getglobal(lua_spell->state, "customspell");
+		if (lua_isfunction(lua_spell->state, lua_gettop(lua_spell->state))) {
+			lua_pop(lua_spell->state, 1);
+			Spell* tmpSpell = lua_spell->spell;
+			lua_spell->spell = new Spell(lua_spell->spell);
+			lua_interface->AddCustomSpell(lua_spell);
+			lua_interface->AddSpawnPointers(lua_spell, false, false, "customspell",0,true);
+			if (lua_pcall(lua_spell->state, 3, 3, 0) != 0) {
+				lua_interface->RemoveCustomSpell(lua_spell->spell->GetSpellID());
+				lua_interface->ResetFunctionStack(lua_spell->state);
+				safe_delete(lua_spell->spell);
+				lua_spell->spell = tmpSpell;
+			}
+			else
+				lua_interface->ResetFunctionStack(lua_spell->state);
+		}
+		else
+			lua_interface->ResetFunctionStack(lua_spell->state);
+	}
+
 	caster->GetZone()->SendCastSpellPacket(lua_spell, caster);
 
 	if (!remove)
@@ -787,7 +809,6 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 {
 	if((customSpell != 0 || spell != 0) && caster)
 	{
-
 		Client* client = 0;
 		//int16 version = 0;
 
@@ -823,6 +844,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 		lua_spell->caster = caster;
 		lua_spell->spell = spell;
+
 		int32 target_id = target->GetID();
 		lua_spell->initial_target = target_id;
 
@@ -850,6 +872,28 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		{
 			client = zone->GetClientBySpawn(caster);
 			//version = client->GetVersion();
+		}
+
+		if (!customSpell && !lua_spell->spell->IsCopiedSpell())
+		{
+			lua_getglobal(lua_spell->state, "customspell");
+			if (lua_isfunction(lua_spell->state, lua_gettop(lua_spell->state))) {
+				lua_pop(lua_spell->state, 1);
+				Spell* tmpSpell = lua_spell->spell;
+				lua_spell->spell = new Spell(lua_spell->spell);
+				lua_interface->AddCustomSpell(lua_spell);
+				lua_interface->AddSpawnPointers(lua_spell, false, false, "customspell", 0, true);
+				if (lua_pcall(lua_spell->state, 3, 3, 0) != 0) {
+					lua_interface->RemoveCustomSpell(lua_spell->spell->GetSpellID());
+					lua_interface->ResetFunctionStack(lua_spell->state);
+					safe_delete(lua_spell->spell);
+					lua_spell->spell = tmpSpell;
+				}
+				else
+					lua_interface->ResetFunctionStack(lua_spell->state);
+			}
+			else
+				lua_interface->ResetFunctionStack(lua_spell->state);
 		}
 
 		//If this spell is the toggle cast type and is being toggled off, do this now
@@ -2446,7 +2490,10 @@ void SpellProcess::DeleteSpell(LuaSpell* spell)
 	RemoveSpellFromQueue(spell->spell, spell->caster);
 
 	if (spell->spell->IsCopiedSpell())
+	{
+		lua_interface->RemoveCustomSpell(spell->spell->GetSpellID());
 		safe_delete(spell->spell);
+	}
 
 	safe_delete(spell);
 }

@@ -222,7 +222,7 @@ public:
 	void			SetConversationValue(lua_State* state, vector<ConversationOption>* conversation);
 	void			SetOptionWindowValue(lua_State* state, vector<OptionWindowOption>* optionWindow);
 
-	void			AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast = false, const char* function = 0, SpellScriptTimer* timer = 0);
+	void			AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast = false, const char* function = 0, SpellScriptTimer* timer = 0, bool passLuaSpell=false);
 	LuaSpell*		GetCurrentSpell(lua_State* state);
 	bool			CallSpellProcess(LuaSpell* spell, int8 num_parameters);
 	LuaSpell*		GetSpell(const char* name);
@@ -271,6 +271,15 @@ public:
 	void			SetSpawnScriptsReloading(bool val) { spawn_scripts_reloading = val; }
 
 	void			AddPendingSpellDelete(LuaSpell* spell);
+
+	void			AddCustomSpell(LuaSpell* spell);
+	void			RemoveCustomSpell(int32 id);
+
+	void			FindCustomSpellLock() { MCustomSpell.readlock(); }
+	void			FindCustomSpellUnlock() { MCustomSpell.releasereadlock(); }
+	LuaSpell*		FindCustomSpell(int32 id);
+
+	int32			GetFreeCustomSpellID();
 private:
 	bool			shutting_down;
 	bool			spawn_scripts_reloading;
@@ -292,6 +301,9 @@ private:
 	map<string, map<lua_State*, bool> > spawn_scripts;
 	map<string, map<lua_State*, bool> > zone_scripts;
 
+	map<int32, LuaSpell*> custom_spells;
+	std::deque<int32> custom_free_spell_ids;
+
 	map<lua_State*, string> item_inverse_scripts;
 	map<lua_State*, string> spawn_inverse_scripts;
 	map<lua_State*, string> zone_inverse_scripts;
@@ -309,5 +321,6 @@ private:
 	Mutex			MLUAUserData;
 	Mutex			MLUAMain;
 	Mutex			MSpellDelete;
+	Mutex			MCustomSpell;
 };
 #endif
