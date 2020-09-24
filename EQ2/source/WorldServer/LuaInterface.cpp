@@ -641,7 +641,8 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 		MSpells.lock();
 		current_spells[spell->state] = spell;
 		MSpells.unlock();
-		lua_pcall(spell->state, 3, 0, 0);
+		lua_pcall(spell->state, 3, 0, 0); 
+		ResetFunctionStack(spell->state);
 	}
 
 	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);

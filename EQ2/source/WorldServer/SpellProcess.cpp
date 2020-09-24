@@ -486,9 +486,12 @@ bool SpellProcess::CastInstant(Spell* spell, Entity* caster, Entity* target, boo
 			lua_interface->AddSpawnPointers(lua_spell, false, false, "customspell",0,true);
 			if (lua_pcall(lua_spell->state, 3, 3, 0) != 0) {
 				lua_interface->RemoveCustomSpell(lua_spell->spell->GetSpellID());
+				lua_interface->ResetFunctionStack(lua_spell->state);
 				safe_delete(lua_spell->spell);
 				lua_spell->spell = tmpSpell;
 			}
+			else
+				lua_interface->ResetFunctionStack(lua_spell->state);
 		}
 	}
 
@@ -880,9 +883,12 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				lua_interface->AddSpawnPointers(lua_spell, false, false, "customspell", 0, true);
 				if (lua_pcall(lua_spell->state, 3, 3, 0) != 0) {
 					lua_interface->RemoveCustomSpell(lua_spell->spell->GetSpellID());
+					lua_interface->ResetFunctionStack(lua_spell->state);
 					safe_delete(lua_spell->spell);
 					lua_spell->spell = tmpSpell;
 				}
+				else
+					lua_interface->ResetFunctionStack(lua_spell->state);
 			}
 		}
 
