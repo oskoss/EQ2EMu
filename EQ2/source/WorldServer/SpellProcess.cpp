@@ -493,6 +493,8 @@ bool SpellProcess::CastInstant(Spell* spell, Entity* caster, Entity* target, boo
 			else
 				lua_interface->ResetFunctionStack(lua_spell->state);
 		}
+		else
+			lua_interface->ResetFunctionStack(lua_spell->state);
 	}
 
 	caster->GetZone()->SendCastSpellPacket(lua_spell, caster);
@@ -890,6 +892,8 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				else
 					lua_interface->ResetFunctionStack(lua_spell->state);
 			}
+			else
+				lua_interface->ResetFunctionStack(lua_spell->state);
 		}
 
 		//If this spell is the toggle cast type and is being toggled off, do this now
