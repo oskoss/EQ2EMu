@@ -72,6 +72,7 @@ extern ChestTrapList chest_trap_list;
 #if defined(__GNUC__)
 #define stricmp strcasecmp
 #define strnicmp strncasecmp
+#include <sys/stat.h>
 #endif
 
 WorldDatabase::WorldDatabase(){
