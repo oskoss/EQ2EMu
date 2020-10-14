@@ -45,6 +45,7 @@
 #include "Zone/map.h"
 #include "Zone/pathfinder_interface.h"
 #include "Zone/mob_movement_manager.h"
+#include "Zone/region_map.h"
 
 extern NetConnection net;		// needs to be here or compile errors in commands.cpp
 class SpellProcess;
@@ -444,6 +445,7 @@ public:
 
 	SPGrid* Grid;
 	Map* zonemap;
+	RegionMap* regionmap;
 	IPathfinder* pathing;
 	MobMovementManager* movementMgr;
 

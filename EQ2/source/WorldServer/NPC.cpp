@@ -83,7 +83,7 @@ NPC::NPC(NPC* old_npc){
 		SetPrimarySkillList(old_npc->GetPrimarySkillList());
 		SetSecondarySkillList(old_npc->GetSecondarySkillList());
 		SetEquipmentListID(old_npc->GetEquipmentListID());
-		SetAggroRadius(old_npc->GetAggroRadius());
+		SetAggroRadius(old_npc->GetBaseAggroRadius());
 		SetCastPercentage(old_npc->GetCastPercentage());
 		SetRandomize(old_npc->GetRandomize());	
 		if(appearance.randomize > 0)
@@ -125,7 +125,8 @@ void NPC::Initialize(){
 	attack_resume_needed = false;
 	MMovementLoop.SetName("NPC::MMovementLoop");
 	last_movement_update = Timer::GetCurrentTime2();
-	aggro_radius = 0;
+	aggro_radius = 0.0f;
+	base_aggro_radius = 0.0f;
 	skills = 0;
 	spells = 0;
 	runback = 0;
@@ -192,7 +193,7 @@ void NPC::Runback(){
 	m_runningBack = true;
 	SetSpeed(GetMaxSpeed()*2);
 
-	if (IsFlying() && CheckLoS(glm::vec3(runback->x, runback->z, runback->y + 1.0f), glm::vec3(GetX(), GetZ(), GetY() + 1.0f)))
+	if ((IsFlyingCreature() || IsWaterCreature()) && CheckLoS(glm::vec3(runback->x, runback->z, runback->y + 1.0f), glm::vec3(GetX(), GetZ(), GetY() + 1.0f)))
 	{
 		FaceTarget(runback->x, runback->z);
 		ClearRunningLocations();
@@ -775,7 +776,10 @@ Spell* NPC::GetNextBuffSpell() {
 	return ret;
 }
 
-void NPC::SetAggroRadius(float radius){
+void NPC::SetAggroRadius(float radius, bool overrideBaseValue){
+	if (base_aggro_radius == 0.0f || overrideBaseValue)
+		base_aggro_radius = radius;
+
 	aggro_radius = radius;
 }
 

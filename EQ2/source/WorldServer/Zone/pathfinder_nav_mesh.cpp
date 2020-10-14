@@ -6,7 +6,7 @@
 #include <DetourCommon.h>
 #include <DetourNavMeshQuery.h>
 #include "../zoneserver.h"
-#include "water_map.h"
+#include "region_map.h"
 #include "../client.h"
 
 struct PathfinderNavmesh::Implementation

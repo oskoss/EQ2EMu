@@ -355,8 +355,9 @@
     <ClCompile Include="..\..\source\WorldServer\Zone\pathfinder_waypoint.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Zone\position.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Zone\raycast_mesh.cpp" />
+    <ClCompile Include="..\..\source\WorldServer\Zone\region_map.cpp" />
+    <ClCompile Include="..\..\source\WorldServer\Zone\region_map_v1.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Zone\SPGrid.cpp" />
-    <ClCompile Include="..\..\source\WorldServer\Zone\water_map.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\common\DatabaseNew.h" />
@@ -500,8 +501,9 @@
     <ClInclude Include="..\..\source\WorldServer\Zone\pathfinder_waypoint.h" />
     <ClInclude Include="..\..\source\WorldServer\Zone\position.h" />
     <ClInclude Include="..\..\source\WorldServer\Zone\raycast_mesh.h" />
+    <ClInclude Include="..\..\source\WorldServer\Zone\region_map.h" />
+    <ClInclude Include="..\..\source\WorldServer\Zone\region_map_v1.h" />
     <ClInclude Include="..\..\source\WorldServer\Zone\SPGrid.h" />
-    <ClInclude Include="..\..\source\WorldServer\Zone\water_map.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

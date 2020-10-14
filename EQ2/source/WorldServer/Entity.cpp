@@ -2526,6 +2526,18 @@ void Entity::AddSkillBonus(int32 spell_id, int32 skill_id, float value) {
 	return;
 }
 
+bool Entity::HasControlEffect(int8 type)
+{
+	if (type >= CONTROL_MAX_EFFECTS)
+		return false;
+
+	MutexList<LuaSpell*>* spell_list = control_effects[type];
+	if (!spell_list || spell_list->size(true) == 0)
+		return false;
+
+	return true;
+}
+
 void Entity::HaltMovement()
 {
 	this->ClearRunningLocations();

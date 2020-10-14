@@ -775,7 +775,19 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "RemoveSkillBonus", EQ2Emu_lua_RemoveSkillBonus);
 	lua_register(state, "AddControlEffect", EQ2Emu_lua_AddControlEffect);
 	lua_register(state, "RemoveControlEffect", EQ2Emu_lua_RemoveControlEffect);
+	lua_register(state, "HasControlEffect", EQ2Emu_lua_HasControlEffect);
+
+	lua_register(state, "GetBaseAggroRadius", EQ2Emu_lua_GetBaseAggroRadius);
+	lua_register(state, "GetAggroRadius", EQ2Emu_lua_GetAggroRadius);
+	lua_register(state, "SetAggroRadius", EQ2Emu_lua_SetAggroRadius);
+
 	lua_register(state, "GetCurrentZoneSafeLocation", EQ2Emu_lua_GetCurrentZoneSafeLocation);
+
+
+	lua_register(state, "SetDeity", EQ2Emu_lua_SetDeity);
+	lua_register(state, "GetDeity", EQ2Emu_lua_GetDeity);
+
+
 	lua_register(state, "GetInt", EQ2Emu_lua_GetInt);
 	lua_register(state, "GetWis", EQ2Emu_lua_GetWis);
 	lua_register(state, "GetSta", EQ2Emu_lua_GetSta);
@@ -1119,6 +1131,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 
 	lua_register(state, "SetSpellDisplayEffect", EQ2Emu_lua_SetSpellDisplayEffect);
 	lua_register(state, "GetSpellDisplayEffect", EQ2Emu_lua_GetSpellDisplayEffect);
+
+	lua_register(state, "InWater", EQ2Emu_lua_InWater);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

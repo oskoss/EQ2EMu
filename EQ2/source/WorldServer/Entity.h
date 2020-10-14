@@ -661,6 +661,8 @@ public:
 	bool IsSnared();
 	float GetHighestSnare();
 
+	bool HasControlEffect(int8 type);
+
 	void HaltMovement();
 
 

@@ -54,6 +54,15 @@ int EQ2Emu_lua_AddSkillBonus(lua_State* state);
 int EQ2Emu_lua_RemoveSkillBonus(lua_State* state);
 int EQ2Emu_lua_AddControlEffect(lua_State* state);
 int EQ2Emu_lua_RemoveControlEffect(lua_State* state);
+int EQ2Emu_lua_HasControlEffect(lua_State* state);
+
+int EQ2Emu_lua_GetBaseAggroRadius(lua_State* state);
+int EQ2Emu_lua_GetAggroRadius(lua_State* state);
+int EQ2Emu_lua_SetAggroRadius(lua_State* state);
+
+int EQ2Emu_lua_SetDeity(lua_State* state);
+int EQ2Emu_lua_GetDeity(lua_State* state);
+
 int EQ2Emu_lua_SetInt(lua_State* state);
 int EQ2Emu_lua_SetWis(lua_State* state);
 int EQ2Emu_lua_SetSta(lua_State* state);
@@ -490,4 +499,6 @@ int EQ2Emu_lua_GetSpellDataIndex(lua_State* state);
 
 int EQ2Emu_lua_SetSpellDisplayEffect(lua_State* state);
 int EQ2Emu_lua_GetSpellDisplayEffect(lua_State* state);
+
+int EQ2Emu_lua_InWater(lua_State* state);
 #endif

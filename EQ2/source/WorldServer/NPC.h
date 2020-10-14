@@ -104,8 +104,9 @@ public:
 	int32	GetEquipmentListID();
 	Spell*	GetNextSpell(float distance);
 	virtual Spell*	GetNextBuffSpell();
-	void	SetAggroRadius(float radius);
+	void	SetAggroRadius(float radius, bool overrideBaseValue = false);
 	float	GetAggroRadius();
+	float	GetBaseAggroRadius() { return base_aggro_radius; }
 	void	SetCastPercentage(int8 percentage);
 	int8	GetCastPercentage();
 	void	SetSkills(map<string, Skill*>* in_skills);
@@ -148,6 +149,7 @@ private:
 	MovementLocation* runback;
 	int8	cast_percentage;
 	float	aggro_radius;
+	float	base_aggro_radius;
 	Spell*	GetNextSpell(float distance, int8 type);
 	map<string, Skill*>* skills;
 	vector<Spell*>* spells;

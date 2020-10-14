@@ -2399,6 +2399,92 @@ int EQ2Emu_lua_RemoveControlEffect(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_HasControlEffect(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int8 type = lua_interface->GetInt8Value(state, 2);
+
+	bool hasEffect = false;
+
+	if (!spawn)
+		lua_interface->LogError("%s: LUA HasControlEffect error: Could not find spawn.", lua_interface->GetScriptName(state));
+	else if (!spawn->IsEntity())
+		lua_interface->LogError("%s: LUA HasControlEffect error: spawn %s is not an entity!.", lua_interface->GetScriptName(state), spawn->GetName());
+	else if (type < CONTROL_MAX_EFFECTS)
+		hasEffect = ((Entity*)spawn)->HasControlEffect(type);
+	else
+		lua_interface->LogError("%s: LUA HasControlEffect unhandled control effect type of %u.", lua_interface->GetScriptName(state), type);
+
+	lua_interface->SetBooleanValue(state, hasEffect);
+
+	return 1;
+}
+
+int EQ2Emu_lua_GetBaseAggroRadius(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+
+	float distance = 0.0f;
+
+	if (!spawn)
+		lua_interface->LogError("%s: LUA GetBaseAggroRadius error: Could not find spawn.", lua_interface->GetScriptName(state));
+	else if (!spawn->IsNPC())
+		lua_interface->LogError("%s: LUA GetBaseAggroRadius error: spawn %s is not an NPC!.", lua_interface->GetScriptName(state), spawn->GetName());
+	else
+		distance = ((NPC*)spawn)->GetBaseAggroRadius();
+
+	lua_interface->SetFloatValue(state, distance);
+
+	return 1;
+}
+
+int EQ2Emu_lua_GetAggroRadius(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+
+	float distance = 0.0f;
+
+	if (!spawn)
+		lua_interface->LogError("%s: LUA GetAggroRadius error: Could not find spawn.", lua_interface->GetScriptName(state));
+	else if (!spawn->IsNPC())
+		lua_interface->LogError("%s: LUA GetAggroRadius error: spawn %s is not an NPC!.", lua_interface->GetScriptName(state), spawn->GetName());
+	else
+		distance = ((NPC*)spawn)->GetAggroRadius();
+
+	lua_interface->SetFloatValue(state, distance);
+
+	return 1;
+}
+
+int EQ2Emu_lua_SetAggroRadius(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	float distance = lua_interface->GetFloatValue(state, 2);
+	bool override = lua_interface->GetBooleanValue(state, 3);
+
+	bool result = false;
+
+	lua_interface->ResetFunctionStack(state);
+
+	if (!spawn)
+		lua_interface->LogError("%s: LUA SetAggroRadius error: Could not find spawn.", lua_interface->GetScriptName(state));
+	else if (!spawn->IsNPC())
+		lua_interface->LogError("%s: LUA SetAggroRadius error: spawn %s is not an NPC!.", lua_interface->GetScriptName(state), spawn->GetName());
+	else
+	{
+		((NPC*)spawn)->SetAggroRadius(distance, override);
+		result = true;
+	}
+
+	lua_interface->SetBooleanValue(state, result);
+
+	return 1;
+}
+
 int EQ2Emu_lua_SetIntBase(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -2463,6 +2549,34 @@ int EQ2Emu_lua_SetStrBase(lua_State* state) {
 	}
 	return 0;
 }
+
+int EQ2Emu_lua_SetDeity(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int8 value = lua_interface->GetInt8Value(state, 2);
+	if (spawn && spawn->IsEntity()) {
+		((Entity*)spawn)->SetDeity(value);
+		if (spawn->IsPlayer())
+			((Player*)spawn)->SetCharSheetChanged(true);
+	}
+
+	lua_interface->ResetFunctionStack(state);
+	return 0;
+}
+
+int EQ2Emu_lua_GetDeity(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn && spawn->IsEntity()) {
+		int8 deity = ((Entity*)spawn)->GetDeity();
+		lua_interface->SetInt32Value(state, deity);
+		return 1;
+	}
+	return 0;
+}
+
 
 int EQ2Emu_lua_SetInt(lua_State* state) {
 	if (!lua_interface)
@@ -10784,5 +10898,16 @@ int EQ2Emu_lua_CastCustomSpell(lua_State* state) {
 	}
 
 	target->GetZone()->ProcessSpell(NULL, (Entity*)caster, (Entity*)target, true, false, spell, 0);
+	return 0;
+}
+
+int EQ2Emu_lua_InWater(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn) {
+		lua_interface->SetBooleanValue(state, spawn->InWater());
+		return 1;
+	}
 	return 0;
 }
