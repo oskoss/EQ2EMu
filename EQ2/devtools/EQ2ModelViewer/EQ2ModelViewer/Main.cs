@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Xml;
 
 using SlimDX;
 using SlimDX.D3DCompiler;
@@ -16,17 +17,21 @@ using Everquest2.Util;
 using Everquest2.Visualization;
 using System.IO;
 using SlimDX.DirectInput;
+using SlimDX.Direct2D;
+using System.Security.Permissions;
 
 namespace EQ2ModelViewer
 {
     public partial class frmMain : Form
     {
         private System.Collections.Generic.List<Model> m_Models = new System.Collections.Generic.List<Model>();
+        private System.Collections.Generic.List<VeRegion> m_Regions = new System.Collections.Generic.List<VeRegion>();
         private GraphicClass Graphics = new GraphicClass();
         public Model SelectedModel = null;
         private string ZoneFile;
         private bool Render3DAspect = true;
         private bool AutoExportOnLoad = false;
+        private bool AutoExportRegionOnLoad = false;
         private String AutoLoadFileName = "";
         public frmMain()
         {
@@ -55,6 +60,7 @@ namespace EQ2ModelViewer
         private Key hitKey = Key.NoConvert;
         double timestamp = 0;
         private CameraClass camera;
+        int region_nodes = 0;
         private void frmMain_Load(object sender, EventArgs e)
         {
             this.WindowState = FormWindowState.Maximized;
@@ -104,6 +110,10 @@ namespace EQ2ModelViewer
                     {
                         AutoExportOnLoad = true;
                     }
+                    else if (cmd.Equals("exportregion"))
+                    {
+                        AutoExportRegionOnLoad = true;
+                    }
                     else
                     {
                         AutoLoadFileName = args[i];
@@ -116,6 +126,8 @@ namespace EQ2ModelViewer
                 LoadZoneFile(AutoLoadFileName);
             if (AutoExportOnLoad)
                 exportToolStripMenuItem_Click(null, EventArgs.Empty);
+            if (AutoExportRegionOnLoad)
+                toolStripMenuItemExportWater_Click(null, EventArgs.Empty);
 
             if (!Render3DAspect)
             {
@@ -228,7 +240,6 @@ namespace EQ2ModelViewer
                         camera.Render();
 
                         //frustum.ConstructFrustum(1000.0f, Graphics.GetProjectionMatrix(), camera.GetViewMatrix());
-
                         foreach (Model model in m_Models) {
                             //if (frustum.CheckSphere(model.Position.X, model.Position.Y, model.Position.Z, 10.0f))
                             //{
@@ -239,7 +250,6 @@ namespace EQ2ModelViewer
                             //lightShader.Render(Graphics.Context, model.GetIndexCount(), temp, camera.GetViewMatrix(), Graphics.GetProjectionMatrix(), model.GetTexture(), new Vector3(0.0f, 0.0f, 0.0f), new Vector4(1.0f, 1.0f, 1.0f, 1.0f), new Vector4(0.0f, 0.0f, 0.0f, 0.0f), camera.GetPosition(), new Vector4(0.0f, 0.0f, 0.0f, 0.0f), 0.0f);
                             //}
                         }
-
                         // 2D
                         Graphics.TurnZBufferOff();
                         Graphics.TurnOnAlphaBlending();
@@ -299,12 +309,13 @@ namespace EQ2ModelViewer
             LoadZoneFile();
         }
 
+        public String DirName = "";
         private void LoadZoneFile(String filename="")
         {
             bool isDrawFile = false;
 
             string fullName = "";
-            String dirName = "";
+            DirName = "";
             if (filename.Length < 1)
             {
                 OpenFileDialog fd = new OpenFileDialog();
@@ -320,7 +331,7 @@ namespace EQ2ModelViewer
                         string temp = fd.FileName.Substring(0, fd.FileName.LastIndexOf("\\"));
                         ZoneFile = fd.SafeFileName.Substring(0, fd.SafeFileName.IndexOf(".draw"));
                         fullName = ZoneFile;
-                        dirName = temp;
+                        DirName = temp;
                         filename = fd.FileName;
                     }
                     else
@@ -328,7 +339,7 @@ namespace EQ2ModelViewer
                         string temp = fd.FileName.Substring(0, fd.FileName.IndexOf("zones"));
                         ZoneFile = fd.SafeFileName.Substring(0, fd.SafeFileName.IndexOf(".lut"));
                         fullName = ZoneFile;
-                        dirName = temp;
+                        DirName = temp;
                         filename = fd.FileName;
                     }
                 }
@@ -341,14 +352,14 @@ namespace EQ2ModelViewer
                     string temp = filename.Substring(0, filename.LastIndexOf("\\"));
                     ZoneFile = filename.Substring(0, filename.IndexOf(".draw"));
                     fullName = filename;
-                    dirName = temp;
+                    DirName = temp;
                 }
                 else
                 {
                     string temp = filename.Substring(0, filename.IndexOf("zones"));
                     ZoneFile = filename.Substring(0, filename.IndexOf(".lut"));
                     fullName = filename;
-                    dirName = temp;
+                    DirName = temp;
                 }
             }
 
@@ -376,7 +387,8 @@ namespace EQ2ModelViewer
                 MessageBox.Show("No filename provided for loading a zonefile!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-                System.IO.BinaryReader reader2 = new System.IO.BinaryReader(new System.IO.FileStream(filename, System.IO.FileMode.Open, System.IO.FileAccess.Read));
+            region_nodes = 0;
+            System.IO.BinaryReader reader2 = new System.IO.BinaryReader(new System.IO.FileStream(filename, System.IO.FileMode.Open, System.IO.FileAccess.Read));
                 // Image(2020): Was ReadUint32, qey_harbor.lut however has 00 1F 00 7A, so that as an int32 is a very large number!
                 reader2.ReadUInt32();
                 do
@@ -391,13 +403,17 @@ namespace EQ2ModelViewer
                     // was duplicating drive name
                     file = file.Replace("/", "\\");
 
-                    file = dirName + file;
+                    file = DirName + file;
                     AppendLoadFile("VOC Loading: " + file);
 
+                if ( file.Contains("qey_harbor_qey_terrain_harbor_geo05_rmob_0"))
+                    {
+                    int test = 0;
+                    }
                     Eq2Reader reader = new Eq2Reader(new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Read));
                     VeNode venode = reader.ReadNodeObject();
 
-                    CheckNode(dirName, venode, false);
+                    CheckNode(DirName, venode, false, false);
 
                     //MessageBox.Show("Done!");
 
@@ -410,8 +426,66 @@ namespace EQ2ModelViewer
         float yaw, pitch, roll = 0;
         float scale = 0;
         UInt32 widgetID;
+        UInt32 regionMapVersion = 1;
+
+        private void toolStripMenuItemExportWater_Click(object sender, EventArgs e)
+        {
+
+            StreamWriter swfile = new StreamWriter(ZoneFile + ".regionread");
+                using (BinaryWriter file = new BinaryWriter(File.Open(ZoneFile + ".EQ2Region", FileMode.Create)))
+            {
+                file.Write(ZoneFile);
+                file.Write(regionMapVersion);
+                file.Write(m_Regions.Count);
+                Int32 regionNum = 0;
+                foreach (VeRegion region in m_Regions)
+                {
+                    file.Write(regionNum);
+                    regionNum += 1;
+                    Int32 node = 0;
+                    file.Write(region.region_type);
+                    file.Write(region.position[0]);
+                    file.Write(region.position[1]);
+                    file.Write(region.position[2]);
+                    file.Write(region.splitdistance);
+                    file.Write(region.vert_count);
+                    swfile.WriteLine();
+                    swfile.WriteLine("REGION: " + region.position[0] + " " + region.position[1] + " " + region.position[2] + " " + region.splitdistance + " - RegionType: " + region.region_type);
+                    if (region.parentNode.regionDefinitionFile != null)
+                        swfile.WriteLine("REGIONFILE: " + region.parentNode.regionDefinitionFile);
+                    if (region.parentNode.environmentDefinitions != null)
+                    {
+                        foreach (string str in region.parentNode.environmentDefinitions)
+                            swfile.WriteLine("EnvDefinition: " + str);
+                    }
+                    swfile.WriteLine("EnvData: " + region.unkcount + " / " + region.parentNode.unk1 + " / " + region.parentNode.unk2);
+
+                    for (ushort i = 0; i < region.vert_count; ++i)
+                    {
+                        Int32 regiontype = 1;
+                        Int32 special = region.special;
+                        swfile.WriteLine(node + " " + region.m_normals[i, 0] + " " + region.m_normals[i, 1] + " " +
+                            region.m_normals[i, 2] + " " + region.m_distance[i] + " " + regiontype + " " + special + " " +
+                           region.m_childindex[i, 0] + " " + region.m_childindex[i, 1]);
+                        file.Write(node);
+                        node += 1;
+                        file.Write(region.m_normals[i, 0]);
+                        file.Write(region.m_normals[i, 1]);
+                        file.Write(region.m_normals[i, 2]);
+                        file.Write(region.m_distance[i]);
+                        file.Write(regiontype);
+                        file.Write(special);
+                        file.Write((Int32)region.m_childindex[i, 0]);
+                        file.Write((Int32)region.m_childindex[i, 1]);
+                    }
+                }
+                file.Close();
+            }
+            swfile.Close();
+        }
+
         UInt32 GridID;
-        private void CheckNode(string temp, object item, bool parentXform)
+        private void CheckNode(string temp, object item, bool parentXform, bool selectNodeParent)
         {
             if (item is VeMeshGeometryNode)
             {
@@ -422,6 +496,15 @@ namespace EQ2ModelViewer
                 // testing tutorial_island02 boat
                 //if (widgetID == 1253219127)
 
+                // tutorial_island02 water
+                if(widgetID == 1864854785)
+                {
+                    int test = 0;
+                }
+                if(widgetID == 2720558016)
+                {
+                    int test = 0;
+                }
                 Model model = new Model();
                 model.Initialize(Graphics.Device, (VeMeshGeometryNode)item, temp);
                 model.Position.X = x;
@@ -437,10 +520,93 @@ namespace EQ2ModelViewer
             }
             else
             {
+
+                if (widgetID == 2720558016)
+                {
+                    int test = 0;
+                }
                 float x1 = 0.0f;
                 float y1 = 0.0f;
                 float z1 = 0.0f;
-                if (item is VeRoomItemNode)
+
+                if (item is VeEnvironmentNode)
+                {
+                    VeEnvironmentNode env = (VeEnvironmentNode)item;
+                    if (env.regionDefinitionFile != null && env.regionDefinitionFile.Length > 0)
+                    {
+                        int waterType = 0;
+                        String envFile = "";
+                        if (env.environmentDefinitions != null)
+                        {
+                            foreach (string str in env.environmentDefinitions)
+                            {
+                                envFile = str;
+                                envFile = envFile.Replace("/", "\\");
+
+                                envFile = DirName + envFile;
+                                waterType = LoadEnvXmlParseLiquid(envFile);
+                                if (waterType != 0)
+                                    break;
+                            }
+                        }
+
+                        bool watervol = env.regionDefinitionFile.Contains("watervol");
+                        bool waterregion = env.regionDefinitionFile.Contains("waterregion");
+                        bool waterregion2 = env.regionDefinitionFile.Contains("water_region");
+                        bool iswater = env.regionDefinitionFile.Contains("water");
+                        bool isocean = env.regionDefinitionFile.Contains("ocean");
+                        bool isvolume = env.regionDefinitionFile.Contains("volume");
+                        AppendLoadFile("Region established: " + waterType + ", " + envFile
+                            + " WaterVol: " + watervol + " WaterRegion: " + waterregion +
+                            " WaterRegion2: " + waterregion2 + " IsWater: " + iswater +
+                            " IsOcean: " + isocean + " IsVolume: " + isvolume);
+                        if (waterType>0)
+                        {
+                            AppendLoadFile("Region accepted: " + waterType + ", " + envFile
+                                + " WaterVol: " + watervol + " WaterRegion: " + waterregion +
+                                " WaterRegion2: " + waterregion2 + " IsWater: " + iswater +
+                                " IsOcean: " + isocean + " IsVolume: " + isvolume);
+                            Eq2Reader reader2 = new Eq2Reader(new System.IO.FileStream(DirName + env.regionDefinitionFile, System.IO.FileMode.Open, System.IO.FileAccess.Read));
+                            VeRegion region = (VeRegion)reader2.ReadObject();
+                            region.parentNode = env;
+                            region.region_type = 0; // default water volume
+
+                            if (waterregion) // 'sea'/ocean/waterregion in tutorial_island02 / qeynos_harbor
+                                region.region_type = 1;
+                            else if (waterregion2)
+                                region.region_type = 0;
+                            else if (isvolume && selectNodeParent)
+                                region.region_type = 4;
+                            else if ((isocean && selectNodeParent)) // ocean in antonica/commonlands/tutorial
+                                region.region_type = 3;
+                            else if (isocean && iswater) // caves in frostfang(halas)
+                                region.region_type = 4;
+                            else if (isocean)
+                                region.region_type = 5;
+
+                            region.special = waterType;
+                            MeshClass tmpMesh = new MeshClass();
+                            region_nodes += region.vert_count;
+                            m_Regions.Add(region);
+                        }
+                        else
+                        {
+                            if (env.regionDefinitionFile != null)
+                            {
+                                AppendLoadFile("Region skipped: " + env.regionDefinitionFile);
+                            }
+                            else
+                                AppendLoadFile("Region skipped: ???");
+
+                            if (env.environmentDefinitions != null)
+                            {
+                                foreach (string str in env.environmentDefinitions)
+                                    AppendLoadFile("EnvDefinition: " + str);
+                            }
+                        }
+                    }
+                }
+                else if (item is VeRoomItemNode)
                 {
                     yaw = ((VeRoomItemNode)item).orientation[0];
                     pitch = ((VeRoomItemNode)item).orientation[1];
@@ -482,9 +648,10 @@ namespace EQ2ModelViewer
 
                     System.Collections.IEnumerator enumerator = ((VeNode)item).EnumerateChildren();
                     bool parentBool = item is VeXformNode;
+                    bool selectNode = item is VeSelectNode;
                     while (enumerator.MoveNext())
                     {
-                        CheckNode(temp, enumerator.Current, parentBool);
+                        CheckNode(temp, enumerator.Current, parentBool, selectNodeParent ? true : selectNode);
                     }
 
                     x = old_x;
@@ -688,6 +855,30 @@ namespace EQ2ModelViewer
             }
             if (sender != null)
                MessageBox.Show("Export Complete!");
+        }
+
+        private int LoadEnvXmlParseLiquid(string filename)
+        {
+            try
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(filename);
+
+                var nsmgr = new XmlNamespaceManager(xmlDoc.NameTable);
+                nsmgr.AddNamespace("vdl", "Vdl");
+                nsmgr.AddNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+                XmlNode atmosphereNode = xmlDoc.SelectSingleNode("/vdl:VdlFile/vdl:Environment/vdl:iAtmosphere", nsmgr);
+                if (atmosphereNode != null && Convert.ToInt32(atmosphereNode.InnerText) < 0)
+                    return Convert.ToInt32(atmosphereNode.InnerText); // lava
+
+                XmlNode liquidNode = xmlDoc.SelectSingleNode("/vdl:VdlFile/vdl:Environment/vdl:nLiquid", nsmgr);
+                if (liquidNode != null)
+                    return Convert.ToInt32(liquidNode.InnerText);
+            }catch(Exception ex)
+            {
+
+            }
+            return 0;
         }
     }
 }

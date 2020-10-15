@@ -165,6 +165,9 @@ namespace EQ2ModelViewer
 
             foreach (MeshClass mesh in m_meshes)
             {
+                if (mesh.GetTexture() == null)
+                    continue;
+
                 mesh.RenderBuffers(Graphics.Context);
                 lightShader.Render(Graphics.Context, mesh.GetIndexCount(), temp, camera.GetViewMatrix(), Graphics.GetProjectionMatrix(), mesh.GetTexture(), new Vector3(0.0f, 0.0f, 0.0f), ambientColor/*new Vector4(1.0f, 1.0f, 1.0f, 1.0f)*/, new Vector4(0.0f, 0.0f, 0.0f, 0.0f), camera.GetPosition(), new Vector4(0.0f, 0.0f, 0.0f, 0.0f), 0.0f);
             }

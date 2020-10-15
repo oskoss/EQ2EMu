@@ -46,43 +46,48 @@ namespace Everquest2.Visualization {
             if (classVersion == 0) unk0 = reader.ReadSingle();
 
             ushort count = reader.ReadUInt16();
-
-            unk1 = new float[count, 3];
-            unk2 = new float[count];
-            unk3 = new short[count, 2];
+            vert_count = count;
+            m_normals = new float[count, 3];
+            m_distance = new float[count];
+            m_childindex = new short[count, 2];
             for (ushort i = 0; i < count; ++i) {
-                unk1[i, 0] = reader.ReadSingle();
-                unk1[i, 1] = reader.ReadSingle();
-                unk1[i, 2] = reader.ReadSingle();
-                unk2[i] = reader.ReadSingle();
-                unk3[i, 0] = reader.ReadInt16();
-                unk3[i, 1] = reader.ReadInt16();
+                m_normals[i, 0] = reader.ReadSingle();
+                m_normals[i, 1] = reader.ReadSingle();
+                m_normals[i, 2] = reader.ReadSingle();
+                m_distance[i] = reader.ReadSingle();
+                m_childindex[i, 0] = reader.ReadInt16();
+                m_childindex[i, 1] = reader.ReadInt16();
             }
 
             if (classVersion >= 2) {
-                uint unkcount = reader.ReadUInt32();
-                float[,] unk6 = new float[unkcount, 4];
+                unkcount = reader.ReadUInt32();
+                m_center = new float[unkcount, 4];
 
                 for (int i = 0; i < unkcount; i++) {
-                    unk6[i, 0] = reader.ReadSingle();
-                    unk6[i, 1] = reader.ReadSingle();
-                    unk6[i, 2] = reader.ReadSingle();
-                    unk6[i, 3] = reader.ReadSingle();
+                    m_center[i, 0] = reader.ReadSingle();
+                    m_center[i, 1] = reader.ReadSingle();
+                    m_center[i, 2] = reader.ReadSingle();
+                    m_center[i, 3] = reader.ReadSingle();
                 }
             }
 
-            unk4[0] = reader.ReadSingle();
-            unk4[1] = reader.ReadSingle();
-            unk4[2] = reader.ReadSingle();
-            unk5 = reader.ReadSingle();
+            position[0] = reader.ReadSingle();
+            position[1] = reader.ReadSingle();
+            position[2] = reader.ReadSingle();
+            splitdistance = reader.ReadSingle();
         }
 
-
-        private float unk0;
-        private float[,] unk1;
-        private float[] unk2;
-        private short[,] unk3;
-        private float[] unk4 = new float[3];
-        private float unk5;
+        public int vert_count;
+        public float unk0;
+        public uint unkcount;
+        public float[,] m_normals;
+        public float[] m_distance;
+        public short[,] m_childindex;
+        public float[] position = new float[3];
+        public float splitdistance;
+        public VeEnvironmentNode parentNode;
+        float[,] m_center; // 1-3 is vector center, 4th is radius
+        public int region_type;
+        public int special = 0;
     }
 }
