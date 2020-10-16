@@ -3602,7 +3602,7 @@ void Spawn::FixZ(bool forceUpdate) {
 	
 	if ( GetZone()->regionmap != nullptr )
 	{
-		glm::vec3 targPos(GetY(), GetX(), GetZ());
+		glm::vec3 targPos(GetY() - 1.0f, GetX(), GetZ());
 		float bestZ = -999999.0f;
 		if ( new_z != BEST_Z_INVALID )
 			bestZ = new_z - 1.0f;
@@ -3624,8 +3624,21 @@ void Spawn::FixZ(bool forceUpdate) {
 
 bool Spawn::CheckLoS(Spawn* target)
 {
-	glm::vec3 targpos(target->GetX(), target->GetZ(), target->GetY()+1.0f);
-	glm::vec3 pos(GetX(), GetZ(), GetY()+1.0f);
+	float radiusSrc = 1.0f;
+	float radiusTarg = 1.0f;
+
+	// we don't have an appropriate eye level height, this will have to do for now
+	if (!target->InWater() )
+	{
+		radiusTarg = 5.0f;
+	}
+	if(!InWater())
+	{
+		radiusSrc = 5.0f;
+	}
+
+	glm::vec3 targpos(target->GetX(), target->GetZ(), target->GetY()+radiusTarg);
+	glm::vec3 pos(GetX(), GetZ(), GetY()+radiusSrc);
 	return CheckLoS(pos, targpos);
 }
 
@@ -3827,7 +3840,7 @@ bool Spawn::InWater()
 				
 		if ( GetZone()->regionmap != nullptr )
 		{
-			glm::vec3 targPos(GetY(), GetX(), GetZ());
+			glm::vec3 targPos(GetY() - 1.0f, GetX(), GetZ());
 			float bestZ = -999999.0f;
 			if ( new_z != BEST_Z_INVALID )
 				bestZ = new_z;
