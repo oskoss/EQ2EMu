@@ -3624,8 +3624,8 @@ void Spawn::FixZ(bool forceUpdate) {
 
 bool Spawn::CheckLoS(Spawn* target)
 {
-	float radiusSrc = 3.5f;
-	float radiusTarg = 3.5f;
+	float radiusSrc = 2.0f;
+	float radiusTarg = 2.0f;
 
 	glm::vec3 targpos(target->GetX(), target->GetZ(), target->GetY()+radiusTarg);
 	glm::vec3 pos(GetX(), GetZ(), GetY()+radiusSrc);
