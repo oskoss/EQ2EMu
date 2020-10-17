@@ -183,10 +183,14 @@ WaterRegionType RegionMapV1::BSPReturnRegionTypeNode(const Region_Node* region_n
 #endif
 
 	if ((current_node->left == 4294967294) &&
-		(current_node->right == 4294967295)) {
+		(current_node->right == -1 || current_node->right == -2)) {
 		if (region_node->region_type == ClassWaterOcean || region_node->region_type == ClassWaterOcean2)
 		{
-			return EstablishDistanceAtAngle(region_node, current_node, distance, absDistance, absSplitDist, false);
+			if ( region_node->region_type == ClassWaterOcean && current_node->right == -1 &&
+			current_node->normal[1] >= 0.9f && distance > 0 )
+				return RegionTypeWater;
+			else
+				return EstablishDistanceAtAngle(region_node, current_node, distance, absDistance, absSplitDist, true);
 		}
 		else
 		{
@@ -219,13 +223,29 @@ WaterRegionType RegionMapV1::BSPReturnRegionTypeNode(const Region_Node* region_n
 #ifdef REGIONDEBUG
 		printf("to left node %i\n", current_node->left);
 #endif
-		if (current_node->left == 4294967294 && ((region_node->region_type == ClassWaterVolume || region_node->region_type == ClassWaterOcean2) ||
-			(region_node->region_type == ClassWaterOcean && current_node->normal[1] == 1.0f)))
-			return RegionTypeWater;
-		else if (current_node->left == -1 || current_node->left == -2) {
-			if (current_node->left == -2 && region_node->region_type == ClassWaterCavern)
-				return EstablishDistanceAtAngle(region_node, current_node, distance, absDistance, absSplitDist, true);
-			else
+		if (current_node->left == -2)
+		{
+			switch(region_node->region_type)
+			{
+				case ClassWaterVolume:
+				case ClassWaterOcean:
+					return RegionTypeWater;
+				break;
+				
+				case ClassWaterOcean2:
+					return EstablishDistanceAtAngle(region_node, current_node, distance, absDistance, absSplitDist, false);
+				break;
+				
+				case ClassWaterCavern:
+					return EstablishDistanceAtAngle(region_node, current_node, distance, absDistance, absSplitDist, true);
+				break;
+				
+				default:
+					return RegionTypeNormal;
+				break;
+			}
+		}
+		else if (current_node->left == -1) {
 				return(RegionTypeNormal);
 		}
 		return BSPReturnRegionTypeNode(region_node, BSP_Root, current_node->left + 1, location, distToNode);
@@ -297,15 +317,15 @@ WaterRegionType RegionMapV1::EstablishDistanceAtAngle(const Region_Node* region_
 	printf("Distcheck: %f < %f\n", absDistance, absSplitDist);
 #endif
 	if (absDistance < absSplitDist &&
-		(current_node->normal[0] == 1.0f || current_node->normal[0] == -1.0f ||
-			(current_node->normal[1] == 1.0f && distance < 0.0f) ||
-			(current_node->normal[1] == -1.0f && distance > 0.0f)))
+		(current_node->normal[0] >= 1.0f || current_node->normal[0] <= -1.0f ||
+			(current_node->normal[1] >= .9f && distance < 0.0f) ||
+			(current_node->normal[1] <= -.9f && distance > 0.0f)))
 	{
 		return RegionTypeWater;
 	}
-	else if (region_node->region_type == ClassWaterOcean2 || checkEdgedAngle)
+	else if (fraction > 0.0f && (region_node->region_type == ClassWaterOcean2 || checkEdgedAngle))
 	{
-		if (current_node->normal[2] == 1.0f || current_node->normal[2] == -1.0f)
+		if (current_node->normal[2] >= 1.0f || current_node->normal[2] <= -1.0f)
 			return RegionTypeNormal;
 		else if (current_node->normal[1] == 0.0f && (current_node->normal[0] < -0.5f || current_node->normal[0] > 0.5f) &&
 			((abs(absDistance * current_node->normal[0]) / 2.0f) < ((abs(absSplitDist * (1.0f / fraction))))))
