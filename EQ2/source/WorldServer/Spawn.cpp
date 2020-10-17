@@ -3832,9 +3832,7 @@ bool Spawn::InWater()
 		{
 			glm::vec3 targPos(GetY(), GetX(), GetZ());
 			if ( IsGroundSpawn() )
-				targPos.y -= 1.0f;
-			else
-				targPos.y -= .1f;
+				targPos.x -= 1.0f;
 			
 			float bestZ = -999999.0f;
 			if ( new_z != BEST_Z_INVALID )
