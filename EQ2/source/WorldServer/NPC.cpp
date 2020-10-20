@@ -94,6 +94,8 @@ NPC::NPC(NPC* old_npc){
 		ChangePrimaryWeapon();
 		ChangeSecondaryWeapon();
 		SetSoundsDisabled(old_npc->IsSoundsDisabled());
+		SetFlyingCreature();
+		SetWaterCreature();
 	}
 }
 
