@@ -3602,7 +3602,13 @@ void Spawn::FixZ(bool forceUpdate) {
 	
 	if ( GetZone()->regionmap != nullptr )
 	{
-		glm::vec3 targPos(GetY() - 1.0f, GetX(), GetZ());
+		glm::vec3 targPos(GetY(), GetX(), GetZ());
+		
+		if ( IsGroundSpawn() )
+			targPos.x -= 1.0f;
+		else
+			targPos.x -= .5f; // standard offset to better assess shallow water
+			
 		float bestZ = -999999.0f;
 		if ( new_z != BEST_Z_INVALID )
 			bestZ = new_z - 1.0f;
@@ -3833,6 +3839,9 @@ bool Spawn::InWater()
 			glm::vec3 targPos(GetY(), GetX(), GetZ());
 			if ( IsGroundSpawn() )
 				targPos.x -= 1.0f;
+			else
+				targPos.x -= .5f; // standard offset to better assess shallow water
+				
 			
 			float bestZ = -999999.0f;
 			if ( new_z != BEST_Z_INVALID )
