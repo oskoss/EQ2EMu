@@ -244,7 +244,7 @@ public:
 
 	/// <summary>Unlock all the spells for the given client</summary>
 	/// <param name='client'>Client to unlock the spells for</param>
-	void UnlockAllSpells(Client* client);
+	void UnlockAllSpells(Client* client, Spell* exception = 0);
 
 	/// <summary>Unlock a single spell for the given client</summary>
 	/// <param name='client'>The client to unlock the spell for</param>

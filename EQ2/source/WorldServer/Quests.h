@@ -226,6 +226,8 @@ public:
 	Player*				GetPlayer();
 	void				SetPlayer(Player* in_player);
 	bool				GetCompleted();
+	bool				HasSentLastUpdate() { return has_sent_last_update; }
+	void				SetSentLastUpdate(bool val) { has_sent_last_update = val; }
 	void				SetCompletedDescription(string desc);
 	const char*			GetCompletedDescription();
 	int32				GetExpReward();
@@ -312,6 +314,7 @@ protected:
 	bool				turned_in;
 	bool				update_needed;
 	bool				deleted;
+	bool				has_sent_last_update;
 
 	string				completed_description;
 	

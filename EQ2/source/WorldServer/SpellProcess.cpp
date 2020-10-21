@@ -392,10 +392,31 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason){
 				if(target && target->IsPlayer() && spell->spell->GetSpellData()->fade_message.length() > 0){
 					Client* client = target->GetZone()->GetClientBySpawn(target);
 					if(client){
+						bool send_to_sender = true;
 						string fade_message = spell->spell->GetSpellData()->fade_message;
 						if(fade_message.find("%t") != string::npos)
-							fade_message.replace(fade_message.find("%t"), 2, target->GetName());
+							fade_message.replace(fade_message.find("%t"), 2, target->GetName());						
 						client->Message(CHANNEL_SPELLS_OTHER, fade_message.c_str());
+					}
+				}
+				if (target && target->IsPlayer() && spell->spell->GetSpellData()->fade_message.length() > 0) {
+					Client* client = target->GetZone()->GetClientBySpawn(target);
+					if (client) {
+						bool send_to_sender = true;
+						string fade_message_others = spell->spell->GetSpellData()->fade_message_others;
+						if (fade_message_others.find("%t") != string::npos)
+							fade_message_others.replace(fade_message_others.find("%t"), 2, target->GetName());
+						if (fade_message_others.find("%c") != string::npos)
+							fade_message_others.replace(fade_message_others.find("%c"), 2, spell->caster->GetName());
+						if (fade_message_others.find("%T") != string::npos) {
+							fade_message_others.replace(fade_message_others.find("%T"), 2, target->GetName());
+							send_to_sender = false;
+						}
+						if (fade_message_others.find("%C") != string::npos) {
+							fade_message_others.replace(fade_message_others.find("%C"), 2, spell->caster->GetName());
+							send_to_sender = false;
+						}
+						spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, fade_message_others.c_str(), target, 50, send_to_sender);
 					}
 				}
 			}
@@ -522,7 +543,10 @@ void SpellProcess::SendStartCast(LuaSpell* spell, Client* client){
 
 void SpellProcess::SendFinishedCast(LuaSpell* spell, Client* client){
 	if(client && spell && spell->spell){
-		UnlockAllSpells(client);
+		if (spell->spell->GetSpellData()->cast_type == SPELL_CAST_TYPE_TOGGLE)
+			UnlockAllSpells(client, spell->spell);
+		else
+			UnlockAllSpells(client);
 		if(spell->resisted && spell->spell->GetSpellData()->recast > 0)
 			CheckRecast(spell->spell, client->GetPlayer(), 0.5); // half sec recast on resisted spells
 		else if (!spell->interrupted && spell->spell->GetSpellData()->cast_type != SPELL_CAST_TYPE_TOGGLE)
@@ -557,9 +581,9 @@ void SpellProcess::LockAllSpells(Client* client){
 	}
 }
 
-void SpellProcess::UnlockAllSpells(Client* client){
+void SpellProcess::UnlockAllSpells(Client* client, Spell* exception){
 	if(client)
-		client->GetPlayer()->UnlockAllSpells();
+		client->GetPlayer()->UnlockAllSpells(false, exception);
 }
 
 void SpellProcess::UnlockSpell(Client* client, Spell* spell){
@@ -1447,11 +1471,20 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 			}
 			if(spell->spell->GetSpellData()->effect_message.length() > 0){
 				string effect_message = spell->spell->GetSpellData()->effect_message;
-				if(effect_message.find("%t") < 0xFFFFFFFF)
+				bool send_to_sender = true;
+				if(effect_message.find("%t") != string::npos)
 					effect_message.replace(effect_message.find("%t"), 2, target->GetName());
 				if (effect_message.find("%c") != string::npos)
 					effect_message.replace(effect_message.find("%c"), 2, spell->caster->GetName());
-				spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, effect_message.c_str(), target, 50);
+				if (effect_message.find("%T") != string::npos) {
+					effect_message.replace(effect_message.find("%T"), 2, target->GetName());
+					send_to_sender = false;
+				}
+				if (effect_message.find("%C") != string::npos) {
+					effect_message.replace(effect_message.find("%C"), 2, spell->caster->GetName());
+					send_to_sender = false;
+				}
+				spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, effect_message.c_str(), target, 50, send_to_sender);
 			}
 			target->GetZone()->CallSpawnScript(target, SPAWN_SCRIPT_CASTED_ON, spell->caster, spell->spell->GetName());
 		}
@@ -1466,7 +1499,13 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 			
 			//LogWrite(SPELL__ERROR, 0, "Spell", "No precast function found for %s", ((Entity*)target)->GetName());
 			target = zone->GetSpawnByID(spell->targets.at(i));
-			
+			if (!target && spell->targets.at(i) == spell->caster->GetID()) {
+				target = spell->caster;
+			}
+			if (!target) {
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Zone has not finished loading process yet.  Try again later.");
+				continue;
+			}
 			if (i == 0 && !spell->spell->GetSpellData()->not_maintained) {
 				spell->caster->AddMaintainedSpell(spell);
 				//((Entity*)target)->AddMaintainedSpell(spell);

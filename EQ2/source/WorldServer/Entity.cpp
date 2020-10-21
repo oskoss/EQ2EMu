@@ -499,6 +499,7 @@ void Entity::DoRegenUpdate(){
 	if(GetPower() < GetTotalPower()){
 		if(regen_power_rate == 0)
 			regen_power_rate = level + (int)(level/10) + 1;
+		cout << "regen_power_rate: " << regen_power_rate << endl;
 		if((power + regen_power_rate) > GetTotalPower())
 			SetPower(GetTotalPower());
 		else
@@ -1376,7 +1377,11 @@ float Entity::GetSpeed() {
 		ret += stats[ITEM_STAT_OFFENSIVESPEED];
 	else if (stats.count(ITEM_STAT_SPEED) && stats.count(ITEM_STAT_MOUNTSPEED))
 		ret += max(stats[ITEM_STAT_SPEED], stats[ITEM_STAT_MOUNTSPEED]);
-
+	else if (stats.count(ITEM_STAT_SPEED))
+		ret += stats[ITEM_STAT_SPEED];
+	else if (stats.count(ITEM_STAT_MOUNTSPEED))
+		ret += stats[ITEM_STAT_MOUNTSPEED];
+	
 	ret *= speed_multiplier;
 	return ret;
 }

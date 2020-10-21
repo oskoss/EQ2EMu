@@ -283,6 +283,13 @@ bool alpha_check(unsigned char val){
 		return false;
 }
 
+unsigned int GetSpellNameCrc(const char* src) {
+	if (!src)
+		return 0;
+	uLong crc = crc32(0L, Z_NULL, 0);
+	return crc32(crc, (unsigned const char*)src, strlen(src));
+}
+
 int GetItemNameCrc(string item_name){
 	const char *src = item_name.c_str();
 	uLong crc = crc32(0L, Z_NULL, 0);    

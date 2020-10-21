@@ -123,6 +123,10 @@ LuaInterface::~LuaInterface() {
 	safe_delete(spell_delete_timer);
 }
 
+int LuaInterface::GetNumberOfArgs(lua_State* state) {
+	return lua_gettop(state);
+}
+
 void LuaInterface::Process() {
 	if(shutting_down)
 		return;
@@ -753,6 +757,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "Attack", EQ2Emu_lua_Attack);
 	lua_register(state, "ApplySpellVisual", EQ2Emu_lua_ApplySpellVisual);
 	
+	
 	lua_register(state, "IsPlayer", EQ2Emu_lua_IsPlayer);
 	lua_register(state, "FaceTarget", EQ2Emu_lua_FaceTarget);
 	lua_register(state, "MoveToLocation", EQ2Emu_lua_MoveToLocation);
@@ -831,6 +836,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "KillSpawnByDistance", EQ2Emu_lua_KillSpawnByDistance);
 	lua_register(state, "Despawn", EQ2Emu_lua_Despawn);
 	lua_register(state, "ChangeHandIcon", EQ2Emu_lua_ChangeHandIcon);
+	lua_register(state, "SetVisualFlag", EQ2Emu_lua_SetVisualFlag);
+	lua_register(state, "SetInfoFlag", EQ2Emu_lua_SetInfoFlag);
 	lua_register(state, "IsBindAllowed", EQ2Emu_lua_IsBindAllowed);
 	lua_register(state, "IsGateAllowed", EQ2Emu_lua_IsGateAllowed);
 	lua_register(state, "Bind", EQ2Emu_lua_Bind);
@@ -841,6 +848,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "ToggleTracking", EQ2Emu_lua_ToggleTracking);
 	lua_register(state, "AddPrimaryEntityCommand", EQ2Emu_lua_AddPrimaryEntityCommand);
 	lua_register(state, "AddSpellBookEntry", EQ2Emu_lua_AddSpellBookEntry);
+	lua_register(state, "HasSpell", EQ2Emu_lua_HasSpell);
 	lua_register(state, "Interrupt", EQ2Emu_lua_Interrupt);
 	lua_register(state, "Stealth", EQ2Emu_lua_Stealth);
 	lua_register(state, "IsInvis", EQ2Emu_lua_IsInvis);
@@ -868,6 +876,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "AddQuestPrereqTradeskillLevel", EQ2Emu_lua_AddQuestPrereqTradeskillLevel);
 	lua_register(state, "AddQuestPrereqTradeskillClass", EQ2Emu_lua_AddQuestPrereqTradeskillClass);
 	lua_register(state, "AddQuestSelectableRewardItem", EQ2Emu_lua_AddQuestSelectableRewardItem);
+	lua_register(state, "HasQuestRewardItem", EQ2Emu_lua_HasQuestRewardItem);
 	lua_register(state, "AddQuestRewardItem", EQ2Emu_lua_AddQuestRewardItem);
 	lua_register(state, "AddQuestRewardCoin", EQ2Emu_lua_AddQuestRewardCoin);
 	lua_register(state, "AddQuestRewardFaction", EQ2Emu_lua_AddQuestRewardFaction);
@@ -943,6 +952,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GiveQuestItem", EQ2Emu_lua_GiveQuestItem);
 	lua_register(state, "SetQuestRepeatable", EQ2Emu_lua_SetQuestRepeatable);
 
+	lua_register(state, "AddWaypoint", EQ2Emu_lua_AddWaypoint);
+	lua_register(state, "RemoveWaypoint", EQ2Emu_lua_RemoveWaypoint);
+	lua_register(state, "SendWaypoints", EQ2Emu_lua_SendWaypoints);
+
 	lua_register(state, "AddWard", EQ2Emu_lua_AddWard);
 	lua_register(state, "AddToWard", EQ2Emu_lua_AddToWard);
 	lua_register(state, "RemoveWard", EQ2Emu_lua_RemoveWard);
@@ -985,6 +998,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetSkillValue", EQ2Emu_lua_SetSkillValue);
 	lua_register(state, "GetSkill", EQ2Emu_lua_GetSkill);
 	lua_register(state, "GetSkillIDByName", EQ2Emu_lua_GetSkillIDByName);
+	lua_register(state, "HasSkill", EQ2Emu_lua_HasSkill);
+	lua_register(state, "AddSkill", EQ2Emu_lua_AddSkill);
+	lua_register(state, "IncreaseSkillCapsByType", EQ2Emu_lua_IncreaseSkillCapsByType);
+	lua_register(state, "RemoveSkill", EQ2Emu_lua_RemoveSkill);
 	lua_register(state, "AddProc", EQ2Emu_lua_AddProc);
 	lua_register(state, "RemoveProc", EQ2Emu_lua_RemoveProc);
 	lua_register(state, "Knockback", EQ2Emu_lua_Knockback);

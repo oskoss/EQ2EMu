@@ -1,0 +1,1 @@
+ALTER TABLE `spells`	ADD COLUMN `fade_message_others` VARCHAR(255) NOT NULL DEFAULT '' AFTER `fade_message`;

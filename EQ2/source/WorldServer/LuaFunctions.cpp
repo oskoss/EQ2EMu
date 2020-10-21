@@ -337,6 +337,30 @@ int EQ2Emu_lua_ChangeHandIcon(lua_State* state) {
 	return 0;
 }
 
+//this function is used to force an update packet to be sent.  
+//Useful if certain calculated things change after the player is sent the spawn packet, like quest flags or player has access to an object now
+int EQ2Emu_lua_SetVisualFlag(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn) {
+		spawn->vis_changed = true;
+	}
+	return 0;
+}
+
+//this function is used to force an update packet to be sent.  
+//Useful if certain calculated things change after the player is sent the spawn packet, like quest flags or player has access to an object now
+int EQ2Emu_lua_SetInfoFlag(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn) {
+		spawn->info_changed = true;
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_SendStateCommand(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -3207,6 +3231,27 @@ int EQ2Emu_lua_AddQuestSelectableRewardItem(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_HasQuestRewardItem(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Quest* quest = lua_interface->GetQuest(state);
+	if (quest) {
+		int32 item_id = lua_interface->GetInt32Value(state, 2);
+		vector<Item*>* items = quest->GetRewardItems();
+		if (items) {
+			vector<Item*>::iterator itr;
+			for (itr = items->begin(); itr != items->end(); itr++) {
+				if (*itr && (*itr)->details.item_id == item_id) {
+					lua_interface->SetBooleanValue(state, true);
+					return 1;
+				}
+			}
+		}
+	}
+	lua_interface->SetBooleanValue(state, false);
+	return 1;
+}
+
 int EQ2Emu_lua_AddQuestRewardItem(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -3694,8 +3739,6 @@ int EQ2Emu_lua_GiveImmediateQuestReward(lua_State* state) {
 	string factions_map_str = lua_interface->GetStringValue(state, 7);
 	string text = lua_interface->GetStringValue(state, 8);
 	int32 source_id = 0;
-	if (quest)
-		source_id = quest->GetQuestID();
 	if (playerSpawn && playerSpawn->IsPlayer()) {
 		Player* player = (Player*)playerSpawn;
 		Client* client = player->GetZone()->GetClientBySpawn(player);
@@ -3710,7 +3753,7 @@ int EQ2Emu_lua_GiveImmediateQuestReward(lua_State* state) {
 						Item* item = new Item(master_item_list.GetItem(itr->first));
 						if (item) {
 							if (itr->second > 0)
-								item->stack_count = itr->second;
+								item->details.count = itr->second;
 							reward_items.push_back(item);
 						}
 					}
@@ -3734,93 +3777,9 @@ int EQ2Emu_lua_GiveImmediateQuestReward(lua_State* state) {
 			const char* reward_type = "Quest Reward!";
 			if (!quest)
 				reward_type = "Reward!";
-			client->DisplayQuestRewards(0, coin, &reward_items, &selectable_reward_items, &faction_rewards, reward_type, status_points, text.c_str());
+			client->DisplayQuestRewards(quest, coin, &reward_items, &selectable_reward_items, &faction_rewards, reward_type, status_points, text.c_str());
 		}
 	}
-			/*PacketStruct* packet2 = configReader.getStruct("WS_QuestRewardPackMsg", client->GetVersion());
-			if (packet2) {
-				player->AddCoins(coin);
-				client->PlaySound("coin_cha_ching");
-				packet2->setSubstructDataByName("reward_data", "unknown1", 255);
-				if(quest)
-					packet2->setSubstructDataByName("reward_data", "reward", "Quest Reward!");
-				else
-					packet2->setSubstructDataByName("reward_data", "reward", "Reward!");
-				packet2->setSubstructDataByName("reward_data", "coin", coin);
-				if (player->GetGuild()) {
-					player->GetInfoStruct()->status_points += status_points;
-					packet2->setSubstructDataByName("reward_data", "status_points", status_points);
-				}
-				if (rewards_str.length() > 0) {
-					map<unsigned int, unsigned short> rewards = ParseIntMap(rewards_str);
-					vector<Item*> reward_items;
-					map<unsigned int, unsigned short>::iterator itr;
-					for (itr = rewards.begin(); itr != rewards.end(); itr++) {
-						if (itr->first > 0) {
-							Item* item = new Item(master_item_list.GetItem(itr->first));
-							if (item) {
-								if (itr->second > 0)
-									item->stack_count = itr->second;
-								reward_items.push_back(item);
-							}
-						}
-					}
-					packet2->setSubstructArrayLengthByName("reward_data", "num_rewards", reward_items.size());
-					for (int i = 0; i < reward_items.size(); i++) {
-						Item* item = reward_items[i];
-						packet2->setArrayDataByName("reward_id", item->details.item_id, i);
-						packet2->setItemArrayDataByName("item", item, client->GetPlayer(), i, 0, -1);
-						player->AddPendingItemReward(item); //item reference will be deleted after the player accepts it
-					}
-				}
-				if (select_rewards_str.length() > 0) {
-					map<unsigned int, unsigned short> rewards = ParseIntMap(select_rewards_str);
-					vector<Item*> reward_items;
-					map<unsigned int, unsigned short>::iterator itr;
-					for (itr = rewards.begin(); itr != rewards.end(); itr++) {
-						if (itr->first > 0) {
-							Item* item = new Item(master_item_list.GetItem(itr->first));
-							if (item) {
-								if (itr->second > 0)
-									item->stack_count = itr->second;
-								reward_items.push_back(item);
-							}
-						}
-					}
-					packet2->setSubstructArrayLengthByName("reward_data", "num_select_rewards", reward_items.size());
-					for (int i = 0; i < reward_items.size(); i++) {
-						Item* item = reward_items[i];
-						packet2->setArrayDataByName("select_reward_id", item->details.item_id, i);
-						packet2->setItemArrayDataByName("select_item", item, client->GetPlayer(), i, 0, -1);
-						player->AddPendingSelectableItemReward(source_id, item); //item reference will be deleted after the player selects one
-					}
-				}
-				if (factions_map_str.length() > 0) {
-					map<unsigned int, signed int> faction_rewards = ParseSInt32Map(factions_map_str);
-					map<unsigned int, signed int>::iterator itr;
-					map<Faction*, signed int> factions;
-					for (itr = faction_rewards.begin(); itr != faction_rewards.end(); itr++) {
-						Faction* faction = master_faction_list.GetFaction(itr->first);
-						if (faction)
-							factions[faction] = itr->second;
-					}
-					packet2->setSubstructArrayLengthByName("reward_data", "num_factions", factions.size());
-					map<Faction*, signed int>::iterator faction_itr;
-					int8 i = 0;
-					for (faction_itr = factions.begin(); faction_itr != factions.end(); faction_itr++) {
-						packet2->setArrayDataByName("faction_name", faction_itr->first->name.c_str(), i);
-						sint32 amount = faction_itr->second;
-						packet2->setArrayDataByName("amount", amount, i);
-						if (amount > 0)
-							player->GetFactions()->IncreaseFaction(faction_itr->first->id, amount);
-						else
-							player->GetFactions()->DecreaseFaction(faction_itr->first->id, (amount * -1));
-						i++;
-					}
-				}				
-				client->QueuePacket(packet2->serialize());
-				safe_delete(packet2);
-			}*/
 	return 0;
 }
 
@@ -4099,22 +4058,41 @@ int EQ2Emu_lua_AddPrimaryEntityCommand(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_HasSpell(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	int32 spellid = lua_interface->GetInt32Value(state, 2);
+	int16 tier = lua_interface->GetInt16Value(state, 3);
+	if (player && player->IsPlayer()) {
+		lua_interface->SetBooleanValue(state, ((Player*)player)->HasSpell(spellid, tier, true));
+		return 1;
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_AddSpellBookEntry(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
 	int32 spellid = lua_interface->GetInt32Value(state, 2);
 	int16 tier = lua_interface->GetInt16Value(state, 3);
+	int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
+	bool add_silently = lua_interface->GetBooleanValue(state, 4);
+	bool add_to_hotbar = true;
+	if (num_args > 4) {
+		add_to_hotbar = lua_interface->GetBooleanValue(state, 5);
+	}
 	Spell* spell = master_spell_list.GetSpell(spellid, tier);
 	if (player && spell && player->IsPlayer()) {
-		Client* client = player->GetZone()->GetClientBySpawn(player);
+		Client* client = player->GetClient();
 		if (client) {
 			if (!client->GetPlayer()->HasSpell(spellid, tier - 1, true))
 			{
 				Spell* spell = master_spell_list.GetSpell(spellid, tier);
 				client->GetPlayer()->AddSpellBookEntry(spellid, 1, client->GetPlayer()->GetFreeSpellBookSlot(spell->GetSpellData()->spell_book_type), spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
 				client->GetPlayer()->UnlockSpell(spell);
-				client->SendSpellUpdate(spell);
+				client->SendSpellUpdate(spell, add_silently, add_to_hotbar);
 			}
 			else
 			{
@@ -4123,7 +4101,7 @@ int EQ2Emu_lua_AddSpellBookEntry(lua_State* state) {
 				client->GetPlayer()->RemoveSpellBookEntry(spell->GetSpellID());
 				client->GetPlayer()->AddSpellBookEntry(spell->GetSpellID(), spell->GetSpellTier(), old_slot, spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
 				client->GetPlayer()->UnlockSpell(spell);
-				client->SendSpellUpdate(spell);
+				client->SendSpellUpdate(spell, add_silently, add_to_hotbar);
 			}
 
 
@@ -5420,6 +5398,51 @@ int EQ2Emu_lua_GetArchetypeName(lua_State* state) {
 		return 1;
 	}
 
+	return 0;
+}
+
+int EQ2Emu_lua_SendWaypoints(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	if (player && player->IsPlayer()) {
+		Client* client = player->GetClient();
+		if (client)
+			client->SendWaypoints();
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_AddWaypoint(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	string name = lua_interface->GetStringValue(state, 2);	
+	int32 type = lua_interface->GetInt32Value(state, 3);
+	if (type == 0)
+		type = 2;
+	if (name.length() > 0) {
+		if (player && player->IsPlayer()) {
+			Client* client = player->GetClient();
+			if (client)
+				client->AddWaypoint(name, type);
+		}
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_RemoveWaypoint(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	string name = lua_interface->GetStringValue(state, 2);	
+	if (name.length() > 0) {
+		if (player && player->IsPlayer()) {
+			Client* client = player->GetClient();
+			if (client)
+				client->RemoveWaypoint(name);
+		}
+	}
 	return 0;
 }
 
@@ -7060,6 +7083,119 @@ int EQ2Emu_lua_SetSkillValue(lua_State* state) {
 	else
 		skill->current_val = value;
 
+	return 0;
+}
+
+int EQ2Emu_lua_HasSkill(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	int32 skill_id = lua_interface->GetInt32Value(state, 2);
+	if (skill_id > 0 && player && player->IsPlayer()) {
+		lua_interface->SetBooleanValue(state, ((Player*)player)->skill_list.HasSkill(skill_id));
+		return 1;
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_AddSkill(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player_spawn = lua_interface->GetSpawn(state);
+	int32 skill_id = lua_interface->GetInt32Value(state, 2);
+	int16 current_val = lua_interface->GetInt16Value(state, 3);
+	int16 max_val = lua_interface->GetInt16Value(state, 4);
+	bool more_to_add = lua_interface->GetBooleanValue(state, 5);
+	if (skill_id > 0 && current_val > 0 && max_val > 0) {
+		if (player_spawn && player_spawn->IsPlayer()) {
+			Player* player = (Player*)player_spawn;
+			bool added = false;
+			if (!player->skill_list.HasSkill(skill_id)) {
+				player->AddSkill(skill_id, current_val, max_val, true);		
+				added = true;
+			}
+			if (!more_to_add) { //need to send update regardless, even if THIS skill wasn't added, otherwise if you have a list and the last item wasn't added but the previous ones were, it wouldn't send the update
+				Client* client = player->GetClient();
+				if (client) {
+					EQ2Packet* packet = player->GetSkills()->GetSkillPacket(client->GetVersion());
+					if (packet)
+						client->QueuePacket(packet);
+				}
+			}
+			if (added) {
+				lua_interface->SetBooleanValue(state, true);
+				return 1;
+			}
+		}
+		else {
+			lua_interface->LogError("%s: LUA AddSkill command error: Given spawn is not a player", lua_interface->GetScriptName(state));
+		}
+	}
+	else {
+		lua_interface->LogError("%s: LUA AddSkill command error: Required parameters not set", lua_interface->GetScriptName(state));
+	}
+	lua_interface->SetBooleanValue(state, false);
+	return 1;
+}
+
+int EQ2Emu_lua_RemoveSkill(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player_spawn = lua_interface->GetSpawn(state);
+	int32 skill_id = lua_interface->GetInt32Value(state, 2);
+	bool more_to_remove = lua_interface->GetBooleanValue(state, 3);
+	if (skill_id > 0) {
+		if (player_spawn && player_spawn->IsPlayer()) {
+			Player* player = (Player*)player_spawn;
+			if (player->skill_list.HasSkill(skill_id)) {
+				player->RemovePlayerSkill(skill_id);
+				if (!more_to_remove) {
+					Client* client = player->GetClient();
+					if (client) {
+						EQ2Packet* packet = player->GetSkills()->GetSkillPacket(client->GetVersion());
+						if (packet)
+							client->QueuePacket(packet);
+					}
+				}
+			}			
+		}
+		else {
+			lua_interface->LogError("%s: LUA RemoveSkill command error: Given spawn is not a player", lua_interface->GetScriptName(state));
+		}
+	}
+	else {
+		lua_interface->LogError("%s: LUA RemoveSkill command error: skill_id not set", lua_interface->GetScriptName(state));
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_IncreaseSkillCapsByType(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player_spawn = lua_interface->GetSpawn(state);
+	int8 skill_type = lua_interface->GetInt8Value(state, 2);
+	int16 amount = lua_interface->GetInt8Value(state, 3);
+	bool more_to_increase = lua_interface->GetBooleanValue(state, 4);
+	if (amount > 0 && skill_type < 100) {
+		if (player_spawn && player_spawn->IsPlayer()) {
+			Player* player = (Player*)player_spawn;
+			player->skill_list.IncreaseSkillCapsByType(skill_type, amount);
+			if (!more_to_increase) {
+				Client* client = player->GetClient();
+				if (client) {
+					EQ2Packet* packet = player->GetSkills()->GetSkillPacket(client->GetVersion());
+					if (packet)
+						client->QueuePacket(packet);
+				}
+			}
+		}
+		else {
+			lua_interface->LogError("%s: LUA IncreaseSkillCapsByType command error: Given spawn is not a player", lua_interface->GetScriptName(state));
+		}
+	}
+	else {
+		lua_interface->LogError("%s: LUA IncreaseSkillCapsByType command error: Invalid parameters", lua_interface->GetScriptName(state));
+	}
 	return 0;
 }
 
@@ -9218,9 +9354,6 @@ int EQ2Emu_lua_SetPlayerLevel(lua_State* state) {
 	}
 
 	client->ChangeLevel(client->GetPlayer()->GetLevel(), level);
-	client->GetPlayer()->SetXP(1);
-	client->GetPlayer()->SetNeededXP();
-
 	return 0;
 }
 
@@ -9977,7 +10110,7 @@ int EQ2Emu_lua_InstructionWindow(lua_State* state) {
 		lua_interface->LogError("LUA InstructionWindow command error: could not find client");
 		return 0;
 	}
-	if (text.length() == 0 || task1.length() == 0 || signal.length() == 0) {
+	if (text.length() == 0) {
 		lua_interface->LogError("LUA InstructionWindow required parameters not given");
 		return 0;
 	}
@@ -10458,16 +10591,16 @@ int EQ2Emu_lua_GetAlignment(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 
 	if (!spawn) {
-		lua_interface->LogError("%s: LUA SetAlignment command error: spawn is not valid", lua_interface->GetScriptName(state));
+		lua_interface->LogError("%s: LUA GetAlignment command error: spawn is not valid", lua_interface->GetScriptName(state));
 		return 0;
 	}
 
 	if (!spawn->IsEntity()) {
-		lua_interface->LogError("%s: LUA SetAlignment command error: spawn is not an entity", lua_interface->GetScriptName(state));
+		lua_interface->LogError("%s: LUA GetAlignment command error: spawn is not an entity", lua_interface->GetScriptName(state));
 		return 0;
 	}
 	
-	lua_interface->SetInt32Value(state, ((Entity*)spawn)->GetAlignment());
+	lua_interface->SetSInt32Value(state, ((Entity*)spawn)->GetAlignment());
 	return 1;
 }
 

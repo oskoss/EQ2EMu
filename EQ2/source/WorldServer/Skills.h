@@ -25,15 +25,29 @@
 #include "../common/types.h"
 #include "MutexMap.h"
 
-#define SKILL_TYPE_COMBAT 1
+#define SKILL_TYPE_WEAPONRY 1
 #define SKILL_TYPE_SPELLCASTING 2
 #define SKILL_TYPE_AVOIDANCE 3
+#define SKILL_TYPE_ARMOR 4
+#define SKILL_TYPE_SHIELD 5
 #define SKILL_TYPE_HARVESTING 6
 #define SKILL_TYPE_ARTISAN 7
 #define SKILL_TYPE_CRAFTSMAN 8
 #define SKILL_TYPE_OUTFITTER 9
 #define SKILL_TYPE_SCHOLAR 10
-#define SKILL_TYPE_GENERAL 12
+#define SKILL_TYPE_GENERAL 13
+#define SKILL_TYPE_LANGUAGE 14
+#define SKILL_TYPE_CLASS 15
+#define SKILL_TYPE_COMBAT 16
+#define SKILL_TYPE_WEAPON 17
+#define SKILL_TYPE_TSKNOWLEDGE 18
+
+#define SKILL_TYPE_GENERAL_DOF 11
+#define SKILL_TYPE_LANGUAGE_DOF 12
+#define SKILL_TYPE_CLASS_DOF 13
+#define SKILL_TYPE_COMBAT_DOF 14
+#define SKILL_TYPE_WEAPON_DOF 15
+#define SKILL_TYPE_TSKNOWLEDGE_DOF 16
 
 #define SKILL_ID_SCULPTING 1039865549
 #define SKILL_ID_FLETCHING 3076004370
@@ -44,6 +58,13 @@
 #define SKILL_ID_SCRIBING 773137566
 #define SKILL_ID_CHEMISTRY 2557647574
 #define SKILL_ID_ARTIFICING 3330500131
+#define SKILL_ID_ARTIFICING 3330500131
+
+//the following update the current_value to the max_value as soon as the max_value is updated
+#define SKILL_ID_DUALWIELD 1852383242
+#define SKILL_ID_FISTS 3177806075
+#define SKILL_ID_DESTROYING 3429135390
+#define SKILL_ID_MAGIC_AFFINITY 2072844078
 
 /* Each SkillBonus is comprised of multiple possible skill bonus values.  This is so one spell can modify
    more than one skill */
@@ -107,8 +128,8 @@ public:
 	void IncreaseSkill(int32 skill_id, int16 amount);
 	void DecreaseSkill(Skill* skill, int16 amount);
 	void DecreaseSkill(int32 skill_id, int16 amount);
-	void SetSkill(Skill* skill, int16 value);
-	void SetSkill(int32 skill_id, int16 value);
+	void SetSkill(Skill* skill, int16 value, bool send_update = true);
+	void SetSkill(int32 skill_id, int16 value, bool send_update = true);
 
 	void IncreaseSkillCap(Skill* skill, int16 amount);
 	void IncreaseSkillCap(int32 skill_id, int16 amount);
@@ -119,6 +140,7 @@ public:
 	void IncreaseAllSkillCaps(int16 value);
 	void IncreaseSkillCapsByType(int8 type, int16 value);
 	void SetSkillCapsByType(int8 type, int16 value);
+	void SetSkillValuesByType(int8 type, int16 value, bool send_update = true);
 	void AddSkillUpdateNeeded(Skill* skill);
 
 	void AddSkillBonus(int32 spell_id, int32 skill_id, float value);

@@ -992,12 +992,69 @@ void Item::SetItem(Item* old_item){
 	spell_tier = old_item->spell_tier;
 }
 
+bool Item::CheckArchetypeAdvSubclass(int8 adventure_class, map<int8, int16>* adv_class_levels) {
+	if (adventure_class > FIGHTER && adventure_class < ANIMALIST) {
+		int8 check = adventure_class % 10;
+		if (check == 2 || check == 5 || check == 8) {
+			int64 adv_classes = 0;
+			int16 level = 0;
+			for (int i = adventure_class + 1; i < adventure_class + 3; i++) {				
+				if (adv_class_levels) { //need to match levels
+					if (level == 0) {
+						if (adv_class_levels->count(i) > 0)
+							level = adv_class_levels->at(i);
+						else
+							return false;
+					}
+					else{
+						if (adv_class_levels->count(i) > 0 && adv_class_levels->at(i) != level)
+							return false;
+					}
+				}
+				else {
+					adv_classes = ((int64)2) << (i - 1);
+					if (!(generic_info.adventure_classes & adv_classes))
+						return false;
+				}
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Item::CheckArchetypeAdvClass(int8 adventure_class, map<int8, int16>* adv_class_levels) {
+	if (adventure_class == 1 || adventure_class == 11 || adventure_class == 21 || adventure_class == 31) {
+		//if the class is an archetype class and the subclasses have access, then allow
+		if (CheckArchetypeAdvSubclass(adventure_class + 1, adv_class_levels) && CheckArchetypeAdvSubclass(adventure_class + 4, adv_class_levels) && CheckArchetypeAdvSubclass(adventure_class + 7, adv_class_levels)) {
+			if (adv_class_levels) {
+				int16 level = 0;
+				for (int i = adventure_class + 1; i <= adventure_class + 7; i += 3) {
+					if (adv_class_levels->count(i+1) == 0 || adv_class_levels->count(i + 2) == 0)
+						return false;
+					if(level == 0)
+						level = adv_class_levels->at(i+1);
+					if (adv_class_levels->at(i+1) != level) //already verified the classes, just need to verify the subclasses have the same levels
+						return false;
+				}
+				
+			}
+			return true;
+		}
+	}
+	else if (CheckArchetypeAdvSubclass(adventure_class, adv_class_levels)) {//check archetype subclass		
+		return true;
+	}
+	return false;
+}
+
 bool Item::CheckClass(int8 adventure_class, int8 tradeskill_class) {
 	int64 adv_classes = ((int64)2) << (adventure_class - 1);
 	int64 ts_classes = ((int64)2) << (tradeskill_class - 1);
 	if( ((generic_info.adventure_classes & adv_classes) || generic_info.adventure_classes == 0) && ((generic_info.tradeskill_classes & ts_classes) || generic_info.tradeskill_classes == 0) )
 		return true;
-	return false;
+	//check arechtype classes as last resort
+	return CheckArchetypeAdvClass(adventure_class);
 }
 
 bool Item::CheckLevel(int8 adventure_class, int8 tradeskill_class, int16 level) {
@@ -1720,7 +1777,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		if(flags.length() > 0)
 			packet->setSubstructDataByName("header_info", "flag_names", flags.c_str());
 	}
-	if(generic_info.adventure_classes > 0 || generic_info.tradeskill_classes > 0 || item_level_overrides.size() > 0){
+	if (generic_info.adventure_classes > 0 || generic_info.tradeskill_classes > 0 || item_level_overrides.size() > 0) {
 		//int64 classes = 0;
 		int16 tmp_level = 0;
 		map<int8, int16> adv_class_levels;
@@ -1736,18 +1793,18 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		if (packet->GetVersion() >= 60000)
 			temp += 2;
 
-		for(int32 i=0;i<=temp;i++){
+		for (int32 i = 0; i <= temp; i++) {
 			tmpVal = (int64)pow(2.0, (double)i);
-			if((generic_info.adventure_classes & tmpVal)){
+			if ((generic_info.adventure_classes & tmpVal)) {
 				//classes += 2 << (i - 1);
 				classes += tmpVal;
 				tmp_level = GetOverrideLevel(i, 255);
-				if(tmp_level == 0)
+				if (tmp_level == 0)
 					adv_class_levels[i] = generic_info.adventure_default_level;
 				else
 					adv_class_levels[i] = tmp_level;
 			}
-			if(tmpVal == 0) {
+			if (tmpVal == 0) {
 				if (packet->GetVersion() >= 60000)
 					classes = 576379072454289112;
 				else if (packet->GetVersion() >= 57048)
@@ -1758,27 +1815,73 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 					classes = 36024082983773912;
 			}
 		}
-		for(int i=ALCHEMIST + 1 - ARTISAN ;i>=0;i--){
+		for (int i = ALCHEMIST + 1 - ARTISAN; i >= 0; i--) {
 			//tmpVal = 2 << i;
 			tmpVal = (int64)pow(2.0, (double)i);
-			if((generic_info.tradeskill_classes & tmpVal)){
-				classes += pow(2, (i + ARTISAN ));
+			if ((generic_info.tradeskill_classes & tmpVal)) {
+				classes += pow(2, (i + ARTISAN));
 				//classes += 2 << (i+ARTISAN-1);
 				tmp_level = GetOverrideLevel(i, 255);
-				if(tmp_level == 0)
+				if (tmp_level == 0)
 					tradeskill_class_levels[i] = generic_info.tradeskill_default_level;
 				else
 					tradeskill_class_levels[i] = tmp_level;
 			}
 		}
+		bool simplified_display = false;
+		if (client->GetVersion() <= 546) { //simplify display (if possible)
+			map<int8, int16> new_adv_class_levels;
+			for (int i = 1; i <= 31; i += 10) {
+				bool add_archetype = CheckArchetypeAdvClass(i, &adv_class_levels);
+				if (add_archetype) {
+					new_adv_class_levels[i] = 0;	
+				}
+				else {
+					for (int x = 1; x <= 7; x += 3) {
+						if (CheckArchetypeAdvSubclass(i+x, &adv_class_levels)) {
+							new_adv_class_levels[i+x] = 0;
+						}
+					}
+				}
+			}
+			if (new_adv_class_levels.size() > 0) {
+				simplified_display = true;
+				int8 i = 0;
+				for (itr = new_adv_class_levels.begin(); itr != new_adv_class_levels.end(); itr++) {
+					i = itr->first;
+					if ((i % 10) == 1) {
+						int16 level = 0;
+						for (int x = i; x < i+10; x++) {
+							if (adv_class_levels.count(x) > 0) {
+								if(level == 0)
+									level = adv_class_levels.at(x);
+								adv_class_levels.erase(x);
+							}
+						}
+						adv_class_levels[i] = level;
+					}
+					else {
+						int16 level = 0;
+						for (int x = i+1; x < i + 3; x++) {
+							if (adv_class_levels.count(x) > 0) {
+								if (level == 0)
+									level = adv_class_levels.at(x);
+								adv_class_levels.erase(x);
+							}
+						}
+						adv_class_levels[i] = level;
+					}
+				}
+			}			
+		}
 		packet->setSubstructArrayLengthByName("header_info", "class_count", adv_class_levels.size() + tradeskill_class_levels.size());
 		int i = 0;
-		for(itr = adv_class_levels.begin(); itr != adv_class_levels.end(); itr++, i++){
+		for (itr = adv_class_levels.begin(); itr != adv_class_levels.end(); itr++, i++) {
 			packet->setArrayDataByName("adventure_class", itr->first, i);
 			packet->setArrayDataByName("tradeskill_class", 255, i);
-			packet->setArrayDataByName("level", itr->second*10, i);
+			packet->setArrayDataByName("level", itr->second * 10, i);
 		}
-		for(itr = tradeskill_class_levels.begin(); itr != tradeskill_class_levels.end(); itr++, i++){
+		for (itr = tradeskill_class_levels.begin(); itr != tradeskill_class_levels.end(); itr++, i++) {
 			packet->setArrayDataByName("adventure_class", 255, i);
 			packet->setArrayDataByName("tradeskill_class", itr->first, i);
 			packet->setArrayDataByName("level", itr->second, i);
@@ -1837,6 +1940,14 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 					slot = EQ2_ORIG_FOOD_SLOT;
 				else if(slot == EQ2_DRINK_SLOT)
 					slot = EQ2_ORIG_DRINK_SLOT;
+			}
+			else if (client->GetVersion() <= 546) {
+				if (slot > EQ2_EARS_SLOT_1 && slot <= EQ2_WAIST_SLOT) //they added a second ear slot later, adjust for only 1 original slot
+					slot -= 1;
+				else if (slot == EQ2_FOOD_SLOT)
+					slot = EQ2_DOF_FOOD_SLOT;
+				else if (slot == EQ2_DRINK_SLOT)
+					slot = EQ2_DOF_DRINK_SLOT;
 			}
 			packet->setArrayDataByName("slot", slot, i);
 		}

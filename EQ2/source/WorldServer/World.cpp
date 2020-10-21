@@ -2276,6 +2276,43 @@ void World::PurgeStartingLists()
 	MStartingLists.releasewritelock();
 }
 
+void World::SetReloadingSubsystem(string subsystem) {
+	MReloadingSubsystems.lock();
+	reloading_subsystems[subsystem] = Timer::GetCurrentTime2();
+	MReloadingSubsystems.unlock();
+}
+
+void World::RemoveReloadingSubSystem(string subsystem) {
+	MReloadingSubsystems.lock();
+	if (reloading_subsystems.count(subsystem) > 0)
+		reloading_subsystems.erase(subsystem);
+	MReloadingSubsystems.unlock();
+}
+
+bool World::IsReloadingSubsystems() {
+	bool result = false;
+	MReloadingSubsystems.lock();
+	result = reloading_subsystems.size() > 0;
+	MReloadingSubsystems.unlock();
+	return result;
+}
+
+map<string, int32> World::GetOldestReloadingSubsystem() {
+	map<string, int32> result;
+	MReloadingSubsystems.lock();
+	int32 current_time = Timer::GetCurrentTime2();
+	map<string, int32>::iterator itr;
+	int32 oldest = current_time;
+	string oldestname = "";
+	for (itr = reloading_subsystems.begin(); itr != reloading_subsystems.end(); itr++) {
+		if (itr->second < oldest)
+			oldestname = itr->first;
+	}
+	result[oldestname] = oldest;
+	MReloadingSubsystems.unlock();
+	return result;
+}
+
 void ZoneList::WatchdogHeartbeat()
 {
 	list<ZoneServer*>::iterator zone_iter;
@@ -2290,9 +2327,8 @@ void ZoneList::WatchdogHeartbeat()
 		{
 			int32 curTime = Timer::GetCurrentTime2();
 			sint64 diff = (sint64)curTime - (sint64)tmp->GetWatchdogTime();
-			if (diff > 60000)
-			{
-				tmp->SetWatchdogTime(Timer::GetCurrentTime2()); // reset so we don't continuously flood this heartbeat
+			if (diff > 120000)
+			{				
 				LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. attempting to cancel threads...", tmp->GetZoneName(), diff);
 #ifndef WIN32
 				tmp->CancelThreads();
@@ -2301,10 +2337,38 @@ void ZoneList::WatchdogHeartbeat()
 #endif
 				MZoneList.releasewritelock(__FUNCTION__, __LINE__);
 				match = true;
-				break;
+				break;				
+			}
+			else if (diff > 90000 && !tmp->isZoneShuttingDown())
+			{
+				tmp->SetWatchdogTime(Timer::GetCurrentTime2()); // reset so we don't continuously flood this heartbeat
+				map<string, int32> oldest_process = world.GetOldestReloadingSubsystem();
+				if (oldest_process.size() > 0) {
+					map<string, int32>::iterator itr = oldest_process.begin();
+					LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. while waiting for %s to reload...attempting shutdown", tmp->GetZoneName(), diff, itr->first);
+				}
+				else
+					LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. attempting shutdown", tmp->GetZoneName(), diff);
+				tmp->Shutdown();
+			}
+			else if (diff > 60000)
+			{		
+				if (world.IsReloadingSubsystems()) {
+					if (world.GetSuppressedWarningTime() == 0) {
+						world.SetSuppressedWarning();
+						map<string, int32> oldest_process = world.GetOldestReloadingSubsystem();
+						if (oldest_process.size() > 0) {
+							map<string, int32>::iterator itr = oldest_process.begin();
+							LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. while waiting for %s to reload...", tmp->GetZoneName(), diff, itr->first);
+						}
+					}
+					continue;
+				}				
 			}
 			else if (diff > 30000 && !tmp->isZoneShuttingDown())
 			{
+				if (world.IsReloadingSubsystems())
+					continue;
 				LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. attempting shutdown", tmp->GetZoneName(), diff);
 				tmp->Shutdown();
 			}

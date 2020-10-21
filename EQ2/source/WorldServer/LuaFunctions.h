@@ -140,6 +140,8 @@ int EQ2Emu_lua_SetRequiredQuest(lua_State* state);
 int EQ2Emu_lua_SetRequiredHistory(lua_State* state);
 int EQ2Emu_lua_Despawn(lua_State* state);
 int EQ2Emu_lua_ChangeHandIcon(lua_State* state);
+int EQ2Emu_lua_SetVisualFlag(lua_State* state);
+int EQ2Emu_lua_SetInfoFlag(lua_State* state);
 int EQ2Emu_lua_AddHate(lua_State* state);
 int EQ2Emu_lua_GetZone(lua_State* state);
 int EQ2Emu_lua_GetZoneName(lua_State* state);
@@ -202,6 +204,7 @@ int EQ2Emu_lua_SetServerControlFlag(lua_State* state);
 int EQ2Emu_lua_ToggleTracking(lua_State* state);
 int EQ2Emu_lua_AddPrimaryEntityCommand(lua_State* state);
 int EQ2Emu_lua_AddSpellBookEntry(lua_State* state);
+int EQ2Emu_lua_HasSpell(lua_State* state);
 int EQ2Emu_lua_Attack(lua_State* state);
 int EQ2Emu_lua_ApplySpellVisual(lua_State* state);
 int EQ2Emu_lua_Interrupt(lua_State* state);
@@ -232,6 +235,7 @@ int EQ2Emu_lua_AddQuestPrereqRace(lua_State* state);
 int EQ2Emu_lua_AddQuestPrereqModelType(lua_State* state);
 int EQ2Emu_lua_AddQuestPrereqTradeskillLevel(lua_State* state);
 int EQ2Emu_lua_AddQuestPrereqTradeskillClass(lua_State* state);
+int EQ2Emu_lua_HasQuestRewardItem(lua_State* state);
 int EQ2Emu_lua_AddQuestRewardItem(lua_State* state);
 int EQ2Emu_lua_AddQuestSelectableRewardItem(lua_State* state);
 int EQ2Emu_lua_AddQuestRewardCoin(lua_State* state);
@@ -311,6 +315,11 @@ int EQ2Emu_lua_GetTempVariable(lua_State* state);
 int EQ2Emu_lua_GiveQuestItem(lua_State*state);
 int EQ2Emu_lua_SetQuestRepeatable(lua_State* state);
 
+
+int EQ2Emu_lua_AddWaypoint(lua_State* state);
+int EQ2Emu_lua_RemoveWaypoint(lua_State* state);
+int EQ2Emu_lua_SendWaypoints(lua_State* state);
+
 int EQ2Emu_lua_AddWard(lua_State* state);
 int EQ2Emu_lua_AddToWard(lua_State* state);
 int EQ2Emu_lua_RemoveWard(lua_State* state);
@@ -355,6 +364,10 @@ int EQ2Emu_lua_SetSkillMaxValue(lua_State* state);
 int EQ2Emu_lua_SetSkillValue(lua_State* state);
 int EQ2Emu_lua_GetSkill(lua_State* state);
 int EQ2Emu_lua_GetSkillIDByName(lua_State* state);
+int EQ2Emu_lua_HasSkill(lua_State* state);
+int EQ2Emu_lua_AddSkill(lua_State* state);
+int EQ2Emu_lua_RemoveSkill(lua_State* state);
+int EQ2Emu_lua_IncreaseSkillCapsByType(lua_State* state);
 
 int EQ2Emu_lua_AddProc(lua_State* state);
 int EQ2Emu_lua_RemoveProc(lua_State* state);

@@ -1348,6 +1348,18 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		HandleLoot(app);
 		break;
 	}
+	case OP_WaypointSelectMsg: {
+		PacketStruct* packet = configReader.getStruct("WS_WaypointSelect", GetVersion());
+		if (packet) {
+			if (packet->LoadPacketData(app->pBuffer, app->size)) {
+				int32 selection = packet->getType_int32_ByName("selection");
+				if (selection > 0) {
+					SelectWaypoint(selection);
+				}
+			}
+		}
+		break;
+	}
 	case OP_KnowledgeWindowSlotMappingMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_KnowledgeWindowSlotMappingMsg", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_SpellSlotMapping", GetVersion());
@@ -1572,9 +1584,18 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			else {
 				EQ2_16BitString command = packet->getType_EQ2_16BitString_ByName("command");
 				if (command.size > 0) {
-					string command_name = command.data;
-					if (command_name.find(" ") < 0xFFFFFFFF)
-						command_name = command_name.substr(0, command_name.find(" "));
+					string command_name = command.data;					
+					if (command_name.find(" ") < 0xFFFFFFFF) {
+						if (GetVersion() <= 546) { //this version uses commands in the form "Buy From Merchant" instead of buy_from_merchant
+							string::size_type pos = command_name.find(" ");
+							while(pos != string::npos){
+								command_name.replace(pos, 1, "_");
+								pos = command_name.find(" ");
+							}
+						}
+						else
+							command_name = command_name.substr(0, command_name.find(" "));
+					}
 					int32 handler = commands.GetCommandHandler(command_name.c_str());
 					if (handler != 0xFFFFFFFF) {
 						if (command.data == command_name) {
@@ -1591,7 +1612,15 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 						if (spawn && spawn->IsNPC()) {
 							if (EntityCommandPrecheck(spawn, command.data.c_str())) {
 								if (!((NPC*)spawn)->HandleUse(this, command.data)) {
-									LogWrite(WORLD__ERROR, 0, "World", "Unhandled command in OP_EntityVerbsVerbMsg: %s", command.data.c_str());
+									command_name = command.data;
+									string::size_type pos = command_name.find(" ");
+									while (pos != string::npos) {
+										command_name.replace(pos, 1, "_");
+										pos = command_name.find(" ");
+									}
+									if (!((NPC*)spawn)->HandleUse(this, command_name)) { //convert the spaces to underscores and see if that makes a difference
+										LogWrite(WORLD__ERROR, 0, "World", "Unhandled command in OP_EntityVerbsVerbMsg: %s", command.data.c_str());
+									}
 								}
 							}
 						}
@@ -2458,7 +2487,8 @@ void Client::HandleSkillInfoRequest(EQApplicationPacket* app) {
 
 void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 	PacketStruct* request = 0;
-
+	if (!app || app->size == 0)
+		return;
 	//LogWrite(CCLIENT__DEBUG, 0, "Client", "Request2:");
 	//DumpPacket(app);
 
@@ -3341,7 +3371,7 @@ void Client::SimpleMessage(int8 color, const char* message) {
 	}
 }
 
-void Client::SendSpellUpdate(Spell* spell) {
+void Client::SendSpellUpdate(Spell* spell, bool add_silently, bool add_to_hotbar) {
 	PacketStruct* packet = configReader.getStruct("WS_SpellGainedMsg", GetVersion());
 	if (packet) {
 		int8 xxx = spell->GetSpellData()->is_aa;
@@ -3349,6 +3379,10 @@ void Client::SendSpellUpdate(Spell* spell) {
 		packet->setDataByName("spell_id", spell->GetSpellID());
 		packet->setDataByName("unique_id", spell->GetSpellData()->spell_name_crc);
 		packet->setDataByName("spell_name", spell->GetName());
+		if(add_silently)
+			packet->setDataByName("add_silently", 1);
+		if(add_to_hotbar)
+			packet->setDataByName("add_to_hotbar", 1);
 		packet->setDataByName("unknown", xxx);
 		packet->setDataByName("display_spell_tier", 1);
 		packet->setDataByName("unknown3", 1);
@@ -4085,8 +4119,9 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 		}
 	}
 
-	if (new_level > old_level)
+	if (new_level > old_level) {		
 		player->UpdatePlayerHistory(HISTORY_TYPE_XP, HISTORY_SUBTYPE_ADVENTURE, new_level, player->GetAdventureClass());
+	}
 
 	if (player->GetPet()) {
 		NPC* pet = (NPC*)player->GetPet();
@@ -4165,12 +4200,36 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	LogWrite(WORLD__DEBUG, 0, "World", "Player: %s leveled from %u to %u", GetPlayer()->GetName(), old_level, new_level);
 	int16 new_skill_cap = 5 * new_level;
 	PlayerSkillList* player_skills = player->GetSkills();
+
+	player_skills->SetSkillCapsByType(SKILL_TYPE_ARMOR, new_skill_cap);
+	player_skills->SetSkillCapsByType(SKILL_TYPE_SHIELD, new_skill_cap);
+	//SKILL_TYPE_ARMOR/SKILL_TYPE_SHIELD always has the same current / max values
+	player_skills->SetSkillValuesByType(SKILL_TYPE_ARMOR, new_skill_cap, false);
+	player_skills->SetSkillValuesByType(SKILL_TYPE_SHIELD, new_skill_cap, false);
+
+	player_skills->SetSkillCapsByType(SKILL_TYPE_CLASS, new_skill_cap);
+	player_skills->SetSkillCapsByType(SKILL_TYPE_WEAPON, new_skill_cap);
+	//SKILL_TYPE_CLASS/SKILL_TYPE_WEAPON always has the same current/max values
+	player_skills->SetSkillValuesByType(SKILL_TYPE_CLASS, new_skill_cap, false);
+	player_skills->SetSkillValuesByType(SKILL_TYPE_WEAPON, new_skill_cap, false);
+	
 	player_skills->SetSkillCapsByType(SKILL_TYPE_COMBAT, new_skill_cap);
+	player_skills->SetSkillCapsByType(SKILL_TYPE_GENERAL, new_skill_cap);
 	player_skills->SetSkillCapsByType(SKILL_TYPE_SPELLCASTING, new_skill_cap);
 	player_skills->SetSkillCapsByType(SKILL_TYPE_AVOIDANCE, new_skill_cap);
-	player_skills->SetSkillCapsByType(SKILL_TYPE_GENERAL, new_skill_cap);
+	
 	if (new_level > player->GetTSLevel())
 		player_skills->SetSkillCapsByType(SKILL_TYPE_HARVESTING, new_skill_cap);
+
+	//SKILL_ID_DUALWIELD, SKILL_ID_FISTS, SKILL_ID_DESTROYING, and SKILL_ID_MAGIC_AFFINITY always have the current_val equal to max_val
+	if (player_skills->HasSkill(SKILL_ID_DUALWIELD))
+		player_skills->SetSkill(SKILL_ID_DUALWIELD, new_skill_cap);
+	if (player_skills->HasSkill(SKILL_ID_FISTS))
+		player_skills->SetSkill(SKILL_ID_FISTS, new_skill_cap);
+	if (player_skills->HasSkill(SKILL_ID_DESTROYING))
+		player_skills->SetSkill(SKILL_ID_DESTROYING, new_skill_cap);
+	if (player_skills->HasSkill(SKILL_ID_MAGIC_AFFINITY))
+		player_skills->SetSkill(SKILL_ID_MAGIC_AFFINITY, new_skill_cap);
 
 	Guild* guild = GetPlayer()->GetGuild();
 	if (guild) {
@@ -5042,8 +5101,8 @@ void Client::CheckQuestQueue() {
 	for (itr = quest_queue.begin(); itr != quest_queue.end(); itr++) {
 		queued_quest = *itr;
 		SendQuestUpdateStepImmediately(queued_quest->quest, queued_quest->step, queued_quest->display_quest_helper);
-		//if(queued_quest->quest && queued_quest->quest->GetTurnedIn()) //update the journal so the old quest isn't the one displayed in the client's quest helper
-		//	SendQuestJournal();
+		if(queued_quest->quest && queued_quest->quest->GetTurnedIn()) //update the journal so the old quest isn't the one displayed in the client's quest helper
+			SendQuestJournal();
 		safe_delete(queued_quest);
 	}
 	quest_queue.clear();
@@ -5320,9 +5379,9 @@ void Client::SendQuestUpdate(Quest* quest) {
 			step = updates->at(i);
 			if (lua_interface && step->Complete() && quest->GetCompleteAction(step->GetStepID()))
 				lua_interface->CallQuestFunction(quest, quest->GetCompleteAction(step->GetStepID()), player);
-			if (step->WasUpdated()) {
-				SendQuestJournal(false, 0, true);
+			if (step->WasUpdated()) {				
 				QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player, step));
+				SendQuestJournal(false, 0, true);
 			}
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 
@@ -5384,17 +5443,21 @@ Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
 	MPendingQuestAccept.lock();
 	for (itr = pending_quest_accept.begin(); itr != pending_quest_accept.end(); itr++) {
 		quest = *itr;
-		items = quest->GetSelectableRewardItems();
-		if (items && items->size() > 0) {
-			for (int32 i = 0; i < items->size(); i++) {
-				if (items->at(i)->details.item_id == item_id) {
-					found_quest = true;
-					break;
+		items = quest->GetRewardItems();
+		if (item_id == 0 && items && items->size() > 0) {
+			found_quest = true;
+		}
+		else {
+			items = quest->GetSelectableRewardItems();
+			if (items && items->size() > 0) {
+				for (int32 i = 0; i < items->size(); i++) {
+					if (items->at(i)->details.item_id == item_id) {
+						found_quest = true;
+						break;
+					}
 				}
 			}
 		}
-		else if (item_id == 0)
-			found_quest = true;
 		if (found_quest) {
 			pending_quest_accept.erase(itr);
 			break;
@@ -5455,10 +5518,10 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 
 void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards, vector<Item*>* selectable_rewards, map<int32, sint32>* factions, const char* header, int32 status_points, const char* text) {
 	if (coin == 0 && (!rewards || rewards->size() == 0) && (!selectable_rewards || selectable_rewards->size() == 0) && (!factions || factions->size() == 0) && status_points == 0 && text == 0 && (!quest || (quest->GetCoinsReward() == 0 && quest->GetCoinsRewardMax() == 0))) {
-		if (quest)
+		/*if (quest)
 			text = quest->GetName();
-		else
-			return;//nothing to give
+		else*/
+		return;//nothing to give
 	}
 	PacketStruct* packet2 = configReader.getStruct("WS_QuestRewardPackMsg", GetVersion());
 	if (packet2) {
@@ -5478,12 +5541,14 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 		if (rewarded_coin > coin)
 			coin = rewarded_coin;
 		if (!quest) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
-			player->AddCoins(coin);
-			PlaySound("coin_cha_ching");
+			if (coin > 0) {
+				player->AddCoins(coin);
+				PlaySound("coin_cha_ching");
+			}
 		}
 		packet2->setSubstructDataByName("reward_data", "unknown1", 255);
 		packet2->setSubstructDataByName("reward_data", "reward", header);
-		packet2->setSubstructDataByName("reward_data", "coin", coin);
+		packet2->setSubstructDataByName("reward_data", "max_coin", coin);
 		if (player->GetGuild()) {
 			if (!quest) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
 				player->GetInfoStruct()->status_points += status_points;
@@ -5694,11 +5759,11 @@ void Client::GiveQuestReward(Quest* quest) {
 
 	quest->IncrementCompleteCount();
 	player->AddCompletedQuest(quest);
-
+	
+	DisplayQuestComplete(quest);
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 	SendQuestJournal();
 	player->RemoveQuest(quest->GetQuestID(), false);
-	DisplayQuestComplete(quest);
 	if (quest->GetExpReward() > 0) {
 		int16 level = player->GetLevel();
 		int32 xp = quest->GetExpReward();
@@ -8010,6 +8075,49 @@ void Client::SendIgnoreList() {
 
 }
 
+void Client::AddWaypoint(string name, int8 type) { 
+	waypoint_id++;
+	WaypointInfo info;
+	info.id = waypoint_id; 
+	info.type = type;
+	waypoints[name] = info;
+}
+
+void Client::SendWaypoints() {
+	PacketStruct* packet = configReader.getStruct("WS_WaypointUpdate", GetVersion());
+	if (packet) {
+		packet->setArrayLengthByName("num_updates", waypoints.size());
+		map<string, WaypointInfo>::iterator itr;
+		int16 i = 0;
+		for (itr = waypoints.begin(); itr != waypoints.end(); itr++) {
+			packet->setArrayDataByName("waypoint_name", itr->first.c_str(), i);
+			packet->setArrayDataByName("waypoint_category", itr->second.type, i);
+			if(itr->second.type == 3)
+				packet->setArrayDataByName("spawn_id", 0xFFFFFFFF, i);
+			else
+				packet->setArrayDataByName("spawn_id", itr->second.id, i);			
+			i++;
+		}		
+		QueuePacket(packet->serialize());
+		safe_delete(packet);
+	}
+}
+
+void Client::SelectWaypoint(int32 id) {
+	string found_name = "";
+	map<string, WaypointInfo>::iterator itr;
+	for (itr = waypoints.begin(); itr != waypoints.end(); itr++) {
+		if (itr->second.id == id) {
+			found_name = itr->first;
+			break;
+		}
+	}
+	if (found_name.length() > 0) {
+		Spawn* spawn = current_zone->FindSpawn(player, found_name.c_str());
+		ShowPathToTarget(spawn);
+	}
+}
+
 void Client::AddWaypoint(const char* waypoint_name, int8 waypoint_category, int32 spawn_id) {
 	if (waypoint_name) {
 		PacketStruct* packet = configReader.getStruct("WS_WaypointUpdate", GetVersion());
@@ -8024,7 +8132,37 @@ void Client::AddWaypoint(const char* waypoint_name, int8 waypoint_category, int3
 			safe_delete(packet);
 		}
 	}
+}
 
+void Client::ShowPathToTarget(Spawn* spawn) {
+	if (spawn && current_zone->pathing) {
+		bool partial = false;
+		bool stuck = false;
+		PathfinderOptions opts;
+		opts.smooth_path = true;
+		opts.step_size = 100.0f;//RuleR(Pathing, NavmeshStepSize);
+		opts.offset = spawn->GetYOffset() + 1.0f;
+		opts.flags = PathingNotDisabled ^ PathingZoneLine;
+		PacketStruct* packet = configReader.getStruct("WS_GlowPath", GetVersion());
+		if (packet) {
+			auto path = current_zone->pathing->FindPath(glm::vec3(player->GetX(), player->GetZ(), player->GetY()), glm::vec3(spawn->GetX(), spawn->GetZ(), spawn->GetY()), partial, stuck, opts);
+			packet->setArrayLengthByName("num_points", path.size());
+			int i = 0;
+			for (auto& node : path)
+			{
+				packet->setArrayDataByName("x", node.pos.x, i);
+				packet->setArrayDataByName("y", node.pos.z, i);
+				packet->setArrayDataByName("z", node.pos.y, i);
+				packet->setDataByName("waypoint_x", spawn->GetX());
+				packet->setDataByName("waypoint_y", spawn->GetY());
+				packet->setDataByName("waypoint_z", spawn->GetZ());
+				i++;
+			}
+			if(i>0)
+				QueuePacket(packet->serialize());
+			safe_delete(packet);
+		}
+	}
 }
 
 void Client::BeginWaypoint(const char* waypoint_name, float x, float y, float z) {
@@ -9065,6 +9203,9 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 				GetCurrentZone()->AddClient(this); //add to zones client list
 
 				zone_list.AddClientToMap(player->GetName(), this);
+				const char* zone_script = world.GetZoneScript(GetCurrentZone()->GetZoneID());
+				if (zone_script && lua_interface)
+					lua_interface->RunZoneScript(zone_script, "new_client", GetCurrentZone(), GetPlayer());
 			}
 			else {
 				LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);

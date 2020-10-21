@@ -1135,15 +1135,19 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 	}
 	case COMMAND_RELOADSTRUCTS: {
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Structs...");
+		world.SetReloadingSubsystem("Structs");
 		configReader.ReloadStructs();
+		world.RemoveReloadingSubSystem("Structs");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
 		break;
 	}
 	case COMMAND_RELOAD_QUESTS: {
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Quests...");
+		world.SetReloadingSubsystem("Quests");
 		master_quest_list.Reload();
 		client_list.ReloadQuests();
 		zone_list.ReloadClientQuests();
+		world.RemoveReloadingSubSystem("Quests");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
 		break;
 	}
@@ -1153,42 +1157,52 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 	}
 	case COMMAND_RELOAD_SPELLS: {
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Spells...");
+		world.SetReloadingSubsystem("Spells");
 		zone_list.DeleteSpellProcess();
 		master_spell_list.Reload();
 		if (lua_interface)
 			lua_interface->ReloadSpells();
 		zone_list.LoadSpellProcess();
-		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
+		world.RemoveReloadingSubSystem("Spells");
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");		
 		break;
 	}
 	case COMMAND_RELOAD_GROUNDSPAWNS: {
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Groundspawn Entries...");
+		world.SetReloadingSubsystem("GroundSpawns");
 		client->GetCurrentZone()->DeleteGroundSpawnItems();
 		client->GetCurrentZone()->LoadGroundSpawnEntries();
+		world.RemoveReloadingSubSystem("GroundSpawns");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
 		break;
 	}
 
 	case COMMAND_RELOAD_ZONESCRIPTS: {
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Zone Scripts...");
+		world.SetReloadingSubsystem("ZoneScripts");
 		world.ResetZoneScripts();
 		database.LoadZoneScriptData();
 		if (lua_interface)
 			lua_interface->DestroyZoneScripts();
+		world.RemoveReloadingSubSystem("ZoneScripts");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
 		break;
 	}
 	case COMMAND_RELOAD_ENTITYCOMMANDS: {
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Entity Commands...");
+		world.SetReloadingSubsystem("EntityCommands");
 		client->GetCurrentZone()->ClearEntityCommands();
 		database.LoadEntityCommands(client->GetCurrentZone());
+		world.RemoveReloadingSubSystem("EntityCommands");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
 		break;
 	}
 	case COMMAND_RELOAD_FACTIONS: {
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Factions...");
+		world.SetReloadingSubsystem("Factions");
 		master_faction_list.Clear();
 		database.LoadFactionList();
+		world.RemoveReloadingSubSystem("Factions");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
 		break;
 	}
@@ -1354,8 +1368,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				}
 				else if (strcmp(sep->arg[0], "spellbook") == 0) {
 					sint32 spell_id = atol(sep->arg[1]);
-					int8 tier = atoi(sep->arg[2]);
-					EQ2Packet* outapp = master_spell_list.GetSpellPacket(spell_id, tier, client, true, 0x2A);
+					int32 tier = atoi(sep->arg[2]);
+					if (tier > 255) {
+						SpellBookEntry* ent = client->GetPlayer()->GetSpellBookSpell(spell_id);
+						if (ent)
+							tier = ent->tier;
+					}
+					EQ2Packet* outapp = master_spell_list.GetSpellPacket(spell_id, (int8)tier, client, true, 0x2A);
 					if (outapp)
 						client->QueuePacket(outapp);
 					else
@@ -1386,7 +1405,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					LogWrite(COMMAND__DEBUG, 5, "Command", "Unknown Spell ID: %u", spell_id);
 					int8 tier = client->GetPlayer()->GetSpellTier(spell_id);
 					int8 type = 0;
-					if (client->GetVersion() <= 283)
+					if (client->GetVersion() <= 546)
 						type = 1;
 					EQ2Packet* outapp = master_spell_list.GetSpecialSpellPacket(spell_id, tier, client, true, type);
 					if (outapp){
@@ -1910,8 +1929,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						new_level = 255;
 
 					client->ChangeLevel(client->GetPlayer()->GetLevel(), new_level);
-					client->GetPlayer()->SetXP(1);
-					client->GetPlayer()->SetNeededXP();
 				}
 			}else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage: /level {new_level}");
@@ -7746,6 +7763,12 @@ void Commands::Command_Toggle_AutoConsume(Client* client, Seperator* sep)
 	{
 		int8 slot = atoi(sep->arg[0]);
 		int8 flag = atoi(sep->arg[1]);
+		if (client->GetVersion() <= 283) {
+			slot += 4;
+		}
+		else if (client->GetVersion() <= 546) {
+			slot += 2;
+		}
 		if (slot == EQ2_FOOD_SLOT)
 		{
 			player->toggle_character_flag(CF_FOOD_AUTO_CONSUME);
@@ -8450,8 +8473,8 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 			}
 		}
 		else if (atoi(sep->arg[0]) == 5) {
-			int16 offset = atoi(sep->arg[0]);
-			int32 value1 = atol(sep->arg[1]);
+			int16 offset = atoi(sep->arg[1]);
+			int32 value1 = atol(sep->arg[2]);
 			EQ2Packet* outapp = client->GetPlayer()->GetPlayerInfo()->serialize(client->GetVersion(), offset, value1);
 			client->QueuePacket(outapp);
 		}
@@ -8543,21 +8566,39 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				client->QueuePacket(ret);
 			}
 		}
-		else if (atoi(sep->arg[0]) == 9) {
-			Spawn* spawn = client->GetPlayer()->GetTarget();
-			if (spawn) {	
-				if (sep->IsSet(3)) {
-					int32 amount = (int32)atoi(sep->arg[3]);
-					spawn->SetActivityStatus(amount);
-				}
+		else if (atoi(sep->arg[0]) == 9) {		
+			PacketStruct* packet2 = configReader.getStruct("WS_DeathWindow", client->GetVersion());
+			if (packet2) {
+				packet2->setArrayLengthByName("location_count", 1);
+				packet2->setArrayDataByName("location_ida", 1234);
+				packet2->setArrayDataByName("unknown2a", 3);
+				packet2->setArrayDataByName("zone_name", "Queen's Colony");
+				packet2->setArrayDataByName("location_name", "Myrrin's Tower");
+				packet2->setArrayDataByName("distance", 134);
+				EQ2Packet* app = packet2->serialize();
 				if (sep->IsSet(2)) {
-					int8 amount = (int8)atoi(sep->arg[2]);
-					spawn->SetLockedNoLoot(amount);
+					int8 offset = atoi(sep->arg[1]);
+					uchar* ptr2 = app->pBuffer;
+					ptr2 += offset;
+					if (sep->IsNumber(2)) {
+						int32 value1 = atol(sep->arg[2]);
+						if (value1 > 0xFFFF)
+							memcpy(ptr2, (uchar*)&value1, 4);
+						else if (value1 > 0xFF)
+							memcpy(ptr2, (uchar*)&value1, 2);
+						else
+							memcpy(ptr2, (uchar*)&value1, 1);
+					}
+					else {
+						int8 len = strlen(sep->arg[2]);
+						memcpy(ptr2, (uchar*)&len, 1);
+						ptr2 += 1;
+						memcpy(ptr2, sep->arg[2], len);
+					}
 				}
-				if (sep->IsSet(1)) {
-					sint8 amount = (sint8)atoi(sep->arg[1]);
-					spawn->AddIconValue(amount);
-				}
+				DumpPacket(app);
+				client->QueuePacket(app);
+				safe_delete(packet2);
 			}
 		}
 		else if (atoi(sep->arg[0]) == 10) {
@@ -8609,34 +8650,44 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 		else if (atoi(sep->arg[0]) == 11) {
 			PacketStruct* packet2 = configReader.getStruct("WS_QuestJournalReply", client->GetVersion());
 			if (packet2) {
-				packet2->setDataByName("quest_id", 5);
+				packet2->setDataByName("quest_id", 524);
 				packet2->setDataByName("player_crc", 2900677088);
-				packet2->setDataByName("name", "Archetype Selection");
-				packet2->setDataByName("description", "I have reported my profession to Garven Tralk");
+				packet2->setDataByName("name", "Tasks aboard the Far Journey");
+				packet2->setDataByName("description", "I completed all the tasks assigned to me by Captain Varlos aboard the Far Journey");
 				packet2->setDataByName("type", "Hallmark");
 				packet2->setDataByName("complete_header", "To complete this quest, I must do the following tasks:");
 				packet2->setDataByName("day", 19);
 				packet2->setDataByName("month", 6);
 				packet2->setDataByName("year", 20);
-				packet2->setDataByName("level", 2);
-				packet2->setDataByName("encounter_level", 4);
-				packet2->setDataByName("difficulty", 3);
+				packet2->setDataByName("level", 1);
+				packet2->setDataByName("encounter_level", 1);
+				packet2->setDataByName("difficulty", 1);
 				packet2->setDataByName("time_obtained", Timer::GetUnixTimeStamp());
-				packet2->setDataByName("timer_start", Timer::GetUnixTimeStamp());
-				packet2->setDataByName("timer_duration", 300);
-				packet2->setDataByName("timer_running", 1);
-				packet2->setArrayLengthByName("task_groups_completed", 0);
-				packet2->setArrayLengthByName("num_task_groups", 1);
-				packet2->setArrayDataByName("task_group", "I need to talk to Garven Tralk");
-				packet2->setSubArrayLengthByName("num_tasks", 1);
+				//packet2->setDataByName("timer_start", Timer::GetUnixTimeStamp());
+				//packet2->setDataByName("timer_duration", 300);
+				//packet2->setDataByName("timer_running", 1);
+				packet2->setArrayLengthByName("task_groups_completed", 9);
+				packet2->setArrayLengthByName("num_task_groups", 10);
+				packet2->setArrayDataByName("task_group", "I spoke to Waulon as Captain Varlos had asked of me.");
+				packet2->setArrayDataByName("task_group", "I found Waulon's hat in one of the boxes.", 1);
+				packet2->setArrayDataByName("task_group", "I returned Waulon's hat.", 2);
+				packet2->setArrayDataByName("task_group", "I have spoken to Ingrid.", 3);
+				packet2->setArrayDataByName("task_group", "I purchased a Shard of Luclin.", 4);
+				packet2->setArrayDataByName("task_group", "I gave the Shard of Luclin to Ingrid.", 5);
+				packet2->setArrayDataByName("task_group", "I have spoken to Captain Varlos.", 6);
+				packet2->setArrayDataByName("task_group", "I killed the rats that Captain Varlos requested.", 7);
+				packet2->setArrayDataByName("task_group", "Captain Varlos has ordered you to kill the escaped goblin.", 8);
+				packet2->setArrayDataByName("task_group", "I killed the escaped goblin.", 9);
+				/*packet2->setSubArrayLengthByName("num_tasks", 1);
 				packet2->setSubArrayDataByName("task", "I need to talk to Garven Tralk");
 				packet2->setSubArrayLengthByName("num_updates", 1);
 				packet2->setSubArrayDataByName("update_currentval", 0);
 				packet2->setSubArrayDataByName("update_maxval", 1);
 				packet2->setSubArrayDataByName("icon", 11);
-
+				*/
 				packet2->setArrayDataByName("waypoint", 0xFFFFFFFF);
 				packet2->setDataByName("journal_updated", 1);
+				packet2->setDataByName("bullets", 1);
 				EQ2Packet* app = packet2->serialize();
 				if (sep->IsSet(2)) {
 					int16 offset = atoi(sep->arg[1]);
@@ -8666,7 +8717,7 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 		else if (atoi(sep->arg[0]) == 12) {
 			PacketStruct* packet2 = configReader.getStruct("WS_QuestJournalReply", client->GetVersion());
 			if (packet2) {
-				packet2->setDataByName("quest_id", 5);
+				packet2->setDataByName("quest_id", 524);
 				packet2->setDataByName("player_crc", 2900677088);
 				packet2->setDataByName("name", "Archetype Selection");
 				packet2->setDataByName("description", "I have reported my profession to Garven Tralk.");

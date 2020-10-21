@@ -134,6 +134,10 @@ struct IncomingPaperdollImage {
 	int8 last_received_packet_index;
 	int8 image_type;
 };
+struct WaypointInfo {
+	int32 id;
+	int8 type;
+};
 
 class Client {
 public:
@@ -155,7 +159,7 @@ public:
 	void	HandleTellMessage(Client* from, const char* message);
 	void	SimpleMessage(int8 color, const char* message);
 	void	Message(int8 type, const char* message, ...);
-	void	SendSpellUpdate(Spell* spell);
+	void	SendSpellUpdate(Spell* spell, bool add_silently = false, bool add_to_hotbar = true);
 	void	Zone(ZoneServer* new_zone, bool set_coords = true);
 	void	Zone(const char* new_zone, bool set_coords = true);
 	void	Zone(int32 zoneid, bool set_coords = true);
@@ -441,6 +445,18 @@ public:
 	void SetRejoinGroupID(int32 id) { rejoin_group_id = id; }
 
 	void TempRemoveGroup();
+
+	void SendWaypoints();
+
+	void AddWaypoint(string name, int8 type);
+	void RemoveWaypoint(string name) {
+		if (waypoints.count(name) > 0){
+			waypoints.erase(name);
+		}
+	}
+	void SelectWaypoint(int32 id);
+	void ShowPathToTarget(Spawn* spawn);
+
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -455,6 +471,8 @@ private:
 	Mutex	MQuestQueue;
 	Mutex	MDeletePlayer;
 	vector<Item*>* search_items;
+	int32 waypoint_id = 0;
+	map<string, WaypointInfo> waypoints;
 	Spawn*	transport_spawn;
 	Mutex	MBuyBack;
 	deque<BuyBackItem*> buy_back_items;

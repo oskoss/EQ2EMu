@@ -337,14 +337,14 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 			vis_flags += 4;
 	}
 
-	if (version <= 546 && vis_flags > 0)
+	if (version <= 546 && (vis_flags > 1 || appearance.display_hand_icon > 0)) //interactable
 		vis_flags = 1;
-	
 	vis_packet->setDataByName("vis_flags", vis_flags);
 
 
-	if (MeetsSpawnAccessRequirements(player))
+	if (MeetsSpawnAccessRequirements(player)) {
 		vis_packet->setDataByName("hand_flag", appearance.display_hand_icon);
+	}
 	else {
 		if ((req_quests_override & 256) > 0)
 			vis_packet->setDataByName("hand_flag", 1);
@@ -1006,7 +1006,9 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 	ptr += pos_packet_size;
 	memcpy(ptr, vis_changes ? vis_changes : &null_byte, tmp_vis_packet_size);
 
-	EQ2Packet* ret_packet = new EQ2Packet(OP_ClientCmdMsg, tmp, size);
+	EQ2Packet* ret_packet = 0;
+	if(info_packet_size + pos_packet_size + vis_packet_size > 0)
+		ret_packet = new EQ2Packet(OP_ClientCmdMsg, tmp, size);
 	delete[] tmp;
 	safe_delete_array(info_changes);
 	safe_delete_array(vis_changes);
@@ -2224,7 +2226,8 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	}
 	if (GetHP() <= 0 && IsEntity()) {
 		packet->setDataByName("corpse", 1);
-		packet->setDataByName("loot_icon", 1); 
+		if(HasLoot())
+			packet->setDataByName("loot_icon", 1); 
 	}
 	if (!IsPlayer())
 		packet->setDataByName("npc", 1);

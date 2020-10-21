@@ -237,7 +237,9 @@ void ConfigReader::loadDataStruct(PacketStruct* packet, XMLNode parentNode, bool
 							ds2->SetIfNotEqualsVariable(ds->GetIfNotEqualsVariable());
 							ds2->SetIfFlagNotSetVariable(ds->GetIfFlagNotSetVariable());
 							ds2->SetIfFlagSetVariable(ds->GetIfFlagSetVariable());
-							ds2->SetIsOptional(ds->IsOptional());							
+							ds2->SetIsOptional(ds->IsOptional());
+							ds2->AddIfSetVariable(if_variable); //add this if the modifier is on the piece that is including the substruct
+							ds2->AddIfNotSetVariable(if_not_variable); //add this if the modifier is on the piece that is including the substruct
 							packet->add(ds2);
 						}
 					}

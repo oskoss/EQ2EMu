@@ -287,6 +287,12 @@ int32 WorldDatabase::LoadSkills()
 				skill->description.data = string(row[3]);
 				skill->description.size = skill->description.data.length();
 				skill->skill_type = strtoul(row[4], NULL, 0);
+				//these two need to be converted to the correct numbers
+				if(skill->skill_type == 13)
+					skill->skill_type = SKILL_TYPE_LANGUAGE;
+				else if(skill->skill_type == 12)
+					skill->skill_type = SKILL_TYPE_GENERAL;
+
 				skill->display = atoi(row[5]);
 				master_skill_list.AddSkill(skill);
 				total++;
@@ -3284,6 +3290,7 @@ bool WorldDatabase::SaveSpawnEntry(Spawn* spawn, const char* spawn_location_name
 			LogWrite(SPAWN__ERROR, 0, "Spawn", "Error in SaveSpawnEntry query '%s': %s", query2.GetQuery(), query2.GetError());
 			return false;
 		}
+		spawn->SetSpawnLocationPlacementID(query2.GetLastInsertedID());
 	}
 	return true;
 }
@@ -3343,6 +3350,8 @@ int32 WorldDatabase::GetSpawnLocationCount(int32 location, Spawn* spawn){
 	MYSQL_RES* result = 0;
 	if(spawn)
 		result = query.RunQuery2(Q_SELECT, "SELECT count(id) FROM spawn_location_entry where spawn_location_id=%u and spawn_id=%u", location, spawn->GetDatabaseID());
+	else
+		result = query.RunQuery2(Q_SELECT, "SELECT count(id) FROM spawn_location_entry where spawn_location_id=%u", location);
 	if(result && mysql_num_rows(result) > 0){
 		MYSQL_ROW row;
 		while(result && (row = mysql_fetch_row(result)) && row[0]){
@@ -4310,7 +4319,7 @@ void WorldDatabase::LoadSpells()
 	int32 total = 0;
 	map<int32, vector<LevelArray*> >* level_data = LoadSpellClasses();
 
-	if( !database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `description`, `type`, `class_skill`, `mastery_skill`, `tier`, `is_aa`,`hp_req`, `power_req`,`power_by_level`, `cast_time`, `recast`, `radius`, `max_aoe_targets`, `req_concentration`, `range`, `duration1`, `duration2`, `resistibility`, `hp_upkeep`, `power_upkeep`, `duration_until_cancel`, `target_type`, `recovery`, `power_req_percent`, `hp_req_percent`, `icon`, `icon_heroic_op`, `icon_backdrop`, `success_message`, `fade_message`, `cast_type`, `lua_script`, `call_frequency`, `interruptable`, `spell_visual`, `effect_message`, `min_range`, `can_effect_raid`, `affect_only_group_members`, `hit_bonus`, `display_spell_tier`, `friendly_spell`, `group_spell`, `spell_book_type`, spell_type+0, s.is_active, savagery_req, savagery_req_percent, savagery_upkeep, dissonance_req, dissonance_req_percent, dissonance_upkeep, linked_timer_id, det_type, incurable, control_effect_type, cast_while_moving, casting_flags, persist_through_death, not_maintained, savage_bar, savage_bar_slot, soe_spell_crc, 0xffffffff-CRC32(s.`name`) as 'spell_name_crc' "
+	if( !database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `description`, `type`, `class_skill`, `mastery_skill`, `tier`, `is_aa`,`hp_req`, `power_req`,`power_by_level`, `cast_time`, `recast`, `radius`, `max_aoe_targets`, `req_concentration`, `range`, `duration1`, `duration2`, `resistibility`, `hp_upkeep`, `power_upkeep`, `duration_until_cancel`, `target_type`, `recovery`, `power_req_percent`, `hp_req_percent`, `icon`, `icon_heroic_op`, `icon_backdrop`, `success_message`, `fade_message`, `fade_message_others`, `cast_type`, `lua_script`, `call_frequency`, `interruptable`, `spell_visual`, `effect_message`, `min_range`, `can_effect_raid`, `affect_only_group_members`, `hit_bonus`, `display_spell_tier`, `friendly_spell`, `group_spell`, `spell_book_type`, spell_type+0, s.is_active, savagery_req, savagery_req_percent, savagery_upkeep, dissonance_req, dissonance_req_percent, dissonance_upkeep, linked_timer_id, det_type, incurable, control_effect_type, cast_while_moving, casting_flags, persist_through_death, not_maintained, savage_bar, savage_bar_slot, soe_spell_crc, 0xffffffff-CRC32(s.`name`) as 'spell_name_crc' "
 									"FROM (spells s, spell_tiers st) "
 									"LEFT JOIN spell_ts_ability_index ts "
 									"ON s.`id` = ts.spell_id "
@@ -4417,6 +4426,10 @@ void WorldDatabase::LoadSpells()
 			message							= result.GetStringStr("fade_message");
 			if( message.length() > 0 )
 				data->fade_message = string(message);
+
+			message = result.GetStringStr("fade_message_others");
+			if (message.length() > 0)
+				data->fade_message_others = string(message);
 
 			message							= result.GetStringStr("effect_message");
 			if( message.length() > 0 )

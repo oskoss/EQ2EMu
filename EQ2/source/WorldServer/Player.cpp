@@ -1330,6 +1330,8 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			packet->setSubstructDataByName("spell_effects", "expire_timestamp", expireTimestamp, i, 0);
 			packet->setSubstructDataByName("spell_effects", "icon", info_struct->spell_effects[i].icon, i, 0);
 			packet->setSubstructDataByName("spell_effects", "icon_type", info_struct->spell_effects[i].icon_backdrop, i, 0);
+			if(info_struct->spell_effects[i].spell && info_struct->spell_effects[i].spell->spell && info_struct->spell_effects[i].spell->spell->GetSpellData()->friendly_spell == 1)
+				packet->setSubstructDataByName("spell_effects", "cancellable", 1, i); 
 		}
 		player->GetMaintainedMutex()->releasereadlock(__FUNCTION__, __LINE__);
 		player->GetSpellEffectMutex()->releasereadlock(__FUNCTION__, __LINE__);
@@ -1682,6 +1684,14 @@ int8 Player::ConvertSlotToClient(int8 slot, int16 version) {
 		else if (slot > EQ2_EARS_SLOT_1 && slot <= EQ2_WAIST_SLOT)
 			slot -= 1;
 	}
+	else if (version <= 546) {
+		if (slot == EQ2_FOOD_SLOT)
+			slot = EQ2_DOF_FOOD_SLOT;
+		else if (slot == EQ2_DRINK_SLOT)
+			slot = EQ2_DOF_DRINK_SLOT;
+		else if (slot > EQ2_EARS_SLOT_1 && slot <= EQ2_WAIST_SLOT)
+			slot -= 1;
+	}
 	return slot;
 }
 
@@ -1690,6 +1700,14 @@ int8 Player::ConvertSlotFromClient(int8 slot, int16 version) {
 		if (slot == EQ2_ORIG_FOOD_SLOT)
 			slot = EQ2_FOOD_SLOT;
 		else if (slot == EQ2_ORIG_DRINK_SLOT)
+			slot = EQ2_DRINK_SLOT;
+		else if (slot > EQ2_EARS_SLOT_1 && slot <= EQ2_WAIST_SLOT)
+			slot += 1;
+	}
+	else if (version <= 546) {
+		if (slot == EQ2_DOF_FOOD_SLOT)
+			slot = EQ2_FOOD_SLOT;
+		else if (slot == EQ2_DOF_DRINK_SLOT)
 			slot = EQ2_DRINK_SLOT;
 		else if (slot > EQ2_EARS_SLOT_1 && slot <= EQ2_WAIST_SLOT)
 			slot += 1;
@@ -2197,7 +2215,7 @@ EQ2Packet* Player::GetQuickbarPacket(int16 version){
 
 void Player::AddSpellBookEntry(int32 spell_id, int8 tier, sint32 slot, int32 type, int32 timer, bool save_needed){
 	SpellBookEntry* spell = new SpellBookEntry;
-	spell->status = 161;
+	spell->status = 169;
 	spell->slot = slot;
 	spell->spell_id = spell_id;
 	spell->type = type;
@@ -2442,13 +2460,21 @@ int8 Player::GetSpellSlot(int32 spell_id){
 
 void Player::AddSkill(int32 skill_id, int16 current_val, int16 max_val, bool save_needed){
 	Skill* master_skill = master_skill_list.GetSkill(skill_id);
-	Skill* skill = new Skill(master_skill);
-	skill->current_val = current_val;
-	skill->previous_val = current_val;
-	skill->max_val = max_val;
-	if(save_needed)
-		skill->save_needed = true;
-	skill_list.AddSkill(skill);
+	if (master_skill) {
+		Skill* skill = new Skill(master_skill);
+		skill->current_val = current_val;
+		skill->previous_val = current_val;
+		skill->max_val = max_val;
+		if (save_needed)
+			skill->save_needed = true;
+		skill_list.AddSkill(skill);
+	}
+}
+
+void Player::RemovePlayerSkill(int32 skill_id, bool save) {
+	Skill* skill = skill_list.GetSkill(skill_id);
+	if (skill)
+		RemoveSkillFromDB(skill, save);
 }
 
 void Player::RemoveSkillFromDB(Skill* skill, bool save) {
@@ -2501,18 +2527,20 @@ void Player::LockAllSpells() {
 	MSpellsBook.writelock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
 		if ((*itr)->type != SPELL_BOOK_TYPE_TRADESKILL)
-			AddSpellStatus((*itr), SPELL_STATUS_LOCK, false);
+			RemoveSpellStatus((*itr), SPELL_STATUS_LOCK, false);
 	}
 
 	MSpellsBook.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-void Player::UnlockAllSpells(bool modify_recast) {
+void Player::UnlockAllSpells(bool modify_recast, Spell* exception) {
 	vector<SpellBookEntry*>::iterator itr;
-
+	int32 exception_spell_id = 0;
+	if (exception)
+		exception_spell_id = exception->GetSpellID();
 	MSpellsBook.writelock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
-		if ((*itr)->type != SPELL_BOOK_TYPE_TRADESKILL)
+		if ((*itr)->spell_id != exception_spell_id && (*itr)->type != SPELL_BOOK_TYPE_TRADESKILL)
 			AddSpellStatus((*itr), SPELL_STATUS_LOCK, modify_recast);
 	}
 
@@ -2532,8 +2560,10 @@ void Player::LockSpell(Spell* spell, int16 recast) {
 }
 
 void Player::UnlockSpell(Spell* spell) {
+	if (spell->GetStayLocked())
+		return;
 	vector<SpellBookEntry*>::iterator itr;
-	SpellBookEntry* spell2;
+	SpellBookEntry* spell2;	
 	MSpellsBook.writelock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
 		spell2 = *itr;
@@ -2612,24 +2642,27 @@ void Player::ModifySpellStatus(SpellBookEntry* spell, sint16 value, bool modify_
 		spell->recast = recast;
 		spell->recast_available = Timer::GetCurrentTime2()	+ (recast * 100);
 	}
-	if (modify_recast || spell->recast_available <= Timer::GetCurrentTime2() || value == 4)
+	if (modify_recast || spell->recast_available <= Timer::GetCurrentTime2() || value == 4) {
 		spell->status += value; // use set/remove spell status now
+	}
 }
 void Player::AddSpellStatus(SpellBookEntry* spell, sint16 value, bool modify_recast, int16 recast) {
 	if (modify_recast) {
 		spell->recast = recast;
 		spell->recast_available = Timer::GetCurrentTime2() + (recast * 100);
 	}
-	if (modify_recast || spell->recast_available <= Timer::GetCurrentTime2() || value == 4)
+	if (modify_recast || spell->recast_available <= Timer::GetCurrentTime2() || value == 4) {
 		spell->status = spell->status | value;
+	}
 }
 void Player::RemoveSpellStatus(SpellBookEntry* spell, sint16 value, bool modify_recast, int16 recast) {
 	if (modify_recast) {
 		spell->recast = recast;
 		spell->recast_available = Timer::GetCurrentTime2() + (recast * 100);
 	}
-	if (modify_recast || spell->recast_available <= Timer::GetCurrentTime2() || value == 4)
+	if (modify_recast || spell->recast_available <= Timer::GetCurrentTime2() || value == 4) {
 		spell->status = spell->status & ~value;
+	}
 
 }
 void Player::SetSpellStatus(Spell* spell, int8 status){
@@ -2790,9 +2823,11 @@ EQ2Packet* Player::GetSpellBookUpdatePacket(int16 version) {
 				if (spell_entry->spell_id == 0)
 					continue;
 				spell = master_spell_list.GetSpell(spell_entry->spell_id, spell_entry->tier);
-				if (spell) {
-					if (spell_entry->recast_available == 0 || Timer::GetCurrentTime2() > spell_entry->recast_available)
+				if (spell) {			
+					if (spell_entry->recast_available == 0 || Timer::GetCurrentTime2() > spell_entry->recast_available) {
 						packet->setSubstructArrayDataByName("spells", "available", 1, 0, ptr);
+					}
+										
 					packet->setSubstructArrayDataByName("spells", "spell_id", spell_entry->spell_id, 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "type", spell_entry->type, 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "recast_available", spell_entry->recast_available, 0, ptr);
@@ -2801,9 +2836,8 @@ EQ2Packet* Player::GetSpellBookUpdatePacket(int16 version) {
 					packet->setSubstructArrayDataByName("spells", "icon", (spell->GetSpellIcon() * -1) - 1, 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "icon_type", spell->GetSpellIconBackdrop(), 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "icon2", spell->GetSpellIconHeroicOp(), 0, ptr);
-					packet->setSubstructArrayDataByName("spells", "unique_id", (spell_entry->tier + 1) * -1, 0, ptr);
+					packet->setSubstructArrayDataByName("spells", "unique_id", (spell_entry->tier + 1) * -1, 0, ptr); //this is actually GetSpellNameCrc(spell->GetName()), but hijacking it for spell tier
 					packet->setSubstructArrayDataByName("spells", "charges", 255, 0, ptr);
-
 					// Beastlord and Channeler spell support
 					if (spell->GetSpellData()->savage_bar == 1)
 						packet->setSubstructArrayDataByName("spells", "unknown6", 32, 0, ptr); // advantages
@@ -3746,9 +3780,7 @@ bool Player::AddXP(int32 xp_amount){
 			return false;
 		}
 		xp_amount -= GetNeededXP() - GetXP();
-		SetLevel(GetLevel() + 1);
-		SetXP(0);
-		SetNeededXP();
+		SetLevel(GetLevel() + 1);		
 	}
 	SetXP(GetXP() + xp_amount);
 	GetPlayerInfo()->CalculateXPPercentages();
@@ -4039,7 +4071,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 				if(!all_quests && !itr->second->GetUpdateRequired())
 					continue;
 				quest = itr->second;
-				if(!quest->GetDeleted() && !quest->GetCompleted())
+				if(!quest->GetDeleted())
 					packet->setArrayDataByName("active", 1, i);
 				packet->setArrayDataByName("name", quest->GetName(), i);
 				packet->setArrayDataByName("quest_type", quest->GetType(), i);
@@ -4053,8 +4085,10 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 					packet->setArrayDataByName("visible", 1, i);
 					display_status += QUEST_DISPLAY_STATUS_COMPLETED;					
 				}
-				if (updated)
+				if (updated) {
 					packet->setArrayDataByName("quest_updated", 1, i);
+					packet->setArrayDataByName("journal_updated", 1, i);
+				}
 				packet->setArrayDataByName("quest_id", quest->GetQuestID(), i);
 				packet->setArrayDataByName("day", quest->GetDay(), i);
 				packet->setArrayDataByName("month", quest->GetMonth(), i);
@@ -4102,7 +4136,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 			//packet->setDataByName("unknown4", 0);
 			packet->setDataByName("visible_quest_id", current_quest_id);
 		}
-		MPlayerQuests.unlock();
+		MPlayerQuests.unlock();		
 		packet->setDataByName("player_crc", crc);
 		packet->setDataByName("player_name", GetName());
 		packet->setDataByName("used_quests", total_quests_num - total_completed_quests);
@@ -4144,7 +4178,7 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 			packet->setArrayDataByName("turned_in", 1);
 			packet->setArrayDataByName("completed", 1);			
 			display_status += QUEST_DISPLAY_STATUS_COMPLETED;
-		}
+		}		
 		packet->setArrayDataByName("quest_id", quest->GetQuestID());
 		packet->setArrayDataByName("day", quest->GetDay());
 		packet->setArrayDataByName("month", quest->GetMonth());
@@ -4189,8 +4223,10 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 			packet->setArrayDataByName("repeatable", 1);
 
 		packet->setArrayDataByName("display_status", display_status);
-		if (updated)
-			packet->setDataByName("quest_updated", 1);
+		if (updated) {
+			packet->setArrayDataByName("quest_updated", 1);
+			packet->setArrayDataByName("journal_updated", 1);
+		}
 		packet->setDataByName("visible_quest_id", quest->GetQuestID());
 		packet->setDataByName("player_crc", crc);
 		packet->setDataByName("player_name", GetName());

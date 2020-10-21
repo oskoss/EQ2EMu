@@ -179,6 +179,7 @@ class LuaInterface {
 public:
 	LuaInterface();
 	~LuaInterface();
+	int				GetNumberOfArgs(lua_State* state);
 	bool			LoadLuaSpell(const char* name);
 	bool			LoadLuaSpell(string name);
 	bool			LoadItemScript(string name);

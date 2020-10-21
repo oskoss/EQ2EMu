@@ -520,7 +520,7 @@
 <Data ElementName="bump_size" Type="sint8" Size="1" /> <!-- 604 -->
 <Data ElementName="soga_skull_type" Type="sint8" Size="3" /> <!-- 605 -->
 <Data ElementName="soga_eye_type" Type="sint8" Size="3" /> <!-- 608 -->
-<Data ElementName="ear_type" Type="sint8" Size="3" /> <!-- 611 -->
+<Data ElementName="soga_ear_type" Type="sint8" Size="3" /> <!-- 611 -->
 <Data ElementName="soga_eye_brow_type" Type="sint8" Size="3" /> <!-- 614 -->
 <Data ElementName="soga_cheek_type" Type="sint8" Size="3" /> <!-- 617 -->
 <Data ElementName="soga_lip_type" Type="sint8" Size="3" /> <!-- 620 -->

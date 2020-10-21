@@ -493,6 +493,7 @@ public:
 	/// <returns>True if the player has enough coins</returns>
 	bool HasCoins(int64 val);
 	void AddSkill(int32 skill_id, int16 current_val, int16 max_val, bool save_needed = false);
+	void RemovePlayerSkill(int32 skill_id, bool save = false);
 	void RemoveSkillFromDB(Skill* skill, bool save = false);
 	void AddSpellBookEntry(int32 spell_id, int8 tier, sint32 slot, int32 type, int32 timer, bool save_needed = false);
 	SpellBookEntry* GetSpellBookSpell(int32 spell_id);
@@ -576,6 +577,11 @@ public:
 	void	ClearRemovedSpawn(Spawn* spawn);
 	bool	ShouldSendSpawn(Spawn* spawn);
 	Client* client = 0;
+	void SetLevel(int16 level, bool setUpdateFlags = true) {
+		SetInfo(&appearance.level, level, setUpdateFlags);
+		SetXP(0);
+		SetNeededXP();
+	}
 
 	Spawn* GetSpawnWithPlayerID(int32 id){
 		Spawn* spawn = 0;
@@ -890,7 +896,7 @@ public:
 	void LockAllSpells();
 
 	/// <summary>Unlocks all Spells, Combat arts, and Abilities (not trade skill spells)</summary>
-	void UnlockAllSpells(bool modify_recast = false);
+	void UnlockAllSpells(bool modify_recast = false, Spell* exception = 0);
 
 	/// <summary>Locks the given spell as well as all spells with a shared timer</summary>
 	void LockSpell(Spell* spell, int16 recast);

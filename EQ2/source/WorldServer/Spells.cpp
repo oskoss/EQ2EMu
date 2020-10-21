@@ -82,6 +82,7 @@ Spell::Spell(Spell* host_spell)
 		spell->duration_until_cancel = host_spell->GetSpellData()->duration_until_cancel;
 		spell->effect_message = string(host_spell->GetSpellData()->effect_message);
 		spell->fade_message = string(host_spell->GetSpellData()->fade_message);
+		spell->fade_message_others = string(host_spell->GetSpellData()->fade_message_others);
 
 		spell->friendly_spell = host_spell->GetSpellData()->friendly_spell;
 		spell->group_spell = host_spell->GetSpellData()->group_spell;
@@ -774,8 +775,12 @@ void Spell::SetPacketInformation(PacketStruct* packet, Client* client, bool disp
 	packet->setSubstructDataByName("spell_info", "tier", spell->tier);
 	packet->setSubstructDataByName("spell_info", "power_req", power_req);
 	packet->setSubstructDataByName("spell_info", "power_upkeep", spell->power_upkeep);
-
-	packet->setSubstructDataByName("spell_info", "cast_time", spell->cast_time);
+	if (packet->GetVersion() <= 546) {//cast times are displayed differently on new clients
+		packet->setSubstructDataByName("spell_info", "cast_time", spell->cast_time/10);
+	}
+	else {
+		packet->setSubstructDataByName("spell_info", "cast_time", spell->cast_time);
+	}
 	packet->setSubstructDataByName("spell_info", "recast", spell->recast);
 	packet->setSubstructDataByName("spell_info", "radius", spell->radius);
 	packet->setSubstructDataByName("spell_info", "req_concentration", spell->req_concentration);
@@ -1095,10 +1100,10 @@ EQ2Packet* Spell::SerializeSpell(Client* client, bool display, bool trait_displa
 		version = client->GetVersion();
 	if (!struct_name)
 		struct_name = "WS_ExamineSpellInfo";
-	if (version <= 283) {
+	if (version <= 546) {
 		if (packet_type == 1)
 			struct_name = "WS_ExamineEffectInfo";
-		else if (!display)
+		else if (!display && version<=283)
 			struct_name = "WS_ExaminePartialSpellInfo";
 		else
 			struct_name = "WS_ExamineSpellInfo";
@@ -1501,6 +1506,11 @@ bool Spell::GetSpellData(lua_State* state, std::string field)
 		lua_interface->SetStringValue(state, GetSpellData()->fade_message.c_str());
 		valSet = true;
 	}
+	else if (field == "fade_message_others")
+	{
+	lua_interface->SetStringValue(state, GetSpellData()->fade_message_others.c_str());
+	valSet = true;
+	}
 	else if (field == "cast_type")
 	{
 		lua_interface->SetSInt32Value(state, GetSpellData()->cast_type);
@@ -1881,6 +1891,12 @@ bool Spell::SetSpellData(lua_State* state, std::string field, int8 fieldArg)
 	{
 		string fade_message = lua_interface->GetStringValue(state, fieldArg);
 		GetSpellData()->fade_message = fade_message;
+		valSet = true;
+	}
+	else if (field == "fade_message_others")
+	{
+		string fade_message_others = lua_interface->GetStringValue(state, fieldArg);
+		GetSpellData()->fade_message_others = fade_message_others;
 		valSet = true;
 	}
 	else if (field == "cast_type")

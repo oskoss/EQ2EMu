@@ -474,7 +474,7 @@ class ZoneList {
 	void ReloadClientQuests();
 	bool DepopFinished();
 	void Depop();
-	void Repop();
+	void Repop();	
 	void DeleteSpellProcess();
 	void LoadSpellProcess();
 	void ProcessWhoQuery(const char* query, Client* client);
@@ -613,10 +613,22 @@ public:
 	multimap<int8, multimap<int8, StartingSkill>*> starting_skills;
 	multimap<int8, multimap<int8, StartingSpell>*> starting_spells;
 	Mutex MStartingLists;
+	void SetReloadingSubsystem(string subsystem);
+	void RemoveReloadingSubSystem(string subsystem);
+
+	bool IsReloadingSubsystems();
+	int32 GetSuppressedWarningTime() {
+		return suppressed_warning;
+	}
+	void SetSuppressedWarning() { suppressed_warning = Timer::GetCurrentTime2(); }
+	map<string, int32> GetOldestReloadingSubsystem();
+
 private:
+	int32 suppressed_warning = 0;
+	map<string, int32> reloading_subsystems;
 	//void RemovePlayerFromGroup(PlayerGroup* group, GroupMemberInfo* info, bool erase = true);
 	//void DeleteGroupMember(GroupMemberInfo* info);
-	
+	Mutex MReloadingSubsystems;
 	Mutex MMerchantList;
 	Mutex MSpawnScripts;
 	Mutex MZoneScripts;

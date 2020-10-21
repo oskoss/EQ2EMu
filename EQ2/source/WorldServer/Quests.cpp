@@ -302,6 +302,7 @@ Quest::Quest(int32 in_id){
 	reward_coins = 0;
 	reward_coins_max = 0;
 	completed_flag = false;
+	has_sent_last_update = false;
 	enc_level = 0;
 	reward_exp = 0;
 	reward_tsexp = 0;
@@ -345,6 +346,7 @@ Quest::Quest(Quest* old_quest){
 	reward_tsexp = old_quest->reward_tsexp;
 	generated_coin = old_quest->generated_coin;
 	completed_flag = old_quest->completed_flag;
+	has_sent_last_update = old_quest->has_sent_last_update;
 	yellow_name = old_quest->yellow_name;
 	m_questFlags = old_quest->m_questFlags;
 	id = old_quest->id;
@@ -995,7 +997,7 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 
 		packet->setDataByName("bullets", 1);
 		if (old_completed_quest) {
-			if (version >= 1096) {
+			if (version >= 1096 || version == 546) {
 				packet->setDataByName("complete", 1);
 				packet->setDataByName("complete2", 1);
 				packet->setDataByName("complete3", 1);
@@ -1008,7 +1010,7 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 				packet->setDataByName("unknown3", 1, 6);
 			}
 		}
-		else if (version >= 1096 && GetCompleted()) {
+		else if ((version >= 1096 || version == 546) && GetCompleted() && HasSentLastUpdate()) { //need to send last quest update before erasing all progress of the quest
 			packet->setDataByName("complete", 1);
 			packet->setDataByName("complete2", 1);
 			packet->setDataByName("complete3", 1);
@@ -1225,12 +1227,15 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 
 				}
 			}
+			if (GetCompleted()) { //mark the last update as being sent, next time we send the quest reply, it will only be a brief portion
+				SetSentLastUpdate(true);
+			}
 		}
 		MQuestSteps.unlock();
 
 
 		string reward_str = "";
-		if (version >= 1096)
+		if (version >= 1096 || version == 546)
 			reward_str = "reward_data_";
 		string tmp = reward_str + "reward";
 		packet->setDataByName(tmp.c_str(), "Quest Reward!");

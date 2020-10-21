@@ -259,6 +259,7 @@ struct SpellData{
 	EQ2_16BitString description;
 	string	success_message;
 	string	fade_message;
+	string	fade_message_others;
 	int8	cast_type;
 	string	lua_script;
 	int32	call_frequency;
@@ -335,7 +336,8 @@ public:
 	bool CastWhileMezzed();
 	bool CastWhileStifled();
 	bool CastWhileFeared();
-
+	bool GetStayLocked() { return stay_locked; }
+	void StayLocked(bool val) { stay_locked = val; }
 
 	vector<SpellDisplayEffect*> effects;
 	vector<LUAData*> lua_data;
@@ -343,6 +345,7 @@ public:
 	void LockSpellInfo() { MSpellInfo.lock(); }
 	void UnlockSpellInfo() { MSpellInfo.unlock(); }
 private:
+	bool stay_locked = false;
 	bool heal_spell;
 	bool buff_spell;
 	bool damage_spell;

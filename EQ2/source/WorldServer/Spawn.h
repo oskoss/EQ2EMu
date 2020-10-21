@@ -152,6 +152,13 @@
 #define INFO_VIS_FLAG_MOUNTED               4
 #define INFO_VIS_FLAG_CROUCH                8
 
+#define ENCOUNTER_STATE_NONE				0
+#define ENCOUNTER_STATE_AVAILABLE			1
+#define ENCOUNTER_STATE_BROKEN				2
+#define ENCOUNTER_STATE_LOCKED				3
+#define ENCOUNTER_STATE_OVERMATCHED			4
+#define ENCOUNTER_STATE_NO_REWARD			5
+
 using namespace std;
 class Spell;
 class ZoneServer;
@@ -293,6 +300,7 @@ public:
 		entity_command->default_allow_list = default_allow_list;
 		return entity_command;
 	}
+	virtual Client* GetClient() { return 0; }
 	void AddChangedZoneSpawn();
 	void AddPrimaryEntityCommand(const char* name, float distance, const char* command, const char* error_text, int16 cast_time, int32 spell_visual, bool defaultDenyList = false, Player* player = NULL);
 	void RemovePrimaryEntityCommand(const char* command);
@@ -446,7 +454,7 @@ public:
 	void SetEncounterLevel(int8 enc_level, bool setUpdateFlags = true){
 		SetInfo(&appearance.encounter_level, enc_level, setUpdateFlags);
 	}
-	void SetLevel(int16 level, bool setUpdateFlags = true){
+	virtual void SetLevel(int16 level, bool setUpdateFlags = true){
 		SetInfo(&appearance.level, level, setUpdateFlags);
 	}	
 	void SetTSLevel(int16 tradeskill_level, bool setUpdateFlags = true){

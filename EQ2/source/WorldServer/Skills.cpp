@@ -155,6 +155,14 @@ map<int32, Skill*>* PlayerSkillList::GetAllSkills(){
 	return &skills;
 }
 
+void PlayerSkillList::SetSkillValuesByType(int8 type, int16 value, bool send_update) {
+	map<int32, Skill*>::iterator itr;
+	for (itr = skills.begin(); itr != skills.end(); itr++) {
+		if (itr->second && itr->second->skill_type == type)
+			SetSkill(itr->second, value, send_update);
+	}
+}
+
 void PlayerSkillList::SetSkillCapsByType(int8 type, int16 value){
 	map<int32, Skill*>::iterator itr;
 	for(itr = skills.begin(); itr != skills.end(); itr++){
@@ -220,19 +228,20 @@ void PlayerSkillList::DecreaseSkill(int32 skill_id, int16 amount){
 	DecreaseSkill(GetSkill(skill_id), amount);
 }
 
-void PlayerSkillList::SetSkill(Skill* skill, int16 value){
+void PlayerSkillList::SetSkill(Skill* skill, int16 value, bool send_update){
 	if(skill){
 		skill->previous_val = skill->current_val;
 		skill->current_val = value;
 		if(skill->current_val > skill->max_val)
 			skill->max_val = skill->current_val;
 		skill->save_needed = true;
-		AddSkillUpdateNeeded(skill);
+		if(send_update)
+			AddSkillUpdateNeeded(skill);
 	}
 }
 
-void PlayerSkillList::SetSkill(int32 skill_id, int16 value){
-	SetSkill(GetSkill(skill_id), value);
+void PlayerSkillList::SetSkill(int32 skill_id, int16 value, bool send_update){
+	SetSkill(GetSkill(skill_id), value, send_update);
 }
 
 void PlayerSkillList::IncreaseSkillCap(Skill* skill, int16 amount){
@@ -319,9 +328,15 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 	PacketStruct* packet = configReader.getStruct("WS_UpdateSkillBook", version);
 	if(packet){
 		if(packet_count < skills.size()){
-			int16 size = 21 * skills.size() + 8;
-			if (version <= 283) {
-				size = 12 * skills.size()+6;
+			int16 size = 0;
+			if (version > 546) {
+				size = 21 * skills.size() + 8;
+			}
+			else if (version <= 283) {
+				size = 12 * skills.size() + 6;
+			}
+			else if (version <= 546) {
+				size = 21 * skills.size() + 7;
 			}
 			if(!orig_packet){				
 				xor_packet = new uchar[size];
@@ -360,7 +375,11 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 				}
 
 				packet->setArrayDataByName("skill_id", skill->skill_id, i);
-				packet->setArrayDataByName("type", skill->skill_type, i);
+				if (version <= 546 && skill->skill_type >= SKILL_TYPE_GENERAL) { //covert it to DOF types
+					packet->setArrayDataByName("type", skill->skill_type-2, i);					
+				}
+				else
+					packet->setArrayDataByName("type", skill->skill_type, i);
 				packet->setArrayDataByName("current_val", skill->current_val, i);
 				packet->setArrayDataByName("base_val", skill->current_val, i);// skill->
 				packet->setArrayDataByName("skill_delta", 0, i);// skill_with_bonuses- skill->current_val

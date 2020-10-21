@@ -1328,6 +1328,7 @@ bool ZoneServer::Process()
 				database.LoadTransporters(this);
 				LogWrite(TRANSPORT__INFO, 0, "Transport", "-Loading Transporters complete!");
 				reloading = false;
+				world.RemoveReloadingSubSystem("Spawns");
 			}
 
 			MSpawnGroupAssociation.writelock(__FUNCTION__, __LINE__);
@@ -3160,14 +3161,14 @@ void ZoneServer::ClientProcess()
 	}
 }
 
-void ZoneServer::SimpleMessage(int8 type, const char* message, Spawn* from, float distance){
+void ZoneServer::SimpleMessage(int8 type, const char* message, Spawn* from, float distance, bool send_to_sender){
 	Client* client = 0;
 	vector<Client*>::iterator client_itr;
 
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(from && client && client->IsConnected() && from->GetDistance(client->GetPlayer()) <= distance){
+		if(from && client && client->IsConnected() && (send_to_sender || from != client->GetPlayer()) && from->GetDistance(client->GetPlayer()) <= distance){
 			client->SimpleMessage(type, message);
 		}
 	}
@@ -4856,6 +4857,23 @@ void ZoneServer::StartZoneInitialSpawnThread(Client* client){
 }
 
 void ZoneServer::SendZoneSpawns(Client* client){
+	int8 count = 0;
+	while (LoadingData && count <= 6000) { //sleep for max of 60 seconds (60000ms) while the maps are loading
+		count++;
+		Sleep(10);
+	}
+	count = 0;
+	int16 size = 0;
+	//give the spawn thread a tad bit of time to add the pending_spawns to spawn_list (up to 10 seconds)
+	while (count < 1000) {		
+		MPendingSpawnListAdd.readlock(__FUNCTION__, __LINE__);
+		size = pending_spawn_list_add.size();
+		MPendingSpawnListAdd.releasereadlock(__FUNCTION__, __LINE__);
+		if (size == 0)
+			break;
+		Sleep(10);
+		count++;
+	}
 	initial_spawn_threads_active++;
 
 	map<int32, Spawn*>::iterator itr;
@@ -7492,6 +7510,7 @@ void ZoneServer::ReloadSpawns() {
 		return;
 
 	reloading = true;
+	world.SetReloadingSubsystem("Spawns");
 	// Let every one in the zone know what is happening
 	HandleBroadcast("Reloading all spawns for this zone.");
 	DeleteGlobalSpawns();

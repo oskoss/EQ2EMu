@@ -65,6 +65,8 @@ extern MasterItemList master_item_list;
 #define EQ2_BACK_SLOT 30
 #define EQ2_ORIG_FOOD_SLOT 18
 #define EQ2_ORIG_DRINK_SLOT 19
+#define EQ2_DOF_FOOD_SLOT 20
+#define EQ2_DOF_DRINK_SLOT 21
 
 #define PRIMARY_SLOT 1
 #define SECONDARY_SLOT 2
@@ -99,6 +101,8 @@ extern MasterItemList master_item_list;
 #define BACK_SLOT 1073741824
 #define ORIG_FOOD_SLOT 524288
 #define ORIG_DRINK_SLOT 1048576
+#define DOF_FOOD_SLOT 1048576
+#define DOF_DRINK_SLOT 2097152
 
 #define CLASSIC_EQ_MAX_BAG_SLOTS 20
 #define NUM_BANK_SLOTS 12
@@ -855,6 +859,8 @@ public:
 	void AddLevelOverride(ItemLevelOverride* class_);
 	bool CheckClassLevel(int8 adventure_class, int8 tradeskill_class, int16 level);
 	bool CheckClass(int8 adventure_class, int8 tradeskill_class);
+	bool CheckArchetypeAdvClass(int8 adventure_class, map<int8, int16>* adv_class_levels = 0);
+	bool CheckArchetypeAdvSubclass(int8 adventure_class, map<int8, int16>* adv_class_levels = 0);
 	bool CheckLevel(int8 adventure_class, int8 tradeskill_class, int16 level);
 	void SetAppearance(int16 type, int8 red, int8 green, int8 blue, int8 highlight_red, int8 highlight_green, int8 highlight_blue);
 	void SetAppearance(ItemAppearance* appearance);

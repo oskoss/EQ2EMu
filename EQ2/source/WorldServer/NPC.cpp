@@ -228,14 +228,14 @@ void NPC::InCombat(bool val){
 	in_combat = val;
 	if(val){
 		LogWrite(NPC__DEBUG, 3, "NPC", "'%s' engaged in combat with '%s'", this->GetName(), ( GetTarget() ) ? GetTarget()->GetName() : "Unknown" );
-		SetLockedNoLoot(3);
+		SetLockedNoLoot(ENCOUNTER_STATE_LOCKED);
 		AddIconValue(64);
 		// In combat so lets set the NPC's speed to its max speed
 		if (GetMaxSpeed() > 0)
 			SetSpeed(GetMaxSpeed());
 	}
 	else{
-		SetLockedNoLoot(1);
+		SetLockedNoLoot(ENCOUNTER_STATE_AVAILABLE);
 		RemoveIconValue(64);
 		if (GetHP() > 0){
 			SetTempActionState(-1); //re-enable action states on exiting combat
@@ -258,7 +258,7 @@ void NPC::InCombat(bool val){
 }
 
 bool NPC::HandleUse(Client* client, string type){
-	if(!client || type.length() == 0 || appearance.show_command_icon == 0)
+	if(!client || type.length() == 0 || (appearance.show_command_icon == 0 && appearance.display_hand_icon == 0))
 		return false;
 	EntityCommand* entity_command = FindEntityCommand(type);
 	if (entity_command) {

@@ -407,6 +407,14 @@ to zero and treated like placeholders." />
 <Data ElementName="hour" Type="int8" Size="1" />
 <Data ElementName="minute" Type="int8" Size="1" />
 <Data ElementName="unknown" Type="int8" Size="1" />
+</Struct>
+<Struct Name="WS_GameWorldTime" ClientVersion="547" OpcodeName="OP_GameWorldTimeMsg">
+<Data ElementName="year" Type="int16" Size="1" />
+<Data ElementName="month" Type="int8" Size="1" />
+<Data ElementName="day" Type="int8" Size="1" />
+<Data ElementName="hour" Type="int8" Size="1" />
+<Data ElementName="minute" Type="int8" Size="1" />
+<Data ElementName="unknown" Type="int8" Size="1" />
 <Data ElementName="unix_time" Type="int32" Size="1" />
 </Struct>
 <Struct Name="WS_GameWorldTime" ClientVersion="1193" OpcodeName="OP_GameWorldTimeMsg">
@@ -422,6 +430,10 @@ to zero and treated like placeholders." />
 <Struct Name="WS_Camp" ClientVersion="1" OpcodeName="OP_CampStartedMsg" >
 <Data ElementName="seconds" Type="int8" Size="1" />
 <Data ElementName="camp_desktop" Type="int8" Size="1" />
+</Struct>
+<Struct Name="WS_Camp" ClientVersion="547" OpcodeName="OP_CampStartedMsg" >
+<Data ElementName="seconds" Type="int8" Size="1" />
+<Data ElementName="camp_desktop" Type="int8" Size="1" />
 <Data ElementName="camp_char_select" Type="int8" Size="1" />
 <Data ElementName="char_name" Type="EQ2_16Bit_String" />
 <Data ElementName="unknown" Type="int8" Size="3" />
@@ -433,7 +445,11 @@ to zero and treated like placeholders." />
 <Data ElementName="char_name" Type="EQ2_16Bit_String" />
 <Data ElementName="unknown" Type="int8" Size="8" />
 </Struct>
-<Struct Name="WS_RequestCamp" ClientVersion="1" OpcodeName="OP_RequestCampMsg">
+<Struct Name="WS_RequestCamp" ClientVersion="" OpcodeName="OP_RequestCampMsg">
+<Data ElementName="quit" Type="int8" Size="1" />
+<Data ElementName="camp_desktop" Type="int8" Size="1" />
+</Struct>
+<Struct Name="WS_RequestCamp" ClientVersion="547" OpcodeName="OP_RequestCampMsg">
 <Data ElementName="quit" Type="int8" Size="1" />
 <Data ElementName="camp_desktop" Type="int8" Size="1" />
 <Data ElementName="camp_char_select" Type="int16" Size="1" />
@@ -459,8 +475,8 @@ to zero and treated like placeholders." />
 <Data ElementName="spell_id" Type="int32" Size="1" />
 <Data ElementName="unique_id" Type="int32" Size="1" />
 <Data ElementName="spell_name" Type="EQ2_16Bit_String" />
-<Data ElementName="display_spell_tier" Type="int8" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="add_silently" Type="int8" Size="1" />
+<Data ElementName="add_to_hotbar" Type="int8" Size="1" />
 <Data ElementName="tier" Type="int8" Size="1" />
 <Data ElementName="icon" Type="int16" Size="1" />
 <Data ElementName="icon_type" Type="int16" Size="1" />
@@ -499,6 +515,18 @@ to zero and treated like placeholders." />
    <Data ElementName="name" Type="EQ2_8Bit_String" />
    <Data ElementName="command" Type="EQ2_8Bit_String" />   
    <Data ElementName="icon" Type="int16" Size="1" />    
+</Data>
+</Struct>
+<Struct Name="WS_MacroInit" ClientVersion="546" OpcodeName="OP_MacroInitMsg" > 
+<Data ElementName="macro_count" Type="int32" />
+<Data ElementName="macro_array" Type="Array" ArraySizeVariable="macro_count">
+   <Data ElementName="number" Type="int8" />
+   <Data ElementName="name" Type="EQ2_8Bit_String" />
+   <Data ElementName="macro_details_count" Type="int8" />
+   <Data ElementName="macro_details_array" Type="Array" ArraySizeVariable="macro_details_count">
+      <Data ElementName="command" Type="EQ2_16Bit_String" />
+   </Data>
+   <Data ElementName="icon" Type="int16" Size="1" /> 
 </Data>
 </Struct>
 <Struct Name="WS_MacroInit" ClientVersion="547" OpcodeName="OP_MacroInitMsg" > 
@@ -1335,12 +1363,12 @@ to zero and treated like placeholders." />
 </Struct>
 <Struct Name="Substruct_SpellEffects" ClientVersion="546" >
 <Data ElementName="spell_id" Type="int32" Size="1" />
+<Data ElementName="cancellable" Type="int8" Size="1" />
 <Data ElementName="total_time" Type="float" Size="1" />
 <Data ElementName="expire_timestamp" Type="int32" Size="1" />
+<Data ElementName="unknown2" Type="int8" Size="1" />
 <Data ElementName="icon" Type="int16" Size="1" />
 <Data ElementName="icon_type" Type="int16" Size="1" />
-<Data ElementName="unknown2" Type="int8" Size="1" />
-<Data ElementName="cancellable" Type="int8" Size="1" />
 <Data ElementName="unknown3" Type="int8" Size="1" />
 </Struct>
 <Struct Name="Substruct_SpellEffects" ClientVersion="843" >
@@ -3184,7 +3212,7 @@ to zero and treated like placeholders." />
 	<Data ElementName="language_unknown" Type="int8" Size="1" />
 </Data>
 </Struct>
-<Struct Name="WS_UpdateSkillBook" ClientVersion="547" OpcodeName="OP_UpdateSkillBookMsg" >
+<Struct Name="WS_UpdateSkillBook" ClientVersion="865" OpcodeName="OP_UpdateSkillBookMsg" >
 <Data ElementName="skill_count" Type="int16" />
 <Data ElementName="packed_size" Type="int32" />
 <Data ElementName="unknown" Type="int8" />
@@ -3281,15 +3309,16 @@ to zero and treated like placeholders." />
 </Struct>
 <Struct Name="SubStruct_UpdateSpellBook" ClientVersion="546">
       <Data ElementName="spell_id" Type="int32" />
-      <Data ElementName="unique_id" Type="int32" />
-      <Data ElementName="recast_available" Type="int32" Size="1" />
-      <Data ElementName="type" Type="int16" Size="1" />
-      <Data ElementName="recast_time" Type="int16" Size="1" />
-      <Data ElementName="unknown3" Type="int16" />
+	  <Data ElementName="unique_id" Type="int32" />	  
+	  <Data ElementName="recast_available" Type="int32" Size="1" />		  	    
+	  <Data ElementName="type" Type="int8" Size="1" />	  
+	  <Data ElementName="recast_time" Type="int16" Size="1" />		  	  
+	  <Data ElementName="unknown3" Type="int8" />
+	  <Data ElementName="unknown4" Type="int16" />	    
       <Data ElementName="icon" Type="sint16" />
       <Data ElementName="icon_type" Type="int16" />
-      <Data ElementName="icon2" Type="int16" Size="1" />
-      <Data ElementName="charges" Type="int8" Size="1" />
+      <Data ElementName="icon2" Type="int16" Size="1" /> 
+	  <Data ElementName="charges" Type="int8" Size="1" />	  
       <Data ElementName="unknown5" Type="int8" Size="1" />
       <Data ElementName="status" Type="int8" Size="1" />
 </Struct>
@@ -4721,6 +4750,14 @@ to zero and treated like placeholders." />
 <Data ElementName="name" Type="EQ2_8Bit_String" Size="1" />
 <Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
 </Struct>
+<Struct Name="WS_EffectInfo" ClientVersion="546">
+<Data ElementName="id" Type="int32" />
+<Data ElementName="icon" Type="int16" Size="1" />
+<Data ElementName="icontype" Type="int16" Size="1" />
+<Data ElementName="type" Type="int16" Size="1" /> <!-- spell=0, combat_art=1, ability=2 -->
+<Data ElementName="name" Type="EQ2_8Bit_String" Size="1" />
+<Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
+</Struct>
 <Struct Name="WS_PartialSpellInfo" ClientVersion="1">
 <Data ElementName="id" Type="int32" />
 <Data ElementName="icon" Type="int16" Size="1" />
@@ -6092,6 +6129,10 @@ to zero and treated like placeholders." />
 <Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
 <Data ElementName="spell_info" Substruct="WS_EffectInfo" Size="1" />
 </Struct>
+<Struct Name="WS_ExamineEffectInfo" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
+<Data ElementName="spell_info" Substruct="WS_EffectInfo" Size="1" />
+</Struct>
 <Struct Name="WS_ExaminePartialSpellInfo" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
 <Data ElementName="spell_info" Substruct="WS_PartialSpellInfo" Size="1" />
@@ -6661,7 +6702,7 @@ to zero and treated like placeholders." />
 <Struct Name="Substruct_JournalRewardData" ClientVersion="546">
 	<Data ElementName="unknown1" Type="int8" Size="1" /> <!-- 255=quest reward, 0=enemy mastery, 1=specialized training,2=character trait, 3=racial tradition -->
 	<Data ElementName="reward" Type="EQ2_16Bit_String" Size="1" />
-	<Data ElementName="coin" Type="int64" Size="1" />
+	<Data ElementName="max_coin" Type="int64" Size="1" />
 	<Data ElementName="min_coin" Type="int64" Size="1" />
 	<Data ElementName="status_points" Type="int32" Size="1" />
 	<Data ElementName="text" Type="EQ2_16Bit_String" Size="1" />
@@ -6911,7 +6952,7 @@ to zero and treated like placeholders." />
 </Data>
 <Data ElementName="unknown10" Type="int8" />
 </Struct>
-<Struct Name="WS_WhoQueryReply" ClientVersion="547" OpcodeName="OP_WhoQueryReplyMsg" >
+<Struct Name="WS_WhoQueryReply" ClientVersion="546" OpcodeName="OP_WhoQueryReplyMsg" >
 <Data ElementName="account_id" Type="int32" />
 <Data ElementName="unknown" Type="int32" />
 <Data ElementName="response" Type="int8" />
@@ -7147,7 +7188,7 @@ to zero and treated like placeholders." />
 	<Data ElementName="name" Type="EQ2_16Bit_String" Size="1" />
 	<Data ElementName="quest_type" Type="EQ2_16Bit_String" Size="1" />
 	<Data ElementName="quest_zone" Type="EQ2_16Bit_String" Size="1" />
-	<Data ElementName="unknown1" Type="int8" Size="1" />
+	<Data ElementName="journal_updated" Type="int8" Size="1" />
 	<Data ElementName="turned_in" Type="int8" Size="1" />
 	<Data ElementName="repeatable" Type="int8" Size="1" />
 	<Data ElementName="unknown2" Type="int8" Size="1" />
@@ -7175,7 +7216,7 @@ to zero and treated like placeholders." />
 	<Data ElementName="name" Type="EQ2_16Bit_String" Size="1" />
 	<Data ElementName="quest_type" Type="EQ2_16Bit_String" Size="1" />
 	<Data ElementName="quest_zone" Type="EQ2_16Bit_String" Size="1" />
-	<Data ElementName="unknown1" Type="int8" Size="1" />
+	<Data ElementName="journal_updated" Type="int8" Size="1" />
 	<Data ElementName="turned_in" Type="int8" Size="1" />
 	<Data ElementName="repeatable" Type="int8" Size="1" />
 	<Data ElementName="unknown2" Type="int8" Size="1" />
@@ -7519,11 +7560,22 @@ to zero and treated like placeholders." />
 		<Data ElementName="waypoint_name" Type="EQ2_16Bit_string" />
 		<Data ElementName="waypoint_category" Type="int8" />
 		<Data ElementName="spawn_id" Type="int32" />
+	</Data>
+</Struct>
+<Struct Name="WS_WaypointUpdate" ClientVersion="547" OpcodeName="OP_WaypointUpdateMsg">
+	<Data ElementName="num_updates" Type="int32" />
+	<Data ElementName="update_array" Type="Array" ArraySizeVariable="num_updates">
+		<Data ElementName="waypoint_name" Type="EQ2_16Bit_string" />
+		<Data ElementName="waypoint_category" Type="int8" />
+		<Data ElementName="spawn_id" Type="int32" />
 		<Data ElementName="waypoint_category2" Type="int8" />
 		<Data ElementName="spawn_id2" Type="int32" />
 	</Data>
 </Struct>
 <Struct Name="WS_WaypointSelect" ClientVersion="1" OpcodeName="OP_WaypointSelectMsg">
+	<Data ElementName="selection" Type="int32" />
+</Struct>
+<Struct Name="WS_WaypointSelect" ClientVersion="547" OpcodeName="OP_WaypointSelectMsg">
 	<Data ElementName="num_selections" Type="int32" />
 	<Data ElementName="selection_array" Type="Array" ArraySizeVariable="num_selections">
 		<Data ElementName="waypoint_name" Type="EQ2_16Bit_string" />
@@ -7586,11 +7638,19 @@ to zero and treated like placeholders." />
 <Data ElementName="month" Type="int8" Size="1" />
 <Data ElementName="year" Type="int8" Size="1" />
 <Data ElementName="time_obtained" Type="int32" Size="1" />
-<Data ElementName="unknown" Type="int8" Size="4" />
+<Data ElementName="timer_duration" Type="int16" Size="1" />
+<Data ElementName="timer_running" Type="int8" Size="1" /> <!-- start timer counting up -->
+<Data ElementName="timer_countdown" Type="int8" Size="1" /> <!-- count down instead of counting up -->
 <Data ElementName="level" Type="int8" Size="1" />
 <Data ElementName="encounter_level" Type="int8" Size="1" />
 <Data ElementName="difficulty" Type="int8" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="8" />
+<Data ElementName="complete" Type="int8" Size="1" />
+<Data ElementName="complete2" Type="int8" Size="1" />
+<Data ElementName="complete3" Type="int8" Size="1" />
+<Data ElementName="unknown3" Type="int8" Size="2" />
+<Data ElementName="deletable" Type="int8" Size="1" />
+<Data ElementName="shareable" Type="int8" Size="1" />
+<Data ElementName="unknown3b" Type="int8" Size="1" />
 <Data ElementName="task_groups_completed" Type="int16" Size="1" />
 <Data ElementName="num_task_groups" Type="int16" />
 <Data ElementName="task_group_array" Type="Array" ArraySizeVariable="num_task_groups">
@@ -7621,7 +7681,7 @@ to zero and treated like placeholders." />
 <Data ElementName="onscreen_update_text2" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="onscreen_update_icon" Type="int16" Size="1" />
 <Data ElementName="unknown6" Type="int8" Size="1" />
-<Data ElementName="reward_data" Substruct="Substruct_JournalRewardData" Optional="true" />
+<Data ElementName="reward_data" Substruct="Substruct_JournalRewardData" IfVariableNotSet="complete" />
 </Struct>
 <Struct Name="WS_QuestJournalReply" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqQuestJournalReplyCmd" >
 <Data ElementName="quest_id" Type="int32" Size="1" />
@@ -18196,6 +18256,27 @@ to zero and treated like placeholders." />
   <Data ElementName="unknown2" Type="int32" />
 </Struct>
 <Struct Name="WS_SatMsg" ClientVersion="1" OpcodeName="OP_SatMsg">
+</Struct>
+<Struct Name="WS_KnowledgebaseRequestMsg" ClientVersion="1" OpcodeName="OP_KnowledgebaseRequestMsg">
+	<Data ElementName="request_id" Type="int32" />
+	<Data ElementName="search_keyword" Type="EQ2_16Bit_String" />
+	<Data ElementName="search_article" Type="EQ2_16Bit_String" />
+</Struct>
+<Struct Name="WS_KnowledgebaseResponseMsg" ClientVersion="1" OpcodeName="OP_KnowledgebaseResponseMsg">
+	<Data ElementName="unknown" Type="int8" Size="6" />
+	<Data ElementName="num_articles" Type="int16" />
+	<Data ElementName="article_array" Type="Array" ArraySizeVariable="num_articles">
+	  <Data ElementName="article" Type="EQ2_16Bit_String" />
+	 </Data> 	 
+	<Data ElementName="num_match_percents2" Type="int16" />
+	<Data ElementName="match_percents_array" Type="Array" ArraySizeVariable="num_match_percents">
+	  <Data ElementName="percentage" Type="int16" />
+	 </Data> 	 
+	 <Data ElementName="num_article_summaries" Type="int16" />
+	<Data ElementName="article_summaries_array" Type="Array" ArraySizeVariable="num_article_summaries">
+	  <Data ElementName="summary" Type="EQ2_16Bit_String" />
+	 </Data>
+	 <Data ElementName="article" Type="EQ2_16Bit_String" />
 </Struct>
 <Struct Name="WS_SysClient" ClientVersion="1" OpcodeName="OP_SysClient">
    <Data ElementName="sys_client" Type="EQ2_16Bit_String" />

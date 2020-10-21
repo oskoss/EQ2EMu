@@ -351,6 +351,25 @@ int8 DataStruct::GetAddType() {
 void DataStruct::SetAddType(int8 new_type) {
 	addType = new_type;
 }
+string DataStruct::AppendVariable(string orig, const char* val) {
+	if (!val)
+		return orig;
+	if(orig.length() == 0)
+		return string(val);
+	if (orig.find(",") < 0xFFFFFFFF) { //has more than one already
+		string valstr = string(val);
+		vector<string>* varnames = SplitString(orig, ',');
+		if (varnames) {
+			for (int32 i = 0; i < varnames->size(); i++) {
+				if (valstr.compare(varnames->at(i)) == 0) {
+					return orig; //already in the variable, no need to append
+				}
+			}
+			safe_delete(varnames);
+		}		
+	}
+	return orig.append(",").append(val);
+}
 int32 DataStruct::GetDataSizeInBytes() {
 	int32 ret = 0;
 	switch (type) {

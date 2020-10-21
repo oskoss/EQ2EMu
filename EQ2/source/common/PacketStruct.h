@@ -113,6 +113,19 @@ public:
 	bool	IsSet();
 	bool	IsOptional();
 	int32 GetDataSizeInBytes();
+	string	AppendVariable(string orig, const char* val);
+	void	AddIfSetVariable(const char* val) {
+		if (val) {
+			if_set_variable = AppendVariable(if_set_variable, val);
+			is_set = true;
+		}
+	}
+	void	AddIfNotSetVariable(const char* val) {
+		if (val) {
+			if_not_set_variable = AppendVariable(if_not_set_variable, val);
+			if_not_set = true;
+		}
+	}
 
 private:
 	bool	is_set;
