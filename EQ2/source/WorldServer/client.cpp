@@ -8092,12 +8092,10 @@ void Client::SendWaypoints() {
 		for (itr = waypoints.begin(); itr != waypoints.end(); itr++) {
 			packet->setArrayDataByName("waypoint_name", itr->first.c_str(), i);
 			packet->setArrayDataByName("waypoint_category", itr->second.type, i);
-			if(itr->second.type == 3)
-				packet->setArrayDataByName("spawn_id", 0xFFFFFFFF, i);
-			else
-				packet->setArrayDataByName("spawn_id", itr->second.id, i);			
+			packet->setArrayDataByName("spawn_id", itr->second.id, i);			
 			i++;
-		}		
+		}
+		packet->setDataByName("unknown", 0xFFFFFFFF);
 		QueuePacket(packet->serialize());
 		safe_delete(packet);
 	}
@@ -8128,24 +8126,42 @@ void Client::AddWaypoint(const char* waypoint_name, int8 waypoint_category, int3
 			packet->setArrayDataByName("spawn_id", spawn_id, 0);
 			packet->setArrayDataByName("waypoint_category2", waypoint_category, 0);
 			packet->setArrayDataByName("spawn_id2", spawn_id, 0);
+			packet->setDataByName("unknown", 0xFFFFFFFF); 
 			QueuePacket(packet->serialize());
 			safe_delete(packet);
 		}
 	}
 }
 
-void Client::ShowPathToTarget(Spawn* spawn) {
-	if (spawn && current_zone->pathing) {
+void Client::ClearWaypoint() {
+	PacketStruct* packet = configReader.getStruct("WS_GlowPath", GetVersion());
+	if (packet) {
+		QueuePacket(packet->serialize());
+		safe_delete(packet);		
+	}
+}
+
+bool Client::ShowPathToTarget(float x, float y, float z, float y_offset) {
+	if (current_zone->pathing) {
+		if (current_zone->zonemap) {
+			if (x < current_zone->zonemap->GetMinX() || x > current_zone->zonemap->GetMaxX())
+				return false;
+			if (z < current_zone->zonemap->GetMinZ() || z > current_zone->zonemap->GetMaxZ())
+				return false;
+			float new_z = current_zone->zonemap->FindBestZ(glm::vec3(x, z, y), nullptr);
+			if (new_z != BEST_Z_INVALID) //this is actually y
+				y = new_z;
+		}
 		bool partial = false;
 		bool stuck = false;
 		PathfinderOptions opts;
 		opts.smooth_path = true;
 		opts.step_size = 100.0f;//RuleR(Pathing, NavmeshStepSize);
-		opts.offset = spawn->GetYOffset() + 1.0f;
+		opts.offset = y_offset + 1.0f;
 		opts.flags = PathingNotDisabled ^ PathingZoneLine;
 		PacketStruct* packet = configReader.getStruct("WS_GlowPath", GetVersion());
 		if (packet) {
-			auto path = current_zone->pathing->FindPath(glm::vec3(player->GetX(), player->GetZ(), player->GetY()), glm::vec3(spawn->GetX(), spawn->GetZ(), spawn->GetY()), partial, stuck, opts);
+			auto path = current_zone->pathing->FindPath(glm::vec3(player->GetX(), player->GetZ(), player->GetY()), glm::vec3(x, z, y), partial, stuck, opts);
 			packet->setArrayLengthByName("num_points", path.size());
 			int i = 0;
 			for (auto& node : path)
@@ -8153,16 +8169,25 @@ void Client::ShowPathToTarget(Spawn* spawn) {
 				packet->setArrayDataByName("x", node.pos.x, i);
 				packet->setArrayDataByName("y", node.pos.z, i);
 				packet->setArrayDataByName("z", node.pos.y, i);
-				packet->setDataByName("waypoint_x", spawn->GetX());
-				packet->setDataByName("waypoint_y", spawn->GetY());
-				packet->setDataByName("waypoint_z", spawn->GetZ());
+				packet->setDataByName("waypoint_x", x);
+				packet->setDataByName("waypoint_y", y);
+				packet->setDataByName("waypoint_z", z);
 				i++;
 			}
-			if(i>0)
+			if (i > 0)
 				QueuePacket(packet->serialize());
 			safe_delete(packet);
+			return (i > 0);
 		}
 	}
+	return false;
+}
+
+bool Client::ShowPathToTarget(Spawn* spawn) {
+	if (spawn) {
+		return ShowPathToTarget(spawn->GetX(), spawn->GetY(), spawn->GetZ(), spawn->GetYOffset());	
+	}
+	return false;
 }
 
 void Client::BeginWaypoint(const char* waypoint_name, float x, float y, float z) {

@@ -7561,6 +7561,7 @@ to zero and treated like placeholders." />
 		<Data ElementName="waypoint_category" Type="int8" />
 		<Data ElementName="spawn_id" Type="int32" />
 	</Data>
+	<Data ElementName="unknown" Type="int32" />
 </Struct>
 <Struct Name="WS_WaypointUpdate" ClientVersion="547" OpcodeName="OP_WaypointUpdateMsg">
 	<Data ElementName="num_updates" Type="int32" />

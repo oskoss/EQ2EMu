@@ -77,6 +77,11 @@ public:
 		CheckMapMutex.releasereadlock();
 		return isMapLoading;
 	}
+	float GetMinX() { return m_MinX; }
+	float GetMaxX() { return m_MaxX; }
+	float GetMinZ() { return m_MinZ; }
+	float GetMaxZ() { return m_MaxZ; }
+
 private:
 	void RotateVertex(glm::vec3 &v, float rx, float ry, float rz);
 	void ScaleVertex(glm::vec3 &v, float sx, float sy, float sz);

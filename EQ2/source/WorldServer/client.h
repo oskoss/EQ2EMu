@@ -455,7 +455,9 @@ public:
 		}
 	}
 	void SelectWaypoint(int32 id);
-	void ShowPathToTarget(Spawn* spawn);
+	void ClearWaypoint();
+	bool ShowPathToTarget(float x, float y, float z, float y_offset);
+	bool ShowPathToTarget(Spawn* spawn);
 
 private:
 	void    SavePlayerImages();

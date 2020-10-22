@@ -862,6 +862,7 @@ private:
 #define COMMAND_RELOAD_STARTABILITIES	522
 
 #define COMMAND_FINDSPAWN				521
+#define COMMAND_WAYPOINT				523
 
 #define GET_AA_XML						751
 #define ADD_AA							752

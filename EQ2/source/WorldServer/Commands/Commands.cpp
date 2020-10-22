@@ -1605,6 +1605,18 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 			break;
 		}
+		case COMMAND_WAYPOINT: {
+			bool success = false;
+			if (sep && sep->IsNumber(0) && sep->IsNumber(1) && sep->IsNumber(2)) {
+				if (!client->ShowPathToTarget(atof(sep->arg[0]), atof(sep->arg[1]), atof(sep->arg[2]), 0))
+					client->Message(CHANNEL_COLOR_RED, "Invalid coordinates given");
+			}
+			else {
+				client->ClearWaypoint();
+				client->Message(CHANNEL_COLOR_YELLOW, "Usage: /waypoint x y z");
+			}
+			break;
+		}
 		case COMMAND_WHO:{
 			const char* who = 0;
 			if(sep && sep->arg[0]){
