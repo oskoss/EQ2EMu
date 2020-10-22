@@ -8148,7 +8148,8 @@ bool Client::ShowPathToTarget(float x, float y, float z, float y_offset) {
 				return false;
 			if (z < current_zone->zonemap->GetMinZ() || z > current_zone->zonemap->GetMaxZ())
 				return false;
-			float new_z = current_zone->zonemap->FindBestZ(glm::vec3(x, z, y), nullptr);
+			auto loc = glm::vec3(x, z, y);
+			float new_z = current_zone->zonemap->FindBestZ(loc, nullptr);
 			if (new_z != BEST_Z_INVALID) //this is actually y
 				y = new_z;
 		}
