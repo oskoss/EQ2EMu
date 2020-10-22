@@ -559,9 +559,6 @@
     <ClCompile Include="..\..\source\WorldServer\Zone\mob_movement_manager.cpp">
       <Filter>Source Files\Zone</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\WorldServer\Zone\water_map.cpp">
-      <Filter>Source Files\Zone</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\WorldServer\Zone\pathfinder_interface.cpp">
       <Filter>Source Files\Zone</Filter>
     </ClCompile>
@@ -575,6 +572,12 @@
       <Filter>Source Files\Zone</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\WorldServer\Zone\pathfinder_waypoint.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\region_map.cpp">
+      <Filter>Source Files\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\WorldServer\Zone\region_map_v1.cpp">
       <Filter>Source Files\Zone</Filter>
     </ClCompile>
   </ItemGroup>
@@ -993,9 +996,6 @@
     <ClInclude Include="..\..\source\WorldServer\Zone\mob_movement_manager.h">
       <Filter>Header Files\Zone</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\WorldServer\Zone\water_map.h">
-      <Filter>Header Files\Zone</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\WorldServer\Zone\pathfinder_interface.h">
       <Filter>Header Files\Zone</Filter>
     </ClInclude>
@@ -1006,6 +1006,12 @@
       <Filter>Header Files\Zone</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\WorldServer\Zone\pathfinder_waypoint.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\region_map.h">
+      <Filter>Header Files\Zone</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\WorldServer\Zone\region_map_v1.h">
       <Filter>Header Files\Zone</Filter>
     </ClInclude>
   </ItemGroup>

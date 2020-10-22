@@ -115,6 +115,15 @@ namespace EQ2ModelViewer
             context.InputAssembler.SetIndexBuffer(m_IndexBuffer, Format.R32_UInt, 0);
             context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
         }
+        public void RenderBuffersExt(DeviceContext context)
+        {
+            int stride = System.Runtime.InteropServices.Marshal.SizeOf(typeof(EQ2Region));
+            int offset = 0;
+
+            context.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding(m_VertexBuffer, stride, offset));
+            context.InputAssembler.SetIndexBuffer(m_IndexBuffer, Format.R32_UInt, 0);
+            context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
+        }
 
         public void ShutDown()
         {
@@ -130,12 +139,16 @@ namespace EQ2ModelViewer
 
         public ShaderResourceView GetTexture()
         {
+            if (m_Texture == null)
+                return null;
+
             return m_Texture.GetTexture();
         }
 
         private void ReleaseTexture()
         {
-            m_Texture.ShutDown();
+            if (m_Texture != null)
+                m_Texture.ShutDown();
         }
 
         public bool LoadTexture(Device device, string filename)

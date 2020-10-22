@@ -82,8 +82,11 @@ void Brain::Think() {
 			}
 			m_body->FaceTarget(target);
 
+			bool breakWaterPursuit = false;
+			if (m_body->IsWaterCreature() && !target->InWater())
+				breakWaterPursuit = true;
 			// Check to see if the NPC has exceeded the max chase distance
-			if (run_back_distance > MAX_CHASE_DISTANCE) {
+			if (run_back_distance > MAX_CHASE_DISTANCE || breakWaterPursuit) {
 				LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "Run back distance is greater then max chase distance, run_back_distance = %f", run_back_distance);
 				// Over the max chase distance, Check to see if the target is is a client
 				Client* client = target->GetZone()->GetClientBySpawn(target);

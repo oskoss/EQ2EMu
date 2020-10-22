@@ -158,6 +158,7 @@ ZoneServer::ZoneServer(const char* name) {
 	Grid = nullptr;
 	zonemap = nullptr;
 	pathing = nullptr;
+	regionmap = nullptr;
 	strcpy(zonesky_file,"");
 	
 	reloading = true;
@@ -215,6 +216,8 @@ ZoneServer::~ZoneServer() {
 	if (movementMgr != nullptr)
 		delete movementMgr;
 
+	if (regionmap != nullptr)
+		delete regionmap;
 	LogWrite(ZONE__INFO, 0, "Zone", "Completed zone shutdown of '%s'", zone_name);
 	--numzones;
 	UpdateWindowTitle(0);
@@ -282,6 +285,10 @@ void ZoneServer::Init()
 	if (zonemap == nullptr) {
 		zonemap = Map::LoadMapFile(zoneName, Grid);
 	}
+	if (regionmap == nullptr) {
+		regionmap = RegionMap::LoadRegionMapfile(zoneName);
+	}
+
 	pathing = IPathfinder::Load(zoneName);
 	movementMgr = new MobMovementManager();
 //	else

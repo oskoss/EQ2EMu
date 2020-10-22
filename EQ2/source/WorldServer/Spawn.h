@@ -759,6 +759,8 @@ public:
 	void SetModelType(int16 model_type, bool setUpdateFlags = true){
 		SetInfo(&appearance.model_type, model_type, setUpdateFlags);
 		SetInfo(&appearance.soga_model_type, model_type, setUpdateFlags);
+		SetFlyingCreature();
+		SetWaterCreature();
 	}
 	int16 GetSogaModelType(){
 		return appearance.soga_model_type;
@@ -767,7 +769,37 @@ public:
 		return appearance.model_type;
 	}
 	
-	bool IsFlying() { return (GetInitialState() == 49156); }
+	bool IsFlyingCreature() { return is_flying_creature; }
+	bool IsWaterCreature() { return is_water_creature; }
+	bool InWater();
+
+	void SetFlyingCreature() {
+		is_flying_creature = false;
+		switch (GetModelType())
+		{
+		case 260:
+		case 295:
+			is_flying_creature = true;
+			break;
+		}
+	}
+	
+	void SetWaterCreature() {
+		is_water_creature = false;
+
+		switch (GetModelType())
+		{
+		case 194:
+		case 204:
+		case 210:
+		case 241:
+		case 242:
+		case 254:
+		case 20828:
+			is_water_creature = true;
+			break;
+		}
+	}
 	void SetPrimaryCommand(const char* name, const char* command, float distance = 10);
 	void SetPrimaryCommands(vector<EntityCommand*>* commands);
 	void SetSecondaryCommands(vector<EntityCommand*>* commands);
@@ -1016,6 +1048,8 @@ public:
 	int32	last_movement_update;
 	int32	last_location_update;
 	bool	forceMapCheck;
+	bool	is_water_creature;
+	bool	is_flying_creature;
 
 	bool following;
 	bool	IsPet() { return is_pet; }

@@ -3562,6 +3562,24 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->Message(CHANNEL_COLOR_YELLOW, "Best Z for %s is %f", spawn->GetName(), bestZ);
 						break;
 					}
+					else if (ToLower(string(sep->arg[0])) == "inwater")
+					{
+						glm::vec3 targPosZ(cmdTarget->GetX(), cmdTarget->GetZ(), cmdTarget->GetY());
+						float bestZ = client->GetPlayer()->FindDestGroundZ(targPosZ, cmdTarget->GetYOffset());
+						if ( bestZ == BEST_Z_INVALID )
+							bestZ = -999999.0f;
+							
+						glm::vec3 targPos(cmdTarget->GetY(), cmdTarget->GetX(), cmdTarget->GetZ());
+
+						if (client->GetCurrentZone()->regionmap == nullptr)
+							client->SimpleMessage(CHANNEL_COLOR_RED, "No water map for zone.");
+						else
+						{
+							bool inWater = cmdTarget->InWater();
+							client->Message(CHANNEL_COLOR_YELLOW, "%s is %s.", cmdTarget->GetName(), inWater ? "in water" : "out of water");
+						}
+						break;
+					}
 					else if (ToLower(string(sep->arg[0])) == "pathto")
 					{
 
@@ -4028,9 +4046,18 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							client->SimpleMessage(CHANNEL_ERROR,"Unable to flag character.  Unknown reason.");
 					}
 				}else{
-					client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage: /flag {name} {new_status}");
-					client->SimpleMessage(CHANNEL_COLOR_YELLOW," Standard User: 0");
-					client->SimpleMessage(CHANNEL_COLOR_YELLOW," Admin User: 100");
+					sint16 status = database.GetCharacterAdminStatus(client->GetPlayer()->GetName());
+					if(status != client->GetAdminStatus())
+					{
+						client->Message(CHANNEL_COLOR_YELLOW,"Flag status was changed from %i to %i.",status,client->GetAdminStatus());
+						client->SetAdminStatus(status);
+					}
+					else
+					{
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage: /flag {name} {new_status}");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW," Standard User: 0");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW," Admin User: 100");
+					}
 				}
 				break;
 			}

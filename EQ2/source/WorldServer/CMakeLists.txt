@@ -14,6 +14,6 @@ add_executable(eq2world ${WORLD_SRCS} ${COMMON_SRCS} ${LUA_SRCS})
 
 set(RECAST_LIBRARIES -L${CMAKE_SOURCE_DIR}/EQ2/source/depends/recastnavigation/RecastDemo/Build/gmake/lib/Debug -lDebugUtils -lDetour -lDetourCrowd -lDetourTileCache -lRecast)
 
-target_include_directories(eq2world PUBLIC ${MySQL_INCLUDE_DIRS} ../common/ ../depends/recastnavigation/Detour/Include)
+target_include_directories(eq2world PUBLIC ${MySQL_INCLUDE_DIRS} ../common/ ../depends/recastnavigation/Detour/Include ../depends/)
 target_link_libraries(eq2world PUBLIC ${MySQL_LIBRARIES} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${RECAST_LIBRARIES})
 

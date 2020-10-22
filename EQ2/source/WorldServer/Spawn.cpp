@@ -114,6 +114,8 @@ Spawn::Spawn(){
 	pickup_unique_item_id = 0;
 	disable_sounds = false;
 	has_quests_required = false;
+	is_flying_creature = false;
+	is_water_creature = false;
 }
 
 Spawn::~Spawn(){
@@ -2617,7 +2619,7 @@ void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate, bool ma
 
 	if (!IsPlayer() && distance > 0.0f)
 	{
-		if (IsFlying() && CheckLoS(spawn))
+		if ((IsFlyingCreature() || IsWaterCreature()) && CheckLoS(spawn))
 		{
 			if (immediate)
 				ClearRunningLocations();
@@ -2664,7 +2666,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		FixZ(true);
 
 		int32 newGrid = GetZone()->Grid->GetGridID(this);
-		if (!IsFlying() && newGrid != 0 && newGrid != appearance.pos.grid_id)
+		if (!IsFlyingCreature() && newGrid != 0 && newGrid != appearance.pos.grid_id)
 			SetPos(&(appearance.pos.grid_id), newGrid);
 
 		forceMapCheck = false;
@@ -3088,7 +3090,7 @@ bool Spawn::CalculateChange(){
 				}
 
 				int32 newGrid = GetZone()->Grid->GetGridID(this);
-				if (!IsFlying() && newGrid != 0 && newGrid != appearance.pos.grid_id)
+				if (!IsFlyingCreature() && newGrid != 0 && newGrid != appearance.pos.grid_id)
 					SetPos(&(appearance.pos.grid_id), newGrid);
 			}
 		}
@@ -3127,7 +3129,7 @@ void Spawn::CalculateRunningLocation(bool stop){
 	{
 		if (GetDistance(GetTarget()) > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
 		{
-			if (IsFlying() && CheckLoS(GetTarget()))
+			if ((IsFlyingCreature() || IsWaterCreature()) && CheckLoS(GetTarget()))
 				AddRunningLocation(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), GetSpeed(), 0, false);
 			else
 				GetZone()->movementMgr->NavigateTo((Entity*)this, GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
@@ -3585,7 +3587,7 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 
 
 void Spawn::FixZ(bool forceUpdate) {
-	if (IsPlayer() || IsFlying() || !GetZone() || (IsObject() && GetZone()->GetInstanceType() == Instance_Type::PERSONAL_HOUSE_INSTANCE)) {
+	if (IsPlayer() || IsFlyingCreature() || !GetZone() || (IsObject() && GetZone()->GetInstanceType() == Instance_Type::PERSONAL_HOUSE_INSTANCE)) {
 		return;
 	}
 	/*
@@ -3596,9 +3598,28 @@ void Spawn::FixZ(bool forceUpdate) {
 	if (zone->watermap && zone->watermap->InLiquid(m_Position)) {
 		return;
 	}*/
-
+	
+	// we do the inwater check here manually to avoid double calling for a Z coordinate
 	glm::vec3 current_loc(GetX(), GetZ(), GetY());
 	float new_z = GetFixedZ(current_loc, 1);
+	
+	if ( GetZone()->regionmap != nullptr )
+	{
+		glm::vec3 targPos(GetY(), GetX(), GetZ());
+		
+		if ( IsGroundSpawn() )
+			targPos.x -= 1.0f;
+		else
+			targPos.x -= .5f; // standard offset to better assess shallow water
+			
+		float bestZ = -999999.0f;
+		if ( new_z != BEST_Z_INVALID )
+			bestZ = new_z - 1.0f;
+		
+		if(GetZone()->regionmap->InWater(targPos, bestZ))
+			return;
+	}
+	
 	if (new_z == GetY())
 		return;
 
@@ -3612,8 +3633,11 @@ void Spawn::FixZ(bool forceUpdate) {
 
 bool Spawn::CheckLoS(Spawn* target)
 {
-	glm::vec3 targpos(target->GetX(), target->GetZ(), target->GetY()+1.0f);
-	glm::vec3 pos(GetX(), GetZ(), GetY()+1.0f);
+	float radiusSrc = 2.0f;
+	float radiusTarg = 2.0f;
+
+	glm::vec3 targpos(target->GetX(), target->GetZ(), target->GetY()+radiusTarg);
+	glm::vec3 pos(GetX(), GetZ(), GetY()+radiusSrc);
 	return CheckLoS(pos, targpos);
 }
 
@@ -3802,4 +3826,34 @@ void Spawn::RemoveSpawnFromPlayer(Player* player)
 	m_Update.writelock(__FUNCTION__, __LINE__);
 	player->RemoveSpawn(this); // sets it as removed
 	m_Update.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+bool Spawn::InWater()
+{
+	bool inWater = false;
+
+	if (GetZone()->regionmap != nullptr)
+	{
+		glm::vec3 current_loc(GetX(), GetZ(), GetY());
+		float new_z = GetFixedZ(current_loc, 1);
+				
+		if ( GetZone()->regionmap != nullptr )
+		{
+			glm::vec3 targPos(GetY(), GetX(), GetZ());
+			if ( IsGroundSpawn() )
+				targPos.x -= 1.0f;
+			else
+				targPos.x -= .5f; // standard offset to better assess shallow water
+				
+			
+			float bestZ = -999999.0f;
+			if ( new_z != BEST_Z_INVALID )
+				bestZ = new_z;
+					
+			if(GetZone()->regionmap->InWater(targPos, bestZ))
+			inWater = true;
+		}
+	}
+
+	return inWater;
 }
