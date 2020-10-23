@@ -16,7 +16,7 @@ RegionMapV1::~RegionMapV1() {
 		itr++;
 		Regions.erase(deleteItr);
 		safe_delete(node);
-		safe_delete(bsp_node);
+		safe_delete_array(bsp_node);
 	}
 
 	Regions.clear();
@@ -182,7 +182,7 @@ WaterRegionType RegionMapV1::BSPReturnRegionTypeNode(const Region_Node* region_n
 		location.x, location.y, location.z, current_node->splitdistance);
 #endif
 
-	if ((current_node->left == 4294967294) &&
+	if ((current_node->left == -2) &&
 		(current_node->right == -1 || current_node->right == -2)) {
 		if (region_node->region_type == ClassWaterOcean || region_node->region_type == ClassWaterOcean2)
 		{
@@ -294,7 +294,7 @@ WaterRegionType RegionMapV1::BSPReturnRegionWaterRegion(const Region_Node* regio
 		if (current_node->left == -1) {
 			return(RegionTypeNormal);
 		}
-		else if (current_node->left == 4294967294) {
+		else if (current_node->left == -2) {
 			return(RegionTypeWater);
 		}
 		return BSPReturnRegionWaterRegion(region_node, BSP_Root, current_node->left + 1, location, distToNode);
