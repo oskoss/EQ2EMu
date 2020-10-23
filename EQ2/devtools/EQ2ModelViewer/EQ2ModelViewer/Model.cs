@@ -32,7 +32,7 @@ namespace EQ2ModelViewer
 
         public bool Initialize(Device device, string modelFileName, string[] textureFileName)
         {
-            if (!LoadModel(modelFileName))
+            if (!LoadModel(modelFileName, null))
             {
                 Console.WriteLine("Model: Failed to load the model");
                 return false;
@@ -61,6 +61,23 @@ namespace EQ2ModelViewer
 
         public bool Initialize(Device device, VeMeshGeometryNode item, String baseDir)
         {
+            if (item.collisionMeshName == null || item.collisionMeshName.Length < 1)
+            {
+                Console.WriteLine("No collision mesh for MeshGeometryNode");
+                return false;
+            }
+
+            VeCollisionMesh collision = null;
+
+            try
+            {
+                Eq2Reader reader2 = new Eq2Reader(new System.IO.FileStream(frmMain.DirName + item.collisionMeshName, System.IO.FileMode.Open, System.IO.FileAccess.Read));
+                collision = (VeCollisionMesh)reader2.ReadObject();
+                reader2.Dispose();
+            }catch(Exception ex)
+            {
+
+            }
             ArrayList textures = new ArrayList();
 
             string[][] meshes = ((VeMeshGeometryNode)item).renderMeshNames;
@@ -103,7 +120,7 @@ namespace EQ2ModelViewer
                         {
                             textures.Add(pickedTexture);
 
-                            if (!LoadModel(path))
+                            if (!LoadModel(path, collision))
                             {
                                 Console.WriteLine("Model: Failed to load the model " + path);
                                 return false;
@@ -211,7 +228,7 @@ namespace EQ2ModelViewer
             return ret;
         }
 
-        private bool LoadModel(string modelFileName)
+        private bool LoadModel(string modelFileName, VeCollisionMesh collision)
         {
             frmMain.AppendLoadFile("LoadModel: " + modelFileName);
             Eq2Reader reader = new Eq2Reader(File.OpenRead(modelFileName));
@@ -233,6 +250,7 @@ namespace EQ2ModelViewer
                         int indicesIdx = model.indices[index];
                         if (indicesIdx < 0 || indicesIdx >= model.vertices.Length)
                             break;
+
                         float x = model.vertices[model.indices[index]].X;
                         float y = model.vertices[model.indices[index]].Y;
                         float z = model.vertices[model.indices[index]].Z;
