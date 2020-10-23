@@ -309,7 +309,7 @@ namespace EQ2ModelViewer
             LoadZoneFile();
         }
 
-        public String DirName = "";
+        public static String DirName = "";
         private void LoadZoneFile(String filename="")
         {
             bool isDrawFile = false;
