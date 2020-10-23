@@ -7,18 +7,14 @@
 --]]
 
 function spawn(NPC)
+
 end
 
 function respawn(NPC)
-	spawn(NPC)
+
 end
+
 function hailed(NPC, Spawn)
-
-end
-
-function respec(Player)
-    skill = GetSkill(Player, "Parry")
-    if skill ~= nil then
-        SetSkillValue(skill, 200)
-	end
+    FaceTarget(NPC, Spawn)
+    PlayFlavor(NPC, "", "Have you come to join the Seafury Buccaneers?  Open seas and plenty of swag await you!", "agree", 1689589577, 4560189, Spawn) 
 end

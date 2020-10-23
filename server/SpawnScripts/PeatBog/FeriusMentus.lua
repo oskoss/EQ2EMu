@@ -3,10 +3,10 @@
 	Script Purpose	: Ferius Mentus
 	Script Author	: Scatman
 	Script Date	: 2009.05.10
-	Script Notes	:
+	Script Notes	: Updated 1/8/2020 by Shatou
 --]]
 
-local QUEST_1 = 214
+local QUEST_1 = 513
 
 function spawn(NPC)
 	ProvidesQuest(NPC, QUEST_1)

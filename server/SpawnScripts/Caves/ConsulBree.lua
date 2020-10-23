@@ -3,15 +3,16 @@
 	Script Purpose	: Consul Bree <Qeynos Guard>
 	Script Author	: Scatman
 	Script Date	: 2008.09.21
-	Script Notes	: 
+	Script Notes	: Updated 1/8/2020 by Shatou
 --]]
 
 local QUEST_FROM_OAKMYST = 212
-local QUEST_FROM_PEATBOG = 220
+local QUEST_FROM_PEATBOG = 512
 local QUEST_1 = 361
-local QUEST_2 = 224
-local QUEST_3 = 225
-local QUEST_4 = 230
+local QUEST_2 = 493
+local QUEST_3 = 494
+local QUEST_4 = 495
+local QUEST_4_SUMMONING_STAFF_ID = 13583
 
 function spawn(NPC)
 	ProvidesQuest(NPC, QUEST_1)
@@ -310,8 +311,8 @@ end
 
 function MoreExplosives(NPC, Spawn)
 	-- 7 explosives
-	for i = 1, 6, 1 do
-		SummonItem(Spawn, 4873)
+	for i = 1, 7, 1 do
+		SummonItem(Spawn, 6975)
 		SendMessage(Spawn, "You receive [explosives].")
 		SendPopUpMessage(Spawn, "You receive explosives.", 255, 255, 255)
 	end
@@ -440,8 +441,8 @@ end
 
 function NeedStaff(NPC, Spawn)
 	-- summoning staff
-	if not HasItem(Spawn, 11850) then
-		SummonItem(Spawn, 11850, 1)
+	if not HasItem(Spawn, QUEST_4_SUMMONING_STAFF_ID) then
+		SummonItem(Spawn, QUEST_4_SUMMONING_STAFF_ID, 1)
 	end
 end
 

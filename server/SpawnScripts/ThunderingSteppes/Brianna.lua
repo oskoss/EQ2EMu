@@ -31,12 +31,7 @@ function hailed(NPC, Spawn)
 		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1009.mp3", "", "", 0, 0, Spawn)
 	end
 	
-	if HasQuest(Spawn, SuppliesForBrianna) and GetQuestStep(Spawn, SuppliesForBrianna) == 2 then
-		-- turn in SuppliesForBrianna
-		AddConversationOption(conversation, "Yes right here.", "dlg_1_1")
-		AddConversationOption(conversation, "Um, I have some but not for you.")
-		StartConversation(conversation, NPC, Spawn, "Well, do you have the supplies?")
-	elseif HasQuest(Spawn, WatchYourStepinTheTSPartIII) and GetQuestStep(Spawn, WatchYourStepinTheTSPartIII) == 2 then
+	if HasQuest(Spawn, WatchYourStepinTheTSPartIII) and GetQuestStep(Spawn, WatchYourStepinTheTSPartIII) == 3 then
 		-- start SuppliesForBrianna
 		AddConversationOption(conversation, "No, I'm here to deliver a package to you.", "dlg_0_1")
 		AddConversationOption(conversation, "Oh okay. Thanks anyways.")
@@ -45,6 +40,11 @@ function hailed(NPC, Spawn)
 		-- on SuppliesForBrianna or HidesForBrianna but not ready for turn in
 		AddConversationOption(conversation, "No but I have my best people working on it.")
 		StartConversation(conversation, NPC, Spawn, "Well, did you bring the supplies yet?")
+	elseif HasQuest(Spawn, SuppliesForBrianna) and GetQuestStep(Spawn, SuppliesForBrianna) == 2 then
+		-- turn in SuppliesForBrianna
+		AddConversationOption(conversation, "Yes right here.", "dlg_1_1")
+		AddConversationOption(conversation, "Um, I have some but not for you.")
+		StartConversation(conversation, NPC, Spawn, "Well, do you have the supplies?")
 	elseif HasCompletedQuest(Spawn, SuppliesForBrianna) and not HasQuest(Spawn, HidesForBrianna) and not HasCompletedQuest(Spawn, HidesForBrianna) then
 		-- start HidesForBrianna
 		AddConversationOption(conversation, "Yes I am.", "dlg_2_1")
@@ -79,7 +79,7 @@ function dlg_0_2(NPC, Spawn)
 end
 
 function dlg_0_3(NPC, Spawn)
-	OfferQuest(NPC, Spawn, SuppliesForBrianna)
+	OfferQuest(NPC, Player, SuppliesForBrianna)
 end
 
 function dlg_1_1(NPC, Spawn)
@@ -102,7 +102,7 @@ function dlg_2_1(NPC, Spawn)
 end
 
 function dlg_2_2(NPC, Spawn)
-	OfferQuest(NPC, Spawn, HidesForBrianna)
+	OfferQuest(NPC, Player, HidesForBrianna)
 end
 
 function dlg_3_1(NPC, Spawn)

@@ -6,8 +6,8 @@
 	Script Notes	: 
 --]]
 
-local QUEST4_FROM_CONSULBREE = 230
-local QUEST_1 = 229
+local QUEST4_FROM_CONSULBREE = 495
+local QUEST_1 = 500
 
 function spawn(NPC)
 	ProvidesQuest(NPC, QUEST_1)

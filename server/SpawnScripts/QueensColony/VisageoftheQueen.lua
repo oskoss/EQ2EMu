@@ -7,21 +7,21 @@
 --]]
 
 function spawn(NPC)
-    Start(NPC) 
-    --SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+    --Start(NPC) 
+    SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
 end
 
 function Start(NPC)
     AddTimer(NPC, 1200000, "speech1")
 end
 
---[[function InRange(NPC, Spawn)
+function InRange(NPC, Spawn)
     speech1(NPC)
 end
 
 function LeaveRange(NPC, Spawn)
     stop_speech(NPC)
-end--]]
+end
 
 function speech1(NPC, Spawn)
     SpawnSet(NPC, "mood_state", "13046")	-- Give her serious face!

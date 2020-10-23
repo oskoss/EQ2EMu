@@ -6,7 +6,7 @@
 	Script Notes	: 
 --]]
 
-local CAVES_CONSUL_BREE_QUEST_3 = 225
+local CAVES_CONSUL_BREE_QUEST_3 = 494
 
 function spawn(NPC)
 	SetRequiredQuest(NPC, CAVES_CONSUL_BREE_QUEST_3, 3) 

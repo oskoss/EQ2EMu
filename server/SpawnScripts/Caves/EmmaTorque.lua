@@ -6,11 +6,11 @@
 	Script Notes	: 
 --]]
 
-local QUEST1_FROM_CONSULBREE = 223
-local QUEST3_FROM_CONSULBREE = 225
-local QUEST4_FROM_CONSULBREE = 230
-local QUEST_1 = 226
-local QUEST_2 = 227
+local QUEST1_FROM_CONSULBREE = 361
+local QUEST3_FROM_CONSULBREE = 494
+local QUEST4_FROM_CONSULBREE = 495
+local QUEST_1 = 496
+local QUEST_2 = 497
 
 function spawn(NPC)
 	ProvidesQuest(NPC, QUEST_1)
@@ -32,7 +32,7 @@ function hailed(NPC, Spawn)
 			AddConversationOption(conversation, "Consul Bree sent me to you. I need a river stone.", "dlg_17_1")
 			
 		-- Drawing Ray
-		elseif not HasItem(Spawn, 140946) then
+		elseif not HasItem(Spawn, 46016) then
 			AddConversationOption(conversation, "I need the Drawing Ray.", "dlg_17_2")
 		end
 	end
@@ -82,8 +82,8 @@ function dlg_17_2(NPC, Spawn)
 	conversation = CreateConversation()
 	
 	-- Drawing Ray
-	if not HasItem(Spawn, 140946) then
-		SummonItem(Spawn, 140946, 1)
+	if not HasItem(Spawn, 46016) then
+		SummonItem(Spawn, 46016, 1)
 		SendMessage(Spawn, "You receive [Drawing Ray].")
 	end
 

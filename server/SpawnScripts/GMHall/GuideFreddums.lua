@@ -13,7 +13,7 @@ end
 
 
 function hailed(NPC, Spawn)
-        Say(NPC, "Greetings. If you have any questions please ask!")
+        Say(NPC, "Greetings.")
 end
 
 function respawn(NPC)

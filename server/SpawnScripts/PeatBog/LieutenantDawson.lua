@@ -3,9 +3,7 @@
 	Script Purpose	: Lieutenant Dawson <Qeynos Guard>
 	Script Author	: Scatman
 	Script Date	: 2009.08.10
-	Script Notes	: 
-	Added in a completion flag for quest TheUnfortunateEarth from Botantist Lith. Updated quest IDs 507-512. 5/6/20. -Darksinga
-	
+	Script Notes	: Updated 1/8/2020 by Shatou
 --]]
 
 local MIN_LEVEL = 5
@@ -16,8 +14,6 @@ local QUEST_3 = 509
 local QUEST_4 = 510
 local QUEST_5 = 511
 local QUEST_6 = 512
-local QUEST_UEARTH = 518
-
 
 function spawn(NPC)
 	ProvidesQuest(NPC, QUEST_1)
@@ -38,10 +34,6 @@ function hailed(NPC, Spawn)
 	
 	if HasQuest(Spawn, QUEST_FROM_JOHFRIT) then
 		SetStepComplete(Spawn, QUEST_FROM_JOHFRIT, 1)
-	end
-
-	if HasQuest (Spawn, QUEST_UEARTH) then
-		SetStepComplete(Spawn, QUEST_UEARTH, 5)
 	end
 
 	if HasCompletedQuest(Spawn, QUEST_1) then

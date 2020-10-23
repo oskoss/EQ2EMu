@@ -109,7 +109,7 @@ function LeaveIsland(NPC, Spawn)
 
     -- Unknown
     else
-        Say(Spawn, "Sorry, I cannot deal with someone of your race. Try visiting the boat on the other island!")
+        PlayFlavor(NPC, "", "Sorry, I cannot deal with someone of your race. Try visiting the boat on the other island!", "", 0, 0, Spawn)
         ZoneRef = GetZone("OutpostOverlord")
         Zone(ZoneRef,Spawn)
     end

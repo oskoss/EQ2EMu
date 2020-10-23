@@ -6,6 +6,8 @@
 	Script Notes	: 
 --]]
 
+local RIVER_BEHEMOTH_REMAINS_ID = 1970101
+
 function spawn(NPC)
 end
 
@@ -16,7 +18,19 @@ end
 function hailed(NPC, Spawn)
 end
 
+
+function wait(seconds)
+  local start = os.time()
+  repeat until os.time() > start + seconds
+end
+
 function death(NPC, Spawn)
-	local Remains = SpawnMob(GetZone(Spawn), 1970147, false, GetX(NPC), GetY(NPC), GetZ(NPC))
-	Despawn(Remains, 60000)
+        local Remains
+        if HasQuest(Spawn, 494) then
+	     Remains = SpawnMob(GetZone(Spawn), RIVER_BEHEMOTH_REMAINS_ID, true, GetX(NPC), GetY(NPC), GetZ(NPC))
+             SetTarget(Spawn, Remains)
+	end
+        
+        wait(5)
+	Despawn(Remains, 30000)
 end
