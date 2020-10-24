@@ -439,6 +439,7 @@ PacketStruct::PacketStruct(PacketStruct* packet, int16 in_client_version) {
 PacketStruct::PacketStruct() {
 	parent = 0;
 	opcode = OP_Unknown;
+	opcode_type = string("");
 }
 
 PacketStruct::PacketStruct(PacketStruct* packet, bool sub) {

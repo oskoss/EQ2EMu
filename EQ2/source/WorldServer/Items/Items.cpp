@@ -795,6 +795,7 @@ Item::~Item(){
 	safe_delete(book_info);
 	safe_delete(houseitem_info);
 	safe_delete(housecontainer_info);
+	DeleteItemSets();
 }
 void Item::SetItem(Item* old_item){
 	if(old_item->GetItemScript())
@@ -913,7 +914,7 @@ void Item::SetItem(Item* old_item){
 	}
 	creator = old_item->creator;
 	adornment = old_item->adornment;
-	item_sets.clear();
+	DeleteItemSets();
 	for (int32 i = 0; i<old_item->item_sets.size(); i++){
 		ItemSet* set = old_item->item_sets[i];
 		if (set){
@@ -1079,6 +1080,17 @@ bool Item::HasStat(uint32 statID)
 
 	return false;
 }
+
+void Item::DeleteItemSets()
+{
+	for (int32 i = 0; i < item_sets.size(); i++){
+		ItemSet* set = item_sets[i];
+		safe_delete(set);
+	}
+		
+	item_sets.clear();
+}
+
 void Item::AddSet(ItemSet* in_set){
 	item_sets.push_back(in_set);
 }
