@@ -34,20 +34,26 @@ SPGrid::SPGrid(string file, int32 cellSize) {
 }
 
 SPGrid::~SPGrid() {
-	vector<Cell>::iterator CellItr;
+	vector<FaceCell>::iterator CellItr;
 	map<int32, vector<Face*> >::iterator MapItr;
 	vector<Face*>::iterator FaceItr;
 
+	map<Face*, bool> deadPtrs;
+	
 	// Loop through the vector of cells
-	/*for (CellItr = m_Cells.begin(); CellItr != m_Cells.end(); CellItr++) {
+	for (CellItr = m_FaceCells.begin(); CellItr != m_FaceCells.end(); CellItr++) {
 		// Loop through the map of vertices on this cell
 		for (MapItr = (*CellItr).FaceList.begin(); MapItr != (*CellItr).FaceList.end(); MapItr++) {
 			// Loop through the vector of faces in the map and delete the pointers
 			for (FaceItr = (*MapItr).second.begin(); FaceItr != (*MapItr).second.end(); FaceItr++) {
-				safe_delete((*FaceItr));
+				if(deadPtrs.count((*FaceItr)) == 0)
+				{
+					deadPtrs.insert(make_pair((*FaceItr), true));
+					safe_delete((*FaceItr));
+				}
 			}
 		}
-	}*/
+	}
 }
 
 bool SPGrid::Init() {

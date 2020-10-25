@@ -9318,6 +9318,18 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 				}
 
 				MakeSpawnChangePacket(tmp_info_changes, tmp_pos_changes, tmp_vis_changes, tmp_info_size, tmp_pos_size, data.size);
+				
+				for (auto& kv : tmp_info_changes) {
+					safe_delete_array(kv.second.data);
+				}
+
+				for (auto& kv : tmp_pos_changes) {
+					safe_delete_array(kv.second.data);
+				}
+
+				for (auto& kv : tmp_vis_changes) {
+					safe_delete_array(kv.second.data);
+				}
 				continue;
 			}
 		}

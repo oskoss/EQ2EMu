@@ -866,6 +866,7 @@ public:
 	void SetAppearance(ItemAppearance* appearance);
 	void AddStat(ItemStat* in_stat);
 	bool HasStat(uint32 statID);
+	void DeleteItemSets();
 	void AddSet(ItemSet* in_set);
 	void AddStatString(ItemStatString* in_stat);
 	void AddStat(int8 type, int16 subtype, float value, char* name = 0);

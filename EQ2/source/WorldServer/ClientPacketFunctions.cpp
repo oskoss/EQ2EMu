@@ -188,6 +188,8 @@ void ClientPacketFunctions::SendCharacterMacros(Client* client) {
 						sprintf(tmp_command, "command%i", x);
 						LogWrite(PACKET__DEBUG, 5, "Packet", "\tLoading Command %i: %s", itr->first, x, itr->second[i]->text.c_str());
 						macro_packet->setArrayDataByName(tmp_command, itr->second[i]->text.c_str(), i);
+						if ( i > 0 ) // itr->second[0] used below, we will delete it later
+							safe_delete(itr->second[i]); // delete MacroData*
 					}
 					macro_packet->setArrayDataByName("unknown2", 2, x);
 					macro_packet->setArrayDataByName("unknown3", 0xFFFFFFFF, x);
@@ -198,6 +200,9 @@ void ClientPacketFunctions::SendCharacterMacros(Client* client) {
 				}
 				macro_packet->setArrayDataByName("icon", itr->second[0]->icon, x);
 				client->GetPlayer()->macro_icons[itr->first] = itr->second[0]->icon;
+				
+				// remove itr->second[0] now that we are done with it
+				safe_delete(itr->second[0]); // delete MacroData*
 			}
 			EQ2Packet* packet = macro_packet->serialize();
 			client->QueuePacket(packet);
