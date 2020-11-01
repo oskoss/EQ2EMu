@@ -3,6 +3,7 @@
 #include "../../common/Log.h"
 
 #ifdef WIN32
+#define _snprintf snprintf
 #include <WinSock2.h>
 #include <windows.h>
 #endif
@@ -13,6 +14,11 @@
 #include <tuple>
 #include <vector>
 #include <fstream>
+#include <iostream>
+#include <boost/asio.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 struct Map::impl
 {
@@ -20,14 +26,28 @@ struct Map::impl
 };
 
 
+inline bool file_exists(const std::string& name) {
+	std::ifstream f(name.c_str());
+	return f.good();
+}
+
 ThreadReturnType LoadMapAsync(void* mapToLoad)
 {
 	Map* map = (Map*)mapToLoad;
 	map->SetMapLoaded(false);
 
+	
 	std::string filename = "Maps/";
 	filename += map->GetFileName();
+
+	std::string deflatedFileName = filename + ".EQ2MapDeflated";
+
 	filename += ".EQ2Map";
+
+	if(file_exists(deflatedFileName))
+		filename = deflatedFileName;
+
+	map->SetFileName(filename);
 
 	if (map->Load(filename))
 		map->SetMapLoaded(true);
@@ -239,21 +259,23 @@ bool Map::DoCollisionCheck(glm::vec3 myloc, glm::vec3 oloc, glm::vec3 &outnorm, 
 	return imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, (RmReal *)&outnorm, (RmReal *)&distance);
 }
 
-inline bool file_exists(const std::string& name) {
-	std::ifstream f(name.c_str());
-	return f.good();
-}
-
 Map *Map::LoadMapFile(std::string file, SPGrid* grid) {
 
 	std::string filename = "Maps/";
 	filename += file;
+	
+	std::string deflatedFileName = filename + ".EQ2MapDeflated";
+
 	filename += ".EQ2Map";
+
+	if(file_exists(deflatedFileName))
+		filename = deflatedFileName;
 
 	LogWrite(MAP__INFO, 7, "Map", "Attempting to load Map File [{%s}]", filename.c_str());
 
 	auto m = new Map(file, grid);
 	m->SetMapLoading(true);
+	m->SetFileName(filename);
 #ifdef WIN32
 	_beginthread(LoadMapAsync, 0, (void*)m);
 #else
@@ -303,7 +325,12 @@ struct ModelEntry
 	std::vector<Poly> polys;
 };
 
+
 bool Map::LoadV2(FILE* f) {
+
+	std::size_t foundDeflated = m_FileName.find(".EQ2MapDeflated");
+	if(foundDeflated != std::string::npos)
+		return LoadV2Deflated(f);
 
 	// Read the string for the zone file name this was created for
 	int8 strSize;
@@ -432,6 +459,168 @@ bool Map::LoadV2(FILE* f) {
 
 	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0]);
 
+	if (!imp->rm) {
+		delete imp;
+		imp = nullptr;
+		return false;
+	}
+
+	return true;
+}
+
+bool Map::LoadV2Deflated(FILE* f) {
+    ifstream file(m_FileName.c_str(), ios_base::in | ios_base::binary);
+    boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf;
+    inbuf.push(boost::iostreams::gzip_decompressor());
+    inbuf.push(file);
+	ostream out(&inbuf);
+	std::streambuf * const srcbuf = out.rdbuf();
+	std::streamsize size = srcbuf->in_avail();
+	if(size == -1)
+	{
+		LogWrite(MAP__ERROR, 0, "Map", "Map::LoadV2Deflated() unable to deflate (%s).", m_ZoneFile.c_str());
+		return false;
+	}
+	// Read the string for the zone file name this was created for
+	int8 strSize;
+	char* buf = new char[1024];
+	srcbuf->sgetn(buf,sizeof(int8));
+	memcpy(&strSize,&buf[0],sizeof(int8));
+	LogWrite(MAP__DEBUG, 0, "Map", "strSize = %u", strSize);
+
+	char name[256];
+	srcbuf->sgetn(&name[0],strSize);
+	name[strSize] = '\0';
+	LogWrite(MAP__DEBUG, 0, "Map", "name = %s", name);
+
+	string fileName(name);
+	std::size_t found = fileName.find(m_ZoneFile);
+	// Make sure file contents are for the correct zone
+	if (found == std::string::npos) {
+		file.close();
+		safe_delete_array(buf);
+		LogWrite(MAP__ERROR, 0, "Map", "Map::LoadV2Deflated() map contents (%s) do not match its name (%s).", &name, m_ZoneFile.c_str());
+		return false;
+	}
+	// Read the min bounds
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MinX,&buf[0],sizeof(float));
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MinZ,&buf[0],sizeof(float));
+
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MaxX,&buf[0],sizeof(float));
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MaxZ,&buf[0],sizeof(float));
+
+	// Calculate how many cells we need
+	// in both the X and Z direction
+	float width = m_MaxX - m_MinX;
+	float height = m_MaxZ - m_MinZ;
+	m_NumCellsX = ceil(width / m_CellSize);
+	m_NumCellsZ = ceil(height / m_CellSize);
+
+	if (mGrid != nullptr)
+		mGrid->InitValues(m_MinX, m_MaxX, m_MinZ, m_MaxZ, m_NumCellsX, m_NumCellsZ);
+
+	// Read the number of grids
+	int32 NumGrids;
+	srcbuf->sgetn(buf,sizeof(int32));
+	memcpy(&NumGrids,&buf[0],sizeof(int32));
+
+	std::vector<glm::vec3> verts;
+	std::vector<uint32> indices;
+
+	uint32 face_count = 0;
+	// Loop through the grids loading the face list
+	for (int32 i = 0; i < NumGrids; i++) {
+		// Read the grid id
+		int32 GridID;
+		srcbuf->sgetn(buf,sizeof(int32));
+		memcpy(&GridID,&buf[0],sizeof(int32));
+
+		// Read the number of vertices
+		int32 NumFaces;
+		srcbuf->sgetn(buf,sizeof(int32));
+		memcpy(&NumFaces,&buf[0],sizeof(int32));
+
+		face_count += NumFaces;
+		// Loop through the vertices list reading
+		// 3 at a time to creat a triangle (face)
+		for (int32 y = 0; y < NumFaces; ) {
+			// Each vertex need an x,y,z coordinate and 
+// we will be reading 3 to create the face
+			float x1, x2, x3;
+			float y1, y2, y3;
+			float z1, z2, z3;
+
+			// Read the first vertex
+			srcbuf->sgetn(buf,sizeof(float)*3);
+			memcpy(&x1,&buf[0],sizeof(float));
+			memcpy(&y1,&buf[4],sizeof(float));
+			memcpy(&z1,&buf[8],sizeof(float));
+			y++;
+
+			// Read the second vertex
+			srcbuf->sgetn(buf,sizeof(float)*3);
+			memcpy(&x2,&buf[0],sizeof(float));
+			memcpy(&y2,&buf[4],sizeof(float));
+			memcpy(&z2,&buf[8],sizeof(float));
+			y++;
+
+			// Read the third (final) vertex
+			srcbuf->sgetn(buf,sizeof(float)*3);
+			memcpy(&x3,&buf[0],sizeof(float));
+			memcpy(&y3,&buf[4],sizeof(float));
+			memcpy(&z3,&buf[8],sizeof(float));
+			y++;
+
+			glm::vec3 a(x1, z1, y1);
+			glm::vec3 b(x2, z2, y2);
+			glm::vec3 c(x3, z3, y3);
+
+			size_t sz = verts.size();
+			verts.push_back(a);
+			indices.push_back((uint32)sz);
+
+			verts.push_back(b);
+			indices.push_back((uint32)sz + 1);
+
+			verts.push_back(c);
+			indices.push_back((uint32)sz + 2);
+
+			if (mGrid != nullptr)
+			{
+				Face* face = new Face;
+				face->Vertex1[0] = x1;
+				face->Vertex1[1] = y1;
+				face->Vertex1[2] = z1;
+
+				face->Vertex2[0] = x2;
+				face->Vertex2[1] = y2;
+				face->Vertex2[2] = z2;
+
+				face->Vertex3[0] = x3;
+				face->Vertex3[1] = y3;
+				face->Vertex3[2] = z3;
+
+				mGrid->AddFace(face, GridID);
+			}
+		}
+	}
+	face_count = face_count / 3;
+
+	if (imp) {
+		imp->rm->release();
+		imp->rm = nullptr;
+	}
+	else {
+		imp = new impl;
+	}
+
+	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0]);
+
+	safe_delete_array(buf);
 	if (!imp->rm) {
 		delete imp;
 		imp = nullptr;

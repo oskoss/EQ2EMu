@@ -82,17 +82,15 @@ public:
 	float GetMinZ() { return m_MinZ; }
 	float GetMaxZ() { return m_MaxZ; }
 
+	void SetFileName(std::string newfile) { m_FileName = string(newfile); }
 private:
 	void RotateVertex(glm::vec3 &v, float rx, float ry, float rz);
 	void ScaleVertex(glm::vec3 &v, float sx, float sy, float sz);
 	void TranslateVertex(glm::vec3 &v, float tx, float ty, float tz);
 	bool LoadV2(FILE *f);
+	bool LoadV2Deflated(FILE *f);
 
-#ifdef USE_MAP_MMFS
-	bool LoadMMF(const std::string& map_file_name, bool force_mmf_overwrite);
-	bool SaveMMF(const std::string& map_file_name, bool force_mmf_overwrite);
-#endif /*USE_MAP_MMFS*/
-
+	string m_FileName;
 	string m_ZoneFile;
 	int32 m_CellSize;
 
