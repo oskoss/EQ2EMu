@@ -5,7 +5,7 @@
     Script Purpose : 
                    : 
 --]]
-
+--Casting power cost scales with the character's total power. A rough equation is Max Power x 54.6% = power cost. 
 -- Info from spell_display_effects (remove from script when done)
 -- Teleports target to a zone landmark
 --     You must be a citizen to benefit from an odyssey.
@@ -13,7 +13,7 @@
 -- If not a City Betrayer
 -- Teleports you to your recall point.
 function precast(Caster, Target)
-    if GetBoundZoneID(Caster) == 0 then
+    if GetBoundZoneID(Target) == 0 then
         return false
     end
 
@@ -21,5 +21,5 @@ function precast(Caster, Target)
 end
 
 function cast(Caster, Target)
-    Gate(Caster)
+    Gate(Target)
 end

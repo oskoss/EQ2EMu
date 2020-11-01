@@ -4,11 +4,15 @@
 	Script Author	: Scatman
 	Script Date	: 2009.09.27
 	Script Notes	: 
+	modified by     :Ememjr
+	Modified Date   :5/16/2020
+	Modified Notes  : added missing NPC text
 --]]
 
 local GNOME = 5
 local QUEST_FROM_NEEZER = 29
-local QUEST_1 = 201
+local QUEST_1 = 30
+local QUEST_FROM_GERMAIN = 521
 
 function spawn(NPC)
 	ProvidesQuest(NPC, QUEST_1)
@@ -26,15 +30,29 @@ function hailed(NPC, Spawn)
 		AddConversationOption(conversation, "I have a delivery from Neezer Grund.", "dlg_0_1")
 	end
 	
-	if HasCompletedQuest(Spawn, QUEST_1) then
-		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins_revamp/qst_gnome_poko_zing_done_2d84e55b.mp3", "Go on now, I don't need yer help and you don't need mine.", "", 16598543, 2700760297, Spawn)
-	elseif HasQuest(Spawn, QUEST_1) then
-		OnQuest1(NPC, Spawn, conversation)
+	if HasQuest(Spawn, QUEST_FROM_GERMAIN) then
+		if GetQuestStep(Spawn, QUEST_FROM_GERMAIN) == 1 then
+			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins/quests/poko/poko010.mp3", "", "", 1396522810, 374675908, Spawn)
+			AddConversationOption(conversation, "Lieutenant Germain wants you to analyze this leaf.", "dlg_9_1")
+			StartConversation(conversation, NPC, Spawn, "How come nobody seems to realize how busy I am? Let me guess, you want me to do something very boring for your benefit, am I right?")
+			
+		elseif GetQuestStep(Spawn, QUEST_FROM_GERMAIN) == 7 then
+			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins/quests/poko/poko014.mp3", "", "", 1818005855, 2773371212, Spawn)
+			AddConversationOption(conversation, "Yes, here they are.", "Step7Complete")
+			--AddConversationOption(conversation, "No, not yet.")
+			StartConversation(conversation, NPC, Spawn, "Do you have my requested materials yet?")
+		end
 	else
-		if GetRace(Spawn) == GNOME and GetLevel(Spawn) >= 3 then
-			WhatDoYouNeed(NPC, Spawn, conversation)
+		if HasCompletedQuest(Spawn, QUEST_1) then
+			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins_revamp/qst_gnome_poko_zing_done_2d84e55b.mp3", "Go on now, I don't need yer help and you don't need mine.", "", 16598543, 2700760297, Spawn)
+		elseif HasQuest(Spawn, QUEST_1) then
+			OnQuest1(NPC, Spawn, conversation)
 		else
-			PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins_revamp/qst_gnome_poko_zing_notonquest_f698071.mp3", "I am very, very busy. Please respect that.", "", 2080673395, 1843361681, Spawn)
+			if GetRace(Spawn) == GNOME and GetLevel(Spawn) >= 3 then
+				WhatDoYouNeed(NPC, Spawn, conversation)
+			else
+				PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins_revamp/qst_gnome_poko_zing_notonquest_f698071.mp3", "I am very, very busy. Please respect that.", "", 2080673395, 1843361681, Spawn)
+			end
 		end
 	end
 	
@@ -63,12 +81,6 @@ function hailed(NPC, Spawn)
 		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins/quests/poko/poko014.mp3", "", "", 1818005855, 2773371212, Spawn)
 		AddConversationOption(conversation, "No, not yet.", "dlg_2_1")
 		StartConversation(conversation, NPC, Spawn, "Do you have my requested materials yet?")
-	end
-
-	if convo==9 then
-		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins/quests/poko/poko010.mp3", "", "", 1396522810, 374675908, Spawn)
-		AddConversationOption(conversation, "Lieutenant Germain wants you to analyze this leaf.", "dlg_9_1")
-		StartConversation(conversation, NPC, Spawn, "How come nobody seems to realize how busy I am? Let me guess, you want me to do something very boring for your benefit, am I right?")
 	end
 
 	if convo==10 then
@@ -209,10 +221,9 @@ end
 
 
 
-
-
-
-
+---------------------------------------------
+--				QUEST FROM GERMAIN		   --
+---------------------------------------------
 function dlg_9_1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
@@ -236,9 +247,37 @@ function dlg_9_3(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
+	SetStepComplete(Spawn, QUEST_FROM_GERMAIN, 1)
+	
 	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins/quests/poko/poko013.mp3", "", "", 2558023332, 1244993646, Spawn)
 	AddConversationOption(conversation, "I will get what you need.", "dlg_9_4")
 	StartConversation(conversation, NPC, Spawn, "I'm looking for a reason for the activity around here lately, the sudden interest. Who knows, maybe this leaf will prove to be that reason. But, I won't abandon my other theories. As such I'd like you to collect bark samples from the trees around here. My theory is--well that's not important. I need bark samples from trees both outside and inside the ruins, as well as from both north and south of the river that runs through them. I would also like some rock samples from the ruins.")
+end
+
+function Step7Complete(NPC, Spawn)
+	--FaceTarget(NPC, Spawn)
+	--conversation = CreateConversation()
+
+	--SetStepComplete(Spawn, QUEST_FROM_GERMAIN, 7)
+	
+	--AddConversationOption(conversation, "What about the leaf?")
+--	StartConversation(conversation, NPC, Spawn, "Good, give them to me.")
+	
+	FaceTarget(NPC, Spawn)
+	conversation = CreateConversation()
+    SetStepComplete(Spawn, QUEST_FROM_GERMAIN, 7)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins/quests/poko/poko015.mp3", "", "", 758778073, 2938724124, Spawn)
+		AddConversationOption(conversation, "What about the leaf?", "dlg_2_2")
+	StartConversation(conversation, NPC, Spawn, "Good, give them to me.")
+	
+end
+function dlg_2_2(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	conversation = CreateConversation()
+
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/poko_zing/qey_adv02_ruins/quests/poko/poko016.mp3", "", "", 2083234040, 3590400426, Spawn)
+		AddConversationOption(conversation, "All right.")
+	StartConversation(conversation, NPC, Spawn, "Oh, right. The leaf wasn't real at all. It was part of some sort of illusion. The plant it came from was meant to hide something. I've already told all of this to Lieutenant Germain, go talk to him, I'm busy.")
 end
 
 --[[ raw_conversations

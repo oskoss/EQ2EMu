@@ -6,7 +6,7 @@
 	Script Notes	: 
 --]]
 
-local DWARF_QUEST_FROM_MARV = 25
+local DWARF_QUEST_FROM_MARV = 526 -- Booze in the Drink
 
 function spawn(NPC)
 	SetRequiredQuest(NPC, DWARF_QUEST_FROM_MARV, 1)

@@ -1,17 +1,24 @@
 --[[
 	Script Name	: SpawnScripts/ForestRuins/ActingLieutenantGermain.lua
-	Script Purpose	: Acting Lieutenant Germain <Qeynos Guard>
+	Script Purpose	: Acting Lieutenant Germain 
 	Script Author	: Scatman
 	Script Date	: 2009.09.27
 	Script Notes	: 
 --]]
 
 local QUEST_FROM_POKO = 201
-local QUEST_1 = 202
-local QUEST_2 = 1
+local QUEST_1 = 520 --News for Germain
+local QUEST_2 = 521 --Favors
+local QUEST_3 = 522 --Return to the Disturbance
+
+
+
 
 function spawn(NPC)
 	ProvidesQuest(NPC, QUEST_1)
+	ProvidesQuest(NPC, QUEST_2)
+	ProvidesQuest(NPC, QUEST_3)
+	
 end
 
 function respawn(NPC)
@@ -21,7 +28,7 @@ end
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
-	
+	Say(NPC, "Hey! you got this far")
 	if HasQuest(Spawn, QUEST_FROM_POKO) and GetQuestStep(Spawn, QUEST_FROM_POKO) == 3 then
 		AddConversationOption(conversation, "I have news for you.", "NewsForYou")
 	end
@@ -36,8 +43,27 @@ function hailed(NPC, Spawn)
 	end
 	
 	if HasCompletedQuest(Spawn, QUEST_1) then
+	    Say(NPC, "Hey! quest 1 complete")
 		if HasCompletedQuest(Spawn, QUEST_2) then
+		    Say(NPC, "Hey! quest 2 complete")
+		    if HasCompletedQuest(Spawn, QUEST_3) then
+			    Say(NPC, "Hey! quest 3 complete")
+		    elseif HasQuest(Spawn, QUEST_3) then
+			    Say(NPC, "Hey! you are still on quest 3")
+			    AddConversationOption(conversation, "I'll come back when I've performed the task.")
+		        StartConversation(conversation, NPC, Spawn, "Well?")
+		    else 
+		        
+		       	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/acting_lieutenant_germain/qey_adv02_ruins/quests/germain/germain009.mp3", "", "", 4053457773, 134802130, Spawn)
+		        AddConversationOption(conversation, "What happened with the leaf?", "dlg_3_1")
+		        StartConversation(conversation, NPC, Spawn, "Welcome back. Are you ready for some more work?")
+		    end
 		elseif HasQuest(Spawn, QUEST_2) then
+			if GetQuestStep(Spawn, QUEST_2) == 8 then
+				PlayFlavor(NPC, "voiceover/english/tutorial_revamp/acting_lieutenant_germain/qey_adv02_ruins/quests/germain/germain009.mp3", "", "", 4053457773, 134802130, Spawn)
+		        AddConversationOption(conversation, "What happened with the leaf?", "dlg_3_1")
+		        StartConversation(conversation, NPC, Spawn, "Welcome back. Are you ready for some more work?")
+			end
 		else
 			OnQuest1(NPC, Spawn, conversation)
 		end
@@ -50,6 +76,7 @@ function hailed(NPC, Spawn)
 			Say(NPC, "Come back to me once you've gotten a bit stronger.", Spawn)
 		end
 	end
+end
 	
 
 --[[
@@ -78,7 +105,7 @@ function hailed(NPC, Spawn)
 		StartConversation(conversation, NPC, Spawn, "Welcome, citizen. Please be careful around here.")
 	end
 --]]
-end
+
 
 ----------------------------------------------------------------------------------------------------------
 --					QUEST FROM POKO
@@ -141,20 +168,55 @@ function dlg_1_3(NPC, Spawn)
 end
 
 function OfferQuest1(NPC, Spawn)
+    
 	FaceTarget(NPC, Spawn)
 	OfferQuest(NPC, Spawn, QUEST_1)
 end
 
 function OnQuest1(NPC, Spawn, conversation)
-	if (HasQuest(Spawn, QUSET_1) and GetQuestStep(Spawn, QUEST_1) == 4) or (HasCompletedQuest(Spawn, QUEST_1)) then
+	if (HasQuest(Spawn, QUEST_1) and GetQuestStep(Spawn, QUEST_1) == 4) or (HasCompletedQuest(Spawn, QUEST_1)) then
 		AddConversationOption(conversation, "Yes. I found his satchel.", "dlg_7_1")
-	elseif GetQuestStep(Spawn, QUEST_1) == 2 then
-		SetStepComplete(Spawn, QUEST_1, 2)
 	else
 		AddConversationOption(conversation, "Not quite yet.")
 	end
 	
 	StartConversation(conversation, NPC, Spawn, "Any news of Del Varun?")
+end
+
+function dlg_3_1(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	
+	conversation = CreateConversation()
+
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/acting_lieutenant_germain/qey_adv02_ruins/quests/germain/germain010.mp3", "", "", 2663997308, 470495818, Spawn)
+		AddConversationOption(conversation, "What are we going to do?", "dlg_3_2")
+	StartConversation(conversation, NPC, Spawn, "It was part of an illusion. Poko made up some kind of dust that he says can dispel the illusion for short periods of time. So, it's time for us to figure out what someone has been trying to hide.")
+end
+
+function dlg_3_2(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	SetStepComplete(Spawn, QUEST_2, 8)
+	conversation = CreateConversation()
+
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/acting_lieutenant_germain/qey_adv02_ruins/quests/germain/germain011.mp3", "", "", 3240178244, 1388073275, Spawn)
+		AddConversationOption(conversation, "What should I be looking for?", "dlg_3_3")
+	StartConversation(conversation, NPC, Spawn, "Find out what those plants are hiding. I'd like you to take Poko's dust and go sprinkle it on the plants. Try to bring back some kind of clue if at all possible, I doubt it will all be nailed down.")
+end
+
+function dlg_3_3(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	OfferQuest(NPC, Spawn, QUEST_3)
+    
+	
+--	Sprinkle Nullification Powder
+	conversation = CreateConversation()
+    
+    
+   
+   
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/acting_lieutenant_germain/qey_adv02_ruins/quests/germain/germain011a.mp3", "", "", 1214679313, 1635044010, Spawn)
+		AddConversationOption(conversation, "Okay.")
+	StartConversation(conversation, NPC, Spawn, "Plans would help the most. Some paper or a book or something of the kind.")
 end
 
 function dlg_7_1(NPC, Spawn)
@@ -191,7 +253,7 @@ end
 
 function OfferQuest2(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	--OfferQuest(NPC, Spawn, QUEST_2)
+	OfferQuest(NPC, Spawn, QUEST_2)
 end
 
 function dlg_7_4(NPC, Spawn)
@@ -210,4 +272,20 @@ function dlg_7_5(NPC, Spawn)
 	StartConversation(conversation, NPC, Spawn, "What does Poko say?")
 end
 
+function QuestComplete(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	conversation = CreateConversation()
 
+	SetStepComplete(Spawn, QUEST_2, 8)
+	
+	AddConversationOption(conversation, "I HAVE COMPLETED QUEST PLACEHOLDER")
+	StartConversation(conversation, NPC, Spawn, "GOOD JOB PLACEHOLDER")
+end
+
+----------------------------------------------------------------------------------------------------------
+--					QUEST 3
+----------------------------------------------------------------------------------------------------------
+function OfferQuest3(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	OfferQuest(NPC, Spawn, QUEST_3)
+end

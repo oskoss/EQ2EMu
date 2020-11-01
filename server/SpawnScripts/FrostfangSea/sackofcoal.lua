@@ -11,6 +11,7 @@ local HadAHammer = 12
 function spawn(NPC)
     AddSpawnAccess(NPC, NPC)
     SetPlayerProximityFunction(NPC, 50, "SpawnAccess", "SpawnAccess")
+    --SetRequiredQuest(NPC, HadAHammer, 1)
 end
 
 function respawn(NPC)
@@ -25,7 +26,7 @@ end
 
 function casted_on(Target, Caster, SpellName)
     if SpellName == "gather coal" then
-	    if HasItem(Caster, 5771) == false and HasQuest(Caster, HadAHammer) then
+	    if HasQuest(Caster, HadAHammer) then
 		    SummonItem(Caster, 5771)
 		end
 	end

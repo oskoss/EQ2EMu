@@ -1,6 +1,6 @@
 --[[
 	Script Name	: SpawnScripts/Oakmyst/LieutenantCharlin.lua
-	Script Purpose	: Lieutenant Charlin <Qeynos Guard>
+	Script Purpose	: Lieutenant Charlin 
 	Script Author	: Scatman
 	Script Date	: 2009.10.02
 	Modified  by    : Ememjr
@@ -12,7 +12,7 @@
 local MIN_LEVEL = 5
 local QUEST_FROM_JORN = 18
 local QUEST_FROM_ADALIN = 294
-local QUEST_FROM_MARV = 25
+local QUEST_FROM_MARV = 526
 local QUEST_1 = 207
 local QUEST_2 = 208
 local QUEST_3 = 209

@@ -1,15 +1,18 @@
 --[[
-	Script Name	: SpawnScripts/Ruins/MardypPrunt.lua
-	Script Purpose	: Mardyp Prunt 
-	Script Author	: Scatman
-	Script Date	: 2009.07.28
-	Script Notes	: 
+	Script Name		:	MardypPrunt.lua
+	Script Purpose	:	Mardyp Prunt
+	Script Author	:	jakejp
+	Script Date		:	04/28/2020
+	Script Notes	:	Auto-Generated from a chat log using SpawnScriptDesigner
 --]]
 
-local QUEST_1 = 265
+require "SpawnScripts/Generic/DialogModule"
+
+-- Quest ID's
+local ANGERFANG = 391
 
 function spawn(NPC)
-	ProvidesQuest(NPC, QUEST_1)
+	ProvidesQuest(NPC, ANGERFANG)
 end
 
 function respawn(NPC)
@@ -18,205 +21,77 @@ end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-	RandomVoiceOver(NPC, Spawn)
-	
-	if HasCompletedQuest(Spawn, QUEST_1) then
-		PlayFlavor(NPC, "", "Making fang dust harder than Mardyp thought!", "", 1689589577, 4560189, Spawn)
-	elseif HasQuest(Spawn, QUEST_1) then
-		OnQuest1(NPC, Spawn, conversation)
-	else
-		RespectEnemies(NPC, Spawn, conversation)
+	if not HasCompletedQuest(Spawn, ANGERFANG) then 
+		if HasQuest(Spawn, ANGERFANG) then 
+			dlg_1(NPC, Spawn)
+		else
+			Dialog.New(NPC, Spawn)
+			Dialog.AddDialog("Respect enemies!")
+			Dialog.AddOption("What?", "dlg_3")
+			Dialog.AddOption("Whatever.")
+			Dialog.Start()
+		end
+	elseif HasCompletedQuest(Spawn, ANGERFANG) then 
+		Say(NPC, "Making fang dust harder than Mardyp thought!", Spawn)
 	end
+
 end
 
-function RandomVoiceOver(NPC, Spawn)
-	local choice = math.random(1, 3)
-	if choice == 1 then
-		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_1_1056.mp3", "", "", 0, 0, Spawn)
-	elseif choice == 2 then
-		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1056.mp3", "", "", 0, 0, Spawn)
-	elseif choice == 3 then
-		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1056.mp3", "", "", 0, 0, Spawn)
-	end
-end
-
----------------------------------------------------------------------------------------
---						QUEST 1
----------------------------------------------------------------------------------------
-
-function RespectEnemies(NPC, Spawn, conversation)
-	AddConversationOption(conversation, "What?", "dlg_4_1")
-	AddConversationOption(conversation, "Whatever.")
-	StartConversation(conversation, NPC, Spawn, "Respect enemies!")
-end
-
-function dlg_4_1(NPC, Spawn)
+function dlg_3(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
+	Dialog.New(NPC, Spawn)
 
-	AddConversationOption(conversation, "Oh.", "dlg_4_2")
-	StartConversation(conversation, NPC, Spawn, "If enemies strong, respect them!")
+	Dialog.AddDialog("If enemies strong, respect them!")
+	Dialog.AddOption("Oh.", "dlg_4")
+
+	Dialog.Start()
 end
 
-function dlg_4_2(NPC, Spawn)
+function dlg_4(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
+	Dialog.New(NPC, Spawn)
 
-	AddConversationOption(conversation, "How can I help?", "dlg_4_3")
-	StartConversation(conversation, NPC, Spawn, "Orc strong! Not THAT strong, but strong enough for respect! Mardyp talk to friend in Big Bend. Friend tell Mardyp that something in orc tusks make orcs more fierce, more strong! Mardyp killing orcs fine, but crushing fangs to eat takes time. You help Mardyp?")
+	Dialog.AddDialog("Orc strong! Not THAT strong, but strong enough for respect! Mardyp talk to friend in Big Bend. Friend tell Mardyp that something in orc tusks make orcs more fierce, more strong! Mardyp killing orcs fine, but crushing fangs to eat takes time. You help Mardyp?")
+	Dialog.AddOption("How can I help?", "dlg_5")
+
+	Dialog.Start()
 end
 
-function dlg_4_3(NPC, Spawn)
+function dlg_5(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
+	Dialog.New(NPC, Spawn)
 
-	AddConversationOption(conversation, "Ok, I'll collect some fangs.", "dlg_4_4")
-	StartConversation(conversation, NPC, Spawn, "Get more fangs while Mardyp crush ones I already have. All orcs have fangs. Mardyp need 20!")
-end
+	Dialog.AddDialog("Get more fangs while Mardyp crush ones I already have. All orcs have fangs. Mardyp need 20!")
+	Dialog.AddOption("Ok, I'll collect some fangs.", "OfferQuest1")
 
-function dlg_4_4(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	AddConversationOption(conversation, "I'll go get your fangs.", "OfferQuest1")
-	StartConversation(conversation, NPC, Spawn, "Good! Mardyp go back to crushing.")
+	Dialog.Start()
 end
 
 function OfferQuest1(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	OfferQuest(NPC, Spawn, QUEST_1)
+	OfferQuest(NPC, Spawn, ANGERFANG)
 end
 
-function OnQuest1(NPC, Spawn, conversation)
-	if GetQuestStep(Spawn, QUEST_1) == 2 then
-		AddConversationOption(conversation, "Here you go.", "dlg_6_1")
+function dlg_1(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	Dialog.New(NPC, Spawn)
+
+	Dialog.AddDialog("Orc fangs?")
+	if GetQuestStep(Spawn, ANGERFANG) == 2 then
+		Dialog.AddOption("Here you go.", "dlg_7")
 	else
-		AddConversationOption(conversation, "Not et.")
-	end
-	StartConversation(conversation, NPC, Spawn, "Orc fangs?")
+		Dialog.AddOption("Not yet.")
+	end 
+	Dialog.Start()
 end
 
-function dlg_6_1(NPC, Spawn)
-	SetStepComplete(Spawn, QUEST_1, 2)
-	
+
+function dlg_7(NPC, Spawn)
+	SetStepComplete(Spawn, ANGERFANG, 2)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
+	Dialog.New(NPC, Spawn)
 
-	AddConversationOption(conversation, "Well, good luck with that.")
-	StartConversation(conversation, NPC, Spawn, "Good! Mardyp very happy! Soon Mardyp make these into soup or drink or something! Unless that too much work, then Mardyp just eat it.")
+	Dialog.AddDialog("Good! Mardyp very happy! Soon Mardyp make these into soup or drink or something! Unless that too much work, then Mardyp just eat it.")
+	Dialog.AddOption("Well, good luck with that.")
+
+	Dialog.Start()
 end
-
-
--- JA: new raw data collected
-
---[[
-function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1056.mp3", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "What?", "dlg_4_1")
-	AddConversationOption(conversation, "Whatever.")
-	StartConversation(conversation, NPC, Spawn, "Respect enemies!")
-	if convo==5 then
-		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1056.mp3", "", "", 0, 0, Spawn)
-		AddConversationOption(conversation, "What?", "dlg_5_1")
-		AddConversationOption(conversation, "Whatever.")
-		StartConversation(conversation, NPC, Spawn, "Respect enemies!")
-	end
-
-	if convo==6 then
-		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1056.mp3", "", "", 0, 0, Spawn)
-		AddConversationOption(conversation, "Here you go.", "dlg_6_1")
-		StartConversation(conversation, NPC, Spawn, "Orc fangs?")
-	end
-
-end
-
-function dlg_4_1(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "Oh.", "dlg_4_2")
-	StartConversation(conversation, NPC, Spawn, "If enemies strong, respect them!")
-end
-
-function dlg_4_2(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "How can I help?", "dlg_4_3")
-	StartConversation(conversation, NPC, Spawn, "Orc strong! Not THAT strong, but strong enough for respect! Mardyp talk to friend in Big Bend. Friend tell Mardyp that something in orc tusks make orcs more fierce, more strong! Mardyp killing orcs fine, but crushing fangs to eat takes time. You help Mardyp?")
-end
-
-function dlg_4_3(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "Ok, I'll collect some fangs.", "dlg_4_4")
-	StartConversation(conversation, NPC, Spawn, "Get more fangs while Mardyp crush ones I already have. All orcs have fangs. Mardyp need 20!")
-end
-
-function dlg_4_4(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "I'll go get your fangs.", "dlg_4_5")
-	StartConversation(conversation, NPC, Spawn, "Good! Mardyp go back to crushing.")
-end
-
-function dlg_5_1(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "Oh.", "dlg_5_2")
-	StartConversation(conversation, NPC, Spawn, "If enemies strong, respect them!")
-end
-
-function dlg_5_2(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "How can I help?", "dlg_5_3")
-	StartConversation(conversation, NPC, Spawn, "Orc strong! Not THAT strong, but strong enough for respect! Mardyp talk to friend in Big Bend. Friend tell Mardyp that something in orc tusks make orcs more fierce, more strong! Mardyp killing orcs fine, but crushing fangs to eat takes time. You help Mardyp?")
-end
-
-function dlg_5_3(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "Ok, I'll collect some fangs.", "dlg_5_4")
-	StartConversation(conversation, NPC, Spawn, "Get more fangs while Mardyp crush ones I already have. All orcs have fangs. Mardyp need 20!")
-end
-
-function dlg_5_4(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "I'll go get your fangs.", "dlg_5_5")
-	StartConversation(conversation, NPC, Spawn, "Good! Mardyp go back to crushing.")
-end
-
-function dlg_6_1(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "Well, good luck with that.", "dlg_6_2")
-	StartConversation(conversation, NPC, Spawn, "Good! Mardyp very happy! Soon Mardyp make these into soup or drink or something! Unless that too much work, then Mardyp just eat it.")
-end
---]]
-
---[[ raw_conversations
-	PlayFlavor(NPC, "", "Making fang dust harder than Mardyp thought!", "", 1689589577, 4560189, Spawn)
---]]
-

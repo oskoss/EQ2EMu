@@ -7,9 +7,9 @@
 --]]
 
 local DWARF = 2
-local DWARF_MENTOR_QUEST_FROM_MAV = 298
-local QUEST_1 = 25
-local QUEST_LAST_IN_OAKMYST = 208
+local DWARF_MENTOR_QUEST_FROM_MAV = 288 --	A Missing Husband
+local QUEST_1 = 526  --Booze in the Drink
+local QUEST_LAST_IN_OAKMYST = 211  --	Clean up
 
 function spawn(NPC)
 	ProvidesQuest(NPC, QUEST_1)

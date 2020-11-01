@@ -4,14 +4,17 @@
 	Script Author	: Scatman
 	Script Date	: 2009.10.05
 	Script Notes	: 
+        Modified By     : Ememjr
+        Modified Date   :
+        Modified Notes  :
 --]]
 
 local DWARF = 2
-local QUEST_1 = 283
-local QUEST_2 = 285
-local QUEST_3 = 286
-local QUEST_4 = 287
-local QUEST_5 = 288
+local QUEST_1 = 283 --A Family Recipe
+local QUEST_2 = 285 --Cheers!
+local QUEST_3 = 286 --A Package
+local QUEST_4 = 287 --A Stone from Home
+local QUEST_5 = 288 --A Missing Husband
 
 function spawn(NPC)
 	ProvidesQuest(NPC, QUEST_1)

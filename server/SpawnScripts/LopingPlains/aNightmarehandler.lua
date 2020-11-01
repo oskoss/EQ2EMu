@@ -81,7 +81,7 @@ function LFayToGFay(NPC, Spawn)
 end
 
 function LFayToSomborn(NPC, Spawn)
-	StartAutoMount(Spawn, 969)
+	StartAutoMount(Spawn, 971)
 	SetMount(Spawn, 8211)
 end
 
@@ -146,7 +146,7 @@ function SFMToLFay(NPC, Spawn)
 end
 
 function SFMToSomborn(NPC, Spawn)
-	StartAutoMount(Spawn, 976)
+	StartAutoMount(Spawn, 975)
 	SetMount(Spawn, 8211)
 end
 
