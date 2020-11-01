@@ -267,3 +267,10 @@
 /server/Maps/exp08_dun_skyshrine_courtyard01_scorched_capital.EQ2Map filter=lfs diff=lfs merge=lfs -text
 /server/Maps/exp08_dun_skyshrine_courtyard01_scorched_market.EQ2Map filter=lfs diff=lfs merge=lfs -text
 /server/Maps/exp10_dun_shissartemple01_forgotten.EQ2Map filter=lfs diff=lfs merge=lfs -text
+/server/Maps/nav/antonica.nav filter=lfs diff=lfs merge=lfs -text
+/server/Maps/nav/commonlands.nav filter=lfs diff=lfs merge=lfs -text
+/server/Maps/nav/feerrott.nav filter=lfs diff=lfs merge=lfs -text
+/server/Maps/nav/lavastorm.nav filter=lfs diff=lfs merge=lfs -text
+/server/Maps/nav/nektulos.nav filter=lfs diff=lfs merge=lfs -text
+/server/Maps/nav/rivervale.nav filter=lfs diff=lfs merge=lfs -text
+/server/Maps/nav/steppes.nav filter=lfs diff=lfs merge=lfs -text
