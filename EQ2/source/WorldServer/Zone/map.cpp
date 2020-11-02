@@ -620,6 +620,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 
 	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0]);
 
+	file.close();
 	safe_delete_array(buf);
 	if (!imp->rm) {
 		delete imp;
