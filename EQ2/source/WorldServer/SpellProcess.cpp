@@ -185,13 +185,13 @@ void SpellProcess::Process(){
 						if (cast_timer->spell && cast_timer->spell->caster)
 							cast_timer->spell->caster->IsCasting(false);
 						cast_timer->delete_timer = true;
-						CastProcessedSpell(cast_timer->spell);
+						CastProcessedSpell(cast_timer->spell, false, cast_timer->in_heroic_opp);
 					}
 					else if (cast_timer->entity_command) {
 						if (cast_timer->timer->Check(false)) {
 							cast_timer->delete_timer = true;
 							Spawn* target = cast_timer->zone->GetSpawnByID(cast_timer->target_id);
-							CastProcessedEntityCommand(cast_timer->entity_command, cast_timer->caster, target);
+							CastProcessedEntityCommand(cast_timer->entity_command, cast_timer->caster, target, cast_timer->in_heroic_opp);
 						}
 					}
 				}
@@ -235,9 +235,8 @@ void SpellProcess::Process(){
 				itr->second->SetComplete(1);
 				ClientPacketFunctions::SendHeroicOPUpdate(itr->first, itr->second);
 				safe_delete(itr->second);
-				delete_itr = itr;
-				itr++;
-				m_soloHO.erase(delete_itr);
+				itr = m_soloHO.erase(delete_itr);
+				continue;
 			}
 			else
 				itr++;
@@ -270,9 +269,8 @@ void SpellProcess::Process(){
 				world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 
 				safe_delete(itr->second);
-				delete_itr = itr;
-				itr++;
-				m_groupHO.erase(delete_itr);
+				itr = m_groupHO.erase(delete_itr);
+				continue;
 			}
 			else
 				itr++;
@@ -829,7 +827,7 @@ Spawn* SpellProcess::GetSpellTarget(Entity* caster){
 	return target;
 }
 
-void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, Spawn* target, bool lock, bool harvest_spell, LuaSpell* customSpell, int16 custom_cast_time)
+void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, Spawn* target, bool lock, bool harvest_spell, LuaSpell* customSpell, int16 custom_cast_time, bool in_heroic_opp)
 {
 	if((customSpell != 0 || spell != 0) && caster)
 	{
@@ -1334,13 +1332,14 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			cast_timer->delete_timer = false;
 			cast_timer->timer = new Timer(spell->GetSpellData()->cast_time * 10);
 			cast_timer->zone = zone;
+			cast_timer->in_heroic_opp = in_heroic_opp;
 			cast_timers.Add(cast_timer);
 			if(caster)
 				caster->IsCasting(true);
 		}
 		else
 		{
-			if(!CastProcessedSpell(lua_spell))
+			if(!CastProcessedSpell(lua_spell, false, in_heroic_opp))
 			{
 				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				DeleteSpell(lua_spell);
@@ -1354,7 +1353,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 	}
 }
 
-void SpellProcess::ProcessEntityCommand(ZoneServer* zone, EntityCommand* entity_command, Entity* caster, Spawn* target, bool lock)  {
+void SpellProcess::ProcessEntityCommand(ZoneServer* zone, EntityCommand* entity_command, Entity* caster, Spawn* target, bool lock, bool in_heroic_opp)  {
 	if (zone && entity_command && caster && target && !target->IsPlayer()) {
 		Client* client = zone->GetClientBySpawn(caster);
 		if (caster->GetDistance(target) > entity_command->distance) {
@@ -1379,18 +1378,19 @@ void SpellProcess::ProcessEntityCommand(ZoneServer* zone, EntityCommand* entity_
 				cast_timer->delete_timer = false;
 				cast_timer->timer = new Timer(entity_command->cast_time * 10);
 				cast_timer->zone = zone;
+				cast_timer->in_heroic_opp = in_heroic_opp;
 				cast_timers.Add(cast_timer);
 				caster->IsCasting(true);
 			}
 		}
-		else if (!CastProcessedEntityCommand(entity_command, client, target))
+		else if (!CastProcessedEntityCommand(entity_command, client, target, in_heroic_opp))
 			return;
 		if (entity_command && entity_command->spell_visual > 0)
 			caster->GetZone()->SendCastEntityCommandPacket(entity_command, caster->GetID(), target->GetID());
 	}
 }
 
-bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
+bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_heroic_opp){
 	if(!spell || !spell->caster || !spell->spell || spell->interrupted)
 		return false;
 	Client* client = 0;
@@ -1440,7 +1440,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 		}
 	}*/
 	if (!processedSpell)
-		processedSpell = ProcessSpell(spell);
+		processedSpell = ProcessSpell(spell, in_heroic_opp);
 
 	// Quick hack to prevent a crash on spells that zones the caster (Gate)
 	if (!spell->caster)
@@ -1561,7 +1561,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 	if (spell->spell->GetSpellData()->friendly_spell && zone->GetSpawnByID(spell->initial_target))
 		spell->caster->CheckProcs(PROC_TYPE_BENEFICIAL, zone->GetSpawnByID(spell->initial_target));
 	// Check HO's
-	if (client) {
+	if (client && !in_heroic_opp) {
 		HeroicOP* ho = nullptr;
 		Spell* ho_spell = nullptr;
 		int32 ho_target = 0;
@@ -1651,14 +1651,14 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive){
 	return true;
 }
 
-bool SpellProcess::CastProcessedEntityCommand(EntityCommand* entity_command, Client* client, Spawn* target) {
+bool SpellProcess::CastProcessedEntityCommand(EntityCommand* entity_command, Client* client, Spawn* target, bool in_heroic_opp) {
 	bool ret = false;
 	if (entity_command && client) {
 		UnlockAllSpells(client);
 		client->GetPlayer()->IsCasting(false);
 		if (entity_command->cast_time == 0) {
 			client->GetPlayer()->GetZone()->CallSpawnScript(target, SPAWN_SCRIPT_CASTED_ON, client->GetPlayer(), entity_command->command.c_str());
-			ret = true;;
+			ret = true;
 		}
 		if (!ret) {
 			PacketStruct* packet = configReader.getStruct("WS_FinishCastSpell", client->GetVersion());

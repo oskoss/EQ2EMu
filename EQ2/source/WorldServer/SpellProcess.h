@@ -131,6 +131,7 @@ struct CastTimer{
 	Timer*			timer;
 	ZoneServer*		zone;
 	bool			delete_timer;
+	bool			in_heroic_opp;
 };
 struct CastSpell{
 	Entity*			caster;
@@ -171,7 +172,7 @@ public:
 	/// <param name='target'>The target(Spawn) of the spell</param>
 	/// <param name='lock'>??? not currently used</param>
 	/// <param name='harvest_spell'>Is this a harvest spell?</param>
-	void ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, Spawn* target = 0, bool lock = true, bool harvest_spell = false, LuaSpell* customSpell = 0, int16 custom_cast_time = 0);
+	void ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, Spawn* target = 0, bool lock = true, bool harvest_spell = false, LuaSpell* customSpell = 0, int16 custom_cast_time = 0, bool in_heroic_opp = false);
 
 	/// <summary>Cast an EntityCommand (right click menu)</summary>
 	/// <param name='zone'>The current ZoneServer</param>
@@ -179,7 +180,7 @@ public:
 	/// <param name='caster'>The Entity casting the EntityCommand</param>
 	/// <param name='target'>The target(Spawn*) of the EntityCommand</param>
 	/// <param name='lock'>??? not currently used</param>
-	void ProcessEntityCommand(ZoneServer* zone, EntityCommand* entity_command, Entity* caster, Spawn* target, bool lock = true);
+	void ProcessEntityCommand(ZoneServer* zone, EntityCommand* entity_command, Entity* caster, Spawn* target, bool lock = true, bool in_heroic_opp = false);
 
 	/// <summary>Checks to see if the caster has enough power and takes it</summary>
 	/// <param name='spell'>LuaSpell to check and take power for (LuaSpell contains the caster)</param>
@@ -220,13 +221,13 @@ public:
 	/// <param name='spell'>LuaSpell to cast</param>
 	/// <param name='passive'>Is this a passive spell being cast?</param>
 	/// <returns>True if the spell was casted</returns>
-	bool CastProcessedSpell(LuaSpell* spell, bool passive = false);
+	bool CastProcessedSpell(LuaSpell* spell, bool passive = false, bool in_heroic_opp = false);
 
 	/// <summary>Cast the EntityCommand, calls ProcessEntityCommand for the given EntityCommand, as well as sends the messages for the command and calls the casted on function in the targets spawn script</summary>
 	/// <param name='entity_command'>EntityCommand to cast</param>
 	/// <param name='client'>Client casting the entity command</param>
 	/// <returns>True if the spell was casted</returns>
-	bool CastProcessedEntityCommand(EntityCommand* entity_command, Client* client, Spawn* target);
+	bool CastProcessedEntityCommand(EntityCommand* entity_command, Client* client, Spawn* target, bool in_heroic_opp = false);
 
 	/// <summary>Sends the start cast packet for the given client</summary>
 	/// <param name='spell'>LuaSpell being cast</param>
