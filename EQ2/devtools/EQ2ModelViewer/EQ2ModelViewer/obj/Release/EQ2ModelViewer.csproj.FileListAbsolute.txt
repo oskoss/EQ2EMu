@@ -68,4 +68,3 @@ D:\github\eq2emu\eq2emu\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\obj\Release\E
 D:\github\eq2emu\eq2emu\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\obj\Release\EQ2ModelViewer.csproj.CopyComplete
 D:\github\eq2emu\eq2emu\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\obj\Release\EQ2ModelViewer.exe
 D:\github\eq2emu\eq2emu\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\obj\Release\EQ2ModelViewer.pdb
-D:\github\eq2emu\eq2emu\EQ2\devtools\EQ2ModelViewer\EQ2ModelViewer\obj\Release\EQ2ModelViewer.csprojAssemblyReference.cache
