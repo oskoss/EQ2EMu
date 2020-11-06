@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Text.RegularExpressions;
 
 using SlimDX;
 using SlimDX.D3DCompiler;
@@ -109,31 +110,19 @@ namespace EQ2ModelViewer
             byte i = 0;
             m_font = new FontType[95];
             StreamReader reader = new StreamReader(File.Open(fontFile, FileMode.Open));
+            Regex trimmer = new Regex(@"([0-9]+)\s.{1}\s([0-9\.]+)\s+([0-9\.]+)\s+([0-9\.]+)");
             while (i < 95)
             {
                 line = reader.ReadLine();
-                string[] data = line.Split(' ');
-                /*string line2 = "";
-                for (int z = 0; z < data.Length; z++)
-                    line2 += data[z] + "\n";
+                Match out_ = trimmer.Match(line);
+                if (!out_.Success)
+                    continue;
 
-                MessageBox.Show(line2);*/
-                int y = 2;
-                if (data[y] == "")
-                    y++;
+                m_font[i].left = float.Parse(out_.Groups[2].Value);
 
-                m_font[i].left = float.Parse(data[y]);
-                y++; 
-                while (data[y] == "")
-                    y++;
+                m_font[i].right = float.Parse(out_.Groups[3].Value);
 
-                m_font[i].right = float.Parse(data[y]);
-
-                y++;
-                while (data[y] == "")
-                    y++;
-
-                m_font[i].size = int.Parse(data[y]);
+                m_font[i].size = int.Parse(out_.Groups[4].Value);
 
                 i++;
             }
