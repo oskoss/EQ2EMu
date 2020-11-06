@@ -61,6 +61,25 @@ namespace EQ2ModelViewer
 
         public bool Initialize(Device device, VeMeshGeometryNode item, String baseDir)
         {
+            if (item.collisionMeshName == null || item.collisionMeshName.Length < 1)
+            {
+                Console.WriteLine("No collision mesh for MeshGeometryNode");
+                return false;
+            }
+
+            VeCollisionMesh collision = null;
+
+            try
+            {
+                Eq2Reader reader2 = new Eq2Reader(new System.IO.FileStream(frmMain.DirName + item.collisionMeshName, System.IO.FileMode.Open, System.IO.FileAccess.Read));
+                collision = (VeCollisionMesh)reader2.ReadObject();
+                reader2.Dispose();
+            }
+            catch (Exception ex)
+            {
+
+            }
+
             ArrayList textures = new ArrayList();
 
             string[][] meshes = ((VeMeshGeometryNode)item).renderMeshNames;
