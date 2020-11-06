@@ -69,19 +69,17 @@ namespace Everquest2.Visualization
             if (classVersion >= 2)
             {
                 //4 bytes, not sure if its a float
-                unk1 = reader.ReadInt32();
+                float unk1 = reader.ReadSingle();
             }
 
             if (classVersion >= 3)
             {
-                unk2 = reader.ReadByte();
+                byte unk2 = reader.ReadByte();
             }
         }
 
 
         public string   regionDefinitionFile;
         public string[] environmentDefinitions;
-        public int unk1 = 0;
-        public int unk2 = 0;
     }
 }

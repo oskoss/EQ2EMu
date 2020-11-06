@@ -32,7 +32,7 @@ namespace EQ2ModelViewer
 
         public bool Initialize(Device device, string modelFileName, string[] textureFileName)
         {
-            if (!LoadModel(modelFileName, null))
+            if (!LoadModel(modelFileName))
             {
                 Console.WriteLine("Model: Failed to load the model");
                 return false;
@@ -61,23 +61,6 @@ namespace EQ2ModelViewer
 
         public bool Initialize(Device device, VeMeshGeometryNode item, String baseDir)
         {
-            if (item.collisionMeshName == null || item.collisionMeshName.Length < 1)
-            {
-                Console.WriteLine("No collision mesh for MeshGeometryNode");
-                return false;
-            }
-
-            VeCollisionMesh collision = null;
-
-            try
-            {
-                Eq2Reader reader2 = new Eq2Reader(new System.IO.FileStream(frmMain.DirName + item.collisionMeshName, System.IO.FileMode.Open, System.IO.FileAccess.Read));
-                collision = (VeCollisionMesh)reader2.ReadObject();
-                reader2.Dispose();
-            }catch(Exception ex)
-            {
-
-            }
             ArrayList textures = new ArrayList();
 
             string[][] meshes = ((VeMeshGeometryNode)item).renderMeshNames;
@@ -96,7 +79,7 @@ namespace EQ2ModelViewer
                             Console.WriteLine("Model: skipping loading of model (Accessories suck!)" + path);
                             return false;
                         }
-                        else if (path.Contains("\\flora\\") && (path.Contains("leaves") || path.Contains("top00")))
+                        else if (path.Contains("\\flora\\") && (path.Contains("leaves") || path.Contains("top_") || path.Contains("top0")))
                         {
                             Console.WriteLine("Model: skipping loading of model (Leaves and Tree Tops suck!)" + path);
                             return false;
@@ -120,7 +103,7 @@ namespace EQ2ModelViewer
                         {
                             textures.Add(pickedTexture);
 
-                            if (!LoadModel(path, collision))
+                            if (!LoadModel(path))
                             {
                                 Console.WriteLine("Model: Failed to load the model " + path);
                                 return false;
@@ -180,6 +163,7 @@ namespace EQ2ModelViewer
             else
                 ambientColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
+            float increment = 0.05f;
             foreach (MeshClass mesh in m_meshes)
             {
                 if (mesh.GetTexture() == null)
@@ -187,6 +171,13 @@ namespace EQ2ModelViewer
 
                 mesh.RenderBuffers(Graphics.Context);
                 lightShader.Render(Graphics.Context, mesh.GetIndexCount(), temp, camera.GetViewMatrix(), Graphics.GetProjectionMatrix(), mesh.GetTexture(), new Vector3(0.0f, 0.0f, 0.0f), ambientColor/*new Vector4(1.0f, 1.0f, 1.0f, 1.0f)*/, new Vector4(0.0f, 0.0f, 0.0f, 0.0f), camera.GetPosition(), new Vector4(0.0f, 0.0f, 0.0f, 0.0f), 0.0f);
+
+                if (highlight)
+                    ambientColor = new Vector4(increment, 1.0f, 0.0f, 1.0f - increment);
+
+                increment += 0.05f;
+                if (increment > .5f)
+                    increment = 0.05f;
             }
         }
 
@@ -228,13 +219,18 @@ namespace EQ2ModelViewer
             return ret;
         }
 
-        private bool LoadModel(string modelFileName, VeCollisionMesh collision)
+        private bool LoadModel(string modelFileName)
         {
             frmMain.AppendLoadFile("LoadModel: " + modelFileName);
             Eq2Reader reader = new Eq2Reader(File.OpenRead(modelFileName));
             VeRenderMesh model = (VeRenderMesh)reader.ReadObject();
             reader.Dispose();
 
+            bool mod = false;
+            if (modelFileName.Contains("ant_terrain_neroom_geo04_l"))
+            {
+                mod = true;
+            }
             if (model.subMeshes.Length > 0)
             {
                 for (int count = 0; count < model.subMeshes.Length; count++)
@@ -250,7 +246,6 @@ namespace EQ2ModelViewer
                         int indicesIdx = model.indices[index];
                         if (indicesIdx < 0 || indicesIdx >= model.vertices.Length)
                             break;
-
                         float x = model.vertices[model.indices[index]].X;
                         float y = model.vertices[model.indices[index]].Y;
                         float z = model.vertices[model.indices[index]].Z;

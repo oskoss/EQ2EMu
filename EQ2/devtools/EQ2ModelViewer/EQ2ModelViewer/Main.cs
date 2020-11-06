@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Collections.Generic;
-using System.Xml;
+using System.IO.Compression;
 
 using SlimDX;
 using SlimDX.D3DCompiler;
@@ -31,7 +31,6 @@ namespace EQ2ModelViewer
         private string ZoneFile;
         private bool Render3DAspect = true;
         private bool AutoExportOnLoad = false;
-        private bool AutoExportRegionOnLoad = false;
         private String AutoLoadFileName = "";
         public frmMain()
         {
@@ -110,10 +109,6 @@ namespace EQ2ModelViewer
                     {
                         AutoExportOnLoad = true;
                     }
-                    else if (cmd.Equals("exportregion"))
-                    {
-                        AutoExportRegionOnLoad = true;
-                    }
                     else
                     {
                         AutoLoadFileName = args[i];
@@ -126,8 +121,6 @@ namespace EQ2ModelViewer
                 LoadZoneFile(AutoLoadFileName);
             if (AutoExportOnLoad)
                 exportToolStripMenuItem_Click(null, EventArgs.Empty);
-            if (AutoExportRegionOnLoad)
-                toolStripMenuItemExportWater_Click(null, EventArgs.Empty);
 
             if (!Render3DAspect)
             {
@@ -309,7 +302,7 @@ namespace EQ2ModelViewer
             LoadZoneFile();
         }
 
-        public static String DirName = "";
+        public String DirName = "";
         private void LoadZoneFile(String filename="")
         {
             bool isDrawFile = false;
@@ -413,7 +406,7 @@ namespace EQ2ModelViewer
                     Eq2Reader reader = new Eq2Reader(new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Read));
                     VeNode venode = reader.ReadNodeObject();
 
-                    CheckNode(DirName, venode, false, false);
+                    CheckNode(DirName, venode, false, null, null);
 
                     //MessageBox.Show("Done!");
 
@@ -444,26 +437,18 @@ namespace EQ2ModelViewer
                     regionNum += 1;
                     Int32 node = 0;
                     file.Write(region.region_type);
-                    file.Write(region.position[0]);
-                    file.Write(region.position[1]);
-                    file.Write(region.position[2]);
-                    file.Write(region.splitdistance);
+                    file.Write(region.unk4[0]);
+                    file.Write(region.unk4[1]);
+                    file.Write(region.unk4[2]);
+                    file.Write(region.unk5);
                     file.Write(region.vert_count);
                     swfile.WriteLine();
-                    swfile.WriteLine("REGION: " + region.position[0] + " " + region.position[1] + " " + region.position[2] + " " + region.splitdistance + " - RegionType: " + region.region_type);
-                    if (region.parentNode.regionDefinitionFile != null)
-                        swfile.WriteLine("REGIONFILE: " + region.parentNode.regionDefinitionFile);
-                    if (region.parentNode.environmentDefinitions != null)
-                    {
-                        foreach (string str in region.parentNode.environmentDefinitions)
-                            swfile.WriteLine("EnvDefinition: " + str);
-                    }
-                    swfile.WriteLine("EnvData: " + region.unkcount + " / " + region.parentNode.unk1 + " / " + region.parentNode.unk2);
+                    swfile.WriteLine("REGION: " + region.unk4[0] + " " + region.unk4[1] + " " + region.unk4[2] + " " + region.unk5 + " - RegionType: " + region.region_type);
 
                     for (ushort i = 0; i < region.vert_count; ++i)
                     {
                         Int32 regiontype = 1;
-                        Int32 special = region.special;
+                        Int32 special = 0;
                         swfile.WriteLine(node + " " + region.m_normals[i, 0] + " " + region.m_normals[i, 1] + " " +
                             region.m_normals[i, 2] + " " + region.m_distance[i] + " " + regiontype + " " + special + " " +
                            region.m_childindex[i, 0] + " " + region.m_childindex[i, 1]);
@@ -485,7 +470,7 @@ namespace EQ2ModelViewer
         }
 
         UInt32 GridID;
-        private void CheckNode(string temp, object item, bool parentXform, bool selectNodeParent)
+        private void CheckNode(string temp, object item, bool parentXform, object next, object parentNode)
         {
             if (item is VeMeshGeometryNode)
             {
@@ -494,14 +479,14 @@ namespace EQ2ModelViewer
                 // testing antonica spires which are not oriented correctly
                 //if ( widgetID == 2990295910 )
                 // testing tutorial_island02 boat
-                //if (widgetID == 1253219127)
+                //if (== 1253219127)
 
                 // tutorial_island02 water
-                if(widgetID == 1864854785)
+                if(widgetID == 337652899)
                 {
                     int test = 0;
                 }
-                if(widgetID == 2720558016)
+                if(widgetID == 625647901)
                 {
                     int test = 0;
                 }
@@ -534,75 +519,29 @@ namespace EQ2ModelViewer
                     VeEnvironmentNode env = (VeEnvironmentNode)item;
                     if (env.regionDefinitionFile != null && env.regionDefinitionFile.Length > 0)
                     {
-                        int waterType = 0;
-                        String envFile = "";
-                        if (env.environmentDefinitions != null)
-                        {
-                            foreach (string str in env.environmentDefinitions)
-                            {
-                                envFile = str;
-                                envFile = envFile.Replace("/", "\\");
-
-                                envFile = DirName + envFile;
-                                waterType = LoadEnvXmlParseLiquid(envFile);
-                                if (waterType != 0)
-                                    break;
-                            }
-                        }
-
                         bool watervol = env.regionDefinitionFile.Contains("watervol");
                         bool waterregion = env.regionDefinitionFile.Contains("waterregion");
                         bool waterregion2 = env.regionDefinitionFile.Contains("water_region");
                         bool iswater = env.regionDefinitionFile.Contains("water");
                         bool isocean = env.regionDefinitionFile.Contains("ocean");
-                        bool isvolume = env.regionDefinitionFile.Contains("volume");
-                        AppendLoadFile("Region established: " + waterType + ", " + envFile
-                            + " WaterVol: " + watervol + " WaterRegion: " + waterregion +
-                            " WaterRegion2: " + waterregion2 + " IsWater: " + iswater +
-                            " IsOcean: " + isocean + " IsVolume: " + isvolume);
-                        if (waterType>0)
+                        if (watervol || waterregion || waterregion2 || iswater || isocean)
                         {
-                            AppendLoadFile("Region accepted: " + waterType + ", " + envFile
-                                + " WaterVol: " + watervol + " WaterRegion: " + waterregion +
-                                " WaterRegion2: " + waterregion2 + " IsWater: " + iswater +
-                                " IsOcean: " + isocean + " IsVolume: " + isvolume);
                             Eq2Reader reader2 = new Eq2Reader(new System.IO.FileStream(DirName + env.regionDefinitionFile, System.IO.FileMode.Open, System.IO.FileAccess.Read));
                             VeRegion region = (VeRegion)reader2.ReadObject();
                             region.parentNode = env;
                             region.region_type = 0; // default water volume
-
                             if (waterregion) // 'sea'/ocean/waterregion in tutorial_island02 / qeynos_harbor
                                 region.region_type = 1;
                             else if (waterregion2)
-                                region.region_type = 0;
-                            else if (isvolume && selectNodeParent)
-                                region.region_type = 4;
-                            else if ((isocean && selectNodeParent)) // ocean in antonica/commonlands/tutorial
+                                region.region_type = 2;
+                            else if (isocean && !iswater) // ocean in frostfang(halas)
                                 region.region_type = 3;
                             else if (isocean && iswater) // caves in frostfang(halas)
                                 region.region_type = 4;
-                            else if (isocean)
-                                region.region_type = 5;
 
-                            region.special = waterType;
                             MeshClass tmpMesh = new MeshClass();
                             region_nodes += region.vert_count;
                             m_Regions.Add(region);
-                        }
-                        else
-                        {
-                            if (env.regionDefinitionFile != null)
-                            {
-                                AppendLoadFile("Region skipped: " + env.regionDefinitionFile);
-                            }
-                            else
-                                AppendLoadFile("Region skipped: ???");
-
-                            if (env.environmentDefinitions != null)
-                            {
-                                foreach (string str in env.environmentDefinitions)
-                                    AppendLoadFile("EnvDefinition: " + str);
-                            }
                         }
                     }
                 }
@@ -620,6 +559,10 @@ namespace EQ2ModelViewer
                     y1 = ((VeXformNode)item).position[1];
                     z1 = ((VeXformNode)item).position[2];
 
+                    if ( x1 < -16.39 && x1 > -16.41)
+                    {
+                        int test = 0;
+                    }
                     if (parentXform)
                     {
                         yaw += (((VeXformNode)item).orientation[0]) * (3.141592654f / 180.0f);
@@ -648,24 +591,99 @@ namespace EQ2ModelViewer
 
                     System.Collections.IEnumerator enumerator = ((VeNode)item).EnumerateChildren();
                     bool parentBool = item is VeXformNode;
-                    bool selectNode = item is VeSelectNode;
-                    while (enumerator.MoveNext())
+
+                    if (enumerator.MoveNext())
                     {
-                        CheckNode(temp, enumerator.Current, parentBool, selectNodeParent ? true : selectNode);
+                        object prevNode = null;
+                        do
+                        {
+                            object curNode = enumerator.Current;
+
+                            object nextNode = null;
+
+                            object newParentNode = parentNode;
+                            if (item is VeXformNode)
+                                newParentNode = item;
+                            else if ((item is VeSelectNode))
+                                newParentNode = item;
+
+                            if (enumerator.MoveNext())
+                                nextNode = enumerator.Current;
+
+                            if (prevNode != null && prevNode is VeXformNode)
+                                parentBool = false;
+
+                            CheckNode(temp, curNode, parentBool, nextNode, newParentNode);
+
+                            prevNode = curNode;
+
+                            if (nextNode == null)
+                                break;
+                        } while (true);
                     }
 
-                    x = old_x;
-                    y = old_y;
-                    z = old_z;
-                    yaw = old_yaw;
-                    pitch = old_pitch;
-                    roll = old_roll;
-                    scale = old_scale;
-                    
+                    if (parentNode is VeSelectNode && parentBool && !parentXform)
+                    {
+                        x = old_x;
+                        y = old_y;
+                        z = old_z;
 
-                    x -= x1;
-                    y -= y1;
-                    z -= z1;
+                        yaw = old_yaw;
+                        pitch = old_pitch;
+                        roll = old_roll;
+
+                        x -= x1;
+                        y -= y1;
+                        z -= z1;
+                    }
+                    else if(parentNode is VeSelectNode && next == null)
+                    {
+                        x = 0;
+                        y = 0;
+                        z = 0;
+
+                        yaw = 0;
+                        pitch = 0;
+                        roll = 0;
+                    }
+                    else if(parentBool && next != null)
+                    {
+                        x = old_x;
+                        y = old_y;
+                        z = old_z;
+
+                        if (((VeNode)next).WidgetID != ((VeNode)item).WidgetID)
+                        {
+                            yaw = 0;
+                            pitch = 0;
+                            roll = 0;
+                        }
+                        else
+                        {
+                            yaw = old_yaw;
+                            pitch = old_pitch;
+                            roll = old_roll;
+                        }
+
+                        x -= x1;
+                        y -= y1;
+                        z -= z1;
+                    }
+                    else
+                    {
+                        x = old_x;
+                        y = old_y;
+                        z = old_z;
+
+                        yaw = old_yaw;
+                        pitch = old_pitch;
+                        roll = old_roll;
+
+                        x -= x1;
+                        y -= y1;
+                        z -= z1;
+                    }
+                    
                 }
             }
         }
@@ -853,32 +871,28 @@ namespace EQ2ModelViewer
                 }
                 file.Close();
             }
+            FileInfo fileToCompress = new FileInfo(ZoneFile + ".EQ2Map");
+
+            using (FileStream originalFileStream = fileToCompress.OpenRead())
+            {
+                if ((File.GetAttributes(fileToCompress.FullName) &
+                   FileAttributes.Hidden) != FileAttributes.Hidden & fileToCompress.Extension != ".gz")
+                {
+                    using (FileStream compressedFileStream = File.Create(ZoneFile + ".EQ2MapDeflated"))
+                    {
+                        using (GZipStream compressionStream = new GZipStream(compressedFileStream,
+                           CompressionMode.Compress))
+                        {
+                            originalFileStream.CopyTo(compressionStream);
+                        }
+                    }
+                    FileInfo info = new FileInfo(ZoneFile + ".EQ2MapDeflated");
+                    Console.WriteLine($"Compressed {fileToCompress.Name} from {fileToCompress.Length.ToString()} to {info.Length.ToString()} bytes.");
+                }
+            }
+
             if (sender != null)
                MessageBox.Show("Export Complete!");
-        }
-
-        private int LoadEnvXmlParseLiquid(string filename)
-        {
-            try
-            {
-                XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.Load(filename);
-
-                var nsmgr = new XmlNamespaceManager(xmlDoc.NameTable);
-                nsmgr.AddNamespace("vdl", "Vdl");
-                nsmgr.AddNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-                XmlNode atmosphereNode = xmlDoc.SelectSingleNode("/vdl:VdlFile/vdl:Environment/vdl:iAtmosphere", nsmgr);
-                if (atmosphereNode != null && Convert.ToInt32(atmosphereNode.InnerText) < 0)
-                    return Convert.ToInt32(atmosphereNode.InnerText); // lava
-
-                XmlNode liquidNode = xmlDoc.SelectSingleNode("/vdl:VdlFile/vdl:Environment/vdl:nLiquid", nsmgr);
-                if (liquidNode != null)
-                    return Convert.ToInt32(liquidNode.InnerText);
-            }catch(Exception ex)
-            {
-
-            }
-            return 0;
         }
     }
 }

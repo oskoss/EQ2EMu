@@ -60,6 +60,13 @@ namespace Everquest2.Visualization
             
             extraLodCount = 0;
 
+            bool trigger = false;
+            if ( WidgetID == 2720558016 )
+            {
+                int bleh = 0;
+                trigger = true;
+            }
+
             renderMeshNames = new string[lodCount][];
             for (uint i = 0; i < lodCount; ++i)
             {

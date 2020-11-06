@@ -22,6 +22,11 @@ namespace EQ2ModelViewer
             public float tu, tv;
             public float nx, ny, nz;
         }
+        public struct EQ2Region
+        {
+            public float x, y, z;
+            public float tu, tv, tz;
+        }
 
         private Buffer m_VertexBuffer;
         private Buffer m_IndexBuffer;
@@ -106,9 +111,58 @@ namespace EQ2ModelViewer
             return true;
         }
 
+        public bool InitializeBuffersExt(Device device, short[,] indices_in)
+        {
+            BufferDescription vertexBufferDesc = new BufferDescription();
+            BufferDescription indexBufferDesc = new BufferDescription();
+            DataStream vertices = new DataStream(System.Runtime.InteropServices.Marshal.SizeOf(typeof(EQ2Region)) * m_VertexCount, true, true);
+            DataStream indices = new DataStream(sizeof(ulong) * m_IndexCount, true, true);
+
+            for (int i = 0; i < m_VertexCount; i++)
+            {
+                vertices.Write(new Vector3(m_model[i].x, m_model[i].y, m_model[i].z));
+                vertices.Write(new Vector3(m_model[i].tu, m_model[i].tv, 0));
+                indices.Write(indices_in[i, 0]);
+                indices.Write(indices_in[i, 1]);
+            }
+            vertices.Position = 0;
+            indices.Position = 0;
+
+            vertexBufferDesc.Usage = ResourceUsage.Default;
+            vertexBufferDesc.SizeInBytes = (int)vertices.Length;
+            vertexBufferDesc.BindFlags = BindFlags.VertexBuffer;
+            vertexBufferDesc.CpuAccessFlags = CpuAccessFlags.None;
+            vertexBufferDesc.OptionFlags = ResourceOptionFlags.None;
+            vertexBufferDesc.StructureByteStride = 0;
+
+
+            m_VertexBuffer = new Buffer(device, vertices, vertexBufferDesc);
+            vertices.Dispose();
+
+            indexBufferDesc.Usage = ResourceUsage.Default;
+            indexBufferDesc.SizeInBytes = (int)indices.Length;
+            indexBufferDesc.BindFlags = BindFlags.IndexBuffer;
+            indexBufferDesc.CpuAccessFlags = CpuAccessFlags.None;
+            indexBufferDesc.OptionFlags = ResourceOptionFlags.None;
+            indexBufferDesc.StructureByteStride = 0;
+
+            m_IndexBuffer = new Buffer(device, indices, indexBufferDesc);
+            indices.Dispose();
+            return true;
+        }
+
         public void RenderBuffers(DeviceContext context)
         {
             int stride = System.Runtime.InteropServices.Marshal.SizeOf(typeof(EQ2Model));
+            int offset = 0;
+
+            context.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding(m_VertexBuffer, stride, offset));
+            context.InputAssembler.SetIndexBuffer(m_IndexBuffer, Format.R32_UInt, 0);
+            context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
+        }
+        public void RenderBuffersExt(DeviceContext context)
+        {
+            int stride = System.Runtime.InteropServices.Marshal.SizeOf(typeof(EQ2Region));
             int offset = 0;
 
             context.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding(m_VertexBuffer, stride, offset));

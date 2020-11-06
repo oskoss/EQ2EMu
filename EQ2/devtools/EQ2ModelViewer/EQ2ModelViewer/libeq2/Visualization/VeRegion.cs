@@ -60,7 +60,7 @@ namespace Everquest2.Visualization {
             }
 
             if (classVersion >= 2) {
-                unkcount = reader.ReadUInt32();
+                uint unkcount = reader.ReadUInt32();
                 m_center = new float[unkcount, 4];
 
                 for (int i = 0; i < unkcount; i++) {
@@ -71,23 +71,21 @@ namespace Everquest2.Visualization {
                 }
             }
 
-            position[0] = reader.ReadSingle();
-            position[1] = reader.ReadSingle();
-            position[2] = reader.ReadSingle();
-            splitdistance = reader.ReadSingle();
+            unk4[0] = reader.ReadSingle();
+            unk4[1] = reader.ReadSingle();
+            unk4[2] = reader.ReadSingle();
+            unk5 = reader.ReadSingle();
         }
 
         public int vert_count;
         public float unk0;
-        public uint unkcount;
         public float[,] m_normals;
         public float[] m_distance;
         public short[,] m_childindex;
-        public float[] position = new float[3];
-        public float splitdistance;
+        public float[] unk4 = new float[3];
+        public float unk5;
         public VeEnvironmentNode parentNode;
         float[,] m_center; // 1-3 is vector center, 4th is radius
         public int region_type;
-        public int special = 0;
     }
 }
