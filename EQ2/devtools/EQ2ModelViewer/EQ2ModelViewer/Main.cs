@@ -32,6 +32,7 @@ namespace EQ2ModelViewer
         private string ZoneFile;
         private bool Render3DAspect = true;
         private bool AutoExportOnLoad = false;
+        private bool AutoExportRegionOnLoad = false;
         private String AutoLoadFileName = "";
         public frmMain()
         {
@@ -110,6 +111,10 @@ namespace EQ2ModelViewer
                     {
                         AutoExportOnLoad = true;
                     }
+                    else if (cmd.Equals("exportregion"))
+                    {
+                        AutoExportRegionOnLoad = true;
+                    }
                     else
                     {
                         AutoLoadFileName = args[i];
@@ -122,6 +127,8 @@ namespace EQ2ModelViewer
                 LoadZoneFile(AutoLoadFileName);
             if (AutoExportOnLoad)
                 exportToolStripMenuItem_Click(null, EventArgs.Empty);
+            if (AutoExportRegionOnLoad)
+                toolStripMenuItemExportWater_Click(null, EventArgs.Empty);
 
             if (!Render3DAspect)
             {
