@@ -1440,7 +1440,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 		}
 	}*/
 	if (!processedSpell)
-		processedSpell = ProcessSpell(spell, in_heroic_opp);
+		processedSpell = ProcessSpell(spell);
 
 	// Quick hack to prevent a crash on spells that zones the caster (Gate)
 	if (!spell->caster)
