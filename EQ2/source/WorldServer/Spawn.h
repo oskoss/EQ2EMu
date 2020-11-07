@@ -214,6 +214,7 @@ struct MovementLocation{
 	string	lua_function;
 	bool	mapped;
 	int32	gridid;
+	int8	stage;
 };
 
 struct SpawnUpdate {
@@ -795,6 +796,7 @@ public:
 		case 241:
 		case 242:
 		case 254:
+		case 10668:
 		case 20828:
 			is_water_creature = true;
 			break;

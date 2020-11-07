@@ -131,19 +131,39 @@ void Brain::Think() {
 			CheckBuffs();
 
 			// If run back distance is greater then 0 then run back
-			if ((wasInCombat || m_body->m_runningBack) && run_back_distance > 1) {
-				m_body->Runback();
-			}
-			else if (m_body->m_runningBack)
+			if(!m_body->EngagedInCombat())
 			{
-				m_body->SetX(m_body->GetRunbackLocation()->x,false);
-				m_body->SetZ(m_body->GetRunbackLocation()->z,false);
-				m_body->SetY(m_body->GetRunbackLocation()->y,true);
-				if (m_body->GetRunbackLocation()->gridid > 0)
-					m_body->SetLocation(m_body->GetRunbackLocation()->gridid);
-				m_body->ClearRunback();
-				m_body->GetZone()->movementMgr->StopNavigation((Entity*)m_body);
-				m_body->ClearRunningLocations();
+				if (run_back_distance > 1) {
+					m_body->Runback(run_back_distance);
+				}
+				else if (m_body->GetRunbackLocation())
+				{
+					switch(m_body->GetRunbackLocation()->stage)
+					{
+						case 0:
+							m_body->GetZone()->movementMgr->StopNavigation((Entity*)m_body);
+							m_body->ClearRunningLocations();
+							m_body->SetX(m_body->GetRunbackLocation()->x,false);
+							m_body->SetZ(m_body->GetRunbackLocation()->z,false);
+							m_body->SetY(m_body->GetRunbackLocation()->y,false);
+							m_body->CalculateRunningLocation(true);
+							m_body->GetRunbackLocation()->stage = 1;
+							m_body->GetZone()->AddChangedSpawn(m_body);
+							break;
+						case 6: // artificially 1500ms per 250ms Think() call
+							if (m_body->GetRunbackLocation()->gridid > 0)
+								m_body->SetLocation(m_body->GetRunbackLocation()->gridid);
+							m_body->SetHeading(m_body->m_runbackHeadingDir1,m_body->m_runbackHeadingDir2,false);
+							m_body->ClearRunback();
+							m_body->SetHP(m_body->GetTotalHP());
+							m_body->GetZone()->AddChangedSpawn(m_body);
+						break;
+						default: // captures case 1 up to case 5 to turn around / reset hp
+                                                        m_body->GetRunbackLocation()->stage++; // artificially delay
+							break;
+
+					}
+				}
 			}
 			// If encounter size is greater then 0 then clear it
 			if (GetEncounterSize() > 0)

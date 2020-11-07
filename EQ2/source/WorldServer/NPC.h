@@ -114,7 +114,7 @@ public:
 	void	SetRunbackLocation(float x, float y, float z, int32 gridid);
 	MovementLocation* GetRunbackLocation();
 	float	GetRunbackDistance();
-	void	Runback();
+	void	Runback(float distance=0.0f);
 	void	ClearRunback();
 	void	AddSkillBonus(int32 spell_id, int32 skill_id, float value);
 	virtual void RemoveSkillBonus(int32 spell_id);
@@ -140,7 +140,8 @@ public:
 	/// <returns>The Brain this NPC uses</returns>
 	::Brain* Brain() { return m_brain; }
 	bool m_runningBack;
-	sint16 m_runbackHeading;
+	sint16 m_runbackHeadingDir1;
+	sint16 m_runbackHeadingDir2;
 
 	bool IsDismissing() { return m_petDismissing; }
 	void SetDismissing(bool val) { m_petDismissing = val; }

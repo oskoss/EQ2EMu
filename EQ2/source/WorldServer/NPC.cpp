@@ -136,7 +136,7 @@ void NPC::Initialize(){
 	m_brain = new ::Brain(this);
 	MBrain.SetName("NPC::m_brain");
 	m_runningBack = false;
-	m_runbackHeading = 0;
+	m_runbackHeadingDir1 = m_runbackHeadingDir2 = 0;
 	following = false;
 	SetFollowTarget(0);
 	m_petDismissing = false;
@@ -172,6 +172,7 @@ void NPC::SetRunbackLocation(float x, float y, float z, int32 gridid){
 	runback->y = y;
 	runback->z = z;
 	runback->gridid = gridid;
+	runback->stage = 0;
 }
 
 MovementLocation* NPC::GetRunbackLocation(){
@@ -184,7 +185,10 @@ float NPC::GetRunbackDistance(){
 	return GetDistance(runback->x, runback->y, runback->z);
 }
 
-void NPC::Runback(){
+void NPC::Runback(float distance){
+	if ( distance == 0.0f )
+		distance = GetRunbackDistance(); // gotta make sure its true, lua doesn't send the distance
+	
 	following = false;
 	if (!m_runningBack)
 	{
@@ -195,7 +199,7 @@ void NPC::Runback(){
 	m_runningBack = true;
 	SetSpeed(GetMaxSpeed()*2);
 
-	if ((IsFlyingCreature() || IsWaterCreature()) && CheckLoS(glm::vec3(runback->x, runback->z, runback->y + 1.0f), glm::vec3(GetX(), GetZ(), GetY() + 1.0f)))
+	if (CheckLoS(glm::vec3(runback->x, runback->z, runback->y + 1.0f), glm::vec3(GetX(), GetZ(), GetY() + 1.0f)))
 	{
 		FaceTarget(runback->x, runback->z);
 		ClearRunningLocations();
@@ -214,7 +218,7 @@ void NPC::Runback(){
 void NPC::ClearRunback(){
 	safe_delete(runback);
 	m_runningBack = false;
-	m_runbackHeading = 0;
+	m_runbackHeadingDir1 = m_runbackHeadingDir2 = 0;
 	resume_movement = true;
 	NeedsToResumeMovement(false);
 }
@@ -228,6 +232,15 @@ void NPC::InCombat(bool val){
 		GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_ATTACKED, GetTarget());
 		SetTempActionState(0); // disable action states in combat
 	}
+	if(!in_combat && val){
+		// if not a pet and no current run back location set then set one to the current location
+		if(!IsPet() && !GetRunbackLocation()) {
+			SetRunbackLocation(GetX(), GetY(), GetZ(), GetLocation());
+			m_runbackHeadingDir1 = appearance.pos.Dir1;
+			m_runbackHeadingDir2 = appearance.pos.Dir2;
+		}
+	}
+
 	in_combat = val;
 	if(val){
 		LogWrite(NPC__DEBUG, 3, "NPC", "'%s' engaged in combat with '%s'", this->GetName(), ( GetTarget() ) ? GetTarget()->GetName() : "Unknown" );
@@ -249,13 +262,6 @@ void NPC::InCombat(bool val){
 	}
 	if(!MovementInterrupted() && val && GetSpeed() > 0 && movement_loop.size() > 0){
 		CalculateRunningLocation(true);
-	}
-	if(val){
-		// if not a pet and no current run back location set then set one to the current location
-		if(!IsPet() && !GetRunbackLocation()) {
-			SetRunbackLocation(GetX(), GetY(), GetZ(), GetLocation());
-			m_runbackHeading = appearance.pos.Dir1;
-		}
 	}
 	MovementInterrupted(val);
 }
