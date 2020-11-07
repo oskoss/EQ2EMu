@@ -1010,7 +1010,8 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 				packet->setDataByName("unknown3", 1, 6);
 			}
 		}
-		else if ((version >= 1096 || version == 546) && GetCompleted() && HasSentLastUpdate()) { //need to send last quest update before erasing all progress of the quest
+		// must always send for newer clients like AoM or else crash!
+		else if (GetCompleted() && ((version >= 1096) || (version == 546 && HasSentLastUpdate()))) { //need to send last quest update before erasing all progress of the quest
 			packet->setDataByName("complete", 1);
 			packet->setDataByName("complete2", 1);
 			packet->setDataByName("complete3", 1);

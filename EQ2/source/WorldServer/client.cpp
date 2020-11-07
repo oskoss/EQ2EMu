@@ -5379,9 +5379,10 @@ void Client::SendQuestUpdate(Quest* quest) {
 			step = updates->at(i);
 			if (lua_interface && step->Complete() && quest->GetCompleteAction(step->GetStepID()))
 				lua_interface->CallQuestFunction(quest, quest->GetCompleteAction(step->GetStepID()), player);
-			if (step->WasUpdated()) {				
-				QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player, step));
+			if (step->WasUpdated()) {
+				// reversing the order of SendQuestJournal and QueuePacket QuestJournalReply causes AoM client to crash!
 				SendQuestJournal(false, 0, true);
+				QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player, step));
 			}
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 
