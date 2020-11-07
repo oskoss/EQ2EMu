@@ -10333,5 +10333,6 @@ void Commands::Command_TargetItem(Client* client, Seperator* sep) {
 }
 
 void Commands::Command_FindSpawn(Client* client, Seperator* sep) {
-	client->GetCurrentZone()->FindSpawn(client, (char*)sep->argplus[0]);
+	if(sep)
+		client->GetCurrentZone()->FindSpawn(client, (char*)sep->argplus[0]);
 }
