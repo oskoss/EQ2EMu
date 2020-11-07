@@ -478,6 +478,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 	std::streamsize size = srcbuf->in_avail();
 	if(size == -1)
 	{
+		file.close();
 		LogWrite(MAP__ERROR, 0, "Map", "Map::LoadV2Deflated() unable to deflate (%s).", m_ZoneFile.c_str());
 		return false;
 	}
