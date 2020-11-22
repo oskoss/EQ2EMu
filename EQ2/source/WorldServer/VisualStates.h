@@ -18,6 +18,7 @@
     along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "../common/Log.h"
+#include "../../common/MiscFunctions.h"
 #include <map>
 
 using namespace std;
@@ -73,19 +74,6 @@ private:
 	string name;
 	string message;
 	string targeted_message;
-};
-class VersionRange {
-public:
-	VersionRange(int32 in_min_version, int32 in_max_version)
-	{
-		min_version = in_min_version;
-		max_version = in_max_version;
-	}
-	int32 GetMinVersion() { return min_version; }
-	int32 GetMaxVersion() { return max_version; }
-private:
-	int32 min_version;
-	int32 max_version;
 };
 
 class EmoteVersionRange {

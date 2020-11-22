@@ -2,8 +2,13 @@
 #define EQ2EMU_REGION_MAP_H
 
 #include "../../common/types.h"
+#include "../../common/MiscFunctions.h"
+
 #include "position.h"
 #include <string>
+
+class Client;
+class Spawn;
 
 enum WaterRegionType : int {
 	RegionTypeUnsupported = -2,
@@ -33,16 +38,87 @@ public:
 	RegionMap() { }
 	virtual ~RegionMap() { }
 
-	static RegionMap* LoadRegionMapfile(std::string zone_name);
-	virtual WaterRegionType ReturnRegionType(const glm::vec3& location, float belowY = -999999.0f) const = 0;
-	virtual bool InWater(const glm::vec3& location, float belowY = -999999.0f) const = 0;
-	virtual bool InLava(const glm::vec3& location) const = 0;
+	static RegionMap* LoadRegionMapfile(std::string filename, std::string zone_name);
+	virtual WaterRegionType ReturnRegionType(const glm::vec3& location, int32 gridid=0) const = 0;
+	virtual bool InWater(const glm::vec3& location, int32 gridid=0) const = 0;
+	virtual bool InLava(const glm::vec3& location, int32 gridid=0) const = 0;
 	virtual bool InLiquid(const glm::vec3& location) const = 0;
 	virtual bool InPvP(const glm::vec3& location) const = 0;
 	virtual bool InZoneLine(const glm::vec3& location) const = 0;
-
+	
+	virtual void IdentifyRegionsInGrid(Client* client, const glm::vec3& location) const = 0;
+	virtual void MapRegionsNearSpawn(Spawn* spawn, Client* client=0) const = 0;
+	virtual void UpdateRegionsNearSpawn(Spawn* spawn, Client* client=0) const = 0;
+	virtual void TicRegionsNearSpawn(Spawn* spawn, Client* client=0) const = 0;
 protected:
 	virtual bool Load(FILE *fp) { return false; }
+};
+
+
+class RegionMapRange {
+public:
+	RegionMapRange()
+	{
+		
+	}
+
+	~RegionMapRange()
+	{
+		map<VersionRange*, RegionMap*>::iterator itr;
+		for (itr = version_map.begin(); itr != version_map.end(); itr++)
+		{
+			VersionRange* range = itr->first;
+			RegionMap* map = itr->second;
+			delete range;
+			delete map;
+		}
+
+		version_map.clear();
+	}
+
+	void AddVersionRange(std::string zoneName);
+
+	map<VersionRange*, RegionMap*>::iterator FindVersionRange(int32 min_version, int32 max_version)
+	{
+		map<VersionRange*, RegionMap*>::iterator itr;
+		for (itr = version_map.begin(); itr != version_map.end(); itr++)
+		{
+			VersionRange* range = itr->first;
+			// if min and max version are both in range
+			if (range->GetMinVersion() <= min_version && max_version <= range->GetMaxVersion())
+				return itr;
+			// if the min version is in range, but max range is 0
+			else if (range->GetMinVersion() <= min_version && range->GetMaxVersion() == 0)
+				return itr;
+			// if min version is 0 and max_version has a cap
+			else if (range->GetMinVersion() == 0 && max_version <= range->GetMaxVersion())
+				return itr;
+		}
+
+		return version_map.end();
+	}
+
+	map<VersionRange*, RegionMap*>::iterator FindRegionByVersion(int32 version)
+	{
+		map<VersionRange*, RegionMap*>::iterator enditr = version_map.end();
+		map<VersionRange*, RegionMap*>::iterator itr;
+		for (itr = version_map.begin(); itr != version_map.end(); itr++)
+		{
+			VersionRange* range = itr->first;
+			// if min and max version are both in range
+			if(range->GetMinVersion() == 0 && range->GetMaxVersion() == 0)
+				enditr = itr;
+			else if (version >= range->GetMinVersion() && version <= range->GetMaxVersion())
+				return itr;
+		}
+
+		return enditr;
+	}
+
+	map<VersionRange*, RegionMap*>::iterator GetRangeEnd() { return version_map.end(); }
+private:
+	std::map<VersionRange*, RegionMap*> version_map;
+	string name;
 };
 
 #endif

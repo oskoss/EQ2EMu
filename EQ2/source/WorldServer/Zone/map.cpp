@@ -15,6 +15,10 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+
+#include <boost/regex.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/foreach.hpp> 
 #include <boost/asio.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
@@ -56,9 +60,10 @@ ThreadReturnType LoadMapAsync(void* mapToLoad)
 	THREAD_RETURN(NULL);
 }
 
-Map::Map(string file, SPGrid* grid) {
+Map::Map(string zonename, string file, SPGrid* grid) {
 	CheckMapMutex.SetName(file + "MapMutex");
 	SetMapLoaded(false);
+	m_ZoneName = zonename;
 	m_ZoneFile = file;
 	imp = nullptr;
 	mGrid = grid;
@@ -71,6 +76,7 @@ Map::~Map() {
 		imp->rm->release();
 		safe_delete(imp);
 	}
+	safe_delete(mGrid);
 }
 
 float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result)
@@ -259,7 +265,7 @@ bool Map::DoCollisionCheck(glm::vec3 myloc, glm::vec3 oloc, glm::vec3 &outnorm, 
 	return imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, (RmReal *)&outnorm, (RmReal *)&distance);
 }
 
-Map *Map::LoadMapFile(std::string file, SPGrid* grid) {
+Map *Map::LoadMapFile(std::string zonename, std::string file, SPGrid* grid) {
 
 	std::string filename = "Maps/";
 	filename += file;
@@ -273,7 +279,7 @@ Map *Map::LoadMapFile(std::string file, SPGrid* grid) {
 
 	LogWrite(MAP__INFO, 7, "Map", "Attempting to load Map File [{%s}]", filename.c_str());
 
-	auto m = new Map(file, grid);
+	auto m = new Map(zonename, file, grid);
 	m->SetMapLoading(true);
 	m->SetFileName(filename);
 #ifdef WIN32
@@ -343,11 +349,11 @@ bool Map::LoadV2(FILE* f) {
 	LogWrite(MAP__DEBUG, 0, "Map", "name = %s", name);
 
 	string fileName(name);
-	std::size_t found = fileName.find(m_ZoneFile);
+	std::size_t found = fileName.find(m_ZoneName);
 	// Make sure file contents are for the correct zone
 	if (found == std::string::npos) {
 		fclose(f);
-		LogWrite(MAP__ERROR, 0, "Map", "Map::LoadV2() map contents (%s) do not match its name (%s).", &name, m_ZoneFile.c_str());
+		LogWrite(MAP__ERROR, 0, "Map", "Map::LoadV2() map contents (%s) do not match its name (%s).", &name, m_ZoneName.c_str());
 		return false;
 	}
 	// Read the min bounds
@@ -469,7 +475,7 @@ bool Map::LoadV2(FILE* f) {
 }
 
 bool Map::LoadV2Deflated(FILE* f) {
-    ifstream file(m_FileName.c_str(), ios_base::in | ios_base::binary);
+    std::ifstream file(m_FileName.c_str(), ios_base::in | ios_base::binary);
     boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf;
     inbuf.push(boost::iostreams::gzip_decompressor());
     inbuf.push(file);
@@ -495,7 +501,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 	LogWrite(MAP__DEBUG, 0, "Map", "name = %s", name);
 
 	string fileName(name);
-	std::size_t found = fileName.find(m_ZoneFile);
+	std::size_t found = fileName.find(m_ZoneName);
 	// Make sure file contents are for the correct zone
 	if (found == std::string::npos) {
 		file.close();
@@ -662,4 +668,102 @@ void Map::TranslateVertex(glm::vec3 &v, float tx, float ty, float tz) {
 	v.x = v.x + tx;
 	v.y = v.y + ty;
 	v.z = v.z + tz;
+}
+
+void MapRange::AddVersionRange(std::string zoneName) {
+  boost::filesystem::path targetDir("Maps/");
+
+  boost::filesystem::recursive_directory_iterator iter(targetDir), eod;
+  boost::smatch base_match;
+  std::string formula = "(.*\\/|.*\\\\)((" + zoneName + ")(\\-([0-9]+)\\-([0-9]+))?)(\\.EQ2Map|\\.EQ2MapDeflated)$";
+  boost::regex re(formula.c_str());
+  LogWrite(MAP__INFO, 0, "Map", "Map Formula to match: %s", formula.c_str());
+  BOOST_FOREACH(boost::filesystem::path
+    const & i, make_pair(iter, eod)) {
+    if (is_regular_file(i)) {
+		std::string fileName(i.string());
+
+      if (boost::regex_match(fileName, base_match, re)) {
+        boost::ssub_match base_sub_match = base_match[2];
+        boost::ssub_match base_sub_match2 = base_match[5];
+		boost::ssub_match base_sub_match3 = base_match[6];
+		std::string baseMatch(base_sub_match.str().c_str());
+		std::string baseMatch2(base_sub_match2.str().c_str());
+		std::string baseMatch3(base_sub_match3.str().c_str());
+        LogWrite(MAP__INFO, 0, "Map", "Map To Load: %s, size: %i, string: %s, min: %s, max: %s\n", i.string().c_str(), base_match.size(), baseMatch.c_str(), baseMatch2.c_str(), baseMatch3.c_str());
+
+        SPGrid * Grid = new SPGrid(base_sub_match.str().c_str(), 0);
+        Map * zonemap = Map::LoadMapFile(zoneName, base_sub_match.str().c_str(), Grid);
+
+        int32 min_version = 0, max_version = 0;
+        if (strlen(base_sub_match2.str().c_str()) > 0)
+          min_version = atoul(base_sub_match2.str().c_str());
+
+        if (strlen(base_sub_match2.str().c_str()) > 0)
+          max_version = atoul(base_sub_match3.str().c_str());
+        version_map.insert(std::make_pair(new VersionRange(min_version, max_version), zonemap));
+      }
+    }
+  }
+}
+
+MapRange::MapRange()
+{
+	
+}
+
+MapRange::~MapRange()
+{
+	Clear();
+}
+
+void MapRange::Clear()
+{
+	map<VersionRange*, Map*>::iterator itr;
+	for (itr = version_map.begin(); itr != version_map.end(); itr++)
+	{
+		VersionRange* range = itr->first;
+		Map* map = itr->second;
+		delete range;
+		delete map;
+	}
+
+	version_map.clear();
+}
+
+map<VersionRange*, Map*>::iterator MapRange::FindVersionRange(int32 min_version, int32 max_version)
+{
+	map<VersionRange*, Map*>::iterator itr;
+	for (itr = version_map.begin(); itr != version_map.end(); itr++)
+	{
+		VersionRange* range = itr->first;
+		// if min and max version are both in range
+		if (range->GetMinVersion() <= min_version && max_version <= range->GetMaxVersion())
+			return itr;
+		// if the min version is in range, but max range is 0
+		else if (range->GetMinVersion() <= min_version && range->GetMaxVersion() == 0)
+			return itr;
+		// if min version is 0 and max_version has a cap
+		else if (range->GetMinVersion() == 0 && max_version <= range->GetMaxVersion())
+			return itr;
+	}
+
+	return version_map.end();	
+}
+
+map<VersionRange*, Map*>::iterator MapRange::FindMapByVersion(int32 version)
+{
+	map<VersionRange*, Map*>::iterator enditr = version_map.end();
+	map<VersionRange*, Map*>::iterator itr;
+	for (itr = version_map.begin(); itr != version_map.end(); itr++)
+	{
+		VersionRange* range = itr->first;
+		// if min and max version are both in range
+		if(range->GetMinVersion() == 0 && range->GetMaxVersion() == 0)
+			enditr = itr;
+		else if (version >= range->GetMinVersion() && version <= range->GetMaxVersion())
+			return itr;
+	}
+
+	return enditr;
 }

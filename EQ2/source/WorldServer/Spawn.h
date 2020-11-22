@@ -33,6 +33,8 @@
 #include "../common/ConfigReader.h"
 #include "Items/Items.h"
 #include "Zone/map.h"
+#include "Zone/region_map.h"
+#include "Zone/region_map_v1.h"
 #include "../common/Mutex.h"
 #include "MutexList.h"
 #include <deque>
@@ -229,6 +231,11 @@ struct SpawnData {
 	Spawn* spawn;
 	uchar* data;
 	int32 size;
+};
+
+struct TimedGridData {
+	int32 timestamp;
+	int32 grid_id;
 };
 
 class Spawn {
@@ -773,6 +780,7 @@ public:
 	bool IsFlyingCreature() { return is_flying_creature; }
 	bool IsWaterCreature() { return is_water_creature; }
 	bool InWater();
+	bool InLava();
 
 	void SetFlyingCreature() {
 		is_flying_creature = false;
@@ -923,7 +931,7 @@ public:
 	bool			TakeDamage(int32 damage);
 	void			TakeDamage(Spawn* attacker, int32 damage);
 	ZoneServer*		GetZone();
-	virtual void	SetZone(ZoneServer* in_zone);
+	virtual void	SetZone(ZoneServer* in_zone, int32 version=0);
 	void			SetFactionID(int32 val) { faction_id = val; }
 	int32			GetFactionID(){
 		return faction_id;
@@ -1174,6 +1182,17 @@ public:
 
 	bool	IsSoundsDisabled() { return disable_sounds; }
 	void	SetSoundsDisabled(bool val) { disable_sounds = val; }
+
+	RegionMap* GetRegionMap() { return region_map; }
+	Map* GetMap() { return current_map; }
+	std::map<int32,TimedGridData> established_grid_id;
+	
+	void DeleteRegion(Region_Node* inNode, ZBSP_Node* rootNode);
+	bool InRegion(Region_Node* inNode, ZBSP_Node* rootNode);
+	int32 GetRegionType(Region_Node* inNode, ZBSP_Node* rootNode);
+	
+	std::map<std::map<Region_Node*, ZBSP_Node*>, Region_Status> Regions;
+	Mutex RegionMutex;
 protected:
 
 	bool	has_quests_required;
@@ -1265,6 +1284,9 @@ private:
 	Mutex m_Update;
 
 	bool disable_sounds;
+
+	RegionMap* region_map;
+	Map* current_map;
 };
 
 #endif

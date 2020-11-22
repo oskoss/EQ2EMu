@@ -879,8 +879,8 @@ Entity*	NPC::GetOwner() {
 	return (Entity*)GetZone()->GetSpawnByID(owner);
 }
 
-void NPC::SetZone(ZoneServer* in_zone) {
-	Spawn::SetZone(in_zone);
+void NPC::SetZone(ZoneServer* in_zone, int32 version) {
+	Spawn::SetZone(in_zone, version);
 	if (in_zone){
 		GetZone()->SetNPCEquipment(this);
 		SetSkills(GetZone()->GetNPCSkills(primary_skill_list, secondary_skill_list));

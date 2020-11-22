@@ -139,6 +139,19 @@ private:
 	T** pVar;
 };
 
+class VersionRange {
+public:
+	VersionRange(int32 in_min_version, int32 in_max_version)
+	{
+		min_version = in_min_version;
+		max_version = in_max_version;
+	}
+	int32 GetMinVersion() { return min_version; }
+	int32 GetMaxVersion() { return max_version; }
+private:
+	int32 min_version;
+	int32 max_version;
+};
 #endif
 
 

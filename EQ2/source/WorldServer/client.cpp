@@ -196,6 +196,8 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	SetHasOwnerOrEditAccess(false);
 	temporary_transport_id = 0;
 	rejoin_group_id = 0;
+	lastRegionRemapTime = 0;
+	regionDebugMessaging = false;
 }
 
 Client::~Client() {
@@ -2842,12 +2844,29 @@ bool Client::Process(bool zone_process) {
 		LogWrite(CCLIENT__DEBUG, 1, "Client", "%s, CheckQuestQueue", __FUNCTION__, __LINE__);
 		CheckQuestQueue();
 	}
-	if (pos_update.Check() && player_pos_changed && IsReadyForUpdates() && ( !disconnect_timer || !disconnect_timer->Enabled())) {
-		//GetPlayer()->CalculateLocation();
-		client_list.CheckPlayersInvisStatus(this);
-		GetCurrentZone()->SendPlayerPositionChanges(GetPlayer());
-		player_pos_changed = false;
-		GetCurrentZone()->CheckTransporters(this);
+	if (pos_update.Check())
+	{
+		if(GetPlayer()->GetRegionMap())
+			GetPlayer()->GetRegionMap()->TicRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
+		
+		if(player_pos_changed && IsReadyForUpdates() && ( !disconnect_timer || !disconnect_timer->Enabled())) {
+			//GetPlayer()->CalculateLocation();
+			client_list.CheckPlayersInvisStatus(this);
+			GetCurrentZone()->SendPlayerPositionChanges(GetPlayer());
+			player_pos_changed = false;
+			GetCurrentZone()->CheckTransporters(this);
+			
+			if(GetPlayer()->GetRegionMap())
+			{
+				if((lastRegionRemapTime+1000) < Timer::GetCurrentTime2())
+				{
+					lastRegionRemapTime = Timer::GetCurrentTime2() + 1000;
+					GetPlayer()->GetRegionMap()->MapRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
+				}
+				else
+					GetPlayer()->GetRegionMap()->UpdateRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
+			}
+		}
 	}
 	if (lua_interface && lua_debug && lua_debug_timer.Check())
 		lua_interface->UpdateDebugClients(this);
@@ -5262,7 +5281,7 @@ void Client::SetPlayerQuest(Quest* quest, map<int32, int32>* progress) {
 	}
 	map<int32, int32>::iterator itr;
 	QuestStep* step = 0;
-	player->SetZone(GetCurrentZone());
+	player->SetZone(GetCurrentZone(), GetVersion());
 	for (itr = progress->begin(); itr != progress->end(); itr++) {
 		step = quest->GetQuestStep(itr->first);
 		if (step && itr->second > 0) {
@@ -8144,13 +8163,13 @@ void Client::ClearWaypoint() {
 
 bool Client::ShowPathToTarget(float x, float y, float z, float y_offset) {
 	if (current_zone->pathing) {
-		if (current_zone->zonemap) {
-			if (x < current_zone->zonemap->GetMinX() || x > current_zone->zonemap->GetMaxX())
+		if (GetPlayer()->GetMap()) {
+			if (x < GetPlayer()->GetMap()->GetMinX() || x > GetPlayer()->GetMap()->GetMaxX())
 				return false;
-			if (z < current_zone->zonemap->GetMinZ() || z > current_zone->zonemap->GetMaxZ())
+			if (z < GetPlayer()->GetMap()->GetMinZ() || z > GetPlayer()->GetMap()->GetMaxZ())
 				return false;
 			auto loc = glm::vec3(x, z, y);
-			float new_z = current_zone->zonemap->FindBestZ(loc, nullptr);
+			float new_z = GetPlayer()->GetMap()->FindBestZ(loc, nullptr);
 			if (new_z != BEST_Z_INVALID) //this is actually y
 				y = new_z;
 		}
@@ -9199,7 +9218,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 			Client* client = zone_list.GetClientByCharName(player->GetName());
 			if (client) {
 				if (client->getConnection())
-					client->getConnection()->SendDisconnect();
+					client->getConnection()->SendDisconnect(true);
 				if (client->GetCurrentZone() && !client->IsZoning()) {
 					//swap players, allowing the client to resume his LD'd player (ONLY if same version of the client)
 					if (client->GetVersion() == version) {
@@ -9213,7 +9232,8 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 						GetPlayer()->SetReturningFromLD(true);
 						GetPlayer()->GetZone()->RemoveDelayedSpawnRemove(GetPlayer());
 					}
-					client->GetCurrentZone()->RemoveClientImmediately(client);
+					ZoneServer* tmpZone = client->GetCurrentZone();
+					tmpZone->RemoveClientImmediately(client);
 				}
 			}
 			MDeletePlayer.releasewritelock(__FUNCTION__, __LINE__);

@@ -35,8 +35,6 @@ using namespace std;
 #include <WinSock2.h>
 #include <windows.h>
 
-#define snprintf	_snprintf
-#define vsnprintf	_vsnprintf
 #define strncasecmp	_strnicmp
 #define strcasecmp	_stricmp
 #else // Pyro: fix for linux

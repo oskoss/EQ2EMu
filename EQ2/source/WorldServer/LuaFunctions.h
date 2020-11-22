@@ -514,4 +514,9 @@ int EQ2Emu_lua_SetSpellDisplayEffect(lua_State* state);
 int EQ2Emu_lua_GetSpellDisplayEffect(lua_State* state);
 
 int EQ2Emu_lua_InWater(lua_State* state);
+int EQ2Emu_lua_InLava(lua_State* state);
+
+int EQ2Emu_lua_DamageSpawn(lua_State* state);
+
+int EQ2Emu_lua_IsInvulnerable(lua_State* state);
 #endif

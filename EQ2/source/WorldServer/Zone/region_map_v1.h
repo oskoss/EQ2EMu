@@ -4,6 +4,9 @@
 #include "region_map.h"
 #include <map>
 
+class Client;
+class Spawn;
+
 #pragma pack(1)
 typedef struct ZBSP_Node {
 	int32 node_number;
@@ -19,8 +22,19 @@ typedef struct Region_Node {
 	float y;
 	float z;
 	float dist;
+	string regionEnvFileName;
+	string regionName;
+	int32 grid_id;
+	string regionScriptName;
 } Region_Node;
 #pragma pack()
+
+struct Region_Status {
+	bool inRegion;
+	int32 timerTic;
+	int32 lastTimerTic;
+	int32 regionType;
+};
 
 class RegionMapV1 : public RegionMap
 {
@@ -28,25 +42,36 @@ public:
 	RegionMapV1();
 	~RegionMapV1();
 	
-	virtual WaterRegionType ReturnRegionType(const glm::vec3& location, float belowY = -999999.0f) const;
-	virtual bool InWater(const glm::vec3& location, float belowY = -999999.0f) const;
-	virtual bool InLava(const glm::vec3& location) const;
+	virtual WaterRegionType ReturnRegionType(const glm::vec3& location, int32 grid_id=0) const;
+	virtual bool InWater(const glm::vec3& location, int32 grid_id=0) const;
+	virtual bool InLava(const glm::vec3& location, int32 grid_id=0) const;
 	virtual bool InLiquid(const glm::vec3& location) const;
 	virtual bool InPvP(const glm::vec3& location) const;
 	virtual bool InZoneLine(const glm::vec3& location) const;
-	
+
+	virtual void IdentifyRegionsInGrid(Client* client, const glm::vec3& location) const;
+	virtual void MapRegionsNearSpawn(Spawn* spawn, Client* client=0) const;
+	virtual void UpdateRegionsNearSpawn(Spawn* spawn, Client* client=0) const;
+	virtual void TicRegionsNearSpawn(Spawn* spawn, Client* client=0) const;
+
 protected:
-	virtual bool Load(FILE *fp);
+	virtual bool Load(FILE *fp, std::string inZoneLowerName, int32 regionVersion);
 
 private:
-	WaterRegionType BSPReturnRegionType(int32 node_number, const glm::vec3& location) const;
+	WaterRegionType BSPReturnRegionType(int32 node_number, const glm::vec3& location, int32 gridid=0) const;
 	WaterRegionType BSPReturnRegionTypeNode(const Region_Node* node, const ZBSP_Node* BSP_Root, int32 node_number, const glm::vec3& location, float distToNode=0.0f) const;
 
 	WaterRegionType BSPReturnRegionWaterRegion(const Region_Node* node, const ZBSP_Node* BSP_Root, int32 node_number, const glm::vec3& location, float distToNode=0.0f) const;
 	map<Region_Node*, ZBSP_Node*> Regions;
 
 	WaterRegionType EstablishDistanceAtAngle(const Region_Node* region_node, const ZBSP_Node* current_node, float distance, float absDistance, float absSplitDist, bool checkEdgedAngle=false) const;
+	
+	std::string TestFile(std::string testFile);
+
 	friend class RegionMap;
+
+	int32 mVersion;
+	std::string mZoneNameLower;
 };
 
 #endif

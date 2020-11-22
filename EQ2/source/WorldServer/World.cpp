@@ -49,6 +49,8 @@
 #include "HeroicOp/HeroicOp.h"
 #include "RaceTypes/RaceTypes.h"
 
+#include <boost/algorithm/string.hpp>
+
 MasterQuestList master_quest_list;
 MasterItemList master_item_list;
 MasterSpellList master_spell_list;
@@ -128,6 +130,14 @@ World::~World(){
 	tov_itemstat_conversion.clear();
 
 	PurgeStartingLists();
+
+	map<std::string, RegionMapRange*>::iterator itr3;
+	for (itr3 = region_maps.begin(); itr3 != region_maps.end(); itr3++)
+		safe_delete(itr3->second);
+	
+	map<std::string, MapRange*>::iterator itr4;
+	for (itr4 = maps.begin(); itr4 != maps.end(); itr4++)
+		safe_delete(itr4->second);
 }
 
 void World::init(){
@@ -2378,3 +2388,71 @@ void ZoneList::WatchdogHeartbeat()
 		MZoneList.releasewritelock(__FUNCTION__, __LINE__);
 }
 
+void World::LoadRegionMaps(std::string zoneFile)
+{
+	string zoneToLower(zoneFile);
+	boost::algorithm::to_lower(zoneToLower);
+
+	std::map<std::string, RegionMapRange*>::iterator itr;
+	itr = region_maps.find(zoneToLower);
+	if (itr == region_maps.end())
+	{
+		RegionMapRange* newRange = new RegionMapRange();
+		newRange->AddVersionRange(zoneFile);
+
+		region_maps.insert(make_pair(zoneToLower, newRange));
+	}
+}
+
+RegionMap* World::GetRegionMap(std::string zoneFile, int32 client_version)
+{
+	string zoneToLower(zoneFile);
+	boost::algorithm::to_lower(zoneToLower);
+
+	std::map<std::string, RegionMapRange*>::iterator itr;
+	itr = region_maps.find(zoneToLower);
+	if ( itr != region_maps.end())
+	{
+		std::map<VersionRange*, RegionMap*>::iterator rmitr;
+		rmitr = itr->second->FindRegionByVersion(client_version);
+		if ( rmitr != itr->second->GetRangeEnd())
+			return rmitr->second;
+	}
+
+	return nullptr;
+}
+
+
+void World::LoadMaps(std::string zoneFile)
+{
+	string zoneToLower(zoneFile);
+	boost::algorithm::to_lower(zoneToLower);
+
+	std::map<std::string, MapRange*>::iterator itr;
+	itr = maps.find(zoneToLower);
+	if (itr == maps.end())
+	{
+		MapRange* newRange = new MapRange();
+		newRange->AddVersionRange(zoneFile);
+
+		maps.insert(make_pair(zoneToLower, newRange));
+	}
+}
+
+Map* World::GetMap(std::string zoneFile, int32 client_version)
+{
+	string zoneToLower(zoneFile);
+	boost::algorithm::to_lower(zoneToLower);
+
+	std::map<std::string, MapRange*>::iterator itr;
+	itr = maps.find(zoneToLower);
+	if ( itr != maps.end())
+	{
+		std::map<VersionRange*, Map*>::iterator rmitr;
+		rmitr = itr->second->FindMapByVersion(client_version);
+		if ( rmitr != itr->second->GetRangeEnd())
+			return rmitr->second;
+	}
+
+	return nullptr;
+}

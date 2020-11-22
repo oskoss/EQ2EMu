@@ -118,7 +118,7 @@ public:
 	void	ClearRunback();
 	void	AddSkillBonus(int32 spell_id, int32 skill_id, float value);
 	virtual void RemoveSkillBonus(int32 spell_id);
-	virtual void SetZone(ZoneServer* zone);
+	virtual void SetZone(ZoneServer* zone, int32 version=0);
 
 	void	SetOwner(Entity* owner) { if (owner) { this->owner = owner->GetID(); } else { owner = 0; } }
 	Entity*	GetOwner();

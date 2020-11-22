@@ -1776,6 +1776,14 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 			if (val)
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "GM Vision Enabled!");
 		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_REGIONDEBUG))
+		{
+			int8 val = atoi(prop_value);
+			
+			client->SetRegionDebug(val == 1);
+			if (val)
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Region Debug Enabled!");
+		}
 		else if (!stricmp(prop_name, CHAR_PROPERTY_LUADEBUG))
 		{
 			int8 val = atoi(prop_value);
@@ -6877,9 +6885,9 @@ void WorldDatabase::GetHouseSpawnInstanceData(ZoneServer* zone, Spawn* spawn)
 		spawn->SetPickupItemID(result.GetInt32(0));
 		spawn->SetPickupUniqueItemID(result.GetInt32(1));
 
-		if (spawn->GetZone() != nullptr && spawn->GetZone()->zonemap != nullptr && spawn->GetZone()->zonemap->IsMapLoaded())
+		if (spawn->GetZone() != nullptr && spawn->GetMap() != nullptr && spawn->GetMap()->IsMapLoaded())
 		{
-			int32 newGrid = spawn->GetZone()->Grid->GetGridID(spawn);
+			int32 newGrid = spawn->GetMap()->GetGrid()->GetGridID(spawn);
 			spawn->SetPos(&(spawn->appearance.pos.grid_id), newGrid);
 		}
 	}

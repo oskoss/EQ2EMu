@@ -1,8 +1,15 @@
 #include "region_map_v1.h"
 #include "../../common/Log.h"
+#include "../client.h"
+#include "../Spawn.h"
+#include "../LuaInterface.h"
+
+#include <boost/filesystem.hpp>
+
+extern LuaInterface* lua_interface;
 
 RegionMapV1::RegionMapV1() {
-
+	mVersion = 1;
 }
 
 RegionMapV1::~RegionMapV1() {
@@ -22,16 +29,16 @@ RegionMapV1::~RegionMapV1() {
 	Regions.clear();
 }
 
-WaterRegionType RegionMapV1::ReturnRegionType(const glm::vec3& location, float belowY) const {
-	return BSPReturnRegionType(1, glm::vec3(location.y, location.x + 0.5f, location.z));
+WaterRegionType RegionMapV1::ReturnRegionType(const glm::vec3& location, int32 gridid) const {
+	return BSPReturnRegionType(1, glm::vec3(location.x, location.y, location.z), gridid);
 }
 
-bool RegionMapV1::InWater(const glm::vec3& location, float belowY) const {
-	return ReturnRegionType(location, belowY) == RegionTypeWater;
+bool RegionMapV1::InWater(const glm::vec3& location, int32 gridid) const {
+	return ReturnRegionType(location, gridid) == RegionTypeWater;
 }
 
-bool RegionMapV1::InLava(const glm::vec3& location) const {
-	return ReturnRegionType(location) == RegionTypeLava;
+bool RegionMapV1::InLava(const glm::vec3& location, int32 gridid) const {
+	return ReturnRegionType(location, gridid) == RegionTypeLava;
 }
 
 bool RegionMapV1::InLiquid(const glm::vec3& location) const {
@@ -46,7 +53,25 @@ bool RegionMapV1::InZoneLine(const glm::vec3& location) const {
 	return ReturnRegionType(location) == RegionTypeZoneLine;
 }
 
-bool RegionMapV1::Load(FILE* fp) {
+std::string RegionMapV1::TestFile(std::string testFile)
+{
+	std::string tmpStr(testFile);
+	std::size_t pos = tmpStr.find("."); 
+	if ( pos != testFile.npos )
+		tmpStr = testFile.substr (0, pos);
+			
+	string tmpScript("RegionScripts/");
+	tmpScript.append(mZoneNameLower);
+	tmpScript.append("/" + tmpStr + ".lua");
+	printf("File to test : %s\n",tmpScript.c_str());
+	std::ifstream f(tmpScript.c_str());
+	return f.good() ? tmpScript : string("");
+}
+
+
+bool RegionMapV1::Load(FILE* fp, std::string inZoneNameLwr, int32 version) {
+	mZoneNameLower = string(inZoneNameLwr.c_str());
+	
 	uint32 region_size;
 	if (fread(&region_size, sizeof(region_size), 1, fp) != 1) {
 		return false;
@@ -80,6 +105,41 @@ bool RegionMapV1::Load(FILE* fp) {
 			return false;
 		}
 
+		int8 strSize;
+		char envName[256] = {""};
+		char regionName[256] = {""};
+		uint32 grid_id = 0;
+
+		if ( version > 1 )
+		{
+			fread(&strSize, sizeof(int8), 1, fp);
+			LogWrite(REGION__DEBUG, 7, "Region", "Region environment strSize = %u", strSize);
+
+			if(strSize)
+			{
+				size_t len = fread(&envName, sizeof(char), strSize, fp);
+				envName[len] = '\0';
+			}
+
+			LogWrite(REGION__DEBUG, 7, "Region", "Region environment file name = %s", envName);
+
+			fread(&strSize, sizeof(int8), 1, fp);
+			LogWrite(REGION__DEBUG, 7, "Region", "Region name strSize = %u", strSize);
+
+			if(strSize)
+			{
+				size_t len = fread(&regionName, sizeof(char), strSize, fp);
+				regionName[len] = '\0';
+			}
+			
+			LogWrite(REGION__DEBUG, 7, "Region", "Region name file name = %s", regionName);
+
+			if (fread(&grid_id, sizeof(grid_id), 1, fp) != 1) {
+				return false;
+			}
+
+		}
+
 		uint32 bsp_tree_size;
 		if (fread(&bsp_tree_size, sizeof(bsp_tree_size), 1, fp) != 1) {
 			return false;
@@ -99,6 +159,22 @@ bool RegionMapV1::Load(FILE* fp) {
 		tmpNode->z = z;
 		tmpNode->dist = dist;
 		tmpNode->region_type = region_type;
+		tmpNode->regionName = string(regionName);
+		tmpNode->regionEnvFileName = string(envName);
+		tmpNode->grid_id = grid_id;
+		tmpNode->regionScriptName = string("");
+		
+		tmpNode->regionScriptName = TestFile(regionName);
+		
+		if ( tmpNode->regionScriptName.size() < 1 )
+		{
+			tmpNode->regionScriptName = TestFile(envName);
+		}
+		if ( tmpNode->regionScriptName.size() < 1 )
+		{
+			tmpNode->regionScriptName = TestFile("default");
+		}
+		
 		Regions.insert(make_pair(tmpNode, BSP_Root));
 	}
 
@@ -109,12 +185,282 @@ bool RegionMapV1::Load(FILE* fp) {
 	return true;
 }
 
-WaterRegionType RegionMapV1::BSPReturnRegionType(int32 node_number, const glm::vec3& location) const {
+void RegionMapV1::IdentifyRegionsInGrid(Client *client, const glm::vec3 &location) const
+{
+	map<Region_Node*, ZBSP_Node*>::const_iterator itr;
+	int region_num = 0;
+
+	int32 grid = 0;
+	if (client->GetPlayer()->GetMap() != nullptr)
+	{
+		grid = client->GetPlayer()->GetMap()->GetGrid()->GetGridIDByLocation(location.x, location.y, location.z);
+	}
+	else
+		client->SimpleMessage(CHANNEL_COLOR_RED, "No map to establish grid id, using grid id 0 (attempt match all).");
+
+	client->Message(2, "Region check against location %f / %f / %f. Grid to try: %u, player grid is %u", location.x, location.y, location.z, grid, client->GetPlayer()->appearance.pos.grid_id);
+
+	for (itr = Regions.begin(); itr != Regions.end(); itr++)
+	{
+		Region_Node *node = itr->first;
+		ZBSP_Node *BSP_Root = itr->second;
+
+		if (grid == 0 || node->grid_id == grid)
+		{
+			float x1 = node->x - location.x;
+			float y1 = node->y - location.y;
+			float z1 = node->z - location.z;
+			float dist = sqrt(x1 *x1 + y1 *y1 + z1 *z1);
+			glm::vec3 testLoc(location.x, location.y, location.z);
+			if (dist <= node->dist)
+			{
+				WaterRegionType regionType = RegionTypeUntagged;
+
+				if (node->region_type == ClassWaterRegion)
+					regionType = BSPReturnRegionWaterRegion(node, BSP_Root, 1, testLoc, dist);
+				else
+					regionType = BSPReturnRegionTypeNode(node, BSP_Root, 1, testLoc, dist);
+
+				if (regionType != RegionTypeNormal)
+				{
+					client->Message(CHANNEL_COLOR_YELLOW, "[DETECTED IN REGION %i] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", regionType, region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+						node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+				}
+				else
+				{
+					client->Message(CHANNEL_COLOR_RED, "[IN DIST RANGE] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+						node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+				}
+			}
+			else
+				client->Message(CHANNEL_COLOR_RED, "[OUT OF RANGE] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+					node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+		}
+		else
+			client->Message(CHANNEL_COLOR_RED, "[OUT OF GRID] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+				node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+
+		region_num++;
+	}
+}
+
+void RegionMapV1::MapRegionsNearSpawn(Spawn *spawn, Client *client) const
+{
+	map<Region_Node*, ZBSP_Node*>::const_iterator itr;
+	int region_num = 0;
+
+	spawn->RegionMutex.writelock();
+
+	glm::vec3 testLoc(spawn->GetX(), spawn->GetY(), spawn->GetZ());
+	for (itr = Regions.begin(); itr != Regions.end(); itr++)
+	{
+		Region_Node *node = itr->first;
+		ZBSP_Node *BSP_Root = itr->second;
+
+		if (node->regionScriptName.size() < 1)	// only track ones that are used with LUA scripting
+			continue;
+
+		float x1 = node->x - testLoc.x;
+		float y1 = node->y - testLoc.y;
+		float z1 = node->z - testLoc.z;
+		float dist = sqrt(x1 *x1 + y1 *y1 + z1 *z1);
+		if (dist <= node->dist)
+		{
+			WaterRegionType regionType = RegionTypeUntagged;
+
+			if (node->region_type == ClassWaterRegion)
+				regionType = BSPReturnRegionWaterRegion(node, BSP_Root, 1, testLoc, dist);
+			else
+				regionType = BSPReturnRegionTypeNode(node, BSP_Root, 1, testLoc, dist);
+
+			if (regionType != RegionTypeNormal)
+			{
+				if (!spawn->InRegion(node, BSP_Root))
+				{
+					spawn->DeleteRegion(node, BSP_Root);
+					std::map<Region_Node*, ZBSP_Node*> newMap;
+					newMap.insert(make_pair(node, BSP_Root));
+					Region_Status status;
+					status.inRegion = true;
+					status.regionType = regionType;
+					int32 returnValue = 0;
+					lua_interface->RunRegionScript(node->regionScriptName, "EnterRegion", spawn->GetZone(), spawn, regionType, &returnValue);
+					status.timerTic = returnValue;
+					status.lastTimerTic = returnValue ? Timer::GetCurrentTime2() : 0;
+					spawn->Regions.insert(make_pair(newMap, status));
+
+					if (client)
+						client->Message(CHANNEL_COLOR_YELLOW, "[ENTER REGION %i %u] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", regionType, returnValue, region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+							node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+				}
+			}
+			else
+			{
+				if (spawn->InRegion(node, BSP_Root))
+				{
+					if (client)
+						client->Message(CHANNEL_COLOR_RED, "[LEAVE REGION] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+							node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+					WaterRegionType whatWasRegionType = (WaterRegionType) spawn->GetRegionType(node, BSP_Root);
+					lua_interface->RunRegionScript(node->regionScriptName, "LeaveRegion", spawn->GetZone(), spawn, whatWasRegionType);
+				}
+				spawn->DeleteRegion(node, BSP_Root);
+
+				std::map<Region_Node*, ZBSP_Node*> newMap;
+				newMap.insert(make_pair(node, BSP_Root));
+				Region_Status status;
+				status.inRegion = false;
+				status.timerTic = 0;
+				status.lastTimerTic = 0;
+				status.regionType = RegionTypeNormal;
+				spawn->Regions.insert(make_pair(newMap, status));
+				if (client)
+					client->Message(CHANNEL_COLOR_RED, "[NEAR REGION] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+						node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+			}
+		}
+
+		region_num++;
+	}
+
+	spawn->RegionMutex.releasewritelock();
+}
+
+void RegionMapV1::UpdateRegionsNearSpawn(Spawn *spawn, Client *client) const
+{
+	map<map<Region_Node*, ZBSP_Node*>, Region_Status>::iterator testitr;
+	int region_num = 0;
+
+	spawn->RegionMutex.writelock();
+
+	glm::vec3 testLoc(spawn->GetX(), spawn->GetY(), spawn->GetZ());
+
+	map<Region_Node*, ZBSP_Node*> deleteNodes;
+	for (testitr = spawn->Regions.begin(); testitr != spawn->Regions.end(); testitr++)
+	{
+
+		map<Region_Node*, ZBSP_Node*>::const_iterator actualItr = testitr->first.begin();
+		Region_Node *node = actualItr->first;
+		ZBSP_Node *BSP_Root = actualItr->second;
+
+		float x1 = node->x - testLoc.x;
+		float y1 = node->y - testLoc.y;
+		float z1 = node->z - testLoc.z;
+		float dist = sqrt(x1 *x1 + y1 *y1 + z1 *z1);
+		if (dist <= node->dist)
+		{
+			WaterRegionType regionType = RegionTypeUntagged;
+
+			if (node->region_type == ClassWaterRegion)
+				regionType = BSPReturnRegionWaterRegion(node, BSP_Root, 1, testLoc, dist);
+			else
+				regionType = BSPReturnRegionTypeNode(node, BSP_Root, 1, testLoc, dist);
+
+			if (regionType != RegionTypeNormal)
+			{
+				if (!testitr->second.inRegion)
+				{
+					testitr->second.inRegion = true;
+					int32 returnValue = 0;
+					lua_interface->RunRegionScript(node->regionScriptName, "EnterRegion", spawn->GetZone(), spawn, regionType, &returnValue);
+					if (client)
+						client->Message(CHANNEL_COLOR_YELLOW, "[ENTER RANGE %i %u] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", regionType, returnValue, region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+							node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+					testitr->second.timerTic = returnValue;
+					testitr->second.lastTimerTic = returnValue ? Timer::GetCurrentTime2() : 0;
+				}
+			}
+			else
+			{
+				if (testitr->second.inRegion)
+				{
+					testitr->second.inRegion = false;
+					testitr->second.timerTic = 0;
+					testitr->second.lastTimerTic = 0;
+					if (client)
+						client->Message(CHANNEL_COLOR_RED, "[LEAVE RANGE] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+							node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+					WaterRegionType whatWasRegionType = (WaterRegionType) spawn->GetRegionType(node, BSP_Root);
+					lua_interface->RunRegionScript(node->regionScriptName, "LeaveRegion", spawn->GetZone(), spawn, whatWasRegionType);
+				}
+			}
+		}
+		else
+		{
+			if (client)
+				client->Message(CHANNEL_COLOR_RED, "[LEAVE RANGE - OOR] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+					node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+			deleteNodes.insert(make_pair(node, BSP_Root));
+		}
+
+		region_num++;
+	}
+
+	map<Region_Node*, ZBSP_Node*>::const_iterator deleteItr;
+	for (deleteItr = deleteNodes.begin(); deleteItr != deleteNodes.end(); deleteItr++)
+	{
+		Region_Node *tmpNode = deleteItr->first;
+		ZBSP_Node *bspNode = deleteItr->second;
+		spawn->DeleteRegion(tmpNode, bspNode);
+	}
+
+	spawn->RegionMutex.releasewritelock();
+}
+
+void RegionMapV1::TicRegionsNearSpawn(Spawn *spawn, Client *client) const
+{
+	map<map<Region_Node*, ZBSP_Node*>, Region_Status>::iterator testitr;
+	int region_num = 0;
+
+	spawn->RegionMutex.writelock();
+
+	for (testitr = spawn->Regions.begin(); testitr != spawn->Regions.end(); testitr++)
+	{
+		map<Region_Node*, ZBSP_Node*>::const_iterator actualItr = testitr->first.begin();
+		Region_Node *node = actualItr->first;
+		ZBSP_Node *BSP_Root = actualItr->second;
+
+		if (testitr->second.timerTic && testitr->second.inRegion && Timer::GetCurrentTime2() >= (testitr->second.lastTimerTic + testitr->second.timerTic))
+		{
+			testitr->second.lastTimerTic = Timer::GetCurrentTime2();
+			if (client)
+				client->Message(CHANNEL_COLOR_RED, "[TICK] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+					node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+			WaterRegionType whatWasRegionType = RegionTypeNormal;	// default will be 0
+
+			if (BSP_Root->special == -3)
+				whatWasRegionType = RegionTypeLava;	// 2
+			else if (BSP_Root->special == 1)
+				whatWasRegionType = RegionTypeWater;	// 1
+
+			int32 returnValue = 0;
+			lua_interface->RunRegionScript(node->regionScriptName, "Tick", spawn->GetZone(), spawn, whatWasRegionType, &returnValue);
+
+			if (returnValue == 1)
+			{
+				testitr->second.lastTimerTic = 0;
+				testitr->second.timerTic = 0;
+			}
+		}
+
+		region_num++;
+	}
+
+	spawn->RegionMutex.releasewritelock();
+}
+
+WaterRegionType RegionMapV1::BSPReturnRegionType(int32 node_number, const glm::vec3& location, int32 gridid) const {
 	map<Region_Node*, ZBSP_Node*>::const_iterator itr;
 	int region_num = 0;
 	for (itr = Regions.begin(); itr != Regions.end(); itr++)
 	{
+
 		Region_Node* node = itr->first;
+
+		// did not match grid id of current region, skip
+		//if ( gridid > 0 && gridid != node->grid_id)
+		//	continue;
+
 		ZBSP_Node* BSP_Root = itr->second;
 
 		float x1 = node->x - location.x;
@@ -129,7 +475,6 @@ WaterRegionType RegionMapV1::BSPReturnRegionType(int32 node_number, const glm::v
 		if (dist <= node->dist)
 		{
 			ZBSP_Node* BSP_Root = itr->second;
-			const ZBSP_Node* current_node = &BSP_Root[node_number - 1];
 
 			WaterRegionType regionType = RegionTypeUntagged;
 
@@ -295,7 +640,18 @@ WaterRegionType RegionMapV1::BSPReturnRegionWaterRegion(const Region_Node* regio
 			return(RegionTypeNormal);
 		}
 		else if (current_node->left == -2) {
-			return(RegionTypeWater);
+			switch(current_node->special)
+			{
+				case -3:
+					return(RegionTypeLava);
+					break;
+				case 1:
+					return(RegionTypeWater);
+					break;
+				default:
+					return(RegionTypeUntagged);
+					break;
+			}
 		}
 		return BSPReturnRegionWaterRegion(region_node, BSP_Root, current_node->left + 1, location, distToNode);
 	}

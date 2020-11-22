@@ -2172,6 +2172,14 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Success!");
 			break;
 										}
+		case COMMAND_RELOADREGIONSCRIPTS:{
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Region Scripts....");
+			if(lua_interface) {
+				lua_interface->DestroyRegionScripts();
+			}
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Success!");
+			break;
+										}
 		case COMMAND_RELOADLUASYSTEM:{
 			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Attempting to reload entire LUA system....");
 			map<Client*, int32> debug_clients = lua_interface->GetDebugClients();
@@ -3015,6 +3023,20 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					else
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "GM Vision Disabled!");
 				}
+				else if (strcmp(sep->arg[0], "regiondebug") == 0)
+				{
+					client->SetRegionDebug(onOff);
+					#if defined(__GNUC__)
+						database.insertCharacterProperty(client, CHAR_PROPERTY_REGIONDEBUG, (onOff) ? (char*)"1" : (char*)"0");
+					#else
+						database.insertCharacterProperty(client, CHAR_PROPERTY_REGIONDEBUG, (onOff) ? "1" : "0");
+					#endif
+
+					if (onOff)
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Region Debug Enabled!");
+					else
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Region Debug Disabled!");
+				}
 				else if (strcmp(sep->arg[0], "luadebug") == 0)
 				{
 					client->SetLuaDebugClient(onOff);
@@ -3576,14 +3598,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					}
 					else if (ToLower(string(sep->arg[0])) == "inwater")
 					{
-						glm::vec3 targPosZ(cmdTarget->GetX(), cmdTarget->GetZ(), cmdTarget->GetY());
-						float bestZ = client->GetPlayer()->FindDestGroundZ(targPosZ, cmdTarget->GetYOffset());
-						if ( bestZ == BEST_Z_INVALID )
-							bestZ = -999999.0f;
-							
-						glm::vec3 targPos(cmdTarget->GetY(), cmdTarget->GetX(), cmdTarget->GetZ());
-
-						if (client->GetCurrentZone()->regionmap == nullptr)
+						if (cmdTarget->GetRegionMap() == nullptr)
 							client->SimpleMessage(CHANNEL_COLOR_RED, "No water map for zone.");
 						else
 						{
@@ -3592,14 +3607,35 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						}
 						break;
 					}
+					else if (ToLower(string(sep->arg[0])) == "inlava")
+					{
+						if (cmdTarget->GetRegionMap() == nullptr)
+							client->SimpleMessage(CHANNEL_COLOR_RED, "No region map for zone.");
+						else
+						{
+							bool inLava = cmdTarget->InLava();
+							client->Message(CHANNEL_COLOR_YELLOW, "%s is %s.", cmdTarget->GetName(), inLava ? "in lava" : "out of lava");
+						}
+						break;
+					}
+					else if (ToLower(string(sep->arg[0])) == "regions")
+					{
+						glm::vec3 targPos(cmdTarget->GetX(), cmdTarget->GetY(), cmdTarget->GetZ());
+
+						if (cmdTarget->GetRegionMap() == nullptr)
+							client->SimpleMessage(CHANNEL_COLOR_RED, "No region map for zone.");
+						else
+						{
+							cmdTarget->GetRegionMap()->IdentifyRegionsInGrid(client, targPos);
+						}
+						break;
+					}
 					else if (ToLower(string(sep->arg[0])) == "pathto")
 					{
-
 						break;
 					}
 					else if (ToLower(string(sep->arg[0])) == "pathfrom")
 					{
-
 						break;
 					}
 				}
@@ -4921,8 +4957,8 @@ void Commands::Command_Grid(Client* client)
 {
 	client->Message(CHANNEL_COLOR_YELLOW, "Your Grid ID is %u", client->GetPlayer()->appearance.pos.grid_id);
 
-	if (client->GetCurrentZone()->Grid != nullptr) {
-		int32 grid = client->GetCurrentZone()->Grid->GetGridID(client->GetPlayer());
+	if (client->GetPlayer()->GetMap() != nullptr) {
+		int32 grid = client->GetPlayer()->GetMap()->GetGrid()->GetGridID(client->GetPlayer());
 		client->Message(CHANNEL_COLOR_YELLOW, "SPGrid result is %u", grid);
 	}
 }

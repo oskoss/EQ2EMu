@@ -86,8 +86,6 @@ extern int errno;
 #include "Bots/Bot.h"
 
 #ifdef WIN32
-#define snprintf	_snprintf
-#define vsnprintf	_vsnprintf
 #define strncasecmp	_strnicmp
 #define strcasecmp  _stricmp
 #endif
@@ -155,10 +153,7 @@ ZoneServer::ZoneServer(const char* name) {
 	holiday_flag = 0;
 	MMasterZoneLock = new CriticalSection(MUTEX_ATTRIBUTE_RECURSIVE);
 	
-	Grid = nullptr;
-	zonemap = nullptr;
 	pathing = nullptr;
-	regionmap = nullptr;
 	strcpy(zonesky_file,"");
 	
 	reloading = true;
@@ -204,20 +199,12 @@ ZoneServer::~ZoneServer() {
 		database.DeleteInstance(instanceID);
 	}
 
-	if (Grid != nullptr)
-		delete Grid;
-
-	if (zonemap != nullptr)
-		delete zonemap;
-
 	if (pathing != nullptr)
 		delete pathing;
 
 	if (movementMgr != nullptr)
 		delete movementMgr;
 
-	if (regionmap != nullptr)
-		delete regionmap;
 	LogWrite(ZONE__INFO, 0, "Zone", "Completed zone shutdown of '%s'", zone_name);
 	--numzones;
 	UpdateWindowTitle(0);
@@ -279,15 +266,16 @@ void ZoneServer::Init()
 	UpdateWindowTitle(0);
 
 	string zoneName(GetZoneFile());
-	if (Grid == nullptr) {
+			
+	world.LoadRegionMaps(zoneName);
+	
+	world.LoadMaps(zoneName);
+/*	if (Grid == nullptr) {
 		Grid = new SPGrid(string(GetZoneFile()), 0);
 	}
 	if (zonemap == nullptr) {
 		zonemap = Map::LoadMapFile(zoneName, Grid);
-	}
-	if (regionmap == nullptr) {
-		regionmap = RegionMap::LoadRegionMapfile(zoneName);
-	}
+	}*/
 
 	pathing = IPathfinder::Load(zoneName);
 	movementMgr = new MobMovementManager();
@@ -1353,19 +1341,13 @@ bool ZoneServer::Process()
 			MSpawnGroupChances.writelock(__FUNCTION__, __LINE__);
 			spawn_group_chances.clear();
 			MSpawnGroupChances.releasewritelock(__FUNCTION__, __LINE__);
-
+			Map* zonemap = world.GetMap(std::string(GetZoneName()),0);
 			while (zonemap != nullptr && zonemap->IsMapLoading())
 			{
 				SetWatchdogTime(Timer::GetCurrentTime2());
 				// Client loop
 				ClientProcess();
 				Sleep(10);
-			}
-
-			if (zonemap != nullptr && Grid != nullptr && !zonemap->IsMapLoaded())
-			{
-				delete Grid;
-				Grid = nullptr;
 			}
 
 			DeleteTransporters();
@@ -2927,7 +2909,8 @@ GroundSpawn* ZoneServer::AddGroundSpawn(SpawnLocation* spawnlocation, SpawnEntry
 }
 
 void ZoneServer::AddSpawn(Spawn* spawn) {
-	spawn->SetZone(this);
+	if(!spawn->IsPlayer()) // we already set it on loadCharacter
+		spawn->SetZone(this);
 
 	spawn->position_changed = false;
 	spawn->info_changed = false;
@@ -2962,10 +2945,7 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 		((Player*)spawn)->GetInfoStruct()->rain = rain;
 		((Player*)spawn)->SetCharSheetChanged(true);
 	}
-
-	if (Grid != nullptr) {
-		Grid->AddSpawn(spawn);
-	}
+	
 	if (movementMgr != nullptr && spawn->IsEntity()) {
 		movementMgr->AddMob((Entity*)spawn);
 	}
@@ -3849,9 +3829,6 @@ void ZoneServer::RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spa
 	spawn->RemoveSpawnProximities();
 	RemoveSpawnProximities(spawnListLocked, spawn);
 
-	if (Grid != nullptr) {
-		Grid->RemoveSpawnFromCell(spawn);
-	}
 	if (movementMgr != nullptr && spawn->IsEntity()) {
 		movementMgr->RemoveMob((Entity*)spawn);
 	}

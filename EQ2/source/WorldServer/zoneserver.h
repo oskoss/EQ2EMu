@@ -443,9 +443,6 @@ public:
 
 	map<int32, int32>* GetSpawnLocationsByGroup(int32 group_id);
 
-	SPGrid* Grid;
-	Map* zonemap;
-	RegionMap* regionmap;
 	IPathfinder* pathing;
 	MobMovementManager* movementMgr;
 

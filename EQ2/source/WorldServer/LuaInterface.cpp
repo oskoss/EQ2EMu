@@ -49,6 +49,7 @@ LuaInterface::LuaInterface() {
 	MItemScripts.SetName("LuaInterface::MItemScripts");
 	MSpellDelete.SetName("LuaInterface::MSpellDelete");
 	MCustomSpell.SetName("LuaInterface::MCustomSpell");
+	MRegionScripts.SetName("LuaInterface::MRegionScripts");
 	user_data_timer = new Timer(20000);
 	user_data_timer->Start();
 	spell_delete_timer = new Timer(5000);
@@ -117,6 +118,7 @@ LuaInterface::~LuaInterface() {
 	DestroyQuests();
 	DestroyItemScripts();
 	DestroyZoneScripts();
+	DestroyRegionScripts();
 	DeleteUserDataPtrs(true);
 	DeletePendingSpells(true);
 	safe_delete(user_data_timer);
@@ -225,6 +227,25 @@ void LuaInterface::DestroyZoneScripts()  {
 	MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
+void LuaInterface::DestroyRegionScripts()  {
+	map<string, map<lua_State*, bool> >::iterator itr;
+	map<lua_State*, bool>::iterator state_itr;
+	Mutex* mutex = 0;
+	MRegionScripts.writelock(__FUNCTION__, __LINE__);
+	for (itr = region_scripts.begin(); itr != region_scripts.end(); itr++){
+		mutex = GetRegionScriptMutex(itr->first.c_str());
+		mutex->writelock(__FUNCTION__, __LINE__);
+		for(state_itr = itr->second.begin(); state_itr != itr->second.end(); state_itr++)
+			lua_close(state_itr->first);
+		mutex->releasewritelock(__FUNCTION__, __LINE__);
+		safe_delete(mutex);
+	}
+	region_scripts.clear();
+	region_inverse_scripts.clear();
+	region_scripts_mutex.clear();
+	MRegionScripts.releasewritelock(__FUNCTION__, __LINE__);
+}
+
 void LuaInterface::ReloadSpells() {
 	DestroySpells();
 	database.LoadSpellScriptData();
@@ -313,6 +334,20 @@ bool LuaInterface::LoadZoneScript(const char* name)  {
 			MZoneScripts.writelock(__FUNCTION__, __LINE__);
 			zone_scripts[name][state] = false;
 			MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
+			ret = true;
+		}
+	}
+	return ret;
+}
+
+bool LuaInterface::LoadRegionScript(const char* name)  {
+	bool ret = false;
+	if (name) {
+		lua_State* state = LoadLuaFile(name);
+		if (state) {
+			MRegionScripts.writelock(__FUNCTION__, __LINE__);
+			region_scripts[name][state] = false;
+			MRegionScripts.releasewritelock(__FUNCTION__, __LINE__);
 			ret = true;
 		}
 	}
@@ -459,6 +494,16 @@ const char* LuaInterface::GetScriptName(lua_State* state)
 		return scriptName;
 	}
 	MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
+	
+	MRegionScripts.writelock(__FUNCTION__, __LINE__);
+	itr = region_inverse_scripts.find(state);
+	if (itr != region_inverse_scripts.end())
+	{
+		const char* scriptName = itr->second.c_str();
+		MRegionScripts.releasewritelock(__FUNCTION__, __LINE__);
+		return scriptName;
+	}
+	MRegionScripts.releasewritelock(__FUNCTION__, __LINE__);
 
 	MSpells.lock();
 	LuaSpell* spell = GetCurrentSpell(state);
@@ -479,6 +524,10 @@ bool LuaInterface::LoadSpawnScript(string name) {
 
 bool LuaInterface::LoadZoneScript(string name) {
 	return LoadZoneScript(name.c_str());
+}
+
+bool LuaInterface::LoadRegionScript(string name) {
+	return LoadRegionScript(name.c_str());
 }
 
 void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast, const char* function, SpellScriptTimer* timer, bool passLuaSpell) {
@@ -512,12 +561,13 @@ void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool preca
 		SetSpawnValue(spell->state, temp_spawn);
 	else {
 		if(spell->caster && spell->initial_target)
+		if(spell->caster && spell->initial_target)
 		{
 			// easier to debug target id as ptr
 			Spawn* new_target = spell->caster->GetZone()->GetSpawnByID(spell->initial_target);
 			SetSpawnValue(spell->state, new_target);
 		}
-		else if(spell->caster && spell->caster->GetTarget())
+				else if(spell->caster && spell->caster->GetTarget())
 			SetSpawnValue(spell->state, spell->caster->GetTarget());
 		else
 			SetSpawnValue(spell->state, 0);
@@ -599,6 +649,32 @@ bool LuaInterface::CallZoneScript(lua_State* state, int8 num_parameters) {
 		}
 		return false;
 	}
+	return true;
+}
+
+bool LuaInterface::CallRegionScript(lua_State* state, int8 num_parameters, int32* returnValue) {
+	if(shutting_down)
+		return false;
+	if (!state || lua_pcall(state, num_parameters, 1, 0) != 0) {
+		if (state){
+			const char* err = lua_tostring(state, -1);
+			LogError("%s: %s", GetScriptName(state), err);
+			lua_pop(state, 1);
+		}
+		return false;
+	}
+	
+	int32 result = 0;
+	
+	if (lua_isnumber(state, -1))
+	{
+		result = (int32)lua_tonumber(state, -1);
+		lua_pop(state, 1);
+	}
+	
+	if(returnValue)
+		*returnValue = result;
+	
 	return true;
 }
 
@@ -1154,6 +1230,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetSpellDisplayEffect", EQ2Emu_lua_GetSpellDisplayEffect);
 
 	lua_register(state, "InWater", EQ2Emu_lua_InWater);
+	lua_register(state, "InLava", EQ2Emu_lua_InLava);
+	
+	lua_register(state, "DamageSpawn", EQ2Emu_lua_DamageSpawn);
+	lua_register(state, "IsInvulnerable", EQ2Emu_lua_IsInvulnerable);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
@@ -1617,6 +1697,17 @@ Mutex* LuaInterface::GetZoneScriptMutex(const char* name) {
 	return mutex;
 }
 
+Mutex* LuaInterface::GetRegionScriptMutex(const char* name) {
+	Mutex* mutex = 0;
+	if(region_scripts_mutex.count(name) > 0)
+		mutex = region_scripts_mutex[name];
+	if(!mutex){
+		mutex = new Mutex();
+		region_scripts_mutex[name] = mutex;
+	}
+	return mutex;
+}
+
 void LuaInterface::UseItemScript(const char* name, lua_State* state, bool val) {
 	MItemScripts.writelock(__FUNCTION__, __LINE__);
 	item_scripts[name][state] = val;
@@ -1637,6 +1728,14 @@ void LuaInterface::UseZoneScript(const char* name, lua_State* state, bool val) {
 	zone_scripts[name][state] = val;
 	zone_inverse_scripts[state] = name;
 	MZoneScripts.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void LuaInterface::UseRegionScript(const char* name, lua_State* state, bool val) {
+
+	MRegionScripts.writelock(__FUNCTION__, __LINE__);
+	region_scripts[name][state] = val;
+	region_inverse_scripts[state] = name;
+	MRegionScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 lua_State* LuaInterface::GetItemScript(const char* name, bool create_new, bool use) {
@@ -1735,6 +1834,40 @@ lua_State* LuaInterface::GetZoneScript(const char* name, bool create_new, bool u
 	if(!ret && create_new){
 		if(name && LoadZoneScript(name))
 			ret = GetZoneScript(name);
+		else{
+			LogError("Error LUA Zone Script '%s'", name);
+			return 0;
+		}
+	}
+	return ret;
+}
+
+lua_State* LuaInterface::GetRegionScript(const char* name, bool create_new, bool use)  {
+	map<string, map<lua_State*, bool> >::iterator itr;
+	map<lua_State*, bool>::iterator region_script_itr;
+	lua_State* ret = 0;
+	Mutex* mutex = 0;
+
+	itr = region_scripts.find(name);
+	if(itr != region_scripts.end()) {
+		mutex = GetRegionScriptMutex(name);
+		mutex->readlock(__FUNCTION__, __LINE__);
+		for(region_script_itr = itr->second.begin(); region_script_itr != itr->second.end(); region_script_itr++){
+			if(!region_script_itr->second){ //not in use
+				ret = region_script_itr->first;
+
+				if (use)
+				{
+					region_script_itr->second = true;
+					break; // don't keep iterating, we already have our result
+				}
+			}
+		}
+		mutex->releasereadlock(__FUNCTION__, __LINE__);
+	}
+	if(!ret && create_new){
+		if(name && LoadRegionScript(name))
+			ret = GetRegionScript(name);
 		else{
 			LogError("Error LUA Zone Script '%s'", name);
 			return 0;
@@ -1890,6 +2023,52 @@ bool LuaInterface::RunZoneScript(string script_name, const char* function_name, 
 		if (mutex)
 			mutex->releasereadlock(__FUNCTION__, __LINE__);
 		UseZoneScript(script_name.c_str(), state, false);
+		return true;
+	}
+	else
+		return false;
+}
+
+
+bool LuaInterface::RunRegionScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn, sint32 int32_arg1, int32* returnValue) {
+	if (!zone)
+		return false;
+	lua_State* state = GetRegionScript(script_name.c_str(), true, true);
+	if (state) {
+		Mutex* mutex = GetRegionScriptMutex(script_name.c_str());
+		if (mutex)
+			mutex->readlock(__FUNCTION__, __LINE__);
+		else {
+			LogError("Error getting lock for '%s'", script_name.c_str());
+			UseRegionScript(script_name.c_str(), state, false);
+			return false;
+		}
+		lua_getglobal(state, function_name);
+		if (!lua_isfunction(state, lua_gettop(state))) {
+			lua_pop(state, 1);
+			mutex->releasereadlock(__FUNCTION__);
+			UseRegionScript(script_name.c_str(), state, false);
+			return false;
+		}
+		SetZoneValue(state, zone);
+		int8 num_params = 1;
+		if (spawn) {
+			SetSpawnValue(state, spawn);
+			num_params++;
+		}
+		if (int32_arg1 > 0) {
+			SetSInt32Value(state, int32_arg1);
+			num_params++;
+		}
+		if (!CallRegionScript(state, num_params, returnValue)) {
+			if (mutex)
+				mutex->releasereadlock(__FUNCTION__, __LINE__);
+			UseRegionScript(script_name.c_str(), state, false);
+			return false;
+		}
+		if (mutex)
+			mutex->releasereadlock(__FUNCTION__, __LINE__);
+		UseRegionScript(script_name.c_str(), state, false);
 		return true;
 	}
 	else

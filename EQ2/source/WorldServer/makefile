@@ -21,7 +21,7 @@ Lua_W_Flags	= -Wall
 
 # World flags
 C_Flags		= -I/usr/include/mariadb -I../depends/fmt/include -I../depends/recastnavigation/Detour/Include -I/usr/local/include/boost -I../depends/glm/ -march=native -pipe -pthread -std=c++0x
-LD_Flags	= -L/usr/lib/x86_64-linux-gnu -lz -lpthread -lmariadbclient -L../depends/recastnavigation/RecastDemo/Build/gmake/lib/Debug -lDebugUtils -lDetour -lDetourCrowd -lDetourTileCache -lRecast -L/usr/local/lib -rdynamic -lm -Wl,-E -ldl -lreadline -lboost_system -lboost_filesystem -lboost_iostreams
+LD_Flags	= -L/usr/lib/x86_64-linux-gnu -lz -lpthread -lmariadbclient -L../depends/recastnavigation/RecastDemo/Build/gmake/lib/Debug -lDebugUtils -lDetour -lDetourCrowd -lDetourTileCache -lRecast -L/usr/local/lib -rdynamic -lm -Wl,-E -ldl -lreadline -lboost_system -lboost_filesystem -lboost_iostreams -lboost_regex
 W_Flags		= -Wall -Wno-reorder
 D_Flags		= -DEQ2 -DWORLD -D_GNU_SOURCE
 

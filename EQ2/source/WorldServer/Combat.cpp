@@ -840,7 +840,7 @@ Skill* Entity::GetSkillByWeaponType(int8 type, bool update) {
 	return 0;
 }
 
-bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod, bool is_tick, bool no_calcs) {
+bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod, bool is_tick, bool no_calcs, bool ignore_attacker) {
 	if(!victim || victim->GetHP() == 0)
 		return false;
 
@@ -952,8 +952,11 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 	if(victim->IsNPC() && victim->GetHP() > 0)
 		((Entity*)victim)->AddHate(this, damage);
 
+	Entity* attacker = nullptr;
+	if(!ignore_attacker)
+		attacker = this;
 	if (damage > 0) {
-		GetZone()->SendDamagePacket(this, victim, type, hit_result, damage_type, damage, spell_name);
+		GetZone()->SendDamagePacket(attacker, victim, type, hit_result, damage_type, damage, spell_name);
 		if (IsStealthed() || IsInvis())
 			CancelAllStealth();
 
@@ -962,7 +965,7 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 	}
 	else if (useWards)
 	{
-		GetZone()->SendDamagePacket(this, victim, DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE, DAMAGE_PACKET_RESULT_NO_DAMAGE, damage_type, 0, spell_name);
+		GetZone()->SendDamagePacket(attacker, victim, DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE, DAMAGE_PACKET_RESULT_NO_DAMAGE, damage_type, 0, spell_name);
 	}
 
 	if (victim->GetHP() <= 0)
@@ -974,7 +977,7 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 		else
 			victim->CheckProcs(PROC_TYPE_PHYSICAL_DEFENSIVE, this);
 	}
-
+	
 	return crit;
 }
 

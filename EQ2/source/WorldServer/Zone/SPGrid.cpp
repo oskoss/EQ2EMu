@@ -393,36 +393,65 @@ int32 SPGrid::GetGridID(Spawn * spawn) {
 	return Grid;
 }
 
-void SPGrid::AddSpawn(Spawn * spawn) {
-	Cell* cell = GetCell(spawn->GetX(), spawn->GetZ());
-	AddSpawn(spawn, cell);
-}
+int32 SPGrid::GetGridIDByLocation(float x, float y, float z) {
+	FaceCell* cell = GetFaceCell(x, z);
+	
 
-void SPGrid::AddSpawn(Spawn * spawn, Cell * cell) {
-	cell->SpawnList.push_back(spawn);
-	spawn->Cell_Info.CurrentCell = cell;
-	spawn->Cell_Info.CellListIndex = cell->SpawnList.size() - 1;
-}
+	/*if (cell->GridBounds.size() == 1)
+		return cell->FaceList.begin()->first;*/
 
-void SPGrid::RemoveSpawnFromCell(Spawn * spawn) {
-	if (spawn->Cell_Info.CurrentCell) {
+	// Create the starting point for the trace
+	float point[3];
+	point[0] = x;
+	point[1] = y + 3.0f; // Small bump to make sure we are above ground when we do the trace
+	point[2] = z;
 
-		vector<Spawn*>& spawns = spawn->Cell_Info.CurrentCell->SpawnList;
+	// Create the direction for the trace, as we want what
+	// is below it will just be -1 in the y direction
+	float direction[3];
+	direction[0] = 0.0f;
+	direction[1] = -1.0f;
+	direction[2] = 0.0f;
 
-		// Only do the vector swap if the vector has more than 1 spawn in it
-		if (spawns.size() > 1) {
-			// Swap the last spawn in this list to our position and update its stored index to match its new index
-			spawns[spawn->Cell_Info.CellListIndex] = spawns.back();
-			spawns[spawn->Cell_Info.CellListIndex]->Cell_Info.CellListIndex = spawn->Cell_Info.CellListIndex;
+	float MinDistance = 0.0f;
+	int32 Grid = 0;
+
+	/*map<int32, GridBounds*>::iterator itr;
+	for (itr = cell->GridBounds.begin(); itr != cell->GridBounds.end(); itr++) {
+		GridBounds* bounds = (*itr).second;
+
+		if (point[0] >= bounds->MinBounds[0] && point[1] >= bounds->MinBounds[1] && point[2] >= bounds->MinBounds[2]
+			&& point[0] <= bounds->MaxBounds[0] && point[1] <= bounds->MaxBounds[1] && point[2] <= bounds->MaxBounds[2]) {
+
+			vector<Face*>::iterator itr2;
+			for (itr2 = cell->FaceList[(*itr).first].begin(); itr2 != cell->FaceList[(*itr).first].end(); itr2++) {
+				Face* face = *itr2;
+				float distance;
+				if ((distance = rayIntersectsTriangle(point, direction, face->Vertex1, face->Vertex2, face->Vertex3)) != 0) {
+					if (MinDistance == 0.0f || distance < MinDistance) {
+						MinDistance = distance;
+						Grid = (*itr).first;
+					}
+				}
+			}
 		}
-
-		// Remove the last spawn from the list which should now be the spawn passed as a parameter
-		spawns.pop_back();
-
-		// Reset the spawns CellInfo to default values now that it is no longer in a cell
-		spawn->Cell_Info.CellListIndex = -1;
-		spawn->Cell_Info.CurrentCell = nullptr;
+	}*/
+	map<int32, vector<Face*> >::iterator mapitr;
+	for (mapitr = cell->FaceList.begin(); mapitr != cell->FaceList.end(); mapitr++) {
+		vector<Face*>::iterator itr;
+		for (itr = (*mapitr).second.begin(); itr != (*mapitr).second.end(); itr++) {
+			Face* face = *itr;
+			float distance;
+			if ((distance = rayIntersectsTriangle(point, direction, face->Vertex1, face->Vertex2, face->Vertex3)) != 0) {
+				if (MinDistance == 0.0f || distance < MinDistance) {
+					MinDistance = distance;
+					Grid = (*mapitr).first;
+				}
+			}
+		}
 	}
+
+	return Grid;
 }
 
 float SPGrid::GetBestY(float x, float y, float z)

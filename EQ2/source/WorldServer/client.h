@@ -213,7 +213,7 @@ public:
 	void	SetCurrentZone(int32 id);
 	void	SetCurrentZone(ZoneServer* zone) { 
 		current_zone = zone;
-		player->SetZone(zone);
+		player->SetZone(zone, GetVersion());
 	}
 	Player*	GetPlayer(){ return player; }
 	EQStream*	getConnection(){ return eqs; }
@@ -459,6 +459,7 @@ public:
 	bool ShowPathToTarget(float x, float y, float z, float y_offset);
 	bool ShowPathToTarget(Spawn* spawn);
 
+	void SetRegionDebug(bool val) { regionDebugMessaging = val; }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -564,6 +565,10 @@ private:
 	int32 temporary_transport_id;
 
 	int32 rejoin_group_id;
+	
+	int32 lastRegionRemapTime;
+	
+	bool regionDebugMessaging;
 };
 
 class ClientList {

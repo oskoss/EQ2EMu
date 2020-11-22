@@ -188,6 +188,8 @@ public:
 	bool			LoadSpawnScript(const char* name);
 	bool			LoadZoneScript(string name);
 	bool			LoadZoneScript(const char* name);
+	bool			LoadRegionScript(string name);
+	bool			LoadRegionScript(const char* name);
 	void			RemoveSpell(LuaSpell* spell, bool call_remove_function = true, bool can_delete = true, string reason = "");
 	Spawn*			GetSpawn(lua_State* state, int8 arg_num = 1);
 	Item*			GetItem(lua_State* state, int8 arg_num = 1);
@@ -230,9 +232,11 @@ public:
 	void			UseItemScript(const char* name, lua_State* state, bool val);
 	void			UseSpawnScript(const char* name, lua_State* state, bool val);
 	void			UseZoneScript(const char* name, lua_State* state, bool val);
+	void			UseRegionScript(const char* name, lua_State* state, bool val);
 	lua_State*		GetItemScript(const char* name, bool create_new = true, bool use = false);
 	lua_State*		GetSpawnScript(const char* name, bool create_new = true, bool use = false);
 	lua_State*		GetZoneScript(const char* name, bool create_new = true, bool use = false);
+	lua_State*		GetRegionScript(const char* name, bool create_new = true, bool use = false);
 	Quest*			LoadQuest(int32 id, const char* name, const char* type, const char* zone, int8 level, const char* description, char* script_name);
 
 	const char*		GetScriptName(lua_State* state);
@@ -244,6 +248,8 @@ public:
 	bool			CallSpawnScript(lua_State* state, int8 num_parameters);
 	bool			RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn = 0, int32 int32_arg1 = 0, const char* str_arg1 = 0, Spawn* spawn_arg1 = 0, int32 int32_arg2 = 0, const char* str_arg2 = 0, Spawn* spawn_arg2 = 0);
 	bool			CallZoneScript(lua_State* state, int8 num_parameters);
+	bool			RunRegionScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn = 0, sint32 int32_arg1 = 0, int32* returnValue = 0);
+	bool			CallRegionScript(lua_State* state, int8 num_parameters, int32* returnValue);
 	void			ResetFunctionStack(lua_State* state);
 	void			DestroySpells();
 	void			DestroySpawnScripts();
@@ -251,6 +257,7 @@ public:
 	void			ReloadSpells();
 	void			DestroyQuests(bool reload = false);
 	void			DestroyZoneScripts();
+	void			DestroyRegionScripts();
 	void			SimpleLogError(const char* error);
 	void			LogError(const char* error, ...);
 
@@ -267,6 +274,7 @@ public:
 	Mutex*			GetSpawnScriptMutex(const char* name);
 	Mutex*			GetItemScriptMutex(const char* name);
 	Mutex*			GetZoneScriptMutex(const char* name);
+	Mutex*			GetRegionScriptMutex(const char* name);
 	Mutex*			GetQuestMutex(Quest* quest);
 
 	void			SetSpawnScriptsReloading(bool val) { spawn_scripts_reloading = val; }
@@ -301,6 +309,7 @@ private:
 	map<string, map<lua_State*, bool> > item_scripts;
 	map<string, map<lua_State*, bool> > spawn_scripts;
 	map<string, map<lua_State*, bool> > zone_scripts;
+	map<string, map<lua_State*, bool> > region_scripts;
 
 	map<int32, LuaSpell*> custom_spells;
 	std::deque<int32> custom_free_spell_ids;
@@ -308,11 +317,14 @@ private:
 	map<lua_State*, string> item_inverse_scripts;
 	map<lua_State*, string> spawn_inverse_scripts;
 	map<lua_State*, string> zone_inverse_scripts;
+	map<lua_State*, string> region_inverse_scripts;
 
 	map<string, Mutex*> item_scripts_mutex;
 	map<string, Mutex*> spawn_scripts_mutex;
 	map<string, Mutex*> zone_scripts_mutex;
-	map<int32, Mutex*> quests_mutex;	
+	map<int32, Mutex*> quests_mutex;
+	map<string, Mutex*> region_scripts_mutex;
+
 	Mutex			MDebugClients;
 	Mutex			MSpells;
 	Mutex			MSpawnScripts;
@@ -323,5 +335,6 @@ private:
 	Mutex			MLUAMain;
 	Mutex			MSpellDelete;
 	Mutex			MCustomSpell;
+	Mutex			MRegionScripts;
 };
 #endif

@@ -36,6 +36,9 @@
 
 #include "PlayerGroups.h"
 
+#include "./Zone/region_map.h"
+#include "./Zone/map.h"
+
 using namespace std;
 struct MerchantInfo{
 	vector<int32> inventory_ids;
@@ -623,6 +626,11 @@ public:
 	void SetSuppressedWarning() { suppressed_warning = Timer::GetCurrentTime2(); }
 	map<string, int32> GetOldestReloadingSubsystem();
 
+	void LoadRegionMaps(std::string zoneFile);
+	RegionMap* GetRegionMap(std::string zoneFile, int32 client_version);
+	
+	void LoadMaps(std::string zoneFile);
+	Map* GetMap(std::string zoneFile, int32 client_version);
 private:
 	int32 suppressed_warning = 0;
 	map<string, int32> reloading_subsystems;
@@ -681,5 +689,8 @@ private:
 
 	Mutex				MBugReport;
 	map<sint32, bool> bug_report_crc;
+
+	std::map<std::string, RegionMapRange*> region_maps;
+	std::map<std::string, MapRange*> maps;
 };
 #endif

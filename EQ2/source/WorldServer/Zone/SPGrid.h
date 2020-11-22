@@ -71,15 +71,7 @@ public:
 
 	// Checks the faces below the given spawn to determine the GridID
 	int32 GetGridID(Spawn* spawn);
-
-	// Calculate a cell from spawn's position and add the spawn to it
-	void AddSpawn(Spawn* spawn);
-
-	// Adds the spawn to a specific spell
-	void AddSpawn(Spawn* spawn, Cell* cell);
-
-	// Removes the spawn from the cell it is currently in
-	void RemoveSpawnFromCell(Spawn* spawn);
+	int32 GetGridIDByLocation(float x, float y, float z);
 
 	// Get cell based on cell coordinates
 	FaceCell* GetFaceCell(int32 x, int32 z);

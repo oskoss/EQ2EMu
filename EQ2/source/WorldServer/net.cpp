@@ -62,8 +62,6 @@ double frame_time = 0.0;
 
 #ifdef WIN32
 	#include <process.h>
-	#define snprintf	_snprintf
-	#define vsnprintf	_vsnprintf
 	#define strncasecmp	_strnicmp
 	#define strcasecmp  _stricmp
 	#include <conio.h>
@@ -165,7 +163,7 @@ int main(int argc, char** argv) {
 		return 0;
 	}
 	#endif
-
+	
 	LogWrite(WORLD__DEBUG, 0, "World", "Randomizing World...");
 	srand(time(NULL));
 
@@ -648,7 +646,7 @@ void CatchSignal(int sig_num) {
 	// when the world shuts down, if this happens again comment out the LogWrite and uncomment the printf
 	if (last_signal != sig_num){
 		static Mutex lock;
-		static ofstream signal_out;
+		static std::ofstream signal_out;
 
 		lock.lock();
 		if (!signal_out.is_open())

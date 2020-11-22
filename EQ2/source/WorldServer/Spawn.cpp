@@ -116,6 +116,9 @@ Spawn::Spawn(){
 	has_quests_required = false;
 	is_flying_creature = false;
 	is_water_creature = false;
+	region_map = nullptr;
+	current_map = nullptr;
+	RegionMutex.SetName("Spawn::RegionMutex");
 }
 
 Spawn::~Spawn(){
@@ -169,6 +172,8 @@ Spawn::~Spawn(){
 
 	// just in case to make sure data is destroyed
 	RemoveSpawnProximities();
+	
+	Regions.clear();
 }
 
 void Spawn::RemovePrimaryCommands()
@@ -797,7 +802,6 @@ uchar* Spawn::spawn_pos_changes(Player* player, int16 version) {
 		return nullptr;
 	}
 
-
 	uchar* tmp;
 	if (IsPlayer() && version > 283)
 		tmp = new uchar[size + 14];
@@ -1325,8 +1329,19 @@ ZoneServer*	Spawn::GetZone(){
 	return zone;
 }
 
-void Spawn::SetZone(ZoneServer* in_zone){
+void Spawn::SetZone(ZoneServer* in_zone, int32 version){
 	zone = in_zone;
+	
+	if(in_zone)
+	{
+		region_map = world.GetRegionMap(std::string(in_zone->GetZoneFile()), version);
+		current_map = world.GetMap(std::string(in_zone->GetZoneFile()), version);
+	}
+	else
+	{
+		region_map = nullptr;
+		current_map = nullptr;
+	}
 }
 
 
@@ -1349,6 +1364,9 @@ void Spawn::SetHP(sint32 new_val, bool setUpdateFlags){
 		else
 			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
 	}
+
+	if ( IsPlayer() && new_val == 0 ) // fixes on death not showing hp update for players
+		((Player*)this)->SetCharSheetChanged(true);
 
 	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer()) {
 		Player* player = (Player*)((NPC*)this)->GetOwner();
@@ -1977,7 +1995,24 @@ int32 Spawn::GetTransporterID(){
 
 void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool bSpawnUpdate) {
 	int16 version = packet->GetVersion();
-	packet->setDataByName("pos_grid_id", appearance.pos.grid_id);
+
+	int32 new_grid_id = 0;
+	if(player->GetMap() != nullptr)
+	{
+		std::map<int32,TimedGridData>::iterator itr = established_grid_id.find(version);
+		if ( itr == established_grid_id.end() || itr->second.timestamp <= (Timer::GetCurrentTime2()))
+		{
+			new_grid_id = player->GetMap()->GetGrid()->GetGridIDByLocation(GetX(),GetY(),GetZ());
+			TimedGridData data;
+			data.grid_id = new_grid_id;
+			data.timestamp = Timer::GetCurrentTime2()+100;
+			established_grid_id.insert(make_pair(packet->GetVersion(), data));
+		}
+		else
+			new_grid_id = itr->second.grid_id;
+	}
+	
+	packet->setDataByName("pos_grid_id", new_grid_id != 0 ? new_grid_id : appearance.pos.grid_id);
 	bool include_heading = true;
 	if (IsWidget() && ((Widget*)this)->GetIncludeHeading() == false)
 		include_heading = false;
@@ -2661,11 +2696,11 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		return;
 	}
 
-	if (forceMapCheck && GetZone() != nullptr && zone->zonemap != nullptr && zone->zonemap->IsMapLoaded())
+	if (forceMapCheck && GetZone() != nullptr && GetMap() != nullptr && GetMap()->IsMapLoaded())
 	{
 		FixZ(true);
 
-		int32 newGrid = GetZone()->Grid->GetGridID(this);
+		int32 newGrid = GetMap()->GetGrid()->GetGridID(this);
 		if (!IsFlyingCreature() && newGrid != 0 && newGrid != appearance.pos.grid_id)
 			SetPos(&(appearance.pos.grid_id), newGrid);
 
@@ -3082,14 +3117,9 @@ bool Spawn::CalculateChange(){
 					SetY(ny + tar_vy, false);
 			}
 
-			if (GetZone()->Grid != nullptr) {
-				Cell* newCell = GetZone()->Grid->GetCell(GetX(), GetZ());
-				if (newCell != Cell_Info.CurrentCell) {
-					GetZone()->Grid->RemoveSpawnFromCell(this);
-					GetZone()->Grid->AddSpawn(this, newCell);
-				}
-
-				int32 newGrid = GetZone()->Grid->GetGridID(this);
+			if (GetMap() != nullptr) {
+				Cell* newCell = GetMap()->GetGrid()->GetCell(GetX(), GetZ());
+				int32 newGrid = GetMap()->GetGrid()->GetGridID(this);
 				if (!IsFlyingCreature() && newGrid != 0 && newGrid != appearance.pos.grid_id)
 					SetPos(&(appearance.pos.grid_id), newGrid);
 			}
@@ -3540,10 +3570,10 @@ void Spawn::SetY(float y, bool updateFlags, bool disableYMapCheck)
 float Spawn::FindDestGroundZ(glm::vec3 dest, float z_offset)
 {
 	float best_z = BEST_Z_INVALID;
-	if (GetZone() != nullptr && GetZone()->zonemap != nullptr)
+	if (GetZone() != nullptr && GetMap() != nullptr)
 	{
 		dest.z += z_offset;
-		best_z = zone->zonemap->FindBestZ(dest, nullptr);
+		best_z = GetMap()->FindBestZ(dest, nullptr);
 	}
 	return best_z;
 }
@@ -3554,7 +3584,7 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 
 	float new_z = destination.z;
 
-	if (GetZone() != nullptr && zone->zonemap != nullptr) {
+	if (GetZone() != nullptr && GetMap() != nullptr) {
 
 /*		if (flymode == GravityBehavior::Flying)
 			return new_z;
@@ -3603,20 +3633,11 @@ void Spawn::FixZ(bool forceUpdate) {
 	glm::vec3 current_loc(GetX(), GetZ(), GetY());
 	float new_z = GetFixedZ(current_loc, 1);
 	
-	if ( GetZone()->regionmap != nullptr )
+	if ( region_map != nullptr )
 	{
-		glm::vec3 targPos(GetY(), GetX(), GetZ());
+		glm::vec3 targPos(GetX(), GetY(), GetZ());
 		
-		if ( IsGroundSpawn() )
-			targPos.x -= 1.0f;
-		else
-			targPos.x -= .5f; // standard offset to better assess shallow water
-			
-		float bestZ = -999999.0f;
-		if ( new_z != BEST_Z_INVALID )
-			bestZ = new_z - 1.0f;
-		
-		if(GetZone()->regionmap->InWater(targPos, bestZ))
+		if(region_map->InWater(targPos, appearance.pos.grid_id))
 			return;
 	}
 	
@@ -3644,10 +3665,10 @@ bool Spawn::CheckLoS(Spawn* target)
 bool Spawn::CheckLoS(glm::vec3 myloc, glm::vec3 oloc)
 {
 	ZoneServer* zone = GetZone();
-	if (zone == NULL || zone->zonemap == NULL || !zone->zonemap->IsMapLoaded())
+	if (zone == NULL || GetMap() == NULL || !GetMap()->IsMapLoaded())
 		return true;
 	else
-		return zone->zonemap->CheckLoS(myloc, oloc);
+		return GetMap()->CheckLoS(myloc, oloc);
 
 	return false;
 }
@@ -3832,28 +3853,82 @@ bool Spawn::InWater()
 {
 	bool inWater = false;
 
-	if (GetZone()->regionmap != nullptr)
-	{
-		glm::vec3 current_loc(GetX(), GetZ(), GetY());
-		float new_z = GetFixedZ(current_loc, 1);
-				
-		if ( GetZone()->regionmap != nullptr )
+		if ( region_map != nullptr )
 		{
-			glm::vec3 targPos(GetY(), GetX(), GetZ());
+			glm::vec3 targPos(GetX(), GetY(), GetZ());
 			if ( IsGroundSpawn() )
-				targPos.x -= 1.0f;
-			else
-				targPos.x -= .5f; // standard offset to better assess shallow water
-				
-			
-			float bestZ = -999999.0f;
-			if ( new_z != BEST_Z_INVALID )
-				bestZ = new_z;
+				targPos.y -= .5f;
 					
-			if(GetZone()->regionmap->InWater(targPos, bestZ))
-			inWater = true;
+			if(region_map->InWater(targPos, appearance.pos.grid_id))
+				inWater = true;
 		}
-	}
 
 	return inWater;
+}
+
+bool Spawn::InLava()
+{
+	bool inLava = false;
+
+		if ( region_map != nullptr )
+		{
+			glm::vec3 targPos(GetX(), GetY(), GetZ());
+			if ( IsGroundSpawn() )
+				targPos.y -= .5f;
+					
+			if(region_map->InLava(targPos, appearance.pos.grid_id))
+				inLava = true;
+		}
+
+	return inLava;
+}
+
+void Spawn::DeleteRegion(Region_Node* inNode, ZBSP_Node* rootNode)
+{
+	map<map<Region_Node*, ZBSP_Node*>, Region_Status>::iterator testitr;
+	for (testitr = Regions.begin(); testitr != Regions.end(); testitr++)
+	{
+		map<Region_Node*, ZBSP_Node*>::const_iterator actualItr = testitr->first.begin();
+		Region_Node* node = actualItr->first;
+		ZBSP_Node* BSP_Root = actualItr->second;
+		if(inNode == node && rootNode == BSP_Root )
+		{
+			testitr = Regions.erase(testitr);
+			break;
+		}
+	}
+}
+
+bool Spawn::InRegion(Region_Node* inNode, ZBSP_Node* rootNode)
+{
+	map<map<Region_Node*, ZBSP_Node*>, Region_Status>::iterator testitr;
+	for (testitr = Regions.begin(); testitr != Regions.end(); testitr++)
+	{
+		map<Region_Node*, ZBSP_Node*>::const_iterator actualItr = testitr->first.begin();
+		Region_Node* node = actualItr->first;
+		ZBSP_Node* BSP_Root = actualItr->second;
+		if(inNode == node && rootNode == BSP_Root )
+		{
+			return testitr->second.inRegion;
+		}
+	}
+		
+	return false;
+}
+
+int32 Spawn::GetRegionType(Region_Node* inNode, ZBSP_Node* rootNode)
+{
+	map<map<Region_Node*, ZBSP_Node*>, Region_Status>::iterator testitr;
+	for (testitr = Regions.begin(); testitr != Regions.end(); testitr++)
+	{
+		map<Region_Node*, ZBSP_Node*>::const_iterator actualItr = testitr->first.begin();
+		Region_Node* node = actualItr->first;
+		ZBSP_Node* BSP_Root = actualItr->second;
+		if(inNode == node && rootNode == BSP_Root )
+		{
+			return testitr->second.regionType;
+		}
+	}
+	
+	return false;
 }

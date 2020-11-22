@@ -1645,7 +1645,7 @@ int EQ2Emu_lua_SetCurrentHP(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	sint32 value = lua_interface->GetSInt32Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
-	if (spawn && value > 0) {
+	if (spawn) {
 		spawn->SetHP(value);
 		if (value > spawn->GetTotalHPBase())
 			spawn->SetTotalHP(value);
@@ -11040,6 +11040,68 @@ int EQ2Emu_lua_InWater(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	if (spawn) {
 		lua_interface->SetBooleanValue(state, spawn->InWater());
+		return 1;
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_InLava(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn) {
+		lua_interface->SetBooleanValue(state, spawn->InLava());
+		return 1;
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_DamageSpawn(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* attacker = lua_interface->GetSpawn(state);
+	Spawn* victim = lua_interface->GetSpawn(state, 2);
+	int8 type = lua_interface->GetInt8Value(state, 3);
+	int8 dmg_type = lua_interface->GetInt8Value(state, 4);
+	int32 low_damage = lua_interface->GetInt32Value(state, 5);
+	int32 high_damage = lua_interface->GetInt32Value(state, 6);
+	string spell_name = lua_interface->GetStringValue(state, 7);
+	int8 crit_mod = lua_interface->GetInt8Value(state, 8);
+	bool is_tick = (lua_interface->GetInt8Value(state, 9) == 1);
+	bool no_calcs = (lua_interface->GetInt8Value(state, 10) == 1);
+	bool ignore_attacker = (lua_interface->GetInt8Value(state, 11) == 1);
+
+	if (!attacker) {
+		lua_interface->LogError("%s: LUA ProcDamage command error: caster is not a valid spawn", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!attacker->IsEntity()) {
+		lua_interface->LogError("%s: LUA ProcDamage command error: caster is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!victim) {
+		lua_interface->LogError("%s: LUA ProcDamage command error: target is not a valid spawn", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!victim->IsEntity()) {
+		lua_interface->LogError("%s: LUA ProcDamage command error: target is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	((Entity*)attacker)->DamageSpawn((Entity*)victim, type, dmg_type, low_damage, high_damage, spell_name.c_str(), crit_mod, is_tick, no_calcs, ignore_attacker);
+	return 0;
+}
+
+int EQ2Emu_lua_IsInvulnerable(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn) {
+		lua_interface->SetBooleanValue(state, spawn->GetInvulnerable());
 		return 1;
 	}
 	return 0;

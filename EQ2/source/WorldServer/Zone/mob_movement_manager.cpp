@@ -476,7 +476,7 @@ struct MobMovementEntry {
 
 void AdjustRoute(std::list<IPathfinder::IPathNode> &nodes, Entity *who)
 {
-	if (who->GetZone() == nullptr || !who->GetZone()->zonemap /*|| !zone->HasWaterMap()*/) {
+	if (who->GetZone() == nullptr || !who->GetMap() /*|| !zone->HasWaterMap()*/) {
 		return;
 	}
 
@@ -484,7 +484,7 @@ void AdjustRoute(std::list<IPathfinder::IPathNode> &nodes, Entity *who)
 
 	for (auto &node : nodes) {
 		//if (!zone->watermap->InLiquid(node.pos)) {
-			auto best_z = who->GetZone()->zonemap->FindBestZ(node.pos, nullptr);
+			auto best_z = who->GetMap()->FindBestZ(node.pos, nullptr);
 			if (best_z != BEST_Z_INVALID) {
 				node.pos.z = best_z + offset;
 			}
@@ -818,7 +818,7 @@ void MobMovementManager::ClearStats()
  */
 void MobMovementManager::UpdatePath(Entity *who, float x, float y, float z, MobMovementMode mob_movement_mode)
 {
-	if (!who->GetZone()->zonemap /*|| !zone->HasWaterMap()*/) {
+	if (!who->GetMap() /*|| !zone->HasWaterMap()*/) {
 		MobListMutex.readlock();
 		auto iter = _impl->Entries.find(who);
 
@@ -1018,7 +1018,7 @@ void MobMovementManager::UpdatePathUnderwater(Entity *who, float x, float y, flo
 
 	auto &ent  = (*eiter);
 	if (/*zone->watermap->InLiquid(who->GetPosition()) && zone->watermap->InLiquid(glm::vec3(x, y, z)) &&*/
-		who->GetZone()->zonemap->CheckLoS(glm::vec3(who->GetX(),who->GetZ(),who->GetY()), glm::vec3(x, y, z))) {
+		who->GetMap()->CheckLoS(glm::vec3(who->GetX(),who->GetZ(),who->GetY()), glm::vec3(x, y, z))) {
 		PushSwimTo(ent.second, x, y, z, movement_mode);
 		PushStopMoving(ent.second);
 		MobListMutex.releasereadlock();

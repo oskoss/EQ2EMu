@@ -23,6 +23,7 @@
 #define ZONE_MAP_H
 
 #include "../../common/types.h"
+#include "../../common/MiscFunctions.h"
 #include "../../common/Mutex.h"
 #include "position.h"
 #include <stdio.h>
@@ -33,7 +34,7 @@
 class Map
 {
 public:
-	Map(string filename, SPGrid* grid=nullptr);
+	Map(string zonename, string filename, SPGrid* grid=nullptr);
 	~Map();
 
 	float FindBestZ(glm::vec3 &start, glm::vec3 *result);
@@ -43,13 +44,9 @@ public:
 	bool CheckLoS(glm::vec3 myloc, glm::vec3 oloc);
 	bool DoCollisionCheck(glm::vec3 myloc, glm::vec3 oloc, glm::vec3 &outnorm, float &distance);
 
-#ifdef USE_MAP_MMFS
-	bool Load(std::string filename, bool force_mmf_overwrite = false);
-#else
 	bool Load(const std::string& filename);
-#endif
 
-	static Map *LoadMapFile(std::string file, SPGrid* grid=nullptr);
+	static Map *LoadMapFile(std::string zonename, std::string file, SPGrid* grid=nullptr);
 
 	std::string GetFileName() { return m_ZoneFile; }
 	void SetMapLoaded(bool val) {
@@ -83,6 +80,8 @@ public:
 	float GetMaxZ() { return m_MaxZ; }
 
 	void SetFileName(std::string newfile) { m_FileName = string(newfile); }
+	
+	SPGrid* GetGrid() { return mGrid; }
 private:
 	void RotateVertex(glm::vec3 &v, float rx, float ry, float rz);
 	void ScaleVertex(glm::vec3 &v, float sx, float sy, float sz);
@@ -92,6 +91,7 @@ private:
 
 	string m_FileName;
 	string m_ZoneFile;
+	string m_ZoneName;
 	int32 m_CellSize;
 
 	float m_MinX;
@@ -111,6 +111,24 @@ private:
 	bool mapLoading;
 	Mutex CheckMapMutex;
 	SPGrid* mGrid;
+};
+
+class MapRange {
+public:
+	MapRange();
+
+	~MapRange();
+
+	void Clear();
+	
+	void AddVersionRange(std::string zoneName);
+
+	map<VersionRange*, Map*>::iterator FindVersionRange(int32 min_version, int32 max_version);
+	map<VersionRange*, Map*>::iterator FindMapByVersion(int32 version);
+	map<VersionRange*, Map*>::iterator GetRangeEnd() { return version_map.end(); }
+private:
+	std::map<VersionRange*, Map*> version_map;
+	string name;
 };
 
 #endif
