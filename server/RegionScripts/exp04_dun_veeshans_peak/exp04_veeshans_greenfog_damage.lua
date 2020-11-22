@@ -1,0 +1,2 @@
+-- https://eq2.fandom.com/wiki/Veeshan%27s_Peak
+-- TODO: After you kill Kluzen, go through the tunnel and kill Nexona. Be careful not to go in the water; it will hurt you after a few seconds. ?? need more details!
