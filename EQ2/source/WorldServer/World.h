@@ -692,5 +692,7 @@ private:
 
 	std::map<std::string, RegionMapRange*> region_maps;
 	std::map<std::string, MapRange*> maps;
+	Mutex				MWorldMaps;
+	Mutex				MWorldRegionMaps;
 };
 #endif

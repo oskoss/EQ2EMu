@@ -110,6 +110,8 @@ World::World() : save_time_timer(300000), time_tick_timer(3000), vitality_timer(
 	merchant_inventory_items.clear();
 	MHouseZones.SetName("World::m_houseZones");
 	MPlayerHouses.SetName("World::m_playerHouses");
+	MWorldMaps.SetName("World::MWorldMaps");
+	MWorldRegionMaps.SetName("World::MWorldRegionMaps");
 }
 
 World::~World(){
@@ -2393,6 +2395,7 @@ void World::LoadRegionMaps(std::string zoneFile)
 	string zoneToLower(zoneFile);
 	boost::algorithm::to_lower(zoneToLower);
 
+	MWorldRegionMaps.writelock();
 	std::map<std::string, RegionMapRange*>::iterator itr;
 	itr = region_maps.find(zoneToLower);
 	if (itr == region_maps.end())
@@ -2402,6 +2405,7 @@ void World::LoadRegionMaps(std::string zoneFile)
 
 		region_maps.insert(make_pair(zoneToLower, newRange));
 	}
+	MWorldRegionMaps.releasewritelock();
 }
 
 RegionMap* World::GetRegionMap(std::string zoneFile, int32 client_version)
@@ -2409,6 +2413,7 @@ RegionMap* World::GetRegionMap(std::string zoneFile, int32 client_version)
 	string zoneToLower(zoneFile);
 	boost::algorithm::to_lower(zoneToLower);
 
+	MWorldRegionMaps.readlock();
 	std::map<std::string, RegionMapRange*>::iterator itr;
 	itr = region_maps.find(zoneToLower);
 	if ( itr != region_maps.end())
@@ -2416,9 +2421,13 @@ RegionMap* World::GetRegionMap(std::string zoneFile, int32 client_version)
 		std::map<VersionRange*, RegionMap*>::iterator rmitr;
 		rmitr = itr->second->FindRegionByVersion(client_version);
 		if ( rmitr != itr->second->GetRangeEnd())
+		{	
+			MWorldRegionMaps.releasereadlock();
 			return rmitr->second;
+		}
 	}
 
+	MWorldRegionMaps.releasereadlock();
 	return nullptr;
 }
 
@@ -2428,6 +2437,7 @@ void World::LoadMaps(std::string zoneFile)
 	string zoneToLower(zoneFile);
 	boost::algorithm::to_lower(zoneToLower);
 
+	MWorldMaps.writelock();
 	std::map<std::string, MapRange*>::iterator itr;
 	itr = maps.find(zoneToLower);
 	if (itr == maps.end())
@@ -2437,6 +2447,7 @@ void World::LoadMaps(std::string zoneFile)
 
 		maps.insert(make_pair(zoneToLower, newRange));
 	}
+	MWorldMaps.releasewritelock();
 }
 
 Map* World::GetMap(std::string zoneFile, int32 client_version)
@@ -2444,6 +2455,7 @@ Map* World::GetMap(std::string zoneFile, int32 client_version)
 	string zoneToLower(zoneFile);
 	boost::algorithm::to_lower(zoneToLower);
 
+	MWorldMaps.readlock();
 	std::map<std::string, MapRange*>::iterator itr;
 	itr = maps.find(zoneToLower);
 	if ( itr != maps.end())
@@ -2451,8 +2463,12 @@ Map* World::GetMap(std::string zoneFile, int32 client_version)
 		std::map<VersionRange*, Map*>::iterator rmitr;
 		rmitr = itr->second->FindMapByVersion(client_version);
 		if ( rmitr != itr->second->GetRangeEnd())
+		{
+			MWorldMaps.releasereadlock();
 			return rmitr->second;
+		}
 	}
 
+	MWorldMaps.releasereadlock();
 	return nullptr;
 }
