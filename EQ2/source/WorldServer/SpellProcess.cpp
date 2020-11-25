@@ -429,7 +429,11 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason){
 
 bool SpellProcess::ProcessSpell(LuaSpell* spell, bool first_cast, const char* function, SpellScriptTimer* timer) {
 	bool ret = false;
-	if(lua_interface && !spell->interrupted){
+	if(!spell->state)
+	{
+		LogWrite(SPELL__ERROR, 0, "Spell", "Error: State is NULL!  SpellProcess::ProcessSpell for Spell '%s'", (spell->spell != nullptr) ? spell->spell->GetName() : "Unknown");
+	}
+	else if(lua_interface && !spell->interrupted){
 		lua_interface->AddSpawnPointers(spell, first_cast, false, function, timer);
 		vector<LUAData*>* data = spell->spell->GetLUAData();
 		for(int32 i=0;i<data->size();i++){
