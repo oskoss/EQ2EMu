@@ -1080,14 +1080,18 @@ void Entity::KillSpawn(Spawn* dead, int8 damage_type, int16 kill_blow_type) {
 	//if (dead->IsEntity())								same code called in zone server
 		//((Entity*)dead)->InCombat(false);
 	
+
+	/* just for sake of not knowing if we are in a read lock, write lock, or no lock
+	**  say spawnlist is locked (DismissPet arg 3 true), which means RemoveSpawn will remove the id from the spawn_list outside of the potential lock
+	*/
 	if (dead->IsPet())
-		((NPC*)dead)->GetOwner()->DismissPet((NPC*)dead, true);
+		((NPC*)dead)->GetOwner()->DismissPet((NPC*)dead, true, true);
 	else if (dead->IsEntity()) {
 		// remove all pets for this entity
-		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetPet());
-		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetCharmedPet());
-		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetDeityPet());
-		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetCosmeticPet());
+		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetPet(), false, true);
+		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetCharmedPet(), false, true);
+		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetDeityPet(), false, true);
+		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetCosmeticPet(), false, true);
 	}
 
 	// If not in combat and no one in the encounter list add this killer to the list

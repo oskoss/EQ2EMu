@@ -404,15 +404,6 @@ public:
 	
 	void    RemoveTargetFromSpell(LuaSpell* spell, Spawn* target);
 
-	/// <summary>Schedules a spawn for removal</summary>
-	/// <param name='spawn'>The spawn to remove</param>
-	/// <param name='time'>The delay before removing the spawn</param>
-	void	AddDelayedSpawnRemove(Spawn* spawn, int32 time);
-
-	/// <summary>Removes a spawn from scheduled removal (used mainly for players returning from LD)</summary>
-	/// <param name='spawn'>The spawn to remove from the scheduled removal</param>
-	void	RemoveDelayedSpawnRemove(Spawn* spawn);
-
 	/// <summary>Set the rain levl in the zone</summary>
 	/// <param name='val'>Level of rain in the zone 0.0 - 1.1 (rain starts at 0.76)</param>
 	void	SetRain(float val);
@@ -669,6 +660,8 @@ public:
 	int32 GetWatchdogTime() { return watchdogTimestamp; }
 	void SetWatchdogTime(int32 time) { watchdogTimestamp = time; }
 	void CancelThreads();
+
+	void AddPendingSpawnRemove(int32 id);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
@@ -746,7 +739,6 @@ private:
 	void	ProcessAggroChecks(Spawn* spawn);																	// never used outside zone server
 	/// <summary>Checks to see if it is time to remove a spawn and removes it</summary>
 	/// <param name='force_delete_all'>Forces all spawns scheduled to be removed regardless of time</param>
-	void	DelayedSpawnRemoval(bool force_delete_all);															// never used outside zone server
 	bool CombatProcess(Spawn* spawn);																			// never used outside zone server
 	void	InitWeather();																						// never used outside zone server
 	///<summary>Dismiss all pets in the zone, useful when the spell process needs to be reloaded</summary>
@@ -768,7 +760,6 @@ private:
 	
 	/* Mutex Maps */
 	MutexMap<Spawn*, Client*>						client_spawn_map;								// ok
-	MutexMap<int32, int32>							delayed_spawn_remove_list;						// 1st int32 = spawn id, 2nd int32 = time
 	MutexMap<Client*, int32>						drowning_victims;
 	MutexMap<Spawn*, int32>							heading_timers;
 	MutexMap<int32, int32>							movement_spawns;								// 1st int32 = spawn id
@@ -947,6 +938,9 @@ private:
 	map<int32, string> m_transportMaps;
 	
 	int32 watchdogTimestamp;
+
+	vector<int32> m_pendingSpawnRemove;
+	Mutex MPendingSpawnRemoval;
 public:
 	Spawn*				GetSpawn(int32 id);
 

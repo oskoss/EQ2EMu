@@ -560,8 +560,7 @@ void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool preca
 	if (temp_spawn)
 		SetSpawnValue(spell->state, temp_spawn);
 	else {
-		if(spell->caster && spell->initial_target)
-		if(spell->caster && spell->initial_target)
+		if(spell->caster && spell->caster->GetZone() != nullptr && spell->initial_target)
 		{
 			// easier to debug target id as ptr
 			Spawn* new_target = spell->caster->GetZone()->GetSpawnByID(spell->initial_target);

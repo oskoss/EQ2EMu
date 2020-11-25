@@ -1125,7 +1125,7 @@ void Entity::HideCosmeticPet(bool val) {
 		cosmeticPet->MakeSpawnPublic();
 }
 
-void Entity::DismissPet(NPC* pet, bool from_death) {
+void Entity::DismissPet(NPC* pet, bool from_death, bool spawnListLocked) {
 	if (!pet)
 		return;
 
@@ -1164,7 +1164,7 @@ void Entity::DismissPet(NPC* pet, bool from_death) {
 
 	// remove the spawn from the world
 	if (!from_death && pet->GetPetType() != PET_TYPE_CHARMED)
-		GetZone()->RemoveSpawn(false, pet);
+		GetZone()->RemoveSpawn(spawnListLocked, pet);
 }
 
 float Entity::CalculateBonusMod() {

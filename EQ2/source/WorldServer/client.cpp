@@ -9230,7 +9230,6 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 						GetPlayer()->SetPendingDeletion(false);
 						GetPlayer()->ResetSavedSpawns();
 						GetPlayer()->SetReturningFromLD(true);
-						GetPlayer()->GetZone()->RemoveDelayedSpawnRemove(GetPlayer());
 					}
 					ZoneServer* tmpZone = client->GetCurrentZone();
 					tmpZone->RemoveClientImmediately(client);

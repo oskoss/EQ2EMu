@@ -4948,7 +4948,7 @@ int EQ2Emu_lua_DismissPet(lua_State* state) {
 	}
 
 	if (!((NPC*)spawn)->IsDismissing())
-		((NPC*)spawn)->GetOwner()->DismissPet((NPC*)spawn);
+		((NPC*)spawn)->GetOwner()->DismissPet((NPC*)spawn, false, true);
 
 	return 0;
 }

@@ -680,7 +680,7 @@ public:
 
 	void HideDeityPet(bool val);
 	void HideCosmeticPet(bool val);
-	void DismissPet(NPC* pet, bool from_death = false);
+	void DismissPet(NPC* pet, bool from_death = false, bool spawnListLocked = false);
 
 	/// <summary>Creates a loot chest to drop in the world</summary>
 	/// <returns>Pointer to the chest</returns>
