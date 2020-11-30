@@ -269,6 +269,11 @@ void RuleManager::Init()
 	RULE_INIT(R_World, SaveHeadshotImage, "1");						// default: true
 	RULE_INIT(R_World, SendPaperdollImagesToLogin, "1");			// default: true
 	RULE_INIT(R_World, TreasureChestDisabled, "0");					// default: false
+	RULE_INIT(R_World, StartingZoneRuleFlag, "0");					// default: 0 - match any options available, just based on version/other fields (will not force qc/outpost)
+																	// 1 - force split zones on alignment/deity despite client selection (queens colony/overlord outpost)
+																	// 2 - (isle of refuge)
+																	// 4 - send to 'new' starting zones, won't support old clients
+																	// 5+ - send to new and old starting zones as needed
 	//INSERT INTO `ruleset_details`(`id`, `ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (NULL, '1', 'R_World', '', '', '')
 
 	/* ZONE */
@@ -385,6 +390,10 @@ bool RuleManager::SetGlobalRuleSet(int32 rule_set_id) {
 }
 
 Rule * RuleManager::GetGlobalRule(int32 category, int32 type) {
+	return global_rule_set.GetRule(category, type);
+}
+
+Rule * RuleManager::GetGlobalRule(const char* category, const char* type) {
 	return global_rule_set.GetRule(category, type);
 }
 

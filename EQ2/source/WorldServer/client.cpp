@@ -621,7 +621,7 @@ void Client::HandlePlayerRevive(int32 point_id)
 		safe_delete(packet);
 	}
 
-	GetCurrentZone()->RemoveSpawn(false, player, false);
+	GetCurrentZone()->RemoveSpawn(player, false);
 
 	m_resurrect.writelock(__FUNCTION__, __LINE__);
 	if (current_rez.active)
@@ -1200,8 +1200,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		if (GetTempPlacementSpawn())
 		{
 			Spawn* tmp = GetTempPlacementSpawn();
-			GetCurrentZone()->RemoveSpawn(false, tmp);
-			delete tmp;
+			GetCurrentZone()->RemoveSpawn(tmp);
 			SetTempPlacementSpawn(nullptr);
 			SetPlacementUniqueItemID(0);
 			break; // break out early if we are tied to a temp spawn
@@ -3152,7 +3151,7 @@ void ClientList::Remove(Client* client, bool remove_data) {
 void Client::SetCurrentZone(int32 id) {
 	if (current_zone) {
 		//current_zone->GetCombat()->RemoveHate(player);
-		current_zone->RemoveSpawn(false, player, false);
+		current_zone->RemoveSpawn(player, false);
 	}
 	SetCurrentZone(zone_list.Get(id));
 
@@ -3161,7 +3160,7 @@ void Client::SetCurrentZone(int32 id) {
 void Client::SetCurrentZoneByInstanceID(int32 id, int32 zoneid) {
 	if (current_zone) {
 		//current_zone->GetCombat()->RemoveHate(player);
-		current_zone->RemoveSpawn(false, player, false);
+		current_zone->RemoveSpawn(player, false);
 	}
 	SetCurrentZone(zone_list.GetByInstanceID(id, zoneid));
 
@@ -3820,7 +3819,7 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Removing player from current zone...", __FUNCTION__);
-	GetCurrentZone()->RemoveSpawn(false, player, false);
+	GetCurrentZone()->RemoveSpawn(player, false);
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting zone to '%s'...", __FUNCTION__, new_zone->GetZoneName());
 	SetCurrentZone(new_zone);
@@ -6016,7 +6015,7 @@ void Client::SaveCombineSpawns(const char* name) {
 	else if ((spawnLocationID = database.SaveCombinedSpawnLocation(GetCurrentZone(), combine_spawn, name)) > 0) {
 		Message(CHANNEL_COLOR_YELLOW, "Successfully combined %u spawns into spawn location: %u", count, spawnLocationID);
 		// we remove the spawn inside SaveCombinedSpawnLocation
-		//GetCurrentZone()->RemoveSpawn(false, combine_spawn);
+		//GetCurrentZone()->RemoveSpawn(combine_spawn);
 	}
 	else
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "Error saving spawn group, check console for details.");

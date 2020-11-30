@@ -303,7 +303,7 @@ public:
 	
 	void	AddSpawnGroupChance(int32 group_id, float percent);
 	
-	void	RemoveSpawn(bool spawnListLocked, Spawn* spawn, bool delete_spawn = true, bool respawn = true, bool lock = true);
+	void	RemoveSpawn(Spawn* spawn, bool delete_spawn = true, bool respawn = true, bool lock = true);
 	void	ProcessSpawnLocations();
 	void	SendQuestUpdates(Client* client, Spawn* spawn = 0);
 	
@@ -645,7 +645,7 @@ public:
 	void SetSpawnStructs(Client* client);
 
 	void AddSpawnProximities(Spawn* spawn);
-	void RemoveSpawnProximities(bool spawnListLocked, Spawn* spawn);
+	void RemoveSpawnProximities(Spawn* spawn);
 	void SetSpawnScript(SpawnEntry* entry, Spawn* spawn);
 	bool IsLoading() {
 		return LoadingData;
@@ -662,6 +662,7 @@ public:
 	void CancelThreads();
 
 	void AddPendingSpawnRemove(int32 id);
+	void ProcessSpawnRemovals();
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;

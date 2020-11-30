@@ -1611,6 +1611,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if (!client->ShowPathToTarget(atof(sep->arg[0]), atof(sep->arg[1]), atof(sep->arg[2]), 0))
 					client->Message(CHANNEL_COLOR_RED, "Invalid coordinates given");
 			}
+			else if ( client->GetAdminStatus() > 100 && cmdTarget ) {
+				if (!client->ShowPathToTarget(cmdTarget->GetX(), cmdTarget->GetY(), cmdTarget->GetZ(), 0))
+					client->Message(CHANNEL_COLOR_RED, "Invalid coordinates given");
+			}
 			else {
 				client->ClearWaypoint();
 				client->Message(CHANNEL_COLOR_YELLOW, "Usage: /waypoint x y z");
@@ -1917,7 +1921,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if(dead && dead->IsPlayer() == false){
 					dead->SetHP(0);
 					if(sep && sep->arg[0] && sep->IsNumber(0) && atoi(sep->arg[0]) == 1)
-						client->GetCurrentZone()->RemoveSpawn(false, dead, true);
+						client->GetCurrentZone()->RemoveSpawn(dead, true);
 					else
 						client->GetPlayer()->KillSpawn(dead);
 				}else{
@@ -2858,7 +2862,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			query.RunQuery2(Q_INSERT, "delete from spawn_instance_data where spawn_id = %u and spawn_location_id = %u and pickup_item_id = %u", spawn->GetDatabaseID(), spawn->GetSpawnLocationID(), spawn->GetPickupItemID());
 
 			if (database.RemoveSpawnFromSpawnLocation(spawn)) {
-				client->GetCurrentZone()->RemoveSpawn(false, spawn, true, true);
+				client->GetCurrentZone()->RemoveSpawn(spawn, true, true);
 			}
 
 			// we had a UI Window displayed, update the house items
@@ -2971,8 +2975,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if (client->GetTempPlacementSpawn())
 					{
 						Spawn* tmp = client->GetTempPlacementSpawn();
-						client->GetCurrentZone()->RemoveSpawn(false, tmp);
-						delete tmp;
+						client->GetCurrentZone()->RemoveSpawn(tmp);
 						client->SetTempPlacementSpawn(nullptr);
 					}
 
@@ -3912,7 +3915,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(spawn && !spawn->IsPlayer()){
 				if(spawn->GetSpawnLocationID() > 0){
 					if(database.RemoveSpawnFromSpawnLocation(spawn)){
-						client->GetCurrentZone()->RemoveSpawn(false, spawn, true, false);
+						client->GetCurrentZone()->RemoveSpawn(spawn, true, false);
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully removed spawn from zone");
 					}
 					else

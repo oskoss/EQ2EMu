@@ -2117,7 +2117,7 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 	int32 last_insert_id = query.GetLastInsertedID();
 	int32 char_id = last_insert_id;
 	UpdateStartingFactions(char_id, create->getType_int8_ByName("starting_zone"));
-	UpdateStartingZone(char_id, class_id, race_id, create->getType_int8_ByName("starting_zone"));
+	UpdateStartingZone(char_id, class_id, race_id, create);
 	UpdateStartingItems(char_id, class_id, race_id);
 	UpdateStartingSkills(char_id, class_id, race_id);
 	UpdateStartingSpells(char_id, class_id, race_id);
@@ -3264,7 +3264,7 @@ int32 WorldDatabase::SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* in_spawn
 		}
 		for(itr=spawns->begin();itr!=spawns->end();itr++){
 			spawn = *itr;
-			zone->RemoveSpawn(false, spawn);
+			zone->RemoveSpawn(spawn);
 		}
 		safe_delete(spawns);
 	}
@@ -3442,21 +3442,37 @@ string WorldDatabase::GetStartingZoneName(int8 choice){
 	return zone_name;
 }
 
-void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_id, int8 choice)
+void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_id, PacketStruct* create)
 {
 	Query query;
 
-	LogWrite(PLAYER__DEBUG, 0, "Player", "Adding default zone for race: %i, class: %i for char_id: %u (choice: %i)", race_id, class_id, char_id, choice);
+	int32 packetVersion = create->GetVersion();
+	int8 choice = create->getType_int8_ByName("starting_zone"); // 0 = far journey, 1 = isle of refuge
+	int8 deity = create->getType_int8_ByName("deity"); // aka 'alignment' for early DOF, 0 = evil, 1 = good
+	int32 startingZoneRuleFlag = rule_manager.GetGlobalRule(R_World, StartingZoneRuleFlag)->GetInt32();
+	
+	if((startingZoneRuleFlag == 1 || startingZoneRuleFlag == 2) && choice > 1)
+	{
+		LogWrite(PLAYER__INFO, 0, "Player", "Starting zone rule flag %u override choice %u to deity value of %u", startingZoneRuleFlag, choice, deity);
+		choice = deity; // inherit deity to know starting choice is 'good' or evil
+	}
+	
+	LogWrite(PLAYER__INFO, 0, "Player", "Adding default zone for race: %i, class: %i for char_id: %u (choice: %i), deity(alignment): %u, version: %u.", race_id, class_id, char_id, choice, deity, packetVersion);
 
 	// first, check to see if there is a starting_zones record for this race/class/choice combo (now using extended Archetype/BaseClass/Class combos
 	MYSQL_RES* result = 0;
 	
+	string whereRuleFlag("");
+	if(startingZoneRuleFlag > 0)
+		whereRuleFlag = string(" AND ruleflag & " + std::to_string(startingZoneRuleFlag));
+	
+	string syntaxSelect("SELECT z.name, sz.zone_id, z.safe_x, z.safe_y, z.safe_z, sz.x, sz.y, sz.z, sz.heading, sz.is_instance FROM");
 	if ( class_id == 0 )
-		result = query.RunQuery2(Q_SELECT, "SELECT `name` FROM starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id = 255 AND race_id IN (%i, 255) AND choice = %u",
-			race_id, choice);
+		result = query.RunQuery2(Q_SELECT, "%s starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id = 255 AND race_id IN (%i, 255) AND deity IN (%i, 255) AND choice = %u AND (min_version = 0 or min_version <= %u) AND (max_version = 0 or max_version >= %u)%s",
+			syntaxSelect.c_str(), race_id, deity, choice, packetVersion, packetVersion, whereRuleFlag.c_str());
 		else
-			result = query.RunQuery2(Q_SELECT, "SELECT `name` FROM starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id IN (%i, %i, %i, 255) AND race_id IN (%i, 255) AND choice IN (%i, 255)",
-		classes.GetBaseClass(class_id), classes.GetSecondaryBaseClass(class_id), class_id, race_id, choice);
+			result = query.RunQuery2(Q_SELECT, "%s starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id IN (%i, %i, %i, 255) AND race_id IN (%i, 255) AND deity IN (%i, 255) AND choice IN (%i, 255) AND (min_version = 0 or min_version <= %u) AND (max_version = 0 or max_version >= %u)%s",
+		syntaxSelect.c_str(), classes.GetBaseClass(class_id), classes.GetSecondaryBaseClass(class_id), class_id, race_id, deity, choice, packetVersion, packetVersion, whereRuleFlag.c_str());
 
 	// TODO: verify client version so clients do not crash trying to enter zones they do not own (paks)
 	if(result && mysql_num_rows(result) > 0)
@@ -3464,15 +3480,65 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 		string zone_name = "ERROR";
 		MYSQL_ROW row;
 
-		if( result && (row = mysql_fetch_row(result)) )
-			zone_name = string(row[0]);
+		bool zoneSet = false;
 
+		float safeX = 0.0f, safeY = 0.0f, safeZ = 0.0f, x = 0.0f, y = 0.0f, z = 0.0f, heading = 0.0f;
+		int8 is_instance = 0;
+		int32 zone_id = 0;
+		int32 instance_id = 0;
+
+		if( result && (row = mysql_fetch_row(result)) )
+		{
+			int8 i=0;
+
+			zoneSet = true;
+
+			zone_name = string(row[i++]);
+
+			zone_id = atoul(row[i++]);
+
+			safeX = atof(row[i++]);
+			safeY = atof(row[i++]);
+			safeZ = atof(row[i++]);
+
+			x = atof(row[i++]);
+			y = atof(row[i++]);
+			z = atof(row[i++]);
+
+			if ( x == -999999.0f && y == -999999.0f && z == -999999.0f)
+			{
+				x = safeX;
+				y = safeY;
+				z = safeZ;
+			}
+
+			heading = atof(row[i++]);
+
+			if(heading == -999999.0f )
+				heading = 0.0f;
+			
+			is_instance = atoul(row[i++]);
+		}
+
+		if(is_instance) // should only be true if we get a result
+		{
+			// this will force a pre-load
+			ZoneServer* instance_zone = zone_list.GetByInstanceID(0, zone_id);
+			if (instance_zone) {
+				instance_id = CreateNewInstance(zone_id);
+				AddCharacterInstance(char_id, instance_id, string(instance_zone->GetZoneName()), instance_zone->GetInstanceType(), Timer::GetUnixTimeStamp(), 0, instance_zone->GetDefaultLockoutTime(), instance_zone->GetDefaultReenterTime());
+				// make sure we inherit the instance id setup in the AddCharacterInstance
+				instance_zone->SetupInstance(instance_id);
+			}
+		}
 		if (class_id == 0)
-			query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z, starting_zones sz SET c.current_zone_id = z.id, c.x = z.safe_x, c.y = z.safe_y, c.z = z.safe_z, c.starting_city = z.id WHERE z.id = sz.zone_id AND sz.class_id = 255 AND sz.race_id IN (%i, 255) AND sz.choice = %u AND c.id = %u",
+			query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z, starting_zones sz SET c.current_zone_id = z.id, c.x = %f, c.y = %f, c.z = %f, c.heading = %f, c.starting_city = z.id, c.instance_id = %u WHERE z.id = sz.zone_id AND sz.class_id = 255 AND sz.race_id IN (%i, 255) AND sz.choice = %u AND c.id = %u",
+				x, y, z, heading, instance_id, 
 				race_id, choice, char_id);
 		else
-			query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z, starting_zones sz SET c.current_zone_id = z.id, c.x = z.safe_x, c.y = z.safe_y, c.z = z.safe_z, c.starting_city = %i WHERE z.id = sz.zone_id AND sz.class_id IN (%i, %i, %i, 255) AND sz.race_id IN (%i, 255) AND sz.choice IN (%i, 255) AND c.id = %u", 
-				choice, classes.GetBaseClass(class_id), classes.GetSecondaryBaseClass(class_id), class_id, race_id, choice, char_id);
+			query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z, starting_zones sz SET c.current_zone_id = z.id, c.x = %f, c.y = %f, c.z = %f, c.heading = %f, c.starting_city = %i, c.instance_id = %u WHERE z.id = sz.zone_id AND sz.class_id IN (%i, %i, %i, 255) AND sz.race_id IN (%i, 255) AND sz.choice IN (%i, 255) AND c.id = %u", 
+				x, y, z, heading, choice, instance_id, 
+				classes.GetBaseClass(class_id), classes.GetSecondaryBaseClass(class_id), class_id, race_id, choice, char_id);
 
 		if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
 			LogWrite(PLAYER__ERROR, 0, "Player", "Error in UpdateStartingZone custom starting_zones, query: '%s': %s", query.GetQuery(), query.GetError());
@@ -3481,7 +3547,7 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 
 		if(query.GetAffectedRows() > 0)
 		{
-			LogWrite(PLAYER__DEBUG, 0, "Player", "Setting New Character Starting Zone to '%s' FROM starting_zones table.", zone_name.c_str());
+			LogWrite(PLAYER__INFO, 0, "Player", "Setting New Character Starting Zone to '%s' with location %f, %f, %f and heading %f FROM starting_zones table.", zone_name.c_str(), x, y, z, heading);
 			return;
 		}
 	}

@@ -203,7 +203,7 @@ public:
 	void	UpdateDataTableVersion(char* name, int32 version);
 	void	UpdateStartingFactions(int32 char_id, int8 choice);
 	string	GetStartingZoneName(int8 choice);
-	void	UpdateStartingZone(int32 char_id, int8 class_id, int8 race_id, int8 choice);
+	void	UpdateStartingZone(int32 char_id, int8 class_id, int8 race_id, PacketStruct* create);
 	void	UpdateStartingItems(int32 char_id, int8 class_id, int8 race_id, bool base_class = false);
 	void	UpdateStartingSkills(int32 char_id, int8 class_id, int8 race_id);
 	void	UpdateStartingSpells(int32 char_id, int8 class_id, int8 race_id);

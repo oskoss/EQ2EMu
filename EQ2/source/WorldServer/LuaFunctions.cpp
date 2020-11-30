@@ -29,6 +29,7 @@
 #include "classes.h"
 #include "Variables.h"
 #include "SpellProcess.h"
+#include "Rules/Rules.h"
 #include "../common/Log.h"
 #include <math.h>
 #include "HeroicOp/HeroicOp.h"
@@ -56,6 +57,7 @@ extern MasterSkillList master_skill_list;
 extern MasterHeroicOPList master_ho_list;
 extern MasterRaceTypeList race_types_list;
 extern MasterLanguagesList master_languages_list;
+extern RuleManager rule_manager;
 
 vector<string> ParseString(string strVal, char delim) {
 	stringstream ss(strVal);
@@ -3925,7 +3927,7 @@ int EQ2Emu_lua_Harvest(lua_State* state) {
 
 			((GroundSpawn*)node)->ProcessHarvest(client);
 			if (((GroundSpawn*)node)->GetNumberHarvests() == 0)
-				player->GetZone()->RemoveSpawn(true, node, true);
+				player->GetZone()->RemoveSpawn(node, true);
 		}
 	}
 	else if (player && player->IsPlayer()) {
@@ -11104,5 +11106,21 @@ int EQ2Emu_lua_IsInvulnerable(lua_State* state) {
 		lua_interface->SetBooleanValue(state, spawn->GetInvulnerable());
 		return 1;
 	}
+	return 0;
+}
+
+int EQ2Emu_lua_GetRuleFlagInt32(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	string category = lua_interface->GetStringValue(state);
+	string name = lua_interface->GetStringValue(state, 2);
+	Rule *ret = 0;
+	if ((ret = rule_manager.GetGlobalRule(category.c_str(), name.c_str()))) {
+		
+		lua_interface->SetInt32Value(state, ret->GetInt32());
+		return 1;
+	}
+	
+	lua_interface->LogError("%s: LUA GetRuleFlag Unknown rule with category '%s' and type '%s'", lua_interface->GetScriptName(state), category.c_str(), name.c_str());
 	return 0;
 }

@@ -1164,7 +1164,7 @@ void Entity::DismissPet(NPC* pet, bool from_death, bool spawnListLocked) {
 
 	// remove the spawn from the world
 	if (!from_death && pet->GetPetType() != PET_TYPE_CHARMED)
-		GetZone()->RemoveSpawn(spawnListLocked, pet);
+		GetZone()->RemoveSpawn(pet);
 }
 
 float Entity::CalculateBonusMod() {

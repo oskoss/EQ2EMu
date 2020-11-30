@@ -127,6 +127,7 @@ enum RuleType {
 	SaveHeadshotImage,
 	SendPaperdollImagesToLogin,
 	TreasureChestDisabled,
+	StartingZoneRuleFlag,
 
 	/* ZONE */
 	MinZoneLevelOverrideStatus,
@@ -247,6 +248,7 @@ public:
 
 	bool SetGlobalRuleSet(int32 rule_set_id);
 	Rule * GetGlobalRule(int32 category, int32 type);
+	Rule * GetGlobalRule(const char* category, const char* type);
 
 	bool SetZoneRuleSet(int32 zone_id, int32 rule_set_id);
 	Rule * GetZoneRule(int32 zone_id, int32 category, int32 type);
