@@ -1,0 +1,1 @@
+insert into ruleset_details set ruleset_id=1, rule_category='R_World', rule_type='StartingZoneRuleFlag',rule_value=1,description='Set starting zones and options, 0 is default wildcard against class, race, deity, version, 1 is far journey to queens colony and overlord outpost, 2 is far journey to isle of refuge';
