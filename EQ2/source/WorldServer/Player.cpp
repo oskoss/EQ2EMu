@@ -5963,8 +5963,12 @@ void Player::UpdateLUAHistory(int32 event_id, int32 value, int32 value2) {
 	hd->Value = value;
 	hd->Value2 = value2;
 	hd->SaveNeeded = true;
-	SendHistoryRequiredSpawns(event_id);
 	mLUAHistory.releasewritelock();
+	// release the mLUAHistory lock, we will maintain a readlock to avoid any further writes until we complete SendHistoryRequiredSpawns
+	// through Spawn::SendSpawnChanges -> Spawn::InitializeVisPacketData -> Spawn::MeetsSpawnAccessRequirements-> Player::GetLUAHistory (this was causing a deadlock)
+	mLUAHistory.readlock();
+	SendHistoryRequiredSpawns(event_id);
+	mLUAHistory.releasereadlock();
 }
 
 LUAHistory* Player::GetLUAHistory(int32 event_id) {
