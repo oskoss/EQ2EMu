@@ -229,13 +229,12 @@ void SpellProcess::Process(){
 	MSoloHO.writelock(__FUNCTION__, __LINE__);
 	if (m_soloHO.size() > 0) {
 		map<Client*, HeroicOP*>::iterator itr = m_soloHO.begin();
-		map<Client*, HeroicOP*>::iterator delete_itr;
 		while (itr != m_soloHO.end()) {
 			if (itr->second->GetWheel() && Timer::GetCurrentTime2() >= (itr->second->GetStartTime() + (itr->second->GetTotalTime() * 1000))) {
 				itr->second->SetComplete(1);
 				ClientPacketFunctions::SendHeroicOPUpdate(itr->first, itr->second);
 				safe_delete(itr->second);
-				itr = m_soloHO.erase(delete_itr);
+				itr = m_soloHO.erase(itr);
 				continue;
 			}
 			else
@@ -248,7 +247,6 @@ void SpellProcess::Process(){
 	MGroupHO.writelock(__FUNCTION__, __LINE__);
 	if (m_groupHO.size() > 0) {
 		map<int32, HeroicOP*>::iterator itr = m_groupHO.begin();
-		map<int32, HeroicOP*>::iterator delete_itr;
 		while (itr != m_groupHO.end()) {
 			if (itr->second->GetWheel() && Timer::GetCurrentTime2() >= (itr->second->GetStartTime() + (itr->second->GetTotalTime() * 1000))) {
 				itr->second->SetComplete(1);
@@ -269,7 +267,7 @@ void SpellProcess::Process(){
 				world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 
 				safe_delete(itr->second);
-				itr = m_groupHO.erase(delete_itr);
+				itr = m_groupHO.erase(itr);
 				continue;
 			}
 			else
