@@ -673,6 +673,13 @@ void Map::TranslateVertex(glm::vec3 &v, float tx, float ty, float tz) {
 void MapRange::AddVersionRange(std::string zoneName) {
   boost::filesystem::path targetDir("Maps/");
 
+  // crash fix since the dir isn't present
+  if(!boost::filesystem::is_directory(targetDir))
+  {
+	LogWrite(MAP__ERROR, 7, "Map", "Unable to find directory %s", targetDir.c_str());
+  	return;
+  }
+
   boost::filesystem::recursive_directory_iterator iter(targetDir), eod;
   boost::smatch base_match;
   std::string formula = "(.*\\/|.*\\\\)((" + zoneName + ")(\\-([0-9]+)\\-([0-9]+))?)(\\.EQ2Map|\\.EQ2MapDeflated)$";

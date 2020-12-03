@@ -85,6 +85,13 @@ RegionMap* RegionMap::LoadRegionMapfile(std::string filename, std::string zone_n
 void RegionMapRange::AddVersionRange(std::string zoneName) {
   boost::filesystem::path targetDir("Regions/");
 
+  // crash fix since the dir isn't present
+  if(!boost::filesystem::is_directory(targetDir))
+  {
+	LogWrite(REGION__ERROR, 7, "Region", "Unable to find directory %s", targetDir.c_str());
+  	return;
+  }
+
   boost::filesystem::recursive_directory_iterator iter(targetDir), eod;
   boost::smatch base_match;
   std::string formula = "(.*\\/|.*\\\\)((" + zoneName + ")(\\-([0-9]+)\\-([0-9]+))?)\\.EQ2Region$";
