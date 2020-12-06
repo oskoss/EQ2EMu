@@ -3444,7 +3444,7 @@ string WorldDatabase::GetStartingZoneName(int8 choice){
 
 void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_id, PacketStruct* create)
 {
-	Query query;
+	Query query,query2;
 
 	int32 packetVersion = create->GetVersion();
 	int8 choice = create->getType_int8_ByName("starting_zone"); // 0 = far journey, 1 = isle of refuge
@@ -3466,7 +3466,7 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 	if(startingZoneRuleFlag > 0)
 		whereRuleFlag = string(" AND ruleflag & " + std::to_string(startingZoneRuleFlag));
 	
-	string syntaxSelect("SELECT z.name, sz.zone_id, z.safe_x, z.safe_y, z.safe_z, sz.x, sz.y, sz.z, sz.heading, sz.is_instance FROM");
+	string syntaxSelect("SELECT z.name, sz.zone_id, z.safe_x, z.safe_y, z.safe_z, sz.x, sz.y, sz.z, sz.heading, sz.is_instance, z.city_zone FROM");
 	if ( class_id == 0 )
 		result = query.RunQuery2(Q_SELECT, "%s starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id = 255 AND race_id IN (%i, 255) AND deity IN (%i, 255) AND choice = %u AND (min_version = 0 or min_version <= %u) AND (max_version = 0 or max_version >= %u)%s",
 			syntaxSelect.c_str(), race_id, deity, choice, packetVersion, packetVersion, whereRuleFlag.c_str());
@@ -3486,6 +3486,7 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 		int8 is_instance = 0;
 		int32 zone_id = 0;
 		int32 instance_id = 0;
+		int8 starting_city = 0;
 
 		if( result && (row = mysql_fetch_row(result)) )
 		{
@@ -3518,6 +3519,8 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 				heading = 0.0f;
 			
 			is_instance = atoul(row[i++]);
+
+			starting_city = atoul(row[i++]);
 		}
 
 		if(is_instance) // should only be true if we get a result
@@ -3532,20 +3535,18 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 			}
 		}
 		if (class_id == 0)
-			query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z, starting_zones sz SET c.current_zone_id = z.id, c.x = %f, c.y = %f, c.z = %f, c.heading = %f, c.starting_city = z.id, c.instance_id = %u WHERE z.id = sz.zone_id AND sz.class_id = 255 AND sz.race_id IN (%i, 255) AND sz.choice = %u AND c.id = %u",
-				x, y, z, heading, instance_id, 
-				race_id, choice, char_id);
+			query2.RunQuery2(Q_UPDATE, "UPDATE characters SET current_zone_id = %u, x = %f, y = %f, z = %f, heading = %f, starting_city = %i, instance_id = %u WHERE id = %u",
+				zone_id, x, y, z, heading, starting_city, instance_id, char_id);
 		else
-			query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z, starting_zones sz SET c.current_zone_id = z.id, c.x = %f, c.y = %f, c.z = %f, c.heading = %f, c.starting_city = %i, c.instance_id = %u WHERE z.id = sz.zone_id AND sz.class_id IN (%i, %i, %i, 255) AND sz.race_id IN (%i, 255) AND sz.choice IN (%i, 255) AND c.id = %u", 
-				x, y, z, heading, choice, instance_id, 
-				classes.GetBaseClass(class_id), classes.GetSecondaryBaseClass(class_id), class_id, race_id, choice, char_id);
+			query2.RunQuery2(Q_UPDATE, "UPDATE characters SET current_zone_id = %u, x = %f, y = %f, z = %f, heading = %f, starting_city = %i, instance_id = %u WHERE id = %u", 
+				zone_id, x, y, z, heading, starting_city, instance_id, char_id);
 
-		if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
-			LogWrite(PLAYER__ERROR, 0, "Player", "Error in UpdateStartingZone custom starting_zones, query: '%s': %s", query.GetQuery(), query.GetError());
+		if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF){
+			LogWrite(PLAYER__ERROR, 0, "Player", "Error in UpdateStartingZone custom starting_zones, query: '%s': %s", query2.GetQuery(), query2.GetError());
 			return;
 		}
 
-		if(query.GetAffectedRows() > 0)
+		if(query2.GetAffectedRows() > 0)
 		{
 			LogWrite(PLAYER__INFO, 0, "Player", "Setting New Character Starting Zone to '%s' with location %f, %f, %f and heading %f FROM starting_zones table.", zone_name.c_str(), x, y, z, heading);
 			return;
@@ -3554,16 +3555,16 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 	else
 	{
 		// there was no matching starting_zone value, so use default 'choice' starting city
-		query.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z SET c.current_zone_id = z.id, c.x = z.safe_x, c.y = z.safe_y, c.z = z.safe_z, c.starting_city = %i WHERE z.start_zone = %i and c.id = %u", 
+		query2.RunQuery2(Q_UPDATE, "UPDATE characters c, zones z SET c.current_zone_id = z.id, c.x = z.safe_x, c.y = z.safe_y, c.z = z.safe_z, c.starting_city = %i WHERE z.start_zone = %i and c.id = %u", 
 			choice, choice, char_id);
 
-		if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
+		if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF)
 		{
-			LogWrite(PLAYER__ERROR, 0, "Player", "Error in UpdateStartingZone player choice, query: '%s': %s", query.GetQuery(), query.GetError());
+			LogWrite(PLAYER__ERROR, 0, "Player", "Error in UpdateStartingZone player choice, query: '%s': %s", query2.GetQuery(), query2.GetError());
 			return;
 		}
 
-		if(query.GetAffectedRows() > 0)
+		if(query2.GetAffectedRows() > 0)
 		{
 			LogWrite(PLAYER__DEBUG, 0, "Player", "Setting New Character Starting Zone to '%s' FROM player choice.", GetStartingZoneName(choice).c_str());
 			return;
