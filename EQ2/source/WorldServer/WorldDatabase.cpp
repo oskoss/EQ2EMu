@@ -3534,12 +3534,9 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 				instance_zone->SetupInstance(instance_id);
 			}
 		}
-		if (class_id == 0)
-			query2.RunQuery2(Q_UPDATE, "UPDATE characters SET current_zone_id = %u, x = %f, y = %f, z = %f, heading = %f, starting_city = %i, instance_id = %u WHERE id = %u",
-				zone_id, x, y, z, heading, starting_city, instance_id, char_id);
-		else
-			query2.RunQuery2(Q_UPDATE, "UPDATE characters SET current_zone_id = %u, x = %f, y = %f, z = %f, heading = %f, starting_city = %i, instance_id = %u WHERE id = %u", 
-				zone_id, x, y, z, heading, starting_city, instance_id, char_id);
+		
+		query2.RunQuery2(Q_UPDATE, "UPDATE characters SET current_zone_id = %u, x = %f, y = %f, z = %f, heading = %f, starting_city = %i, instance_id = %u WHERE id = %u", 
+			zone_id, x, y, z, heading, starting_city, instance_id, char_id);
 
 		if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF){
 			LogWrite(PLAYER__ERROR, 0, "Player", "Error in UpdateStartingZone custom starting_zones, query: '%s': %s", query2.GetQuery(), query2.GetError());
