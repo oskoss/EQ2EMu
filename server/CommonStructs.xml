@@ -53,8 +53,9 @@ to zero and treated like placeholders." />
 <Data ElementName="gender" Type="int8" />
 <Data ElementName="deity" Type="int8" />
 <Data ElementName="class" Type="int8" />
-<Data ElementName="level" Type="int16" />
+<Data ElementName="level" Type="int8" />
 <Data ElementName="starting_zone" Type="int8" />
+<Data ElementName="cc_unknown_0" Type="int8" />
 <Data ElementName="version" Type="int8" />
 <Data ElementName="race_file" Type="EQ2_16Bit_String" />
 <Data ElementName="skin_color" Type="float" Size="3" />
