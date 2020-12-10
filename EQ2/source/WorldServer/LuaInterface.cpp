@@ -1233,8 +1233,12 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	lua_register(state, "DamageSpawn", EQ2Emu_lua_DamageSpawn);
 	lua_register(state, "IsInvulnerable", EQ2Emu_lua_IsInvulnerable);
+	lua_register(state, "SetInvulnerable", EQ2Emu_lua_SetInvulnerable);
 	
 	lua_register(state, "GetRuleFlagInt32", EQ2Emu_lua_GetRuleFlagInt32);
+	
+	lua_register(state, "GetAAInfo", EQ2Emu_lua_GetAAInfo);
+	lua_register(state, "SetAAInfo", EQ2Emu_lua_SetAAInfo);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

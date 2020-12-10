@@ -10273,6 +10273,7 @@ void Commands::Add_AA(Client* client, Seperator* sep) {
 		AltAdvanceData* data = master_aa_list.GetAltAdvancement(spell_id);
 		// addspellbookentry here
 		if (spell_tier >= data->maxRank) {
+		LogWrite(COMMAND__ERROR, 0, "Command", "Error in Add_AA spell_tier %u >= maxRank %u", spell_tier, data->maxRank);
 			return;
 		}
 		if (!spell_tier) {

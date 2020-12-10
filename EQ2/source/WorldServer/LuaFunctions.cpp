@@ -11109,6 +11109,17 @@ int EQ2Emu_lua_IsInvulnerable(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_SetInvulnerable(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	bool invul = lua_interface->GetBooleanValue(state, 2);
+	if (spawn) {
+		spawn->SetInvulnerable(invul);
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_GetRuleFlagInt32(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -11122,5 +11133,73 @@ int EQ2Emu_lua_GetRuleFlagInt32(lua_State* state) {
 	}
 	
 	lua_interface->LogError("%s: LUA GetRuleFlag Unknown rule with category '%s' and type '%s'", lua_interface->GetScriptName(state), category.c_str(), name.c_str());
+	return 0;
+}
+
+
+int EQ2Emu_lua_GetAAInfo(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string type = lua_interface->GetStringValue(state, 2);
+	if (spawn) {
+		int res = 1;
+
+		boost::to_lower(type);
+		if(type == "assigned_aa")
+			lua_interface->SetSInt32Value(state, spawn->GetAssignedAA());
+		else if ( type == "unassigned_aa")
+			lua_interface->SetSInt32Value(state, spawn->GetUnassignedAA());
+		else if ( type == "assigned_tradeskill_aa")
+			lua_interface->SetSInt32Value(state, spawn->GetTradeskillAA());
+		else if ( type == "unassigned_tradeskill_aa")
+			lua_interface->SetSInt32Value(state, spawn->GetUnassignedTradeskillAA());
+		else if ( type == "assigned_prestige_aa")
+			lua_interface->SetSInt32Value(state, spawn->GetPrestigeAA());
+		else if ( type == "unassigned_prestige_aa")
+			lua_interface->SetSInt32Value(state, spawn->GetUnassignedPretigeAA());
+		else if ( type == "assigned_tradeskill_prestige_aa")
+			lua_interface->SetSInt32Value(state, spawn->GetTradeskillPrestigeAA());
+		else if ( type == "unassigned_tradeskill_prestige_aa")
+			lua_interface->SetSInt32Value(state, spawn->GetUnassignedTradeskillPrestigeAA());
+		else
+			res = 0;
+
+		return res;
+	}
+	
+	lua_interface->LogError("%s: LUA GetAAInfo spawn does not exist", lua_interface->GetScriptName(state));
+	return 0;
+}
+
+int EQ2Emu_lua_SetAAInfo(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string type = lua_interface->GetStringValue(state, 2);
+	sint32 value = lua_interface->GetSInt32Value(state, 3);
+	if (spawn) {
+		boost::to_lower(type);
+		if(type == "assigned_aa")
+			spawn->SetAssignedAA((sint16)value);
+		else if ( type == "unassigned_aa")
+			spawn->SetUnassignedAA((sint16)value);
+		else if ( type == "assigned_tradeskill_aa")
+			spawn->SetTradeskillAA((sint16)value);
+		else if ( type == "unassigned_tradeskill_aa")
+			spawn->SetUnassignedTradeskillAA((sint16)value);
+		else if ( type == "assigned_prestige_aa")
+			spawn->SetPrestigeAA((sint16)value);
+		else if ( type == "unassigned_prestige_aa")
+			spawn->SetUnassignedPrestigeAA((sint16)value);
+		else if ( type == "assigned_tradeskill_prestige_aa")
+			spawn->SetTradeskillPrestigeAA((sint16)value);
+		else if ( type == "unassigned_tradeskill_prestige_aa")
+			spawn->SetUnassignedTradeskillPrestigeAA((sint16)value);
+
+		if(spawn->IsPlayer())
+			((Player*)spawn)->SetCharSheetChanged(true);
+	}
 	return 0;
 }

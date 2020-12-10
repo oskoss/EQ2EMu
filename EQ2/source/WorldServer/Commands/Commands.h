@@ -866,15 +866,15 @@ private:
 
 #define COMMAND_RELOADREGIONSCRIPTS		524
 
-#define GET_AA_XML						751
-#define ADD_AA							752
-#define COMMIT_AA_PROFILE				753				
-#define BEGIN_AA_PROFILE				754
-#define BACK_AA							755
-#define REMOVE_AA						756
-#define SWITCH_AA_PROFILE				757
-#define CANCEL_AA_PROFILE				758
-#define SAVE_AA_PROFILE					759
+#define GET_AA_XML						750
+#define ADD_AA							751
+#define COMMIT_AA_PROFILE				752				
+#define BEGIN_AA_PROFILE				753
+#define BACK_AA							754
+#define REMOVE_AA						755
+#define SWITCH_AA_PROFILE				756
+#define CANCEL_AA_PROFILE				757
+#define SAVE_AA_PROFILE					758
 
 
 

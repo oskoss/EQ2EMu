@@ -767,7 +767,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 
 		packet->setDataByName("assigned_aa", player->GetAssignedAA());
 		packet->setDataByName("max_aa", rule_manager.GetGlobalRule(R_Player, MaxAA)->GetInt16());
-		packet->setDataByName("unassigned_aa", 200);// player->GetUnassignedAA()); // dov confirmed
+		packet->setDataByName("unassigned_aa", player->GetUnassignedAA()); // dov confirmed
 		packet->setDataByName("aa_green_bar", 0);// dov confirmed
 		packet->setDataByName("adv_xp_to_aa_xp_slider", 0);  // aa slider max // dov confirmed
 		packet->setDataByName("adv_xp_to_aa_xp_max", 100);  // aa slider position // dov confirmed
@@ -1026,11 +1026,11 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("uncontested_riposte_pve", 0); //????
 		packet->setDataByName("uncontested_parry_pve", 0); //????
 		packet->setDataByName("total_prestige_points", player->GetPrestigeAA());
-		packet->setDataByName("unassigned_prestige_points", 25); // player->GetUnassignedPretigeAA());
-		packet->setDataByName("total_tradeskill_points", 40); // player->GetTradeskillAA());
-		packet->setDataByName("unassigned_tradeskill_points", 25);// player->GetUnassignedTradeskillAA());
+		packet->setDataByName("unassigned_prestige_points", player->GetUnassignedPretigeAA());
+		packet->setDataByName("total_tradeskill_points", player->GetTradeskillAA());
+		packet->setDataByName("unassigned_tradeskill_points", player->GetUnassignedTradeskillAA());
 		packet->setDataByName("total_tradeskill_prestige_points", player->GetTradeskillPrestigeAA());
-		packet->setDataByName("unassigned_tradeskill_prestige_points", 25);// player->GetUnassignedTradeskillPrestigeAA());
+		packet->setDataByName("unassigned_tradeskill_prestige_points", player->GetUnassignedTradeskillPrestigeAA());
 		/*packet->setDataByName("unknown13", 201, 0);
 		packet->setDataByName("unknown13", 201, 1);
 		packet->setDataByName("unknown13", 234, 2);

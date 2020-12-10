@@ -519,6 +519,10 @@ int EQ2Emu_lua_InLava(lua_State* state);
 int EQ2Emu_lua_DamageSpawn(lua_State* state);
 
 int EQ2Emu_lua_IsInvulnerable(lua_State* state);
+int EQ2Emu_lua_SetInvulnerable(lua_State* state);
 
 int EQ2Emu_lua_GetRuleFlagInt32(lua_State* state);
+
+int EQ2Emu_lua_GetAAInfo(lua_State* state);
+int EQ2Emu_lua_SetAAInfo(lua_State* state);
 #endif
