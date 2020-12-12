@@ -8864,12 +8864,13 @@ void Client::ShowRecipeBook() {
 }
 
 void Client::SendTitleUpdate() {
-	list<Title*>* titles = player->GetPlayerTitles()->GetAllTitles();
-	list<Title*>::iterator itr;
+	// must call release read lock before leaving function on GetPlayerTitles
+	vector<Title*>* titles = player->GetPlayerTitles()->GetAllTitles();
+	vector<Title*>::iterator itr;
 	Title* title;
-	int16 i = 0;
-	sint16 prefix_index = database.GetCharPrefixIndex(GetCharacterID(), player);
-	sint16 suffix_index = database.GetCharSuffixIndex(GetCharacterID(), player);
+	sint32 i = 0;
+	sint32 prefix_index = database.GetCharPrefixIndex(GetCharacterID(), player);
+	sint32 suffix_index = database.GetCharSuffixIndex(GetCharacterID(), player);
 	PacketStruct* packet = configReader.getStruct("WS_TitleUpdate", GetVersion());
 	if (packet) {
 		packet->setArrayLengthByName("num_titles", titles->size());
@@ -8891,20 +8892,23 @@ void Client::SendTitleUpdate() {
 		safe_delete(packet);
 		SendUpdateTitles(prefix_index, suffix_index);
 	}
+	player->GetPlayerTitles()->ReleaseReadLock();
 }
 
-void Client::SendUpdateTitles(sint16 prefix, sint16 suffix) {
+void Client::SendUpdateTitles(sint32 prefix, sint32 suffix) {
 	Title* suffix_title = 0;
 	Title* prefix_title = 0;
 	if (suffix != -1) {
 		suffix_title = player->GetPlayerTitles()->GetTitle(suffix);
-		strcpy(player->appearance.suffix_title, suffix_title->GetName());
+		if(suffix_title)
+			strcpy(player->appearance.suffix_title, suffix_title->GetName());
 	}
 	else
 		memset(player->appearance.suffix_title, 0, strlen(player->appearance.suffix_title));
 	if (prefix != -1) {
 		prefix_title = player->GetPlayerTitles()->GetTitle(prefix);
-		strcpy(player->appearance.prefix_title, prefix_title->GetName());
+		if(prefix_title)
+			strcpy(player->appearance.prefix_title, prefix_title->GetName());
 	}
 	else
 		memset(player->appearance.prefix_title, 0, strlen(player->appearance.prefix_title));

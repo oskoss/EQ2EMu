@@ -22,7 +22,7 @@
 
 #include <string>
 #include <map>
-#include <list>
+#include <vector>
 #include "../common/Mutex.h"
 #include "../common/types.h"
 
@@ -38,13 +38,13 @@ public:
 	void			SetPrefix(int8 prefix) {this->prefix = prefix;}
 	void			SetSaveNeeded(bool save_needed) {this->save_needed = save_needed;}
 
-	int32			GetID() {return id;}
+	sint32			GetID() {return id;}
 	const char*		GetName() {return name;}
 	int8			GetPrefix() {return prefix;}
 	bool			GetSaveNeeded() {return save_needed;}
 	
 private:
-	int32	id;
+	sint32	id;
 	int8	prefix;
 	char	name[256];
 	bool	save_needed;
@@ -57,22 +57,27 @@ public:
 	void Clear();
 	int32 Size();
 	void AddTitle(Title* title);
-	Title* GetTitle(int32 id);
+	Title* GetTitle(sint32 id);
 	Title* GetTitleByName(const char* title_name);
-	map<int32, Title*>* GetAllTitles();
 
 private:
-	map<int32,Title*> titles_list;
+	map<sint32,Title*> titles_list;
+	Mutex MMasterTitleMutex;
 };
 
 class PlayerTitlesList {
 public:
 	PlayerTitlesList();
 	~PlayerTitlesList();
-	Title* GetTitle(int32 index);
-	list<Title*>* GetAllTitles();
+	Title* GetTitle(sint32 index);
+	Title* GetTitleByName(const char* title_name);
+	vector<Title*>* GetAllTitles();
 	void Add(Title* title);
+
+	int32 Size();
+	void ReleaseReadLock() { MPlayerTitleMutex.releasereadlock(); }
 private:
-	list<Title*> player_titles_list;
+	vector<Title*> player_titles_list;
+	Mutex MPlayerTitleMutex;
 };
 #endif

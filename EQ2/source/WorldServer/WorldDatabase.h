@@ -477,12 +477,14 @@ public:
 	void LoadRuleSetDetails(RuleSet *rule_set);
 
 	/* Titles */
+	sint32				AddMasterTitle(const char* titleName, int8 isPrefix = 0);
 	void				LoadTitles();
-	int32				LoadCharacterTitles(int32 char_id, Player *player);
-	sint16				GetCharPrefixIndex(int32 char_id, Player *player);
-	sint16				GetCharSuffixIndex(int32 char_id, Player *player);
-	void				SaveCharPrefixIndex(sint16 index, int32 char_id, Client *client);
-	void				SaveCharSuffixIndex(sint16 index, int32 char_id, Client *client);
+	sint32				LoadCharacterTitles(int32 char_id, Player *player);
+	sint32				GetCharPrefixIndex(int32 char_id, Player *player);
+	sint32				GetCharSuffixIndex(int32 char_id, Player *player);
+	void				SaveCharPrefixIndex(sint32 index, int32 char_id);
+	void				SaveCharSuffixIndex(sint32 index, int32 char_id);
+	sint32				AddCharacterTitle(sint32 index, int32 char_id, Spawn* player);
 
 	/* Languages */
 	void				LoadLanguages();

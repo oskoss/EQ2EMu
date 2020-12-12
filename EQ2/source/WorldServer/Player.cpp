@@ -5368,13 +5368,15 @@ int8 Player::FindFreeBankSlot() {
 	return item_list.FindFreeBankSlot();
 }
 
-void Player::AddTitle(int32 title_id, const char *name, int8 prefix, bool save_needed){
+void Player::AddTitle(sint32 title_id, const char *name, int8 prefix, bool save_needed){
 	Title* new_title = new Title;
 	new_title->SetID(title_id);
 	new_title->SetName(name);
 	new_title->SetPrefix(prefix);
+	new_title->SetSaveNeeded(save_needed);
 	player_titles_list.Add(new_title);
 }
+
 void Player::AddAAEntry(int16 template_id, int8 tab_id, int32 aa_id, int16 order,int8 treeid) {
 	
 	

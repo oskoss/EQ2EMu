@@ -825,7 +825,7 @@ public:
 	static bool SortSpellEntryByLevelReverse(SpellBookEntry* s1, SpellBookEntry* s2);
 
 	int8 GetSpellSlot(int32 spell_id);
-	void				AddTitle(int32 title_id, const char *name, int8 prefix, bool save_needed = false);
+	void				AddTitle(sint32 title_id, const char *name, int8 prefix, bool save_needed = false);
 	void				AddAAEntry(int16 template_id, int8 tab_id, int32 aa_id, int16 order, int8 treeid);
 	PlayerTitlesList*	GetPlayerTitles() { return &player_titles_list; }
 	void				AddLanguage(int32 id, const char *name, bool save_needed = false);

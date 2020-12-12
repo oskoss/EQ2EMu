@@ -36,6 +36,7 @@
 #include "RaceTypes/RaceTypes.h"
 #include "ClientPacketFunctions.h"
 #include "Transmute.h"
+#include "Titles.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include <sstream> 
 #include <boost/algorithm/string.hpp>
@@ -57,6 +58,7 @@ extern MasterSkillList master_skill_list;
 extern MasterHeroicOPList master_ho_list;
 extern MasterRaceTypeList race_types_list;
 extern MasterLanguagesList master_languages_list;
+extern MasterTitlesList master_titles_list;
 extern RuleManager rule_manager;
 
 vector<string> ParseString(string strVal, char delim) {
@@ -11202,4 +11204,177 @@ int EQ2Emu_lua_SetAAInfo(lua_State* state) {
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
 	return 0;
+}
+
+int EQ2Emu_lua_AddMasterTitle(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	string titleName = lua_interface->GetStringValue(state);
+	int8 isPrefix = lua_interface->GetInt8Value(state, 2);
+	
+	sint32 index = database.AddMasterTitle(titleName.c_str(), isPrefix);
+	lua_interface->SetSInt32Value(state, index);
+
+	return 1;
+}
+
+int EQ2Emu_lua_AddCharacterTitle(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string titleName = lua_interface->GetStringValue(state, 2);
+	
+	if(!spawn->IsPlayer())
+	{
+		lua_interface->LogError("%s: LUA AddCharacterTitle command error: player is not valid", lua_interface->GetScriptName(state));
+		lua_interface->SetSInt32Value(state, -1);
+		return 1;
+	}
+
+	Player* player = (Player*)spawn;
+	// check if player already has the title, don't need to add twice
+	Title* playerHasTitle = player->GetPlayerTitles()->GetTitleByName(titleName.c_str());
+
+	if ( playerHasTitle)
+	{
+		lua_interface->SetSInt32Value(state, playerHasTitle->GetID());
+		return 1;
+	}
+
+	Title* title = master_titles_list.GetTitleByName(titleName.c_str());
+	
+	if(!title)
+	{
+		lua_interface->LogError("%s: LUA AddCharacterTitle command error: title is not valid with name '%s'", lua_interface->GetScriptName(state), titleName.c_str());
+		lua_interface->SetSInt32Value(state, -1);
+		return 1;
+	}
+	
+
+	sint32 returnIdx = database.AddCharacterTitle(title->GetID(), player->GetCharacterID(), player);
+
+	if(returnIdx < 0)
+	{
+		lua_interface->LogError("%s: LUA AddCharacterTitle command error: got invalid index (-1) returned for database.AddCharacterTitle '%s'", lua_interface->GetScriptName(state), titleName.c_str());
+	}
+
+	lua_interface->SetSInt32Value(state, returnIdx);
+
+	player->GetClient()->SendTitleUpdate();
+
+	return 1;
+}
+
+int EQ2Emu_lua_SetCharacterTitleSuffix(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string titleName = lua_interface->GetStringValue(state, 2);
+	
+	if(!spawn->IsPlayer())
+	{
+		lua_interface->LogError("%s: LUA SetCharacterTitleSuffix command error: player is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	Player* player = (Player*)spawn;
+
+	Title* title = player->GetPlayerTitles()->GetTitleByName(titleName.c_str());
+	
+	if(!title)
+	{
+		lua_interface->LogError("%s: LUA SetCharacterTitleSuffix command error: title is not valid with name '%s'", lua_interface->GetScriptName(state), titleName.c_str());
+		return 0;
+	}
+	
+	if(title->GetPrefix())
+	{
+		lua_interface->LogError("%s: LUA SetCharacterTitleSuffix command error: title with name '%s' is not valid as a suffix, only prefix", lua_interface->GetScriptName(state), titleName.c_str());
+		return 0;
+	}
+
+	database.SaveCharSuffixIndex(title->GetID(), player->GetCharacterID());
+	player->GetClient()->SendTitleUpdate();
+
+	return 1;
+}
+
+int EQ2Emu_lua_SetCharacterTitlePrefix(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string titleName = lua_interface->GetStringValue(state, 2);
+	
+	if(!spawn->IsPlayer())
+	{
+		lua_interface->LogError("%s: LUA SetCharacterTitlePrefix command error: player is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	Player* player = (Player*)spawn;
+
+	Title* title = player->GetPlayerTitles()->GetTitleByName(titleName.c_str());
+
+	if(!title)
+	{
+		lua_interface->LogError("%s: LUA SetCharacterTitlePrefix command error: title is not valid with name '%s'", lua_interface->GetScriptName(state), titleName.c_str());
+		return 0;
+	}
+	
+	if(!title->GetPrefix())
+	{
+		lua_interface->LogError("%s: LUA SetCharacterTitlePrefix command error: title with name '%s' is not valid as a prefix, only suffix", lua_interface->GetScriptName(state), titleName.c_str());
+		return 0;
+	}
+	
+	database.SaveCharPrefixIndex(title->GetID(), player->GetCharacterID());
+	player->GetClient()->SendTitleUpdate();
+
+	return 1;
+}
+
+int EQ2Emu_lua_ResetCharacterTitleSuffix(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	
+	if(!spawn->IsPlayer())
+	{
+		lua_interface->LogError("%s: LUA ResetCharacterTitleSuffix command error: player is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	Player* player = (Player*)spawn;
+
+
+	database.SaveCharSuffixIndex(-1, player->GetCharacterID());
+	player->GetClient()->SendTitleUpdate();
+
+	return 1;
+}
+
+int EQ2Emu_lua_ResetCharacterTitlePrefix(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	
+	if(!spawn->IsPlayer())
+	{
+		lua_interface->LogError("%s: LUA ResetCharacterTitlePrefix command error: player is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	Player* player = (Player*)spawn;
+
+
+	database.SaveCharPrefixIndex(-1, player->GetCharacterID());
+	player->GetClient()->SendTitleUpdate();
+
+	return 1;
 }

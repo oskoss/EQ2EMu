@@ -41,6 +41,7 @@ Title::~Title(){
 }
 
 MasterTitlesList::MasterTitlesList(){
+	MMasterTitleMutex.SetName("MasterTitlesList::MMasterTitleMutex");
 }
 
 MasterTitlesList::~MasterTitlesList(){
@@ -48,32 +49,46 @@ MasterTitlesList::~MasterTitlesList(){
 }
 
 void MasterTitlesList::Clear(){
-	map<int32, Title*>::iterator itr;
+	MMasterTitleMutex.writelock();
+	map<sint32, Title*>::iterator itr;
 	for(itr = titles_list.begin(); itr != titles_list.end(); itr++)
 		safe_delete(itr->second);
 	titles_list.clear();
+	MMasterTitleMutex.releasewritelock();
 }
 
 void MasterTitlesList::AddTitle(Title* title){
 	assert(title);
+	MMasterTitleMutex.writelock();
 	if(titles_list.count(title->GetID()) == 0)
 		titles_list[title->GetID()] = title;
+	MMasterTitleMutex.releasewritelock();
 }
 
 int32 MasterTitlesList::Size(){
-	return titles_list.size();
+	int32 size = 0;
+	MMasterTitleMutex.readlock();
+	size = titles_list.size();
+	MMasterTitleMutex.releasereadlock();
+
+	return size;
 }
 
-Title* MasterTitlesList::GetTitle(int32 id){
+Title* MasterTitlesList::GetTitle(sint32 id){
+	Title* title = 0;
+
+	MMasterTitleMutex.readlock();
 	if(titles_list.count(id) > 0)
-		return titles_list[id];
-	else
-		return 0;
+		title = titles_list[id];
+	MMasterTitleMutex.releasereadlock();
+
+	return title;
 }
 
 Title* MasterTitlesList::GetTitleByName(const char* title_name){
 	Title* title = 0;
-	map<int32, Title*>::iterator itr;
+	map<sint32, Title*>::iterator itr;
+	MMasterTitleMutex.readlock();
 	for(itr = titles_list.begin(); itr != titles_list.end(); itr++){
 		Title* current_title = itr->second;
 		if(::ToLower(string(current_title->GetName())) == ::ToLower(string(title_name))){
@@ -81,40 +96,67 @@ Title* MasterTitlesList::GetTitleByName(const char* title_name){
 			break;
 		}
 	}
+	MMasterTitleMutex.releasereadlock();
 	return title;
 }
 
-map<int32, Title*>* MasterTitlesList::GetAllTitles(){
-	return &titles_list;
-}
-
 PlayerTitlesList::PlayerTitlesList(){
+	MPlayerTitleMutex.SetName("PlayerTitlesList::MPlayerTitleMutex");
 }
 
 PlayerTitlesList::~PlayerTitlesList(){
-	list<Title*>::iterator itr;
+	MPlayerTitleMutex.writelock();
+	vector<Title*>::iterator itr;
 	for (itr = player_titles_list.begin(); itr != player_titles_list.end(); itr++)
 		safe_delete(*itr);
+
+	player_titles_list.clear();
+	MPlayerTitleMutex.releasewritelock();
 }
 
-Title* PlayerTitlesList::GetTitle(int32 index){
-	list<Title*>::iterator itr;
+Title* PlayerTitlesList::GetTitle(sint32 index){
+	MPlayerTitleMutex.readlock();
 	Title* title = 0;
 	Title* ret = 0;
-	for(itr = player_titles_list.begin(); itr != player_titles_list.end(); itr++){
-		title = *itr;
-		if(title->GetID() == index){
-			ret = title;
-			break;
-		}
-	}
+	if ( index < player_titles_list.size() )
+		ret = player_titles_list[index];
+	
+	MPlayerTitleMutex.releasereadlock();
 	return ret;
 }
 
-list<Title*>* PlayerTitlesList::GetAllTitles(){
+Title* PlayerTitlesList::GetTitleByName(const char* title_name){
+	Title* resTitle = 0;
+	vector<Title*>::iterator itr;
+	MPlayerTitleMutex.readlock();
+	for(itr = player_titles_list.begin(); itr != player_titles_list.end(); itr++){
+		Title* title = *itr;
+		if(::ToLower(string(title->GetName())) == ::ToLower(string(title_name))){
+			resTitle = title;
+			break;
+		}
+	}
+	MPlayerTitleMutex.releasereadlock();
+	return resTitle;
+}
+
+
+vector<Title*>* PlayerTitlesList::GetAllTitles(){
+	MPlayerTitleMutex.readlock();
 	return &player_titles_list;
 }
 
 void PlayerTitlesList::Add(Title* title){
+	MPlayerTitleMutex.writelock();
 	player_titles_list.push_back(title);
+	MPlayerTitleMutex.releasewritelock();
+}
+
+int32 PlayerTitlesList::Size(){
+	int32 size = 0;
+	MPlayerTitleMutex.readlock();
+	size = player_titles_list.size();
+	MPlayerTitleMutex.releasereadlock();
+
+	return size;
 }

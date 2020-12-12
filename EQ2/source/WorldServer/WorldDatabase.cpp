@@ -2564,7 +2564,7 @@ void WorldDatabase::LoadZoneInfo(ZoneServer* zone){
 void WorldDatabase::LoadZoneInfo(ZoneInfo* zone_info) {
 	Query query;
 	int32 ruleset_id;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT name, file, description, underworld, safe_x, safe_y, safe_z, min_status, min_level, max_level, instance_type, shutdown_timer, zone_motd, default_reenter_time, default_reset_time, default_lockout_time, force_group_to_zone, lua_script, xp_modifier, ruleset_id, expansion_id, always_loaded, city_zone, start_zone, zone_type, weather_allowed FROM zones WHERE id = %u", zone_info->id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT name, file, description, underworld, safe_x, safe_y, safe_z, min_status, min_level, max_level, instance_type, shutdown_timer, zone_motd, default_reenter_time, default_reset_time, default_lockout_time, force_group_to_zone, lua_script, xp_modifier, ruleset_id, expansion_id, always_loaded, city_zone, start_zone, zone_type, weather_allowed, sky_file FROM zones WHERE id = %u", zone_info->id);
 	if (result && mysql_num_rows(result) > 0) {
 		MYSQL_ROW row;
 		row = mysql_fetch_row(result);
@@ -2598,6 +2598,8 @@ void WorldDatabase::LoadZoneInfo(ZoneInfo* zone_info) {
 		zone_info->start_zone		= atoi(row[23]);
 		row[24] == NULL ? strncpy(zone_info->zone_type, "", sizeof(zone_info->zone_type)) : strncpy(zone_info->zone_type, row[24], sizeof(zone_info->zone_type));
 		zone_info->weather_allowed	= atoi(row[25]);
+
+		strncpy(zone_info->sky_file, row[26], sizeof(zone_info->sky_file));
 	}
 }
 
@@ -5784,31 +5786,67 @@ bool WorldDatabase::CheckBannedIPs(const char* loginIP)
  	return false;
 }
 
+sint32 WorldDatabase::AddMasterTitle(const char* titleName, int8 isPrefix)
+{
+	if(titleName == nullptr || strlen(titleName) < 1)
+	{
+		LogWrite(DATABASE__ERROR, 0, "DBNew", "AddMasterTitle called with missing titleName");
+		return -1;
+	}
+
+	Query query;
+	Title* title = master_titles_list.GetTitleByName(titleName);
+	
+	if(title)
+		return title->GetID();
+
+	query.RunQuery2(Q_INSERT, "INSERT INTO titles set title='%s', prefix=%u", titleName, isPrefix);
+	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
+		LogWrite(DATABASE__ERROR, 0, "Database", "Error in AddMasterTitle query '%s': %s", query.GetQuery(), query.GetError());
+		return false;
+	}
+
+	int32 last_insert_id = query.GetLastInsertedID();
+	if(last_insert_id > 0)
+	{
+		title = new Title;
+		title->SetID(last_insert_id);
+		title->SetName(titleName);
+		title->SetPrefix(isPrefix);
+		master_titles_list.AddTitle(title);
+		return (sint32)last_insert_id;
+	}
+
+
+	return -1;
+}
+
 void WorldDatabase::LoadTitles(){
-	int32 index = 0;
 	Query query;
 	MYSQL_ROW row;
+	int32 count = 0;
 	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, title, prefix FROM titles");
 	if(result && mysql_num_rows(result) > 0){
 		Title* title = 0;
 		while(result && (row = mysql_fetch_row(result))){
-			LogWrite(WORLD__DEBUG, 5, "World", "\tLoading Title '%s' (%u), Prefix: %i, Index: %u", row[1], atoul(row[0]), atoi(row[2]), index);
+			sint32 idx = atoi(row[0]);
+			LogWrite(WORLD__DEBUG, 5, "World", "\tLoading Title '%s' (%u), Prefix: %i, Index: %u", row[1], idx, atoi(row[2]), count);
 			title = new Title;
-			title->SetID(index);
+			title->SetID(idx);
 			title->SetName(row[1]);
 			title->SetPrefix(atoi(row[2]));
 			master_titles_list.AddTitle(title);
-			index++;
+			count++;
 		}
 	}
-	LogWrite(WORLD__DEBUG, 0, "World", "\tLoaded %u Title%s", index, index == 1 ? "" : "s");
+	LogWrite(WORLD__DEBUG, 0, "World", "\tLoaded %u Title%s", count, count == 1 ? "" : "s");
 }
 
-int32 WorldDatabase::LoadCharacterTitles(int32 char_id, Player *player){
+sint32 WorldDatabase::LoadCharacterTitles(int32 char_id, Player *player){
 	LogWrite(WORLD__DEBUG, 0, "World", "Loading Titles for player '%s'...", player->GetName());
 	Query query;
 	MYSQL_ROW row;
-	int32 index = 0;
+	sint32 index = 0;
 	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT title_id, title, prefix FROM character_titles, titles WHERE character_titles.title_id = titles.id AND character_titles.char_id = %u", char_id);
 	if(result && mysql_num_rows(result) > 0){
 		while(result && (row = mysql_fetch_row(result))){
@@ -5820,11 +5858,11 @@ int32 WorldDatabase::LoadCharacterTitles(int32 char_id, Player *player){
 	return index;
 }
 
-sint16 WorldDatabase::GetCharPrefixIndex(int32 char_id, Player *player){
+sint32 WorldDatabase::GetCharPrefixIndex(int32 char_id, Player *player){
 	LogWrite(PLAYER__DEBUG, 0, "Player", "Getting current title index for player '%s'...", player->GetName());
 	Query query;
 	MYSQL_ROW row;
-	sint16 ret = -1;
+	sint32 ret = 0;
 	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT prefix_title FROM character_details WHERE char_id = %u", char_id);
 	if(result && mysql_num_rows(result) > 0)
 		while(result && (row = mysql_fetch_row(result))){
@@ -5834,11 +5872,11 @@ sint16 WorldDatabase::GetCharPrefixIndex(int32 char_id, Player *player){
 	return ret;
 }
 
-sint16 WorldDatabase::GetCharSuffixIndex(int32 char_id, Player *player){
+sint32 WorldDatabase::GetCharSuffixIndex(int32 char_id, Player *player){
 	LogWrite(PLAYER__DEBUG, 0, "Player", "Getting current title index for player '%s'...", player->GetName());
 	Query query;
 	MYSQL_ROW row;
-	sint16 ret = -1;
+	sint32 ret = 0;
 	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT suffix_title FROM character_details WHERE char_id = %u", char_id);
 	if(result && mysql_num_rows(result) > 0)
 		while(result && (row = mysql_fetch_row(result))){
@@ -5848,16 +5886,39 @@ sint16 WorldDatabase::GetCharSuffixIndex(int32 char_id, Player *player){
 	return ret;
 }
 
-void WorldDatabase::SaveCharPrefixIndex(sint16 index, int32 char_id, Client *client){
+void WorldDatabase::SaveCharPrefixIndex(sint32 index, int32 char_id){
 	Query query;
-	query.RunQuery2(Q_UPDATE, "UPDATE character_details SET prefix_title = %i WHERE char_id = %u", index, client->GetCharacterID());
-	LogWrite(PLAYER__DEBUG, 0, "Player", "Saving Prefix Index %i for player '%s'...", index, client->GetPlayer()->GetName());
+	query.RunQuery2(Q_UPDATE, "UPDATE character_details SET prefix_title = %i WHERE char_id = %u", index, char_id);
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Saving Prefix Index %i for character id '%u'...", index, char_id);
 }
 
-void WorldDatabase::SaveCharSuffixIndex(sint16 index, int32 char_id, Client *client){
+void WorldDatabase::SaveCharSuffixIndex(sint32 index, int32 char_id){
 	Query query;
-	query.RunQuery2(Q_SELECT, "UPDATE character_details SET suffix_title = %i WHERE char_id = %u", index, client->GetCharacterID());
-	LogWrite(PLAYER__DEBUG, 0, "Player", "Saving Suffix Index %i for player '%s'...", index, client->GetPlayer()->GetName());
+	query.RunQuery2(Q_SELECT, "UPDATE character_details SET suffix_title = %i WHERE char_id = %u", index, char_id);
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Saving Suffix Index %i for character id %u...", index, char_id);
+}
+
+sint32 WorldDatabase::AddCharacterTitle(sint32 index, int32 char_id, Spawn* player) {
+	if(!player || !player->IsPlayer())
+	{
+		LogWrite(DATABASE__ERROR, 0, "DBNew", "AddCharacterTitle spawn is not a player: %s", player ? player->GetName() : "Unset");
+		return -1;
+	}
+
+	Title* title = master_titles_list.GetTitle(index);
+	if(!title)
+	{
+		LogWrite(DATABASE__ERROR, 0, "DBNew", "AddCharacterTitle title index %u missing from master_titles_list for player: %s (%u)", index, player ? player->GetName() : "Unset", char_id);
+		return -1;
+	}
+
+	Query query;
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Adding titles for char_id: %u, index: %i", char_id, index);
+	query.RunQuery2(Q_INSERT, "INSERT IGNORE INTO character_titles (char_id, title_id) VALUES (%u, %i)", char_id, index);
+	sint32 curIndex = (sint32)((Player*)player)->GetPlayerTitles()->Size();
+	((Player*)player)->AddTitle(curIndex++, title->GetName(), title->GetPrefix(), title->GetSaveNeeded());
+
+	return curIndex;
 }
 
 void WorldDatabase::LoadLanguages()

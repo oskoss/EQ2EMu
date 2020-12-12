@@ -7739,10 +7739,11 @@ void Commands::Command_Title(Client* client)
 */ 
 void Commands::Command_TitleList(Client* client)
 {
-	list<Title*>* titles = client->GetPlayer()->GetPlayerTitles()->GetAllTitles();
-	list<Title*>::iterator itr;
+	// must call release read lock before leaving function on GetPlayerTitles
+	vector<Title*>* titles = client->GetPlayer()->GetPlayerTitles()->GetAllTitles();
+	vector<Title*>::iterator itr;
 	Title* title;
-	int16 i = 0;
+	sint32 i = 0;
 
 	client->Message(CHANNEL_NARRATIVE, "Listing available titles:");
 	for(itr = titles->begin(); itr != titles->end(); itr++)
@@ -7752,6 +7753,7 @@ void Commands::Command_TitleList(Client* client)
 		i++;
 	}
 
+	client->GetPlayer()->GetPlayerTitles()->ReleaseReadLock();
 }
 
 /* 
@@ -7765,9 +7767,26 @@ void Commands::Command_TitleSetPrefix(Client* client, Seperator* sep)
 {
 	if (sep && sep->arg[0] && sep->IsNumber(0))
 	{
-		int32 index = atoul(sep->arg[0]);
+		sint32 index = atoul(sep->arg[0]);
 
-		database.SaveCharPrefixIndex(index, client->GetCharacterID(), client);
+		if(index > -1)
+		{
+			Title* title = client->GetPlayer()->GetPlayerTitles()->GetTitle(index);
+			if(!title)
+			{
+				client->Message(CHANNEL_COLOR_RED, "Missing index %i to set title", index);
+				return;
+			}
+			else if(!title->GetPrefix())
+			{
+				client->Message(CHANNEL_COLOR_RED, "%s is not a prefix.", title->GetName());
+				return;
+			}
+		}
+		else // make sure client doesn't pass some bogus negative index
+			index = -1;
+
+		database.SaveCharPrefixIndex(index, client->GetCharacterID());
 		client->SendTitleUpdate();
 	}
 }
@@ -7783,9 +7802,25 @@ void Commands::Command_TitleSetSuffix(Client* client, Seperator* sep)
 {
 	if (sep && sep->arg[0] && sep->IsNumber(0))
 	{
-		int32 index = atoul(sep->arg[0]);
+		sint32 index = atoul(sep->arg[0]);
+		if(index > -1)
+		{
+			Title* title = client->GetPlayer()->GetPlayerTitles()->GetTitle(index);
+			if(!title)
+			{
+				client->Message(CHANNEL_COLOR_RED, "Missing index %i to set title", index);
+				return;
+			}
+			else if(title->GetPrefix())
+			{
+				client->Message(CHANNEL_COLOR_RED, "%s is not a suffix.", title->GetName());
+				return;
+			}
+		}
+		else // make sure client doesn't pass some bogus negative index
+			index = -1;
 
-		database.SaveCharSuffixIndex(index, client->GetCharacterID(), client);
+		database.SaveCharSuffixIndex(index, client->GetCharacterID());
 		client->SendTitleUpdate();
 	}
 }
@@ -9711,7 +9746,7 @@ void Commands::Command_ZoneDetails(Client* client, Seperator* sep)
 			client->Message(CHANNEL_COLOR_YELLOW, "default_reenter_time: %u, default_reset_time: %u, default_lockout_time: %u", zone_info->default_reenter_time, zone_info->default_reenter_time, zone_info->default_lockout_time);
 			client->Message(CHANNEL_COLOR_YELLOW, "force_group_to_zone: %u, expansion_id: %u, min_version: %u", zone_info->force_group_to_zone, zone_info->expansion_id, zone_info->min_version);
 			client->Message(CHANNEL_COLOR_YELLOW, "always_loaded: %u, city_zone: %u, start_zone: %u, weather_allowed: %u", zone_info->always_loaded, zone_info->city_zone, zone_info->start_zone, zone_info->weather_allowed);
-			client->Message(CHANNEL_COLOR_YELLOW, "zone_type: %s", zone_info->zone_type);
+			client->Message(CHANNEL_COLOR_YELLOW, "zone_type: %s, sky_file: %s", zone_info->zone_type, zone_info->sky_file);
 			client->Message(CHANNEL_COLOR_YELLOW, "lua_script: %s", zone_info->lua_script);
 			client->Message(CHANNEL_COLOR_YELLOW, "zone_motd: %s", zone_info->zone_motd);
 		}

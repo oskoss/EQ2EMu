@@ -1239,6 +1239,13 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	lua_register(state, "GetAAInfo", EQ2Emu_lua_GetAAInfo);
 	lua_register(state, "SetAAInfo", EQ2Emu_lua_SetAAInfo);
+	
+	lua_register(state, "AddMasterTitle", EQ2Emu_lua_AddMasterTitle);
+	lua_register(state, "AddCharacterTitle", EQ2Emu_lua_AddCharacterTitle);
+	lua_register(state, "SetCharacterTitleSuffix", EQ2Emu_lua_SetCharacterTitleSuffix);
+	lua_register(state, "SetCharacterTitlePrefix", EQ2Emu_lua_SetCharacterTitlePrefix);
+	lua_register(state, "ResetCharacterTitleSuffix", EQ2Emu_lua_ResetCharacterTitleSuffix);
+	lua_register(state, "ResetCharacterTitlePrefix", EQ2Emu_lua_ResetCharacterTitlePrefix);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

@@ -188,6 +188,7 @@ struct ZoneInfo {
 	int16	min_version;
 	bool	weather_allowed;
 	int32	ruleset_id;
+	char	sky_file[64];
 };
 
 class EQ2_CommandString : public DataBuffer{

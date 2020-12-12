@@ -358,7 +358,7 @@ public:
 	void	AcceptCollectionRewards(Collection *collection, int32 selectable_item_id = 0);
 	void	SendRecipeList();
 	void	SendTitleUpdate();
-	void	SendUpdateTitles(sint16 prefix, sint16 suffix);
+	void	SendUpdateTitles(sint32 prefix, sint32 suffix);
 	void	SendLanguagesUpdate(int32 id);
 	void	SendAchievementsList();
 	void	SendAchievementUpdate(bool first_login = false);
