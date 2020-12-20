@@ -1838,49 +1838,51 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			string name = packet->getType_EQ2_16BitString_ByName("pet_name").data;
 			if (strlen(name.c_str()) != 0) {
 				target->SetName(name.c_str());
-				strcpy(player->GetInfoStruct()->pet_name, name.c_str());
+				player->GetInfoStruct()->set_pet_name(name);
 				GetCurrentZone()->SendUpdateTitles(target);
 				change = true;
 			}
 
+			int8 pet_behavior = player->GetInfoStruct()->get_pet_behavior();
 			// Check protect self setting and update if needed
 			if (packet->getType_int8_ByName("protect_self") == 1) {
-				if ((player->GetInfoStruct()->pet_behavior & 2) == 0) {
-					player->GetInfoStruct()->pet_behavior += 2;
+				if ((pet_behavior & 2) == 0) {
+					player->GetInfoStruct()->set_pet_behavior(pet_behavior + 2);
 					change = true;
 				}
 			}
 			else {
-				if ((player->GetInfoStruct()->pet_behavior & 2) != 0) {
-					player->GetInfoStruct()->pet_behavior -= 2;
+				if ((pet_behavior & 2) != 0) {
+					player->GetInfoStruct()->set_pet_behavior(pet_behavior - 2);
 					change = true;
 				}
 			}
 
 			// Check protect master setting and update if needed
 			if (packet->getType_int8_ByName("protect_master") == 1) {
-				if ((player->GetInfoStruct()->pet_behavior & 1) == 0) {
-					player->GetInfoStruct()->pet_behavior += 1;
+				if ((pet_behavior & 1) == 0) {
+					player->GetInfoStruct()->set_pet_behavior(pet_behavior + 1);
 					change = true;
 				}
 			}
 			else {
-				if ((player->GetInfoStruct()->pet_behavior & 1) != 0) {
-					player->GetInfoStruct()->pet_behavior -= 1;
+				if ((pet_behavior & 1) != 0) {
+					player->GetInfoStruct()->set_pet_behavior(pet_behavior - 1);
 					change = true;
 				}
 			}
 
+			int8 pet_movement = player->GetInfoStruct()->get_pet_movement();
 			// Check stay/follow setting and update if needed
 			if (packet->getType_int8_ByName("stay_follow_toggle") == 1) {
-				if (player->GetInfoStruct()->pet_movement != 2) {
-					player->GetInfoStruct()->pet_movement = 2;
+				if (pet_movement != 2) {
+					player->GetInfoStruct()->set_pet_movement(2);
 					change = true;
 				}
 			}
 			else {
-				if (player->GetInfoStruct()->pet_movement != 1) {
-					player->GetInfoStruct()->pet_movement = 1;
+				if (pet_movement != 1) {
+					player->GetInfoStruct()->set_pet_movement(1);
 					change = true;
 				}
 			}
@@ -4185,7 +4187,7 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	GetPlayer()->ChangePrimaryWeapon();
 	GetPlayer()->ChangeSecondaryWeapon();
 	GetPlayer()->ChangeRangedWeapon();
-	GetPlayer()->GetInfoStruct()->level = new_level;
+	GetPlayer()->GetInfoStruct()->set_level(new_level);
 	// GetPlayer()->SetLevel(new_level);
 
 	LogWrite(MISC__TODO, 1, "TODO", "Get new HP/POWER/stat based on default values from DB\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
@@ -4196,21 +4198,21 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	GetPlayer()->SetHP(GetPlayer()->GetTotalHP());
 	GetPlayer()->SetPower(GetPlayer()->GetTotalPower());
 	InfoStruct* info = player->GetInfoStruct();
-	info->agi_base = new_level * 2 + 15;
-	info->intel_base = new_level * 2 + 15;
-	info->wis_base = new_level * 2 + 15;
-	info->str_base = new_level * 2 + 15;
-	info->sta_base = new_level * 2 + 15;
-	info->cold_base = (int16)(new_level * 1.5 + 10);
-	info->heat_base = (int16)(new_level * 1.5 + 10);
-	info->disease_base = (int16)(new_level * 1.5 + 10);
-	info->mental_base = (int16)(new_level * 1.5 + 10);
-	info->magic_base = (int16)(new_level * 1.5 + 10);
-	info->divine_base = (int16)(new_level * 1.5 + 10);
-	info->poison_base = (int16)(new_level * 1.5 + 10);
+	info->set_agi_base(new_level * 2 + 15);
+	info->set_intel_base(new_level * 2 + 15);
+	info->set_wis_base(new_level * 2 + 15);
+	info->set_str_base(new_level * 2 + 15);
+	info->set_sta_base(new_level * 2 + 15);
+	info->set_cold_base((int16)(new_level * 1.5 + 10));
+	info->set_heat_base((int16)(new_level * 1.5 + 10));
+	info->set_disease_base((int16)(new_level * 1.5 + 10));
+	info->set_mental_base((int16)(new_level * 1.5 + 10));
+	info->set_magic_base((int16)(new_level * 1.5 + 10));
+	info->set_divine_base((int16)(new_level * 1.5 + 10));
+	info->set_poison_base((int16)(new_level * 1.5 + 10));
 	GetPlayer()->SetHPRegen((int)(new_level * .75) + (int)(new_level / 10) + 3);
 	GetPlayer()->SetPowerRegen(new_level + (int)(new_level / 10) + 4);
-	GetPlayer()->GetInfoStruct()->poison_base = (int16)(new_level * 1.5 + 10);
+	GetPlayer()->GetInfoStruct()->set_poison_base((int16)(new_level * 1.5 + 10));
 	UpdateTimeStampFlag(LEVEL_UPDATE_FLAG);
 	GetPlayer()->SetCharSheetChanged(true);
 
@@ -4351,7 +4353,7 @@ void Client::ChangeTSLevel(int16 old_level, int16 new_level) {
 		QueuePacket(command_packet->serialize());
 		safe_delete(command_packet);
 	}
-	GetPlayer()->GetInfoStruct()->tradeskill_level = new_level;
+	GetPlayer()->GetInfoStruct()->set_tradeskill_level(new_level);
 	GetPlayer()->SetTSLevel(new_level);
 
 
@@ -4874,17 +4876,17 @@ void Client::Bank(Spawn* banker, bool cancel) {
 		PacketStruct* packet = configReader.getStruct("WS_UpdateBank", GetVersion());
 		if (packet) {
 			packet->setDataByName("spawn_id", GetPlayer()->GetIDWithPlayerSpawn(banker));
-			int64 coins = GetPlayer()->GetInfoStruct()->bank_coin_copper + GetPlayer()->GetInfoStruct()->bank_coin_silver * 100 +
-				GetPlayer()->GetInfoStruct()->bank_coin_gold * 10000 + (int64)GetPlayer()->GetInfoStruct()->bank_coin_plat * 1000000;
+			int64 coins = GetPlayer()->GetInfoStruct()->get_bank_coin_copper() + GetPlayer()->GetInfoStruct()->get_bank_coin_silver() * 100 +
+				GetPlayer()->GetInfoStruct()->get_bank_coin_gold() * 10000 + (int64)GetPlayer()->GetInfoStruct()->get_bank_coin_plat() * 1000000;
 			int32 coins1, coins2;
 			coins1 = ((int32*)&coins)[0];
 			coins2 = ((int32*)&coins)[1];
 			packet->setDataByName("bank_coins", coins1);
 			packet->setDataByName("bank_coins2", coins2);
-			packet->setDataByName("copper", GetPlayer()->GetInfoStruct()->coin_copper);
-			packet->setDataByName("silver", GetPlayer()->GetInfoStruct()->coin_silver);
-			packet->setDataByName("gold", GetPlayer()->GetInfoStruct()->coin_gold);
-			packet->setDataByName("plat", GetPlayer()->GetInfoStruct()->coin_plat);
+			packet->setDataByName("copper", GetPlayer()->GetInfoStruct()->get_coin_copper());
+			packet->setDataByName("silver", GetPlayer()->GetInfoStruct()->get_coin_silver());
+			packet->setDataByName("gold", GetPlayer()->GetInfoStruct()->get_coin_gold());
+			packet->setDataByName("plat", GetPlayer()->GetInfoStruct()->get_coin_plat());
 			if (!cancel)
 				packet->setDataByName("display", 1);
 			QueuePacket(packet->serialize());
@@ -4902,11 +4904,12 @@ void Client::BankWithdrawal(int64 amount) {
 		int32 tmp = 0;
 		if (amount >= 1000000) {
 			tmp = amount / 1000000;
-			if (tmp > GetPlayer()->GetBankCoinsPlat())
+			int32 bank_coins_plat = GetPlayer()->GetBankCoinsPlat();
+			if (tmp > bank_coins_plat)
 				cheater = true;
 			else {
-				GetPlayer()->GetInfoStruct()->bank_coin_plat -= tmp;
-				GetPlayer()->GetInfoStruct()->coin_plat += tmp;
+				GetPlayer()->GetInfoStruct()->set_bank_coin_plat(bank_coins_plat - tmp);
+				GetPlayer()->GetInfoStruct()->add_coin_plat(tmp);
 				amount -= (int64)tmp * 1000000;
 				sprintf(withdrawal_data, "%u Platinum ", tmp);
 				withdrawal.append(withdrawal_data);
@@ -4918,13 +4921,14 @@ void Client::BankWithdrawal(int64 amount) {
 			if (tmp > GetPlayer()->GetBankCoinsGold())
 				cheater = true;
 			else {
-				GetPlayer()->GetInfoStruct()->bank_coin_gold -= tmp;
-				if ((GetPlayer()->GetInfoStruct()->coin_gold + tmp) > 100) {
-					GetPlayer()->GetInfoStruct()->coin_gold = (GetPlayer()->GetInfoStruct()->coin_gold + tmp) - 100;
-					GetPlayer()->GetInfoStruct()->coin_plat += 1;
+				int32 bank_coins_gold = GetPlayer()->GetInfoStruct()->get_bank_coin_gold();
+				bank_coins_gold -= tmp;
+				if ((GetPlayer()->GetInfoStruct()->get_coin_gold() + tmp) > 100) {
+					GetPlayer()->GetInfoStruct()->set_coin_gold((GetPlayer()->GetInfoStruct()->get_coin_gold() + tmp) - 100);
+					GetPlayer()->GetInfoStruct()->add_coin_plat(1);
 				}
 				else
-					GetPlayer()->GetInfoStruct()->coin_gold += tmp;
+					GetPlayer()->GetInfoStruct()->add_coin_gold(tmp);
 				amount -= tmp * 10000;
 				sprintf(withdrawal_data, "%u Gold ", tmp);
 				withdrawal.append(withdrawal_data);
@@ -4933,16 +4937,17 @@ void Client::BankWithdrawal(int64 amount) {
 		}
 		if (!cheater && amount >= 100) {
 			tmp = amount / 100;
-			if (tmp > GetPlayer()->GetBankCoinsSilver())
+				int32 bank_coins_silver = GetPlayer()->GetBankCoinsSilver();
+			if (tmp > bank_coins_silver)
 				cheater = true;
 			else {
-				GetPlayer()->GetInfoStruct()->bank_coin_silver -= tmp;
-				if ((GetPlayer()->GetInfoStruct()->coin_silver + tmp) > 100) {
-					GetPlayer()->GetInfoStruct()->coin_silver = (GetPlayer()->GetInfoStruct()->coin_silver + tmp) - 100;
-					GetPlayer()->GetInfoStruct()->coin_gold += 1;
+				GetPlayer()->GetInfoStruct()->set_bank_coin_silver(bank_coins_silver - tmp);
+				if ((GetPlayer()->GetInfoStruct()->get_coin_silver() + tmp) > 100) {
+					GetPlayer()->GetInfoStruct()->set_coin_silver((GetPlayer()->GetInfoStruct()->get_coin_silver() + tmp) - 100);
+					GetPlayer()->GetInfoStruct()->add_coin_gold(1);
 				}
 				else
-					GetPlayer()->GetInfoStruct()->coin_silver += tmp;
+					GetPlayer()->GetInfoStruct()->add_coin_silver(tmp);
 				amount -= tmp * 100;
 				sprintf(withdrawal_data, "%u Silver ", tmp);
 				withdrawal.append(withdrawal_data);
@@ -4953,18 +4958,20 @@ void Client::BankWithdrawal(int64 amount) {
 			if (amount > 0) {
 				sprintf(withdrawal_data, "%u Copper ", (int32)amount);
 				withdrawal.append(withdrawal_data);
-				GetPlayer()->GetInfoStruct()->bank_coin_copper -= amount;
-				if ((GetPlayer()->GetInfoStruct()->coin_copper + amount) > 100) {
-					GetPlayer()->GetInfoStruct()->coin_copper = (GetPlayer()->GetInfoStruct()->coin_copper + amount) - 100;
-					GetPlayer()->GetInfoStruct()->coin_silver += 1;
+				int32 bank_coin_copper = GetPlayer()->GetInfoStruct()->get_bank_coin_copper();
+
+				GetPlayer()->GetInfoStruct()->set_bank_coin_copper(bank_coin_copper - amount);
+				if ((GetPlayer()->GetInfoStruct()->get_coin_copper() + amount) > 100) {
+					GetPlayer()->GetInfoStruct()->set_coin_copper((GetPlayer()->GetInfoStruct()->get_coin_copper() + amount) - 100);
+					GetPlayer()->GetInfoStruct()->add_coin_silver(1);
 				}
 				else
-					GetPlayer()->GetInfoStruct()->coin_copper += amount;
+					GetPlayer()->GetInfoStruct()->add_coin_copper(amount);
 			}
 			if (withdrawal.length() > 0) {
 				withdrawal.append("withdrawn ");
-				sprintf(withdrawal_data, "(%u Plat %u Gold %u Silver %u Copper in the bank now.)", GetPlayer()->GetInfoStruct()->bank_coin_plat,
-					GetPlayer()->GetInfoStruct()->bank_coin_gold, GetPlayer()->GetInfoStruct()->bank_coin_silver, GetPlayer()->GetInfoStruct()->bank_coin_copper);
+				sprintf(withdrawal_data, "(%u Plat %u Gold %u Silver %u Copper in the bank now.)", GetPlayer()->GetInfoStruct()->get_bank_coin_plat(),
+					GetPlayer()->GetInfoStruct()->get_bank_coin_gold(), GetPlayer()->GetInfoStruct()->get_bank_coin_silver(), GetPlayer()->GetInfoStruct()->get_bank_coin_copper());
 				withdrawal.append(withdrawal_data);
 				SimpleMessage(CHANNEL_NARRATIVE, withdrawal.c_str());
 			}
@@ -4988,8 +4995,8 @@ void Client::BankDeposit(int64 amount) {
 			if (tmp > GetPlayer()->GetCoinsPlat())
 				cheater = true;
 			else {
-				GetPlayer()->GetInfoStruct()->bank_coin_plat += tmp;
-				GetPlayer()->GetInfoStruct()->coin_plat -= tmp;
+				GetPlayer()->GetInfoStruct()->add_bank_coin_plat(tmp);
+				GetPlayer()->GetInfoStruct()->set_coin_plat(GetPlayer()->GetInfoStruct()->get_coin_plat() - tmp);
 				amount -= (int64)tmp * 1000000;
 				sprintf(deposit_data, "%u Platinum ", tmp);
 				deposit.append(deposit_data);
@@ -5001,13 +5008,13 @@ void Client::BankDeposit(int64 amount) {
 			if (tmp > GetPlayer()->GetCoinsGold())
 				cheater = true;
 			else {
-				if ((GetPlayer()->GetInfoStruct()->bank_coin_gold + tmp) > 100) {
-					GetPlayer()->GetInfoStruct()->bank_coin_gold = (GetPlayer()->GetInfoStruct()->bank_coin_gold + tmp) - 100;
-					GetPlayer()->GetInfoStruct()->bank_coin_plat += 1;
+				if ((GetPlayer()->GetInfoStruct()->get_bank_coin_gold() + tmp) > 100) {
+					GetPlayer()->GetInfoStruct()->set_bank_coin_gold((GetPlayer()->GetInfoStruct()->get_bank_coin_gold() + tmp) - 100);
+					GetPlayer()->GetInfoStruct()->add_bank_coin_plat(1);
 				}
 				else
-					GetPlayer()->GetInfoStruct()->bank_coin_gold += tmp;
-				GetPlayer()->GetInfoStruct()->coin_gold -= tmp;
+					GetPlayer()->GetInfoStruct()->add_bank_coin_gold(tmp);
+				GetPlayer()->GetInfoStruct()->set_coin_gold(GetPlayer()->GetInfoStruct()->get_coin_gold() - tmp);
 				amount -= tmp * 10000;
 				sprintf(deposit_data, "%u Gold ", tmp);
 				deposit.append(deposit_data);
@@ -5019,13 +5026,13 @@ void Client::BankDeposit(int64 amount) {
 			if (tmp > GetPlayer()->GetCoinsSilver())
 				cheater = true;
 			else {
-				if ((GetPlayer()->GetInfoStruct()->bank_coin_silver + tmp) > 100) {
-					GetPlayer()->GetInfoStruct()->bank_coin_silver = (GetPlayer()->GetInfoStruct()->bank_coin_silver + tmp) - 100;
-					GetPlayer()->GetInfoStruct()->bank_coin_gold += 1;
+				if ((GetPlayer()->GetInfoStruct()->get_bank_coin_silver() + tmp) > 100) {
+					GetPlayer()->GetInfoStruct()->set_bank_coin_silver((GetPlayer()->GetInfoStruct()->get_bank_coin_silver() + tmp) - 100);
+					GetPlayer()->GetInfoStruct()->add_bank_coin_gold(1);
 				}
 				else
-					GetPlayer()->GetInfoStruct()->bank_coin_silver += tmp;
-				GetPlayer()->GetInfoStruct()->coin_silver -= tmp;
+					GetPlayer()->GetInfoStruct()->add_bank_coin_silver(tmp);
+				GetPlayer()->GetInfoStruct()->set_coin_silver(GetPlayer()->GetInfoStruct()->get_coin_silver() - tmp);
 				amount -= tmp * 100;
 				sprintf(deposit_data, "%u Silver ", tmp);
 				deposit.append(deposit_data);
@@ -5036,18 +5043,18 @@ void Client::BankDeposit(int64 amount) {
 			if (amount > 0) {
 				sprintf(deposit_data, "%u Copper ", (int32)amount);
 				deposit.append(deposit_data);
-				if ((GetPlayer()->GetInfoStruct()->bank_coin_copper + amount) > 100) {
-					GetPlayer()->GetInfoStruct()->bank_coin_copper = (GetPlayer()->GetInfoStruct()->bank_coin_copper + amount) - 100;
-					GetPlayer()->GetInfoStruct()->bank_coin_silver += 1;
+				if ((GetPlayer()->GetInfoStruct()->get_bank_coin_copper() + amount) > 100) {
+					GetPlayer()->GetInfoStruct()->set_bank_coin_copper((GetPlayer()->GetInfoStruct()->get_bank_coin_copper() + amount) - 100);
+					GetPlayer()->GetInfoStruct()->add_bank_coin_silver(1);
 				}
 				else
-					GetPlayer()->GetInfoStruct()->bank_coin_copper += amount;
-				GetPlayer()->GetInfoStruct()->coin_copper -= amount;
+					GetPlayer()->GetInfoStruct()->add_bank_coin_copper(amount);
+				GetPlayer()->GetInfoStruct()->set_coin_copper(GetPlayer()->GetInfoStruct()->get_coin_copper() - amount);
 			}
 			if (deposit.length() > 0) {
 				deposit.append("deposited ");
-				sprintf(deposit_data, "(%u Plat %u Gold %u Silver %u Copper in the bank now.)", GetPlayer()->GetInfoStruct()->bank_coin_plat,
-					GetPlayer()->GetInfoStruct()->bank_coin_gold, GetPlayer()->GetInfoStruct()->bank_coin_silver, GetPlayer()->GetInfoStruct()->bank_coin_copper);
+				sprintf(deposit_data, "(%u Plat %u Gold %u Silver %u Copper in the bank now.)", GetPlayer()->GetInfoStruct()->get_bank_coin_plat(),
+					GetPlayer()->GetInfoStruct()->get_bank_coin_gold(), GetPlayer()->GetInfoStruct()->get_bank_coin_silver(), GetPlayer()->GetInfoStruct()->get_bank_coin_copper());
 				deposit.append(deposit_data);
 				SimpleMessage(CHANNEL_NARRATIVE, deposit.c_str());
 			}
@@ -5521,7 +5528,7 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 				player->GetFactions()->DecreaseFaction(faction_id, (amount * -1));
 		}
 		if (player->GetGuild()) {
-			player->GetInfoStruct()->status_points += quest->GetStatusPoints();
+			player->GetInfoStruct()->add_status_points(quest->GetStatusPoints());
 			player->SetCharSheetChanged(true);
 		}
 	}
@@ -5570,7 +5577,7 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 		packet2->setSubstructDataByName("reward_data", "max_coin", coin);
 		if (player->GetGuild()) {
 			if (!quest) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
-				player->GetInfoStruct()->status_points += status_points;
+				player->GetInfoStruct()->add_status_points(status_points);
 				player->SetCharSheetChanged(true);
 			}
 			packet2->setSubstructDataByName("reward_data", "status_points", status_points);
@@ -6267,7 +6274,7 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 				quantity = item->details.count;
 			if (player->GetGuild()) {
 				total_status_sell_price = status_sell_price * quantity;
-				player->GetInfoStruct()->status_points += total_status_sell_price;
+				player->GetInfoStruct()->add_status_points(total_status_sell_price);
 				guild->UpdateGuildStatus(GetPlayer(), total_status_sell_price / 10);
 				guild->SendGuildMemberList();
 				guild->AddEXPCurrent((total_status_sell_price / 10), true);
@@ -6440,7 +6447,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 
 					// Check if the player has enough status, coins and staion cash to buy the item before checking the items
 					// TODO: need to add support for station cash
-					if (player->GetInfoStruct()->status_points >= ItemInfo->price_status && player->HasCoins(ItemInfo->price_coins * quantity)) {
+					if (player->GetInfoStruct()->get_status_points() >= ItemInfo->price_status && player->HasCoins(ItemInfo->price_coins * quantity)) {
 						// Check items
 						int16 item_quantity = 0;
 						// Default these to true in case price_item_id or price_item2_id was never set
@@ -6479,7 +6486,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 						}
 						// if we have every thing then remove the price and give the item
 						if (hasItem1 && hasItem2) {
-							player->GetInfoStruct()->status_points -= ItemInfo->price_status;
+							player->GetInfoStruct()->set_status_points(player->GetInfoStruct()->get_status_points() - ItemInfo->price_status);
 							// TODO: station cash
 
 							// The update that would normally be sent after modifing the players inventory is automatically sent in AddItem wich is called later
@@ -8945,11 +8952,11 @@ void Client::SendPetOptionsWindow(const char* pet_name, int8 type) {
 	if (packet) {
 		if (pet_name)
 			packet->setDataByName("pet_name", pet_name);
-		if (player->GetInfoStruct()->pet_behavior & 1)
+		if (player->GetInfoStruct()->get_pet_behavior() & 1)
 			packet->setDataByName("protect_master", 1);
-		if (player->GetInfoStruct()->pet_behavior & 2)
+		if (player->GetInfoStruct()->get_pet_behavior() & 2)
 			packet->setDataByName("protect_self", 1);
-		if (player->GetInfoStruct()->pet_movement == 2)
+		if (player->GetInfoStruct()->get_pet_movement() == 2)
 			packet->setDataByName("stay_follow_toggle", 1);
 
 		packet->setDataByName("pet_type", type);
@@ -8967,8 +8974,9 @@ bool Client::IsCrafting() {
 void Client::SendBiography() {
 	PacketStruct* packet = configReader.getStruct("WS_BioUpdate", GetVersion());
 	if (packet) {
-		if (strlen(player->GetInfoStruct()->biography) > 0)
-			packet->setDataByName("biography", player->GetInfoStruct()->biography);
+		char biography[512];
+		strncpy(biography, player->GetInfoStruct()->get_biography().c_str(), player->GetInfoStruct()->get_biography().size());
+		packet->setDataByName("biography", biography);
 
 		QueuePacket(packet->serialize());
 	}

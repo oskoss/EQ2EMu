@@ -414,8 +414,8 @@ void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
 
 EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, int32 value, int16 offset2, int16 offset3, int16 offset4, int32 value2) {
 	// If spawn is NPC AND is pet && owner is a player && owner is the player passed to this function && player's char sheet pet id is 0
-	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer() && player == ((NPC*)this)->GetOwner() && player->GetInfoStruct()->pet_id == 0) {
-		((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->pet_id = player->spawn_id;
+	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer() && player == ((NPC*)this)->GetOwner() && player->GetInfoStruct()->get_pet_id() == 0) {
+		((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->set_pet_id(player->spawn_id);
 		player->SetCharSheetChanged(true);
 	}
 	m_Update.writelock(__FUNCTION__, __LINE__);
@@ -1372,12 +1372,12 @@ void Spawn::SetHP(sint32 new_val, bool setUpdateFlags){
 		Player* player = (Player*)((NPC*)this)->GetOwner();
 		if (player->GetPet() && player->GetCharmedPet()) {
 			if (this == player->GetPet()) {
-				player->GetInfoStruct()->pet_health_pct = (float)basic_info.cur_hp / (float)basic_info.max_hp;
+				player->GetInfoStruct()->set_pet_health_pct((float)basic_info.cur_hp / (float)basic_info.max_hp);
 				player->SetCharSheetChanged(true);
 			}
 		}
 		else {
-			player->GetInfoStruct()->pet_health_pct = (float)basic_info.cur_hp / (float)basic_info.max_hp;
+			player->GetInfoStruct()->set_pet_health_pct((float)basic_info.cur_hp / (float)basic_info.max_hp);
 			player->SetCharSheetChanged(true);
 		}
 	}
@@ -1402,12 +1402,12 @@ void Spawn::SetTotalHP(sint32 new_val){
 		Player* player = (Player*)((NPC*)this)->GetOwner();
 		if (player->GetPet() && player->GetCharmedPet()) {
 			if (this == player->GetPet()) {
-				player->GetInfoStruct()->pet_health_pct = (float)basic_info.cur_hp / (float)basic_info.max_hp;
+				player->GetInfoStruct()->set_pet_health_pct((float)basic_info.cur_hp / (float)basic_info.max_hp);
 				player->SetCharSheetChanged(true);
 			}
 		}
 		else {
-			player->GetInfoStruct()->pet_health_pct = (float)basic_info.cur_hp / (float)basic_info.max_hp;
+			player->GetInfoStruct()->set_pet_health_pct((float)basic_info.cur_hp / (float)basic_info.max_hp);
 			player->SetCharSheetChanged(true);
 		}
 	}
@@ -1461,12 +1461,12 @@ void Spawn::SetPower(sint32 power, bool setUpdateFlags){
 		Player* player = (Player*)((NPC*)this)->GetOwner();
 		if (player->GetPet() && player->GetCharmedPet()) {
 			if (this == player->GetPet()) {
-				player->GetInfoStruct()->pet_power_pct = (float)basic_info.cur_power / (float)basic_info.max_power;
+				player->GetInfoStruct()->set_pet_power_pct((float)basic_info.cur_power / (float)basic_info.max_power);
 				player->SetCharSheetChanged(true);
 			}
 		}
 		else {
-			player->GetInfoStruct()->pet_power_pct = (float)basic_info.cur_power / (float)basic_info.max_power;
+			player->GetInfoStruct()->set_pet_power_pct((float)basic_info.cur_power / (float)basic_info.max_power);
 			player->SetCharSheetChanged(true);
 		}
 	}
@@ -1492,12 +1492,12 @@ void Spawn::SetTotalPower(sint32 new_val)
 		Player* player = (Player*)((NPC*)this)->GetOwner();
 		if (player->GetPet() && player->GetCharmedPet()) {
 			if (this == player->GetPet()) {
-				player->GetInfoStruct()->pet_power_pct = (float)basic_info.cur_power / (float)basic_info.max_power;
+				player->GetInfoStruct()->set_pet_power_pct((float)basic_info.cur_power / (float)basic_info.max_power);
 				player->SetCharSheetChanged(true);
 			}
 		}
 		else {
-			player->GetInfoStruct()->pet_power_pct = (float)basic_info.cur_power / (float)basic_info.max_power;
+			player->GetInfoStruct()->set_pet_power_pct((float)basic_info.cur_power / (float)basic_info.max_power);
 			player->SetCharSheetChanged(true);
 		}
 	}
@@ -1648,6 +1648,10 @@ void Spawn::SetUnassignedTradeskillPrestigeAA(sint16 new_val)
 	SetInfo(&basic_info.unassigned_tradeskill_prestige_aa, new_val);
 }
 
+void Spawn::SetAAXPRewards(int32 value)
+{
+	SetInfo(&basic_info.aaxp_rewards, value, false);
+}
 
 sint16 Spawn::GetAssignedAA()
 {
@@ -1687,6 +1691,11 @@ sint16 Spawn::GetTradeskillPrestigeAA()
 sint16 Spawn::GetUnassignedTradeskillPrestigeAA()
 {
 	return basic_info.unassigned_tradeskill_prestige_aa;
+}
+
+int32 Spawn::GetAAXPRewards()
+{
+	return basic_info.aaxp_rewards;
 }
 
 float Spawn::GetDistance(float x1, float y1, float z1, float x2, float y2, float z2){

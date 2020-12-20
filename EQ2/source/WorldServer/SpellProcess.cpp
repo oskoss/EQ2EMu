@@ -656,10 +656,11 @@ bool SpellProcess::AddConcentration(LuaSpell* spell) {
 		int8 req = spell->spell->GetSpellData()->req_concentration / 256;
 		int8 current_avail = 5 - spell->caster->GetConcentrationCurrent();
 		if (current_avail >= req) {
-			spell->caster->GetInfoStruct()->cur_concentration += req;
+			int8 curConcentration = spell->caster->GetInfoStruct()->get_cur_concentration();
+			spell->caster->GetInfoStruct()->set_cur_concentration(curConcentration + req);
 			if (spell->caster->IsPlayer())
 				spell->caster->GetZone()->TriggerCharSheetTimer();
-			LogWrite(SPELL__DEBUG, 0, "Spell", "Concentration is now %u on %s", spell->caster->GetInfoStruct()->cur_concentration, spell->caster->GetName());
+			LogWrite(SPELL__DEBUG, 0, "Spell", "Concentration is now %u on %s", spell->caster->GetInfoStruct()->get_cur_concentration(), spell->caster->GetName());
 			return true;
 		}
 	}
@@ -931,7 +932,8 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 				if (actual_concentration > 0)
 				{
-					caster->GetInfoStruct()->cur_concentration -= actual_concentration;
+					int8 curConcentration = caster->GetInfoStruct()->get_cur_concentration();
+					caster->GetInfoStruct()->set_cur_concentration(curConcentration - actual_concentration);
 					if (caster->IsPlayer())
 						caster->GetZone()->TriggerCharSheetTimer();
 				}

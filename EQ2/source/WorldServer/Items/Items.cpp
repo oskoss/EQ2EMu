@@ -3699,13 +3699,13 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 ItemStatsValues* EquipmentItemList::CalculateEquipmentBonuses(Entity* entity){
 	ItemStatsValues* stats = new ItemStatsValues;
 	memset(stats, 0, sizeof(ItemStatsValues));
-	entity->GetInfoStruct()->mitigation_base = 0;
+	entity->GetInfoStruct()->set_mitigation_base(0);
 	MEquipmentItems.lock();
 	for(int8 i=0;i<NUM_SLOTS;i++){
 		if(items[i] && items[i]->details.item_id > 0){
 			master_item_list.CalculateItemBonuses(items[i], entity, stats);
 			if (items[i]->armor_info && !items[i]->IsShield())
-				entity->GetInfoStruct()->mitigation_base += items[i]->armor_info->mitigation_high;
+				entity->GetInfoStruct()->add_mitigation_base(items[i]->armor_info->mitigation_high);
 		}
 	}
 	MEquipmentItems.unlock();

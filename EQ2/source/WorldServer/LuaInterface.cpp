@@ -1246,6 +1246,18 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetCharacterTitlePrefix", EQ2Emu_lua_SetCharacterTitlePrefix);
 	lua_register(state, "ResetCharacterTitleSuffix", EQ2Emu_lua_ResetCharacterTitleSuffix);
 	lua_register(state, "ResetCharacterTitlePrefix", EQ2Emu_lua_ResetCharacterTitlePrefix);
+	
+	lua_register(state, "GetInfoStructString", EQ2Emu_lua_GetInfoStructString);
+	lua_register(state, "GetInfoStructUInt", EQ2Emu_lua_GetInfoStructUInt);
+	lua_register(state, "GetInfoStructSInt", EQ2Emu_lua_GetInfoStructSInt);
+	lua_register(state, "GetInfoStructFloat", EQ2Emu_lua_GetInfoStructFloat);
+	
+	lua_register(state, "SetInfoStructString", EQ2Emu_lua_SetInfoStructString);
+	lua_register(state, "SetInfoStructUInt", EQ2Emu_lua_SetInfoStructUInt);
+	lua_register(state, "SetInfoStructSInt", EQ2Emu_lua_SetInfoStructSInt);
+	lua_register(state, "SetInfoStructFloat", EQ2Emu_lua_SetInfoStructFloat);
+	
+	lua_register(state, "SetCharSheetChanged", EQ2Emu_lua_SetCharSheetChanged);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
@@ -1503,6 +1515,22 @@ ZoneServer* LuaInterface::GetZone(lua_State* state, int8 arg_num) {
 	return ret;
 }
 
+sint64 LuaInterface::GetSInt64Value(lua_State* state, int8 arg_num) {
+	sint64 val = 0;
+	if(lua_isnumber(state, arg_num)){
+		val = (sint64)lua_tointeger(state, arg_num);
+	}
+	return val;
+}
+
+int64 LuaInterface::GetInt64Value(lua_State* state, int8 arg_num) {
+	int64 val = 0;
+	if(lua_isnumber(state, arg_num)){
+		val = (int64)lua_tonumber(state, arg_num);
+	}
+	return val;
+}
+
 sint32 LuaInterface::GetSInt32Value(lua_State* state, int8 arg_num) {
 	sint32 val = 0;
 	if(lua_isnumber(state, arg_num)){
@@ -1574,6 +1602,14 @@ void LuaInterface::SetInt32Value(lua_State* state, int32 value) {
 }
 
 void LuaInterface::SetSInt32Value(lua_State* state, sint32 value) {
+	lua_pushinteger(state, value);
+}
+
+void LuaInterface::SetInt64Value(lua_State* state, int64 value) {
+	lua_pushinteger(state, value);
+}
+
+void LuaInterface::SetSInt64Value(lua_State* state, sint64 value) {
 	lua_pushinteger(state, value);
 }
 

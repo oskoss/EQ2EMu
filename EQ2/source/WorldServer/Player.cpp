@@ -245,29 +245,31 @@ PlayerInfo* Player::GetPlayerInfo(){
 }
 
 void PlayerInfo::CalculateXPPercentages(){
-	if(info_struct->xp_needed > 0){
-		float percentage = ((double)info_struct->xp / info_struct->xp_needed) * 1000;
-		info_struct->xp_yellow = (int16)percentage;
-		info_struct->xp_blue = (int16)((percentage-info_struct->xp_yellow)*1000);
-		info_struct->xp_blue_vitality_bar = 0;
-		info_struct->xp_yellow_vitality_bar = 0;
+	int32 xp_needed = info_struct->get_xp_needed();
+	if(xp_needed > 0){
+		float percentage = ((double)info_struct->get_xp() / xp_needed) * 1000;
+		info_struct->set_xp_yellow((int16)percentage);
+		info_struct->set_xp_blue((int16)(percentage-info_struct->get_xp_yellow())*1000);
+		info_struct->set_xp_blue_vitality_bar(0);
+		info_struct->set_xp_yellow_vitality_bar(0);
 		if(player->GetXPVitality() > 0){
 			float vitality_total = player->GetXPVitality()*10 + percentage;
 			vitality_total -= ((int)(percentage/100)*100);
 			if(vitality_total < 100){ //10%
-				info_struct->xp_blue_vitality_bar = info_struct->xp_blue + (int16)(player->GetXPVitality() *10);
+				info_struct->set_xp_blue_vitality_bar(info_struct->get_xp_blue() + (int16)(player->GetXPVitality() *10));
 			}
 			else
-				info_struct->xp_yellow_vitality_bar = info_struct->xp_yellow + (int16)(player->GetXPVitality() *10);
+				info_struct->set_xp_yellow_vitality_bar(info_struct->get_xp_yellow() + (int16)(player->GetXPVitality() *10));
 		}
 	}
 }
 
 void PlayerInfo::CalculateTSXPPercentages(){
-	if(info_struct->ts_xp_needed > 0){
-		float percentage = ((double)info_struct->ts_xp / info_struct->ts_xp_needed) * 1000;
-		info_struct->tradeskill_exp_yellow = (int16)percentage;
-		info_struct->tradeskill_exp_blue = (int16)((percentage - info_struct->tradeskill_exp_yellow) * 1000);
+	int32 ts_xp_needed = info_struct->get_ts_xp_needed();
+	if(ts_xp_needed > 0){
+		float percentage = ((double)info_struct->get_ts_xp() / ts_xp_needed) * 1000;
+		info_struct->set_tradeskill_exp_yellow((int16)percentage);
+		info_struct->set_tradeskill_exp_blue((int16)((percentage - info_struct->get_tradeskill_exp_yellow()) * 1000));
 		/*info_struct->xp_blue_vitality_bar = 0;
 		info_struct->xp_yellow_vitality_bar = 0;
 		if(player->GetXPVitality() > 0){
@@ -334,27 +336,37 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 	player->CalculateBonuses();
 	PacketStruct* packet = configReader.getStruct("WS_CharacterSheet", version);
 	if(packet){
-		packet->setDataByName("deity", "None");
-		packet->setDataByName("character_name", info_struct->name);
-		packet->setDataByName("race", info_struct->race);
-		packet->setDataByName("gender", info_struct->gender);
-		packet->setDataByName("class1", info_struct->class1);
-		packet->setDataByName("class2", info_struct->class2);
-		packet->setDataByName("class3", info_struct->class3);
-		packet->setDataByName("tradeskill_class1", info_struct->tradeskill_class1);
-		packet->setDataByName("tradeskill_class2", info_struct->tradeskill_class2);
-		packet->setDataByName("tradeskill_class3", info_struct->tradeskill_class3);
-		packet->setDataByName("level", info_struct->level);
-		packet->setDataByName("effective_level", info_struct->level);
-		packet->setDataByName("tradeskill_level", info_struct->tradeskill_level);
-		packet->setDataByName("account_age_base", info_struct->account_age_base);
-		for(int8 i=0;i<sizeof(info_struct->account_age_bonus);i++)
-			packet->setDataByName("account_age_bonus", info_struct->account_age_bonus[i]);
-		packet->setDataByName("deity", info_struct->deity);
+		//TODO: 2021 FIX THIS CASTING
+		char deity[32];
+		strncpy(deity, info_struct->get_deity().c_str(), 32);
+		packet->setDataByName("deity", deity);
+		
+		char name[40];
+		strncpy(name, info_struct->get_name().c_str(), 40);
+		packet->setDataByName("character_name", name);
+		packet->setDataByName("race", info_struct->get_race());
+		packet->setDataByName("gender", info_struct->get_gender());
+		packet->setDataByName("class1", info_struct->get_class1());
+		packet->setDataByName("class2", info_struct->get_class2());
+		packet->setDataByName("class3", info_struct->get_class3());
+		packet->setDataByName("tradeskill_class1", info_struct->get_tradeskill_class1());
+		packet->setDataByName("tradeskill_class2", info_struct->get_tradeskill_class2());
+		packet->setDataByName("tradeskill_class3", info_struct->get_tradeskill_class3());
+		packet->setDataByName("level", info_struct->get_level());
+		packet->setDataByName("effective_level", info_struct->get_level());
+		packet->setDataByName("tradeskill_level", info_struct->get_tradeskill_level());
+		packet->setDataByName("account_age_base", info_struct->get_account_age_base());
+
+//		for(int8 i=0;i<19;i++)
+//		{
+//			packet->setDataByName("account_age_bonus", info_struct->get_account_age_bonus(i));
+//		}
+
+		//
 		packet->setDataByName("current_hp", player->GetHP());
 		packet->setDataByName("max_hp",player-> GetTotalHP());
 		packet->setDataByName("base_hp", player->GetTotalHPBase());
-		float bonus_health = floor( (float)(info_struct->sta * player->CalculateBonusMod()));
+		float bonus_health = floor( (float)(info_struct->get_sta() * player->CalculateBonusMod()));
 		packet->setDataByName("bonus_health", bonus_health);
 		packet->setDataByName("stat_bonus_health", player->CalculateBonusMod());
 		packet->setDataByName("current_power", player->GetPower());
@@ -362,59 +374,61 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 		packet->setDataByName("base_power", player->GetTotalPowerBase());
 		packet->setDataByName("bonus_power", floor( (float)(player->GetPrimaryStat() * player->CalculateBonusMod())));
 		packet->setDataByName("stat_bonus_power", player->CalculateBonusMod());
-		packet->setDataByName("conc_used", info_struct->cur_concentration);
-		packet->setDataByName("conc_max", info_struct->max_concentration);
-		packet->setDataByName("attack", info_struct->cur_attack);
-		packet->setDataByName("attack_base", info_struct->attack_base);
-		packet->setDataByName("absorb", info_struct->absorb);
-		packet->setDataByName("mitigation_skill1", info_struct->mitigation_skill1);
-		packet->setDataByName("mitigation_skill2", info_struct->mitigation_skill2);
-		packet->setDataByName("mitigation_skill3", info_struct->mitigation_skill3);
+		packet->setDataByName("conc_used", info_struct->get_cur_concentration());
+		packet->setDataByName("conc_max", info_struct->get_max_concentration());
+		packet->setDataByName("attack", info_struct->get_cur_attack());
+		packet->setDataByName("attack_base", info_struct->get_attack_base());
+		packet->setDataByName("absorb", info_struct->get_absorb());
+		packet->setDataByName("mitigation_skill1", info_struct->get_mitigation_skill1());
+		packet->setDataByName("mitigation_skill2", info_struct->get_mitigation_skill2());
+		packet->setDataByName("mitigation_skill3", info_struct->get_mitigation_skill3());
 		CalculateXPPercentages();
-		packet->setDataByName("exp_yellow", info_struct->xp_yellow);
-		packet->setDataByName("exp_blue", info_struct->xp_blue);
-		packet->setDataByName("tradeskill_exp_yellow", info_struct->tradeskill_exp_yellow);
-		packet->setDataByName("tradeskill_exp_blue", info_struct->tradeskill_exp_blue);
-		packet->setDataByName("flags", info_struct->flags);
-		packet->setDataByName("flags2", info_struct->flags2);
-		packet->setDataByName("str", info_struct->str);
-		packet->setDataByName("sta", info_struct->sta);
-		packet->setDataByName("agi", info_struct->agi);
-		packet->setDataByName("wis", info_struct->wis);
-		packet->setDataByName("int", info_struct->intel);
-		packet->setDataByName("str_base", info_struct->str_base);
-		packet->setDataByName("sta_base", info_struct->sta_base);
-		packet->setDataByName("agi_base", info_struct->agi_base);
-		packet->setDataByName("wis_base", info_struct->wis_base);
-		packet->setDataByName("int_base", info_struct->intel_base);
-		packet->setDataByName("mitigation_cur", info_struct->cur_mitigation);
-		packet->setDataByName("mitigation_max", info_struct->max_mitigation);
-		packet->setDataByName("mitigation_base", info_struct->mitigation_base);
-		packet->setDataByName("heat", info_struct->heat);
-		packet->setDataByName("cold", info_struct->cold);
-		packet->setDataByName("magic", info_struct->magic);
-		packet->setDataByName("mental", info_struct->mental);
-		packet->setDataByName("divine", info_struct->divine);
-		packet->setDataByName("disease", info_struct->disease);
-		packet->setDataByName("poison", info_struct->poison);
-		packet->setDataByName("heat_base", info_struct->heat_base);
-		packet->setDataByName("cold_base", info_struct->cold_base);
-		packet->setDataByName("magic_base", info_struct->magic_base);
-		packet->setDataByName("mental_base", info_struct->mental_base);
-		packet->setDataByName("divine_base", info_struct->divine_base);
-		packet->setDataByName("disease_base", info_struct->disease_base);
-		packet->setDataByName("poison_base", info_struct->poison_base);
-		packet->setDataByName("mitigation_cur2", info_struct->cur_mitigation);
-		packet->setDataByName("mitigation_max2", info_struct->max_mitigation);
-		packet->setDataByName("mitigation_base2", info_struct->mitigation_base);
-		packet->setDataByName("coins_copper", info_struct->coin_copper);
-		packet->setDataByName("coins_silver", info_struct->coin_silver);
-		packet->setDataByName("coins_gold", info_struct->coin_gold);
-		packet->setDataByName("coins_plat", info_struct->coin_plat);
-		packet->setDataByName("weight", info_struct->weight);
-		packet->setDataByName("max_weight", info_struct->max_weight);
-		packet->setDataByName("pet_name", info_struct->pet_name);
-		packet->setDataByName("status_points", info_struct->status_points);
+		packet->setDataByName("exp_yellow", info_struct->get_xp_yellow());
+		packet->setDataByName("exp_blue", info_struct->get_xp_blue());
+		packet->setDataByName("tradeskill_exp_yellow", info_struct->get_tradeskill_exp_yellow());
+		packet->setDataByName("tradeskill_exp_blue", info_struct->get_tradeskill_exp_blue());
+		packet->setDataByName("flags", info_struct->get_flags());
+		packet->setDataByName("flags2", info_struct->get_flags2());
+		packet->setDataByName("str", info_struct->get_str());
+		packet->setDataByName("sta", info_struct->get_sta());
+		packet->setDataByName("agi", info_struct->get_agi());
+		packet->setDataByName("wis", info_struct->get_wis());
+		packet->setDataByName("int", info_struct->get_intel());
+		packet->setDataByName("str_base", info_struct->get_str_base());
+		packet->setDataByName("sta_base", info_struct->get_sta_base());
+		packet->setDataByName("agi_base", info_struct->get_agi_base());
+		packet->setDataByName("wis_base", info_struct->get_wis_base());
+		packet->setDataByName("int_base", info_struct->get_intel_base());
+		packet->setDataByName("mitigation_cur", info_struct->get_cur_mitigation());
+		packet->setDataByName("mitigation_max", info_struct->get_max_mitigation());
+		packet->setDataByName("mitigation_base", info_struct->get_mitigation_base());
+		packet->setDataByName("heat", info_struct->get_heat());
+		packet->setDataByName("cold", info_struct->get_cold());
+		packet->setDataByName("magic", info_struct->get_magic());
+		packet->setDataByName("mental", info_struct->get_mental());
+		packet->setDataByName("divine", info_struct->get_divine());
+		packet->setDataByName("disease", info_struct->get_disease());
+		packet->setDataByName("poison", info_struct->get_poison());
+		packet->setDataByName("heat_base", info_struct->get_heat_base());
+		packet->setDataByName("cold_base", info_struct->get_cold_base());
+		packet->setDataByName("magic_base", info_struct->get_magic_base());
+		packet->setDataByName("mental_base", info_struct->get_mental_base());
+		packet->setDataByName("divine_base", info_struct->get_divine_base());
+		packet->setDataByName("disease_base", info_struct->get_disease_base());
+		packet->setDataByName("poison_base", info_struct->get_poison_base());
+		packet->setDataByName("mitigation_cur2", info_struct->get_cur_mitigation());
+		packet->setDataByName("mitigation_max2", info_struct->get_max_mitigation());
+		packet->setDataByName("mitigation_base2", info_struct->get_mitigation_base());
+		packet->setDataByName("coins_copper", info_struct->get_coin_copper());
+		packet->setDataByName("coins_silver", info_struct->get_coin_silver());
+		packet->setDataByName("coins_gold", info_struct->get_coin_gold());
+		packet->setDataByName("coins_plat", info_struct->get_coin_plat());
+		packet->setDataByName("weight", info_struct->get_weight());
+		packet->setDataByName("max_weight", info_struct->get_max_weight());
+		char pet_name[32];
+		strncpy(pet_name, info_struct->get_pet_name().c_str(), 32);
+		packet->setDataByName("pet_name", pet_name);
+		packet->setDataByName("status_points", info_struct->get_status_points());
 		if(bind_zone_id > 0){
 			string bind_name = database.GetZoneName(bind_zone_id);
 			if (bind_name.length() > 0)
@@ -431,9 +445,9 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 			packet->setDataByName("house_zone", "None");
 		//packet->setDataByName("account_age_base", 14);
 		if(player->GetHPRegen() == 0)
-			player->SetHPRegen((int)(info_struct->level*.75)+(int)(info_struct->level/10)+3);
+			player->SetHPRegen((int)(info_struct->get_level()*.75)+(int)(info_struct->get_level()/10)+3);
 		if(player->GetPowerRegen() == 0)
-			player->SetPowerRegen(info_struct->level+(int)(info_struct->level/10)+4);
+			player->SetPowerRegen(info_struct->get_level()+(int)(info_struct->get_level()/10)+4);
 		packet->setDataByName("hp_regen", player->GetHPRegen());
 		packet->setDataByName("power_regen", player->GetPowerRegen());
 		/*packet->setDataByName("unknown11", -1, 0);
@@ -451,8 +465,8 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 		packet->setDataByName("adventure_exp_vitality", (int16)(player->GetXPVitality() *10));
 		//packet->setDataByName("unknown15b", 9911);
 		packet->setDataByName("unknown15a", 78);
-		packet->setDataByName("xp_yellow_vitality_bar", info_struct->xp_yellow_vitality_bar);
-		packet->setDataByName("xp_blue_vitality_bar", info_struct->xp_blue_vitality_bar);
+		packet->setDataByName("xp_yellow_vitality_bar", info_struct->get_xp_yellow_vitality_bar());
+		packet->setDataByName("xp_blue_vitality_bar", info_struct->get_xp_blue_vitality_bar());
 		packet->setDataByName("tradeskill_exp_vitality", 100);
 		packet->setDataByName("unknown15c", 200);
 
@@ -497,8 +511,8 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 	//	for(int i=0;i<19;i++)
 	//		packet->setDataByName("unknown7", 257, i);
 		//packet->setDataByName("unknown21", info_struct->rain, 2);
-		packet->setDataByName("rain", info_struct->rain);
-		packet->setDataByName("rain2", info_struct->wind); //-102.24);
+		packet->setDataByName("rain", info_struct->get_rain());
+		packet->setDataByName("rain2", info_struct->get_wind()); //-102.24);
 		/*packet->setDataByName("unknown22", 3, 4);
 		packet->setDataByName("unknown23", 3, 161);
 		packet->setDataByName("unknown20", 103);
@@ -578,7 +592,7 @@ EQ2Packet* PlayerInfo::serialize3(PacketStruct* packet, int16 version){
 }
 
 void PlayerInfo::SetAccountAge(int16 age){
-	info_struct->account_age_base = age;
+	info_struct->set_account_age_base(age);
 }
 
 EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyValue) {
@@ -626,26 +640,32 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 	//Sleep(5000);
 
 	if (packet) {
-		packet->setDataByName("character_name", info_struct->name);
+		char name[40];
+		strncpy(name,info_struct->get_name().c_str(),40);
+		packet->setDataByName("character_name", name);
 		//	packet->setDataByName("unknown_1_1_MJ", 99);//unknown_1_1_MJ
-		packet->setDataByName("race", info_struct->race);
-		packet->setDataByName("gender", info_struct->gender);
+		packet->setDataByName("race", info_struct->get_race());
+		packet->setDataByName("gender", info_struct->get_gender());
 		packet->setDataByName("exiled", 0);  // need exiled data
-		packet->setDataByName("class1", info_struct->class1);
-		packet->setDataByName("class2", info_struct->class2);
-		packet->setDataByName("class3", info_struct->class3);
-		packet->setDataByName("tradeskill_class1", info_struct->tradeskill_class1);
-		packet->setDataByName("tradeskill_class2", info_struct->tradeskill_class2);
-		packet->setDataByName("tradeskill_class3", info_struct->tradeskill_class3);
-		packet->setDataByName("level", info_struct->level);
-		packet->setDataByName("effective_level", info_struct->level);
-		packet->setDataByName("tradeskill_level", info_struct->tradeskill_level);
+		packet->setDataByName("class1", info_struct->get_class1());
+		packet->setDataByName("class2", info_struct->get_class2());
+		packet->setDataByName("class3", info_struct->get_class3());
+		packet->setDataByName("tradeskill_class1", info_struct->get_tradeskill_class1());
+		packet->setDataByName("tradeskill_class2", info_struct->get_tradeskill_class2());
+		packet->setDataByName("tradeskill_class3", info_struct->get_tradeskill_class3());
+		packet->setDataByName("level", info_struct->get_level());
+		packet->setDataByName("effective_level", info_struct->get_level());
+		packet->setDataByName("tradeskill_level", info_struct->get_tradeskill_level());
 		//		packet->setDataByName("unknown_1_2_MJ", 98);  //unknown_1_2_MJ
-		packet->setDataByName("account_age_base", info_struct->account_age_base);
-		for (int8 i = 0; i < sizeof(info_struct->account_age_bonus); i++)
-			packet->setDataByName("account_age_bonus", info_struct->account_age_bonus[i]);
-		packet->setDataByName("deity", "None");
-		packet->setDataByName("deity", info_struct->deity);
+		packet->setDataByName("account_age_base", info_struct->get_account_age_base());
+		//TODO: 2021 FIX THIS CASTING
+		for (int8 i = 0; i < 19; i++)
+			packet->setDataByName("account_age_bonus", 0);
+		//TODO: 2021 FIX THIS CASTING
+		char deity[32];
+		strncpy(deity, info_struct->get_deity().c_str(), 32);
+		packet->setDataByName("deity", deity);
+		
 		packet->setDataByName("last_name", player->GetLastName());
 		//	packet->setDataByName("unknown_1_3_MJ", 97);//unknown_1_3_MJ
 		packet->setDataByName("current_hp", player->GetHP());
@@ -655,75 +675,75 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("current_power", player->GetPower());
 		packet->setDataByName("max_power", player->GetTotalPower());
 		packet->setDataByName("base_power", player->GetTotalPowerBase());
-		packet->setDataByName("conc_used", info_struct->cur_concentration);
-		packet->setDataByName("conc_max", info_struct->max_concentration);
+		packet->setDataByName("conc_used", info_struct->get_cur_concentration());
+		packet->setDataByName("conc_max", info_struct->get_max_concentration());
 		if (player->GetHPRegen() == 0)
-			player->SetHPRegen((int)(info_struct->level * .75) + (int)(info_struct->level / 10) + 1);
+			player->SetHPRegen((int)(info_struct->get_level() * .75) + (int)(info_struct->get_level() / 10) + 1);
 		if (player->GetPowerRegen() == 0)
-			player->SetPowerRegen(info_struct->level + (int)(info_struct->level / 10) + 4);
+			player->SetPowerRegen(info_struct->get_level() + (int)(info_struct->get_level() / 10) + 4);
 		packet->setDataByName("hp_regen", player->GetHPRegen() + player->stats[ITEM_STAT_HPREGEN]);
 		packet->setDataByName("power_regen", player->GetPowerRegen() + player->stats[ITEM_STAT_MANAREGEN]);
 		//	packet->setDataByName("unknown_1_4a_MJ", 96); //-1// was unknown11
 		//	packet->setDataByName("unknown_1_4b_MJ", 96); //-1
 		packet->setDataByName("stat_bonus_health", player->CalculateBonusMod());//bonus health and bonus power getting same value?
 		packet->setDataByName("stat_bonus_power", player->CalculateBonusMod());//bonus health and bonus power getting same value?
-		float bonus_health = floor((float)(info_struct->sta * player->CalculateBonusMod()));
+		float bonus_health = floor((float)(info_struct->get_sta() * player->CalculateBonusMod()));
 		packet->setDataByName("bonus_health", bonus_health);
 		packet->setDataByName("bonus_power", floor((float)(player->GetPrimaryStat() * player->CalculateBonusMod())));
 		packet->setDataByName("stat_bonus_damage", 95); //stat_bonus_damage
-		packet->setDataByName("mitigation_cur", info_struct->cur_mitigation);// confirmed DoV
-		packet->setDataByName("mitigation_base", info_struct->mitigation_base);// confirmed DoV
+		packet->setDataByName("mitigation_cur", info_struct->get_cur_mitigation());// confirmed DoV
+		packet->setDataByName("mitigation_base", info_struct->get_mitigation_base());// confirmed DoV
 		packet->setDataByName("mitigation_pct_pve", 392); // % calculation Mitigation % vs PvE 392 = 39.2%// confirmed DoV
 		packet->setDataByName("mitigation_pct_pvp", 559); // % calculation Mitigation % vs PvP 559 = 55.9%// confirmed DoV
 		packet->setDataByName("toughness", 0);//toughness// confirmed DoV
 		packet->setDataByName("toughness_resist_dmg_pvp", 0);//toughness_resist_dmg_pvp 73 = 7300% // confirmed DoV 
 		packet->setDataByName("avoidance_pct", 0);//avoidance_pct 192 = 19.2% // confirmed DoV
-		packet->setDataByName("avoidance_base", info_struct->avoidance_base); // confirmed DoV
+		packet->setDataByName("avoidance_base", info_struct->get_avoidance_base()); // confirmed DoV
 		packet->setDataByName("avoidance", 71);
 		//		packet->setDataByName("unknown_1096_1_MJ", 90);//unknown_1096_1_MJ
-		packet->setDataByName("base_avoidance_pct", info_struct->base_avoidance_pct);// confirmed DoV
+		packet->setDataByName("base_avoidance_pct", info_struct->get_base_avoidance_pct());// confirmed DoV
 		//		packet->setDataByName("unknown_1096_2_MJ", 89);//unknown_1096_2_MJ
-		packet->setDataByName("parry", info_struct->parry_base);// confirmed DoV
+		packet->setDataByName("parry", info_struct->get_parry_base());// confirmed DoV
 		//		packet->setDataByName("unknown_1096_3_MJ", 88);//unknown_1096_3_MJ
-		packet->setDataByName("block", info_struct->block_base);// confirmed DoV
+		packet->setDataByName("block", info_struct->get_block_base());// confirmed DoV
 		//		packet->setDataByName("unknown_1096_4_MJ", 87);//unknown_1096_4_MJ
-		packet->setDataByName("uncontested_block", info_struct->uncontested_block);// confirmed DoV
+		packet->setDataByName("uncontested_block", info_struct->get_uncontested_block());// confirmed DoV
 		//		packet->setDataByName("unknown_1096_5_MJ", 86);//unknown_1096_5_MJ
-		packet->setDataByName("str", info_struct->str);// confirmed DoV
-		packet->setDataByName("sta", info_struct->sta);// confirmed DoV
-		packet->setDataByName("agi", info_struct->agi);// confirmed DoV
-		packet->setDataByName("wis", info_struct->wis);// confirmed DoV
-		packet->setDataByName("int", info_struct->intel);// confirmed DoV
-		packet->setDataByName("str_base", info_struct->str_base);  // confirmed DoV
-		packet->setDataByName("sta_base", info_struct->sta_base);// confirmed DoV
-		packet->setDataByName("agi_base", info_struct->agi_base);// confirmed DoV
-		packet->setDataByName("wis_base", info_struct->wis_base);// confirmed DoV
-		packet->setDataByName("int_base", info_struct->intel_base);// confirmed DoV
+		packet->setDataByName("str", info_struct->get_str());// confirmed DoV
+		packet->setDataByName("sta", info_struct->get_sta());// confirmed DoV
+		packet->setDataByName("agi", info_struct->get_agi());// confirmed DoV
+		packet->setDataByName("wis", info_struct->get_wis());// confirmed DoV
+		packet->setDataByName("int", info_struct->get_intel());// confirmed DoV
+		packet->setDataByName("str_base", info_struct->get_str_base());  // confirmed DoV
+		packet->setDataByName("sta_base", info_struct->get_sta_base());// confirmed DoV
+		packet->setDataByName("agi_base", info_struct->get_agi_base());// confirmed DoV
+		packet->setDataByName("wis_base", info_struct->get_wis_base());// confirmed DoV
+		packet->setDataByName("int_base", info_struct->get_intel_base());// confirmed DoV
 		//		packet->setDataByName("unknown_1096_6_MJ", 86);//unknown_1096_6_MJ
 		if (version <= 996) {
-			packet->setDataByName("heat", info_struct->heat);
-			packet->setDataByName("cold", info_struct->cold);
-			packet->setDataByName("magic", info_struct->magic);
-			packet->setDataByName("mental", info_struct->mental);
-			packet->setDataByName("divine", info_struct->divine);
-			packet->setDataByName("disease", info_struct->disease);
-			packet->setDataByName("poison", info_struct->poison);
-			packet->setDataByName("heat_base", info_struct->heat_base);
-			packet->setDataByName("cold_base", info_struct->cold_base);
-			packet->setDataByName("magic_base", info_struct->magic_base);
-			packet->setDataByName("mental_base", info_struct->mental_base);
-			packet->setDataByName("divine_base", info_struct->divine_base);
-			packet->setDataByName("disease_base", info_struct->disease_base);
-			packet->setDataByName("poison_base", info_struct->poison_base);
+			packet->setDataByName("heat", info_struct->get_heat());
+			packet->setDataByName("cold", info_struct->get_cold());
+			packet->setDataByName("magic", info_struct->get_magic());
+			packet->setDataByName("mental", info_struct->get_mental());
+			packet->setDataByName("divine", info_struct->get_divine());
+			packet->setDataByName("disease", info_struct->get_disease());
+			packet->setDataByName("poison", info_struct->get_poison());
+			packet->setDataByName("heat_base", info_struct->get_heat_base());
+			packet->setDataByName("cold_base", info_struct->get_cold_base());
+			packet->setDataByName("magic_base", info_struct->get_magic_base());
+			packet->setDataByName("mental_base", info_struct->get_mental_base());
+			packet->setDataByName("divine_base", info_struct->get_divine_base());
+			packet->setDataByName("disease_base", info_struct->get_disease_base());
+			packet->setDataByName("poison_base", info_struct->get_poison_base());
 		}
 		else {
-			packet->setDataByName("elemental", info_struct->heat);// confirmed DoV
-			packet->setDataByName("noxious", info_struct->poison);// confirmed DoV
-			packet->setDataByName("arcane", info_struct->magic);// confirmed DoV
+			packet->setDataByName("elemental", info_struct->get_heat());// confirmed DoV
+			packet->setDataByName("noxious", info_struct->get_poison());// confirmed DoV
+			packet->setDataByName("arcane", info_struct->get_magic());// confirmed DoV
 			//		packet->setDataByName("unknown_1096_7_MJ", 85);//unknown_1096_7_MJ
-			packet->setDataByName("elemental_base", info_struct->elemental_base);// confirmed DoV
-			packet->setDataByName("noxious_base", info_struct->noxious_base);// confirmed DoV
-			packet->setDataByName("arcane_base", info_struct->arcane_base);// confirmed DoV
+			packet->setDataByName("elemental_base", info_struct->get_elemental_base());// confirmed DoV
+			packet->setDataByName("noxious_base", info_struct->get_noxious_base());// confirmed DoV
+			packet->setDataByName("arcane_base", info_struct->get_arcane_base());// confirmed DoV
 		}
 		//	packet->setDataByName("unknown_1096_8_MJ", 205);//unknown_1096_8_MJ
 		packet->setDataByName("elemental_absorb_pve", 0); //210 = 21.0% confirmed DoV
@@ -742,11 +762,11 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("noxious_dmg_reduction_pct", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("arcane_dmg_reduction_pct", 0);//210 = 21.0% confirmed DoV
 		CalculateXPPercentages();
-		packet->setDataByName("current_adv_xp", info_struct->xp); // confirmed DoV
-		packet->setDataByName("needed_adv_xp", info_struct->xp_needed);// confirmed DoV
+		packet->setDataByName("current_adv_xp", info_struct->get_xp()); // confirmed DoV
+		packet->setDataByName("needed_adv_xp", info_struct->get_xp_needed());// confirmed DoV
 		packet->setDataByName("debt_adv_xp", 0);//95= 9500% //confirmed DoV
-		packet->setDataByName("current_trade_xp", info_struct->ts_xp);// confirmed DoV
-		packet->setDataByName("needed_trade_xp", info_struct->ts_xp_needed);// confirmed DoV
+		packet->setDataByName("current_trade_xp", info_struct->get_ts_xp());// confirmed DoV
+		packet->setDataByName("needed_trade_xp", info_struct->get_ts_xp_needed());// confirmed DoV
 
 		packet->setDataByName("debt_trade_xp", 0);//95= 9500% //confirmed DoV
 		packet->setDataByName("server_bonus", 0);//confirmed DoV
@@ -756,8 +776,8 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("recruit_friend_bonus", 0);//confirmed DoV
 
 		packet->setDataByName("adventure_vitality", (int16)(player->GetXPVitality() * 10)); // a %%
-		packet->setDataByName("adventure_vitality_yellow_arrow", info_struct->xp_yellow_vitality_bar); //change info_struct to match struct
-		packet->setDataByName("adventure_vitality_blue_arrow", info_struct->xp_blue_vitality_bar);  //change info_struct to match struct
+		packet->setDataByName("adventure_vitality_yellow_arrow", info_struct->get_xp_yellow_vitality_bar()); //change info_struct to match struct
+		packet->setDataByName("adventure_vitality_blue_arrow", info_struct->get_xp_blue_vitality_bar());  //change info_struct to match struct
 
 		packet->setDataByName("tradeskill_vitality", 300); //300 = 30%
 
@@ -781,10 +801,10 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("completed_collections", 144);// dov confirmed
 		packet->setDataByName("unknown_1096_13_MJ", 80);//unknown_1096_13_MJ
 		packet->setDataByName("unknown_1096_14_MJ", 50);//unknown_1096_14_MJ
-		packet->setDataByName("coins_copper", info_struct->coin_copper);// dov confirmed
-		packet->setDataByName("coins_silver", info_struct->coin_silver);// dov confirmed
-		packet->setDataByName("coins_gold", info_struct->coin_gold);// dov confirmed
-		packet->setDataByName("coins_plat", info_struct->coin_plat);// dov confirmed
+		packet->setDataByName("coins_copper", info_struct->get_coin_copper());// dov confirmed
+		packet->setDataByName("coins_silver", info_struct->get_coin_silver());// dov confirmed
+		packet->setDataByName("coins_gold", info_struct->get_coin_gold());// dov confirmed
+		packet->setDataByName("coins_plat", info_struct->get_coin_plat());// dov confirmed
 		//packet->setDataByName("unknown_1096_15_MJ", 50);//unknown_1096_15_MJ
 		//////Spell Effects go here, but are below
 		//////Dettrimental effects go here, but are below
@@ -803,7 +823,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("melee_sec_dmg_max", player->GetSecondaryWeaponMaxDamage());// dov confirmed // this is off when using 2 handed weapon
 		packet->setDataByName("ranged_dmg_min", player->GetRangedWeaponMinDamage());// dov confirmed
 		packet->setDataByName("ranged_dmg_max", player->GetRangedWeaponMaxDamage());// dov confirmed
-		if (info_struct->attackspeed > 0) {
+		if (info_struct->get_attackspeed() > 0) {
 			packet->setDataByName("melee_pri_delay", (((float)player->GetPrimaryWeaponDelay() * 1.33) / player->CalculateAttackSpeedMod()) * .001);// dov confirmed
 			packet->setDataByName("melee_sec_delay", (((float)player->GetSecondaryWeaponDelay() * 1.33) / player->CalculateAttackSpeedMod()) * .001);// dov confirmed
 			packet->setDataByName("ranged_delay", (((float)player->GetRangeWeaponDelay() * 1.33) / player->CalculateAttackSpeedMod()) * .001);// dov confirmed
@@ -817,13 +837,13 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		//packet->setDataByName("unknown_1096_18_MJ", 98);//unknown_1096_19b_MJ
 		//packet->setDataByName("unknown_1096_18_MJ", 97);//unknown_1096_19c_MJ
 		//packet->setDataByName("unknown_1096_18_MJ", 96);//unknown_1096_19d_MJ
-		packet->setDataByName("ability_mod_pve", info_struct->ability_modifier);// dov confirmed
+		packet->setDataByName("ability_mod_pve", info_struct->get_ability_modifier());// dov confirmed
 		packet->setDataByName("base_melee_crit", 85);//85 = 8500% dov confirmed
 		packet->setDataByName("base_spell_crit", 84);// dov confirmed
 		packet->setDataByName("base_taunt_crit", 83);// dov confirmed
 		packet->setDataByName("base_heal_crit", 82);// dov confirmed
-		packet->setDataByName("flags", info_struct->flags);
-		packet->setDataByName("flags2", info_struct->flags2);
+		packet->setDataByName("flags", info_struct->get_flags());
+		packet->setDataByName("flags2", info_struct->get_flags2());
 		if (version == 546) {
 			if (player->get_character_flag(CF_ANONYMOUS))
 				packet->setDataByName("flags_anonymous", 1);
@@ -854,39 +874,39 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		//unknown_1096_21_MJ
 		//unknown_1096_22_MJ
 		//unknown_1096_23_MJ
-		packet->setDataByName("haste", info_struct->haste);// dov confirmed
+		packet->setDataByName("haste", info_struct->get_haste());// dov confirmed
 		//unknown_1096_24_MJ
 		//unknown_1096_25_MJ
 		//unknown_1096_26_MJ
-		packet->setDataByName("drunk", info_struct->drunk);// dov confirmed
+		packet->setDataByName("drunk", info_struct->get_drunk());// dov confirmed
 		//unknown_1096_27_MJ
-		packet->setDataByName("hate_mod", info_struct->hate_mod);// dov confirmed
+		packet->setDataByName("hate_mod", info_struct->get_hate_mod());// dov confirmed
 		packet->setDataByName("adventure_effects_bonus", 55);// NEED an adventure_effects_bonus// dov confirmed
 		packet->setDataByName("tradeskill_effects_bonus", 56);// NEED an tradeskill_effects_bonus// dov confirmed
 		//unknown_1096_28_MJ
-		packet->setDataByName("dps", info_struct->dps);// dov confirmed
+		packet->setDataByName("dps", info_struct->get_dps());// dov confirmed
 		//unknown_1096_29_MJ
-		packet->setDataByName("melee_ae", info_struct->melee_ae);// dov confirmed
-		packet->setDataByName("multi_attack", info_struct->multi_attack);// dov confirmed
-		packet->setDataByName("spell_multi_attack", info_struct->spell_multi_attack);// dov confirmed
+		packet->setDataByName("melee_ae", info_struct->get_melee_ae());// dov confirmed
+		packet->setDataByName("multi_attack", info_struct->get_multi_attack());// dov confirmed
+		packet->setDataByName("spell_multi_attack", info_struct->get_spell_multi_attack());// dov confirmed
 		//unknown_1096_30_MJ
-		packet->setDataByName("block_chance", info_struct->block_chance);// dov confirmed
+		packet->setDataByName("block_chance", info_struct->get_block_chance());// dov confirmed
 		//unknown_1096_31_MJ
-		packet->setDataByName("crit_chance", info_struct->crit_chance);// dov confirmed
+		packet->setDataByName("crit_chance", info_struct->get_crit_chance());// dov confirmed
 		//unknown_1096_32_MJ
-		packet->setDataByName("crit_bonus", info_struct->crit_bonus);// dov confirmed
-		packet->setDataByName("potency", player->stats[ITEM_STAT_POTENCY]);//info_struct->potency);// dov confirmed
+		packet->setDataByName("crit_bonus", info_struct->get_crit_bonus());// dov confirmed
+		packet->setDataByName("potency", player->stats[ITEM_STAT_POTENCY]);//info_struct->get_potency);// dov confirmed
 		//unknown_1096_33_MJ
-		packet->setDataByName("reuse_speed", info_struct->reuse_speed);// dov confirmed
-		packet->setDataByName("recovery_speed", info_struct->recovery_speed);// dov confirmed
-		packet->setDataByName("casting_speed", info_struct->casting_speed);// dov confirmed
-		packet->setDataByName("spell_reuse_speed", info_struct->spell_reuse_speed);// dov confirmed
+		packet->setDataByName("reuse_speed", info_struct->get_reuse_speed());// dov confirmed
+		packet->setDataByName("recovery_speed", info_struct->get_recovery_speed());// dov confirmed
+		packet->setDataByName("casting_speed", info_struct->get_casting_speed());// dov confirmed
+		packet->setDataByName("spell_reuse_speed", info_struct->get_spell_reuse_speed());// dov confirmed
 		//unknown_1096_34_MJ
-		packet->setDataByName("strikethrough", info_struct->strikethrough);//dov confirmed
+		packet->setDataByName("strikethrough", info_struct->get_strikethrough());//dov confirmed
 		//unknown_1096_35_MJ
-		packet->setDataByName("accuracy", info_struct->accuracy);//dov confirmed
+		packet->setDataByName("accuracy", info_struct->get_accuracy());//dov confirmed
 		//unknown_1096_36_MJ
-		packet->setDataByName("critical_mit", info_struct->critical_mitigation);//dov /confirmed
+		packet->setDataByName("critical_mit", info_struct->get_critical_mitigation());//dov /confirmed
 		//unknown_1096_37_MJ
 		//toughness_resist_crit_pvp
 		//unknown_1096_38_MJ
@@ -901,20 +921,22 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		/////GRoup Members
 		//unknown_1096_40_MJ
 		//unknown_1096_41_MJ
-		if (version <= 283 && info_struct->pet_id == 0xFFFFFFFF)
+		if (version <= 283 && info_struct->get_pet_id() == 0xFFFFFFFF)
 			packet->setDataByName("pet_id", 0);
 		else {
-			packet->setDataByName("pet_id", info_struct->pet_id);
-			packet->setDataByName("pet_name", info_struct->pet_name);
+			packet->setDataByName("pet_id", info_struct->get_pet_id());
+			char pet_name[32];
+			strncpy(pet_name, info_struct->get_pet_name().c_str(), 32);
+			packet->setDataByName("pet_name", pet_name);
 		}
 		//unknown_1096_42_MJ
-		packet->setDataByName("pet_health_pct", info_struct->pet_health_pct);
-		packet->setDataByName("pet_power_pct", info_struct->pet_power_pct);
+		packet->setDataByName("pet_health_pct", info_struct->get_pet_health_pct());
+		packet->setDataByName("pet_power_pct", info_struct->get_pet_power_pct());
 		//unknown_1096_43_MJ
-		packet->setDataByName("pet_movement", info_struct->pet_movement);
-		packet->setDataByName("pet_behavior", info_struct->pet_behavior);
-		packet->setDataByName("rain", info_struct->rain);
-		packet->setDataByName("rain2", info_struct->wind); //-102.24);
+		packet->setDataByName("pet_movement", info_struct->get_pet_movement());
+		packet->setDataByName("pet_behavior", info_struct->get_pet_behavior());
+		packet->setDataByName("rain", info_struct->get_rain());
+		packet->setDataByName("rain2", info_struct->get_wind()); //-102.24);
 		packet->setDataByName("status_points", 999999);// info_struct->status_points);
 		packet->setDataByName("guild_status", 888888);
 		//unknown_1096_44_MJ
@@ -955,7 +977,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("ex_progress_add", player->stats[ITEM_STAT_EX_PROGRESS_ADD]);
 		packet->setDataByName("ex_success_mod", player->stats[ITEM_STAT_EX_SUCCESS_MOD]);
 
-		packet->setDataByName("flurry", info_struct->flurry);
+		packet->setDataByName("flurry", info_struct->get_flurry());
 		packet->setDataByName("unknown153", 153);
 		packet->setDataByName("bountiful_harvest", 0); // need bountiful harvest
 
@@ -973,35 +995,35 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("decrease_falling_dmg", 169);
 
 
-		info_struct->max_weight = 200;
+		info_struct->set_max_weight(200);
 		//packet->setDataByName("auto_attack", 1);
 		//492
 		if (version <= 546) {
-			packet->setDataByName("exp_yellow", info_struct->xp_yellow / 10);
-			packet->setDataByName("exp_blue", info_struct->xp_blue/10);
+			packet->setDataByName("exp_yellow", info_struct->get_xp_yellow() / 10);
+			packet->setDataByName("exp_blue", info_struct->get_xp_blue()/10);
 		}
 		else {
-			packet->setDataByName("exp_yellow", info_struct->xp_yellow);
-			packet->setDataByName("exp_blue", info_struct->xp_blue);
+			packet->setDataByName("exp_yellow", info_struct->get_xp_yellow());
+			packet->setDataByName("exp_blue", info_struct->get_xp_blue());
 		}
 		
 		if (version <= 546) {
-			packet->setDataByName("tradeskill_exp_yellow", info_struct->tradeskill_exp_yellow / 10);
-			packet->setDataByName("tradeskill_exp_blue", info_struct->tradeskill_exp_blue / 10);
+			packet->setDataByName("tradeskill_exp_yellow", info_struct->get_tradeskill_exp_yellow() / 10);
+			packet->setDataByName("tradeskill_exp_blue", info_struct->get_tradeskill_exp_blue() / 10);
 		}
 		else {
-			packet->setDataByName("tradeskill_exp_yellow", info_struct->tradeskill_exp_yellow);
-			packet->setDataByName("tradeskill_exp_blue", info_struct->tradeskill_exp_blue);
+			packet->setDataByName("tradeskill_exp_yellow", info_struct->get_tradeskill_exp_yellow());
+			packet->setDataByName("tradeskill_exp_blue", info_struct->get_tradeskill_exp_blue());
 		}		
 
-		packet->setDataByName("attack", info_struct->cur_attack);
-		packet->setDataByName("attack_base", info_struct->attack_base);
-		packet->setDataByName("absorb", info_struct->absorb);
-		packet->setDataByName("mitigation_skill1", info_struct->mitigation_skill1);
-		packet->setDataByName("mitigation_skill2", info_struct->mitigation_skill2);
-		packet->setDataByName("mitigation_skill3", info_struct->mitigation_skill3);
+		packet->setDataByName("attack", info_struct->get_cur_attack());
+		packet->setDataByName("attack_base", info_struct->get_attack_base());
+		packet->setDataByName("absorb", info_struct->get_absorb());
+		packet->setDataByName("mitigation_skill1", info_struct->get_mitigation_skill1());
+		packet->setDataByName("mitigation_skill2", info_struct->get_mitigation_skill2());
+		packet->setDataByName("mitigation_skill3", info_struct->get_mitigation_skill3());
 
-		packet->setDataByName("mitigation_max", info_struct->max_mitigation);
+		packet->setDataByName("mitigation_max", info_struct->get_max_mitigation());
 
 		packet->setDataByName("savagery", 250);
 		packet->setDataByName("max_savagery", 500);
@@ -1010,19 +1032,19 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("dissonance", 5000);
 		packet->setDataByName("max_dissonance", 10000);
 
-		packet->setDataByName("mitigation_cur2", info_struct->cur_mitigation);
-		packet->setDataByName("mitigation_max2", info_struct->max_mitigation);
-		packet->setDataByName("mitigation_base2", info_struct->mitigation_base);
+		packet->setDataByName("mitigation_cur2", info_struct->get_cur_mitigation());
+		packet->setDataByName("mitigation_max2", info_struct->get_max_mitigation());
+		packet->setDataByName("mitigation_base2", info_struct->get_mitigation_base());
 
 		if (version < 1096)
-			packet->setDataByName("weight", info_struct->weight);
-		packet->setDataByName("max_weight", info_struct->max_weight);
+			packet->setDataByName("weight", info_struct->get_weight());
+		packet->setDataByName("max_weight", info_struct->get_max_weight());
 		packet->setDataByName("unknownint32a", 777777);
 		packet->setDataByName("unknownint32b", 666666);
 		packet->setDataByName("mitigation2_cur", 2367);
-		packet->setDataByName("uncontested_riposte", info_struct->uncontested_riposte);
-		packet->setDataByName("uncontested_dodge", info_struct->uncontested_dodge);
-		packet->setDataByName("uncontested_parry", info_struct->uncontested_parry); //????
+		packet->setDataByName("uncontested_riposte", info_struct->get_uncontested_riposte());
+		packet->setDataByName("uncontested_dodge", info_struct->get_uncontested_dodge());
+		packet->setDataByName("uncontested_parry", info_struct->get_uncontested_parry()); //????
 		packet->setDataByName("uncontested_riposte_pve", 0); //????
 		packet->setDataByName("uncontested_parry_pve", 0); //????
 		packet->setDataByName("total_prestige_points", player->GetPrestigeAA());
@@ -1288,8 +1310,8 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 
 
 
-		packet->setDataByName("vision", info_struct->vision);
-		packet->setDataByName("breathe_underwater", info_struct->breathe_underwater);
+		packet->setDataByName("vision", info_struct->get_vision());
+		packet->setDataByName("breathe_underwater", info_struct->get_breathe_underwater());
 
 
 
@@ -1575,27 +1597,28 @@ EQ2Packet* PlayerInfo::serializePet(int16 version) {
 			packet->setDataByName("max_power", pet->GetTotalPower());
 			packet->setDataByName("base_power", pet->GetTotalPowerBase());
 
-			packet->setDataByName("spawn_id", info_struct->pet_id);
-			packet->setDataByName("spawn_id2", info_struct->pet_id);
-
-			packet->setDataByName("name", info_struct->pet_name);
-			packet->setDataByName("no_pet", info_struct->pet_name);
+			packet->setDataByName("spawn_id", info_struct->get_pet_id());
+			packet->setDataByName("spawn_id2", info_struct->get_pet_id());
+			char pet_name[32];
+			strncpy(pet_name, info_struct->get_pet_name().c_str(), 32);
+			packet->setDataByName("name", pet_name);
+			packet->setDataByName("no_pet", pet_name);
 
 			if (version >= 57000) {
 				packet->setDataByName("current_power3", pet->GetPower());
 				packet->setDataByName("max_power3", pet->GetTotalPower());
-				packet->setDataByName("health_pct_tooltip", (double)info_struct->pet_health_pct);
-				packet->setDataByName("health_pct_bar", (double)info_struct->pet_health_pct);
+				packet->setDataByName("health_pct_tooltip", (double)info_struct->get_pet_health_pct());
+				packet->setDataByName("health_pct_bar", (double)info_struct->get_pet_health_pct());
 			}
 			else {
-				packet->setDataByName("health_pct_tooltip", info_struct->pet_health_pct);
-				packet->setDataByName("health_pct_bar", info_struct->pet_health_pct);
+				packet->setDataByName("health_pct_tooltip", info_struct->get_pet_health_pct());
+				packet->setDataByName("health_pct_bar", info_struct->get_pet_health_pct());
 			}
-			packet->setDataByName("power_pct_tooltip", info_struct->pet_power_pct);
-			packet->setDataByName("power_pct_bar", info_struct->pet_power_pct);
+			packet->setDataByName("power_pct_tooltip", info_struct->get_pet_power_pct());
+			packet->setDataByName("power_pct_bar", info_struct->get_pet_power_pct());
 			packet->setDataByName("unknown5", 255); // Hate % maybe
-			packet->setDataByName("movement", info_struct->pet_movement);
-			packet->setDataByName("behavior", info_struct->pet_behavior);
+			packet->setDataByName("movement", info_struct->get_pet_movement());
+			packet->setDataByName("behavior", info_struct->get_pet_behavior());
 		}
 		else {
 			packet->setDataByName("current_hp", 0);
@@ -2100,35 +2123,35 @@ EQ2Packet* Player::MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 ne
 }
 
 int32 Player::GetCoinsCopper(){
-	return GetInfoStruct()->coin_copper;
+	return GetInfoStruct()->get_coin_copper();
 }
 
 int32 Player::GetCoinsSilver(){
-	return GetInfoStruct()->coin_silver;
+	return GetInfoStruct()->get_coin_silver();
 }
 
 int32 Player::GetCoinsGold(){
-	return GetInfoStruct()->coin_gold;
+	return GetInfoStruct()->get_coin_gold();
 }
 
 int32 Player::GetCoinsPlat(){
-	return GetInfoStruct()->coin_plat;
+	return GetInfoStruct()->get_coin_plat();
 }
 
 int32 Player::GetBankCoinsCopper(){
-	return GetInfoStruct()->bank_coin_copper;
+	return GetInfoStruct()->get_bank_coin_copper();
 }
 
 int32 Player::GetBankCoinsSilver(){
-	return GetInfoStruct()->bank_coin_silver;
+	return GetInfoStruct()->get_bank_coin_silver();
 }
 
 int32 Player::GetBankCoinsGold(){
-	return GetInfoStruct()->bank_coin_gold;
+	return GetInfoStruct()->get_bank_coin_gold();
 }
 
 int32 Player::GetBankCoinsPlat(){
-	return GetInfoStruct()->bank_coin_plat;
+	return GetInfoStruct()->get_bank_coin_plat();
 }
 
 vector<QuickBarItem*>* Player::GetQuickbar(){
@@ -2874,17 +2897,20 @@ PlayerInfo::PlayerInfo(Player* in_player){
 	pet_changes = 0;
 	player = in_player;
 	info_struct = player->GetInfoStruct();
-	strcpy(info_struct->name, player->GetName());
-	info_struct->class1 = classes.GetBaseClass(player->GetAdventureClass());
-	info_struct->class2 = classes.GetSecondaryBaseClass(player->GetAdventureClass());
-	info_struct->class3 = player->GetAdventureClass();
-	info_struct->race = player->GetRace();
-	info_struct->gender = player->GetGender();
-	info_struct->level = player->GetLevel();
-	info_struct->tradeskill_level = player->GetTSLevel(); // JA: added 2011.07.22 to address TODO below
-	info_struct->tradeskill_class1 = classes.GetTSBaseClass(player->GetTradeskillClass());
-	info_struct->tradeskill_class2 = classes.GetSecondaryTSBaseClass(player->GetTradeskillClass());
-	info_struct->tradeskill_class3 = player->GetTradeskillClass();
+	info_struct->set_name(std::string(player->GetName()));
+	info_struct->set_deity(std::string("None"));
+
+	info_struct->set_class1(classes.GetBaseClass(player->GetAdventureClass()));
+	info_struct->set_class2(classes.GetSecondaryBaseClass(player->GetAdventureClass()));
+	info_struct->set_class3(player->GetAdventureClass());
+
+	info_struct->set_race(player->GetRace());
+	info_struct->set_gender(player->GetGender());
+	info_struct->set_level(player->GetLevel());
+	info_struct->set_tradeskill_level(player->GetTSLevel()); // JA: added 2011.07.22 to address TODO below
+	info_struct->set_tradeskill_class1(classes.GetTSBaseClass(player->GetTradeskillClass()));
+	info_struct->set_tradeskill_class2(classes.GetSecondaryTSBaseClass(player->GetTradeskillClass()));
+	info_struct->set_tradeskill_class3(player->GetTradeskillClass());
 
 	LogWrite(MISC__TODO, 1, "TODO", "Fix info_struct.tradeskill_level = player->GetArtLevel();\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 
@@ -2895,6 +2921,7 @@ PlayerInfo::PlayerInfo(Player* in_player){
 		}
 		info_struct->spell_effects[i].spell_id = 0xFFFFFFFF;	
 	}
+	
 	house_zone_id = 0;
 	bind_zone_id = 0;
 	bind_x = 0;
@@ -3486,9 +3513,9 @@ PlayerSkillList* Player::GetSkills(){
 
 void Player::InCombat(bool val, bool range) {
 	if (val)
-		GetInfoStruct()->flags |= (1 << (range?CF_RANGED_AUTO_ATTACK:CF_AUTO_ATTACK));
+		GetInfoStruct()->set_flags(GetInfoStruct()->get_flags() | (1 << (range?CF_RANGED_AUTO_ATTACK:CF_AUTO_ATTACK)));
 	else
-		GetInfoStruct()->flags &= ~(1 << (range?CF_RANGED_AUTO_ATTACK:CF_AUTO_ATTACK));
+		GetInfoStruct()->set_flags(GetInfoStruct()->get_flags() & ~(1 << (range?CF_RANGED_AUTO_ATTACK:CF_AUTO_ATTACK)));
 
 	in_combat = val;
 	if(in_combat)
@@ -3508,7 +3535,7 @@ bool Player::GetCharSheetChanged(){
 }
 
 bool Player::AdventureXPEnabled(){
-	return (GetInfoStruct()->flags & (1 << CF_COMBAT_EXPERIENCE_ENABLED));
+	return (GetInfoStruct()->get_flags() & (1 << CF_COMBAT_EXPERIENCE_ENABLED));
 }
 
 bool Player::TradeskillXPEnabled() {
@@ -3518,41 +3545,57 @@ bool Player::TradeskillXPEnabled() {
 
 void Player::set_character_flag(int flag){
 	LogWrite(PLAYER__DEBUG, 0, "Player", "Flag: %u", flag);
-	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags before: %u, Flags2: %u", GetInfoStruct()->flags, GetInfoStruct()->flags2);
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags before: %u, Flags2: %u", GetInfoStruct()->get_flags(), GetInfoStruct()->get_flags2());
 
 	if (flag > CF_MAXIMUM_FLAG) return;
-	if (flag < 32) GetInfoStruct()->flags |= (1 << flag);
-	else GetInfoStruct()->flags2 |= (1 << (flag - 32));
+	if (flag < 32) GetInfoStruct()->set_flags(GetInfoStruct()->get_flags() | (1 << flag));
+	else GetInfoStruct()->set_flags2(GetInfoStruct()->get_flags2() | (1 << (flag - 32)));
 	charsheet_changed = true;
 	info_changed = true;
 
-	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags after: %u, Flags2: %u", GetInfoStruct()->flags, GetInfoStruct()->flags2);
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags after: %u, Flags2: %u", GetInfoStruct()->get_flags(), GetInfoStruct()->get_flags2());
 }
 
 void Player::reset_character_flag(int flag){
 	LogWrite(PLAYER__DEBUG, 0, "Player", "Flag: %u", flag);
-	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags before: %u, Flags2: %u", GetInfoStruct()->flags, GetInfoStruct()->flags2);
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags before: %u, Flags2: %u", GetInfoStruct()->get_flags(), GetInfoStruct()->get_flags2());
 
 	if (flag > CF_MAXIMUM_FLAG) return;
-	if (flag < 32) GetInfoStruct()->flags &= ~(1 << flag);
-	else GetInfoStruct()->flags2 &= ~(1 << (flag - 32));
+	if (flag < 32)
+	{
+		int8 origflag = GetInfoStruct()->get_flags();
+		GetInfoStruct()->set_flags(origflag &= ~(1 << flag));
+	}
+	else
+	{
+		int8 flag2 = GetInfoStruct()->get_flags2();
+		GetInfoStruct()->set_flags2(flag2  &= ~(1 << (flag - 32)));
+	}
 	charsheet_changed = true;
 	info_changed = true;
 
-	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags after: %u, Flags2: %u", GetInfoStruct()->flags, GetInfoStruct()->flags2);
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags after: %u, Flags2: %u", GetInfoStruct()->get_flags(), GetInfoStruct()->get_flags2());
 }
 
 void Player::toggle_character_flag(int flag){
 	LogWrite(PLAYER__DEBUG, 0, "Player", "Flag: %u", flag);
-	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags before: %u, Flags2: %u", GetInfoStruct()->flags, GetInfoStruct()->flags2);
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags before: %u, Flags2: %u", GetInfoStruct()->get_flags(), GetInfoStruct()->get_flags2());
 
 	if (flag > CF_MAXIMUM_FLAG) return;
-	if (flag < 32) GetInfoStruct()->flags ^= (1 << flag);
-	else GetInfoStruct()->flags2 ^= (1 << (flag - 32));
+	if (flag < 32)
+	{
+		int8 origflag = GetInfoStruct()->get_flags();
+		GetInfoStruct()->set_flags(origflag ^= ~(1 << flag));
+	}
+	else
+	{
+		int8 flag2 = GetInfoStruct()->get_flags2();
+		GetInfoStruct()->set_flags2(flag2  ^= ~(1 << (flag - 32)));
+	}
 	charsheet_changed = true;
 	info_changed = true;
 
-	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags after: %u, Flags2: %u", GetInfoStruct()->flags, GetInfoStruct()->flags2);
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Flags after: %u, Flags2: %u", GetInfoStruct()->get_flags(), GetInfoStruct()->get_flags2());
 }
 
 bool Player::get_character_flag(int flag){
@@ -3562,22 +3605,22 @@ bool Player::get_character_flag(int flag){
 		LogWrite(PLAYER__DEBUG, 0, "Player", "Player::get_character_flag error: attempted to check flag %i", flag);
 		return ret;
 	}
-	if (flag < 32) ret = ((GetInfoStruct()->flags) >> flag & 1);
-	else ret = ((GetInfoStruct()->flags2) >> (flag - 32) & 1);
+	if (flag < 32) ret = ((GetInfoStruct()->get_flags()) >> flag & 1);
+	else ret = ((GetInfoStruct()->get_flags2()) >> (flag - 32) & 1);
 
 	return ret;
 }
 
 float Player::GetXPVitality(){
-	return GetInfoStruct()->xp_vitality;
+	return GetInfoStruct()->get_xp_vitality();
 }
 
 float Player::GetTSXPVitality() {
-	return GetInfoStruct()->tradeskill_xp_vitality;
+	return GetInfoStruct()->get_tradeskill_xp_vitality();
 }
 
 bool Player::DoubleXPEnabled(){
-	return GetInfoStruct()->xp_vitality > 0;
+	return GetInfoStruct()->get_xp_vitality() > 0;
 }
 
 void Player::SetCharacterID(int32 new_id){
@@ -3646,15 +3689,15 @@ float Player::CalculateXP(Spawn* victim){
 
 		float percent = (((float)(total))/GetNeededXP()) *100;
 		LogWrite(PLAYER__DEBUG, 5, "XP", "Percent of total / XP Needed * 100, percent = %.2f", percent);
-
-		if(GetXPVitality() >= percent) {
-			GetInfoStruct()->xp_vitality -= percent;
+		float xp_vitality = GetXPVitality();
+		if(xp_vitality >= percent) {
+			GetInfoStruct()->set_xp_vitality(xp_vitality - percent);
 			total *= 2;
 			LogWrite(PLAYER__DEBUG, 5, "XP", "Vitality >= Percent, total = %.2f", total);
 		}
 		else {
 			total += ((GetXPVitality() / percent) *2)*total;
-			GetInfoStruct()->xp_vitality = 0;
+			GetInfoStruct()->set_xp_vitality(0);
 			LogWrite(PLAYER__DEBUG, 5, "XP", "Vitality < Percent, total = %.2f", total);
 		}
 	}
@@ -3703,14 +3746,15 @@ float Player::CalculateTSXP(int8 level){
 		float percent = (((float)(total))/GetNeededTSXP()) *100;
 		LogWrite(PLAYER__DEBUG, 5, "XP", "Percent of total / XP Needed * 100, percent = %.2f", percent);
 
-		if(GetTSXPVitality() >= percent) {
-			GetInfoStruct()->tradeskill_xp_vitality -= percent;
+		float ts_xp_vitality = GetTSXPVitality();
+		if(ts_xp_vitality >= percent) {
+			GetInfoStruct()->set_tradeskill_xp_vitality(ts_xp_vitality - percent);
 			total *= 2;
 			LogWrite(PLAYER__DEBUG, 5, "XP", "Vitality >= Percent, total = %.2f", total);
 		}
 		else {
 			total += ((GetTSXPVitality() / percent) *2)*total;
-			GetInfoStruct()->tradeskill_xp_vitality = 0;
+			GetInfoStruct()->set_tradeskill_xp_vitality(0);
 			LogWrite(PLAYER__DEBUG, 5, "XP", "Vitality < Percent, total = %.2f", total);
 		}
 	}
@@ -3719,7 +3763,7 @@ float Player::CalculateTSXP(int8 level){
 }
 
 void Player::SetNeededXP(int32 val){
-	GetInfoStruct()->xp_needed = val;
+	GetInfoStruct()->set_xp_needed(val);
 }
 
 void Player::SetNeededXP(){
@@ -3734,39 +3778,39 @@ void Player::SetNeededXP(){
 }
 
 void Player::SetXP(int32 val){
-	GetInfoStruct()->xp = val;
+	GetInfoStruct()->set_xp(val);
 }
 
 void Player::SetNeededTSXP(int32 val) {
-	GetInfoStruct()->ts_xp_needed = val;
+	GetInfoStruct()->set_ts_xp_needed(val);
 }
 
 void Player::SetNeededTSXP() {
-	GetInfoStruct()->ts_xp_needed = GetTSLevel() * 100;
+	GetInfoStruct()->set_ts_xp_needed(GetTSLevel() * 100);
 }
 
 void Player::SetTSXP(int32 val) {
-	GetInfoStruct()->ts_xp = val;
+	GetInfoStruct()->set_ts_xp(val);
 }
 
 int32 Player::GetXPDebt(){
-	return GetInfoStruct()->xp_debt;
+	return GetInfoStruct()->get_xp_debt();
 }
 
 int32 Player::GetNeededXP(){
-	return GetInfoStruct()->xp_needed;
+	return GetInfoStruct()->get_xp_needed();
 }
 
 int32 Player::GetXP(){
-	return GetInfoStruct()->xp;
+	return GetInfoStruct()->get_xp();
 }
 
 int32 Player::GetNeededTSXP() {
-	return GetInfoStruct()->ts_xp_needed;
+	return GetInfoStruct()->get_ts_xp_needed();
 }
 
 int32 Player::GetTSXP() {
-	return GetInfoStruct()->ts_xp;
+	return GetInfoStruct()->get_ts_xp();
 }
 
 bool Player::AddXP(int32 xp_amount){
@@ -3818,9 +3862,9 @@ bool Player::AddTSXP(int32 xp_amount){
 
 	if (GetTradeskillClass() == 0){
 		SetTradeskillClass(1);
-		GetInfoStruct()->tradeskill_class1 = 1;
-		GetInfoStruct()->tradeskill_class2 = 1;
-		GetInfoStruct()->tradeskill_class3 = 1;
+		GetInfoStruct()->set_tradeskill_class1(1);
+		GetInfoStruct()->set_tradeskill_class2(1);
+		GetInfoStruct()->set_tradeskill_class3(1);
 	}
 	return true;
 }
@@ -4677,48 +4721,51 @@ void Player::AddCoins(int64 val){
 	if(val >= 1000000){
 		tmp = val / 1000000;
 		val -= tmp*1000000;
-		GetInfoStruct()->coin_plat += tmp;
+		GetInfoStruct()->add_coin_plat(tmp);
 	}
 	if(val >= 10000){
 		tmp = val / 10000;
 		val -= tmp*10000;
-		GetInfoStruct()->coin_gold += tmp;
+		GetInfoStruct()->add_coin_gold(tmp);
 	}
 	if(val >= 100){
 		tmp = val / 100;
 		val -= tmp*100;
-		GetInfoStruct()->coin_silver += tmp;
+		GetInfoStruct()->add_coin_silver(tmp);
 	}
-	GetInfoStruct()->coin_copper += val;
-	if(GetInfoStruct()->coin_copper >= 100){
-		tmp = GetInfoStruct()->coin_copper/100;
-		GetInfoStruct()->coin_copper -= 100 * tmp;
-		GetInfoStruct()->coin_silver += tmp;
+	GetInfoStruct()->add_coin_copper(val);
+	int32 new_copper_value = GetInfoStruct()->get_coin_copper();
+	if(new_copper_value >= 100){
+		tmp = new_copper_value/100;
+		GetInfoStruct()->set_coin_copper(new_copper_value - (100 * tmp));
+		GetInfoStruct()->add_coin_silver(tmp);
 	}
-	if(GetInfoStruct()->coin_silver >= 100){
-		tmp = GetInfoStruct()->coin_silver/100;
-		GetInfoStruct()->coin_silver -= 100 * tmp;
-		GetInfoStruct()->coin_gold += tmp;
+	int32 new_silver_value = GetInfoStruct()->get_coin_silver();
+	if(new_silver_value >= 100){
+		tmp = new_silver_value/100;
+		GetInfoStruct()->set_coin_silver(new_silver_value - (100 * tmp));
+		GetInfoStruct()->add_coin_gold(tmp);
 	}
-	if(GetInfoStruct()->coin_gold >= 100){
-		tmp = GetInfoStruct()->coin_gold/100;
-		GetInfoStruct()->coin_gold -= 100 * tmp;
-		GetInfoStruct()->coin_plat += tmp;
+	int32 new_gold_value = GetInfoStruct()->get_coin_gold();
+	if(new_gold_value >= 100){
+		tmp = new_gold_value/100;
+		GetInfoStruct()->set_coin_gold(new_gold_value - (100 * tmp));
+		GetInfoStruct()->add_coin_plat(tmp);
 	}
 	charsheet_changed = true;
 }
 
 bool Player::RemoveCoins(int64 val){
-	int64 total_coins = GetInfoStruct()->coin_plat*1000000;
-	total_coins += GetInfoStruct()->coin_gold*10000;
-	total_coins += GetInfoStruct()->coin_silver*100;
-	total_coins += GetInfoStruct()->coin_copper;
+	int64 total_coins = GetInfoStruct()->get_coin_plat()*1000000;
+	total_coins += GetInfoStruct()->get_coin_gold()*10000;
+	total_coins += GetInfoStruct()->get_coin_silver()*100;
+	total_coins += GetInfoStruct()->get_coin_copper();
 	if(total_coins >= val){
 		total_coins -= val;
-		GetInfoStruct()->coin_plat = 0;
-		GetInfoStruct()->coin_gold = 0;
-		GetInfoStruct()->coin_silver = 0;
-		GetInfoStruct()->coin_copper = 0;
+		GetInfoStruct()->set_coin_plat(0);
+		GetInfoStruct()->set_coin_gold(0);
+		GetInfoStruct()->set_coin_silver(0);
+		GetInfoStruct()->set_coin_copper(0);
 		AddCoins(total_coins);
 		return true;
 	}
@@ -4726,10 +4773,10 @@ bool Player::RemoveCoins(int64 val){
 }
 
 bool Player::HasCoins(int64 val) {
-	int64 total_coins = GetInfoStruct()->coin_plat*1000000;
-	total_coins += GetInfoStruct()->coin_gold*10000;
-	total_coins += GetInfoStruct()->coin_silver*100;
-	total_coins += GetInfoStruct()->coin_copper;
+	int64 total_coins = GetInfoStruct()->get_coin_plat()*1000000;
+	total_coins += GetInfoStruct()->get_coin_gold()*10000;
+	total_coins += GetInfoStruct()->get_coin_silver()*100;
+	total_coins += GetInfoStruct()->get_coin_copper();
 	if(total_coins >= val)
 		return true;
 
@@ -5340,9 +5387,9 @@ int32 CharacterInstances::GetInstanceCount() {
 
 void Player::SetPlayerAdventureClass(int8 new_class){
 	SetAdventureClass(new_class);
-	GetInfoStruct()->class1 = classes.GetBaseClass(new_class);
-	GetInfoStruct()->class2 = classes.GetSecondaryBaseClass(new_class);
-	GetInfoStruct()->class3 = new_class;
+	GetInfoStruct()->set_class1(classes.GetBaseClass(new_class));
+	GetInfoStruct()->set_class2(classes.GetSecondaryBaseClass(new_class));
+	GetInfoStruct()->set_class3(new_class);
 	charsheet_changed = true;
 	if(GetZone())
 		GetZone()->TriggerCharSheetTimer();
@@ -5499,12 +5546,12 @@ void Player::RemoveAllPassives()
 }
 
 void Player::ResetPetInfo() {
-	GetInfoStruct()->pet_id = 0xFFFFFFFF;
-	strcpy(GetInfoStruct()->pet_name, "No Pet");
-	GetInfoStruct()->pet_movement = 0;
-	GetInfoStruct()->pet_behavior = 0;
-	GetInfoStruct()->pet_health_pct = 0.0f;
-	GetInfoStruct()->pet_power_pct = 0.0f;
+	GetInfoStruct()->set_pet_id(0xFFFFFFFF);
+	GetInfoStruct()->set_pet_name(std::string("No Pet"));
+	GetInfoStruct()->set_pet_movement(0);
+	GetInfoStruct()->set_pet_behavior(0);
+	GetInfoStruct()->set_pet_health_pct(0.0f);
+	GetInfoStruct()->set_pet_power_pct(0.0f);
 	// Make sure the values get sent to the client
 	SetCharSheetChanged(true);
 }

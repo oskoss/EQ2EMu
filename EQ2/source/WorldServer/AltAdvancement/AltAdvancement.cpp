@@ -300,7 +300,7 @@ void MasterAAList::DisplayAA(Client* client,int8 newtemplate,int8 changemode) {
 
 	for (int x = 0; x < TreeNodeList.size(); x++)
 	{
-		int8 class_id = client->GetPlayer()->GetInfoStruct()->class3;
+		int8 class_id = client->GetPlayer()->GetInfoStruct()->get_class3();
 		
 		if (TreeNodeList[x]->classID == class_id)
 		{

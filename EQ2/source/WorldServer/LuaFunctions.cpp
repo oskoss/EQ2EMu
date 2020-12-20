@@ -1796,9 +1796,9 @@ int EQ2Emu_lua_SetTradeskillClass(lua_State* state) {
 	if (spawn) {
 		spawn->SetTradeskillClass(value);
 		if (spawn->IsEntity()) {
-			((Entity*)spawn)->GetInfoStruct()->tradeskill_class1 = classes.GetTSBaseClass(spawn->GetTradeskillClass());
-			((Entity*)spawn)->GetInfoStruct()->tradeskill_class2 = classes.GetSecondaryTSBaseClass(spawn->GetTradeskillClass());
-			((Entity*)spawn)->GetInfoStruct()->tradeskill_class3 = spawn->GetTradeskillClass();
+			((Entity*)spawn)->GetInfoStruct()->set_tradeskill_class1(classes.GetTSBaseClass(spawn->GetTradeskillClass()));
+			((Entity*)spawn)->GetInfoStruct()->set_tradeskill_class2(classes.GetSecondaryTSBaseClass(spawn->GetTradeskillClass()));
+			((Entity*)spawn)->GetInfoStruct()->set_tradeskill_class3(spawn->GetTradeskillClass());
 		}
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
@@ -2519,7 +2519,7 @@ int EQ2Emu_lua_SetIntBase(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	int16 value = lua_interface->GetInt16Value(state, 2);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->GetInfoStruct()->intel_base = value;
+		((Entity*)spawn)->GetInfoStruct()->set_intel_base(value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -2532,7 +2532,7 @@ int EQ2Emu_lua_SetAgiBase(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	int16 value = lua_interface->GetInt16Value(state, 2);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->GetInfoStruct()->agi_base = value;
+		((Entity*)spawn)->GetInfoStruct()->set_agi_base(value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -2545,7 +2545,7 @@ int EQ2Emu_lua_SetWisBase(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	int16 value = lua_interface->GetInt16Value(state, 2);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->GetInfoStruct()->wis_base = value;
+		((Entity*)spawn)->GetInfoStruct()->set_wis_base(value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -2558,7 +2558,7 @@ int EQ2Emu_lua_SetStaBase(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	int16 value = lua_interface->GetInt16Value(state, 2);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->GetInfoStruct()->sta_base = value;
+		((Entity*)spawn)->GetInfoStruct()->set_sta_base(value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -2571,7 +2571,7 @@ int EQ2Emu_lua_SetStrBase(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	int16 value = lua_interface->GetInt16Value(state, 2);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->GetInfoStruct()->str_base = value;
+		((Entity*)spawn)->GetInfoStruct()->set_str_base(value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -4406,12 +4406,12 @@ int EQ2Emu_lua_Charm(lua_State* state) {
 		// If owner is player and player does not have a summoned pet set the players charsheet
 		if (owner->IsPlayer() && !((Entity*)owner)->GetPet()) {
 			Player* player = (Player*)owner;
-			player->GetInfoStruct()->pet_id = player->GetIDWithPlayerSpawn(pet);
-			strcpy(player->GetInfoStruct()->pet_name, pet->GetName());
-			player->GetInfoStruct()->pet_movement = 2;
-			player->GetInfoStruct()->pet_behavior = 3;
-			player->GetInfoStruct()->pet_health_pct = 1.0f;
-			player->GetInfoStruct()->pet_power_pct = 1.0f;
+			player->GetInfoStruct()->set_pet_id(player->GetIDWithPlayerSpawn(pet));
+			player->GetInfoStruct()->set_pet_name(std::string(pet->GetName()));
+			player->GetInfoStruct()->set_pet_movement(2);
+			player->GetInfoStruct()->set_pet_behavior(3);
+			player->GetInfoStruct()->set_pet_health_pct(1.0f);
+			player->GetInfoStruct()->set_pet_power_pct(1.0f);
 			// Make sure the values get sent to the client
 			player->SetCharSheetChanged(true);
 		}
@@ -4709,12 +4709,13 @@ int EQ2Emu_lua_SummonPet(lua_State* state) {
 	// If player set various values for the char sheet (pet window)
 	if (spawn->IsPlayer()) {
 		Player* player = (Player*)spawn;
-		player->GetInfoStruct()->pet_id = player->GetIDWithPlayerSpawn(pet);
-		strcpy(player->GetInfoStruct()->pet_name, random_pet_name.c_str());
-		player->GetInfoStruct()->pet_movement = 2;
-		player->GetInfoStruct()->pet_behavior = 3;
-		player->GetInfoStruct()->pet_health_pct = 1.0f;
-		player->GetInfoStruct()->pet_power_pct = 1.0f;
+		
+		player->GetInfoStruct()->set_pet_id(player->GetIDWithPlayerSpawn(pet));
+		player->GetInfoStruct()->set_pet_name(random_pet_name);
+		player->GetInfoStruct()->set_pet_movement(2);
+		player->GetInfoStruct()->set_pet_behavior(3);
+		player->GetInfoStruct()->set_pet_health_pct(1.0f);
+		player->GetInfoStruct()->set_pet_power_pct(1.0f);
 		// Make sure the values get sent to the client
 		player->SetCharSheetChanged(true);
 	}
@@ -7893,14 +7894,14 @@ int EQ2Emu_lua_SetVision(lua_State* state) {
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			Spawn* target = zone->GetSpawnByID(spell->targets.at(i));
 			if (target->IsEntity()) {
-				((Entity*)target)->GetInfoStruct()->vision = vision;
+				((Entity*)target)->GetInfoStruct()->set_vision(vision);
 				if (target->IsPlayer())
 					((Player*)target)->SetCharSheetChanged(true);
 			}
 		}
 	}
 	else {
-		((Entity*)spawn)->GetInfoStruct()->vision = vision;
+		((Entity*)spawn)->GetInfoStruct()->set_vision(vision);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -7930,14 +7931,14 @@ int EQ2Emu_lua_BlurVision(lua_State* state) {
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			Spawn* target = zone->GetSpawnByID(spell->targets.at(i));
 			if (target && target->IsEntity()) {
-				((Entity*)target)->GetInfoStruct()->drunk = intensity;
+				((Entity*)target)->GetInfoStruct()->set_drunk(intensity);
 				if (target->IsPlayer())
 					((Player*)target)->SetCharSheetChanged(true);
 			}
 		}
 	}
 	else {
-		((Entity*)spawn)->GetInfoStruct()->drunk = intensity;
+		((Entity*)spawn)->GetInfoStruct()->set_drunk(intensity);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -7967,14 +7968,14 @@ int EQ2Emu_lua_BreatheUnderwater(lua_State* state) {
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			Spawn* target = zone->GetSpawnByID(spell->targets.at(i));
 			if (target->IsEntity()) {
-				((Entity*)target)->GetInfoStruct()->breathe_underwater = breatheUnderwater;
+				((Entity*)target)->GetInfoStruct()->set_breathe_underwater(breatheUnderwater);
 				if (target->IsPlayer())
 					((Player*)target)->SetCharSheetChanged(true);
 			}
 		}
 	}
 	else {
-		((Entity*)spawn)->GetInfoStruct()->breathe_underwater = breatheUnderwater;
+		((Entity*)spawn)->GetInfoStruct()->set_breathe_underwater(breatheUnderwater);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -10689,14 +10690,14 @@ int EQ2Emu_lua_SetAlignment(lua_State* state) {
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			Spawn* target = zone->GetSpawnByID(spell->targets.at(i));
 			if (target->IsEntity()) {
-				((Entity*)target)->GetInfoStruct()->alignment = (sint8)alignment;
+				((Entity*)target)->GetInfoStruct()->set_alignment((sint8)alignment);
 				if (target->IsPlayer())
 					((Player*)target)->SetCharSheetChanged(true);
 			}
 		}
 	}
 	else {
-		((Entity*)spawn)->GetInfoStruct()->alignment = (sint8)alignment;
+		((Entity*)spawn)->GetInfoStruct()->set_alignment((sint8)alignment);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -11042,6 +11043,7 @@ int EQ2Emu_lua_InWater(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		lua_interface->SetBooleanValue(state, spawn->InWater());
 		return 1;
@@ -11053,6 +11055,7 @@ int EQ2Emu_lua_InLava(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		lua_interface->SetBooleanValue(state, spawn->InLava());
 		return 1;
@@ -11076,6 +11079,7 @@ int EQ2Emu_lua_DamageSpawn(lua_State* state) {
 	bool no_calcs = (lua_interface->GetInt8Value(state, 10) == 1);
 	bool ignore_attacker = (lua_interface->GetInt8Value(state, 11) == 1);
 
+	lua_interface->ResetFunctionStack(state);
 	if (!attacker) {
 		lua_interface->LogError("%s: LUA ProcDamage command error: caster is not a valid spawn", lua_interface->GetScriptName(state));
 		return 0;
@@ -11104,6 +11108,7 @@ int EQ2Emu_lua_IsInvulnerable(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		lua_interface->SetBooleanValue(state, spawn->GetInvulnerable());
 		return 1;
@@ -11116,6 +11121,7 @@ int EQ2Emu_lua_SetInvulnerable(lua_State* state) {
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	bool invul = lua_interface->GetBooleanValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		spawn->SetInvulnerable(invul);
 	}
@@ -11127,6 +11133,7 @@ int EQ2Emu_lua_GetRuleFlagInt32(lua_State* state) {
 		return 0;
 	string category = lua_interface->GetStringValue(state);
 	string name = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	Rule *ret = 0;
 	if ((ret = rule_manager.GetGlobalRule(category.c_str(), name.c_str()))) {
 		
@@ -11144,6 +11151,7 @@ int EQ2Emu_lua_GetAAInfo(lua_State* state) {
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string type = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		int res = 1;
 
@@ -11181,6 +11189,7 @@ int EQ2Emu_lua_SetAAInfo(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string type = lua_interface->GetStringValue(state, 2);
 	sint32 value = lua_interface->GetSInt32Value(state, 3);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		boost::to_lower(type);
 		if(type == "assigned_aa")
@@ -11213,6 +11222,7 @@ int EQ2Emu_lua_AddMasterTitle(lua_State* state) {
 	string titleName = lua_interface->GetStringValue(state);
 	int8 isPrefix = lua_interface->GetInt8Value(state, 2);
 	
+	lua_interface->ResetFunctionStack(state);
 	sint32 index = database.AddMasterTitle(titleName.c_str(), isPrefix);
 	lua_interface->SetSInt32Value(state, index);
 
@@ -11226,6 +11236,7 @@ int EQ2Emu_lua_AddCharacterTitle(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string titleName = lua_interface->GetStringValue(state, 2);
 	
+	lua_interface->ResetFunctionStack(state);
 	if(!spawn->IsPlayer())
 	{
 		lua_interface->LogError("%s: LUA AddCharacterTitle command error: player is not valid", lua_interface->GetScriptName(state));
@@ -11274,6 +11285,7 @@ int EQ2Emu_lua_SetCharacterTitleSuffix(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string titleName = lua_interface->GetStringValue(state, 2);
 	
+	lua_interface->ResetFunctionStack(state);
 	if(!spawn->IsPlayer())
 	{
 		lua_interface->LogError("%s: LUA SetCharacterTitleSuffix command error: player is not valid", lua_interface->GetScriptName(state));
@@ -11309,6 +11321,7 @@ int EQ2Emu_lua_SetCharacterTitlePrefix(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string titleName = lua_interface->GetStringValue(state, 2);
 	
+	lua_interface->ResetFunctionStack(state);
 	if(!spawn->IsPlayer())
 	{
 		lua_interface->LogError("%s: LUA SetCharacterTitlePrefix command error: player is not valid", lua_interface->GetScriptName(state));
@@ -11343,6 +11356,7 @@ int EQ2Emu_lua_ResetCharacterTitleSuffix(lua_State* state) {
 
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	
+	lua_interface->ResetFunctionStack(state);
 	if(!spawn->IsPlayer())
 	{
 		lua_interface->LogError("%s: LUA ResetCharacterTitleSuffix command error: player is not valid", lua_interface->GetScriptName(state));
@@ -11364,6 +11378,7 @@ int EQ2Emu_lua_ResetCharacterTitlePrefix(lua_State* state) {
 
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	
+	lua_interface->ResetFunctionStack(state);
 	if(!spawn->IsPlayer())
 	{
 		lua_interface->LogError("%s: LUA ResetCharacterTitlePrefix command error: player is not valid", lua_interface->GetScriptName(state));
@@ -11378,3 +11393,178 @@ int EQ2Emu_lua_ResetCharacterTitlePrefix(lua_State* state) {
 
 	return 1;
 }
+
+int EQ2Emu_lua_GetInfoStructString(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string field = lua_interface->GetStringValue(state, 2);
+	
+	lua_interface->ResetFunctionStack(state);
+	if(!spawn || !spawn->IsEntity())
+	{
+		lua_interface->LogError("%s: LUA GetInfoStructString command error: spawn is not valid, either does not exist or is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	Entity* ent = (Entity*)spawn;
+	lua_interface->SetStringValue(state, ent->GetInfoStructString(field).c_str());
+
+	return 1;
+}
+
+int EQ2Emu_lua_GetInfoStructUInt(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string field = lua_interface->GetStringValue(state, 2);
+	
+	lua_interface->ResetFunctionStack(state);
+	if(!spawn || !spawn->IsEntity())
+	{
+		lua_interface->LogError("%s: LUA GetInfoStructUInt command error: spawn is not valid, either does not exist or is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	Entity* ent = (Entity*)spawn;
+	lua_interface->SetInt64Value(state, ent->GetInfoStructUInt(field));
+
+	return 1;
+}
+
+int EQ2Emu_lua_GetInfoStructSInt(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string field = lua_interface->GetStringValue(state, 2);
+	
+	lua_interface->ResetFunctionStack(state);
+	if(!spawn || !spawn->IsEntity())
+	{
+		lua_interface->LogError("%s: LUA GetInfoStructSInt command error: spawn is not valid, either does not exist or is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	Entity* ent = (Entity*)spawn;
+	lua_interface->SetSInt64Value(state, ent->GetInfoStructSInt(field));
+
+	return 1;
+}
+
+int EQ2Emu_lua_GetInfoStructFloat(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string field = lua_interface->GetStringValue(state, 2);
+	
+	lua_interface->ResetFunctionStack(state);
+	if(!spawn || !spawn->IsEntity())
+	{
+		lua_interface->LogError("%s: LUA GetInfoStructFloat command error: spawn is not valid, either does not exist or is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	Entity* ent = (Entity*)spawn;
+	lua_interface->SetFloatValue(state, ent->GetInfoStructFloat(field));
+
+	return 1;
+}
+
+int EQ2Emu_lua_SetInfoStructString(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string field = lua_interface->GetStringValue(state, 2);
+	string value = lua_interface->GetStringValue(state, 3);
+	
+	lua_interface->ResetFunctionStack(state);
+	if(!spawn || !spawn->IsEntity())
+	{
+		lua_interface->LogError("%s: LUA SetInfoStructString command error: spawn is not valid, either does not exist or is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	Entity* ent = (Entity*)spawn;
+	bool set_ = ent->SetInfoStructString(field, value);
+	lua_interface->SetBooleanValue(state, set_);
+	return 1;
+}
+
+int EQ2Emu_lua_SetInfoStructUInt(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string field = lua_interface->GetStringValue(state, 2);
+	int64 value = lua_interface->GetInt64Value(state, 3);
+	
+	lua_interface->ResetFunctionStack(state);
+	if(!spawn || !spawn->IsEntity())
+	{
+		lua_interface->LogError("%s: LUA SetInfoStructUInt command error: spawn is not valid, either does not exist or is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	Entity* ent = (Entity*)spawn;
+	bool set_ = ent->SetInfoStructUInt(field, value);
+	lua_interface->SetBooleanValue(state, set_);
+	return 1;
+}
+
+int EQ2Emu_lua_SetInfoStructSInt(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string field = lua_interface->GetStringValue(state, 2);
+	sint64 value = lua_interface->GetSInt64Value(state, 3);
+	
+	lua_interface->ResetFunctionStack(state);
+	if(!spawn || !spawn->IsEntity())
+	{
+		lua_interface->LogError("%s: LUA SetInfoStructSInt command error: spawn is not valid, either does not exist or is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	Entity* ent = (Entity*)spawn;
+	bool set_ = ent->SetInfoStructSInt(field, value);
+	lua_interface->SetBooleanValue(state, set_);
+	return 1;
+}
+
+int EQ2Emu_lua_SetInfoStructFloat(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string field = lua_interface->GetStringValue(state, 2);
+	float value = lua_interface->GetFloatValue(state, 3);
+	
+	lua_interface->ResetFunctionStack(state);
+	if(!spawn || !spawn->IsEntity())
+	{
+		lua_interface->LogError("%s: LUA SetInfoStructFloat command error: spawn is not valid, either does not exist or is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	Entity* ent = (Entity*)spawn;
+	bool set_ = ent->SetInfoStructFloat(field, value);
+	lua_interface->SetBooleanValue(state, set_);
+	return 1;
+}
+
+int EQ2Emu_lua_SetCharSheetChanged(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	bool value = lua_interface->GetBooleanValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	
+	if(!spawn || !spawn->IsPlayer())
+	{
+		lua_interface->LogError("%s: LUA SetCharSheetChanged command error: spawn is not valid, either does not exist or is not a player", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	((Player*)spawn)->SetCharSheetChanged(value);
+
+	return 0;
+}
+

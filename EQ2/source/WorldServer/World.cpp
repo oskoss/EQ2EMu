@@ -710,8 +710,8 @@ void ZoneList::ProcessWhoQuery(vector<string>* queries, ZoneServer* zone, vector
 			add_player = true;
 			Client* find_client = zone_list.GetClientByCharName(player->GetName());
 			if (find_client == NULL) continue;
-			int flags = find_client->GetPlayer()->GetInfoStruct()->flags;
-			int flags2 = find_client->GetPlayer()->GetInfoStruct()->flags2;
+			int flags = find_client->GetPlayer()->GetInfoStruct()->get_flags();
+			int flags2 = find_client->GetPlayer()->GetInfoStruct()->get_flags2();
 			for(int32 i=0;add_player && queries && i<queries->size();i++){
 				found_match = false;
 				if(queries->at(i) == "ALL")
@@ -846,8 +846,8 @@ void ZoneList::ProcessWhoQuery(const char* query, Client* client){
 				break;
 			player = *spawn_iter;
 			Client* find_client = zone_list.GetClientByCharName(player->GetName());
-			int flags = find_client->GetPlayer()->GetInfoStruct()->flags;
-			int flags2 = find_client->GetPlayer()->GetInfoStruct()->flags2;
+			int flags = find_client->GetPlayer()->GetInfoStruct()->get_flags();
+			int flags2 = find_client->GetPlayer()->GetInfoStruct()->get_flags2();
 			packet->setArrayDataByName("char_name", player->GetName(), i);
 			packet->setArrayDataByName("level", player->GetLevel(), i);
 			packet->setArrayDataByName("admin_level", ((flags2 & (1 << (CF_HIDE_STATUS - 32))) && !isGM)?0:(find_client->GetAdminStatus() >> 4), i);

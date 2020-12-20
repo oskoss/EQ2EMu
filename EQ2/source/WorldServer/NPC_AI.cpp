@@ -539,7 +539,7 @@ void CombatPetBrain::Think() {
 	LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "Pet AI code called for %s", GetBody()->GetName());
 
 	// If owner is a player and player has stay set then return out
-	if (GetBody()->GetOwner()->IsPlayer() && ((Player*)GetBody()->GetOwner())->GetInfoStruct()->pet_movement == 1)
+	if (GetBody()->GetOwner()->IsPlayer() && ((Player*)GetBody()->GetOwner())->GetInfoStruct()->get_pet_movement() == 1)
 		return;
 
 	// Set target to owner

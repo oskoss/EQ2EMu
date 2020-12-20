@@ -204,6 +204,8 @@ public:
 	int16			GetInt16Value(lua_State* state, int8 arg_num = 1);
 	int32			GetInt32Value(lua_State* state, int8 arg_num = 1);
 	sint32			GetSInt32Value(lua_State* state, int8 arg_num = 1);
+	int64			GetInt64Value(lua_State* state, int8 arg_num = 1);
+	sint64			GetSInt64Value(lua_State* state, int8 arg_num = 1);
 	float			GetFloatValue(lua_State* state, int8 arg_num = 1);
 	string			GetStringValue(lua_State* state, int8 arg_num = 1);
 	bool			GetBooleanValue(lua_State*state, int8 arg_num = 1);
@@ -212,6 +214,8 @@ public:
 
 	void			SetInt32Value(lua_State* state, int32 value);
 	void			SetSInt32Value(lua_State* state, sint32 value);
+	void			SetInt64Value(lua_State* state, int64 value);
+	void			SetSInt64Value(lua_State* state, sint64 value);
 	void			SetFloatValue(lua_State* state, float value);
 	void			SetBooleanValue(lua_State* state, bool value);
 	void			SetStringValue(lua_State* state, const char* value);

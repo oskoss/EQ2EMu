@@ -25,11 +25,11 @@ Bot::Bot() : NPC() {
 	AddSecondaryEntityCommand("bot inventory", 10000, "bot inv list", "", 0, 0);
 
 	InfoStruct* info = GetInfoStruct();
-	info->str_base = 50;
-	info->sta_base = 20;
-	info->wis_base = 20;
-	info->intel_base = 20;
-	info->agi_base = 20;
+	info->set_str_base(50);
+	info->set_sta_base(20);
+	info->set_wis_base(20);
+	info->set_intel_base(20);
+	info->set_agi_base(20);
 }
 
 Bot::~Bot() {
@@ -662,7 +662,7 @@ void Bot::ChangeLevel(int16 old_level, int16 new_level) {
 	ChangePrimaryWeapon();
 	ChangeSecondaryWeapon();
 	ChangeRangedWeapon();
-	GetInfoStruct()->level = new_level;
+	GetInfoStruct()->set_level(new_level);
 	// GetPlayer()->SetLevel(new_level);
 
 	LogWrite(MISC__TODO, 1, "TODO", "Get new HP/POWER/stat based on default values from DB\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
@@ -672,21 +672,22 @@ void Bot::ChangeLevel(int16 old_level, int16 new_level) {
 	CalculateBonuses();
 	SetHP(GetTotalHP());
 	SetPower(GetTotalPower());
-	GetInfoStruct()->agi_base = new_level * 2 + 15;
-	GetInfoStruct()->intel_base = new_level * 2 + 15;
-	GetInfoStruct()->wis_base = new_level * 2 + 15;
-	GetInfoStruct()->str_base = new_level * 2 + 15;
-	GetInfoStruct()->sta_base = new_level * 2 + 15;
-	GetInfoStruct()->cold_base = (int16)(new_level*1.5 + 10);
-	GetInfoStruct()->heat_base = (int16)(new_level*1.5 + 10);
-	GetInfoStruct()->disease_base = (int16)(new_level*1.5 + 10);
-	GetInfoStruct()->mental_base = (int16)(new_level*1.5 + 10);
-	GetInfoStruct()->magic_base = (int16)(new_level*1.5 + 10);
-	GetInfoStruct()->divine_base = (int16)(new_level*1.5 + 10);
-	GetInfoStruct()->poison_base = (int16)(new_level*1.5 + 10);
+
+	GetInfoStruct()->set_agi_base(new_level * 2 + 15);
+	GetInfoStruct()->set_intel_base(new_level * 2 + 15);
+	GetInfoStruct()->set_wis_base(new_level * 2 + 15);
+	GetInfoStruct()->set_str_base(new_level * 2 + 15);
+	GetInfoStruct()->set_sta_base(new_level * 2 + 15);
+	GetInfoStruct()->set_cold_base((int16)(new_level*1.5 + 10));
+	GetInfoStruct()->set_heat_base((int16)(new_level*1.5 + 10));
+	GetInfoStruct()->set_disease_base((int16)(new_level*1.5 + 10));
+	GetInfoStruct()->set_mental_base((int16)(new_level*1.5 + 10));
+	GetInfoStruct()->set_magic_base((int16)(new_level*1.5 + 10));
+	GetInfoStruct()->set_divine_base((int16)(new_level*1.5 + 10));
+	GetInfoStruct()->set_poison_base((int16)(new_level*1.5 + 10));
+
 	SetHPRegen((int)(new_level*.75) + (int)(new_level / 10) + 3);
 	SetPowerRegen(new_level + (int)(new_level / 10) + 4);
-	GetInfoStruct()->poison_base = (int16)(new_level*1.5 + 10);
 	/*UpdateTimeStampFlag(LEVEL_UPDATE_FLAG);
 	GetPlayer()->SetCharSheetChanged(true);
 

@@ -2279,11 +2279,11 @@ void PacketStruct::SetSubPacketSize(int32 new_size) {
 }
 void* PacketStruct::GetStructPointer(DataStruct* data_struct, bool erase) {
 	try {
-		void* tmp = struct_data[data_struct];
-		if (tmp != 0) {
+		map<DataStruct*, void*>::iterator tmpitr = struct_data.find(data_struct);
+		if (tmpitr != struct_data.end()) {
 			if (erase)
 				struct_data.erase(data_struct);
-			return tmp;
+			return tmpitr->second;
 		}
 		else {
 			PacketStruct* packet = 0;
@@ -2291,7 +2291,7 @@ void* PacketStruct::GetStructPointer(DataStruct* data_struct, bool erase) {
 			for (itr2 = arrays.begin(); itr2 != arrays.end(); itr2++) {
 				packet = *itr2;
 				if (packet) {
-					tmp = packet->GetStructPointer(data_struct, erase);
+					void* tmp = packet->GetStructPointer(data_struct, erase);
 					if (tmp != 0)
 						return tmp;
 				}
@@ -2581,6 +2581,7 @@ void PacketStruct::setItem(DataStruct* ds, Item* item, Player* player, int32 ind
 			memcpy(out_ptr, (uchar*)generic_string_data->c_str() + (13 + offset), generic_string_data->length() - (13 + offset));
 		}
 		ds->SetItemSize(size);
+		//printf("Item Name: %s\n",item->name.c_str());
 		//DumpPacket(out_data, size);
 		memcpy(ptr, out_data, size);
 		safe_delete_array(out_data);

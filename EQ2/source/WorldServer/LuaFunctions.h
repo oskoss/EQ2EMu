@@ -532,4 +532,16 @@ int EQ2Emu_lua_SetCharacterTitleSuffix(lua_State* state);
 int EQ2Emu_lua_SetCharacterTitlePrefix(lua_State* state);
 int EQ2Emu_lua_ResetCharacterTitleSuffix(lua_State* state);
 int EQ2Emu_lua_ResetCharacterTitlePrefix(lua_State* state);
+
+int EQ2Emu_lua_GetInfoStructString(lua_State* state);
+int EQ2Emu_lua_GetInfoStructUInt(lua_State* state);
+int EQ2Emu_lua_GetInfoStructSInt(lua_State* state);
+int EQ2Emu_lua_GetInfoStructFloat(lua_State* state);
+
+int EQ2Emu_lua_SetInfoStructString(lua_State* state);
+int EQ2Emu_lua_SetInfoStructUInt(lua_State* state);
+int EQ2Emu_lua_SetInfoStructSInt(lua_State* state);
+int EQ2Emu_lua_SetInfoStructFloat(lua_State* state);
+
+int EQ2Emu_lua_SetCharSheetChanged(lua_State* state);
 #endif

@@ -35,6 +35,7 @@ extern MasterSpellList master_spell_list;
 extern Classes classes;
 
 Entity::Entity(){
+	MapInfoStruct();	
 	max_speed = 6;
 	base_speed = 0.0f;
 	last_x = -1;
@@ -47,7 +48,7 @@ Entity::Entity(){
 	casting = false;
 	memset(&melee_combat_data, 0, sizeof(CombatData));
 	memset(&ranged_combat_data, 0, sizeof(CombatData));
-	memset(&info_struct, 0, sizeof(InfoStruct));
+	//memset(&info_struct, 0, sizeof(InfoStruct));
 	memset(&features, 0, sizeof(CharFeatures));
 	memset(&equipment, 0, sizeof(EQ2_Equipment));
 	pet = 0;
@@ -70,15 +71,8 @@ Entity::Entity(){
 		control_effects[i] = NULL;
 
 	immunities.clear();
-
-	for(int i=0;i<45;i++){
-		if(i<NUM_MAINTAINED_EFFECTS){
-			info_struct.maintained_effects[i].spell_id = 0xFFFFFFFF;
-			if (IsPlayer())
-				info_struct.maintained_effects[i].icon = 0xFFFF;
-		}
-		info_struct.spell_effects[i].spell_id = 0xFFFFFFFF;	
-	}
+	
+	info_struct.ResetEffects(this);
 
 	MCommandMutex.SetName("Entity::MCommandMutex");
 	hasSeeInvisSpell = false;
@@ -102,6 +96,275 @@ Entity::~Entity(){
 	immunities.clear();
 }
 
+void Entity::MapInfoStruct()
+{
+/** GETS **/
+	get_string_funcs["name"] = l::bind(&InfoStruct::get_name, &info_struct);
+	get_int8_funcs["class1"] = l::bind(&InfoStruct::get_class1, &info_struct);
+	get_int8_funcs["class2"] = l::bind(&InfoStruct::get_class2, &info_struct);
+	get_int8_funcs["class3"] = l::bind(&InfoStruct::get_class3, &info_struct);
+	get_int8_funcs["race"] = l::bind(&InfoStruct::get_race, &info_struct);
+	get_int8_funcs["gender"] = l::bind(&InfoStruct::get_gender, &info_struct);
+	get_int16_funcs["level"] = l::bind(&InfoStruct::get_level, &info_struct);
+	get_int16_funcs["max_level"] = l::bind(&InfoStruct::get_max_level, &info_struct);
+	get_int16_funcs["tradeskill_level"] = l::bind(&InfoStruct::get_tradeskill_level, &info_struct);
+	get_int16_funcs["tradeskill_max_level"] = l::bind(&InfoStruct::get_tradeskill_max_level, &info_struct);
+	get_int8_funcs["cur_concentration"] = l::bind(&InfoStruct::get_cur_concentration, &info_struct);
+	get_int8_funcs["max_concentration"] = l::bind(&InfoStruct::get_max_concentration, &info_struct);
+	get_int16_funcs["cur_attack"] = l::bind(&InfoStruct::get_cur_attack, &info_struct);
+	get_int16_funcs["attack_base"] = l::bind(&InfoStruct::get_attack_base, &info_struct);
+	get_int16_funcs["cur_mitigation"] = l::bind(&InfoStruct::get_cur_mitigation, &info_struct);
+	get_int16_funcs["max_mitigation"] = l::bind(&InfoStruct::get_max_mitigation, &info_struct);
+	get_int16_funcs["mitigation_base"] = l::bind(&InfoStruct::get_mitigation_base, &info_struct);
+	get_int16_funcs["avoidance_display"] = l::bind(&InfoStruct::get_avoidance_display, &info_struct);
+	get_int16_funcs["cur_avoidance"] = l::bind(&InfoStruct::get_cur_avoidance, &info_struct);
+	get_int16_funcs["base_avoidance_pct"] = l::bind(&InfoStruct::get_base_avoidance_pct, &info_struct);
+	get_int16_funcs["avoidance_base"] = l::bind(&InfoStruct::get_avoidance_base, &info_struct);
+	get_int16_funcs["max_avoidance"] = l::bind(&InfoStruct::get_max_avoidance, &info_struct);
+	get_int16_funcs["parry"] = l::bind(&InfoStruct::get_parry, &info_struct);
+	get_int16_funcs["parry_base"] = l::bind(&InfoStruct::get_parry_base, &info_struct);
+	get_int16_funcs["deflection"] = l::bind(&InfoStruct::get_deflection, &info_struct);
+	get_int16_funcs["deflection_base"] = l::bind(&InfoStruct::get_deflection_base, &info_struct);
+	get_int16_funcs["block"] = l::bind(&InfoStruct::get_block, &info_struct);
+	get_int16_funcs["block_base"] = l::bind(&InfoStruct::get_block_base, &info_struct);
+	get_float_funcs["str"] = l::bind(&InfoStruct::get_str, &info_struct);
+	get_float_funcs["sta"] = l::bind(&InfoStruct::get_sta, &info_struct);
+	get_float_funcs["agi"] = l::bind(&InfoStruct::get_agi, &info_struct);
+	get_float_funcs["wis"] = l::bind(&InfoStruct::get_wis, &info_struct);
+	get_float_funcs["intel"] = l::bind(&InfoStruct::get_intel, &info_struct);
+	get_float_funcs["str_base"] = l::bind(&InfoStruct::get_str_base, &info_struct);
+	get_float_funcs["sta_base"] = l::bind(&InfoStruct::get_sta_base, &info_struct);
+	get_float_funcs["agi_base"] = l::bind(&InfoStruct::get_agi_base, &info_struct);
+	get_float_funcs["wis_base"] = l::bind(&InfoStruct::get_wis_base, &info_struct);
+	get_float_funcs["intel_base"] = l::bind(&InfoStruct::get_intel_base, &info_struct);
+	get_int16_funcs["heat"] = l::bind(&InfoStruct::get_heat, &info_struct);
+	get_int16_funcs["cold"] = l::bind(&InfoStruct::get_cold, &info_struct);
+	get_int16_funcs["magic"] = l::bind(&InfoStruct::get_magic, &info_struct);
+	get_int16_funcs["mental"] = l::bind(&InfoStruct::get_mental, &info_struct);
+	get_int16_funcs["divine"] = l::bind(&InfoStruct::get_divine, &info_struct);
+	get_int16_funcs["disease"] = l::bind(&InfoStruct::get_disease, &info_struct);
+	get_int16_funcs["poison"] = l::bind(&InfoStruct::get_poison, &info_struct);
+	get_int16_funcs["disease_base"] = l::bind(&InfoStruct::get_disease_base, &info_struct);
+	get_int16_funcs["cold_base"] = l::bind(&InfoStruct::get_cold_base, &info_struct);
+	get_int16_funcs["divine_base"] = l::bind(&InfoStruct::get_divine_base, &info_struct);
+	get_int16_funcs["magic_base"] = l::bind(&InfoStruct::get_magic_base, &info_struct);
+	get_int16_funcs["mental_base"] = l::bind(&InfoStruct::get_mental_base, &info_struct);
+	get_int16_funcs["heat_base"] = l::bind(&InfoStruct::get_heat_base, &info_struct);
+	get_int16_funcs["poison_base"] = l::bind(&InfoStruct::get_poison_base, &info_struct);
+	get_int16_funcs["elemental_base"] = l::bind(&InfoStruct::get_elemental_base, &info_struct);
+	get_int16_funcs["noxious_base"] = l::bind(&InfoStruct::get_noxious_base, &info_struct);
+	get_int16_funcs["arcane_base"] = l::bind(&InfoStruct::get_arcane_base, &info_struct);
+	get_int32_funcs["coin_copper"] = l::bind(&InfoStruct::get_coin_copper, &info_struct);
+	get_int32_funcs["coin_silver"] = l::bind(&InfoStruct::get_coin_silver, &info_struct);
+	get_int32_funcs["coin_gold"] = l::bind(&InfoStruct::get_coin_gold, &info_struct);
+	get_int32_funcs["coin_plat"] = l::bind(&InfoStruct::get_coin_plat, &info_struct);
+	get_int32_funcs["bank_coin_copper"] = l::bind(&InfoStruct::get_bank_coin_copper, &info_struct);
+	get_int32_funcs["bank_coin_silver"] = l::bind(&InfoStruct::get_bank_coin_silver, &info_struct);
+	get_int32_funcs["bank_coin_gold"] = l::bind(&InfoStruct::get_bank_coin_gold, &info_struct);
+	get_int32_funcs["bank_coin_plat"] = l::bind(&InfoStruct::get_bank_coin_plat, &info_struct);
+	get_int32_funcs["status_points"] = l::bind(&InfoStruct::get_status_points, &info_struct);
+	get_string_funcs["deity"] = l::bind(&InfoStruct::get_deity, &info_struct);
+	get_int32_funcs["weight"] = l::bind(&InfoStruct::get_weight, &info_struct);
+	get_int32_funcs["max_weight"] = l::bind(&InfoStruct::get_max_weight, &info_struct);
+	get_int8_funcs["tradeskill_class1"] = l::bind(&InfoStruct::get_tradeskill_class1, &info_struct);
+	get_int8_funcs["tradeskill_class2"] = l::bind(&InfoStruct::get_tradeskill_class2, &info_struct);
+	get_int8_funcs["tradeskill_class3"] = l::bind(&InfoStruct::get_tradeskill_class3, &info_struct);
+	get_int16_funcs["account_age_base"] = l::bind(&InfoStruct::get_account_age_base, &info_struct);
+	//	int8			account_age_bonus_[19];
+	get_int16_funcs["absorb"] = l::bind(&InfoStruct::get_absorb, &info_struct);
+	get_int32_funcs["xp"] = l::bind(&InfoStruct::get_xp, &info_struct);
+	get_int32_funcs["xp_needed"] = l::bind(&InfoStruct::get_xp_needed, &info_struct);
+	get_int32_funcs["xp_debt"] = l::bind(&InfoStruct::get_xp_debt, &info_struct);
+	get_int16_funcs["xp_yellow"] = l::bind(&InfoStruct::get_xp_yellow, &info_struct);
+	get_int16_funcs["xp_yellow_vitality_bar"] = l::bind(&InfoStruct::get_xp_yellow_vitality_bar, &info_struct);
+	get_int16_funcs["xp_blue_vitality_bar"] = l::bind(&InfoStruct::get_xp_blue_vitality_bar, &info_struct);
+	get_int16_funcs["xp_blue"] = l::bind(&InfoStruct::get_xp_blue, &info_struct);
+	get_int32_funcs["ts_xp"] = l::bind(&InfoStruct::get_ts_xp, &info_struct);
+	get_int32_funcs["ts_xp_needed"] = l::bind(&InfoStruct::get_ts_xp_needed, &info_struct);
+	get_int16_funcs["tradeskill_exp_yellow"] = l::bind(&InfoStruct::get_tradeskill_exp_yellow, &info_struct);
+	get_int16_funcs["tradeskill_exp_blue"] = l::bind(&InfoStruct::get_tradeskill_exp_blue, &info_struct);
+	get_int32_funcs["flags"] = l::bind(&InfoStruct::get_flags, &info_struct);
+	get_int32_funcs["flags2"] = l::bind(&InfoStruct::get_flags2, &info_struct);
+	get_float_funcs["xp_vitality"] = l::bind(&InfoStruct::get_xp_vitality, &info_struct);
+	get_float_funcs["tradeskill_xp_vitality"] = l::bind(&InfoStruct::get_tradeskill_xp_vitality, &info_struct);
+	get_int16_funcs["mitigation_skill1"] = l::bind(&InfoStruct::get_mitigation_skill1, &info_struct);
+	get_int16_funcs["mitigation_skill2"] = l::bind(&InfoStruct::get_mitigation_skill2, &info_struct);
+	get_int16_funcs["mitigation_skill3"] = l::bind(&InfoStruct::get_mitigation_skill3, &info_struct);
+	get_float_funcs["ability_modifier"] = l::bind(&InfoStruct::get_ability_modifier, &info_struct);
+	get_float_funcs["critical_mitigation"] = l::bind(&InfoStruct::get_critical_mitigation, &info_struct);
+	get_float_funcs["block_chance"] = l::bind(&InfoStruct::get_block_chance, &info_struct);
+	get_float_funcs["uncontested_parry"] = l::bind(&InfoStruct::get_uncontested_parry, &info_struct);
+	get_float_funcs["uncontested_block"] = l::bind(&InfoStruct::get_uncontested_block, &info_struct);
+	get_float_funcs["uncontested_dodge"] = l::bind(&InfoStruct::get_uncontested_dodge, &info_struct);
+	get_float_funcs["uncontested_riposte"] = l::bind(&InfoStruct::get_uncontested_riposte, &info_struct);
+	get_float_funcs["crit_chance"] = l::bind(&InfoStruct::get_crit_chance, &info_struct);
+	get_float_funcs["crit_bonus"] = l::bind(&InfoStruct::get_crit_bonus, &info_struct);
+	get_float_funcs["potency"] = l::bind(&InfoStruct::get_potency, &info_struct);
+	get_float_funcs["hate_mod"] = l::bind(&InfoStruct::get_hate_mod, &info_struct);
+	get_float_funcs["reuse_speed"] = l::bind(&InfoStruct::get_reuse_speed, &info_struct);
+	get_float_funcs["casting_speed"] = l::bind(&InfoStruct::get_casting_speed, &info_struct);
+	get_float_funcs["recovery_speed"] = l::bind(&InfoStruct::get_recovery_speed, &info_struct);
+	get_float_funcs["spell_reuse_speed"] = l::bind(&InfoStruct::get_spell_reuse_speed, &info_struct);
+	get_float_funcs["spell_multi_attack"] = l::bind(&InfoStruct::get_spell_multi_attack, &info_struct);
+	get_float_funcs["dps"] = l::bind(&InfoStruct::get_dps, &info_struct);
+	get_float_funcs["dps_multiplier"] = l::bind(&InfoStruct::get_dps_multiplier, &info_struct);
+	get_float_funcs["attackspeed"] = l::bind(&InfoStruct::get_attackspeed, &info_struct);
+	get_float_funcs["haste"] = l::bind(&InfoStruct::get_haste, &info_struct);
+	get_float_funcs["multi_attack"] = l::bind(&InfoStruct::get_multi_attack, &info_struct);
+	get_float_funcs["flurry"] = l::bind(&InfoStruct::get_flurry, &info_struct);
+	get_float_funcs["melee_ae"] = l::bind(&InfoStruct::get_melee_ae, &info_struct);
+	get_float_funcs["strikethrough"] = l::bind(&InfoStruct::get_strikethrough, &info_struct);
+	get_float_funcs["accuracy"] = l::bind(&InfoStruct::get_accuracy, &info_struct);
+	get_float_funcs["offensivespeed"] = l::bind(&InfoStruct::get_offensivespeed, &info_struct);
+	get_float_funcs["rain"] = l::bind(&InfoStruct::get_rain, &info_struct);
+	get_float_funcs["wind"] = l::bind(&InfoStruct::get_wind, &info_struct);
+	get_sint8_funcs["alignment"] = l::bind(&InfoStruct::get_alignment, &info_struct);
+	get_int32_funcs["pet_id"] = l::bind(&InfoStruct::get_pet_id, &info_struct);
+	get_string_funcs["pet_name"] = l::bind(&InfoStruct::get_pet_name, &info_struct);
+	get_float_funcs["pet_health_pct"] = l::bind(&InfoStruct::get_pet_health_pct, &info_struct);
+	get_float_funcs["pet_power_pct"] = l::bind(&InfoStruct::get_pet_power_pct, &info_struct);
+	get_int8_funcs["pet_movement"] = l::bind(&InfoStruct::get_pet_movement, &info_struct);
+	get_int8_funcs["pet_behavior"] = l::bind(&InfoStruct::get_pet_behavior, &info_struct);
+	get_int8_funcs["vision"] = l::bind(&InfoStruct::get_vision, &info_struct);
+	get_int8_funcs["breathe_underwater"] = l::bind(&InfoStruct::get_breathe_underwater, &info_struct);
+	get_string_funcs["biography"] = l::bind(&InfoStruct::get_biography, &info_struct);
+	get_float_funcs["drunk"] = l::bind(&InfoStruct::get_drunk, &info_struct);
+
+
+/** SETS **/
+	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
+	set_int8_funcs["class1"] = l::bind(&InfoStruct::set_class1, &info_struct, l::_1);
+	set_int8_funcs["class2"] = l::bind(&InfoStruct::set_class2, &info_struct, l::_1);
+	set_int8_funcs["class3"] = l::bind(&InfoStruct::set_class3, &info_struct, l::_1);
+	set_int8_funcs["race"] = l::bind(&InfoStruct::set_race, &info_struct, l::_1);
+	set_int8_funcs["gender"] = l::bind(&InfoStruct::set_gender, &info_struct, l::_1);
+	set_int16_funcs["level"] = l::bind(&InfoStruct::set_level, &info_struct, l::_1);
+	set_int16_funcs["max_level"] = l::bind(&InfoStruct::set_max_level, &info_struct, l::_1);
+	set_int16_funcs["tradeskill_level"] = l::bind(&InfoStruct::set_tradeskill_level, &info_struct, l::_1);
+	set_int16_funcs["tradeskill_max_level"] = l::bind(&InfoStruct::set_tradeskill_max_level, &info_struct, l::_1);
+	set_int8_funcs["cur_concentration"] = l::bind(&InfoStruct::set_cur_concentration, &info_struct, l::_1);
+	set_int8_funcs["max_concentration"] = l::bind(&InfoStruct::set_max_concentration, &info_struct, l::_1);
+	set_int16_funcs["cur_attack"] = l::bind(&InfoStruct::set_cur_attack, &info_struct, l::_1);
+	set_int16_funcs["attack_base"] = l::bind(&InfoStruct::set_attack_base, &info_struct, l::_1);
+	set_int16_funcs["cur_mitigation"] = l::bind(&InfoStruct::set_cur_mitigation, &info_struct, l::_1);
+	set_int16_funcs["max_mitigation"] = l::bind(&InfoStruct::set_max_mitigation, &info_struct, l::_1);
+	set_int16_funcs["mitigation_base"] = l::bind(&InfoStruct::set_mitigation_base, &info_struct, l::_1);
+	set_int16_funcs["avoidance_display"] = l::bind(&InfoStruct::set_avoidance_display, &info_struct, l::_1);
+	set_int16_funcs["cur_avoidance"] = l::bind(&InfoStruct::set_cur_avoidance, &info_struct, l::_1);
+	set_int16_funcs["base_avoidance_pct"] = l::bind(&InfoStruct::set_base_avoidance_pct, &info_struct, l::_1);
+	set_int16_funcs["avoidance_base"] = l::bind(&InfoStruct::set_avoidance_base, &info_struct, l::_1);
+	set_int16_funcs["max_avoidance"] = l::bind(&InfoStruct::set_max_avoidance, &info_struct, l::_1);
+	set_int16_funcs["parry"] = l::bind(&InfoStruct::set_parry, &info_struct, l::_1);
+	set_int16_funcs["parry_base"] = l::bind(&InfoStruct::set_parry_base, &info_struct, l::_1);
+	set_int16_funcs["deflection"] = l::bind(&InfoStruct::set_deflection, &info_struct, l::_1);
+	set_int16_funcs["deflection_base"] = l::bind(&InfoStruct::set_deflection_base, &info_struct, l::_1);
+	set_int16_funcs["block"] = l::bind(&InfoStruct::set_block, &info_struct, l::_1);
+	set_int16_funcs["block_base"] = l::bind(&InfoStruct::set_block_base, &info_struct, l::_1);
+	set_float_funcs["str"] = l::bind(&InfoStruct::set_str, &info_struct, l::_1);
+	set_float_funcs["sta"] = l::bind(&InfoStruct::set_sta, &info_struct, l::_1);
+	set_float_funcs["agi"] = l::bind(&InfoStruct::set_agi, &info_struct, l::_1);
+	set_float_funcs["wis"] = l::bind(&InfoStruct::set_wis, &info_struct, l::_1);
+	set_float_funcs["intel"] = l::bind(&InfoStruct::set_intel, &info_struct, l::_1);
+	set_float_funcs["str_base"] = l::bind(&InfoStruct::set_str_base, &info_struct, l::_1);
+	set_float_funcs["sta_base"] = l::bind(&InfoStruct::set_sta_base, &info_struct, l::_1);
+	set_float_funcs["agi_base"] = l::bind(&InfoStruct::set_agi_base, &info_struct, l::_1);
+	set_float_funcs["wis_base"] = l::bind(&InfoStruct::set_wis_base, &info_struct, l::_1);
+	set_float_funcs["intel_base"] = l::bind(&InfoStruct::set_intel_base, &info_struct, l::_1);
+	set_int16_funcs["heat"] = l::bind(&InfoStruct::set_heat, &info_struct, l::_1);
+	set_int16_funcs["cold"] = l::bind(&InfoStruct::set_cold, &info_struct, l::_1);
+	set_int16_funcs["magic"] = l::bind(&InfoStruct::set_magic, &info_struct, l::_1);
+	set_int16_funcs["mental"] = l::bind(&InfoStruct::set_mental, &info_struct, l::_1);
+	set_int16_funcs["divine"] = l::bind(&InfoStruct::set_divine, &info_struct, l::_1);
+	set_int16_funcs["disease"] = l::bind(&InfoStruct::set_disease, &info_struct, l::_1);
+	set_int16_funcs["poison"] = l::bind(&InfoStruct::set_poison, &info_struct, l::_1);
+	set_int16_funcs["disease_base"] = l::bind(&InfoStruct::set_disease_base, &info_struct, l::_1);
+	set_int16_funcs["cold_base"] = l::bind(&InfoStruct::set_cold_base, &info_struct, l::_1);
+	set_int16_funcs["divine_base"] = l::bind(&InfoStruct::set_divine_base, &info_struct, l::_1);
+	set_int16_funcs["magic_base"] = l::bind(&InfoStruct::set_magic_base, &info_struct, l::_1);
+	set_int16_funcs["mental_base"] = l::bind(&InfoStruct::set_mental_base, &info_struct, l::_1);
+	set_int16_funcs["heat_base"] = l::bind(&InfoStruct::set_heat_base, &info_struct, l::_1);
+	set_int16_funcs["poison_base"] = l::bind(&InfoStruct::set_poison_base, &info_struct, l::_1);
+	set_int16_funcs["elemental_base"] = l::bind(&InfoStruct::set_elemental_base, &info_struct, l::_1);
+	set_int16_funcs["noxious_base"] = l::bind(&InfoStruct::set_noxious_base, &info_struct, l::_1);
+	set_int16_funcs["arcane_base"] = l::bind(&InfoStruct::set_arcane_base, &info_struct, l::_1);
+	set_int32_funcs["coin_copper"] = l::bind(&InfoStruct::set_coin_copper, &info_struct, l::_1);
+	set_int32_funcs["coin_silver"] = l::bind(&InfoStruct::set_coin_silver, &info_struct, l::_1);
+	set_int32_funcs["coin_gold"] = l::bind(&InfoStruct::set_coin_gold, &info_struct, l::_1);
+	set_int32_funcs["coin_plat"] = l::bind(&InfoStruct::set_coin_plat, &info_struct, l::_1);
+	set_int32_funcs["bank_coin_copper"] = l::bind(&InfoStruct::set_bank_coin_copper, &info_struct, l::_1);
+	set_int32_funcs["bank_coin_silver"] = l::bind(&InfoStruct::set_bank_coin_silver, &info_struct, l::_1);
+	set_int32_funcs["bank_coin_gold"] = l::bind(&InfoStruct::set_bank_coin_gold, &info_struct, l::_1);
+	set_int32_funcs["bank_coin_plat"] = l::bind(&InfoStruct::set_bank_coin_plat, &info_struct, l::_1);
+	set_int32_funcs["status_points"] = l::bind(&InfoStruct::set_status_points, &info_struct, l::_1);
+	set_string_funcs["deity"] = l::bind(&InfoStruct::set_deity, &info_struct, l::_1);
+	set_int32_funcs["weight"] = l::bind(&InfoStruct::set_weight, &info_struct, l::_1);
+	set_int32_funcs["max_weight"] = l::bind(&InfoStruct::set_max_weight, &info_struct, l::_1);
+	set_int8_funcs["tradeskill_class1"] = l::bind(&InfoStruct::set_tradeskill_class1, &info_struct, l::_1);
+	set_int8_funcs["tradeskill_class2"] = l::bind(&InfoStruct::set_tradeskill_class2, &info_struct, l::_1);
+	set_int8_funcs["tradeskill_class3"] = l::bind(&InfoStruct::set_tradeskill_class3, &info_struct, l::_1);
+	set_int16_funcs["account_age_base"] = l::bind(&InfoStruct::set_account_age_base, &info_struct, l::_1);
+	//	int8			account_age_bonus_[19];
+	set_int16_funcs["absorb"] = l::bind(&InfoStruct::set_absorb, &info_struct, l::_1);
+	set_int32_funcs["xp"] = l::bind(&InfoStruct::set_xp, &info_struct, l::_1);
+	set_int32_funcs["xp_needed"] = l::bind(&InfoStruct::set_xp_needed, &info_struct, l::_1);
+	set_int32_funcs["xp_debt"] = l::bind(&InfoStruct::set_xp_debt, &info_struct, l::_1);
+	set_int16_funcs["xp_yellow"] = l::bind(&InfoStruct::set_xp_yellow, &info_struct, l::_1);
+	set_int16_funcs["xp_yellow_vitality_bar"] = l::bind(&InfoStruct::set_xp_yellow_vitality_bar, &info_struct, l::_1);
+	set_int16_funcs["xp_blue_vitality_bar"] = l::bind(&InfoStruct::set_xp_blue_vitality_bar, &info_struct, l::_1);
+	set_int16_funcs["xp_blue"] = l::bind(&InfoStruct::set_xp_blue, &info_struct, l::_1);
+	set_int32_funcs["ts_xp"] = l::bind(&InfoStruct::set_ts_xp, &info_struct, l::_1);
+	set_int32_funcs["ts_xp_needed"] = l::bind(&InfoStruct::set_ts_xp_needed, &info_struct, l::_1);
+	set_int16_funcs["tradeskill_exp_yellow"] = l::bind(&InfoStruct::set_tradeskill_exp_yellow, &info_struct, l::_1);
+	set_int16_funcs["tradeskill_exp_blue"] = l::bind(&InfoStruct::set_tradeskill_exp_blue, &info_struct, l::_1);
+	set_int32_funcs["flags"] = l::bind(&InfoStruct::set_flags, &info_struct, l::_1);
+	set_int32_funcs["flags2"] = l::bind(&InfoStruct::set_flags2, &info_struct, l::_1);
+	set_float_funcs["xp_vitality"] = l::bind(&InfoStruct::set_xp_vitality, &info_struct, l::_1);
+	set_float_funcs["tradeskill_xp_vitality"] = l::bind(&InfoStruct::set_tradeskill_xp_vitality, &info_struct, l::_1);
+	set_int16_funcs["mitigation_skill1"] = l::bind(&InfoStruct::set_mitigation_skill1, &info_struct, l::_1);
+	set_int16_funcs["mitigation_skill2"] = l::bind(&InfoStruct::set_mitigation_skill2, &info_struct, l::_1);
+	set_int16_funcs["mitigation_skill3"] = l::bind(&InfoStruct::set_mitigation_skill3, &info_struct, l::_1);
+	set_float_funcs["ability_modifier"] = l::bind(&InfoStruct::set_ability_modifier, &info_struct, l::_1);
+	set_float_funcs["critical_mitigation"] = l::bind(&InfoStruct::set_critical_mitigation, &info_struct, l::_1);
+	set_float_funcs["block_chance"] = l::bind(&InfoStruct::set_block_chance, &info_struct, l::_1);
+	set_float_funcs["uncontested_parry"] = l::bind(&InfoStruct::set_uncontested_parry, &info_struct, l::_1);
+	set_float_funcs["uncontested_block"] = l::bind(&InfoStruct::set_uncontested_block, &info_struct, l::_1);
+	set_float_funcs["uncontested_dodge"] = l::bind(&InfoStruct::set_uncontested_dodge, &info_struct, l::_1);
+	set_float_funcs["uncontested_riposte"] = l::bind(&InfoStruct::set_uncontested_riposte, &info_struct, l::_1);
+	set_float_funcs["crit_chance"] = l::bind(&InfoStruct::set_crit_chance, &info_struct, l::_1);
+	set_float_funcs["crit_bonus"] = l::bind(&InfoStruct::set_crit_bonus, &info_struct, l::_1);
+	set_float_funcs["potency"] = l::bind(&InfoStruct::set_potency, &info_struct, l::_1);
+	set_float_funcs["hate_mod"] = l::bind(&InfoStruct::set_hate_mod, &info_struct, l::_1);
+	set_float_funcs["reuse_speed"] = l::bind(&InfoStruct::set_reuse_speed, &info_struct, l::_1);
+	set_float_funcs["casting_speed"] = l::bind(&InfoStruct::set_casting_speed, &info_struct, l::_1);
+	set_float_funcs["recovery_speed"] = l::bind(&InfoStruct::set_recovery_speed, &info_struct, l::_1);
+	set_float_funcs["spell_reuse_speed"] = l::bind(&InfoStruct::set_spell_reuse_speed, &info_struct, l::_1);
+	set_float_funcs["spell_multi_attack"] = l::bind(&InfoStruct::set_spell_multi_attack, &info_struct, l::_1);
+	set_float_funcs["dps"] = l::bind(&InfoStruct::set_dps, &info_struct, l::_1);
+	set_float_funcs["dps_multiplier"] = l::bind(&InfoStruct::set_dps_multiplier, &info_struct, l::_1);
+	set_float_funcs["attackspeed"] = l::bind(&InfoStruct::set_attackspeed, &info_struct, l::_1);
+	set_float_funcs["haste"] = l::bind(&InfoStruct::set_haste, &info_struct, l::_1);
+	set_float_funcs["multi_attack"] = l::bind(&InfoStruct::set_multi_attack, &info_struct, l::_1);
+	set_float_funcs["flurry"] = l::bind(&InfoStruct::set_flurry, &info_struct, l::_1);
+	set_float_funcs["melee_ae"] = l::bind(&InfoStruct::set_melee_ae, &info_struct, l::_1);
+	set_float_funcs["strikethrough"] = l::bind(&InfoStruct::set_strikethrough, &info_struct, l::_1);
+	set_float_funcs["accuracy"] = l::bind(&InfoStruct::set_accuracy, &info_struct, l::_1);
+	set_float_funcs["offensivespeed"] = l::bind(&InfoStruct::set_offensivespeed, &info_struct, l::_1);
+	set_float_funcs["rain"] = l::bind(&InfoStruct::set_rain, &info_struct, l::_1);
+	set_float_funcs["wind"] = l::bind(&InfoStruct::set_wind, &info_struct, l::_1);
+	set_sint8_funcs["alignment"] = l::bind(&InfoStruct::set_alignment, &info_struct, l::_1);
+	set_int32_funcs["pet_id"] = l::bind(&InfoStruct::set_pet_id, &info_struct, l::_1);
+	set_string_funcs["pet_name"] = l::bind(&InfoStruct::set_pet_name, &info_struct, l::_1);
+	set_float_funcs["pet_health_pct"] = l::bind(&InfoStruct::set_pet_health_pct, &info_struct, l::_1);
+	set_float_funcs["pet_power_pct"] = l::bind(&InfoStruct::set_pet_power_pct, &info_struct, l::_1);
+	set_int8_funcs["pet_movement"] = l::bind(&InfoStruct::set_pet_movement, &info_struct, l::_1);
+	set_int8_funcs["pet_behavior"] = l::bind(&InfoStruct::set_pet_behavior, &info_struct, l::_1);
+	set_int8_funcs["vision"] = l::bind(&InfoStruct::set_vision, &info_struct, l::_1);
+	set_int8_funcs["breathe_underwater"] = l::bind(&InfoStruct::set_breathe_underwater, &info_struct, l::_1);
+	set_string_funcs["biography"] = l::bind(&InfoStruct::set_biography, &info_struct, l::_1);
+	set_float_funcs["drunk"] = l::bind(&InfoStruct::set_drunk, &info_struct, l::_1);
+
+}
+
 bool Entity::HasMoved(bool include_heading){
 	if(GetX() == last_x && GetY() == last_y && GetZ() == last_z && ((!include_heading) || (include_heading && GetHeading() == last_heading)))
 		return false;
@@ -117,123 +380,123 @@ bool Entity::HasMoved(bool include_heading){
 }
 
 int16 Entity::GetStr(){
-	return GetInfoStruct()->str;
+	return GetInfoStruct()->get_str();
 }
 
 int16 Entity::GetSta(){
-	return GetInfoStruct()->sta;
+	return GetInfoStruct()->get_sta();
 }
 
 int16 Entity::GetInt(){
-	return GetInfoStruct()->intel;
+	return GetInfoStruct()->get_intel();
 }
 
 int16 Entity::GetWis(){
-	return GetInfoStruct()->wis;
+	return GetInfoStruct()->get_wis();
 }
 
 int16 Entity::GetAgi(){
-	return GetInfoStruct()->agi;
+	return GetInfoStruct()->get_agi();
 }
 
 int16 Entity::GetPrimaryStat(){
 	int8 base_class = classes.GetBaseClass(GetAdventureClass());
 	if (base_class == FIGHTER) 
-		return GetInfoStruct()->str;	
+		return GetInfoStruct()->get_str();	
 	else if (base_class == PRIEST) 
-		return GetInfoStruct()->wis;
+		return GetInfoStruct()->get_wis();
 	else if (base_class == MAGE) 
-		return GetInfoStruct()->intel;
+		return GetInfoStruct()->get_intel();
 	else
-		return GetInfoStruct()->agi;
+		return GetInfoStruct()->get_agi();
 }
 
 int16 Entity::GetHeatResistance(){
-	return GetInfoStruct()->heat;
+	return GetInfoStruct()->get_heat();
 }
 
 int16 Entity::GetColdResistance(){
-	return GetInfoStruct()->cold;
+	return GetInfoStruct()->get_cold();
 }
 
 int16 Entity::GetMagicResistance(){
-	return GetInfoStruct()->magic;
+	return GetInfoStruct()->get_magic();
 }
 
 int16 Entity::GetMentalResistance(){
-	return GetInfoStruct()->mental;
+	return GetInfoStruct()->get_mental();
 }
 
 int16 Entity::GetDivineResistance(){
-	return GetInfoStruct()->divine;
+	return GetInfoStruct()->get_divine();
 }
 
 int16 Entity::GetDiseaseResistance(){
-	return GetInfoStruct()->disease;
+	return GetInfoStruct()->get_disease();
 }
 
 int16 Entity::GetPoisonResistance(){
-	return GetInfoStruct()->poison;
+	return GetInfoStruct()->get_poison();
 }
 
 int8 Entity::GetConcentrationCurrent() {
-	return GetInfoStruct()->cur_concentration;
+	return GetInfoStruct()->get_cur_concentration();
 }
 
 int8 Entity::GetConcentrationMax() {
-	return GetInfoStruct()->max_concentration;
+	return GetInfoStruct()->get_max_concentration();
 }
 
 int16 Entity::GetStrBase(){
-	return GetInfoStruct()->str_base;
+	return GetInfoStruct()->get_str_base();
 }
 
 int16 Entity::GetStaBase(){
-	return GetInfoStruct()->sta_base;
+	return GetInfoStruct()->get_sta_base();
 }
 
 int16 Entity::GetIntBase(){
-	return GetInfoStruct()->intel_base;
+	return GetInfoStruct()->get_intel_base();
 }
 
 int16 Entity::GetWisBase(){
-	return GetInfoStruct()->wis_base;
+	return GetInfoStruct()->get_wis_base();
 }
 
 int16 Entity::GetAgiBase(){
-	return GetInfoStruct()->agi_base;
+	return GetInfoStruct()->get_agi_base();
 }
 
 int16 Entity::GetHeatResistanceBase(){
-	return GetInfoStruct()->heat_base;
+	return GetInfoStruct()->get_heat_base();
 }
 
 int16 Entity::GetColdResistanceBase(){
-	return GetInfoStruct()->cold_base;
+	return GetInfoStruct()->get_cold_base();
 }
 
 int16 Entity::GetMagicResistanceBase(){
-	return GetInfoStruct()->magic_base;
+	return GetInfoStruct()->get_magic_base();
 }
 
 int16 Entity::GetMentalResistanceBase(){
-	return GetInfoStruct()->mental_base;
+	return GetInfoStruct()->get_mental_base();
 }
 
 int16 Entity::GetDivineResistanceBase(){
-	return GetInfoStruct()->divine_base;
+	return GetInfoStruct()->get_divine_base();
 }
 
 int16 Entity::GetDiseaseResistanceBase(){
-	return GetInfoStruct()->disease_base;
+	return GetInfoStruct()->get_disease_base();
 }
 
 int16 Entity::GetPoisonResistanceBase(){
-	return GetInfoStruct()->poison_base;
+	return GetInfoStruct()->get_poison_base();
 }
 
 sint8 Entity::GetAlignment(){
-	return GetInfoStruct()->alignment;
+	return GetInfoStruct()->get_alignment();
 }
 
 bool Entity::IsCasting(){
@@ -314,9 +577,9 @@ void Entity::ChangePrimaryWeapon(){
 		melee_combat_data.wield_type = 2;
 	}
 	if(IsNPC())
-		melee_combat_data.primary_weapon_damage_high += (int32)(GetInfoStruct()->str / 10);
+		melee_combat_data.primary_weapon_damage_high += (int32)(GetInfoStruct()->get_str() / 10);
 	else
-		melee_combat_data.primary_weapon_damage_high += (int32)(GetInfoStruct()->str / 25);
+		melee_combat_data.primary_weapon_damage_high += (int32)(GetInfoStruct()->get_str() / 25);
 }
 
 void Entity::ChangeSecondaryWeapon(){
@@ -334,9 +597,9 @@ void Entity::ChangeSecondaryWeapon(){
 		melee_combat_data.secondary_weapon_type = 1;
 	}
 	if(IsNPC())
-		melee_combat_data.secondary_weapon_damage_high += (int32)(GetInfoStruct()->str / 10);
+		melee_combat_data.secondary_weapon_damage_high += (int32)(GetInfoStruct()->get_str() / 10);
 	else
-		melee_combat_data.secondary_weapon_damage_high += (int32)(GetInfoStruct()->str / 25);
+		melee_combat_data.secondary_weapon_damage_high += (int32)(GetInfoStruct()->get_str() / 25);
 }
 
 void Entity::ChangeRangedWeapon(){
@@ -704,76 +967,80 @@ void Entity::SetMaxSpeed(float val){
 
 void Entity::CalculateBonuses(){
 	InfoStruct* info = &info_struct;
-	info->block = info->block_base;
+	info->set_block(info->get_block_base());
 	
-	info->cur_attack = info->attack_base;
-	info->cur_mitigation = info->mitigation_base;
-	info->base_avoidance_pct = info->avoidance_base;
+	info->set_cur_attack(info->get_attack_base());
+	info->set_cur_mitigation(info->get_mitigation_base());
+	info->set_base_avoidance_pct(info->get_avoidance_base());
 
 	LogWrite(MISC__TODO, 1, "TODO", "Calculate via current spells\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 
 	//info->cur_concentration = 0;
-	info->parry = info->parry_base;
-	info->deflection = info->deflection_base;
+	info->set_parry(info->get_parry_base());
+	info->set_deflection(info->get_deflection_base());
 
-	info->disease = info->disease_base;
-	info->divine = info->divine_base;
-	info->heat = info->heat_base;
-	info->magic = info->magic_base;
-	info->mental = info->mental_base;
-	info->cold = info->cold_base;
-	info->poison = info->poison_base;
-	info->elemental_base = info->heat;
-	info->noxious_base = info->poison;
-	info->arcane_base = info->magic;
+	info->set_disease(info->get_disease_base());
+	info->set_divine(info->get_divine_base());
+	info->set_heat(info->get_heat_base());
+	info->set_magic(info->get_magic_base());
+	info->set_mental(info->get_mental_base());
+	info->set_cold(info->get_cold_base());
+	info->set_poison(info->get_poison_base());
+	info->set_elemental_base(info->get_heat());
+	info->set_noxious_base(info->get_poison());
+	info->set_arcane_base(info->get_magic());
 
-	info->sta = info->sta_base;
-	info->agi = info->agi_base;
-	info->str = info->str_base;
-	info->wis = info->wis_base;
-	info->intel = info->intel_base;
-	info->ability_modifier = 0;
-	info->critical_mitigation = 0;
-	info->block_chance = 0;
-	info->crit_chance = 0;
-	info->crit_bonus = 0;
-	info->potency = 0;
-	info->hate_mod = 0;
-	info->reuse_speed = 0;
-	info->casting_speed = 0;
-	info->recovery_speed = 0;
-	info->spell_reuse_speed = 0;
-	info->spell_multi_attack = 0;
-	info->dps = 0;
-	info->dps_multiplier = 0;
-	info->haste = 0;
-	info->attackspeed = 0;
-	info->multi_attack = 0;
-	info->flurry = 0;
-	info->melee_ae = 0;
-	info->strikethrough = 0;
-	info->accuracy = 0;
-	info->offensivespeed = 0;
+	info->set_sta(info->get_sta_base());
+	info->set_agi(info->get_agi_base());
+	info->set_str(info->get_str_base());
+	info->set_wis(info->get_wis_base());
+	info->set_intel(info->get_intel_base());
+	info->set_ability_modifier(0);
+	info->set_critical_mitigation(0);
+
+	info->set_block_chance(0);
+	info->set_crit_chance(0);
+	info->set_crit_bonus(0);
+	info->set_potency(0);
+	info->set_hate_mod(0);
+	info->set_reuse_speed(0);
+	info->set_casting_speed(0);
+	info->set_recovery_speed(0);
+	info->set_spell_reuse_speed(0);
+	info->set_spell_multi_attack(0);
+	info->set_dps(0);
+	info->set_dps_multiplier(0);
+	info->set_haste(0);
+	info->set_attackspeed(0);
+	info->set_multi_attack(0);
+	info->set_flurry(0);
+	info->set_melee_ae(0);
+
+	info->set_strikethrough(0);
+
+	info->set_accuracy(0);
+
+	info->set_offensivespeed(0);
 
 	stats.clear();
 	ItemStatsValues* values = equipment_list.CalculateEquipmentBonuses(this);
 	CalculateSpellBonuses(values);
-	info->sta += values->sta;
-	info->str += values->str;
-	info->agi += values->agi;
-	info->wis += values->wis;
-	info->intel += values->int_;
+	info->add_sta(values->sta);
+	info->add_str(values->str);
+	info->add_agi(values->agi);
+	info->add_wis(values->wis);
+	info->add_intel(values->int_);
 
-	info->disease += values->vs_disease;
-	info->divine += values->vs_divine;
-	info->heat += values->vs_heat;
-	info->magic += values->vs_magic;
+	info->add_disease(values->vs_disease);
+	info->add_divine(values->vs_divine);
+	info->add_heat(values->vs_heat);
+	info->add_magic(values->vs_magic);
 	int32 sta_hp_bonus = 0.0;
 	int32 prim_power_bonus = 0.0;
 	float bonus_mod = 0.0;
 	if (IsPlayer()) {
 		bonus_mod = CalculateBonusMod(); 
-		sta_hp_bonus = info->sta * bonus_mod;
+		sta_hp_bonus = info->get_sta() * bonus_mod;
 		prim_power_bonus = GetPrimaryStat() * bonus_mod;
 	}
 	prim_power_bonus = floor(float(prim_power_bonus));
@@ -784,38 +1051,43 @@ void Entity::CalculateBonuses(){
 		SetHP(GetTotalHP());
 	if(GetPower() > GetTotalPower())
 		SetPower(GetTotalPower());
-	info->mental += values->vs_mental;
-	info->poison += values->vs_poison;
-	info->max_concentration += values->concentration;
-	info->cold += values->vs_cold;
-	info->mitigation_skill1 += values->vs_slash;
-	info->mitigation_skill2 += values->vs_pierce;
-	info->mitigation_skill3 += values->vs_crush;
-	info->ability_modifier += values->ability_modifier;
-	info->critical_mitigation += values->criticalmitigation;
-	info->block_chance += values->extrashieldblockchance;
-	info->crit_chance += values->beneficialcritchance;
-	info->crit_bonus += values->critbonus;
-	info->potency += values->potency;
-	info->hate_mod += values->hategainmod;
-	info->reuse_speed += values->abilityreusespeed;
-	info->casting_speed += values->abilitycastingspeed;
-	info->recovery_speed += values->abilityrecoveryspeed;
-	info->spell_reuse_speed += values->spellreusespeed;
-	info->spell_multi_attack += values->spellmultiattackchance;
-	info->dps += values->dps;
-	info->dps_multiplier = CalculateDPSMultiplier();
-	info->haste += values->attackspeed;
-	info->multi_attack += values->multiattackchance;
-	info->flurry += values->flurry;
-	info->melee_ae += values->aeautoattackchance;
-	info->strikethrough += values->strikethrough;
-	info->accuracy += values->accuracy;
-	info->offensivespeed += values->offensivespeed;
-	info->uncontested_block += values->uncontested_block;
-	info->uncontested_parry += values->uncontested_parry;
-	info->uncontested_dodge += values->uncontested_dodge;
-	info->uncontested_riposte += values->uncontested_riposte;
+
+	info->add_mental(values->vs_mental);
+
+	info->add_poison(values->vs_poison);
+
+	info->add_max_concentration(values->concentration);
+
+	info->add_cold(values->vs_cold);
+
+	info->add_mitigation_skill1(values->vs_slash);
+	info->add_mitigation_skill2(values->vs_pierce);
+	info->add_mitigation_skill3(values->vs_crush);
+	info->add_ability_modifier(values->ability_modifier);
+	info->add_critical_mitigation(values->criticalmitigation);
+	info->add_block_chance(values->extrashieldblockchance);
+	info->add_crit_chance(values->beneficialcritchance);
+	info->add_crit_bonus(values->critbonus);
+	info->add_potency(values->potency);
+	info->add_hate_mod(values->hategainmod);
+	info->add_reuse_speed(values->abilityreusespeed);
+	info->add_casting_speed(values->abilitycastingspeed);
+	info->add_recovery_speed(values->abilityrecoveryspeed);
+	info->add_spell_reuse_speed(values->spellreusespeed);
+	info->add_spell_multi_attack(values->spellmultiattackchance);
+	info->add_dps(values->dps);
+	info->add_dps_multiplier(CalculateDPSMultiplier());
+	info->add_haste(values->attackspeed);
+	info->add_multi_attack(values->multiattackchance);
+	info->add_flurry(values->flurry);
+	info->add_melee_ae(values->aeautoattackchance);
+	info->add_strikethrough(values->strikethrough);
+	info->add_accuracy(values->accuracy);
+	info->add_offensivespeed(values->offensivespeed);
+	info->add_uncontested_block(values->uncontested_block);
+	info->add_uncontested_parry(values->uncontested_parry);
+	info->add_uncontested_dodge(values->uncontested_dodge);
+	info->add_uncontested_riposte(values->uncontested_riposte);
 	safe_delete(values);
 }
 
@@ -1178,7 +1450,7 @@ float Entity::CalculateBonusMod() {
 }
 
 float Entity::CalculateDPSMultiplier(){
-	float dps = GetInfoStruct()->dps;
+	float dps = GetInfoStruct()->get_dps();
 
 	if (dps > 0){
 		if (dps <= 100)
@@ -1356,7 +1628,7 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 }
 
 float Entity::CalculateCastingSpeedMod() {
-	float cast_speed = info_struct.casting_speed;
+	float cast_speed = info_struct.get_casting_speed();
 	
 	if(cast_speed > 0)
 		return 100 * max((float) 0.5, (float) (1 + (1 - (1 / (1 + (cast_speed * .01))))));
@@ -1472,9 +1744,9 @@ void Entity::CureDetrimentByType(int8 cure_count, int8 det_type, string cure_nam
 		if (det && det->det_type == det_type && !det->incurable){
 			levels = det->spell->spell->GetSpellLevels();
 			info_struct = det->caster->GetInfoStruct();
-			caster_class1 = info_struct->class1;
-			caster_class2 = info_struct->class2;
-			caster_class3 = info_struct->class3;
+			caster_class1 = info_struct->get_class1();
+			caster_class2 = info_struct->get_class2();
+			caster_class3 = info_struct->get_class3();
 			pass_level_check = false;
 			for (int32 x = 0; x < levels->size(); x++){
 				level_class = levels->at(x)->adventure_class;
@@ -1527,9 +1799,9 @@ void Entity::CureDetrimentByControlEffect(int8 cure_count, int8 control_type, st
 		if (det && det->control_effect == control_type && !det->incurable){
 			levels = det->spell->spell->GetSpellLevels();
 			info_struct = det->caster->GetInfoStruct();
-			caster_class1 = info_struct->class1;
-			caster_class2 = info_struct->class2;
-			caster_class3 = info_struct->class3;
+			caster_class1 = info_struct->get_class1();
+			caster_class2 = info_struct->get_class2();
+			caster_class3 = info_struct->get_class3();
 			pass_level_check = false;
 			for (int32 x = 0; x < levels->size(); x++){
 				level_class = levels->at(x)->adventure_class;
@@ -2551,4 +2823,254 @@ void Entity::HaltMovement()
 		GetZone()->movementMgr->StopNavigation(this);
 
 	RunToLocation(GetX(), GetY(), GetZ());
+}	
+
+std::string Entity::GetInfoStructString(std::string field)
+{
+		map<string, boost::function<std::string()>>::const_iterator itr = get_string_funcs.find(field);
+		if(itr != get_string_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return std::string("");
+}
+
+int8 Entity::GetInfoStructInt8(std::string field)
+{
+		map<string, boost::function<int8()>>::const_iterator itr = get_int8_funcs.find(field);
+		if(itr != get_int8_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return 0;
+}
+
+int16 Entity::GetInfoStructInt16(std::string field)
+{
+		map<string, boost::function<int16()>>::const_iterator itr = get_int16_funcs.find(field);
+		if(itr != get_int16_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return 0;
+}
+
+int32 Entity::GetInfoStructInt32(std::string field)
+{
+		map<string, boost::function<int32()>>::const_iterator itr = get_int32_funcs.find(field);
+		if(itr != get_int32_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return 0;
+}
+
+int64 Entity::GetInfoStructInt64(std::string field)
+{
+		map<string, boost::function<int64()>>::const_iterator itr = get_int64_funcs.find(field);
+		if(itr != get_int64_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return 0;
+}
+
+sint8 Entity::GetInfoStructSInt8(std::string field)
+{
+		map<string, boost::function<sint8()>>::const_iterator itr = get_sint8_funcs.find(field);
+		if(itr != get_sint8_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return 0;
+}
+
+sint16 Entity::GetInfoStructSInt16(std::string field)
+{
+		map<string, boost::function<sint16()>>::const_iterator itr = get_sint16_funcs.find(field);
+		if(itr != get_sint16_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return 0;
+}
+
+sint32 Entity::GetInfoStructSInt32(std::string field)
+{
+		map<string, boost::function<sint32()>>::const_iterator itr = get_sint32_funcs.find(field);
+		if(itr != get_sint32_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return 0;
+}
+
+sint64 Entity::GetInfoStructSInt64(std::string field)
+{
+		map<string, boost::function<sint64()>>::const_iterator itr = get_sint64_funcs.find(field);
+		if(itr != get_sint64_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return 0;
+}
+
+float Entity::GetInfoStructFloat(std::string field)
+{
+		map<string, boost::function<float()>>::const_iterator itr = get_float_funcs.find(field);
+		if(itr != get_float_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+	return 0.0f;
+}
+
+int64 Entity::GetInfoStructUInt(std::string field)
+{
+		map<string, boost::function<int8()>>::const_iterator itr = get_int8_funcs.find(field);
+		if(itr != get_int8_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+		map<string, boost::function<int16()>>::const_iterator itr2 = get_int16_funcs.find(field);
+		if(itr2 != get_int16_funcs.end())
+		{
+			auto func = (itr2->second)();
+			return func;
+		}
+		map<string, boost::function<int32()>>::const_iterator itr3 = get_int32_funcs.find(field);
+		if(itr3 != get_int32_funcs.end())
+		{
+			auto func = (itr3->second)();
+			return func;
+		}
+		map<string, boost::function<int64()>>::const_iterator itr4 = get_int64_funcs.find(field);
+		if(itr4 != get_int64_funcs.end())
+		{
+			auto func = (itr4->second)();
+			return func;
+		}
+	return 0;
+}
+
+sint64 Entity::GetInfoStructSInt(std::string field)
+{
+		map<string, boost::function<sint8()>>::const_iterator itr = get_sint8_funcs.find(field);
+		if(itr != get_sint8_funcs.end())
+		{
+			auto func = (itr->second)();
+			return func;
+		}
+		map<string, boost::function<sint16()>>::const_iterator itr2 = get_sint16_funcs.find(field);
+		if(itr2 != get_sint16_funcs.end())
+		{
+			auto func = (itr2->second)();
+			return func;
+		}
+		map<string, boost::function<sint32()>>::const_iterator itr3 = get_sint32_funcs.find(field);
+		if(itr3 != get_sint32_funcs.end())
+		{
+			auto func = (itr3->second)();
+			return func;
+		}
+		map<string, boost::function<sint64()>>::const_iterator itr4 = get_sint64_funcs.find(field);
+		if(itr4 != get_sint64_funcs.end())
+		{
+			auto func = (itr4->second)();
+			return func;
+		}
+	return 0;
+}
+
+
+bool Entity::SetInfoStructString(std::string field, std::string value)
+{
+		map<string, boost::function<void(std::string)>>::const_iterator itr = set_string_funcs.find(field);
+		if(itr != set_string_funcs.end())
+		{
+			(itr->second)(value);
+			return true;
+		}
+	return false;
+}
+
+
+bool Entity::SetInfoStructUInt(std::string field, int64 value)
+{
+		map<string, boost::function<void(int8)>>::const_iterator itr = set_int8_funcs.find(field);
+		if(itr != set_int8_funcs.end())
+		{
+			(itr->second)((int8)value);
+			return true;
+		}
+		map<string, boost::function<void(int16)>>::const_iterator itr2 = set_int16_funcs.find(field);
+		if(itr2 != set_int16_funcs.end())
+		{
+			(itr2->second)((int16)value);
+			return true;
+		}
+		map<string, boost::function<void(int32)>>::const_iterator itr3 = set_int32_funcs.find(field);
+		if(itr3 != set_int32_funcs.end())
+		{
+			(itr3->second)((int32)value);
+			return true;
+		}
+		map<string, boost::function<void(int64)>>::const_iterator itr4 = set_int64_funcs.find(field);
+		if(itr4 != set_int64_funcs.end())
+		{
+			(itr4->second)(value);
+			return true;
+		}
+	return false;
+}
+
+bool Entity::SetInfoStructSInt(std::string field, sint64 value)
+{
+		map<string, boost::function<void(sint8)>>::const_iterator itr = set_sint8_funcs.find(field);
+		if(itr != set_sint8_funcs.end())
+		{
+			(itr->second)((sint8)value);
+			return true;
+		}
+		map<string, boost::function<void(sint16)>>::const_iterator itr2 = set_sint16_funcs.find(field);
+		if(itr2 != set_sint16_funcs.end())
+		{
+			(itr2->second)((sint16)value);
+			return true;
+		}
+		map<string, boost::function<void(sint32)>>::const_iterator itr3 = set_sint32_funcs.find(field);
+		if(itr3 != set_sint32_funcs.end())
+		{
+			(itr3->second)((sint32)value);
+			return true;
+		}
+		map<string, boost::function<void(sint64)>>::const_iterator itr4 = set_sint64_funcs.find(field);
+		if(itr4 != set_sint64_funcs.end())
+		{
+			(itr4->second)(value);
+			return true;
+		}
+	return false;
+}
+
+bool Entity::SetInfoStructFloat(std::string field, float value)
+{
+		map<string, boost::function<void(float)>>::const_iterator itr = set_float_funcs.find(field);
+		if(itr != set_float_funcs.end())
+		{
+			(itr->second)(value);
+			return true;
+		}
+	return false;
 }

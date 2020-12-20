@@ -203,6 +203,7 @@ struct BasicInfoStruct{
 	sint16	unassigned_prestige_aa;
 	sint16	tradeskill_prestige_aa;
 	sint16	unassigned_tradeskill_prestige_aa;
+	int32	aaxp_rewards;
 };
 
 struct MovementLocation{
@@ -672,6 +673,7 @@ public:
 	sint16 GetUnassignedPretigeAA();
 	sint16 GetTradeskillPrestigeAA();
 	sint16 GetUnassignedTradeskillPrestigeAA();
+	int32 GetAAXPRewards();
 
 	void SetTotalPower(sint32 new_val);
 	void SetTotalHP(sint32 new_val);
@@ -693,6 +695,7 @@ public:
 	void SetUnassignedPrestigeAA(sint16 new_val);
 	void SetTradeskillPrestigeAA(sint16 new_val);
 	void SetUnassignedTradeskillPrestigeAA(sint16 new_val);
+	void SetAAXPRewards(int32 amount);
 	void SetPrivateQuestSpawn(bool val) {req_quests_private = val;}
 	void SetQuestsRequiredOverride(int16 val) {req_quests_override = val;}
 	void SetQuestsRequiredContinuedAccess(bool val) {req_quests_continued_access = val;}

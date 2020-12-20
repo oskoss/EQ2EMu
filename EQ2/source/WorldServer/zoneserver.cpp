@@ -2894,7 +2894,7 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 	if(spawn->IsPlayer() && ((Player*)spawn)->GetGroupMemberInfo())
 		world.GetGroupManager()->SendGroupUpdate(((Player*)spawn)->GetGroupMemberInfo()->group_id, GetClientBySpawn(spawn));
 	if (spawn->IsPlayer()) {
-		((Player*)spawn)->GetInfoStruct()->rain = rain;
+		((Player*)spawn)->GetInfoStruct()->set_rain(rain);
 		((Player*)spawn)->SetCharSheetChanged(true);
 	}
 	
@@ -3220,11 +3220,11 @@ void ZoneServer::UpdateVitality(float amount){
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(client && client->GetPlayer()->GetInfoStruct()->xp_vitality < 100){
-			if((client->GetPlayer()->GetInfoStruct()->xp_vitality + amount) > 100)
-				client->GetPlayer()->GetInfoStruct()->xp_vitality = 100;
+		if(client && client->GetPlayer()->GetInfoStruct()->get_xp_vitality() < 100){
+			if((client->GetPlayer()->GetInfoStruct()->get_xp_vitality() + amount) > 100)
+				client->GetPlayer()->GetInfoStruct()->set_xp_vitality(100);
 			else
-				client->GetPlayer()->GetInfoStruct()->xp_vitality += amount;
+				client->GetPlayer()->GetInfoStruct()->add_xp_vitality(amount);
 			client->GetPlayer()->SetCharSheetChanged(true);
 		}
 	}
@@ -6232,7 +6232,7 @@ void ZoneServer::SetRain(float val) {
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (itr = clients.begin(); itr != clients.end(); itr++) {
 		Client* client = *itr;
-		client->GetPlayer()->GetInfoStruct()->rain = val;
+		client->GetPlayer()->GetInfoStruct()->set_rain(val);
 		client->GetPlayer()->SetCharSheetChanged(true);
 		if( val >= 0.75 && !weather_signaled )
 		{
@@ -6261,7 +6261,7 @@ void ZoneServer::SetWind(float val) {
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (itr = clients.begin(); itr != clients.end(); itr++) {
 		Client* client = *itr;
-		client->GetPlayer()->GetInfoStruct()->wind = val;
+		client->GetPlayer()->GetInfoStruct()->set_wind(val);
 		client->GetPlayer()->SetCharSheetChanged(true);
 	}
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
@@ -6517,21 +6517,21 @@ void ZoneServer::ResurrectSpawn(Spawn* spawn, Client* client) {
 		power_amt *= ((caster->stats[ITEM_STAT_POTENCY] / 100) + 1);
 
 		//Ability Mod
-		heal_amt += (int32)min((int32)info->ability_modifier, (int32)(heal_amt / 2));
-		power_amt += (int32)min((int32)info->ability_modifier, (int32)(power_amt / 2));
+		heal_amt += (int32)min((int32)info->get_ability_modifier(), (int32)(heal_amt / 2));
+		power_amt += (int32)min((int32)info->get_ability_modifier(), (int32)(power_amt / 2));
 
 		if(!crit_mod || crit_mod == 1){
 			if(crit_mod == 1) 
 				crit = true;
 			else {
 				// Crit Roll
-				float chance = (float)max((float)0, (float)info->crit_chance);
+				float chance = (float)max((float)0, (float)info->get_crit_chance());
 				crit = (MakeRandomFloat(0, 100) <= chance); 
 			}
 			if(crit){
 				//Apply total crit multiplier with crit bonus
-				heal_amt *= ((info->crit_bonus / 100) + 1.3);
-				power_amt *= ((info->crit_bonus / 100) + 1.3);
+				heal_amt *= ((info->get_crit_bonus() / 100) + 1.3);
+				power_amt *= ((info->get_crit_bonus() / 100) + 1.3);
 			}
 		}
 	}

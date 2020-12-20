@@ -231,7 +231,7 @@ void Entity::MeleeAttack(Spawn* victim, float distance, bool primary, bool multi
 
 	//Multi Attack roll
 	if(!multi_attack){
-		float multi_attack = info_struct.multi_attack;
+		float multi_attack = info_struct.get_multi_attack();
 		if(multi_attack > 0){
 			float chance = multi_attack;
 			if (multi_attack > 100){
@@ -260,7 +260,7 @@ void Entity::MeleeAttack(Spawn* victim, float distance, bool primary, bool multi
 		Entity* pet = 0;
 		bool AddHate = false;
 		if (victim->IsPlayer()) {
-			if (((Player*)victim)->GetInfoStruct()->pet_behavior & 1)
+			if (((Player*)victim)->GetInfoStruct()->get_pet_behavior() & 1)
 				AddHate = true;
 		}
 		else
@@ -317,7 +317,7 @@ void Entity::RangeAttack(Spawn* victim, float distance, Item* weapon, Item* ammo
 				Entity* pet = 0;
 				bool AddHate = false;
 				if (victim->IsPlayer()) {
-					if (((Player*)victim)->GetInfoStruct()->pet_behavior & 1)
+					if (((Player*)victim)->GetInfoStruct()->get_pet_behavior() & 1)
 						AddHate = true;
 				}
 				else
@@ -344,7 +344,7 @@ void Entity::RangeAttack(Spawn* victim, float distance, Item* weapon, Item* ammo
 	}
 	//Multi Attack roll
 	if(!multi_attack){
-		float multi_attack = info_struct.multi_attack;
+		float multi_attack = info_struct.get_multi_attack();
 		if(multi_attack > 0){
 			float chance = multi_attack;
 			if (multi_attack > 100){
@@ -437,31 +437,32 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 	if(EngagedInCombat() == false)
 	{
 		LogWrite(MISC__TODO, 1, "TODO", "//It would probably be better to add a column to the spells table for 'starts autoattack'\nfile: %s, func: %s, Line: %i", __FILE__, __FUNCTION__, __LINE__);
-		if(GetInfoStruct()->class1 == COMMONER ||
-			GetInfoStruct()->class1 == FIGHTER ||
-			GetInfoStruct()->class1 == WARRIOR ||
-			GetInfoStruct()->class1 == GUARDIAN ||
-			GetInfoStruct()->class1 == BERSERKER ||
-			GetInfoStruct()->class1 == BRAWLER ||
-			GetInfoStruct()->class1 == MONK ||
-			GetInfoStruct()->class1 == BRUISER ||
-			GetInfoStruct()->class1 == CRUSADER ||
-			GetInfoStruct()->class1 == SHADOWKNIGHT ||
-			GetInfoStruct()->class1 == PALADIN ||
-			GetInfoStruct()->class1 == SCOUT ||
-			GetInfoStruct()->class1 == ROGUE ||
-			GetInfoStruct()->class1 == SWASHBUCKLER ||
-			GetInfoStruct()->class1 == BRIGAND ||
-			GetInfoStruct()->class1 == BARD ||
-			GetInfoStruct()->class1 == TROUBADOR ||
-			GetInfoStruct()->class1 == DIRGE ||
-			GetInfoStruct()->class1 == PREDATOR ||
-			GetInfoStruct()->class1 == RANGER ||
-			GetInfoStruct()->class1 == ASSASSIN ||
-			GetInfoStruct()->class1 == ANIMALIST ||
-			GetInfoStruct()->class1 == BEASTLORD ||
-			GetInfoStruct()->class1 == SHAPER || 
-			GetInfoStruct()->class1 == CHANNELER) //note: it would probably be better to add a column to the spells table for "starts autoattack".
+		int8 class1_ = GetInfoStruct()->get_class1();
+		if(class1_ == COMMONER ||
+			class1_ == FIGHTER ||
+			class1_ == WARRIOR ||
+			class1_ == GUARDIAN ||
+			class1_ == BERSERKER ||
+			class1_ == BRAWLER ||
+			class1_ == MONK ||
+			class1_ == BRUISER ||
+			class1_ == CRUSADER ||
+			class1_ == SHADOWKNIGHT ||
+			class1_ == PALADIN ||
+			class1_ == SCOUT ||
+			class1_ == ROGUE ||
+			class1_ == SWASHBUCKLER ||
+			class1_ == BRIGAND ||
+			class1_ == BARD ||
+			class1_ == TROUBADOR ||
+			class1_ == DIRGE ||
+			class1_ == PREDATOR ||
+			class1_ == RANGER ||
+			class1_ == ASSASSIN ||
+			class1_ == ANIMALIST ||
+			class1_ == BEASTLORD ||
+			class1_ == SHAPER || 
+			class1_ == CHANNELER) //note: it would probably be better to add a column to the spells table for "starts autoattack".
 		{
 			if (victim->IsNPC())
 				((NPC*)victim)->AddHate(this, 5);
@@ -474,7 +475,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 		Entity* pet = 0;
 		bool AddHate = false;
 		if (victim->IsPlayer()) {
-			if (((Player*)victim)->GetInfoStruct()->pet_behavior & 1)
+			if (((Player*)victim)->GetInfoStruct()->get_pet_behavior() & 1)
 				AddHate = true;
 		}
 		else
@@ -526,7 +527,7 @@ bool Entity::ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32
 		Entity* pet = 0;
 		bool AddHate = false;
 		if (victim->IsPlayer()) {
-			if (((Player*)victim)->GetInfoStruct()->pet_behavior & 1)
+			if (((Player*)victim)->GetInfoStruct()->get_pet_behavior() & 1)
 				AddHate = true;
 		}
 		else
@@ -586,7 +587,7 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 			//heal_amt += base_roll * (GetPrimaryStat()
 		
 			//Ability Modifier can only be up to half of base roll + potency and primary stat bonus
-			heal_amt += (int32)min(info_struct.ability_modifier, (float)(heal_amt / 2));
+			heal_amt += (int32)min(info_struct.get_ability_modifier(), (float)(heal_amt / 2));
 		}
 
 		if(!crit_mod || crit_mod == 1){
@@ -594,12 +595,12 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 				crit = true;
 			else {
 				// Crit Roll
-				float chance = max((float)0, info_struct.crit_chance);
+				float chance = max((float)0, info_struct.get_crit_chance());
 				crit = (MakeRandomFloat(0, 100) <= chance); 
 			}
 			if(crit){
 				//Apply total crit multiplier with crit bonus
-				heal_amt *= (info_struct.crit_bonus / 100) + 1.3;
+				heal_amt *= (info_struct.get_crit_bonus() / 100) + 1.3;
 				if(luaspell->spell)
 					luaspell->crit = true;
 			}
@@ -780,37 +781,37 @@ float Entity::GetDamageTypeResistPercentage(int8 damage_type) {
 		break;
 										  }
 	case DAMAGE_PACKET_DAMAGE_TYPE_HEAT: {
-		ret += GetInfoStruct()->heat / 50;
+		ret += GetInfoStruct()->get_heat() / 50;
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "DamageType: Heat (%i), Amt: %.2f", damage_type, ret);
 		break;
 										 }
 	case DAMAGE_PACKET_DAMAGE_TYPE_COLD: {
-		ret += GetInfoStruct()->cold / 50;
+		ret += GetInfoStruct()->get_cold() / 50;
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "DamageType: Cold (%i), Amt: %.2f", damage_type, ret);
 		break;
 										 }
 	case DAMAGE_PACKET_DAMAGE_TYPE_MAGIC: {
-		ret += GetInfoStruct()->magic / 50;
+		ret += GetInfoStruct()->get_magic() / 50;
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "DamageType: Magic (%i), Amt: %.2f", damage_type, ret);
 		break;
 										  }
 	case DAMAGE_PACKET_DAMAGE_TYPE_MENTAL: {
-		ret += GetInfoStruct()->mental / 50;
+		ret += GetInfoStruct()->get_mental() / 50;
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "DamageType: Mental (%i), Amt: %.2f", damage_type, ret);
 		break;
 										   }
 	case DAMAGE_PACKET_DAMAGE_TYPE_DIVINE: {
-		ret += GetInfoStruct()->divine / 50;
+		ret += GetInfoStruct()->get_divine() / 50;
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "DamageType: Divine (%i), Amt: %.2f", damage_type, ret);
 		break;
 										   }
 	case DAMAGE_PACKET_DAMAGE_TYPE_DISEASE: {
-		ret += GetInfoStruct()->disease / 50;
+		ret += GetInfoStruct()->get_disease() / 50;
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "DamageType: Disease (%i), Amt: %.2f", damage_type, ret);
 		break;
 											}
 	case DAMAGE_PACKET_DAMAGE_TYPE_POISON: {
-		ret += GetInfoStruct()->poison / 50;
+		ret += GetInfoStruct()->get_poison() / 50;
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "DamageType: Poison (%i), Amt: %.2f", damage_type, ret);
 		break;
 										   }
@@ -863,7 +864,7 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 
 		//DPS mod is only applied to auto attacks
 		if (type == DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE || type == DAMAGE_PACKET_TYPE_RANGE_DAMAGE ) {
-			damage *= (info_struct.dps_multiplier);
+			damage *= (info_struct.get_dps_multiplier());
 		}
 		//Potency and ability mod is only applied to spells/CAs
 		else { 
@@ -871,7 +872,7 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 			damage *= ((stats[ITEM_STAT_POTENCY] / 100) + 1);
 
 			// Ability mod can only give up to half of damage after potency
-			int32 mod = (int32)min(info_struct.ability_modifier, (float)(damage / 2));
+			int32 mod = (int32)min(info_struct.get_ability_modifier(), (float)(damage / 2));
 			damage += mod;
 		}
 
@@ -883,14 +884,14 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 
 			// Crit Roll
 			else {
-				float chance = max((float)0, (info_struct.crit_chance - victim->stats[ITEM_STAT_CRITAVOIDANCE]));
+				float chance = max((float)0, (info_struct.get_crit_chance() - victim->stats[ITEM_STAT_CRITAVOIDANCE]));
 				if (MakeRandomFloat(0, 100) <= chance)
 					crit = true;
 			}
 			if(crit){
 				//Apply total crit multiplier with crit bonus
-				if(info_struct.crit_bonus > 0)
-					damage *= (1.3 + (info_struct.crit_bonus / 100));
+				if(info_struct.get_crit_bonus() > 0)
+					damage *= (1.3 + (info_struct.get_crit_bonus() / 100));
 				else
 					damage *= 1.3;
 
@@ -986,7 +987,7 @@ void Entity::AddHate(Entity* attacker, sint32 hate) {
 		return;
 
 	// If a players pet and protect self is off
-	if (IsPet() && ((NPC*)this)->GetOwner()->IsPlayer() && ((((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->pet_behavior & 2) == 0))
+	if (IsPet() && ((NPC*)this)->GetOwner()->IsPlayer() && ((((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->get_pet_behavior() & 2) == 0))
 		return;
 
 	if (IsNPC()) {
@@ -1011,7 +1012,7 @@ void Entity::AddHate(Entity* attacker, sint32 hate) {
 		AddHate(((NPC*)attacker)->GetOwner(), 1);
 
 	// If player and player has a pet and protect master is set add hate to the pet
-	if (IsPlayer() && HasPet() && (((Player*)this)->GetInfoStruct()->pet_behavior & 1)) {
+	if (IsPlayer() && HasPet() && (((Player*)this)->GetInfoStruct()->get_pet_behavior() & 1)) {
 		// If we have a combat pet add hate to it
 		if (((Player*)this)->GetPet())
 			AddHate(((Player*)this)->GetPet(), 1);
@@ -1247,7 +1248,7 @@ void Entity::SetAttackDelay(bool primary, bool ranged) {
 }
 
 float Entity::CalculateAttackSpeedMod(){
-	float aspeed = info_struct.attackspeed;
+	float aspeed = info_struct.get_attackspeed();
 	
 	if(aspeed > 0) {
 		if (aspeed <= 100)

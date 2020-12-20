@@ -62,7 +62,8 @@ NPC::NPC(NPC* old_npc){
 		database_id = old_npc->database_id;
 		primary_command_list_id = old_npc->primary_command_list_id;
 		secondary_command_list_id = old_npc->secondary_command_list_id;
-		memcpy(GetInfoStruct(), old_npc->GetInfoStruct(), sizeof(InfoStruct));
+		this->SetInfoStruct(old_npc->GetInfoStruct());
+		//memcpy(GetInfoStruct(), old_npc->GetInfoStruct(), sizeof(InfoStruct));
 		memcpy(&appearance, &old_npc->appearance, sizeof(AppearanceData));
 		memcpy(&features, &old_npc->features, sizeof(CharFeatures));
 		memcpy(&equipment, &old_npc->equipment, sizeof(EQ2_Equipment));

@@ -900,7 +900,7 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 	NPC* npc = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards\n"
 													"FROM spawn s\n"
 													"INNER JOIN spawn_npcs npc\n"
 													"ON s.id = npc.spawn_id\n"
@@ -1006,26 +1006,27 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->SetEquipmentListID(atoul(row[46]));
 
 		InfoStruct* info = npc->GetInfoStruct();
-		info->str_base = atoi(row[47]);
-		info->sta_base = atoi(row[48]);
-		info->wis_base = atoi(row[49]);		
-		info->intel_base = atoi(row[50]);
-		info->agi_base = atoi(row[51]);
-		info->heat_base = atoi(row[52]);
-		info->cold_base = atoi(row[53]);
-		info->magic_base = atoi(row[54]);
-		info->mental_base = atoi(row[55]);
-		info->divine_base = atoi(row[56]);
-		info->disease_base = atoi(row[57]);
-		info->poison_base = atoi(row[58]);
-		info->alignment = atoi(row[64]);
+		info->set_str_base(atoi(row[47]));
+		info->set_sta_base(atoi(row[48]));
+		info->set_wis_base(atoi(row[49]));		
+		info->set_intel_base(atoi(row[50]));
+		info->set_agi_base(atoi(row[51]));
+		info->set_heat_base(atoi(row[52]));
+		info->set_cold_base(atoi(row[53]));
+		info->set_magic_base(atoi(row[54]));
+		info->set_mental_base(atoi(row[55]));
+		info->set_divine_base(atoi(row[56]));
+		info->set_disease_base(atoi(row[57]));
+		info->set_poison_base(atoi(row[58]));
+		info->set_alignment(atoi(row[64]));
+
 		npc->SetAggroRadius(atof(row[59]));
 		npc->SetCastPercentage(atoi(row[60]));
 		npc->appearance.heroic_flag = atoi(row[63]);
 
-		info->elemental_base = atoi(row[65]);
-		info->arcane_base = atoi(row[66]);
-		info->noxious_base = atoi(row[67]);
+		info->set_elemental_base(atoi(row[65]));
+		info->set_arcane_base(atoi(row[66]));
+		info->set_noxious_base(atoi(row[67]));
 		npc->SetTotalSavagery(atoul(row[68]));
 		npc->SetTotalDissonance(atoul(row[69]));
 		npc->SetSavagery(npc->GetTotalSavagery());
@@ -1048,6 +1049,8 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->SetSoundsDisabled(disableSounds);
 
 		npc->SetMerchantLevelRange(atoul(row[78]), atoul(row[79]));
+		
+		npc->SetAAXPRewards(atoul(row[80]));
 
 		zone->AddNPC(id, npc);
 		total++;
@@ -1067,7 +1070,7 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 	Sign* sign = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_signs ss\n"
 												  "ON s.id = ss.spawn_id\n"
@@ -1137,6 +1140,8 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 		sign->SetSoundsDisabled(disableSounds);
 
 		sign->SetMerchantLevelRange(atoul(row[31]), atoul(row[32]));
+		
+		sign->SetAAXPRewards(atoul(row[33]));
 
 		zone->AddSign(id, sign);
 		total++;
@@ -1153,7 +1158,7 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 	Widget* widget = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_widgets sw\n"
 												  "ON s.id = sw.spawn_id\n"
@@ -1237,6 +1242,8 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 		widget->SetSoundsDisabled(disableSounds);
 
 		widget->SetMerchantLevelRange(atoul(row[36]), atoul(row[37]));
+		
+		widget->SetAAXPRewards(atoul(row[38]));
 
 		zone->AddWidget(id, widget);
 		total++;
@@ -1253,7 +1260,7 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 	Object* object = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_objects so\n"
 												  "ON s.id = so.spawn_id\n"
@@ -1311,6 +1318,8 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 
 		object->SetMerchantLevelRange(atoul(row[22]), atoul(row[23]));
 
+		object->SetAAXPRewards(atoul(row[24]));
+
 		zone->AddObject(id, object);
 		total++;
 
@@ -1326,7 +1335,7 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 	GroundSpawn* spawn = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.expansion_flag, s.holiday_flag, s.disable_sounds\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.aaxp_rewards\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_ground sg\n"
 												  "ON s.id = sg.spawn_id\n"
@@ -1385,6 +1394,8 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 		int8 disableSounds = atoul(row[23]);
 		spawn->SetSoundsDisabled(disableSounds);
 
+		spawn->SetAAXPRewards(atoul(row[24]));
+
 		zone->AddGroundSpawn(id, spawn);
 		total++;
 		LogWrite(GROUNDSPAWN__DEBUG, 5, "GSpawn", "---Loading GroundSpawn: '%s' (%u)", spawn->appearance.name, id);
@@ -1442,36 +1453,43 @@ bool WorldDatabase::LoadCharacterStats(int32 id, int32 account_id, Client* clien
 
 			client->GetPlayer()->SetHP(result.GetSInt32Str("hp"));
 			client->GetPlayer()->SetPower(result.GetSInt32Str("power"));
-			info->max_concentration = result.GetInt8Str("max_concentration");
-			if (info->max_concentration == 0)
-				info->max_concentration = 5;
-			info->attack_base = result.GetInt16Str("attack");
-			info->mitigation_base = result.GetInt16Str("mitigation");
-			info->avoidance_base = result.GetInt16Str("avoidance");
-			info->parry_base = result.GetInt16Str("parry");
-			info->deflection_base = result.GetInt16Str("deflection");
-			info->block_base = result.GetInt16Str("block");
-			info->str_base = result.GetInt16Str("str");
-			info->sta_base = result.GetInt16Str("sta");
-			info->agi_base = result.GetInt16Str("agi");
-			info->wis_base = result.GetInt16Str("wis");
-			info->intel_base = result.GetInt16Str("intel");
+			info->set_max_concentration(result.GetInt8Str("max_concentration"));
+			
+			if (info->get_max_concentration() == 0)
+				info->set_max_concentration(5);
+
+			info->set_attack_base(result.GetInt16Str("attack"));
+			info->set_mitigation_base(result.GetInt16Str("mitigation"));
+			info->set_avoidance_base(result.GetInt16Str("avoidance"));
+			info->set_parry_base(result.GetInt16Str("parry"));
+			info->set_deflection_base(result.GetInt16Str("deflection"));
+			info->set_block_base(result.GetInt16Str("block"));
+			info->set_str_base(result.GetInt16Str("str"));
+			info->set_sta_base(result.GetInt16Str("sta"));
+			info->set_agi_base(result.GetInt16Str("agi"));
+			info->set_wis_base(result.GetInt16Str("wis"));
+			info->set_intel_base(result.GetInt16Str("intel"));
+
 			// old resist types
-			info->heat_base = result.GetInt16Str("heat");
-			info->cold_base = result.GetInt16Str("cold");
-			info->magic_base = result.GetInt16Str("magic");
-			info->mental_base = result.GetInt16Str("mental");
-			info->divine_base = result.GetInt16Str("divine");
-			info->disease_base = result.GetInt16Str("disease");
-			info->poison_base = result.GetInt16Str("poison");
+			info->set_heat_base(result.GetInt16Str("heat"));
+			info->set_cold_base(result.GetInt16Str("cold"));
+			info->set_magic_base(result.GetInt16Str("magic"));
+			info->set_mental_base(result.GetInt16Str("mental"));
+			info->set_divine_base(result.GetInt16Str("divine"));
+			info->set_disease_base(result.GetInt16Str("disease"));
+			info->set_poison_base(result.GetInt16Str("poison"));
+
 			//
-			info->coin_copper = result.GetInt32Str("coin_copper");
-			info->coin_silver = result.GetInt32Str("coin_silver");
-			info->coin_gold = result.GetInt32Str("coin_gold");
-			info->coin_plat = result.GetInt32Str("coin_plat");
-			strcpy(info->pet_name, result.GetStringStr("pet_name"));
-			strcpy(info->biography, result.GetStringStr("biography"));
-			info->status_points = result.GetInt32Str("status_points");
+
+			info->set_coin_copper(result.GetInt32Str("coin_copper"));
+			info->set_coin_silver(result.GetInt32Str("coin_silver"));
+			info->set_coin_gold(result.GetInt32Str("coin_gold"));
+			info->set_coin_plat(result.GetInt32Str("coin_plat"));
+			info->set_pet_name(result.GetStringStr("pet_name") ? std::string(result.GetStringStr("pet_name")) : std::string(""));
+			const char* bio = result.GetStringStr("biography");
+			if(bio && strlen(bio) > 0)
+				info->set_biography(std::string(bio));
+			info->set_status_points(result.GetInt32Str("status_points"));
 			client->GetPlayer()->GetPlayerInfo()->SetBindZone(result.GetInt32Str("bind_zone_id"));
 			client->GetPlayer()->GetPlayerInfo()->SetBindX(result.GetFloatStr("bind_x"));
 			client->GetPlayer()->GetPlayerInfo()->SetBindY(result.GetFloatStr("bind_y"));
@@ -1488,34 +1506,40 @@ bool WorldDatabase::LoadCharacterStats(int32 id, int32 account_id, Client* clien
 			client->GetPlayer()->SetUnassignedPrestigeAA(result.GetInt16Str("unassigned_prestige_aa"));
 			client->GetPlayer()->SetTradeskillPrestigeAA(result.GetInt16Str("tradeskill_prestige_aa"));
 			client->GetPlayer()->SetUnassignedTradeskillPrestigeAA(result.GetInt16Str("unassigned_tradeskill_prestige_aa"));
-			info->xp = result.GetInt32Str("xp");
-			info->xp_needed = result.GetInt32Str("xp_needed");
-			if(info->xp_needed == 0)
+			info->set_xp(result.GetInt32Str("xp"));
+
+			info->set_xp_needed(result.GetInt32Str("xp_needed"));
+
+			if(info->get_xp_needed()== 0)
 				client->GetPlayer()->SetNeededXP();
-			info->xp_debt = result.GetInt32Str("xp_debt");
-			info->xp_vitality = result.GetFloatStr("xp_vitality");
-			info->ts_xp = result.GetInt32Str("tradeskill_xp");
-			info->ts_xp_needed = result.GetInt32Str("tradeskill_xp_needed");
-			if (info->ts_xp_needed == 0)
+
+			info->set_xp_debt(result.GetInt32Str("xp_debt"));
+			info->set_xp_vitality(result.GetFloatStr("xp_vitality"));
+			info->set_ts_xp(result.GetInt32Str("tradeskill_xp"));
+			info->set_ts_xp_needed(result.GetInt32Str("tradeskill_xp_needed"));
+
+			if (info->get_ts_xp_needed() == 0)
 				client->GetPlayer()->SetNeededTSXP();
-			info->tradeskill_xp_vitality = result.GetFloatStr("tradeskill_xp_vitality");
+
+			info->set_tradeskill_xp_vitality(result.GetFloatStr("tradeskill_xp_vitality"));
 			client->GetPlayer()->SetTotalHPBase(client->GetPlayer()->GetTotalHP());
 			client->GetPlayer()->SetTotalPowerBase(client->GetPlayer()->GetTotalPower());
-			info->bank_coin_copper = result.GetInt32Str("bank_copper");
-			info->bank_coin_silver = result.GetInt32Str("bank_silver");
-			info->bank_coin_gold = result.GetInt32Str("bank_gold");
-			info->bank_coin_plat = result.GetInt32Str("bank_plat");
+			info->set_bank_coin_copper(result.GetInt32Str("bank_copper"));
+			info->set_bank_coin_silver(result.GetInt32Str("bank_silver"));
+			info->set_bank_coin_gold(result.GetInt32Str("bank_gold"));
+			info->set_bank_coin_plat(result.GetInt32Str("bank_plat"));
+
 			client->GetPlayer()->SetCombatVoice(result.GetInt16Str("combat_voice"));
 			client->GetPlayer()->SetEmoteVoice(result.GetInt16Str("emote_voice"));
 			client->GetPlayer()->SetBiography(result.GetStringStr("biography"));
-			client->GetPlayer()->GetInfoStruct()->flags = result.GetInt32Str("flags");
-			client->GetPlayer()->GetInfoStruct()->flags2 = result.GetInt32Str("flags2");
+			client->GetPlayer()->GetInfoStruct()->set_flags(result.GetInt32Str("flags"));
+			client->GetPlayer()->GetInfoStruct()->set_flags2(result.GetInt32Str("flags2"));
 			client->GetPlayer()->SetLastName(result.GetStringStr("last_name"));
 
 			// new resist types
-			info->elemental_base = result.GetInt16Str("elemental");
-			info->arcane_base = result.GetInt16Str("arcane");
-			info->noxious_base = result.GetInt16Str("noxious");
+			info->set_elemental_base(result.GetInt16Str("elemental"));
+			info->set_arcane_base(result.GetInt16Str("arcane"));
+			info->set_noxious_base(result.GetInt16Str("noxious"));
 			// new savagery and dissonance
 			client->GetPlayer()->SetSavagery(result.GetSInt16Str("savagery"));
 			client->GetPlayer()->SetDissonance(result.GetSInt16Str("dissonance"));
@@ -6110,7 +6134,7 @@ bool WorldDatabase::LoadSign(ZoneServer* zone, int32 spawn_id) {
 	Sign* sign = 0;
 	int32 id = 0;
 	DatabaseResult result;
-	database_new.Select(&result, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	database_new.Select(&result, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_signs ss\n"
 								 "ON ss.spawn_id = s.id\n"
@@ -6165,6 +6189,8 @@ bool WorldDatabase::LoadSign(ZoneServer* zone, int32 spawn_id) {
 		sign->SetSoundsDisabled(result.GetInt8(28));
 
 		sign->SetMerchantLevelRange(result.GetInt32(29), result.GetInt32(30));
+		
+		sign->SetAAXPRewards(result.GetInt32(31));
 
 		zone->AddSign(id, sign);
 
@@ -6181,7 +6207,7 @@ bool WorldDatabase::LoadWidget(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	database_new.Select(&result, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_widgets sw\n"
 								 "ON sw.spawn_id = s.id\n"
@@ -6243,6 +6269,9 @@ bool WorldDatabase::LoadWidget(ZoneServer* zone, int32 spawn_id) {
 		widget->SetSoundsDisabled(result.GetInt8(33));
 
 		widget->SetMerchantLevelRange(result.GetInt32(34), result.GetInt32(35));
+		
+		widget->SetAAXPRewards(result.GetInt32(36));
+
 		zone->AddWidget(id, widget);
 
 		LogWrite(WIDGET__DEBUG, 0, "Widget", "Loaded Widget: '%s' (%u).", widget->appearance.name, spawn_id);
@@ -6258,7 +6287,7 @@ bool WorldDatabase::LoadObject(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	database_new.Select(&result, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_objects so\n"
 								 "ON so.spawn_id = s.id\n"
@@ -6298,6 +6327,9 @@ bool WorldDatabase::LoadObject(ZoneServer* zone, int32 spawn_id) {
 		object->SetSoundsDisabled(result.GetInt8(19));
 
 		object->SetMerchantLevelRange(result.GetInt32(20), result.GetInt32(21));
+		
+		object->SetAAXPRewards(result.GetInt32(22));
+
 		zone->AddObject(id, object);
 
 		LogWrite(OBJECT__DEBUG, 0, "Object", "Loaded Object: '%s' (%u).", object->appearance.name, spawn_id);
@@ -6407,7 +6439,7 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 										
-	database_new.Select(&result, "SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.disable_sounds, s.merchant_min_level, s.merchant_max_level\n"
+	database_new.Select(&result, "SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_npcs npc\n"
 								 "ON npc.spawn_id = s.id\n"
@@ -6494,26 +6526,27 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		npc->SetEquipmentListID(result.GetInt32(46));
 
 		InfoStruct* info = npc->GetInfoStruct();
-		info->str_base = result.GetInt16(47);
-		info->sta_base = result.GetInt16(48);
-		info->wis_base = result.GetInt16(49);		
-		info->intel_base = result.GetInt16(50);
-		info->agi_base = result.GetInt16(51);
-		info->heat_base = result.GetInt16(52);
-		info->cold_base = result.GetInt16(53);
-		info->magic_base = result.GetInt16(54);
-		info->mental_base = result.GetInt16(55);
-		info->divine_base = result.GetInt16(56);
-		info->disease_base = result.GetInt16(57);
-		info->poison_base = result.GetInt16(58);
-		info->alignment = result.GetInt8(64);
+		info->set_str_base(result.GetInt16(47));
+		info->set_sta_base(result.GetInt16(48));
+		info->set_wis_base(result.GetInt16(49));		
+		info->set_intel_base(result.GetInt16(50));
+		info->set_agi_base(result.GetInt16(51));
+		info->set_heat_base(result.GetInt16(52));
+		info->set_cold_base(result.GetInt16(53));
+		info->set_magic_base(result.GetInt16(54));
+		info->set_mental_base(result.GetInt16(55));
+		info->set_divine_base(result.GetInt16(56));
+		info->set_disease_base(result.GetInt16(57));
+		info->set_poison_base(result.GetInt16(58));
+		info->set_alignment(result.GetInt8(64));
+
 		npc->SetAggroRadius(result.GetFloat(59));
 		npc->SetCastPercentage(result.GetInt8(60));
 		npc->appearance.heroic_flag = result.GetInt8(63);
 
-		info->elemental_base = result.GetInt16(65);
-		info->arcane_base = result.GetInt16(66);
-		info->noxious_base = result.GetInt16(67);
+		info->set_elemental_base(result.GetInt16(65));
+		info->set_arcane_base(result.GetInt16(66));
+		info->set_noxious_base(result.GetInt16(67));
 		npc->SetTotalSavagery(result.GetInt32(68));
 		npc->SetTotalDissonance(result.GetInt32(69));
 		npc->SetSavagery(npc->GetTotalSavagery());
@@ -6533,6 +6566,8 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		npc->SetSoundsDisabled(result.GetInt8(75));
 
 		npc->SetMerchantLevelRange(result.GetInt32(76), result.GetInt32(77));
+		
+		npc->SetAAXPRewards(result.GetInt32(78));
 
 		zone->AddNPC(id, npc);
 

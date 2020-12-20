@@ -155,6 +155,7 @@ Commands::Commands(){
 	spawn_set_values["merchant_min_level"] = SPAWN_SET_VALUE_MERCHANT_MIN_LEVEL;
 	spawn_set_values["merchant_max_level"] = SPAWN_SET_VALUE_MERCHANT_MAX_LEVEL;
 	spawn_set_values["skin_color"] = SPAWN_SET_SKIN_COLOR;
+	spawn_set_values["aaxp_rewards"] = SPAWN_SET_AAXP_REWARDS;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -520,6 +521,10 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				}
 				break;
 			}
+			case SPAWN_SET_AAXP_REWARDS: {
+				target->SetAAXPRewards(atoul(value));
+				break;
+			}
 
 			if(temp_value)
 				*temp_value = string(tmp);
@@ -540,7 +545,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			if (target->GetDatabaseID() > 0)
 			{
 				char query[256];
-				snprintf(query, 256, "update spawn set expansion_flag=%i where id=%i", atoul(value), target->GetDatabaseID());
+				snprintf(query, 256, "update spawn set expansion_flag=%u where id=%i", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
 					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
@@ -553,7 +558,20 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			if (target->GetDatabaseID() > 0)
 			{
 				char query[256];
-				snprintf(query, 256, "update spawn set holiday_flag=%i where id=%i", atoul(value), target->GetDatabaseID());
+				snprintf(query, 256, "update spawn set holiday_flag=%u where id=%i", atoul(value), target->GetDatabaseID());
+				if (database.RunQuery(query, strnlen(query, 256)))
+				{
+					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
+				}
+			}
+			break;
+		}
+		case SPAWN_SET_AAXP_REWARDS: {
+
+			if (target->GetDatabaseID() > 0)
+			{
+				char query[256];
+				snprintf(query, 256, "update spawn set aaxp_rewards=%u where id=%i", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
 					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
@@ -1782,7 +1800,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_RACE:{
 			if(sep && sep->arg[0][0] && sep->IsNumber(0)){
 				if(sep->arg[1][0] && sep->IsNumber(1)){
-					client->GetPlayer()->GetInfoStruct()->race = atoi(sep->arg[1]);
+					client->GetPlayer()->GetInfoStruct()->set_race(atoi(sep->arg[1]));
 					client->GetPlayer()->SetRace(atoi(sep->arg[1]));
 					client->UpdateTimeStampFlag ( RACE_UPDATE_FLAG );
 					client->GetPlayer()->SetCharSheetChanged(true);
@@ -1978,7 +1996,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						   }
 		case COMMAND_GENDER:{
 			if(sep && sep->arg[ndx][0]){
-				client->GetPlayer()->GetInfoStruct()->gender = atoi(sep->arg[ndx]);
+				client->GetPlayer()->GetInfoStruct()->set_gender(atoi(sep->arg[ndx]));
 				client->GetPlayer()->SetCharSheetChanged(true);
 				client->UpdateTimeStampFlag ( GENDER_UPDATE_FLAG );
 			}else{
@@ -2265,8 +2283,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								  }
 		case COMMAND_NAME:{
 			if(sep && sep->arg[ndx][0]){
-				memset(client->GetPlayer()->GetInfoStruct()->name, 0, 40);
-				strncpy(client->GetPlayer()->GetInfoStruct()->name, sep->arg[ndx], 39);
+				client->GetPlayer()->GetInfoStruct()->set_name(std::string(sep->arg[ndx]).substr(0,39));
 				client->GetPlayer()->SetCharSheetChanged(true);
 			}else
 				client->Message(CHANNEL_COLOR_YELLOW,"Usage: /name {new_name}");
@@ -3833,8 +3850,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								case SPAWN_SET_VALUE_EXPANSION_FLAG:
 								case SPAWN_SET_VALUE_HOLIDAY_FLAG:
 								case SPAWN_SET_VALUE_FACTION:
+								case SPAWN_SET_AAXP_REWARDS:
 								{
-									// not applicable
+									// not applicable already ran db command
 									break;
 								}
 								default:
@@ -6430,9 +6448,9 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				int8 tsclass = atoi(sep->arg[2]);
 
 				player->SetTradeskillClass(tsclass);
-				player->GetInfoStruct()->tradeskill_class1 = classes.GetTSBaseClass(player->GetTradeskillClass());
-				player->GetInfoStruct()->tradeskill_class2 = classes.GetSecondaryTSBaseClass(player->GetTradeskillClass());
-				player->GetInfoStruct()->tradeskill_class3 = player->GetTradeskillClass();
+				player->GetInfoStruct()->set_tradeskill_class1(classes.GetTSBaseClass(player->GetTradeskillClass()));
+				player->GetInfoStruct()->set_tradeskill_class2(classes.GetSecondaryTSBaseClass(player->GetTradeskillClass()));
+				player->GetInfoStruct()->set_tradeskill_class3(player->GetTradeskillClass());
 				player->SetCharSheetChanged(true);
 			}
 		}
@@ -6863,7 +6881,7 @@ void Commands::Command_Pet(Client* client, Seperator* sep)
 	
 	if (strcmp(sep->arg[0], "stay") == 0) {
 		client->Message(CHANNEL_COLOR_YELLOW, "You command your pet to stay.");
-		client->GetPlayer()->GetInfoStruct()->pet_movement = 1;
+		client->GetPlayer()->GetInfoStruct()->set_pet_movement(1);
 		client->GetPlayer()->SetCharSheetChanged(true);
 		if (client->GetPlayer()->GetPet())
 			client->GetPlayer()->GetPet()->following = false;
@@ -6872,28 +6890,28 @@ void Commands::Command_Pet(Client* client, Seperator* sep)
 	}
 	else if (strcmp(sep->arg[0], "follow") == 0) {
 		client->Message(CHANNEL_COLOR_YELLOW, "You command your pet to follow.");
-		client->GetPlayer()->GetInfoStruct()->pet_movement = 2;
+		client->GetPlayer()->GetInfoStruct()->set_pet_movement(2);
 		client->GetPlayer()->SetCharSheetChanged(true);
 	}
 	else if (strcmp(sep->arg[0], "preserve_master") == 0) {
-		if (client->GetPlayer()->GetInfoStruct()->pet_behavior & 1) {
+		if (client->GetPlayer()->GetInfoStruct()->get_pet_behavior() & 1) {
 			client->Message(CHANNEL_COLOR_YELLOW, "Your pet will no longer protect you.");
-			client->GetPlayer()->GetInfoStruct()->pet_behavior -= 1;
+			client->GetPlayer()->GetInfoStruct()->set_pet_behavior(client->GetPlayer()->GetInfoStruct()->get_pet_behavior()-1);
 		}
 		else {
 			client->Message(CHANNEL_COLOR_YELLOW, "You command your pet to protect you.");
-			client->GetPlayer()->GetInfoStruct()->pet_behavior += 1;
+			client->GetPlayer()->GetInfoStruct()->set_pet_behavior(client->GetPlayer()->GetInfoStruct()->get_pet_behavior()+1);
 		}
 		client->GetPlayer()->SetCharSheetChanged(true);
 	}
 	else if (strcmp(sep->arg[0], "preserve_self") == 0) {
-		if (client->GetPlayer()->GetInfoStruct()->pet_behavior & 2) {
+		if (client->GetPlayer()->GetInfoStruct()->get_pet_behavior() & 2) {
 			client->Message(CHANNEL_COLOR_YELLOW, "Your pet will no longer protect itself.");
-			client->GetPlayer()->GetInfoStruct()->pet_behavior -= 2;
+			client->GetPlayer()->GetInfoStruct()->set_pet_behavior(client->GetPlayer()->GetInfoStruct()->get_pet_behavior()-2);
 		}
 		else {
 			client->Message(CHANNEL_COLOR_YELLOW, "You command your pet to protect itself.");
-			client->GetPlayer()->GetInfoStruct()->pet_behavior += 2;
+			client->GetPlayer()->GetInfoStruct()->set_pet_behavior(client->GetPlayer()->GetInfoStruct()->get_pet_behavior()+2);
 		}
 		client->GetPlayer()->SetCharSheetChanged(true);
 	}
@@ -6903,7 +6921,7 @@ void Commands::Command_Pet(Client* client, Seperator* sep)
 			((NPC*)client->GetPlayer()->GetPet())->Brain()->ClearHate();
 		if (client->GetPlayer()->GetCharmedPet())
 			((NPC*)client->GetPlayer()->GetCharmedPet())->Brain()->ClearHate();
-		client->GetPlayer()->GetInfoStruct()->pet_behavior = 0;
+		client->GetPlayer()->GetInfoStruct()->set_pet_behavior(0);
 		client->GetPlayer()->SetCharSheetChanged(true);
 	}
 	else if (strcmp(sep->arg[0], "attack") == 0) {
@@ -9977,14 +9995,14 @@ void Commands::Command_ConsumeFood(Client* client, Seperator* sep) {
 void Commands::Command_Aquaman(Client* client, Seperator* sep) {
 	if (sep && sep->arg[0] && sep->IsNumber(0)) {
 		if (atoi(sep->arg[0]) == 1) {
-			client->GetPlayer()->GetInfoStruct()->vision = 4;
-			client->GetPlayer()->GetInfoStruct()->breathe_underwater = 1;
+			client->GetPlayer()->GetInfoStruct()->set_vision(4);
+			client->GetPlayer()->GetInfoStruct()->set_breathe_underwater(1);
 			client->GetPlayer()->SetCharSheetChanged(true);
 			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Maybe you ought to stick to the shallow end until you know how to swim.");
 		}
 		else {
-			client->GetPlayer()->GetInfoStruct()->vision = 0;
-			client->GetPlayer()->GetInfoStruct()->breathe_underwater = 0;
+			client->GetPlayer()->GetInfoStruct()->set_vision(0);
+			client->GetPlayer()->GetInfoStruct()->set_breathe_underwater(0);
 			client->GetPlayer()->SetCharSheetChanged(true);
 			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Aquaman mode turned off.");
 		}
