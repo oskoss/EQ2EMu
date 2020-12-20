@@ -44,7 +44,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\EQ2EMu\my_server\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)worldserver\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\$(ProjectName)__Debug_$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\..\..\bin\</OutDir>
@@ -76,9 +76,9 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WRITE_PACKETS;WORLD;_DEBUG;_EQDEBUG;WIN32;_CONSOLE;EQ2;EQN_DEBUG;_CRT_SECURE_NO_DEPRECATE;GLM_ENABLE_EXPERIMENTAL;GLM_FORCE_CTOR_INIT;GLM_FORCE_RADIANS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUG;WORLD;_DEBUG;_EQDEBUG;WIN32;_CONSOLE;EQ2;EQN_DEBUG;_CRT_SECURE_NO_DEPRECATE;GLM_ENABLE_EXPERIMENTAL;GLM_FORCE_CTOR_INIT;GLM_FORCE_RADIANS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <FunctionLevelLinking>false</FunctionLevelLinking>
@@ -93,20 +93,23 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ShowIncludes>false</ShowIncludes>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;ws2_32.lib;Zlibx64_debug.lib;mysqlclient.lib;DebugUtils.lib;Detour.lib;DetourCrowd.lib;DetourTileCache.lib;Recast.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;ws2_32.lib;mysqlclient.lib;DebugUtils.lib;Detour.lib;DetourCrowd.lib;DetourTileCache.lib;Recast.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\source\LUA</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT;LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -215,7 +218,6 @@
     <ClCompile Include="..\..\source\LUA\lapi.c" />
     <ClCompile Include="..\..\source\LUA\lauxlib.c" />
     <ClCompile Include="..\..\source\LUA\lbaselib.c" />
-    <ClCompile Include="..\..\source\LUA\lbitlib.c" />
     <ClCompile Include="..\..\source\LUA\lcode.c" />
     <ClCompile Include="..\..\source\LUA\lcorolib.c" />
     <ClCompile Include="..\..\source\LUA\lctype.c" />
@@ -372,11 +374,13 @@
     <ClInclude Include="..\..\source\LUA\ldo.h" />
     <ClInclude Include="..\..\source\LUA\lfunc.h" />
     <ClInclude Include="..\..\source\LUA\lgc.h" />
+    <ClInclude Include="..\..\source\LUA\ljumptab.h" />
     <ClInclude Include="..\..\source\LUA\llex.h" />
     <ClInclude Include="..\..\source\LUA\llimits.h" />
     <ClInclude Include="..\..\source\LUA\lmem.h" />
     <ClInclude Include="..\..\source\LUA\lobject.h" />
     <ClInclude Include="..\..\source\LUA\lopcodes.h" />
+    <ClInclude Include="..\..\source\LUA\lopnames.h" />
     <ClInclude Include="..\..\source\LUA\lparser.h" />
     <ClInclude Include="..\..\source\LUA\lprefix.h" />
     <ClInclude Include="..\..\source\LUA\lstate.h" />
@@ -384,6 +388,7 @@
     <ClInclude Include="..\..\source\LUA\ltable.h" />
     <ClInclude Include="..\..\source\LUA\ltm.h" />
     <ClInclude Include="..\..\source\LUA\lua.h" />
+    <ClInclude Include="..\..\source\LUA\lua.hpp" />
     <ClInclude Include="..\..\source\LUA\luaconf.h" />
     <ClInclude Include="..\..\source\LUA\lualib.h" />
     <ClInclude Include="..\..\source\LUA\lundump.h" />
