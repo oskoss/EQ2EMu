@@ -776,6 +776,8 @@ struct InfoStruct{
 				maintained_effects[i].spell_id = 0xFFFFFFFF;
 				if (spawn->IsPlayer())
 					maintained_effects[i].icon = 0xFFFF;
+
+				maintained_effects[i].spell = nullptr;
 			}
 			spell_effects[i].spell_id = 0xFFFFFFFF;	
 			spell_effects[i].spell = nullptr;

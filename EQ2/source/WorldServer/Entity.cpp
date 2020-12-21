@@ -853,6 +853,7 @@ void Entity::RemoveMaintainedSpell(LuaSpell* luaspell){
 		memset(&GetInfoStruct()->maintained_effects[29], 0, sizeof(MaintainedEffects));
 		GetInfoStruct()->maintained_effects[29].spell_id = 0xFFFFFFFF;
 		GetInfoStruct()->maintained_effects[29].icon = 0xFFFF;
+		GetInfoStruct()->maintained_effects[29].spell = nullptr;
 	}
 	MMaintainedSpells.releasewritelock(__FUNCTION__, __LINE__);
 }

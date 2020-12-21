@@ -2918,8 +2918,10 @@ PlayerInfo::PlayerInfo(Player* in_player){
 		if(i<30){
 			info_struct->maintained_effects[i].spell_id = 0xFFFFFFFF;
 			info_struct->maintained_effects[i].icon = 0xFFFF;
+			info_struct->maintained_effects[i].spell = nullptr;
 		}
 		info_struct->spell_effects[i].spell_id = 0xFFFFFFFF;	
+		info_struct->spell_effects[i].spell = nullptr;	
 	}
 	
 	house_zone_id = 0;
@@ -3163,6 +3165,7 @@ void Player::RemoveMaintainedSpell(LuaSpell* luaspell){
 		memset(&GetInfoStruct()->maintained_effects[29], 0, sizeof(MaintainedEffects));
 		GetInfoStruct()->maintained_effects[29].spell_id = 0xFFFFFFFF;
 		GetInfoStruct()->maintained_effects[29].icon = 0xFFFF;
+		GetInfoStruct()->maintained_effects[29].spell = nullptr;
 		charsheet_changed = true;
 	}
 	GetMaintainedMutex()->releasewritelock(__FUNCTION__, __LINE__);
