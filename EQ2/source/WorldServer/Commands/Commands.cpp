@@ -2787,6 +2787,17 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if (sep->arg[1] && sep->IsNumber(1))
 					tier = atoul(sep->arg[1]);
 
+				int8 self = 1;
+				if (sep->arg[1] && sep->IsNumber(2))
+				{
+					self = atoul(sep->arg[2]);
+					if(self != 1 && !cmdTarget->IsEntity())
+					{
+						client->Message(CHANNEL_COLOR_RED, "Target is not an entity required to cast non-self spell.");
+						self = 1;
+					}
+				}
+
 				int32 spellid = atoul(sep->arg[0]);
 				Spell* spell = master_spell_list.GetSpell(spellid, tier);
 
@@ -2797,7 +2808,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					// Get the current zones spell process
 					spellProcess = client->GetCurrentZone()->GetSpellProcess();
 
-					spellProcess->CastInstant(spell, (Entity*)client->GetPlayer(), (cmdTarget && cmdTarget->IsEntity()) ? (Entity*)cmdTarget : (Entity*)client->GetPlayer());
+					spellProcess->CastInstant(spell, (!cmdTarget || self == 1) ? (Entity*)client->GetPlayer() : (Entity*)cmdTarget, (cmdTarget && cmdTarget->IsEntity()) ? (Entity*)cmdTarget : (Entity*)client->GetPlayer());
 				}
 				else
 				{
@@ -4514,8 +4525,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case CANCEL_AA_PROFILE			: { Cancel_AA_Profile(client, sep); break; }
 		case SAVE_AA_PROFILE			: { Save_AA_Profile(client, sep); break; }
 		case COMMAND_TARGETITEM			: { Command_TargetItem(client, sep); break; }
-
 		case COMMAND_FINDSPAWN: { Command_FindSpawn(client, sep); break; }
+		case COMMAND_MOVECHARACTER: { Command_MoveCharacter(client, sep); break; }
 
 
 		default: 
@@ -10428,4 +10439,21 @@ void Commands::Command_TargetItem(Client* client, Seperator* sep) {
 void Commands::Command_FindSpawn(Client* client, Seperator* sep) {
 	if(sep)
 		client->GetCurrentZone()->FindSpawn(client, (char*)sep->argplus[0]);
+}
+
+void Commands::Command_MoveCharacter(Client* client, Seperator* sep) {
+	if(sep && sep->arg[0][0] && sep->arg[1][0])
+	{
+		char* name = sep->arg[0];
+		char* zoneName = sep->arg[1];
+		
+		char query[256];
+		snprintf(query, 256, "UPDATE characters c, zones z set c.x = z.safe_x, c.y = z.safe_y, c.z = z.safe_z, c.heading = z.safe_heading, c.current_zone_id = z.id where c.name = '%s' and z.name='%s'", name, zoneName);
+		if (database.RunQuery(query, strnlen(query, 256)))
+		{
+			client->Message(CHANNEL_COLOR_YELLOW, "Ran query:%s", query);
+		}
+		else
+			client->Message(CHANNEL_COLOR_RED, "Query FAILED to run: %s", query);
+	}
 }

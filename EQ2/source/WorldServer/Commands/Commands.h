@@ -429,6 +429,8 @@ public:
 
 	void Command_FindSpawn(Client* client, Seperator* set);
 
+	void Command_MoveCharacter(Client* client, Seperator* set);
+
 	// Bot Commands
 	void Command_Bot(Client* client, Seperator* sep);
 	void Command_Bot_Create(Client* client, Seperator* sep);
@@ -867,6 +869,8 @@ private:
 #define COMMAND_WAYPOINT				523
 
 #define COMMAND_RELOADREGIONSCRIPTS		524
+
+#define COMMAND_MOVECHARACTER			525
 
 #define GET_AA_XML						750
 #define ADD_AA							751
