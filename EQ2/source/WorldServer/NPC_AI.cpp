@@ -196,6 +196,14 @@ void Brain::AddHate(Entity* entity, sint32 hate) {
 	if (m_body->IsNPC() && ((NPC*)m_body)->m_runningBack)
 		return;
 
+	if(m_body->IsImmune(IMMUNITY_TYPE_TAUNT))
+	{
+		LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "%s is immune to taunt from entity %s.", m_body->GetName(), entity ? entity->GetName() : "(null)");
+		if(entity && entity->IsPlayer())
+			((Player*)entity)->GetClient()->GetCurrentZone()->SendDamagePacket((Spawn*)entity, (Spawn*)m_body, DAMAGE_PACKET_TYPE_RANGE_SPELL_DMG, DAMAGE_PACKET_RESULT_IMMUNE, 0, 0, "Hate");
+		return;
+	}
+	
 	// Lock the hate list, we are altering the list so use write lock
 	MHateList.writelock(__FUNCTION__, __LINE__);
 

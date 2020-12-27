@@ -819,6 +819,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SpellDamage", EQ2Emu_lua_SpellDamage);
 	lua_register(state, "CastSpell", EQ2Emu_lua_CastSpell);	
 	lua_register(state, "SpellHeal", EQ2Emu_lua_SpellHeal);
+	lua_register(state, "SpellHealPct", EQ2Emu_lua_SpellHealPct);
 	lua_register(state, "AddItem", EQ2Emu_lua_AddItem);
 	lua_register(state, "SummonItem", EQ2Emu_lua_SummonItem);
 	lua_register(state, "RemoveItem", EQ2Emu_lua_RemoveItem);
@@ -1127,6 +1128,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetSpellTriggerCount", EQ2Emu_lua_SetSpellTriggerCount);
 	lua_register(state, "GetSpellTriggerCount", EQ2Emu_lua_GetSpellTriggerCount);
 	lua_register(state, "RemoveTriggerFromSpell", EQ2Emu_lua_RemoveTriggerFromSpell);
+	lua_register(state, "HasSpellImmunity", EQ2Emu_lua_HasSpellImmunity);
 	lua_register(state, "AddImmunitySpell", EQ2Emu_lua_AddImmunitySpell);
 	lua_register(state, "RemoveImmunitySpell", EQ2Emu_lua_RemoveImmunitySpell);
 	lua_register(state, "SetSpellSnareValue", EQ2Emu_lua_SetSpellSnareValue);
@@ -1178,7 +1180,6 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "ProcHate", EQ2Emu_lua_ProcHate);
 
 	lua_register(state, "GetRandomSpawnByID", EQ2Emu_lua_GetRandomSpawnByID);
-	lua_register(state, "AddLootToObject", EQ2Emu_lua_AddLootToObject);
 	lua_register(state, "ShowLootWindow", EQ2Emu_lua_ShowLootWindow);
 	lua_register(state, "AddPrimaryEntityCommandAllSpawns", EQ2Emu_lua_AddPrimaryEntityCommandAllSpawns);
 	lua_register(state, "InstructionWindow", EQ2Emu_lua_InstructionWindow);
@@ -1258,6 +1259,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetInfoStructFloat", EQ2Emu_lua_SetInfoStructFloat);
 	
 	lua_register(state, "SetCharSheetChanged", EQ2Emu_lua_SetCharSheetChanged);
+	
+	lua_register(state, "AddPlayerMail", EQ2Emu_lua_AddPlayerMail);
+	lua_register(state, "AddPlayerMailByCharID", EQ2Emu_lua_AddPlayerMailByCharID);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

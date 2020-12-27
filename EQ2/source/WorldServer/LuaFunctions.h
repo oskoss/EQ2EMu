@@ -161,6 +161,7 @@ int EQ2Emu_lua_ModifyHP(lua_State* state);
 int EQ2Emu_lua_ModifyTotalPower(lua_State* state);
 int EQ2Emu_lua_ModifyTotalHP(lua_State* state);
 int EQ2Emu_lua_SpellHeal(lua_State* state);
+int EQ2Emu_lua_SpellHealPct(lua_State* state);
 
 int EQ2Emu_lua_AddItem(lua_State* state);
 int EQ2Emu_lua_SummonItem(lua_State* state);
@@ -189,7 +190,6 @@ int EQ2Emu_lua_HasLootItem(lua_State* state);
 int EQ2Emu_lua_RemoveLootItem(lua_State* state);
 int EQ2Emu_lua_AddLootCoin(lua_State* state);
 int EQ2Emu_lua_GiveLoot(lua_State* state);
-int EQ2Emu_lua_AddLootToObject(lua_State* state);
 int EQ2Emu_lua_HasPendingLoot(lua_State* state);
 int EQ2Emu_lua_HasPendingLootItem(lua_State* state);
 int EQ2Emu_lua_CreateConversation(lua_State* state);
@@ -413,6 +413,7 @@ int EQ2Emu_lua_CopySpawnAppearance(lua_State* state);
 int EQ2Emu_lua_RemoveTriggerFromSpell(lua_State* state);
 int EQ2Emu_lua_GetSpellTriggerCount(lua_State* state);
 int EQ2Emu_lua_SetSpellTriggerCount(lua_State* state);
+int EQ2Emu_lua_HasSpellImmunity(lua_State* state);
 int EQ2Emu_lua_AddImmunitySpell(lua_State* state);
 int EQ2Emu_lua_RemoveImmunitySpell(lua_State* state);
 int EQ2Emu_lua_SetSpellSnareValue(lua_State* state);
@@ -544,4 +545,7 @@ int EQ2Emu_lua_SetInfoStructSInt(lua_State* state);
 int EQ2Emu_lua_SetInfoStructFloat(lua_State* state);
 
 int EQ2Emu_lua_SetCharSheetChanged(lua_State* state);
+
+int EQ2Emu_lua_AddPlayerMail(lua_State* state);
+int EQ2Emu_lua_AddPlayerMailByCharID(lua_State* state);
 #endif

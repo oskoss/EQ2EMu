@@ -353,7 +353,7 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 		packet->setDataByName("tradeskill_class2", info_struct->get_tradeskill_class2());
 		packet->setDataByName("tradeskill_class3", info_struct->get_tradeskill_class3());
 		packet->setDataByName("level", info_struct->get_level());
-		packet->setDataByName("effective_level", info_struct->get_level());
+		packet->setDataByName("effective_level", info_struct->get_effective_level() != 0 ? info_struct->get_effective_level() : info_struct->get_level());
 		packet->setDataByName("tradeskill_level", info_struct->get_tradeskill_level());
 		packet->setDataByName("account_age_base", info_struct->get_account_age_base());
 
@@ -654,7 +654,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("tradeskill_class2", info_struct->get_tradeskill_class2());
 		packet->setDataByName("tradeskill_class3", info_struct->get_tradeskill_class3());
 		packet->setDataByName("level", info_struct->get_level());
-		packet->setDataByName("effective_level", info_struct->get_level());
+		packet->setDataByName("effective_level", info_struct->get_effective_level() != 0 ? info_struct->get_effective_level() : info_struct->get_level());
 		packet->setDataByName("tradeskill_level", info_struct->get_tradeskill_level());
 		//		packet->setDataByName("unknown_1_2_MJ", 98);  //unknown_1_2_MJ
 		packet->setDataByName("account_age_base", info_struct->get_account_age_base());
@@ -699,7 +699,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("toughness_resist_dmg_pvp", 0);//toughness_resist_dmg_pvp 73 = 7300% // confirmed DoV 
 		packet->setDataByName("avoidance_pct", 0);//avoidance_pct 192 = 19.2% // confirmed DoV
 		packet->setDataByName("avoidance_base", info_struct->get_avoidance_base()); // confirmed DoV
-		packet->setDataByName("avoidance", 71);
+		packet->setDataByName("avoidance", info_struct->get_cur_avoidance());
 		//		packet->setDataByName("unknown_1096_1_MJ", 90);//unknown_1096_1_MJ
 		packet->setDataByName("base_avoidance_pct", info_struct->get_base_avoidance_pct());// confirmed DoV
 		//		packet->setDataByName("unknown_1096_2_MJ", 89);//unknown_1096_2_MJ

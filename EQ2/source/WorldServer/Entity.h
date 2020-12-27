@@ -122,6 +122,7 @@ struct InfoStruct{
 		gender_ = 0;
 		level_ = 0;
 		max_level_ = 0;
+		effective_level_ = 0;
 		tradeskill_level_ = 0;
 		tradeskill_max_level_ = 0;
 		cur_concentration_ = 0;
@@ -263,6 +264,7 @@ struct InfoStruct{
 		gender_ = oldStruct->get_gender();
 		level_ = oldStruct->get_level();
 		max_level_ = oldStruct->get_max_level();
+		effective_level_ = oldStruct->get_effective_level();
 		tradeskill_level_ = oldStruct->get_tradeskill_level();
 		tradeskill_max_level_ = oldStruct->get_tradeskill_max_level();
 		cur_concentration_ = oldStruct->get_cur_concentration();
@@ -398,6 +400,7 @@ struct InfoStruct{
 	int8	 get_gender() { std::lock_guard<std::mutex> lk(classMutex); return gender_; }
 	int16 	 get_level() { std::lock_guard<std::mutex> lk(classMutex); return level_; }
 	int16	 get_max_level() { std::lock_guard<std::mutex> lk(classMutex); return max_level_; }
+	int16	 get_effective_level() { std::lock_guard<std::mutex> lk(classMutex); return effective_level_; } 
 	int16	 get_tradeskill_level() { std::lock_guard<std::mutex> lk(classMutex); return tradeskill_level_; }
 	int16	 get_tradeskill_max_level() { std::lock_guard<std::mutex> lk(classMutex); return tradeskill_max_level_; }
 
@@ -549,6 +552,7 @@ struct InfoStruct{
 	void	set_gender(int8 value) { std::lock_guard<std::mutex> lk(classMutex); gender_ = value; }
 	void	set_level(int16 value) { std::lock_guard<std::mutex> lk(classMutex); level_ = value; }
 	void	set_max_level(int16 value) { std::lock_guard<std::mutex> lk(classMutex); max_level_ = value; }
+	void	set_effective_level(int16 value) { std::lock_guard<std::mutex> lk(classMutex); effective_level_ = value; }
 
 	void	set_cur_concentration(int8 value) { std::lock_guard<std::mutex> lk(classMutex); cur_concentration_ = value; }
 	void	set_max_concentration(int8 value) { std::lock_guard<std::mutex> lk(classMutex); max_concentration_ = value; }
@@ -795,6 +799,7 @@ private:
 	int8			gender_;
 	int16			level_;
 	int16			max_level_;
+	int16			effective_level_;
 	int16			tradeskill_level_;
 	int16			tradeskill_max_level_;
 	
@@ -1016,6 +1021,8 @@ struct ThreatTransfer {
 #define IMMUNITY_TYPE_ROOT 5
 #define IMMUNITY_TYPE_FEAR 6
 #define IMMUNITY_TYPE_AOE 7
+#define IMMUNITY_TYPE_TAUNT 8
+#define IMMUNITY_TYPE_RIPOSTE 9
 
 //class Spell;
 //class ZoneServer;
@@ -1467,6 +1474,9 @@ public:
 	void AddDazeImmunity(LuaSpell* spell);
 	void RemoveDazeImmunity(LuaSpell* spell);
 	bool IsDazeImmune();
+	void AddImmunity(LuaSpell* spell, int16 type);
+	void RemoveImmunity(LuaSpell* spell, int16 type);
+	bool IsImmune(int16 type);
 	void AddFlightSpell(LuaSpell* spell);
 	void RemoveFlightSpell(LuaSpell* spell);
 	void AddSafefallSpell(LuaSpell* spell);

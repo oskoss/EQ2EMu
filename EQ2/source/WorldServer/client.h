@@ -279,7 +279,7 @@ public:
 	Quest*	GetActiveQuest(int32 quest_id);
 	void	DisplayConversation(int32 conversation_id, int32 spawn_id, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2);
 	void	DisplayConversation(Item* item, vector<ConversationOption>* conversations, const char* text, int8 type, const char* mp3 = 0, int32 key1 = 0, int32 key2 = 0);
-	void	DisplayConversation(Entity* npc, int8 type, vector<ConversationOption>* conversations, const char* text, const char* mp3 = 0, int32 key1 = 0, int32 key2 = 0);
+	void	DisplayConversation(Spawn* src, int8 type, vector<ConversationOption>* conversations, const char* text, const char* mp3 = 0, int32 key1 = 0, int32 key2 = 0);
 	void	CloseDialog(int32 conversation_id);
 	int32	GetConversationID(Spawn* spawn, Item* item);
 	void	CombineSpawns(float radius, Spawn* spawn);
@@ -460,6 +460,12 @@ public:
 	bool ShowPathToTarget(Spawn* spawn);
 
 	void SetRegionDebug(bool val) { regionDebugMessaging = val; }
+
+	static void CreateMail(int32 charID, std::string fromName, std::string subjectName, std::string mailBody, 
+		int8 mailType, int32 copper, int32 silver, int32 gold, int32 platinum, int32 item_id, int16 stack_size, int32 time_sent, int32 expire_time);
+	void CreateAndUpdateMail(std::string fromName, std::string subjectName, std::string mailBody, 
+		int8 mailType, int32 copper, int32 silver, int32 gold, int32 platinum, int32 item_id, int16 stack_size, int32 time_sent, int32 expire_time);
+
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

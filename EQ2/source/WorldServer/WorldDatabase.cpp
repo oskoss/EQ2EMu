@@ -4137,9 +4137,15 @@ void WorldDatabase::SavePlayerMail(Mail* mail) {
 	Query query_update;
 	Query query_insert;
 	if (mail) {
-		query_update.AddQueryAsync(mail->player_to_id, this, Q_UPDATE, "UPDATE `character_mail` SET `already_read`=%u, `coin_copper`=%u, `coin_silver`=%u, `coin_gold`=%u, `coin_plat`=%u WHERE `id`=%u", mail->already_read, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->mail_id);
-		if (query_update.GetAffectedRows() == 0)
-			query_insert.AddQueryAsync(mail->player_to_id, this, Q_UPDATE, "INSERT INTO `character_mail` (`player_to_id`, `player_from`, `subject`, `mail_body`, `already_read`, `mail_type`, `coin_copper`, `coin_silver`, `coin_gold`, `coin_plat`, `stack`, `postage_cost`, `attachment_cost`, `char_item_id`, `time_sent`, `expire_time`) VALUES (%u, '%s', '%s', '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)", mail->player_to_id, mail->player_from.c_str(), getSafeEscapeString(mail->subject.c_str()).c_str(), getSafeEscapeString(mail->mail_body.c_str()).c_str(), mail->already_read, mail->mail_type, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->stack, mail->postage_cost, mail->attachment_cost, mail->char_item_id, mail->time_sent, mail->expire_time);
+		if(mail->mail_id > 0)
+			query_update.RunQuery2(Q_UPDATE, "UPDATE `character_mail` SET `already_read`=%u, `coin_copper`=%u, `coin_silver`=%u, `coin_gold`=%u, `coin_plat`=%u WHERE `id`=%u", mail->already_read, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->mail_id);
+		if (mail->mail_id == 0 || query_update.GetAffectedRows() == 0)
+		{
+			query_insert.RunQuery2(Q_INSERT, "INSERT INTO `character_mail` (`player_to_id`, `player_from`, `subject`, `mail_body`, `already_read`, `mail_type`, `coin_copper`, `coin_silver`, `coin_gold`, `coin_plat`, `stack`, `postage_cost`, `attachment_cost`, `char_item_id`, `time_sent`, `expire_time`) VALUES (%u, '%s', '%s', '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)", mail->player_to_id, mail->player_from.c_str(), getSafeEscapeString(mail->subject.c_str()).c_str(), getSafeEscapeString(mail->mail_body.c_str()).c_str(), mail->already_read, mail->mail_type, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->stack, mail->postage_cost, mail->attachment_cost, mail->char_item_id, mail->time_sent, mail->expire_time);
+			
+			if(!mail->mail_id)
+				mail->mail_id = query_insert.GetLastInsertedID();
+		}
 		mail->save_needed = false;
 	}
 }
@@ -4167,8 +4173,15 @@ void WorldDatabase::LoadPlayerMail(Client* client, bool new_only) {
 			result = query.RunQuery2(Q_SELECT, "SELECT `id`, `player_to_id`, `player_from`, `subject`, `mail_body`, `already_read`, `mail_type`, `coin_copper`, `coin_silver`, `coin_gold`, `coin_plat`, `stack`, `postage_cost`, `attachment_cost`, `char_item_id`, `time_sent`, `expire_time` FROM `character_mail` WHERE `player_to_id`=%u", client->GetCharacterID());
 		if (result && mysql_num_rows(result) > 0) {
 			MYSQL_ROW row;
-			client->SimpleMessage(CHANNEL_NARRATIVE, "You've got mail! :)");
+			bool hasMail = false;
 			while (result && (row = mysql_fetch_row(result))) {
+
+				int32 time_sent = atoul(row[15]);
+				if ( time_sent > Timer::GetUnixTimeStamp() )
+					continue; // should have not been received yet
+
+
+				hasMail = true;
 				Mail* mail = new Mail;
 				mail->mail_id = atoul(row[0]);
 				mail->player_to_id = atoul(row[1]);
@@ -4186,7 +4199,7 @@ void WorldDatabase::LoadPlayerMail(Client* client, bool new_only) {
 				mail->postage_cost = atoul(row[12]);
 				mail->attachment_cost = atoul(row[13]);
 				mail->char_item_id = atoul(row[14]);
-				mail->time_sent = atoul(row[15]);
+				mail->time_sent = time_sent;
 				mail->expire_time = atoul(row[16]);
 				mail->save_needed = false;
 				client->GetPlayer()->AddMail(mail);
@@ -4194,6 +4207,9 @@ void WorldDatabase::LoadPlayerMail(Client* client, bool new_only) {
 				LogWrite(PLAYER__DEBUG, 5, "Player", "Loaded Mail ID %i, to: %i, from: %s", atoul(row[0]), atoul(row[1]), string(row[2]).c_str());
 
 			}
+			
+			if(hasMail)
+				client->SimpleMessage(CHANNEL_NARRATIVE, "You've got mail! :)");
 		}
 	}
 }

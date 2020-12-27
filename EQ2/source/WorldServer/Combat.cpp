@@ -546,6 +546,7 @@ bool Entity::ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32
 	return true;
 }
 
+// this is used exclusively by LUA, heal_type is forced lower case via boost::lower(heal_type); in the LUA Functions used by this
 bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string heal_type, int32 low_heal, int32 high_heal, int8 crit_mod, bool no_calcs, string custom_spell_name){
 	 if(!target || !luaspell || !luaspell->spell)
 		return false;
@@ -608,7 +609,7 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 	}
 
 	int16 type = 0;
-	if (heal_type == "Heal") {
+	if (heal_type == "heal") {
 		if(crit)
 			type = HEAL_PACKET_TYPE_CRIT_HEAL;
 		else
@@ -626,7 +627,7 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 			target->SetHP(target->GetHP() + heal_amt);
 		*/
 	}
-	else if (heal_type == "Power"){
+	else if (heal_type == "power"){
 		if(crit)
 			type = HEAL_PACKET_TYPE_CRIT_MANA;
 		else
@@ -734,6 +735,9 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 		}
 		if(rand() % roll_chance >= chance)
 			return DAMAGE_PACKET_RESULT_MISS; //successfully avoided
+
+		if(entity_victim->IsImmune(IMMUNITY_TYPE_RIPOSTE))
+		return DAMAGE_PACKET_RESULT_RIPOSTE;
 
 		skill = entity_victim->GetSkillByName("Parry", true);
 		if(skill){
@@ -921,7 +925,7 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 		int32 prevDmg = damage;
 		damage = victim->CheckWards(this, damage, damage_type);
 
-		if (damage < prevDmg)
+		if (damage < (sint64)prevDmg)
 			useWards = true;
 
 		victim->TakeDamage(damage);

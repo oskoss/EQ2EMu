@@ -2278,8 +2278,9 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	if (!IsPlayer())
 		packet->setDataByName("npc", 1);
 	if (GetMerchantID() > 0)
-		packet->setDataByName("merchant", 1);		
-	packet->setDataByName("effective_level", (int8)GetLevel());
+		packet->setDataByName("merchant", 1);
+		
+	packet->setDataByName("effective_level", spawn->IsEntity() && ((Entity*)spawn)->GetInfoStruct()->get_effective_level() != 0 ? (int8)((Entity*)spawn)->GetInfoStruct()->get_effective_level() : (int8)GetLevel());
 	packet->setDataByName("level", (int8)GetLevel());
 	packet->setDataByName("unknown4", (int8)GetLevel());
 	packet->setDataByName("difficulty", appearance.encounter_level); //6);

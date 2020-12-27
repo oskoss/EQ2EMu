@@ -5895,22 +5895,22 @@ void Client::DisplayConversation(Item* item, vector<ConversationOption>* convers
 
 }
 
-void Client::DisplayConversation(Entity* npc, int8 type, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2) {
-	if (!npc || !(type == 1 || type == 2 || type == 3) || !text /*|| !conversations || conversations->size() == 0*/) {
+void Client::DisplayConversation(Spawn* src, int8 type, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2) {
+	if (!src || !(type == 1 || type == 2 || type == 3) || !text /*|| !conversations || conversations->size() == 0*/) {
 		return;
 	}
-	int32 conversation_id = GetConversationID(npc, 0);
+	int32 conversation_id = GetConversationID(src, 0);
 	if (conversation_id == 0) {
 		next_conversation_id++;
 		conversation_id = next_conversation_id;
 	}
-	conversation_spawns[conversation_id] = npc;
+	conversation_spawns[conversation_id] = src;
 
-	/* NPCs can start two different types of conversations.
+	/* Spawns can start two different types of conversations.
 	 * Type 1: The chat type with bubbles.
 	 * Type 2: The dialog type with the blue box. */
 	if (type == 1)
-		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(npc), conversations, text, mp3, key1, key2);
+		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(src), conversations, text, mp3, key1, key2);
 	else if (type == 2)
 		DisplayConversation(conversation_id, 0xFFFFFFFF, conversations, text, mp3, key1, key2);
 	else //if (type == 3)
@@ -7307,7 +7307,11 @@ void Client::SendMailList() {
 				p->setArrayDataByName("subject", mail->subject.c_str(), i);
 				p->setArrayDataByName("unknown1", 0x0000, i);
 				p->setArrayDataByName("already_read", mail->already_read, i);
-				p->setArrayDataByName("mail_deletion", mail->expire_time - mail->time_sent, i);
+				if(mail->expire_time)
+					p->setArrayDataByName("mail_deletion", mail->expire_time - mail->time_sent, i);
+				else
+					p->setArrayDataByName("mail_deletion", 0, i);
+				
 				p->setArrayDataByName("mail_type", mail->mail_type, i);
 				p->setArrayDataByName("mail_expire", 0xFFFFFFFF, i);
 				p->setArrayDataByName("unknown1a", 0xFFFFFFFF, i);
@@ -7393,6 +7397,7 @@ void Client::DisplayMailMessage(int32 mail_id) {
 				mail->save_needed = true;
 				QueuePacket(packet->serialize());
 				safe_delete(packet);
+				// trying to update this causes the window not to open
 				//SendMailList();
 			}
 		}
@@ -9842,4 +9847,59 @@ void Client::TempRemoveGroup()
 
 		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 	}
+}
+
+void Client::CreateMail(int32 charID, std::string fromName, std::string subjectName, std::string mailBody, 
+int8 mailType, int32 copper, int32 silver, int32 gold, int32 platinum, int32 item_id, int16 stack_size, int32 time_sent, int32 expire_time)
+{
+	Mail mail;
+	memset(&mail,0,sizeof(Mail));
+	mail.player_to_id = charID;
+	mail.player_from = fromName;
+	mail.subject = subjectName;
+	mail.mail_body = mailBody;
+
+	mail.mail_type = mailType;
+
+	mail.coin_copper = copper;
+	mail.coin_silver = silver;
+	mail.coin_gold = gold;
+	mail.coin_plat = platinum;
+
+	mail.char_item_id = item_id;
+	mail.stack = stack_size;
+
+	mail.time_sent = time_sent;
+	mail.expire_time = expire_time;
+
+	database.SavePlayerMail(&mail);	
+}
+
+void Client::CreateAndUpdateMail(std::string fromName, std::string subjectName, std::string mailBody, 
+int8 mailType, int32 copper, int32 silver, int32 gold, int32 platinum, int32 item_id, int16 stack_size, int32 time_sent, int32 expire_time)
+{
+	Mail* mail = new Mail();
+	mail->player_to_id = GetCharacterID();
+	mail->player_from = fromName;
+	mail->subject = subjectName;
+	mail->mail_body = mailBody;
+
+	mail->mail_type = mailType;
+
+	mail->coin_copper = copper;
+	mail->coin_silver = silver;
+	mail->coin_gold = gold;
+	mail->coin_plat = platinum;
+
+	mail->char_item_id = item_id;
+	mail->stack = stack_size;
+
+	mail->time_sent = time_sent;
+	mail->expire_time = expire_time;
+
+	mail->postage_cost = 0;
+	mail->save_needed = 1;
+	mail->already_read = 0;
+	database.SavePlayerMail(mail);
+	GetPlayer()->AddMail(mail);
 }

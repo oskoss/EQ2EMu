@@ -107,6 +107,7 @@ void Entity::MapInfoStruct()
 	get_int8_funcs["gender"] = l::bind(&InfoStruct::get_gender, &info_struct);
 	get_int16_funcs["level"] = l::bind(&InfoStruct::get_level, &info_struct);
 	get_int16_funcs["max_level"] = l::bind(&InfoStruct::get_max_level, &info_struct);
+	get_int16_funcs["effective_level"] = l::bind(&InfoStruct::get_effective_level, &info_struct);
 	get_int16_funcs["tradeskill_level"] = l::bind(&InfoStruct::get_tradeskill_level, &info_struct);
 	get_int16_funcs["tradeskill_max_level"] = l::bind(&InfoStruct::get_tradeskill_max_level, &info_struct);
 	get_int8_funcs["cur_concentration"] = l::bind(&InfoStruct::get_cur_concentration, &info_struct);
@@ -240,6 +241,7 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["gender"] = l::bind(&InfoStruct::set_gender, &info_struct, l::_1);
 	set_int16_funcs["level"] = l::bind(&InfoStruct::set_level, &info_struct, l::_1);
 	set_int16_funcs["max_level"] = l::bind(&InfoStruct::set_max_level, &info_struct, l::_1);
+	set_int16_funcs["effective_level"] = l::bind(&InfoStruct::set_effective_level, &info_struct, l::_1);
 	set_int16_funcs["tradeskill_level"] = l::bind(&InfoStruct::set_tradeskill_level, &info_struct, l::_1);
 	set_int16_funcs["tradeskill_max_level"] = l::bind(&InfoStruct::set_tradeskill_max_level, &info_struct, l::_1);
 	set_int8_funcs["cur_concentration"] = l::bind(&InfoStruct::set_cur_concentration, &info_struct, l::_1);
@@ -567,9 +569,13 @@ void Entity::ChangePrimaryWeapon(){
 		melee_combat_data.wield_type = item->weapon_info->wield_type;
 	}
 	else{
+		int16 effective_level = GetInfoStruct()->get_effective_level();
+		if ( !effective_level )
+			effective_level = GetLevel();
+
 		melee_combat_data.primary_weapon_delay = 2000;
-		melee_combat_data.primary_weapon_damage_low = (int32)(1 + GetLevel() * .2);
-		melee_combat_data.primary_weapon_damage_high = (int32)(5 + GetLevel() * (GetLevel()/5));
+		melee_combat_data.primary_weapon_damage_low = (int32)(1 + effective_level * .2);
+		melee_combat_data.primary_weapon_damage_high = (int32)(5 + effective_level * (effective_level/5));
 		if(IsNPC())
 			melee_combat_data.primary_weapon_type = ((NPC*)this)->GetAttackType();
 		else
@@ -591,9 +597,13 @@ void Entity::ChangeSecondaryWeapon(){
 		melee_combat_data.secondary_weapon_type = item->GetWeaponType();
 	}
 	else{
+		int16 effective_level = GetInfoStruct()->get_effective_level();
+		if ( !effective_level )
+			effective_level = GetLevel();
+
 		melee_combat_data.secondary_weapon_delay = 2000;
-		melee_combat_data.secondary_weapon_damage_low = (int32)(1 + GetLevel() * .2);
-		melee_combat_data.secondary_weapon_damage_high = (int32)(5 + GetLevel() * (GetLevel()/6));
+		melee_combat_data.secondary_weapon_damage_low = (int32)(1 + effective_level * .2);
+		melee_combat_data.secondary_weapon_damage_high = (int32)(5 + effective_level * (effective_level/6));
 		melee_combat_data.secondary_weapon_type = 1;
 	}
 	if(IsNPC())
@@ -740,7 +750,10 @@ void Entity::DoRegenUpdate(){
 		return;
 	sint32 hp = GetHP();
 	sint32 power = GetPower();
-	int16 level = GetLevel();
+
+	int16 effective_level = GetInfoStruct()->get_effective_level();
+	if(!effective_level)
+		effective_level = GetLevel();
 
 	// No regen for NPC's while in combat
 	// Temp solution for now
@@ -749,7 +762,7 @@ void Entity::DoRegenUpdate(){
 
 	if(hp < GetTotalHP()){
 		if(regen_hp_rate == 0)
-			regen_hp_rate = (int)(level*.75)+(int)(level/10) + 1;
+			regen_hp_rate = (int)(effective_level*.75)+(int)(effective_level/10) + 1;
 		int16 temp = regen_hp_rate + stats[ITEM_STAT_HPREGEN];
 		if((hp + temp) > GetTotalHP())
 			SetHP(GetTotalHP());
@@ -761,7 +774,7 @@ void Entity::DoRegenUpdate(){
 	}
 	if(GetPower() < GetTotalPower()){
 		if(regen_power_rate == 0)
-			regen_power_rate = level + (int)(level/10) + 1;
+			regen_power_rate = effective_level + (int)(effective_level/10) + 1;
 		cout << "regen_power_rate: " << regen_power_rate << endl;
 		if((power + regen_power_rate) > GetTotalPower())
 			SetPower(GetTotalPower());
@@ -2492,6 +2505,28 @@ void Entity::RemoveDazeImmunity(LuaSpell* spell){
 
 bool Entity::IsDazeImmune(){
 	return (immunities[IMMUNITY_TYPE_DAZE] && immunities[IMMUNITY_TYPE_DAZE]->size(true) > 0);
+}
+
+void Entity::AddImmunity(LuaSpell* spell, int16 type){
+	if (!spell)
+		return;
+
+	if (!immunities[type])
+		immunities[type] = new MutexList<LuaSpell*>;
+
+	immunities[type]->Add(spell);
+}
+
+void Entity::RemoveImmunity(LuaSpell* spell, int16 type){
+	MutexList<LuaSpell*>* list = immunities[type];
+	if (!list || list->size(true) == 0)
+		return;
+
+	list->Remove(spell);
+}
+
+bool Entity::IsImmune(int16 type){
+	return (immunities[type] && immunities[type]->size(true) > 0);
 }
 
 void Entity::RemoveEffectsFromLuaSpell(LuaSpell* spell){
