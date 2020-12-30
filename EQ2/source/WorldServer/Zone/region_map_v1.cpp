@@ -9,6 +9,7 @@
 extern LuaInterface* lua_interface;
 
 RegionMapV1::RegionMapV1() {
+	BSPTreeSize = 0;
 	mVersion = 1;
 }
 
@@ -144,6 +145,8 @@ bool RegionMapV1::Load(FILE* fp, std::string inZoneNameLwr, int32 version) {
 		if (fread(&bsp_tree_size, sizeof(bsp_tree_size), 1, fp) != 1) {
 			return false;
 		}
+
+		BSPTreeSize = bsp_tree_size;
 
 		LogWrite(REGION__DEBUG, 0, "RegionMap", "region x,y,z,dist = %f, %f, %f, %f, region bsp tree size: %u", x, y, z, dist, bsp_tree_size);
 
@@ -493,6 +496,9 @@ WaterRegionType RegionMapV1::BSPReturnRegionType(int32 node_number, const glm::v
 }
 
 WaterRegionType RegionMapV1::BSPReturnRegionTypeNode(const Region_Node* region_node, const ZBSP_Node* BSP_Root, int32 node_number, const glm::vec3& location, float distToNode) const {
+	if(node_number > BSPTreeSize || node_number == 4294967295)
+		return RegionTypeNormal;
+		
 	const ZBSP_Node* current_node = &BSP_Root[node_number - 1];
 	float distance;
 

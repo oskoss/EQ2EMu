@@ -71,6 +71,7 @@ private:
 	friend class RegionMap;
 
 	int32 mVersion;
+	int32 BSPTreeSize;
 	std::string mZoneNameLower;
 };
 
