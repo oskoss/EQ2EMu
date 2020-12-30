@@ -7,7 +7,6 @@
 #include <boost/filesystem.hpp>
 
 extern LuaInterface* lua_interface;
-#define REGIONDEBUG 1
 
 RegionMapV1::RegionMapV1() {
 	BSPTreeSize = 0;
@@ -497,14 +496,14 @@ WaterRegionType RegionMapV1::BSPReturnRegionType(int32 node_number, const glm::v
 }
 
 WaterRegionType RegionMapV1::BSPReturnRegionTypeNode(const Region_Node* region_node, const ZBSP_Node* BSP_Root, int32 node_number, const glm::vec3& location, float distToNode) const {
-	if(node_number == 4294967295)
+	if(node_number > BSPTreeSize || node_number == 4294967295)
 		return RegionTypeNormal;
 		
 	const ZBSP_Node* current_node = &BSP_Root[node_number - 1];
 	float distance;
 
 #ifdef REGIONDEBUG
-	printf("left = %u, right %u (Size: %u)\n", current_node->left, current_node->right, BSPTreeSize);
+	printf("left = %u, right %u\n", current_node->left, current_node->right);
 #endif
 
 	if (region_node->region_type == ClassWaterRegion2)
