@@ -1262,6 +1262,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	lua_register(state, "AddPlayerMail", EQ2Emu_lua_AddPlayerMail);
 	lua_register(state, "AddPlayerMailByCharID", EQ2Emu_lua_AddPlayerMailByCharID);
+	
+	lua_register(state, "OpenDoor", EQ2Emu_lua_OpenDoor);
+	lua_register(state, "CloseDoor", EQ2Emu_lua_CloseDoor);
+	lua_register(state, "IsOpen", EQ2Emu_lua_IsOpen);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
@@ -1970,10 +1974,14 @@ bool LuaInterface::RunItemScript(string script_name, const char* function_name, 
 }
 
 
-bool LuaInterface::RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn, const char* message) {
+bool LuaInterface::RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn, const char* message, bool is_door_open) {
 	if(!npc || spawn_scripts_reloading)
 		return false;
 
+	bool isUseDoorFunction = false;
+	if(!strcmp(function_name,"usedoor"))
+		isUseDoorFunction = true;
+		
 	lua_State* state = GetSpawnScript(script_name.c_str(), true, true);
 	if(state){
 		Mutex* mutex = GetSpawnScriptMutex(script_name.c_str());
@@ -1993,11 +2001,18 @@ bool LuaInterface::RunSpawnScript(string script_name, const char* function_name,
 		}
 		SetSpawnValue(state, npc);
 		int8 num_parms = 1;
-		if(spawn){
+		// we always send spawn, even if null (nil) when its 'usedoor' function
+		if(spawn || isUseDoorFunction){
 			SetSpawnValue(state, spawn);
 			num_parms++;
 		}
-		if(message){
+
+		// usedoor function always passes just npc, spawn and is_door_open
+		if(isUseDoorFunction){
+			SetBooleanValue(state, is_door_open);
+			num_parms++;
+		}
+		else if(message){
 			SetStringValue(state, message);
 			num_parms++;
 		}

@@ -548,4 +548,8 @@ int EQ2Emu_lua_SetCharSheetChanged(lua_State* state);
 
 int EQ2Emu_lua_AddPlayerMail(lua_State* state);
 int EQ2Emu_lua_AddPlayerMailByCharID(lua_State* state);
+
+int EQ2Emu_lua_OpenDoor(lua_State* state);
+int EQ2Emu_lua_CloseDoor(lua_State* state);
+int EQ2Emu_lua_IsOpen(lua_State* state);
 #endif

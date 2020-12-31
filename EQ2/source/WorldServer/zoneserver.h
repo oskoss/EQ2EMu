@@ -87,6 +87,7 @@ class Bot;
 #define SPAWN_SCRIPT_GROUP_DEAD			17
 #define SPAWN_SCRIPT_HEAR_SAY			18
 #define SPAWN_SCRIPT_PRESPAWN			19
+#define SPAWN_SCRIPT_USEDOOR			20
 
 #define SPAWN_CONDITIONAL_NONE			0
 #define SPAWN_CONDITIONAL_DAY			1
@@ -309,7 +310,7 @@ public:
 	
 	EQ2Packet* GetZoneInfoPacket(Client* client);
 	Spawn*	FindSpawn(Player* searcher, const char* name);
-	bool	CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn = 0, const char* message = 0);
+	bool	CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn = 0, const char* message = 0, bool is_door_open = false);
 	void	SendSpawnVisualState(Spawn* spawn, int16 type);
 	void	SendSpellFailedPacket(Client* client, int16 error);
 	void	SendInterruptPacket(Spawn* interrupted, LuaSpell* spell);

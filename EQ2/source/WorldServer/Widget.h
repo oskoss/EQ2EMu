@@ -22,6 +22,7 @@
 #include "Spawn.h"
 #include "client.h"
 #include <string.h>
+#include <mutex>
 
 using namespace std;
 #define WIDGET_TYPE_GENERIC	0
@@ -80,7 +81,7 @@ public:
 	void	SetCloseSound(const char* name);
 	void	SetOpenDuration(int16 val);
 	int16	GetOpenDuration();
-	void	ProcessUse();
+	void	ProcessUse(Spawn* caller=nullptr);
 	void	SetHouseID(int32 val) { m_houseID = val; }
 	int32	GetHouseID() { return m_houseID; }
 
@@ -101,7 +102,6 @@ public:
 
 		return string("Generic");
 	}
-
 private:
 	int8	widget_type;
 	bool	include_location;
@@ -128,5 +128,6 @@ private:
 	float	close_x;
 	float	close_z;
 	bool	multi_floor_lift;
+	std::mutex MWidgetMutex;
 };
 #endif

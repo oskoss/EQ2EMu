@@ -24,10 +24,12 @@
 #include "World.h"
 #include "../common/Log.h"
 #include "ClientPacketFunctions.h"
+#include "LuaInterface.h"
 
 extern World world;
 extern ConfigReader configReader;
 extern MasterSpellList master_spell_list;
+extern LuaInterface* lua_interface;
 
 Widget::Widget(){
 	widget_id = 0;
@@ -201,7 +203,9 @@ void Widget::SetCloseY(float val){
 	close_y = val;
 }
 bool Widget::IsOpen(){
-	return is_open;
+	std::lock_guard<std::mutex> lk(MWidgetMutex);
+	bool widget_open = is_open;
+	return widget_open;
 }
 int8 Widget::GetWidgetType(){
 	return widget_type;
@@ -244,10 +248,11 @@ void Widget::HandleTimerUpdate(){
 	if(widget_type == WIDGET_TYPE_LIFT)
 		return; //This Widget is a lift, return.
 	else if (widget_type == WIDGET_TYPE_DOOR && is_open)
-		HandleUse(0, "");
+		HandleUse(nullptr, "");
 }
 
 void Widget::OpenDoor(){
+	std::lock_guard<std::mutex> lk(MWidgetMutex);
 	if(GetOpenHeading() >= 0)
 		SetHeading(GetOpenHeading());
 	float openX = GetOpenX();
@@ -282,6 +287,7 @@ void Widget::OpenDoor(){
 }
 
 void Widget::CloseDoor(){
+	std::lock_guard<std::mutex> lk(MWidgetMutex);
 	if(GetClosedHeading() > 0)
 		SetHeading(GetClosedHeading());
 	else if(GetOpenHeading() >= 0)
@@ -316,20 +322,29 @@ void Widget::CloseDoor(){
 	GetZone()->SendSpawnChanges(this);
 }
 
-void Widget::ProcessUse(){
+void Widget::ProcessUse(Spawn* caller){
 	if(widget_type == WIDGET_TYPE_LIFT && GetZone()->HasWidgetTimer(this)) //this door is a lift and in use, wait until it gets to the 
 		return;
-	if(is_open) //close
-		CloseDoor();
-	else //open
-		OpenDoor();
-	if(is_open){
-		if(GetOpenSound())
-			GetZone()->PlaySoundFile(0, GetOpenSound(), widget_x, widget_y, widget_z);
+	if (GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_USEDOOR, caller, "", is_open)) {
+		// handled in lua, nothing to do here!
 	}
-	else	
-		if(GetCloseSound())
-			GetZone()->PlaySoundFile(0, GetCloseSound(), widget_x, widget_y, widget_z);
+	else
+	{
+		bool wasOpen = IsOpen();
+			if(wasOpen) //close
+			CloseDoor();
+		else //open
+			OpenDoor();
+
+		bool isOpen = IsOpen();
+		if(isOpen){
+			if(GetOpenSound())
+				GetZone()->PlaySoundFile(0, GetOpenSound(), widget_x, widget_y, widget_z);
+		}
+		else	
+			if(GetCloseSound())
+				GetZone()->PlaySoundFile(0, GetCloseSound(), widget_x, widget_y, widget_z);
+	}
 }
 
 void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
@@ -353,7 +368,7 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 		client->SetTemporaryTransportID(0);
 		GetZone()->GetTransporters(&destinations, client, GetTransporterID());
 	}
-	if (destinations.size())
+	if (destinations.size() && client)
 		client->ProcessTeleport(this, &destinations, GetTransporterID());
 	else if (overrideWidgetType == WIDGET_TYPE_DOOR || overrideWidgetType == WIDGET_TYPE_LIFT){
 		Widget* widget = this;
@@ -369,7 +384,7 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 		}
 		if (linked_spawn){
 			widget = linked_spawn;
-			ProcessUse(); //fire the first door, then fire the linked door below
+			ProcessUse(client ? client->GetPlayer() : nullptr); //fire the first door, then fire the linked door below
 		}
 		else if (action_spawn) {
 			widget = action_spawn;
@@ -380,9 +395,9 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 			}
 
 			if (widget->linked_spawn)
-				widget->linked_spawn->ProcessUse();
+				widget->linked_spawn->ProcessUse(client ? client->GetPlayer() : nullptr);
 		}
-		widget->ProcessUse();
+		widget->ProcessUse(client ? client->GetPlayer() : nullptr);
 	}
 	else if (client && m_houseID > 0 && strncasecmp("access", command.c_str(), 6) == 0) {
 		// Used a door to enter a house

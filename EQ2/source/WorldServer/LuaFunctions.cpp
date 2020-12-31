@@ -4389,7 +4389,7 @@ int EQ2Emu_lua_UseWidget(lua_State* state) {
 	if (lua_interface) {
 		widget = lua_interface->GetSpawn(state);
 		if (widget && widget->IsWidget())
-			((Widget*)widget)->HandleUse(NULL, "");
+			((Widget*)widget)->HandleUse(nullptr, "");
 	}
 
 	return 0;
@@ -11575,4 +11575,62 @@ int EQ2Emu_lua_AddPlayerMailByCharID(lua_State* state) {
 	Client::CreateMail(char_id, fromName, subjectName, mailBody, mailType, copper, silver, gold, platinum, item_id, stack_size, time_sent, expire_time);
 	lua_interface->SetBooleanValue(state, true);
 	return 1;
+}
+
+int EQ2Emu_lua_OpenDoor(lua_State* state) {
+	Spawn* widget;
+
+	if (lua_interface) {
+		widget = lua_interface->GetSpawn(state);
+		bool disable_open_sound = lua_interface->GetBooleanValue(state, 2);
+
+		lua_interface->ResetFunctionStack(state);
+
+		if (widget && widget->IsWidget())
+		{
+			((Widget*)widget)->OpenDoor();
+
+			if(!disable_open_sound && ((Widget*)widget)->IsOpen() && ((Widget*)widget)->GetOpenSound())
+				widget->GetZone()->PlaySoundFile(0, ((Widget*)widget)->GetOpenSound(), ((Widget*)widget)->GetX(), ((Widget*)widget)->GetY(), ((Widget*)widget)->GetZ());
+		}
+		else
+			lua_interface->LogError("%s: LUA OpenDoor command error: spawn is not valid, either does not exist or is not a widget", lua_interface->GetScriptName(state));
+	}
+
+	return 0;
+}
+
+int EQ2Emu_lua_CloseDoor(lua_State* state) {
+	Spawn* widget;
+
+	if (lua_interface) {
+		widget = lua_interface->GetSpawn(state);
+		bool disable_close_sound = lua_interface->GetBooleanValue(state, 2);
+		
+		lua_interface->ResetFunctionStack(state);
+
+		if (widget && widget->IsWidget())
+		{
+			((Widget*)widget)->CloseDoor();
+
+			if(!disable_close_sound && !((Widget*)widget)->IsOpen() && ((Widget*)widget)->GetCloseSound())
+				widget->GetZone()->PlaySoundFile(0, ((Widget*)widget)->GetCloseSound(), ((Widget*)widget)->GetX(), ((Widget*)widget)->GetY(), ((Widget*)widget)->GetZ());
+		}
+		else
+			lua_interface->LogError("%s: LUA CloseDoor command error: spawn is not valid, either does not exist or is not a widget", lua_interface->GetScriptName(state));
+	}
+
+	return 0;
+}
+
+int EQ2Emu_lua_IsOpen(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* widget = lua_interface->GetSpawn(state);
+	if (widget && widget->IsWidget())
+	{
+		lua_interface->SetBooleanValue(state, ((Widget*)widget)->IsOpen());
+		return 1;
+	}
+	return 0;
 }

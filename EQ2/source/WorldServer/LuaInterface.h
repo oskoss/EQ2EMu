@@ -248,7 +248,7 @@ public:
 	void			RemoveSpawnScript(const char* name);
 	bool			RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn = 0);
 	bool			CallItemScript(lua_State* state, int8 num_parameters);
-	bool			RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn = 0, const char* message = 0);
+	bool			RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn = 0, const char* message = 0, bool is_door_open = false);
 	bool			CallSpawnScript(lua_State* state, int8 num_parameters);
 	bool			RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn = 0, int32 int32_arg1 = 0, const char* str_arg1 = 0, Spawn* spawn_arg1 = 0, int32 int32_arg2 = 0, const char* str_arg2 = 0, Spawn* spawn_arg2 = 0);
 	bool			CallZoneScript(lua_State* state, int8 num_parameters);

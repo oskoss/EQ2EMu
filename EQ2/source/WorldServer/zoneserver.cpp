@@ -2575,7 +2575,7 @@ void ZoneServer::AddSpawnGroupLocation(int32 group_id, int32 location_id, int32 
 	MSpawnGroupAssociation.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char* message){
+bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char* message, bool is_door_open){
 
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Enter %s", __FUNCTION__);
 	if(!npc)
@@ -2696,6 +2696,10 @@ bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 			}
 			case SPAWN_SCRIPT_PRESPAWN: {
 				lua_interface->RunSpawnScript(script, "prespawn", npc);
+				break;
+			}
+			case SPAWN_SCRIPT_USEDOOR: {
+				lua_interface->RunSpawnScript(script, "usedoor", npc, spawn, "", is_door_open);
 				break;
 			}
 			default:
