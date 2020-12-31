@@ -3036,7 +3036,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		}
 		case COMMAND_GM:
 		{
-			if (sep->arg[0] && sep->arg[1])
+			if (sep && sep->arg[0] && sep->arg[1])
 			{
 				bool onOff = (strcmp(sep->arg[1], "on") == 0);
 				if (strcmp(sep->arg[0], "vision") == 0)
@@ -3549,25 +3549,56 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			spawn->SetSpawnOrigY(spawn->GetY());
 			spawn->SetSpawnOrigZ(spawn->GetZ());
 			spawn->SetSpawnOrigHeading(spawn->GetHeading());
-			spawn->appearance.targetable = 1;
-			spawn->appearance.race = 255;
-			spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
-			spawn->SetModelType(atoi(sep->arg[1]));
-			spawn->SetAdventureClass(atoi(sep->arg[2]));
-			spawn->SetLevel(atoi(sep->arg[3]));
-			spawn->SetName(sep->arg[4]);
-			if(sep->arg[5][0] && sep->IsNumber(5))
-				spawn->SetEncounterLevel(atoi(sep->arg[5]));
-			if(sep->arg[6][0] && sep->IsNumber(6))
-				spawn->size = atoi(sep->arg[6]);
-			if(spawn->GetTotalHP() == 0){
-				spawn->SetTotalHP(25*spawn->GetLevel() + 1);
-				spawn->SetHP(25*spawn->GetLevel() + 1);
+
+			
+			if(spawn->IsSign())
+			{
+				((Sign*)spawn)->SetSignType(SIGN_TYPE_GENERIC);
+				((Sign*)spawn)->SetSignDistance(20.0f);
+				((Sign*)spawn)->SetIncludeLocation(1);
+				((Sign*)spawn)->SetIncludeHeading(1);
+				((Sign*)spawn)->SetInitialState(1);
+				((Sign*)spawn)->SetSignTitle(sep->arg[4]);
+				((Sign*)spawn)->SetActivityStatus(64);
+				spawn->appearance.race = 0;
+				spawn->SetLevel(0);
+				spawn->SetHP(0);
+				spawn->SetTotalHP(0);
+				spawn->SetPower(0);
+				spawn->SetTotalPower(0);
+				spawn->SetEncounterLevel(0);
+				spawn->SetTargetable(0);
+				spawn->SetSogaModelType(0);
+				spawn->SetCollisionRadius(19);
+				((Sign*)spawn)->SetWidgetX(client->GetPlayer()->GetX());
+				((Sign*)spawn)->SetWidgetY(client->GetPlayer()->GetY());
+				((Sign*)spawn)->SetWidgetZ(client->GetPlayer()->GetZ());
+				spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				spawn->appearance.model_type = atoul(sep->arg[1]);
 			}
-			if(spawn->GetTotalPower() == 0){
-				spawn->SetTotalPower(25*spawn->GetLevel() + 1);
-				spawn->SetPower(25*spawn->GetLevel() + 1);
+			else
+			{
+				spawn->appearance.targetable = 1;
+				spawn->appearance.race = 255;
+				spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				spawn->SetModelType(atoi(sep->arg[1]));
+				spawn->SetAdventureClass(atoi(sep->arg[2]));
+				spawn->SetLevel(atoi(sep->arg[3]));
+				spawn->SetName(sep->arg[4]);
+				if(sep->arg[5][0] && sep->IsNumber(5))
+					spawn->SetEncounterLevel(atoi(sep->arg[5]));
+				if(sep->arg[6][0] && sep->IsNumber(6))
+					spawn->size = atoi(sep->arg[6]);
+				if(spawn->GetTotalHP() == 0){
+					spawn->SetTotalHP(25*spawn->GetLevel() + 1);
+					spawn->SetHP(25*spawn->GetLevel() + 1);
+				}
+				if(spawn->GetTotalPower() == 0){
+					spawn->SetTotalPower(25*spawn->GetLevel() + 1);
+					spawn->SetPower(25*spawn->GetLevel() + 1);
+				}
 			}
+
 			client->GetCurrentZone()->AddSpawn(spawn);
 			break;
 								  }
