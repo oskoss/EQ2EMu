@@ -26,6 +26,7 @@ typedef struct Region_Node {
 	string regionName;
 	int32 grid_id;
 	string regionScriptName;
+	int32 vert_count;
 } Region_Node;
 #pragma pack()
 
@@ -71,7 +72,6 @@ private:
 	friend class RegionMap;
 
 	int32 mVersion;
-	int32 BSPTreeSize;
 	std::string mZoneNameLower;
 };
 

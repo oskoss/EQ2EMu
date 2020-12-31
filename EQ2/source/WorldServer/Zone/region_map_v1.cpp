@@ -9,7 +9,6 @@
 extern LuaInterface* lua_interface;
 
 RegionMapV1::RegionMapV1() {
-	BSPTreeSize = 0;
 	mVersion = 1;
 }
 
@@ -74,7 +73,7 @@ bool RegionMapV1::Load(FILE* fp, std::string inZoneNameLwr, int32 version) {
 	mZoneNameLower = string(inZoneNameLwr.c_str());
 	
 	uint32 region_size;
-	if (fread(&region_size, sizeof(region_size), 1, fp) != 1) {
+	if (fread(&region_size, sizeof(uint32), 1, fp) != 1) {
 		return false;
 	}
 
@@ -83,26 +82,26 @@ bool RegionMapV1::Load(FILE* fp, std::string inZoneNameLwr, int32 version) {
 	for (int i = 0; i < region_size; i++)
 	{
 		uint32 region_num;
-		if (fread(&region_num, sizeof(region_num), 1, fp) != 1) {
+		if (fread(&region_num, sizeof(uint32), 1, fp) != 1) {
 			return false;
 		}
 
 		uint32 region_type;
-		if (fread(&region_type, sizeof(region_type), 1, fp) != 1) {
+		if (fread(&region_type, sizeof(uint32), 1, fp) != 1) {
 			return false;
 		}
 
 		float x, y, z, dist;
-		if (fread(&x, sizeof(x), 1, fp) != 1) {
+		if (fread(&x, sizeof(float), 1, fp) != 1) {
 			return false;
 		}
-		if (fread(&y, sizeof(y), 1, fp) != 1) {
+		if (fread(&y, sizeof(float), 1, fp) != 1) {
 			return false;
 		}
-		if (fread(&z, sizeof(z), 1, fp) != 1) {
+		if (fread(&z, sizeof(float), 1, fp) != 1) {
 			return false;
 		}
-		if (fread(&dist, sizeof(dist), 1, fp) != 1) {
+		if (fread(&dist, sizeof(float), 1, fp) != 1) {
 			return false;
 		}
 
@@ -135,20 +134,18 @@ bool RegionMapV1::Load(FILE* fp, std::string inZoneNameLwr, int32 version) {
 			
 			LogWrite(REGION__DEBUG, 7, "Region", "Region name file name = %s", regionName);
 
-			if (fread(&grid_id, sizeof(grid_id), 1, fp) != 1) {
+			if (fread(&grid_id, sizeof(uint32), 1, fp) != 1) {
 				return false;
 			}
 
 		}
 
-		uint32 bsp_tree_size;
-		if (fread(&bsp_tree_size, sizeof(bsp_tree_size), 1, fp) != 1) {
+		int32 bsp_tree_size;
+		if (fread(&bsp_tree_size, sizeof(int32), 1, fp) != 1) {
 			return false;
 		}
 
-		BSPTreeSize = bsp_tree_size;
-
-		LogWrite(REGION__DEBUG, 0, "RegionMap", "region x,y,z,dist = %f, %f, %f, %f, region bsp tree size: %u", x, y, z, dist, bsp_tree_size);
+		LogWrite(REGION__DEBUG, 7, "Region", "region x,y,z,dist = %f, %f, %f, %f, region bsp tree size: %i\n", x, y, z, dist, bsp_tree_size);
 
 		ZBSP_Node* BSP_Root = new ZBSP_Node[bsp_tree_size];
 		if (fread(BSP_Root, sizeof(ZBSP_Node), bsp_tree_size, fp) != bsp_tree_size) {
@@ -178,6 +175,8 @@ bool RegionMapV1::Load(FILE* fp, std::string inZoneNameLwr, int32 version) {
 			tmpNode->regionScriptName = TestFile("default");
 		}
 		
+		tmpNode->vert_count = bsp_tree_size;
+
 		Regions.insert(make_pair(tmpNode, BSP_Root));
 	}
 
@@ -496,14 +495,19 @@ WaterRegionType RegionMapV1::BSPReturnRegionType(int32 node_number, const glm::v
 }
 
 WaterRegionType RegionMapV1::BSPReturnRegionTypeNode(const Region_Node* region_node, const ZBSP_Node* BSP_Root, int32 node_number, const glm::vec3& location, float distToNode) const {
-	if(node_number == 4294967295)
-		return RegionTypeNormal;
+	if(node_number > region_node->vert_count)
+	{
+		LogWrite(REGION__DEBUG, 0, "Region", "Region %s grid %u (%s) - Node %u is out of range for region max vert count of %i.  Hit at location %f %f %f.", 
+		region_node->regionName.c_str(), region_node->grid_id, region_node->regionScriptName.c_str(), node_number, region_node->vert_count,
+		location.x, location.y, location.z);
+		return (RegionTypeWater);
+	}
 		
 	const ZBSP_Node* current_node = &BSP_Root[node_number - 1];
 	float distance;
 
 #ifdef REGIONDEBUG
-	printf("left = %u, right %u (Size: %u)\n", current_node->left, current_node->right, BSPTreeSize);
+	printf("left = %u, right %u (Size: %i)\n", current_node->left, current_node->right, region_node->vert_count);
 #endif
 
 	if (region_node->region_type == ClassWaterRegion2)
