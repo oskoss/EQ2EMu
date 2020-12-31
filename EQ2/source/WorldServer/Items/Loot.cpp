@@ -453,7 +453,7 @@ NPC* Entity::DropChest() {
 	int8 highest_tier = 0;
 	vector<Item*>::iterator itr;	
 	for (itr = ((Spawn*)this)->GetLootItems()->begin(); itr != ((Spawn*)this)->GetLootItems()->end(); ) {
-		if ((*itr)->details.tier >= ITEM_TAG_UNCOMMON) {
+		if ((*itr)->details.tier >= ITEM_TAG_UNCOMMON && !(*itr)->IsBodyDrop()) {
 			if ((*itr)->details.tier > highest_tier)
 				highest_tier = (*itr)->details.tier;
 

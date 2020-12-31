@@ -1281,6 +1281,10 @@ bool Item::IsHarvest() {
 	return generic_info.harvest == 1;
 }
 
+bool Item::IsBodyDrop() {
+	return generic_info.body_drop == 1;
+}
+
 bool Item::IsTradeskill(){
 	LogWrite(MISC__TODO, 1, "TODO", "Item Is Crafted\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	return false;

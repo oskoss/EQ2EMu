@@ -697,6 +697,7 @@ public:
 		int16					tradeskill_default_level;
 		int8					usable;
 		int8					harvest;
+		int8					body_drop;
 	};
 	struct Armor_Info {
 		int16					mitigation_low;
@@ -913,6 +914,7 @@ public:
 	bool IsTradeskill();
 	bool IsThrown();
 	bool IsHarvest();
+	bool IsBodyDrop();
 	void SetItemScript(string name);
 	const char*	GetItemScript();
 	int32 CalculateRepairCost();

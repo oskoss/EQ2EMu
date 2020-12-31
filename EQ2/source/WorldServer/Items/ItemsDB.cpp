@@ -282,6 +282,7 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	item->details.soe_id						= result->GetSInt32Str("soe_item_id");
 
 	item->generic_info.harvest					= result->GetInt8Str("harvest");
+	item->generic_info.body_drop				= result->GetInt8Str("body_drop");
 }
 
 int32 WorldDatabase::LoadSkillItems()
