@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using System.Collections.Generic;
 using System.IO.Compression;
 using System.Xml;
+using System.Text.RegularExpressions;
 
 using SlimDX;
 using SlimDX.D3DCompiler;
@@ -30,10 +31,12 @@ namespace EQ2ModelViewer
         private GraphicClass Graphics = new GraphicClass();
         public Model SelectedModel = null;
         private string ZoneFile;
+        private string AppendFileStr = "";
         private bool Render3DAspect = true;
         private bool AutoExportOnLoad = false;
         private bool AutoExportRegionOnLoad = false;
         private String AutoLoadFileName = "";
+        private bool IsLoaded = false;
         public frmMain()
         {
             InitializeComponent();
@@ -114,6 +117,15 @@ namespace EQ2ModelViewer
                     else if (cmd.Equals("exportregion"))
                     {
                         AutoExportRegionOnLoad = true;
+                    }
+                    else if ( cmd.StartsWith("appendexportfile"))
+                    {
+                        int equalsSign = cmd.IndexOf("=");
+                        if (equalsSign > 0 && (equalsSign+1) < cmd.Length)
+                        {
+                            string appendFileVal = cmd.Substring(equalsSign+1, cmd.Length - equalsSign - 1);
+                            AppendFileStr = appendFileVal;
+                        }
                     }
                     else
                     {
@@ -313,6 +325,8 @@ namespace EQ2ModelViewer
         public static String DirName = "";
         private void LoadZoneFile(String filename="")
         {
+            IsLoaded = false;
+
             bool isDrawFile = false;
 
             string fullName = "";
@@ -389,6 +403,10 @@ namespace EQ2ModelViewer
                 return;
             }
             region_nodes = 0;
+
+            if (!File.Exists(filename))
+                return;
+
             System.IO.BinaryReader reader2 = new System.IO.BinaryReader(new System.IO.FileStream(filename, System.IO.FileMode.Open, System.IO.FileAccess.Read));
                 // Image(2020): Was ReadUint32, qey_harbor.lut however has 00 1F 00 7A, so that as an int32 is a very large number!
                 reader2.ReadUInt32();
@@ -421,18 +439,22 @@ namespace EQ2ModelViewer
                     // 16 bytes between file names, grid id's maybe?
                     reader2.ReadBytes(16);
                 } while (true);
+
+            IsLoaded = true;
             }
 
         float x, y, z = 0;
         float yaw, pitch, roll = 0;
         float scale = 0;
         UInt32 widgetID;
-        UInt32 regionMapVersion = 1;
+        UInt32 regionMapVersion = 2;
         private void toolStripMenuItemExportWater_Click(object sender, EventArgs e)
         {
+            if (!IsLoaded)
+                return;
 
-            StreamWriter swfile = new StreamWriter(ZoneFile + ".regionread");
-            using (BinaryWriter file = new BinaryWriter(File.Open(ZoneFile + ".EQ2Region", FileMode.Create)))
+            StreamWriter swfile = new StreamWriter(ZoneFile + AppendFileStr + ".regionread");
+            using (BinaryWriter file = new BinaryWriter(File.Open(ZoneFile + AppendFileStr + ".EQ2Region", FileMode.Create)))
             {
                 file.Write(ZoneFile);
                 file.Write(regionMapVersion);
@@ -448,6 +470,17 @@ namespace EQ2ModelViewer
                     file.Write(region.position[1]);
                     file.Write(region.position[2]);
                     file.Write(region.splitdistance);
+                    file.Write(region.envFileChosen);
+
+                    String outFile = "";
+
+                    Regex trimmer = new Regex(@"(?!.*\/)(\w|\s|-)+\.region");
+                    Match out_ = trimmer.Match(region.parentNode.regionDefinitionFile);
+                    if (out_.Success && out_.Groups.Count > 0)
+                        outFile = out_.Value;
+
+                    file.Write(outFile);
+                    file.Write(region.GridID);
                     file.Write(region.vert_count);
                     swfile.WriteLine();
                     swfile.WriteLine("REGION: " + region.position[0] + " " + region.position[1] + " " + region.position[2] + " " + region.splitdistance + " - RegionType: " + region.region_type);
@@ -531,15 +564,43 @@ namespace EQ2ModelViewer
 
                 if (item is VeEnvironmentNode)
                 {
+                    String envFile = "";
+                    String writeFileName = "";
                     VeEnvironmentNode env = (VeEnvironmentNode)item;
-                    if (env.regionDefinitionFile != null && env.regionDefinitionFile.Length > 0)
+                    bool noFly = false;
+                    if (env.environmentDefinitions != null)
+                    {
+                        foreach (string str in env.environmentDefinitions)
+                        {
+                            if (str.Contains("no_fly.xml"))
+                            {
+                                /* <VdlFile xmlns="Vdl" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="Vdl BaseClasses.xsd">
+                                      <Environment VDLTYPE="OBJECT">
+                                        <iPriority VDLTYPE="INT">1</iPriority>
+                                        <bOverrideZoneAllowFlying VDLTYPE="BOOL">true</bOverrideZoneAllowFlying>
+                                        <bAllowFlying VDLTYPE="BOOL">false</bAllowFlying>
+                                      </Environment>
+                                   </VdlFile>
+                                   */
+                                noFly = true;
+                                break;
+                            }
+                        }
+                    }
+                        if (noFly || env.regionDefinitionFile != null && env.regionDefinitionFile.Length > 0)
                     {
                         int waterType = 0;
-                        String envFile = "";
-                        if (env.environmentDefinitions != null)
+                        if (!noFly && env.environmentDefinitions != null)
                         {
                             foreach (string str in env.environmentDefinitions)
                             {
+                                writeFileName = str;
+
+                                Regex trimmer = new Regex(@"(?!.*\/)(\w|\s|-)+\.xml");
+                                Match out_ = trimmer.Match(writeFileName);
+                                if (out_.Success && out_.Groups.Count > 0)
+                                    writeFileName = out_.Value;
+
                                 envFile = str;
                                 envFile = envFile.Replace("/", "\\");
 
@@ -550,58 +611,81 @@ namespace EQ2ModelViewer
                             }
                         }
 
-                        bool watervol = env.regionDefinitionFile.Contains("watervol");
-                        bool waterregion = env.regionDefinitionFile.Contains("waterregion");
-                        bool waterregion2 = env.regionDefinitionFile.Contains("water_region");
-                        bool iswater = env.regionDefinitionFile.Contains("water");
-                        bool isocean = env.regionDefinitionFile.Contains("ocean");
-                        bool isvolume = env.regionDefinitionFile.Contains("volume");
-                        AppendLoadFile("Region established: " + waterType + ", " + envFile
-                            + " WaterVol: " + watervol + " WaterRegion: " + waterregion +
-                            " WaterRegion2: " + waterregion2 + " IsWater: " + iswater +
-                            " IsOcean: " + isocean + " IsVolume: " + isvolume);
-                        if (waterType > 0)
+                        if (noFly)
                         {
-                            AppendLoadFile("Region accepted: " + waterType + ", " + envFile
-                                + " WaterVol: " + watervol + " WaterRegion: " + waterregion +
-                                " WaterRegion2: " + waterregion2 + " IsWater: " + iswater +
-                                " IsOcean: " + isocean + " IsVolume: " + isvolume);
-                            Eq2Reader reader2 = new Eq2Reader(new System.IO.FileStream(DirName + env.regionDefinitionFile, System.IO.FileMode.Open, System.IO.FileAccess.Read));
-                            VeRegion region = (VeRegion)reader2.ReadObject();
-                            region.parentNode = env;
-                            region.region_type = 0; // default water volume
-
-                            if (waterregion) // 'sea'/ocean/waterregion in tutorial_island02 / qeynos_harbor
-                                region.region_type = 1;
-                            else if (waterregion2)
-                                region.region_type = 0;
-                            else if (isvolume && selectNodeParent)
-                                region.region_type = 4;
-                            else if ((isocean && selectNodeParent)) // ocean in antonica/commonlands/tutorial
-                                region.region_type = 3;
-                            else if (isocean && iswater) // caves in frostfang(halas)
-                                region.region_type = 4;
-                            else if (isocean)
-                                region.region_type = 5;
-
-                            region.special = waterType;
-                            MeshClass tmpMesh = new MeshClass();
-                            region_nodes += region.vert_count;
-                            m_Regions.Add(region);
+                            /* no fly does not have normals in a env.regionDefinitionFile
+                            ** perhaps they expect us to use the VolumeBox at the parent level?
+                            */
                         }
                         else
                         {
-                            if (env.regionDefinitionFile != null)
+                            bool watervol = env.regionDefinitionFile.Contains("watervol");
+                            bool waterregion = env.regionDefinitionFile.Contains("waterregion");
+                            bool waterregion2 = env.regionDefinitionFile.Contains("water_region");
+                            bool iswater = env.regionDefinitionFile.Contains("water");
+                            bool isocean = env.regionDefinitionFile.Contains("ocean");
+                            bool isvolume = env.regionDefinitionFile.Contains("volume");
+                            AppendLoadFile("Region established: " + waterType + ", " + envFile
+                                + " WaterVol: " + watervol + " WaterRegion: " + waterregion +
+                                " WaterRegion2: " + waterregion2 + " IsWater: " + iswater +
+                                " IsOcean: " + isocean + " IsVolume: " + isvolume);
+                            if (waterType == -2 || waterType == -3) // lava
                             {
-                                AppendLoadFile("Region skipped: " + env.regionDefinitionFile);
+                                AppendLoadFile("Lava region accepted: " + waterType + ", " + envFile);
+                                Eq2Reader reader2 = new Eq2Reader(new System.IO.FileStream(DirName + env.regionDefinitionFile, System.IO.FileMode.Open, System.IO.FileAccess.Read));
+                                VeRegion region = (VeRegion)reader2.ReadObject();
+                                region.parentNode = env;
+                                region.region_type = 1; // default 'region' algorithm
+                                region.special = -3;
+                                region.envFileChosen = writeFileName;
+                                region.GridID = GridID;
+                                region_nodes += region.vert_count;
+                                m_Regions.Add(region);
+                            }
+                            else if (waterType > 0)
+                            {
+                                AppendLoadFile("Region accepted: " + waterType + ", " + envFile
+                                    + " WaterVol: " + watervol + " WaterRegion: " + waterregion +
+                                    " WaterRegion2: " + waterregion2 + " IsWater: " + iswater +
+                                    " IsOcean: " + isocean + " IsVolume: " + isvolume);
+                                Eq2Reader reader2 = new Eq2Reader(new System.IO.FileStream(DirName + env.regionDefinitionFile, System.IO.FileMode.Open, System.IO.FileAccess.Read));
+                                VeRegion region = (VeRegion)reader2.ReadObject();
+                                region.parentNode = env;
+                                region.region_type = 0; // default water volume
+
+                                if (waterregion) // 'sea'/ocean/waterregion in tutorial_island02 / qeynos_harbor
+                                    region.region_type = 1;
+                                else if (waterregion2)
+                                    region.region_type = 0;
+                                else if (isvolume && selectNodeParent)
+                                    region.region_type = 4;
+                                else if ((isocean && selectNodeParent)) // ocean in antonica/commonlands/tutorial
+                                    region.region_type = 3;
+                                else if (isocean && iswater) // caves in frostfang(halas)
+                                    region.region_type = 4;
+                                else if (isocean)
+                                    region.region_type = 5;
+
+                                region.special = waterType;
+                                region_nodes += region.vert_count;
+                                region.envFileChosen = writeFileName;
+                                region.GridID = GridID;
+                                m_Regions.Add(region);
                             }
                             else
-                                AppendLoadFile("Region skipped: ???");
-
-                            if (env.environmentDefinitions != null)
                             {
-                                foreach (string str in env.environmentDefinitions)
-                                    AppendLoadFile("EnvDefinition: " + str);
+                                if (env.regionDefinitionFile != null)
+                                {
+                                    AppendLoadFile("Region skipped: " + env.regionDefinitionFile);
+                                }
+                                else
+                                    AppendLoadFile("Region skipped: ???");
+
+                                if (env.environmentDefinitions != null)
+                                {
+                                    foreach (string str in env.environmentDefinitions)
+                                        AppendLoadFile("EnvDefinition: " + str);
+                                }
                             }
                         }
                     }
@@ -805,6 +889,9 @@ namespace EQ2ModelViewer
 
         private void exportToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!IsLoaded)
+                return;
+
             //List<Vector3> MasterVertexList = new List<Vector3>();
             Dictionary<UInt32, List<Vector3>> MasterVertexList = new Dictionary<UInt32, List<Vector3>>();
             foreach (Model model in m_Models)
@@ -863,7 +950,7 @@ namespace EQ2ModelViewer
             }
 
 
-            using (StreamWriter file = new StreamWriter(ZoneFile + ".obj"))
+            using (StreamWriter file = new StreamWriter(ZoneFile + AppendFileStr + ".obj"))
             {
                 //   file.WriteLine(ZoneFile);
                 //  file.WriteLine("Min");
@@ -912,7 +999,7 @@ namespace EQ2ModelViewer
                 file.Close();
             }
 
-            using (BinaryWriter file = new BinaryWriter(File.Open(ZoneFile + ".EQ2Map", FileMode.Create)))
+            using (BinaryWriter file = new BinaryWriter(File.Open(ZoneFile + AppendFileStr + ".EQ2Map", FileMode.Create)))
             {
                 file.Write(ZoneFile);
                 file.Write(minX);
@@ -933,14 +1020,14 @@ namespace EQ2ModelViewer
                 }
                 file.Close();
             }
-            FileInfo fileToCompress = new FileInfo(ZoneFile + ".EQ2Map");
+            FileInfo fileToCompress = new FileInfo(ZoneFile + AppendFileStr + ".EQ2Map");
 
             using (FileStream originalFileStream = fileToCompress.OpenRead())
             {
                 if ((File.GetAttributes(fileToCompress.FullName) &
                    FileAttributes.Hidden) != FileAttributes.Hidden & fileToCompress.Extension != ".gz")
                 {
-                    using (FileStream compressedFileStream = File.Create(ZoneFile + ".EQ2MapDeflated"))
+                    using (FileStream compressedFileStream = File.Create(ZoneFile + AppendFileStr + ".EQ2MapDeflated"))
                     {
                         using (GZipStream compressionStream = new GZipStream(compressedFileStream,
                            CompressionMode.Compress))
@@ -948,7 +1035,7 @@ namespace EQ2ModelViewer
                             originalFileStream.CopyTo(compressionStream);
                         }
                     }
-                    FileInfo info = new FileInfo(ZoneFile + ".EQ2MapDeflated");
+                    FileInfo info = new FileInfo(ZoneFile + AppendFileStr + ".EQ2MapDeflated");
                     Console.WriteLine($"Compressed {fileToCompress.Name} from {fileToCompress.Length.ToString()} to {info.Length.ToString()} bytes.");
                 }
             }

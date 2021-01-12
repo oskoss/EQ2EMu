@@ -96,5 +96,7 @@ namespace Everquest2.Visualization
         float[,] m_center; // 1-3 is vector center, 4th is radius
         public int region_type;
         public int special = 0;
+        public string envFileChosen = "";
+        public uint GridID = 0;
     }
 }
