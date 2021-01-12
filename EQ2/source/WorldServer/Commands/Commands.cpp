@@ -1330,9 +1330,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						if(item->GetItemScript() && lua_interface)
 							lua_interface->RunItemScript(item->GetItemScript(), "examined", item, client->GetPlayer());
 						else if(item->generic_info.offers_quest_id > 0){ //leave the current functionality in place if it doesnt have an item script
-							Quest* quest = master_quest_list.GetQuest(item->generic_info.offers_quest_id);
+							Quest* quest = master_quest_list.GetQuest(item->generic_info.offers_quest_id, false);
 							if(quest && client->GetPlayer()->GetCompletedQuest(item->generic_info.offers_quest_id) == 0 && client->GetPlayer()->GetQuest(item->generic_info.offers_quest_id) == 0)
-								client->AddPendingQuest(quest);
+								client->AddPendingQuest(new Quest(quest)); // copy quest since we pulled the master quest to see if it existed or not
 						}
 					}
 					else

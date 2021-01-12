@@ -3311,7 +3311,7 @@ int EQ2Emu_lua_OfferQuest(lua_State* state) {
 
 	/* NPC is allowed to be null */
 	if (player && player->IsPlayer() && quest_id > 0) {
-		Quest* master_quest = master_quest_list.GetQuest(quest_id);
+		Quest* master_quest = master_quest_list.GetQuest(quest_id, false);
 		if (master_quest) {
 			Client* client = player->GetZone()->GetClientBySpawn(player);
 			if (!client) {

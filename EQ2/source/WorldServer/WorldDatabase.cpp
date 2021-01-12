@@ -2485,7 +2485,10 @@ void WorldDatabase::LoadCharacterQuests(Client* client){
 					// If given timestamp is greater then completed then this is a repeatable quest we are working on
 					// so get a fresh quest object to add as an active quest
 					if (given_timestamp > completed_timestamp)
+					{
+						safe_delete(quest);
 						quest = master_quest_list.GetQuest(atoul(row[0]));
+					}
 					else
 						addQuest = false;
 

@@ -4498,7 +4498,7 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 			MPlayerQuests.unlock();
 			if (CanReceiveQuest(quests->at(i))){
 				MPlayerQuests.lock();
-				quest = master_quest_list.GetQuest(quests->at(i));
+				quest = master_quest_list.GetQuest(quests->at(i), false);
 				MPlayerQuests.unlock();
 				if(quest){
 					int8 color = quest->GetFeatherColor();
@@ -4514,7 +4514,6 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 					// normal
 					else
 						ret = 1;
-					safe_delete(quest);
 					break;
 				}
 			}
@@ -4536,7 +4535,7 @@ bool Player::CanReceiveQuest(int32 quest_id){
 	bool passed = true;
 	int32 x;
 	MPlayerQuests.lock();
-	Quest* quest = master_quest_list.GetQuest(quest_id);
+	Quest* quest = master_quest_list.GetQuest(quest_id, false);
 	MPlayerQuests.unlock();
 	if (!quest)
 		passed = false;
@@ -4644,7 +4643,6 @@ bool Player::CanReceiveQuest(int32 quest_id){
 		}
 	}
 
-	safe_delete(quest);
 	return passed;
 }
 

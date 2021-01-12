@@ -2248,14 +2248,14 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	packet->setSubstructDataByName("footer", "collection_needed", player->GetCollectionList()->NeedsItem(this) ? 1 : 0);
 
 	if(generic_info.offers_quest_id > 0){
-		Quest* quest = master_quest_list.GetQuest(generic_info.offers_quest_id);
+		Quest* quest = master_quest_list.GetQuest(generic_info.offers_quest_id, false);
 		if(quest){
 			packet->setSubstructDataByName("footer", "offers_quest", quest->GetName());
 			packet->setSubstructDataByName("footer", "quest_color", player->GetArrowColor(quest->GetQuestLevel()));
 		}
 	}
 	if(generic_info.part_of_quest_id > 0){
-		Quest* quest = master_quest_list.GetQuest(generic_info.part_of_quest_id);
+		Quest* quest = master_quest_list.GetQuest(generic_info.part_of_quest_id, false);
 		if(quest){
 			packet->setSubstructDataByName("footer", "part_of_quest", quest->GetName());
 			packet->setSubstructDataByName("footer", "quest_color", player->GetArrowColor(quest->GetQuestLevel()));

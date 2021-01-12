@@ -384,9 +384,14 @@ protected:
 class MasterQuestList{
 public:
 	MasterQuestList();
-	Quest* GetQuest(int32 id){
+	Quest* GetQuest(int32 id, bool copyQuest = true){
 		if(quests.count(id) > 0)
-			return new Quest(quests[id]);
+		{
+			if(copyQuest)
+				return new Quest(quests[id]);
+			else
+				return quests[id];
+		}
 		else
 			return 0;
 	}
