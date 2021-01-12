@@ -2699,7 +2699,7 @@ bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 				break;
 			}
 			case SPAWN_SCRIPT_USEDOOR: {
-				lua_interface->RunSpawnScript(script, "usedoor", npc, spawn, "", is_door_open);
+				result = lua_interface->RunSpawnScript(script, "usedoor", npc, spawn, "", is_door_open);
 				break;
 			}
 			default:
