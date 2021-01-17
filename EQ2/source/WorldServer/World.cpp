@@ -2363,7 +2363,7 @@ void ZoneList::WatchdogHeartbeat()
 					LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. attempting shutdown", tmp->GetZoneName(), diff);
 				tmp->Shutdown();
 			}
-			else if (diff > 60000)
+			else if (diff > 30000)
 			{		
 				if (world.IsReloadingSubsystems()) {
 					if (world.GetSuppressedWarningTime() == 0) {
@@ -2377,7 +2377,7 @@ void ZoneList::WatchdogHeartbeat()
 					continue;
 				}				
 			}
-			else if (diff > 30000 && !tmp->isZoneShuttingDown())
+			else if (diff > 60000 && !tmp->isZoneShuttingDown())
 			{
 				if (world.IsReloadingSubsystems())
 					continue;
