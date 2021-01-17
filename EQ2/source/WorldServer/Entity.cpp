@@ -1110,6 +1110,7 @@ EquipmentItemList* Entity::GetEquipmentList(){
 }
 
 void Entity::SetEquipment(Item* item, int8 slot){
+	std::lock_guard<std::mutex> lk(MEquipment);
 	if(!item && slot < NUM_SLOTS){
 		SetInfo(&equipment.equip_id[slot], 0);
 		SetInfo(&equipment.color[slot].red, 0);
@@ -1120,13 +1121,15 @@ void Entity::SetEquipment(Item* item, int8 slot){
 		SetInfo(&equipment.highlight[slot].blue, 0);
 	}
 	else{
-		SetInfo(&equipment.equip_id[item->details.slot_id], item->generic_info.appearance_id);
-		SetInfo(&equipment.color[item->details.slot_id].red, item->generic_info.appearance_red);
-		SetInfo(&equipment.color[item->details.slot_id].green, item->generic_info.appearance_green);
-		SetInfo(&equipment.color[item->details.slot_id].blue, item->generic_info.appearance_blue);
-		SetInfo(&equipment.highlight[item->details.slot_id].red, item->generic_info.appearance_highlight_red);
-		SetInfo(&equipment.highlight[item->details.slot_id].green, item->generic_info.appearance_highlight_green);
-		SetInfo(&equipment.highlight[item->details.slot_id].blue, item->generic_info.appearance_highlight_blue);
+		if ( slot >= NUM_SLOTS ) 
+			slot = item->details.slot_id;
+		SetInfo(&equipment.equip_id[slot], item->generic_info.appearance_id);
+		SetInfo(&equipment.color[slot].red, item->generic_info.appearance_red);
+		SetInfo(&equipment.color[slot].green, item->generic_info.appearance_green);
+		SetInfo(&equipment.color[slot].blue, item->generic_info.appearance_blue);
+		SetInfo(&equipment.highlight[slot].red, item->generic_info.appearance_highlight_red);
+		SetInfo(&equipment.highlight[slot].green, item->generic_info.appearance_highlight_green);
+		SetInfo(&equipment.highlight[slot].blue, item->generic_info.appearance_highlight_blue);
 	}
 }
 

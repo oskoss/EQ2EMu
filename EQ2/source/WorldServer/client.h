@@ -466,6 +466,7 @@ public:
 	void CreateAndUpdateMail(std::string fromName, std::string subjectName, std::string mailBody, 
 		int8 mailType, int32 copper, int32 silver, int32 gold, int32 platinum, int32 item_id, int16 stack_size, int32 time_sent, int32 expire_time);
 
+	void SendEquipOrInvUpdateBySlot(int8 slot);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

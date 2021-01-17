@@ -1201,6 +1201,7 @@ public:
 
 	void SetEquipment(Item* item, int8 slot = 255);
 	void SetEquipment(int8 slot, int16 type, int8 red, int8 green, int8 blue, int8 h_r, int8 h_g, int8 h_b){
+		std::lock_guard<std::mutex> lk(MEquipment);
 		SetInfo(&equipment.equip_id[slot], type);
 		SetInfo(&equipment.color[slot].red, red);
 		SetInfo(&equipment.color[slot].green, green);
@@ -1314,6 +1315,7 @@ public:
 	EQ2_Color* GetMountColor(){
 		return &features.mount_color;
 	}	
+	// should only be accessed through MEquipment mutex
 	EQ2_Equipment	equipment;
 	CharFeatures	features;	
 
@@ -1531,6 +1533,9 @@ public:
 	bool SetInfoStructUInt(std::string field, int64 value);
 	bool SetInfoStructSInt(std::string field, sint64 value);
 	bool SetInfoStructFloat(std::string field, float value);
+
+	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
+	std::mutex		MEquipment;
 protected:
 	bool	in_combat;
 
@@ -1614,7 +1619,6 @@ private:
 	map<string, boost::function<void(sint8)> > set_sint8_funcs;
 	
 	map<string, boost::function<void(std::string)> > set_string_funcs;
-
 };
 
 #endif

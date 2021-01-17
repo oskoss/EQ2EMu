@@ -5995,6 +5995,8 @@ int EQ2Emu_lua_HasItemEquipped(lua_State* state) {
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
 	int32 item_id = lua_interface->GetInt32Value(state, 2);
+	
+	lua_interface->ResetFunctionStack(state);
 	if (!player->IsPlayer()) {
 		lua_interface->LogError("%s: LUA HasItemEquipped command error: spawn is not player", lua_interface->GetScriptName(state));
 		return 0;
@@ -6009,6 +6011,7 @@ int	EQ2Emu_lua_GetEquippedItemBySlot(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state);
 	int8 slot = lua_interface->GetInt8Value(state, 2);
 
+	lua_interface->ResetFunctionStack(state);
 	if (!player) {
 		lua_interface->LogError("%s: LUA GetEquippedItemBySlot command error: spawn is not valid", lua_interface->GetScriptName(state));
 		return 0;
@@ -6032,6 +6035,7 @@ int	EQ2Emu_lua_GetEquippedItemByID(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state);
 	int32 id = lua_interface->GetInt32Value(state, 2);
 
+	lua_interface->ResetFunctionStack(state);
 	if (!player) {
 		lua_interface->LogError("%s: LUA GetEquippedItemByID command error: spawn is not valid", lua_interface->GetScriptName(state));
 		return 0;
@@ -6049,6 +6053,141 @@ int	EQ2Emu_lua_GetEquippedItemByID(lua_State* state) {
 	return 1;
 }
 
+int	EQ2Emu_lua_SetEquippedItemByID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int8 slot = lua_interface->GetInt8Value(state, 2);
+	int32 item_id = lua_interface->GetInt32Value(state, 3);
+
+	lua_interface->ResetFunctionStack(state);
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA SetEquippedItemByID command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spawn->IsEntity()) {
+		lua_interface->LogError("%s: LUA SetEquippedItemByID command error: spawn is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	Item* item = master_item_list.GetItem(item_id);
+	if (!item) {
+		lua_interface->LogError("%s: LUA SetEquippedItemByID command error: equipped item with used id %u not found", item_id, lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	Item* copy = new Item(item);
+	bool result = ((Entity*)spawn)->GetEquipmentList()->AddItem(slot, copy);
+
+	if(result)
+	{
+		((Entity*)spawn)->SetEquipment(copy, slot);
+		spawn->vis_changed = true;
+
+		if(spawn->IsPlayer())
+			((Player*)spawn)->GetClient()->SendEquipOrInvUpdateBySlot(slot);
+	}
+	else
+	{
+		safe_delete(copy);
+	}
+	
+
+	lua_interface->SetBooleanValue(state, result);
+	return 1;
+}
+
+int	EQ2Emu_lua_SetEquippedItem(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int8 slot = lua_interface->GetInt8Value(state, 2);
+	Item* item = lua_interface->GetItem(state, 3);
+
+	lua_interface->ResetFunctionStack(state);
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA SetEquippedItem command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spawn->IsEntity()) {
+		lua_interface->LogError("%s: LUA SetEquippedItem command error: spawn is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!item) {
+		lua_interface->LogError("%s: LUA SetEquippedItem command error: passed item not found", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	bool result = ((Entity*)spawn)->GetEquipmentList()->AddItem(slot, item);
+	if(result)
+	{
+		((Entity*)spawn)->SetEquipment(item, slot);
+		spawn->vis_changed = true;
+
+		if(spawn->IsPlayer())
+			((Player*)spawn)->GetClient()->SendEquipOrInvUpdateBySlot(slot);
+	}
+	lua_interface->SetBooleanValue(state, result);
+	return 1;
+}
+
+int	EQ2Emu_lua_UnequipSlot(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int8 slot = lua_interface->GetInt8Value(state, 2);
+	bool no_delete_item = (lua_interface->GetBooleanValue(state, 2) == false); // if not set then we default to deleting it, otherwise if set to true we don't delete
+
+	lua_interface->ResetFunctionStack(state);
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA UnequipSlot command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spawn->IsEntity()) {
+		lua_interface->LogError("%s: LUA UnequipSlot command error: spawn is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	((Entity*)spawn)->GetEquipmentList()->RemoveItem(slot, no_delete_item);
+	((Entity*)spawn)->SetEquipment(nullptr, slot);
+	spawn->vis_changed = true;
+
+	if(spawn->IsPlayer())
+		((Player*)spawn)->GetClient()->SendEquipOrInvUpdateBySlot(slot);
+
+	lua_interface->SetBooleanValue(state, true);
+	return 1;
+}
+
+int	EQ2Emu_lua_SetEquipment(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int8 slot = lua_interface->GetInt8Value(state, 2);
+	int16 type = lua_interface->GetInt16Value(state, 3);
+	int8 r = lua_interface->GetInt8Value(state, 4);
+	int8 g = lua_interface->GetInt8Value(state, 5);
+	int8 b = lua_interface->GetInt8Value(state, 6);
+	int8 h_r = lua_interface->GetInt8Value(state, 7);
+	int8 h_g = lua_interface->GetInt8Value(state, 8);
+	int8 h_b = lua_interface->GetInt8Value(state, 9);
+
+	lua_interface->ResetFunctionStack(state);
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA SetEquipment command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spawn->IsEntity()) {
+		lua_interface->LogError("%s: LUA SetEquipment command error: spawn is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	((Entity*)spawn)->SetEquipment(slot, type, r, g, b, h_r, h_g, h_b);
+	spawn->vis_changed = true;
+	lua_interface->SetBooleanValue(state, true);
+	return 1;
+}
+
 int	EQ2Emu_lua_GetItemByID(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -6057,6 +6196,7 @@ int	EQ2Emu_lua_GetItemByID(lua_State* state) {
 	int8 count = lua_interface->GetInt8Value(state, 3);
 	bool include_bank = lua_interface->GetInt8Value(state, 4);
 
+	lua_interface->ResetFunctionStack(state);
 	if (!player) {
 		lua_interface->LogError("%s: LUA GetItemByID command error: spawn is not valid", lua_interface->GetScriptName(state));
 		return 0;
@@ -11538,7 +11678,6 @@ int EQ2Emu_lua_AddPlayerMail(lua_State* state) {
 	}
 
 	int32 time_sent = sent_time > 0 ? sent_time : Timer::GetUnixTimeStamp();
-	int32 char_id = ((Player*)spawn)->GetCharacterID();
 
 	((Player*)spawn)->GetClient()->CreateAndUpdateMail(fromName, subjectName, mailBody, mailType, copper, silver, gold, platinum, item_id, stack_size, time_sent, expire_time);
 	lua_interface->SetBooleanValue(state, true);

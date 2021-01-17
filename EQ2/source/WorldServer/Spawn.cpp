@@ -2369,9 +2369,12 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 					}
 				}
 			}
+			entity->MEquipment.lock();
 			packet->setDataByName("equipment_types", entity->equipment.equip_id[i], i);
 			packet->setColorByName("equipment_colors", entity->equipment.color[i], i);
 			packet->setColorByName("equipment_highlights", entity->equipment.highlight[i], i);
+			entity->MEquipment.unlock();
+			
 		}
 		packet->setDataByName("mount_type", entity->GetMount());
 

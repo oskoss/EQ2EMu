@@ -808,6 +808,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "HasFreeSlot", EQ2Emu_lua_HasFreeSlot);
 	lua_register(state, "HasItemEquipped", EQ2Emu_lua_HasItemEquipped);
 	lua_register(state, "GetEquippedItemByID", EQ2Emu_lua_GetEquippedItemByID);
+	lua_register(state, "SetEquippedItemByID", EQ2Emu_lua_SetEquippedItemByID);
+	lua_register(state, "SetEquippedItem", EQ2Emu_lua_SetEquippedItem);
+	lua_register(state, "UnequipSlot", EQ2Emu_lua_UnequipSlot);
+	lua_register(state, "SetEquipment", EQ2Emu_lua_SetEquipment);
 	lua_register(state, "GetEquippedItemBySlot", EQ2Emu_lua_GetEquippedItemBySlot);
 	lua_register(state, "GetItemByID", EQ2Emu_lua_GetItemByID);
 	lua_register(state, "GetItemType", EQ2Emu_lua_GetItemType);

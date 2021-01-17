@@ -7296,7 +7296,7 @@ void Client::SendMailList() {
 		if (p) {
 			MutexMap<int32, Mail*>* mail_list = player->GetMail();
 			MutexMap<int32, Mail*>::iterator itr = mail_list->begin();
-			int16 i = 0;
+			int32 i = 0;
 			p->setDataByName("kiosk_id", kiosk_id);
 			p->setArrayLengthByName("num_messages", (int16)mail_list->size());
 			while (itr.Next()) {
@@ -7319,11 +7319,26 @@ void Client::SendMailList() {
 				p->setArrayDataByName("coin_silver", mail->coin_silver, i);
 				p->setArrayDataByName("coin_gold", mail->coin_gold, i);
 				p->setArrayDataByName("coin_plat", mail->coin_plat, i);
-				p->setArrayDataByName("num_items", mail->stack, i);
-				p->setArrayDataByName("packettype", GetItemPacketType(GetVersion()));
-				p->setArrayDataByName("packetsubtype", 0xFF, i);
+				if(mail->stack)
+					p->setArrayDataByName("num_items", mail->stack, i);
 
-				p->setArrayDataByName("unknown2", 0, i);
+				//p->setArrayDataByName("unknown2", 0, i);
+
+				if(mail->stack)
+				{
+					// need double item packet support for serialize, LE was working on it for crafting so don't want to double down the work
+					//Item* item = master_item_list.GetItem(mail->char_item_id);
+					//EQ2Packet* pack = item->serialize(GetVersion(), true, GetPlayer(), true, GetItemPacketType(GetVersion()), 0, false, false);
+					//p->setArrayLengthByName("item", pack->size, i);
+					//p->setArrayDataByName("item", pack->pBuffer, i, 0);
+					//p->setItemArrayDataByName("item", item, GetPlayer(), i, 0, 2, true, true);
+					//DumpPacket(pack);
+				}
+				else
+				{
+					p->setArrayDataByName("packettype", GetItemPacketType(GetVersion()), i);
+					p->setArrayDataByName("packetsubtype", 0xFF, i);
+				}
 				//p->setArrayDataByName("item_id", 5, i, 0);
 				//Item* item = master_item_list.GetItem(5);
 				//if (item)
@@ -7347,7 +7362,9 @@ void Client::SendMailList() {
 			}
 			p->setDataByName("unknown3", 0x01F4);
 			p->setDataByName("unknown4", 0x01000000);
-			QueuePacket(p->serialize());
+			EQ2Packet* pack = p->serialize();
+			//DumpPacket(pack->pBuffer, pack->size);
+			QueuePacket(pack);
 			safe_delete(p);
 		}
 	}
@@ -9902,4 +9919,20 @@ int8 mailType, int32 copper, int32 silver, int32 gold, int32 platinum, int32 ite
 	mail->already_read = 0;
 	database.SavePlayerMail(mail);
 	GetPlayer()->AddMail(mail);
+}
+
+void Client::SendEquipOrInvUpdateBySlot(int8 slot)
+{
+	if(slot < NUM_SLOTS)
+	{
+		EQ2Packet* app = GetPlayer()->GetEquipmentList()->serialize(GetVersion());
+		if (app)
+			QueuePacket(app);
+	}
+	else
+	{
+		EQ2Packet* outapp = GetPlayer()->SendInventoryUpdate(GetVersion());
+			if (outapp)
+				QueuePacket(outapp);
+	}
 }

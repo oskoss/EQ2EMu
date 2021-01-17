@@ -2003,15 +2003,9 @@ int32 WorldDatabase::LoadNPCAppearanceEquipmentData(ZoneServer* zone){
 				count++;
 			spawn_id = new_spawn_id;
 		}
-		slot = atoi(row[1]);
+		slot = atoul(row[1]);
 		if(slot < NUM_SLOTS){
-			npc->equipment.equip_id[slot] = atoi(row[2]);
-			npc->equipment.color[slot].red = atoi(row[3]);
-			npc->equipment.color[slot].green = atoi(row[4]);
-			npc->equipment.color[slot].blue = atoi(row[5]);
-			npc->equipment.highlight[slot].red = atoi(row[6]);
-			npc->equipment.highlight[slot].green = atoi(row[7]);
-			npc->equipment.highlight[slot].blue = atoi(row[8]);
+			npc->SetEquipment(slot, atoul(row[2]), atoul(row[3]), atoul(row[4]), atoul(row[5]), atoul(row[6]), atoul(row[7]), atoul(row[8]));
 		}
 	}
 	if(query.GetError() && strlen(query.GetError()) > 0)
@@ -6859,13 +6853,7 @@ void WorldDatabase::LoadNPCAppearanceEquipmentData(ZoneServer* zone, int32 spawn
 	while (result.Next()) {
 		slot = result.GetInt8(0);
 		if(slot < NUM_SLOTS) {
-			npc->equipment.equip_id[slot] = result.GetInt16(1);
-			npc->equipment.color[slot].red = result.GetInt8(2);
-			npc->equipment.color[slot].green = result.GetInt8(3);
-			npc->equipment.color[slot].blue = result.GetInt8(4);
-			npc->equipment.highlight[slot].red = result.GetInt8(5);
-			npc->equipment.highlight[slot].green = result.GetInt8(6);
-			npc->equipment.highlight[slot].blue = result.GetInt8(7);
+			npc->SetEquipment(slot, result.GetInt16(1), result.GetInt8(2), result.GetInt8(3), result.GetInt8(4), result.GetInt8(5), result.GetInt8(6), result.GetInt8(7));
 		}
 	}
 }
