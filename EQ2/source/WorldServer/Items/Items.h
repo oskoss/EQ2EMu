@@ -1031,7 +1031,7 @@ public:
 	int8	GetNumberOfItems();
 	Item*	GetItemFromUniqueID(int32 item_id);
 	Item*	GetItemFromItemID(int32 item_id);
-	void	SetItem(int8 slot_id, Item* item);
+	void	SetItem(int8 slot_id, Item* item, bool locked = false);
 	void	RemoveItem(int8 slot, bool delete_item = false);
 	Item*	GetItem(int8 slot_id);
 	bool	AddItem(int8 slot, Item* item);

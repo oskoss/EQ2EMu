@@ -3556,9 +3556,12 @@ bool EquipmentItemList::AddItem(int8 slot, Item* item){
 		Item* curItem = GetItem(slot);
 
 		if (curItem) // existing item in slot
+		{
+			MEquipmentItems.unlock();
 			return false;
+		}
 		
-		SetItem(slot, item);
+		SetItem(slot, item, true);
 		if (item->details.unique_id == 0) {
 			GetItem(slot)->details.unique_id = MasterItemList::NextUniqueID();
 			if (item->IsBag())
@@ -3581,13 +3584,17 @@ int8 EquipmentItemList::GetNumberOfItems(){
 	return ret;
 }
 
-void EquipmentItemList::SetItem(int8 slot_id, Item* item){
-	MEquipmentItems.lock();
+void EquipmentItemList::SetItem(int8 slot_id, Item* item, bool locked){
+	if(!locked)
+		MEquipmentItems.lock();
+		
 	item->details.inv_slot_id = 0;
 	item->details.slot_id = slot_id;
 	item->details.index = slot_id;
 	items[slot_id] = item;
-	MEquipmentItems.unlock();
+
+	if(!locked)
+		MEquipmentItems.unlock();
 }
 
 vector<Item*>* EquipmentItemList::GetAllEquippedItems(){
