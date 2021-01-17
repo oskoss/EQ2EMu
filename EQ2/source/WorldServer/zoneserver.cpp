@@ -3934,19 +3934,7 @@ void ZoneServer::SendQuestUpdates(Client* client, Spawn* spawn){
 			SendSpawnChanges(spawn, client, false, true);
 	}
 	else{
-		map<int32, Spawn*>::iterator itr;
-		MSpawnList.readlock(__FUNCTION__, __LINE__);
-		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-			spawn = itr->second;
-
-			if (spawn) {
-				spawn->m_requiredQuests.readlock(__FUNCTION__, __LINE__);
-				if (spawn && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn) && (client->GetPlayer()->CheckQuestRemoveFlag(spawn) || client->GetPlayer()->CheckQuestFlag(spawn) != 0 || (spawn->HasQuestsRequired() && client->GetPlayer()->CheckQuestRequired(spawn))))
-					SendSpawnChanges(spawn, client, false, true);
-				spawn->m_requiredQuests.releasereadlock(__FUNCTION__, __LINE__);
-			}
-		}
-		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+		client->GetCurrentZone()->SendAllSpawnsForVisChange(client);
 	}
 }
 
