@@ -1202,6 +1202,9 @@ public:
 	void SetEquipment(Item* item, int8 slot = 255);
 	void SetEquipment(int8 slot, int16 type, int8 red, int8 green, int8 blue, int8 h_r, int8 h_g, int8 h_b){
 		std::lock_guard<std::mutex> lk(MEquipment);
+		if(slot >= NUM_SLOTS)
+			return;
+		
 		SetInfo(&equipment.equip_id[slot], type);
 		SetInfo(&equipment.color[slot].red, red);
 		SetInfo(&equipment.color[slot].green, green);

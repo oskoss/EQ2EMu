@@ -1123,6 +1123,10 @@ void Entity::SetEquipment(Item* item, int8 slot){
 	else{
 		if ( slot >= NUM_SLOTS ) 
 			slot = item->details.slot_id;
+
+		if( slot >= NUM_SLOTS )
+			return;
+		
 		SetInfo(&equipment.equip_id[slot], item->generic_info.appearance_id);
 		SetInfo(&equipment.color[slot].red, item->generic_info.appearance_red);
 		SetInfo(&equipment.color[slot].green, item->generic_info.appearance_green);
