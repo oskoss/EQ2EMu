@@ -11773,3 +11773,25 @@ int EQ2Emu_lua_IsOpen(lua_State* state) {
 	}
 	return 0;
 }
+
+int EQ2Emu_lua_MakeRandomInt(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	sint32 min = lua_interface->GetSInt32Value(state);
+	sint32 max = lua_interface->GetSInt32Value(state, 2);
+	sint32 result = MakeRandomInt(min, max);
+	lua_interface->SetSInt32Value(state, result);
+	return 1;
+}
+
+int EQ2Emu_lua_MakeRandomFloat(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	float min = lua_interface->GetFloatValue(state);
+	float max = lua_interface->GetFloatValue(state, 2);
+	float result = MakeRandomFloat(min, max);
+	lua_interface->SetFloatValue(state, result);
+	return 1;
+}

@@ -1270,6 +1270,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "OpenDoor", EQ2Emu_lua_OpenDoor);
 	lua_register(state, "CloseDoor", EQ2Emu_lua_CloseDoor);
 	lua_register(state, "IsOpen", EQ2Emu_lua_IsOpen);
+	
+	lua_register(state, "MakeRandomInt", EQ2Emu_lua_MakeRandomInt);
+	lua_register(state, "MakeRandomFloat", EQ2Emu_lua_MakeRandomFloat);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

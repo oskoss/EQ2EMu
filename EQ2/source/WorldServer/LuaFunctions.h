@@ -556,4 +556,7 @@ int EQ2Emu_lua_AddPlayerMailByCharID(lua_State* state);
 int EQ2Emu_lua_OpenDoor(lua_State* state);
 int EQ2Emu_lua_CloseDoor(lua_State* state);
 int EQ2Emu_lua_IsOpen(lua_State* state);
+
+int EQ2Emu_lua_MakeRandomInt(lua_State* state);
+int EQ2Emu_lua_MakeRandomFloat(lua_State* state);
 #endif
