@@ -2579,15 +2579,20 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	packet->setDataByName("activity_status", temp_activity_status); //appearance.activity_status);
 
 	// If player and player has a follow target
+	/* Jan 2021 Note!! Setting follow_target 0xFFFFFFFF has the result in causing strange behavior in swimming.  Targetting a mob makes you focus down to its swim level, unable to swim above it.
+	** in the same respect the player will drop like a rock to the bottom of the ocean (seems to be when self set to that flag?)
+	** for now disabling this, if DoF needs it enabled for whatever reason then we need a version check added.
+	*/
 	if (IsPlayer()) {
 		if (((Player*)this)->GetFollowTarget())
 			packet->setDataByName("follow_target", ((((Player*)this)->GetIDWithPlayerSpawn(((Player*)this)->GetFollowTarget()) * -1) - 1));
-		else
-			packet->setDataByName("follow_target", 0xFFFFFFFF);
+		//else
+		//	packet->setDataByName("follow_target", 0xFFFFFFFF);
 	}
-	else if (!IsPet()) {
-		packet->setDataByName("follow_target", 0xFFFFFFFF);
-	}
+	//else if (!IsPet()) {
+	//	packet->setDataByName("follow_target", 0xFFFFFFFF);
+	//}
+	
 	if (GetTarget() && GetTarget()->GetTargetable())
 		packet->setDataByName("target_id", ((spawn->GetIDWithPlayerSpawn(GetTarget()) * -1) - 1));
 	else
