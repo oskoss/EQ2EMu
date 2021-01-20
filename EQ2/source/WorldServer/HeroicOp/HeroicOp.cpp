@@ -58,6 +58,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 	vector<HeroicOPStarter*> temp;
 	HeroicOPStarter* starter = 0;
 
+	LogWrite(SPELL__ERROR, 0, "HO", "Current Stage %u, wheel exists: %u, looking for icon %u", m_currentStage, m_wheel ? 1 : 0, icon);
 	// If no wheel is set we are dealing with a starter chain still.
 	if (!m_wheel) {
 		// Loop through the starter chains
@@ -81,7 +82,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 
 			// now advance the current stage
 			m_currentStage++;
-
+			
 			// Temp pointer to hold the completed chain, if any
 			HeroicOPStarter* complete_starter = 0;
 
@@ -90,6 +91,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 				starter = *itr;
 				// Found one that is 0xFFFF, means the starter chain is done, get a wheel and reset the stage to 0
 				if ((starter->abilities[m_currentStage] = 0xFFFF)) {
+					LogWrite(SPELL__ERROR, 0, "HO", "Current Stage %u, starter reset (new stage 0)", m_currentStage);
 					// reset the stage
 					ResetStage();
 					// geth the wheel
@@ -107,6 +109,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 
 			// Check to see if the completed start chain pointer was set
 			if (complete_starter) {
+				LogWrite(SPELL__ERROR, 0, "HO", "Current Stage %u, complete_starter set", m_currentStage);
 				// clear the starter list
 				starters.clear();
 				// add the completed starter back in, we do this in case we need this starter again we can just do starters.at(0), for example shifting the wheel
@@ -115,6 +118,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 		}
 	}
 	else {
+		LogWrite(SPELL__ERROR, 0, "HO", "Current Stage %u, wheel order: %u", m_currentStage, m_wheel->order);
 		// Wheel was set so we need to check the order it needs to be completed in.
 		if (m_wheel->order == 0) {
 			// No order
@@ -300,6 +304,12 @@ HeroicOPWheel* MasterHeroicOPList::GetWheel(HeroicOPStarter* starter) {
 	}
 
 	int index = MakeRandomInt(0, m_hoList[starter->start_class][starter].size() - 1);
-	return m_hoList[starter->start_class][starter].at(index);
+
+	if(index < m_hoList[starter->start_class][starter].size())
+		return m_hoList[starter->start_class][starter].at(index);
+	else
+		LogWrite(SPELL__ERROR, 0, "HO", "Wheel index %u for heroic_ops starter ID %u NOT Found!! Wheel starter_class %u, wheel size: %u.  Wheels that match starter_link_id -> Starter 'id' missing.", index, starter->id, starter->start_class, m_hoList[starter->start_class][starter].size());
+	
+	return nullptr;
 }
 

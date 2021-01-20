@@ -1587,16 +1587,24 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 				}
 			}
 			spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
-			if (match && ho->UpdateHeroicOP(spell->spell->GetSpellIconHeroicOp())) {
+			
+			if(match && !spell->spell)
+					LogWrite(SPELL__ERROR, 0, "HO", "%s: spell->spell is nullptr", client->GetPlayer()->GetName());
+			else if (match && spell->spell && ho->UpdateHeroicOP(spell->spell->GetSpellIconHeroicOp())) {
 				ClientPacketFunctions::SendHeroicOPUpdate(client, ho);
 				if (ho->GetComplete() > 0) {
-					ho_spell = master_spell_list.GetSpell(ho->GetWheel()->spell_id, 1);
-					ho_target = ho->GetTarget();
-					if (!ho_spell)
-						LogWrite(SPELL__ERROR, 0, "HO", "Invalid spell for a HO, spell id = %u", ho->GetWheel()->spell_id);
+					if(!ho->GetWheel())
+							LogWrite(SPELL__ERROR, 0, "HO", "%s: Wheel is inactive (nullptr) cannot check for invalid spell", client->GetPlayer()->GetName());
+					else
+					{
+						ho_spell = master_spell_list.GetSpell(ho->GetWheel()->spell_id, 1);
+						ho_target = ho->GetTarget();
+						if (!ho_spell)
+							LogWrite(SPELL__ERROR, 0, "HO", "%s: Invalid spell for a HO, spell id = %u", client->GetPlayer()->GetName(), ho->GetWheel()->spell_id);
 
-					safe_delete(ho);
-					m_soloHO.erase(soloItr);
+						safe_delete(ho);
+						m_soloHO.erase(soloItr);
+					}
 				}
 			}
 		}
