@@ -90,7 +90,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 			for (itr = starters.begin(); itr != starters.end(); itr++) {
 				starter = *itr;
 				// Found one that is 0xFFFF, means the starter chain is done, get a wheel and reset the stage to 0
-				if ((starter->abilities[m_currentStage] = 0xFFFF)) {
+				if ((starter->abilities[m_currentStage] == 0xFFFF)) {
 					LogWrite(SPELL__ERROR, 0, "HO", "Current Stage %u, starter reset (new stage 0)", m_currentStage);
 					// reset the stage
 					ResetStage();
