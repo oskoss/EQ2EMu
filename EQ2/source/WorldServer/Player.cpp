@@ -2475,7 +2475,11 @@ int8 Player::GetSpellSlot(int32 spell_id){
 	for(itr = spells.begin(); itr != spells.end(); itr++){
 		spell = *itr;
 		if(spell->spell_id == spell_id)
-			return spell->slot;
+		{
+			int8 slot = spell->slot;
+			MSpellsBook.unlock();
+			return slot;
+		}
 	}
 	MSpellsBook.unlock();
 	return 0;
