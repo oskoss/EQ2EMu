@@ -973,7 +973,7 @@ void NetConnection::WelcomeHeader()
 #ifdef _WIN32
 	SetConsoleTextAttribute(console, FOREGROUND_YELLOW_BOLD);
 #endif
-	printf("\n\nCopyright (C) 2007-2020 EQ2Emulator. https://www.eq2emu.com \n\n");
+	printf("\n\nCopyright (C) 2007-2021 EQ2Emulator. https://www.eq2emu.com \n\n");
 	printf("EQ2Emulator is free software: you can redistribute it and/or modify\n");
 	printf("it under the terms of the GNU General Public License as published by\n");
 	printf("the Free Software Foundation, either version 3 of the License, or\n");
@@ -1000,7 +1000,7 @@ void NetConnection::WelcomeHeader()
 	printf(" Website     : https://eq2emu.com \n");
 	printf(" Wiki        : http://eq2emu.com:3001/ \n");
 	printf(" Git         : http://git.eq2emu.com \n");
-	printf(" Discord     : https://discord.gg/j92Ay9H \n\n");
+	printf(" Discord     : https://discord.gg/5Cavm9NYQf \n\n");
 #ifdef _WIN32
 	SetConsoleTextAttribute(console, FOREGROUND_WHITE_BOLD);
 #endif
