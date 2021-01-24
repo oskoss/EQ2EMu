@@ -43,7 +43,7 @@ public:
 
 	void SetMainTank(Entity* tank) { main_tank = tank; }
 
-	void Camp();
+	void Camp(bool immediate=false);
 	void ChangeLevel(int16 old_level, int16 new_level);
 
 private:
