@@ -719,6 +719,9 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 			spawn = itr->second;
 			if(spawn && !spawn->IsPlayer()){
+				if(spawn->IsBot())
+				((Bot*)spawn)->Camp(true);
+
 				SendRemoveSpawn(client, spawn, packet);
 			}
 		}

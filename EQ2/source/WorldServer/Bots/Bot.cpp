@@ -33,7 +33,6 @@ Bot::Bot() : NPC() {
 }
 
 Bot::~Bot() {
-
 }
 
 void Bot::GiveItem(int32 item_id) {
@@ -603,7 +602,7 @@ bool Bot::ShouldMelee() {
 	return ret;
 }
 
-void Bot::Camp() {
+void Bot::Camp(bool immediate) {
 	// Copy from COMMAND_GROUP_LEAVE
 	GroupMemberInfo* gmi = GetGroupMemberInfo();
 	if (gmi) {
@@ -617,9 +616,12 @@ void Bot::Camp() {
 		}
 	}
 
-	GetZone()->PlayAnimation(this, 538);
-	SetVisualState(540);
-	GetZone()->Despawn(this, 5000);
+	if(!immediate)
+	{
+		GetZone()->PlayAnimation(this, 538);
+		SetVisualState(540);
+		GetZone()->Despawn(this, 5000);
+	}
 
 	if (!GetOwner())
 		return;
