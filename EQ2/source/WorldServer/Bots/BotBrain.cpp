@@ -29,9 +29,6 @@ void BotBrain::Think() {
 	if (Body->IsMezzedOrStunned())
 		return;
 
-	Entity* target = 0;
-	bool result;
-	
 	// If combat was processed we can return out
 	if (ProcessCombat())
 		return;
@@ -45,14 +42,17 @@ void BotBrain::Think() {
 		return;
 
 	// Set target to owner
-	target = GetBody()->GetOwner();	
+	Spawn* target = GetBody()->GetFollowTarget();
 
-	// Get distance from the owner
-	float distance = GetBody()->GetDistance(target);
+	if(target)
+	{
+		// Get distance from the owner
+		float distance = GetBody()->GetDistance(target);
 
-	// If out of melee range then move closer
-	if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
-		MoveCloser(target);
+		// If out of melee range then move closer
+		if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
+			MoveCloser(target);
+	}
 }
 
 bool BotBrain::ProcessCombat() {
@@ -137,7 +137,7 @@ bool BotBrain::ProcessSpell(Entity* target, float distance) {
 		float distance = Body->GetDistance(Body->GetTarget());
 		if (distance > spell->GetSpellData()->range) {
 			if (Body->GetTarget()->IsEntity())
-				MoveCloser((Entity*)Body->GetTarget());
+				MoveCloser((Spawn*)Body->GetTarget());
 		}
 		else {
 			// stop movement if spell can't be cast while moving
@@ -185,7 +185,7 @@ bool BotBrain::ProcessOutOfCombatSpells() {
 		float distance = Body->GetDistance(Body->GetTarget());
 		if (distance > spell->GetSpellData()->range) {
 			if (Body->GetTarget()->IsEntity())
-				MoveCloser((Entity*)Body->GetTarget());
+				MoveCloser((Spawn*)Body->GetTarget());
 		}
 		else {
 			Body->GetZone()->ProcessSpell(spell, Body, Body->GetTarget());

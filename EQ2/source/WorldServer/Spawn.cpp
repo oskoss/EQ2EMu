@@ -2782,7 +2782,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				}
 			}
 			else {
-				MoveToLocation(followTarget, rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat());
+				MoveToLocation(followTarget, rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat(), false);
 				CalculateRunningLocation();
 			}
 		}

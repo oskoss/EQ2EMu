@@ -36,7 +36,9 @@ extern Races races;
 extern Appearance master_appearance_list;
 
 NPC::NPC(){	
-	Initialize();	
+	Initialize();
+	if (GetMaxSpeed() > 0)
+		SetSpeed(GetMaxSpeed());
 }
 
 NPC::NPC(NPC* old_npc){

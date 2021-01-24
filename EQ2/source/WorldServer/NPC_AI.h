@@ -120,7 +120,7 @@ public:
 	bool HasRecovered();
 	/// <summary>Tells the NPC to move closer to the given target</summary>
 	/// <param name="target">The target to move closer to</param>
-	void MoveCloser(Entity* target);
+	void MoveCloser(Spawn* target);
 
 protected:
 	// m_body = the npc this brain controls

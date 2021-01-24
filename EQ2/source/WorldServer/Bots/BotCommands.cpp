@@ -139,6 +139,40 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 				return;
 			}
 		}
+		else if (strncasecmp("follow", sep->arg[0], 6) == 0) {
+			if (sep->IsSet(1) && sep->IsNumber(1)) {
+				int32 index = atoi(sep->arg[1]);
+
+				// Check if bot is currently spawned and if so camp it out
+				if (client->GetPlayer()->SpawnedBots.count(index) > 0) {
+					Spawn* bot = client->GetCurrentZone()->GetSpawnByID(client->GetPlayer()->SpawnedBots[index]);
+					if (bot && bot->IsBot())
+						((Bot*)bot)->SetFollowTarget(client->GetPlayer(), 5);
+				}
+				return;
+			}
+			else {
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You must give the id (from /bot list) to have a bot follow you");
+				return;
+			}
+		}
+		else if (strncasecmp("stopfollow", sep->arg[0], 10) == 0) {
+			if (sep->IsSet(1) && sep->IsNumber(1)) {
+				int32 index = atoi(sep->arg[1]);
+
+				// Check if bot is currently spawned and if so camp it out
+				if (client->GetPlayer()->SpawnedBots.count(index) > 0) {
+					Spawn* bot = client->GetCurrentZone()->GetSpawnByID(client->GetPlayer()->SpawnedBots[index]);
+					if (bot && bot->IsBot())
+						((Bot*)bot)->SetFollowTarget(nullptr);
+				}
+				return;
+			}
+			else {
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You must give the id (from /bot list) to stop a following bot");
+				return;
+			}
+		}
 		else if (strncasecmp("summon", sep->arg[0], 6) == 0) {
 			if (sep->IsSet(1) && strncasecmp("group", sep->arg[1], 5) == 0) {
 				GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
@@ -469,6 +503,7 @@ void Commands::Command_Bot_Spawn(Client* client, Seperator* sep) {
 		memset(&bot->appearance, 0, sizeof(bot->appearance));
 
 		if (database.LoadBot(client->GetCharacterID(), bot_id, bot)) {
+			bot->SetFollowTarget(client->GetPlayer(), 5);
 			bot->appearance.pos.collision_radius = 32;
 			bot->secondary_command_list_id = 0;
 			bot->primary_command_list_id = 0;

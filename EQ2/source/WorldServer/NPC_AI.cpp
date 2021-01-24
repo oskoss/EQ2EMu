@@ -320,7 +320,7 @@ vector<Entity*>* Brain::GetHateList() {
 	return ret;
 }
 
-void Brain::MoveCloser(Entity* target) {
+void Brain::MoveCloser(Spawn* target) {
 	if (target && m_body->GetFollowTarget() != target)
 		m_body->SetFollowTarget(target);
 
@@ -376,7 +376,7 @@ bool Brain::CheckBuffs() {
 
 void Brain::ProcessMelee(Entity* target, float distance) {
 	if(distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
-		MoveCloser(target);
+		MoveCloser((Spawn*)target);
 	else {
 		if (target) {
 			LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "%s is within melee range of %s.", m_body->GetName(), target->GetName());
@@ -559,7 +559,7 @@ void CombatPetBrain::Think() {
 
 	// If out of melee range then move closer
 	if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
-		MoveCloser(target);
+		MoveCloser((Spawn*)target);
 }
 
 /* Example of how to override the default AI */
@@ -591,7 +591,7 @@ void NonCombatPetBrain::Think() {
 
 	// If out of melee range then move closer
 	if (distance > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
-		MoveCloser(target);
+		MoveCloser((Spawn*)target);
 }
 
 BlankBrain::BlankBrain(NPC* body) : Brain(body) {
