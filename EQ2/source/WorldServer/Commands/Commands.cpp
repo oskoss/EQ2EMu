@@ -215,7 +215,8 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			case SPAWN_SET_VALUE_NAME:{
 				sprintf(tmp, "%s", target->GetName());
 				target->SetName(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 				break;
 									  }
 			case SPAWN_SET_VALUE_X_OFFSET: 
@@ -249,7 +250,8 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			case SPAWN_SET_VALUE_SUB_TITLE: {
 				sprintf(tmp, "%s", target->GetSubTitle());
 				target->SetSubTitle(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 				break;
 											}
 			case SPAWN_SET_VALUE_LEVEL:{
@@ -317,7 +319,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			case SPAWN_SET_VALUE_FACIAL_HAIR_TYPE:{
 				if(target->IsEntity()){
 					sprintf(tmp, "%i", ((Entity*)target)->GetHairType());
-					((Entity*)target)->SetHairType(val, send_update);
+					((Entity*)target)->SetFacialHairType(val, send_update);
 				}
 				break;
 												  }
@@ -472,21 +474,24 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			case SPAWN_SET_VALUE_PREFIX: {
 				sprintf(tmp, "%s", target->GetPrefixTitle());
 				target->SetPrefixTitle(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 				break;
 			}
 
 			case SPAWN_SET_VALUE_SUFFIX: {
 				sprintf(tmp, "%s", target->GetSuffixTitle());
 				target->SetSuffixTitle(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 				break;
 			}
 
 			case SPAWN_SET_VALUE_LASTNAME: {
 				sprintf(tmp, "%s", target->GetLastName());
 				target->SetLastName(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 				break;
 			}
 			case SPAWN_SET_VALUE_EXPANSION_FLAG:
@@ -548,7 +553,8 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				snprintf(query, 256, "update spawn set expansion_flag=%u where id=%i", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
-					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
+					if(client)
+						client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
 				}
 			}
 			break;
@@ -561,7 +567,8 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				snprintf(query, 256, "update spawn set holiday_flag=%u where id=%i", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
-					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
+					if(client)
+						client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
 				}
 			}
 			break;
@@ -574,19 +581,22 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				snprintf(query, 256, "update spawn set aaxp_rewards=%u where id=%i", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
-					client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
+					if(client)
+						client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
 				}
 			}
 			break;
 		}
 			case SPAWN_SET_VALUE_NAME:{
 				target->SetName(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 				break;
 									  }
 			case SPAWN_SET_VALUE_SUB_TITLE: {
 				target->SetSubTitle(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 				break;
 											}
 			case SPAWN_SET_VALUE_X_OFFSET: 
@@ -663,7 +673,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 										   }
 			case SPAWN_SET_VALUE_FACIAL_HAIR_TYPE:{
 				if(target->IsEntity())
-					((Entity*)target)->SetHairType(val, send_update);
+					((Entity*)target)->SetFacialHairType(val, send_update);
 				break;
 												  }
 			case SPAWN_SET_VALUE_WING_TYPE:{
@@ -737,20 +747,20 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 										 }
 			case SPAWN_SET_VALUE_COMMAND_PRIMARY:{
 				ZoneServer* zone = target->GetZone();
-				if (!zone)
+				if (!zone && client)
 					zone = client->GetCurrentZone();
 
-				if(zone->GetEntityCommandList(val))
+				if(zone && zone->GetEntityCommandList(val))
 					target->SetPrimaryCommands(zone->GetEntityCommandList(val));
 				target->primary_command_list_id = val;
 				break;
 												 }
 			case SPAWN_SET_VALUE_COMMAND_SECONDARY:{
 				ZoneServer* zone = target->GetZone();
-				if (!zone)
+				if (!zone && client)
 					zone = client->GetCurrentZone();
 
-				if (zone->GetEntityCommandList(val))
+				if (zone && zone->GetEntityCommandList(val))
 					target->SetSecondaryCommands(zone->GetEntityCommandList(val));
 				target->secondary_command_list_id = val;
 				break;
@@ -819,17 +829,20 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 									   }
 			case SPAWN_SET_VALUE_PREFIX: {
 				target->SetPrefixTitle(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 				break;
 										 }
 			case SPAWN_SET_VALUE_SUFFIX: {
 				target->SetSuffixTitle(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 				break;
 			}
 			case SPAWN_SET_VALUE_LASTNAME: {
 				target->SetLastName(value);
-				client->GetCurrentZone()->SendUpdateTitles(target);
+				if(target->GetZone())
+					target->GetZone()->SendUpdateTitles(target);
 			    break;
 			}
 			case SPAWN_SET_VALUE_SPAWN_SCRIPT:{
