@@ -38,11 +38,11 @@
 #endif
 
 #if defined(LOGIN)
-#define CURRENT_VERSION	"0.9.0-capricorn"
+#define CURRENT_VERSION	"0.9.0-sirius"
 #elif defined(WORLD)
-#define CURRENT_VERSION	"0.9.0-capricorn"
+#define CURRENT_VERSION	"0.9.0-sirius"
 #else
-#define CURRENT_VERSION	"0.9.0-capricorn"
+#define CURRENT_VERSION	"0.9.0-sirius"
 #endif
 
 #define COMPILE_DATE	__DATE__
