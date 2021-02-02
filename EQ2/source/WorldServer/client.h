@@ -467,6 +467,9 @@ public:
 		int8 mailType, int32 copper, int32 silver, int32 gold, int32 platinum, int32 item_id, int16 stack_size, int32 time_sent, int32 expire_time);
 
 	void SendEquipOrInvUpdateBySlot(int8 slot);
+
+	void SetReloadingZone(bool val) { client_reloading_zone = val; }
+	bool IsReloadingZone() { return client_reloading_zone; }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -576,6 +579,8 @@ private:
 	int32 lastRegionRemapTime;
 	
 	bool regionDebugMessaging;
+
+	bool client_reloading_zone;
 };
 
 class ClientList {

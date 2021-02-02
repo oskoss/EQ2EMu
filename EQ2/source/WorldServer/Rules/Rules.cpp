@@ -220,7 +220,7 @@ void RuleManager::Init()
 	RULE_INIT(R_Combat, MaxCombatRange, "4.0");
 	/* SPAWN */
 	RULE_INIT(R_Spawn, SpeedMultiplier, "300"); // note: this value was 1280 until 6/1/2009, then was 600 til Sep 2009, when it became 300...?
-	//RULE_INIT(R_Spawn, SpeedRatio, "0");		// was 1280/7.5 and 600/7.5 until it became 300.
+	RULE_INIT(R_Spawn, ClassicRegen, "0");
 
 	/* TIMER */
 

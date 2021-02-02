@@ -1194,6 +1194,14 @@ public:
 	bool InRegion(Region_Node* inNode, ZBSP_Node* rootNode);
 	int32 GetRegionType(Region_Node* inNode, ZBSP_Node* rootNode);
 	
+	float SpawnAngle(Spawn* target, float selfx, float selfz);
+	bool BehindSpawn(Spawn *target, float selfx, float selfz)
+	{ return (!target || target == this) ? false : SpawnAngle(target, selfx, selfz) > 90.0f; }
+	bool InFrontSpawn(Spawn *target, float selfx, float selfz)
+	{ return (!target || target == this) ? false : SpawnAngle(target, selfx, selfz) < 63.0f; }
+	bool IsFlankingSpawn(Spawn *target, float selfx, float selfz)
+	{ return (!target || target == this) ? false : SpawnAngle(target, selfx, selfz) > 63.0f; }
+
 	std::map<std::map<Region_Node*, ZBSP_Node*>, Region_Status> Regions;
 	Mutex RegionMutex;
 protected:

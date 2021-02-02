@@ -1124,6 +1124,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "CureByType", EQ2Emu_lua_CureByType);
 	lua_register(state, "CureByControlEffect", EQ2Emu_lua_CureByControlEffect);
 	lua_register(state, "AddSpawnSpellBonus", EQ2Emu_lua_AddSpawnSpellBonus);
+	lua_register(state, "RemoveSpawnSpellBonus", EQ2Emu_lua_RemoveSpawnSpellBonus);
 	lua_register(state, "CancelSpell", EQ2Emu_lua_CancelSpell);
 	lua_register(state, "RemoveStealth", EQ2Emu_lua_RemoveStealth);
 	lua_register(state, "RemoveInvis", EQ2Emu_lua_RemoveInvis);
@@ -1273,6 +1274,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	lua_register(state, "MakeRandomInt", EQ2Emu_lua_MakeRandomInt);
 	lua_register(state, "MakeRandomFloat", EQ2Emu_lua_MakeRandomFloat);
+	
+	lua_register(state, "AddIconValue", EQ2Emu_lua_AddIconValue);
+	lua_register(state, "RemoveIconValue", EQ2Emu_lua_RemoveIconValue);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

@@ -212,8 +212,10 @@ void Brain::AddHate(Entity* entity, sint32 hate) {
 	else
 		m_hatelist.insert(std::pair<int32, sint32>(entity->GetID(), hate));
 
+	entity->MHatedBy.lock();
 	if (entity->HatedBy.count(m_body->GetID()) == 0)
 		entity->HatedBy.insert(m_body->GetID());
+	entity->MHatedBy.unlock();
 
 	// Unlock the list
 	MHateList.releasewritelock(__FUNCTION__, __LINE__);
@@ -227,7 +229,11 @@ void Brain::ClearHate() {
 	for (itr = m_hatelist.begin(); itr != m_hatelist.end(); itr++) {
 		Spawn* spawn = m_body->GetZone()->GetSpawnByID(itr->first);
 		if (spawn && spawn->IsEntity())
-			((Entity*)spawn)->HatedBy.erase(itr->first);
+		{
+			((Entity*)spawn)->MHatedBy.lock();
+			((Entity*)spawn)->HatedBy.erase(m_body->GetID());
+			((Entity*)spawn)->MHatedBy.unlock();
+		}
 	}
 
 	// Clear the list
@@ -245,7 +251,9 @@ void Brain::ClearHate(Entity* entity) {
 		// Erase the entity from the hate list
 		m_hatelist.erase(entity->GetID());
 
+	entity->MHatedBy.lock();
 	entity->HatedBy.erase(m_body->GetID());
+	entity->MHatedBy.unlock();
 
 	// Unlock the hate list
 	MHateList.releasewritelock(__FUNCTION__, __LINE__);

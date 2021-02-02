@@ -171,8 +171,6 @@ Player::~Player(){
 	world.RemoveLottoPlayer(GetCharacterID());
 	safe_delete(info);
 	index_mutex.writelock(__FUNCTION__, __LINE__);
-	player_spawn_index_map.clear();
-	player_spawn_map.clear();
 	player_spawn_reverse_id_map.clear();
 	player_removed_spawns.clear();
 	player_spawn_id_map.clear();
@@ -444,12 +442,8 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 		else
 			packet->setDataByName("house_zone", "None");
 		//packet->setDataByName("account_age_base", 14);
-		if(player->GetHPRegen() == 0)
-			player->SetHPRegen((int)(info_struct->get_level()*.75)+(int)(info_struct->get_level()/10)+3);
-		if(player->GetPowerRegen() == 0)
-			player->SetPowerRegen(info_struct->get_level()+(int)(info_struct->get_level()/10)+4);
-		packet->setDataByName("hp_regen", player->GetHPRegen());
-		packet->setDataByName("power_regen", player->GetPowerRegen());
+		packet->setDataByName("hp_regen", info_struct->get_hp_regen());
+		packet->setDataByName("power_regen", info_struct->get_power_regen());
 		/*packet->setDataByName("unknown11", -1, 0);
 		packet->setDataByName("unknown11", -1, 1);
 		packet->setDataByName("unknown13", 201, 0);
@@ -677,12 +671,9 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("base_power", player->GetTotalPowerBase());
 		packet->setDataByName("conc_used", info_struct->get_cur_concentration());
 		packet->setDataByName("conc_max", info_struct->get_max_concentration());
-		if (player->GetHPRegen() == 0)
-			player->SetHPRegen((int)(info_struct->get_level() * .75) + (int)(info_struct->get_level() / 10) + 1);
-		if (player->GetPowerRegen() == 0)
-			player->SetPowerRegen(info_struct->get_level() + (int)(info_struct->get_level() / 10) + 4);
-		packet->setDataByName("hp_regen", player->GetHPRegen() + player->stats[ITEM_STAT_HPREGEN]);
-		packet->setDataByName("power_regen", player->GetPowerRegen() + player->stats[ITEM_STAT_MANAREGEN]);
+		packet->setDataByName("hp_regen", player->GetInfoStruct()->get_hp_regen());
+		packet->setDataByName("power_regen", player->GetInfoStruct()->get_power_regen());
+
 		//	packet->setDataByName("unknown_1_4a_MJ", 96); //-1// was unknown11
 		//	packet->setDataByName("unknown_1_4b_MJ", 96); //-1
 		packet->setDataByName("stat_bonus_health", player->CalculateBonusMod());//bonus health and bonus power getting same value?
@@ -697,15 +688,19 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("mitigation_pct_pvp", 559); // % calculation Mitigation % vs PvP 559 = 55.9%// confirmed DoV
 		packet->setDataByName("toughness", 0);//toughness// confirmed DoV
 		packet->setDataByName("toughness_resist_dmg_pvp", 0);//toughness_resist_dmg_pvp 73 = 7300% // confirmed DoV 
-		packet->setDataByName("avoidance_pct", 0);//avoidance_pct 192 = 19.2% // confirmed DoV
-		packet->setDataByName("avoidance_base", info_struct->get_avoidance_base()); // confirmed DoV
+		packet->setDataByName("avoidance_pct", (int16)info_struct->get_avoidance_display()*10.0f);//avoidance_pct 192 = 19.2% // confirmed DoV
+		packet->setDataByName("avoidance_base", (int16)info_struct->get_avoidance_base()*10.0f); // confirmed DoV
 		packet->setDataByName("avoidance", info_struct->get_cur_avoidance());
 		//		packet->setDataByName("unknown_1096_1_MJ", 90);//unknown_1096_1_MJ
 		packet->setDataByName("base_avoidance_pct", info_struct->get_base_avoidance_pct());// confirmed DoV
 		//		packet->setDataByName("unknown_1096_2_MJ", 89);//unknown_1096_2_MJ
-		packet->setDataByName("parry", info_struct->get_parry_base());// confirmed DoV
+		float parry_pct = info_struct->get_parry(); // client works off of int16, but we use floats to track the actual x/100%
+		packet->setDataByName("parry",(int16)(parry_pct*10.0f));// confirmed DoV
 		//		packet->setDataByName("unknown_1096_3_MJ", 88);//unknown_1096_3_MJ
-		packet->setDataByName("block", info_struct->get_block_base());// confirmed DoV
+
+		float block_pct = info_struct->get_block()*10.0f;
+		
+		packet->setDataByName("block", (int16)block_pct);// confirmed DoV
 		//		packet->setDataByName("unknown_1096_4_MJ", 87);//unknown_1096_4_MJ
 		packet->setDataByName("uncontested_block", info_struct->get_uncontested_block());// confirmed DoV
 		//		packet->setDataByName("unknown_1096_5_MJ", 86);//unknown_1096_5_MJ
@@ -895,7 +890,9 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("crit_chance", info_struct->get_crit_chance());// dov confirmed
 		//unknown_1096_32_MJ
 		packet->setDataByName("crit_bonus", info_struct->get_crit_bonus());// dov confirmed
+		((Entity*)player)->MStats.lock();
 		packet->setDataByName("potency", player->stats[ITEM_STAT_POTENCY]);//info_struct->get_potency);// dov confirmed
+		((Entity*)player)->MStats.unlock();
 		//unknown_1096_33_MJ
 		packet->setDataByName("reuse_speed", info_struct->get_reuse_speed());// dov confirmed
 		packet->setDataByName("recovery_speed", info_struct->get_recovery_speed());// dov confirmed
@@ -910,12 +907,14 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		//unknown_1096_37_MJ
 		//toughness_resist_crit_pvp
 		//unknown_1096_38_MJ
+		((Entity*)player)->MStats.lock();
 		packet->setDataByName("durability_mod", player->stats[ITEM_STAT_DURABILITY_MOD]);// dov confirmed
 		packet->setDataByName("durability_add", player->stats[ITEM_STAT_DURABILITY_ADD]);// dov confirmed
 		packet->setDataByName("progress_mod", player->stats[ITEM_STAT_PROGRESS_MOD]);// dov confirmed
 		packet->setDataByName("progress_add", player->stats[ITEM_STAT_PROGRESS_ADD]);// dov confirmed
 		packet->setDataByName("success_mod", player->stats[ITEM_STAT_SUCCESS_MOD]);// dov confirmed
 		packet->setDataByName("crit_success_mod", player->stats[ITEM_STAT_CRIT_SUCCESS_MOD]);// dov confirmed
+		((Entity*)player)->MStats.unlock();
 
 		//unknown_1096_39_MJ
 		/////GRoup Members
@@ -966,6 +965,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 
 
 
+		((Entity*)player)->MStats.lock();
 		packet->setDataByName("rare_harvest_chance", player->stats[ITEM_STAT_RARE_HARVEST_CHANCE]);
 		packet->setDataByName("max_crafting", player->stats[ITEM_STAT_MAX_CRAFTING]);
 		packet->setDataByName("component_refund", player->stats[ITEM_STAT_COMPONENT_REFUND]);
@@ -976,6 +976,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("ex_progress_mod", player->stats[ITEM_STAT_EX_PROGRESS_MOD]);
 		packet->setDataByName("ex_progress_add", player->stats[ITEM_STAT_EX_PROGRESS_ADD]);
 		packet->setDataByName("ex_success_mod", player->stats[ITEM_STAT_EX_SUCCESS_MOD]);
+		((Entity*)player)->MStats.unlock();
 
 		packet->setDataByName("flurry", info_struct->get_flurry());
 		packet->setDataByName("unknown153", 153);
@@ -3010,8 +3011,6 @@ SpellEffects* Player::GetSpellEffects() {
 void Player::ClearEverything(){
 	index_mutex.writelock(__FUNCTION__, __LINE__);
 	player_removed_spawns.clear();
-	player_spawn_map.clear();
-	player_spawn_index_map.clear();
 	player_spawn_id_map.clear();
 	player_spawn_reverse_id_map.clear();
 	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
@@ -3524,13 +3523,22 @@ void Player::InCombat(bool val, bool range) {
 	else
 		GetInfoStruct()->set_flags(GetInfoStruct()->get_flags() & ~(1 << (range?CF_RANGED_AUTO_ATTACK:CF_AUTO_ATTACK)));
 
+	bool changeCombatState = false;
+	
+	if((in_combat && !val) || (!in_combat && val))
+		changeCombatState = true;
+
 	in_combat = val;
 	if(in_combat)
 		AddIconValue(64);
 	else
 		RemoveIconValue(64);
 
+	if(changeCombatState)
+		SetRegenValues(GetInfoStruct()->get_effective_level());
+
 	charsheet_changed = true;
+	info_changed = true;
 }
 
 void Player::SetCharSheetChanged(bool val){
@@ -3821,7 +3829,9 @@ int32 Player::GetTSXP() {
 }
 
 bool Player::AddXP(int32 xp_amount){
+	MStats.lock();
 	xp_amount += ((xp_amount) * stats[ITEM_STAT_COMBATEXPMOD]) / 100;
+	MStats.unlock();
 
 	float current_xp_percent = ((float)GetXP()/(float)GetNeededXP())*100;
 	float miniding_min_percent = ((int)(current_xp_percent/10)+1)*10;
@@ -3845,7 +3855,9 @@ bool Player::AddXP(int32 xp_amount){
 }
 
 bool Player::AddTSXP(int32 xp_amount){
+	MStats.lock();
 	xp_amount += ((xp_amount)*stats[ITEM_STAT_TRADESKILLEXPMOD]) / 100;
+	MStats.unlock();
 
 	float current_xp_percent = ((float)GetTSXP()/(float)GetNeededTSXP())*100;
 	float miniding_min_percent = ((int)(current_xp_percent/10)+1)*10;
@@ -3901,8 +3913,8 @@ Spawn* Player::GetSpawnByIndex(int16 index){
 	Spawn* spawn = 0;
 
 	index_mutex.readlock(__FUNCTION__, __LINE__);
-	if(player_spawn_map.count(index) > 0)
-		spawn = player_spawn_map[index];
+	if(player_spawn_id_map.count(index) > 0)
+		spawn = player_spawn_id_map[index];
 	index_mutex.releasereadlock(__FUNCTION__, __LINE__);
 
 	return spawn;
@@ -3912,8 +3924,8 @@ int16 Player::GetIndexForSpawn(Spawn* spawn) {
 	int16 val = 0;
 
 	index_mutex.readlock(__FUNCTION__, __LINE__);
-	if(player_spawn_index_map.count(spawn) > 0)
-		val = player_spawn_index_map[spawn];
+	if(player_spawn_reverse_id_map.count(spawn) > 0)
+		val = player_spawn_reverse_id_map[spawn];
 	index_mutex.releasereadlock(__FUNCTION__, __LINE__);
 
 	return val;
@@ -3942,11 +3954,11 @@ void Player::RemoveSpawn(Spawn* spawn)
 
 	player_removed_spawns[spawn] = 1;
 
-	if (player_spawn_index_map[spawn] && player_spawn_map.count(player_spawn_index_map[spawn]) > 0)
-		player_spawn_map.erase(player_spawn_index_map[spawn]);
+	if (player_spawn_reverse_id_map[spawn] && player_spawn_id_map.count(player_spawn_reverse_id_map[spawn]) > 0)
+		player_spawn_id_map.erase(player_spawn_reverse_id_map[spawn]);
 
-	if (player_spawn_index_map.count(spawn) > 0)
-		player_spawn_index_map.erase(spawn);
+	if (player_spawn_reverse_id_map.count(spawn) > 0)
+		player_spawn_reverse_id_map.erase(spawn);
 
 	if (player_spawn_id_map.count(spawn->GetID()) && player_spawn_id_map[spawn->GetID()] == spawn)
 		player_spawn_id_map.erase(spawn->GetID());
@@ -5019,8 +5031,11 @@ PlayerItemList*	Player::GetPlayerItemList(){
 	return &item_list;
 }
 
-void Player::ResetSavedSpawns(){
+void Player::ResetRemovedSpawns(){
 	player_removed_spawns.clear();
+}
+void Player::ResetSavedSpawns(){
+	ResetRemovedSpawns();
 
 	vis_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_vis_packet_list.clear();
@@ -5037,8 +5052,6 @@ void Player::ResetSavedSpawns(){
 	index_mutex.writelock(__FUNCTION__, __LINE__);
 	player_spawn_reverse_id_map.clear();
 	player_spawn_id_map.clear();
-	player_spawn_map.clear();
-	player_spawn_index_map.clear();
 	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	m_playerSpawnQuestsRequired.writelock(__FUNCTION__, __LINE__);
@@ -5116,7 +5129,10 @@ bool Player::CheckLevelStatus(int16 new_level) {
 Skill* Player::GetSkillByName(const char* name, bool check_update){
 	Skill* ret = skill_list.GetSkillByName(name);
 	if(check_update)
-		skill_list.CheckSkillIncrease(ret);
+		{
+			if(skill_list.CheckSkillIncrease(ret))
+				CalculateBonuses();
+		}
 	return ret;
 }
 
@@ -5793,7 +5809,6 @@ void Player::InitXPTable() {
 void Player::SendQuestRequiredSpawns(int32 quest_id){
 	bool locked = true;
 	m_playerSpawnQuestsRequired.readlock(__FUNCTION__, __LINE__);
-	Quest* quest = GetQuest(quest_id);
 	if (player_spawn_quests_required.size() > 0 ) {
 		ZoneServer* zone = GetZone();
 		Client* client = zone->GetClientBySpawn(this);
@@ -6122,4 +6137,22 @@ void Player::UpdateTargetInvisHistory(int32 targetID, bool canSeeStatus)
 void Player::RemoveTargetInvisHistory(int32 targetID)
 {
 	target_invis_history.erase(targetID);
+}
+
+void Player::SetSpawnMap(Spawn* spawn)
+{
+	index_mutex.writelock(__FUNCTION__, __LINE__);
+	spawn_id += 1;
+	if (spawn_index == 255)
+		spawn_index += 1; //just so we dont have to worry about overloading
+	
+	int32 tmp_id = spawn_id;
+
+	player_spawn_id_map[tmp_id] = spawn;
+
+	if(player_spawn_reverse_id_map.count(spawn))
+		player_spawn_reverse_id_map.erase(spawn);
+
+	player_spawn_reverse_id_map.insert(make_pair(spawn,tmp_id));
+	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
 }

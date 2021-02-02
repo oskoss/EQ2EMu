@@ -30,6 +30,7 @@
 #include "../Recipes/Recipe.h"
 #include <algorithm>
 #include <sstream>
+#include <boost/algorithm/string.hpp>
 
 extern World world;
 extern MasterSpellList master_spell_list;
@@ -37,6 +38,49 @@ extern MasterQuestList master_quest_list;
 extern MasterRecipeList master_recipe_list;
 extern ConfigReader configReader;
 extern LuaInterface* lua_interface;
+
+MasterItemList::MasterItemList(){
+	AddMappedItemStat(ITEM_STAT_ADORNING, std::string("adorning"));
+	AddMappedItemStat(ITEM_STAT_AGGRESSION, std::string("aggression"));
+	AddMappedItemStat(ITEM_STAT_ARTIFICING, std::string("artificing"));
+	AddMappedItemStat(ITEM_STAT_ARTISTRY, std::string("artistry"));
+	AddMappedItemStat(ITEM_STAT_CHEMISTRY, std::string("chemistry"));
+	AddMappedItemStat(ITEM_STAT_CRUSHING, std::string("crushing"));
+	AddMappedItemStat(ITEM_STAT_DEFENSE, std::string("defense"));
+	AddMappedItemStat(ITEM_STAT_DEFLECTION, std::string("deflection"));
+	AddMappedItemStat(ITEM_STAT_DISRUPTION, std::string("disruption"));
+	AddMappedItemStat(ITEM_STAT_FISHING, std::string("fishing"));
+	AddMappedItemStat(ITEM_STAT_FLETCHING, std::string("fletching"));
+	AddMappedItemStat(ITEM_STAT_FOCUS, std::string("focus"));
+	AddMappedItemStat(ITEM_STAT_FORESTING, std::string("foresting"));
+	AddMappedItemStat(ITEM_STAT_GATHERING, std::string("gathering"));
+	AddMappedItemStat(ITEM_STAT_METAL_SHAPING, std::string("metal shaping"));
+	AddMappedItemStat(ITEM_STAT_METALWORKING, std::string("metalworking"));
+	AddMappedItemStat(ITEM_STAT_MINING, std::string("mining"));
+	AddMappedItemStat(ITEM_STAT_MINISTRATION, std::string("ministration"));
+	AddMappedItemStat(ITEM_STAT_ORDINATION, std::string("ordination"));
+	AddMappedItemStat(ITEM_STAT_ADORNING, std::string("adorning"));
+	AddMappedItemStat(ITEM_STAT_PARRY, std::string("parry"));
+	AddMappedItemStat(ITEM_STAT_PIERCING, std::string("piercing"));
+	AddMappedItemStat(ITEM_STAT_RANGED, std::string("ranged"));
+	AddMappedItemStat(ITEM_STAT_SAFE_FALL, std::string("safe fall"));
+	AddMappedItemStat(ITEM_STAT_SCRIBING, std::string("scribing"));
+	AddMappedItemStat(ITEM_STAT_SCULPTING, std::string("sculpting"));
+	AddMappedItemStat(ITEM_STAT_SLASHING, std::string("slashing"));
+	AddMappedItemStat(ITEM_STAT_SUBJUGATION, std::string("subjugation"));
+	AddMappedItemStat(ITEM_STAT_SWIMMING, std::string("swimming"));
+	AddMappedItemStat(ITEM_STAT_TAILORING, std::string("tailoring"));
+	AddMappedItemStat(ITEM_STAT_TINKERING, std::string("tinkering"));
+	AddMappedItemStat(ITEM_STAT_TRANSMUTING, std::string("transmuting"));
+	AddMappedItemStat(ITEM_STAT_TRAPPING, std::string("trapping"));
+	AddMappedItemStat(ITEM_STAT_WEAPON_SKILLS, std::string("weapon skills"));
+}
+
+void MasterItemList::AddMappedItemStat(int32 id, std::string lower_case_name)
+{
+	mappedItemStatsStrings[lower_case_name] = id;
+	mappedItemStatTypeIDs[id] = lower_case_name;
+}
 
 MasterItemList::~MasterItemList(){
 	RemoveAll();
@@ -707,7 +751,28 @@ ItemStatsValues* MasterItemList::CalculateItemBonuses(Item* item, Entity* entity
 		}
 		for(int32 i=0;i<item->item_stats.size();i++){
 			ItemStat* stat = item->item_stats[i];
-			world.AddBonuses(values, stat->stat_type*100 + stat->stat_subtype, stat->value, entity);
+				int multiplier = 100;
+				if(stat->stat_subtype > 99)
+					multiplier = 1000;
+			
+			int32 id = 0;
+			sint32 value = stat->value;
+			if(stat->stat_type != 1)
+					id = stat->stat_type*multiplier + stat->stat_subtype;
+			else
+			{
+				int32 tmp_id = master_item_list.GetItemStatIDByName(stat->stat_name);
+				if(tmp_id != 0xFFFFFFFF)
+				{
+					id = tmp_id;
+					if(!value)
+						value = stat->stat_subtype;		
+				}
+				else
+					id = stat->stat_type*multiplier + stat->stat_subtype;
+			}
+
+			world.AddBonuses(values, id, stat->value, entity);
 		}
 		return values;
 	}
@@ -3122,7 +3187,6 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 				}
 			}
 			else{
-				printf("7\n");
 				MoveItem(item_from, item_to->details.bag_id, 0);
 				MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 				return true;
@@ -3841,4 +3905,23 @@ string Item::CreateItemLink(int16 client_Version, bool bUseUniqueID) {
 			ss << "\\aITEM " << details.item_id << ' ' << name << ':' << name << "\\/a";
 	}
 	return ss.str();
+}
+
+int32 MasterItemList::GetItemStatIDByName(std::string name)
+{
+	boost::to_lower(name);
+	map<std::string, int32>::iterator itr = mappedItemStatsStrings.find(name.c_str());
+	if(itr != mappedItemStatsStrings.end())
+		return itr->second;
+
+	return 0xFFFFFFFF;
+}
+
+std::string MasterItemList::GetItemStatNameByID(int32 id)
+{
+	map<int32, std::string>::iterator itr = mappedItemStatTypeIDs.find(id);
+	if(itr != mappedItemStatTypeIDs.end())
+		return itr->second;
+
+	return std::string("");
 }

@@ -430,9 +430,9 @@ void RegionMapV1::TicRegionsNearSpawn(Spawn *spawn, Client *client) const
 					node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
 			WaterRegionType whatWasRegionType = RegionTypeNormal;	// default will be 0
 
-			if (BSP_Root->special == -3)
+			if (BSP_Root->special == SPECIAL_REGION_LAVA_OR_DEATH)
 				whatWasRegionType = RegionTypeLava;	// 2
-			else if (BSP_Root->special == 1)
+			else if (BSP_Root->special == SPECIAL_REGION_WATER)
 				whatWasRegionType = RegionTypeWater;	// 1
 
 			int32 returnValue = 0;
@@ -652,10 +652,10 @@ WaterRegionType RegionMapV1::BSPReturnRegionWaterRegion(const Region_Node* regio
 		else if (current_node->left == -2) {
 			switch(current_node->special)
 			{
-				case -3:
+				case SPECIAL_REGION_LAVA_OR_DEATH:
 					return(RegionTypeLava);
 					break;
-				case 1:
+				case SPECIAL_REGION_WATER:
 					return(RegionTypeWater);
 					break;
 				default:

@@ -28,10 +28,14 @@
 #include "classes.h"
 #include "LuaInterface.h"
 #include "ClientPacketFunctions.h"
+#include "Skills.h"
+#include "Rules/Rules.h"
 
 extern World world;
 extern MasterItemList master_item_list;
 extern MasterSpellList master_spell_list;
+extern MasterSkillList master_skill_list;
+extern RuleManager rule_manager;
 extern Classes classes;
 
 Entity::Entity(){
@@ -77,7 +81,6 @@ Entity::Entity(){
 	MCommandMutex.SetName("Entity::MCommandMutex");
 	hasSeeInvisSpell = false;
 	hasSeeHideSpell = false;
-
 }
 
 Entity::~Entity(){
@@ -118,15 +121,15 @@ void Entity::MapInfoStruct()
 	get_int16_funcs["max_mitigation"] = l::bind(&InfoStruct::get_max_mitigation, &info_struct);
 	get_int16_funcs["mitigation_base"] = l::bind(&InfoStruct::get_mitigation_base, &info_struct);
 	get_int16_funcs["avoidance_display"] = l::bind(&InfoStruct::get_avoidance_display, &info_struct);
-	get_int16_funcs["cur_avoidance"] = l::bind(&InfoStruct::get_cur_avoidance, &info_struct);
+	get_float_funcs["cur_avoidance"] = l::bind(&InfoStruct::get_cur_avoidance, &info_struct);
 	get_int16_funcs["base_avoidance_pct"] = l::bind(&InfoStruct::get_base_avoidance_pct, &info_struct);
 	get_int16_funcs["avoidance_base"] = l::bind(&InfoStruct::get_avoidance_base, &info_struct);
 	get_int16_funcs["max_avoidance"] = l::bind(&InfoStruct::get_max_avoidance, &info_struct);
-	get_int16_funcs["parry"] = l::bind(&InfoStruct::get_parry, &info_struct);
-	get_int16_funcs["parry_base"] = l::bind(&InfoStruct::get_parry_base, &info_struct);
-	get_int16_funcs["deflection"] = l::bind(&InfoStruct::get_deflection, &info_struct);
+	get_float_funcs["parry"] = l::bind(&InfoStruct::get_parry, &info_struct);
+	get_float_funcs["parry_base"] = l::bind(&InfoStruct::get_parry_base, &info_struct);
+	get_float_funcs["deflection"] = l::bind(&InfoStruct::get_deflection, &info_struct);
 	get_int16_funcs["deflection_base"] = l::bind(&InfoStruct::get_deflection_base, &info_struct);
-	get_int16_funcs["block"] = l::bind(&InfoStruct::get_block, &info_struct);
+	get_float_funcs["block"] = l::bind(&InfoStruct::get_block, &info_struct);
 	get_int16_funcs["block_base"] = l::bind(&InfoStruct::get_block_base, &info_struct);
 	get_float_funcs["str"] = l::bind(&InfoStruct::get_str, &info_struct);
 	get_float_funcs["sta"] = l::bind(&InfoStruct::get_sta, &info_struct);
@@ -231,6 +234,12 @@ void Entity::MapInfoStruct()
 	get_string_funcs["biography"] = l::bind(&InfoStruct::get_biography, &info_struct);
 	get_float_funcs["drunk"] = l::bind(&InfoStruct::get_drunk, &info_struct);
 
+	get_sint16_funcs["power_regen"] = l::bind(&InfoStruct::get_power_regen, &info_struct);
+	get_sint16_funcs["hp_regen"] = l::bind(&InfoStruct::get_hp_regen, &info_struct);
+
+	get_int8_funcs["power_regen_override"] = l::bind(&InfoStruct::get_power_regen_override, &info_struct);
+	get_int8_funcs["hp_regen_override"] = l::bind(&InfoStruct::get_hp_regen_override, &info_struct);
+
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -252,15 +261,15 @@ void Entity::MapInfoStruct()
 	set_int16_funcs["max_mitigation"] = l::bind(&InfoStruct::set_max_mitigation, &info_struct, l::_1);
 	set_int16_funcs["mitigation_base"] = l::bind(&InfoStruct::set_mitigation_base, &info_struct, l::_1);
 	set_int16_funcs["avoidance_display"] = l::bind(&InfoStruct::set_avoidance_display, &info_struct, l::_1);
-	set_int16_funcs["cur_avoidance"] = l::bind(&InfoStruct::set_cur_avoidance, &info_struct, l::_1);
+	set_float_funcs["cur_avoidance"] = l::bind(&InfoStruct::set_cur_avoidance, &info_struct, l::_1);
 	set_int16_funcs["base_avoidance_pct"] = l::bind(&InfoStruct::set_base_avoidance_pct, &info_struct, l::_1);
 	set_int16_funcs["avoidance_base"] = l::bind(&InfoStruct::set_avoidance_base, &info_struct, l::_1);
 	set_int16_funcs["max_avoidance"] = l::bind(&InfoStruct::set_max_avoidance, &info_struct, l::_1);
-	set_int16_funcs["parry"] = l::bind(&InfoStruct::set_parry, &info_struct, l::_1);
-	set_int16_funcs["parry_base"] = l::bind(&InfoStruct::set_parry_base, &info_struct, l::_1);
-	set_int16_funcs["deflection"] = l::bind(&InfoStruct::set_deflection, &info_struct, l::_1);
+	set_float_funcs["parry"] = l::bind(&InfoStruct::set_parry, &info_struct, l::_1);
+	set_float_funcs["parry_base"] = l::bind(&InfoStruct::set_parry_base, &info_struct, l::_1);
+	set_float_funcs["deflection"] = l::bind(&InfoStruct::set_deflection, &info_struct, l::_1);
 	set_int16_funcs["deflection_base"] = l::bind(&InfoStruct::set_deflection_base, &info_struct, l::_1);
-	set_int16_funcs["block"] = l::bind(&InfoStruct::set_block, &info_struct, l::_1);
+	set_float_funcs["block"] = l::bind(&InfoStruct::set_block, &info_struct, l::_1);
 	set_int16_funcs["block_base"] = l::bind(&InfoStruct::set_block_base, &info_struct, l::_1);
 	set_float_funcs["str"] = l::bind(&InfoStruct::set_str, &info_struct, l::_1);
 	set_float_funcs["sta"] = l::bind(&InfoStruct::set_sta, &info_struct, l::_1);
@@ -364,6 +373,12 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["breathe_underwater"] = l::bind(&InfoStruct::set_breathe_underwater, &info_struct, l::_1);
 	set_string_funcs["biography"] = l::bind(&InfoStruct::set_biography, &info_struct, l::_1);
 	set_float_funcs["drunk"] = l::bind(&InfoStruct::set_drunk, &info_struct, l::_1);
+
+	set_sint16_funcs["power_regen"] = l::bind(&InfoStruct::set_power_regen, &info_struct, l::_1);
+	set_sint16_funcs["hp_region"] = l::bind(&InfoStruct::set_hp_regen, &info_struct, l::_1);
+
+	set_int8_funcs["power_regen_override"] = l::bind(&InfoStruct::set_power_regen_override, &info_struct, l::_1);
+	set_int8_funcs["hp_region_override"] = l::bind(&InfoStruct::set_hp_regen_override, &info_struct, l::_1);
 
 }
 
@@ -667,55 +682,11 @@ int8 Entity::GetWieldType(){
 }
 
 bool Entity::BehindTarget(Spawn* target){
-	float target_angle = 360 - target->GetHeading();	
-	float angle = 360 - GetHeading();
-	if(target_angle > angle)
-		angle = target_angle - angle;
-	else
-		angle -= target_angle;
-	return (angle < 90 || angle > 270);
+	return BehindSpawn(target, GetX(), GetZ());
 }
 
 bool Entity::FlankingTarget(Spawn* target) {
-	float angle;
-	double diff_x = target->GetX() - GetX();
-	double diff_z = target->GetZ() - GetZ();
-	if (diff_z == 0) {
-	   if (diff_x > 0)
-		   angle = 90;
-	   else
-		   angle = 270;
-	}
-	else
-		angle = ((atan(diff_x / diff_z)) * 180) / 3.14159265358979323846;
-	if (angle < 0)
-		angle = angle + 360;
-	else
-		angle = angle + 180;
-	if (diff_x < 0)
-		angle = angle + 180;
-	
-	if (angle > GetHeading())
-		angle = angle - GetHeading();
-	else
-		angle = GetHeading() - angle;
-
-	if (angle > 360)
-		angle -= 360;
-
-	//LogWrite(SPAWN__ERROR, 0, "Angle", "spawn heading = %f", GetHeading());
-	//LogWrite(SPAWN__ERROR, 0, "Angle", "angle = %f", angle);
-
-	return (angle >= 45 && angle <= 315);
-}
-
-float Entity::GetShieldBlockChance(){
-	float ret = 0;
-	Item* item = equipment_list.GetItem(1);
-	if(item && item->details.item_id > 0 && item->IsShield()){
-	
-	}
-	return ret;
+	return IsFlankingSpawn(target, GetX(), GetZ());
 }
 
 float Entity::GetDodgeChance(){
@@ -729,20 +700,14 @@ bool Entity::EngagedInCombat(){
 }
 
 void Entity::InCombat(bool val){
-	in_combat = val;
-}
+	bool changeCombatState = false;
+	if((in_combat && !val) || (!in_combat && val))
+		changeCombatState = true;
 
-void Entity::SetHPRegen(int16 new_val){
-	regen_hp_rate = new_val;
-}
-void Entity::SetPowerRegen(int16 new_val){
-	regen_power_rate = new_val;
-}
-int16 Entity::GetHPRegen(){
-	return regen_hp_rate;
-}
-int16 Entity::GetPowerRegen(){
-	return regen_power_rate;
+	in_combat = val;
+
+	if(changeCombatState)
+		SetRegenValues(GetInfoStruct()->get_effective_level());
 }
 
 void Entity::DoRegenUpdate(){
@@ -751,19 +716,9 @@ void Entity::DoRegenUpdate(){
 	sint32 hp = GetHP();
 	sint32 power = GetPower();
 
-	int16 effective_level = GetInfoStruct()->get_effective_level();
-	if(!effective_level)
-		effective_level = GetLevel();
-
-	// No regen for NPC's while in combat
-	// Temp solution for now
-	if (IsNPC() && EngagedInCombat())
-		return;
-
 	if(hp < GetTotalHP()){
-		if(regen_hp_rate == 0)
-			regen_hp_rate = (int)(effective_level*.75)+(int)(effective_level/10) + 1;
-		int16 temp = regen_hp_rate + stats[ITEM_STAT_HPREGEN];
+		sint16 temp = GetInfoStruct()->get_hp_regen();
+
 		if((hp + temp) > GetTotalHP())
 			SetHP(GetTotalHP());
 		else
@@ -773,16 +728,14 @@ void Entity::DoRegenUpdate(){
 
 	}
 	if(GetPower() < GetTotalPower()){
-		if(regen_power_rate == 0)
-			regen_power_rate = effective_level + (int)(effective_level/10) + 1;
-		cout << "regen_power_rate: " << regen_power_rate << endl;
-		if((power + regen_power_rate) > GetTotalPower())
+		sint16 temp = GetInfoStruct()->get_power_regen();
+		
+		if((power + temp) > GetTotalPower())
 			SetPower(GetTotalPower());
 		else
-			SetPower(power + regen_power_rate);
+			SetPower(power + temp);
 
 		LogWrite(MISC__TODO, 1, "TODO", "Fix this later for mobs\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-
 	}
 }
 
@@ -979,8 +932,39 @@ void Entity::SetMaxSpeed(float val){
 	max_speed = val;
 }
 
+float Entity::CalculateSkillStatChance(char* skillName, int16 item_stat, float max_cap, float modifier, bool add_to_skill)
+{
+	float skillAndItemsChance = 0.0f;
+
+	Skill* skill = GetSkillByName(skillName, false);
+	if(skill){
+		MStats.lock();
+		float item_chance_or_skill = stats[item_stat];
+		MStats.unlock();
+		if(add_to_skill)
+		{
+			skillAndItemsChance = (((float)skill->current_val+item_chance_or_skill)/10.0f); // do we know 25 is accurate?  10 gives more 'skill' space, most cap at 70% with items
+		}
+		else
+		{
+			skillAndItemsChance = ((float)skill->current_val/10.0f); // do we know 25 is accurate?  10 gives more 'skill' space, most cap at 70% with items
+
+			// take chance percentage and add the item stats % (+1 = 1% or .01f)
+			skillAndItemsChance += (skillAndItemsChance*((item_chance_or_skill + modifier)/100.0f));
+		}
+	}
+
+	if ( max_cap > 0.0f && skillAndItemsChance > max_cap )
+		skillAndItemsChance = max_cap;
+
+	return skillAndItemsChance;
+}
+
 void Entity::CalculateBonuses(){
 	InfoStruct* info = &info_struct;
+
+	int16 effective_level = info->get_effective_level() != 0 ? info->get_effective_level() : GetLevel();
+
 	info->set_block(info->get_block_base());
 	
 	info->set_cur_attack(info->get_attack_base());
@@ -988,10 +972,6 @@ void Entity::CalculateBonuses(){
 	info->set_base_avoidance_pct(info->get_avoidance_base());
 
 	LogWrite(MISC__TODO, 1, "TODO", "Calculate via current spells\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-
-	//info->cur_concentration = 0;
-	info->set_parry(info->get_parry_base());
-	info->set_deflection(info->get_deflection_base());
 
 	info->set_disease(info->get_disease_base());
 	info->set_divine(info->get_divine_base());
@@ -1102,7 +1082,171 @@ void Entity::CalculateBonuses(){
 	info->add_uncontested_parry(values->uncontested_parry);
 	info->add_uncontested_dodge(values->uncontested_dodge);
 	info->add_uncontested_riposte(values->uncontested_riposte);
+
+	
+	float full_pct_hit = 100.0f;
+
+	//info->cur_concentration = 0;
+	MStats.lock();
+	float parryStat = stats[ITEM_STAT_PARRY];
+	MStats.unlock();
+	float parry_pct = CalculateSkillStatChance("Parry", ITEM_STAT_PARRYCHANCE, 70.0f, parryStat);
+	parry_pct += parry_pct * (info->get_cur_avoidance()/100.0f);
+	if(parry_pct > 70.0f)
+		parry_pct = 70.0f;
+
+	info->set_parry(parry_pct);
+
+	full_pct_hit -= parry_pct;
+	
+	float block_pct = 0.0f;
+
+	if(GetAdventureClass() != BRAWLER)
+	{
+		Item* item = equipment_list.GetItem(EQ2_SECONDARY_SLOT);
+		if(item && item->details.item_id > 0 && item->IsShield()){
+			// if high is set and greater than low use high, otherwise use low
+			int16 mitigation = item->armor_info->mitigation_high > item->armor_info->mitigation_low ? item->armor_info->mitigation_high : item->armor_info->mitigation_low;
+			// we frankly don't know the formula for Block, only that it uses the 'Protection' of the shield, which is the mitigation_low/mitigation_high in the armor_info
+			if(mitigation)
+			{
+				/*DOF Prima Guide: Shields now have the following base chances
+				to block: Tower (10%), Kite (10%), Round
+				(5%), Buckler (3%). Your chances to block
+				scale up or down based on the con of your
+				opponent.*/
+				Skill* skill = master_skill_list.GetSkill(item->generic_info.skill_req1);
+				float baseBlock = 0.0f;
+				if(skill)
+				{
+					if(skill->short_name.data == "towershield" || skill->short_name.data == "kiteshield")
+						baseBlock = 10.0f;
+					else if (skill->short_name.data == "roundshield")
+						baseBlock = 5.0f;
+					else if (skill->short_name.data == "buckler") 
+						baseBlock = 3.0f;
+				}
+				if(GetLevel() > mitigation)
+					block_pct = log10f((float)mitigation/((float)GetLevel()*10.0f));
+				else
+					block_pct = log10f(((float)GetLevel()/(float)mitigation)) * log10f(GetLevel()) * 2.0f;
+				
+				if(block_pct < 0.0f)
+					block_pct *= -1.0f;
+
+				block_pct += baseBlock;
+
+				block_pct += block_pct * (info->get_cur_avoidance()/100.0f);
+				if(block_pct > 70.0f)
+					block_pct = 70.0f;
+			}
+		}
+	}
+	else
+	{
+		//info->cur_concentration = 0;
+		MStats.lock();
+		float deflectionStat = stats[ITEM_STAT_DEFLECTION];
+		MStats.unlock();
+		block_pct = CalculateSkillStatChance("Deflection", ITEM_STAT_MINIMUMDEFLECTIONCHANCE, 70.0f, deflectionStat+1.0f);
+		block_pct += block_pct * (info->get_cur_avoidance()/100.0f);
+	}
+
+	float block_actual = 0.0f;
+	if(full_pct_hit > 0.0f)
+		block_actual = block_pct * (full_pct_hit / 100.0f);
+
+	info->set_block(block_actual);
+	full_pct_hit -= block_actual;
+
+
+	//info->cur_concentration = 0;
+	MStats.lock();
+	float defenseStat = stats[ITEM_STAT_DEFENSE];
+	MStats.unlock();
+	
+	float dodge_pct = CalculateSkillStatChance("Defense", ITEM_STAT_DODGECHANCE, 100.0f, defenseStat);
+	dodge_pct += dodge_pct * (info->get_cur_avoidance()/100.0f);
+
+	float dodge_actual = 0.0f;
+	if(full_pct_hit > 0.0f)
+		dodge_actual = dodge_pct * (full_pct_hit / 100.0f) + (log10f(GetLevel() * GetAgi()) / 100.0f);
+
+	info->set_avoidance_base(dodge_actual);
+
+	float total_avoidance = parry_pct + block_actual + dodge_actual;
+	info->set_avoidance_display(total_avoidance);
+
+	SetRegenValues(effective_level);
+
 	safe_delete(values);
+}
+
+void Entity::SetRegenValues(int16 effective_level)
+{
+	bool classicRegen = rule_manager.GetGlobalRule(R_Spawn, ClassicRegen)->GetBool();
+	if(!GetInfoStruct()->get_hp_regen_override())
+	{
+		sint16 regen_hp_rate = 0;
+		sint16 temp = 0;
+
+		MStats.lock();
+		if(!IsAggroed())
+		{
+			if(classicRegen)
+			{
+				// classic regen only gives OUT OF COMBAT, doesn't combine in+out of combat
+				regen_hp_rate = (int)(effective_level*.75)+1;
+				temp = regen_hp_rate + stats[ITEM_STAT_HPREGEN];
+				temp += stats[ITEM_STAT_HPREGENPPT];
+			}
+			else
+			{
+				regen_hp_rate = (int)(effective_level*.75)+(int)(effective_level/10) + 1;
+				temp = regen_hp_rate + stats[ITEM_STAT_HPREGEN];
+				temp += stats[ITEM_STAT_HPREGENPPT] + stats[ITEM_STAT_COMBATHPREGENPPT];
+			}
+		}
+		else
+		{
+			regen_hp_rate = (sint16)(effective_level / 10) + 1;
+			temp = regen_hp_rate + stats[ITEM_STAT_COMBATHPREGENPPT];
+		}
+		MStats.unlock();
+
+		GetInfoStruct()->set_hp_regen(temp);
+	}
+
+	if(!GetInfoStruct()->get_power_regen_override())
+	{
+		sint16 regen_power_rate = 0;
+		sint16 temp = 0;
+
+		MStats.lock();
+		if(!IsAggroed())
+		{
+			if(classicRegen)
+			{				
+				regen_power_rate = effective_level + 1;
+				temp = regen_power_rate + stats[ITEM_STAT_MANAREGEN];
+				temp += stats[ITEM_STAT_MPREGENPPT];
+			}
+			else
+			{
+				regen_power_rate = effective_level + (int)(effective_level/10) + 1;
+				temp = regen_power_rate + stats[ITEM_STAT_MANAREGEN];
+				temp += stats[ITEM_STAT_MPREGENPPT] + stats[ITEM_STAT_COMBATMPREGENPPT];
+			}
+		}
+		else
+		{
+			regen_power_rate = (sint16)(effective_level / 10) + 1;
+			temp = regen_power_rate + stats[ITEM_STAT_COMBATMPREGENPPT];
+		}
+		MStats.unlock();
+
+		GetInfoStruct()->set_power_regen(temp);
+	}
 }
 
 EquipmentItemList* Entity::GetEquipmentList(){
@@ -1664,6 +1808,7 @@ float Entity::GetSpeed() {
 	if (EngagedInCombat() && GetMaxSpeed() > 0.0f)
 		ret = GetMaxSpeed();
 
+	MStats.lock();
 	if ((IsStealthed() || IsInvis()) && stats.count(ITEM_STAT_STEALTHINVISSPEEDMOD))
 		ret += stats[ITEM_STAT_STEALTHINVISSPEEDMOD];
 	else if (EngagedInCombat() && stats.count(ITEM_STAT_OFFENSIVESPEED))
@@ -1674,6 +1819,7 @@ float Entity::GetSpeed() {
 		ret += stats[ITEM_STAT_SPEED];
 	else if (stats.count(ITEM_STAT_MOUNTSPEED))
 		ret += stats[ITEM_STAT_MOUNTSPEED];
+	MStats.unlock();
 	
 	ret *= speed_multiplier;
 	return ret;

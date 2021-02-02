@@ -102,8 +102,10 @@ void TradeskillMgr::Process() {
 			float crit_fail = m_critFail;
 
 			// Modify the % chance for success based off of stats
+			client->GetPlayer()->MStats.lock();
 			fail -= client->GetPlayer()->stats[ITEM_STAT_SUCCESS_MOD];
 			success += client->GetPlayer()->stats[ITEM_STAT_SUCCESS_MOD];
+			client->GetPlayer()->MStats.unlock();
 
 			// add values together for the if
 			crit_success += crit_fail;
@@ -157,8 +159,10 @@ void TradeskillMgr::Process() {
 			}
 
 			// Modify the progress/durability by the players stats
+			client->GetPlayer()->MStats.lock();
 			progress += client->GetPlayer()->stats[ITEM_STAT_PROGRESS_ADD];
 			durability += client->GetPlayer()->stats[ITEM_STAT_DURABILITY_ADD];
+			client->GetPlayer()->MStats.unlock();
 
 			tradeskill->currentDurability += durability;
 			tradeskill->currentProgress += progress;

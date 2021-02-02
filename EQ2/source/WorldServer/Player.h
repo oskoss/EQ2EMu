@@ -599,30 +599,19 @@ public:
 		if (player_spawn_reverse_id_map.count(spawn) > 0)
 			id = player_spawn_reverse_id_map[spawn];
 		index_mutex.releasereadlock(__FUNCTION__, __LINE__);
+
 		return id;
 	}
 
-	void SetSpawnMap(Spawn* spawn)
+	void SetSpawnMap(Spawn* spawn);
+
+	void SetSpawnMapIndex(Spawn* spawn, int32 index)
 	{
 		index_mutex.writelock(__FUNCTION__, __LINE__);
-		spawn_id += 1;
-		int32 tmp_id = spawn_id;
-		player_spawn_id_map[tmp_id] = spawn;
-
-		if(player_spawn_reverse_id_map.count(spawn))
-			player_spawn_reverse_id_map.erase(spawn);
-
-		player_spawn_reverse_id_map.insert(make_pair(spawn,tmp_id));
-		index_mutex.releasewritelock(__FUNCTION__, __LINE__);
-	}
-
-	void SetSpawnMapIndex(Spawn* spawn, int16 index)
-	{
-		index_mutex.writelock(__FUNCTION__, __LINE__);
-		if (player_spawn_map.count(index))
-			player_spawn_map[index] = spawn;
+		if (player_spawn_id_map.count(index))
+			player_spawn_id_map[index] = spawn;
 		else
-			player_spawn_map[index] = spawn;
+			player_spawn_id_map[index] = spawn;
 		index_mutex.releasewritelock(__FUNCTION__, __LINE__);
 	}
 
@@ -636,16 +625,8 @@ public:
 
 		new_index = spawn_index;
 
-		if (player_spawn_index_map.count(spawn))
-			player_spawn_index_map.erase(spawn);
-
-		player_spawn_index_map.insert(make_pair(spawn,new_index));
-
-		if (player_spawn_map.count(new_index))
-			player_spawn_map[new_index] = spawn;
-		else
-			player_spawn_map.insert(make_pair(new_index, spawn));
-
+		player_spawn_id_map[new_index] = spawn;
+		player_spawn_reverse_id_map[spawn] = new_index;
 		index_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 		return new_index;
@@ -711,7 +692,7 @@ public:
 	void				SetGroupInformation(PacketStruct* packet);
 
 
-
+	void				ResetRemovedSpawns();
 	void				ResetSavedSpawns();
 	bool				IsReturningFromLD();
 	void				SetReturningFromLD(bool val);
@@ -960,6 +941,20 @@ public:
 	bool HasGMVision() { return gm_vision; }
 	void SetGMVision(bool val) { gm_vision = val; }
 
+	void StopCombat(int8 type=0) { 
+		switch(type)
+		{
+			case 2:
+				SetRangeAttack(false);
+				InCombat(false, true);
+			break;
+			default:
+				InCombat(false);
+				InCombat(false, true);
+				SetRangeAttack(false);
+			break;
+		}
+	}
 
 
 
@@ -1092,8 +1087,6 @@ private:
 
 	bool gm_vision;
 
-	map<Spawn*, int16>	player_spawn_index_map;
-	map<int16, Spawn*>	player_spawn_map;
 	map<int32, Spawn*>	player_spawn_id_map;
 	map<Spawn*, int32>	player_spawn_reverse_id_map;
 	map<Spawn*, int8>	player_removed_spawns;

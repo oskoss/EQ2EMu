@@ -687,9 +687,6 @@ void Bot::ChangeLevel(int16 old_level, int16 new_level) {
 	GetInfoStruct()->set_magic_base((int16)(new_level*1.5 + 10));
 	GetInfoStruct()->set_divine_base((int16)(new_level*1.5 + 10));
 	GetInfoStruct()->set_poison_base((int16)(new_level*1.5 + 10));
-
-	SetHPRegen((int)(new_level*.75) + (int)(new_level / 10) + 3);
-	SetPowerRegen(new_level + (int)(new_level / 10) + 4);
 	/*UpdateTimeStampFlag(LEVEL_UPDATE_FLAG);
 	GetPlayer()->SetCharSheetChanged(true);
 

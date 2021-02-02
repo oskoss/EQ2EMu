@@ -872,6 +872,9 @@ private:
 
 #define COMMAND_MOVECHARACTER			525
 
+#define COMMAND_CRAFTITEM                526
+
+
 #define GET_AA_XML						750
 #define ADD_AA							751
 #define COMMIT_AA_PROFILE				752				

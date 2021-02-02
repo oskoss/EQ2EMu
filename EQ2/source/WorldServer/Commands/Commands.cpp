@@ -318,7 +318,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 										   }
 			case SPAWN_SET_VALUE_FACIAL_HAIR_TYPE:{
 				if(target->IsEntity()){
-					sprintf(tmp, "%i", ((Entity*)target)->GetHairType());
+					sprintf(tmp, "%i", ((Entity*)target)->GetFacialHairType());
 					((Entity*)target)->SetFacialHairType(val, send_update);
 				}
 				break;
@@ -1638,6 +1638,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		}
 		case COMMAND_WAYPOINT: {
 			bool success = false;
+			client->ClearWaypoint();
 			if (sep && sep->IsNumber(0) && sep->IsNumber(1) && sep->IsNumber(2)) {
 				if (!client->ShowPathToTarget(atof(sep->arg[0]), atof(sep->arg[1]), atof(sep->arg[2]), 0))
 					client->Message(CHANNEL_COLOR_RED, "Invalid coordinates given");
@@ -1647,7 +1648,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					client->Message(CHANNEL_COLOR_RED, "Invalid coordinates given");
 			}
 			else {
-				client->ClearWaypoint();
 				client->Message(CHANNEL_COLOR_YELLOW, "Usage: /waypoint x y z");
 			}
 			break;
@@ -3123,16 +3123,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(type == 0){
 				if(incombat)
 					client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
-				player->InCombat(false);
-				player->InCombat(false, true);
-				player->SetRangeAttack(false);
+					player->StopCombat(type);
 			}
 			else {
 				if(type == 2){
 					player->InCombat(false);
 					if(incombat && player->GetRangeAttack()){
-						player->SetRangeAttack(false);
-						player->InCombat(false, true);
+						player->StopCombat(type);
 						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
 					}
 					else{
@@ -3705,12 +3702,22 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						}
 						break;
 					}
-					else if (ToLower(string(sep->arg[0])) == "pathto")
+					else if (ToLower(string(sep->arg[0])) == "behind")
 					{
+						bool isBehind = client->GetPlayer()->BehindTarget(cmdTarget);
+						client->Message(CHANNEL_COLOR_YELLOW, "%s %s.", isBehind ? "YOU are behind" : "YOU are NOT behind", cmdTarget->GetName());
 						break;
 					}
-					else if (ToLower(string(sep->arg[0])) == "pathfrom")
+					else if (ToLower(string(sep->arg[0])) == "infront")
 					{
+						bool isBehind = client->GetPlayer()->InFrontSpawn(cmdTarget, client->GetPlayer()->GetX(), client->GetPlayer()->GetZ());
+						client->Message(CHANNEL_COLOR_YELLOW, "%s %s.", isBehind ? "YOU are infront of" : "YOU are NOT infront of", cmdTarget->GetName());
+						break;
+					}
+					else if (ToLower(string(sep->arg[0])) == "flank")
+					{
+						bool isFlanking = client->GetPlayer()->FlankingTarget(cmdTarget);
+						client->Message(CHANNEL_COLOR_YELLOW, "%s is %s.", isFlanking ? "YOU are flanking" : "YOU are NOT flanking", cmdTarget->GetName());
 						break;
 					}
 				}
@@ -4571,6 +4578,39 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_TARGETITEM			: { Command_TargetItem(client, sep); break; }
 		case COMMAND_FINDSPAWN: { Command_FindSpawn(client, sep); break; }
 		case COMMAND_MOVECHARACTER: { Command_MoveCharacter(client, sep); break; }
+		case COMMAND_CRAFTITEM: {
+					Item* item = 0;
+					if (sep && sep->IsNumber(0)) {
+						int32 item_id = atol(sep->arg[0]);
+						int32 quantity = 1;
+
+						if (sep->arg[1] && sep->IsNumber(1))
+							quantity = atoi(sep->arg[1]);
+						item = new Item(master_item_list.GetItem(item_id));
+						if (!item) {
+							LogWrite(TRADESKILL__ERROR, 0, "CraftItem", "Item (%u) not found.", item_id);
+						}
+						else {
+							item->details.count = quantity;
+							// use CHANNEL_COLOR_CHAT_RELATIONSHIP as that is the same value (4) as it is in a log for this message
+							client->Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "You created %s.", item->CreateItemLink(client->GetVersion()).c_str());
+							client->AddItem(item);
+							//Check for crafting quest updates
+							int8 update_amt = 0;
+							if (item->stack_count > 1)
+								update_amt = 1;
+							else
+								update_amt = quantity;
+							client->GetPlayer()->CheckQuestsCraftUpdate(item, update_amt);
+						}
+
+					}
+					
+					else {
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage: /craftitem {item_id} [quantity] ");
+						}
+					break;
+				}
 
 
 		default: 
@@ -10380,6 +10420,10 @@ void Commands::Add_AA(Client* client, Seperator* sep) {
 		spell_tier = client->GetPlayer()->GetSpellTier(spell_id);
 		AltAdvanceData* data = master_aa_list.GetAltAdvancement(spell_id);
 		// addspellbookentry here
+		if(!data) {
+		LogWrite(COMMAND__ERROR, 0, "Command", "Error in Add_AA no data for spell_id %u spell_tier %u", spell_id, spell_tier);
+			return;
+		}
 		if (spell_tier >= data->maxRank) {
 		LogWrite(COMMAND__ERROR, 0, "Command", "Error in Add_AA spell_tier %u >= maxRank %u", spell_tier, data->maxRank);
 			return;

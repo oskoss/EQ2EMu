@@ -133,12 +133,12 @@ struct InfoStruct{
 		max_mitigation_ = 0;
 		mitigation_base_ = 0;
 		avoidance_display_ = 0;
-		cur_avoidance_ = 0;
+		cur_avoidance_ = 0.0f;
 		base_avoidance_pct_ = 0;
 		avoidance_base_ = 0;
 		max_avoidance_ = 0;
-		parry_ = 0;
-		parry_base_ = 0;
+		parry_ = 0.0f;
+		parry_base_ = 0.0f;
 		deflection_ = 0;
 		deflection_base_ = 0;
 		block_ = 0;
@@ -246,7 +246,11 @@ struct InfoStruct{
 		breathe_underwater_ = 0;
 		biography_ = std::string("");
 		drunk_ = 0;
+		power_regen_ = 0;
+		hp_regen_ = 0;
 
+		power_regen_override_ = 0;
+		hp_regen_override_ = 0;
 	}
 
 
@@ -388,7 +392,11 @@ struct InfoStruct{
 		breathe_underwater_ = oldStruct->get_breathe_underwater();
 		biography_ = std::string(oldStruct->get_biography());
 		drunk_ = oldStruct->get_drunk();
+		power_regen_ = oldStruct->get_power_regen();
+		hp_regen_ = oldStruct->get_hp_regen();
 
+		power_regen_override_ = oldStruct->get_power_regen_override();
+		hp_regen_override_ = oldStruct->get_hp_regen_override();
 	}
 
 	//mutable std::shared_mutex mutex_;
@@ -413,19 +421,19 @@ struct InfoStruct{
 
 	int16	 get_mitigation_base() { std::lock_guard<std::mutex> lk(classMutex); return mitigation_base_; }
 	int16	 get_avoidance_display() { std::lock_guard<std::mutex> lk(classMutex); return avoidance_display_; }
-	int16	 get_cur_avoidance() { std::lock_guard<std::mutex> lk(classMutex); return cur_avoidance_; }
+	float	 get_cur_avoidance() { std::lock_guard<std::mutex> lk(classMutex); return cur_avoidance_; }
 	int16	 get_base_avoidance_pct() { std::lock_guard<std::mutex> lk(classMutex); return base_avoidance_pct_; }
 	int16	 get_avoidance_base() { std::lock_guard<std::mutex> lk(classMutex); return avoidance_base_; }
 
-	int16	 get_parry() { std::lock_guard<std::mutex> lk(classMutex); return parry_; }
-	int16	 get_parry_base() { std::lock_guard<std::mutex> lk(classMutex); return parry_base_; }
+	float	 get_parry() { std::lock_guard<std::mutex> lk(classMutex); return parry_; }
+	float	 get_parry_base() { std::lock_guard<std::mutex> lk(classMutex); return parry_base_; }
 	
 	int16	 get_max_avoidance() { std::lock_guard<std::mutex> lk(classMutex); return max_avoidance_; }
 
-	int16	 get_deflection() { std::lock_guard<std::mutex> lk(classMutex); return deflection_; }
+	float	 get_deflection() { std::lock_guard<std::mutex> lk(classMutex); return deflection_; }
 	int16	 get_deflection_base() { std::lock_guard<std::mutex> lk(classMutex); return deflection_base_; }
 
-	int16	 get_block() { std::lock_guard<std::mutex> lk(classMutex); return block_; }
+	float	 get_block() { std::lock_guard<std::mutex> lk(classMutex); return block_; }
 	int16	 get_block_base() { std::lock_guard<std::mutex> lk(classMutex); return block_base_; }
 
 	float	 get_str() { std::lock_guard<std::mutex> lk(classMutex); return str_; }
@@ -540,6 +548,12 @@ struct InfoStruct{
 	std::string get_biography() { std::lock_guard<std::mutex> lk(classMutex); return biography_; }
 	float	 get_drunk() { std::lock_guard<std::mutex> lk(classMutex); return drunk_; }
 
+	sint16	 get_power_regen() { std::lock_guard<std::mutex> lk(classMutex); return power_regen_; }
+	sint16	 get_hp_regen() { std::lock_guard<std::mutex> lk(classMutex); return hp_regen_; }
+
+	int8	 get_power_regen_override() { std::lock_guard<std::mutex> lk(classMutex); return power_regen_override_; }
+	int8	 get_hp_regen_override() { std::lock_guard<std::mutex> lk(classMutex); return hp_regen_override_; }
+
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
 	void	set_deity(std::string value) { std::lock_guard<std::mutex> lk(classMutex); deity_ = value; }
@@ -568,15 +582,15 @@ struct InfoStruct{
 	void	add_mitigation_base(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_base_ += value; }
 
 	void	set_avoidance_display(int16 value) { std::lock_guard<std::mutex> lk(classMutex); avoidance_display_ = value; }
-	void	set_cur_avoidance(int16 value) { std::lock_guard<std::mutex> lk(classMutex); cur_avoidance_ = value; }
+	void	set_cur_avoidance(float value) { std::lock_guard<std::mutex> lk(classMutex); cur_avoidance_ = value; }
 	void	set_base_avoidance_pct(int16 value) { std::lock_guard<std::mutex> lk(classMutex); base_avoidance_pct_ = value; }
 	void	set_avoidance_base(int16 value) { std::lock_guard<std::mutex> lk(classMutex); avoidance_base_ = value; }
 	void	set_max_avoidance(int16 value) { std::lock_guard<std::mutex> lk(classMutex); max_avoidance_ = value; }
-	void	set_parry(int16 value) { std::lock_guard<std::mutex> lk(classMutex); parry_ = value; }
-	void	set_parry_base(int16 value) { std::lock_guard<std::mutex> lk(classMutex); parry_base_ = value; }
+	void	set_parry(float value) { std::lock_guard<std::mutex> lk(classMutex); parry_ = value; }
+	void	set_parry_base(float value) { std::lock_guard<std::mutex> lk(classMutex); parry_base_ = value; }
 	void	set_deflection(int16 value) { std::lock_guard<std::mutex> lk(classMutex); deflection_ = value; }
-	void	set_deflection_base(int16 value) { std::lock_guard<std::mutex> lk(classMutex); deflection_base_ = value; }
-	void	set_block(int16 value) { std::lock_guard<std::mutex> lk(classMutex); block_ = value; }
+	void	set_deflection_base(float value) { std::lock_guard<std::mutex> lk(classMutex); deflection_base_ = value; }
+	void	set_block(float value) { std::lock_guard<std::mutex> lk(classMutex); block_ = value; }
 	void	set_block_base(int16 value) { std::lock_guard<std::mutex> lk(classMutex); block_base_ = value; }
 
 	void	set_str(float value) { std::lock_guard<std::mutex> lk(classMutex); str_ = value; }
@@ -773,6 +787,12 @@ struct InfoStruct{
 
 	void	set_biography(std::string value) { std::lock_guard<std::mutex> lk(classMutex); biography_ = value; }
 
+	void	set_power_regen(sint16 value) { std::lock_guard<std::mutex> lk(classMutex); power_regen_ = value; }
+	void	set_hp_regen(sint16 value) { std::lock_guard<std::mutex> lk(classMutex); hp_regen_ = value; }
+
+	void	set_power_regen_override(int8 value) { std::lock_guard<std::mutex> lk(classMutex); power_regen_override_ = value; }
+	void	set_hp_regen_override(int8 value) { std::lock_guard<std::mutex> lk(classMutex); hp_regen_override_ = value; }
+
 	void	ResetEffects(Spawn* spawn)
 	{
 		for(int i=0;i<45;i++){
@@ -811,16 +831,18 @@ private:
 	int16			max_mitigation_;
 	int16			mitigation_base_;
 	int16			avoidance_display_;
-	int16			cur_avoidance_;
+	float			cur_avoidance_;
 	int16			base_avoidance_pct_;
 	int16			avoidance_base_;
 	int16			max_avoidance_;
-	int16			parry_;
-	int16			parry_base_;
-	int16			deflection_;
+	float			parry_;
+	float			parry_base_;
+	float			deflection_;
 	int16			deflection_base_;
-	int16			block_;
+	float			block_;
 	int16			block_base_;
+	float			riposte_;
+	float			riposte_base_;
 	float			str_; //int16
 	float			sta_; //int16
 	float			agi_;//int16
@@ -928,6 +950,11 @@ private:
 	std::string		biography_;
 	float			drunk_;
 
+	sint16			power_regen_;
+	sint16			hp_regen_;
+
+	int8			power_regen_override_;
+	int8			hp_regen_override_;
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;
 };
@@ -1034,7 +1061,6 @@ public:
 	virtual ~Entity();
 
 	void MapInfoStruct();
-	virtual float GetShieldBlockChance();
 	virtual float GetDodgeChance();
 	virtual void AddMaintainedSpell(LuaSpell* spell);
 	virtual void AddSpellEffect(LuaSpell* spell);
@@ -1054,7 +1080,9 @@ public:
 	EquipmentItemList* GetEquipmentList();
 
 	bool IsEntity(){ return true; }
+	float CalculateSkillStatChance(char* skill, int16 item_stat, float max_cap = 0.0f, float modifier = 0.0f, bool add_to_skill = false);
 	void CalculateBonuses();
+	void SetRegenValues(int16 effective_level);
 	float CalculateBonusMod();
 	float CalculateDPSMultiplier();
 	float CalculateCastingSpeedMod();
@@ -1098,9 +1126,7 @@ public:
 
 	bool	HasMoved(bool include_heading);
 	void	SetHPRegen(int16 new_val);
-	void	SetPowerRegen(int16 new_val);
 	int16	GetHPRegen();
-	int16	GetPowerRegen();
 	void	DoRegenUpdate();
 	MaintainedEffects* GetFreeMaintainedSpellSlot();
 	SpellEffects* GetFreeSpellEffectSlot();
@@ -1499,6 +1525,17 @@ public:
 
 	// Keep track of entities that hate this spawn.
 	set<int32> HatedBy;
+	std::mutex MHatedBy;
+
+	bool IsAggroed() { 
+			int32 size = 0;
+
+			MHatedBy.lock();
+			size = HatedBy.size();
+			MHatedBy.unlock();
+
+			return size > 0;
+		}
 
 	Mutex	MCommandMutex;
 
@@ -1539,6 +1576,7 @@ public:
 
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		MEquipment;
+	std::mutex		MStats;
 protected:
 	bool	in_combat;
 

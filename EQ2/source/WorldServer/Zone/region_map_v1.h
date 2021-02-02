@@ -7,6 +7,9 @@
 class Client;
 class Spawn;
 
+#define SPECIAL_REGION_LAVA_OR_DEATH 4294967293
+#define SPECIAL_REGION_WATER		 1
+
 #pragma pack(1)
 typedef struct ZBSP_Node {
 	int32 node_number;

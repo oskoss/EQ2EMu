@@ -96,6 +96,8 @@ extern int errno;
 // extern volatile bool RunLoops;										// never used in the zone server?
 // extern Classes classes;												// never used in the zone server?
 
+#define NO_CATCH 1
+
 extern WorldDatabase	database;
 extern sint32			numzones;
 extern ClientList		client_list;
@@ -1821,7 +1823,7 @@ void ZoneServer::ProcessDrowning(){
 				Client* client = itr->first;
 				Player* player = client->GetPlayer();
 				drowning_victims.Get(client) = Timer::GetCurrentTime2() + 2000;
-				damage = player->GetTotalHP()/20 + player->GetHPRegen();
+				damage = player->GetTotalHP()/20 + player->GetInfoStruct()->get_hp_regen();
 				player->TakeDamage(damage);
 				if(player->GetHP() == 0)
 					dead_list.push_back(client);
@@ -3780,7 +3782,7 @@ void ZoneServer::RemoveFromRangeMap(Client* client){
 }
 */
 
-void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool lock) 
+void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool lock, bool erase_from_spawn_list) 
 {
 	LogWrite(ZONE__DEBUG, 3, "Zone", "Processing RemoveSpawn function for %s (%i)...", spawn->GetName(),spawn->GetID());
 
@@ -3807,7 +3809,8 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 		spawn_expire_timers.erase(spawn->GetID());
 	
 	// we will remove the spawn ptr and entry in the spawn_list later.. it is not safe right now (lua? client process? spawn process? etc? too many factors)
-	AddPendingSpawnRemove(spawn->GetID());
+	if(erase_from_spawn_list)
+		AddPendingSpawnRemove(spawn->GetID());
 
 	PacketStruct* packet = 0;
 	int16 packet_version = 0;
@@ -4172,7 +4175,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 
 		// Remove hate towards dead from all npc's in the zone
 		ClearHate((Entity*)dead);
-
+		
 		// Check kill and death procs
 		if (killer && dead != killer){
 			if (dead->IsEntity())
@@ -4525,6 +4528,7 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 				packet->setArrayDataByName("damage_type", damage_type);
 				packet->setArrayDataByName("damage", damage);
 			}
+
 			if (!attacker)
 				packet->setSubstructDataByName("header", "attacker", 0xFFFFFFFF);
 			else
@@ -4796,6 +4800,11 @@ void ZoneServer::SendZoneSpawns(Client* client){
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		Spawn* spawn = itr->second;
 		if (spawn) {
+			if(spawn == client->GetPlayer() && client->IsReloadingZone())
+			{
+				client->GetPlayer()->SetSpawnMap(spawn);
+			}
+			
 			CheckSpawnRange(client, spawn, true);
 		}
 	}
@@ -6508,8 +6517,10 @@ void ZoneServer::ResurrectSpawn(Spawn* spawn, Client* client) {
 
 	if(!no_calcs && caster){
 		//Potency Mod
+		((Entity*)caster)->MStats.lock();
 		heal_amt *=  ((caster->stats[ITEM_STAT_POTENCY] / 100) + 1);
 		power_amt *= ((caster->stats[ITEM_STAT_POTENCY] / 100) + 1);
+		((Entity*)caster)->MStats.unlock();
 
 		//Ability Mod
 		heal_amt += (int32)min((int32)info->get_ability_modifier(), (int32)(heal_amt / 2));

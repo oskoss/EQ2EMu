@@ -2132,6 +2132,34 @@ int EQ2Emu_lua_AddSpawnSpellBonus(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_RemoveSpawnSpellBonus(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
+	
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA AddSpawnSpellBonus command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!spawn->IsEntity()) {
+		lua_interface->LogError("%s: LUA AddSpawnSpellBonus command error: spawn is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!luaspell || !luaspell->spell) {
+		lua_interface->LogError("%s: LUA AddSpawnSpellBonus command error: can only be used in a spell script", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	((Entity*)spawn)->RemoveSpellBonus(luaspell);
+	if (spawn->IsPlayer())
+		((Player*)spawn)->SetCharSheetChanged(true);
+	
+	return 0;
+}
+
 int EQ2Emu_lua_RemoveSpellBonus(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -7065,7 +7093,15 @@ int EQ2Emu_lua_CanHarvest(lua_State* state) {
 	GroundSpawnEntry* entry = 0;
 	bool can_harvest = false;
 	sint32 min_skill = -1;
-
+	int16 totalSkill = skill->current_val;
+	int32 skillID = master_item_list.GetItemStatIDByName(collection_skill);
+	if(skillID != 0xFFFFFFFF)
+	{
+		((Entity*)player)->MStats.lock();
+		totalSkill += ((Entity*)player)->stats[skillID];
+		((Entity*)player)->MStats.unlock();
+	}
+	
 	// first, iterate through groundspawn_entries, discard tables player cannot use
 	for (itr = groundspawn_entries->begin(); itr != groundspawn_entries->end(); itr++)
 	{
@@ -7074,7 +7110,7 @@ int EQ2Emu_lua_CanHarvest(lua_State* state) {
 		if (min_skill == -1 || entry->min_skill_level < min_skill)
 			min_skill = entry->min_skill_level;
 		// if player lacks skill, skip table
-		if (entry->min_skill_level > skill->current_val)
+		if (entry->min_skill_level > totalSkill)
 			continue;
 		// if bonus, but player lacks level, skip table
 		if (entry->bonus_table && (player->GetLevel() < entry->min_adventure_level))
@@ -7103,7 +7139,7 @@ int EQ2Emu_lua_CanHarvest(lua_State* state) {
 				msg.append("catch");
 
 			msg.append(" the %s. It requires %i %s skill, and your skill is %i.");
-			client->Message(CHANNEL_HARVESTING_WARNINGS, msg.c_str(), ground->GetName(), min_skill, skill->name.data.c_str(), skill->current_val);
+			client->Message(CHANNEL_HARVESTING_WARNINGS, msg.c_str(), ground->GetName(), min_skill, skill->name.data.c_str(), totalSkill);
 			// You do not have enough skill to catch the band of fish.  It requires 20 Fishing skill, and your skill is 12.
 		}
 	}
@@ -9984,12 +10020,16 @@ int EQ2Emu_lua_Evac(lua_State* state) {
 					PacketStruct* packet = configReader.getStruct("WS_TeleportWithinZone", client->GetVersion());
 					if (packet)
 					{
+						client->SetReloadingZone(true);
 						packet->setDataByName("x", x);
 						packet->setDataByName("y", y);
 						packet->setDataByName("z", z);
 						client->QueuePacket(packet->serialize());
 						safe_delete(packet);
 					}
+					
+					client->GetCurrentZone()->ClearHate(client->GetPlayer());
+					client->GetCurrentZone()->RemoveSpawn(client->GetPlayer(), false, false, false, false);
 				}
 			}
 		}
@@ -10807,6 +10847,7 @@ int EQ2Emu_lua_GetSpell(lua_State* state) {
 		return 0;
 	int32 spell_id = lua_interface->GetInt32Value(state);
 	int8 spell_tier = lua_interface->GetInt8Value(state, 2);
+	string custom_lua_script = lua_interface->GetStringValue(state, 3);
 	if (spell_id > 0) {
 
 		if (spell_tier == 0)
@@ -10814,8 +10855,10 @@ int EQ2Emu_lua_GetSpell(lua_State* state) {
 
 		Spell* spell = master_spell_list.GetSpell(spell_id, spell_tier);
 		LuaSpell* lua_spell = 0;
+		if(custom_lua_script.size() < 1)
+			custom_lua_script = spell->GetSpellData()->lua_script;
 		if (lua_interface)
-			lua_spell = lua_interface->GetSpell(spell->GetSpellData()->lua_script.c_str());
+			lua_spell = lua_interface->GetSpell(custom_lua_script.c_str());
 
 		if (!lua_spell)
 			return 0;
@@ -11793,5 +11836,49 @@ int EQ2Emu_lua_MakeRandomFloat(lua_State* state) {
 	float max = lua_interface->GetFloatValue(state, 2);
 	float result = MakeRandomFloat(min, max);
 	lua_interface->SetFloatValue(state, result);
+	return 1;
+}
+
+int EQ2Emu_lua_AddIconValue(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 value = lua_interface->GetInt32Value(state, 2);
+
+	lua_interface->ResetFunctionStack(state);
+	
+	if(!spawn)
+	{
+		lua_interface->LogError("%s: LUA AddIconValue command error: spawn is not valid, does not exist", lua_interface->GetScriptName(state));
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	spawn->AddIconValue(value);
+	lua_interface->SetBooleanValue(state, true);
+
+	return 1;
+}
+
+int EQ2Emu_lua_RemoveIconValue(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 value = lua_interface->GetInt32Value(state, 2);
+
+	lua_interface->ResetFunctionStack(state);
+	
+	if(!spawn)
+	{
+		lua_interface->LogError("%s: LUA RemoveIconValue command error: spawn is not valid, does not exist", lua_interface->GetScriptName(state));
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	spawn->RemoveIconValue(value);
+	lua_interface->SetBooleanValue(state, true);
+
 	return 1;
 }

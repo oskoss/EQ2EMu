@@ -132,6 +132,15 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 		return;
 	}
 
+	int16 totalSkill = skill->current_val;
+	int32 skillID = master_item_list.GetItemStatIDByName(collection_skill);
+	if(skillID != 0xFFFFFFFF)
+	{
+		((Entity*)client->GetPlayer())->MStats.lock();
+		totalSkill += ((Entity*)client->GetPlayer())->stats[skillID];
+		((Entity*)client->GetPlayer())->MStats.unlock();
+	}
+
 	for (int8 i = 0; i < num_attempts_per_harvest; i++) {
 		vector<GroundSpawnEntry*> mod_groundspawn_entries;
 
@@ -147,7 +156,7 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 				entry = *itr;
 
 				// if player lacks skill, skip table
-				if (entry->min_skill_level > skill->current_val)
+				if (entry->min_skill_level > totalSkill)
 					continue;
 				// if bonus, but player lacks level, skip table
 				if (entry->bonus_table && (client->GetPlayer()->GetLevel() < entry->min_adventure_level))
@@ -182,7 +191,7 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 			}
 
 			// now roll to see which table to use
-			table_choice = MakeRandomInt(lowest_skill_level, skill->current_val);
+			table_choice = MakeRandomInt(lowest_skill_level, totalSkill);
 			LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Random INT for Table by skill level: %i", table_choice);
 
 			int16 highest_score = 0;
@@ -251,7 +260,7 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 					harvest_type = 2;
 					reward_total = 3;
 				}
-				else if (chance <= selected_table->harvest1 || skill->current_val == skill->max_val || is_collection) {
+				else if (chance <= selected_table->harvest1 || totalSkill >= skill->max_val || is_collection) {
 					LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Harvest 1 Item from table : %i", selected_table->min_skill_level);
 					harvest_type = 1;
 				}

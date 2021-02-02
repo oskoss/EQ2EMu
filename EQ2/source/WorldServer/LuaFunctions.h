@@ -409,6 +409,7 @@ int EQ2Emu_lua_RemoveThreatTransfer(lua_State* state);
 int EQ2Emu_lua_CureByType(lua_State* state);
 int EQ2Emu_lua_CureByControlEffect(lua_State* state);
 int EQ2Emu_lua_AddSpawnSpellBonus(lua_State* state);
+int EQ2Emu_lua_RemoveSpawnSpellBonus(lua_State* state);
 int EQ2Emu_lua_CancelSpell(lua_State* state);
 int EQ2Emu_lua_RemoveStealth(lua_State* state);
 int EQ2Emu_lua_RemoveInvis(lua_State* state);
@@ -559,4 +560,7 @@ int EQ2Emu_lua_IsOpen(lua_State* state);
 
 int EQ2Emu_lua_MakeRandomInt(lua_State* state);
 int EQ2Emu_lua_MakeRandomFloat(lua_State* state);
+
+int EQ2Emu_lua_AddIconValue(lua_State* state);
+int EQ2Emu_lua_RemoveIconValue(lua_State* state);
 #endif

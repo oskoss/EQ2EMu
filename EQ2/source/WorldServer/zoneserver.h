@@ -304,7 +304,7 @@ public:
 	
 	void	AddSpawnGroupChance(int32 group_id, float percent);
 	
-	void	RemoveSpawn(Spawn* spawn, bool delete_spawn = true, bool respawn = true, bool lock = true);
+	void	RemoveSpawn(Spawn* spawn, bool delete_spawn = true, bool respawn = true, bool lock = true, bool erase_from_spawn_list = true);
 	void	ProcessSpawnLocations();
 	void	SendQuestUpdates(Client* client, Spawn* spawn = 0);
 	
@@ -664,6 +664,8 @@ public:
 
 	void AddPendingSpawnRemove(int32 id);
 	void ProcessSpawnRemovals();
+
+	bool	SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* packet = 0, bool delete_spawn = false);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
@@ -697,7 +699,6 @@ private:
 	void	SaveClients();																						// never used outside zone server
 	void	CheckSendSpawnToClient();																			// never used outside zone server
 	void	CheckSendSpawnToClient(Client* client, bool initial_login = false);									// never used outside zone server
-	bool	SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* packet = 0, bool delete_spawn = false);	// never used outside zone server
 	void	CheckRemoveSpawnFromClient(Spawn* spawn);															// never used outside zone server
 	void	SaveClient(Client* client);																			// never used outside zone server
 	void	ProcessFaction(Spawn* spawn, Client* client);														// never used outside zone server

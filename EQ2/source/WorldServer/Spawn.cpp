@@ -3950,3 +3950,40 @@ int32 Spawn::GetRegionType(Region_Node* inNode, ZBSP_Node* rootNode)
 	
 	return false;
 }
+
+float Spawn::SpawnAngle(Spawn* target, float selfx, float selfz)
+{
+	if (!target || target == this)
+		return 0.0f;
+
+	float angle, lengthb, vectorx, vectorz, dotp;
+	float spx = (target->GetX());	// mob xloc (inverse because eq)
+	float spz = -(target->GetZ());		// mob yloc
+	float heading = target->GetHeading();	// mob heading
+	if (heading < 270)
+		heading += 90;
+	else
+		heading -= 270;
+
+	heading = heading * 3.1415f / 180.0f;	// convert to radians
+	vectorx = spx + (10.0f * std::cos(heading));	// create a vector based on heading
+	vectorz = spz + (10.0f * std::sin(heading));	// of spawn length 10
+
+	// length of spawn to player vector
+	lengthb = (float) std::sqrt(((selfx - spx) * (selfx - spx)) + ((-selfz - spz) * (-selfz - spz)));
+
+	// calculate dot product to get angle
+	// Handle acos domain errors due to floating point rounding errors
+	dotp = ((vectorx - spx) * (selfx - spx) +
+			(vectorz - spz) * (-selfz - spz)) / (10.0f * lengthb);
+
+	if (dotp > 1)
+		return 0.0f;
+	else if (dotp < -1)
+		return 180.0f;
+
+	angle = std::acos(dotp);
+	angle = angle * 180.0f / 3.1415f;
+
+	return angle;
+}

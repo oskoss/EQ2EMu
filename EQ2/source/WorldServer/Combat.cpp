@@ -582,7 +582,9 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 		if (heal_amt > 0){
 			//int32 base_roll = heal_amt;
 			//potency mod
+			MStats.lock();
 			heal_amt *= (stats[ITEM_STAT_POTENCY] / 100 + 1);
+			MStats.unlock();
 
 			//primary stat mod, insert forula here when done
 			//heal_amt += base_roll * (GetPrimaryStat()
@@ -682,12 +684,14 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 	if (target->IsEntity()) {
 		int32 hate_amt = heal_amt / 2;
 		set<int32>::iterator itr;
+		((Entity*)target)->MHatedBy.lock();
 		for (itr = ((Entity*)target)->HatedBy.begin(); itr != ((Entity*)target)->HatedBy.end(); itr++) {
 			Spawn* spawn = GetZone()->GetSpawnByID(*itr);
 			if (spawn && spawn->IsEntity()) {
 				((Entity*)spawn)->AddHate(this, hate_amt);
 			}
 		}
+		((Entity*)target)->MHatedBy.unlock();
 	}
 
 	return true;
@@ -702,14 +706,28 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 		return DAMAGE_PACKET_RESULT_INVULNERABLE;
 	}
 
-	if(!victim->IsEntity() || (!spell && BehindTarget(victim))) {
+	bool behind = false;
+	if(!victim->IsEntity() || (!spell && victim->GetAdventureClass() != BRAWLER && (behind = BehindTarget(victim)))) {
 		return DAMAGE_PACKET_RESULT_SUCCESSFUL;
 	}
 
 	float bonus = ToHitBonus;
 	Skill* skill = GetSkillByWeaponType(damage_type, true);
+
+	float skillAddedByWeapon = 0.0f;
+	if(skill)
+	{
+		int16 skillID = master_item_list.GetItemStatIDByName(skill->name.data);
+		if(skillID != 0xFFFFFFFF)
+		{
+			MStats.lock();
+			skillAddedByWeapon = stats[skillID];
+			MStats.unlock();
+		}
+	}
+	
 	if (skill)
-		bonus += skill->current_val / 25;
+		bonus += (skill->current_val+skillAddedByWeapon) / 25;
 	if (victim->IsEntity())
 		bonus -= ((Entity*)victim)->GetDamageTypeResistPercentage(damage_type);
 
@@ -725,38 +743,76 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 		if(skill)
 			roll_chance -= skill->current_val / 25;
 
-		skill = entity_victim->GetSkillByName("Defense", true);
-		if (skill)
-			chance -= skill->current_val / 25;
-
-		if(rand()%roll_chance >= (chance - entity_victim->GetAgi()/50)){
-			entity_victim->CheckProcs(PROC_TYPE_EVADE, this);
-			return DAMAGE_PACKET_RESULT_DODGE;//successfully dodged
-		}
-		if(rand() % roll_chance >= chance)
-			return DAMAGE_PACKET_RESULT_MISS; //successfully avoided
-
 		if(entity_victim->IsImmune(IMMUNITY_TYPE_RIPOSTE))
 		return DAMAGE_PACKET_RESULT_RIPOSTE;
 
+		// Avoidance Instructions: https://forums.daybreakgames.com/eq2/index.php?threads/avoidance-faq.482979/
+
+		/*Parry: reads as parry in the avoidance tooltip, increased by items with +parry on them
+		  Caps at 70%. For plate tanks, works in the front quadrant only, for brawlers this is 360 degrees.
+		  A small % of parries will be ripostes, which not only avoid the attack but also damage your attacker
+		*/
+
 		skill = entity_victim->GetSkillByName("Parry", true);
 		if(skill){
-			if(rand()%roll_chance >= (chance - 5 - skill->current_val/25)){ //successful parry
-				if(rand()%100 <= 20) {
-					entity_victim->CheckProcs(PROC_TYPE_RIPOSTE, this);
-					return DAMAGE_PACKET_RESULT_RIPOSTE;
+			float parryChance = entity_victim->GetInfoStruct()->get_parry();
+			float chanceValue = (100.0f - parryChance);
+
+			if(rand()%roll_chance >= chanceValue){ //successful parry
+				/* You may only riposte things in the front quadrant.
+				Riposte is based off of parry: a certain % of parries turn into ripostes.
+				*/
+				if(!behind && victim->InFrontSpawn((Spawn*)this, victim->GetX(), victim->GetZ())) { // if the attacker is not behind the victim, and the victim is facing the attacker (in front of spawn) then we can riposte
+					float riposteChanceValue = parryChance / 7.0f; //  Riposte is based off of parry: a certain % of parries turn into ripostes. Unknown what the value is divided by, 7 to make it 10% even.
+						if(rand()%100 <= riposteChanceValue) {
+							entity_victim->CheckProcs(PROC_TYPE_RIPOSTE, this);
+							return DAMAGE_PACKET_RESULT_RIPOSTE;
+						}
 				}
 				entity_victim->CheckProcs(PROC_TYPE_PARRY, this);
 				return DAMAGE_PACKET_RESULT_PARRY;
 			}
 		}
 
-		skill = entity_victim->GetSkillByName("Deflection", true);
-		if(skill){
-			if(rand()%100 >= (chance - skill->current_val/25)) { //successfully deflected
-				return DAMAGE_PACKET_RESULT_DEFLECT;
+		skill = nullptr;
+
+		
+		float blockChance = 0.0f;
+		if(victim->GetAdventureClass() == BRAWLER)
+			skill = entity_victim->GetSkillByName("Deflection", true);
+
+		blockChance = entity_victim->GetInfoStruct()->get_block();
+		
+		if(blockChance > 0.0f)
+		{
+			blockChance += (blockChance*(entity_victim->GetInfoStruct()->get_block_chance()/100.0f));
+			float chanceValue = (100.0f - blockChance);
+			/* Non-brawlers may only block things in the front quadrant.
+			Riposte is based off of parry: a certain % of parries turn into ripostes.
+			*/
+			float rnd = rand()%roll_chance;	
+			if(rnd >= chanceValue){ //successful block
+				if(victim->GetAdventureClass() == BRAWLER || (!behind && victim->InFrontSpawn((Spawn*)this, victim->GetX(), victim->GetZ()))) { // if the attacker is not behind the victim, and the victim is facing the attacker (in front of spawn) then we can block				
+					entity_victim->CheckProcs(PROC_TYPE_BLOCK, this);
+					return (victim->GetAdventureClass() == BRAWLER) ? DAMAGE_PACKET_RESULT_DEFLECT : DAMAGE_PACKET_RESULT_BLOCK;
+				}
 			}
 		}
+
+		skill = entity_victim->GetSkillByName("Defense", true);
+
+		float dodgeChance = entity_victim->GetInfoStruct()->get_avoidance_base();
+		if(dodgeChance > 0.0f)
+		{
+			float chanceValue = (100.0f - dodgeChance);
+			float rnd = rand()%roll_chance;	
+			if(rnd >= chanceValue){ //successful dodge
+				entity_victim->CheckProcs(PROC_TYPE_EVADE, this);
+				return DAMAGE_PACKET_RESULT_DODGE;//successfully dodged
+			}
+		}
+		if(rand() % roll_chance >= chance)
+			return DAMAGE_PACKET_RESULT_MISS; //successfully avoided
 	}
 	else{
 		skill = entity_victim->GetSkillByName("Spell Avoidance", true);
@@ -873,7 +929,9 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 		//Potency and ability mod is only applied to spells/CAs
 		else { 
 			// Potency mod
+			MStats.lock();
 			damage *= ((stats[ITEM_STAT_POTENCY] / 100) + 1);
+			MStats.unlock();
 
 			// Ability mod can only give up to half of damage after potency
 			int32 mod = (int32)min(info_struct.get_ability_modifier(), (float)(damage / 2));
@@ -888,7 +946,9 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 
 			// Crit Roll
 			else {
+				victim->MStats.lock();
 				float chance = max((float)0, (info_struct.get_crit_chance() - victim->stats[ITEM_STAT_CRITAVOIDANCE]));
+				victim->MStats.unlock();
 				if (MakeRandomFloat(0, 100) <= chance)
 					crit = true;
 			}
@@ -1052,8 +1112,14 @@ bool Entity::CheckInterruptSpell(Entity* attacker) {
 	//modified to 50% and added global rule, 30% was too small at starting levels
 	int8 percent = rule_manager.GetGlobalRule(R_Spells, NoInterruptBaseChance)->GetInt32();
 	Skill* skill = GetSkillByName("Focus", true);
+
+	float focusSkillPts = 0.0f;
+	MStats.lock();
+	focusSkillPts = stats[ITEM_STAT_FOCUS];
+	MStats.unlock();
+
 	if(skill)
-		percent += ((skill->current_val + 1)/6);
+		percent += ((skill->current_val + 1 + focusSkillPts)/6);
 	if(MakeRandomInt(1, 100) > percent) {
 		LogWrite(COMBAT__DEBUG, 0, "Combat", "'%s' interrupted spell for '%s': %i%%", attacker->GetName(), GetName(), percent);
 		GetZone()->Interrupted(this, attacker, SPELL_ERROR_INTERRUPTED);

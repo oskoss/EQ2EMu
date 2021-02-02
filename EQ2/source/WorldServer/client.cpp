@@ -198,6 +198,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	rejoin_group_id = 0;
 	lastRegionRemapTime = 0;
 	regionDebugMessaging = false;
+	client_reloading_zone = false;
 }
 
 Client::~Client() {
@@ -632,7 +633,13 @@ void Client::HandlePlayerRevive(int32 point_id)
 void Client::SendCharInfo() {
 	EQ2Packet* app;
 
+	if(IsReloadingZone())
+	{
+		GetPlayer()->ResetRemovedSpawns();
+		SetReloadingZone(false);
+	}
 
+	
 	player->SetEquippedItemAppearances();
 
 	ClientPacketFunctions::SendCharacterData(this);
@@ -663,7 +670,7 @@ void Client::SendCharInfo() {
 	ClientPacketFunctions::SendAbilities(this);
 
 	ClientPacketFunctions::SendSkillBook(this);
-	if (!player->IsResurrecting()) {
+	if (!IsReloadingZone() && !player->IsResurrecting()) {
 		if(GetVersion() > 546) //we will send this later on for 546 and below
 			ClientPacketFunctions::SendUpdateSpellBook(this);
 	}
@@ -673,7 +680,7 @@ void Client::SendCharInfo() {
 	ClientPacketFunctions::SendLoginCommandMessages(this);
 
 	GetCurrentZone()->AddSpawn(player);
-
+	
 	//SendCollectionList();
 	Guild* guild = player->GetGuild();
 	if (guild)
@@ -1420,8 +1427,11 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			}*/
 			float safe_height = 13.0f;
 			Skill* skill = GetPlayer()->GetSkillByName("Safe Fall", true);
+			GetPlayer()->MStats.lock();
+			float deflectionStat = GetPlayer()->stats[ITEM_STAT_SAFE_FALL];
+			GetPlayer()->MStats.unlock();
 			if (skill)
-				safe_height += (skill->current_val + 1) / 5;
+				safe_height += (skill->current_val + 1 + deflectionStat) / 5;
 
 			if (height > safe_height) {
 				int16 damage = (int16)ceil((height - safe_height) * 125);
@@ -4210,8 +4220,6 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	info->set_magic_base((int16)(new_level * 1.5 + 10));
 	info->set_divine_base((int16)(new_level * 1.5 + 10));
 	info->set_poison_base((int16)(new_level * 1.5 + 10));
-	GetPlayer()->SetHPRegen((int)(new_level * .75) + (int)(new_level / 10) + 3);
-	GetPlayer()->SetPowerRegen(new_level + (int)(new_level / 10) + 4);
 	GetPlayer()->GetInfoStruct()->set_poison_base((int16)(new_level * 1.5 + 10));
 	UpdateTimeStampFlag(LEVEL_UPDATE_FLAG);
 	GetPlayer()->SetCharSheetChanged(true);
@@ -8283,7 +8291,7 @@ void Client::InspectPlayer(Player* player_to_inspect) {
 			packet->setDataByName("power_base", player_to_inspect->GetTotalPowerBase());
 			packet->setDataByName("mitigation", 0);
 			packet->setDataByName("unknown1", 0);
-			packet->setDataByName("avoidance", 0);
+			packet->setDataByName("avoidance", player_to_inspect->GetInfoStruct()->get_cur_avoidance());
 			packet->setDataByName("unknown2", 0);
 			packet->setDataByName("mitigation_percentage", 0);
 			packet->setDataByName("strength", player_to_inspect->GetStr());

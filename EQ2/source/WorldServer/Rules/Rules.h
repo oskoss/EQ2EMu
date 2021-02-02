@@ -81,6 +81,7 @@ enum RuleType {
 
 	/* SPAWN */
 	SpeedMultiplier,
+	ClassicRegen,
 	//SpeedRatio,
 
 	/* UI */
