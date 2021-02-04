@@ -2495,9 +2495,12 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 
 	if (!Alive() && GetTotalHP() > 0 && !IsObject() && !IsGroundSpawn())
 		temp_activity_status = 1;
-
 	temp_activity_status += (IsNPC() || IsObject() || IsGroundSpawn()) ? 1 << 1 : 0;
 	if (version >= 1188) {
+		// Fix widget or sign having 'Play Legends of Norrath' or 'Tell' options in right click (client hard-coded entity commands)
+		if(IsWidget() || IsSign())
+			temp_activity_status = 0xFF;
+
 		if (IsGroundSpawn() || GetShowHandIcon())
 			temp_activity_status += ACTIVITY_STATUS_INTERACTABLE_1188;
 
