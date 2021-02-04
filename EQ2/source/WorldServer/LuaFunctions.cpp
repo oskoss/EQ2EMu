@@ -10855,13 +10855,28 @@ int EQ2Emu_lua_GetSpell(lua_State* state) {
 
 		Spell* spell = master_spell_list.GetSpell(spell_id, spell_tier);
 		LuaSpell* lua_spell = 0;
-		if(custom_lua_script.size() < 1)
+		if(custom_lua_script.size() > 0)
+		{
+			// attempt to load the custom script since it isn't already loaded
+			// we will re-obtain the lua_spell further below
+			if((lua_spell = lua_interface->GetSpell(custom_lua_script.c_str())) == nullptr)
+			{		
+				LogWrite(LUA__WARNING, 0, "LUA", "GetSpell(%u, %u, '%s'), custom lua script not loaded, attempting to load.", spell_id, spell_tier, custom_lua_script.c_str());
+				lua_interface->LoadLuaSpell(custom_lua_script);
+			}
+		}
+		else
 			custom_lua_script = spell->GetSpellData()->lua_script;
-		if (lua_interface)
+		
+
+		if (!lua_spell && lua_interface)
 			lua_spell = lua_interface->GetSpell(custom_lua_script.c_str());
 
 		if (!lua_spell)
+		{
+			LogWrite(LUA__ERROR, 0, "LUA", "GetSpell(%u, %u, '%s') spell could not be loaded.", spell_id, spell_tier, custom_lua_script.c_str());
 			return 0;
+		}
 
 		lua_spell->spell = new Spell(spell);
 
