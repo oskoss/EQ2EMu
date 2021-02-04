@@ -2357,7 +2357,11 @@ void ZoneList::WatchdogHeartbeat()
 				map<string, int32> oldest_process = world.GetOldestReloadingSubsystem();
 				if (oldest_process.size() > 0) {
 					map<string, int32>::iterator itr = oldest_process.begin();
-					LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. while waiting for %s to reload...attempting shutdown", tmp->GetZoneName(), diff, itr->first);
+					if(itr != oldest_process.end())
+						LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. while waiting for %s to reload...attempting shutdown", tmp->GetZoneName(), diff, itr->first);
+					else
+						LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds... attempting shutdown", tmp->GetZoneName(), diff);
+
 				}
 				else
 					LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. attempting shutdown", tmp->GetZoneName(), diff);
@@ -2371,7 +2375,10 @@ void ZoneList::WatchdogHeartbeat()
 						map<string, int32> oldest_process = world.GetOldestReloadingSubsystem();
 						if (oldest_process.size() > 0) {
 							map<string, int32>::iterator itr = oldest_process.begin();
-							LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. while waiting for %s to reload...", tmp->GetZoneName(), diff, itr->first);
+							if(itr != oldest_process.end())
+								LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds.. while waiting for %s to reload...", tmp->GetZoneName(), diff, itr->first);
+							else
+								LogWrite(WORLD__ERROR, 1, "World", "Zone %s is hung for %i milliseconds...", tmp->GetZoneName(), diff);
 						}
 					}
 					continue;
