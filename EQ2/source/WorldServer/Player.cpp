@@ -759,7 +759,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		CalculateXPPercentages();
 		packet->setDataByName("current_adv_xp", info_struct->get_xp()); // confirmed DoV
 		packet->setDataByName("needed_adv_xp", info_struct->get_xp_needed());// confirmed DoV
-		packet->setDataByName("debt_adv_xp", 0);//95= 9500% //confirmed DoV
+		packet->setDataByName("debt_adv_xp", info_struct->get_xp_debt());//95= 9500% //confirmed DoV
 		packet->setDataByName("current_trade_xp", info_struct->get_ts_xp());// confirmed DoV
 		packet->setDataByName("needed_trade_xp", info_struct->get_ts_xp_needed());// confirmed DoV
 
