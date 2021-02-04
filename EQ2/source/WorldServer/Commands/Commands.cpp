@@ -10434,18 +10434,24 @@ void Commands::Add_AA(Client* client, Seperator* sep) {
 		if (!client->GetPlayer()->HasSpell(spell_id, 0, true))
 		{
 			Spell* spell = master_spell_list.GetSpell(spell_id, spell_tier);
-			client->GetPlayer()->AddSpellBookEntry(spell_id, 1, client->GetPlayer()->GetFreeSpellBookSlot(spell->GetSpellData()->spell_book_type), spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
-			client->GetPlayer()->UnlockSpell(spell);
-			client->SendSpellUpdate(spell);
+			if(spell)
+			{
+				client->GetPlayer()->AddSpellBookEntry(spell_id, 1, client->GetPlayer()->GetFreeSpellBookSlot(spell->GetSpellData()->spell_book_type), spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
+				client->GetPlayer()->UnlockSpell(spell);
+				client->SendSpellUpdate(spell);
+			}
 		}
 		else
 		{
 			Spell* spell = master_spell_list.GetSpell(spell_id, spell_tier + 1 );
-			int8 old_slot = client->GetPlayer()->GetSpellSlot(spell->GetSpellID());
-			client->GetPlayer()->RemoveSpellBookEntry(spell->GetSpellID());
-			client->GetPlayer()->AddSpellBookEntry(spell->GetSpellID(), spell->GetSpellTier(), old_slot, spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
-			client->GetPlayer()->UnlockSpell(spell);
-			client->SendSpellUpdate(spell);
+			if(spell)
+			{
+				int8 old_slot = client->GetPlayer()->GetSpellSlot(spell->GetSpellID());
+				client->GetPlayer()->RemoveSpellBookEntry(spell->GetSpellID());
+				client->GetPlayer()->AddSpellBookEntry(spell->GetSpellID(), spell->GetSpellTier(), old_slot, spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
+				client->GetPlayer()->UnlockSpell(spell);
+				client->SendSpellUpdate(spell);
+			}
 		}
 		
 		
