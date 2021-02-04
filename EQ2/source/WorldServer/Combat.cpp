@@ -687,7 +687,7 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 		((Entity*)target)->MHatedBy.lock();
 		for (itr = ((Entity*)target)->HatedBy.begin(); itr != ((Entity*)target)->HatedBy.end(); itr++) {
 			Spawn* spawn = GetZone()->GetSpawnByID(*itr);
-			if (spawn && spawn->IsEntity()) {
+			if (spawn && spawn->IsEntity() && target != this) {
 				((Entity*)spawn)->AddHate(this, hate_amt);
 			}
 		}
