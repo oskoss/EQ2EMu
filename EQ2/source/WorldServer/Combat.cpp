@@ -707,7 +707,8 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 	}
 
 	bool behind = false;
-	if(!victim->IsEntity() || (!spell && victim->GetAdventureClass() != BRAWLER && (behind = BehindTarget(victim)))) {
+	// Monk added with Brawler to 360 degree support per KoS Prima Official eGuide Fighter: Monk, pg 138, denoted '360-Degree Avoidance!'
+	if(!victim->IsEntity() || (!spell && victim->GetAdventureClass() != BRAWLER && victim->GetAdventureClass() != MONK && (behind = BehindTarget(victim)))) {
 		return DAMAGE_PACKET_RESULT_SUCCESSFUL;
 	}
 
@@ -792,7 +793,7 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 			*/
 			float rnd = rand()%roll_chance;	
 			if(rnd >= chanceValue){ //successful block
-				if(victim->GetAdventureClass() == BRAWLER || (!behind && victim->InFrontSpawn((Spawn*)this, victim->GetX(), victim->GetZ()))) { // if the attacker is not behind the victim, and the victim is facing the attacker (in front of spawn) then we can block				
+				if((victim->GetAdventureClass() == BRAWLER || victim->GetAdventureClass() == MONK) || (!behind && victim->InFrontSpawn((Spawn*)this, victim->GetX(), victim->GetZ()))) { // if the attacker is not behind the victim, and the victim is facing the attacker (in front of spawn) then we can block				
 					entity_victim->CheckProcs(PROC_TYPE_BLOCK, this);
 					return (victim->GetAdventureClass() == BRAWLER) ? DAMAGE_PACKET_RESULT_DEFLECT : DAMAGE_PACKET_RESULT_BLOCK;
 				}
