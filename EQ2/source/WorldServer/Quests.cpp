@@ -1722,6 +1722,8 @@ void Quest::SetLevel(int8 in_level) {
 void Quest::SetCompletedFlag(bool val) { 
 	completed_flag = val; 
 	SetUpdateRequired(true);
+	if(player && player->GetClient())
+		player->GetClient()->SendQuestJournalUpdate(this, true);
 }
 
 void Quest::SetStepTimer(int32 duration) {
