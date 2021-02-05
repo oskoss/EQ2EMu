@@ -2499,7 +2499,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	if (version >= 1188) {
 		// Fix widget or sign having 'Play Legends of Norrath' or 'Tell' options in right click (client hard-coded entity commands)
 		if(IsWidget() || IsSign())
-			temp_activity_status = 0xFF;
+			temp_activity_status = 2;
 
 		if (IsGroundSpawn() || GetShowHandIcon())
 			temp_activity_status += ACTIVITY_STATUS_INTERACTABLE_1188;
