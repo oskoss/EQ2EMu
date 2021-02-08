@@ -16548,6 +16548,25 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown5a" Type="int16" Size="1" />
 <Data ElementName="unknown5" Type="int8" Size="1" />
 </Struct>
+<Struct Name="WS_SelectTradeskill" ClientVersion="60114" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_TradeskillList">
+<Data ElementName="unknown1" Type="int32" Size="1" />
+<Data ElementName="title_text" Type="EQ2_16Bit_String" />
+<Data ElementName="num_selections" Type="int8" Size="1" />
+<Data ElementName="selections" Type="Array" ArraySizeVariable="num_selections">
+  <Data ElementName="tradeskill_name" Type="EQ2_16Bit_String" />
+  <Data ElementName="tradeskill_description" Type="EQ2_16Bit_String" />
+  <Data ElementName="icon_id" Type="int32" Size="1" />
+  <Data ElementName="icon_sheet" Type="int32" Size="1" />
+  <Data ElementName="command_text" Type="EQ2_16Bit_String" />
+  <Data ElementName="confirm_window_title" Type="EQ2_16Bit_String" />
+  <Data ElementName="unknown4" Type="int32" Size="3" />
+  <Data ElementName="unknown6" Type="int64" Size="1" />
+  <Data ElementName="unknown7" Type="int32" Size="1" />
+</Data>
+<Data ElementName="command_text_cancel" Type="EQ2_16Bit_String" />
+<Data ElementName="unknown5a" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="unknown5" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_PetOptions" ClientVersion="1" OpcodeName="OP_PetOptions">
 <Data ElementName="unknown" Type="int16" />
 <Data ElementName="pet_name" Type="EQ2_16Bit_String" />
