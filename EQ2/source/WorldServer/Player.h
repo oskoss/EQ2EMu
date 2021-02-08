@@ -530,7 +530,7 @@ public:
 	void	SetNeededTSXP();
 	void	SetTSXP(int32 val);
 	int32	GetNeededXP();
-	int32	GetXPDebt();
+	float	GetXPDebt();
 	int32	GetXP();
 	int32	GetNeededTSXP();
 	int32	GetTSXP();
@@ -539,6 +539,7 @@ public:
 	bool	DoubleXPEnabled();
 	float	CalculateXP(Spawn* victim);
 	float	CalculateTSXP(int8 level);
+	void	CalculateOfflineDebtRecovery(int32 unix_timestamp);
 	void	InCombat(bool val, bool range = false);
 	void	PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version);
 	uchar*	GetMovementPacketData(){
@@ -956,6 +957,7 @@ public:
 		}
 	}
 
+	NPC* InstantiateSpiritShard(float origX, float origY, float origZ, float origHeading, int32 origGridID, ZoneServer* origZone);
 
 
 

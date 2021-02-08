@@ -1064,6 +1064,112 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 	LogWrite(NPC__INFO, 0, "NPC", "--Loaded %i NPC Equipment Appearance(s).", LoadNPCAppearanceEquipmentData(zone));	
 }
 
+
+void WorldDatabase::LoadSpiritShards(ZoneServer* zone){
+	Query query;
+	MYSQL_ROW row;
+	NPC* npc = 0;
+	int32 id = 0;
+	int32 total = 0;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT timestamp, name, level, race, gender, adventure_class, model_type, soga_model_type, hair_type, hair_face_type, wing_type, chest_type, legs_type, soga_hair_type, soga_hair_face_type, hide_hood, size, collision_radius, action_state, visual_state, mood_state, emote_state, pos_state, activity_status, sub_title, prefix_title, suffix_title, lastname, x, y, z, heading, gridid, id, charid\n"
+													"FROM character_spirit_shards\n"
+													"WHERE zoneid = %u and (instanceid = 0 or instanceid = %u)",
+													zone->GetZoneID(), zone->GetInstanceID());
+	while(result && (row = mysql_fetch_row(result))){
+		/*npc->SetAppearanceID(atoi(row[12]));
+		AppearanceData* appearance = world.GetNPCAppearance(npc->GetAppearanceID());
+		if(appearance)
+		memcpy(&npc->appearance, appearance, sizeof(AppearanceData));
+		*/
+		sint64 timestamp = 0;
+#ifdef WIN32
+			timestamp = _strtoui64(row[0], NULL, 10);
+#else
+			timestamp = strtoull(row[0], 0, 10);
+#endif
+		
+		if(!row[1])
+			continue;
+
+		NPC* shard = new NPC();
+		
+		shard->SetShardCreatedTimestamp(timestamp);
+		strcpy(shard->appearance.name, row[1]);
+
+		shard->appearance.level =	atoul(row[2]);
+		shard->appearance.race = atoul(row[3]);
+		shard->appearance.gender = atoul(row[4]);
+		shard->appearance.adventure_class = atoul(row[5]);
+		 
+		//shard->appearance.lua_race_id = result.GetInt16(74);
+		shard->appearance.model_type = atoul(row[6]);
+		shard->appearance.soga_model_type = atoul(row[7]);
+		shard->appearance.display_name = 1;
+		shard->features.hair_type = atoul(row[8]);
+		shard->features.hair_face_type = atoul(row[9]);
+		shard->features.wing_type = atoul(row[10]);
+		shard->features.chest_type = atoul(row[11]);
+		shard->features.legs_type = atoul(row[12]);
+		shard->features.soga_hair_type = atoul(row[13]);
+		shard->features.soga_hair_face_type = atoul(row[14]);
+		shard->appearance.attackable = 0;
+		shard->appearance.show_level = 1;
+		shard->appearance.targetable = 1;
+		shard->appearance.show_command_icon = 1;
+		shard->appearance.display_hand_icon = 0;
+		shard->appearance.hide_hood = atoul(row[15]);
+		shard->size = atoul(row[16]);
+		shard->appearance.pos.collision_radius = atoul(row[17]);
+		shard->appearance.action_state = atoul(row[18]);
+		shard->appearance.visual_state = atoul(row[19]); // ghostly look
+		shard->appearance.mood_state = atoul(row[20]);
+		shard->appearance.emote_state = atoul(row[21]);
+		shard->appearance.pos.state = atoul(row[22]);
+		shard->appearance.activity_status = atoul(row[23]);
+
+		if(row[24])
+			strncpy(shard->appearance.sub_title, row[24], sizeof(shard->appearance.sub_title));
+
+		if(row[25])
+			shard->SetPrefixTitle(row[25]);
+
+		if(row[26])
+			shard->SetSuffixTitle(row[26]);
+
+		if(row[27])
+			shard->SetLastName(row[27]);
+
+		shard->SetX(atof(row[28]));
+		shard->SetY(atof(row[29]));
+		shard->SetZ(atof(row[30]));
+		shard->SetHeading(atof(row[31]));
+		shard->SetSpawnOrigX(shard->GetX());
+		shard->SetSpawnOrigY(shard->GetY());
+		shard->SetSpawnOrigZ(shard->GetZ());
+		shard->SetSpawnOrigHeading(shard->GetHeading());
+		shard->appearance.pos.grid_id = atoul(row[32]);
+		shard->SetShardID(atoul(row[33]));
+		shard->SetShardCharID(atoul(row[34]));
+
+		const char* script = rule_manager.GetGlobalRule(R_Combat, SpiritShardSpawnScript)->GetString();
+
+		if(script)
+		{
+			shard->SetSpawnScript(script);
+			zone->CallSpawnScript(shard, SPAWN_SCRIPT_PRESPAWN);
+		}
+		
+		zone->AddSpawn(shard);
+
+		if(script)
+			zone->CallSpawnScript(shard, SPAWN_SCRIPT_SPAWN);
+		
+		total++;
+		LogWrite(NPC__DEBUG, 5, "NPC", "---Loading Player Spirit Shard: '%s' (%u)", npc->appearance.name, id);
+	}
+	LogWrite(NPC__INFO, 0, "NPC", "--Loaded %i Spirit Shard(s).", total);
+}
+
 void WorldDatabase::LoadSigns(ZoneServer* zone){
 	Query query;
 	MYSQL_ROW row;
@@ -1513,7 +1619,7 @@ bool WorldDatabase::LoadCharacterStats(int32 id, int32 account_id, Client* clien
 			if(info->get_xp_needed()== 0)
 				client->GetPlayer()->SetNeededXP();
 
-			info->set_xp_debt(result.GetInt32Str("xp_debt"));
+			info->set_xp_debt(result.GetFloatStr("xp_debt"));
 			info->set_xp_vitality(result.GetFloatStr("xp_vitality"));
 			info->set_ts_xp(result.GetInt32Str("tradeskill_xp"));
 			info->set_ts_xp_needed(result.GetInt32Str("tradeskill_xp_needed"));
@@ -3810,7 +3916,7 @@ void WorldDatabase::Save(Client* client){
 	if(client->GetCurrentZone())
 		zone_id = client->GetCurrentZone()->GetZoneID();
 	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update characters set current_zone_id=%u, x=%f, y=%f, z=%f, heading=%f, level=%i,instance_id=%i,last_saved=%i, `class`=%i, `tradeskill_level`=%i, `tradeskill_class`=%i, `group_id`=%u where id = %u", zone_id, player->GetX(), player->GetY(), player->GetZ(), player->GetHeading(), player->GetLevel(), instance_id, client->GetLastSavedTimeStamp(), client->GetPlayer()->GetAdventureClass(), client->GetPlayer()->GetTSLevel(), client->GetPlayer()->GetTradeskillClass(), client->GetPlayer()->GetGroupMemberInfo() ? client->GetPlayer()->GetGroupMemberInfo()->group_id : 0, client->GetCharacterID());
-	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %u, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s', assigned_aa = %i, unassigned_aa = %i, tradeskill_aa = %i, unassigned_tradeskill_aa = %i, prestige_aa = %i, unassigned_prestige_aa = %i, tradeskill_prestige_aa = %i, unassigned_tradeskill_prestige_aa = %i where char_id = %u",
+	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %f, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s', assigned_aa = %i, unassigned_aa = %i, tradeskill_aa = %i, unassigned_tradeskill_aa = %i, prestige_aa = %i, unassigned_prestige_aa = %i, tradeskill_prestige_aa = %i, unassigned_tradeskill_prestige_aa = %i where char_id = %u",
 		player->GetHP(), player->GetPower(), player->GetStrBase(), player->GetStaBase(), player->GetAgiBase(), player->GetWisBase(), player->GetIntBase(), player->GetHeatResistanceBase(), player->GetColdResistanceBase(), player->GetMagicResistanceBase(),
 		player->GetMentalResistanceBase(), player->GetDivineResistanceBase(), player->GetDiseaseResistanceBase(), player->GetPoisonResistanceBase(), player->GetCoinsCopper(), player->GetCoinsSilver(), player->GetCoinsGold(), player->GetCoinsPlat(), player->GetTotalHPBase(), player->GetTotalPowerBase(), player->GetXP(), player->GetNeededXP(), player->GetXPDebt(), player->GetXPVitality(), player->GetTSXP(), player->GetNeededTSXP(), player->GetTSXPVitality(), player->GetBankCoinsCopper(),
 		player->GetBankCoinsSilver(), player->GetBankCoinsGold(), player->GetBankCoinsPlat(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneID(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneX(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneY(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneZ(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneHeading(), client->GetPlayer()->GetPlayerInfo()->GetHouseZoneID(), 
@@ -7168,4 +7274,50 @@ void WorldDatabase::LoadStartingSpells(World* world)
 	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u Starting Spell(s)", total);
 
 	world->MStartingLists.releasewritelock();
+}
+
+
+bool WorldDatabase::DeleteSpiritShard(int32 id){
+	Query query;
+	query.RunQuery2(Q_DELETE, "delete FROM character_spirit_shards where id=%u",id);
+	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
+		LogWrite(WORLD__ERROR, 0, "World", "Error in DeleteSpiritShard query '%s': %s", query.GetQuery(), query.GetError());
+		return false;
+	}
+	return true;
+}
+
+int32 WorldDatabase::CreateSpiritShard(const char* name, int32 level, int8 race, int8 gender, int8 adventure_class, 
+									  int16 model_type, int16 soga_model_type, int16 hair_type, int16 hair_face_type, int16 wing_type,
+									  int16 chest_type, int16 legs_type, int16 soga_hair_type, int16 soga_hair_face_type, int8 hide_hood, 
+									  int16 size, int16 collision_radius, int16 action_state, int16 visual_state, int16 mood_state, int16 emote_state, 
+									  int16 pos_state, int16 activity_status, char* sub_title, char* prefix_title, char* suffix_title, char* lastname, 
+									  float x, float y, float z, float heading, int32 gridid, int32 charid, int32 zoneid, int32 instanceid) 
+{
+	LogWrite(WORLD__INFO, 3, "World", "Saving Spirit Shard %s %u", name, charid);
+
+	Query query;
+	char* name_escaped = getEscapeString(name);
+	
+	if(!sub_title)
+		sub_title = "";
+	char* subtitle_escaped = getEscapeString(sub_title);
+	char* prefix_escaped = getEscapeString(prefix_title);
+	char* suffix_escaped = getEscapeString(suffix_title);
+	char* lastname_escaped = getEscapeString(lastname);
+	string insert = string("INSERT INTO character_spirit_shards (name, level, race, gender, adventure_class, model_type, soga_model_type, hair_type, hair_face_type, wing_type, chest_type, legs_type, soga_hair_type, soga_hair_face_type, hide_hood, size, collision_radius, action_state, visual_state, mood_state, emote_state, pos_state, activity_status, sub_title, prefix_title, suffix_title, lastname, x, y, z, heading, gridid, charid, zoneid, instanceid) VALUES ('%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s', '%s', '%s', '%s', %f, %f, %f, %f, %u, %u, %u, %u)");
+	query.RunQuery2(Q_INSERT, insert.c_str(), name_escaped, level, race, gender, adventure_class, model_type, soga_model_type, 
+																hair_type, hair_face_type, wing_type, chest_type, legs_type, soga_hair_type, 
+																soga_hair_face_type, hide_hood, size, collision_radius, action_state, visual_state, 
+																mood_state, emote_state, pos_state, activity_status, subtitle_escaped, prefix_escaped, suffix_escaped, 
+																lastname_escaped, x, y, z, heading, gridid, charid, zoneid, instanceid);
+
+	
+	safe_delete_array(name_escaped);
+	safe_delete_array(subtitle_escaped);
+	safe_delete_array(prefix_escaped);
+	safe_delete_array(suffix_escaped);
+	safe_delete_array(lastname_escaped);
+
+	return query.GetLastInsertedID();
 }

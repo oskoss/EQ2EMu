@@ -191,7 +191,7 @@ struct InfoStruct{
 		absorb_ = 0;
 		xp_ = 0;
 		xp_needed_ = 0;
-		xp_debt_ = 0;
+		xp_debt_ = 0.0f;
 		xp_yellow_ = 0;
 		xp_yellow_vitality_bar_ = 0;
 		xp_blue_vitality_bar_ = 0;
@@ -489,7 +489,7 @@ struct InfoStruct{
 	int16	 get_absorb() { std::lock_guard<std::mutex> lk(classMutex); return absorb_; }
 	int32	 get_xp() { std::lock_guard<std::mutex> lk(classMutex); return xp_; }
 	int32	 get_xp_needed() { std::lock_guard<std::mutex> lk(classMutex); return xp_needed_; }
-	int32	 get_xp_debt() { std::lock_guard<std::mutex> lk(classMutex); return xp_debt_; }
+	float	 get_xp_debt() { std::lock_guard<std::mutex> lk(classMutex); return xp_debt_; }
 	int16	 get_xp_yellow() { std::lock_guard<std::mutex> lk(classMutex); return xp_yellow_; }
 	int16	 get_xp_yellow_vitality_bar() { std::lock_guard<std::mutex> lk(classMutex); return xp_yellow_vitality_bar_; }
 	int16	 get_xp_blue_vitality_bar() { std::lock_guard<std::mutex> lk(classMutex); return xp_blue_vitality_bar_; }
@@ -658,7 +658,7 @@ struct InfoStruct{
 	void	set_xp(int32 value) { std::lock_guard<std::mutex> lk(classMutex); xp_ = value; }
 	void	set_xp_needed(int32 value) { std::lock_guard<std::mutex> lk(classMutex); xp_needed_ = value; }
 
-	void	set_xp_debt(int32 value) { std::lock_guard<std::mutex> lk(classMutex); xp_debt_ = value; }
+	void	set_xp_debt(float value) { std::lock_guard<std::mutex> lk(classMutex); xp_debt_ = value; }
 
 	void	set_xp_yellow(int16 value) { std::lock_guard<std::mutex> lk(classMutex); xp_yellow_ = value; }
 	void	set_xp_blue(int16 value) { std::lock_guard<std::mutex> lk(classMutex); xp_blue_ = value; }
@@ -891,7 +891,7 @@ private:
 	int16			absorb_;
 	int32			xp_;
 	int32			xp_needed_;
-	int32			xp_debt_;
+	float			xp_debt_;
 	int16			xp_yellow_;
 	int16			xp_yellow_vitality_bar_;
 	int16			xp_blue_vitality_bar_;
@@ -1194,6 +1194,7 @@ public:
 	void			AddHate(Entity* attacker, sint32 hate);
 	bool			CheckInterruptSpell(Entity* attacker);
 	void			KillSpawn(Spawn* dead, int8 damage_type = 0, int16 kill_blow_type = 0);
+	void			HandleDeathExperienceDebt(Spawn* killer);
 	void            SetAttackDelay(bool primary = false, bool ranged = false);
 	float           CalculateAttackSpeedMod();
 	virtual void	ProcessCombat();

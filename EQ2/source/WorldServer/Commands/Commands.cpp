@@ -3830,6 +3830,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if (spawn->IsNPC()) {
 						details4 += "\nRandomize:		" + to_string(((NPC*)spawn)->GetRandomize()) + "\n";
 					}
+
+					const char* spawnScriptMsg = (spawn->GetSpawnScript() && strlen(spawn->GetSpawnScript())>0) ? spawn->GetSpawnScript() : "Not Set";
+
+						details4 += "\nSpawnScript:		" + std::string(spawnScriptMsg) + "\n";
 				}
 
 				string title = string(spawn->GetName()) + "(" + to_string(spawn->GetDatabaseID()) + ")";

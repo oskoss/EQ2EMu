@@ -30,6 +30,7 @@
 #include "LuaInterface.h"
 #include "Rules/Rules.h"
 #include "SpellProcess.h"
+#include "World.h"
 #include <math.h>
 
 extern Classes classes;
@@ -37,6 +38,7 @@ extern ConfigReader configReader;
 extern MasterSkillList master_skill_list;
 extern RuleManager rule_manager;
 extern LuaInterface* lua_interface;
+extern World world;
 
 /* ******************************************************************************
 
@@ -1181,6 +1183,51 @@ void Entity::KillSpawn(Spawn* dead, int8 damage_type, int16 kill_blow_type) {
 	dead->CalculateRunningLocation(true);
 
 	GetZone()->KillSpawn(true, dead, this, true, damage_type, kill_blow_type);
+}
+
+void Entity::HandleDeathExperienceDebt(Spawn* killer)
+{
+	if(!IsPlayer())
+		return;
+
+	float ruleDebt = 0.0f;
+	
+	if(killer && killer->IsPlayer())
+		ruleDebt = rule_manager.GetGlobalRule(R_Combat, PVPDeathExperienceDebt)->GetFloat()/100.0f;
+	else
+		ruleDebt = rule_manager.GetGlobalRule(R_Combat, DeathExperienceDebt)->GetFloat()/100.0f;
+
+	if(ruleDebt > 0.0f)
+	{
+		bool groupDebt = rule_manager.GetGlobalRule(R_Combat, GroupExperienceDebt)->GetBool();
+		if(groupDebt && ((Player*)this)->GetGroupMemberInfo())
+		{
+			world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+			PlayerGroup* group = world.GetGroupManager()->GetGroup(((Player*)this)->GetGroupMemberInfo()->group_id);
+			if (group)
+			{
+				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+				deque<GroupMemberInfo*>* members = group->GetMembers();
+				int32 size = members->size();
+				float xpDebtPerMember = ruleDebt/(float)size;
+				deque<GroupMemberInfo*>::iterator itr;
+				for (itr = members->begin(); itr != members->end(); itr++) {
+					GroupMemberInfo* gmi = *itr;
+					if (gmi->client && gmi->client->GetPlayer()) {
+						gmi->client->GetPlayer()->GetInfoStruct()->set_xp_debt(gmi->client->GetPlayer()->GetInfoStruct()->get_xp_debt()+xpDebtPerMember);
+						gmi->client->GetPlayer()->SetCharSheetChanged(true);
+					}
+				}
+				group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+			}
+			world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+		}
+		else
+		{
+			((Player*)this)->GetInfoStruct()->set_xp_debt(((Player*)this)->GetInfoStruct()->get_xp_debt()+ruleDebt);
+			((Player*)this)->SetCharSheetChanged(true);
+		}
+	}
 }
 
 void Entity::ProcessCombat() {

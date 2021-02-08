@@ -183,6 +183,7 @@ int EQ2Emu_lua_Shout(lua_State* state);
 int EQ2Emu_lua_SayOOC(lua_State* state);
 int EQ2Emu_lua_Emote(lua_State* state);
 int EQ2Emu_lua_IsPlayer(lua_State* state);
+int EQ2Emu_lua_GetCharacterID(lua_State* state);
 int EQ2Emu_lua_MovementLoopAdd(lua_State* state);
 int EQ2Emu_lua_GetCurrentZoneSafeLocation(lua_State* state);
 int EQ2Emu_lua_PlayFlavor(lua_State* state);
@@ -497,6 +498,7 @@ int EQ2Emu_lua_SetSeeInvis(lua_State* state);
 int EQ2Emu_lua_SetSeeHide(lua_State* state);
 
 int EQ2Emu_lua_SetAccessToEntityCommand(lua_State* state);
+int EQ2Emu_lua_SetAccessToEntityCommandByCharID(lua_State* state);
 int EQ2Emu_lua_RemovePrimaryEntityCommand(lua_State* state);
 int EQ2Emu_lua_SendUpdateDefaultCommand(lua_State* state);
 
@@ -527,7 +529,9 @@ int EQ2Emu_lua_DamageSpawn(lua_State* state);
 int EQ2Emu_lua_IsInvulnerable(lua_State* state);
 int EQ2Emu_lua_SetInvulnerable(lua_State* state);
 
+int EQ2Emu_lua_GetRuleFlagBool(lua_State* state);
 int EQ2Emu_lua_GetRuleFlagInt32(lua_State* state);
+int EQ2Emu_lua_GetRuleFlagFloat(lua_State* state);
 
 int EQ2Emu_lua_GetAAInfo(lua_State* state);
 int EQ2Emu_lua_SetAAInfo(lua_State* state);
@@ -563,4 +567,9 @@ int EQ2Emu_lua_MakeRandomFloat(lua_State* state);
 
 int EQ2Emu_lua_AddIconValue(lua_State* state);
 int EQ2Emu_lua_RemoveIconValue(lua_State* state);
+
+int EQ2Emu_lua_GetShardID(lua_State* state);
+int EQ2Emu_lua_GetShardCharID(lua_State* state);
+int EQ2Emu_lua_GetShardCreatedTimestamp(lua_State* state);
+int EQ2Emu_lua_DeleteDBShardID(lua_State* state);
 #endif

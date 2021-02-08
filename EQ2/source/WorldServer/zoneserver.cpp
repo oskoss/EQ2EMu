@@ -765,7 +765,12 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 		DeleteData(false);
 
 	if(repop)
+	{
+		// reload spirit shards for the current zone
+		database.LoadSpiritShards(this);
+
 		LoadingData = true;
+	}
 }
 
 void ZoneServer::Depop(bool respawns, bool repop) {
@@ -1244,6 +1249,10 @@ bool ZoneServer::Process()
 			if (reloading) {
 				LogWrite(COMMAND__DEBUG, 0, "Command", "-Loading Entity Commands...");
 				database.LoadEntityCommands(this);
+				LogWrite(NPC__INFO, 0, "NPC", "-Loading Spirit Shard data...");
+				database.LoadSpiritShards(this);
+				LogWrite(NPC__INFO, 0, "NPC", "-Load Spirit Shard data complete!");
+
 				LogWrite(NPC__INFO, 0, "NPC", "-Loading NPC data...");
 				database.LoadNPCs(this);
 				LogWrite(NPC__INFO, 0, "NPC", "-Load NPC data complete!");
@@ -4194,6 +4203,8 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 		{
 			((Player*)dead)->UpdatePlayerStatistic(STAT_PLAYER_TOTAL_DEATHS, 1);
 			client = GetClientBySpawn(dead);
+
+			((Entity*)dead)->HandleDeathExperienceDebt(killer);
 
 			if(client) {
 

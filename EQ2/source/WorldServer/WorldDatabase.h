@@ -245,6 +245,7 @@ public:
 	void	LoadSpawns(ZoneServer* zone);
 	int8	GetAppearanceType(string type);
 	void	LoadNPCs(ZoneServer* zone);
+	void	LoadSpiritShards(ZoneServer* zone);
 	int32	LoadAppearances(ZoneServer* zone, Client* client = 0);
 	int32	LoadNPCSpells(ZoneServer* zone);
 	int32	LoadNPCSkills(ZoneServer* zone);
@@ -594,6 +595,14 @@ public:
 
 	void				LoadStartingSkills(World* world);
 	void				LoadStartingSpells(World* world);
+
+	int32				CreateSpiritShard(const char* name, int32 level, int8 race, int8 gender, int8 adventure_class, 
+									  int16 model_type, int16 soga_model_type, int16 hair_type, int16 hair_face_type, int16 wing_type,
+									  int16 chest_type, int16 legs_type, int16 soga_hair_type, int16 soga_hair_face_type, int8 hide_hood, 
+									  int16 size, int16 collision_radius, int16 action_state, int16 visual_state, int16 mood_state, int16 emote_state, 
+									  int16 pos_state, int16 activity_status, char* sub_title, char* prefix_title, char* suffix_title, char* lastname, 
+									  float x, float y, float z, float heading, int32 gridid, int32 charid, int32 zoneid, int32 instanceid);
+	bool				DeleteSpiritShard(int32 id);
 private:
 	DatabaseNew			database_new;
 	map<int32, string>	zone_names;

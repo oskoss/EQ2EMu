@@ -178,7 +178,7 @@ void Entity::MapInfoStruct()
 	get_int16_funcs["absorb"] = l::bind(&InfoStruct::get_absorb, &info_struct);
 	get_int32_funcs["xp"] = l::bind(&InfoStruct::get_xp, &info_struct);
 	get_int32_funcs["xp_needed"] = l::bind(&InfoStruct::get_xp_needed, &info_struct);
-	get_int32_funcs["xp_debt"] = l::bind(&InfoStruct::get_xp_debt, &info_struct);
+	get_float_funcs["xp_debt"] = l::bind(&InfoStruct::get_xp_debt, &info_struct);
 	get_int16_funcs["xp_yellow"] = l::bind(&InfoStruct::get_xp_yellow, &info_struct);
 	get_int16_funcs["xp_yellow_vitality_bar"] = l::bind(&InfoStruct::get_xp_yellow_vitality_bar, &info_struct);
 	get_int16_funcs["xp_blue_vitality_bar"] = l::bind(&InfoStruct::get_xp_blue_vitality_bar, &info_struct);
@@ -318,7 +318,7 @@ void Entity::MapInfoStruct()
 	set_int16_funcs["absorb"] = l::bind(&InfoStruct::set_absorb, &info_struct, l::_1);
 	set_int32_funcs["xp"] = l::bind(&InfoStruct::set_xp, &info_struct, l::_1);
 	set_int32_funcs["xp_needed"] = l::bind(&InfoStruct::set_xp_needed, &info_struct, l::_1);
-	set_int32_funcs["xp_debt"] = l::bind(&InfoStruct::set_xp_debt, &info_struct, l::_1);
+	set_float_funcs["xp_debt"] = l::bind(&InfoStruct::set_xp_debt, &info_struct, l::_1);
 	set_int16_funcs["xp_yellow"] = l::bind(&InfoStruct::set_xp_yellow, &info_struct, l::_1);
 	set_int16_funcs["xp_yellow_vitality_bar"] = l::bind(&InfoStruct::set_xp_yellow_vitality_bar, &info_struct, l::_1);
 	set_int16_funcs["xp_blue_vitality_bar"] = l::bind(&InfoStruct::set_xp_blue_vitality_bar, &info_struct, l::_1);

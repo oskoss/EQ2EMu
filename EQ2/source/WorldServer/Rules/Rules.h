@@ -78,6 +78,16 @@ enum RuleType {
 
 	/* COMBAT */
 	MaxCombatRange,
+	DeathExperienceDebt,
+	GroupExperienceDebt,
+	PVPDeathExperienceDebt,
+	ExperienceToDebt,
+	ExperienceDebtRecoveryPercent,
+	ExperienceDebtRecoveryPeriod,
+	EnableSpiritShards,
+	SpiritShardSpawnScript,
+	ShardDebtRecoveryPercent,
+	ShardRecoveryByRadius,
 
 	/* SPAWN */
 	SpeedMultiplier,

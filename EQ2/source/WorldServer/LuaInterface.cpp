@@ -843,6 +843,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	
 	lua_register(state, "IsPlayer", EQ2Emu_lua_IsPlayer);
+	lua_register(state, "GetCharacterID", EQ2Emu_lua_GetCharacterID);
 	lua_register(state, "FaceTarget", EQ2Emu_lua_FaceTarget);
 	lua_register(state, "MoveToLocation", EQ2Emu_lua_MoveToLocation);
 	lua_register(state, "ClearRunningLocations", EQ2Emu_lua_ClearRunningLocations);
@@ -1213,6 +1214,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetSeeHide", EQ2Emu_lua_SetSeeHide);
 
 	lua_register(state, "SetAccessToEntityCommand", EQ2Emu_lua_SetAccessToEntityCommand);
+	lua_register(state, "SetAccessToEntityCommandByCharID", EQ2Emu_lua_SetAccessToEntityCommandByCharID);
 	lua_register(state, "RemovePrimaryEntityCommand", EQ2Emu_lua_RemovePrimaryEntityCommand);
 	lua_register(state, "SendUpdateDefaultCommand", EQ2Emu_lua_SendUpdateDefaultCommand);
 
@@ -1241,7 +1243,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "IsInvulnerable", EQ2Emu_lua_IsInvulnerable);
 	lua_register(state, "SetInvulnerable", EQ2Emu_lua_SetInvulnerable);
 	
+	lua_register(state, "GetRuleFlagBool", EQ2Emu_lua_GetRuleFlagBool);
 	lua_register(state, "GetRuleFlagInt32", EQ2Emu_lua_GetRuleFlagInt32);
+	lua_register(state, "GetRuleFlagFloat", EQ2Emu_lua_GetRuleFlagFloat);
 	
 	lua_register(state, "GetAAInfo", EQ2Emu_lua_GetAAInfo);
 	lua_register(state, "SetAAInfo", EQ2Emu_lua_SetAAInfo);
@@ -1277,6 +1281,11 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	lua_register(state, "AddIconValue", EQ2Emu_lua_AddIconValue);
 	lua_register(state, "RemoveIconValue", EQ2Emu_lua_RemoveIconValue);
+	
+	lua_register(state, "GetShardID", EQ2Emu_lua_GetShardID);
+	lua_register(state, "GetShardCharID", EQ2Emu_lua_GetShardCharID);
+	lua_register(state, "GetShardCreatedTimestamp", EQ2Emu_lua_GetShardCreatedTimestamp);
+	lua_register(state, "DeleteDBShardID", EQ2Emu_lua_DeleteDBShardID);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

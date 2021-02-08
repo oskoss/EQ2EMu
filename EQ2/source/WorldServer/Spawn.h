@@ -314,6 +314,7 @@ public:
 	void AddPrimaryEntityCommand(const char* name, float distance, const char* command, const char* error_text, int16 cast_time, int32 spell_visual, bool defaultDenyList = false, Player* player = NULL);
 	void RemovePrimaryEntityCommand(const char* command);
 	bool SetPermissionToEntityCommand(EntityCommand* command, Player* player, bool permissionValue);
+	bool SetPermissionToEntityCommandByCharID(EntityCommand* command, int32 charID, bool permissionValue);
 
 	void RemoveSpawnFromPlayer(Player* player);
 

@@ -143,6 +143,9 @@ void NPC::Initialize(){
 	following = false;
 	SetFollowTarget(0);
 	m_petDismissing = false;
+	m_ShardID = 0;
+	m_ShardCharID = 0;
+	m_ShardCreatedTimestamp = 0;
 }
 
 EQ2Packet* NPC::serialize(Player* player, int16 version){

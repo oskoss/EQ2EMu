@@ -1007,6 +1007,19 @@ int EQ2Emu_lua_IsPlayer(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_GetCharacterID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn && spawn->IsPlayer()) {
+		lua_interface->SetInt32Value(state, ((Player*)spawn)->GetCharacterID());
+		return 1;
+	}
+
+	lua_interface->SetInt32Value(state, 0);
+	return 1;
+}
+
 int EQ2Emu_lua_FaceTarget(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -10667,12 +10680,39 @@ int EQ2Emu_lua_SetAccessToEntityCommand(lua_State* state)
 	string command = lua_interface->GetStringValue(state, 3);
 	bool val = (lua_interface->GetInt8Value(state, 4) == 1);
 
+	lua_interface->ResetFunctionStack(state);
 	if (spawn && player && player->IsPlayer())
 	{
 		EntityCommand* cmd = spawn->FindEntityCommand(string(command), true);
 		bool res = false;
 		if (cmd)
 			res = spawn->SetPermissionToEntityCommand(cmd, (Player*)player, val);
+
+		lua_interface->SetBooleanValue(state, res);
+		return 1;
+	}
+
+	return 0;
+}
+
+
+int EQ2Emu_lua_SetAccessToEntityCommandByCharID(lua_State* state)
+{
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 charID = lua_interface->GetInt32Value(state, 2);
+	string command = lua_interface->GetStringValue(state, 3);
+	bool val = (lua_interface->GetInt8Value(state, 4) == 1);
+
+	lua_interface->ResetFunctionStack(state);
+	if (spawn && charID)
+	{
+		EntityCommand* cmd = spawn->FindEntityCommand(string(command), true);
+		bool res = false;
+		if (cmd)
+			res = spawn->SetPermissionToEntityCommandByCharID(cmd, charID, val);
 
 		lua_interface->SetBooleanValue(state, res);
 		return 1;
@@ -10689,6 +10729,7 @@ int EQ2Emu_lua_RemovePrimaryEntityCommand(lua_State* state)
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string command = lua_interface->GetStringValue(state, 2);
 
+	lua_interface->ResetFunctionStack(state);
 	if (spawn && command.length() > 0)
 		spawn->RemovePrimaryEntityCommand(command.c_str());
 
@@ -10705,6 +10746,7 @@ int EQ2Emu_lua_SendUpdateDefaultCommand(lua_State* state) {
 	string command = lua_interface->GetStringValue(state, 3);
 	Spawn* player = lua_interface->GetSpawn(state, 4);
 
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		spawn->GetZone()->SendUpdateDefaultCommand(spawn, command.c_str(), distance, player);
 	}
@@ -10719,6 +10761,7 @@ int EQ2Emu_lua_SendTransporters(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state, 2);
 	int32 transport_id = lua_interface->GetInt32Value(state, 3);
 
+	lua_interface->ResetFunctionStack(state);
 	if (spawn && player && transport_id && player->IsPlayer()) {
 		Client* client = 0;
 		if (player && player->IsPlayer())
@@ -10748,6 +10791,7 @@ int EQ2Emu_lua_SetTemporaryTransportID(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state);
 	int32 transport_id = lua_interface->GetInt32Value(state, 2);
 
+	lua_interface->ResetFunctionStack(state);
 	if (player && player->IsPlayer()) {
 		Client* client = 0;
 		if (player && player->IsPlayer())
@@ -10765,6 +10809,8 @@ int EQ2Emu_lua_GetTemporaryTransportID(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
+
+	lua_interface->ResetFunctionStack(state);
 	if (player && player->IsPlayer()) {
 		Client* client = 0;
 		if (player && player->IsPlayer())
@@ -10803,6 +10849,8 @@ int EQ2Emu_lua_SetAlignment(lua_State* state) {
 		return 0;
 	}
 
+	lua_interface->ResetFunctionStack(state);
+
 	if (spell && spell->targets.size() > 0) {
 		ZoneServer* zone = spell->caster->GetZone();
 		for (int8 i = 0; i < spell->targets.size(); i++) {
@@ -10827,6 +10875,8 @@ int EQ2Emu_lua_GetAlignment(lua_State* state) {
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
 
+	lua_interface->ResetFunctionStack(state);
+	
 	if (!spawn) {
 		lua_interface->LogError("%s: LUA GetAlignment command error: spawn is not valid", lua_interface->GetScriptName(state));
 		return 0;
@@ -11264,6 +11314,23 @@ int EQ2Emu_lua_SetInvulnerable(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_GetRuleFlagBool(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	string category = lua_interface->GetStringValue(state);
+	string name = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	Rule *ret = 0;
+	if ((ret = rule_manager.GetGlobalRule(category.c_str(), name.c_str()))) {
+		
+		lua_interface->SetBooleanValue(state, ret->GetBool());
+		return 1;
+	}
+	
+	lua_interface->LogError("%s: LUA GetRuleFlagBool Unknown rule with category '%s' and type '%s'", lua_interface->GetScriptName(state), category.c_str(), name.c_str());
+	return 0;
+}
+
 int EQ2Emu_lua_GetRuleFlagInt32(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -11277,7 +11344,24 @@ int EQ2Emu_lua_GetRuleFlagInt32(lua_State* state) {
 		return 1;
 	}
 	
-	lua_interface->LogError("%s: LUA GetRuleFlag Unknown rule with category '%s' and type '%s'", lua_interface->GetScriptName(state), category.c_str(), name.c_str());
+	lua_interface->LogError("%s: LUA GetRuleFlagInt32 Unknown rule with category '%s' and type '%s'", lua_interface->GetScriptName(state), category.c_str(), name.c_str());
+	return 0;
+}
+
+int EQ2Emu_lua_GetRuleFlagFloat(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	string category = lua_interface->GetStringValue(state);
+	string name = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	Rule *ret = 0;
+	if ((ret = rule_manager.GetGlobalRule(category.c_str(), name.c_str()))) {
+		
+		lua_interface->SetFloatValue(state, ret->GetFloat());
+		return 1;
+	}
+	
+	lua_interface->LogError("%s: LUA GetRuleFlagFloat Unknown rule with category '%s' and type '%s'", lua_interface->GetScriptName(state), category.c_str(), name.c_str());
 	return 0;
 }
 
@@ -11824,6 +11908,8 @@ int EQ2Emu_lua_IsOpen(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* widget = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
+
 	if (widget && widget->IsWidget())
 	{
 		lua_interface->SetBooleanValue(state, ((Widget*)widget)->IsOpen());
@@ -11838,6 +11924,8 @@ int EQ2Emu_lua_MakeRandomInt(lua_State* state) {
 
 	sint32 min = lua_interface->GetSInt32Value(state);
 	sint32 max = lua_interface->GetSInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+
 	sint32 result = MakeRandomInt(min, max);
 	lua_interface->SetSInt32Value(state, result);
 	return 1;
@@ -11849,6 +11937,8 @@ int EQ2Emu_lua_MakeRandomFloat(lua_State* state) {
 
 	float min = lua_interface->GetFloatValue(state);
 	float max = lua_interface->GetFloatValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
+
 	float result = MakeRandomFloat(min, max);
 	lua_interface->SetFloatValue(state, result);
 	return 1;
@@ -11895,5 +11985,61 @@ int EQ2Emu_lua_RemoveIconValue(lua_State* state) {
 	spawn->RemoveIconValue(value);
 	lua_interface->SetBooleanValue(state, true);
 
+	return 1;
+}
+
+int EQ2Emu_lua_GetShardID(lua_State* state) {
+	Spawn* npc = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
+
+	if (npc && npc->IsNPC()) {
+		NPC* shard = (NPC*)npc;
+		int32 shardid = shard->GetShardID();
+		lua_interface->SetInt32Value(state, shardid);
+		return 1;
+	}
+	lua_interface->SetInt32Value(state, 0);
+	return 1;
+}
+
+int EQ2Emu_lua_GetShardCharID(lua_State* state) {
+	Spawn* npc = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
+
+	if (npc && npc->IsNPC()) {
+		NPC* shard = (NPC*)npc;
+		int32 charid = shard->GetShardCharID();
+		lua_interface->SetInt32Value(state, charid);
+		return 1;
+	}
+	lua_interface->SetInt32Value(state, 0);
+	return 1;
+}
+
+int EQ2Emu_lua_GetShardCreatedTimestamp(lua_State* state) {
+	Spawn* npc = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
+
+	if (npc && npc->IsNPC()) {
+		NPC* shard = (NPC*)npc;
+		int64 timestamp = shard->GetShardCreatedTimestamp();
+		lua_interface->SetSInt64Value(state, timestamp);
+		return 1;
+	}
+	lua_interface->SetSInt64Value(state, 0);
+	return 1;
+}
+
+int EQ2Emu_lua_DeleteDBShardID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	int32 shardid = lua_interface->GetInt32Value(state);
+
+	lua_interface->ResetFunctionStack(state);
+
+	if(shardid < 1)
+		lua_interface->SetBooleanValue(state, false);
+	else
+		lua_interface->SetBooleanValue(state, database.DeleteSpiritShard(shardid));
 	return 1;
 }

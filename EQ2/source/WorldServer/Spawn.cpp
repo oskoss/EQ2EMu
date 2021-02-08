@@ -3849,18 +3849,21 @@ void Spawn::RemovePrimaryEntityCommand(const char* command) {
 
 bool Spawn::SetPermissionToEntityCommand(EntityCommand* command, Player* player, bool permissionValue)
 {
-	if (player != NULL)
-	{
-		map<int32, bool>::iterator itr = command->allow_or_deny.find(player->GetCharacterID());
-		if (itr == command->allow_or_deny.end())
-			command->allow_or_deny.insert(make_pair(player->GetCharacterID(), permissionValue));
-		else if (itr->second != permissionValue)
-			itr->second = permissionValue;
+	if(!player)
+		return false;
+	
+	return SetPermissionToEntityCommandByCharID(command, player->GetCharacterID(), permissionValue);
+}
 
-		return true;
-	}
-
-	return false;
+bool Spawn::SetPermissionToEntityCommandByCharID(EntityCommand* command, int32 charID, bool permissionValue)
+{
+	map<int32, bool>::iterator itr = command->allow_or_deny.find(charID);
+	if (itr == command->allow_or_deny.end())
+		command->allow_or_deny.insert(make_pair(charID, permissionValue));
+	else if (itr->second != permissionValue)
+		itr->second = permissionValue;
+	
+	return true;
 }
 
 void Spawn::RemoveSpawnFromPlayer(Player* player)

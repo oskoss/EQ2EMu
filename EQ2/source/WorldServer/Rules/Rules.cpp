@@ -218,6 +218,17 @@ void RuleManager::Init()
 
 	/* COMBAT */
 	RULE_INIT(R_Combat, MaxCombatRange, "4.0");
+	RULE_INIT(R_Combat, DeathExperienceDebt, "50.00"); // divide by 100, 50/100 = .5% debt per pve death
+	RULE_INIT(R_Combat, PVPDeathExperienceDebt, "25.00"); // divide by 100, 25/100 = .25% debt per pvp death
+	RULE_INIT(R_Combat, GroupExperienceDebt, "0"); // set to 1 means we will share debt between the group
+	RULE_INIT(R_Combat, ExperienceToDebt, "50.00"); // percentage of xp earned to debt vs obtained xp 50/100 = 50% to debt
+	RULE_INIT(R_Combat, ExperienceDebtRecoveryPercent, "5.00"); // recovery percentage per period of time, 5/100 = 5% recovered (so if .5% debt, .5*.05 = .025, .5-.025=.475% debt left)
+	RULE_INIT(R_Combat, ExperienceDebtRecoveryPeriod, "600"); // every 10 minutes (x*60 seconds) recover ExperienceDebtRecoveryPercent
+	RULE_INIT(R_Combat, EnableSpiritShards, "1");
+	RULE_INIT(R_Combat, SpiritShardSpawnScript, "SpawnScripts/Generic/SpiritShard.lua");
+	RULE_INIT(R_Combat, ShardDebtRecoveryPercent, "25.00"); // recovered percentage of debt upon obtainig shard, 25/100 means 25%.  If there is .5 DeathExperienceDebt, .5*25% = .125,  .5 - .125 = .375
+	RULE_INIT(R_Combat, ShardRecoveryByRadius, "1"); // allow shards to auto pick up by radius, not requiring to click/right click the shard
+
 	/* SPAWN */
 	RULE_INIT(R_Spawn, SpeedMultiplier, "300"); // note: this value was 1280 until 6/1/2009, then was 600 til Sep 2009, when it became 300...?
 	RULE_INIT(R_Spawn, ClassicRegen, "0");

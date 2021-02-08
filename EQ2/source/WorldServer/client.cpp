@@ -199,6 +199,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	lastRegionRemapTime = 0;
 	regionDebugMessaging = false;
 	client_reloading_zone = false;
+	last_saved_timestamp = 0;
 }
 
 Client::~Client() {
@@ -505,6 +506,14 @@ void Client::HandlePlayerRevive(int32 point_id)
 		QueuePacket(packet->serialize());
 		safe_delete(packet);
 	}
+	float origX, origY, origZ, origHeading = 0.0f;
+
+	origX = player->GetX();
+	origY = player->GetY();
+	origZ = player->GetZ();
+	origHeading = player->GetHeading();
+	ZoneServer* originalZone = GetCurrentZone();
+	int32 origGridID = GetPlayer()->appearance.pos.grid_id;
 
 	float x, y, z, heading;
 	RevivePoint* revive_point = 0;
@@ -621,8 +630,21 @@ void Client::HandlePlayerRevive(int32 point_id)
 		QueuePacket(packet->serialize());
 		safe_delete(packet);
 	}
+	
+	if(rule_manager.GetGlobalRule(R_Combat, EnableSpiritShards)->GetBool())
+	{
+		NPC* shard = player->InstantiateSpiritShard(origX, origY, origZ, origHeading, origGridID, originalZone);
 
-	GetCurrentZone()->RemoveSpawn(player, false);
+		if(shard->GetSpawnScript() && strlen(shard->GetSpawnScript()) > 0)
+			originalZone->CallSpawnScript(shard, SPAWN_SCRIPT_PRESPAWN);
+
+		originalZone->RemoveSpawn(player, false);
+
+		originalZone->AddSpawn(shard);
+		
+		if(shard->GetSpawnScript() && strlen(shard->GetSpawnScript()) > 0)
+			originalZone->CallSpawnScript(shard, SPAWN_SCRIPT_SPAWN);
+	}
 
 	m_resurrect.writelock(__FUNCTION__, __LINE__);
 	if (current_rez.active)
@@ -3987,6 +4009,7 @@ void Client::Save() {
 
 		UpdateCharacterInstances();
 
+		this->SetLastSavedTimeStamp(Timer::GetCurrentTime2());
 		database.Save(this);
 		if (GetPlayer()->UpdateQuickbarNeeded()) {
 			database.SaveQuickBar(GetCharacterID(), GetPlayer()->GetQuickbar());
@@ -9249,6 +9272,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 		firstlogin = zar->isFirstLogin();
 		LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
 		if (database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)) {
+			GetPlayer()->CalculateOfflineDebtRecovery(GetLastSavedTimeStamp());
 			GetPlayer()->vis_changed = false;
 			GetPlayer()->info_changed = false;
 

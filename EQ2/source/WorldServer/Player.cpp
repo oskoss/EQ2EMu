@@ -759,7 +759,19 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		CalculateXPPercentages();
 		packet->setDataByName("current_adv_xp", info_struct->get_xp()); // confirmed DoV
 		packet->setDataByName("needed_adv_xp", info_struct->get_xp_needed());// confirmed DoV
-		packet->setDataByName("debt_adv_xp", info_struct->get_xp_debt());//95= 9500% //confirmed DoV
+
+		if(version >= 60114)
+		{
+			// AoM ends up the debt_adv_xp field is the percentage of xp to the next level needed to advance out of debt (WHYY CANT THIS JUST BE A PERCENTAGE LIKE DOV!)
+			float currentPctOfLevel = (float)info_struct->get_xp() / (float)info_struct->get_xp_needed();
+			float neededPctAdvanceOutOfDebt = currentPctOfLevel + (info_struct->get_xp_debt() / 100.0f);
+			packet->setDataByName("debt_adv_xp", neededPctAdvanceOutOfDebt);
+		}
+		else
+		{
+			packet->setDataByName("exp_debt", (int16)(info_struct->get_xp_debt()/10.0f));//95= 9500% //confirmed DoV
+		}
+		
 		packet->setDataByName("current_trade_xp", info_struct->get_ts_xp());// confirmed DoV
 		packet->setDataByName("needed_trade_xp", info_struct->get_ts_xp_needed());// confirmed DoV
 
@@ -1431,9 +1443,12 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			}
 		}
 		player->GetDetrimentMutex()->releasereadlock(__FUNCTION__, __LINE__);
-		packet->setDataByName("spirit_rank", 2);
-		packet->setDataByName("spirit", 1);
-		packet->setDataByName("spirit_progress", .67);
+
+		// disabling as not in use right now
+		//packet->setDataByName("spirit_rank", 2);
+		//packet->setDataByName("spirit", 1);
+		//packet->setDataByName("spirit_progress", .67);
+
 		packet->setDataByName("combat_exp_enabled", 1);
 		/*for (int i = 0; i < 12; i++) {
 			packet->setSubstructDataByName("spell_effects", "spell_id", i + 1, i);
@@ -3777,6 +3792,35 @@ float Player::CalculateTSXP(int8 level){
 	return total * world.GetXPRate() * zone_xp_modifier;
 }
 
+void Player::CalculateOfflineDebtRecovery(int32 unix_timestamp)
+{
+	float xpDebt = GetXPDebt();
+	// not a real timestamp to work with
+	if(unix_timestamp < 1 || xpDebt == 0.0f)
+		return;
+
+	uint32 diff = (Timer::GetCurrentTime2() - unix_timestamp)/1000;
+	
+	float recoveryDebtPercentage = rule_manager.GetGlobalRule(R_Combat, ExperienceDebtRecoveryPercent)->GetFloat()/100.0f;
+	int32 recoveryPeriodSeconds = rule_manager.GetGlobalRule(R_Combat, ExperienceDebtRecoveryPeriod)->GetInt32();
+	if(recoveryDebtPercentage == 0.0f || recoveryPeriodSeconds < 1)
+		return;
+
+
+	float periodsPassed = (float)diff/(float)recoveryPeriodSeconds;
+
+	// not enough time passed to calculate debt xp recovered
+	if(periodsPassed < 1.0f)
+		return;
+
+	float debtToSubtract = xpDebt * ((recoveryDebtPercentage*periodsPassed)/100.0f);
+
+	if(debtToSubtract >= xpDebt)
+		GetInfoStruct()->set_xp_debt(0.0f);
+	else
+		GetInfoStruct()->set_xp_debt(xpDebt - debtToSubtract);
+}
+
 void Player::SetNeededXP(int32 val){
 	GetInfoStruct()->set_xp_needed(val);
 }
@@ -3808,7 +3852,7 @@ void Player::SetTSXP(int32 val) {
 	GetInfoStruct()->set_ts_xp(val);
 }
 
-int32 Player::GetXPDebt(){
+float Player::GetXPDebt(){
 	return GetInfoStruct()->get_xp_debt();
 }
 
@@ -3830,8 +3874,37 @@ int32 Player::GetTSXP() {
 
 bool Player::AddXP(int32 xp_amount){
 	MStats.lock();
-	xp_amount += ((xp_amount) * stats[ITEM_STAT_COMBATEXPMOD]) / 100;
+	xp_amount += (int32)(((float)xp_amount) * stats[ITEM_STAT_COMBATEXPMOD]) / 100;
 	MStats.unlock();
+
+	if(GetInfoStruct()->get_xp_debt())
+	{
+		float expRatioToDebt = rule_manager.GetGlobalRule(R_Combat, ExperienceToDebt)->GetFloat()/100.0f;
+		int32 amountToTakeFromDebt = (int32)((float)expRatioToDebt * (float)xp_amount);
+		int32 amountRequiredClearDebt = (GetInfoStruct()->get_xp_debt()/100.0f) * xp_amount;
+
+		if(amountToTakeFromDebt > amountRequiredClearDebt)
+		{
+			GetInfoStruct()->set_xp_debt(0.0f);
+			if(amountRequiredClearDebt > xp_amount)
+				xp_amount = 0;
+			else
+				xp_amount -= amountRequiredClearDebt;
+		}
+		else
+		{
+			float amountRemovedPct = ((float)amountToTakeFromDebt/(float)amountRequiredClearDebt);
+			GetInfoStruct()->set_xp_debt(GetInfoStruct()->get_xp_debt()-amountRemovedPct);
+			if(amountToTakeFromDebt > xp_amount)
+				xp_amount = 0;
+			else
+				xp_amount -= amountToTakeFromDebt;
+		}
+	}
+	
+	// used up in xp debt
+	if(!xp_amount)
+		return true;
 
 	float current_xp_percent = ((float)GetXP()/(float)GetNeededXP())*100;
 	float miniding_min_percent = ((int)(current_xp_percent/10)+1)*10;
@@ -6155,4 +6228,82 @@ void Player::SetSpawnMap(Spawn* spawn)
 
 	player_spawn_reverse_id_map.insert(make_pair(spawn,tmp_id));
 	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+NPC* Player::InstantiateSpiritShard(float origX, float origY, float origZ, float origHeading, int32 origGridID, ZoneServer* origZone)
+{
+		NPC* npc = new NPC();
+		string newName(GetName());
+		newName.append("'s spirit shard");
+
+		strcpy(npc->appearance.name, newName.c_str());
+		/*vector<EntityCommand*>* primary_command_list = zone->GetEntityCommandList(result.GetInt32(9));
+		vector<EntityCommand*>* secondary_command_list = zone->GetEntityCommandList(result.GetInt32(10));
+		if(primary_command_list){
+			npc->SetPrimaryCommands(primary_command_list);
+			npc->primary_command_list_id = result.GetInt32(9);
+		}
+		if(secondary_command_list){
+			npc->SetSecondaryCommands(secondary_command_list);
+			npc->secondary_command_list_id = result.GetInt32(10);
+		}*/
+		npc->appearance.level =	GetLevel();
+		npc->appearance.race = GetRace();
+		npc->appearance.gender = GetGender();
+		npc->appearance.adventure_class = GetAdventureClass();
+		 
+		//npc->appearance.lua_race_id = result.GetInt16(74);
+		npc->appearance.model_type = GetModelType();
+		npc->appearance.soga_model_type = GetSogaModelType();
+		npc->appearance.display_name = 1;
+		npc->features.hair_type = GetHairType();
+		npc->features.hair_face_type = GetFacialHairType();
+		npc->features.wing_type = GetWingType();
+		npc->features.chest_type = GetChestType();
+		npc->features.legs_type = GetLegsType();
+		npc->features.soga_hair_type = GetSogaHairType();
+		npc->features.soga_hair_face_type = GetSogaFacialHairType();
+		npc->appearance.attackable = 0;
+		npc->appearance.show_level = 1;
+		npc->appearance.targetable = 1;
+		npc->appearance.show_command_icon = 1;
+		npc->appearance.display_hand_icon = 0;
+		npc->appearance.hide_hood = GetHideHood();
+		npc->size = GetSize();
+		npc->appearance.pos.collision_radius = appearance.pos.collision_radius;
+		npc->appearance.action_state = appearance.action_state;
+		npc->appearance.visual_state = 6193; // ghostly look
+		npc->appearance.mood_state = appearance.mood_state;
+		npc->appearance.emote_state = appearance.emote_state;
+		npc->appearance.pos.state = appearance.pos.state;
+		npc->appearance.activity_status = appearance.activity_status;
+		strncpy(npc->appearance.sub_title, appearance.sub_title, sizeof(npc->appearance.sub_title));
+		npc->SetPrefixTitle(GetPrefixTitle());
+		npc->SetSuffixTitle(GetSuffixTitle());
+		npc->SetLastName(GetLastName());
+		npc->SetX(origX);
+		npc->SetY(origY);
+		npc->SetZ(origZ);
+		npc->SetHeading(origHeading);
+		npc->SetSpawnOrigX(origX);
+		npc->SetSpawnOrigY(origY);
+		npc->SetSpawnOrigZ(origZ);
+		npc->SetSpawnOrigHeading(origHeading);
+		npc->appearance.pos.grid_id = origGridID;
+		const char* script = rule_manager.GetGlobalRule(R_Combat, SpiritShardSpawnScript)->GetString();
+
+		int32 dbid = database.CreateSpiritShard(newName.c_str(), GetLevel(), GetRace(), GetGender(), GetAdventureClass(), GetModelType(), GetSogaModelType(), 
+		GetHairType(), GetFacialHairType(), GetWingType(), GetChestType(), GetLegsType(), GetSogaHairType(), GetSogaFacialHairType(), GetHideHood(),
+		GetSize(), npc->appearance.pos.collision_radius, npc->appearance.action_state, npc->appearance.visual_state, npc->appearance.mood_state, 
+		npc->appearance.emote_state, npc->appearance.pos.state, npc->appearance.activity_status, npc->appearance.sub_title, GetPrefixTitle(), GetSuffixTitle(),
+		GetLastName(), origX, origY, origZ, origHeading, origGridID, GetCharacterID(), origZone->GetZoneID(), origZone->GetInstanceID());
+
+		npc->SetShardID(dbid);
+		npc->SetShardCharID(GetCharacterID());
+		npc->SetShardCreatedTimestamp(Timer::GetCurrentTime2());
+		
+		if(script)
+			npc->SetSpawnScript(script);
+		
+		return npc;
 }

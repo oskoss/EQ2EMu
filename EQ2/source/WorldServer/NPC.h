@@ -146,6 +146,14 @@ public:
 	bool IsDismissing() { return m_petDismissing; }
 	void SetDismissing(bool val) { m_petDismissing = val; }
 
+	int32 GetShardID() { return m_ShardID; }
+	void SetShardID(int32 shardid) { m_ShardID = shardid; }
+
+	int32 GetShardCharID() { return m_ShardCharID; }
+	void SetShardCharID(int32 charid) { m_ShardCharID = charid; }
+
+	sint64 GetShardCreatedTimestamp() { return m_ShardCreatedTimestamp; }
+	void SetShardCreatedTimestamp(sint64 timestamp) { m_ShardCreatedTimestamp = timestamp; }
 private:
 	MovementLocation* runback;
 	int8	cast_percentage;
@@ -177,6 +185,10 @@ private:
 	// the brain class and not the function defined above
 	::Brain*	m_brain;
 	Mutex		MBrain;
+
+	int32		m_ShardID;
+	int32		m_ShardCharID;
+	sint64		m_ShardCreatedTimestamp;
 };
 #endif
 
