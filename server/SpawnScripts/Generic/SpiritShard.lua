@@ -6,7 +6,7 @@
 function spawn(NPC)
 	local DebtToRemovePct = GetRuleFlagFloat("R_Combat", "ShardDebtRecoveryPercent")
 		
-	if GetRuleFlagFloat("R_Combat", "ShardRecoveryByRadius") == true then
+	if GetRuleFlagBool("R_Combat", "ShardRecoveryByRadius") == true then
 		SetPlayerProximityFunction(NPC, 10.0, "recovershard")
 	end
 	
