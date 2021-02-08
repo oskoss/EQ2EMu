@@ -1068,7 +1068,6 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 void WorldDatabase::LoadSpiritShards(ZoneServer* zone){
 	Query query;
 	MYSQL_ROW row;
-	NPC* npc = 0;
 	int32 id = 0;
 	int32 total = 0;
 	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT timestamp, name, level, race, gender, adventure_class, model_type, soga_model_type, hair_type, hair_face_type, wing_type, chest_type, legs_type, soga_hair_type, soga_hair_face_type, hide_hood, size, collision_radius, action_state, visual_state, mood_state, emote_state, pos_state, activity_status, sub_title, prefix_title, suffix_title, lastname, x, y, z, heading, gridid, id, charid\n"
@@ -1165,7 +1164,7 @@ void WorldDatabase::LoadSpiritShards(ZoneServer* zone){
 			zone->CallSpawnScript(shard, SPAWN_SCRIPT_SPAWN);
 		
 		total++;
-		LogWrite(NPC__DEBUG, 5, "NPC", "---Loading Player Spirit Shard: '%s' (%u)", npc->appearance.name, id);
+		LogWrite(NPC__DEBUG, 5, "NPC", "---Loading Player Spirit Shard: '%s' (%u)", shard->appearance.name, id);
 	}
 	LogWrite(NPC__INFO, 0, "NPC", "--Loaded %i Spirit Shard(s).", total);
 }
