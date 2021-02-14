@@ -8743,6 +8743,13 @@ void Client::DisplayCollectionComplete(Collection* collection) {
 	packet->setArrayLengthByName("num_rewards", reward_items->size());
 	for (i = 0; i < reward_items->size(); i++) {
 		reward_item = reward_items->at(i);
+		if(!reward_item->item)
+		{
+			LogWrite(DATABASE__ERROR, 0, "Database", "DisplayCollectionComplete Collection %s (%u) num_rewards has missing item in slot %u", collection->GetName(), collection->GetID(), i);
+			Message(CHANNEL_COLOR_RED, "DisplayCollectionComplete Collection %s (%u) num_rewards has missing item in slot %u", collection->GetName(), collection->GetID(), i);
+			continue;
+		}
+
 		packet->setArrayDataByName("reward_id", reward_item->item->details.item_id, i);
 		if (version < 860)
 			packet->setItemArrayDataByName("item", reward_item->item, player, i, 0, -1);
@@ -8754,6 +8761,13 @@ void Client::DisplayCollectionComplete(Collection* collection) {
 	packet->setArrayLengthByName("num_select_rewards", selectable_reward_items->size());
 	for (i = 0; i < selectable_reward_items->size(); i++) {
 		reward_item = selectable_reward_items->at(i);
+		if(!reward_item->item)
+		{
+			LogWrite(DATABASE__ERROR, 0, "Database", "DisplayCollectionComplete Collection %s (%u) num_select_rewards has missing item in slot %u", collection->GetName(), collection->GetID(), i);
+			Message(CHANNEL_COLOR_RED, "DisplayCollectionComplete Collection %s (%u) num_select_rewards has missing item in slot %u", collection->GetName(), collection->GetID(), i);
+			continue;
+		}
+
 		packet->setArrayDataByName("select_reward_id", reward_item->item->details.item_id, i);
 		if (version < 860)
 			packet->setItemArrayDataByName("select_item", reward_item->item, player, i, 0, -1);
