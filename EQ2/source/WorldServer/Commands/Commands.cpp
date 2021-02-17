@@ -1753,13 +1753,17 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_HAILED_BUSY, client->GetPlayer());
 					else
 					{
+						bool pauseRunback = false;
 						// prime runback as the heading or anything can be altered when hailing succeeds
-						if(spawn->IsNPC())
+						if(spawn->IsNPC() && (spawn->HasMovementLoop() || spawn->HasMovementLocations()))
+						{
 							((NPC*)spawn)->StartRunback();
+							pauseRunback = true;
+						}
 
-						if(spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_HAILED, client->GetPlayer()))
+						if(spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_HAILED, client->GetPlayer()) && pauseRunback)
 							spawn->PauseMovement(rule_manager.GetGlobalRule(R_Spawn, HailMovementPause)->GetInt32());
-						else if(spawn->IsNPC())
+						else if(spawn->IsNPC() && pauseRunback)
 							((NPC*)spawn)->ClearRunback();
 					}
 				}
