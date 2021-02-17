@@ -81,6 +81,12 @@ Entity::Entity(){
 	MCommandMutex.SetName("Entity::MCommandMutex");
 	hasSeeInvisSpell = false;
 	hasSeeHideSpell = false;
+
+	owner = 0;
+	m_petType = 0;
+	m_petSpellID = 0;
+	m_petSpellTier = 0;
+	m_petDismissing = false;
 }
 
 Entity::~Entity(){
@@ -239,6 +245,9 @@ void Entity::MapInfoStruct()
 
 	get_int8_funcs["power_regen_override"] = l::bind(&InfoStruct::get_power_regen_override, &info_struct);
 	get_int8_funcs["hp_regen_override"] = l::bind(&InfoStruct::get_hp_regen_override, &info_struct);
+	
+	get_int8_funcs["water_type"] = l::bind(&InfoStruct::get_water_type, &info_struct);
+	get_int8_funcs["flying_type"] = l::bind(&InfoStruct::get_flying_type, &info_struct);
 
 
 /** SETS **/
@@ -379,6 +388,9 @@ void Entity::MapInfoStruct()
 
 	set_int8_funcs["power_regen_override"] = l::bind(&InfoStruct::set_power_regen_override, &info_struct, l::_1);
 	set_int8_funcs["hp_region_override"] = l::bind(&InfoStruct::set_hp_regen_override, &info_struct, l::_1);
+	
+	set_int8_funcs["water_type"] = l::bind(&InfoStruct::set_water_type, &info_struct, l::_1);
+	set_int8_funcs["flying_type"] = l::bind(&InfoStruct::set_flying_type, &info_struct, l::_1);
 
 }
 
@@ -1562,18 +1574,29 @@ void Entity::HideCosmeticPet(bool val) {
 		cosmeticPet->MakeSpawnPublic();
 }
 
-void Entity::DismissPet(NPC* pet, bool from_death, bool spawnListLocked) {
+void Entity::DismissAllPets(bool from_death, bool spawnListLocked)
+{
+	DismissPet(GetPet(), from_death, spawnListLocked);
+	DismissPet(GetCharmedPet(), from_death, spawnListLocked);
+	DismissPet(GetDeityPet(), from_death, spawnListLocked);
+	DismissPet(GetCosmeticPet(), from_death, spawnListLocked);
+}
+
+void Entity::DismissPet(Entity* pet, bool from_death, bool spawnListLocked) {
 	if (!pet)
 		return;
 
 	Entity* PetOwner = pet->GetOwner();
 
-	pet->SetDismissing(true);
+	if(pet->IsNPC())
+	{
+		((NPC*)pet)->SetDismissing(true);
 
-	// Remove the spell maintained spell
-	Spell* spell = master_spell_list.GetSpell(pet->GetPetSpellID(), pet->GetPetSpellTier());
-	if (spell)
-		GetZone()->GetSpellProcess()->DeleteCasterSpell(this, spell, from_death == true ? (string)"pet_death" : (string)"canceled");
+		// Remove the spell maintained spell
+		Spell* spell = master_spell_list.GetSpell(pet->GetPetSpellID(), pet->GetPetSpellTier());
+		if (spell)
+			GetZone()->GetSpellProcess()->DeleteCasterSpell(this, spell, from_death == true ? (string)"pet_death" : (string)"canceled");
+	}
 
 	if (pet->GetPetType() == PET_TYPE_CHARMED) {
 		PetOwner->SetCharmedPet(0);
@@ -1582,7 +1605,9 @@ void Entity::DismissPet(NPC* pet, bool from_death, bool spawnListLocked) {
 			// set the pet flag to false, owner to 0, and give the mob its old brain back
 			pet->SetPet(false);
 			pet->SetOwner(0);
-			pet->SetBrain(new Brain(pet));
+			if(pet->IsNPC())
+				((NPC*)pet)->SetBrain(new Brain((NPC*)pet));
+
 			pet->SetDismissing(false);
 		}
 	}
@@ -1822,6 +1847,7 @@ float Entity::GetSpeed() {
 	MStats.unlock();
 	
 	ret *= speed_multiplier;
+	
 	return ret;
 }
 
@@ -3262,4 +3288,14 @@ bool Entity::SetInfoStructFloat(std::string field, float value)
 			return true;
 		}
 	return false;
+}
+
+Entity*	Entity::GetOwner() {
+	Entity* ent = nullptr;
+
+	Spawn* spawn = GetZone()->GetSpawnByID(owner);
+	if ( spawn && spawn->IsEntity() )
+		ent = (Entity*)spawn;
+
+	return ent;
 }

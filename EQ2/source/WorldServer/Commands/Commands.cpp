@@ -1748,13 +1748,20 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if (spawn->IsNPC())
 					show_bubble = false;
 				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SAY, tmp, HEAR_SPAWN_DISTANCE, 0, show_bubble);
-				if(spawn->IsPlayer() == false && spawn->GetDistance(client->GetPlayer()) < 30){
+				if(spawn->IsPlayer() == false && spawn->GetDistance(client->GetPlayer()) < rule_manager.GetGlobalRule(R_Spawn, HailDistance)->GetInt32()){
 					if(spawn->IsNPC() && ((NPC*)spawn)->EngagedInCombat())
 						spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_HAILED_BUSY, client->GetPlayer());
 					else
-						spawn->ProcessMovement();
-					LogWrite(MISC__TODO, 0, "Check", "ProcessMovement has been called");
-						spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_HAILED, client->GetPlayer());
+					{
+						// prime runback as the heading or anything can be altered when hailing succeeds
+						if(spawn->IsNPC())
+							((NPC*)spawn)->StartRunback();
+
+						if(spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_HAILED, client->GetPlayer()))
+							spawn->PauseMovement(rule_manager.GetGlobalRule(R_Spawn, HailMovementPause)->GetInt32());
+						else if(spawn->IsNPC())
+							((NPC*)spawn)->ClearRunback();
+					}
 				}
 			}
 			else {
@@ -3817,6 +3824,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				details3 += "Pitch:	" + to_string(spawn->GetPitch()) + "\n";
 				details3 += "Roll:	" + to_string(spawn->GetRoll()) + "\n";
 				details3 += "Hide Hood:	" + to_string(spawn->appearance.hide_hood) + "\n";
+				details3 += "Speed:	" + to_string(spawn->GetSpeed()) + "\n";
+				details3 += "BaseSpeed:	" + to_string(spawn->GetBaseSpeed()) + "\n";
 
 				string details4;
 				if (spawn->IsEntity()) {

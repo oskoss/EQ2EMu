@@ -1286,6 +1286,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetShardCharID", EQ2Emu_lua_GetShardCharID);
 	lua_register(state, "GetShardCreatedTimestamp", EQ2Emu_lua_GetShardCreatedTimestamp);
 	lua_register(state, "DeleteDBShardID", EQ2Emu_lua_DeleteDBShardID);
+	
+	lua_register(state, "PauseMovement", EQ2Emu_lua_PauseMovement);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

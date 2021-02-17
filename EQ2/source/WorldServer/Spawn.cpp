@@ -119,6 +119,7 @@ Spawn::Spawn(){
 	region_map = nullptr;
 	current_map = nullptr;
 	RegionMutex.SetName("Spawn::RegionMutex");
+	pause_timer.Disable();
 }
 
 Spawn::~Spawn(){
@@ -2750,7 +2751,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	Spawn* followTarget = GetZone()->GetSpawnByID(m_followTarget, isSpawnListLocked);
 	if (!followTarget && m_followTarget > 0)
 		m_followTarget = 0;
-	if (following && followTarget && !((Entity*)this)->IsFeared()) {
+	if (following && !IsPauseMovementTimerActive() && followTarget && !((Entity*)this)->IsFeared()) {
 
 		// Need to clear m_followTarget before the zoneserver deletes it
 		if (followTarget->GetHP() <= 0) {
@@ -2767,7 +2768,10 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				float speed = 4.0f;
 				if (IsEntity())
 					speed = ((Entity*)this)->GetMaxSpeed();
-				SetSpeed(speed);
+				if (IsEntity())
+					((Entity*)this)->SetSpeed(speed);
+				
+					SetSpeed(speed);
 			}
 			MovementLocation* loc = GetCurrentRunningLocation();
 			float dist = GetDistance(followTarget, true);
@@ -2792,7 +2796,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	}
 
 	// Movement loop is only for scripted paths
-	else if(!EngagedInCombat() && !NeedsToResumeMovement() && movement_loop.size() > 0 && movement_index < movement_loop.size() && (!IsNPC() || !((NPC*)this)->m_runningBack)){
+	else if(!EngagedInCombat() && !IsPauseMovementTimerActive() && !NeedsToResumeMovement() && movement_loop.size() > 0 && movement_index < movement_loop.size() && (!IsNPC() || !((NPC*)this)->m_runningBack)){
 		// Get the target location
 		MovementData* data = movement_loop[movement_index];
 		// need to resume our movement
@@ -2806,6 +2810,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 			}
 
 			data = movement_loop[movement_index];
+			
 			((Entity*)this)->SetSpeed(data->speed);
 			SetSpeed(data->speed);
 			if(!IsWidget())
@@ -2907,7 +2912,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 			AddRunningLocation(data->x, data->y, data->z, data->speed);
 		}
 	}
-	else if (IsRunning()) {
+	else if (IsRunning() && !IsPauseMovementTimerActive()) {
 		CalculateRunningLocation();
 	}
 	/*else if (IsNPC() && !IsRunning() && !EngagedInCombat() && ((NPC*)this)->GetRunbackLocation()) {
@@ -2958,6 +2963,9 @@ bool Spawn::IsRunning(){
 }
 
 void Spawn::RunToLocation(float x, float y, float z, float following_x, float following_y, float following_z){
+	if(IsPauseMovementTimerActive())
+		return;
+	
 	if(!IsWidget())
 		FaceTarget(x, z);
 	SetPos(&appearance.pos.X2, x, false);
@@ -3041,7 +3049,7 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 		SetSpawnOrigHeading(GetHeading());
 	}
 	movement_locations->push_back(data);	
-	if(finished_adding_locations){
+	if(!IsPauseMovementTimerActive() && finished_adding_locations){
 		current_location = movement_locations->front();
 		SetSpeed(current_location->speed);
 		if(movement_locations->size() > 1){		
@@ -3151,14 +3159,15 @@ bool Spawn::CalculateChange(){
 
 void Spawn::CalculateRunningLocation(bool stop){
 
-	if (!stop && (last_location_update + 100) > Timer::GetCurrentTime2())
-		return;
-	else if (!stop)
-	last_location_update = Timer::GetCurrentTime2();
+	bool pauseTimerEnabled = IsPauseMovementTimerActive();
 
+	if (!pauseTimerEnabled && !stop && (last_location_update + 100) > Timer::GetCurrentTime2())
+		return;
+	else if (!pauseTimerEnabled && !stop)
+		last_location_update = Timer::GetCurrentTime2();
 
 	bool removed = CalculateChange();
-	if (stop) {
+	if (stop || pauseTimerEnabled) {
 		//following = false;
 		SetPos(&appearance.pos.X2, GetX(), false);
 		SetPos(&appearance.pos.Y2, GetY(), false);
@@ -3255,13 +3264,14 @@ void Spawn::FaceTarget(float x, float z){
 	SetHeading(angle);
 }
 
-void Spawn::FaceTarget(Spawn* target){
+void Spawn::FaceTarget(Spawn* target, bool disable_action_state){
 	if(!target)
 		return;
 	FaceTarget(target->GetX(), target->GetZ());
 	if(GetHP() > 0 && target->IsPlayer() && !EngagedInCombat()){
 		GetZone()->AddHeadingTimer(this);
-		SetTempActionState(0);
+		if(disable_action_state)
+			SetTempActionState(0);
 	}
 }
 
@@ -3992,4 +4002,85 @@ float Spawn::SpawnAngle(Spawn* target, float selfx, float selfz)
 	angle = angle * 180.0f / 3.1415f;
 
 	return angle;
+}
+
+bool Spawn::PauseMovement(int32 period_of_time_ms)
+{
+	if(period_of_time_ms < 1)
+		period_of_time_ms = 1;
+	
+	RunToLocation(GetX(),GetY(),GetZ());
+	pause_timer.Start(period_of_time_ms, true);
+
+	return true;
+}
+
+bool Spawn::IsPauseMovementTimerActive()
+{
+	if(pause_timer.Check())
+		pause_timer.Disable();
+	
+	return pause_timer.Enabled();
+}
+
+bool Spawn::IsFlyingCreature()
+{
+	if(!IsEntity())
+		return false;
+
+	return ((Entity*)this)->GetInfoStruct()->get_flying_type();
+}
+
+bool Spawn::IsWaterCreature()
+{
+	if(!IsEntity())
+		return false;
+
+	return ((Entity*)this)->GetInfoStruct()->get_water_type();
+}
+
+
+void Spawn::SetFlyingCreature() {
+	if(!IsEntity() || !rule_manager.GetGlobalRule(R_Spawn, UseHardCodeFlyingModelType)->GetInt8())
+		return;
+
+	if(((Entity*)this)->GetInfoStruct()->get_flying_type() > 0) // DB spawn npc flag already set
+		return;
+
+	switch (GetModelType())
+	{
+	case 260:
+	case 295:
+		((Entity*)this)->GetInfoStruct()->set_flying_type(1);
+		is_flying_creature = true;
+		break;
+	default:
+		((Entity*)this)->GetInfoStruct()->set_flying_type(0);
+		break;
+	}
+}
+	
+void Spawn::SetWaterCreature() {
+	if(!IsEntity() || !rule_manager.GetGlobalRule(R_Spawn, UseHardCodeWaterModelType)->GetInt8())
+		return;
+
+	if(((Entity*)this)->GetInfoStruct()->get_water_type() > 0) // DB spawn npc flag already set
+		return;
+
+	switch (GetModelType())
+	{
+	case 194:
+	case 204:
+	case 210:
+	case 241:
+	case 242:
+	case 254:
+	case 10668:
+	case 20828:
+		((Entity*)this)->GetInfoStruct()->set_water_type(1);
+		break;
+	default:
+		((Entity*)this)->GetInfoStruct()->set_water_type(0);
+		break;
+	}
 }

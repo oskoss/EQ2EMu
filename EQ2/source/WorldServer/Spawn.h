@@ -781,39 +781,14 @@ public:
 		return appearance.model_type;
 	}
 	
-	bool IsFlyingCreature() { return is_flying_creature; }
-	bool IsWaterCreature() { return is_water_creature; }
+	bool IsFlyingCreature();
+	bool IsWaterCreature();
 	bool InWater();
 	bool InLava();
 
-	void SetFlyingCreature() {
-		is_flying_creature = false;
-		switch (GetModelType())
-		{
-		case 260:
-		case 295:
-			is_flying_creature = true;
-			break;
-		}
-	}
+	void SetFlyingCreature();
+	void SetWaterCreature();
 	
-	void SetWaterCreature() {
-		is_water_creature = false;
-
-		switch (GetModelType())
-		{
-		case 194:
-		case 204:
-		case 210:
-		case 241:
-		case 242:
-		case 254:
-		case 10668:
-		case 20828:
-			is_water_creature = true;
-			break;
-		}
-	}
 	void SetPrimaryCommand(const char* name, const char* command, float distance = 10);
 	void SetPrimaryCommands(vector<EntityCommand*>* commands);
 	void SetSecondaryCommands(vector<EntityCommand*>* commands);
@@ -1035,10 +1010,11 @@ public:
 	bool	NeedsToResumeMovement(){ return attack_resume_needed; }
 	void	NeedsToResumeMovement(bool val) { attack_resume_needed = val; }
 	bool	HasMovementLoop(){ return movement_loop.size() > 0; }
+	bool	HasMovementLocations() { return movement_locations ? movement_locations->size() > 0 : false; }
 	Timer*	GetRunningTimer();
 	float	GetFaceTarget(float x, float z);
 	void	FaceTarget(float x, float z);
-	void	FaceTarget(Spawn* target);
+	void	FaceTarget(Spawn* target, bool disable_action_state = true);
 	void	SetInvulnerable(bool val);
 	bool	GetInvulnerable();
 	bool				changed;
@@ -1205,6 +1181,9 @@ public:
 
 	std::map<std::map<Region_Node*, ZBSP_Node*>, Region_Status> Regions;
 	Mutex RegionMutex;
+
+	virtual bool PauseMovement(int32 period_of_time_ms);
+	virtual bool IsPauseMovementTimerActive();
 protected:
 
 	bool	has_quests_required;
@@ -1243,6 +1222,7 @@ protected:
 	MutexList<SpawnProximity*> spawn_proximities;
 
 	void CheckProximities();
+	Timer pause_timer;
 private:		
 	vector<Item*>	loot_items;
 	int32			loot_coins;

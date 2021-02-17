@@ -959,6 +959,7 @@ public:
 
 	NPC* InstantiateSpiritShard(float origX, float origY, float origZ, float origHeading, int32 origGridID, ZoneServer* origZone);
 
+	void DismissAllPets();
 
 
 	AppearanceData SavedApp;

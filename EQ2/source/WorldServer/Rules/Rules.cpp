@@ -232,6 +232,10 @@ void RuleManager::Init()
 	/* SPAWN */
 	RULE_INIT(R_Spawn, SpeedMultiplier, "300"); // note: this value was 1280 until 6/1/2009, then was 600 til Sep 2009, when it became 300...?
 	RULE_INIT(R_Spawn, ClassicRegen, "0");
+	RULE_INIT(R_Spawn, HailMovementPause, "5000"); // time in milliseconds the spawn is paused on hail
+	RULE_INIT(R_Spawn, HailDistance, "5"); // max distance to hail a spawn/npc
+	RULE_INIT(R_Spawn, UseHardCodeWaterModelType, "1"); // uses alternate method of setting water type by model type (hardcoded) versus relying on just DB
+	RULE_INIT(R_Spawn, UseHardCodeFlyingModelType, "1"); // uses alternate method of setting flying type by model type (hardcoded) versus relying on just DB
 
 	/* TIMER */
 

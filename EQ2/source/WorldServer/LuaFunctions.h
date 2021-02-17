@@ -572,4 +572,6 @@ int EQ2Emu_lua_GetShardID(lua_State* state);
 int EQ2Emu_lua_GetShardCharID(lua_State* state);
 int EQ2Emu_lua_GetShardCreatedTimestamp(lua_State* state);
 int EQ2Emu_lua_DeleteDBShardID(lua_State* state);
+
+int EQ2Emu_lua_PauseMovement(lua_State* state);
 #endif

@@ -92,6 +92,10 @@ enum RuleType {
 	/* SPAWN */
 	SpeedMultiplier,
 	ClassicRegen,
+	HailMovementPause,
+	HailDistance,
+	UseHardCodeWaterModelType,
+	UseHardCodeFlyingModelType,
 	//SpeedRatio,
 
 	/* UI */

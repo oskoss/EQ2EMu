@@ -721,10 +721,24 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 			spawn = itr->second;
 			if(spawn && !spawn->IsPlayer()){
+				bool dispatched = false;
 				if(spawn->IsBot())
-				((Bot*)spawn)->Camp(true);
-
-				SendRemoveSpawn(client, spawn, packet);
+				{
+					((Bot*)spawn)->Camp(true);
+					dispatched = true;
+				}
+				else if(spawn->IsPet())
+				{
+					Entity* owner = ((Entity*)spawn)->GetOwner();
+					if(owner)
+					{
+						owner->DismissPet((Entity*)spawn);
+						dispatched = true;
+					}
+				}
+				
+				if(!dispatched)
+					SendRemoveSpawn(client, spawn, packet);
 			}
 		}
 		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
@@ -2655,7 +2669,7 @@ bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 				break;
 									   }
 			case SPAWN_SCRIPT_HAILED:{
-				lua_interface->RunSpawnScript(script, "hailed", npc, spawn);
+				result = lua_interface->RunSpawnScript(script, "hailed", npc, spawn);
 				break;
 									 }
 			case SPAWN_SCRIPT_HAILED_BUSY:{
@@ -2978,10 +2992,7 @@ void ZoneServer::RemoveClient(Client* client)
 				LogWrite(ZONE__DEBUG, 0, "Zone", "Removing client '%s' (%u) due to Camp/Quit...", client->GetPlayer()->GetName(), client->GetPlayer()->GetCharacterID());
 			}
 				
-				client->GetPlayer()->DismissPet((NPC*)client->GetPlayer()->GetPet());
-				client->GetPlayer()->DismissPet((NPC*)client->GetPlayer()->GetCharmedPet());
-				client->GetPlayer()->DismissPet((NPC*)client->GetPlayer()->GetDeityPet());
-				client->GetPlayer()->DismissPet((NPC*)client->GetPlayer()->GetCosmeticPet());
+				((Entity*)client->GetPlayer())->DismissAllPets();
 			//}
 		}
 		else
@@ -2992,7 +3003,7 @@ void ZoneServer::RemoveClient(Client* client)
 		map<int32, int32>::iterator itr;
 		for (itr = client->GetPlayer()->SpawnedBots.begin(); itr != client->GetPlayer()->SpawnedBots.end(); itr++) {
 			Spawn* spawn = GetSpawnByID(itr->second);
-			if (spawn && spawn->IsBot())
+			if (spawn)
 				((Bot*)spawn)->Camp();
 		}
 
@@ -6659,8 +6670,8 @@ void ZoneServer::DismissAllPets() {
 	MSpawnList.readlock(__FUNCTION__, __LINE__);
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		spawn = itr->second;
-		if (spawn && spawn->IsPet() && ((NPC*)spawn)->GetOwner())
-			((NPC*)spawn)->GetOwner()->DismissPet((NPC*)spawn);
+		if (spawn && spawn->IsEntity())
+			((Entity*)spawn)->DismissAllPets();
 	}
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }

@@ -251,6 +251,9 @@ struct InfoStruct{
 
 		power_regen_override_ = 0;
 		hp_regen_override_ = 0;
+
+		water_type_ = 0;
+		flying_type_ = 0;
 	}
 
 
@@ -397,6 +400,9 @@ struct InfoStruct{
 
 		power_regen_override_ = oldStruct->get_power_regen_override();
 		hp_regen_override_ = oldStruct->get_hp_regen_override();
+
+		water_type_ = oldStruct->get_water_type();
+		flying_type_ = oldStruct->get_flying_type();
 	}
 
 	//mutable std::shared_mutex mutex_;
@@ -553,6 +559,9 @@ struct InfoStruct{
 
 	int8	 get_power_regen_override() { std::lock_guard<std::mutex> lk(classMutex); return power_regen_override_; }
 	int8	 get_hp_regen_override() { std::lock_guard<std::mutex> lk(classMutex); return hp_regen_override_; }
+
+	int8	 get_water_type() { std::lock_guard<std::mutex> lk(classMutex); return water_type_; }
+	int8	 get_flying_type() { std::lock_guard<std::mutex> lk(classMutex); return flying_type_; }
 
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
@@ -793,6 +802,9 @@ struct InfoStruct{
 	void	set_power_regen_override(int8 value) { std::lock_guard<std::mutex> lk(classMutex); power_regen_override_ = value; }
 	void	set_hp_regen_override(int8 value) { std::lock_guard<std::mutex> lk(classMutex); hp_regen_override_ = value; }
 
+	void	set_water_type(int8 value) { std::lock_guard<std::mutex> lk(classMutex); water_type_ = value; }
+	void	set_flying_type(int8 value) { std::lock_guard<std::mutex> lk(classMutex); flying_type_ = value; }
+
 	void	ResetEffects(Spawn* spawn)
 	{
 		for(int i=0;i<45;i++){
@@ -955,6 +967,9 @@ private:
 
 	int8			power_regen_override_;
 	int8			hp_regen_override_;
+
+	int8			water_type_;
+	int8			flying_type_;
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;
 };
@@ -1400,7 +1415,19 @@ public:
 
 	void HideDeityPet(bool val);
 	void HideCosmeticPet(bool val);
-	void DismissPet(NPC* pet, bool from_death = false, bool spawnListLocked = false);
+	void DismissPet(Entity* pet, bool from_death = false, bool spawnListLocked = false);
+	void DismissAllPets(bool from_death = false, bool spawnListLocked = false);
+
+	void	SetOwner(Entity* owner) { if (owner) { this->owner = owner->GetID(); } else { owner = 0; } }
+	Entity*	GetOwner();
+	int8	GetPetType() { return m_petType; }
+	void	SetPetType(int8 val) { m_petType = val; }
+	void	SetPetSpellID(int32 val) { m_petSpellID = val; }
+	int32	GetPetSpellID() { return m_petSpellID; }
+	void	SetPetSpellTier(int8 val) { m_petSpellTier = val; }
+	int8	GetPetSpellTier() { return m_petSpellTier; }
+	bool IsDismissing() { return m_petDismissing; }
+	void SetDismissing(bool val) { m_petDismissing = val; }
 
 	/// <summary>Creates a loot chest to drop in the world</summary>
 	/// <returns>Pointer to the chest</returns>
@@ -1580,6 +1607,12 @@ public:
 	std::mutex		MStats;
 protected:
 	bool	in_combat;
+	int8	m_petType;
+	int32	owner;
+	// m_petSpellID holds the spell id used to create/control this pet
+	int32	m_petSpellID;
+	int8	m_petSpellTier;
+	bool	m_petDismissing;
 
 private:
 	MutexList<BonusValues*> bonus_list;

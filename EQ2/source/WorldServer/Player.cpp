@@ -6301,7 +6301,7 @@ NPC* Player::InstantiateSpiritShard(float origX, float origY, float origZ, float
 		npc->SetShardID(dbid);
 		npc->SetShardCharID(GetCharacterID());
 		npc->SetShardCreatedTimestamp(Timer::GetCurrentTime2());
-		
+
 		if(script)
 			npc->SetSpawnScript(script);
 		

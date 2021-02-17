@@ -1025,10 +1025,16 @@ int EQ2Emu_lua_FaceTarget(lua_State* state) {
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	Spawn* target = lua_interface->GetSpawn(state, 2);
+	
+	int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
+	bool reset_action_state = true;
+	if(num_args > 2)
+		reset_action_state = lua_interface->GetBooleanValue(state, 3);
+	
 	if (spawn && target) {
 		if (spawn->IsEntity())
 			// ((Entity*)spawn)->FaceTarget(target);
-			static_cast<Entity*>(spawn)->FaceTarget(target);
+			static_cast<Entity*>(spawn)->FaceTarget(target, reset_action_state);
 	}
 	lua_interface->ResetFunctionStack(state);
 	return 0;
@@ -1996,6 +2002,7 @@ int EQ2Emu_lua_SetSpeed(lua_State* state) {
 	float value = lua_interface->GetFloatValue(state, 2);
 	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
+				printf("Speed set lua: %f\n",value);
 		spawn->SetSpeed(value);
 		((Entity*)spawn)->SetSpeed(value);
 		if (spawn->IsPlayer()) {
@@ -12042,4 +12049,16 @@ int EQ2Emu_lua_DeleteDBShardID(lua_State* state) {
 	else
 		lua_interface->SetBooleanValue(state, database.DeleteSpiritShard(shardid));
 	return 1;
+}
+
+int EQ2Emu_lua_PauseMovement(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 delay_in_ms = lua_interface->GetInt32Value(state, 2);
+	if (spawn) {
+		spawn->PauseMovement(delay_in_ms);
+	}
+	lua_interface->ResetFunctionStack(state);
+	return 0;
 }

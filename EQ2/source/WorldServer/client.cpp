@@ -3846,11 +3846,7 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 	//GetCurrentZone()->GetCombat()->RemoveHate(player);
 
 	// Remove players pet from zone if there is one
-	player->DismissPet((NPC*)player->GetPet());
-	player->DismissPet((NPC*)player->GetCharmedPet());
-	player->DismissPet((NPC*)player->GetDeityPet());
-	player->DismissPet((NPC*)player->GetCosmeticPet());
-
+	((Entity*)player)->DismissAllPets();
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Removing player from current zone...", __FUNCTION__);
 	GetCurrentZone()->RemoveSpawn(player, false);

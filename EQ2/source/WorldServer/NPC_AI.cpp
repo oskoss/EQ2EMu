@@ -83,7 +83,7 @@ void Brain::Think() {
 			m_body->FaceTarget(target);
 
 			bool breakWaterPursuit = false;
-			if (m_body->IsWaterCreature() && !target->InWater())
+			if (m_body->IsWaterCreature() && !m_body->IsFlyingCreature() && !target->InWater())
 				breakWaterPursuit = true;
 			// Check to see if the NPC has exceeded the max chase distance
 			if (run_back_distance > MAX_CHASE_DISTANCE || breakWaterPursuit) {
@@ -131,7 +131,7 @@ void Brain::Think() {
 			CheckBuffs();
 
 			// If run back distance is greater then 0 then run back
-			if(!m_body->EngagedInCombat())
+			if(!m_body->EngagedInCombat() && !m_body->IsPauseMovementTimerActive())
 			{
 				if (run_back_distance > 1) {
 					m_body->Runback(run_back_distance);
@@ -330,7 +330,7 @@ vector<Entity*>* Brain::GetHateList() {
 
 void Brain::MoveCloser(Spawn* target) {
 	if (target && m_body->GetFollowTarget() != target)
-		m_body->SetFollowTarget(target);
+		m_body->SetFollowTarget(target, rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat());
 
 	if (m_body->GetFollowTarget() && !m_body->following) {
 		m_body->CalculateRunningLocation(true);

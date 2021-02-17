@@ -135,7 +135,6 @@ void NPC::Initialize(){
 	skills = 0;
 	spells = 0;
 	runback = 0;
-	owner = 0;
 	m_brain = new ::Brain(this);
 	MBrain.SetName("NPC::m_brain");
 	m_runningBack = false;
@@ -191,11 +190,16 @@ float NPC::GetRunbackDistance(){
 	return GetDistance(runback->x, runback->y, runback->z);
 }
 
-void NPC::Runback(float distance){
+void NPC::Runback(float distance, bool stopFollowing){
+	if(!runback)
+		return;
+	
 	if ( distance == 0.0f )
 		distance = GetRunbackDistance(); // gotta make sure its true, lua doesn't send the distance
 	
-	following = false;
+	if(stopFollowing)
+		following = false;
+	
 	if (!m_runningBack)
 	{
 		ClearRunningLocations();
@@ -229,6 +233,41 @@ void NPC::ClearRunback(){
 	NeedsToResumeMovement(false);
 }
 
+void NPC::StartRunback()
+{
+	if(GetRunbackLocation())
+		return;
+
+	SetRunbackLocation(GetX(), GetY(), GetZ(), GetLocation());
+	m_runbackHeadingDir1 = appearance.pos.Dir1;
+	m_runbackHeadingDir2 = appearance.pos.Dir2;
+}
+
+bool NPC::PauseMovement(int32 period_of_time_ms)
+{
+	if(period_of_time_ms < 1)
+		period_of_time_ms = 1;
+
+	if(HasMovementLoop() || HasMovementLocations())
+		StartRunback();
+	
+	RunToLocation(GetX(),GetY(),GetZ());
+	pause_timer.Start(period_of_time_ms, true);
+
+	return true;
+}
+
+bool NPC::IsPauseMovementTimerActive()
+{
+	if(pause_timer.Check())
+	{
+		pause_timer.Disable();
+		Runback();
+	}
+	
+	return pause_timer.Enabled();
+}
+
 void NPC::InCombat(bool val){
 	if (in_combat == val)
 		return;
@@ -241,9 +280,7 @@ void NPC::InCombat(bool val){
 	if(!in_combat && val){
 		// if not a pet and no current run back location set then set one to the current location
 		if(!IsPet() && !GetRunbackLocation()) {
-			SetRunbackLocation(GetX(), GetY(), GetZ(), GetLocation());
-			m_runbackHeadingDir1 = appearance.pos.Dir1;
-			m_runbackHeadingDir2 = appearance.pos.Dir2;
+			StartRunback();
 		}
 	}
 
@@ -879,10 +916,6 @@ void NPC::SetBrain(::Brain* brain) {
 	MBrain.releasewritelock(__FUNCTION__, __LINE__);
 	// Delete the old brain
 	safe_delete(old_brain);
-}
-
-Entity*	NPC::GetOwner() {
-	return (Entity*)GetZone()->GetSpawnByID(owner);
 }
 
 void NPC::SetZone(ZoneServer* in_zone, int32 version) {

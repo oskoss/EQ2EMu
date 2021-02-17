@@ -1162,10 +1162,7 @@ void Entity::KillSpawn(Spawn* dead, int8 damage_type, int16 kill_blow_type) {
 		((NPC*)dead)->GetOwner()->DismissPet((NPC*)dead, true, true);
 	else if (dead->IsEntity()) {
 		// remove all pets for this entity
-		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetPet(), false, true);
-		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetCharmedPet(), false, true);
-		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetDeityPet(), false, true);
-		((Entity*)dead)->DismissPet((NPC*)((Entity*)dead)->GetCosmeticPet(), false, true);
+		((Entity*)dead)->DismissAllPets(false, true);
 	}
 
 	// If not in combat and no one in the encounter list add this killer to the list

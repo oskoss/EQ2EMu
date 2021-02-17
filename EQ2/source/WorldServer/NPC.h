@@ -80,6 +80,7 @@ public:
 	void	SetAppearanceID(int32 id){ appearance_id = id; }
 	int32	GetAppearanceID(){ return appearance_id; }
 	bool	IsNPC(){ return true; }
+	void	StartRunback();
 	void	InCombat(bool val);
 	bool	HandleUse(Client* client, string type);
 	void	SetRandomize(int32 value) {appearance.randomize = value;}
@@ -114,20 +115,16 @@ public:
 	void	SetRunbackLocation(float x, float y, float z, int32 gridid);
 	MovementLocation* GetRunbackLocation();
 	float	GetRunbackDistance();
-	void	Runback(float distance=0.0f);
+	void	Runback(float distance=0.0f, bool stopFollowing = true);
 	void	ClearRunback();
+	
+	virtual bool PauseMovement(int32 period_of_time_ms);
+	virtual bool IsPauseMovementTimerActive();
+	
 	void	AddSkillBonus(int32 spell_id, int32 skill_id, float value);
 	virtual void RemoveSkillBonus(int32 spell_id);
 	virtual void SetZone(ZoneServer* zone, int32 version=0);
 
-	void	SetOwner(Entity* owner) { if (owner) { this->owner = owner->GetID(); } else { owner = 0; } }
-	Entity*	GetOwner();
-	int8	GetPetType() { return m_petType; }
-	void	SetPetType(int8 val) { m_petType = val; }
-	void	SetPetSpellID(int32 val) { m_petSpellID = val; }
-	int32	GetPetSpellID() { return m_petSpellID; }
-	void	SetPetSpellTier(int8 val) { m_petSpellTier = val; }
-	int8	GetPetSpellTier() { return m_petSpellTier; }
 	void	SetMaxPetLevel(int8 val) { m_petMaxLevel = val; }
 	int8	GetMaxPetLevel() { return m_petMaxLevel; }
 
@@ -142,9 +139,6 @@ public:
 	bool m_runningBack;
 	sint16 m_runbackHeadingDir1;
 	sint16 m_runbackHeadingDir2;
-
-	bool IsDismissing() { return m_petDismissing; }
-	void SetDismissing(bool val) { m_petDismissing = val; }
 
 	int32 GetShardID() { return m_ShardID; }
 	void SetShardID(int32 shardid) { m_ShardID = shardid; }
@@ -172,14 +166,7 @@ private:
 	int32	appearance_id;
 	int32	npc_id;
 	MutexMap<int32, SkillBonus*> skill_bonus_list;
-	int8	m_petType;
-	// m_petSpellID holds the spell id used to create this pet
-	int32	m_petSpellID;
-	int8	m_petSpellTier;
-	int32	owner;
 	int8	m_petMaxLevel;
-
-	bool	m_petDismissing;
 
 	// Because I named the get function Brain() as well we need to use '::' to specify we are refering to
 	// the brain class and not the function defined above
