@@ -1274,7 +1274,7 @@ private:
 	int16 m_spawnAnimLeeway;
 
 	Mutex m_Update;
-
+	Mutex m_SpawnMutex;
 	bool disable_sounds;
 
 	RegionMap* region_map;

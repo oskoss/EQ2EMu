@@ -156,6 +156,27 @@ Commands::Commands(){
 	spawn_set_values["merchant_max_level"] = SPAWN_SET_VALUE_MERCHANT_MAX_LEVEL;
 	spawn_set_values["skin_color"] = SPAWN_SET_SKIN_COLOR;
 	spawn_set_values["aaxp_rewards"] = SPAWN_SET_AAXP_REWARDS;
+	
+	spawn_set_values["hair_color1"] = SPAWN_SET_HAIR_COLOR1;
+	spawn_set_values["hair_color2"] = SPAWN_SET_HAIR_COLOR2;
+	spawn_set_values["hair_type_color"] = SPAWN_SET_HAIR_TYPE_COLOR;
+	spawn_set_values["hair_face_color"] = SPAWN_SET_HAIR_FACE_COLOR;
+	spawn_set_values["hair_type_highlight_color"] = SPAWN_SET_HAIR_TYPE_HIGHLIGHT_COLOR;
+	spawn_set_values["face_hairlight_color"] = SPAWN_SET_HAIR_FACE_HIGHLIGHT_COLOR;
+	spawn_set_values["hair_highlight"] = SPAWN_SET_HAIR_HIGHLIGHT;
+	spawn_set_values["model_color"] = SPAWN_SET_MODEL_COLOR;
+	spawn_set_values["eye_color"] = SPAWN_SET_EYE_COLOR;
+	
+	spawn_set_values["soga_skin_color"] = SPAWN_SET_SOGA_SKIN_COLOR;
+	spawn_set_values["soga_hair_color1"] = SPAWN_SET_SOGA_HAIR_COLOR1;
+	spawn_set_values["soga_hair_color2"] = SPAWN_SET_SOGA_HAIR_COLOR2;
+	spawn_set_values["soga_hair_type_color"] = SPAWN_SET_SOGA_HAIR_TYPE_COLOR;
+	spawn_set_values["soga_hair_face_color"] = SPAWN_SET_SOGA_HAIR_FACE_COLOR;
+	spawn_set_values["soga_hair_type_highlight_color"] = SPAWN_SET_SOGA_HAIR_TYPE_HIGHLIGHT_COLOR;
+	spawn_set_values["soga_face_hairlight_color"] = SPAWN_SET_SOGA_HAIR_FACE_HIGHLIGHT_COLOR;
+	spawn_set_values["soga_hair_highlight"] = SPAWN_SET_SOGA_HAIR_HIGHLIGHT;
+	spawn_set_values["soga_model_color"] = SPAWN_SET_SOGA_MODEL_COLOR;
+	spawn_set_values["soga_eye_color"] = SPAWN_SET_SOGA_EYE_COLOR;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -200,9 +221,34 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 	int32 val = 0;
 	try{
 		if(type != SPAWN_SET_VALUE_NAME && 
-			!(type >= SPAWN_SET_VALUE_SPAWN_SCRIPT && type <= SPAWN_SET_VALUE_SUB_TITLE) && !(type >= SPAWN_SET_VALUE_PREFIX && type <= SPAWN_SET_VALUE_EXPANSION_FLAG || type == SPAWN_SET_VALUE_HOLIDAY_FLAG)
-			&& type != SPAWN_SET_SKIN_COLOR)
-			val = atoul(value);
+			!(type >= SPAWN_SET_VALUE_SPAWN_SCRIPT && type <= SPAWN_SET_VALUE_SUB_TITLE) && !(type >= SPAWN_SET_VALUE_PREFIX && type <= SPAWN_SET_VALUE_EXPANSION_FLAG || type == SPAWN_SET_VALUE_HOLIDAY_FLAG))
+			{
+				switch(type)
+				{
+					case SPAWN_SET_SKIN_COLOR:
+					case SPAWN_SET_HAIR_COLOR1:
+					case SPAWN_SET_HAIR_COLOR2:
+					case SPAWN_SET_HAIR_TYPE_COLOR:
+					case SPAWN_SET_HAIR_FACE_COLOR:
+					case SPAWN_SET_HAIR_TYPE_HIGHLIGHT_COLOR:
+					case SPAWN_SET_HAIR_FACE_HIGHLIGHT_COLOR:
+					case SPAWN_SET_HAIR_HIGHLIGHT:
+					case SPAWN_SET_EYE_COLOR:
+					case SPAWN_SET_SOGA_SKIN_COLOR:
+					case SPAWN_SET_SOGA_HAIR_COLOR1:
+					case SPAWN_SET_SOGA_HAIR_COLOR2:
+					case SPAWN_SET_SOGA_HAIR_TYPE_COLOR:
+					case SPAWN_SET_SOGA_HAIR_FACE_COLOR:
+					case SPAWN_SET_SOGA_HAIR_TYPE_HIGHLIGHT_COLOR:
+					case SPAWN_SET_SOGA_HAIR_FACE_HIGHLIGHT_COLOR:
+					case SPAWN_SET_SOGA_HAIR_HIGHLIGHT:
+					case SPAWN_SET_SOGA_EYE_COLOR:
+					// ignore these are colors can't pass as a integer value
+						break;
+					default:
+						val = atoul(value);
+				}
+			}
 	}
 	catch(...){
 		if(client)
@@ -509,8 +555,28 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				target->SetMerchantLevelRange(target->GetMerchantMinLevel(), atoul(value));
 				break;
 			}
-			case SPAWN_SET_SKIN_COLOR: {
-				if (target->IsNPC())
+			case SPAWN_SET_SKIN_COLOR:
+			case SPAWN_SET_HAIR_COLOR1:
+			case SPAWN_SET_HAIR_COLOR2:
+			case SPAWN_SET_HAIR_TYPE_COLOR:
+			case SPAWN_SET_HAIR_FACE_COLOR:
+			case SPAWN_SET_HAIR_TYPE_HIGHLIGHT_COLOR:
+			case SPAWN_SET_HAIR_FACE_HIGHLIGHT_COLOR:
+			case SPAWN_SET_HAIR_HIGHLIGHT:
+			case SPAWN_SET_MODEL_COLOR:
+			case SPAWN_SET_EYE_COLOR:
+			case SPAWN_SET_SOGA_SKIN_COLOR:
+			case SPAWN_SET_SOGA_HAIR_COLOR1:
+			case SPAWN_SET_SOGA_HAIR_COLOR2:
+			case SPAWN_SET_SOGA_HAIR_TYPE_COLOR:
+			case SPAWN_SET_SOGA_HAIR_FACE_COLOR:
+			case SPAWN_SET_SOGA_HAIR_TYPE_HIGHLIGHT_COLOR:
+			case SPAWN_SET_SOGA_HAIR_FACE_HIGHLIGHT_COLOR:
+			case SPAWN_SET_SOGA_HAIR_HIGHLIGHT:
+			case SPAWN_SET_SOGA_MODEL_COLOR:
+			case SPAWN_SET_SOGA_EYE_COLOR:
+					{
+				if (target->IsEntity())
 				{
 					Seperator* skinsep = new Seperator(value, ' ', 3, 500, true);
 					if (skinsep->IsNumber(0) && skinsep->IsNumber(1) && skinsep->IsNumber(2))
@@ -520,7 +586,69 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 						clr.green = atoul(skinsep->arg[1]);
 						clr.blue = atoul(skinsep->arg[2]);
 
-						((Entity*)target)->SetSkinColor(clr);
+						switch(type)
+						{
+							case SPAWN_SET_SKIN_COLOR:
+								((Entity*)target)->SetSkinColor(clr);
+							break;
+							case SPAWN_SET_HAIR_COLOR1:
+								((Entity*)target)->SetHairColor1(clr);
+							break;
+							case SPAWN_SET_HAIR_COLOR2:
+								((Entity*)target)->SetHairColor2(clr);
+							break;
+							case SPAWN_SET_HAIR_TYPE_COLOR:
+								((Entity*)target)->SetHairColor(clr);
+							break;
+							case SPAWN_SET_HAIR_FACE_COLOR:
+								((Entity*)target)->SetFacialHairColor(clr);
+							break;
+							case SPAWN_SET_HAIR_TYPE_HIGHLIGHT_COLOR:
+								((Entity*)target)->SetHairTypeHighlightColor(clr);
+							break;
+							case SPAWN_SET_HAIR_FACE_HIGHLIGHT_COLOR:
+								((Entity*)target)->SetFacialHairHighlightColor(clr);
+							break;
+							case SPAWN_SET_HAIR_HIGHLIGHT:
+								((Entity*)target)->SetHairHighlightColor(clr);
+							break;
+							case SPAWN_SET_MODEL_COLOR:
+								((Entity*)target)->SetModelColor(clr);
+							break;
+							case SPAWN_SET_EYE_COLOR:
+								((Entity*)target)->SetEyeColor(clr);
+							break;
+							case SPAWN_SET_SOGA_SKIN_COLOR:
+								((Entity*)target)->SetSogaSkinColor(clr);
+							break;
+							case SPAWN_SET_SOGA_HAIR_COLOR1:
+								((Entity*)target)->SetSogaHairColor1(clr);
+							break;
+							case SPAWN_SET_SOGA_HAIR_COLOR2:
+								((Entity*)target)->SetSogaHairColor2(clr);
+							break;
+							case SPAWN_SET_SOGA_HAIR_TYPE_COLOR:
+								((Entity*)target)->SetSogaHairColor(clr);
+							break;
+							case SPAWN_SET_SOGA_HAIR_FACE_COLOR:
+								((Entity*)target)->SetSogaFacialHairColor(clr);
+							break;
+							case SPAWN_SET_SOGA_HAIR_TYPE_HIGHLIGHT_COLOR:
+								((Entity*)target)->SetSogaHairTypeHighlightColor(clr);
+							break;
+							case SPAWN_SET_SOGA_HAIR_FACE_HIGHLIGHT_COLOR:
+								((Entity*)target)->SetSogaFacialHairHighlightColor(clr);
+							break;
+							case SPAWN_SET_SOGA_HAIR_HIGHLIGHT:
+								((Entity*)target)->SetSogaHairHighlightColor(clr);
+							break;
+							case SPAWN_SET_SOGA_MODEL_COLOR:
+								((Entity*)target)->SetSogaModelColor(clr);
+							break;
+							case SPAWN_SET_SOGA_EYE_COLOR:
+								((Entity*)target)->SetSogaEyeColor(clr);
+							break;
+						}
 					}
 					safe_delete(skinsep);
 				}
@@ -892,7 +1020,26 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				break;
 			}
 
-			case SPAWN_SET_SKIN_COLOR: {
+			case SPAWN_SET_SKIN_COLOR:
+			case SPAWN_SET_HAIR_COLOR1:
+			case SPAWN_SET_HAIR_COLOR2:
+			case SPAWN_SET_HAIR_TYPE_COLOR:
+			case SPAWN_SET_HAIR_FACE_COLOR:
+			case SPAWN_SET_HAIR_TYPE_HIGHLIGHT_COLOR:
+			case SPAWN_SET_HAIR_FACE_HIGHLIGHT_COLOR:
+			case SPAWN_SET_HAIR_HIGHLIGHT:
+			case SPAWN_SET_MODEL_COLOR:
+			case SPAWN_SET_EYE_COLOR:
+			case SPAWN_SET_SOGA_SKIN_COLOR:
+			case SPAWN_SET_SOGA_HAIR_COLOR1:
+			case SPAWN_SET_SOGA_HAIR_COLOR2:
+			case SPAWN_SET_SOGA_HAIR_TYPE_COLOR:
+			case SPAWN_SET_SOGA_HAIR_FACE_COLOR:
+			case SPAWN_SET_SOGA_HAIR_TYPE_HIGHLIGHT_COLOR:
+			case SPAWN_SET_SOGA_HAIR_FACE_HIGHLIGHT_COLOR:
+			case SPAWN_SET_SOGA_HAIR_HIGHLIGHT:
+			case SPAWN_SET_SOGA_MODEL_COLOR:
+			case SPAWN_SET_SOGA_EYE_COLOR: {
 				if (target->IsNPC())
 				{
 					Seperator* skinsep = new Seperator(value, ' ', 3, 500, true);
@@ -902,11 +1049,94 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 						clr.red = atoul(skinsep->arg[0]);
 						clr.green = atoul(skinsep->arg[1]);
 						clr.blue = atoul(skinsep->arg[2]);
-
-						((Entity*)target)->SetSkinColor(clr);
 						Query replaceSkinQuery;
-						replaceSkinQuery.AddQueryAsync(0, &database, Q_DELETE, "delete from npc_appearance where spawn_id=%u and type='skin_color'", target->GetDatabaseID());
-						replaceSkinQuery.AddQueryAsync(0, &database, Q_INSERT, "insert into npc_appearance set spawn_id=%u, type='skin_color', red=%u, green=%u, blue=%u", target->GetDatabaseID(), clr.red, clr.green, clr.blue);
+
+						string fieldName("");
+						switch(type)
+						{
+							case SPAWN_SET_SKIN_COLOR:
+								((Entity*)target)->SetSkinColor(clr);
+								fieldName.append("skin_color");
+								break;
+							case SPAWN_SET_HAIR_COLOR1:
+								((Entity*)target)->SetHairColor1(clr);
+								fieldName.append("hair_color1");
+								break;
+							case SPAWN_SET_HAIR_COLOR2:
+								((Entity*)target)->SetHairColor2(clr);
+								fieldName.append("hair_color2");
+								break;
+							case SPAWN_SET_HAIR_TYPE_COLOR:
+								((Entity*)target)->SetHairColor(clr);
+								fieldName.append("hair_type_color");
+								break;
+							case SPAWN_SET_HAIR_FACE_COLOR:
+								((Entity*)target)->SetFacialHairColor(clr);
+								fieldName.append("hair_face_color");
+								break;
+							case SPAWN_SET_HAIR_TYPE_HIGHLIGHT_COLOR:
+								((Entity*)target)->SetHairTypeHighlightColor(clr);
+								fieldName.append("hair_type_highlight_color");
+								break;
+							case SPAWN_SET_HAIR_FACE_HIGHLIGHT_COLOR:
+								((Entity*)target)->SetFacialHairHighlightColor(clr);
+								fieldName.append("hair_face_highlight_color");
+								break;
+							case SPAWN_SET_HAIR_HIGHLIGHT:
+								((Entity*)target)->SetHairHighlightColor(clr);
+								fieldName.append("hair_highlight");
+								break;
+							case SPAWN_SET_MODEL_COLOR:
+								((Entity*)target)->SetModelColor(clr);
+								fieldName.append("model_color");
+								break;
+							case SPAWN_SET_EYE_COLOR:
+								((Entity*)target)->SetEyeColor(clr);
+								fieldName.append("eye_color");
+								break;
+							case SPAWN_SET_SOGA_SKIN_COLOR:
+								((Entity*)target)->SetSogaSkinColor(clr);
+								fieldName.append("soga_skin_color");
+								break;
+							case SPAWN_SET_SOGA_HAIR_COLOR1:
+								((Entity*)target)->SetSogaHairColor1(clr);
+								fieldName.append("soga_hair_color1");
+								break;
+							case SPAWN_SET_SOGA_HAIR_COLOR2:
+								((Entity*)target)->SetSogaHairColor2(clr);
+								fieldName.append("soga_hair_color2");
+								break;
+							case SPAWN_SET_SOGA_HAIR_TYPE_COLOR:
+								((Entity*)target)->SetSogaHairColor(clr);
+								fieldName.append("soga_hair_type_color");
+								break;
+							case SPAWN_SET_SOGA_HAIR_FACE_COLOR:
+								((Entity*)target)->SetSogaFacialHairColor(clr);
+								fieldName.append("soga_hair_face_color");
+								break;
+							case SPAWN_SET_SOGA_HAIR_TYPE_HIGHLIGHT_COLOR:
+								((Entity*)target)->SetSogaHairTypeHighlightColor(clr);
+								fieldName.append("soga_hair_type_highlight_color");
+								break;
+							case SPAWN_SET_SOGA_HAIR_FACE_HIGHLIGHT_COLOR:
+								((Entity*)target)->SetSogaFacialHairHighlightColor(clr);
+								fieldName.append("soga_hair_face_highlight_color");
+								break;
+							case SPAWN_SET_SOGA_HAIR_HIGHLIGHT:
+								((Entity*)target)->SetSogaHairHighlightColor(clr);
+								fieldName.append("soga_hair_highlight");
+								break;
+							case SPAWN_SET_SOGA_MODEL_COLOR:
+								((Entity*)target)->SetSogaModelColor(clr);
+								fieldName.append("soga_model_color");
+								break;
+							case SPAWN_SET_SOGA_EYE_COLOR:
+								((Entity*)target)->SetSogaEyeColor(clr);
+								fieldName.append("soga_eye_color");
+								break;
+						}
+						replaceSkinQuery.AddQueryAsync(0, &database, Q_DELETE, "delete from npc_appearance where spawn_id=%u and type='%s'", target->GetDatabaseID(), fieldName.c_str());
+						replaceSkinQuery.AddQueryAsync(0, &database, Q_INSERT, "insert into npc_appearance set spawn_id=%u, type='%s', red=%u, green=%u, blue=%u", target->GetDatabaseID(), fieldName.c_str(), clr.red, clr.green, clr.blue);
 					}
 					safe_delete(skinsep);
 				}
@@ -3910,9 +4140,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							{
 								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "New name will not be effective until zone reload.");
 							}
-							else if (set_type == SPAWN_SET_SKIN_COLOR)
+							else if (set_type == SPAWN_SET_SKIN_COLOR || (set_type >= SPAWN_SET_HAIR_COLOR1 && set_type <= SPAWN_SET_SOGA_EYE_COLOR))
 							{
-								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set skin_color to R G B: %s.", sep->argplus[1]);
+								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set color field to R G B: %s.", sep->argplus[1]);
 							}
 							else if(set_type == SPAWN_SET_VALUE_LOCATION)
 							{

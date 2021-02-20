@@ -148,6 +148,9 @@ struct CharFeatures{
 	EQ2_Color			soga_hair_face_color;
 	EQ2_Color			soga_hair_face_highlight_color;
 	EQ2_Color			soga_hair_highlight_color;
+	
+	EQ2_Color			model_color;
+	EQ2_Color			soga_model_color;
 };
 struct PositionData{
 	int32			grid_id;

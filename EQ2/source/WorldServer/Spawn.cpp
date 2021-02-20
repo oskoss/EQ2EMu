@@ -120,6 +120,7 @@ Spawn::Spawn(){
 	current_map = nullptr;
 	RegionMutex.SetName("Spawn::RegionMutex");
 	pause_timer.Disable();
+	m_SpawnMutex.SetName("Spawn::SpawnMutex");
 }
 
 Spawn::~Spawn(){
@@ -2421,6 +2422,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 			packet->setDataByName("soga_nose_type", entity->features.soga_nose_type[i], i);
 		}
 		packet->setColorByName("skin_color", entity->features.skin_color);
+		packet->setColorByName("model_color", entity->features.model_color);
 		packet->setColorByName("eye_color", entity->features.eye_color);
 		packet->setColorByName("hair_type_color", entity->features.hair_type_color);
 		packet->setColorByName("hair_type_highlight_color", entity->features.hair_type_highlight_color);
@@ -2432,6 +2434,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		packet->setColorByName("hair_color1", entity->features.hair_color1);
 		packet->setColorByName("hair_color2", entity->features.hair_color2);
 		packet->setColorByName("soga_skin_color", entity->features.soga_skin_color);
+		packet->setColorByName("soga_model_color", entity->features.soga_model_color);
 		packet->setColorByName("soga_eye_color", entity->features.soga_eye_color);
 		packet->setColorByName("soga_hair_color1", entity->features.soga_hair_color1);
 		packet->setColorByName("soga_hair_color2", entity->features.soga_hair_color2);
@@ -2449,8 +2452,10 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		empty.blue = 255;
 		empty.green = 255;
 		packet->setColorByName("skin_color", empty);
+		packet->setColorByName("model_color", empty);
 		packet->setColorByName("eye_color", empty);
 		packet->setColorByName("soga_skin_color", empty);
+		packet->setColorByName("soga_model_color", empty);
 		packet->setColorByName("soga_eye_color", empty);
 	}
 	if (appearance.icon == 0) {
@@ -3434,11 +3439,17 @@ void Spawn::RemoveSpawnFromGroup(bool erase_all){
 }
 
 void Spawn::SetSpawnGroupID(int32 id){
+	m_SpawnMutex.writelock();
 	group_id = id;
+	m_SpawnMutex.releasewritelock();
 }
 
 int32 Spawn::GetSpawnGroupID(){
-	return group_id;
+	int32 groupid = 0;
+	m_SpawnMutex.readlock();
+	groupid = group_id;
+	m_SpawnMutex.releasereadlock();
+	return groupid;
 }
 
 void Spawn::AddChangedZoneSpawn(){

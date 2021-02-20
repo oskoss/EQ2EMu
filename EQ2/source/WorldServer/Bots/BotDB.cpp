@@ -35,6 +35,7 @@ int32 WorldDatabase::CreateNewBot(int32 char_id, string name, int8 race, int8 ad
 
 void WorldDatabase::SaveBotAppearance(Bot* bot) {
 	SaveBotColors(bot->BotID, "skin_color", bot->features.skin_color);
+	SaveBotColors(bot->BotID, "model_color", bot->features.model_color);
 	SaveBotColors(bot->BotID, "eye_color", bot->features.eye_color);
 	SaveBotColors(bot->BotID, "hair_color1", bot->features.hair_color1);
 	SaveBotColors(bot->BotID, "hair_color2", bot->features.hair_color2);
@@ -62,6 +63,7 @@ void WorldDatabase::SaveBotAppearance(Bot* bot) {
 	SaveBotFloats(bot->BotID, "body_age", bot->features.body_age, 0, 0);
 
 	SaveBotColors(bot->BotID, "soga_skin_color", bot->features.soga_skin_color);
+	SaveBotColors(bot->BotID, "soga_model_color", bot->features.soga_model_color);
 	SaveBotColors(bot->BotID, "soga_eye_color", bot->features.soga_eye_color);
 	SaveBotColors(bot->BotID, "soga_hair_color1", bot->features.soga_hair_color1);
 	SaveBotColors(bot->BotID, "soga_hair_color2", bot->features.soga_hair_color2);
@@ -367,6 +369,14 @@ void WorldDatabase::LoadBotAppearance(Bot* bot) {
 		}
 		case APPEARANCE_BODY_AGE: {
 			bot->features.body_age = color.red;
+			break;
+		}
+		case APPEARANCE_MC:{
+			bot->features.model_color = color;
+			break;
+		}
+		case APPEARANCE_SMC:{
+			bot->features.soga_model_color = color;
 			break;
 		}
 		}

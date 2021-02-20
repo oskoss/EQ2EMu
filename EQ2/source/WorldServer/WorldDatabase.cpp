@@ -641,6 +641,10 @@ int8 WorldDatabase::GetAppearanceType(string type){
 		ret = APPEARANCE_SOGA_U13;
 	else if (type == "body_age")
 		ret = APPEARANCE_BODY_AGE;
+	else if (type == "model_color")
+		ret = APPEARANCE_MC;
+	else if (type == "soga_model_color")
+		ret = APPEARANCE_SMC;
 	return ret;
 }
 
@@ -889,7 +893,16 @@ int32 WorldDatabase::LoadAppearances(ZoneServer* zone, Client* client){
 				entity->features.body_age = color.red;
 				break;
 			}
+			case APPEARANCE_MC:{
+				entity->features.model_color = color;
+				break;
+			}
+			case APPEARANCE_SMC:{
+				entity->features.soga_model_color = color;
+				break;
+			}
 		}
+		entity->info_changed = true;
 	}
 	return count;
 }
@@ -2254,6 +2267,7 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 	AddNewPlayerToServerGuild(loginID, char_id);
 
 	SaveCharacterColors(char_id,"skin_color", create->getType_EQ2_Color_ByName("skin_color"));
+	SaveCharacterColors(char_id,"model_color", create->getType_EQ2_Color_ByName("model_color"));
 	SaveCharacterColors(char_id,"eye_color", create->getType_EQ2_Color_ByName("eye_color"));
 	SaveCharacterColors(char_id,"hair_color1", create->getType_EQ2_Color_ByName("hair_color1"));
 	SaveCharacterColors(char_id,"hair_color2", create->getType_EQ2_Color_ByName("hair_color2"));
@@ -2279,6 +2293,7 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 	SaveCharacterFloats(char_id,"body_size", create->getType_float_ByName("body_size",0), 0, 0);
 
 	SaveCharacterColors(char_id,"soga_skin_color", create->getType_EQ2_Color_ByName("soga_skin_color"));
+	SaveCharacterColors(char_id,"soga_model_color", create->getType_EQ2_Color_ByName("soga_model_color"));
 	SaveCharacterColors(char_id,"soga_eye_color", create->getType_EQ2_Color_ByName("soga_eye_color"));
 	SaveCharacterColors(char_id,"soga_hair_color1", create->getType_EQ2_Color_ByName("soga_hair_color1"));
 	SaveCharacterColors(char_id,"soga_hair_color2", create->getType_EQ2_Color_ByName("soga_hair_color2"));
@@ -3918,10 +3933,10 @@ void WorldDatabase::Save(Client* client){
 	if(client->GetCurrentZone())
 		zone_id = client->GetCurrentZone()->GetZoneID();
 	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update characters set current_zone_id=%u, x=%f, y=%f, z=%f, heading=%f, level=%i,instance_id=%i,last_saved=%i, `class`=%i, `tradeskill_level`=%i, `tradeskill_class`=%i, `group_id`=%u where id = %u", zone_id, player->GetX(), player->GetY(), player->GetZ(), player->GetHeading(), player->GetLevel(), instance_id, client->GetLastSavedTimeStamp(), client->GetPlayer()->GetAdventureClass(), client->GetPlayer()->GetTSLevel(), client->GetPlayer()->GetTradeskillClass(), client->GetPlayer()->GetGroupMemberInfo() ? client->GetPlayer()->GetGroupMemberInfo()->group_id : 0, client->GetCharacterID());
-	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %f, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s', assigned_aa = %i, unassigned_aa = %i, tradeskill_aa = %i, unassigned_tradeskill_aa = %i, prestige_aa = %i, unassigned_prestige_aa = %i, tradeskill_prestige_aa = %i, unassigned_tradeskill_prestige_aa = %i where char_id = %u",
+	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %f, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, status_points = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s', assigned_aa = %i, unassigned_aa = %i, tradeskill_aa = %i, unassigned_tradeskill_aa = %i, prestige_aa = %i, unassigned_prestige_aa = %i, tradeskill_prestige_aa = %i, unassigned_tradeskill_prestige_aa = %i where char_id = %u",
 		player->GetHP(), player->GetPower(), player->GetStrBase(), player->GetStaBase(), player->GetAgiBase(), player->GetWisBase(), player->GetIntBase(), player->GetHeatResistanceBase(), player->GetColdResistanceBase(), player->GetMagicResistanceBase(),
 		player->GetMentalResistanceBase(), player->GetDivineResistanceBase(), player->GetDiseaseResistanceBase(), player->GetPoisonResistanceBase(), player->GetCoinsCopper(), player->GetCoinsSilver(), player->GetCoinsGold(), player->GetCoinsPlat(), player->GetTotalHPBase(), player->GetTotalPowerBase(), player->GetXP(), player->GetNeededXP(), player->GetXPDebt(), player->GetXPVitality(), player->GetTSXP(), player->GetNeededTSXP(), player->GetTSXPVitality(), player->GetBankCoinsCopper(),
-		player->GetBankCoinsSilver(), player->GetBankCoinsGold(), player->GetBankCoinsPlat(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneID(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneX(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneY(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneZ(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneHeading(), client->GetPlayer()->GetPlayerInfo()->GetHouseZoneID(), 
+		player->GetBankCoinsSilver(), player->GetBankCoinsGold(), player->GetBankCoinsPlat(), player->GetStatusPoints(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneID(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneX(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneY(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneZ(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneHeading(), client->GetPlayer()->GetPlayerInfo()->GetHouseZoneID(), 
 		client->GetPlayer()->GetCombatVoice(), client->GetPlayer()->GetEmoteVoice(), getSafeEscapeString(client->GetPlayer()->GetBiography().c_str()).c_str(), player->GetFlags(), player->GetFlags2(), client->GetPlayer()->GetLastName(), 
 		client->GetPlayer()->GetAssignedAA(), client->GetPlayer()->GetUnassignedAA(), client->GetPlayer()->GetTradeskillAA(), client->GetPlayer()->GetUnassignedTradeskillAA(), client->GetPlayer()->GetPrestigeAA(), 
 		client->GetPlayer()->GetUnassignedPretigeAA(), client->GetPlayer()->GetTradeskillPrestigeAA(), client->GetPlayer()->GetUnassignedTradeskillPrestigeAA(), client->GetCharacterID());
@@ -6934,8 +6949,18 @@ void WorldDatabase::LoadAppearance(ZoneServer* zone, int32 spawn_id) {
 			case APPEARANCE_SOGA_U13:{
 				break;
 			}
+			case APPEARANCE_MC:{
+				entity->features.model_color = color;
+				break;
+			}
+			case APPEARANCE_SMC:{
+				entity->features.soga_model_color = color;
+				break;
+			}
 		}
 	}
+
+	entity->info_changed = true;
 }
 
 void WorldDatabase::LoadNPCAppearanceEquipmentData(ZoneServer* zone, int32 spawn_id) {
