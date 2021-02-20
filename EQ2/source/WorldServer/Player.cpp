@@ -387,6 +387,19 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 		packet->setDataByName("tradeskill_exp_blue", info_struct->get_tradeskill_exp_blue());
 		packet->setDataByName("flags", info_struct->get_flags());
 		packet->setDataByName("flags2", info_struct->get_flags2());
+
+		packet->setDataByName("avoidance_pct", (int16)info_struct->get_avoidance_display()*10.0f);//avoidance_pct 192 = 19.2% // confirmed DoV
+		packet->setDataByName("avoidance_base", (int16)info_struct->get_avoidance_base()*10.0f); // confirmed DoV
+		packet->setDataByName("avoidance", info_struct->get_cur_avoidance());
+		packet->setDataByName("base_avoidance_pct", info_struct->get_base_avoidance_pct());// confirmed DoV
+		float parry_pct = info_struct->get_parry(); // client works off of int16, but we use floats to track the actual x/100%
+		packet->setDataByName("parry",(int16)(parry_pct*10.0f));// confirmed DoV
+
+		float block_pct = info_struct->get_block()*10.0f;
+		
+		packet->setDataByName("block", (int16)block_pct);// confirmed DoV
+		packet->setDataByName("uncontested_block", info_struct->get_uncontested_block());// confirmed DoV
+
 		packet->setDataByName("str", info_struct->get_str());
 		packet->setDataByName("sta", info_struct->get_sta());
 		packet->setDataByName("agi", info_struct->get_agi());
@@ -948,7 +961,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("pet_behavior", info_struct->get_pet_behavior());
 		packet->setDataByName("rain", info_struct->get_rain());
 		packet->setDataByName("rain2", info_struct->get_wind()); //-102.24);
-		packet->setDataByName("status_points", 999999);// info_struct->status_points);
+		packet->setDataByName("status_points", info_struct->get_status_points());
 		packet->setDataByName("guild_status", 888888);
 		//unknown_1096_44_MJ
 		if (house_zone_id > 0){
@@ -2170,6 +2183,10 @@ int32 Player::GetBankCoinsPlat(){
 	return GetInfoStruct()->get_bank_coin_plat();
 }
 
+int32 Player::GetStatusPoints(){
+	return GetInfoStruct()->get_status_points();
+}
+
 vector<QuickBarItem*>* Player::GetQuickbar(){
 	return &quickbar_items;
 }
@@ -3097,10 +3114,10 @@ void Player::AddMaintainedSpell(LuaSpell* luaspell){
 		effect->spell = luaspell;
 		luaspell->slot_pos = effect->slot_pos;
 		effect->spell_id = spell->GetSpellData()->id;
-		LogWrite(PLAYER__DEBUG, 5, "Player", "AddMaintainedSpell Spell ID: %u", spell->GetSpellData()->id);
+		LogWrite(PLAYER__DEBUG, 5, "Player", "AddMaintainedSpell Spell ID: %u, req concentration: %u", spell->GetSpellData()->id, spell->GetSpellData()->req_concentration);
 		effect->icon = spell->GetSpellData()->icon;
 		effect->icon_backdrop = spell->GetSpellData()->icon_backdrop;
-		effect->conc_used = spell->GetSpellData()->req_concentration / 256;
+		effect->conc_used = spell->GetSpellData()->req_concentration;
 		effect->total_time = spell->GetSpellDuration()/10;
 		effect->tier = spell->GetSpellData()->tier;
 		if (spell->GetSpellData()->duration_until_cancel)

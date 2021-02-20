@@ -2725,8 +2725,8 @@ to zero and treated like placeholders." />
 <Data ElementName="merc_unknown21cc" Type="int8" Size="4" />
 <Data ElementName="rain" Type="float" Size="1" />
 <Data ElementName="rain2" Type="float" Size="1" />
-<Data ElementName="unknownx527_1" Type="int32" Size="1" />
-<Data ElementName="unknownx527_2" Type="int32" Size="1" />
+<Data ElementName="status_points" Type="int32" Size="1" />
+<Data ElementName="guild_status" Type="int32" Size="1" />
 <Data ElementName="unknownx527" Type="int8" Size="1" />
 <Data ElementName="house_zone" Type="char" Size="48" />
 <Data ElementName="unknownx526_1" Type="int32" Size="1" />
@@ -2762,10 +2762,10 @@ to zero and treated like placeholders." />
 <Data ElementName="unknownx526_31" Type="int32" Size="1" />
 <Data ElementName="unknownx526_32" Type="int32" Size="1" />
 <Data ElementName="unknownx526_33" Type="int32" Size="1" />
-<Data ElementName="status_points" Type="int32" Size="1" />
-<Data ElementName="guild_status" Type="int32" Size="1" />
 <Data ElementName="unknownx526_34" Type="int32" Size="1" />
 <Data ElementName="unknownx526_35" Type="int32" Size="1" />
+<Data ElementName="unknownx526_36" Type="int32" Size="1" />
+<Data ElementName="unknownx526_37" Type="int32" Size="1" />
 <Data ElementName="unknown187" Type="int8" Size="3" />
 <Data ElementName="bind_zone" Type="char" Size="32" />
 <Data ElementName="unknown188" Type="int8" Size="52" />

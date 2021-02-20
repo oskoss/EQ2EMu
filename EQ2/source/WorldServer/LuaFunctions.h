@@ -123,6 +123,7 @@ int EQ2Emu_lua_GetSpawnByGroupID(lua_State* state);
 int EQ2Emu_lua_GetSpawnByLocationID(lua_State* state);
 int EQ2Emu_lua_GetSpawnID(lua_State* state);
 int EQ2Emu_lua_GetSpawnGroupID(lua_State* state);
+int EQ2Emu_lua_SetSpawnGroupID(lua_State* state);
 int EQ2Emu_lua_GetSpawnLocationID(lua_State* state);
 int EQ2Emu_lua_GetSpawnLocationPlacementID(lua_State* state);
 int EQ2Emu_lua_GetFactionAmount(lua_State* state);
@@ -574,4 +575,7 @@ int EQ2Emu_lua_GetShardCreatedTimestamp(lua_State* state);
 int EQ2Emu_lua_DeleteDBShardID(lua_State* state);
 
 int EQ2Emu_lua_PauseMovement(lua_State* state);
+
+int EQ2Emu_lua_GetArrowColor(lua_State* state);
+int EQ2Emu_lua_GetTSArrowColor(lua_State* state);
 #endif

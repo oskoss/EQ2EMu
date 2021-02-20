@@ -519,6 +519,7 @@ public:
 	int32	GetBankCoinsSilver();
 	int32	GetBankCoinsGold();
 	int32	GetBankCoinsPlat();
+	int32	GetStatusPoints();
 	float	GetXPVitality();
 	float	GetTSXPVitality();
 	bool	AdventureXPEnabled();

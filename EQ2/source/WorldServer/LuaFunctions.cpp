@@ -383,7 +383,13 @@ int EQ2Emu_lua_SpawnSet(lua_State* state) {
 	string variable = lua_interface->GetStringValue(state, 2);
 	string value = lua_interface->GetStringValue(state, 3);
 	bool no_update = lua_interface->GetBooleanValue(state, 4); // send update is true by default in SetSpawnCommand, so allow user to specify 'true' to disable send update.
-	bool temporary_flag = lua_interface->GetBooleanValue(state, 5); // default false as originally designed, allow user to set temporary_flag true to not update DB
+	bool temporary_flag = true;
+	
+	int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
+
+	if(num_args >= 5)
+		temporary_flag = lua_interface->GetBooleanValue(state, 5); // this used to be false, but no one bothered to set it temporary, we don't need to update the DB
+	
 	int32 type = commands.GetSpawnSetType(variable);
 	if (type != 0xFFFFFFFF && value.length() > 0 && spawn)
 		commands.SetSpawnCommand(0, spawn, type, value.c_str(), !no_update, temporary_flag);
@@ -582,6 +588,22 @@ int EQ2Emu_lua_GetSpawnGroupID(lua_State* state) {
 		return 1;
 	}
 	return 0;
+}
+
+int EQ2Emu_lua_SetSpawnGroupID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 new_group_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	if (spawn) {
+		spawn->SetSpawnGroupID(new_group_id);
+		lua_interface->SetBooleanValue(state, true);
+		return 1;
+	}
+
+	lua_interface->SetBooleanValue(state, false);
+	return 1;
 }
 
 int EQ2Emu_lua_GetSpawnLocationID(lua_State* state) {
@@ -2002,7 +2024,6 @@ int EQ2Emu_lua_SetSpeed(lua_State* state) {
 	float value = lua_interface->GetFloatValue(state, 2);
 	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
-				printf("Speed set lua: %f\n",value);
 		spawn->SetSpeed(value);
 		((Entity*)spawn)->SetSpeed(value);
 		if (spawn->IsPlayer()) {
@@ -12060,5 +12081,26 @@ int EQ2Emu_lua_PauseMovement(lua_State* state) {
 		spawn->PauseMovement(delay_in_ms);
 	}
 	lua_interface->ResetFunctionStack(state);
+	return 0;
+}
+
+int EQ2Emu_lua_GetArrowColor(lua_State* state) {
+	Player* player = (Player*)lua_interface->GetSpawn(state);
+	int8 level = lua_interface->GetInt8Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	if (player && player->IsPlayer() && level > 0) {
+		lua_interface->SetInt32Value(state, player->GetArrowColor(level));
+		return 1;
+	}
+	return 0;
+}
+int EQ2Emu_lua_GetTSArrowColor(lua_State* state) {
+	Player* player = (Player*)lua_interface->GetSpawn(state);
+	int8 level = lua_interface->GetInt8Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	if (player && player->IsPlayer() && level > 0) {
+		lua_interface->SetInt32Value(state, player->GetTSArrowColor(level));
+		return 1;
+	}
 	return 0;
 }
