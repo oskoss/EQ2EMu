@@ -364,6 +364,20 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason){
 			active_spells.Remove(spell);
 		if (spell->caster) {
 			if (spell->spell->GetSpellData()->cast_type == SPELL_CAST_TYPE_TOGGLE){
+				
+				int8 actual_concentration = spell->spell->GetSpellData()->req_concentration;
+
+				if (actual_concentration > 0)
+				{
+					int8 curConcentration = spell->caster->GetInfoStruct()->get_cur_concentration();
+					if(curConcentration >= actual_concentration)
+					{
+						spell->caster->GetInfoStruct()->set_cur_concentration(curConcentration - actual_concentration);
+						if (spell->caster->IsPlayer())
+							spell->caster->GetZone()->TriggerCharSheetTimer();
+					}
+				}
+				
 				CheckRecast(spell->spell, spell->caster);
 				if (spell->caster && spell->caster->IsPlayer())
 					SendSpellBookUpdate(spell->caster->GetZone()->GetClientBySpawn(spell->caster));
@@ -643,7 +657,7 @@ bool SpellProcess::TakeHP(LuaSpell* spell) {
 
 bool SpellProcess::CheckConcentration(LuaSpell* spell) {
 	if (spell && spell->caster) {
-		int8 req = spell->spell->GetSpellData()->req_concentration / 256;
+		int8 req = spell->spell->GetSpellData()->req_concentration;
 		int8 current_avail = 5 - spell->caster->GetConcentrationCurrent();
 		if (current_avail >= req)
 			return true;
@@ -653,10 +667,10 @@ bool SpellProcess::CheckConcentration(LuaSpell* spell) {
 
 bool SpellProcess::AddConcentration(LuaSpell* spell) {
 	if (spell && spell->caster) {
-		int8 req = spell->spell->GetSpellData()->req_concentration / 256;
-		int8 current_avail = 5 - spell->caster->GetConcentrationCurrent();
+		int8 req = spell->spell->GetSpellData()->req_concentration;
+		int8 curConcentration = spell->caster->GetInfoStruct()->get_cur_concentration();
+		int8 current_avail = 5 - curConcentration;
 		if (current_avail >= req) {
-			int8 curConcentration = spell->caster->GetInfoStruct()->get_cur_concentration();
 			spell->caster->GetInfoStruct()->set_cur_concentration(curConcentration + req);
 			if (spell->caster->IsPlayer())
 				spell->caster->GetZone()->TriggerCharSheetTimer();
@@ -925,19 +939,9 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if (spell->GetSpellData()->cast_type == SPELL_CAST_TYPE_TOGGLE)
 		{
 			bool ret_val = DeleteCasterSpell(caster, spell, "purged");
-
+			
 			if (ret_val)
 			{
-				int8 actual_concentration = spell->GetSpellData()->req_concentration / 256;
-
-				if (actual_concentration > 0)
-				{
-					int8 curConcentration = caster->GetInfoStruct()->get_cur_concentration();
-					caster->GetInfoStruct()->set_cur_concentration(curConcentration - actual_concentration);
-					if (caster->IsPlayer())
-						caster->GetZone()->TriggerCharSheetTimer();
-				}
-
 				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				DeleteSpell(lua_spell);
 				return;

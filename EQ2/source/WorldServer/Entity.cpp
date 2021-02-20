@@ -248,6 +248,8 @@ void Entity::MapInfoStruct()
 	
 	get_int8_funcs["water_type"] = l::bind(&InfoStruct::get_water_type, &info_struct);
 	get_int8_funcs["flying_type"] = l::bind(&InfoStruct::get_flying_type, &info_struct);
+	
+	get_int8_funcs["no_interrupt"] = l::bind(&InfoStruct::get_no_interrupt, &info_struct);
 
 
 /** SETS **/
@@ -391,6 +393,8 @@ void Entity::MapInfoStruct()
 	
 	set_int8_funcs["water_type"] = l::bind(&InfoStruct::set_water_type, &info_struct, l::_1);
 	set_int8_funcs["flying_type"] = l::bind(&InfoStruct::set_flying_type, &info_struct, l::_1);
+	
+	set_int8_funcs["no_interrupt"] = l::bind(&InfoStruct::set_no_interrupt, &info_struct, l::_1);
 
 }
 
@@ -762,8 +766,8 @@ void Entity::AddMaintainedSpell(LuaSpell* luaspell){
 		MMaintainedSpells.writelock(__FUNCTION__, __LINE__);
 		effect->spell = luaspell;
 		effect->spell_id = spell->GetSpellData()->id;
-		LogWrite(NPC__SPELLS, 5, "NPC", "AddMaintainedSpell Spell ID: %u", spell->GetSpellData()->id);
-		effect->conc_used = spell->GetSpellData()->req_concentration / 256;
+		LogWrite(NPC__SPELLS, 5, "NPC", "AddMaintainedSpell Spell ID: %u, Concentration: %u", spell->GetSpellData()->id, spell->GetSpellData()->req_concentration);
+		effect->conc_used = spell->GetSpellData()->req_concentration;
 		effect->total_time = spell->GetSpellDuration() / 10;
 		effect->tier = spell->GetSpellData()->tier;
 		if (spell->GetSpellData()->duration_until_cancel)

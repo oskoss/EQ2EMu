@@ -1111,6 +1111,9 @@ bool Entity::CheckInterruptSpell(Entity* attacker) {
 	if(!spell || spell->GetSpellData()->interruptable == 0)
 		return false;
 
+	if(GetInfoStruct()->get_no_interrupt())
+		return false;
+		
 	//originally base of 30 percent chance to continue casting if attacked
 	//modified to 50% and added global rule, 30% was too small at starting levels
 	int8 percent = rule_manager.GetGlobalRule(R_Spells, NoInterruptBaseChance)->GetInt32();

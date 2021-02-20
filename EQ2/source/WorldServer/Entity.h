@@ -254,6 +254,8 @@ struct InfoStruct{
 
 		water_type_ = 0;
 		flying_type_ = 0;
+
+		no_interrupt_ = 0;
 	}
 
 
@@ -403,6 +405,8 @@ struct InfoStruct{
 
 		water_type_ = oldStruct->get_water_type();
 		flying_type_ = oldStruct->get_flying_type();
+
+		no_interrupt_ = oldStruct->get_no_interrupt();
 	}
 
 	//mutable std::shared_mutex mutex_;
@@ -545,23 +549,25 @@ struct InfoStruct{
 	int32	 get_pet_id() { std::lock_guard<std::mutex> lk(classMutex); return pet_id_; }
 
 	std::string get_pet_name() { std::lock_guard<std::mutex> lk(classMutex); return pet_name_; }
-	float	 get_pet_health_pct() { std::lock_guard<std::mutex> lk(classMutex); return pet_health_pct_; }
-	float	 get_pet_power_pct() { std::lock_guard<std::mutex> lk(classMutex); return pet_power_pct_; }
-	int8	 get_pet_movement() { std::lock_guard<std::mutex> lk(classMutex); return pet_movement_; }
-	int8	 get_pet_behavior() { std::lock_guard<std::mutex> lk(classMutex); return pet_behavior_; }
-	int8	 get_vision() { std::lock_guard<std::mutex> lk(classMutex); return vision_; }
-	int8	 get_breathe_underwater() { std::lock_guard<std::mutex> lk(classMutex); return breathe_underwater_; }
+	float	get_pet_health_pct() { std::lock_guard<std::mutex> lk(classMutex); return pet_health_pct_; }
+	float	get_pet_power_pct() { std::lock_guard<std::mutex> lk(classMutex); return pet_power_pct_; }
+	int8	get_pet_movement() { std::lock_guard<std::mutex> lk(classMutex); return pet_movement_; }
+	int8	get_pet_behavior() { std::lock_guard<std::mutex> lk(classMutex); return pet_behavior_; }
+	int8	get_vision() { std::lock_guard<std::mutex> lk(classMutex); return vision_; }
+	int8	get_breathe_underwater() { std::lock_guard<std::mutex> lk(classMutex); return breathe_underwater_; }
 	std::string get_biography() { std::lock_guard<std::mutex> lk(classMutex); return biography_; }
-	float	 get_drunk() { std::lock_guard<std::mutex> lk(classMutex); return drunk_; }
+	float	get_drunk() { std::lock_guard<std::mutex> lk(classMutex); return drunk_; }
 
-	sint16	 get_power_regen() { std::lock_guard<std::mutex> lk(classMutex); return power_regen_; }
-	sint16	 get_hp_regen() { std::lock_guard<std::mutex> lk(classMutex); return hp_regen_; }
+	sint16	get_power_regen() { std::lock_guard<std::mutex> lk(classMutex); return power_regen_; }
+	sint16	get_hp_regen() { std::lock_guard<std::mutex> lk(classMutex); return hp_regen_; }
 
-	int8	 get_power_regen_override() { std::lock_guard<std::mutex> lk(classMutex); return power_regen_override_; }
-	int8	 get_hp_regen_override() { std::lock_guard<std::mutex> lk(classMutex); return hp_regen_override_; }
+	int8	get_power_regen_override() { std::lock_guard<std::mutex> lk(classMutex); return power_regen_override_; }
+	int8	get_hp_regen_override() { std::lock_guard<std::mutex> lk(classMutex); return hp_regen_override_; }
 
-	int8	 get_water_type() { std::lock_guard<std::mutex> lk(classMutex); return water_type_; }
-	int8	 get_flying_type() { std::lock_guard<std::mutex> lk(classMutex); return flying_type_; }
+	int8	get_water_type() { std::lock_guard<std::mutex> lk(classMutex); return water_type_; }
+	int8	get_flying_type() { std::lock_guard<std::mutex> lk(classMutex); return flying_type_; }
+
+	int8	get_no_interrupt() { std::lock_guard<std::mutex> lk(classMutex); return no_interrupt_; }
 
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
@@ -805,6 +811,8 @@ struct InfoStruct{
 	void	set_water_type(int8 value) { std::lock_guard<std::mutex> lk(classMutex); water_type_ = value; }
 	void	set_flying_type(int8 value) { std::lock_guard<std::mutex> lk(classMutex); flying_type_ = value; }
 
+	void	set_no_interrupt(int8 value) { std::lock_guard<std::mutex> lk(classMutex); no_interrupt_ = value; }
+
 	void	ResetEffects(Spawn* spawn)
 	{
 		for(int i=0;i<45;i++){
@@ -970,6 +978,8 @@ private:
 
 	int8			water_type_;
 	int8			flying_type_;
+
+	int8			no_interrupt_;
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;
 };
@@ -1258,11 +1268,35 @@ public:
 	void SetHairType(int16 new_val, bool setUpdateFlags = true){
 		SetInfo(&features.hair_type, new_val, setUpdateFlags);
 	}
+	void SetHairColor1(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.hair_color1, new_val, setUpdateFlags);
+	}
+	void SetHairColor2(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.hair_color2, new_val, setUpdateFlags);
+	}
+	void SetSogaHairColor1(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.soga_hair_color1, new_val, setUpdateFlags);
+	}
+	void SetSogaHairColor2(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.soga_hair_color2, new_val, setUpdateFlags);
+	}
+	void SetHairHighlightColor(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.hair_highlight_color, new_val, setUpdateFlags);
+	}
+	void SetSogaHairHighlightColor(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.soga_hair_highlight_color, new_val, setUpdateFlags);
+	}
 	void SetHairColor(EQ2_Color new_val, bool setUpdateFlags = true){
 		SetInfo(&features.hair_type_color, new_val, setUpdateFlags);
 	}
-	void SetHairHighlightColor(EQ2_Color new_val, bool setUpdateFlags = true){
+	void SetSogaHairColor(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.soga_hair_type_color, new_val, setUpdateFlags);
+	}
+	void SetHairTypeHighlightColor(EQ2_Color new_val, bool setUpdateFlags = true){
 		SetInfo(&features.hair_type_highlight_color, new_val, setUpdateFlags);
+	}
+	void SetSogaHairTypeHighlightColor(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.soga_hair_type_highlight_color, new_val, setUpdateFlags);
 	}
 	void SetFacialHairType(int16 new_val, bool setUpdateFlags = true){
 		SetInfo(&features.hair_face_type, new_val, setUpdateFlags);
@@ -1270,8 +1304,14 @@ public:
 	void SetFacialHairColor(EQ2_Color new_val, bool setUpdateFlags = true){
 		SetInfo(&features.hair_face_color, new_val, setUpdateFlags);
 	}
+	void SetSogaFacialHairColor(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.soga_hair_face_color, new_val, setUpdateFlags);
+	}
 	void SetFacialHairHighlightColor(EQ2_Color new_val, bool setUpdateFlags = true){
 		SetInfo(&features.hair_face_highlight_color, new_val, setUpdateFlags);
+	}
+	void SetSogaFacialHairHighlightColor(EQ2_Color new_val, bool setUpdateFlags = true){
+		SetInfo(&features.soga_hair_face_highlight_color, new_val, setUpdateFlags);
 	}
 	void SetWingType(int16 new_val, bool setUpdateFlags = true){
 		SetInfo(&features.wing_type, new_val, setUpdateFlags);
@@ -1303,6 +1343,15 @@ public:
 	void SetSkinColor(EQ2_Color color){
 		SetInfo(&features.skin_color, color);
 	}
+	void SetSogaSkinColor(EQ2_Color color){
+		SetInfo(&features.soga_skin_color, color);
+	}
+	void SetModelColor(EQ2_Color color){
+		SetInfo(&features.model_color, color);
+	}
+	void SetSogaModelColor(EQ2_Color color){
+		SetInfo(&features.soga_model_color, color);
+	}
 	void SetCombatVoice(int16 val, bool setUpdateFlags = true) { 
 		SetInfo(&features.combat_voice, val, setUpdateFlags); 
 	}
@@ -1320,6 +1369,9 @@ public:
 	}
 	void SetEyeColor(EQ2_Color eye_color){
 		SetInfo(&features.eye_color, eye_color);
+	}
+	void SetSogaEyeColor(EQ2_Color eye_color){
+		SetInfo(&features.soga_eye_color, eye_color);
 	}
 	int16 GetHairType(){
 		return features.hair_type;
@@ -1350,6 +1402,12 @@ public:
 	}
 	EQ2_Color* GetSkinColor(){
 		return &features.skin_color;
+	}
+	EQ2_Color* GetModelColor(){
+		return &features.model_color;
+	}
+	EQ2_Color* GetSogaModelColor(){
+		return &features.soga_model_color;
 	}
 	EQ2_Color* GetEyeColor(){
 		return &features.eye_color;
