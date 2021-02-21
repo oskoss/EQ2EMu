@@ -625,6 +625,14 @@ WaterRegionType RegionMapV1::BSPReturnRegionTypeNode(const Region_Node* region_n
 
 
 WaterRegionType RegionMapV1::BSPReturnRegionWaterRegion(const Region_Node* region_node, const ZBSP_Node* BSP_Root, int32 node_number, const glm::vec3& location, float distToNode) const {
+	if(node_number > region_node->vert_count)
+	{
+		LogWrite(REGION__DEBUG, 0, "Region", "Region %s grid %u (%s) - Node %u is out of range for region max vert count of %i.  Hit at location %f %f %f.", 
+		region_node->regionName.c_str(), region_node->grid_id, region_node->regionScriptName.c_str(), node_number, region_node->vert_count,
+		location.x, location.y, location.z);
+		return (RegionTypeNormal);
+	}
+
 	const ZBSP_Node* current_node = &BSP_Root[node_number - 1];
 	float distance;
 
