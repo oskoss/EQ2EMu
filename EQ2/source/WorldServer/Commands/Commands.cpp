@@ -555,6 +555,21 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				target->SetMerchantLevelRange(target->GetMerchantMinLevel(), atoul(value));
 				break;
 			}
+			case SPAWN_SET_VALUE_FACTION:{
+				sprintf(tmp, "%i", target->faction_id);
+				ZoneServer* zone = target->GetZone();
+				if (!zone && client)
+					zone = client->GetCurrentZone();
+
+				target->faction_id = atoul(value);
+				if(zone)
+				{
+					zone->RemoveDeadEnemyList(target);
+					if(target->IsNPC())
+						zone->AddEnemyList((NPC*)target);
+				}
+				break;
+			}
 			case SPAWN_SET_SKIN_COLOR:
 			case SPAWN_SET_HAIR_COLOR1:
 			case SPAWN_SET_HAIR_COLOR2:
@@ -919,13 +934,16 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 												  }
 			case SPAWN_SET_VALUE_FACTION:{
 				ZoneServer* zone = target->GetZone();
-				if (!zone)
+				if (!zone && client)
 					zone = client->GetCurrentZone();
 
 				target->faction_id = val;
-				zone->RemoveDeadEnemyList(target);
-				if(target->IsNPC())
-					zone->AddEnemyList((NPC*)target);
+				if(zone)
+				{
+					zone->RemoveDeadEnemyList(target);
+					if(target->IsNPC())
+						zone->AddEnemyList((NPC*)target);
+				}
 				break;
 										 }
 			case SPAWN_SET_VALUE_DEVICE_ID:{
@@ -3162,22 +3180,34 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			PlayerHouse* ph = world.GetPlayerHouseByInstanceID(client->GetCurrentZone()->GetInstanceID());
 			if (ph && sep && sep->IsNumber(1))
 			{
-				int64 outVal = strtoull(sep->arg[1], NULL, 0);
-				if (client->GetPlayer()->RemoveCoins(outVal))
+				int64 outValCoin = strtoull(sep->arg[1], NULL, 0);
+				int32 outValStatus = 0;
+				
+				if(sep->IsNumber(2))
 				{
+					outValStatus = strtoull(sep->arg[2], NULL, 0);
+					if(outValStatus > client->GetPlayer()->GetInfoStruct()->get_status_points())
+						outValStatus = 0; // cheat check
+				}
+				
+				if ((!outValCoin && outValStatus) || client->GetPlayer()->RemoveCoins(outValCoin))
+				{
+					if(outValStatus)
+						client->GetPlayer()->GetInfoStruct()->subtract_status_points(outValStatus);
 					char query[256];
 					map<string,Deposit>::iterator itr = ph->depositsMap.find(string(client->GetPlayer()->GetName()));
 					if (itr != ph->depositsMap.end())
 					{
-						snprintf(query, 256, "update character_house_deposits set timestamp = %u, amount = amount + %I64u, last_amount = %I64u where house_id = %u and instance_id = %u and name='%s'", Timer::GetUnixTimeStamp(), outVal, outVal, ph->house_id, ph->instance_id, client->GetPlayer()->GetName());
+						snprintf(query, 256, "update character_house_deposits set timestamp = %u, amount = amount + %I64u, last_amount = %I64u, status = status + %u, last_status = %u where house_id = %u and instance_id = %u and name='%s'", Timer::GetUnixTimeStamp(), outValCoin, outValCoin, outValStatus, outValStatus, ph->house_id, ph->instance_id, client->GetPlayer()->GetName());
 					}
 					else
-						snprintf(query, 256, "insert into character_house_deposits set timestamp = %u, house_id = %u, instance_id = %u, name='%s', amount = %I64u", Timer::GetUnixTimeStamp(), ph->house_id, ph->instance_id, client->GetPlayer()->GetName(), outVal);
+						snprintf(query, 256, "insert into character_house_deposits set timestamp = %u, house_id = %u, instance_id = %u, name='%s', amount = %I64u, status = %u", Timer::GetUnixTimeStamp(), ph->house_id, ph->instance_id, client->GetPlayer()->GetName(), outValCoin, outValStatus);
 
 					if (database.RunQuery(query, strnlen(query, 256)))
 					{
-						ph->escrow_coins += outVal;
-						database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins);
+						ph->escrow_coins += outValCoin;
+						ph->escrow_status += outValStatus;
+						database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins, ph->escrow_status);
 
 						database.LoadDeposits(ph);
 						client->PlaySound("coin_cha_ching");
@@ -3186,7 +3216,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					}
 					else
 					{
-						client->GetPlayer()->AddCoins(outVal);
+						if(outValCoin)
+							client->GetPlayer()->AddCoins(outValCoin);
+							
+						if(outValStatus)
+							client->GetPlayer()->GetInfoStruct()->add_status_points(outValStatus);
 						client->SimpleMessage(CHANNEL_COLOR_RED, "Deposit failed!");
 					}
 				}
