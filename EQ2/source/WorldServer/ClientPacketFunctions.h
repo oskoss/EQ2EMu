@@ -77,7 +77,7 @@ public:
 	static void SendAchievementList(Client* client);
 
 	/* Housing (/Housing/HousingPackets.cpp) */
-	static void SendHousePurchace(Client* client, HouseZone* hz, int32 spawnID);
+	static void SendHousePurchase(Client* client, HouseZone* hz, int32 spawnID);
 	static void SendHousingList(Client* client);
 	static void SendBaseHouseWindow(Client* client, HouseZone* hz, PlayerHouse* ph, int32 spawnID);
 	static void SendHouseVisitWindow(Client* client, vector<PlayerHouse*> houses);

@@ -510,7 +510,7 @@ public:
 	int64				AddPlayerHouse(int32 char_id, int32 house_id, int32 instance_id, int32 upkeep_due);
 	void				SetHouseUpkeepDue(int32 char_id, int32 house_id, int32 instance_id, int32 upkeep_due);
 	void				RemovePlayerHouse(int32 char_id, int32 house_id);
-	void				UpdateHouseEscrow(int32 house_id, int32 instance_id, int64 amount);
+	void				UpdateHouseEscrow(int32 house_id, int32 instance_id, int64 amount_coins, int32 amount_status);
 	void				LoadPlayerHouses();
 	void				LoadDeposits(PlayerHouse* house);
 	void				LoadHistory(PlayerHouse* house);

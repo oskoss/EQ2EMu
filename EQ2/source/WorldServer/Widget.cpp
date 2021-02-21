@@ -415,7 +415,7 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 		}
 		else {
 			if (hz)
-				ClientPacketFunctions::SendHousePurchace(client, hz, 0);
+				ClientPacketFunctions::SendHousePurchase(client, hz, 0);
 		}
 	}
 	else if (client && strncasecmp("access", command.c_str(), 6) == 0 && GetZone()->GetInstanceType() > 0) {

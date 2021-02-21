@@ -7,14 +7,14 @@ extern ConfigReader configReader;
 extern World world;
 extern WorldDatabase database;
 
-void ClientPacketFunctions::SendHousePurchace(Client* client, HouseZone* hz, int32 spawnID) {
+void ClientPacketFunctions::SendHousePurchase(Client* client, HouseZone* hz, int32 spawnID) {
 	PacketStruct* packet = configReader.getStruct("WS_PlayerHousePurchase", client->GetVersion());
 	if (packet) {
 		packet->setDataByName("house_name", hz->name.c_str());
 		packet->setDataByName("house_id", hz->id);
 		packet->setDataByName("spawn_id", spawnID);
 		packet->setDataByName("purchase_coins", hz->cost_coin);
-		packet->setDataByName("purchace_status", hz->cost_status);
+		packet->setDataByName("purchase_status", hz->cost_status);
 		packet->setDataByName("upkeep_coins", hz->upkeep_coin);
 		packet->setDataByName("upkeep_status", hz->upkeep_status);
 		packet->setDataByName("vendor_vault_slots", hz->vault_slots);

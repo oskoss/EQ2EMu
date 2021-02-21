@@ -712,6 +712,7 @@ struct InfoStruct{
 
 	void	set_status_points(int32 value) { std::lock_guard<std::mutex> lk(classMutex); status_points_ = value; }
 	void	add_status_points(int32 value) { std::lock_guard<std::mutex> lk(classMutex); status_points_ += value; }
+	bool	subtract_status_points(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if(value > status_points_) return false; status_points_ -= value; return true; }
 	
 	void	set_mitigation_skill1(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill1_ = value; }
 	void	set_mitigation_skill2(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill2_ = value; }

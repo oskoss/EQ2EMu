@@ -31,10 +31,10 @@ void WorldDatabase::SetHouseUpkeepDue(int32 char_id, int32 house_id, int32 insta
 }
 
 
-void WorldDatabase::UpdateHouseEscrow(int32 house_id, int32 instance_id, int64 amount) {
+void WorldDatabase::UpdateHouseEscrow(int32 house_id, int32 instance_id, int64 amount_coins, int32 amount_status) {
 	Query query;
-	string update = string("UPDATE character_houses set escrow_coins = %I64u where house_id = %u and instance_id = %u");
-	query.RunQuery2(Q_UPDATE, update.c_str(), amount, house_id, instance_id);
+	string update = string("UPDATE character_houses set escrow_coins = %I64u, escrow_status = %u where house_id = %u and instance_id = %u");
+	query.RunQuery2(Q_UPDATE, update.c_str(), amount_coins, amount_status, house_id, instance_id);
 }
 
 
