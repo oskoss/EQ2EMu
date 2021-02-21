@@ -5615,21 +5615,45 @@ int EQ2Emu_lua_GiveQuestItem(lua_State* state)
 		packet->setDataByName("name", quest->GetName());
 		packet->setDataByName("description", description.c_str());
 		packet->setDataByName("level", quest->GetLevel());
-		packet->setArrayLengthByName("num_rewards", 1);
-		packet->setArrayDataByName("reward_id", item->details.item_id);
+
+		// if there are any additional optional items to add we will verify them and append
+		int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
+		vector<Item*> additionalItems;
+		if(num_args > 4)
+		{
+			for(int8 n=5;n<num_args+1;n++)
+			{
+				int32 new_item = lua_interface->GetInt32Value(state, n);
+				Item* tmpItem = master_item_list.GetItem(new_item);
+				if(tmpItem)
+					additionalItems.push_back(tmpItem);
+			}
+		}
+		
+		packet->setArrayLengthByName("num_rewards", 1+additionalItems.size());
+
+		sint8 offset = 2; // all new clients
 
 		if (client->GetVersion() < 860)
-			packet->setItemArrayDataByName("item", item, (Player*)spawn, 0, 0, -1);
+			offset = -1;
 		else if (client->GetVersion() < 1193)
-			packet->setItemArrayDataByName("item", item, (Player*)spawn);
-		else
-			packet->setItemArrayDataByName("item", item, (Player*)spawn, 0, 0, 2);
+			offset = 0;
 
-		client->QueuePacket(packet->serialize());
-		safe_delete(packet);
-
+		packet->setArrayDataByName("reward_id", item->details.item_id, 0);
+		packet->setItemArrayDataByName("item", item, (Player*)spawn, 0, 0, offset);
+		
 		lua_interface->SetBooleanValue(state, client->AddItem(item_id, 1));
 		client->Message(CHANNEL_COLOR_YELLOW, "You receive %s.", item->CreateItemLink(client->GetVersion()).c_str());
+
+		for(int8 n=0;n<additionalItems.size();n++)
+		{
+			packet->setArrayDataByName("reward_id", additionalItems[n]->details.item_id, n+1);
+			packet->setItemArrayDataByName("item", additionalItems[n], (Player*)spawn, n+1, 0, offset);
+			lua_interface->SetBooleanValue(state, client->AddItem(additionalItems[n]->details.item_id, 1));
+			client->Message(CHANNEL_COLOR_YELLOW, "You receive %s.", additionalItems[n]->CreateItemLink(client->GetVersion()).c_str());
+		}
+		client->QueuePacket(packet->serialize());
+		safe_delete(packet);
 		return 1;
 	}
 
