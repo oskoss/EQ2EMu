@@ -161,6 +161,7 @@ struct SpellBookEntry{
 	int16	recast;
 	int32	timer;
 	bool	save_needed;
+	bool	in_use;
 	Player* player;
 	bool visible;
 };

@@ -7815,3 +7815,24 @@ void ZoneServer::ProcessSpawnRemovals()
 	}
 	MPendingSpawnRemoval.releasewritelock(__FUNCTION__, __LINE__);
 }
+
+void ZoneServer::AddSpawnToGroup(Spawn* spawn, int32 group_id)
+{
+	if( spawn->GetSpawnGroupID() > 0 )
+		spawn->RemoveSpawnFromGroup();
+	MutexList<int32>* groupList = &spawn_group_map.Get(group_id);
+	MutexList<int32>::iterator itr2 = groupList->begin();
+	
+	while(itr2.Next())
+	{
+		Spawn* groupSpawn = GetSpawnByID(itr2.value);
+		if(groupSpawn)
+		{
+			// found existing group member to add it in
+			spawn->AddSpawnToGroup(groupSpawn);
+			break;
+		}
+	}
+	groupList->Add(spawn->GetID());
+	spawn->SetSpawnGroupID(group_id);
+}

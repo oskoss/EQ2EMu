@@ -4555,7 +4555,7 @@ void WorldDatabase::LoadSpells()
 	int32 total = 0;
 	map<int32, vector<LevelArray*> >* level_data = LoadSpellClasses();
 
-	if( !database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `description`, `type`, `class_skill`, `mastery_skill`, `tier`, `is_aa`,`hp_req`, `power_req`,`power_by_level`, `cast_time`, `recast`, `radius`, `max_aoe_targets`, `req_concentration`, `range`, `duration1`, `duration2`, `resistibility`, `hp_upkeep`, `power_upkeep`, `duration_until_cancel`, `target_type`, `recovery`, `power_req_percent`, `hp_req_percent`, `icon`, `icon_heroic_op`, `icon_backdrop`, `success_message`, `fade_message`, `fade_message_others`, `cast_type`, `lua_script`, `call_frequency`, `interruptable`, `spell_visual`, `effect_message`, `min_range`, `can_effect_raid`, `affect_only_group_members`, `hit_bonus`, `display_spell_tier`, `friendly_spell`, `group_spell`, `spell_book_type`, spell_type+0, s.is_active, savagery_req, savagery_req_percent, savagery_upkeep, dissonance_req, dissonance_req_percent, dissonance_upkeep, linked_timer_id, det_type, incurable, control_effect_type, cast_while_moving, casting_flags, persist_through_death, not_maintained, savage_bar, savage_bar_slot, soe_spell_crc, 0xffffffff-CRC32(s.`name`) as 'spell_name_crc' "
+	if( !database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `description`, `type`, `class_skill`, `min_class_skill_req`, `mastery_skill`, `tier`, `is_aa`,`hp_req`, `power_req`,`power_by_level`, `cast_time`, `recast`, `radius`, `max_aoe_targets`, `req_concentration`, `range`, `duration1`, `duration2`, `resistibility`, `hp_upkeep`, `power_upkeep`, `duration_until_cancel`, `target_type`, `recovery`, `power_req_percent`, `hp_req_percent`, `icon`, `icon_heroic_op`, `icon_backdrop`, `success_message`, `fade_message`, `fade_message_others`, `cast_type`, `lua_script`, `call_frequency`, `interruptable`, `spell_visual`, `effect_message`, `min_range`, `can_effect_raid`, `affect_only_group_members`, `hit_bonus`, `display_spell_tier`, `friendly_spell`, `group_spell`, `spell_book_type`, spell_type+0, s.is_active, savagery_req, savagery_req_percent, savagery_upkeep, dissonance_req, dissonance_req_percent, dissonance_upkeep, linked_timer_id, det_type, incurable, control_effect_type, cast_while_moving, casting_flags, persist_through_death, not_maintained, savage_bar, savage_bar_slot, soe_spell_crc, 0xffffffff-CRC32(s.`name`) as 'spell_name_crc', type_group_spell_id "
 									"FROM (spells s, spell_tiers st) "
 									"LEFT JOIN spell_ts_ability_index ts "
 									"ON s.`id` = ts.spell_id "
@@ -4614,8 +4614,8 @@ void WorldDatabase::LoadSpells()
 
 			/* Skill Requirements */
 			data->class_skill				= result.GetInt32Str("class_skill");
+			data->min_class_skill_req		= result.GetInt16Str("min_class_skill_req");
 			data->mastery_skill				= result.GetInt32Str("mastery_skill");
-			// no min_class_skill_req?
 
 			/* Cost  */
 			data->req_concentration			= result.GetInt16Str("req_concentration");
@@ -4653,6 +4653,7 @@ void WorldDatabase::LoadSpells()
 			data->resistibility				= result.GetFloatStr("resistibility");
 			data->linked_timer				= result.GetInt32Str("linked_timer_id");
 			data->spell_name_crc			= result.GetInt32Str("spell_name_crc");
+			data->type_group_spell_id		= result.GetSInt32Str("type_group_spell_id");
 
 			/* Cast Messaging */
 			string message					= result.GetStringStr("success_message");

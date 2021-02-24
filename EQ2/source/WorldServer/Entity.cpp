@@ -931,6 +931,61 @@ SpellEffects* Entity::GetSpellEffect(int32 id, Entity* caster) {
 	return ret;
 }
 
+SpellEffects* Entity::GetSpellEffectWithLinkedTimer(int32 id, int32 linked_timer, sint32 type_group_spell_id, Entity* caster) {
+	SpellEffects* ret = 0;
+	InfoStruct* info = GetInfoStruct();
+	MSpellEffects.readlock(__FUNCTION__, __LINE__);
+	for(int i = 0; i < 45; i++) {
+		if(info->spell_effects[i].spell_id != 0xFFFFFFFF)
+		{
+			if(  (info->spell_effects[i].spell_id == id && linked_timer == 0 && type_group_spell_id == 0) ||
+				 (linked_timer > 0 && info->spell_effects[i].spell->spell->GetSpellData()->linked_timer == linked_timer) ||
+				(type_group_spell_id > 0 && info->spell_effects[i].spell->spell->GetSpellData()->type_group_spell_id == type_group_spell_id))
+			{
+				if (type_group_spell_id >= -1 && (!caster || info->spell_effects[i].caster == caster)){
+					ret = &info->spell_effects[i];
+					break;
+				}
+			}
+		}
+	}
+	MSpellEffects.releasereadlock(__FUNCTION__, __LINE__);
+	return ret;
+}
+
+LuaSpell* Entity::HasLinkedTimerID(LuaSpell* spell, Spawn* target, bool stackWithOtherPlayers) {
+	if(!spell->spell->GetSpellData()->linked_timer)
+		return nullptr;
+	LuaSpell* ret = nullptr;
+	InfoStruct* info = GetInfoStruct();
+	MSpellEffects.readlock(__FUNCTION__, __LINE__);
+	//this for loop primarily handles self checks and 'friendly' checks
+	for(int i = 0; i < NUM_MAINTAINED_EFFECTS; i++) {
+			if(info->maintained_effects[i].spell_id != 0xFFFFFFFF)
+			{
+				if( ((info->maintained_effects[i].spell_id == spell->spell->GetSpellID() && spell->spell->GetSpellData()->type_group_spell_id >= 0) ||
+					(info->maintained_effects[i].spell->spell->GetSpellData()->linked_timer > 0 && info->maintained_effects[i].spell->spell->GetSpellData()->linked_timer == spell->spell->GetSpellData()->linked_timer) || 
+					(spell->spell->GetSpellData()->type_group_spell_id > 0 && spell->spell->GetSpellData()->type_group_spell_id == info->maintained_effects[i].spell->spell->GetSpellData()->type_group_spell_id)) && 
+					((spell->spell->GetSpellData()->friendly_spell) || 
+					(!spell->spell->GetSpellData()->friendly_spell && spell->spell->GetSpellData()->type_group_spell_id >= -1 && spell->caster == info->maintained_effects[i].spell->caster) ) &&
+					(target == nullptr || info->maintained_effects[i].spell->initial_target == target->GetID())) {
+					ret = info->maintained_effects[i].spell;
+					break;
+				}
+			}
+	}
+	MSpellEffects.releasereadlock(__FUNCTION__, __LINE__);
+
+	if(!ret && !stackWithOtherPlayers && target && target->IsEntity())
+	{
+		SpellEffects* effect = ((Entity*)target)->GetSpellEffectWithLinkedTimer(spell->spell->GetSpellID(), spell->spell->GetSpellData()->linked_timer, spell->spell->GetSpellData()->type_group_spell_id, nullptr);
+		if(effect)
+			ret = effect->spell;
+	}
+	
+	return ret;
+}
+
 InfoStruct* Entity::GetInfoStruct(){ 
 	return &info_struct; 
 }

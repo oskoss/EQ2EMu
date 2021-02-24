@@ -666,6 +666,8 @@ public:
 	void ProcessSpawnRemovals();
 
 	bool	SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* packet = 0, bool delete_spawn = false);
+
+	void	AddSpawnToGroup(Spawn* spawn, int32 group_id);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;

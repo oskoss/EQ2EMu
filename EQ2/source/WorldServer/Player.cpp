@@ -2282,6 +2282,7 @@ void Player::AddSpellBookEntry(int32 spell_id, int8 tier, sint32 slot, int32 typ
 	spell->recast_available = 0;
 	spell->player = this;
 	spell->visible = true;
+	spell->in_use = false;
 	MSpellsBook.lock();
 	spells.push_back(spell);
 	MSpellsBook.unlock();
@@ -2600,7 +2601,10 @@ void Player::UnlockAllSpells(bool modify_recast, Spell* exception) {
 		exception_spell_id = exception->GetSpellID();
 	MSpellsBook.writelock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
-		if ((*itr)->spell_id != exception_spell_id && (*itr)->type != SPELL_BOOK_TYPE_TRADESKILL)
+		if ((*itr)->in_use == false && 
+			 (((*itr)->spell_id != exception_spell_id || 
+			 (*itr)->timer > 0 && (*itr)->timer != exception->GetSpellData()->linked_timer)
+		&& (*itr)->type != SPELL_BOOK_TYPE_TRADESKILL))
 			AddSpellStatus((*itr), SPELL_STATUS_LOCK, modify_recast);
 	}
 
@@ -2613,8 +2617,13 @@ void Player::LockSpell(Spell* spell, int16 recast) {
 	MSpellsBook.writelock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
 		spell2 = *itr;
-		if (spell2->spell_id == spell->GetSpellID() /*|| (spell->GetSpellData()->linked_timer > 0 && spell->GetSpellData()->linked_timer == spell2->timer)*/)
+		if (spell2->spell_id == spell->GetSpellID() || (spell->GetSpellData()->linked_timer > 0 && spell->GetSpellData()->linked_timer == spell2->timer))
+		{
+			spell2->in_use = true;
 			RemoveSpellStatus(spell2, SPELL_STATUS_LOCK, true, recast);
+		}
+		else if(spell2->in_use)
+			RemoveSpellStatus(spell2, SPELL_STATUS_LOCK, false, 0);
 	}
 	MSpellsBook.releasewritelock(__FUNCTION__, __LINE__);
 }
@@ -2627,8 +2636,11 @@ void Player::UnlockSpell(Spell* spell) {
 	MSpellsBook.writelock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
 		spell2 = *itr;
-		if (spell2->spell_id == spell->GetSpellID() /*|| (spell->GetSpellData()->linked_timer > 0 && spell->GetSpellData()->linked_timer == spell2->timer)*/)
+		if (spell2->spell_id == spell->GetSpellID() || (spell->GetSpellData()->linked_timer > 0 && spell->GetSpellData()->linked_timer == spell2->timer))
+		{
+			spell2->in_use = false;
 			AddSpellStatus(spell2, SPELL_STATUS_LOCK);
+		}
 	}
 	MSpellsBook.releasewritelock(__FUNCTION__, __LINE__);
 }

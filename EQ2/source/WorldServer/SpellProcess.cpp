@@ -336,6 +336,11 @@ void SpellProcess::CheckInterrupt(InterruptStruct* interrupt){
 	entity->GetZone()->SendInterruptPacket(entity, interrupt->spell);
 	if(interrupt->error_code > 0)
 		entity->GetZone()->SendSpellFailedPacket(client, interrupt->error_code);
+	if(entity->IsPlayer())
+	{
+		((Player*)entity)->UnlockSpell(interrupt->spell->spell);
+		SendSpellBookUpdate(((Player*)entity)->GetClient());
+	}
 }
 
 bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell, string reason){
@@ -377,11 +382,13 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason){
 							spell->caster->GetZone()->TriggerCharSheetTimer();
 					}
 				}
-				
 				CheckRecast(spell->spell, spell->caster);
 				if (spell->caster && spell->caster->IsPlayer())
 					SendSpellBookUpdate(spell->caster->GetZone()->GetClientBySpawn(spell->caster));
 			}
+			if(spell->caster->IsPlayer())
+				((Player*)spell->caster)->UnlockSpell(spell->spell);
+			
 			spell->caster->RemoveProc(0, spell);
 			spell->caster->RemoveMaintainedSpell(spell);
 			CheckRemoveTargetFromSpell(spell, false);
@@ -561,10 +568,15 @@ void SpellProcess::SendFinishedCast(LuaSpell* spell, Client* client){
 			UnlockAllSpells(client, spell->spell);
 		else
 			UnlockAllSpells(client);
+		
 		if(spell->resisted && spell->spell->GetSpellData()->recast > 0)
 			CheckRecast(spell->spell, client->GetPlayer(), 0.5); // half sec recast on resisted spells
 		else if (!spell->interrupted && spell->spell->GetSpellData()->cast_type != SPELL_CAST_TYPE_TOGGLE)
 			CheckRecast(spell->spell, client->GetPlayer());
+		else if(spell->caster && spell->caster->IsPlayer())
+		{
+			((Player*)spell->caster)->LockSpell(spell->spell, (int16)(spell->spell->GetSpellData()->recast * 10));
+		}
 		PacketStruct* packet = configReader.getStruct("WS_FinishCastSpell", client->GetVersion());
 		if(packet){
 			packet->setMediumStringByName("spell_name", spell->spell->GetSpellData()->name.data.c_str());			
@@ -994,6 +1006,41 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			DeleteSpell(lua_spell);
 			return;
 		}
+		int8 spell_type = lua_spell->spell->GetSpellData()->spell_type;
+
+		LuaSpell* conflictSpell = caster->HasLinkedTimerID(lua_spell, target, (spell_type == SPELL_TYPE_DD || spell_type == SPELL_TYPE_DOT));
+		if(conflictSpell)
+		{
+			if(conflictSpell->spell->GetSpellData()->min_class_skill_req > 0 && lua_spell->spell->GetSpellData()->min_class_skill_req > 0)
+			{
+				if(conflictSpell->spell->GetSpellData()->min_class_skill_req <= lua_spell->spell->GetSpellData()->min_class_skill_req)
+				{
+					if(spell->GetSpellData()->friendly_spell)
+					{
+						ZoneServer* zone = caster->GetZone();
+						Spawn* tmpTarget = zone->GetSpawnByID(conflictSpell->initial_target);
+						if(tmpTarget && tmpTarget->IsEntity())
+						{
+							zone->RemoveTargetFromSpell(conflictSpell, tmpTarget);
+							((Entity*)tmpTarget)->RemoveSpellEffect(conflictSpell);
+							if(client)
+								UnlockSpell(client, conflictSpell->spell);
+						}
+						return;
+					}
+					else if(lua_spell->spell->GetSpellData()->spell_type == SPELL_TYPE_DEBUFF)
+					{
+						SpellCannotStack(zone, client, lua_spell->caster, lua_spell, conflictSpell);
+						return;
+					}
+				}
+				else
+				{
+					SpellCannotStack(zone, client, lua_spell->caster, lua_spell, conflictSpell);
+					return;
+				}	
+			}
+		}
 
 		if ((caster->IsMezzed() && !spell->CastWhileMezzed()) || (caster->IsStunned() && !spell->CastWhileStunned())) 
 		{
@@ -1407,10 +1454,29 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 	if (spell->spell->GetSpellData()->max_aoe_targets > 0 && spell->targets.size() == 0) {
 		GetSpellTargetsTrueAOE(spell);
 		if (spell->targets.size() == 0) {
+			if(client)
+			{
+				client->GetPlayer()->UnlockAllSpells(true);
+				SendSpellBookUpdate(client);
+			}
 			spell->caster->GetZone()->SendSpellFailedPacket(client, SPELL_ERROR_NO_TARGETS_IN_RANGE);
 			return false;
 		}
 	}
+	
+	if(!spell->spell->GetSpellData()->friendly_spell)
+	{
+		ZoneServer* zone = client->GetCurrentZone();
+		Spawn* tmpTarget = zone->GetSpawnByID(spell->initial_target);
+		int8 spell_type = spell->spell->GetSpellData()->spell_type;
+		LuaSpell* conflictSpell = spell->caster->HasLinkedTimerID(spell, tmpTarget, (spell_type == SPELL_TYPE_DD || spell_type == SPELL_TYPE_DOT));
+		if(conflictSpell && tmpTarget && tmpTarget->IsEntity())
+		{
+			((Entity*)tmpTarget)->RemoveSpellEffect(conflictSpell);
+			zone->RemoveTargetFromSpell(conflictSpell, tmpTarget);
+		}
+	}
+	
 	MutexList<LuaSpell*>::iterator itr = active_spells.begin();
 	bool processedSpell = false;
 	LuaSpell* replace_spell = 0;
@@ -2551,4 +2617,12 @@ void SpellProcess::DeleteSpell(LuaSpell* spell)
 	}
 
 	safe_delete(spell);
+}
+
+void SpellProcess::SpellCannotStack(ZoneServer* zone, Client* client, Entity* caster, LuaSpell* lua_spell, LuaSpell* conflictSpell)
+{
+	LogWrite(SPELL__DEBUG, 1, "Spell", "%s cannot stack spell %s, conflicts with %s.", caster->GetName(), lua_spell->spell->GetName(), conflictSpell->spell->GetName());
+	zone->SendSpellFailedPacket(client, SPELL_ERROR_TAKE_EFFECT_MOREPOWERFUL);
+	lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
+	DeleteSpell(lua_spell);
 }

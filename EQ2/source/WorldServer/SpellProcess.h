@@ -381,6 +381,8 @@ public:
 	void AddSpellCancel(LuaSpell* spell);
 
 	void DeleteSpell(LuaSpell* spell);
+
+	void SpellCannotStack(ZoneServer* zone, Client* client, Entity* caster, LuaSpell* lua_spell, LuaSpell* conflictSpell);
 private:
 	/// <summary>Sends the spell data to the lua script</summary>
 	/// <param name='spell'>LuaSpell to call the lua script for</param>

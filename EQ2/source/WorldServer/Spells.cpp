@@ -69,6 +69,7 @@ Spell::Spell(Spell* host_spell)
 		spell->cast_type = host_spell->GetSpellData()->cast_type;
 		spell->cast_while_moving = host_spell->GetSpellData()->cast_while_moving;
 		spell->class_skill = host_spell->GetSpellData()->class_skill;
+		spell->min_class_skill_req = host_spell->GetSpellData()->min_class_skill_req;
 		spell->control_effect_type = host_spell->GetSpellData()->control_effect_type;
 		spell->description = EQ2_16BitString(host_spell->GetSpellData()->description);
 		spell->det_type = host_spell->GetSpellData()->det_type;
@@ -139,6 +140,7 @@ Spell::Spell(Spell* host_spell)
 		spell->tier = host_spell->GetSpellData()->tier;
 		spell->ts_loc_index = host_spell->GetSpellData()->ts_loc_index;
 		spell->type = host_spell->GetSpellData()->type;
+		spell->type_group_spell_id = host_spell->GetSpellData()->type_group_spell_id;
 	}
 
 	heal_spell = host_spell->IsHealSpell();
@@ -726,6 +728,7 @@ void Spell::SetPacketInformation(PacketStruct* packet, Client* client, bool disp
 	packet->setSubstructDataByName("spell_info", "type", spell->type);
 	packet->setSubstructDataByName("spell_info", "unknown_MJ1d", 1); //63119 test
 	packet->setSubstructDataByName("spell_info", "class_skill", spell->class_skill);
+	packet->setSubstructDataByName("spell_info", "min_class_skill_req", spell->min_class_skill_req);
 	packet->setSubstructDataByName("spell_info", "mastery_skill", spell->mastery_skill);
 	packet->setSubstructDataByName("spell_info", "duration_flag", spell->duration_until_cancel);
 	if (client && spell->type != 2) {
@@ -1331,6 +1334,11 @@ bool Spell::GetSpellData(lua_State* state, std::string field)
 		lua_interface->SetInt32Value(state, GetSpellData()->class_skill);
 		valSet = true;
 	}
+	else if (field == "min_class_skill_req")
+	{
+		lua_interface->SetInt32Value(state, GetSpellData()->min_class_skill_req);
+		valSet = true;
+	}
 	else if (field == "mastery_skill")
 	{
 		lua_interface->SetInt32Value(state, GetSpellData()->mastery_skill);
@@ -1636,6 +1644,11 @@ bool Spell::GetSpellData(lua_State* state, std::string field)
 		lua_interface->SetSInt32Value(state, GetSpellData()->spell_name_crc);
 		valSet = true;
 	}
+	else if (field == "type_group_spell_id")
+	{
+		lua_interface->SetSInt32Value(state, GetSpellData()->type_group_spell_id);
+		valSet = true;
+	}
 
 	return valSet;
 }
@@ -1681,6 +1694,12 @@ bool Spell::SetSpellData(lua_State* state, std::string field, int8 fieldArg)
 	{
 		int32 class_skill = lua_interface->GetInt32Value(state, fieldArg);
 		GetSpellData()->class_skill = class_skill;
+		valSet = true;
+	}
+	else if (field == "min_class_skill_req")
+	{
+		int16 min_class_skill_req = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->min_class_skill_req = min_class_skill_req;
 		valSet = true;
 	}
 	else if (field == "mastery_skill")
@@ -2029,6 +2048,12 @@ bool Spell::SetSpellData(lua_State* state, std::string field, int8 fieldArg)
 	{
 		int8 spell_type = lua_interface->GetInt8Value(state, fieldArg);
 		GetSpellData()->spell_type = spell_type;
+		valSet = true;
+	}
+	else if (field == "type_group_spell_id")
+	{
+		sint32 type_group_spell_id = lua_interface->GetSInt32Value(state, fieldArg);
+		GetSpellData()->type_group_spell_id = type_group_spell_id;
 		valSet = true;
 	}
 

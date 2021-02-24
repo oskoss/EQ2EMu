@@ -1157,6 +1157,8 @@ public:
 	MaintainedEffects* GetFreeMaintainedSpellSlot();
 	SpellEffects* GetFreeSpellEffectSlot();
 	SpellEffects* GetSpellEffect(int32 id, Entity* caster = 0);
+	SpellEffects* GetSpellEffectWithLinkedTimer(int32 id, int32 linked_timer = 0, sint32 type_group_spell_id = 0, Entity* caster = 0);
+	LuaSpell* HasLinkedTimerID(LuaSpell* spell, Spawn* target = nullptr,  bool stackWithOtherPlayers = true);
 
 	//flags
 	int32 GetFlags() { return info_struct.get_flags(); }

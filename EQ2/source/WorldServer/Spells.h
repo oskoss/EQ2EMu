@@ -224,6 +224,7 @@ struct SpellData{
 	int16	icon_backdrop;
 	int16	type;
 	int32	class_skill;
+	int16	min_class_skill_req;
 	int32	mastery_skill;
 	int8    ts_loc_index;
 	int8	num_levels;
@@ -286,6 +287,7 @@ struct SpellData{
 	int32	soe_spell_crc;
 	int8	spell_type;
 	int32	spell_name_crc;
+	sint32	type_group_spell_id;
 };
 class Spell{
 public:
