@@ -793,6 +793,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetSpawnID", EQ2Emu_lua_GetSpawnID);
 	lua_register(state, "GetSpawnGroupID", EQ2Emu_lua_GetSpawnGroupID);
 	lua_register(state, "SetSpawnGroupID", EQ2Emu_lua_SetSpawnGroupID);
+	lua_register(state, "AddSpawnToGroup", EQ2Emu_lua_AddSpawnToGroup);
 	lua_register(state, "GetSpawnLocationID", EQ2Emu_lua_GetSpawnLocationID);
 	lua_register(state, "GetSpawnLocationPlacementID", EQ2Emu_lua_GetSpawnLocationPlacementID);
 	lua_register(state, "CreateSpawnList", EQ2Emu_lua_CreateSpawnList);

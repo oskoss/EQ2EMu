@@ -606,6 +606,22 @@ int EQ2Emu_lua_SetSpawnGroupID(lua_State* state) {
 	return 1;
 }
 
+int EQ2Emu_lua_AddSpawnToGroup(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 new_group_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	if (spawn) {
+		spawn->GetZone()->AddSpawnToGroup(spawn, new_group_id);
+		lua_interface->SetBooleanValue(state, true);
+		return 1;
+	}
+
+	lua_interface->SetBooleanValue(state, false);
+	return 1;
+}
+
 int EQ2Emu_lua_GetSpawnLocationID(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	if (spawn) {
@@ -5641,17 +5657,28 @@ int EQ2Emu_lua_GiveQuestItem(lua_State* state)
 
 		packet->setArrayDataByName("reward_id", item->details.item_id, 0);
 		packet->setItemArrayDataByName("item", item, (Player*)spawn, 0, 0, offset);
-		
-		lua_interface->SetBooleanValue(state, client->AddItem(item_id, 1));
+
+		bool itemsAddedSuccessfully = true;
+
+		itemsAddedSuccessfully = client->AddItem(item_id, 1);
 		client->Message(CHANNEL_COLOR_YELLOW, "You receive %s.", item->CreateItemLink(client->GetVersion()).c_str());
 
 		for(int8 n=0;n<additionalItems.size();n++)
 		{
 			packet->setArrayDataByName("reward_id", additionalItems[n]->details.item_id, n+1);
 			packet->setItemArrayDataByName("item", additionalItems[n], (Player*)spawn, n+1, 0, offset);
-			lua_interface->SetBooleanValue(state, client->AddItem(additionalItems[n]->details.item_id, 1));
+
+			// run until we hit a failure then don't update the boolean since its false
+			if(itemsAddedSuccessfully)
+				itemsAddedSuccessfully = client->AddItem(additionalItems[n]->details.item_id, 1);
+			else // we already failed to add an item somewhere
+				client->AddItem(additionalItems[n]->details.item_id, 1);
+			
 			client->Message(CHANNEL_COLOR_YELLOW, "You receive %s.", additionalItems[n]->CreateItemLink(client->GetVersion()).c_str());
 		}
+		
+		lua_interface->SetBooleanValue(state, itemsAddedSuccessfully);
+
 		client->QueuePacket(packet->serialize());
 		safe_delete(packet);
 		return 1;
@@ -9401,7 +9428,10 @@ int EQ2Emu_lua_AddLanguage(lua_State* state) {
 
 	Language* language = master_languages_list.GetLanguage(language_id);
 	if (language)
+	{
 		((Player*)player)->AddLanguage(language->GetID(), language->GetName(), true);
+		((Player*)player)->GetClient()->SendLanguagesUpdate(language->GetID());
+	}
 
 	return 0;
 }
