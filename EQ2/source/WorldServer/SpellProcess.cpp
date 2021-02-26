@@ -1464,7 +1464,8 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 		}
 	}
 	
-	if(!spell->spell->GetSpellData()->friendly_spell)
+	if(client && client->GetCurrentZone() && 
+		!spell->spell->GetSpellData()->friendly_spell)
 	{
 		ZoneServer* zone = client->GetCurrentZone();
 		Spawn* tmpTarget = zone->GetSpawnByID(spell->initial_target);
@@ -2615,7 +2616,6 @@ void SpellProcess::DeleteSpell(LuaSpell* spell)
 		lua_interface->RemoveCustomSpell(spell->spell->GetSpellID());
 		safe_delete(spell->spell);
 	}
-
 	safe_delete(spell);
 }
 
