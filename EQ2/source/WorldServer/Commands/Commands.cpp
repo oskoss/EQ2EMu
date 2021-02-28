@@ -3565,7 +3565,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 			bool collectedItems = false;
 			if (collection = player->GetPendingCollectionReward())
+			{
 				client->AcceptCollectionRewards(collection, selectable_item_id);
+				collectedItems = true;
+			}
 			else if (client->GetPlayer()->HasPendingItemRewards()) {
 				vector<Item*> items = client->GetPlayer()->GetPendingItemRewards();
 				if (items.size() > 0) {
