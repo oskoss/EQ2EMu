@@ -7,14 +7,14 @@
 --]]
 
 function spawn(NPC)
-
-MoveToLocation(NPC, 236.09, -3.99, 149.36, 7, "aggro", false)
-
+        MoveToLocation(NPC, 259.49, -4.74, 62.4, 7, "aggro", false)
+        MoveToLocation(NPC, 257.61, -5.86, 68.2, 7, "aggro", false)
+        MoveToLocation(NPC, 246.66, -7.01, 86.54, 7, "aggro", false)
 end
 
 
 function respawn(NPC)
-         spawn(NPC)
+        spawn(NPC)
 end
 
 function aggro(NPC)

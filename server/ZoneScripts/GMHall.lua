@@ -1,7 +1,7 @@
 --[[
 	Script Name	: ZoneScripts/GMHall.lua
 	Script Purpose	: Announce locations
-	Script Author	: John Adams
+	Script Author	: John Adams * TyroneSWG
 	Script Date	: 2009.05.07 * 2019.01.15
 	Script Notes	: GMHall General Script
 --]]

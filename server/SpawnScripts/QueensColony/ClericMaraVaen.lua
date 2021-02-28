@@ -12,7 +12,7 @@ local TheSourceOfEvil = 164
 function spawn(NPC)
 	SetLuaBrain(NPC)
 	SetBrainTick(NPC, 500)
-	Think(NPC, Spawn)
+	--Think(NPC, Spawn)
 	ProvidesQuest(NPC, TheSourceOfEvil)
 end
 
@@ -21,7 +21,7 @@ function respawn(NPC)
 end
 
 -- Brain override
-function Think(NPC, Spawn)
+function Think(NPC)
 	local mostHated = GetMostHated(NPC)
 	if mostHated ~= nil then
 --[[ Say(NPC, "Has most hated") --]]
@@ -80,7 +80,7 @@ function DoNotFret(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen001.mp3", "", "", 2971501331, 3435878603, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen001.mp3", "", "nod", 2971501331, 3435878603, Spawn)
 	AddConversationOption(conversation, "I guess you know me?", "dlg_20_1")
 	AddConversationOption(conversation, "Nice to meet you, too.")
 	StartConversation(conversation, NPC, Spawn, "Do not fret, " .. GetName(Spawn) .. ". The hand of Qeynos reaches far and wide to help those in need.")
@@ -90,7 +90,7 @@ function dlg_20_1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen002.mp3", "", "", 2633924079, 3010054159, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen002.mp3", "", "chuckle", 2633924079, 3010054159, Spawn)
 	AddConversationOption(conversation, "I'm ready.", "dlg_20_2")
 	AddConversationOption(conversation, "I don't think I'm ready.")
 	StartConversation(conversation, NPC, Spawn, "Murrar sent word that you were coming.  He said to be nice, hehe!  No worries, I mean only the best.  In any case, I'll be doing most of the work for this first task, when you're ready.")
@@ -102,7 +102,7 @@ function dlg_20_2(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen003.mp3", "", "", 929576879, 4035132590, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen003.mp3", "", "nod", 929576879, 4035132590, Spawn)
 	AddConversationOption(conversation, "I'll do my best.")
 	StartConversation(conversation, NPC, Spawn, "You see those ghostly figures down in the canyon? Those are the souls of our scouts who were lost and consumed by evil. I believe that they may be trapped between our world and the next. I think I can resurrect them, if you can just lure them close to me.")
 end
@@ -111,6 +111,7 @@ function KeepTrying(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen004.mp3", "", "beckon", 873884307, 3834280576, Spawn)
 	AddConversationOption(conversation, "I'll keep trying.")
 	StartConversation(conversation, NPC, Spawn, "Keep trying, I believe we can save more scouts if you get them close to me.")
 end
@@ -131,7 +132,7 @@ function dlg_21_1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen006.mp3", "", "", 3734054586, 4057468106, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen006.mp3", "", "nod", 3734054586, 4057468106, Spawn)
 	AddConversationOption(conversation, "I have a feeling I know where this is going.", "dlg_21_2")
 	StartConversation(conversation, NPC, Spawn, "Long ago there lived a ferocious breed on this island, a species of dire wolf that the Sapswill called 'the Morak.'  The Morak were cleansed from the island so it could be a safer place.")
 end
@@ -149,6 +150,7 @@ function ClearMorak(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen008.mp3", "", "", 307447635, 3375690454, Spawn)
 	AddConversationOption(conversation, "I'm on my way.")
 	StartConversation(conversation, NPC, Spawn, "The Morak need to be cleared so our scouts can push forward.")
 end
@@ -159,7 +161,7 @@ function QuestComplete(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen009.mp3", "", "", 72596140, 1372143516, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen009.mp3", "", "thanks", 72596140, 1372143516, Spawn)
 	AddConversationOption(conversation, "Is there anything else I can do?", "AnythingElse")
 	AddConversationOption(conversation, "You're welcome.")
 	StartConversation(conversation, NPC, Spawn, "You did it, I knew you could! Our scouts were able to clear through to the far side of the village. I'll send word back to Murrar. Thank you, " .. GetName(Spawn) .. ".")
@@ -173,7 +175,7 @@ function AnythingElse(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen012.mp3", "", "", 2525989430, 544085949, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen012.mp3", "", "nod", 2525989430, 544085949, Spawn)
 	AddConversationOption(conversation, "So should I travel there?", "TravelThere")
 	AddConversationOption(conversation, "I'll deal with this later.")
 	StartConversation(conversation, NPC, Spawn, "The few scouts that broke through to the Sapswill village report a twist in this evil plot. Apparently the goblins are victims of the evil as well. A few goblins survived some sort of an attack on their village and are being held at a scout camp that has been set up on its outskirts.")
@@ -193,7 +195,7 @@ function ThanksForHelp(Spawn, NPC, onNextQuest)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen010.mp3", "", "", 1827963300, 3132811539, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/cleric_mara_vaen/tutorial_island02_revamp/quests/citizenship/clericmaravaen/clericmaravaen010.mp3", "", "thanks", 1827963300, 3132811539, Spawn)
 	if onNextQuest == false then
 		AddConversationOption(conversation, "Is there anything else I can do?", "AnythingElse")
 	end

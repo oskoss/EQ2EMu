@@ -15,11 +15,11 @@ local ADiplomaticMission = 166
 function Init(Quest)
     -- Diplomat's Badge
   
-    AddQuestStepChat(Quest, 1, "Greet a musician.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530039)
-    AddQuestStepChat(Quest, 2, "Greet an incapacitated Sapswill.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530039)
+    AddQuestStepChat(Quest, 1, "Greet a musician.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530226)
+    AddQuestStepChat(Quest, 2, "Greet an incapacitated Sapswill.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530230)
     AddQuestStepChat(Quest, 3, "Greet a seated Sapswill.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530036)
-    AddQuestStepChat(Quest, 4, "Greet an active Sapswill.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530039)
-    AddQuestStepChat(Quest, 5, "Greet a happy Sapswill.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530039)
+    AddQuestStepChat(Quest, 4, "Greet an active Sapswill.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530228)
+    AddQuestStepChat(Quest, 5, "Greet a happy Sapswill.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530229)
     AddQuestStepChat(Quest, 6, "Greet Durg.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530035)
     AddQuestStepChat(Quest, 7, "Greet Gonk.", 1, "The Sapswill soothsayer said I need to get the members of their community. Guess it's all part of the diplomatic stuff.", 0, 2530034)
 	
@@ -37,7 +37,8 @@ function Accepted(Quest, QuestGiver, Player)
 	if GetDistance(Player, QuestGiver) < 30 then
 	    FaceTarget(QuestGiver, Player)
 	    conversation = CreateConversation()
-			
+		
+            PlayFlavor(NPC, "voiceover/english/tutorial_revamp/a_sapswill_soothsayer/tutorial_island02_revamp/quests/sapswill_soothsayer/sapswill_soothsayer011.mp3", "", "nod", 2132440732, 232283022, Spawn)
 	    AddConversationOption(conversation, "To long life!")
 	    StartConversation(conversation, QuestGiver, Player, "To long life, and happy friendships!")
 	end

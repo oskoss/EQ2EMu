@@ -6,6 +6,7 @@
     Modified Date  : 2020.04.03
     Modified by    : premierio015
     Notes	   : Added all correct voiceover options, added animations.
+                   : redid hailed section, added in to turn in collections if you have them, and redouced code from repetiveness
 --]]
 
 function spawn(NPC)
@@ -17,31 +18,20 @@ end
 
 function hailed(NPC, Spawn)
     FaceTarget(NPC, Spawn)
+    if HasCollectionsToHandIn(Spawn) then
+        HandInCollections(Spawn)
+    end
+	
     conversation = CreateConversation()
-	math.randomseed(os.time())
-	choice = math.random (1, 3)
-	str = tostring(choice)
-	if choice == 1 then
-    PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1061.mp3", "", "beckon", 0, 0, Spawn)
+    math.randomseed(os.time())
+    choice = math.random (1, 3)
+    PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_"..choice.."_1061.mp3", "", "beckon", 0, 0, Spawn)
     AddConversationOption(conversation, "I'd like to learn about collections.", "dlg_0_1")
     AddConversationOption(conversation, "I'd like to learn about harvesting.","dlg_0_4")
     AddConversationOption(conversation, "I've no time to chat right now.")
-	StartConversation(conversation, NPC, Spawn, "Don't be shy! Come closer, m'dear, and I'd be happy to answer any questions you have about collections or harvesting!")
-	elseif choice == 2 then
-	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1061.mp3", "", "beckon", 0, 0, Spawn)
-    AddConversationOption(conversation, "I'd like to learn about collections.", "dlg_0_1")
-    AddConversationOption(conversation, "I'd like to learn about harvesting.","dlg_0_4")
-    AddConversationOption(conversation, "I've no time to chat right now.")
-	StartConversation(conversation, NPC, Spawn, "Don't be shy! Come closer, m'dear, and I'd be happy to answer any questions you have about collections or harvesting!")
-	else
-	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_1_1061.mp3", "", "beckon", 0, 0, Spawn)
-    AddConversationOption(conversation, "I'd like to learn about collections.", "dlg_0_1")
-    AddConversationOption(conversation, "I'd like to learn about harvesting.","dlg_0_4")
-    AddConversationOption(conversation, "I've no time to chat right now.")
-	StartConversation(conversation, NPC, Spawn, "Don't be shy! Come closer, m'dear, and I'd be happy to answer any questions you have about collections or harvesting!")
+    StartConversation(conversation, NPC, Spawn, "Don't be shy! Come closer, m'dear, and I'd be happy to answer any questions you have about collections or harvesting!")
+	
 end
-end
-
 function dlg_0_1(NPC, Spawn)
     FaceTarget(NPC, Spawn)
 	PlayAnimation(NPC, 12028)
@@ -76,6 +66,7 @@ end
 
 function dlg_0_5(NPC, Spawn)
     FaceTarget(NPC, Spawn)
+	PlayAnimation(NPC, 11882)
     conversation = CreateConversation()
     AddConversationOption(conversation, "Why do I need to increase my harvesting skills?", "dlg_0_6")
     StartConversation(conversation, NPC, Spawn, "The items found through harvesting are the basic building blocks of tradeskills.  They cannot be sold to vendors, but they can be traded or sold to other players who need them for their respective tradeskill professions.  Some components that can be found through harvesting are very rare and can be worth quite a bit of money to tradeskillers.")

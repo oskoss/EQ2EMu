@@ -1,2 +1,3 @@
 function examined(NPC, Spawn)
-    end
+    SendMessage(Spawn, "Turn this in to Cherry in the GM Hall for a reward!")
+end

@@ -1,14 +1,13 @@
 --[[
     Script Name    : Spells/Fighter/Brawler/FlyingKick.lua
-    Script Author  : Dello
-    Script Date    : 19/07/2014
+    Script Author  : neatz09
+    Script Date    : 2020.11.05 05:11:45
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target, MinVal, MaxVal, CurrentHP, MinHeal, MaxHeal)
-    CurrentHP = GetMaxHP(Caster)
-    MinHeal = CurrentHP * (MinVal / 100)
-    MaxHeal = CurrentHP * (MaxVal / 100)
-    SpellHeal("Heal", MinHeal, MaxHeal, Caster)
+-- Inflicts 30 - 50 crushing damage on target
+
+function cast(Caster, Target, DmgType, MinVal, MaxVal)
+	SpellDamage(Target, DmgType, MinVal, MaxVal)
 end

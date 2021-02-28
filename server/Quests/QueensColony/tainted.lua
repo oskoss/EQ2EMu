@@ -6,16 +6,17 @@
 	Zone       : The Queen's Colony
 	Quest Starter   : Deianeira
 	Preceded By: Nothing
-	Followed By: Ghosts and Goblins (<ghosts_and_goblins.lua>)
+	Followed By: Ghosts and Goblins ()
 
 	Script Author	: Scatman
 	Script Date	: 2008.08.13
+	Modified : 11/12/2020 added additional spawn id for toxic crawlers EmemJR
 --]]
 
 function Init(quest)
 	
 	-- spider fang ring
-	AddQuestStepKill(quest, 1, "I need to clear the Tainted Forest of these toxic crawlers!", 4, 100, "I need to clear out the toxic crawlers to keep their poison from spreading throughout the Colony.", 1857, 2530084)
+	AddQuestStepKill(quest, 1, "I need to clear the Tainted Forest of these toxic crawlers!", 4, 100, "I need to clear out the toxic crawlers to keep their poison from spreading throughout the Colony.", 1857, 2530084,2530202,2530201)
 	AddQuestStepCompleteAction(quest, 1, "step1_toxicCrawlers")
 
 end
@@ -26,7 +27,7 @@ function Accepted(quest, questGiver, player)
 	 FaceTarget(questGiver, player)
 	 
 	 conversation = CreateConversation()
-	 PlayFlavor(questGiver, "voiceover/english/tutorial_revamp/deianeira/tutorial_island02_revamp/quest/qst_deianeira_complete_111dc711.mp3", "", "", 796380527, 3559718915, player)
+	 PlayFlavor(questGiver, "voiceover/english/tutorial_revamp/deianeira/tutorial_island02_revamp/quest/qst_deianeira_complete_111dc711.mp3", "", "thanks", 796380527, 3559718915, player)
 	 AddConversationOption(conversation, "I'll be back when I'm done with the spiders.")
 	 StartConversation(conversation, questGiver, player, "It's up to us to find the answers; they're never handed to us.")
 	    end
@@ -61,7 +62,7 @@ end
 
 function step2_complete_examinedParchment(quest, questGiver, player)
 	UpdateQuestStepDescription(quest, 2, "I've examined the scrap.")
-	AddQuestStepKill(quest, 3, "While hard to decipher, the writings indicate that there is a problem with the toxic crawlers. I'll try to find another piece of parchment on one of these spiders though it may take me a while to find one with more of this parchment.", 1, 25, "There is more to be learned in the Tainted Forest.", 2180, 2530084)
+	AddQuestStepKill(quest, 3, "While hard to decipher, the writings indicate that there is a problem with the toxic crawlers. I'll try to find another piece of parchment on one of these spiders though it may take me a while to find one with more of this parchment.", 1, 25, "There is more to be learned in the Tainted Forest.", 2180, 2530084,2530202,2530201)
 	AddQuestStepCompleteAction(quest, 3, "step3_complete_toxicCrawlers")
 end
 

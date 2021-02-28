@@ -1,24 +1,43 @@
 --[[
     Script Name    : Spells/Priest/Cleric/Templar/Sanctuary.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 06:08:55
+    Script Author  : neatz09
+    Script Date    : 2020.10.27 12:10:19
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
+-- Makes group members (AE) immune to Root effects
+-- Makes group members (AE) immune to Stifle effects
+-- Makes group members (AE) immune to Stun effects
+-- Makes group members (AE) immune to Fear effects
+-- Makes group members (AE) immune to Daze effects
+-- Makes group members (AE) immune to Mesmerize effects
+-- 1% chance to dispel when target takes damage
+-- 1% chance to dispel when target receives hostile action
 
--- Info from spell_display_effects (remove from script when done)
-
+function cast(Caster, Target, Chance)
+	AddProc(Target, 15, 1, nil, 1)
+	AddImmunitySpell(5, Target) --Root
+	AddImmunitySpell(2, Target) --Stifle
+	AddImmunitySpell(4, Target) --Stun
+	AddImmunitySpell(6, Target) --Fear
+	AddImmunitySpell(3, Target) --Daze
+	AddImmunitySpell(1, Target) --Mez
+		Say(Caster, "PVP Immunity not implemented.")
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+function proc(Caster, Target, Type, Chance)
+	if Type == 15 then 
+		CancelSpell()
+					end
 end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+	RemoveProc(Target)
+	RemoveImmunitySpell(5, Target) --Root
+	RemoveImmunitySpell(2, Target) --Stifle
+	RemoveImmunitySpell(4, Target) --Stun
+	RemoveImmunitySpell(6, Target) --Fear
+	RemoveImmunitySpell(3, Target) --Daze
+	RemoveImmunitySpell(1, Target) --Mez
 end
-
