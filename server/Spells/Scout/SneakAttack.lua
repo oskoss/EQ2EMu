@@ -1,26 +1,22 @@
 --[[
     Script Name    : Spells/Scout/SneakAttack.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 02:08:59
+    Script Author  : neatz09
+    Script Date    : 2020.11.06 07:11:46
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
-
--- Info from spell_display_effects (remove from script when done)
--- Inflicts 24 - 41 melee damage on target
+-- Inflicts 14 - 24 melee damage on target
 -- Must be flanking or behind
 
+function precast(Caster,Target)
+	if not IsFlanking(Target, Caster) then
+		SendMessage(Caster, "Must be flanking or behind", "yellow")
+			return false
+				end
+	return true
 end
 
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+function cast(Caster, Target, DmgType, MinVal, MaxVal)
+	SpellDamage(Target, DmgType, MinVal, MaxVal)
 end
-
-function remove(Caster, Target)
-    -- code to remove the spell
-end
-

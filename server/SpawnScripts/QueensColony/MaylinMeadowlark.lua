@@ -8,31 +8,35 @@
     Notes          : Added all dialogues and anims
 --]]
 
-function spawn (NPC)
-      hailed(NPC, Spawn)
-	  Emote(NPC)
+function spawn(NPC)
+        EmotePoint(NPC)
 end
 
-function respawn (NPC)
-     spawn(NPC)
+function respawn(NPC)
+        spawn(NPC)
 end	 
 
 function hailed(NPC, Spawn)
-    FaceTarget(NPC, Spawn)
+        FaceTarget(NPC, Spawn)
 	math.randomseed(os.time())
 	choice = math.random (1, 3)
 	str = tostring(choice)
-	if choice == 1 then
-    PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_1_1005.mp3", "I think I saw something moving out there!", "point", 0, 0, Spawn)
-	elseif choice == 2 then
-	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1005.mp3", "I wouldn't go swimming over at those ruins in the bay if i were you.", "point", 0, 0, Spawn)
-	else
-	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1005.mp3", "I think i see it, over there!", "point", 0, 0, Spawn)
- end
 
+        PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_"..choice.."_1005.mp3", "", "", 0, 0, Spawn)
 
-function Emote (NPC)
+        text = math.random (1, 3)
+
+        if text == 1 then
+            Say(NPC, "I think I saw something moving out there!")
+        elseif text == 2 then
+            Say(NPC, "I wouldn't go swimming over at those ruins in the bay if I were you.")
+        else
+            Say(NPC, "I think I see it, over there!")	
+        end
+end
+
+function EmotePoint(NPC)
 	PlayAnimation(NPC, 12028)
-	AddTimer(NPC, 10000, "Emote")
-		end
+        local time = math.random (10000,15000) 
+	AddTimer(NPC, time, "EmotePoint")
 end

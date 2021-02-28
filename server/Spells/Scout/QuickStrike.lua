@@ -6,9 +6,8 @@
                    : 
 --]]
 
--- Info from spell_display_effects (remove from script when done)
 -- Inflicts 6 - 10 melee damage on target
 
 function cast(Caster, Target, DmgType, MinVal, MaxVal)
-SpellDamage(Target, DmgType, MinVal, MaxVal)
+	SpellDamage(Target, DmgType, MinVal, MaxVal)
 end

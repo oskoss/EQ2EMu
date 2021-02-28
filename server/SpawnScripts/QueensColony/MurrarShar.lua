@@ -3,23 +3,23 @@
 	Script Purpose	: Murrar Shar <Emissary of Queen Antonia Bayle>
 	Script Author	: Zcoretri
 	Script Date	: 2015.07.30
-        Modified Date :  2020.04.20
+        Modified Date   : 2020.04.20
         Modified by     : premierio015
-       Modified Notes: Added animations
+        Modified Notes  : Added animations
 	Script Notes	: 
 --]]
 
-local WelcomeToNorrath = 133
-local TheArtOfCombat = 132
-local APresenceOfEvil = 131
-local IntoTheTaintedForest = 162
-local JoiningTheForwardRanks = 163
-local TheSourceOfEvil = 164
+        local WelcomeToNorrath = 133
+        local TheArtOfCombat = 132
+        local APresenceOfEvil = 131
+        local IntoTheTaintedForest = 162
+        local JoiningTheForwardRanks = 163
+        local TheSourceOfEvil = 164
 
-local quest2_text = nil
+        local quest2_text = nil
 
 function spawn(NPC)
-    ProvidesQuest(NPC, TheArtOfCombat)
+        ProvidesQuest(NPC, TheArtOfCombat)
 	ProvidesQuest(NPC, APresenceOfEvil)
 	ProvidesQuest(NPC, IntoTheTaintedForest)
 	ProvidesQuest(NPC, JoiningTheForwardRanks)
@@ -92,7 +92,7 @@ function hailed(NPC, Spawn)
 			GoblinsAreVictims(NPC, Spawn)
 		end
 	else
-		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar030.mp3", "", "", 3165714952, 1304016911, Spawn)
+		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar030.mp3", "", "nod", 3165714952, 1304016911, Spawn)
 		AddConversationOption(conversation, "Farewell.")
 		AddConversationOption(conversation, "How do I leave the island?", "LeaveIsland")
 		StartConversation(conversation, NPC, Spawn, "Qeynos will live for you, my friend. Your deeds here will not be forgotten. Farewell.")
@@ -175,7 +175,7 @@ function NiceSword(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 	
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar013.mp3", "", "", 271551862, 2243544574, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar013.mp3", "", "thanks", 271551862, 2243544574, Spawn)
 	AddConversationOption(conversation, "Okay, I will.")
 	StartConversation(conversation, NPC, Spawn, "Thank you for noticing. They call this one Berik, Sword of Thunder. I earned it in a dungeon in Antonica known as Stormhold. Work hard and you might find such a prize someday.")
 end
@@ -248,7 +248,7 @@ function ReadyToHelpNow(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar016.mp3", "", "", 943121762, 902772716, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar016.mp3", "", "ponder", 943121762, 902772716, Spawn)
 	AddConversationOption(conversation, "I could do that.", "ICouldDoThat")
 	AddConversationOption(conversation, "How do I leave the island?", "LeaveIsland")
 	AddConversationOption(conversation, "I can't right now.")
@@ -294,7 +294,7 @@ function dlg_19_1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar020.mp3", "", "", 969547880, 3659700172, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar020.mp3", "", "nod", 969547880, 3659700172, Spawn)
 	AddConversationOption(conversation, "You want me to confront the Chieftain now?", "dlg_19_2")
 	StartConversation(conversation, NPC, Spawn, "That I do. My best guess is that the goblin leader, High Chieftain Grexx, is involved. He is the most powerful and influential figure to the goblins. If he were somehow corrupted, the goblins would follow any orders he demanded.")
 end
@@ -303,7 +303,7 @@ function dlg_19_2(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar021.mp3", "", "", 2156921006, 779590907, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar021.mp3", "", "nod", 2156921006, 779590907, Spawn)
 	AddConversationOption(conversation, "Will do.", "OfferQuest4")
 	AddConversationOption(conversation, "I can't right now.")
 	StartConversation(conversation, NPC, Spawn, "First things first ," .. GetName(Spawn) .. ". We need to break through to the goblin village. I have assigned this duty to Cleric Mara'Vaen. Seek her out and see how you can help.")
@@ -324,7 +324,7 @@ function Quest5Done(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar028.mp3", "", "", 1703190849, 2791144430, Spawn)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/murrar_shar/tutorial_island02_revamp/quests/citizenship/murrarshar/murrarshar028.mp3", "", "thanks", 1703190849, 2791144430, Spawn)
 	AddConversationOption(conversation, "It was nothing, really.", "ItWasNothingReally")
 	AddConversationOption(conversation, "How do I leave the island?", "LeaveIsland")
 	StartConversation(conversation, NPC, Spawn, "By the glory of Qeynos, you've done it! The source of evil is gone and the island is saved. You are on a path to greatness, " .. GetName(Spawn) .. ". Your deeds here shall not be forgotten and I forsee many adventures ahead of you.")

@@ -18,6 +18,8 @@ local RyGorrOperations = 60
 
 local SometimesKnut = 84
 
+local ScrollId = 4
+
 function init_zone_script(Zone)
     SetLocationProximityFunction(Zone, -316.244, 35.409, -714.906, 10, "BarricadeMessage")
 	SetLocationProximityFunction(Zone, 607, 66.2, -506.50, 20, "AshesMessage")
@@ -44,6 +46,9 @@ function BarricadeMessage(Zone, Spawn)
 end
 
 function player_entry(Zone, Player)
+    if not HasItem(ScrollId) then
+        GiveLoot(Player, ScrollId)
+    end
 end
 
 function AshesMessage(Zone, Spawn)

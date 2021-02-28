@@ -394,4 +394,3 @@ end
 function respawn(NPC)
 
 end
-
