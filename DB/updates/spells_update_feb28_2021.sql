@@ -1,0 +1,1 @@
+alter table spells modify column spell_type enum('Unset', 'DD', 'DoT', 'Heal', 'HoT-Ward', 'Debuff', 'Buff', 'CombatBuff', 'Taunt', 'Detaunt', 'Rez', 'Cure', 'Food', 'Drink') NOT NULL default 'Unset';
