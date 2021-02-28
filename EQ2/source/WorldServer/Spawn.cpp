@@ -41,6 +41,9 @@ extern World world;
 Spawn::Spawn(){ 
 	loot_coins = 0;
 	trap_triggered = false;
+	trap_state = 0;
+	chest_drop_time = 0;
+	trap_opened_time = 0;
 	group_id = 0;
 	size_offset = 0;
 	merchant_id = 0;

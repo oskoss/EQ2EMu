@@ -272,7 +272,7 @@ public:
 	void	SendQuestUpdateStep(Quest* quest, int32 step, bool display_quest_helper = true);
 	void	SendQuestUpdateStepImmediately(Quest* quest, int32 step, bool display_quest_helper = true);
 	void	DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards=0, vector<Item*>* selectable_rewards=0, map<int32, sint32>* factions=0, const char* header="Quest Reward!", int32 status_points=0, const char* text=0);
-	void	DisplayQuestComplete(Quest* quest);
+	void	DisplayQuestComplete(Quest* quest, bool tempReward = false, std::string customDescription = string(""));
 	void	DisplayRandomizeFeatures(int32 features);
 	void	AcceptQuestReward(Quest* quest, int32 item_id);
 	Quest*	GetPendingQuestAcceptance(int32 item_id);
@@ -338,7 +338,9 @@ public:
 		player = new_player;
 		player->SetClient(this);
 	}
-	void	AddPendingQuestReward(Quest* quest);
+
+	void	AddPendingQuestAcceptReward(Quest* quest);
+	void	AddPendingQuestReward(Quest* quest, bool update=true);
 	void	AddPendingQuestUpdate(int32 quest_id, int32 step_id, int32 progress = 0xFFFFFFFF);
 	void	ProcessQuestUpdates();	
 	void	AddWaypoint(const char* waypoint_name, int8 waypoint_category, int32 spawn_id);
@@ -470,6 +472,12 @@ public:
 
 	void SetReloadingZone(bool val) { client_reloading_zone = val; }
 	bool IsReloadingZone() { return client_reloading_zone; }
+
+	void QueueStateCommand(int32 spawn_player_id, int32 state);
+	void ProcessStateCommands();
+	void PurgeItem(Item* item);
+	void ConsumeFoodDrink(Item* item, int32 slot);
+	void AwardCoins(int64 total_coins, std::string reason = string(""));
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -500,6 +508,7 @@ private:
 	int32	next_conversation_id;
 	map<int32, Spawn*> conversation_spawns;
 	map<int32, Item*> conversation_items;
+	Mutex MConversation;
 	map<int32, map<int8, string> > conversation_map;
 	int32	current_quest_id;
 	Spawn*	banker;
@@ -581,6 +590,9 @@ private:
 	bool regionDebugMessaging;
 
 	bool client_reloading_zone;
+
+	map<int32, int32> queued_state_commands;
+	Mutex MQueueStateCmds;
 };
 
 class ClientList {

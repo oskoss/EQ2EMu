@@ -466,6 +466,15 @@ bool Brain::CheckLootAllowed(Entity* entity) {
 	bool ret = false;
 	vector<int32>::iterator itr;
 
+	if(m_body)
+	{
+		if(rule_manager.GetGlobalRule(R_Loot, AllowChestUnlockByDropTime)->GetInt8()
+		&& m_body->GetChestDropTime() > 0 && Timer::GetCurrentTime2() >= m_body->GetChestDropTime()+(rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeDrop)->GetInt32()*1000))
+			return true;
+		if(rule_manager.GetGlobalRule(R_Loot, AllowChestUnlockByTrapTime)->GetInt8() 
+		&& m_body->GetTrapOpenedTime() > 0 && Timer::GetCurrentTime2() >= m_body->GetChestDropTime()+(rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeTrap)->GetInt32()*1000))
+			return true;
+	}
 	// Check the encounter list to see if the given entity is in it, if so return true.
 	MEncounter.readlock(__FUNCTION__, __LINE__);
 	if (entity->IsPlayer())

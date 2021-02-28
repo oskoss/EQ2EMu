@@ -306,7 +306,7 @@ void Entity::RangeAttack(Spawn* victim, float distance, Item* weapon, Item* ammo
 					((Player*)this)->equipment_list.RemoveItem(ammo->details.slot_id, true);
 
 				Client* client = GetZone()->GetClientBySpawn(this);
-				EQ2Packet* outapp = ((Player*)this)->GetEquipmentList()->serialize(client->GetVersion());
+				EQ2Packet* outapp = ((Player*)this)->GetEquipmentList()->serialize(client->GetVersion(), (Player*)this);
 				if(outapp)
 					client->QueuePacket(outapp);
 			}

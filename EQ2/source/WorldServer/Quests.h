@@ -139,6 +139,7 @@ public:
 	void				AddPrereqItem(Item* item);
 
 	void				AddRewardItem(Item* item);
+	void				AddTmpRewardItem(Item* item);
 	void				AddSelectableRewardItem(Item* item);
 	void				AddRewardCoins(int32 copper, int32 silver, int32 gold, int32 plat);
 	void                AddRewardCoinsMax(int64 coins);
@@ -180,6 +181,7 @@ public:
 	vector<int32>*		GetPrereqQuests();
 	vector<Item*>*		GetPrereqItems();
 	vector<Item*>*		GetRewardItems();
+	vector<Item*>*		GetTmpRewardItems();
 	vector<Item*>*		GetSelectableRewardItems();
 	map<int32, sint32>*	GetRewardFactions();
 	void				GiveQuestReward(Player* player);
@@ -193,6 +195,11 @@ public:
 	void				SetStepDescription(int32 step, string desc);
 	void				SetTaskGroupDescription(int32 step, string desc, bool display_bullets);
 
+	void				SetStatusTmpReward(int32 status) { tmp_reward_status = status; }
+	int64				GetStatusTmpReward() { return tmp_reward_status; }
+
+	void				SetCoinTmpReward(int64 coins) { tmp_reward_coins = coins; }
+	int64				GetCoinTmpReward() { return tmp_reward_coins; }
 	int64				GetCoinsReward();
 	int64               GetCoinsRewardMax();
 	int64               GetGeneratedCoin();
@@ -305,6 +312,9 @@ public:
 	void				SetCompleteCount(int16 val) { m_completeCount = val; }
 	void				IncrementCompleteCount() { m_completeCount += 1; }
 
+	void				SetQuestTemporaryState(bool tempState, std::string customDescription = string(""));
+	bool				GetQuestTemporaryState() { return quest_state_temporary; }
+	std::string			GetQuestTemporaryDescription() { return quest_temporary_description; }
 protected:
 	bool				needs_save;
 	Mutex				MQuestSteps;
@@ -349,8 +359,11 @@ protected:
 	vector<Item*>		prereq_items;
 	vector<Item*>		reward_items;
 	vector<Item*>		selectable_reward_items;
+	vector<Item*>		tmp_reward_items;
 	int64				reward_coins;
 	int64               reward_coins_max;
+	int32				tmp_reward_status;
+	int64				tmp_reward_coins;
 	int64               generated_coin;
 	map<int32, sint32>	reward_factions;
 	int32				reward_status;
@@ -379,6 +392,9 @@ protected:
 	int32				m_timerStep;	// used for the fail action when timer expires
 
 	int16				m_completeCount;
+
+	bool				quest_state_temporary;
+	std::string			quest_temporary_description;
 };
 
 class MasterQuestList{

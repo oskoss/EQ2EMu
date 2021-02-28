@@ -370,10 +370,38 @@ int EQ2Emu_lua_SendStateCommand(lua_State* state) {
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	int32 new_state = lua_interface->GetInt32Value(state, 2);
+	Spawn* player = lua_interface->GetSpawn(state, 3);
+
+	lua_interface->ResetFunctionStack(state);
+
 	if (spawn) {
-		spawn->GetZone()->SendStateCommand(spawn, new_state);
+		if(player)
+		{
+			if(player->IsPlayer())
+			{
+				Client* client = ((Player*)player)->GetClient();
+				if(client)
+				{
+					ClientPacketFunctions::SendStateCommand(client, client->GetPlayer()->GetIDWithPlayerSpawn(spawn), new_state);		
+					lua_interface->SetBooleanValue(state, true);
+					return 1;
+				}
+				else
+					LogWrite(LUA__ERROR, 0, "LUA", "Spawn %s Error in SendStateCommand,attempted to pass player value in argument 3, but argument does not have active client.", spawn->GetName());
+			}
+			else
+				LogWrite(LUA__ERROR, 0, "LUA", "Spawn %s Error in SendStateCommand,attempted to pass player value in argument 3, but argument is NOT a player.", spawn->GetName());
+		}
+		else
+		{
+			spawn->GetZone()->SendStateCommand(spawn, new_state);
+			lua_interface->SetBooleanValue(state, true);
+			return 1;
+		}
 	}
-	return 0;
+
+	lua_interface->SetBooleanValue(state, false);
+	return 1;
 }
 
 int EQ2Emu_lua_SpawnSet(lua_State* state) {
@@ -3595,6 +3623,30 @@ int EQ2Emu_lua_SetQuestRewardStatus(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_SetStatusTmpReward(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Quest* quest = lua_interface->GetQuest(state);
+	if (quest) {
+		int32 status = lua_interface->GetInt32Value(state, 2);
+		quest->SetStatusTmpReward(status);
+	}
+	return 0;
+}
+
+
+int EQ2Emu_lua_SetCoinTmpReward(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Quest* quest = lua_interface->GetQuest(state);
+	if (quest) {
+		int64 coins = lua_interface->GetInt64Value(state, 2);
+		quest->SetCoinTmpReward(coins);
+	}
+	return 0;
+}
+
+
 int EQ2Emu_lua_SetQuestRewardComment(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -3698,7 +3750,8 @@ int EQ2Emu_lua_AddQuestStepChat(lua_State* state) {
 			quest_step->SetIcon(icon);
 		if (quest->GetPlayer()) {
 			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
-			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
+			if(client)
+				quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 	}
 	return 0;
@@ -3979,11 +4032,11 @@ int EQ2Emu_lua_UpdateQuestTaskGroupDescription(lua_State* state) {
 	bool display_bullets = (lua_interface->GetInt8Value(state, 4) == 1);
 	if (quest && step > 0 && description.length() > 0) {
 		quest->SetTaskGroupDescription(step, description, display_bullets);
-		if (quest->GetPlayer()) {
+	/*	if (quest->GetPlayer()) {
 			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
 			if (client)
 				client->SendQuestUpdateStep(quest, step, false);
-		}
+		}*/
 	}
 	return 0;
 }
@@ -3996,11 +4049,11 @@ int EQ2Emu_lua_UpdateQuestStepDescription(lua_State* state) {
 	string description = lua_interface->GetStringValue(state, 3);
 	if (quest && step > 0 && description.length() > 0) {
 		quest->SetStepDescription(step, description);
-		if (quest->GetPlayer()) {
+		/*if (quest->GetPlayer()) {
 			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
 			if (client)
 				client->SendQuestUpdateStepImmediately(quest, step);
-		}
+		}*/
 	}
 	return 0;
 }
@@ -4073,11 +4126,16 @@ int EQ2Emu_lua_GiveQuestReward(lua_State* state) {
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
 	Spawn* spawn = lua_interface->GetSpawn(state, 2);
+
+	lua_interface->ResetFunctionStack(state);
 	if (quest && spawn) {
 		if (spawn->IsPlayer()) {
 			Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
 			if (client)
+			{
+				client->AddPendingQuestAcceptReward(quest);
 				client->AddPendingQuestReward(quest);
+			}
 		}
 	}
 	return 0;
@@ -5624,67 +5682,31 @@ int EQ2Emu_lua_GiveQuestItem(lua_State* state)
 		lua_interface->SetBooleanValue(state, false);
 		return 1;
 	}
+	
+	Item* firstItem = new Item(item);
+	quest->AddTmpRewardItem(firstItem);
 
-	PacketStruct* packet = configReader.getStruct("WS_QuestComplete", client->GetVersion());
-	if (packet) {
-		packet->setDataByName("title", "Quest Reward!");
-		packet->setDataByName("name", quest->GetName());
-		packet->setDataByName("description", description.c_str());
-		packet->setDataByName("level", quest->GetLevel());
-
-		// if there are any additional optional items to add we will verify them and append
-		int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
-		vector<Item*> additionalItems;
-		if(num_args > 4)
+	int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
+	bool itemsAddedSuccessfully = true;
+	if(num_args > 4)
+	{
+		for(int8 n=5;n<num_args+1;n++)
 		{
-			for(int8 n=5;n<num_args+1;n++)
+			int32 new_item = lua_interface->GetInt32Value(state, n);
+			Item* tmpItem = master_item_list.GetItem(new_item);
+			if(tmpItem)
 			{
-				int32 new_item = lua_interface->GetInt32Value(state, n);
-				Item* tmpItem = master_item_list.GetItem(new_item);
-				if(tmpItem)
-					additionalItems.push_back(tmpItem);
+				Item* newTmpItem = new Item(tmpItem);
+				quest->AddTmpRewardItem(newTmpItem);
 			}
+			else
+				itemsAddedSuccessfully = false;
 		}
-		
-		packet->setArrayLengthByName("num_rewards", 1+additionalItems.size());
-
-		sint8 offset = 2; // all new clients
-
-		if (client->GetVersion() < 860)
-			offset = -1;
-		else if (client->GetVersion() < 1193)
-			offset = 0;
-
-		packet->setArrayDataByName("reward_id", item->details.item_id, 0);
-		packet->setItemArrayDataByName("item", item, (Player*)spawn, 0, 0, offset);
-
-		bool itemsAddedSuccessfully = true;
-
-		itemsAddedSuccessfully = client->AddItem(item_id, 1);
-		client->Message(CHANNEL_COLOR_YELLOW, "You receive %s.", item->CreateItemLink(client->GetVersion()).c_str());
-
-		for(int8 n=0;n<additionalItems.size();n++)
-		{
-			packet->setArrayDataByName("reward_id", additionalItems[n]->details.item_id, n+1);
-			packet->setItemArrayDataByName("item", additionalItems[n], (Player*)spawn, n+1, 0, offset);
-
-			// run until we hit a failure then don't update the boolean since its false
-			if(itemsAddedSuccessfully)
-				itemsAddedSuccessfully = client->AddItem(additionalItems[n]->details.item_id, 1);
-			else // we already failed to add an item somewhere
-				client->AddItem(additionalItems[n]->details.item_id, 1);
-			
-			client->Message(CHANNEL_COLOR_YELLOW, "You receive %s.", additionalItems[n]->CreateItemLink(client->GetVersion()).c_str());
-		}
-		
-		lua_interface->SetBooleanValue(state, itemsAddedSuccessfully);
-
-		client->QueuePacket(packet->serialize());
-		safe_delete(packet);
-		return 1;
 	}
-
-	lua_interface->SetBooleanValue(state, false);
+	client->AddPendingQuestAcceptReward(quest);
+	client->DisplayQuestComplete(quest, true, description);
+	
+	lua_interface->SetBooleanValue(state, itemsAddedSuccessfully);
 	return 1;
 }
 
@@ -8049,7 +8071,7 @@ int EQ2Emu_lua_SetItemCount(lua_State* state) {
 
 	((Player*)owner)->SendInventoryUpdate(client->GetVersion());
 
-	EQ2Packet* app = ((Player*)owner)->GetEquipmentList()->serialize(client->GetVersion());
+	EQ2Packet* app = ((Player*)owner)->GetEquipmentList()->serialize(client->GetVersion(), client->GetPlayer());
 	if (app)
 		client->QueuePacket(app);
 

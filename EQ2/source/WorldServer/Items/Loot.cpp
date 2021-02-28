@@ -431,7 +431,7 @@ NPC* Entity::DropChest() {
 	chest->SetShowName(1);
 	chest->SetTargetable(1);
 	chest->SetLevel(GetLevel());
-
+	chest->SetChestDropTime();
 	// Set the brain to a blank brain so it does nothing
 	chest->SetBrain(new BlankBrain(chest));
 	// Set the x, y, z, heading, location (grid id) to that of the dead spawn

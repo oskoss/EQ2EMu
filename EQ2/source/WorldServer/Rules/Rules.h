@@ -166,6 +166,10 @@ enum RuleType {
 	LootRadius,
 	AutoDisarmChest, // if enabled disarm only works if you right click and disarm, clicking and opening chest won't attempt auto disarm
 	ChestTriggerRadiusGroup,
+	ChestUnlockedTimeDrop,
+	AllowChestUnlockByDropTime,
+	ChestUnlockedTimeTrap,
+	AllowChestUnlockByTrapTime,
 	
 	/* SPELLS */
 	NoInterruptBaseChance,

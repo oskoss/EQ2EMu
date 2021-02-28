@@ -1086,6 +1086,7 @@ public:
 	Entity();
 	virtual ~Entity();
 
+	void DeleteSpellEffects();
 	void MapInfoStruct();
 	virtual float GetDodgeChance();
 	virtual void AddMaintainedSpell(LuaSpell* spell);
@@ -1157,6 +1158,7 @@ public:
 	MaintainedEffects* GetFreeMaintainedSpellSlot();
 	SpellEffects* GetFreeSpellEffectSlot();
 	SpellEffects* GetSpellEffect(int32 id, Entity* caster = 0);
+	SpellEffects* GetSpellEffectBySpellType(int8 spell_type);
 	SpellEffects* GetSpellEffectWithLinkedTimer(int32 id, int32 linked_timer = 0, sint32 type_group_spell_id = 0, Entity* caster = 0);
 	LuaSpell* HasLinkedTimerID(LuaSpell* spell, Spawn* target = nullptr,  bool stackWithOtherPlayers = true);
 

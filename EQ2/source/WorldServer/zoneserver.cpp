@@ -177,7 +177,6 @@ ZoneServer::~ZoneServer() {
 	LogWrite(ZONE__INFO, 0, "Zone", "Initiating zone shutdown of '%s'", zone_name);
 	changed_spawns.clear();
 	transport_spawns.clear();
-	safe_delete(spellProcess);
 	safe_delete(tradeskillMgr);
 	MMasterZoneLock->lock();
 	MMasterSpawnLock.writelock(__FUNCTION__, __LINE__);
@@ -208,6 +207,9 @@ ZoneServer::~ZoneServer() {
 	if (movementMgr != nullptr)
 		delete movementMgr;
 
+	// moved to the bottom as we want spawns deleted first, this used to be above Spawn deletion which is a big no no
+	safe_delete(spellProcess);
+	
 	LogWrite(ZONE__INFO, 0, "Zone", "Completed zone shutdown of '%s'", zone_name);
 	--numzones;
 	UpdateWindowTitle(0);
@@ -3299,6 +3301,8 @@ void ZoneServer::SendSpawn(Spawn* spawn, Client* client){
 	2 = update and new quest
 	3 = update
 	*/
+	if(spawn->IsEntity() && spawn->HasTrapTriggered())
+		client->QueueStateCommand(client->GetPlayer()->GetIDWithPlayerSpawn(spawn), spawn->GetTrapState());
 }
 
 Client*	ZoneServer::GetClientBySpawn(Spawn* spawn){
@@ -4220,7 +4224,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 			if(client) {
 
 				if(client->GetPlayer()->DamageEquippedItems(10, client))
-					client->QueuePacket(client->GetPlayer()->GetEquipmentList()->serialize(client->GetVersion()));
+					client->QueuePacket(client->GetPlayer()->GetEquipmentList()->serialize(client->GetVersion(), client->GetPlayer()));
 
 				client->DisplayDeadWindow();
 			}

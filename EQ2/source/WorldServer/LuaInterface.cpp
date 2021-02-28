@@ -750,6 +750,31 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 		spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(spell, false);
 		spell->caster->RemoveProc(0, spell);
 		spell->caster->RemoveMaintainedSpell(spell);
+
+		int8 spell_type = spell->spell->GetSpellData()->spell_type;
+		if(spell->caster->IsPlayer())
+		{
+			Player* player = (Player*)spell->caster;
+			switch(spell_type)
+			{
+				case SPELL_TYPE_FOOD:
+					if(player->get_character_flag(CF_FOOD_AUTO_CONSUME))
+					{
+						Item* item = player->GetEquipmentList()->GetItem(EQ2_FOOD_SLOT);
+						if(item && player->GetClient())
+							player->GetClient()->ConsumeFoodDrink(item, EQ2_FOOD_SLOT);
+					}
+				break;
+				case SPELL_TYPE_DRINK:
+					if(player->get_character_flag(CF_DRINK_AUTO_CONSUME))
+					{
+						Item* item = player->GetEquipmentList()->GetItem(EQ2_DRINK_SLOT);
+						if(item && player->GetClient())
+							player->GetClient()->ConsumeFoodDrink(item, EQ2_DRINK_SLOT);
+					}
+				break;
+			}
+		}
 	}
 }
 
@@ -980,6 +1005,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "AddQuestRewardCoin", EQ2Emu_lua_AddQuestRewardCoin);
 	lua_register(state, "AddQuestRewardFaction", EQ2Emu_lua_AddQuestRewardFaction);
 	lua_register(state, "SetQuestRewardStatus", EQ2Emu_lua_SetQuestRewardStatus);
+	lua_register(state, "SetStatusTmpReward", EQ2Emu_lua_SetStatusTmpReward);
+	lua_register(state, "SetCoinTmpReward", EQ2Emu_lua_SetCoinTmpReward);
 	lua_register(state, "SetQuestRewardComment", EQ2Emu_lua_SetQuestRewardComment);
 	lua_register(state, "SetQuestRewardExp", EQ2Emu_lua_SetQuestRewardExp);
 	lua_register(state, "AddQuestStepKill", EQ2Emu_lua_AddQuestStepKill);

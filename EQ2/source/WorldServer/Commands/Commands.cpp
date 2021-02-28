@@ -8284,7 +8284,10 @@ void Commands::Command_Toggle_AutoConsume(Client* client, Seperator* sep)
 			if (flag == 1)
 				client->Message(CHANNEL_NARRATIVE, "You decide to eat immediately whenever you become hungry.");
 			else
+			{
 				client->Message(CHANNEL_NARRATIVE, "You decide to ignore the hunger.");
+				return;
+			}
 		}
 		else
 		{
@@ -8294,8 +8297,20 @@ void Commands::Command_Toggle_AutoConsume(Client* client, Seperator* sep)
 			if (flag == 1)
 				client->Message(CHANNEL_NARRATIVE, "You decide to drink immediately whenever you become thirsty.");
 			else
+			{
 				client->Message(CHANNEL_NARRATIVE, "You decide to ignore the thirst.");
+				return;
+			}
 		}
+
+
+		if(slot == 22 && player->GetSpellEffectBySpellType(SPELL_TYPE_FOOD))
+			return;
+		else if (player->GetSpellEffectBySpellType(SPELL_TYPE_DRINK))
+			return;
+		Item* item = player->GetEquipmentList()->GetItem(slot);
+		if(item)
+			client->ConsumeFoodDrink(item, slot);
 	}
 }
 
@@ -10343,28 +10358,17 @@ void Commands::Command_ConsumeFood(Client* client, Seperator* sep) {
 		Player* player = client->GetPlayer();
 		int8 slot = atoi(sep->arg[0]);
 		Item* item = player->GetEquipmentList()->GetItem(slot);
-
-		if(item) {
-			LogWrite(MISC__INFO, 1, "Command", "ItemID: %u, ItemName: %s ItemCount: %i ", item->details.item_id, item->name.c_str(), item->details.count);
-			if(item->GetItemScript() && lua_interface){
-				lua_interface->RunItemScript(item->GetItemScript(), "cast", item, client->GetPlayer());
-				if (slot == 22)
-					client->Message(CHANNEL_NARRATIVE, "You eat a %s.", item->name.c_str());
-				else
-					client->Message(CHANNEL_NARRATIVE, "You drink a %s.", item->name.c_str());
-			}
+		if(slot == 22 && player->GetSpellEffectBySpellType(SPELL_TYPE_FOOD))
+		{
+			client->Message(CHANNEL_NARRATIVE, "If you ate anymore you would explode!");
+			return;
 		}
-
-		if (item->details.count > 1) {
-			item->details.count -= 1;
-			item->save_needed = true;
+		else if (player->GetSpellEffectBySpellType(SPELL_TYPE_DRINK))
+		{
+			client->Message(CHANNEL_NARRATIVE, "If you drank anymore you would explode!");
+			return;
 		}
-		else {
-			player->GetEquipmentList()->RemoveItem(slot, true);
-			database.DeleteItem(player->GetCharacterID(), item, "EQUIPPED");
-		}
-		client->GetPlayer()->SetCharSheetChanged(true);
-		client->QueuePacket(player->GetEquipmentList()->serialize(client->GetVersion(), player));
+		client->ConsumeFoodDrink(item, slot);
 	}
 }
 

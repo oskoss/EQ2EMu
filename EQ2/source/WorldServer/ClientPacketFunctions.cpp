@@ -383,7 +383,7 @@ void ClientPacketFunctions::SendZoneChange(Client* client, char* zone_ip, int16 
 }
 
 void ClientPacketFunctions::SendStateCommand(Client* client, int32 spawn_id, int32 state) {
-	if (!client) {
+	if (!client || !spawn_id) {
 		return;
 	}
 

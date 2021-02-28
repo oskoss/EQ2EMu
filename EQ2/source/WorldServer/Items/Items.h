@@ -1080,7 +1080,7 @@ public:
 	int8	GetFreeSlot(Item* tmp, int8 slot_id = 255);
 	int8	GetSlotByItem(Item* item);
 	ItemStatsValues*	CalculateEquipmentBonuses(Entity* entity = 0);
-	EQ2Packet* serialize(int16 version, Player* player = 0);
+	EQ2Packet* serialize(int16 version, Player* player);
 	uchar* xor_packet;
 	uchar* orig_packet;
 private:

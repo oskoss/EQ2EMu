@@ -1821,8 +1821,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 				lua_interface->RunItemScript(item->GetItemScript(), "equipped", to_item, this);
 
 			item_list.RemoveItem(to_item);
-			slot = item->details.slot_id;
-			equipment_list.SetItem(slot, to_item);
+			equipment_list.SetItem(item->details.slot_id, to_item);
 			to_item->save_needed = true;
 			packets.push_back(to_item->serialize(version, false));
 			SetEquipment(to_item);
@@ -1831,7 +1830,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 			item_list.AddItem(item);
 			item->save_needed = true;
 			packets.push_back(item->serialize(version, false));
-			packets.push_back(equipment_list.serialize(version));
+			packets.push_back(equipment_list.serialize(version, this));
 			packets.push_back(item_list.serialize(this, version));
 		}
 		else if (to_item && to_item->IsBag() && to_item->details.num_slots > 0) {
@@ -1849,7 +1848,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 					item->details.slot_id = i;
 					item_list.AddItem(item);
 					item->save_needed = true;
-					packets.push_back(equipment_list.serialize(version));
+					packets.push_back(equipment_list.serialize(version, this));
 					packets.push_back(item->serialize(version, false));
 					packets.push_back(to_item->serialize(version, false, this));
 					packets.push_back(item_list.serialize(this, version));
@@ -1902,7 +1901,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 					item->details.slot_id = slot;
 					item_list.AddItem(item);
 					item->save_needed = true;
-					packets.push_back(equipment_list.serialize(version));
+					packets.push_back(equipment_list.serialize(version, this));
 					packets.push_back(item->serialize(version, false));
 					packets.push_back(item_list.serialize(this, version));
 				}
@@ -1921,7 +1920,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 					item->details.slot_id = slot;
 					item_list.AddItem(item);
 					item->save_needed = true;
-					packets.push_back(equipment_list.serialize(version));
+					packets.push_back(equipment_list.serialize(version, this));
 					packets.push_back(item->serialize(version, false));
 					packets.push_back(item_list.serialize(this, version));
 				}
@@ -1973,7 +1972,7 @@ EQ2Packet* Player::SwapEquippedItems(int8 slot1, int8 slot2, int16 version){
 		}
 		item_from->save_needed = true;
 		item_from->details.slot_id = slot2;
-		return equipment_list.serialize(version);
+		return equipment_list.serialize(version, this);
 	}
 	return 0;
 }
@@ -3643,13 +3642,13 @@ void Player::toggle_character_flag(int flag){
 	if (flag > CF_MAXIMUM_FLAG) return;
 	if (flag < 32)
 	{
-		int8 origflag = GetInfoStruct()->get_flags();
-		GetInfoStruct()->set_flags(origflag ^= ~(1 << flag));
+		int32 origflag = GetInfoStruct()->get_flags();
+		GetInfoStruct()->set_flags(origflag ^= (1 << flag));
 	}
 	else
 	{
-		int8 flag2 = GetInfoStruct()->get_flags2();
-		GetInfoStruct()->set_flags2(flag2  ^= ~(1 << (flag - 32)));
+		int32 flag2 = GetInfoStruct()->get_flags2();
+		GetInfoStruct()->set_flags2(flag2  ^= (1 << (flag - 32)));
 	}
 	charsheet_changed = true;
 	info_changed = true;
@@ -4248,6 +4247,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 					packet->setArrayDataByName("turned_in", 1, i);
 					packet->setArrayDataByName("completed", 1, i);
 					packet->setArrayDataByName("visible", 1, i);
+					packet->setArrayDataByName("unknown3", 1, i);
 					display_status += QUEST_DISPLAY_STATUS_COMPLETED;					
 				}
 				if (updated) {
@@ -4341,7 +4341,8 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 			packet->setArrayDataByName("completed", 1);
 		if(quest->GetTurnedIn()) {
 			packet->setArrayDataByName("turned_in", 1);
-			packet->setArrayDataByName("completed", 1);			
+			packet->setArrayDataByName("completed", 1);
+			packet->setArrayDataByName("visible", 1);	
 			display_status += QUEST_DISPLAY_STATUS_COMPLETED;
 		}		
 		packet->setArrayDataByName("quest_id", quest->GetQuestID());
@@ -4391,7 +4392,9 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 		if (updated) {
 			packet->setArrayDataByName("quest_updated", 1);
 			packet->setArrayDataByName("journal_updated", 1);
-		}
+		}		
+		if(version >= 546)
+			packet->setDataByName("unknown3", 1);
 		packet->setDataByName("visible_quest_id", quest->GetQuestID());
 		packet->setDataByName("player_crc", crc);
 		packet->setDataByName("player_name", GetName());

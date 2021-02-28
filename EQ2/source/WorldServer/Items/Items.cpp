@@ -2716,7 +2716,8 @@ void PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 			Item* bag = GetItemFromUniqueID(item->details.inv_slot_id, true);
 			if(bag && bag->IsBag()){
 				if(item->details.slot_id > bag->details.num_slots){
-					LogWrite(ITEM__ERROR, 0, "Item", "Error Adding Item: Invalid slot for item unique id: %u", item->details.unique_id);
+					LogWrite(ITEM__ERROR, 0, "Item", "Error Adding Item: Invalid slot for item unique id: %u (%s - %i), InvSlotID: %u, slotid: %u, numslots: %u", item->details.unique_id, item->name.c_str(), 
+					item->details.item_id, item->details.inv_slot_id, item->details.slot_id, bag->details.num_slots);
 					safe_delete(item);
 					return;
 				}
@@ -3739,9 +3740,14 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 							menu_data += ORIG_ITEM_MENU_TYPE_FOOD;
 					}
 					else {
-						menu_data += ITEM_MENU_TYPE_CONSUME;
+							menu_data += ITEM_MENU_TYPE_CONSUME;
 						if (player && ((item->IsFoodFood() && player->get_character_flag(CF_FOOD_AUTO_CONSUME)) || (item->IsFoodDrink() && player->get_character_flag(CF_DRINK_AUTO_CONSUME))))
+						{
+							// needs all 3 to display 'auto consume' off option as well as set the yellowish tint in the background
 							menu_data += ITEM_MENU_TYPE_CONSUME_OFF;
+							menu_data += ORIG_ITEM_MENU_TYPE_DRINK;
+							menu_data += ORIG_ITEM_MENU_TYPE_FOOD;
+						}
 					}
 				}
 				packet->setSubstructArrayDataByName("items", "unique_id", item->details.unique_id, 0, i);

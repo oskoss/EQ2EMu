@@ -843,8 +843,25 @@ public:
 	bool HasTrapTriggered() {
 		return trap_triggered;
 	}
-	void SetTrapTriggered(bool triggered) {
+	int32 GetTrapState() {
+		return trap_state;
+	}
+	void SetChestDropTime() {
+		chest_drop_time = Timer::GetCurrentTime2();
+		trap_opened_time = 0;
+	}
+	void SetTrapTriggered(bool triggered, int32 state) {
+		if(!trap_triggered && triggered)
+			trap_opened_time = Timer::GetCurrentTime2();
+		
 		trap_triggered = triggered;
+		trap_state = state;
+	}
+	int32 GetChestDropTime() {
+		return chest_drop_time;
+	}
+	int32 GetTrapOpenedTime() {
+		return trap_opened_time;
 	}
 	void AddLootItem(int32 id, int16 charges = 1) {
 		Item* master_item = master_item_list.GetItem(id);
@@ -1227,6 +1244,9 @@ private:
 	vector<Item*>	loot_items;
 	int32			loot_coins;
 	bool			trap_triggered;
+	int32			trap_state;
+	int32			chest_drop_time;
+	int32			trap_opened_time;
 	deque<MovementLocation*>* movement_locations;
 	Mutex			MLootItems;
 	Mutex*			MMovementLocations;

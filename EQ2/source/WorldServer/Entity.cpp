@@ -30,6 +30,7 @@
 #include "ClientPacketFunctions.h"
 #include "Skills.h"
 #include "Rules/Rules.h"
+#include "LuaInterface.h"
 
 extern World world;
 extern MasterItemList master_item_list;
@@ -37,6 +38,7 @@ extern MasterSpellList master_spell_list;
 extern MasterSkillList master_skill_list;
 extern RuleManager rule_manager;
 extern Classes classes;
+extern LuaInterface* lua_interface;
 
 Entity::Entity(){
 	MapInfoStruct();	
@@ -103,6 +105,35 @@ Entity::~Entity(){
 	for (itr4 = immunities.begin(); itr4 != immunities.end(); itr4++)
 		safe_delete(itr4->second);
 	immunities.clear();
+	DeleteSpellEffects();
+}
+
+void Entity::DeleteSpellEffects()
+{
+	map<LuaSpell*,bool> deletedPtrs;
+
+	for(int i=0;i<45;i++){
+		if(i<30){
+			if(GetInfoStruct()->maintained_effects[i].spell_id != 0xFFFFFFFF)
+			{
+				lua_interface->RemoveSpell(GetInfoStruct()->maintained_effects[i].spell);
+				if (IsPlayer())
+					GetInfoStruct()->maintained_effects[i].icon = 0xFFFF;
+
+				deletedPtrs[GetInfoStruct()->maintained_effects[i].spell] = true;
+				GetInfoStruct()->maintained_effects[i].spell = nullptr;
+			}
+		}
+		if(GetInfoStruct()->spell_effects[i].spell_id != 0xFFFFFFFF)
+		{
+			if(deletedPtrs.find(GetInfoStruct()->spell_effects[i].spell) == deletedPtrs.end())
+			{
+				lua_interface->RemoveSpell(GetInfoStruct()->spell_effects[i].spell);
+				deletedPtrs[GetInfoStruct()->spell_effects[i].spell] = true;
+				GetInfoStruct()->spell_effects[i].spell = nullptr;
+			}
+		}
+	}
 }
 
 void Entity::MapInfoStruct()
@@ -925,6 +956,20 @@ SpellEffects* Entity::GetSpellEffect(int32 id, Entity* caster) {
 				ret = &info->spell_effects[i];
 				break;
 			}
+		}
+	}
+	MSpellEffects.releasereadlock(__FUNCTION__, __LINE__);
+	return ret;
+}
+
+SpellEffects* Entity::GetSpellEffectBySpellType(int8 spell_type) {
+	SpellEffects* ret = 0;
+	InfoStruct* info = GetInfoStruct();
+	MSpellEffects.readlock(__FUNCTION__, __LINE__);
+	for(int i = 0; i < 45; i++) {
+		if(info->spell_effects[i].spell_id != 0xFFFFFFFF && info->spell_effects[i].spell->spell->GetSpellData()->spell_type == spell_type) {
+			ret = &info->spell_effects[i];
+			break;
 		}
 	}
 	MSpellEffects.releasereadlock(__FUNCTION__, __LINE__);

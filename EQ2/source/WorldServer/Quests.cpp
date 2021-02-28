@@ -40,7 +40,26 @@ QuestStep::QuestStep(int32 in_id, int8 in_type, string in_description, vector<in
 	ids = in_ids;
 	if(in_task_group)
 		task_group = string(in_task_group);
-	locations = in_locations;
+	if(type != QUEST_STEP_TYPE_LOCATION) {
+		locations = 0;
+		if (in_ids){
+			in_ids = new vector<int32>;
+			for(int32 i=0;i<in_ids->size();i++)
+				ids->push_back(in_ids->at(i));
+		}
+		else
+			ids = 0;
+	}
+	else { // location step
+		ids = 0;
+		if (in_locations) {
+			locations = new vector<Location>;
+			for(int32 i=0; i < in_locations->size(); i++)
+				locations->push_back(in_locations->at(i));
+		}
+		else
+			locations = 0;
+	}
 	max_variation = in_max_variation;
 	quantity = in_quantity;
 	step_progress = 0;
@@ -58,6 +77,8 @@ QuestStep::QuestStep(QuestStep* old_step){
 	quantity = old_step->quantity;
 	max_variation = old_step->max_variation;
 	step_progress = 0;
+	ids = 0;
+	locations = 0;
 	if(type != QUEST_STEP_TYPE_LOCATION) {
 		locations = 0;
 		if (old_step->ids){
@@ -318,6 +339,9 @@ Quest::Quest(int32 in_id){
 	MCompletedActions.SetName("Quest::MCompletedActions");
 	MProgressActions.SetName("Quest::MProgressActions");
 	MFailedActions.SetName("Quest::failed_Actions");
+	quest_state_temporary = false;
+	tmp_reward_status = 0;
+	tmp_reward_coins = 0;
 }
 
 Quest::Quest(Quest* old_quest){
@@ -388,6 +412,9 @@ Quest::Quest(Quest* old_quest){
 	MQuestSteps.SetName("Quest::MQuestSteps");
 	MProgressActions.SetName("Quest::MProgressActions");
 	MCompletedActions.SetName("Quest::MCompletedActions");
+	quest_state_temporary = false;
+	tmp_reward_status = 0;
+	tmp_reward_coins = 0;
 }
 
 Quest::~Quest(){
@@ -397,6 +424,8 @@ Quest::~Quest(){
 		safe_delete(prereq_items[i]);
 	for(int32 i=0;i<reward_items.size();i++)
 		safe_delete(reward_items[i]);
+	for(int32 i=0;i<tmp_reward_items.size();i++)
+		safe_delete(tmp_reward_items[i]);
 	for(int32 i=0;i<selectable_reward_items.size();i++)
 		safe_delete(selectable_reward_items[i]);
 	quest_step_map.clear();
@@ -1456,6 +1485,10 @@ void Quest::AddRewardItem(Item* item){
 	reward_items.push_back(item);
 }
 
+void Quest::AddTmpRewardItem(Item* item){
+	tmp_reward_items.push_back(item);
+}
+
 void Quest::AddRewardCoins(int32 copper, int32 silver, int32 gold, int32 plat){
 	reward_coins = copper + (silver*100) + (gold*10000) + ((int64)plat*1000000);
 }
@@ -1518,6 +1551,10 @@ vector<Item*>* Quest::GetPrereqItems(){
 
 vector<Item*>* Quest::GetRewardItems(){
 	return &reward_items;
+}
+
+vector<Item*>* Quest::GetTmpRewardItems(){
+	return &tmp_reward_items;
 }
 
 vector<Item*>* Quest::GetSelectableRewardItems(){
@@ -1679,7 +1716,9 @@ int32 Quest::GetExpReward(){
 void Quest::GiveQuestReward(Player* player){
 	if(reward_coins > 0)
 		player->AddCoins(reward_coins);
-	reward_items.clear();
+
+	if(!GetQuestTemporaryState())
+		reward_items.clear();
 }
 
 bool Quest::GetDeleted(){
@@ -1753,4 +1792,21 @@ void MasterQuestList::LockQuests(){
 
 void MasterQuestList::UnlockQuests(){
 	MQuests.unlock();
+}
+
+void Quest::SetQuestTemporaryState(bool tempState, std::string customDescription)
+{
+	if(!tempState)
+	{
+		tmp_reward_coins = 0;
+		tmp_reward_status = 0;
+		
+		for(int32 i=0;i<tmp_reward_items.size();i++)
+			safe_delete(tmp_reward_items[i]);
+
+		tmp_reward_items.clear();
+	}
+
+	quest_state_temporary = tempState;
+	quest_temporary_description = customDescription;
 }

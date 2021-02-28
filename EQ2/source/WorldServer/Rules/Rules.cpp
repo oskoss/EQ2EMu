@@ -318,6 +318,10 @@ void RuleManager::Init()
 	RULE_INIT(R_Loot, LootRadius, "5.0");
 	RULE_INIT(R_Loot, AutoDisarmChest, "1");
 	RULE_INIT(R_Loot, ChestTriggerRadiusGroup, "10.0"); // radius at which chest will trigger against group members
+	RULE_INIT(R_Loot, ChestUnlockedTimeDrop, "1200"); // time in seconds, 20 minutes by default, triggers only if AllowChestUnlockByDropTime is 1
+	RULE_INIT(R_Loot, AllowChestUnlockByDropTime, "1"); // when set to 1 we will start a countdown timer to allow anyone to loot once ChestUnlockedTimeDrop elapsed
+	RULE_INIT(R_Loot, ChestUnlockedTimeTrap, "600"); // time in seconds, 10 minutes by default
+	RULE_INIT(R_Loot, AllowChestUnlockByTrapTime, "1"); // when set to 1 we will allow unlocking the chest to all players after the trap is triggered (or chest is open) and period ChestUnlockedTimeTrap elapsed
 
 	RULE_INIT(R_Spells, NoInterruptBaseChance, "50");
 

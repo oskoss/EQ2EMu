@@ -200,6 +200,8 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	regionDebugMessaging = false;
 	client_reloading_zone = false;
 	last_saved_timestamp = 0;
+	MQueueStateCmds.SetName("Client::MQueueStateCmds");
+	MConversation.SetName("Client::MConversation");
 }
 
 Client::~Client() {
@@ -714,7 +716,7 @@ void Client::SendCharInfo() {
 		//DumpPacket(app);
 		QueuePacket(app);
 	}
-	app = player->GetEquipmentList()->serialize(GetVersion());
+	app = player->GetEquipmentList()->serialize(GetVersion(), player);
 	if (app) {
 		QueuePacket(app);
 	}
@@ -1003,6 +1005,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SysClient", opcode, opcode);
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
 		SetReadyForUpdates();
+		ProcessStateCommands();
 		break;
 	}
 	case OP_MapRequest: {
@@ -1209,13 +1212,17 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			int32 conversation_id = packet->getType_int32_ByName("conversation_id");
 			int32 response_index = packet->getType_int32_ByName("response");
 			if (GetCurrentZone()) {
+				MConversation.readlock();
 				Spawn* spawn = conversation_spawns[conversation_id];
 				Item* item = conversation_items[conversation_id];
+				MConversation.releasereadlock();
 				if (conversation_map.count(conversation_id) > 0 && conversation_map[conversation_id].count(response_index) > 0) {
 					if (spawn)
 						GetCurrentZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_CONVERSATION, player, conversation_map[conversation_id][response_index].c_str());
 					else if (item && lua_interface && item->GetItemScript())
 						lua_interface->RunItemScript(item->GetItemScript(), conversation_map[conversation_id][response_index].c_str(), item, player);
+					else
+						CloseDialog(conversation_id);
 				}
 				else
 					CloseDialog(conversation_id);
@@ -2914,6 +2921,8 @@ bool Client::Process(bool zone_process) {
 	}
 	if (pos_update.Check())
 	{
+		ProcessStateCommands();
+
 		if(GetPlayer()->GetRegionMap())
 			GetPlayer()->GetRegionMap()->TicRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
 		
@@ -4842,7 +4851,7 @@ void Client::OpenChest(Spawn* entity, bool attemptDisarm)
 
 		Skill* disarmSkill = GetPlayer()->GetSkillByName("Disarm Trap", false);
 		firstChestOpen = true;
-		entity->SetTrapTriggered(true);
+		entity->SetTrapTriggered(true, state);
 		if (ret)
 		{
 			if (disarmSkill && attemptDisarm)
@@ -4872,17 +4881,15 @@ void Client::OpenChest(Spawn* entity, bool attemptDisarm)
 	else if (!entity->HasTrapTriggered())
 	{
 		firstChestOpen = true;
-		entity->SetTrapTriggered(true);
+		entity->SetTrapTriggered(true, state);
 	}
 
 	// We set the visual state with out updating so those not in range will see it opened when it is finally sent to them,
 	// for those in range the SendStateCommand will cause it to animate open.
 
-	// TODO: when player enters radius that does not have visual state, update visual state
+	// players not currently in radius will have it queued with client->QueueStateCommand when SendSpawn takes place
 	if (firstChestOpen)
-		entity->SetVisualState(state, false);
-
-	GetCurrentZone()->SendStateCommand(entity, state);
+		GetCurrentZone()->SendStateCommand(entity, state);
 }
 
 void Client::CastGroupOrSelf(Entity* source, uint32 spellID, uint32 spellTier, float restrictiveRadius)
@@ -5129,10 +5136,17 @@ void Client::BankDeposit(int64 amount) {
 
 }
 
-void Client::AddPendingQuestReward(Quest* quest) {
+void Client::AddPendingQuestAcceptReward(Quest* quest)
+{
+	MPendingQuestAccept.lock();
+	pending_quest_accept.push_back(quest);
+	MPendingQuestAccept.unlock();
+}
+
+void Client::AddPendingQuestReward(Quest* quest, bool update) {
 	MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
 	quest_pending_reward.push_back(quest);
-	quest_updates = true;
+	quest_updates = update;
 	MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
 
 }
@@ -5162,6 +5176,10 @@ void Client::ProcessQuestUpdates() {
 				}
 				else
 					AddStepProgress(quest_itr->first, step_itr->first, step_itr->second);
+				
+				Quest* tmpQuest = GetPlayer()->GetQuest(quest_itr->first);
+				if(tmpQuest)
+					SendQuestJournalUpdate(tmpQuest);
 			}
 		}
 	}
@@ -5465,18 +5483,22 @@ void Client::SendQuestUpdate(Quest* quest) {
 		for (int32 i = 0; i < updates->size(); i++) {
 			step = updates->at(i);
 			if (lua_interface && step->Complete() && quest->GetCompleteAction(step->GetStepID()))
+			{
 				lua_interface->CallQuestFunction(quest, quest->GetCompleteAction(step->GetStepID()), player);
+				SendQuestUpdateStep(quest, step->GetStepID());
+			}
 			if (step->WasUpdated()) {
 				// reversing the order of SendQuestJournal and QueuePacket QuestJournalReply causes AoM client to crash!
 				SendQuestJournal(false, 0, true);
 				QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player, step));
+				updated = true;
 			}
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 
 		}
 		if (lua_interface && quest->GetCompleted() && quest->GetCompleteAction()) {
 			lua_interface->CallQuestFunction(quest, quest->GetCompleteAction(), player);
-			SendQuestJournalUpdate(quest, false);
+			SendQuestJournalUpdate(quest, true);
 		}
 		if (quest->GetCompleted()) {
 			if (quest->GetQuestReturnNPC() > 0)
@@ -5531,7 +5553,11 @@ Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
 	MPendingQuestAccept.lock();
 	for (itr = pending_quest_accept.begin(); itr != pending_quest_accept.end(); itr++) {
 		quest = *itr;
-		items = quest->GetRewardItems();
+
+		if(quest->GetQuestTemporaryState())
+			items = quest->GetTmpRewardItems();
+		else
+			items = quest->GetRewardItems();
 		if (item_id == 0 && items && items->size() > 0) {
 			found_quest = true;
 		}
@@ -5566,12 +5592,40 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 		num_slots_needed++;
 		master_item = master_item_list.GetItem(item_id);
 	}
-	vector<Item*>* items = quest->GetRewardItems();
-	if (items && items->size() > 0)
-		num_slots_needed += items->size();
-	if (free_slots >= num_slots_needed || (player->item_list.HasFreeBagSlot() && master_item && master_item->IsBag() && master_item->bag_info->num_slots >= items->size())) {
+
+	int32 totalItems = 0;
+
+	vector<Item*>* items = 0;
+	vector<Item*>* tmpItems = 0;
+	
+	bool isTempState = quest->GetQuestTemporaryState();
+	
+	if(isTempState)
+	{
+		tmpItems = quest->GetTmpRewardItems();
+		if (tmpItems && tmpItems->size() > 0)
+		{
+			num_slots_needed += tmpItems->size();
+			totalItems += tmpItems->size();
+		}
+	}
+	else
+	{
+		items = quest->GetRewardItems();
+		if (items && items->size() > 0)
+		{
+			num_slots_needed += items->size();
+			totalItems += items->size();
+		}
+	}
+
+	if (free_slots >= num_slots_needed || (player->item_list.HasFreeBagSlot() && master_item && master_item->IsBag() && master_item->bag_info->num_slots >= totalItems)) {
 		if (master_item)
 			AddItem(item_id);
+		if (tmpItems && tmpItems->size() > 0) {
+			for (int32 i = 0; i < tmpItems->size(); i++)
+				AddItem(new Item(tmpItems->at(i)));
+		}
 		if (items && items->size() > 0) {
 			for (int32 i = 0; i < items->size(); i++)
 				AddItem(new Item(items->at(i)));
@@ -5589,17 +5643,31 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 			else
 				player->GetFactions()->DecreaseFaction(faction_id, (amount * -1));
 		}
-		if (player->GetGuild()) {
-			player->GetInfoStruct()->add_status_points(quest->GetStatusPoints());
-			player->SetCharSheetChanged(true);
+
+		player->GetInfoStruct()->add_status_points(quest->GetStatusPoints());
+		player->SetCharSheetChanged(true);
+		
+		if(quest->GetQuestTemporaryState())
+		{
+			int64 total_coins = quest->GetCoinTmpReward();
+			if (total_coins > 0)
+				AwardCoins(total_coins, std::string("for completing ").append(quest->GetName()));
+
+			player->GetInfoStruct()->add_status_points(quest->GetStatusTmpReward());
+			
+			quest->SetQuestTemporaryState(false);
 		}
+		else
+			player->GetInfoStruct()->add_status_points(quest->GetStatusPoints());
+		
+		player->SetCharSheetChanged(true);
 	}
 	else {
 		MPendingQuestAccept.lock();
 		pending_quest_accept.push_back(quest);
 		MPendingQuestAccept.unlock();
 		SimpleMessage(CHANNEL_COLOR_RED, "You do not have enough free slots!  Free some slots and try again.");
-		DisplayQuestComplete(quest);
+		DisplayQuestComplete(quest, quest->GetQuestTemporaryState(), quest->GetQuestTemporaryDescription());
 	}
 
 }
@@ -5699,9 +5767,14 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 	}
 }
 
-void Client::DisplayQuestComplete(Quest* quest) {	
+void Client::DisplayQuestComplete(Quest* quest, bool tempReward, std::string customDescription) {	
 	if (!quest)
 		return;
+	
+	quest->SetQuestTemporaryState(tempReward, customDescription);
+	
+	AddPendingQuestAcceptReward(quest);
+	
 	if (GetVersion() <= 546) {
 		DisplayQuestRewards(quest, 0, quest->GetRewardItems(), quest->GetSelectableRewardItems(), quest->GetRewardFactions(), "Quest Complete!", quest->GetStatusPoints());
 		return;
@@ -5710,7 +5783,13 @@ void Client::DisplayQuestComplete(Quest* quest) {
 	if (packet) {
 		packet->setDataByName("title", "Quest Reward!");
 		packet->setDataByName("name", quest->GetName());
-		packet->setDataByName("description", quest->GetDescription());
+		if(customDescription.size() > 0)
+		{
+			packet->setDataByName("description", customDescription.c_str());
+		}
+		else
+			packet->setDataByName("description", quest->GetDescription());
+		
 		packet->setDataByName("level", quest->GetLevel());
 		packet->setDataByName("encounter_level", quest->GetEncounterLevel());
 		int8 difficulty = 0;
@@ -5719,57 +5798,88 @@ void Client::DisplayQuestComplete(Quest* quest) {
 		else
 			difficulty = player->GetArrowColor(quest->GetLevel());
 		packet->setDataByName("difficulty", difficulty);
-		int64 rewarded_coin = 0;
-		if (quest->GetCoinsReward() > 0) {
-			if (quest->GetCoinsRewardMax() > 0)
-				rewarded_coin = MakeRandomInt(quest->GetCoinsReward(), quest->GetCoinsRewardMax());
-			else
-				rewarded_coin = quest->GetCoinsReward();
+
+		if(tempReward)
+		{
+			packet->setDataByName("max_coin", quest->GetCoinTmpReward());
+			packet->setDataByName("min_coin", quest->GetCoinTmpReward());
+			packet->setDataByName("status_points", quest->GetStatusPoints());
 		}
-		quest->SetGeneratedCoin(rewarded_coin);
-		packet->setDataByName("max_coin", rewarded_coin);
-		packet->setDataByName("min_coin", rewarded_coin);
-		packet->setDataByName("status_points", quest->GetStatusPoints());
-		vector<Item*>* items2 = quest->GetSelectableRewardItems();
-		vector<Item*>* items = quest->GetRewardItems();
-		if (items) {
-			packet->setArrayLengthByName("num_rewards", items->size());
-			for (int32 i = 0; i < items->size(); i++) {
-				packet->setArrayDataByName("reward_id", items->at(i)->details.item_id, i);
-				if (version < 860)
-					packet->setItemArrayDataByName("item", items->at(i), player, i, 0, -1);
-				else if (version < 1193)
-					packet->setItemArrayDataByName("item", items->at(i), player, i);
+		else
+		{
+			int64 rewarded_coin = 0;
+			if (quest->GetCoinsReward() > 0) {
+				if (quest->GetCoinsRewardMax() > 0)
+					rewarded_coin = MakeRandomInt(quest->GetCoinsReward(), quest->GetCoinsRewardMax());
 				else
-					packet->setItemArrayDataByName("item", items->at(i), player, i, 0, 2);
+					rewarded_coin = quest->GetCoinsReward();
 			}
+			quest->SetGeneratedCoin(rewarded_coin);
+			packet->setDataByName("max_coin", rewarded_coin);
+			packet->setDataByName("min_coin", rewarded_coin);
+			packet->setDataByName("status_points", quest->GetStatusPoints());
 		}
-		if (items2 && items2->size() > 0) {
-			packet->setArrayLengthByName("num_select_rewards", items2->size());
-			for (int32 i = 0; i < items2->size(); i++) {
-				packet->setArrayDataByName("select_reward_id", items2->at(i)->details.item_id, i);
-				if (version < 860)
-					packet->setItemArrayDataByName("select_item", items2->at(i), player, i, 0, -1);
-				else if (version < 1193)
-					packet->setItemArrayDataByName("select_item", items2->at(i), player, i);
-				else
-					packet->setItemArrayDataByName("select_item", items2->at(i), player, i, 0, 2);
-			}
-		}
-		map<int32, sint32>* reward_factions = quest->GetRewardFactions();
-		if (reward_factions && reward_factions->size() > 0) {
-			packet->setArrayLengthByName("num_factions", reward_factions->size());
-			map<int32, sint32>::iterator itr;
-			int16 index = 0;
-			for (itr = reward_factions->begin(); itr != reward_factions->end(); itr++) {
-				int32 faction_id = itr->first;
-				sint32 amount = itr->second;
-				const char* faction_name = master_faction_list.GetFactionNameByID(faction_id);
-				if (faction_name) {
-					packet->setArrayDataByName("faction_name", const_cast<char*>(faction_name), index);
-					packet->setArrayDataByName("amount", amount, index);
+
+		vector<Item*>* items = quest->GetTmpRewardItems();
+
+		if(tempReward)
+		{
+			if (items) {
+				packet->setArrayLengthByName("num_rewards", items->size());
+				for (int32 i = 0; i < items->size(); i++) {
+					packet->setArrayDataByName("reward_id", items->at(i)->details.item_id, i);
+					if (version < 860)
+						packet->setItemArrayDataByName("item", items->at(i), player, i, 0, -1);
+					else if (version < 1193)
+						packet->setItemArrayDataByName("item", items->at(i), player, i);
+					else
+						packet->setItemArrayDataByName("item", items->at(i), player, i, 0, 2);
 				}
-				index++;
+			}
+		}
+		else
+		{
+			vector<Item*>* items2 = quest->GetSelectableRewardItems();
+			vector<Item*>* items = quest->GetRewardItems();
+			if (items) {
+				packet->setArrayLengthByName("num_rewards", items->size());
+				for (int32 i = 0; i < items->size(); i++) {
+					packet->setArrayDataByName("reward_id", items->at(i)->details.item_id, i);
+					if (version < 860)
+						packet->setItemArrayDataByName("item", items->at(i), player, i, 0, -1);
+					else if (version < 1193)
+						packet->setItemArrayDataByName("item", items->at(i), player, i);
+					else
+						packet->setItemArrayDataByName("item", items->at(i), player, i, 0, 2);
+				}
+			}
+			if (items2 && items2->size() > 0) {
+				packet->setArrayLengthByName("num_select_rewards", items2->size());
+				for (int32 i = 0; i < items2->size(); i++) {
+					packet->setArrayDataByName("select_reward_id", items2->at(i)->details.item_id, i);
+					if (version < 860)
+						packet->setItemArrayDataByName("select_item", items2->at(i), player, i, 0, -1);
+					else if (version < 1193)
+						packet->setItemArrayDataByName("select_item", items2->at(i), player, i);
+					else
+						packet->setItemArrayDataByName("select_item", items2->at(i), player, i, 0, 2);
+				}
+			}
+			map<int32, sint32>* reward_factions = quest->GetRewardFactions();
+			if (reward_factions && reward_factions->size() > 0) {
+				packet->setArrayLengthByName("num_factions", reward_factions->size());
+				map<int32, sint32>::iterator itr;
+				int16 index = 0;
+				for (itr = reward_factions->begin(); itr != reward_factions->end(); itr++) {
+					int32 faction_id = itr->first;
+					sint32 amount = itr->second;
+					const char* faction_name = master_faction_list.GetFactionNameByID(faction_id);
+					if (faction_name) {
+						packet->setArrayDataByName("faction_name", const_cast<char*>(faction_name), index);
+						packet->setArrayDataByName("amount", amount, index);
+					}
+					index++;
+				}
 			}
 		}
 		EQ2Packet* outapp = packet->serialize();
@@ -5841,16 +5951,20 @@ void Client::DisplayRandomizeFeatures(int32 flags) {
 
 void Client::GiveQuestReward(Quest* quest) {
 	current_quest_id = 0;
-	MPendingQuestAccept.lock();
-	pending_quest_accept.push_back(quest);
-	MPendingQuestAccept.unlock();
 
-	quest->IncrementCompleteCount();
-	player->AddCompletedQuest(quest);
+	if(!quest->GetQuestTemporaryState())
+	{
+		quest->IncrementCompleteCount();
+		player->AddCompletedQuest(quest);
+	}
 	
-	DisplayQuestComplete(quest);
+	DisplayQuestComplete(quest, quest->GetQuestTemporaryState(), quest->GetQuestTemporaryDescription());
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 	SendQuestJournal();
+	
+	if(quest->GetQuestTemporaryState())
+		return;
+	
 	player->RemoveQuest(quest->GetQuestID(), false);
 	if (quest->GetExpReward() > 0) {
 		int16 level = player->GetLevel();
@@ -5873,43 +5987,12 @@ void Client::GiveQuestReward(Quest* quest) {
 		}
 	}
 	int64 total_coins = quest->GetGeneratedCoin();
-	if (total_coins > 0) {
-		player->AddCoins(total_coins);
-		PlaySound("coin_cha_ching");
-		char tmp[64] = { 0 };
-		string message = "You receive ";
-		int32 val = 0;
-		if (total_coins >= 1000000) {
-			val = total_coins / 1000000;
-			total_coins -= 1000000 * val;
-			sprintf(tmp, "%u Platinum ", val);
-			message.append(tmp);
-			memset(tmp, 0, 64);
-		}
-		if (total_coins >= 10000) {
-			val = total_coins / 10000;
-			total_coins -= 10000 * val;
-			sprintf(tmp, "%u Gold ", val);
-			message.append(tmp);
-			memset(tmp, 0, 64);
-		}
-		if (total_coins >= 100) {
-			val = total_coins / 100;
-			total_coins -= 100 * val;
-			sprintf(tmp, "%u Silver ", val);
-			message.append(tmp);
-			memset(tmp, 0, 64);
-		}
-		if (total_coins > 0) {
-			sprintf(tmp, "%u Copper ", (int32)total_coins);
-			message.append(tmp);
-		}
-		message.append("for completing ").append(quest->GetName());
-		int8 type = CHANNEL_LOOT;
-		SimpleMessage(type, message.c_str());
-	}
+	if (total_coins > 0)
+		AwardCoins(total_coins, std::string("for completing ").append(quest->GetName()));
+	
 	if (quest->GetQuestGiver() > 0)
 		GetCurrentZone()->SendSpawnChangesByDBID(quest->GetQuestGiver(), this, false, true);
+	
 	RemovePlayerQuest(quest->GetQuestID(), true, false);	
 }
 
@@ -5949,7 +6032,9 @@ void Client::DisplayConversation(Item* item, vector<ConversationOption>* convers
 		next_conversation_id++;
 		conversation_id = next_conversation_id;
 	}
+	MConversation.writelock();
 	conversation_items[conversation_id] = item;
+	MConversation.releasewritelock();
 	if (type == 4)
 		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(player), conversations, text, mp3, key1, key2);
 	else
@@ -5966,7 +6051,9 @@ void Client::DisplayConversation(Spawn* src, int8 type, vector<ConversationOptio
 		next_conversation_id++;
 		conversation_id = next_conversation_id;
 	}
+	MConversation.writelock();
 	conversation_spawns[conversation_id] = src;
+	MConversation.releasewritelock();
 
 	/* Spawns can start two different types of conversations.
 	 * Type 1: The chat type with bubbles.
@@ -5987,13 +6074,27 @@ void Client::CloseDialog(int32 conversation_id) {
 		QueuePacket(packet->serialize());
 		safe_delete(packet);
 	}
-	conversation_items.erase(conversation_id);
-	conversation_spawns.erase(conversation_id);
+
+	MConversation.writelock();
+	std::map<int32, Item*>::iterator itr;
+	while((itr = conversation_items.find(conversation_id)) != conversation_items.end())
+	{
+		conversation_items.erase(itr);
+	}
+	
+	std::map<int32, Spawn*>::iterator itr2 = conversation_spawns.find(conversation_id);
+
+	while((itr2 = conversation_spawns.find(conversation_id)) != conversation_spawns.end())
+	{
+		conversation_spawns.erase(itr2);
+	}
+	MConversation.releasewritelock();
 
 }
 
 int32 Client::GetConversationID(Spawn* spawn, Item* item) {
 	int32 conversation_id = 0;
+	MConversation.readlock();
 	if (spawn) {
 		map<int32, Spawn*>::iterator itr;
 		for (itr = conversation_spawns.begin(); itr != conversation_spawns.end(); itr++) {
@@ -6012,6 +6113,7 @@ int32 Client::GetConversationID(Spawn* spawn, Item* item) {
 			}
 		}
 	}
+	MConversation.releasereadlock();
 
 	return conversation_id;
 }
@@ -6211,7 +6313,10 @@ bool Client::RemoveItem(Item* item, int16 quantity) {
 		if (item->GetItemScript() && lua_interface)
 			lua_interface->RunItemScript(item->GetItemScript(), "removed", item, player);
 		if (delete_item)
+		{
+			PurgeItem(item);
 			safe_delete(item);
+		}
 		return true;
 	}
 
@@ -6623,7 +6728,7 @@ void Client::RepairItem(int32 item_id) {
 			if (player->RemoveCoins((int32)repair_cost)) {
 				item->generic_info.condition = 100;
 				item->save_needed = true;
-				QueuePacket(player->GetEquipmentList()->serialize(GetVersion()));
+				QueuePacket(player->GetEquipmentList()->serialize(GetVersion(), player));
 				QueuePacket(player->SendInventoryUpdate(GetVersion()));
 				QueuePacket(item->serialize(version, false, player));
 				Message(CHANNEL_MERCHANT, "You give %s %s to repair your %s.", spawn->GetName(), GetCoinMessage(repair_cost).c_str(), item->CreateItemLink(GetVersion()).c_str());
@@ -6661,7 +6766,7 @@ void Client::RepairAllItems() {
 						Message(CHANNEL_COLOR_YELLOW, "Repaired: %s.", item->CreateItemLink(GetVersion()).c_str());
 					}
 				}
-				QueuePacket(player->GetEquipmentList()->serialize(GetVersion()));
+				QueuePacket(player->GetEquipmentList()->serialize(GetVersion(), player));
 				QueuePacket(player->SendInventoryUpdate(GetVersion()));
 				PlaySound("coin_cha_ching");
 				if (spawn->GetMerchantType() & MERCHANT_TYPE_REPAIR)
@@ -10002,7 +10107,7 @@ void Client::SendEquipOrInvUpdateBySlot(int8 slot)
 {
 	if(slot < NUM_SLOTS)
 	{
-		EQ2Packet* app = GetPlayer()->GetEquipmentList()->serialize(GetVersion());
+		EQ2Packet* app = GetPlayer()->GetEquipmentList()->serialize(GetVersion(), GetPlayer());
 		if (app)
 			QueuePacket(app);
 	}
@@ -10012,4 +10117,107 @@ void Client::SendEquipOrInvUpdateBySlot(int8 slot)
 			if (outapp)
 				QueuePacket(outapp);
 	}
+}
+
+void Client::QueueStateCommand(int32 spawn_player_id, int32 state)
+{
+	if(spawn_player_id < 1)
+		return;
+
+	MQueueStateCmds.writelock();
+	queued_state_commands.insert(make_pair(spawn_player_id, state));
+	MQueueStateCmds.releasewritelock();
+}
+
+void Client::ProcessStateCommands()
+{
+	if(!IsReadyForUpdates())
+		return;
+
+	MQueueStateCmds.writelock();
+	map<int32, int32>::iterator itr = queued_state_commands.begin();
+	for(; itr != queued_state_commands.end(); itr++)
+		ClientPacketFunctions::SendStateCommand(this, itr->first, itr->second);
+
+	queued_state_commands.clear();
+	MQueueStateCmds.releasewritelock();
+}
+
+void Client::PurgeItem(Item* item)
+{
+	MConversation.writelock();
+	map<int32, Item*>::iterator itr;
+	for(itr = conversation_items.begin(); itr != conversation_items.end(); itr++)
+	{
+		if ( itr->second == item )
+		{
+			conversation_items.erase(itr);
+			break;
+		}
+	}
+	MConversation.releasewritelock();
+}
+
+void Client::ConsumeFoodDrink(Item* item, int32 slot)
+{
+		if(item) {
+			LogWrite(MISC__INFO, 1, "Command", "ItemID: %u, ItemName: %s ItemCount: %i ", item->details.item_id, item->name.c_str(), item->details.count);
+			if(item->GetItemScript() && lua_interface){
+				lua_interface->RunItemScript(item->GetItemScript(), "cast", item, GetPlayer());
+				if (slot == 22)
+					Message(CHANNEL_NARRATIVE, "You eat a %s.", item->name.c_str());
+				else
+					Message(CHANNEL_NARRATIVE, "You drink a %s.", item->name.c_str());
+			}
+
+		if (item->details.count > 1) {
+			item->details.count -= 1;
+			item->save_needed = true;
+		}
+		else {
+			GetPlayer()->GetEquipmentList()->RemoveItem(slot, true);
+			database.DeleteItem(GetPlayer()->GetCharacterID(), item, "EQUIPPED");
+		}
+		GetPlayer()->SetCharSheetChanged(true);
+		QueuePacket(player->GetEquipmentList()->serialize(GetVersion(), player));
+	}
+}
+
+void Client::AwardCoins(int64 total_coins, std::string reason)
+{
+		if (total_coins > 0) {
+		player->AddCoins(total_coins);
+		PlaySound("coin_cha_ching");
+		char tmp[64] = { 0 };
+		string message = "You receive ";
+		int32 val = 0;
+		if (total_coins >= 1000000) {
+			val = total_coins / 1000000;
+			total_coins -= 1000000 * val;
+			sprintf(tmp, "%u Platinum ", val);
+			message.append(tmp);
+			memset(tmp, 0, 64);
+		}
+		if (total_coins >= 10000) {
+			val = total_coins / 10000;
+			total_coins -= 10000 * val;
+			sprintf(tmp, "%u Gold ", val);
+			message.append(tmp);
+			memset(tmp, 0, 64);
+		}
+		if (total_coins >= 100) {
+			val = total_coins / 100;
+			total_coins -= 100 * val;
+			sprintf(tmp, "%u Silver ", val);
+			message.append(tmp);
+			memset(tmp, 0, 64);
+		}
+		if (total_coins > 0) {
+			sprintf(tmp, "%u Copper ", (int32)total_coins);
+			message.append(tmp);
+		}
+		message.append(reason);
+		int8 type = CHANNEL_LOOT;
+		SimpleMessage(type, message.c_str());
+		}
 }

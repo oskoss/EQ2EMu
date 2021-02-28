@@ -257,6 +257,8 @@ int EQ2Emu_lua_AddQuestSelectableRewardItem(lua_State* state);
 int EQ2Emu_lua_AddQuestRewardCoin(lua_State* state);
 int EQ2Emu_lua_AddQuestRewardFaction(lua_State* state);
 int EQ2Emu_lua_SetQuestRewardStatus(lua_State* state);
+int EQ2Emu_lua_SetStatusTmpReward(lua_State* state);
+int EQ2Emu_lua_SetCoinTmpReward(lua_State* state);
 int EQ2Emu_lua_SetQuestRewardComment(lua_State* state);
 int EQ2Emu_lua_SetQuestRewardExp(lua_State* state);
 int EQ2Emu_lua_AddQuestStep(lua_State* state);
