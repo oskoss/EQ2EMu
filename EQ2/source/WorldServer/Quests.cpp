@@ -37,28 +37,23 @@ extern MasterFactionList master_faction_list;
 QuestStep::QuestStep(int32 in_id, int8 in_type, string in_description, vector<int32>* in_ids, int32 in_quantity, const char* in_task_group, vector<Location>* in_locations, float in_max_variation, float in_percentage, int32 in_usableitemid){
 	type = in_type;
 	description = in_description;
-	ids = in_ids;
+	ids = 0;
+	locations = 0;
 	if(in_task_group)
 		task_group = string(in_task_group);
 	if(type != QUEST_STEP_TYPE_LOCATION) {
-		locations = 0;
 		if (in_ids){
-			in_ids = new vector<int32>;
+			ids = new vector<int32>;
 			for(int32 i=0;i<in_ids->size();i++)
 				ids->push_back(in_ids->at(i));
 		}
-		else
-			ids = 0;
 	}
 	else { // location step
-		ids = 0;
 		if (in_locations) {
 			locations = new vector<Location>;
 			for(int32 i=0; i < in_locations->size(); i++)
 				locations->push_back(in_locations->at(i));
 		}
-		else
-			locations = 0;
 	}
 	max_variation = in_max_variation;
 	quantity = in_quantity;
@@ -80,24 +75,18 @@ QuestStep::QuestStep(QuestStep* old_step){
 	ids = 0;
 	locations = 0;
 	if(type != QUEST_STEP_TYPE_LOCATION) {
-		locations = 0;
 		if (old_step->ids){
 			ids = new vector<int32>;
 			for(int32 i=0;i<old_step->ids->size();i++)
 				ids->push_back(old_step->ids->at(i));
 		}
-		else
-			ids = 0;
 	}
 	else { // location step
-		ids = 0;
 		if (old_step->locations) {
 			locations = new vector<Location>;
 			for(int32 i=0; i < old_step->locations->size(); i++)
 				locations->push_back(old_step->locations->at(i));
 		}
-		else
-			locations = 0;
 	}
 	icon = old_step->icon;
 	id = old_step->id;
