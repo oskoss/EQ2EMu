@@ -2178,7 +2178,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		break;
 	}
 	case OP_PaperdollImage: {
-		PacketStruct* packet = configReader.getStruct("WS_PaperdollImage", version);
+/*		PacketStruct* packet = configReader.getStruct("WS_PaperdollImage", version);
 		if (packet && packet->LoadPacketData(app->pBuffer, app->size)) {
 
 			//First check if this is a new image... delete an existing partial image if one exists
@@ -2255,7 +2255,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			incoming_paperdoll.last_received_packet_index = packet_index;
 		}
 		safe_delete(packet);
-
+*/
 		break;
 	}
 
