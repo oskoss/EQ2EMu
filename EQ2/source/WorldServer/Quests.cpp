@@ -331,6 +331,7 @@ Quest::Quest(int32 in_id){
 	quest_state_temporary = false;
 	tmp_reward_status = 0;
 	tmp_reward_coins = 0;
+	completed_description = string("");
 }
 
 Quest::Quest(Quest* old_quest){
@@ -404,6 +405,7 @@ Quest::Quest(Quest* old_quest){
 	quest_state_temporary = false;
 	tmp_reward_status = 0;
 	tmp_reward_coins = 0;
+	completed_description = string("");
 }
 
 Quest::~Quest(){
