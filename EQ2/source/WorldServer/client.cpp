@@ -5176,10 +5176,6 @@ void Client::ProcessQuestUpdates() {
 				}
 				else
 					AddStepProgress(quest_itr->first, step_itr->first, step_itr->second);
-				
-				Quest* tmpQuest = GetPlayer()->GetQuest(quest_itr->first);
-				if(tmpQuest)
-					SendQuestJournalUpdate(tmpQuest);
 			}
 		}
 	}
@@ -5486,11 +5482,13 @@ void Client::SendQuestUpdate(Quest* quest) {
 			{
 				lua_interface->CallQuestFunction(quest, quest->GetCompleteAction(step->GetStepID()), player);
 				SendQuestUpdateStep(quest, step->GetStepID());
+				updated = true;
 			}
 			if (step->WasUpdated()) {
 				// reversing the order of SendQuestJournal and QueuePacket QuestJournalReply causes AoM client to crash!
 				SendQuestJournal(false, 0, true);
-				QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player, step));
+				if(!updated)
+					QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player, step));
 				updated = true;
 			}
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
