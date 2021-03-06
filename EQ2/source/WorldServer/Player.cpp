@@ -119,8 +119,11 @@ Player::Player(){
 	m_playerSpawnQuestsRequired.SetName("Player::player_spawn_quests_required");
 	m_playerSpawnHistoryRequired.SetName("Player::player_spawn_history_required");
 	gm_vision = false;
+	SetSaveSpellEffects(true);
 }
 Player::~Player(){
+	SetSaveSpellEffects(true);
+	DeleteSpellEffects();
 	for(int32 i=0;i<spells.size();i++){
 		safe_delete(spells[i]);
 	}
@@ -5241,6 +5244,16 @@ Skill* Player::GetSkillByName(const char* name, bool check_update){
 	return ret;
 }
 
+Skill* Player::GetSkillByID(int32 id, bool check_update){
+	Skill* ret = skill_list.GetSkill(id);
+	if(check_update)
+		{
+			if(skill_list.CheckSkillIncrease(ret))
+				CalculateBonuses();
+		}
+	return ret;
+}
+
 void Player::SetRangeAttack(bool val){
 	range_attack = val;
 }
@@ -6338,4 +6351,128 @@ NPC* Player::InstantiateSpiritShard(float origX, float origY, float origZ, float
 			npc->SetSpawnScript(script);
 		
 		return npc;
+}
+
+void Player::SaveSpellEffects()
+{
+	if(stop_save_spell_effects)
+	{
+		LogWrite(PLAYER__WARNING, 0, "Player", "SaveSpellEffects called while player constructing / deconstructing!");
+		return;
+	}
+
+	SpellProcess* spellProcess = 0;
+	// Get the current zones spell process
+	spellProcess = GetZone()->GetSpellProcess();
+
+	Query savedEffects;
+	savedEffects.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete from character_spell_effects where charid=%u", GetCharacterID());
+	savedEffects.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete from character_spell_effect_targets where caster_char_id=%u", GetCharacterID());
+	InfoStruct* info = GetInfoStruct();
+	MSpellEffects.readlock(__FUNCTION__, __LINE__);
+	MMaintainedSpells.readlock(__FUNCTION__, __LINE__);
+	for(int i = 0; i < 45; i++) {
+		if(info->spell_effects[i].spell_id != 0xFFFFFFFF)
+		{
+			Spawn* spawn = GetZone()->GetSpawnByID(info->spell_effects[i].spell->initial_target);
+
+			int32 target_char_id = 0;
+			if(spawn && spawn->IsPlayer())
+				target_char_id = ((Player*)spawn)->GetCharacterID();
+
+			int32 timestamp = 0xFFFFFFFF;
+			if(!info->spell_effects[i].spell->spell->GetSpellData()->duration_until_cancel)
+				timestamp = info->spell_effects[i].expire_timestamp - Timer::GetCurrentTime2();
+			
+			int32 caster_char_id = (info->spell_effects[i].caster && info->spell_effects[i].caster->IsPlayer()) ? ((Player*)info->spell_effects[i].caster)->GetCharacterID() : 0;
+
+			if(caster_char_id == 0)
+				continue;
+			
+			Query effectSave;
+			effectSave.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, 
+			"insert into character_spell_effects (name, caster_char_id, target_char_id, target_type, db_effect_type, spell_id, effect_slot, slot_pos, icon, icon_backdrop, conc_used, tier, total_time, expire_timestamp, lua_file, custom_spell, charid, damage_remaining, effect_bitmask, num_triggers, had_triggers, cancel_after_triggers, crit, last_spellattack_hit, interrupted, resisted, custom_function) values ('%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %u, '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s')", 
+			database.getSafeEscapeString(info->spell_effects[i].spell->spell->GetName()).c_str(), caster_char_id,
+			target_char_id,  0 /*no target_type for spell_effects*/, DB_TYPE_SPELLEFFECTS /* db_effect_type for spell_effects */, info->spell_effects[i].spell_id, i, info->spell_effects[i].spell->slot_pos, 
+			info->spell_effects[i].icon, info->spell_effects[i].icon_backdrop, 0 /* no conc_used for spell_effects */, info->spell_effects[i].tier, 
+			info->spell_effects[i].total_time, timestamp, database.getSafeEscapeString(info->spell_effects[i].spell->file_name.c_str()).c_str(), info->spell_effects[i].spell->spell->IsCopiedSpell(), GetCharacterID(), 
+			info->spell_effects[i].spell->damage_remaining, info->spell_effects[i].spell->effect_bitmask, info->spell_effects[i].spell->num_triggers, info->spell_effects[i].spell->had_triggers, info->spell_effects[i].spell->cancel_after_all_triggers,
+			info->spell_effects[i].spell->crit, info->spell_effects[i].spell->last_spellattack_hit, info->spell_effects[i].spell->interrupted, info->spell_effects[i].spell->resisted, (info->maintained_effects[i].expire_timestamp) == 0xFFFFFFFF ? "" : database.getSafeEscapeString(spellProcess->SpellScriptTimerCustomFunction(info->spell_effects[i].spell).c_str()).c_str());
+			
+		/*	info->spell_effects[i].spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+			std::string insertTargets = string("insert into character_spell_effect_targets (caster_char_id, target_char_id, target_type, db_effect_type, spell_id, effect_slot, slot_pos) values ");
+			bool firstTarget = true;
+			for (int8 t = 0; t < info->spell_effects[i].spell->targets.size(); t++) {
+					Spawn* spawn = GetZone()->GetSpawnByID(info->spell_effects[i].spell->targets.at(t));
+					if(spawn && spawn->IsPlayer())
+					{
+						if(!firstTarget)
+							insertTargets.append(", ");
+
+						insertTargets.append("(" + caster_char_id + ", " + target_char_id + ", " + "0" + ", " std::to_string(DB_TYPE_SPELLEFFECTS) + ", " + info->spell_effects[i].spell_id + ", " + i + ", " + info->spell_effects[i].spell->slot_pos + ")");
+						firstTarget = false;
+					}
+			}
+			info->spell_effects[i].spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+			if(!firstTarget)
+			{
+				Query targetSave;
+				targetSave.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, insertTarget.c_str());
+			}*/
+		}
+		if (i < NUM_MAINTAINED_EFFECTS && info->maintained_effects[i].spell_id != 0xFFFFFFFF){
+			Spawn* spawn = GetZone()->GetSpawnByID(info->maintained_effects[i].spell->initial_target);
+
+			int32 target_char_id = 0;
+			if(spawn && spawn->IsPlayer())
+				target_char_id = ((Player*)spawn)->GetCharacterID();
+
+			int32 caster_char_id = (info->maintained_effects[i].spell->caster && info->maintained_effects[i].spell->caster->IsPlayer()) ? ((Player*)info->maintained_effects[i].spell->caster)->GetCharacterID() : 0;
+			
+			int32 timestamp = 0xFFFFFFFF;
+			if(!info->maintained_effects[i].spell->spell->GetSpellData()->duration_until_cancel)
+				timestamp = info->maintained_effects[i].expire_timestamp - Timer::GetCurrentTime2();
+			Query effectSave;
+			effectSave.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, 
+			"insert into character_spell_effects (name, caster_char_id, target_char_id, target_type, db_effect_type, spell_id, effect_slot, slot_pos, icon, icon_backdrop, conc_used, tier, total_time, expire_timestamp, lua_file, custom_spell, charid, damage_remaining, effect_bitmask, num_triggers, had_triggers, cancel_after_triggers, crit, last_spellattack_hit, interrupted, resisted, custom_function) values ('%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %u, '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s')", 
+			database.getSafeEscapeString(info->maintained_effects[i].name).c_str(), caster_char_id, target_char_id,  info->maintained_effects[i].target_type, DB_TYPE_MAINTAINEDEFFECTS /* db_effect_type for maintained_effects */, info->maintained_effects[i].spell_id, i, info->maintained_effects[i].slot_pos, 
+			info->maintained_effects[i].icon, info->maintained_effects[i].icon_backdrop, info->maintained_effects[i].conc_used, info->maintained_effects[i].tier, 
+			info->maintained_effects[i].total_time, timestamp, database.getSafeEscapeString(info->maintained_effects[i].spell->file_name.c_str()).c_str(), info->maintained_effects[i].spell->spell->IsCopiedSpell(), GetCharacterID(), 
+			info->maintained_effects[i].spell->damage_remaining, info->maintained_effects[i].spell->effect_bitmask, info->maintained_effects[i].spell->num_triggers, info->maintained_effects[i].spell->had_triggers, info->maintained_effects[i].spell->cancel_after_all_triggers,
+			info->maintained_effects[i].spell->crit, info->maintained_effects[i].spell->last_spellattack_hit, info->maintained_effects[i].spell->interrupted, info->maintained_effects[i].spell->resisted, (info->maintained_effects[i].expire_timestamp) == 0xFFFFFFFF ? "" : database.getSafeEscapeString(spellProcess->SpellScriptTimerCustomFunction(info->maintained_effects[i].spell).c_str()).c_str());
+
+			info->maintained_effects[i].spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+			std::string insertTargets = string("insert into character_spell_effect_targets (caster_char_id, target_char_id, target_type, db_effect_type, spell_id, effect_slot, slot_pos) values ");
+			bool firstTarget = true;
+			map<int32, bool> targetsInserted;
+			for (int8 t = 0; t < info->maintained_effects[i].spell->targets.size(); t++) {
+					Spawn* spawn = GetZone()->GetSpawnByID(info->maintained_effects[i].spell->targets.at(t));
+					if(spawn && spawn->IsPlayer())
+					{
+						int32 tmpCharID = ((Player*)spawn)->GetCharacterID();
+
+						if(targetsInserted.find(tmpCharID) != targetsInserted.end())
+							continue;
+
+						if(!firstTarget)
+							insertTargets.append(", ");
+						
+						targetsInserted.insert(make_pair(tmpCharID, true));
+
+						insertTargets.append("(" + std::to_string(caster_char_id) + ", " + std::to_string(tmpCharID) + ", " + "0" + ", " + 
+						std::to_string(DB_TYPE_MAINTAINEDEFFECTS) + ", " + std::to_string(info->maintained_effects[i].spell_id) + ", " + std::to_string(i) + 
+						", " + std::to_string(info->maintained_effects[i].spell->slot_pos) + ")");
+						firstTarget = false;
+					}
+			}
+			info->maintained_effects[i].spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+			if(!firstTarget)
+			{
+				Query targetSave;
+				targetSave.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, insertTargets.c_str());
+			}
+		}
+	}
+	MMaintainedSpells.releasereadlock(__FUNCTION__, __LINE__);
+	MSpellEffects.releasereadlock(__FUNCTION__, __LINE__);
 }

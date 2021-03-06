@@ -131,7 +131,8 @@ void SpellProcess::Process(){
 				// to counter this check to see if the spell has a call_frequency > 0 before we call ProcessSpell()
 				if (spell->spell->GetSpellData()->call_frequency > 0 && !ProcessSpell(spell, false))
 					active_spells.Remove(spell, true, 2000);
-				else if ((spell->timer.GetDuration() * spell->num_calls) >= spell->spell->GetSpellData()->duration1 * 100)
+				else if (((spell->timer.GetDuration() * spell->num_calls) >= spell->spell->GetSpellData()->duration1 * 100) || 
+						 (spell->restored && (spell->timer.GetSetAtTrigger() * spell->num_calls) >= spell->spell->GetSpellData()->duration1 * 100))
 					DeleteCasterSpell(spell, "expired");
 			}
 			else
@@ -361,7 +362,7 @@ bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell, string reason)
 	return ret;
 }
 
-bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason){
+bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells){
 	bool ret = false;
 	Spawn* target = 0;
 	if(spell) {
@@ -441,7 +442,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason){
 			ret = true;
 		}
 		if(lua_interface)
-			lua_interface->RemoveSpell(spell, true, SpellScriptTimersHasSpell(spell), reason);
+			lua_interface->RemoveSpell(spell, true, SpellScriptTimersHasSpell(spell), reason, removing_all_spells);
 	}
 	return ret;
 }
@@ -453,7 +454,7 @@ bool SpellProcess::ProcessSpell(LuaSpell* spell, bool first_cast, const char* fu
 		LogWrite(SPELL__ERROR, 0, "Spell", "Error: State is NULL!  SpellProcess::ProcessSpell for Spell '%s'", (spell->spell != nullptr) ? spell->spell->GetName() : "Unknown");
 	}
 	else if(lua_interface && !spell->interrupted){
-		lua_interface->AddSpawnPointers(spell, first_cast, false, function, timer);
+		std::string functionCall = lua_interface->AddSpawnPointers(spell, first_cast, false, function, timer);
 		vector<LUAData*>* data = spell->spell->GetLUAData();
 		for(int32 i=0;i<data->size();i++){
 			switch(data->at(i)->type){
@@ -479,7 +480,7 @@ bool SpellProcess::ProcessSpell(LuaSpell* spell, bool first_cast, const char* fu
 				}
 			}
 		}
-		ret = lua_interface->CallSpellProcess(spell, 2 + data->size());
+		ret = lua_interface->CallSpellProcess(spell, 2 + data->size(), functionCall);
 	}
 	return ret;
 }
@@ -629,10 +630,15 @@ bool SpellProcess::CheckPower(LuaSpell* spell){
 	return false;
 }
 
-bool SpellProcess::TakePower(LuaSpell* spell){
+bool SpellProcess::TakePower(LuaSpell* spell, int32 custom_power_req){
 	int16 req = 0;
 	if(spell->caster){
-		req = spell->spell->GetPowerRequired(spell->caster);
+
+		if(custom_power_req)
+			req = custom_power_req;
+		else
+			req = spell->spell->GetPowerRequired(spell->caster);
+		
 		if(spell->caster->GetPower() >= req){
 			spell->caster->SetPower(spell->caster->GetPower() - req);
 			if(spell->caster->IsPlayer())
@@ -653,10 +659,13 @@ bool SpellProcess::CheckHP(LuaSpell* spell) {
    return false; 
 }
 
-bool SpellProcess::TakeHP(LuaSpell* spell) { 
+bool SpellProcess::TakeHP(LuaSpell* spell, int32 custom_hp_req) { 
    int16 req = 0; 
-   if(spell->caster && spell->caster->IsPlayer()){ 
-     req = spell->spell->GetHPRequired(spell->caster); 
+   if(spell->caster){ 
+		if(custom_hp_req)
+			req = custom_hp_req;
+		else
+     		req = spell->spell->GetHPRequired(spell->caster); 
      if(spell->caster->GetHP() >= req){ 
         spell->caster->SetHP(spell->caster->GetHP() - req);
 		if(spell->caster->IsPlayer())
@@ -1022,6 +1031,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 						if(tmpTarget && tmpTarget->IsEntity())
 						{
 							zone->RemoveTargetFromSpell(conflictSpell, tmpTarget);
+							CheckRemoveTargetFromSpell(conflictSpell);
 							((Entity*)tmpTarget)->RemoveSpellEffect(conflictSpell);
 							if(client)
 								UnlockSpell(client, conflictSpell->spell);
@@ -1369,14 +1379,38 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		//Apply casting speed mod
 		spell->ModifyCastTime(caster);
 
-		LockAllSpells(client);
-
 		//cancel stealth effects on cast
 		if(caster->IsStealthed() || caster->IsInvis())
 			caster->CancelAllStealth();
+		
+		if(caster && caster->IsEntity() && caster->CheckFizzleSpell(lua_spell))
+		{
+			caster->GetZone()->SendCastSpellPacket(0, target ? target : caster, caster);
+			caster->GetZone()->SendInterruptPacket(caster, lua_spell, true);
+			caster->IsCasting(false);
+			
+			if(caster->IsPlayer())
+			{
+				((Player*)caster)->UnlockSpell(spell);
+				SendSpellBookUpdate(((Player*)caster)->GetClient());
+			}
+
+			// fizzle takes half
+			int16 power_req = spell->GetPowerRequired(caster) / 2;
+			TakePower(lua_spell, power_req);
+
+     		int16 hp_req = spell->GetHPRequired(caster) / 2; 
+			TakeHP(lua_spell, hp_req);
+
+			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
+			DeleteSpell(lua_spell);
+			return;
+		}
 
 		SendStartCast(lua_spell, client);
-			
+
+		LockAllSpells(client);
+
 		if(spell->GetSpellData()->cast_time > 0)
 		{
 			CastTimer* cast_timer = new CastTimer;
@@ -1520,6 +1554,11 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 	// Quick hack to prevent a crash on spells that zones the caster (Gate)
 	if (!spell->caster)
 		return true;
+
+	Skill* skill = spell->caster->GetSkillByID(spell->spell->GetSpellData()->mastery_skill, false);
+	// trigger potential skill increase if we succeed in casting a mastery skill and it still has room to grow (against this spell)
+	if(skill && skill->current_val < spell->spell->GetSpellData()->min_class_skill_req)
+		spell->caster->GetSkillByID(spell->spell->GetSpellData()->mastery_skill, true);
 
 	ZoneServer* zone = spell->caster->GetZone();
 	Spawn* target = 0;
@@ -1796,7 +1835,7 @@ void SpellProcess::Interrupted(Entity* caster, Spawn* interruptor, int16 error_c
 	}
 }
 
-void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast){
+void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast, bool call_expire_function){
 	int32 i = 0;
 	if(cast_timers.size() > 0){		
 		CastTimer* cast_timer = 0;
@@ -1818,8 +1857,8 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 				continue;
 			if (spell->spell->GetSpellData()->persist_though_death)
 				continue;
-			if(spell->caster == spawn){
-				DeleteCasterSpell(spell, "expired");
+			if(spell->caster == spawn && call_expire_function){
+				DeleteCasterSpell(spell, "expired", remove_all);
 				continue;
 			}
 
@@ -2138,7 +2177,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 				} // end is player
 			} // end is friendly
 
-			else if (target && data->group_spell > 0 || data->icon_backdrop == 312) // is not friendly, but is a group spell, icon_backdrop 312 is green (encounter AE)
+			else if (target && (data->group_spell > 0 || data->icon_backdrop == 312)) // is not friendly, but is a group spell, icon_backdrop 312 is green (encounter AE)
 			{
 				// target is non-player
 				if (target->IsNPC())
@@ -2421,6 +2460,24 @@ bool SpellProcess::SpellScriptTimersHasSpell(LuaSpell* spell) {
 	return ret;
 }
 
+std::string SpellProcess::SpellScriptTimerCustomFunction(LuaSpell* spell) {
+	bool ret = false;
+	std::string val = string("");
+	vector<SpellScriptTimer*>::iterator itr;
+
+	MSpellScriptTimers.readlock(__FUNCTION__, __LINE__);
+	for (itr = m_spellScriptList.begin(); itr != m_spellScriptList.end(); itr++) {
+		SpellScriptTimer* timer = *itr;
+		if (timer && timer->spell == spell) {
+			val = string(timer->customFunction);
+			break;
+		}
+	}
+	MSpellScriptTimers.releasereadlock(__FUNCTION__, __LINE__);
+
+	return val;
+}
+
 void SpellProcess::ClearSpellScriptTimerList() {
 	vector<SpellScriptTimer*>::iterator itr;
 	MSpellScriptTimers.writelock(__FUNCTION__, __LINE__);
@@ -2625,4 +2682,10 @@ void SpellProcess::SpellCannotStack(ZoneServer* zone, Client* client, Entity* ca
 	zone->SendSpellFailedPacket(client, SPELL_ERROR_TAKE_EFFECT_MOREPOWERFUL);
 	lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 	DeleteSpell(lua_spell);
+}
+
+void SpellProcess::AddActiveSpell(LuaSpell* spell)
+{
+	if(!active_spells.count(spell))
+		active_spells.Add(spell);
 }

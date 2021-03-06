@@ -27,6 +27,7 @@
 #include "NPC_AI.h"
 #include "Appearances.h"
 #include "SpellProcess.h"
+#include "Skills.h"
 
 extern MasterSpellList master_spell_list;
 extern ConfigReader configReader;
@@ -34,6 +35,7 @@ extern WorldDatabase database;
 extern World world;
 extern Races races;
 extern Appearance master_appearance_list;
+extern MasterSkillList master_skill_list;
 
 NPC::NPC(){	
 	Initialize();
@@ -668,7 +670,7 @@ void NPC::Randomize(NPC* npc, int32 flags)
 		color1.green = MakeRandomInt(min_val, max_val);
 		color1.blue = MakeRandomInt(min_val, max_val);
 		LogWrite(NPC__DEBUG, 5, "NPCs", "Randomizing Hair Type Highlight - R: %i, G: %i, B: %i", color1.red, color1.green, color1.blue);
-		npc->SetHairHighlightColor(color1);
+		npc->SetHairTypeHighlightColor(color1);
 	}
 	if (flags & RANDOMIZE_SKIN_COLOR) {
 		npc->features.skin_color.red = MakeRandomInt(min_val, max_val);
@@ -697,6 +699,18 @@ void NPC::Randomize(NPC* npc, int32 flags)
 Skill* NPC::GetSkillByName(const char* name, bool check_update){
 	if(skills && skills->count(name) > 0){
 		Skill* ret = (*skills)[name];
+		if(ret && check_update && ret->current_val < ret->max_val && (rand()%100) >= 90)
+			ret->current_val++;
+		return ret;
+	}
+	return 0;
+}
+
+Skill* NPC::GetSkillByID(int32 id, bool check_update){
+	Skill* skill = master_skill_list.GetSkill(id);
+
+	if(skill && skills && skills->count(skill->name.data) > 0){
+		Skill* ret = (*skills)[skill->name.data];
 		if(ret && check_update && ret->current_val < ret->max_val && (rand()%100) >= 90)
 			ret->current_val++;
 		return ret;

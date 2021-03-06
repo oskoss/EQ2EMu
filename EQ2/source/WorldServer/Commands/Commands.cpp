@@ -4508,7 +4508,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->QueuePacket(app);
 			break;
 										}
-		case COMMAND_ITEMSEARCH:{
+		case COMMAND_ITEMSEARCH:
+		case COMMAND_FROMBROKER:{
 				PacketStruct* packet = configReader.getStruct("WS_StartBroker", client->GetVersion());
 				if (packet) {
 					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer()));
@@ -6189,6 +6190,22 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 						return;
 					}
 				}
+			}
+		}
+		else if(sep->arg[2][0] && strncasecmp("nosale", sep->arg[0], 6) == 0 && sep->IsNumber(1) && sep->IsNumber(2))
+		{
+			sint64 data = strtoull(sep->arg[1], NULL, 0);
+			
+			int32 character_item_id = (int32) (data >> 32);
+			int32 item_id = (int32) (data & 0xffffffffL);
+
+			int8 sale_setting = atoi(sep->arg[2]);
+			Item* item = client->GetPlayer()->item_list.GetItemFromUniqueID(character_item_id);
+			if(item)
+			{
+				item->no_sale = sale_setting;
+				item->save_needed = true;
+				client->SendSellMerchantList();
 			}
 		}
 	}

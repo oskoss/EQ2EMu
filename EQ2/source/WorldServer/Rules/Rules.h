@@ -173,6 +173,10 @@ enum RuleType {
 	
 	/* SPELLS */
 	NoInterruptBaseChance,
+	EnableFizzleSpells,
+	DefaultFizzleChance,
+	FizzleMaxSkill,
+	FizzleDefaultSkill,
 
 	/* ZONE TIMERS */
 	RegenTimer,

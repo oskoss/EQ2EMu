@@ -185,7 +185,7 @@ public:
 	/// <summary>Checks to see if the caster has enough power and takes it</summary>
 	/// <param name='spell'>LuaSpell to check and take power for (LuaSpell contains the caster)</param>
 	/// <returns>True if caster had enough power</returns>
-	bool TakePower(LuaSpell* spell);
+	bool TakePower(LuaSpell* spell, int32 custom_power_req = 0);
 
 	/// <summary>Check to see if the caster has enough power to cast the spell</summary>
 	/// <param name='spell'>LuaSpell to check (LuaSpell contains the caster)</param>
@@ -195,7 +195,7 @@ public:
 	/// <summary>Check to see if the caster has enough hp and take it</summary>
 	/// <param name='spell'>LuaSpell to check and take hp for (LuaSpell contains the caster)</param>
 	/// <returns>True if the caster had enough hp</returns>
-	bool TakeHP(LuaSpell* spell); 
+	bool TakeHP(LuaSpell* spell, int32 custom_hp_req = 0); 
 
 	/// <summary>Check to see if the caster has enough hp to cast the spell</summary>
 	/// <param name='spell'>LuaSpell to check (LuaSpell contains the caster)</param>
@@ -259,7 +259,7 @@ public:
 
 	/// <summary>Remove the given spell from the ZpellProcess</summary>
 	/// <param name='spell'>LuaSpell to remove</param>
-	bool DeleteCasterSpell(LuaSpell* spell, string reason="");
+	bool DeleteCasterSpell(LuaSpell* spell, string reason="", bool removing_all_spells = false);
 
 	/// <summary>Interrupt the spell</summary>
 	/// <param name='interrupt'>InterruptStruct that contains all the info</param>
@@ -268,7 +268,7 @@ public:
 	/// <summary>Removes the timers for the given spawn</summary>
 	/// <param name='spawn'>Spawn to remove the timers for</param>
 	/// <param name='remove_all'>Remove all timers (cast, recast, active, queue, interrupted)? If false only cast timers are removed</param>
-	void RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all = false, bool delete_recast = true);
+	void RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all = false, bool delete_recast = true, bool call_expire_function = true);
 
 	/// <summary>Sets the recast timer for the spell </summary>
 	/// <param name='spell'>The spell to set the recast for</param>
@@ -356,6 +356,7 @@ public:
 
 	/// <summary>Checks to see if the list has the spell</summary>
 	bool SpellScriptTimersHasSpell(LuaSpell* spell);
+	std::string SpellScriptTimerCustomFunction(LuaSpell* spell);
 
 	void ClearSpellScriptTimerList();
 
@@ -383,12 +384,11 @@ public:
 	void DeleteSpell(LuaSpell* spell);
 
 	void SpellCannotStack(ZoneServer* zone, Client* client, Entity* caster, LuaSpell* lua_spell, LuaSpell* conflictSpell);
-private:
-	/// <summary>Sends the spell data to the lua script</summary>
-	/// <param name='spell'>LuaSpell to call the lua script for</param>
-	/// <param name='first_cast'>No clue, not currently used</param>
-	/// <returns>True if the spell script was called successfully</returns>
+
 	bool ProcessSpell(LuaSpell* spell, bool first_cast = true, const char* function = 0, SpellScriptTimer* timer = 0);
+
+	void AddActiveSpell(LuaSpell* spell);
+private:
 	Mutex MSpellProcess;
 	MutexMap<Entity*,Spell*> spell_que;
 	MutexList<LuaSpell*> active_spells;

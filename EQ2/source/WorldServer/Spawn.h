@@ -148,6 +148,7 @@
 #define MERCHANT_TYPE_CRAFTING				8
 #define MERCHANT_TYPE_REPAIR				16
 #define MERCHANT_TYPE_LOTTO					32
+#define MERCHANT_TYPE_CITYMERCHANT			64
 
 #define INFO_VIS_FLAG_INVIS                 1
 #define INFO_VIS_FLAG_HIDE_HOOD             2

@@ -89,6 +89,7 @@ public:
 	bool	CheckSameAppearance(string name, int16 id);
 	void	Randomize(NPC* npc, int32 flags);
 	Skill*	GetSkillByName(const char* name, bool check_update = false);
+	Skill*	GetSkillByID(int32 id, bool check_update = false);
 	void	SetAttackType(int8 type);
 	int8	GetAttackType();
 	void	SetAIStrategy(int8 strategy);

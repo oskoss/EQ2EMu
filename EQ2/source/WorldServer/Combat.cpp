@@ -376,12 +376,10 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 	Skill* skill = nullptr;
 	if(spell->GetSpellData()->resistibility > 0)
 		bonus -= (1 - spell->GetSpellData()->resistibility)*100;
-	skill = master_skill_list.GetSkill(spell->GetSpellData()->mastery_skill);
-	if(skill){
-		skill = GetSkillByName(skill->name.data.c_str(), true);
-		if(skill)
-			bonus += skill->current_val / 25;
-	}
+
+	skill = GetSkillByID(spell->GetSpellData()->mastery_skill, false);
+	if(skill)
+		bonus += skill->current_val / 25;
 
 	int8 hit_result = 0;
 	bool is_tick = false; // if spell is already active, this is a tick
@@ -1101,6 +1099,35 @@ void Entity::AddHate(Entity* attacker, sint32 hate) {
 		}
 		safe_delete(group);
 	}
+}
+
+bool Entity::CheckFizzleSpell(LuaSpell* spell) {
+	if(!spell || !rule_manager.GetGlobalRule(R_Spells, EnableFizzleSpells)->GetInt8()
+	|| spell->spell->GetSpellData()->can_fizzle == false)
+		return false;
+
+	float fizzleMaxSkill = rule_manager.GetGlobalRule(R_Spells, FizzleMaxSkill)->GetFloat();
+	float baseFizzle = rule_manager.GetGlobalRule(R_Spells, DefaultFizzleChance)->GetFloat()/100.0f; // 10%
+	float skillObtained = 0.2f; // default of .2f so we don't go over the threshold if no skill
+	Skill* skill = GetSkillByID(spell->spell->GetSpellData()->mastery_skill, false);
+	if(skill && spell->spell->GetSpellData()->min_class_skill_req > 0)
+	{
+		float skillObtained = skill->current_val / spell->spell->GetSpellData()->min_class_skill_req;
+		if(skillObtained > fizzleMaxSkill) // 120% over the skill value
+		{
+			skillObtained = fizzleMaxSkill;
+		}
+			
+		baseFizzle = (fizzleMaxSkill - skillObtained) * baseFizzle;
+
+		float totalSuccessChance = 1.0f - baseFizzle;
+
+		float randResult = MakeRandomFloat(0.0f, 1.0f);
+		if(randResult > totalSuccessChance)
+			return true;
+	}
+
+	return false;
 }
 
 bool Entity::CheckInterruptSpell(Entity* attacker) {

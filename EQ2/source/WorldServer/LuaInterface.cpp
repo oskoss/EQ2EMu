@@ -276,6 +276,7 @@ bool LuaInterface::LoadLuaSpell(const char* name) {
 		spell->slot_pos = 0;
 		spell->damage_remaining = 0;
 		spell->effect_bitmask = 0;
+		spell->restored = false;
 
 		MSpells.lock();
 		if (spells.count(lua_script) > 0) {
@@ -530,15 +531,28 @@ bool LuaInterface::LoadRegionScript(string name) {
 	return LoadRegionScript(name.c_str());
 }
 
-void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast, const char* function, SpellScriptTimer* timer, bool passLuaSpell) {
+std::string LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast, const char* function, SpellScriptTimer* timer, bool passLuaSpell) {
+	std::string functionCalled = string(""); 
 	if (function)
+	{
+		functionCalled = string(function);
 		lua_getglobal(spell->state, function);
+	}
 	else if (precast)
+	{
+		functionCalled = "precast";
 		lua_getglobal(spell->state, "precast");
+	}
 	else if(first_cast)
+	{
+		functionCalled = "cast";
 		lua_getglobal(spell->state, "cast");
+	}
 	else
+	{
+		functionCalled = "tick";
 		lua_getglobal(spell->state, "tick");
+	}
 
 	if(passLuaSpell)
 		SetSpellValue(spell->state, spell);
@@ -571,6 +585,8 @@ void LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, bool preca
 		else
 			SetSpawnValue(spell->state, 0);
 	}
+
+	return functionCalled;
 }
 
 LuaSpell* LuaInterface::GetCurrentSpell(lua_State* state) {
@@ -579,7 +595,7 @@ LuaSpell* LuaInterface::GetCurrentSpell(lua_State* state) {
 	return 0;
 }
 
-bool LuaInterface::CallSpellProcess(LuaSpell* spell, int8 num_parameters) {
+bool LuaInterface::CallSpellProcess(LuaSpell* spell, int8 num_parameters, std::string customFunction) {
 	if(shutting_down || !spell || !spell->caster)
 		return false;
 
@@ -587,9 +603,9 @@ bool LuaInterface::CallSpellProcess(LuaSpell* spell, int8 num_parameters) {
 	current_spells[spell->state] = spell;
 	MSpells.unlock();
 	if(lua_pcall(spell->state, num_parameters, 0, 0) != 0){
-		LogError("Error running %s", lua_tostring(spell->state, -1));
+		LogError("Error running function '%s' in %s: %s", customFunction.c_str(), spell->spell->GetName(), lua_tostring(spell->state, -1));
 		lua_pop(spell->state, 1);
-		RemoveSpell(spell, false);
+		RemoveSpell(spell, false); // may be in a lock
 		return false;
 	}
 	return true;
@@ -694,7 +710,7 @@ lua_State* LuaInterface::LoadLuaFile(const char* name) {
 	return 0;
 }
 
-void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool can_delete, string reason) {
+void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool can_delete, string reason, bool removing_all_spells) {
 	if(shutting_down)
 		return;
 
@@ -752,7 +768,7 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 		spell->caster->RemoveMaintainedSpell(spell);
 
 		int8 spell_type = spell->spell->GetSpellData()->spell_type;
-		if(spell->caster->IsPlayer())
+		if(spell->caster->IsPlayer() && !removing_all_spells)
 		{
 			Player* player = (Player*)spell->caster;
 			switch(spell_type)
@@ -1766,6 +1782,7 @@ LuaSpell* LuaInterface::GetSpell(const char* name)  {
 		new_spell->caster = 0;
 		new_spell->initial_target = 0;
 		new_spell->spell = 0;
+		new_spell->restored = false;
 		return new_spell;
 	}
 	else{

@@ -594,6 +594,11 @@ extern MasterItemList master_item_list;
 #define ITEM_STAT_UNCONTESTED_DODGE     852
 #define ITEM_STAT_UNCONTESTED_RIPOSTE     853
 
+#define	DISPLAY_FLAG_RED_TEXT			1 // old clients
+#define	DISPLAY_FLAG_NO_GUILD_STATUS	8
+#define	DISPLAY_FLAG_NO_BUYBACK			16
+#define	DISPLAY_FLAG_NOT_FOR_SALE		64
+
 #pragma pack(1)
 struct ItemStatsValues{
 	sint16			str;
@@ -884,6 +889,8 @@ public:
 	int32					spell_id;
 	int8					spell_tier;
 	string					item_script;
+	bool					no_buy_back;
+	bool					no_sale;
 	void AddEffect(string effect, int8 percentage, int8 subbulletflag);
 	void AddBookPage(int8 page, string page_text,int8 valign, int8 halign);
 	int32 GetMaxSellValue();

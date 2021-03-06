@@ -111,6 +111,8 @@ using namespace std;
 #define CHAR_PROPERTY_GMVISION		"modify_gmvision"
 #define CHAR_PROPERTY_LUADEBUG		"modify_luadebug"
 
+#define DB_TYPE_SPELLEFFECTS		1
+#define DB_TYPE_MAINTAINEDEFFECTS	2
 
 struct StartingItem{
 	string	type;
@@ -605,6 +607,8 @@ public:
 									  int16 pos_state, int16 activity_status, char* sub_title, char* prefix_title, char* suffix_title, char* lastname, 
 									  float x, float y, float z, float heading, int32 gridid, int32 charid, int32 zoneid, int32 instanceid);
 	bool				DeleteSpiritShard(int32 id);
+
+	void				LoadCharacterSpellEffects(int32 char_id, Client *client, int8 db_spell_type);
 private:
 	DatabaseNew			database_new;
 	map<int32, string>	zone_names;

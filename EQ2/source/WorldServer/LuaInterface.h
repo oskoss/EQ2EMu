@@ -91,6 +91,7 @@ struct LuaSpell{
 	bool            had_dmg_remaining;
 	Mutex           MSpellTargets;
 	int32           effect_bitmask;
+	bool			restored; // restored spell cross zone
 
 };
 
@@ -190,7 +191,7 @@ public:
 	bool			LoadZoneScript(const char* name);
 	bool			LoadRegionScript(string name);
 	bool			LoadRegionScript(const char* name);
-	void			RemoveSpell(LuaSpell* spell, bool call_remove_function = true, bool can_delete = true, string reason = "");
+	void			RemoveSpell(LuaSpell* spell, bool call_remove_function = true, bool can_delete = true, string reason = "", bool removing_all_spells = false);
 	Spawn*			GetSpawn(lua_State* state, int8 arg_num = 1);
 	Item*			GetItem(lua_State* state, int8 arg_num = 1);
 	Quest*			GetQuest(lua_State* state, int8 arg_num = 1);
@@ -229,9 +230,9 @@ public:
 	void			SetConversationValue(lua_State* state, vector<ConversationOption>* conversation);
 	void			SetOptionWindowValue(lua_State* state, vector<OptionWindowOption>* optionWindow);
 
-	void			AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast = false, const char* function = 0, SpellScriptTimer* timer = 0, bool passLuaSpell=false);
+	std::string		AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast = false, const char* function = 0, SpellScriptTimer* timer = 0, bool passLuaSpell=false);
 	LuaSpell*		GetCurrentSpell(lua_State* state);
-	bool			CallSpellProcess(LuaSpell* spell, int8 num_parameters);
+	bool			CallSpellProcess(LuaSpell* spell, int8 num_parameters, std::string functionCalled);
 	LuaSpell*		GetSpell(const char* name);
 	void			UseItemScript(const char* name, lua_State* state, bool val);
 	void			UseSpawnScript(const char* name, lua_State* state, bool val);

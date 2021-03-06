@@ -818,6 +818,8 @@ Item::Item(){
 	memset(&details, 0, sizeof(ItemCore));
 	memset(&generic_info, 0, sizeof(Generic_Info));
 	generic_info.condition = 100;
+	no_buy_back = false;
+	no_sale = false;
 }
 
 Item::Item(Item* in_item){
@@ -833,6 +835,8 @@ Item::Item(Item* in_item){
 	generic_info.condition = 100;
 	spell_id = in_item->spell_id;
 	spell_tier = in_item->spell_tier;
+	no_buy_back = in_item->no_buy_back;
+	no_sale = in_item->no_sale;
 }
 
 Item::~Item(){

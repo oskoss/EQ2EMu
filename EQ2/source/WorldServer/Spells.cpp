@@ -141,6 +141,7 @@ Spell::Spell(Spell* host_spell)
 		spell->ts_loc_index = host_spell->GetSpellData()->ts_loc_index;
 		spell->type = host_spell->GetSpellData()->type;
 		spell->type_group_spell_id = host_spell->GetSpellData()->type_group_spell_id;
+		spell->can_fizzle = host_spell->GetSpellData()->can_fizzle;
 	}
 
 	heal_spell = host_spell->IsHealSpell();
@@ -1649,6 +1650,11 @@ bool Spell::GetSpellData(lua_State* state, std::string field)
 		lua_interface->SetSInt32Value(state, GetSpellData()->type_group_spell_id);
 		valSet = true;
 	}
+	else if (field == "can_fizzle")
+	{
+		lua_interface->SetBooleanValue(state, GetSpellData()->can_fizzle);
+		valSet = true;
+	}
 
 	return valSet;
 }
@@ -2054,6 +2060,12 @@ bool Spell::SetSpellData(lua_State* state, std::string field, int8 fieldArg)
 	{
 		sint32 type_group_spell_id = lua_interface->GetSInt32Value(state, fieldArg);
 		GetSpellData()->type_group_spell_id = type_group_spell_id;
+		valSet = true;
+	}
+	else if (field == "can_fizzle")
+	{
+		bool can_fizzle = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->can_fizzle = can_fizzle;
 		valSet = true;
 	}
 

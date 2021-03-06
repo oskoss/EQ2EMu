@@ -894,6 +894,8 @@ private:
 
 #define COMMAND_CRAFTITEM                526
 
+#define COMMAND_FROMBROKER           	527
+
 
 #define GET_AA_XML						750
 #define ADD_AA							751

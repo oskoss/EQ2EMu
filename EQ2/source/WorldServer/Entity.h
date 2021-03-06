@@ -1096,7 +1096,7 @@ public:
 	virtual bool HasActiveMaintainedSpell(Spell* spell, Spawn* target);
 	virtual bool HasActiveSpellEffect(Spell* spell, Spawn* target);
 	virtual void AddSkillBonus(int32 spell_id, int32 skill_id, float value);
-	void AddDetrimentalSpell(LuaSpell* spell);
+	void AddDetrimentalSpell(LuaSpell* spell, int32 override_expire_timestamp = 0);
 	DetrimentalEffects* GetDetrimentalEffect(int32 spell_id, Entity* caster);
 	virtual MaintainedEffects* GetMaintainedSpell(int32 spell_id);
 	void RemoveDetrimentalSpell(LuaSpell* spell);
@@ -1208,6 +1208,7 @@ public:
 	void	ChangeSecondaryWeapon();
 	void	ChangeRangedWeapon();
 	virtual Skill*	GetSkillByName(const char* name, bool check_update = false);
+	virtual Skill*	GetSkillByID(int32 id, bool check_update = false);
 	bool			AttackAllowed(Entity* target, float distance = 0, bool range_attack = false);
 	bool			PrimaryWeaponReady();
 	bool			SecondaryWeaponReady();
@@ -1223,6 +1224,7 @@ public:
 	bool			DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod = 0, bool is_tick = false, bool no_damage_calcs = false, bool ignore_attacker = false);
 	void			AddHate(Entity* attacker, sint32 hate);
 	bool			CheckInterruptSpell(Entity* attacker);
+	bool			CheckFizzleSpell(LuaSpell* spell);
 	void			KillSpawn(Spawn* dead, int8 damage_type = 0, int16 kill_blow_type = 0);
 	void			HandleDeathExperienceDebt(Spawn* killer);
 	void            SetAttackDelay(bool primary = false, bool ranged = false);
@@ -1668,6 +1670,9 @@ public:
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		MEquipment;
 	std::mutex		MStats;
+
+	Mutex   MMaintainedSpells;
+	Mutex   MSpellEffects;
 protected:
 	bool	in_combat;
 	int8	m_petType;
@@ -1676,7 +1681,6 @@ protected:
 	int32	m_petSpellID;
 	int8	m_petSpellTier;
 	bool	m_petDismissing;
-
 private:
 	MutexList<BonusValues*> bonus_list;
 	map<int8, MutexList<LuaSpell*>*> control_effects;
@@ -1695,8 +1699,6 @@ private:
 	CombatData ranged_combat_data;
 	map<int8, int8> det_count_list;
 	Mutex MDetriments;
-	Mutex   MMaintainedSpells;
-	Mutex   MSpellEffects;
 	vector<DetrimentalEffects> detrimental_spell_effects;
 	// Pointers for the 4 types of pets (Summon, Charm, Deity, Cosmetic)
 	Entity*	pet;

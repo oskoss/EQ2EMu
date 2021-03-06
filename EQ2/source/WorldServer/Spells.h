@@ -290,6 +290,7 @@ struct SpellData{
 	int8	spell_type;
 	int32	spell_name_crc;
 	sint32	type_group_spell_id;
+	bool	can_fizzle;
 };
 class Spell{
 public:

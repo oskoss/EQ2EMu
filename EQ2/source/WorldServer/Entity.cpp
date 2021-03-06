@@ -105,7 +105,8 @@ Entity::~Entity(){
 	for (itr4 = immunities.begin(); itr4 != immunities.end(); itr4++)
 		safe_delete(itr4->second);
 	immunities.clear();
-	DeleteSpellEffects();
+	if(!IsPlayer())
+		DeleteSpellEffects();
 }
 
 void Entity::DeleteSpellEffects()
@@ -116,11 +117,16 @@ void Entity::DeleteSpellEffects()
 		if(i<30){
 			if(GetInfoStruct()->maintained_effects[i].spell_id != 0xFFFFFFFF)
 			{
-				lua_interface->RemoveSpell(GetInfoStruct()->maintained_effects[i].spell);
-				if (IsPlayer())
-					GetInfoStruct()->maintained_effects[i].icon = 0xFFFF;
+				if(deletedPtrs.find(GetInfoStruct()->spell_effects[i].spell) == deletedPtrs.end())
+				{
+					lua_interface->RemoveSpell(GetInfoStruct()->maintained_effects[i].spell, IsPlayer() ? false:  true);
+					if (IsPlayer())
+						GetInfoStruct()->maintained_effects[i].icon = 0xFFFF;
 
-				deletedPtrs[GetInfoStruct()->maintained_effects[i].spell] = true;
+					deletedPtrs[GetInfoStruct()->maintained_effects[i].spell] = true;
+				}
+				
+				GetInfoStruct()->maintained_effects[i].spell_id = 0xFFFFFFFF;
 				GetInfoStruct()->maintained_effects[i].spell = nullptr;
 			}
 		}
@@ -128,10 +134,11 @@ void Entity::DeleteSpellEffects()
 		{
 			if(deletedPtrs.find(GetInfoStruct()->spell_effects[i].spell) == deletedPtrs.end())
 			{
-				lua_interface->RemoveSpell(GetInfoStruct()->spell_effects[i].spell);
+				lua_interface->RemoveSpell(GetInfoStruct()->spell_effects[i].spell, IsPlayer() ? false:  true);
 				deletedPtrs[GetInfoStruct()->spell_effects[i].spell] = true;
-				GetInfoStruct()->spell_effects[i].spell = nullptr;
 			}
+			GetInfoStruct()->spell_effects[i].spell_id = 0xFFFFFFFF;
+			GetInfoStruct()->spell_effects[i].spell = nullptr;
 		}
 	}
 }
@@ -999,7 +1006,7 @@ SpellEffects* Entity::GetSpellEffectWithLinkedTimer(int32 id, int32 linked_timer
 }
 
 LuaSpell* Entity::HasLinkedTimerID(LuaSpell* spell, Spawn* target, bool stackWithOtherPlayers) {
-	if(!spell->spell->GetSpellData()->linked_timer)
+	if(!spell->spell->GetSpellData()->linked_timer && !spell->spell->GetSpellData()->type_group_spell_id)
 		return nullptr;
 	LuaSpell* ret = nullptr;
 	InfoStruct* info = GetInfoStruct();
@@ -1036,6 +1043,11 @@ InfoStruct* Entity::GetInfoStruct(){
 }
 
 Skill* Entity::GetSkillByName(const char* name, bool check_update){
+	LogWrite(MISC__TODO, 1, "TODO", "This does nothing... yet...\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
+	return 0;
+}
+
+Skill* Entity::GetSkillByID(int32 id, bool check_update){
 	LogWrite(MISC__TODO, 1, "TODO", "This does nothing... yet...\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	return 0;
 }
@@ -2165,7 +2177,7 @@ vector<DetrimentalEffects>* Entity::GetDetrimentalSpellEffects() {
 	return &detrimental_spell_effects;
 }
 
-void Entity::AddDetrimentalSpell(LuaSpell* luaspell){
+void Entity::AddDetrimentalSpell(LuaSpell* luaspell, int32 override_expire_timestamp){
 	if(!luaspell || !luaspell->caster)
 		return;
 	
@@ -2183,6 +2195,8 @@ void Entity::AddDetrimentalSpell(LuaSpell* luaspell){
 	new_det.spell = luaspell;
 	if (spell->GetSpellData()->duration_until_cancel)
 		new_det.expire_timestamp = 0xFFFFFFFF;
+	else if(override_expire_timestamp)
+		new_det.expire_timestamp = override_expire_timestamp;
 	else
 		new_det.expire_timestamp = Timer::GetCurrentTime2() + (spell->GetSpellDuration()*100);
 	new_det.icon = data->icon;

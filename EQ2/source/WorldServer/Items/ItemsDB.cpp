@@ -283,6 +283,8 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 
 	item->generic_info.harvest					= result->GetInt8Str("harvest");
 	item->generic_info.body_drop				= result->GetInt8Str("body_drop");
+
+	item->no_buy_back							= (result->GetInt8Str("no_buy_back") == 1);
 }
 
 int32 WorldDatabase::LoadSkillItems()
@@ -1105,9 +1107,9 @@ void WorldDatabase::SaveItem(int32 account_id, int32 char_id, Item* item, const 
 	LogWrite(ITEM__DEBUG, 1, "Items", "Saving ItemID: %u (Type: %s) for account: %u, player: %u", item->details.item_id, type, account_id, char_id);
 
 	Query query;
-	string update_item = string("REPLACE INTO character_items (id, type, char_id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value, account_id, login_checksum) VALUES (%u, '%s', %u, %i, %u, '%s', %i, %i, %i, %i, %i, %i, %i, %u, %u, 0)");
+	string update_item = string("REPLACE INTO character_items (id, type, char_id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value, no_sale, account_id, login_checksum) VALUES (%u, '%s', %u, %i, %u, '%s', %i, %i, %i, %i, %i, %i, %i, %u, %u, %u, 0)");
 	query.AddQueryAsync(char_id, this, Q_REPLACE, update_item.c_str(), item->details.unique_id, type, char_id, item->details.slot_id, item->details.item_id,
-		getSafeEscapeString(item->creator.c_str()).c_str(),item->adorn0,item->adorn1,item->adorn2, item->generic_info.condition, item->CheckFlag(ATTUNED) ? 1 : 0, item->details.inv_slot_id, item->details.count, item->GetMaxSellValue(), account_id);
+		getSafeEscapeString(item->creator.c_str()).c_str(),item->adorn0,item->adorn1,item->adorn2, item->generic_info.condition, item->CheckFlag(ATTUNED) ? 1 : 0, item->details.inv_slot_id, item->details.count, item->GetMaxSellValue(), item->no_sale, account_id);
 }
 
 void WorldDatabase::DeleteItem(int32 char_id, Item* item, const char* type) 
@@ -1137,7 +1139,7 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT type, id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value FROM character_items where char_id = %u or (bag_id = -4 and account_id = %u) ORDER BY slot asc", char_id, account_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT type, id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value, no_sale FROM character_items where char_id = %u or (bag_id = -4 and account_id = %u) ORDER BY slot asc", char_id, account_id);
 
 	if(result)
 	{
@@ -1180,6 +1182,7 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 				item->details.inv_slot_id = atol(row[10]); //bag_id
 				item->details.count = atoi(row[11]); //count
 				item->SetMaxSellValue(atoul(row[12])); //max sell value
+				item->no_sale = (atoul(row[13]) == 1);
 
 				
 				if(strncasecmp(row[0], "EQUIPPED", 8)==0)

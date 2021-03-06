@@ -313,7 +313,7 @@ public:
 	bool	CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn = 0, const char* message = 0, bool is_door_open = false);
 	void	SendSpawnVisualState(Spawn* spawn, int16 type);
 	void	SendSpellFailedPacket(Client* client, int16 error);
-	void	SendInterruptPacket(Spawn* interrupted, LuaSpell* spell);
+	void	SendInterruptPacket(Spawn* interrupted, LuaSpell* spell, bool fizzle=false);
 	void	HandleEmote(Client* originator, string name);
 	Client*	GetClientBySpawn(Spawn* spawn);
 	Spawn*	GetSpawnByDatabaseID(int32 id);
@@ -392,7 +392,7 @@ public:
 	void	LoadSpellProcess();
 	void	LockAllSpells(Player* player);
 	void	UnlockAllSpells(Player* player);
-	void	RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast = true);
+	void	RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast = true, bool call_expire_function = true);
 	void	Interrupted(Entity* caster, Spawn* interruptor, int16 error_code, bool cancel = false, bool from_movement = false);
 	Spell*	GetSpell(Entity* caster);
 	void	ProcessSpell(Spell* spell, Entity* caster, Spawn* target = 0, bool lock = true, bool harvest_spell = false, LuaSpell* customSpell = 0, int16 custom_cast_time = 0, bool in_heroic_opp = false);
@@ -422,6 +422,7 @@ public:
 
 	void	HidePrivateSpawn(Spawn* spawn);
 	Client*	GetClientByName(char* name);
+	Client*	GetClientByCharID(int32 charid);
 
 	/// <summary>Gets spawns for a true AoE spell</summary>
 	vector<Spawn*> GetAttackableSpawnsByDistance(Spawn* spawn, float distance);

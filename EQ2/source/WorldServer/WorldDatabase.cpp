@@ -46,6 +46,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "ClientPacketFunctions.h"
 #include "Zone/ChestTrap.h"
 #include "../common/version.h"
+#include "SpellProcess.h"
 
 extern Classes classes;
 extern Commands commands;
@@ -4555,7 +4556,7 @@ void WorldDatabase::LoadSpells()
 	int32 total = 0;
 	map<int32, vector<LevelArray*> >* level_data = LoadSpellClasses();
 
-	if( !database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `description`, `type`, `class_skill`, `min_class_skill_req`, `mastery_skill`, `tier`, `is_aa`,`hp_req`, `power_req`,`power_by_level`, `cast_time`, `recast`, `radius`, `max_aoe_targets`, `req_concentration`, `range`, `duration1`, `duration2`, `resistibility`, `hp_upkeep`, `power_upkeep`, `duration_until_cancel`, `target_type`, `recovery`, `power_req_percent`, `hp_req_percent`, `icon`, `icon_heroic_op`, `icon_backdrop`, `success_message`, `fade_message`, `fade_message_others`, `cast_type`, `lua_script`, `call_frequency`, `interruptable`, `spell_visual`, `effect_message`, `min_range`, `can_effect_raid`, `affect_only_group_members`, `hit_bonus`, `display_spell_tier`, `friendly_spell`, `group_spell`, `spell_book_type`, spell_type+0, s.is_active, savagery_req, savagery_req_percent, savagery_upkeep, dissonance_req, dissonance_req_percent, dissonance_upkeep, linked_timer_id, det_type, incurable, control_effect_type, cast_while_moving, casting_flags, persist_through_death, not_maintained, savage_bar, savage_bar_slot, soe_spell_crc, 0xffffffff-CRC32(s.`name`) as 'spell_name_crc', type_group_spell_id "
+	if( !database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `description`, `type`, `class_skill`, `min_class_skill_req`, `mastery_skill`, `tier`, `is_aa`,`hp_req`, `power_req`,`power_by_level`, `cast_time`, `recast`, `radius`, `max_aoe_targets`, `req_concentration`, `range`, `duration1`, `duration2`, `resistibility`, `hp_upkeep`, `power_upkeep`, `duration_until_cancel`, `target_type`, `recovery`, `power_req_percent`, `hp_req_percent`, `icon`, `icon_heroic_op`, `icon_backdrop`, `success_message`, `fade_message`, `fade_message_others`, `cast_type`, `lua_script`, `call_frequency`, `interruptable`, `spell_visual`, `effect_message`, `min_range`, `can_effect_raid`, `affect_only_group_members`, `hit_bonus`, `display_spell_tier`, `friendly_spell`, `group_spell`, `spell_book_type`, spell_type+0, s.is_active, savagery_req, savagery_req_percent, savagery_upkeep, dissonance_req, dissonance_req_percent, dissonance_upkeep, linked_timer_id, det_type, incurable, control_effect_type, cast_while_moving, casting_flags, persist_through_death, not_maintained, savage_bar, savage_bar_slot, soe_spell_crc, 0xffffffff-CRC32(s.`name`) as 'spell_name_crc', type_group_spell_id, can_fizzle "
 									"FROM (spells s, spell_tiers st) "
 									"LEFT JOIN spell_ts_ability_index ts "
 									"ON s.`id` = ts.spell_id "
@@ -4654,6 +4655,7 @@ void WorldDatabase::LoadSpells()
 			data->linked_timer				= result.GetInt32Str("linked_timer_id");
 			data->spell_name_crc			= result.GetInt32Str("spell_name_crc");
 			data->type_group_spell_id		= result.GetSInt32Str("type_group_spell_id");
+			data->can_fizzle				= ( result.GetInt8Str("can_fizzle") == 1);
 
 			/* Cast Messaging */
 			string message					= result.GetStringStr("success_message");
@@ -7348,4 +7350,232 @@ int32 WorldDatabase::CreateSpiritShard(const char* name, int32 level, int8 race,
 	safe_delete_array(lastname_escaped);
 
 	return query.GetLastInsertedID();
+}
+
+void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int8 db_spell_type) 
+{
+		SpellProcess* spellProcess = client->GetCurrentZone()->GetSpellProcess();
+
+		if(!spellProcess)
+			return;
+	DatabaseResult result;
+
+	Player* player = client->GetPlayer();
+	// Use -1 on type and subtype to turn the enum into an int and make it a 0 index
+	if (!database_new.Select(&result, "SELECT name, caster_char_id, target_char_id, target_type, spell_id, effect_slot, slot_pos, icon, icon_backdrop, conc_used, tier, total_time, expire_timestamp, lua_file, custom_spell, damage_remaining, effect_bitmask, num_triggers, had_triggers, cancel_after_triggers, crit, last_spellattack_hit, interrupted, resisted, custom_function FROM character_spell_effects WHERE charid = %u and db_effect_type = %u", char_id, db_spell_type)) {
+		LogWrite(DATABASE__ERROR, 0, "DBNew", "MySQL Error %u: %s", database_new.GetError(), database_new.GetErrorMsg());
+		return;
+	}
+	InfoStruct* info = player->GetInfoStruct();
+	while (result.Next()) {
+//result.GetInt8Str
+		char spell_name[60];
+		strncpy(spell_name, result.GetStringStr("name"), 60);
+
+		int32 caster_char_id = result.GetInt32Str("caster_char_id");
+		int32 target_char_id = result.GetInt32Str("target_char_id");
+		int8 target_type = result.GetInt8Str("target_type");
+		int32 spell_id = result.GetInt32Str("spell_id");
+		int32 effect_slot = result.GetInt32Str("effect_slot");
+		int32 slot_pos = result.GetInt32Str("slot_pos");
+		int16 icon = result.GetInt32Str("icon");
+		int16 icon_backdrop = result.GetInt32Str("icon_backdrop");
+		int8 conc_used = result.GetInt32Str("conc_used");
+		int8 tier = result.GetInt32Str("tier");
+		float total_time = result.GetFloatStr("total_time");
+		int32 expire_timestamp = result.GetInt32Str("expire_timestamp");
+
+		string lua_file (result.GetStringStr("lua_file"));
+
+		int8 custom_spell = result.GetInt32Str("custom_spell");
+
+		int32 damage_remaining = result.GetInt32Str("damage_remaining");
+		int32 effect_bitmask = result.GetInt32Str("effect_bitmask");
+		int16 num_triggers = result.GetInt32Str("num_triggers");
+		int8 had_triggers = result.GetInt32Str("had_triggers");
+		int8 cancel_after_triggers = result.GetInt32Str("cancel_after_triggers");
+		int8 crit = result.GetInt32Str("crit");
+		int8 last_spellattack_hit = result.GetInt32Str("last_spellattack_hit");
+		int8 interrupted = result.GetInt32Str("interrupted");
+		int8 resisted = result.GetInt32Str("resisted");
+		std::string custom_function = std::string(result.GetStringStr("custom_function"));
+		LuaSpell* lua_spell = 0;
+		if(custom_spell)
+		{
+			if((lua_spell = lua_interface->GetSpell(lua_file.c_str())) == nullptr)
+			{		
+				LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u, '%s'), custom lua script not loaded, when attempting to load.", spell_id, tier, lua_file.c_str());
+				lua_interface->LoadLuaSpell(lua_file);
+			}
+		}
+
+		Spell* spell = master_spell_list.GetSpell(spell_id, tier);
+		
+		bool isMaintained = false;
+		bool isExistingLuaSpell = false;
+		MaintainedEffects* effect;
+		Client* tmpCaster = nullptr;
+		if(caster_char_id == player->GetCharacterID() && target_char_id == player->GetCharacterID() && (effect = player->GetMaintainedSpell(spell_id)) != nullptr)
+		{
+			safe_delete(lua_spell);
+			lua_spell = effect->spell;
+			if(lua_spell)
+				spell = lua_spell->spell;
+			isMaintained = true;
+			isExistingLuaSpell = true;
+		}
+		else if ( caster_char_id != player->GetCharacterID() && (tmpCaster = zone_list.GetClientByCharID(caster_char_id)) != nullptr 
+					 && tmpCaster->GetPlayer() && (effect = tmpCaster->GetPlayer()->GetMaintainedSpell(spell_id)) != nullptr)
+		{
+			if(tmpCaster->GetCurrentZone() != client->GetCurrentZone())
+			{
+				LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u, '%s'), characters in different zones, cannot assign maintained spell.", spell_id, tier, lua_file.c_str());
+				safe_delete(lua_spell);
+				continue;
+			}
+			else if(effect->spell)
+			{
+				safe_delete(lua_spell);
+				effect->spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
+				effect->spell->targets.push_back(client->GetPlayer()->GetID());
+				effect->spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+				lua_spell = effect->spell;
+				spell = effect->spell->spell;
+				isExistingLuaSpell = true;
+			}
+			else
+			{
+				LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u, '%s'), something went wrong loading another characters maintained spell.", spell_id, tier, lua_file.c_str());
+				safe_delete(lua_spell);
+				continue;
+			}
+		}
+		else if(custom_spell && lua_spell)
+		{
+			lua_spell->spell = new Spell(spell);
+
+			lua_interface->AddCustomSpell(lua_spell);
+		}
+		else
+		{
+			safe_delete(lua_spell);
+			lua_spell = lua_interface->GetSpell(spell->GetSpellData()->lua_script.c_str());
+			if(lua_spell)
+				lua_spell->spell = spell;
+		}
+		
+		if(!lua_spell)
+		{
+			LogWrite(LUA__ERROR, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u, '%s'), lua_spell FAILED, when attempting to load.", spell_id, tier, lua_file.c_str());
+			continue;
+		}
+	
+		SpellScriptTimer* timer = nullptr;
+		if(!isExistingLuaSpell && expire_timestamp != 0xFFFFFFFF && custom_function.size() > 0)
+		{
+			timer = new SpellScriptTimer;
+
+			timer->caster = 0;
+			timer->deleteWhenDone = false;
+			timer->target = 0;
+
+			timer->time = expire_timestamp;
+			timer->customFunction = string(custom_function); // TODO
+			timer->spell = lua_spell;
+			timer->caster = (caster_char_id == player->GetCharacterID()) ? player->GetID() : 0;
+			timer->target = (target_char_id == player->GetCharacterID()) ? player->GetID() : 0;
+		}
+		
+		lua_spell->crit = crit;
+		lua_spell->damage_remaining = damage_remaining;
+		lua_spell->effect_bitmask = effect_bitmask;
+		lua_spell->had_dmg_remaining = (damage_remaining>0) ? true : false;
+		lua_spell->had_triggers = had_triggers;
+		lua_spell->initial_target = (target_char_id == player->GetCharacterID()) ? player->GetID() : 0;
+		lua_spell->interrupted = interrupted;
+		lua_spell->last_spellattack_hit = last_spellattack_hit;
+		lua_spell->num_triggers = num_triggers;
+		//lua_spell->num_calls  ??
+		//if(target_char_id == player->GetCharacterID())
+		//	lua_spell->targets.push_back(player->GetID());
+		
+		if(db_spell_type == DB_TYPE_SPELLEFFECTS)
+		{
+			player->MSpellEffects.writelock();
+			info->spell_effects[effect_slot].caster = (caster_char_id == player->GetCharacterID()) ? player : 0;
+			info->spell_effects[effect_slot].expire_timestamp = Timer::GetCurrentTime2() + expire_timestamp;
+			info->spell_effects[effect_slot].icon = icon;
+			info->spell_effects[effect_slot].icon_backdrop = icon_backdrop;
+			info->spell_effects[effect_slot].spell_id = spell_id;
+			info->spell_effects[effect_slot].tier = tier;
+			info->spell_effects[effect_slot].total_time = total_time;
+			info->spell_effects[effect_slot].spell = lua_spell;
+			lua_spell->caster = player; // TODO: get actual player
+			player->MSpellEffects.releasewritelock();
+
+			if(!isMaintained)
+				spellProcess->ProcessSpell(lua_spell, true, "cast", timer);
+		}
+		else if ( db_spell_type == DB_TYPE_MAINTAINEDEFFECTS )
+		{
+			player->MMaintainedSpells.writelock();
+
+			DatabaseResult targets;
+			// Use -1 on type and subtype to turn the enum into an int and make it a 0 index
+			if (database_new.Select(&targets, "SELECT target_char_id, target_type, db_effect_type, spell_id from character_spell_effect_targets where caster_char_id = %u and effect_slot = %u and slot_pos = %u", char_id, effect_slot, slot_pos)) {
+				while (targets.Next()) {
+					int32 target_char = targets.GetInt32Str("target_char_id");
+					int16 target_type = targets.GetInt32Str("target_type");
+					int32 in_spell_id = targets.GetInt32Str("spell_id");
+					if(spell_id != in_spell_id)
+						continue;
+					
+					Client* client2 = zone_list.GetClientByCharID(target_char);
+					lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
+					if(client2 && client2->GetPlayer() && client2->GetCurrentZone() == client->GetCurrentZone())
+						lua_spell->targets.push_back(client2->GetPlayer()->GetID());
+					lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+				}
+			}
+
+			info->maintained_effects[effect_slot].conc_used = conc_used;
+			strncpy(info->maintained_effects[effect_slot].name, spell_name, 60);
+			info->maintained_effects[effect_slot].slot_pos = slot_pos;
+			info->maintained_effects[effect_slot].target = (target_char_id == player->GetCharacterID()) ? player->GetID() : 0;
+			info->maintained_effects[effect_slot].target_type = target_type;
+			info->maintained_effects[effect_slot].expire_timestamp = Timer::GetCurrentTime2() + expire_timestamp;
+			info->maintained_effects[effect_slot].icon = icon;
+			info->maintained_effects[effect_slot].icon_backdrop = icon_backdrop;
+			info->maintained_effects[effect_slot].spell_id = spell_id;
+			info->maintained_effects[effect_slot].tier = tier;
+			info->maintained_effects[effect_slot].total_time = total_time;
+			info->maintained_effects[effect_slot].spell = lua_spell;
+			lua_spell->caster = player;
+			player->MMaintainedSpells.releasewritelock();
+
+			spellProcess->ProcessSpell(lua_spell, true, "cast", timer);
+		}
+		if(!isExistingLuaSpell && expire_timestamp != 0xFFFFFFFF && !isMaintained)
+		{
+			lua_spell->timer.SetTimer(expire_timestamp);
+			lua_spell->timer.SetAtTrigger(lua_spell->spell->GetSpellData()->duration1 * 100);
+			lua_spell->timer.Start();
+		}
+
+		if(lua_spell->spell->GetSpellData()->det_type)
+			player->AddDetrimentalSpell(lua_spell, expire_timestamp);
+
+		if(timer)
+			spellProcess->AddSpellScriptTimer(timer);
+		
+		lua_spell->num_calls = 1;
+		lua_spell->restored = true;
+		if(!lua_spell->resisted && (lua_spell->spell->GetSpellDuration() > 0 || lua_spell->spell->GetSpellData()->duration_until_cancel))
+				spellProcess->AddActiveSpell(lua_spell);
+
+		if (num_triggers > 0)
+			ClientPacketFunctions::SendMaintainedExamineUpdate(client, slot_pos, num_triggers, 0);
+		if (damage_remaining > 0)
+			ClientPacketFunctions::SendMaintainedExamineUpdate(client, slot_pos, damage_remaining, 1);
+	}
 }

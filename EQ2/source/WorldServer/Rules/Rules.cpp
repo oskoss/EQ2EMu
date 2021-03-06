@@ -324,6 +324,10 @@ void RuleManager::Init()
 	RULE_INIT(R_Loot, AllowChestUnlockByTrapTime, "1"); // when set to 1 we will allow unlocking the chest to all players after the trap is triggered (or chest is open) and period ChestUnlockedTimeTrap elapsed
 
 	RULE_INIT(R_Spells, NoInterruptBaseChance, "50");
+	RULE_INIT(R_Spells, EnableFizzleSpells, "1"); // enables/disables the 'fizzling' of spells based on can_fizzle in the spells table.  This also enables increasing specialized skills for classes based on spells/abilities.
+	RULE_INIT(R_Spells, DefaultFizzleChance, "10.0"); // default percentage x / 100, eg 10% is 10.0
+	RULE_INIT(R_Spells, FizzleMaxSkill, "1.2"); // 1.0 is 100%, 1.2 is 120%, so you get 120% your max skill against a spell, no fizzle
+	RULE_INIT(R_Spells, FizzleDefaultSkill, ".2"); // offset against MaxSkill to average out to 100%, default of .2f so we don't go over the threshold if no skill
 
 	RULE_INIT(R_Expansion, GlobalExpansionFlag, "0");
 	RULE_INIT(R_Expansion, GlobalHolidayFlag, "0");

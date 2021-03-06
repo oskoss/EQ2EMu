@@ -805,6 +805,11 @@ void Client::SendCharInfo() {
 
 	if (version > 546)
 		ClientPacketFunctions::SendHousingList(this);
+	
+	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_MAINTAINEDEFFECTS);
+	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_SPELLEFFECTS);
+	GetPlayer()->SetSaveSpellEffects(false);
+	GetPlayer()->SetCharSheetChanged(true);
 }
 
 void Client::SendZoneSpawns() {
@@ -3509,14 +3514,13 @@ void Client::Message(int8 type, const char* message, ...) {
 void Client::Disconnect(bool send_disconnect)
 {
 	LogWrite(CCLIENT__DEBUG, 0, "CClient", "Client Disconnect...");
+	this->Save();
+	this->GetPlayer()->WritePlayerStatistics();
 
 	SetConnected(false);
 
 	if (send_disconnect && getConnection())
 		getConnection()->SendDisconnect(true);
-
-	this->Save();
-	this->GetPlayer()->WritePlayerStatistics();
 
 	eqs = 0;
 }
@@ -3888,7 +3892,8 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Removing player from fighting...", __FUNCTION__);
 	//GetCurrentZone()->GetCombat()->RemoveHate(player);
-
+	player->SaveSpellEffects();
+	player->SetSaveSpellEffects(true);
 	// Remove players pet from zone if there is one
 	((Entity*)player)->DismissAllPets();
 
@@ -4060,6 +4065,7 @@ void Client::Save() {
 
 		GetPlayer()->SaveHistory();
 		GetPlayer()->SaveLUAHistory();
+		GetPlayer()->SaveSpellEffects();
 	}
 
 }
@@ -5641,9 +5647,6 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 			else
 				player->GetFactions()->DecreaseFaction(faction_id, (amount * -1));
 		}
-
-		player->GetInfoStruct()->add_status_points(quest->GetStatusPoints());
-		player->SetCharSheetChanged(true);
 		
 		if(quest->GetQuestTemporaryState())
 		{
@@ -6408,7 +6411,8 @@ float Client::CalculateSellMultiplier(int32 merchant_id) {
 void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 	Spawn* spawn = GetMerchantTransaction();
 	Guild* guild = GetPlayer()->GetGuild();
-	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
+	if (spawn && spawn->GetMerchantID() > 0 && (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY)) && 
+		spawn->IsClientInMerchantLevelRange(this)) {
 		int32 total_sell_price = 0;
 		int32 total_status_sell_price = 0; //for status
 		float multiplier = CalculateBuyMultiplier(spawn->GetMerchantID());
@@ -6422,7 +6426,7 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 			item = player->item_list.GetItemFromUniqueID(unique_id);
 
 		if (!item)
-			player->item_list.GetItemFromID(item_id);
+			item = player->item_list.GetItemFromID(item_id);
 		if (item && master_item) {
 			int32 sell_price = (int32)(master_item->sell_price * multiplier);
 			if (sell_price > item->sell_price)
@@ -6437,19 +6441,40 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 				status_sell_price = item->sell_status;
 			if (quantity > item->details.count)
 				quantity = item->details.count;
-			if (player->GetGuild()) {
-				total_status_sell_price = status_sell_price * quantity;
-				player->GetInfoStruct()->add_status_points(total_status_sell_price);
+
+			total_status_sell_price = status_sell_price * quantity;
+
+			if(total_status_sell_price > 0 && (!(spawn->GetMerchantType() & MERCHANT_TYPE_CITYMERCHANT)))
+				total_status_sell_price = 0;
+
+			player->GetInfoStruct()->add_status_points(total_status_sell_price);
+
+			int32 guildMaxLevel = 5 + item->details.recommended_level; // client hard codes +5 to the level
+
+			if (player->GetGuild() && guild->GetLevel() < guildMaxLevel) {
 				guild->UpdateGuildStatus(GetPlayer(), total_status_sell_price / 10);
 				guild->SendGuildMemberList();
 				guild->AddEXPCurrent((total_status_sell_price / 10), true);
 			}
 			if (quantity > 1)
-				Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %i %s to %s for %s.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
+			{
+				if(total_status_sell_price)
+					Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %i %s to %s for %s and %u Status Points.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str(), status_sell_price);
+				else
+					Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %i %s to %s for %s%s.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
+			}
 			else
-				Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %s to %s for %s.", master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
+			{
+				if(total_status_sell_price)
+					Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %s to %s for %s and %u Status Points.", master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str(), status_sell_price);
+				else
+					Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %s to %s for %s.", master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
+			}
 			player->AddCoins(total_sell_price);
-			AddBuyBack(unique_id, item_id, quantity, sell_price);
+
+			if(!item->no_buy_back && (total_status_sell_price == 0 || (total_status_sell_price > 0 && (!(spawn->GetMerchantType() & MERCHANT_TYPE_CITYMERCHANT)))))
+				AddBuyBack(unique_id, item_id, quantity, sell_price);
+
 			if (quantity >= item->details.count) {
 				database.DeleteItem(GetCharacterID(), item, 0);
 				player->item_list.DestroyItem(item->details.index);
@@ -6461,8 +6486,8 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 			EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 			if (outapp)
 				QueuePacket(outapp);
-			if (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY))
-				SendSellMerchantList();
+			
+			SendSellMerchantList();
 			if (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY_BACK))
 				SendBuyBackList();
 		}
@@ -6472,7 +6497,8 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 
 void Client::BuyBack(int32 item_id, int16 quantity) {
 	Spawn* spawn = GetMerchantTransaction();
-	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
+	if (spawn && spawn->GetMerchantID() > 0 && (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY_BACK)) && 
+		spawn->IsClientInMerchantLevelRange(this)) {
 		deque<BuyBackItem*>::iterator itr;
 		BuyBackItem* buyback = 0;
 		BuyBackItem* closest = 0;
@@ -6523,8 +6549,8 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 					database.DeleteBuyBack(GetCharacterID(), closest->item_id, closest->quantity, closest->price);
 					safe_delete(closest);
 				}
-				if (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY))
-					SendSellMerchantList();
+				
+				SendSellMerchantList();
 				if (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY_BACK))
 					SendBuyBackList();
 			}
@@ -6571,6 +6597,12 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 				if (quantity > total_available)
 					quantity = total_available;
 			}
+			if(quantity < 1)
+			{
+				SimpleMessage(CHANNEL_COLOR_RED, "Merchant does not have item for purchase (quantity < 1).");
+				return;
+			}
+
 			total_buy_price = sell_price * quantity;
 			item = new Item(master_item);
 			item->details.count = quantity;
@@ -6596,8 +6628,8 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 						//EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 						//if(outapp)
 						//	QueuePacket(outapp);
-						if (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY) && !(spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO))
-							SendSellMerchantList();
+						
+						SendSellMerchantList();
 						if (spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO)
 							PlayLotto(total_buy_price, item->details.item_id);
 					}
@@ -6612,7 +6644,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 
 					// Check if the player has enough status, coins and staion cash to buy the item before checking the items
 					// TODO: need to add support for station cash
-					if (player->GetInfoStruct()->get_status_points() >= ItemInfo->price_status && player->HasCoins(ItemInfo->price_coins * quantity)) {
+					if (player->GetInfoStruct()->get_status_points() >= (ItemInfo->price_status * quantity) && player->HasCoins(ItemInfo->price_coins * quantity)) {
 						// Check items
 						int16 item_quantity = 0;
 						// Default these to true in case price_item_id or price_item2_id was never set
@@ -6651,7 +6683,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 						}
 						// if we have every thing then remove the price and give the item
 						if (hasItem1 && hasItem2) {
-							player->GetInfoStruct()->set_status_points(player->GetInfoStruct()->get_status_points() - ItemInfo->price_status);
+							player->GetInfoStruct()->set_status_points(player->GetInfoStruct()->get_status_points() - (ItemInfo->price_status * quantity));
 							// TODO: station cash
 
 							// The update that would normally be sent after modifing the players inventory is automatically sent in AddItem wich is called later
@@ -6691,8 +6723,8 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 								world.DecreaseMerchantQuantity(spawn->GetMerchantID(), item_id, quantity);
 								SendBuyMerchantList();
 							}
-							if (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY) && !(spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO))
-								SendSellMerchantList();
+							
+							SendSellMerchantList();
 							if (spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO)
 								PlayLotto(total_buy_price, item->details.item_id);
 
@@ -7022,6 +7054,9 @@ void Client::SendBuyMerchantList(bool sell) {
 
 void Client::SendSellMerchantList(bool sell) {
 	Spawn* spawn = GetMerchantTransaction();
+	if (!spawn || (spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY) || (spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO))
+		return;
+	
 	if (spawn && spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(this)) {
 		map<int32, Item*>* items = player->GetItemList();
 		if (items) {
@@ -7056,10 +7091,32 @@ void Client::SendSellMerchantList(bool sell) {
 					string thename = item->name;
 
 					packet->setArrayDataByName("price", sell_price, i);
-					if (player->GetGuild()) {
-						packet->setArrayDataByName("status", 0, i);//additive to status 2 maybe for server bonus etc
+					packet->setArrayDataByName("status", 0, i);//additive to status 2 maybe for server bonus etc
+
+					int8 dispFlags = 0;
+
+					// only city merchants allow selling for status
+					if(item->sell_status > 0 && (spawn->GetMerchantType() & MERCHANT_TYPE_CITYMERCHANT))
+					{
 						packet->setArrayDataByName("status2", item->sell_status, i); //this one is the main status
+						int32 guildMaxLevel = 5 + item->details.recommended_level; // client hard codes +5 to the level
+						if (GetPlayer()->GetGuild() && GetPlayer()->GetGuild()->GetLevel() >= guildMaxLevel) {
+							dispFlags += DISPLAY_FLAG_NO_GUILD_STATUS;
+						}
+
 					}
+					if(item->no_buy_back || (item->sell_status > 0 && (spawn->GetMerchantType() & MERCHANT_TYPE_CITYMERCHANT)))
+					{
+						if(GetVersion() < 1188)
+							dispFlags += DISPLAY_FLAG_RED_TEXT; // for older clients it isn't "no buy back", you can either have 1 for red text or 255 for 'not for sale' to be checked
+						else
+							dispFlags += DISPLAY_FLAG_NO_BUYBACK;
+					}
+
+					if(item->no_sale)
+						dispFlags += DISPLAY_FLAG_NOT_FOR_SALE;
+					
+					packet->setArrayDataByName("display_flags", dispFlags, i);
 					packet->setArrayDataByName("item_id", item->details.item_id, i);
 					packet->setArrayDataByName("unique_item_id", item->details.unique_id, i);
 					packet->setArrayDataByName("stack_size", item->details.count, i);
@@ -10158,6 +10215,9 @@ void Client::PurgeItem(Item* item)
 
 void Client::ConsumeFoodDrink(Item* item, int32 slot)
 {
+	if(GetPlayer()->StopSaveSpellEffects())
+		return;
+
 		if(item) {
 			LogWrite(MISC__INFO, 1, "Command", "ItemID: %u, ItemName: %s ItemCount: %i ", item->details.item_id, item->name.c_str(), item->details.count);
 			if(item->GetItemScript() && lua_interface){

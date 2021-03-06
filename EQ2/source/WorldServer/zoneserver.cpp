@@ -3326,6 +3326,21 @@ Client*	ZoneServer::GetClientByName(char* name) {
 	return ret;
 }
 
+Client*	ZoneServer::GetClientByCharID(int32 charid) {
+	Client* ret = 0;
+	vector<Client*>::iterator itr;
+
+	MClientList.readlock(__FUNCTION__, __LINE__);
+	for (itr = clients.begin(); itr != clients.end(); itr++) {
+		if ((*itr)->GetCharacterID() == charid) {
+			ret = *itr;
+			break;
+		}
+	}
+	MClientList.releasereadlock(__FUNCTION__, __LINE__);
+	return ret;
+}
+
 void ZoneServer::AddMovementNPC(Spawn* spawn){
 	if (spawn)
 		movement_spawns.Put(spawn->GetID(), 1);
@@ -4654,7 +4669,7 @@ void ZoneServer::SendSpellFailedPacket(Client* client, int16 error){
 	}
 }
 
-void ZoneServer::SendInterruptPacket(Spawn* interrupted, LuaSpell* spell){
+void ZoneServer::SendInterruptPacket(Spawn* interrupted, LuaSpell* spell, bool fizzle){
 	if(!interrupted || !spell)
 		return;
 	
@@ -4668,7 +4683,7 @@ void ZoneServer::SendInterruptPacket(Spawn* interrupted, LuaSpell* spell){
 		client = *client_itr;
 		if(!client || !client->GetPlayer()->WasSentSpawn(interrupted->GetID()) || client->GetPlayer()->WasSpawnRemoved(interrupted))
 			continue;
-		packet = configReader.getStruct("WS_Interrupt", client->GetVersion());
+		packet = configReader.getStruct(fizzle ? "WS_SpellFizzle" : "WS_Interrupt", client->GetVersion());
 		if(packet){
 			packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(interrupted));
 			packet->setArrayLengthByName("num_targets", spell->targets.size());
@@ -5691,9 +5706,9 @@ void ZoneServer::RemoveLocationGrids() {
 	location_grids.clear(true);
 }
 
-void ZoneServer::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast){
+void ZoneServer::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast, bool call_expire_function){
 	if(spellProcess)
-		spellProcess->RemoveSpellTimersFromSpawn(spawn, remove_all, delete_recast);
+		spellProcess->RemoveSpellTimersFromSpawn(spawn, remove_all, delete_recast, call_expire_function);
 }
 
 void ZoneServer::Interrupted(Entity* caster, Spawn* interruptor, int16 error_code, bool cancel, bool from_movement){
@@ -5730,8 +5745,7 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn) {
 
 	LogWrite(ZONE__DEBUG, 7, "Zone", "Processing RemoveSpawnSupportFunctions...");
 
-	if(spawn->IsEntity())
-		RemoveSpellTimersFromSpawn((Entity*)spawn, true);
+	RemoveSpellTimersFromSpawn((Entity*)spawn, true);
 
 	RemoveDamagedSpawn(spawn);
 	spawn->SendSpawnChanges(false);

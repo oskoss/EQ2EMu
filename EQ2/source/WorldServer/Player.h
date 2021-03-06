@@ -444,6 +444,7 @@ public:
 	PlayerItemList    item_list;
 	PlayerSkillList	  skill_list;
 	Skill*	GetSkillByName(const char* name, bool check_update = false);
+	Skill*	GetSkillByID(int32 skill_id, bool check_update = false);
 	PlayerSkillList* GetSkills();
 	bool DamageEquippedItems(int8 amount = 10, Client* client = 0);
 	vector<EQ2Packet*>	EquipItem(int16 index, int16 version, int8 slot_id = 255);
@@ -963,14 +964,16 @@ public:
 
 	void DismissAllPets();
 
+	void SaveSpellEffects();
 
+	void SetSaveSpellEffects(bool val) { stop_save_spell_effects = val; }
 	AppearanceData SavedApp;
 	CharFeatures SavedFeatures;
 	bool custNPC;
 	Entity* custNPCTarget;
 	// bot index, spawn id
 	map<int32, int32> SpawnedBots;
-
+	bool StopSaveSpellEffects() { return stop_save_spell_effects; }
 private:
 	bool range_attack;
 	int16 last_movement_activity;
@@ -1091,6 +1094,7 @@ private:
 	EQ2_Color tmp_mount_saddle_color;
 
 	bool gm_vision;
+	bool stop_save_spell_effects;
 
 	map<int32, Spawn*>	player_spawn_id_map;
 	map<Spawn*, int32>	player_spawn_reverse_id_map;
