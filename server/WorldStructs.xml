@@ -9012,6 +9012,14 @@ to zero and treated like placeholders." />
 </Data>
 <Data ElementName="spell_id" Type="int32" />
 </Struct>
+<Struct Name="WS_SpellFizzle" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearSpellFizzleCmd">
+<Data ElementName="spawn_id" Type="int32" />
+<Data ElementName="num_targets" Type="int16" />
+<Data ElementName="target_array" Type="Array" ArraySizeVariable="num_targets">
+     <Data ElementName="target" Type="int32" />
+</Data>
+<Data ElementName="spell_id" Type="int32" />
+</Struct>
 <Struct Name="WS_DisplaySpellFailed" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqDisplaySpellFailCmd" >
 <Data ElementName="error_code" Type="int16" />
 </Struct>
@@ -9228,7 +9236,7 @@ to zero and treated like placeholders." />
 	<Data ElementName="icon" Type="int16" />
 	<Data ElementName="item_difficulty" Type="int8" />
 	<Data ElementName="level" Type="int8" />
-	<Data ElementName="unknown4" Type="int8" />
+	<Data ElementName="display_flags" Type="int8" />
 	<Data ElementName="quantity" Type="int8" />
 	<Data ElementName="unknown5" Type="int8" />
 	<Data ElementName="tier" Type="int8" />
@@ -9284,7 +9292,7 @@ to zero and treated like placeholders." />
 	<Data ElementName="icon" Type="int16" />
 	<Data ElementName="item_difficulty" Type="int8" />
 	<Data ElementName="level" Type="int8" />
-	<Data ElementName="unknown4" Type="int8" />
+	<Data ElementName="display_flags" Type="int8" />
 	<Data ElementName="quantity" Type="int8" />
 	<Data ElementName="unknown5" Type="int8" />
 	<Data ElementName="tier" Type="int8" />
@@ -9316,7 +9324,7 @@ to zero and treated like placeholders." />
   <Data ElementName="icon" Type="int16" />
   <Data ElementName="item_difficulty" Type="int8" />
   <Data ElementName="level" Type="int8" />
-  <Data ElementName="unknown4" Type="int8" />
+  <Data ElementName="display_flags" Type="int8" />
   <Data ElementName="quantity" Type="int8" />
   <Data ElementName="unknown5" Type="int8" />
   <Data ElementName="tier" Type="int8" />
@@ -9350,7 +9358,8 @@ to zero and treated like placeholders." />
   <Data ElementName="icon" Type="int16" />
   <Data ElementName="item_difficulty" Type="int8" />
   <Data ElementName="level" Type="int8" />
-  <Data ElementName="unknown4" Type="int8" Size="2" />
+  <Data ElementName="display_flags" Type="int8" />
+  <Data ElementName="unknown4" Type="int8" />
   <Data ElementName="quantity" Type="int8" />
   <Data ElementName="unknown5" Type="int8" />
   <Data ElementName="tier" Type="int8" />
@@ -9384,7 +9393,8 @@ to zero and treated like placeholders." />
 <Data ElementName="icon" Type="int16" />
 <Data ElementName="item_difficulty" Type="int8" />
 <Data ElementName="level" Type="int8" />
-<Data ElementName="unknown4" Type="int8" Size="2" />
+<Data ElementName="display_flags" Type="int8" />
+<Data ElementName="unknown4" Type="int8" />
 <Data ElementName="quantity" Type="int8" />
 <Data ElementName="unknown5" Type="int8" />
 <Data ElementName="tier" Type="int8" />
@@ -9420,7 +9430,8 @@ to zero and treated like placeholders." />
   <Data ElementName="icon" Type="int16" />
   <Data ElementName="item_difficulty" Type="int8" />
   <Data ElementName="level" Type="int8" />
-  <Data ElementName="unknown4" Type="int8" Size="2" />
+  <Data ElementName="display_flags" Type="int8" />
+  <Data ElementName="unknown4" Type="int8" />
   <Data ElementName="quantity" Type="int8" />
   <Data ElementName="unknown5" Type="int8" />
   <Data ElementName="tier" Type="int8" />
@@ -9456,7 +9467,8 @@ to zero and treated like placeholders." />
   <Data ElementName="icon" Type="int16" />
   <Data ElementName="item_difficulty" Type="int8" />
   <Data ElementName="level" Type="int8" />
-  <Data ElementName="unknown4" Type="int16" Size="1" />
+  <Data ElementName="display_flags" Type="int8" />
+  <Data ElementName="unknown4" Type="int8" />
   <Data ElementName="quantity" Type="int8" />
   <Data ElementName="unknown5" Type="int8" />
   <Data ElementName="tier" Type="int8" />
