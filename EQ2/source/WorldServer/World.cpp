@@ -1225,7 +1225,7 @@ int32 World::GetInventoryID(int32 merchant_id, int32 item_id){
 
 void World::DecreaseMerchantQuantity(int32 merchant_id, int32 item_id, int16 amount){
 	int16 total_left = GetMerchantItemQuantity(merchant_id, item_id);
-	if(total_left > 0 && total_left < 0xFFFF){
+	if(total_left > 0 && total_left < 0xFF){
 		int32 inventory_id = GetInventoryID(merchant_id, item_id);
 		if(inventory_id > 0){
 			MMerchantList.lock();
