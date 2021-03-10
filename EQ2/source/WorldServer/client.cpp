@@ -9233,7 +9233,20 @@ void Client::SendBiography() {
 	PacketStruct* packet = configReader.getStruct("WS_BioUpdate", GetVersion());
 	if (packet) {
 		char biography[512];
-		strncpy(biography, player->GetInfoStruct()->get_biography().c_str(), player->GetInfoStruct()->get_biography().size());
+		if(player->GetInfoStruct()->get_biography().size() < 1)
+		{
+			safe_delete(packet);
+			return;
+		}
+		else
+		{
+			int16 size = player->GetInfoStruct()->get_biography().size();
+			if(size>511)
+				size = 511;
+			
+			strncpy(biography, player->GetInfoStruct()->get_biography().c_str(), player->GetInfoStruct()->get_biography().size());
+			biography[player->GetInfoStruct()->get_biography().size()] = '\0';
+		}
 		packet->setDataByName("biography", biography);
 
 		QueuePacket(packet->serialize());
