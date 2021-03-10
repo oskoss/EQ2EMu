@@ -431,7 +431,7 @@ public:
 		tutorial_step = val;
 	}
 	void	AddMaintainedSpell(LuaSpell* spell);
-	void	AddSpellEffect(LuaSpell* spell);
+	void	AddSpellEffect(LuaSpell* spell, int32 override_expire_time = 0);
 	void	RemoveMaintainedSpell(LuaSpell* spell);
 	void	RemoveSpellEffect(LuaSpell* spell);
 	bool	HasActiveMaintainedSpell(Spell* spell, Spawn* target);

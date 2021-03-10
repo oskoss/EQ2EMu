@@ -24,8 +24,11 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "Spells.h"
 #include "LuaInterface.h"
 #include "Bots/Bot.h"
+#include "SpellProcess.h"
+#include "Rules/Rules.h"
 
 extern ZoneList	zone_list;
+extern RuleManager rule_manager;
 
 /******************************************************** PlayerGroup ********************************************************/
 
@@ -564,6 +567,7 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 	PlayerGroup* group = nullptr;
 	Player* caster = nullptr;
 	vector<int32> new_target_list;
+	vector<int32> char_list;
 	Client* client = nullptr;
 	bool has_effect = false;
 	vector<BonusValues*>* sb_list = nullptr;
@@ -614,6 +618,7 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 					(spell->GetSpellData()->target_type == SPELL_TARGET_GROUP_AE || spell->GetSpellData()->target_type == SPELL_TARGET_RAID_AE)) {
 
 					luaspell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
+					luaspell->char_id_targets.clear();
 
 					for (target_itr = group->GetMembers()->begin(); target_itr != group->GetMembers()->end(); target_itr++) {
 						group_member = (*target_itr)->member;
@@ -632,7 +637,8 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 							has_effect = true;
 
 						// Check if player is within range of the caster
-						if (group_member->GetZone() != caster->GetZone() || caster->GetDistance(group_member) > spell->GetSpellData()->radius) {
+						if (!rule_manager.GetGlobalRule(R_Spells, EnableCrossZoneGroupBuffs)->GetInt8() && 
+								(group_member->GetZone() != caster->GetZone() || caster->GetDistance(group_member) > spell->GetSpellData()->radius)) {
 							if (has_effect) {
 								group_member->RemoveSpellEffect(luaspell);
 								group_member->RemoveSpellBonus(luaspell);
@@ -659,12 +665,19 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 							continue;
 						}
 
-						//this group member is a target of the spell
-						new_target_list.push_back(group_member->GetID());
+						if(group_member->GetZone() != caster->GetZone())
+						{
+							if(group_member->IsPlayer())
+								luaspell->char_id_targets.insert(make_pair(((Player*)group_member)->GetCharacterID(), 0));			
+						}
+						else
+						{
+							//this group member is a target of the spell
+							new_target_list.push_back(group_member->GetID());
+						}
 
 						if (has_effect)
 							continue;
-
 
 						pet = 0;
 						charmed_pet = 0;
@@ -674,11 +687,11 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 							charmed_pet = group_member->GetCharmedPet();
 						}
 
-						group_member->AddSpellEffect(luaspell);
+						group_member->AddSpellEffect(luaspell, luaspell->timer.GetRemainingTime() != 0 ? luaspell->timer.GetRemainingTime() : 0);
 						if (pet)
-							pet->AddSpellEffect(luaspell);
+							pet->AddSpellEffect(luaspell, luaspell->timer.GetRemainingTime() != 0 ? luaspell->timer.GetRemainingTime() : 0);
 						if (charmed_pet)
-							charmed_pet->AddSpellEffect(luaspell);
+							charmed_pet->AddSpellEffect(luaspell, luaspell->timer.GetRemainingTime() != 0 ? luaspell->timer.GetRemainingTime() : 0);
 
 						if (pet)
 							new_target_list.push_back(pet->GetID());
@@ -714,8 +727,8 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 						}
 					}
 
-					new_target_list.push_back(caster->GetID());
 					luaspell->targets.swap(new_target_list);
+					SpellProcess::AddSelfAndPet(luaspell, caster);
 					luaspell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 					new_target_list.clear();
 				}

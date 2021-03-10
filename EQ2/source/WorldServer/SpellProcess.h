@@ -363,7 +363,7 @@ public:
 	MutexList<LuaSpell*>* GetActiveSpells() { return &active_spells; }
 
 	void RemoveTargetFromSpell(LuaSpell* spell, Spawn* target);
-	void CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete = true);
+	void CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete = true, bool removing_all_spells = false);
 
 	/// <summary>Adds a solo HO to the SpellProcess</summary>
 	/// <param name='client'>The client who is starting the HO</param>
@@ -388,6 +388,7 @@ public:
 	bool ProcessSpell(LuaSpell* spell, bool first_cast = true, const char* function = 0, SpellScriptTimer* timer = 0);
 
 	void AddActiveSpell(LuaSpell* spell);
+	static void AddSelfAndPet(LuaSpell* spell, Spawn* caster, bool onlyPet=false);
 private:
 	Mutex MSpellProcess;
 	MutexMap<Entity*,Spell*> spell_que;

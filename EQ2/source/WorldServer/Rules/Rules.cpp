@@ -328,6 +328,8 @@ void RuleManager::Init()
 	RULE_INIT(R_Spells, DefaultFizzleChance, "10.0"); // default percentage x / 100, eg 10% is 10.0
 	RULE_INIT(R_Spells, FizzleMaxSkill, "1.2"); // 1.0 is 100%, 1.2 is 120%, so you get 120% your max skill against a spell, no fizzle
 	RULE_INIT(R_Spells, FizzleDefaultSkill, ".2"); // offset against MaxSkill to average out to 100%, default of .2f so we don't go over the threshold if no skill
+	RULE_INIT(R_Spells, EnableCrossZoneGroupBuffs, "0"); // enables/disables allowing cross zone group buffs
+	RULE_INIT(R_Spells, EnableCrossZoneTargetBuffs, "0"); // enables/disables allowing cross zone target buffs
 
 	RULE_INIT(R_Expansion, GlobalExpansionFlag, "0");
 	RULE_INIT(R_Expansion, GlobalHolidayFlag, "0");

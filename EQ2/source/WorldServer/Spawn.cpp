@@ -2291,8 +2291,13 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	packet->setDataByName("difficulty", appearance.encounter_level); //6);
 	packet->setDataByName("unknown6", 1);
 	packet->setDataByName("heroic_flag", appearance.heroic_flag);
-	if (!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign())
-		packet->setDataByName("interaction_flag", 12); //this makes NPCs head turn to look at you
+	if (IsNPC() && !IsPet())
+	{
+		if(((Entity*)this)->GetInfoStruct()->get_interaction_flag())
+			packet->setDataByName("interaction_flag", ((Entity*)this)->GetInfoStruct()->get_interaction_flag()); //this makes NPCs head turn to look at you (12)
+		else
+			packet->setDataByName("interaction_flag", 12); //turn head since no other value is set
+	}
 
 	packet->setDataByName("class", appearance.adventure_class);
 

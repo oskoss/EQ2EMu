@@ -177,6 +177,8 @@ enum RuleType {
 	DefaultFizzleChance,
 	FizzleMaxSkill,
 	FizzleDefaultSkill,
+	EnableCrossZoneGroupBuffs,
+	EnableCrossZoneTargetBuffs,
 
 	/* ZONE TIMERS */
 	RegenTimer,

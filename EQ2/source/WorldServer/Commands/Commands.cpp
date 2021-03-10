@@ -4098,6 +4098,16 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				details3 += "Speed:	" + to_string(spawn->GetSpeed()) + "\n";
 				details3 += "BaseSpeed:	" + to_string(spawn->GetBaseSpeed()) + "\n";
 
+				if(spawn->IsEntity())
+				{
+					Entity* ent = (Entity*)spawn;
+					details3 += "STR / STRBase:	" + to_string(ent->GetInfoStruct()->get_str()) + " / " + to_string(ent->GetInfoStruct()->get_str_base()) + "\n";
+					details3 += "AGI / AGIBase:	" + to_string(ent->GetInfoStruct()->get_agi()) + " / " + to_string(ent->GetInfoStruct()->get_agi_base()) + "\n";
+					details3 += "STA / STABase:	" + to_string(ent->GetInfoStruct()->get_sta()) + " / " + to_string(ent->GetInfoStruct()->get_sta_base()) + "\n";
+					details3 += "INT / INTBase:	" + to_string(ent->GetInfoStruct()->get_intel()) + " / " + to_string(ent->GetInfoStruct()->get_intel_base()) + "\n";
+					details3 += "WIS / WISBase:	" + to_string(ent->GetInfoStruct()->get_wis()) + " / " + to_string(ent->GetInfoStruct()->get_wis_base()) + "\n";
+				}
+
 				string details4;
 				if (spawn->IsEntity()) {
 					details4 += "Facial Hair Type:	" + to_string(((Entity*)spawn)->GetFacialHairType()) + "\n";

@@ -256,6 +256,8 @@ struct InfoStruct{
 		flying_type_ = 0;
 
 		no_interrupt_ = 0;
+
+		interaction_flag_ = 0;
 	}
 
 
@@ -407,6 +409,8 @@ struct InfoStruct{
 		flying_type_ = oldStruct->get_flying_type();
 
 		no_interrupt_ = oldStruct->get_no_interrupt();
+
+		interaction_flag_ = oldStruct->get_interaction_flag();
 	}
 
 	//mutable std::shared_mutex mutex_;
@@ -568,6 +572,8 @@ struct InfoStruct{
 	int8	get_flying_type() { std::lock_guard<std::mutex> lk(classMutex); return flying_type_; }
 
 	int8	get_no_interrupt() { std::lock_guard<std::mutex> lk(classMutex); return no_interrupt_; }
+
+	int8	get_interaction_flag() { std::lock_guard<std::mutex> lk(classMutex); return interaction_flag_; }
 
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
@@ -814,6 +820,8 @@ struct InfoStruct{
 
 	void	set_no_interrupt(int8 value) { std::lock_guard<std::mutex> lk(classMutex); no_interrupt_ = value; }
 
+	void	set_interaction_flag(int8 value) { std::lock_guard<std::mutex> lk(classMutex); interaction_flag_ = value; }
+
 	void	ResetEffects(Spawn* spawn)
 	{
 		for(int i=0;i<45;i++){
@@ -981,6 +989,8 @@ private:
 	int8			flying_type_;
 
 	int8			no_interrupt_;
+
+	int8			interaction_flag_;
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;
 };
@@ -1086,11 +1096,11 @@ public:
 	Entity();
 	virtual ~Entity();
 
-	void DeleteSpellEffects();
+	void DeleteSpellEffects(bool removeClient = false);
 	void MapInfoStruct();
 	virtual float GetDodgeChance();
 	virtual void AddMaintainedSpell(LuaSpell* spell);
-	virtual void AddSpellEffect(LuaSpell* spell);
+	virtual void AddSpellEffect(LuaSpell* spell, int32 override_expire_time = 0);
 	virtual void RemoveMaintainedSpell(LuaSpell* spell);
 	virtual void RemoveSpellEffect(LuaSpell* spell);
 	virtual bool HasActiveMaintainedSpell(Spell* spell, Spawn* target);

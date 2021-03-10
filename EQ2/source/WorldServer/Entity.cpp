@@ -109,7 +109,7 @@ Entity::~Entity(){
 		DeleteSpellEffects();
 }
 
-void Entity::DeleteSpellEffects()
+void Entity::DeleteSpellEffects(bool removeClient)
 {
 	map<LuaSpell*,bool> deletedPtrs;
 
@@ -119,7 +119,7 @@ void Entity::DeleteSpellEffects()
 			{
 				if(deletedPtrs.find(GetInfoStruct()->spell_effects[i].spell) == deletedPtrs.end())
 				{
-					lua_interface->RemoveSpell(GetInfoStruct()->maintained_effects[i].spell, IsPlayer() ? false:  true);
+					lua_interface->RemoveSpell(GetInfoStruct()->maintained_effects[i].spell, false, removeClient, "", removeClient);
 					if (IsPlayer())
 						GetInfoStruct()->maintained_effects[i].icon = 0xFFFF;
 
@@ -132,11 +132,6 @@ void Entity::DeleteSpellEffects()
 		}
 		if(GetInfoStruct()->spell_effects[i].spell_id != 0xFFFFFFFF)
 		{
-			if(deletedPtrs.find(GetInfoStruct()->spell_effects[i].spell) == deletedPtrs.end())
-			{
-				lua_interface->RemoveSpell(GetInfoStruct()->spell_effects[i].spell, IsPlayer() ? false:  true);
-				deletedPtrs[GetInfoStruct()->spell_effects[i].spell] = true;
-			}
 			GetInfoStruct()->spell_effects[i].spell_id = 0xFFFFFFFF;
 			GetInfoStruct()->spell_effects[i].spell = nullptr;
 		}
@@ -289,6 +284,8 @@ void Entity::MapInfoStruct()
 	
 	get_int8_funcs["no_interrupt"] = l::bind(&InfoStruct::get_no_interrupt, &info_struct);
 
+	get_int8_funcs["interaction_flag"] = l::bind(&InfoStruct::get_interaction_flag, &info_struct);
+
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -433,6 +430,8 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["flying_type"] = l::bind(&InfoStruct::set_flying_type, &info_struct, l::_1);
 	
 	set_int8_funcs["no_interrupt"] = l::bind(&InfoStruct::set_no_interrupt, &info_struct, l::_1);
+
+	set_int8_funcs["interaction_flag"] = l::bind(&InfoStruct::set_interaction_flag, &info_struct, l::_1);
 
 }
 
@@ -816,7 +815,7 @@ void Entity::AddMaintainedSpell(LuaSpell* luaspell){
 	}
 }
 
-void Entity::AddSpellEffect(LuaSpell* luaspell){
+void Entity::AddSpellEffect(LuaSpell* luaspell, int32 override_expire_time){
 	if (!luaspell || !luaspell->caster)
 		return;
 
@@ -827,7 +826,11 @@ void Entity::AddSpellEffect(LuaSpell* luaspell){
 		GetZone()->RemoveTargetFromSpell(old_effect->spell, this);
 		RemoveSpellEffect(old_effect->spell);
 	}
-	effect = GetFreeSpellEffectSlot();
+	
+	LogWrite(SPELL__DEBUG, 0, "Spell", "%s AddSpellEffect %s (%u).", spell->GetName(), GetName(), GetID());
+	
+	if(!effect)
+		effect = GetFreeSpellEffectSlot();
 
 	if(effect){
 		MSpellEffects.writelock(__FUNCTION__, __LINE__);
@@ -837,6 +840,8 @@ void Entity::AddSpellEffect(LuaSpell* luaspell){
 		effect->total_time = spell->GetSpellDuration()/10;
 		if (spell->GetSpellData()->duration_until_cancel)
 			effect->expire_timestamp = 0xFFFFFFFF;
+		else if(override_expire_time)
+			effect->expire_timestamp = Timer::GetCurrentTime2() + override_expire_time;
 		else
 			effect->expire_timestamp = Timer::GetCurrentTime2() + (spell->GetSpellDuration()*100);
 		effect->icon = spell->GetSpellData()->icon;
@@ -889,6 +894,8 @@ void Entity::RemoveSpellEffect(LuaSpell* spell) {
 			found = true;
 	}
 	if (found) {
+		LogWrite(SPELL__DEBUG, 0, "Spell", "%s RemoveSpellEffect %s (%u).", spell->spell->GetName(), GetName(), GetID());
+		GetZone()->GetSpellProcess()->RemoveTargetFromSpell(spell, this);
 		memset(&GetInfoStruct()->spell_effects[44], 0, sizeof(SpellEffects));
 		GetInfoStruct()->spell_effects[44].spell_id = 0xFFFFFFFF;
 		changed = true;
@@ -1147,11 +1154,11 @@ void Entity::CalculateBonuses(){
 	stats.clear();
 	ItemStatsValues* values = equipment_list.CalculateEquipmentBonuses(this);
 	CalculateSpellBonuses(values);
-	info->add_sta(values->sta);
-	info->add_str(values->str);
-	info->add_agi(values->agi);
-	info->add_wis(values->wis);
-	info->add_intel(values->int_);
+	info->add_sta((float)values->sta);
+	info->add_str((float)values->str);
+	info->add_agi((float)values->agi);
+	info->add_wis((float)values->wis);
+	info->add_intel((float)values->int_);
 
 	info->add_disease(values->vs_disease);
 	info->add_divine(values->vs_divine);
@@ -1433,6 +1440,8 @@ void Entity::AddSpellBonus(LuaSpell* spell, int16 type, float value, int64 class
 	bonus->tier = spell ? spell->spell->GetSpellTier() : 0;
 	bonus_list.Add(bonus);
 
+	if(IsNPC())
+		CalculateBonuses();
 }
 
 BonusValues* Entity::GetSpellBonus(int32 spell_id) {
@@ -1464,6 +1473,9 @@ void Entity::RemoveSpellBonus(const LuaSpell* spell){
 		if(itr.value->luaspell == spell)
 			bonus_list.Remove(itr.value, true);
 	}
+	
+	if(IsNPC())
+		CalculateBonuses();
 }
 
 void Entity::CalculateSpellBonuses(ItemStatsValues* stats){
@@ -1715,7 +1727,8 @@ void Entity::DismissPet(Entity* pet, bool from_death, bool spawnListLocked) {
 	}
 
 	if (pet->GetPetType() == PET_TYPE_CHARMED) {
-		PetOwner->SetCharmedPet(0);
+		if(PetOwner)
+			PetOwner->SetCharmedPet(0);
 
 		if (!from_death) {
 			// set the pet flag to false, owner to 0, and give the mob its old brain back
@@ -1727,15 +1740,15 @@ void Entity::DismissPet(Entity* pet, bool from_death, bool spawnListLocked) {
 			pet->SetDismissing(false);
 		}
 	}
-	else if (pet->GetPetType() == PET_TYPE_COMBAT)
+	else if (PetOwner && pet->GetPetType() == PET_TYPE_COMBAT)
 		PetOwner->SetCombatPet(0);
-	else if (pet->GetPetType() == PET_TYPE_DEITY)
+	else if (PetOwner && pet->GetPetType() == PET_TYPE_DEITY)
 		PetOwner->SetDeityPet(0);
-	else if (pet->GetPetType() == PET_TYPE_COSMETIC)
+	else if (PetOwner && pet->GetPetType() == PET_TYPE_COSMETIC)
 		PetOwner->SetCosmeticPet(0);
 
 	// if owner is player and no combat pets left reset the pet info
-	if (PetOwner->IsPlayer()) {
+	if (PetOwner && PetOwner->IsPlayer()) {
 		if (!PetOwner->GetPet() && !PetOwner->GetCharmedPet())
 			((Player*)PetOwner)->ResetPetInfo();
 	}

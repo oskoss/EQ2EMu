@@ -273,7 +273,6 @@ int EQ2Emu_lua_AddQuestStepCompleteAction(lua_State* state);
 int EQ2Emu_lua_AddQuestStepProgressAction(lua_State* state);
 int EQ2Emu_lua_SetQuestCompleteAction(lua_State* state);
 int EQ2Emu_lua_GiveQuestReward(lua_State* state);
-int EQ2Emu_lua_GiveImmediateQuestReward(lua_State* state);
 int EQ2Emu_lua_UpdateQuestTaskGroupDescription(lua_State* state);
 int EQ2Emu_lua_UpdateQuestStepDescription(lua_State* state);
 int EQ2Emu_lua_UpdateQuestDescription(lua_State* state);

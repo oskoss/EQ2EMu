@@ -3598,10 +3598,10 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 	int8 deity = create->getType_int8_ByName("deity"); // aka 'alignment' for early DOF, 0 = evil, 1 = good
 	int32 startingZoneRuleFlag = rule_manager.GetGlobalRule(R_World, StartingZoneRuleFlag)->GetInt32();
 	
-	if((startingZoneRuleFlag == 1 || startingZoneRuleFlag == 2) && choice > 1)
+	if((startingZoneRuleFlag == 1 || startingZoneRuleFlag == 2) && packetVersion > 546)
 	{
-		LogWrite(PLAYER__INFO, 0, "Player", "Starting zone rule flag %u override choice %u to deity value of %u", startingZoneRuleFlag, choice, deity);
-		choice = deity; // inherit deity to know starting choice is 'good' or evil
+		LogWrite(PLAYER__INFO, 0, "Player", "Starting zone rule flag %u override choice %u to deity value of 0", startingZoneRuleFlag, choice);
+		choice = 0;
 	}
 	
 	LogWrite(PLAYER__INFO, 0, "Player", "Adding default zone for race: %i, class: %i for char_id: %u (choice: %i), deity(alignment): %u, version: %u.", race_id, class_id, char_id, choice, deity, packetVersion);
@@ -7354,13 +7354,14 @@ int32 WorldDatabase::CreateSpiritShard(const char* name, int32 level, int8 race,
 
 void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int8 db_spell_type) 
 {
-		SpellProcess* spellProcess = client->GetCurrentZone()->GetSpellProcess();
+	SpellProcess* spellProcess = client->GetCurrentZone()->GetSpellProcess();
+	Player* player = client->GetPlayer();
 
 		if(!spellProcess)
 			return;
 	DatabaseResult result;
 
-	Player* player = client->GetPlayer();
+	multimap<LuaSpell*, Entity*> restoreSpells;
 	// Use -1 on type and subtype to turn the enum into an int and make it a 0 index
 	if (!database_new.Select(&result, "SELECT name, caster_char_id, target_char_id, target_type, spell_id, effect_slot, slot_pos, icon, icon_backdrop, conc_used, tier, total_time, expire_timestamp, lua_file, custom_spell, damage_remaining, effect_bitmask, num_triggers, had_triggers, cancel_after_triggers, crit, last_spellattack_hit, interrupted, resisted, custom_function FROM character_spell_effects WHERE charid = %u and db_effect_type = %u", char_id, db_spell_type)) {
 		LogWrite(DATABASE__ERROR, 0, "DBNew", "MySQL Error %u: %s", database_new.GetError(), database_new.GetErrorMsg());
@@ -7413,9 +7414,9 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 		
 		bool isMaintained = false;
 		bool isExistingLuaSpell = false;
-		MaintainedEffects* effect;
+		MaintainedEffects* effect = nullptr;
 		Client* tmpCaster = nullptr;
-		if(caster_char_id == player->GetCharacterID() && target_char_id == player->GetCharacterID() && (effect = player->GetMaintainedSpell(spell_id)) != nullptr)
+		if(caster_char_id == player->GetCharacterID() && (target_char_id == 0xFFFFFFFF || target_char_id == player->GetCharacterID()) && (effect = player->GetMaintainedSpell(spell_id)) != nullptr)
 		{
 			safe_delete(lua_spell);
 			lua_spell = effect->spell;
@@ -7427,25 +7428,22 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 		else if ( caster_char_id != player->GetCharacterID() && (tmpCaster = zone_list.GetClientByCharID(caster_char_id)) != nullptr 
 					 && tmpCaster->GetPlayer() && (effect = tmpCaster->GetPlayer()->GetMaintainedSpell(spell_id)) != nullptr)
 		{
-			if(tmpCaster->GetCurrentZone() != client->GetCurrentZone())
-			{
-				LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u, '%s'), characters in different zones, cannot assign maintained spell.", spell_id, tier, lua_file.c_str());
-				safe_delete(lua_spell);
-				continue;
-			}
-			else if(effect->spell)
+			if(effect->spell && effect->spell_id == spell_id)
 			{
 				safe_delete(lua_spell);
 				effect->spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
-				effect->spell->targets.push_back(client->GetPlayer()->GetID());
+				if(tmpCaster->GetCurrentZone() == player->GetZone())
+					effect->spell->targets.push_back(client->GetPlayer()->GetID());
 				effect->spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 				lua_spell = effect->spell;
 				spell = effect->spell->spell;
 				isExistingLuaSpell = true;
+				isMaintained = true;
+				LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u, '%s'), effect spell id %u maintained spell recovered from %s", spell_id, tier, spell_name, effect ? effect->spell_id : 0, (tmpCaster && tmpCaster->GetPlayer()) ? tmpCaster->GetPlayer()->GetName() : "?");
 			}
 			else
 			{
-				LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u, '%s'), something went wrong loading another characters maintained spell.", spell_id, tier, lua_file.c_str());
+				LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u, '%s'), something went wrong loading another characters maintained spell. Effect has spell id %u", spell_id, tier, lua_file.c_str(), effect ? effect->spell_id : 0);
 				safe_delete(lua_spell);
 				continue;
 			}
@@ -7456,7 +7454,7 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 
 			lua_interface->AddCustomSpell(lua_spell);
 		}
-		else
+		else if(db_spell_type == DB_TYPE_MAINTAINEDEFFECTS)
 		{
 			safe_delete(lua_spell);
 			lua_spell = lua_interface->GetSpell(spell->GetSpellData()->lua_script.c_str());
@@ -7483,26 +7481,95 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			timer->customFunction = string(custom_function); // TODO
 			timer->spell = lua_spell;
 			timer->caster = (caster_char_id == player->GetCharacterID()) ? player->GetID() : 0;
-			timer->target = (target_char_id == player->GetCharacterID()) ? player->GetID() : 0;
+			
+			if(target_char_id == 0xFFFFFFFF && player->HasPet())
+				timer->target = player->GetPet()->GetID();
+			else
+				timer->target = (target_char_id == player->GetCharacterID()) ? player->GetID() : 0;
+
+			if(!timer->target && target_char_id)
+			{
+				Client* tmpClient = zone_list.GetClientByCharID(target_char_id);
+				if(tmpClient && tmpClient->GetPlayer() && tmpClient->GetPlayer()->GetZone() == player->GetZone())
+					timer->target = tmpClient->GetPlayer()->GetID();
+			}
 		}
 		
-		lua_spell->crit = crit;
-		lua_spell->damage_remaining = damage_remaining;
-		lua_spell->effect_bitmask = effect_bitmask;
-		lua_spell->had_dmg_remaining = (damage_remaining>0) ? true : false;
-		lua_spell->had_triggers = had_triggers;
-		lua_spell->initial_target = (target_char_id == player->GetCharacterID()) ? player->GetID() : 0;
-		lua_spell->interrupted = interrupted;
-		lua_spell->last_spellattack_hit = last_spellattack_hit;
-		lua_spell->num_triggers = num_triggers;
+		if(!isExistingLuaSpell)
+		{
+			lua_spell->crit = crit;
+			lua_spell->damage_remaining = damage_remaining;
+			lua_spell->effect_bitmask = effect_bitmask;
+			lua_spell->had_dmg_remaining = (damage_remaining>0) ? true : false;
+			lua_spell->had_triggers = had_triggers;
+			lua_spell->initial_caster_char_id = caster_char_id; 
+			lua_spell->initial_target = (target_char_id == player->GetCharacterID()) ? player->GetID() : 0;
+			lua_spell->initial_target_char_id = target_char_id;
+			lua_spell->interrupted = interrupted;
+			lua_spell->last_spellattack_hit = last_spellattack_hit;
+			lua_spell->num_triggers = num_triggers;
+		}
+
+		if(lua_spell->initial_target == 0 && target_char_id == 0xFFFFFFFF && player->HasPet())
+		{
+			lua_spell->initial_target = player->GetPet()->GetID();
+			lua_spell->initial_target_char_id = target_char_id;
+		}
 		//lua_spell->num_calls  ??
 		//if(target_char_id == player->GetCharacterID())
 		//	lua_spell->targets.push_back(player->GetID());
 		
 		if(db_spell_type == DB_TYPE_SPELLEFFECTS)
 		{
+			if (caster_char_id != player->GetCharacterID() && lua_spell->spell->GetSpellData()->group_spell && lua_spell->spell->GetSpellData()->friendly_spell)
+				{
+					if(!isExistingLuaSpell)
+						safe_delete(lua_spell);
+					continue;
+				}
+			
 			player->MSpellEffects.writelock();
-			info->spell_effects[effect_slot].caster = (caster_char_id == player->GetCharacterID()) ? player : 0;
+			LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s lua_spell caster %s (%u), caster char id: %u.", lua_spell->spell->GetName(), lua_spell->caster ? lua_spell->caster->GetName() : "", lua_spell->caster ? lua_spell->caster->GetID() : 0, caster_char_id);
+
+			if(lua_spell->caster && (rule_manager.GetGlobalRule(R_Spells,EnableCrossZoneTargetBuffs)->GetInt8() || (!rule_manager.GetGlobalRule(R_Spells,EnableCrossZoneTargetBuffs)->GetInt8() && lua_spell->caster->GetZone() == player->GetZone())))
+				info->spell_effects[effect_slot].caster = lua_spell->caster;
+			else if(caster_char_id != player->GetCharacterID())
+			{
+				Client* tmpCaster = zone_list.GetClientByCharID(caster_char_id);
+				if(tmpCaster)
+				{
+					if((rule_manager.GetGlobalRule(R_Spells,EnableCrossZoneTargetBuffs)->GetInt8() || (!rule_manager.GetGlobalRule(R_Spells,EnableCrossZoneTargetBuffs)->GetInt8() && lua_spell->caster->GetZone() == player->GetZone())))
+					{
+						info->spell_effects[effect_slot].caster = tmpCaster->GetPlayer();
+						LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s lua_spell caster %s (%u), caster char id: %u, found player %s.", lua_spell->spell->GetName(), lua_spell->caster ? lua_spell->caster->GetName() : "", lua_spell->caster ? lua_spell->caster->GetID() : 0, caster_char_id, tmpCaster->GetPlayer()->GetName());
+					}
+					else
+					{
+						LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s lua_spell caster %s (%u), caster char id: %u, found player %s, SKIPPED due to R_Spells, EnableCrossZoneTargetBuffs.", lua_spell->spell->GetName(), lua_spell->caster ? lua_spell->caster->GetName() : "", lua_spell->caster ? lua_spell->caster->GetID() : 0, caster_char_id, tmpCaster->GetPlayer()->GetName());
+						if(!isExistingLuaSpell)
+						{
+							safe_delete(lua_spell);
+						}
+						else
+						{
+							lua_spell->char_id_targets.insert(make_pair(player->GetCharacterID(),0));
+						}
+						player->MSpellEffects.releasewritelock();
+						continue;
+					}
+
+				}
+			}
+			else if(caster_char_id == player->GetCharacterID())
+				info->spell_effects[effect_slot].caster = player;
+			else
+			{					
+				LogWrite(LUA__ERROR, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s lua_spell caster %s (%u), caster char id: %u, failed to find caster will delete: %u", lua_spell->spell->GetName(), lua_spell->caster ? lua_spell->caster->GetName() : "", lua_spell->caster ? lua_spell->caster->GetID() : 0, caster_char_id, isExistingLuaSpell);
+				if(!isExistingLuaSpell)
+					safe_delete(lua_spell);
+				continue;
+			}
+			
 			info->spell_effects[effect_slot].expire_timestamp = Timer::GetCurrentTime2() + expire_timestamp;
 			info->spell_effects[effect_slot].icon = icon;
 			info->spell_effects[effect_slot].icon_backdrop = icon_backdrop;
@@ -7510,11 +7577,24 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			info->spell_effects[effect_slot].tier = tier;
 			info->spell_effects[effect_slot].total_time = total_time;
 			info->spell_effects[effect_slot].spell = lua_spell;
-			lua_spell->caster = player; // TODO: get actual player
+			printf("SlotPos: %u %s\n",slot_pos,spell->GetName());
+			multimap<int32,int8>::iterator entries;
+			while((entries = lua_spell->char_id_targets.find(player->GetCharacterID())) != lua_spell->char_id_targets.end())
+			{
+				lua_spell->char_id_targets.erase(entries);
+			}
+			lua_spell->slot_pos = slot_pos;
+			if(!isExistingLuaSpell)
+				lua_spell->caster = player; // TODO: get actual player
+
 			player->MSpellEffects.releasewritelock();
 
 			if(!isMaintained)
 				spellProcess->ProcessSpell(lua_spell, true, "cast", timer);
+				else
+				{
+					// track target id when caster isnt in zone somehow
+				}
 		}
 		else if ( db_spell_type == DB_TYPE_MAINTAINEDEFFECTS )
 		{
@@ -7530,18 +7610,59 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 					if(spell_id != in_spell_id)
 						continue;
 					
-					Client* client2 = zone_list.GetClientByCharID(target_char);
+					int32 idToAdd = 0;
+
+					if(target_char == 0xFFFFFFFF)
+					{
+						if( player->HasPet() )
+						{
+							idToAdd = player->GetPet()->GetID();
+							restoreSpells.insert(make_pair(lua_spell, player->GetPet()));
+						}
+					}
+					else
+					{
+						Client* client2 = zone_list.GetClientByCharID(target_char);
+						if(client2 && client2->GetPlayer() && client2->GetCurrentZone() == client->GetCurrentZone())
+						{
+							idToAdd = client2->GetPlayer()->GetID();
+							if(client != client2)
+								restoreSpells.insert(make_pair(lua_spell, client2->GetPlayer()));
+							
+							multimap<int32,int8>::iterator entries;
+							while((entries = lua_spell->char_id_targets.find(target_char)) != lua_spell->char_id_targets.end())
+							{
+								lua_spell->char_id_targets.erase(entries);
+							}
+						}
+						else
+						{
+							lua_spell->char_id_targets.insert(make_pair(target_char,0));
+						}
+					}
+					
+					if(!idToAdd)
+						continue;
+					
 					lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
-					if(client2 && client2->GetPlayer() && client2->GetCurrentZone() == client->GetCurrentZone())
-						lua_spell->targets.push_back(client2->GetPlayer()->GetID());
+					lua_spell->targets.push_back(idToAdd);
 					lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 				}
 			}
-
+			
+			Client* tmpClient = 0;
+			int32 targetID = 0;
+			if(target_char_id == 0xFFFFFFFF && player->HasPet())
+				targetID = player->GetPet()->GetID();
+			else if(target_char_id == player->GetCharacterID())
+				targetID = player->GetID();
+			else if((tmpClient = zone_list.GetClientByCharID(target_char_id)) != nullptr && tmpClient->GetPlayer())
+				targetID = tmpClient->GetPlayer()->GetID();
+			
 			info->maintained_effects[effect_slot].conc_used = conc_used;
 			strncpy(info->maintained_effects[effect_slot].name, spell_name, 60);
 			info->maintained_effects[effect_slot].slot_pos = slot_pos;
-			info->maintained_effects[effect_slot].target = (target_char_id == player->GetCharacterID()) ? player->GetID() : 0;
+			info->maintained_effects[effect_slot].target = targetID;
 			info->maintained_effects[effect_slot].target_type = target_type;
 			info->maintained_effects[effect_slot].expire_timestamp = Timer::GetCurrentTime2() + expire_timestamp;
 			info->maintained_effects[effect_slot].icon = icon;
@@ -7550,9 +7671,18 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			info->maintained_effects[effect_slot].tier = tier;
 			info->maintained_effects[effect_slot].total_time = total_time;
 			info->maintained_effects[effect_slot].spell = lua_spell;
-			lua_spell->caster = player;
+			if(!isExistingLuaSpell)
+				lua_spell->caster = player;
 			player->MMaintainedSpells.releasewritelock();
-
+		
+			LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s process spell caster %s (%u), caster char id: %u, target id %u (%s).", lua_spell->spell->GetName(), lua_spell->caster ? lua_spell->caster->GetName() : "", 
+											lua_spell->caster ? lua_spell->caster->GetID() : 0, caster_char_id, targetID, tmpClient ? tmpClient->GetPlayer()->GetName() : "");
+			if(tmpClient && lua_spell->initial_target_char_id == tmpClient->GetCharacterID())
+			{
+				lua_spell->initial_target = tmpClient->GetPlayer()->GetID();
+				lua_spell->targets.push_back(lua_spell->initial_target);
+			}
+			
 			spellProcess->ProcessSpell(lua_spell, true, "cast", timer);
 		}
 		if(!isExistingLuaSpell && expire_timestamp != 0xFFFFFFFF && !isMaintained)
@@ -7562,20 +7692,99 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			lua_spell->timer.Start();
 		}
 
-		if(lua_spell->spell->GetSpellData()->det_type)
+		if(target_char_id == player->GetCharacterID() && lua_spell->spell->GetSpellData()->det_type)
 			player->AddDetrimentalSpell(lua_spell, expire_timestamp);
-
-		if(timer)
-			spellProcess->AddSpellScriptTimer(timer);
 		
-		lua_spell->num_calls = 1;
-		lua_spell->restored = true;
+		if(!isExistingLuaSpell)
+		{
+			if(timer)
+				spellProcess->AddSpellScriptTimer(timer);
+			
+			lua_spell->num_calls = 1;
+			lua_spell->restored = true;
+		}
+		
 		if(!lua_spell->resisted && (lua_spell->spell->GetSpellDuration() > 0 || lua_spell->spell->GetSpellData()->duration_until_cancel))
 				spellProcess->AddActiveSpell(lua_spell);
 
-		if (num_triggers > 0)
-			ClientPacketFunctions::SendMaintainedExamineUpdate(client, slot_pos, num_triggers, 0);
-		if (damage_remaining > 0)
-			ClientPacketFunctions::SendMaintainedExamineUpdate(client, slot_pos, damage_remaining, 1);
+		if ( db_spell_type == DB_TYPE_MAINTAINEDEFFECTS )
+		{
+			if (num_triggers > 0)
+				ClientPacketFunctions::SendMaintainedExamineUpdate(client, slot_pos, num_triggers, 0);
+			if (damage_remaining > 0)
+				ClientPacketFunctions::SendMaintainedExamineUpdate(client, slot_pos, damage_remaining, 1);
+		}
 	}
+
+	if(!rule_manager.GetGlobalRule(R_Spells,EnableCrossZoneTargetBuffs)->GetInt8() && db_spell_type == DB_TYPE_SPELLEFFECTS)
+	{
+		DatabaseResult targets;
+		if (database_new.Select(&targets, "SELECT caster_char_id, target_type, spell_id from character_spell_effect_targets where target_char_id = %u", player->GetCharacterID())) {
+			while (targets.Next()) {
+				int32 caster_char_id = targets.GetInt32Str("caster_char_id");
+				int16 target_type = targets.GetInt32Str("target_type");
+				int32 in_spell_id = targets.GetInt32Str("spell_id");
+					Client* tmpCaster = nullptr;
+					MaintainedEffects* effect = nullptr;
+					if ( caster_char_id != player->GetCharacterID() && (tmpCaster = zone_list.GetClientByCharID(caster_char_id)) != nullptr 
+								&& tmpCaster->GetCurrentZone() == player->GetZone() && tmpCaster->GetPlayer() && (effect = tmpCaster->GetPlayer()->GetMaintainedSpell(in_spell_id)) != nullptr)
+					{
+						if(!player->GetSpellEffect(effect->spell_id, tmpCaster->GetPlayer()))
+						{
+							if(effect->spell->initial_target_char_id == player->GetCharacterID())
+								effect->spell->initial_target = player->GetID();
+							restoreSpells.insert(make_pair(effect->spell, player));
+						}
+					}
+				}
+			}
+	}
+	
+	multimap<LuaSpell*, Entity*>::const_iterator itr;
+
+	for (itr = restoreSpells.begin(); itr != restoreSpells.end(); itr++)
+	{
+		LuaSpell* tmpSpell = itr->first;
+		Entity* target = itr->second;
+		if(!target)
+		{
+			target = client->GetPlayer()->GetPet();
+			if(!target)
+				continue;
+		}
+
+		Entity* caster = tmpSpell->caster;
+		if(!caster)
+			caster = client->GetPlayer();
+		
+		if(caster != target && caster->GetPet() != target && 
+			tmpSpell->spell->GetSpellData()->group_spell && tmpSpell->spell->GetSpellData()->friendly_spell && (caster->group_id == 0 || target->group_id == 0 || caster->group_id != target->group_id))
+		{
+			LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s player no longer grouped with %s to reload bonuses for spell %s.", target->GetName(), caster ? caster->GetName() : "?", tmpSpell->spell->GetName());
+			continue;
+		}
+
+		LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s using caster %s to reload bonuses for spell %s.", player->GetName(), caster ? caster->GetName() : "?", tmpSpell->spell->GetName());
+		
+		target->AddSpellEffect(tmpSpell, tmpSpell->timer.GetRemainingTime() != 0 ? tmpSpell->timer.GetRemainingTime() : 0);
+		vector<BonusValues*>* sb_list = caster->GetAllSpellBonuses(tmpSpell);
+		for (int32 x = 0; x < sb_list->size(); x++) {
+			BonusValues* bv = sb_list->at(x);
+			target->AddSpellBonus(tmpSpell, bv->type, bv->value, bv->class_req, bv->race_req, bv->faction_req);
+		}
+		sb_list->clear();
+		safe_delete(sb_list);
+		// look for a skill bonus on the caster's spell
+		if(caster->IsPlayer())
+		{
+			SkillBonus* sb = ((Player*)caster)->GetSkillBonus(tmpSpell->spell->GetSpellID());
+			if (sb) {
+				map<int32, SkillBonusValue*>::iterator itr_skills;
+				for (itr_skills = sb->skills.begin(); itr_skills != sb->skills.end(); itr_skills++)
+				target->AddSkillBonus(sb->spell_id, (*itr_skills).second->skill_id, (*itr_skills).second->value);
+			}
+		}
+
+	}
+
 }

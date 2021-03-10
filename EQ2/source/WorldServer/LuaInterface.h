@@ -72,8 +72,11 @@ struct OptionWindowOption {
 
 struct LuaSpell{
 	Entity*			caster;
+	int32			initial_caster_char_id;
 	int32			initial_target;
+	int32			initial_target_char_id;
 	vector<int32>	targets;
+	multimap<int32, int8> char_id_targets;
 	Spell*			spell;
 	lua_State*		state;
 	string			file_name;

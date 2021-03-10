@@ -22,6 +22,7 @@
 #include "WorldDatabase.h"
 #include "SpellProcess.h"
 #include "../common/Log.h"
+#include "World.h"
 
 #ifndef WIN32
     #include <stdio.h>
@@ -34,6 +35,7 @@
 #endif
 
 extern WorldDatabase database;
+extern ZoneList zone_list;
 
 
 LuaInterface::LuaInterface() {
@@ -277,6 +279,8 @@ bool LuaInterface::LoadLuaSpell(const char* name) {
 		spell->damage_remaining = 0;
 		spell->effect_bitmask = 0;
 		spell->restored = false;
+		spell->initial_caster_char_id = 0;
+		spell->initial_target_char_id = 0;
 
 		MSpells.lock();
 		if (spells.count(lua_script) > 0) {
@@ -751,7 +755,22 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 			continue;
 
 		((Entity*)target)->RemoveProc(0, spell);
+		((Entity*)target)->RemoveSpellEffect(spell);
+		((Entity*)target)->RemoveSpellBonus(spell);
 	}
+
+	multimap<int32,int8>::iterator entries;
+	for(entries = spell->char_id_targets.begin(); entries != spell->char_id_targets.end(); entries++)
+	{
+		Client* tmpClient = zone_list.GetClientByCharID(entries->first);
+		if(tmpClient && tmpClient->GetPlayer())
+		{
+			tmpClient->GetPlayer()->RemoveProc(0, spell);
+			tmpClient->GetPlayer()->RemoveSpellEffect(spell);
+			tmpClient->GetPlayer()->RemoveSpellBonus(spell);
+		}
+	}
+	spell->char_id_targets.clear(); // TODO: reach out to those clients in different
 	spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 
 	// we need to make sure all memory is purged for a copied spell, its only used once
@@ -1037,7 +1056,6 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "AddQuestStepProgressAction", EQ2Emu_lua_AddQuestStepProgressAction);
 	lua_register(state, "SetQuestCompleteAction", EQ2Emu_lua_SetQuestCompleteAction);
 	lua_register(state, "GiveQuestReward", EQ2Emu_lua_GiveQuestReward);
-	lua_register(state, "GiveImmediateQuestReward", EQ2Emu_lua_GiveImmediateQuestReward);
 	lua_register(state, "UpdateQuestStepDescription", EQ2Emu_lua_UpdateQuestStepDescription);
 	lua_register(state, "UpdateQuestDescription", EQ2Emu_lua_UpdateQuestDescription);
 	lua_register(state, "UpdateQuestZone", EQ2Emu_lua_UpdateQuestZone);
@@ -1783,6 +1801,8 @@ LuaSpell* LuaInterface::GetSpell(const char* name)  {
 		new_spell->initial_target = 0;
 		new_spell->spell = 0;
 		new_spell->restored = false;
+		new_spell->initial_caster_char_id = 0;
+		new_spell->initial_target_char_id = 0;
 		return new_spell;
 	}
 	else{

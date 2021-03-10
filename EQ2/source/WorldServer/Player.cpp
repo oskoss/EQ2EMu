@@ -1065,8 +1065,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("mitigation_max2", info_struct->get_max_mitigation());
 		packet->setDataByName("mitigation_base2", info_struct->get_mitigation_base());
 
-		if (version < 1096)
-			packet->setDataByName("weight", info_struct->get_weight());
+		packet->setDataByName("weight", info_struct->get_weight());
 		packet->setDataByName("max_weight", info_struct->get_max_weight());
 		packet->setDataByName("unknownint32a", 777777);
 		packet->setDataByName("unknownint32b", 666666);
@@ -3126,7 +3125,8 @@ void Player::AddMaintainedSpell(LuaSpell* luaspell){
 		effect->target_type = target_type;
 
 		effect->spell = luaspell;
-		luaspell->slot_pos = effect->slot_pos;
+		if(!luaspell->slot_pos)
+			luaspell->slot_pos = effect->slot_pos;
 		effect->spell_id = spell->GetSpellData()->id;
 		LogWrite(PLAYER__DEBUG, 5, "Player", "AddMaintainedSpell Spell ID: %u, req concentration: %u", spell->GetSpellData()->id, spell->GetSpellData()->req_concentration);
 		effect->icon = spell->GetSpellData()->icon;
@@ -3142,7 +3142,7 @@ void Player::AddMaintainedSpell(LuaSpell* luaspell){
 		charsheet_changed = true;
 	}
 }
-void Player::AddSpellEffect(LuaSpell* luaspell){
+void Player::AddSpellEffect(LuaSpell* luaspell, int32 override_expire_time){
 	if(!luaspell || !luaspell->caster)
 		return;
 
@@ -3163,6 +3163,8 @@ void Player::AddSpellEffect(LuaSpell* luaspell){
 		effect->total_time = spell->GetSpellDuration()/10;
 		if (spell->GetSpellData()->duration_until_cancel)
 			effect->expire_timestamp = 0xFFFFFFFF;
+		else if(override_expire_time)
+			effect->expire_timestamp = Timer::GetCurrentTime2() + override_expire_time;
 		else
 			effect->expire_timestamp = Timer::GetCurrentTime2() + (spell->GetSpellDuration()*100);
 		effect->icon = spell->GetSpellData()->icon;
@@ -6374,17 +6376,18 @@ void Player::SaveSpellEffects()
 	for(int i = 0; i < 45; i++) {
 		if(info->spell_effects[i].spell_id != 0xFFFFFFFF)
 		{
-			Spawn* spawn = GetZone()->GetSpawnByID(info->spell_effects[i].spell->initial_target);
-
+			Spawn* spawn = nullptr;
 			int32 target_char_id = 0;
-			if(spawn && spawn->IsPlayer())
+			if(info->spell_effects[i].spell->initial_target_char_id != 0)
+				target_char_id = info->spell_effects[i].spell->initial_target_char_id;
+			else if((spawn = GetZone()->GetSpawnByID(info->spell_effects[i].spell->initial_target)) != nullptr && spawn->IsPlayer())
 				target_char_id = ((Player*)spawn)->GetCharacterID();
 
 			int32 timestamp = 0xFFFFFFFF;
 			if(!info->spell_effects[i].spell->spell->GetSpellData()->duration_until_cancel)
 				timestamp = info->spell_effects[i].expire_timestamp - Timer::GetCurrentTime2();
 			
-			int32 caster_char_id = (info->spell_effects[i].caster && info->spell_effects[i].caster->IsPlayer()) ? ((Player*)info->spell_effects[i].caster)->GetCharacterID() : 0;
+			int32 caster_char_id = info->spell_effects[i].spell->initial_caster_char_id;
 
 			if(caster_char_id == 0)
 				continue;
@@ -6398,34 +6401,20 @@ void Player::SaveSpellEffects()
 			info->spell_effects[i].total_time, timestamp, database.getSafeEscapeString(info->spell_effects[i].spell->file_name.c_str()).c_str(), info->spell_effects[i].spell->spell->IsCopiedSpell(), GetCharacterID(), 
 			info->spell_effects[i].spell->damage_remaining, info->spell_effects[i].spell->effect_bitmask, info->spell_effects[i].spell->num_triggers, info->spell_effects[i].spell->had_triggers, info->spell_effects[i].spell->cancel_after_all_triggers,
 			info->spell_effects[i].spell->crit, info->spell_effects[i].spell->last_spellattack_hit, info->spell_effects[i].spell->interrupted, info->spell_effects[i].spell->resisted, (info->maintained_effects[i].expire_timestamp) == 0xFFFFFFFF ? "" : database.getSafeEscapeString(spellProcess->SpellScriptTimerCustomFunction(info->spell_effects[i].spell).c_str()).c_str());
-			
-		/*	info->spell_effects[i].spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
-			std::string insertTargets = string("insert into character_spell_effect_targets (caster_char_id, target_char_id, target_type, db_effect_type, spell_id, effect_slot, slot_pos) values ");
-			bool firstTarget = true;
-			for (int8 t = 0; t < info->spell_effects[i].spell->targets.size(); t++) {
-					Spawn* spawn = GetZone()->GetSpawnByID(info->spell_effects[i].spell->targets.at(t));
-					if(spawn && spawn->IsPlayer())
-					{
-						if(!firstTarget)
-							insertTargets.append(", ");
-
-						insertTargets.append("(" + caster_char_id + ", " + target_char_id + ", " + "0" + ", " std::to_string(DB_TYPE_SPELLEFFECTS) + ", " + info->spell_effects[i].spell_id + ", " + i + ", " + info->spell_effects[i].spell->slot_pos + ")");
-						firstTarget = false;
-					}
-			}
-			info->spell_effects[i].spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
-			if(!firstTarget)
-			{
-				Query targetSave;
-				targetSave.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, insertTarget.c_str());
-			}*/
 		}
 		if (i < NUM_MAINTAINED_EFFECTS && info->maintained_effects[i].spell_id != 0xFFFFFFFF){
 			Spawn* spawn = GetZone()->GetSpawnByID(info->maintained_effects[i].spell->initial_target);
 
 			int32 target_char_id = 0;
-			if(spawn && spawn->IsPlayer())
+		
+			if(info->maintained_effects[i].spell->initial_target_char_id != 0)
+				target_char_id = info->maintained_effects[i].spell->initial_target_char_id;
+			else if(!info->maintained_effects[i].spell->initial_target)
+				target_char_id = GetCharacterID();
+			else if(spawn && spawn->IsPlayer())
 				target_char_id = ((Player*)spawn)->GetCharacterID();
+			else if (spawn && spawn->IsPet() && ((Entity*)spawn)->GetOwner() == (Entity*)this)
+				target_char_id = 0xFFFFFFFF;
 
 			int32 caster_char_id = (info->maintained_effects[i].spell->caster && info->maintained_effects[i].spell->caster->IsPlayer()) ? ((Player*)info->maintained_effects[i].spell->caster)->GetCharacterID() : 0;
 			
@@ -6446,11 +6435,19 @@ void Player::SaveSpellEffects()
 			bool firstTarget = true;
 			map<int32, bool> targetsInserted;
 			for (int8 t = 0; t < info->maintained_effects[i].spell->targets.size(); t++) {
-					Spawn* spawn = GetZone()->GetSpawnByID(info->maintained_effects[i].spell->targets.at(t));
-					if(spawn && spawn->IsPlayer())
+				int32 spawn_id = info->maintained_effects[i].spell->targets.at(t);
+					Spawn* spawn = GetZone()->GetSpawnByID(spawn_id);
+					LogWrite(SPELL__DEBUG, 0, "Spell", "%s has target %u to identify for spell %s", GetName(), spawn_id, info->maintained_effects[i].spell->spell->GetName());
+					if(spawn && (spawn->IsPlayer() || spawn->IsPet()))
 					{
-						int32 tmpCharID = ((Player*)spawn)->GetCharacterID();
-
+						int32 tmpCharID = 0;
+						
+						if(spawn->IsPlayer())
+							tmpCharID = ((Player*)spawn)->GetCharacterID();
+						else if (spawn->IsPet() && ((Entity*)spawn)->GetOwner() == (Entity*)this)
+						{
+							tmpCharID = 0xFFFFFFFF;
+						}
 						if(targetsInserted.find(tmpCharID) != targetsInserted.end())
 							continue;
 
@@ -6459,11 +6456,26 @@ void Player::SaveSpellEffects()
 						
 						targetsInserted.insert(make_pair(tmpCharID, true));
 
+
+						LogWrite(SPELL__DEBUG, 0, "Spell", "%s has target %s (%u) added to spell %s", GetName(), spawn ? spawn->GetName() : "NA", tmpCharID, info->maintained_effects[i].spell->spell->GetName());
 						insertTargets.append("(" + std::to_string(caster_char_id) + ", " + std::to_string(tmpCharID) + ", " + "0" + ", " + 
 						std::to_string(DB_TYPE_MAINTAINEDEFFECTS) + ", " + std::to_string(info->maintained_effects[i].spell_id) + ", " + std::to_string(i) + 
-						", " + std::to_string(info->maintained_effects[i].spell->slot_pos) + ")");
+						", " + std::to_string(info->maintained_effects[i].slot_pos) + ")");
 						firstTarget = false;
 					}
+			}
+			multimap<int32,int8>::iterator entries;
+			for(entries = info->maintained_effects[i].spell->char_id_targets.begin(); entries != info->maintained_effects[i].spell->char_id_targets.end(); entries++)
+			{
+				if(!firstTarget)
+					insertTargets.append(", ");
+
+				LogWrite(SPELL__DEBUG, 0, "Spell", "%s has target %s (%u) added to spell %s", GetName(), spawn ? spawn->GetName() : "NA", entries->first, info->maintained_effects[i].spell->spell->GetName());
+				insertTargets.append("(" + std::to_string(caster_char_id) + ", " + std::to_string(entries->first) + ", " + "0" + ", " + 
+				std::to_string(DB_TYPE_MAINTAINEDEFFECTS) + ", " + std::to_string(info->maintained_effects[i].spell_id) + ", " + std::to_string(i) + 
+				", " + std::to_string(info->maintained_effects[i].slot_pos) + ")");
+
+				firstTarget = false;
 			}
 			info->maintained_effects[i].spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 			if(!firstTarget)

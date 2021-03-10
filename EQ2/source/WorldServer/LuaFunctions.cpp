@@ -349,6 +349,7 @@ int EQ2Emu_lua_SetVisualFlag(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	if (spawn) {
 		spawn->vis_changed = true;
+		spawn->GetZone()->AddChangedSpawn(spawn);
 	}
 	return 0;
 }
@@ -361,6 +362,7 @@ int EQ2Emu_lua_SetInfoFlag(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	if (spawn) {
 		spawn->info_changed = true;
+		spawn->GetZone()->AddChangedSpawn(spawn);
 	}
 	return 0;
 }
@@ -3719,6 +3721,7 @@ int EQ2Emu_lua_AddQuestStepKill(lua_State* state) {
 			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
+		safe_delete(ids);
 	}
 	return 0;
 }
@@ -3753,6 +3756,7 @@ int EQ2Emu_lua_AddQuestStepChat(lua_State* state) {
 			if(client)
 				quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
+		safe_delete(ids);
 	}
 	return 0;
 }
@@ -3787,6 +3791,7 @@ int EQ2Emu_lua_AddQuestStepObtainItem(lua_State* state) {
 			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
+		safe_delete(ids);
 	}
 	return 0;
 }
@@ -3893,6 +3898,7 @@ int EQ2Emu_lua_AddQuestStepSpell(lua_State* state) {
 			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
+		safe_delete(ids);
 	}
 	return 0;
 }
@@ -3927,6 +3933,7 @@ int EQ2Emu_lua_AddQuestStepCraft(lua_State* state) {
 			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
+		safe_delete(ids);
 	}
 	return 0;
 }
@@ -3961,6 +3968,7 @@ int EQ2Emu_lua_AddQuestStepHarvest(lua_State* state) {
 			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
+		safe_delete(ids);
 	}
 	return 0;
 }
@@ -4063,61 +4071,6 @@ int EQ2Emu_lua_UpdateQuestZone(lua_State* state) {
 	string zone = lua_interface->GetStringValue(state, 2);
 	if (quest && zone.length() > 0)
 		quest->SetZone(zone);
-	return 0;
-}
-
-int EQ2Emu_lua_GiveImmediateQuestReward(lua_State* state) {
-	if (!lua_interface)
-		return 0;
-	Quest* quest = lua_interface->GetQuest(state);
-	Spawn* playerSpawn = lua_interface->GetSpawn(state, 2);
-	int32 coin = lua_interface->GetInt32Value(state, 3);
-	int32 status_points = lua_interface->GetInt32Value(state, 4);	
-	string rewards_str = lua_interface->GetStringValue(state, 5);
-	string select_rewards_str = lua_interface->GetStringValue(state, 6);
-	string factions_map_str = lua_interface->GetStringValue(state, 7);
-	string text = lua_interface->GetStringValue(state, 8);
-	if (playerSpawn && playerSpawn->IsPlayer()) {
-		Player* player = (Player*)playerSpawn;
-		Client* client = player->GetZone()->GetClientBySpawn(player);
-		if (client) {
-			vector<Item*> reward_items;
-			vector<Item*> selectable_reward_items;
-			if (rewards_str.length() > 0) {
-				map<unsigned int, unsigned short> rewards = ParseIntMap(rewards_str);
-				map<unsigned int, unsigned short>::iterator itr;
-				for (itr = rewards.begin(); itr != rewards.end(); itr++) {
-					if (itr->first > 0) {
-						Item* item = new Item(master_item_list.GetItem(itr->first));
-						if (item) {
-							if (itr->second > 0)
-								item->details.count = itr->second;
-							reward_items.push_back(item);
-						}
-					}
-				}
-			}
-			if (select_rewards_str.length() > 0) {
-				map<unsigned int, unsigned short> rewards = ParseIntMap(select_rewards_str);
-				map<unsigned int, unsigned short>::iterator itr;
-				for (itr = rewards.begin(); itr != rewards.end(); itr++) {
-					if (itr->first > 0) {
-						Item* item = new Item(master_item_list.GetItem(itr->first));
-						if (item) {
-							if (itr->second > 0)
-								item->stack_count = itr->second;
-							selectable_reward_items.push_back(item);
-						}
-					}
-				}
-			}
-			map<unsigned int, signed int> faction_rewards = ParseSInt32Map(factions_map_str);
-			const char* reward_type = "Quest Reward!";
-			if (!quest)
-				reward_type = "Reward!";
-			client->DisplayQuestRewards(quest, coin, &reward_items, &selectable_reward_items, &faction_rewards, reward_type, status_points, text.c_str());
-		}
-	}
 	return 0;
 }
 
@@ -5878,7 +5831,7 @@ int EQ2Emu_lua_AddToWard(lua_State* state) {
 	if (zone->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
 		Entity* target = (Entity*)zone->GetSpawnByID(spell->targets.at(0));
 		ward = target->GetWard(spell->spell->GetSpellID());
-		if (ward) {
+		if (target && ward) {
 			ward->DamageLeft += amount;
 			if (ward->DamageLeft > ward->BaseDamage)
 				ward->DamageLeft = ward->BaseDamage;
@@ -8264,7 +8217,7 @@ int EQ2Emu_lua_SetVision(lua_State* state) {
 		ZoneServer* zone = spell->caster->GetZone();
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			Spawn* target = zone->GetSpawnByID(spell->targets.at(i));
-			if (target->IsEntity()) {
+			if (target && target->IsEntity()) {
 				((Entity*)target)->GetInfoStruct()->set_vision(vision);
 				if (target->IsPlayer())
 					((Player*)target)->SetCharSheetChanged(true);
@@ -8338,7 +8291,7 @@ int EQ2Emu_lua_BreatheUnderwater(lua_State* state) {
 		ZoneServer* zone = spell->caster->GetZone();
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			Spawn* target = zone->GetSpawnByID(spell->targets.at(i));
-			if (target->IsEntity()) {
+			if (target && target->IsEntity()) {
 				((Entity*)target)->GetInfoStruct()->set_breathe_underwater(breatheUnderwater);
 				if (target->IsPlayer())
 					((Player*)target)->SetCharSheetChanged(true);
@@ -10959,7 +10912,7 @@ int EQ2Emu_lua_SetAlignment(lua_State* state) {
 		ZoneServer* zone = spell->caster->GetZone();
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			Spawn* target = zone->GetSpawnByID(spell->targets.at(i));
-			if (target->IsEntity()) {
+			if (target && target->IsEntity()) {
 				((Entity*)target)->GetInfoStruct()->set_alignment((sint8)alignment);
 				if (target->IsPlayer())
 					((Player*)target)->SetCharSheetChanged(true);
