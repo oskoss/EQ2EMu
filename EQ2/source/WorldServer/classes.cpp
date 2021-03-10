@@ -187,9 +187,9 @@ string Classes::GetClassNameCase(int8 class_id) {
 	map<string, int8>::iterator itr;
 	for (itr = class_map.begin(); itr != class_map.end(); itr++){
 		if (itr->second == class_id) {
-			string class_name = itr->first;
-			class_name[0] = itr->first[0];
+			string class_name = string(itr->first);
 			transform(itr->first.begin() + 1, itr->first.end(), class_name.begin() + 1, ::tolower);
+			class_name[0] = ::toupper(class_name[0]);
 			LogWrite(WORLD__DEBUG, 5, "World", "%s returning class name: %s for class_id %i", __FUNCTION__, class_name.c_str(), class_id);
 			return class_name;
 		}
