@@ -7552,7 +7552,9 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 						}
 						else
 						{
+							lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 							lua_spell->char_id_targets.insert(make_pair(player->GetCharacterID(),0));
+							lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 						}
 						player->MSpellEffects.releasewritelock();
 						continue;
@@ -7577,12 +7579,15 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			info->spell_effects[effect_slot].tier = tier;
 			info->spell_effects[effect_slot].total_time = total_time;
 			info->spell_effects[effect_slot].spell = lua_spell;
-			printf("SlotPos: %u %s\n",slot_pos,spell->GetName());
+
+			lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 			multimap<int32,int8>::iterator entries;
 			while((entries = lua_spell->char_id_targets.find(player->GetCharacterID())) != lua_spell->char_id_targets.end())
 			{
 				lua_spell->char_id_targets.erase(entries);
 			}
+			lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+
 			lua_spell->slot_pos = slot_pos;
 			if(!isExistingLuaSpell)
 				lua_spell->caster = player; // TODO: get actual player
@@ -7629,15 +7634,19 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 							if(client != client2)
 								restoreSpells.insert(make_pair(lua_spell, client2->GetPlayer()));
 							
+							lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 							multimap<int32,int8>::iterator entries;
 							while((entries = lua_spell->char_id_targets.find(target_char)) != lua_spell->char_id_targets.end())
 							{
 								lua_spell->char_id_targets.erase(entries);
 							}
+							lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 						}
 						else
 						{
+							lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 							lua_spell->char_id_targets.insert(make_pair(target_char,0));
+							lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 						}
 					}
 					
