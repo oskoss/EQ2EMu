@@ -13,7 +13,7 @@ CREATE TABLE character_spell_effects (
   tier tinyint(3) unsigned NOT NULL DEFAULT 0,
   total_time float unsigned NOT NULL DEFAULT 0,
   expire_timestamp int(10) unsigned NOT NULL DEFAULT 0,
-  lua_file text not null default '',
+  lua_file text,
   custom_spell tinyint(3) unsigned NOT NULL DEFAULT 0,
   charid int(10) unsigned NOT NULL DEFAULT 0,
   damage_remaining int(10) unsigned NOT NULL DEFAULT 0,
