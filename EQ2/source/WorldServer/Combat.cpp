@@ -1108,7 +1108,7 @@ bool Entity::CheckFizzleSpell(LuaSpell* spell) {
 
 	float fizzleMaxSkill = rule_manager.GetGlobalRule(R_Spells, FizzleMaxSkill)->GetFloat();
 	float baseFizzle = rule_manager.GetGlobalRule(R_Spells, DefaultFizzleChance)->GetFloat()/100.0f; // 10%
-	float skillObtained = 0.2f; // default of .2f so we don't go over the threshold if no skill
+	float skillObtained = rule_manager.GetGlobalRule(R_Spells, FizzleDefaultSkill)->GetFloat(); // default of .2f so we don't go over the threshold if no skill
 	Skill* skill = GetSkillByID(spell->spell->GetSpellData()->mastery_skill, false);
 	if(skill && spell->spell->GetSpellData()->min_class_skill_req > 0)
 	{
