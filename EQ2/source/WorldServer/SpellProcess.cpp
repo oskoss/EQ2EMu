@@ -795,7 +795,7 @@ void SpellProcess::CheckSpellQueue(Entity* caster){
 	}
 }
 
-void SpellProcess::CheckSpellQueue(Spell* spell, Entity* caster){
+bool SpellProcess::CheckSpellQueue(Spell* spell, Entity* caster){
 	if(caster->IsPlayer()){
 		bool add = true;
 		bool remove = false;
@@ -807,8 +807,12 @@ void SpellProcess::CheckSpellQueue(Spell* spell, Entity* caster){
 		if(remove)
 			RemoveSpellFromQueue(spell, caster);
 		if(add)
+		{
 			AddSpellToQueue(spell, caster);		
+			return true;
+		}
 	}
+	return false;
 }
 
 void SpellProcess::SendSpellBookUpdate(Client* client){
@@ -1037,7 +1041,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 							zone->RemoveTargetFromSpell(conflictSpell, tmpTarget);
 							CheckRemoveTargetFromSpell(conflictSpell);
 							((Entity*)tmpTarget)->RemoveSpellEffect(conflictSpell);
-							if(client)
+							if(client && IsReady(conflictSpell->spell, client->GetPlayer()))
 								UnlockSpell(client, conflictSpell->spell);
 						}
 						DeleteSpell(lua_spell);
@@ -1089,9 +1093,12 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if(caster->IsPlayer() && !IsReady(spell, caster))
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "Queuing spell for %s.", caster->GetName());
-			CheckSpellQueue(spell, caster);
-			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
-			DeleteSpell(lua_spell);
+			bool queueSpell = CheckSpellQueue(spell, caster);
+			if(!queueSpell)
+			{
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
+				DeleteSpell(lua_spell);
+			}
 			return;
 		}
 

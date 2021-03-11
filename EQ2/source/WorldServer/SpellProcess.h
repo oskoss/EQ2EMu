@@ -299,7 +299,7 @@ public:
 	/// <summary>Check the given enities queue for the spell, if found remove, if not found add</summary>
 	/// <param name='spell'>Spell to check for</param>
 	/// <param name='caster'>Entity's queue to check, if not player function does nothing</param>
-	void CheckSpellQueue(Spell* spell, Entity* caster);
+	bool CheckSpellQueue(Spell* spell, Entity* caster);
 
 	/// <summary>Checks to see if the entity can cast the spell </summary>
 	/// <param name='spell'>The spell being cast</param>
