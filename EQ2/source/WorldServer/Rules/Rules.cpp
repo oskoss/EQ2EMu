@@ -330,6 +330,8 @@ void RuleManager::Init()
 	RULE_INIT(R_Spells, FizzleDefaultSkill, ".2"); // offset against MaxSkill to average out to 100%, default of .2f so we don't go over the threshold if no skill
 	RULE_INIT(R_Spells, EnableCrossZoneGroupBuffs, "0"); // enables/disables allowing cross zone group buffs
 	RULE_INIT(R_Spells, EnableCrossZoneTargetBuffs, "0"); // enables/disables allowing cross zone target buffs
+	RULE_INIT(R_Spells, PlayerSpellSaveStateWaitInterval, "100"); // time in milliseconds we wait before performing a save when the spell save trigger is activated, allows additional actions to take place until the cap is hit
+	RULE_INIT(R_Spells, PlayerSpellSaveStateCap, "1000"); // sets a maximum wait time before we queue a spell state save to the DB, given a lot can go on in a short period with players especially in combat, maybe good to have this at a higher interval.
 
 	RULE_INIT(R_Expansion, GlobalExpansionFlag, "0");
 	RULE_INIT(R_Expansion, GlobalHolidayFlag, "0");

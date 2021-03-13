@@ -1437,9 +1437,9 @@ void World::SendGroupQuests(PlayerGroup* group, Client* client){
 	}
 }*/
 
-void World::RejoinGroup(Client* client, int32 group_id){
+bool World::RejoinGroup(Client* client, int32 group_id){
 	if (!group_id) // no need if no group id!
-		return;
+		return false;
 
 	world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 	PlayerGroup* group = world.GetGroupManager()->GetGroup(group_id);
@@ -1457,7 +1457,7 @@ void World::RejoinGroup(Client* client, int32 group_id){
 			client->GetCharacterID());
 		LogWrite(PLAYER__ERROR, 0, "Player", "Group did not exist for player %s to group id %i, async query to group_id = 0.", name.c_str(), group_id);
 		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
-		return;
+		return false;
 	}
 	deque<GroupMemberInfo*>::iterator itr;
 	GroupMemberInfo* info = 0;
@@ -1490,6 +1490,8 @@ void World::RejoinGroup(Client* client, int32 group_id){
 		LogWrite(PLAYER__ERROR, 0, "Player", "Identified group match for player %s to group id %u, however the player name was not present in the group!  May be an old group id that has been re-used.", name.c_str(), group_id);
 	
 	world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+
+	return match;
 }
 
 

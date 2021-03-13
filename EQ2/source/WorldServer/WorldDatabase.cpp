@@ -4133,11 +4133,6 @@ void WorldDatabase::LoadSpawnScriptData() {
 				else
 					LogWrite(LUA__ERROR, 0, "LUA", "Invalid Entry in spawn_scripts table.");
 			}
-			if( spawn_id || spawnentry_id || spawn_location_id ) {
-
-				LogWrite(LUA__DEBUG, 5, "LUA", "SpawnScript %s loaded.", spawn_script.c_str());
-
-			}
 
 			spawn_id = 0;
 			spawnentry_id = 0;
@@ -7610,7 +7605,7 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			if (database_new.Select(&targets, "SELECT target_char_id, target_type, db_effect_type, spell_id from character_spell_effect_targets where caster_char_id = %u and effect_slot = %u and slot_pos = %u", char_id, effect_slot, slot_pos)) {
 				while (targets.Next()) {
 					int32 target_char = targets.GetInt32Str("target_char_id");
-					int16 target_type = targets.GetInt32Str("target_type");
+					int8 maintained_target_type = targets.GetInt32Str("target_type");
 					int32 in_spell_id = targets.GetInt32Str("spell_id");
 					if(spell_id != in_spell_id)
 						continue;
@@ -7621,8 +7616,8 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 					{
 						if( player->HasPet() )
 						{
-							idToAdd = player->GetPet()->GetID();
 							restoreSpells.insert(make_pair(lua_spell, player->GetPet()));
+							// target added via restoreSpells
 						}
 					}
 					else
@@ -7630,32 +7625,47 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 						Client* client2 = zone_list.GetClientByCharID(target_char);
 						if(client2 && client2->GetPlayer() && client2->GetCurrentZone() == client->GetCurrentZone())
 						{
-							idToAdd = client2->GetPlayer()->GetID();
-							if(client != client2)
+							if(maintained_target_type > 0)
+							{
+								if(client != client2)
+								{
+									lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
+									
+									if(client2->GetPlayer()->GetPet() && maintained_target_type == PET_TYPE_COMBAT)
+									{
+										restoreSpells.insert(make_pair(lua_spell, client2->GetPlayer()->GetPet()));
+										// target added via restoreSpells
+									}
+									if(client2->GetPlayer()->GetCharmedPet() && maintained_target_type == PET_TYPE_CHARMED)
+									{
+										restoreSpells.insert(make_pair(lua_spell, client2->GetPlayer()->GetCharmedPet()));
+										// target added via restoreSpells
+									}
+									
+									lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+								}
+							} // end of pet clause
+							else if(client != client2) // maintained type must be 0, so client
 								restoreSpells.insert(make_pair(lua_spell, client2->GetPlayer()));
 							
 							lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 							multimap<int32,int8>::iterator entries;
-							while((entries = lua_spell->char_id_targets.find(target_char)) != lua_spell->char_id_targets.end())
+							for(entries = lua_spell->char_id_targets.begin(); entries != lua_spell->char_id_targets.end(); entries++)
 							{
-								lua_spell->char_id_targets.erase(entries);
+								int32 ent_char_id = entries->first;
+								int8 ent_target_type = entries->second;
+								if(ent_char_id == target_char && ent_target_type == maintained_target_type)
+									entries = lua_spell->char_id_targets.erase(entries);
 							}
 							lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 						}
 						else
 						{
 							lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
-							lua_spell->char_id_targets.insert(make_pair(target_char,0));
+							lua_spell->char_id_targets.insert(make_pair(target_char,maintained_target_type));
 							lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 						}
 					}
-					
-					if(!idToAdd)
-						continue;
-					
-					lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
-					lua_spell->targets.push_back(idToAdd);
-					lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 				}
 			}
 			
@@ -7725,20 +7735,37 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 		}
 	}
 
-	if(!rule_manager.GetGlobalRule(R_Spells,EnableCrossZoneTargetBuffs)->GetInt8() && db_spell_type == DB_TYPE_SPELLEFFECTS)
+	if(db_spell_type == DB_TYPE_SPELLEFFECTS)
 	{
+		// if the cross_zone_target_buff option is disabled then we check for all possible targets within the current zone
+		// if cross_zone_target_buff is enabled, we only check to restore pets, the players get restored by their own spell effects (we don't directly track the pets, indirectly we do through the player casting and their targets)
+		int8 cross_zone_target_buff = rule_manager.GetGlobalRule(R_Spells,EnableCrossZoneTargetBuffs)->GetInt8();
+
 		DatabaseResult targets;
-		if (database_new.Select(&targets, "SELECT caster_char_id, target_type, spell_id from character_spell_effect_targets where target_char_id = %u", player->GetCharacterID())) {
+		if (
+			(!cross_zone_target_buff && database_new.Select(&targets, "SELECT caster_char_id, target_type, spell_id from character_spell_effect_targets where target_char_id = %u", player->GetCharacterID())) ||
+			(database_new.Select(&targets, "SELECT caster_char_id, target_type, spell_id from character_spell_effect_targets where target_char_id = %u and target_type > 0", player->GetCharacterID())))
+		 {
 			while (targets.Next()) {
 				int32 caster_char_id = targets.GetInt32Str("caster_char_id");
-				int16 target_type = targets.GetInt32Str("target_type");
+				int8 prev_target_type = targets.GetInt32Str("target_type");
 				int32 in_spell_id = targets.GetInt32Str("spell_id");
 					Client* tmpCaster = nullptr;
 					MaintainedEffects* effect = nullptr;
-					if ( caster_char_id != player->GetCharacterID() && (tmpCaster = zone_list.GetClientByCharID(caster_char_id)) != nullptr 
-								&& tmpCaster->GetCurrentZone() == player->GetZone() && tmpCaster->GetPlayer() && (effect = tmpCaster->GetPlayer()->GetMaintainedSpell(in_spell_id)) != nullptr)
+					if (caster_char_id != player->GetCharacterID() && (tmpCaster = zone_list.GetClientByCharID(caster_char_id)) != nullptr && (cross_zone_target_buff || 
+								 tmpCaster->GetCurrentZone() == player->GetZone()) && tmpCaster->GetPlayer() && (effect = tmpCaster->GetPlayer()->GetMaintainedSpell(in_spell_id)) != nullptr)
 					{
-						if(!player->GetSpellEffect(effect->spell_id, tmpCaster->GetPlayer()))
+						if(prev_target_type > 0)
+						{
+							if(player->HasPet())
+							{
+								if(player->GetPet() && prev_target_type == PET_TYPE_COMBAT)
+									restoreSpells.insert(make_pair(effect->spell, player->GetPet()));
+								if(player->GetCharmedPet() && prev_target_type == PET_TYPE_CHARMED)
+									restoreSpells.insert(make_pair(effect->spell, player->GetCharmedPet()));
+							}
+						}
+						else if(!player->GetSpellEffect(effect->spell_id, tmpCaster->GetPlayer()))
 						{
 							if(effect->spell->initial_target_char_id == player->GetCharacterID())
 								effect->spell->initial_target = player->GetID();
@@ -7766,15 +7793,23 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 		if(!caster)
 			caster = client->GetPlayer();
 		
+		int32 group_id_target = target->group_id;
+		if(target->IsPet() && target->GetOwner())
+			group_id_target = target->GetOwner()->group_id;
+			
 		if(caster != target && caster->GetPet() != target && 
-			tmpSpell->spell->GetSpellData()->group_spell && tmpSpell->spell->GetSpellData()->friendly_spell && (caster->group_id == 0 || target->group_id == 0 || caster->group_id != target->group_id))
+			tmpSpell->spell->GetSpellData()->group_spell && tmpSpell->spell->GetSpellData()->friendly_spell && (caster->group_id == 0 || group_id_target == 0 || caster->group_id != group_id_target))
 		{
-			LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s player no longer grouped with %s to reload bonuses for spell %s.", target->GetName(), caster ? caster->GetName() : "?", tmpSpell->spell->GetName());
+			LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s player no longer grouped with %s to reload bonuses for spell %s (target_groupid: %u, caster_groupid: %u).", target->GetName(), caster ? caster->GetName() : "?", tmpSpell->spell->GetName(), group_id_target, caster->group_id);
 			continue;
 		}
 
 		LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s using caster %s to reload bonuses for spell %s.", player->GetName(), caster ? caster->GetName() : "?", tmpSpell->spell->GetName());
 		
+		tmpSpell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
+		tmpSpell->targets.push_back(target->GetID());
+		tmpSpell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+
 		target->AddSpellEffect(tmpSpell, tmpSpell->timer.GetRemainingTime() != 0 ? tmpSpell->timer.GetRemainingTime() : 0);
 		vector<BonusValues*>* sb_list = caster->GetAllSpellBonuses(tmpSpell);
 		for (int32 x = 0; x < sb_list->size(); x++) {

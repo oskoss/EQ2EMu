@@ -667,8 +667,7 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 
 						if(group_member->GetZone() != caster->GetZone())
 						{
-							if(group_member->IsPlayer())
-								luaspell->char_id_targets.insert(make_pair(((Player*)group_member)->GetCharacterID(), 0));			
+							SpellProcess::AddSelfAndPetToCharTargets(luaspell, group_member);		
 						}
 						else
 						{

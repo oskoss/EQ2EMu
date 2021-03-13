@@ -478,6 +478,8 @@ public:
 	void PurgeItem(Item* item);
 	void ConsumeFoodDrink(Item* item, int32 slot);
 	void AwardCoins(int64 total_coins, std::string reason = string(""));
+
+	void TriggerSpellSave();
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -593,6 +595,9 @@ private:
 
 	map<int32, int32> queued_state_commands;
 	Mutex MQueueStateCmds;
+	Timer save_spell_state_timer; // will be the 're-trigger' to delay
+	int32 save_spell_state_time_bucket; // bucket as we collect over time when timer is reset by new spell effects being casted
+	std::mutex MSaveSpellStateMutex;
 };
 
 class ClientList {

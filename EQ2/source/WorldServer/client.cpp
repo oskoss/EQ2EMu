@@ -202,6 +202,8 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	last_saved_timestamp = 0;
 	MQueueStateCmds.SetName("Client::MQueueStateCmds");
 	MConversation.SetName("Client::MConversation");
+	save_spell_state_timer.Disable();
+	save_spell_state_time_bucket = 0;
 }
 
 Client::~Client() {
@@ -806,6 +808,10 @@ void Client::SendCharInfo() {
 	if (version > 546)
 		ClientPacketFunctions::SendHousingList(this);
 	
+	GetPlayer()->group_id = rejoin_group_id;
+	if(!world.RejoinGroup(this, rejoin_group_id))
+		GetPlayer()->group_id = 0;
+
 	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_MAINTAINEDEFFECTS);
 	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_SPELLEFFECTS);
 	GetPlayer()->SetSaveSpellEffects(false);
@@ -1380,7 +1386,6 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		if (!IsReadyForSpawns())
 			SetReadyForSpawns(true);
 		SendCharInfo();
-		world.RejoinGroup(this, rejoin_group_id);
 		pos_update.Start();
 		quest_pos_timer.Start();
 		break;
@@ -2924,6 +2929,15 @@ bool Client::Process(bool zone_process) {
 		LogWrite(CCLIENT__DEBUG, 1, "Client", "%s, CheckQuestQueue", __FUNCTION__, __LINE__);
 		CheckQuestQueue();
 	}
+
+	MSaveSpellStateMutex.lock();
+	if(save_spell_state_timer.Check())
+	{
+		save_spell_state_timer.Disable();
+		GetPlayer()->SaveSpellEffects();
+	}
+	MSaveSpellStateMutex.unlock();
+
 	if (pos_update.Check())
 	{
 		ProcessStateCommands();
@@ -3892,8 +3906,10 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Removing player from fighting...", __FUNCTION__);
 	//GetCurrentZone()->GetCombat()->RemoveHate(player);
+	MSaveSpellStateMutex.lock();
 	player->SaveSpellEffects();
 	player->SetSaveSpellEffects(true);
+	MSaveSpellStateMutex.unlock();
 	// Remove players pet from zone if there is one
 	((Entity*)player)->DismissAllPets();
 
@@ -4065,7 +4081,9 @@ void Client::Save() {
 
 		GetPlayer()->SaveHistory();
 		GetPlayer()->SaveLUAHistory();
+		MSaveSpellStateMutex.lock();
 		GetPlayer()->SaveSpellEffects();
+		MSaveSpellStateMutex.unlock();
 	}
 
 }
@@ -9528,10 +9546,11 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 				GetCurrentZone()->SetSpawnStructs(this);
 				connected_to_zone = true;
 				client_list.Remove(this); //remove from master client list
-				new_client_login = true;
 				GetCurrentZone()->AddClient(this); //add to zones client list
-
 				zone_list.AddClientToMap(player->GetName(), this);
+				// this initiates additional DB loading and client offloading within the Zone the player resides, need the client already added in zone and to the map above.
+				new_client_login = true;
+
 				const char* zone_script = world.GetZoneScript(GetCurrentZone()->GetZoneID());
 				if (zone_script && lua_interface)
 					lua_interface->RunZoneScript(zone_script, "new_client", GetCurrentZone(), GetPlayer());
@@ -10291,4 +10310,38 @@ void Client::AwardCoins(int64 total_coins, std::string reason)
 		int8 type = CHANNEL_LOOT;
 		SimpleMessage(type, message.c_str());
 		}
+}
+
+void Client::TriggerSpellSave()
+{
+	int32 interval = rule_manager.GetGlobalRule(R_Spells, PlayerSpellSaveStateWaitInterval)->GetInt32();
+	// default to not have some bogus value in the rule
+	if(interval < 1)
+		interval = 100;
+	
+	MSaveSpellStateMutex.lock();
+	if(!save_spell_state_timer.Enabled())
+	{
+		save_spell_state_time_bucket = 0;
+		save_spell_state_timer.Start(interval, true);
+	}
+	else
+	{
+		int32 elapsed_time = save_spell_state_timer.GetElapsedTime();
+		save_spell_state_time_bucket += elapsed_time;
+
+		int32 save_wait_cap = rule_manager.GetGlobalRule(R_Spells, PlayerSpellSaveStateCap)->GetInt32();
+		
+		// default to not have some bogus value in the rule
+		if(save_wait_cap < interval)
+			save_wait_cap = interval+1;
+		
+		if(save_spell_state_time_bucket >= save_wait_cap)
+		{
+			// save immediately and disable timer
+			GetPlayer()->SaveSpellEffects();
+			save_spell_state_timer.Disable();
+		}
+	}
+	MSaveSpellStateMutex.unlock();
 }

@@ -3172,6 +3172,12 @@ void Player::AddSpellEffect(LuaSpell* luaspell, int32 override_expire_time){
 		effect->tier = spell->GetSpellTier();
 		GetSpellEffectMutex()->releasewritelock(__FUNCTION__, __LINE__);
 		charsheet_changed = true;
+
+		if(luaspell->caster && luaspell->caster->IsPlayer() && luaspell->caster != this)
+		{
+			GetClient()->TriggerSpellSave();
+			((Player*)luaspell->caster)->GetClient()->TriggerSpellSave();
+		}
 	}	
 }
 
@@ -6433,7 +6439,7 @@ void Player::SaveSpellEffects()
 			info->maintained_effects[i].spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 			std::string insertTargets = string("insert into character_spell_effect_targets (caster_char_id, target_char_id, target_type, db_effect_type, spell_id, effect_slot, slot_pos) values ");
 			bool firstTarget = true;
-			map<int32, bool> targetsInserted;
+			map<Spawn*, int8> targetsInserted;
 			for (int8 t = 0; t < info->maintained_effects[i].spell->targets.size(); t++) {
 				int32 spawn_id = info->maintained_effects[i].spell->targets.at(t);
 					Spawn* spawn = GetZone()->GetSpawnByID(spawn_id);
@@ -6441,6 +6447,10 @@ void Player::SaveSpellEffects()
 					if(spawn && (spawn->IsPlayer() || spawn->IsPet()))
 					{
 						int32 tmpCharID = 0;
+						int8 type = 0;
+
+						if(targetsInserted.find(spawn) != targetsInserted.end())
+							continue;
 						
 						if(spawn->IsPlayer())
 							tmpCharID = ((Player*)spawn)->GetCharacterID();
@@ -6448,17 +6458,22 @@ void Player::SaveSpellEffects()
 						{
 							tmpCharID = 0xFFFFFFFF;
 						}
-						if(targetsInserted.find(tmpCharID) != targetsInserted.end())
-							continue;
+						else if(spawn->IsPet() && ((Entity*)spawn)->GetOwner() && 
+									((Entity*)spawn)->GetOwner()->IsPlayer())
+						{
+							type = ((Entity*)spawn)->GetPetType();
+							Player* petOwner =  (Player*)((Entity*)spawn)->GetOwner();
+							tmpCharID = petOwner->GetCharacterID();
+						}
 
 						if(!firstTarget)
 							insertTargets.append(", ");
 						
-						targetsInserted.insert(make_pair(tmpCharID, true));
+						targetsInserted.insert(make_pair(spawn, true));
 
 
 						LogWrite(SPELL__DEBUG, 0, "Spell", "%s has target %s (%u) added to spell %s", GetName(), spawn ? spawn->GetName() : "NA", tmpCharID, info->maintained_effects[i].spell->spell->GetName());
-						insertTargets.append("(" + std::to_string(caster_char_id) + ", " + std::to_string(tmpCharID) + ", " + "0" + ", " + 
+						insertTargets.append("(" + std::to_string(caster_char_id) + ", " + std::to_string(tmpCharID) + ", " + std::to_string(type) + ", " + 
 						std::to_string(DB_TYPE_MAINTAINEDEFFECTS) + ", " + std::to_string(info->maintained_effects[i].spell_id) + ", " + std::to_string(i) + 
 						", " + std::to_string(info->maintained_effects[i].slot_pos) + ")");
 						firstTarget = false;
@@ -6471,7 +6486,7 @@ void Player::SaveSpellEffects()
 					insertTargets.append(", ");
 
 				LogWrite(SPELL__DEBUG, 0, "Spell", "%s has target %s (%u) added to spell %s", GetName(), spawn ? spawn->GetName() : "NA", entries->first, info->maintained_effects[i].spell->spell->GetName());
-				insertTargets.append("(" + std::to_string(caster_char_id) + ", " + std::to_string(entries->first) + ", " + "0" + ", " + 
+				insertTargets.append("(" + std::to_string(caster_char_id) + ", " + std::to_string(entries->first) + ", " + std::to_string(entries->second) + ", " + 
 				std::to_string(DB_TYPE_MAINTAINEDEFFECTS) + ", " + std::to_string(info->maintained_effects[i].spell_id) + ", " + std::to_string(i) + 
 				", " + std::to_string(info->maintained_effects[i].slot_pos) + ")");
 

@@ -851,6 +851,9 @@ void Entity::AddSpellEffect(LuaSpell* luaspell, int32 override_expire_time){
 		changed = true;
 		info_changed = true;
 		AddChangedZoneSpawn();
+
+		if(luaspell->caster && luaspell->caster->IsPlayer() && luaspell->caster != this)
+			((Player*)luaspell->caster)->GetClient()->TriggerSpellSave();
 	}
 }
 

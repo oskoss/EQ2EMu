@@ -179,6 +179,8 @@ enum RuleType {
 	FizzleDefaultSkill,
 	EnableCrossZoneGroupBuffs,
 	EnableCrossZoneTargetBuffs,
+	PlayerSpellSaveStateWaitInterval,
+	PlayerSpellSaveStateCap,
 
 	/* ZONE TIMERS */
 	RegenTimer,

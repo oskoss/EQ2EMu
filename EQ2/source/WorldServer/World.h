@@ -568,7 +568,7 @@ public:
 	//void GroupReadUnLock();
 	//void CheckRemoveGroupedPlayer();
 	//void SendGroupUpdate(PlayerGroup* group, Client* exclude = 0);
-	void RejoinGroup(Client* client, int32 group_id);
+	bool RejoinGroup(Client* client, int32 group_id);
 	//bool MakeLeader(Client* leader, string new_leader);
 	
 	void AddBonuses(ItemStatsValues* values, int16 type, sint32 value, Entity* entity);

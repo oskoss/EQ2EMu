@@ -1931,23 +1931,30 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 			if (caster->IsPlayer() && target->HasTarget())
 			{
 				secondary_target = target->GetTarget();
-				if (secondary_target) {
 					// check if spell is friendly
 					if (data->friendly_spell) {
 						//if target is NPC (and not a bot) on friendly spell, check to see if target is friendly
 						if (target->IsNPC() && !target->IsBot()) {
 							if (!target->IsPet() || (target->IsPet() && ((NPC*)target)->GetOwner()->IsNPC())) {
-								if (secondary_target->IsPlayer()) {
-									implied = true;
+								if (secondary_target && secondary_target->IsPlayer()) {
+									luaspell->initial_target = target->GetID();
+									luaspell->initial_target_char_id = (target && target->IsPlayer()) ? ((Player*)target)->GetCharacterID() : 0;
+									luaspell->targets.push_back(target->GetID());
 								}
-								else if (secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner()->IsPlayer())
+								else if (secondary_target && secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner()->IsPlayer())
 									implied = true;
+							}
+							else if (target->IsPet() && ((Entity*)target)->GetOwner()->IsPlayer())
+							{
+								luaspell->initial_target = target->GetID();
+								luaspell->initial_target_char_id = (target && target->IsPlayer()) ? ((Player*)target)->GetCharacterID() : 0;
+								luaspell->targets.push_back(target->GetID());
 							}
 						}
 					}   // if spell is not friendly
 					else {   // check if there is an implied target for this non-friendly spell
 						if (target->IsPlayer() || (target->IsPet() && ((NPC*)target)->GetOwner()->IsPlayer())) {
-							if (secondary_target->IsNPC()) {
+							if (secondary_target && secondary_target->IsNPC()) {
 								if (!secondary_target->IsPet() || (secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner()->IsNPC())) {
 									implied = true;
 								}
@@ -1962,7 +1969,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 								GetPlayerGroupTargets((Player*)target, caster, luaspell);
 
 							}
-							else if (target->IsPlayer() && ((Entity*)caster)->AttackAllowed((Entity*)secondary_target))
+							else if (secondary_target && target->IsPlayer() && ((Entity*)caster)->AttackAllowed((Entity*)secondary_target))
 							{
 								implied = true;
 								luaspell->initial_target = secondary_target->GetID();
@@ -1972,7 +1979,6 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 							}
 						}
 					} // end friendly spell check
-				}
 			}
 			else if (caster->IsPlayer()) {
 				if (data->friendly_spell) {
@@ -2093,8 +2099,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 								{
 									if(group_member->GetZone() != caster->GetZone())
 									{
-										if(group_member->IsPlayer())
-											luaspell->char_id_targets.insert(make_pair(((Player*)group_member)->GetCharacterID(), 0));
+										SpellProcess::AddSelfAndPetToCharTargets(luaspell, group_member);		
 									}
 									else if (group_member->GetZone() == luaspell->caster->GetZone()) {
 										luaspell->targets.push_back(group_member->GetID());
@@ -2170,14 +2175,14 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 					if (data->can_effect_raid > 0 || data->affect_only_group_members > 0 || data->group_spell > 0) 
 					{
 						// if caster is in a group, and target is a player and targeted player is a group member
-						if (((Player*)caster)->GetGroupMemberInfo() && (target->IsPlayer() || target->IsBot()) && ((Player*)caster)->IsGroupMember((Entity*)target))
+						if (((Player*)caster)->GetGroupMemberInfo() && (target->IsPlayer() || target->IsBot() || target->IsPet()) && ((Player*)caster)->IsGroupMember((Entity*)target))
 							luaspell->targets.push_back(target->GetID()); // return the target
 						else
 							luaspell->targets.push_back(caster->GetID()); // else return the caster
 					}
 					else if (target->IsPlayer() || target->IsBot()) // else it is not raid, group only or group spell
 						luaspell->targets.push_back(target->GetID()); // return target for single spell
-					else
+					else if ((luaspell->targets.size() < 1) || (!target->IsPet() || (((Entity*)target)->GetOwner() && !((Entity*)target)->GetOwner()->IsPlayer()))) 
 						luaspell->targets.push_back(caster->GetID()); // and if no target, cast on self
 				}
 				else if (caster->IsNPC()) // caster is an NPC
@@ -2584,9 +2589,16 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 									targets->erase(target_itr);
 									if (remove_spawn->IsEntity())
 									{
-										if(!removing_all_spells && remove_spawn->IsPlayer())
+										if(!removing_all_spells)
 										{
-											spell->char_id_targets.insert(make_pair(((Player*)remove_spawn)->GetCharacterID(),0));
+											if(remove_spawn->IsPlayer())
+												spell->char_id_targets.insert(make_pair(((Player*)remove_spawn)->GetCharacterID(),0));
+											else if(remove_spawn->IsPet() && ((Entity*)remove_spawn)->GetOwner() && ((Entity*)remove_spawn)->GetOwner()->IsPlayer())
+											{
+												Entity* pet = (Entity*)remove_spawn;
+												Player* ownerPlayer = (Player*)pet->GetOwner();
+												spell->char_id_targets.insert(make_pair(ownerPlayer->GetCharacterID(),pet->GetPetType()));
+											}
 										}
 										((Entity*)remove_spawn)->RemoveEffectsFromLuaSpell(spell);
 									}
@@ -2754,4 +2766,20 @@ void SpellProcess::AddSelfAndPet(LuaSpell* spell, Spawn* caster, bool onlyPet)
 		spell->targets.push_back(((Entity*)caster)->GetCharmedPet()->GetID());
 	if(!onlyPet && caster->IsEntity() && ((Entity*)caster)->IsPet() && ((Entity*)caster)->GetOwner())
 		spell->targets.push_back(((Entity*)caster)->GetOwner()->GetID());
+}
+
+void SpellProcess::AddSelfAndPetToCharTargets(LuaSpell* spell, Spawn* caster, bool onlyPet)
+{
+	if(!caster->IsPlayer())
+		return;
+	
+	Player* player = ((Player*)caster);
+	int32 charID = player->GetCharacterID();
+	
+	if(player->HasPet() && player->GetPet())
+		spell->char_id_targets.insert(make_pair(charID, player->GetPet()->GetPetType()));
+	if(player->HasPet() && player->GetCharmedPet())
+		spell->char_id_targets.insert(make_pair(charID, player->GetPet()->GetPetType()));
+	if(!onlyPet)
+		spell->char_id_targets.insert(make_pair(charID, 0x00));
 }
