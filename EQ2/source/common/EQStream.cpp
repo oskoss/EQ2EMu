@@ -1582,10 +1582,8 @@ DumpPacket(buffer, length);
 		ProcessPacket(&p);
 		ProcessQueue();
 	} else {
-#ifdef EQN_DEBUG
 		cout << "Incoming packet failed checksum:" <<endl;
 		dump_message_column(const_cast<unsigned char *>(buffer),length,"CRC failed: ");
-#endif
 	}
 }
 
