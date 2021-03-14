@@ -4,6 +4,7 @@
 #include "../Spawn.h"
 #include "../LuaInterface.h"
 
+#undef snprintf
 #include <boost/filesystem.hpp>
 
 extern LuaInterface* lua_interface;
