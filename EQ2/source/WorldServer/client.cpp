@@ -127,7 +127,8 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	ip = eqs->GetrIP();
 	port = ntohs(eqs->GetrPort());
 	merchant_transaction = nullptr;
-	SetMailTransaction(nullptr);
+	mail_window.item = nullptr; // don't want this to be set(loose ptr) when using ResetSendMail to provide rest of the defaults
+	ResetSendMail(false);
 	timestamp_flag = 0;
 	current_quest_id = 0;
 	last_update_time = 0;
@@ -2969,6 +2970,7 @@ bool Client::Process(bool zone_process) {
 	if (quest_pos_timer.Check())
 		CheckPlayerQuestsLocationUpdate();
 	if (camp_timer && camp_timer->Check() && getConnection()) {
+		ResetSendMail();
 		getConnection()->SendDisconnect(false);
 		safe_delete(camp_timer);
 		disconnect_timer = new Timer(2000);
@@ -3910,6 +3912,7 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 	player->SaveSpellEffects();
 	player->SetSaveSpellEffects(true);
 	MSaveSpellStateMutex.unlock();
+	ResetSendMail();
 	// Remove players pet from zone if there is one
 	((Entity*)player)->DismissAllPets();
 
@@ -6311,7 +6314,7 @@ bool Client::AddItemToBank(Item* item) {
 
 	return true;
 }
-bool Client::RemoveItem(Item* item, int16 quantity) {
+bool Client::RemoveItem(Item* item, int16 quantity, bool force_override_no_delete) {
 	EQ2Packet* outapp;
 	bool delete_item = false;
 
@@ -6327,6 +6330,9 @@ bool Client::RemoveItem(Item* item, int16 quantity) {
 		delete_item = true;
 	}
 
+	if(force_override_no_delete)
+		delete_item = false;
+	
 	if ((outapp = player->SendInventoryUpdate(version))) {
 		QueuePacket(outapp);
 		if (item->GetItemScript() && lua_interface)
@@ -6363,13 +6369,10 @@ Spawn* Client::GetMerchantTransaction() {
 }
 
 void Client::SetMailTransaction(Spawn* spawn) {
+	ResetSendMail(spawn ? false : true);
+	MMailWindowMutex.lock();
 	mail_transaction = spawn;
-	mail_window.coin_copper = 0;
-	mail_window.coin_silver = 0;
-	mail_window.coin_gold = 0;
-	mail_window.coin_plat = 0;
-	mail_window.char_item_id = 0;
-
+	MMailWindowMutex.unlock();
 }
 
 Spawn* Client::GetMailTransaction() {
@@ -7559,13 +7562,25 @@ void Client::SendMailList() {
 				p->setArrayDataByName("coin_silver", mail->coin_silver, i);
 				p->setArrayDataByName("coin_gold", mail->coin_gold, i);
 				p->setArrayDataByName("coin_plat", mail->coin_plat, i);
-				if(mail->stack)
-					p->setArrayDataByName("num_items", mail->stack, i);
 
 				//p->setArrayDataByName("unknown2", 0, i);
 
-				if(mail->stack)
+				bool successItemAdd = false;
+				if(mail->stack && mail->char_item_id)
 				{
+					Item* item = master_item_list.GetItem(mail->char_item_id);
+					if(item)
+					{
+						item->stack_count = mail->stack > 1 ? mail->stack : 0;
+						if (version < 860)
+							p->setItemArrayDataByName("item", item, player, i, 0, -1);
+						else if (version < 1193)
+							p->setItemArrayDataByName("item", item, player, i);
+						else
+							p->setItemArrayDataByName("item", item, player, i, 0, 2);
+						
+						successItemAdd = true;
+					}
 					// need double item packet support for serialize, LE was working on it for crafting so don't want to double down the work
 					//Item* item = master_item_list.GetItem(mail->char_item_id);
 					//EQ2Packet* pack = item->serialize(GetVersion(), true, GetPlayer(), true, GetItemPacketType(GetVersion()), 0, false, false);
@@ -7574,10 +7589,14 @@ void Client::SendMailList() {
 					//p->setItemArrayDataByName("item", item, GetPlayer(), i, 0, 2, true, true);
 					//DumpPacket(pack);
 				}
-				else
+				
+				if(!successItemAdd)
 				{
-					p->setArrayDataByName("packettype", GetItemPacketType(GetVersion()), i);
-					p->setArrayDataByName("packetsubtype", 0xFF, i);
+					//p->setArrayDataByName("packettype", GetItemPacketType(GetVersion()), i);
+					//p->setArrayDataByName("packetsubtype", 0xFF, i);
+					p->setArrayDataByName("end_tag1", 0xFFFFFFFF, i);
+					p->setArrayDataByName("end_tag2", GetItemPacketType(GetVersion()), i);
+					p->setArrayDataByName("end_tag3", 0xFF, i);
 				}
 				//p->setArrayDataByName("item_id", 5, i, 0);
 				//Item* item = master_item_list.GetItem(5);
@@ -7603,7 +7622,7 @@ void Client::SendMailList() {
 			p->setDataByName("unknown3", 0x01F4);
 			p->setDataByName("unknown4", 0x01000000);
 			EQ2Packet* pack = p->serialize();
-			//DumpPacket(pack->pBuffer, pack->size);
+			DumpPacket(pack->pBuffer, pack->size);
 			QueuePacket(pack);
 			safe_delete(p);
 		}
@@ -7643,16 +7662,33 @@ void Client::DisplayMailMessage(int32 mail_id) {
 				packet->setDataByName("coin_silver", mail->coin_silver);
 				packet->setDataByName("coin_gold", mail->coin_gold);
 				packet->setDataByName("coin_plat", mail->coin_plat);
-				packet->setDataByName("stack", mail->stack);
-				packet->setDataByName("packettype", GetItemPacketType(GetVersion()));
-				packet->setDataByName("packetsubtype", 0xFF);
-				packet->setDataByName("unknown4", 0);
-				packet->setDataByName("unknown5", 0);
-				packet->setDataByName("unknown6", 0);
-				packet->setDataByName("unknown7", 0);
+				if(mail->stack || mail->char_item_id)
+				{
+					Item* item = master_item_list.GetItem(mail->char_item_id);
+					item->stack_count = mail->stack > 1 ? mail->stack : 0;
+					if (version < 860)
+						packet->setItemByName("item", item, player, 0, -1);
+					else if (version < 1193)
+						packet->setItemByName("item", item, player, 0, 0);
+					else
+						packet->setItemByName("item", item, player, 0, 2);
+				}
+				else
+				{
+					packet->setDataByName("end_tag", 0xFFFFFFFF);
+
+					/*packet->setDataByName("packettype", GetItemPacketType(GetVersion()));
+					packet->setDataByName("packetsubtype", 0xFF);
+					packet->setDataByName("unknown4", 0);
+					packet->setDataByName("unknown5", 0);
+					packet->setDataByName("unknown6", 0);
+					packet->setDataByName("unknown7", 0);*/
+				}
 				mail->already_read = true;
 				mail->save_needed = true;
-				QueuePacket(packet->serialize());
+				EQ2Packet* pack = packet->serialize();
+				DumpPacket(pack);
+				QueuePacket(pack);
 				safe_delete(packet);
 				// trying to update this causes the window not to open
 				//SendMailList();
@@ -7673,6 +7709,7 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 		string player_to = packet->getType_EQ2_16BitString_ByName("player_to").data;
 		PacketStruct* reply_packet = configReader.getStruct("WS_MailSendMessageReply", GetVersion());
 		vector<int32>* ids = 0;
+		MMailWindowMutex.lock();
 		if (reply_packet) {
 			int8 reply_type = MAIL_SEND_RESULT_UNKNOWN_ERROR;
 			if (player_to.length() == 0)
@@ -7682,8 +7719,8 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 			else if (GetAdminStatus() == 0 && !player->RemoveCoins(10))
 				reply_type = MAIL_SEND_RESULT_NOT_ENOUGH_COIN;
 			else {
-				if (player_to.compare("<all>") == 0) {
-					if (mail_window.coin_copper + mail_window.coin_silver + mail_window.coin_gold + mail_window.coin_plat == 0)
+				if (GetAdminStatus() > 200 && player_to.compare("<all>") == 0) {
+					if (mail_window.char_item_id == 0 && (mail_window.coin_copper + mail_window.coin_silver + mail_window.coin_gold + mail_window.coin_plat) == 0)
 						ids = database.GetAllPlayerIDs();
 					else
 						SimpleMessage(CHANNEL_NARRATIVE, "You may not mail gifts to multiple players.");
@@ -7709,7 +7746,8 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 							mail->coin_silver = mail_window.coin_silver;
 							mail->coin_gold = mail_window.coin_gold;
 							mail->coin_plat = mail_window.coin_plat;
-							mail->stack = 0;
+							mail->char_item_id = mail_window.char_item_id;
+							mail->stack = mail_window.stack;
 
 							// GM's send mail for free!
 							if (GetAdminStatus() > 0)
@@ -7722,7 +7760,6 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 								mail->postage_cost = 10;
 								mail->attachment_cost = 50;
 							}
-							mail->char_item_id = 0;
 							mail->time_sent = Timer::GetUnixTimeStamp();
 							mail->expire_time = mail->time_sent + 2592000;	//30 days in seconds
 							//int16 packettype = packet->getType_int16_ByName("packettype");
@@ -7738,10 +7775,7 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 								to_client->SimpleMessage(CHANNEL_NARRATIVE, "You've got mail! :)");
 							}
 							database.SavePlayerMail(mail);
-							mail_window.coin_copper = 0;
-							mail_window.coin_silver = 0;
-							mail_window.coin_gold = 0;
-							mail_window.coin_plat = 0;
+							ResetSendMail(false, false);
 						}
 						else
 							reply_type = MAIL_SEND_RESULT_UNKNOWN_PLAYER;
@@ -7764,6 +7798,7 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 			safe_delete(ids);
 		}
 		safe_delete(packet);
+		MMailWindowMutex.unlock();
 	}
 
 }
@@ -7773,11 +7808,53 @@ void Client::DeleteMail(int32 mail_id, bool from_database) {
 	player->DeleteMail(mail_id, from_database);
 
 }
-
+bool Client::AddMailItem(Item* item)
+{
+	bool ret = false;
+	if (GetMailTransaction()) {
+		MMailWindowMutex.lock();
+		if(mail_window.char_item_id == 0)
+		{
+			mail_window.item = item;
+			mail_window.char_item_id = item->details.item_id;
+			mail_window.stack = item->details.count;
+			ret = true;
+		PacketStruct* packet = configReader.getStruct("WS_UpdatePlayerMail", GetVersion());
+				packet->setDataByName("coin_copper", mail_window.coin_copper);
+				packet->setDataByName("coin_silver", mail_window.coin_silver);
+				packet->setDataByName("coin_gold", mail_window.coin_gold);
+				packet->setDataByName("coin_plat", mail_window.coin_plat);
+					if(item)
+					{
+					packet->setDataByName("stack", mail_window.stack);
+					item->stack_count = mail_window.stack;
+					if (version < 860)
+						packet->setItemByName("item", item, player, 0, -1);
+					else if (version < 1193)
+						packet->setItemByName("item", item, player, 0, 0);
+					else
+						packet->setItemByName("item", item, player, 0, 2);
+					}
+					else
+					{
+						packet->setDataByName("end_tag2", GetItemPacketType(GetVersion()));
+						packet->setDataByName("end_tag3", 0xFF);
+					}
+				//packet->setDataByName("packettype", GetItemPacketType(version));
+				//packet->setDataByName("packetsubtype", 0xFF);
+				//packet->setDataByName("unknown2", 0);
+				//packet->PrintPacket();
+				QueuePacket(packet->serialize());
+		}
+		MMailWindowMutex.unlock();
+	}
+	return ret;
+}
 bool Client::AddMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) {
 
 	bool ret = false;
 	if (GetMailTransaction()) {
+	MMailWindowMutex.lock();
 		PacketStruct* packet = configReader.getStruct("WS_UpdatePlayerMail", GetVersion());
 		if (packet) {
 			if (copper > 0) {
@@ -7813,10 +7890,23 @@ bool Client::AddMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) {
 				packet->setDataByName("coin_silver", mail_window.coin_silver);
 				packet->setDataByName("coin_gold", mail_window.coin_gold);
 				packet->setDataByName("coin_plat", mail_window.coin_plat);
-				packet->setDataByName("stack", 0);
-				packet->setDataByName("packettype", GetItemPacketType(version));
-				packet->setDataByName("packetsubtype", 0xFF);
-				packet->setDataByName("unknown2", 0);
+					Item* item = master_item_list.GetItem(mail_window.char_item_id);
+					if(item)
+					{
+					packet->setDataByName("stack", mail_window.stack);
+					item->stack_count = mail_window.stack;
+					if (version < 860)
+						packet->setItemByName("item", item, player, 0, -1);
+					else if (version < 1193)
+						packet->setItemByName("item", item, player, 0, 0);
+					else
+						packet->setItemByName("item", item, player, 0, 2);
+					}
+					else
+					{
+						packet->setDataByName("end_tag2", GetItemPacketType(GetVersion()));
+						packet->setDataByName("end_tag3", 0xFF);
+					}
 				//packet->PrintPacket();
 				QueuePacket(packet->serialize());
 			}
@@ -7824,6 +7914,7 @@ bool Client::AddMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) {
 				SimpleMessage(CHANNEL_NARRATIVE, "You don't have that much money.");
 			safe_delete(packet);
 		}
+		MMailWindowMutex.unlock();
 	}
 	else
 		SimpleMessage(CHANNEL_NARRATIVE, "You are currently not in a mail transaction.");
@@ -7834,6 +7925,7 @@ bool Client::AddMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) {
 bool Client::RemoveMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) {
 	bool ret = false;
 	if (GetMailTransaction()) {
+		MMailWindowMutex.lock();
 		PacketStruct* packet = configReader.getStruct("WS_UpdatePlayerMail", GetVersion());
 		if (packet) {
 			if (copper > 0) {
@@ -7873,6 +7965,7 @@ bool Client::RemoveMailCoin(int32 copper, int32 silver, int32 gold, int32 plat) 
 			}
 			safe_delete(packet);
 		}
+		MMailWindowMutex.unlock();
 	}
 	else
 		SimpleMessage(CHANNEL_NARRATIVE, "You are currently not in a mail transaction.");
@@ -7902,7 +7995,9 @@ void Client::TakeMailAttachments(int32 mail_id) {
 				mail->coin_plat = 0;
 			}
 			if (mail->char_item_id > 0) {
-				LogWrite(MISC__TODO, 1, "TODO", "Items by Mail\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
+				AddItem(mail->char_item_id, mail->stack);
+				mail->char_item_id = 0;
+				mail->stack = 0;
 			}
 			/*	Can't find the right packet to send to update the player's mail.  This packet below updates the mail the player is sending, not
 				the mail the player is getting attachments from.  There is an opcode OP_MailRemoveAttachFromMailMsg with opcode 328 but i can't
@@ -7934,15 +8029,31 @@ void Client::TakeMailAttachments(int32 mail_id) {
 
 }
 
-void Client::CancelSendMail() {
-	SimpleMessage(CHANNEL_NARRATIVE, "You cancel sending a letter.");
-	player->AddCoins(mail_window.coin_copper + (mail_window.coin_silver * 100) + (mail_window.coin_gold * 10000) + (mail_window.coin_plat * 1000000));
+void Client::ResetSendMail(bool cancel, bool needslock) {
+	if(cancel && mail_transaction)
+		SimpleMessage(CHANNEL_NARRATIVE, "You cancel sending a letter.");
+	if(needslock)
+		MMailWindowMutex.lock();
+	if(cancel)
+		player->AddCoins(mail_window.coin_copper + (mail_window.coin_silver * 100) + (mail_window.coin_gold * 10000) + (mail_window.coin_plat * 1000000));
+	if(!cancel)
+		mail_transaction = 0;
 	mail_window.coin_copper = 0;
 	mail_window.coin_silver = 0;
 	mail_window.coin_gold = 0;
 	mail_window.coin_plat = 0;
 	mail_window.char_item_id = 0;
+	mail_window.stack = 0;
 
+	if(mail_window.item){
+		if(cancel)
+			AddItem(mail_window.item);
+		else
+			safe_delete(mail_window.item);
+	}
+	mail_window.item = nullptr;
+	if(needslock)
+		MMailWindowMutex.unlock();
 }
 
 bool Client::GateAllowed() {

@@ -99,7 +99,9 @@ struct MailWindow {
 	int32	coin_silver;
 	int32	coin_gold;
 	int32	coin_plat;
+	Item*	item;
 	int32	char_item_id;
+	int32	stack;
 };
 
 struct PendingGuildInvite {
@@ -197,7 +199,7 @@ public:
 	bool	AddItem(Item* item);
 	bool	AddItemToBank(int32 item_id, int16 quantity = 0);
 	bool	AddItemToBank(Item* item);
-	bool	RemoveItem(Item *item, int16 quantity);
+	bool	RemoveItem(Item *item, int16 quantity, bool force_override_no_delete = false);
 	void	ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destinations, int32 transport_id = 0);
 	void	ProcessTeleportLocation(EQApplicationPacket* app); 
 
@@ -318,10 +320,11 @@ public:
 	void	DisplayMailMessage(int32 mail_id);
 	void	HandleSentMail(EQApplicationPacket* app);
 	void	DeleteMail(int32 mail_id, bool from_database = false);
+	bool	AddMailItem(Item* item);
 	bool	AddMailCoin(int32 copper, int32 silver = 0, int32 gold = 0, int32 plat = 0);
 	bool	RemoveMailCoin(int32 copper, int32 silver = 0, int32 gold = 0, int32 plat = 0);
 	void	TakeMailAttachments(int32 mail_id);
-	void	CancelSendMail();
+	void	ResetSendMail(bool cancel = true, bool needslock = true);
 	bool	GateAllowed();
 	bool	BindAllowed();
 	bool	Bind();
@@ -556,6 +559,7 @@ private:
 	ZoneServer* current_zone;
 	int32	name_crc;
 	MailWindow	mail_window;
+	std::mutex	MMailWindowMutex;
 	PendingGuildInvite	pending_guild_invite;
 	PendingResurrection current_rez;
 	string* pending_last_name;

@@ -2157,8 +2157,44 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 									  }
 		case COMMAND_SET_MAIL_ITEM: {
-			LogWrite(MISC__TODO, 1, "TODO", " received set_mail_item\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-			if (sep && sep->arg[0]) LogWrite(COMMAND__DEBUG, 0, "Command", "%s\n", sep->argplus[0]);
+			if(sep && sep->IsNumber(0))
+			{
+				Item* item = client->GetPlayer()->item_list.GetItemFromIndex(atoul(sep->arg[0]));
+				if(item)
+				{
+					int16 quantity = atoul(sep->arg[1]);
+					if(item->CheckFlag(NO_TRADE) || item->CheckFlag(ATTUNED) || item->CheckFlag(ARTIFACT) || item->CheckFlag2(HEIRLOOM))
+					{
+						return;
+					}
+					if(item->IsBag())
+					{
+						vector<Item*>* bag_items = player->GetPlayerItemList()->GetItemsInBag(item);
+						if(bag_items && bag_items->size() > 0)
+						{
+							client->SimpleMessage(CHANNEL_COLOR_RED,"You cannot mail a bag with items inside it.");
+							safe_delete(bag_items);
+							return;
+						}
+						safe_delete(bag_items);
+					}
+					Item* itemtoadd = item;
+					if(quantity > 0)
+					{
+						if(quantity > item->details.count)
+							return;
+
+						Item* tmpItem = new Item(item);
+						tmpItem->details.count = quantity;
+						itemtoadd = tmpItem;
+					}
+						
+					if(client->AddMailItem(itemtoadd))
+					{
+						client->RemoveItem(item, quantity, true);
+					}
+				}
+			}
 			break;
 							   }
 		case COMMAND_REMOVE_MAIL_PLAT: {
@@ -2187,7 +2223,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 											}
 		case COMMAND_CANCEL_SEND_MAIL: {
-			client->CancelSendMail();
+			client->ResetSendMail();
 			break;
 									   }
 		case COMMAND_DELETE_MAIL_MESSAGE: {

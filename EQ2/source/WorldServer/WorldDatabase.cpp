@@ -4254,8 +4254,8 @@ void WorldDatabase::SavePlayerMail(Mail* mail) {
 	Query query_insert;
 	if (mail) {
 		if(mail->mail_id > 0)
-			query_update.RunQuery2(Q_UPDATE, "UPDATE `character_mail` SET `already_read`=%u, `coin_copper`=%u, `coin_silver`=%u, `coin_gold`=%u, `coin_plat`=%u WHERE `id`=%u", mail->already_read, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->mail_id);
-		if (mail->mail_id == 0 || query_update.GetAffectedRows() == 0)
+			query_update.RunQuery2(Q_UPDATE, "UPDATE `character_mail` SET `already_read`=%u, `coin_copper`=%u, `coin_silver`=%u, `coin_gold`=%u, `coin_plat`=%u, `char_item_id`=%u, `stack`=%u WHERE `id`=%u", mail->already_read, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->char_item_id, mail->stack, mail->mail_id);
+		else if (mail->mail_id == 0 || query_update.GetAffectedRows() == 0)
 		{
 			query_insert.RunQuery2(Q_INSERT, "INSERT INTO `character_mail` (`player_to_id`, `player_from`, `subject`, `mail_body`, `already_read`, `mail_type`, `coin_copper`, `coin_silver`, `coin_gold`, `coin_plat`, `stack`, `postage_cost`, `attachment_cost`, `char_item_id`, `time_sent`, `expire_time`) VALUES (%u, '%s', '%s', '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)", mail->player_to_id, mail->player_from.c_str(), getSafeEscapeString(mail->subject.c_str()).c_str(), getSafeEscapeString(mail->mail_body.c_str()).c_str(), mail->already_read, mail->mail_type, mail->coin_copper, mail->coin_silver, mail->coin_gold, mail->coin_plat, mail->stack, mail->postage_cost, mail->attachment_cost, mail->char_item_id, mail->time_sent, mail->expire_time);
 			
