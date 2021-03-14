@@ -200,6 +200,10 @@ void DataStruct::SetOversizedByte(int8 val) {
 }
 void DataStruct::SetItemSize(int32 val) {
 	item_size = val;
+	if(item_size)
+		is_set = true;
+	else
+		is_set = false;
 }
 void DataStruct::SetIfEqualsVariable(const char* variable) {
 	if (variable) {
@@ -1692,7 +1696,6 @@ void PacketStruct::serializePacket(bool clear) {
 					}
 					else
 						strcpy(name, varname.c_str());
-
 					if (!GetVariableIsNotSet(name))
 						continue;
 				}
@@ -2398,6 +2401,7 @@ void PacketStruct::PrintPacket() {
 				break;
 			}
 			case DATA_STRUCT_ITEM: {
+				printf("EQ2_Item %s\tIsSet:  %u", ds->GetName(), ds->IsSet());
 				if (ds->GetItemSize() > 0) {
 					DumpPacket((uchar*)GetStructPointer(ds), ds->GetItemSize());
 				}
@@ -2559,7 +2563,10 @@ void PacketStruct::setItem(DataStruct* ds, Item* item, Player* player, int32 ind
 		int32 size = generic_string_data->length();
 		//DumpPacket((uchar*)generic_string_data->c_str(), size);
 		if (size <= 13)
+		{
+			ds->SetIsSet(false);
 			return;
+		}
 		size -= (9 + offset);
 		if (client_version > 546 && item->IsBag() == false && item->IsBauble() == false && item->IsFood() == false && (offset == 0 || offset == -1 || offset == 2))
 			size = (size * 2) - 5;
