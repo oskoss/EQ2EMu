@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
+using System.Text;
 
 namespace Movement_Loop_Generator_2._0
 {
@@ -24,7 +25,11 @@ namespace Movement_Loop_Generator_2._0
         Dictionary<string, string> NPCList = new Dictionary<string, string>();
 
         private OpenFileDialog file_dialog = new OpenFileDialog();
-        StreamReader streamReader;
+        FileStream fileStream;
+        private long LastLengthLocation = -1;
+        private String LastErrMsg = "";
+        private Exception LastExceptionMsg = null;
+        private bool suppress = false;
 
         public Form1()
         {
@@ -93,7 +98,7 @@ namespace Movement_Loop_Generator_2._0
 
             if (split.Length > 1)
             {
-                npcname_count = Convert.ToInt32(split[1]);
+                Int32.TryParse(split[1], out npcname_count);
             }
             
 
@@ -114,10 +119,10 @@ namespace Movement_Loop_Generator_2._0
             dataLoc = new List<DataStruct>();
             ResetListView(true);
             // Parse button throws an exception Unhandled if the logfile text box is empty
-            streamReader = new StreamReader(this.textBox_LogFile.Text);
+            LastLengthLocation = -1;
             try
             {
-                while ((line = streamReader.ReadLine()) != null)
+                while (OpenReadLine(out line))
                 {
                     if (line.Contains(locSpeed))
                     {
@@ -157,7 +162,6 @@ namespace Movement_Loop_Generator_2._0
                     {
                         if (count >= 1)
                         {
-                            streamReader.Close();
                             return;
                         }
                         else
@@ -220,7 +224,6 @@ namespace Movement_Loop_Generator_2._0
                         }
                     }
                 }
-                streamReader.Close();
             }
             catch
             {
@@ -235,12 +238,12 @@ namespace Movement_Loop_Generator_2._0
             int index = 0;
             int multipleNPC = 0;
 
-            streamReader = new StreamReader(this.textBox_LogFile.Text);
 
-            while ((line = streamReader.ReadLine()) != null)
-            {
+                LastLengthLocation = -1;
+                while (OpenReadLine(out line))
+                {
 
-                if (line.Contains(locStart))
+                        if (line.Contains(locStart))
                 {
                     index = line.IndexOf(locStart) + 11;
                     string npc_name = line.Substring(index, (line.Length - index) - 1);
@@ -261,7 +264,6 @@ namespace Movement_Loop_Generator_2._0
                     
                 }
             }
-            streamReader.Close();
         }
 
         /*********************************************************************************************************************************
@@ -371,6 +373,7 @@ namespace Movement_Loop_Generator_2._0
             file_dialog.Filter = "Text|*.txt|All|*.*";
             if (this.file_dialog.ShowDialog() == DialogResult.OK)
             {
+                CloseFile();
                 this.textBox_LogFile.Text = this.file_dialog.FileName;
 
                 ResetListView(true);
@@ -757,6 +760,174 @@ namespace Movement_Loop_Generator_2._0
 
             int total_wapoints = dataLoc.Count;
             richTextBox_OutputView.Text = richTextBox_OutputView.Text + "\n\n\n" + total_wapoints + " Waypoints were loaded\n\nClick a waypoint to edit it in the boxes below";
+        }
+
+        private bool OpenFile(out FileStream fileStream)
+        {
+            fileStream = null;
+
+            try
+            {
+                fileStream = new FileStream(this.textBox_LogFile.Text, FileMode.Open, FileAccess.Read, System.IO.FileShare.ReadWrite, 8, FileOptions.SequentialScan);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LastErrMsg = ex.Message;
+                LastExceptionMsg = ex;
+                DisplayError();
+            }
+
+            return false;
+        }
+
+        public bool ReadLine(out String line)
+        {
+            bool val = false;
+            line = "";
+            FileStream fs = null;
+
+            if (fileStream == null)
+            {
+                if (OpenFile(out fs))
+                {
+                    String lineRead = "";
+                    val = ReadLineDown(-1, out lineRead);
+
+                    line = lineRead;
+
+                    CloseFile();
+                }
+            }
+            else
+            {
+                String lineRead = "";
+                val = ReadLineDown(-1, out lineRead);
+
+                line = lineRead;
+
+                CloseFile();
+            }
+
+            return val;
+        }
+
+        public bool OpenReadLine(out String line)
+        {
+            bool val = false;
+            line = "";
+            FileStream fs = null;
+
+            if (fileStream == null)
+            {
+                if (OpenFile(out fs))
+                {
+                    String lineRead = "";
+                    fileStream = fs;
+                    val = ReadLineDown(-1, out lineRead);
+
+                    line = lineRead;
+                }
+            }
+            else
+            {
+                String lineRead = "";
+                val = ReadLineDown(-1, out lineRead);
+
+                line = lineRead;
+            }
+
+            return val;
+        }
+
+        private bool ReadLineDown(int locToStart, out String line)
+        {
+            line = "";
+
+            try
+            {
+                byte[] dataToRead = new byte[256];
+
+                bool firstRun = false;
+
+                if (LastLengthLocation == -1)
+                {
+                    firstRun = true;
+                    LastLengthLocation = 0;
+                }
+
+                if (fileStream.Position < LastLengthLocation)
+                {
+                    fileStream.Position = LastLengthLocation;
+                }
+                else
+                {
+                    fileStream.Position = LastLengthLocation;
+                }
+                String strToConstruct = "";
+                while (true)
+                {
+                    int dataRead = fileStream.Read(dataToRead, 0, dataToRead.Length);
+                    if (dataRead < 1)
+                        return false;
+
+                    String out_ = Encoding.UTF8.GetString(dataToRead, 0, dataRead);
+                    int firstIdx = out_.IndexOf(Environment.NewLine);
+                    if (firstIdx < 0)
+                    {
+                        strToConstruct += out_;
+                        LastLengthLocation += out_.Length;
+                        continue;
+                    }
+                    else
+                    {
+                        strToConstruct += out_.Substring(0, firstIdx);
+                        LastLengthLocation += (firstIdx + Environment.NewLine.Length);
+                        break;
+                    }
+                }
+
+                line = strToConstruct;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LastErrMsg = ex.Message;
+                LastExceptionMsg = ex;
+                DisplayError();
+            }
+
+            return false;
+        }
+
+        public bool CloseFile()
+        {
+            try
+            {
+                if(fileStream != null)
+                    fileStream.Close();
+                fileStream = null;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LastErrMsg = ex.Message;
+                LastExceptionMsg = ex;
+                DisplayError();
+            }
+
+            return false;
+        }
+
+        public void DisplayError()
+        {
+            if (suppress)
+                return;
+
+            if (MessageBox.Show("Error Message: " + LastErrMsg + "\n\nWould you like to STOP being shown errors?  Selecting YES means no errors will be shown until tool restart", "ERROR!", MessageBoxButtons.YesNo) ==
+                DialogResult.Yes)
+                suppress = true;
         }
 
         /*********************************************************************************************************************************
