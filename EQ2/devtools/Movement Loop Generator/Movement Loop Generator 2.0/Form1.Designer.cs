@@ -105,7 +105,7 @@
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click_1);
             // 
@@ -115,7 +115,7 @@
             this.authorToolStripMenuItem1,
             this.reversePathToolStripMenuItem});
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.settingsToolStripMenuItem.Text = "Settings";
             // 
             // authorToolStripMenuItem1
@@ -147,27 +147,27 @@
             this.loadingLogsToolStripMenuItem,
             this.useGeneratorToolStripMenuItem});
             this.howToUseToolStripMenuItem.Name = "howToUseToolStripMenuItem";
-            this.howToUseToolStripMenuItem.Size = new System.Drawing.Size(60, 20);
+            this.howToUseToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.howToUseToolStripMenuItem.Text = "How To";
             // 
             // collectWaypointsToolStripMenuItem
             // 
             this.collectWaypointsToolStripMenuItem.Name = "collectWaypointsToolStripMenuItem";
-            this.collectWaypointsToolStripMenuItem.Size = new System.Drawing.Size(179, 22);
+            this.collectWaypointsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.collectWaypointsToolStripMenuItem.Text = "Collecting locations";
             this.collectWaypointsToolStripMenuItem.Click += new System.EventHandler(this.collectWaypointsToolStripMenuItem_Click);
             // 
             // loadingLogsToolStripMenuItem
             // 
             this.loadingLogsToolStripMenuItem.Name = "loadingLogsToolStripMenuItem";
-            this.loadingLogsToolStripMenuItem.Size = new System.Drawing.Size(179, 22);
+            this.loadingLogsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.loadingLogsToolStripMenuItem.Text = "Loading logs";
             this.loadingLogsToolStripMenuItem.Click += new System.EventHandler(this.loadingLogsToolStripMenuItem_Click);
             // 
             // useGeneratorToolStripMenuItem
             // 
             this.useGeneratorToolStripMenuItem.Name = "useGeneratorToolStripMenuItem";
-            this.useGeneratorToolStripMenuItem.Size = new System.Drawing.Size(179, 22);
+            this.useGeneratorToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.useGeneratorToolStripMenuItem.Text = "Editing locations";
             this.useGeneratorToolStripMenuItem.Click += new System.EventHandler(this.editinglogsToolStripMenuItem_Click);
             // 
