@@ -1391,6 +1391,10 @@ EquipmentItemList* Entity::GetEquipmentList(){
 	return &equipment_list;
 }
 
+EquipmentItemList* Entity::GetAppearanceEquipmentList(){
+	return &appearance_equipment_list;
+}
+
 void Entity::SetEquipment(Item* item, int8 slot){
 	std::lock_guard<std::mutex> lk(MEquipment);
 	if(!item && slot < NUM_SLOTS){

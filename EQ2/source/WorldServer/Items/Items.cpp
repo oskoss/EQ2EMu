@@ -2670,10 +2670,13 @@ PlayerItemList::PlayerItemList(){
 PlayerItemList::~PlayerItemList(){
 	safe_delete_array(xor_packet);
 	safe_delete_array(orig_packet);
-	map<sint32, map<int16, Item*> >::iterator bag_iter;
+	map<sint32, map<int8, map<int16, Item*>> >::iterator bag_iter;
 	map<int16, Item*>::iterator itr;
 	for(bag_iter = items.begin(); bag_iter != items.end(); bag_iter++){
-		for(itr = bag_iter->second.begin(); itr != bag_iter->second.end(); itr++){
+		for(itr = bag_iter->second[0].begin(); itr != bag_iter->second[0].end(); itr++){
+			safe_delete(itr->second);
+		}
+		for(itr = bag_iter->second[1].begin(); itr != bag_iter->second[1].end(); itr++){
 			safe_delete(itr->second);
 		}
 		bag_iter->second.clear();
@@ -2702,11 +2705,11 @@ Item* PlayerItemList::GetItemFromIndex(int32 index){
 	return ret;
 }
 
-Item* PlayerItemList::GetItem(sint32 bag_slot, int16 slot){
+Item* PlayerItemList::GetItem(sint32 bag_slot, int16 slot, int8 appearance_type){
 	Item* ret = 0;
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
-	if(items.count(bag_slot) > 0 && items[bag_slot].count(slot) > 0)
-		ret = items[bag_slot][slot];
+	if(items.count(bag_slot) > 0 && items[bag_slot][appearance_type].count(slot) > 0)
+		ret = items[bag_slot][appearance_type][slot];
 	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
@@ -2746,7 +2749,7 @@ void PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 		new_index = max_index;
 
 	indexed_items[new_index] = item;
-	items[item->details.inv_slot_id][item->details.slot_id] = item;
+	items[item->details.inv_slot_id][item->details.appearance_type][item->details.slot_id] = item;
 	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -2754,8 +2757,8 @@ Item* PlayerItemList::GetBag(int8 inventory_slot, bool lock){
 	Item* bag = 0;
 	if(lock)
 		MPlayerItems.readlock(__FUNCTION__, __LINE__);
-	if(items.count(0) > 0 && items[0].count(inventory_slot) > 0 && items[0][inventory_slot]->IsBag())
-		bag = items[0][inventory_slot];
+	if(items.count(0) > 0 && items[0][BASE_EQUIPMENT].count(inventory_slot) > 0 && items[0][BASE_EQUIPMENT][inventory_slot]->IsBag())
+		bag = items[0][BASE_EQUIPMENT][inventory_slot];
 	if(lock)
 		MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	return bag;
@@ -2765,8 +2768,8 @@ Item* PlayerItemList::GetBankBag(int8 inventory_slot, bool lock){
 	Item* bag = 0;
 	if(lock)
 		MPlayerItems.readlock(__FUNCTION__, __LINE__);
-	if(items.count(-3) > 0 && items[-3].count(inventory_slot) > 0 && items[-3][inventory_slot]->IsBag())
-		bag = items[-3][inventory_slot];
+	if(items.count(-3) > 0 && items[-3][BASE_EQUIPMENT].count(inventory_slot) > 0 && items[-3][BASE_EQUIPMENT][inventory_slot]->IsBag())
+		bag = items[-3][BASE_EQUIPMENT][inventory_slot];
 	if(lock)
 		MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	return bag;
@@ -2785,7 +2788,7 @@ int16 PlayerItemList::GetNumberOfFreeSlots(){
 		if(bag && bag->details.num_slots > 0){
 			if(items.count(bag->details.bag_id) > 0){
 				for(int16 x=0;x<bag->details.num_slots;x++){
-					if(items[bag->details.bag_id].count(x) == 0)
+					if(items[bag->details.bag_id][BASE_EQUIPMENT].count(x) == 0)
 						count++;
 				}
 			}
@@ -2802,7 +2805,7 @@ bool PlayerItemList::HasFreeBagSlot(){
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	if(items.count(0) > 0){
 		for(int8 i=0;i<NUM_INV_SLOTS;i++){
-			if(items[0].count(i) == 0){
+			if(items[0][BASE_EQUIPMENT].count(i) == 0){
 				ret = true;
 				break;
 			}
@@ -2819,7 +2822,7 @@ bool PlayerItemList::HasFreeSlot(){
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	if(items.count(0) > 0){
 		for(int8 i=0;i<NUM_INV_SLOTS;i++){
-			if(items[0].count(i) == 0){
+			if(items[0][BASE_EQUIPMENT].count(i) == 0){
 				ret = true;
 				break;
 			}
@@ -2834,7 +2837,7 @@ bool PlayerItemList::HasFreeSlot(){
 			if(bag && bag->details.num_slots > 0){
 				if(items.count(bag->details.bag_id) > 0){
 					for(int16 x=0;x<bag->details.num_slots;x++){
-						if(items[bag->details.bag_id].count(x) == 0){
+						if(items[bag->details.bag_id][BASE_EQUIPMENT].count(x) == 0){
 							ret = true;
 							break;
 						}
@@ -2856,7 +2859,7 @@ bool PlayerItemList::GetFirstFreeBankSlot(sint32* bag_id, sint16* slot) {
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	if (items.count(-3) > 0) {
 		for (int8 i = 0; i < NUM_BANK_SLOTS; i++) {
-			if (items[-3].count(i) == 0) {
+			if (items[-3][BASE_EQUIPMENT].count(i) == 0) {
 				*bag_id = -3;
 				*slot = i;
 				ret = true;
@@ -2880,7 +2883,7 @@ bool PlayerItemList::GetFirstFreeBankSlot(sint32* bag_id, sint16* slot) {
 				// Item was a bag so lets loop through the slots and try to find an empty one
 				if(items.count(bag->details.bag_id) > 0) {
 					for(int16 x = 0; x < bag->details.num_slots; x++) {
-						if(items[bag->details.bag_id].count(x) == 0) {
+						if(items[bag->details.bag_id][BASE_EQUIPMENT].count(x) == 0) {
 							// Found a free slot, get the bag id of this bag
 							*bag_id = bag->details.bag_id;
 							// Get the slot
@@ -2912,7 +2915,7 @@ bool PlayerItemList::GetFirstFreeSlot(sint32* bag_id, sint16* slot) {
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	if(items.count(0) > 0){
 		for(int8 i=0; i < NUM_INV_SLOTS; i++) {
-			if(items[0].count(i) == 0) {
+			if(items[0][BASE_EQUIPMENT].count(i) == 0) {
 				// Found an empty slot, store the slot id and set the return value
 				*bag_id = 0;
 				*slot = i;
@@ -2938,7 +2941,7 @@ bool PlayerItemList::GetFirstFreeSlot(sint32* bag_id, sint16* slot) {
 				// Item was a bag so lets loop through the slots and try to find an empty one
 				if(items.count(bag->details.bag_id) > 0) {
 					for(int16 x = 0; x < bag->details.num_slots; x++) {
-						if(items[bag->details.bag_id].count(x) == 0) {
+						if(items[bag->details.bag_id][BASE_EQUIPMENT].count(x) == 0) {
 							// Found a free slot, get the bag id of this bag
 							*bag_id = bag->details.bag_id;
 							// Get the slot
@@ -2967,12 +2970,18 @@ Item* PlayerItemList::CanStack(Item* item, bool include_bank){
 	if(!item)
 		return 0;
 	Item* ret = 0;
-	map<sint32, map<int16, Item*> >::iterator itr;
+	map<sint32, map<int8, map<int16, Item*>> >::iterator itr;
 	map<int16, Item*>::iterator slot_itr;
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	for(itr = items.begin(); itr != items.end(); itr++){
 		if(include_bank || (!include_bank && itr->first >= 0)){
-			for(slot_itr=itr->second.begin();slot_itr!=itr->second.end(); slot_itr++){
+			for(slot_itr=itr->second[0].begin();slot_itr!=itr->second[0].end(); slot_itr++){
+				if(slot_itr->second && slot_itr->second->details.item_id == item->details.item_id && ((slot_itr->second->details.count + item->details.count) <= slot_itr->second->stack_count)){
+					ret = slot_itr->second;
+					break;
+				}
+			}
+			for(slot_itr=itr->second[1].begin();slot_itr!=itr->second[1].end(); slot_itr++){
 				if(slot_itr->second && slot_itr->second->details.item_id == item->details.item_id && ((slot_itr->second->details.count + item->details.count) <= slot_itr->second->stack_count)){
 					ret = slot_itr->second;
 					break;
@@ -3010,7 +3019,7 @@ bool PlayerItemList::AssignItemToFreeSlot(Item* item){
 				bag = GetBag(i, false);
 				if(bag && bag->details.num_slots > 0){
 					for(int16 x=0;x<bag->details.num_slots;x++){
-						if(items[bag->details.bag_id].count(x) == 0){
+						if(items[bag->details.bag_id][BASE_EQUIPMENT].count(x) == 0){
 							item->details.inv_slot_id = bag->details.bag_id;
 							item->details.slot_id = x;
 							MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
@@ -3023,7 +3032,7 @@ bool PlayerItemList::AssignItemToFreeSlot(Item* item){
 		}
 		//bags full, check inventory slots
 		for(int8 i=0;i<NUM_INV_SLOTS;i++){
-			if(items[0].count(i) == 0){
+			if(items[0][BASE_EQUIPMENT].count(i) == 0){
 				item->details.inv_slot_id = 0;
 				item->details.slot_id = i;
 				MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
@@ -3038,13 +3047,13 @@ bool PlayerItemList::AssignItemToFreeSlot(Item* item){
 
 void PlayerItemList::RemoveItem(Item* item, bool delete_item){
 	MPlayerItems.writelock(__FUNCTION__, __LINE__);
-	if(items.count(item->details.inv_slot_id) > 0 && items[item->details.inv_slot_id].count(item->details.slot_id) > 0){
-		items[item->details.inv_slot_id].erase(item->details.slot_id);
+	if(items.count(item->details.inv_slot_id) > 0 && items[item->details.inv_slot_id][item->details.appearance_type].count(item->details.slot_id) > 0){
+		items[item->details.inv_slot_id][item->details.appearance_type].erase(item->details.slot_id);
 		indexed_items[item->details.index] = 0;
 	}
 	if(item->IsBag() && item->details.inv_slot_id == 0 && item->details.slot_id < NUM_INV_SLOTS && items.count(item->details.bag_id) > 0){
 		map<int16, Item*>::iterator itr;
-		for(itr = items[item->details.bag_id].begin(); itr != items[item->details.bag_id].end(); itr++){
+		for(itr = items[item->details.bag_id][item->details.appearance_type].begin(); itr != items[item->details.bag_id][item->details.appearance_type].end(); itr++){
 			indexed_items[itr->second->details.index] = 0;
 			if(delete_item){
 				safe_delete(itr->second);
@@ -3063,7 +3072,7 @@ void PlayerItemList::DestroyItem(int16 index){
 	Item* item = indexed_items[index];
 	map<int16, Item*>::iterator itr;
 	if(item && item->IsBag() && item->details.inv_slot_id == 0 && item->details.slot_id < NUM_INV_SLOTS && items.count((sint32)item->details.bag_id) > 0){ //inventory
-		map<int16, Item*>* tmp_map = &(items[(sint32)item->details.bag_id]);
+		map<int16, Item*>* tmp_map = &(items[(sint32)item->details.bag_id][item->details.appearance_type]);
 		for(itr = tmp_map->begin(); itr != tmp_map->end(); itr++){
 			indexed_items[itr->second->details.index] = 0;
 			if(itr->second != item){
@@ -3072,19 +3081,20 @@ void PlayerItemList::DestroyItem(int16 index){
 		}
 		items.erase(item->details.bag_id);
 	}
-	if(items.count(item->details.inv_slot_id) > 0 && items[item->details.inv_slot_id].count(item->details.slot_id) > 0)
-		items[item->details.inv_slot_id].erase(item->details.slot_id);
+	if(items.count(item->details.inv_slot_id) > 0 && items[item->details.inv_slot_id][item->details.appearance_type].count(item->details.slot_id) > 0)
+		items[item->details.inv_slot_id][item->details.appearance_type].erase(item->details.slot_id);
 	indexed_items[index] = 0;
 	safe_delete(item);
 	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-void PlayerItemList::MoveItem(Item* item, sint32 inv_slot, int16 slot, bool erase_old){
-	if(erase_old && items.count(item->details.inv_slot_id) > 0)
-		items[item->details.inv_slot_id].erase(item->details.slot_id);
-	items[inv_slot][slot] = item;
+void PlayerItemList::MoveItem(Item* item, sint32 inv_slot, int16 slot, int8 appearance_type, bool erase_old){
+	if(erase_old && items.count(item->details.inv_slot_id) > 0 && items[item->details.inv_slot_id][BASE_EQUIPMENT].count(item->details.slot_id))
+		items[item->details.inv_slot_id][BASE_EQUIPMENT].erase(item->details.slot_id);
+	items[inv_slot][BASE_EQUIPMENT][slot] = item;
 	item->details.inv_slot_id = inv_slot;
 	item->details.slot_id = slot;
+	item->details.appearance_type = 0;
 	item->save_needed = true;
 }
 
@@ -3092,19 +3102,19 @@ int16 PlayerItemList::GetNumberOfItems(){
 	int16 ret = 0;
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	if(items.size() > 0){
-		map<sint32, map<int16, Item*> >::iterator itr;
+		map<sint32, map<int8, map<int16, Item*>> >::iterator itr;
 		sint32 bag_id = 0;
 		for(itr = items.begin(); itr != items.end(); itr++){
 			bag_id = itr->first;
-			if(items.count(bag_id) > 0)
-				ret += items[bag_id].size();
+			if(items[bag_id].count(0))
+				ret += items[bag_id][BASE_EQUIPMENT].size();
 		}
 	}
 	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
-bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8 charges){
+bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8 appearance_type, int8 charges){
 	MPlayerItems.writelock(__FUNCTION__, __LINE__);
 	Item* item_from = indexed_items[from_index];
 	Item* item_to = 0;
@@ -3112,14 +3122,14 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 		if(to_bag_id > 0){  //bag item
 			Item* bag = GetItemFromUniqueID(to_bag_id, true, false);
 			if(bag && bag->details.num_slots > to)
-				item_to = items[to_bag_id][to];
+				item_to = items[to_bag_id][BASE_EQUIPMENT][to];
 			else{
 				MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 				return false;
 			}
 		}
 		else
-			item_to = items[to_bag_id][to];
+			item_to = items[to_bag_id][BASE_EQUIPMENT][to];
 		if(charges > 0) {
 			if (item_to && item_from->details.item_id == item_to->details.item_id){
 				if(item_to->details.count > 0 && item_to->details.count < item_to->stack_count){
@@ -3128,7 +3138,7 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 						total_tmp_price = (item_to->GetMaxSellValue()*item_to->details.count) + (item_from->GetMaxSellValue()*item_from->details.count);
 						item_to->details.count += item_from->details.count;
 						indexed_items[from_index] = 0;
-						items[item_from->details.inv_slot_id].erase(item_from->details.slot_id);
+						items[item_from->details.inv_slot_id][BASE_EQUIPMENT].erase(item_from->details.slot_id);
 						item_from->needs_deletion = true;
 						item_to->save_needed = true;
 					}
@@ -3147,9 +3157,9 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 			else {
 				if (item_from->details.count == charges) {
 					if (item_to) 
-						MoveItem(item_to, item_from->details.inv_slot_id, item_from->details.slot_id);
+						MoveItem(item_to, item_from->details.inv_slot_id, item_from->details.slot_id, BASE_EQUIPMENT, true);
 
-					MoveItem(item_from, to_bag_id, to, item_to ? false:true);
+					MoveItem(item_from, to_bag_id, to, BASE_EQUIPMENT, item_to ? false:true);
 					MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 				}
 				else {
@@ -3162,6 +3172,7 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 					new_item->details.count = charges;
 					new_item->details.slot_id = to;
 					new_item->details.inv_slot_id = to_bag_id;
+					new_item->details.appearance_type = 0;
 					MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 					new_item->save_needed = true;
 					AddItem(new_item);
@@ -3176,7 +3187,7 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 			if (item_from->IsBag() && item_from->details.num_slots > 0) {
 				for (int8 i = 0; i < item_from->details.num_slots; i++) {
 					// if there is something in the bag return, can't put bags with items into other bags
-					if (items[item_from->details.bag_id].count(i) != 0) {
+					if (items[item_from->details.bag_id][BASE_EQUIPMENT].count(i) != 0) {
 						MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 						return false;
 					}
@@ -3184,23 +3195,23 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 			}
 			if(items.count(item_to->details.bag_id) > 0){
 				for(int8 i=0;i<item_to->details.num_slots;i++){
-					if(items[item_to->details.bag_id].count(i) == 0){
-						MoveItem(item_from, item_to->details.bag_id, i);
+					if(items[item_to->details.bag_id][BASE_EQUIPMENT].count(i) == 0){
+						MoveItem(item_from, item_to->details.bag_id, i, 0, true);
 						MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 						return true;
 					}
 				}
 			}
 			else{
-				MoveItem(item_from, item_to->details.bag_id, 0);
+				MoveItem(item_from, item_to->details.bag_id, 0, BASE_EQUIPMENT, true);
 				MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 				return true;
 			}
 		}
 		if (item_to) 
-			MoveItem(item_to, item_from->details.inv_slot_id, item_from->details.slot_id);
+			MoveItem(item_to, item_from->details.inv_slot_id, item_from->details.slot_id, BASE_EQUIPMENT, true);
 
-		MoveItem(item_from, to_bag_id, to, item_to ? false:true);
+		MoveItem(item_from, to_bag_id, to, BASE_EQUIPMENT, item_to ? false:true);
 		
 		MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 		return true;
@@ -3284,7 +3295,7 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 	
 	int32 menu_data = 3;
 	if(item->slot_data.size() > 0)
-		menu_data -= ITEM_MENU_TYPE_GENERIC;	
+		menu_data -= ITEM_MENU_TYPE_GENERIC;
 
 	if (item->details.num_slots > 0) {
 		if (packet->GetVersion() <= 283 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
@@ -3456,12 +3467,18 @@ vector<Item*>* PlayerItemList::GetOverflowItemList() {
 }
 
 bool PlayerItemList::HasItem(int32 id, bool include_bank){
-	map<sint32, map<int16, Item*> >::iterator itr;
+	map<sint32, map<int8, map<int16, Item*>> >::iterator itr;
 	map<int16, Item*>::iterator slot_itr;
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	for(itr = items.begin(); itr != items.end(); itr++){
 		if(include_bank || (!include_bank && itr->first >= 0)){
-			for(slot_itr=itr->second.begin();slot_itr!=itr->second.end(); slot_itr++){
+			for(slot_itr=itr->second[BASE_EQUIPMENT].begin();slot_itr!=itr->second[BASE_EQUIPMENT].end(); slot_itr++){
+				if(slot_itr->second && slot_itr->second->details.item_id == id){
+					MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+					return true;
+				}
+			}
+			for(slot_itr=itr->second[APPEARANCE_EQUIPMENT].begin();slot_itr!=itr->second[APPEARANCE_EQUIPMENT].end(); slot_itr++){
 				if(slot_itr->second && slot_itr->second->details.item_id == id){
 					MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 					return true;
@@ -3479,7 +3496,7 @@ bool PlayerItemList::SharedBankAddAllowed(Item* item){
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	if(item->IsBag() && items.count(item->details.bag_id) > 0){
 		map<int16, Item*>::iterator itr;
-		for(itr = items[item->details.bag_id].begin(); itr != items[item->details.bag_id].end(); itr++){
+		for(itr = items[item->details.bag_id][BASE_EQUIPMENT].begin(); itr != items[item->details.bag_id][BASE_EQUIPMENT].end(); itr++){
 			if(itr->second->CheckFlag(NO_TRADE)){
 				MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 				return false;
@@ -3497,7 +3514,7 @@ vector<Item*>* PlayerItemList::GetItemsFromBagID(sint32 bag_id){
 		map<int16, Item*>::iterator itr;
 		map<int16, Item*>::iterator itr2;
 		Item* item = 0;
-		for(itr = items[bag_id].begin(); itr != items[bag_id].end(); itr++){
+		for(itr = items[bag_id][BASE_EQUIPMENT].begin(); itr != items[bag_id][BASE_EQUIPMENT].end(); itr++){
 			item = itr->second;
 			if(item)
 				ret->push_back(item);
@@ -3512,7 +3529,7 @@ vector<Item*>* PlayerItemList::GetItemsInBag(Item* bag){
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	if(bag && bag->IsBag() && items.count(bag->details.bag_id) > 0){
 		map<int16, Item*>::iterator itr;
-		for(itr = items[bag->details.bag_id].begin(); itr != items[bag->details.bag_id].end(); itr++){
+		for(itr = items[bag->details.bag_id][BASE_EQUIPMENT].begin(); itr != items[bag->details.bag_id][BASE_EQUIPMENT].end(); itr++){
 			ret_items->push_back(itr->second);
 		}
 	}
@@ -3522,17 +3539,20 @@ vector<Item*>* PlayerItemList::GetItemsInBag(Item* bag){
 
 Item* PlayerItemList::GetItemFromID(int32 id, int8 count, bool include_bank, bool lock){
 	//first check for an exact count match
-	map<sint32, map<int16, Item*> >::iterator itr;
+	map<sint32, map<int8, map<int16, Item*>> >::iterator itr;
 	map<int16, Item*>::iterator slot_itr;
 	if(lock)
 		MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	for(itr = items.begin(); itr != items.end(); itr++){
 		if(include_bank || (!include_bank && itr->first >= 0)){
-			for(slot_itr=itr->second.begin();slot_itr!=itr->second.end(); slot_itr++){
-				if(slot_itr->second && slot_itr->second->details.item_id == id && (count == 0 || slot_itr->second->details.count == count)){
-					if(lock)
-						MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
-					return slot_itr->second;
+			for(int8 i=0;i<MAX_EQUIPMENT;i++)
+			{
+				for(slot_itr=itr->second[i].begin();slot_itr!=itr->second[i].end(); slot_itr++){
+					if(slot_itr->second && slot_itr->second->details.item_id == id && (count == 0 || slot_itr->second->details.count == count)){
+						if(lock)
+							MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+						return slot_itr->second;
+					}
 				}
 			}
 		}
@@ -3542,9 +3562,12 @@ Item* PlayerItemList::GetItemFromID(int32 id, int8 count, bool include_bank, boo
 	Item* closest = 0;
 	for(itr = items.begin(); itr != items.end(); itr++){
 		if(include_bank || (!include_bank && itr->first >= 0)){
-			for(slot_itr=itr->second.begin();slot_itr!=itr->second.end(); slot_itr++){
-				if(slot_itr->second && slot_itr->second->details.item_id == id && slot_itr->second->details.count > count && (closest == 0 || slot_itr->second->details.count < closest->details.count))
-					closest = slot_itr->second;
+			for(int8 i=0;i<MAX_EQUIPMENT;i++)
+			{
+				for(slot_itr=itr->second[i].begin();slot_itr!=itr->second[i].end(); slot_itr++){
+					if(slot_itr->second && slot_itr->second->details.item_id == id && slot_itr->second->details.count > count && (closest == 0 || slot_itr->second->details.count < closest->details.count))
+						closest = slot_itr->second;
+				}
 			}
 		}
 	}
@@ -3554,13 +3577,20 @@ Item* PlayerItemList::GetItemFromID(int32 id, int8 count, bool include_bank, boo
 }
 
 Item* PlayerItemList::GetItemFromUniqueID(int32 id, bool include_bank, bool lock){
-	map<sint32, map<int16, Item*> >::iterator itr;
+	map<sint32, map<int8, map<int16, Item*>> >::iterator itr;
 	map<int16, Item*>::iterator slot_itr;
 	if(lock)
 		MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	for(itr = items.begin(); itr != items.end(); itr++){
 		if(include_bank || (!include_bank && itr->first >= 0)){
-			for(slot_itr=itr->second.begin();slot_itr!=itr->second.end(); slot_itr++){
+			for(slot_itr=itr->second[0].begin();slot_itr!=itr->second[0].end(); slot_itr++){
+				if(slot_itr->second && slot_itr->second->details.unique_id == id){
+					if(lock)
+						MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+					return slot_itr->second;
+				}
+			}
+			for(slot_itr=itr->second[1].begin();slot_itr!=itr->second[1].end(); slot_itr++){
 				if(slot_itr->second && slot_itr->second->details.unique_id == id){
 					if(lock)
 						MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
@@ -3577,7 +3607,7 @@ Item* PlayerItemList::GetItemFromUniqueID(int32 id, bool include_bank, bool lock
 bool PlayerItemList::HasFreeBankSlot() {
 	bool ret = false;
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
-	if (items[-3].size() < 12) //12 slots in the bank
+	if (items[-3][BASE_EQUIPMENT].size() < 12) //12 slots in the bank
 		ret = true;
 	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
@@ -3587,7 +3617,7 @@ int8 PlayerItemList::FindFreeBankSlot() {
 	int8 ret = 0;
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	for (int8 i = 0; i < 12; i++) { //12 slots in the bank
-		if (items[-3].count(i) == 0) {
+		if (items[-3][BASE_EQUIPMENT].count(i) == 0) {
 			ret = i;
 			break;
 		}
@@ -3602,6 +3632,7 @@ EquipmentItemList::EquipmentItemList(){
 	for(int8 i=0;i<NUM_SLOTS;i++)
 		items[i] = 0;
 	MEquipmentItems.SetName("EquipmentItemList::MEquipmentItems");
+	AppearanceType = 0;
 }
 
 EquipmentItemList::EquipmentItemList(const EquipmentItemList& list){
@@ -3660,6 +3691,7 @@ void EquipmentItemList::SetItem(int8 slot_id, Item* item, bool locked){
 	item->details.inv_slot_id = 0;
 	item->details.slot_id = slot_id;
 	item->details.index = slot_id;
+	item->details.appearance_type = GetAppearanceType();
 	items[slot_id] = item;
 
 	if(!locked)
@@ -3782,7 +3814,7 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 			packet->setSubstructArrayDataByName("items", "index", i, 0, i);
 		}
 		MEquipmentItems.unlock();
-		packet->setDataByName("equip_flag", 1);
+		packet->setDataByName("equip_flag", GetAppearanceType() ? 2 : 1);
 		app = packet->serializeCountPacket(version, 1, orig_packet, xor_packet);
 		safe_delete(packet);
 	}
@@ -3817,6 +3849,9 @@ bool EquipmentItemList::HasItem(int32 id){
 void EquipmentItemList::RemoveItem(int8 slot, bool delete_item){
 	if(slot < NUM_SLOTS){
 		MEquipmentItems.lock();
+		if(items[slot] && items[slot]->details.appearance_type)
+			items[slot]->details.appearance_type = 0;
+		
 		if(delete_item){
 			safe_delete(items[slot]);
 		}

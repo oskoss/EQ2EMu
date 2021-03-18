@@ -872,6 +872,10 @@ public:
 			loot_items.push_back(item);
 		}
 	}
+	void AddLootItem(Item* item) {
+		if(item)
+			loot_items.push_back(item);
+	}
 	bool HasLoot() {
 		if (loot_items.size() == 0 && loot_coins == 0)
 			return false;
@@ -1236,6 +1240,7 @@ protected:
 	map<int32, vector<int16>* > required_quests;
 	map<int32, LUAHistory*> required_history;
 	EquipmentItemList equipment_list;
+	EquipmentItemList appearance_equipment_list;
 
 	MutexList<SpawnProximity*> spawn_proximities;
 

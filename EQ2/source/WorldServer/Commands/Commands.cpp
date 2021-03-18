@@ -1611,6 +1611,18 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					else
 						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Index: %u", item_index);
 				}
+				else if(strcmp(sep->arg[0], "appearance") == 0){
+					int32 item_index = atol(sep->arg[1]);
+					Item* item = client->GetPlayer()->GetAppearanceEquipmentList()->GetItem(item_index);
+					if(item){
+						EQ2Packet* app = item->serialize(client->GetVersion(), true, client->GetPlayer());
+						client->QueuePacket(app);
+						if(item->GetItemScript() && lua_interface)
+							lua_interface->RunItemScript(item->GetItemScript(), "examined", item, client->GetPlayer());
+					}
+					else
+						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Index: %u", item_index);
+				}
 				else if(strcmp(sep->arg[0], "item") == 0 || strcmp(sep->arg[0], "merchant") == 0 || strcmp(sep->arg[0], "store") == 0 || strcmp(sep->arg[0], "buyback") == 0 || strcmp(sep->arg[0], "consignment") == 0){
 					int32 item_id = atoul(sep->arg[1]);
 					Item* item = master_item_list.GetItem(item_id);
@@ -2157,7 +2169,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 									  }
 		case COMMAND_SET_MAIL_ITEM: {
-			if(sep && sep->IsNumber(0))
+			if(sep && sep->IsNumber(0) && sep->IsNumber(2))
 			{
 				Item* item = client->GetPlayer()->item_list.GetItemFromIndex(atoul(sep->arg[0]));
 				if(item)
@@ -2401,7 +2413,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				}
 				else
 				{
-					vector<int32> loot_list = client->GetCurrentZone()->GetSpawnLootList(spawn->GetDatabaseID(), spawn->GetZone()->GetZoneID(), spawn->GetLevel(), race_types_list.GetRaceType(spawn->GetModelType()));
+					vector<int32> loot_list = client->GetCurrentZone()->GetSpawnLootList(spawn->GetDatabaseID(), spawn->GetZone()->GetZoneID(), spawn->GetLevel(), race_types_list.GetRaceType(spawn->GetModelType()), spawn);
 					if (loot_list.size() > 0) {
 						client->Message(CHANNEL_COLOR_YELLOW, "%s belongs to the following loot lists: ", spawn->GetName());
 						vector<int32>::iterator list_itr;
@@ -2455,7 +2467,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_LOOT_REMOVEITEM:{
 			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity() && sep && sep->arg[0] && sep->IsNumber(0)){
-				spawn->LootItem(atoul(sep->arg[0]));
+				Item* item = spawn->LootItem(atoul(sep->arg[0]));
+				safe_delete(item);
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully removed item.");
 			}
 			else
@@ -5967,7 +5980,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 
 	if(sep && sep->arg[0][0])
 	{
-		LogWrite(COMMAND__INFO, 0, "Command", "command: %s", command->command.data.c_str());
+		LogWrite(COMMAND__INFO, 0, "Command", "command: %s", sep->argplus[0]);
 
 		if(client->GetPlayer()->GetHP() == 0)
 			client->SimpleMessage(CHANNEL_COLOR_RED,"You cannot do that right now.");
@@ -6033,7 +6046,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 				}
 			}
 
-			EQ2Packet* outapp = client->GetPlayer()->MoveInventoryItem(bag_id, from_index, (int8)to_slot, charges, client->GetVersion());
+			EQ2Packet* outapp = client->GetPlayer()->MoveInventoryItem(bag_id, from_index, (int8)to_slot, charges, 0, client->GetVersion());
 			client->QueuePacket(outapp);
 
 			//removed from bag send update
@@ -6060,11 +6073,17 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 			{
 				int16 index = atoi(sep->arg[1]);
 				int8 slot_id = 255;
-
+				int8 unk3 = 0;
+				int8 appearance_equip = 0;
+				
 				if(sep->arg[2][0] && sep->IsNumber(2))
 					slot_id = atoi(sep->arg[2]);
+				if(sep->arg[3][0] && sep->IsNumber(3))
+					unk3 = atoul(sep->arg[3]);
+				if(sep->arg[4][0] && sep->IsNumber(4))
+					appearance_equip = atoul(sep->arg[4]);
 
-				vector<EQ2Packet*> packets = client->GetPlayer()->EquipItem(index, client->GetVersion(), slot_id);
+				vector<EQ2Packet*> packets = client->GetPlayer()->EquipItem(index, client->GetVersion(), appearance_equip, slot_id);
 				EQ2Packet* outapp = 0;
 
 				for(int32 i=0;i<packets.size();i++)
@@ -6124,7 +6143,14 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 						to_slot = atoi(sep->arg[3]);
 				}
 
-				vector<EQ2Packet*> packets = client->GetPlayer()->UnequipItem(index, bag_id, to_slot, client->GetVersion());
+				sint8 unk4 = 0;
+				int8 appearance_equip = 0;
+				if(sep->arg[4][0] && sep->IsNumber(4))
+					unk4 = atoi(sep->arg[4]);
+				if(sep->arg[5][0] && sep->IsNumber(5))
+					appearance_equip = atoul(sep->arg[5]);
+
+				vector<EQ2Packet*> packets = client->GetPlayer()->UnequipItem(index, bag_id, to_slot, client->GetVersion(), appearance_equip);
 				EQ2Packet* outapp = 0;
 
 				for(int32 i=0;i<packets.size();i++)
@@ -10521,7 +10547,7 @@ void Commands::Command_Attune_Inv(Client* client, Seperator* sep) {
 
 			client->QueuePacket(item->serialize(client->GetVersion(), false, client->GetPlayer()));
 
-			vector<EQ2Packet*> packets = client->GetPlayer()->EquipItem(index, client->GetVersion(), -1);
+			vector<EQ2Packet*> packets = client->GetPlayer()->EquipItem(index, client->GetVersion(), 0, -1); // appearance type??
 			EQ2Packet* outapp = 0;
 
 			for (int32 i=0;i<packets.size();i++) {

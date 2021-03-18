@@ -629,10 +629,10 @@ void LuaInterface::RemoveSpawnScript(const char* name) {
 	MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-bool LuaInterface::CallItemScript(lua_State* state, int8 num_parameters) {
+bool LuaInterface::CallItemScript(lua_State* state, int8 num_parameters, sint64* returnValue) {
 	if(shutting_down)
 		return false;
-	if(!state || lua_pcall(state, num_parameters, 0, 0) != 0){
+	if(!state || lua_pcall(state, num_parameters, 1, 0) != 0){
 		if (state){
 			const char* err = lua_tostring(state, -1);
 			LogError("%s: %s", GetScriptName(state), err);
@@ -640,6 +640,18 @@ bool LuaInterface::CallItemScript(lua_State* state, int8 num_parameters) {
 		}
 		return false;
 	}
+
+	sint64 result = 0;
+	
+	if (lua_isnumber(state, -1))
+	{
+		result = (sint64)lua_tonumber(state, -1);
+		lua_pop(state, 1);
+	}
+	
+	if(returnValue)
+		*returnValue = result;
+	
 	return true;
 }
 
@@ -657,10 +669,10 @@ bool LuaInterface::CallSpawnScript(lua_State* state, int8 num_parameters) {
 	return true;
 }
 
-bool LuaInterface::CallZoneScript(lua_State* state, int8 num_parameters) {
+bool LuaInterface::CallZoneScript(lua_State* state, int8 num_parameters, int32* returnValue) {
 	if(shutting_down)
 		return false;
-	if (!state || lua_pcall(state, num_parameters, 0, 0) != 0) {
+	if (!state || lua_pcall(state, num_parameters, 1, 0) != 0) {
 		if (state){
 			const char* err = lua_tostring(state, -1);
 			LogError("%s: %s", GetScriptName(state), err);
@@ -668,6 +680,18 @@ bool LuaInterface::CallZoneScript(lua_State* state, int8 num_parameters) {
 		}
 		return false;
 	}
+	
+	int32 result = 0;
+	
+	if (lua_isnumber(state, -1))
+	{
+		result = (int32)lua_tonumber(state, -1);
+		lua_pop(state, 1);
+	}
+	
+	if(returnValue)
+		*returnValue = result;
+	
 	return true;
 }
 
@@ -2023,7 +2047,7 @@ lua_State* LuaInterface::GetRegionScript(const char* name, bool create_new, bool
 	return ret;
 }
 
-bool LuaInterface::RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn) {
+bool LuaInterface::RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn, sint64* returnValue) {
 	if(!item)
 		return false;
 	lua_State* state = GetItemScript(script_name.c_str(), true, true);
@@ -2049,7 +2073,7 @@ bool LuaInterface::RunItemScript(string script_name, const char* function_name, 
 			SetSpawnValue(state, spawn);
 			num_parms++;
 		}
-		if(!CallItemScript(state, num_parms)){
+		if(!CallItemScript(state, num_parms, returnValue)){
 			if(mutex)
 				mutex->releasereadlock(__FUNCTION__, __LINE__);
 			UseItemScript(script_name.c_str(), state, false);
@@ -2173,6 +2197,51 @@ bool LuaInterface::RunZoneScript(string script_name, const char* function_name, 
 			num_params++;
 		}
 		if (!CallZoneScript(state, num_params)) {
+			if (mutex)
+				mutex->releasereadlock(__FUNCTION__, __LINE__);
+			UseZoneScript(script_name.c_str(), state, false);
+			return false;
+		}
+		if (mutex)
+			mutex->releasereadlock(__FUNCTION__, __LINE__);
+		UseZoneScript(script_name.c_str(), state, false);
+		return true;
+	}
+	else
+		return false;
+}
+
+bool LuaInterface::RunZoneScriptWithReturn(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn, int32 int32_arg1, int32 int32_arg2, int32 int32_arg3, int32* returnValue) {
+	if (!zone)
+		return false;
+	lua_State* state = GetZoneScript(script_name.c_str(), true, true);
+	if (state) {
+		Mutex* mutex = GetZoneScriptMutex(script_name.c_str());
+		if (mutex)
+			mutex->readlock(__FUNCTION__, __LINE__);
+		else {
+			LogError("Error getting lock for '%s'", script_name.c_str());
+			UseZoneScript(script_name.c_str(), state, false);
+			return false;
+		}
+		lua_getglobal(state, function_name);
+		if (!lua_isfunction(state, lua_gettop(state))) {
+			lua_pop(state, 1);
+			mutex->releasereadlock(__FUNCTION__);
+			UseZoneScript(script_name.c_str(), state, false);
+			return false;
+		}
+		SetZoneValue(state, zone);
+		int8 num_params = 1;
+		SetSpawnValue(state, spawn);
+		num_params++;
+		SetInt32Value(state, int32_arg1);
+		num_params++;
+		SetInt32Value(state, int32_arg2);
+		num_params++;
+		SetInt32Value(state, int32_arg3);
+		num_params++;
+		if (!CallZoneScript(state, num_params, returnValue)) {
 			if (mutex)
 				mutex->releasereadlock(__FUNCTION__, __LINE__);
 			UseZoneScript(script_name.c_str(), state, false);

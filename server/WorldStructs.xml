@@ -14996,6 +14996,7 @@ to zero and treated like placeholders." />
 <Data ElementName="location_z" Type="float" Size="1" />
 </Data>
 </Struct>
+
 <Struct Name="WS_GetMailHeader" ClientVersion="1" OpcodeName="OP_MailGetHeadersReplyMsg">
 <Data ElementName="kiosk_id" Type="int32" />
 <Data ElementName="num_messages" Type="int16" Size="1" />
@@ -15091,8 +15092,11 @@ to zero and treated like placeholders." />
 <Data ElementName="coin_silver" Type="int32" />
 <Data ElementName="coin_gold" Type="int32" />
 <Data ElementName="coin_plat" Type="int32" />
-<Data ElementName="item" Type="EQ2_Item" />
-<Data ElementName="end_tag" Type="int32" IfVariableNotSet="item"/>
+<Data ElementName="item" Type="EQ2_Item" Optional="TRUE"/>
+<Data ElementName="end_tagx" Type="int16" IfVariableNotSet="item"/>
+<Data ElementName="end_tag2" Type="int16" IfVariableNotSet="item"/>
+<Data ElementName="end_tag3" Type="int8" IfVariableNotSet="item"/>
+<Data ElementName="end_tag4" Type="int32"/>
 </Struct>
 <Struct Name="WS_MailSendMessage" ClientVersion="1" OpcodeName="OP_MailSendMessageMsg">
 <Data ElementName="player_to" Type="EQ2_16Bit_String" />

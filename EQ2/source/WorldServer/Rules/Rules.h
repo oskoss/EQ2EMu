@@ -70,6 +70,7 @@ enum RuleType {
 	MinLastNameLevel,
 	MaxLastNameLength,
 	MinLastNameLength,
+	DisableHouseAlignmentRequirement,
 
 	/* PVP */
 	AllowPVP,

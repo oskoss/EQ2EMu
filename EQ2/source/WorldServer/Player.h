@@ -447,10 +447,10 @@ public:
 	Skill*	GetSkillByID(int32 skill_id, bool check_update = false);
 	PlayerSkillList* GetSkills();
 	bool DamageEquippedItems(int8 amount = 10, Client* client = 0);
-	vector<EQ2Packet*>	EquipItem(int16 index, int16 version, int8 slot_id = 255);
+	vector<EQ2Packet*>	EquipItem(int16 index, int16 version, int8 appearance_type, int8 slot_id = 255);
 	bool CanEquipItem(Item* item);
 	void SetEquippedItemAppearances();
-	vector<EQ2Packet*>	UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version);
+	vector<EQ2Packet*>	UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version, int8 appearance_type = 0);
 	int8 ConvertSlotToClient(int8 slot, int16 version);
 	int8 ConvertSlotFromClient(int8 slot, int16 version);
 	EQ2Packet* SwapEquippedItems(int8 slot1, int8 slot2, int16 version);
@@ -462,6 +462,7 @@ public:
 	map<int32, Item*>* GetItemList();
 	map<int32, Item*>* GetBankItemList();
 	vector<Item*>* GetEquippedItemList();
+	vector<Item*>* GetAppearanceEquippedItemList();
 	Quest* SetStepComplete(int32 quest_id, int32 step);
 	Quest* AddStepProgress(int32 quest_id, int32 step, int32 progress);
 	int32  GetStepProgress(int32 quest_id, int32 step_id);
@@ -505,7 +506,7 @@ public:
 	/// <param name='skill_id'>The id of the skill to check</param>
 	/// <returns>A vector of int32's of the spell id's</returns>
 	vector<int32> GetSpellBookSpellIDBySkill(int32 skill_id);
-	EQ2Packet* MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 new_slot, int8 charges, int16 version = 1);
+	EQ2Packet* MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 new_slot, int8 charges, int8 appearance_type, int16 version = 1);
 	bool IsPlayer(){ return true; }
 	MaintainedEffects* GetFreeMaintainedSpellSlot();
 	MaintainedEffects* GetMaintainedSpell(int32 id);

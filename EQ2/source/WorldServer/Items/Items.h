@@ -32,6 +32,11 @@ class MasterItemList;
 class Player;
 class Entity;
 extern MasterItemList master_item_list;
+
+#define BASE_EQUIPMENT 		 0
+#define APPEARANCE_EQUIPMENT 1
+#define MAX_EQUIPMENT 2 // max iterations for equipment (base is 0, appearance is 1, so this is 2)
+
 #define EQ2_PRIMARY_SLOT 0
 #define EQ2_SECONDARY_SLOT 1
 #define EQ2_HEAD_SLOT 2
@@ -652,6 +657,7 @@ struct ItemCore{
 	int32	bag_id;
 	sint32	inv_slot_id;
 	sint16	slot_id;
+	sint16	appearance_type; // 0 for combat armor, 1 for appearance armor
 	int8	index;
 	int16	icon;
 	int16	count;
@@ -1001,7 +1007,7 @@ public:
 	~PlayerItemList();
 //	int16 number;
 	map<int32, Item*> indexed_items;
-	map<sint32, map<int16, Item*> > items;
+	map<sint32, map<int8, map<int16, Item*>> > items;
 //	map< int8, Item* > inv_items;
 //	map< int8, Item* > bank_items;
 	bool  SharedBankAddAllowed(Item* item);
@@ -1010,8 +1016,8 @@ public:
 	Item* GetBag(int8 inventory_slot, bool lock = true);
 	bool  HasItem(int32 id, bool include_bank = false);
 	Item* GetItemFromIndex(int32 index);
-	void  MoveItem(Item* item, sint32 inv_slot, int16 slot, bool erase_old = true);
-	bool  MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8 charges);
+	void  MoveItem(Item* item, sint32 inv_slot, int16 slot, int8 appearance_type, bool erase_old); // erase old was true
+	bool  MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8 appearance_type, int8 charges);
 	Item* GetItemFromUniqueID(int32 item_id, bool include_bank = false, bool lock = true);
 	Item* GetItemFromID(int32 item_id, int8 count = 0, bool include_bank = false, bool lock = true);
 	bool  AssignItemToFreeSlot(Item* item);
@@ -1025,7 +1031,7 @@ public:
 	void RemoveItem(Item* item, bool delete_item = false);
 	void AddItem(Item* item);
 
-	Item* GetItem(sint32 bag_slot, int16 slot);
+	Item* GetItem(sint32 bag_slot, int16 slot, int8 appearance_type = 0);
 	
 	EQ2Packet*	serialize(Player* player, int16 version);
 	uchar* xor_packet;
@@ -1090,8 +1096,12 @@ public:
 	EQ2Packet* serialize(int16 version, Player* player);
 	uchar* xor_packet;
 	uchar* orig_packet;
+
+	void	SetAppearanceType(int8 type) { AppearanceType = type; }
+	int8	GetAppearanceType() { return AppearanceType; }
 private:
 	Mutex MEquipmentItems;
+	int8 AppearanceType; // 0 for normal equip, 1 for appearance
 };
 
 #endif

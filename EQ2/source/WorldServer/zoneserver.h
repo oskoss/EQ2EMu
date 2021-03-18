@@ -1046,7 +1046,7 @@ public:
 	void				AddRacialLootList(int16 racial_id, GlobalLoot* loot);
 	void				AddZoneLootList(int32 zone, GlobalLoot* loot);
 	void				ClearLootTables();
-	vector<int32>		GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 spawn_level, int16 racial_id);
+	vector<int32>		GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 spawn_level, int16 racial_id, Spawn* spawn = 0);
 	vector<LootDrop*>*	GetLootDrops(int32 table_id);
 	LootTable*			GetLootTable(int32 table_id);
 

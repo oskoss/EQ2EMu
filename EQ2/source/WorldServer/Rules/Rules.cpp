@@ -210,6 +210,7 @@ void RuleManager::Init()
 	RULE_INIT(R_Player, MinLastNameLevel, "20");
 	RULE_INIT(R_Player, MaxLastNameLength, "20");
 	RULE_INIT(R_Player, MinLastNameLength, "4");
+	RULE_INIT(R_Player, DisableHouseAlignmentRequirement, "1");
 
 	/* PVP */
 	RULE_INIT(R_PVP, AllowPVP, "0");

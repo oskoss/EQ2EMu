@@ -1083,11 +1083,29 @@ void WorldDatabase::SaveItems(Client* client)
 
 		if(item && item->save_needed)
 		{
-			SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "EQUIPPED");
+			if(item->details.appearance_type)
+				SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "APPEARANCE");
+			else
+				SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "EQUIPPED");
 			item->save_needed = false;
 		}
 	}
 	safe_delete(equipped_list);
+
+	
+	vector<Item*>* appearance_equipped_list = client->GetPlayer()->GetAppearanceEquippedItemList();
+
+	for(int32 i=0;i<appearance_equipped_list->size();i++)
+	{
+		item = appearance_equipped_list->at(i);
+
+		if(item && item->save_needed)
+		{
+			SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "APPEARANCE");
+			item->save_needed = false;
+		}
+	}
+	safe_delete(appearance_equipped_list);
 
 	vector<Item*>* overflow = client->GetPlayer()->item_list.GetOverflowItemList();
 	for (int32 i = 0; i < overflow->size(); i++){
@@ -1183,12 +1201,16 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 				item->details.count = atoi(row[11]); //count
 				item->SetMaxSellValue(atoul(row[12])); //max sell value
 				item->no_sale = (atoul(row[13]) == 1);
+				item->details.appearance_type = 0;
 
 				
 				if(strncasecmp(row[0], "EQUIPPED", 8)==0)
 					ret = player->GetEquipmentList()->AddItem(item->details.slot_id, item);
-				else if (strncasecmp(row[0], "APPEARANCE", 10) == 2)
-					ret = player->GetEquipmentList()->AddItem(item->details.slot_id, item);
+				else if (strncasecmp(row[0], "APPEARANCE", 10) == 0)
+				{
+					item->details.appearance_type = 1;
+					ret = player->GetAppearanceEquipmentList()->AddItem(item->details.slot_id, item);
+				}
 				else {
 					if (version < 1209 && item->details.count > 255) {
 						int stacks = item->details.count / 255;

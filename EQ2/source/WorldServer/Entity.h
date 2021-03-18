@@ -1115,6 +1115,7 @@ public:
 	}
 	int8	GetDeity(){ return deity; }
 	EquipmentItemList* GetEquipmentList();
+	EquipmentItemList* GetAppearanceEquipmentList();
 
 	bool IsEntity(){ return true; }
 	float CalculateSkillStatChance(char* skill, int16 item_stat, float max_cap = 0.0f, float modifier = 0.0f, bool add_to_skill = false);

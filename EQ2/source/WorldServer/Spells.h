@@ -187,6 +187,8 @@
 #define SPELL_TYPE_CURE			12
 #define SPELL_TYPE_FOOD			13
 #define SPELL_TYPE_DRINK		14
+#define SPELL_TYPE_ROOT			15
+#define SPELL_TYPE_SNARE		16
 
 
 struct LUAData{

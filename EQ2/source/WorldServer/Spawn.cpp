@@ -124,6 +124,7 @@ Spawn::Spawn(){
 	RegionMutex.SetName("Spawn::RegionMutex");
 	pause_timer.Disable();
 	m_SpawnMutex.SetName("Spawn::SpawnMutex");
+	appearance_equipment_list.SetAppearanceType(1);
 }
 
 Spawn::~Spawn(){

@@ -1769,13 +1769,21 @@ int8 Player::ConvertSlotFromClient(int8 slot, int16 version) {
 	return slot;
 }
 
-vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version) {
+vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version, int8 appearance_type) {
 	vector<EQ2Packet*>	packets;
-	Item* item = equipment_list.items[index];
+	EquipmentItemList* equipList = &equipment_list;
+	
+	if(appearance_type)
+		equipList = &appearance_equipment_list;
+		
+	Item* item = equipList->items[index];
 	if (item && bag_id == -999) {
 		int8 old_slot = item->details.slot_id;
 		if (item_list.AssignItemToFreeSlot(item)) {
-			database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
+			if(appearance_type)
+				database.DeleteItem(GetCharacterID(), item, "APPEARANCE");
+			else
+				database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
 
 			if (item->GetItemScript() && lua_interface)
 				lua_interface->RunItemScript(item->GetItemScript(), "unequipped", item, this);
@@ -1791,8 +1799,9 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 				if (bag_packet)
 					packets.push_back(bag_packet);
 			}
-			equipment_list.RemoveItem(index);
-			packets.push_back(equipment_list.serialize(version, this));
+			equipList->RemoveItem(index);
+			SetEquippedItemAppearances();
+			packets.push_back(equipList->serialize(version, this));
 			SetCharSheetChanged(true);
 			SetEquipment(0, old_slot);
 		}
@@ -1809,11 +1818,25 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 	}
 	else if (item) {
 		Item* to_item = 0;
-		if (item_list.items.count(bag_id) > 0 && item_list.items[bag_id].count(slot) > 0)
-			to_item = item_list.items[bag_id][slot];
-		if (to_item && GetEquipmentList()->CanItemBeEquippedInSlot(to_item, ConvertSlotFromClient(item->details.slot_id, version))) {
-			equipment_list.RemoveItem(index);
-			database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
+		if(appearance_type && slot == 255)
+		{
+			sint16 tmpSlot = 0;
+			item_list.GetFirstFreeSlot(&bag_id, &tmpSlot);
+			if(tmpSlot >= 0 && tmpSlot < 255)
+				slot = tmpSlot;
+			else
+				bag_id = 0;
+		}
+
+		if (item_list.items.count(bag_id) > 0 && item_list.items[bag_id][appearance_type].count(slot) > 0)
+			to_item = item_list.items[bag_id][appearance_type][slot];
+		if (to_item && equipList->CanItemBeEquippedInSlot(to_item, ConvertSlotFromClient(item->details.slot_id, version))) {
+			equipList->RemoveItem(index);
+			if(item->details.appearance_type)
+				database.DeleteItem(GetCharacterID(), item, "APPEARANCE");
+			else
+				database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
+			
 			database.DeleteItem(GetCharacterID(), to_item, "NOT-EQUIPPED");
 
 			if (item->GetItemScript() && lua_interface)
@@ -1823,34 +1846,42 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 				lua_interface->RunItemScript(item->GetItemScript(), "equipped", to_item, this);
 
 			item_list.RemoveItem(to_item);
-			equipment_list.SetItem(item->details.slot_id, to_item);
+			equipList->SetItem(item->details.slot_id, to_item);
 			to_item->save_needed = true;
 			packets.push_back(to_item->serialize(version, false));
 			SetEquipment(to_item);
 			item->details.inv_slot_id = bag_id;
 			item->details.slot_id = slot;
+			item->details.appearance_type = 0;
 			item_list.AddItem(item);
 			item->save_needed = true;
+			SetEquippedItemAppearances();
 			packets.push_back(item->serialize(version, false));
-			packets.push_back(equipment_list.serialize(version, this));
+			packets.push_back(equipList->serialize(version, this));
 			packets.push_back(item_list.serialize(this, version));
 		}
 		else if (to_item && to_item->IsBag() && to_item->details.num_slots > 0) {
 			bool free_slot = false;
 			for (int8 i = 0; i < to_item->details.num_slots; i++) {
-				if (item_list.items[to_item->details.bag_id].count(i) == 0) {
+				if (item_list.items[to_item->details.bag_id][appearance_type].count(i) == 0) {
 					SetEquipment(0, item->details.slot_id);
-					database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
+
+					if(item->details.appearance_type)
+						database.DeleteItem(GetCharacterID(), item, "APPEARANCE");
+					else
+						database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
 
 					if (item->GetItemScript() && lua_interface)
 						lua_interface->RunItemScript(item->GetItemScript(), "unequipped", item, this);
 
-					equipment_list.RemoveItem(index);
+					equipList->RemoveItem(index);
 					item->details.inv_slot_id = to_item->details.bag_id;
 					item->details.slot_id = i;
+					item->details.appearance_type = to_item->details.appearance_type;
 					item_list.AddItem(item);
 					item->save_needed = true;
-					packets.push_back(equipment_list.serialize(version, this));
+					SetEquippedItemAppearances();
+					packets.push_back(equipList->serialize(version, this));
 					packets.push_back(item->serialize(version, false));
 					packets.push_back(to_item->serialize(version, false, this));
 					packets.push_back(item_list.serialize(this, version));
@@ -1892,18 +1923,24 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 					}
 				}
 				else {
+					// need to check if appearance slot vs equipped
 					SetEquipment(0, item->details.slot_id);
-					database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
+					if(item->details.appearance_type)
+						database.DeleteItem(GetCharacterID(), item, "APPEARANCE");
+					else
+						database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
 
 					if (item->GetItemScript() && lua_interface)
 						lua_interface->RunItemScript(item->GetItemScript(), "unequipped", item, this);
 
-					equipment_list.RemoveItem(index);
+					equipList->RemoveItem(index);
 					item->details.inv_slot_id = bag_id;
 					item->details.slot_id = slot;
+					item->details.appearance_type = 0;
 					item_list.AddItem(item);
 					item->save_needed = true;
-					packets.push_back(equipment_list.serialize(version, this));
+					SetEquippedItemAppearances();
+					packets.push_back(equipList->serialize(version, this));
 					packets.push_back(item->serialize(version, false));
 					packets.push_back(item_list.serialize(this, version));
 				}
@@ -1912,17 +1949,22 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 				Item* bag = item_list.GetItemFromUniqueID(bag_id, true);
 				if (bag && bag->IsBag() && slot < bag->details.num_slots) {
 					SetEquipment(0, item->details.slot_id);
-					database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
+					if(item->details.appearance_type)
+						database.DeleteItem(GetCharacterID(), item, "APPEARANCE");
+					else
+						database.DeleteItem(GetCharacterID(), item, "EQUIPPED");
 
 					if (item->GetItemScript() && lua_interface)
 						lua_interface->RunItemScript(item->GetItemScript(), "unequipped", item, this);
 
-					equipment_list.RemoveItem(index);
+					equipList->RemoveItem(index);
 					item->details.inv_slot_id = bag_id;
 					item->details.slot_id = slot;
+					item->details.appearance_type = 0;
 					item_list.AddItem(item);
 					item->save_needed = true;
-					packets.push_back(equipment_list.serialize(version, this));
+					SetEquippedItemAppearances();
+					packets.push_back(equipList->serialize(version, this));
 					packets.push_back(item->serialize(version, false));
 					packets.push_back(item_list.serialize(this, version));
 				}
@@ -1943,6 +1985,10 @@ vector<Item*>* Player::GetEquippedItemList(){
 	return equipment_list.GetAllEquippedItems();
 }
 
+vector<Item*>* Player::GetAppearanceEquippedItemList(){
+	return appearance_equipment_list.GetAllEquippedItems();
+}
+
 EQ2Packet*	Player::SendBagUpdate(int32 bag_unique_id, int16 version){
 	Item* bag = 0;
 	if(bag_unique_id > 0)
@@ -1955,11 +2001,19 @@ EQ2Packet*	Player::SendBagUpdate(int32 bag_unique_id, int16 version){
 
 void Player::SetEquippedItemAppearances(){
 	vector<Item*>* items = GetEquipmentList()->GetAllEquippedItems();
+	vector<Item*>* appearance_items = GetAppearanceEquipmentList()->GetAllEquippedItems();
 	if(items){
 		for(int32 i=0;i<items->size();i++)
 			SetEquipment(items->at(i));
+		
+		// just have appearance items brute force replace the slots after the fact
+		for(int32 i=0;i<appearance_items->size();i++)
+			SetEquipment(appearance_items->at(i));
 	}
 	safe_delete(items);
+	safe_delete(appearance_items);
+	info_changed = true;
+	GetZone()->SendSpawnChanges(this);
 }
 
 EQ2Packet* Player::SwapEquippedItems(int8 slot1, int8 slot2, int16 version){
@@ -2005,7 +2059,12 @@ bool Player::CanEquipItem(Item* item) {
 	return false;
 }
 
-vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 slot_id) {
+vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance_type, int8 slot_id) {
+
+	EquipmentItemList* equipList = &equipment_list;
+	if(appearance_type)
+		equipList = &appearance_equipment_list;
+
 	vector<EQ2Packet*>	packets;
 	if (item_list.indexed_items.count(index) == 0)
 		return packets;
@@ -2014,7 +2073,7 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 slot_id) {
 	if (item) {
 		if (slot_id != 255 && !item->HasSlot(slot_id))
 			return packets;
-		int8 slot = equipment_list.GetFreeSlot(item, slot_id);
+		int8 slot = equipList->GetFreeSlot(item, slot_id);
 		bool canEquip = CanEquipItem(item);
 		if (canEquip && item->CheckFlag(ATTUNEABLE)) {
 			PacketStruct* packet = configReader.getStruct("WS_ChoiceWindow", version);
@@ -2039,18 +2098,18 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 slot_id) {
 				slot = item->slot_data.at(0);
 			else
 				slot = slot_id;
-			packets = UnequipItem(slot, item->details.inv_slot_id, item->details.slot_id, version);
+			packets = UnequipItem(slot, item->details.inv_slot_id, item->details.slot_id, version, appearance_type);
 			// If item is a 2handed weapon and something is in the secondary, unequip the secondary
-			if (item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && equipment_list.GetItem(EQ2_SECONDARY_SLOT) != 0) {
-				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version);
+			if (item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && equipList->GetItem(EQ2_SECONDARY_SLOT) != 0) {
+				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version, appearance_type);
 				//packets.reserve(packets.size() + tmp_packets.size());
 				packets.insert(packets.end(), tmp_packets.begin(), tmp_packets.end());
 			}
 		}
 		else if (canEquip && slot < 255) {
 			// If item is a 2handed weapon and something is in the secondary, unequip the secondary
-			if (item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && equipment_list.GetItem(EQ2_SECONDARY_SLOT) != 0) {
-				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version);
+			if (item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && equipList->GetItem(EQ2_SECONDARY_SLOT) != 0) {
+				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version, appearance_type);
 				//packets.reserve(packets.size() + tmp_packets.size());
 				packets.insert(packets.end(), tmp_packets.begin(), tmp_packets.end());
 			}
@@ -2061,7 +2120,7 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 slot_id) {
 				lua_interface->RunItemScript(item->GetItemScript(), "equipped", item, this);
 
 			item_list.RemoveItem(item);
-			equipment_list.SetItem(ConvertSlotToClient(slot, version), item);
+			equipList->SetItem(ConvertSlotToClient(slot, version), item);
 			item->save_needed = true;
 			packets.push_back(item->serialize(version, false));
 			SetEquipment(item);
@@ -2078,7 +2137,8 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 slot_id) {
 					client->Message(CHANNEL_COLOR_RED, "Your %s is worn out and will not be effective until repaired.", item->CreateItemLink(client->GetVersion(), true).c_str());
 				}
 			}
-			packets.push_back(equipment_list.serialize(version, this));
+			SetEquippedItemAppearances();
+			packets.push_back(equipList->serialize(version, this));
 			EQ2Packet* outapp = item_list.serialize(this, version);
 			if (outapp) {
 				packets.push_back(outapp);
@@ -2124,9 +2184,9 @@ bool Player::AddItemToBank(Item* item) {
 EQ2Packet* Player::SendInventoryUpdate(int16 version) {
 	return item_list.serialize(this, version);
 }
-EQ2Packet* Player::MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 new_slot, int8 charges, int16 version) {
+EQ2Packet* Player::MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 new_slot, int8 charges, int8 appearance_type, int16 version) {
 	Item* item = item_list.GetItemFromIndex(from_index);
-	int8 result = item_list.MoveItem(to_bag_id, from_index, new_slot, charges);
+	int8 result = item_list.MoveItem(to_bag_id, from_index, new_slot, appearance_type, charges);
 	if (result == 1) {
 		if (item) {
 			if (!item->needs_deletion)

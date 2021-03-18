@@ -2,14 +2,17 @@
 #include "../World.h"
 #include "../client.h"
 #include "../WorldDatabase.h"
+#include "../Rules/Rules.h"
 
 extern ConfigReader configReader;
 extern World world;
 extern WorldDatabase database;
+extern RuleManager rule_manager;
 
 void ClientPacketFunctions::SendHousePurchase(Client* client, HouseZone* hz, int32 spawnID) {
 	PacketStruct* packet = configReader.getStruct("WS_PlayerHousePurchase", client->GetVersion());
 	if (packet) {
+		int8 disable_alignment_req = rule_manager.GetGlobalRule(R_Player, DisableHouseAlignmentRequirement)->GetInt8();
 		packet->setDataByName("house_name", hz->name.c_str());
 		packet->setDataByName("house_id", hz->id);
 		packet->setDataByName("spawn_id", spawnID);
@@ -19,7 +22,7 @@ void ClientPacketFunctions::SendHousePurchase(Client* client, HouseZone* hz, int
 		packet->setDataByName("upkeep_status", hz->upkeep_status);
 		packet->setDataByName("vendor_vault_slots", hz->vault_slots);
 		string req;
-		if (hz->alignment > 0) {
+		if (hz->alignment > 0 && !disable_alignment_req) {
 			req = "You must be of ";
 			if (hz->alignment == 1)
 				req.append("Good");
@@ -53,7 +56,7 @@ void ClientPacketFunctions::SendHousePurchase(Client* client, HouseZone* hz, int
 		packet->setDataByName("additional_reqs", req.c_str());
 
 		bool enable_buy = true;
-		if (hz->alignment > 0 && client->GetPlayer()->GetAlignment() != hz->alignment)
+		if (hz->alignment > 0 && client->GetPlayer()->GetAlignment() != hz->alignment && !disable_alignment_req)
 			enable_buy = false;
 		if (hz->guild_level > 0 && (!client->GetPlayer()->GetGuild() || (client->GetPlayer()->GetGuild() && client->GetPlayer()->GetGuild()->GetLevel() < hz->guild_level)))
 			enable_buy = false;

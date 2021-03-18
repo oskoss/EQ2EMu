@@ -175,7 +175,7 @@ ZoneServer::~ZoneServer() {
 		Sleep(10);
 	}
 	LogWrite(ZONE__INFO, 0, "Zone", "Initiating zone shutdown of '%s'", zone_name);
-	changed_spawns.clear();
+	changed_spawns.clear(true);
 	transport_spawns.clear();
 	safe_delete(tradeskillMgr);
 	MMasterZoneLock->lock();
@@ -1878,17 +1878,23 @@ void ZoneServer::SendSpawnChanges(){
 
 	MSpawnList.readlock(__FUNCTION__, __LINE__);
 
+	int32 max_updates = 100;
+	
 	MutexList<int32>::iterator spawn_iter = changed_spawns.begin();
 	int count = 0;
 	while(spawn_iter.Next()){		
 		spawn = GetSpawnByID(spawn_iter->value);
 		if(spawn){
 			spawns_to_send.insert(spawn);
+			count++;
 		}
 		if (!spawn)
 			changed_spawns.Remove(spawn_iter->value);
+
+		if(count >= max_updates)
+			break;
 	}
-	changed_spawns.clear();
+	//changed_spawns.clear() is not thread safe, advise we rely on what was removed and continue on, get any others in next batch
 
 	vector<Client*>::iterator client_itr;
 	Client* client = 0;
@@ -2320,7 +2326,7 @@ void ZoneServer::ProcessSpawnLocations()
 }
 
 void ZoneServer::AddLoot(NPC* npc){
-	vector<int32> loot_tables = GetSpawnLootList(npc->GetDatabaseID(), GetZoneID(), npc->GetLevel(), race_types_list.GetRaceType(npc->GetModelType()));
+	vector<int32> loot_tables = GetSpawnLootList(npc->GetDatabaseID(), GetZoneID(), npc->GetLevel(), race_types_list.GetRaceType(npc->GetModelType()), npc);
 	if(loot_tables.size() > 0){
 		vector<LootDrop*>* loot_drops = 0;
 		vector<LootDrop*>::iterator loot_drop_itr;
@@ -7221,8 +7227,10 @@ void ZoneServer::ClearLootTables(){
 	zone_loot_list.clear();
 }
 
-vector<int32> ZoneServer::GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 spawn_level, int16 racial_id) {
+vector<int32> ZoneServer::GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 spawn_level, int16 racial_id, Spawn* spawn) {
 	vector<int32> ret;
+	int32 returnValue = 0;
+
 	if(reloading)
 		return ret;
 
@@ -7233,12 +7241,23 @@ vector<int32> ZoneServer::GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 s
 		vector<GlobalLoot*>::iterator itr;
 		for (itr = level_loot_list.begin(); itr != level_loot_list.end(); itr++) {
 			GlobalLoot* loot = *itr;
-			if (loot->minLevel == 0 && loot->maxLevel == 0)
+			const char* zone_script = world.GetZoneScript(this->GetZoneID());
+			returnValue = 0; // reset since this can override the database setting
+			if(zone_script)
+			{
+				if(lua_interface->RunZoneScriptWithReturn(zone_script, "loot_criteria_level", spawn->GetZone(), spawn, loot->table_id, loot->minLevel, loot->maxLevel, &returnValue) && returnValue == 0)
+					continue;
+			}
+			bool entryAdded = false;
+			if (loot->minLevel == 0 && loot->maxLevel == 0 && (entryAdded = true)) // successful plan to add set entryAdded to true
 				ret.push_back(loot->table_id);
 			else {
-				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel)
+				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel && (entryAdded = true)) // successful plan to add set entryAdded to true
 					ret.push_back(loot->table_id);
 			}
+			
+			if(!entryAdded && returnValue) // DB override via LUA scripting
+				ret.push_back(loot->table_id);
 		}
 	}
 
@@ -7246,12 +7265,23 @@ vector<int32> ZoneServer::GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 s
 		vector<GlobalLoot*>::iterator itr;
 		for (itr = racial_loot_list[racial_id].begin(); itr != racial_loot_list[racial_id].end(); itr++) {
 			GlobalLoot* loot = *itr;
-			if (loot->minLevel == 0 && loot->maxLevel == 0)
+			const char* zone_script = world.GetZoneScript(this->GetZoneID());
+			returnValue = 0; // reset since this can override the database setting
+			if(zone_script)
+			{
+				if(lua_interface->RunZoneScriptWithReturn(zone_script, "loot_criteria_racial", spawn->GetZone(), spawn, loot->table_id, loot->minLevel, loot->maxLevel, &returnValue) && returnValue == 0)
+					continue;
+			}
+			bool entryAdded = false;
+			if (loot->minLevel == 0 && loot->maxLevel == 0 && (entryAdded = true)) // successful plan to add set entryAdded to true
 				ret.push_back(loot->table_id);
 			else {
-				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel)
+				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel && (entryAdded = true)) // successful plan to add set entryAdded to true
 					ret.push_back(loot->table_id);
 			}
+
+			if(!entryAdded && returnValue) // DB override via LUA scripting
+				ret.push_back(loot->table_id);
 		}
 	}
 
@@ -7259,12 +7289,23 @@ vector<int32> ZoneServer::GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 s
 		vector<GlobalLoot*>::iterator itr;
 		for (itr = zone_loot_list[zone_id].begin(); itr != zone_loot_list[zone_id].end(); itr++) {
 			GlobalLoot* loot = *itr;
-			if (loot->minLevel == 0 && loot->maxLevel == 0)
+			const char* zone_script = world.GetZoneScript(this->GetZoneID());
+			returnValue = 0; // reset since this can override the database setting
+			if(zone_script)
+			{
+				if(lua_interface->RunZoneScriptWithReturn(zone_script, "loot_criteria_zone", spawn->GetZone(), spawn, loot->table_id, loot->minLevel, loot->maxLevel, &returnValue) && returnValue == 0)
+					continue;
+			}
+			bool entryAdded = false;
+			if (loot->minLevel == 0 && loot->maxLevel == 0 && (entryAdded = true)) // successful plan to add set entryAdded to true
 				ret.push_back(loot->table_id);
 			else {
-				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel)
+				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel && (entryAdded = true)) // successful plan to add set entryAdded to true
 					ret.push_back(loot->table_id);
 			}
+
+			if(!entryAdded && returnValue) // DB override via LUA scripting
+				ret.push_back(loot->table_id);
 		}
 	}
 

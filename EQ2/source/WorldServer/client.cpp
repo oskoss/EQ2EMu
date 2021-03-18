@@ -724,6 +724,11 @@ void Client::SendCharInfo() {
 		QueuePacket(app);
 	}
 
+	app = player->GetAppearanceEquipmentList()->serialize(GetVersion(), player);
+	if (app) {
+		QueuePacket(app);
+	}
+
 	vector<Item*>* items = player->item_list.GetItemsFromBagID(-3); // bank items
 	if (items && items->size() > 0) {
 		for (int32 i = 0; i < items->size(); i++) {
@@ -1960,10 +1965,23 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 			HouseZone* hz = world.GetHouseZone(packet->getType_int64_ByName("house_id"));
 			if (hz) {
+				int8 disable_alignment_req = rule_manager.GetGlobalRule(R_Player, DisableHouseAlignmentRequirement)->GetInt8();
 				std::vector<PlayerHouse*> houses = world.GetAllPlayerHouses(GetCharacterID());
 				if (houses.size() > 24)
 				{
 					SimpleMessage(CHANNEL_COLOR_YELLOW, "You already own 25 houses and may not own another.");
+					safe_delete(packet);
+					break;
+				}
+				if(disable_alignment_req && hz->alignment > 0 && hz->alignment != GetPlayer()->GetAlignment())
+				{
+					std::string req = "You must be of ";
+					if (hz->alignment == 1)
+						req.append("Good");
+					else
+						req.append("Evil");
+					req.append(" alignment to purchase this house");
+					SimpleMessage(CHANNEL_COLOR_YELLOW, req.c_str());
 					safe_delete(packet);
 					break;
 				}
@@ -2416,8 +2434,13 @@ bool Client::HandleLootItem(Spawn* entity, int32 item_id) {
 	if (!entity) {
 		return false;
 	}
-
-	return HandleLootItem(entity, entity->LootItem(item_id));
+	Item* item = entity->LootItem(item_id);
+	bool success = false;
+	success = HandleLootItem(entity, item);
+	if(!success)
+		entity->AddLootItem(item);
+	
+	return success;
 }
 
 void Client::HandleLoot(EQApplicationPacket* app) {
@@ -2671,6 +2694,8 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (!item)
 			item = GetPlayer()->GetEquipmentList()->GetItemFromUniqueID(id);
 		if (!item)
+			item = GetPlayer()->GetAppearanceEquipmentList()->GetItemFromUniqueID(id);
+		if (!item)
 			item = master_item_list.GetItem(id);
 		if (item) {// && sent_item_details.count(id) == 0){
 			sent_item_details[id] = true;
@@ -2697,6 +2722,8 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		Item* item = GetPlayer()->item_list.GetItemFromUniqueID(unique_id, true);
 		if (!item)
 			item = GetPlayer()->GetEquipmentList()->GetItemFromUniqueID(unique_id);
+		if (!item)
+			item = GetPlayer()->GetAppearanceEquipmentList()->GetItemFromUniqueID(unique_id);
 		if (!item)
 			item = master_item_list.GetItem(id);
 		if (item) {
@@ -6979,9 +7006,18 @@ void Client::SendBuyMerchantList(bool sell) {
 					item_difficulty = player->GetArrowColor(tmp_level);
 					if (item_difficulty != ARROW_COLOR_WHITE && item_difficulty != ARROW_COLOR_RED && item_difficulty != ARROW_COLOR_GRAY)
 						item_difficulty = ARROW_COLOR_WHITE;
+
+					sint64 overrideValue = 0;
+					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "item_difficulty", item, player, &overrideValue))
+					{
+						item_difficulty = (sint8)overrideValue;
+						printf("Override difficulty: %i\n",item_difficulty);
+					}
+
 					item_difficulty -= 6;
 					if (item_difficulty < 0)
 						item_difficulty *= -1;
+					
 					packet->setArrayDataByName("item_difficulty", item_difficulty, i);
 					packet->setArrayDataByName("quantity", ItemInfo.quantity, i);
 					packet->setArrayDataByName("unknown5", 255, i);
@@ -7152,9 +7188,18 @@ void Client::SendSellMerchantList(bool sell) {
 					item_difficulty = player->GetArrowColor(tmp_level);
 					if (item_difficulty != ARROW_COLOR_WHITE && item_difficulty != ARROW_COLOR_RED && item_difficulty != ARROW_COLOR_GRAY)
 						item_difficulty = ARROW_COLOR_WHITE;
+					
+					sint64 overrideValue = 0;
+					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "item_difficulty", item, player, &overrideValue))
+					{
+						item_difficulty = (sint8)overrideValue;
+						printf("Override difficulty: %i\n",item_difficulty);
+					}
+					
 					item_difficulty -= 6;
 					if (item_difficulty < 0)
 						item_difficulty *= -1;
+
 					packet->setArrayDataByName("item_difficulty", item_difficulty, i);
 					if (item->details.count == 1)
 						packet->setArrayDataByName("quantity", 0xFFFF, i);
@@ -7223,6 +7268,14 @@ void Client::SendBuyBackList(bool sell) {
 					item_difficulty = player->GetArrowColor(tmp_level);
 					if (item_difficulty != ARROW_COLOR_WHITE && item_difficulty != ARROW_COLOR_RED && item_difficulty != ARROW_COLOR_GRAY)
 						item_difficulty = ARROW_COLOR_WHITE;
+					
+					sint64 overrideValue = 0;
+					if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "item_difficulty", master_item, player, &overrideValue))
+					{
+						item_difficulty = (sint8)overrideValue;
+						printf("Override difficulty: %i\n",item_difficulty);
+					}
+
 					item_difficulty -= 6;
 					if (item_difficulty < 0)
 						item_difficulty *= -1;
@@ -7566,7 +7619,7 @@ void Client::SendMailList() {
 				//p->setArrayDataByName("unknown2", 0, i);
 
 				bool successItemAdd = false;
-				if(mail->stack && mail->char_item_id)
+				if(mail->stack || mail->char_item_id)
 				{
 					Item* item = master_item_list.GetItem(mail->char_item_id);
 					if(item)
@@ -7581,30 +7634,13 @@ void Client::SendMailList() {
 						
 						successItemAdd = true;
 					}
-					// need double item packet support for serialize, LE was working on it for crafting so don't want to double down the work
-					//Item* item = master_item_list.GetItem(mail->char_item_id);
-					//EQ2Packet* pack = item->serialize(GetVersion(), true, GetPlayer(), true, GetItemPacketType(GetVersion()), 0, false, false);
-					//p->setArrayLengthByName("item", pack->size, i);
-					//p->setArrayDataByName("item", pack->pBuffer, i, 0);
-					//p->setItemArrayDataByName("item", item, GetPlayer(), i, 0, 2, true, true);
-					//DumpPacket(pack);
 				}
-				
+
 				if(!successItemAdd)
 				{
-					//p->setArrayDataByName("packettype", GetItemPacketType(GetVersion()), i);
-					//p->setArrayDataByName("packetsubtype", 0xFF, i);
-					p->setArrayDataByName("end_tag1", 0xFFFFFFFF, i);
 					p->setArrayDataByName("end_tag2", GetItemPacketType(GetVersion()), i);
 					p->setArrayDataByName("end_tag3", 0xFF, i);
 				}
-				//p->setArrayDataByName("item_id", 5, i, 0);
-				//Item* item = master_item_list.GetItem(5);
-				//if (item)
-				//	printf("%s\n", item->name.c_str());
-				//else
-				//	printf("no item\n");
-				//p->setItemArrayDataByName("item", master_item_list.GetItem(5), i, 0);
 				i++;
 			}
 
@@ -7675,14 +7711,8 @@ void Client::DisplayMailMessage(int32 mail_id) {
 				}
 				else
 				{
-					packet->setDataByName("end_tag", 0xFFFFFFFF);
-
-					/*packet->setDataByName("packettype", GetItemPacketType(GetVersion()));
-					packet->setDataByName("packetsubtype", 0xFF);
-					packet->setDataByName("unknown4", 0);
-					packet->setDataByName("unknown5", 0);
-					packet->setDataByName("unknown6", 0);
-					packet->setDataByName("unknown7", 0);*/
+					packet->setDataByName("end_tag2", GetItemPacketType(GetVersion()));
+					packet->setDataByName("end_tag3", 0xFF);
 				}
 				mail->already_read = true;
 				mail->save_needed = true;
