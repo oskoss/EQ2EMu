@@ -998,8 +998,8 @@ void NetConnection::WelcomeHeader()
 	SetConsoleTextAttribute(console, FOREGROUND_MAGENTA_BOLD);
 #endif
 	printf(" Website     : https://eq2emu.com \n");
-	printf(" Wiki        : http://eq2emu.com:3001/ \n");
-	printf(" Git         : http://git.eq2emu.com \n");
+	printf(" Wiki        : https://wiki.eq2emu.com \n");
+	printf(" Git         : https://git.eq2emu.com \n");
 	printf(" Discord     : https://discord.gg/5Cavm9NYQf \n\n");
 #ifdef _WIN32
 	SetConsoleTextAttribute(console, FOREGROUND_WHITE_BOLD);
