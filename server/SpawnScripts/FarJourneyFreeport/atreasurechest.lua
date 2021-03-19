@@ -6,9 +6,13 @@
                    : 
 --]]
 
+function prespawn(NPC)
+	SpawnSet(NPC, "visual_state", 0) -- default visual state of 0, we set the visual state when we open it
+end
+
 function spawn(NPC)
 	ChangeHandIcon(NPC, 0)
-	SpawnSet(NPC, "targetable", 0, true, true)
+	SpawnSet(NPC, "targetable", 0)
 end
 
 function respawn(NPC)
@@ -26,10 +30,11 @@ function open(NPC, Player)
 	else
 		DisplayText(Player, 12, "This box is empty.")
 		ChangeHandIcon(NPC, 0)
-		SpawnSet(NPC, "targetable", 0, true, true)
+		SpawnSet(NPC, "targetable", 0)
 	end
 end
 
 function finished_open_animation(NPC)
+	SpawnSet(NPC, "visual_state", 11903) -- this swings open right in DoF, in AoM its really quick but better, not aware of any time we can expose
 	SendStateCommand(NPC, 400)
 end
