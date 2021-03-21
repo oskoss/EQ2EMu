@@ -41,6 +41,8 @@ EQ2Packet* LS_CharSelectList::serialize(int16 version){
 		for (int i = 0; i < 3; i++)
 			account_info.unknown5[i] = 0xFFFFFFFF;
 		account_info.unknown5[3] = 0;
+		account_info.unknown6 = 0xFFFF; // sets Veteran Bonus under 'Select Character' yellow (vs greyed out), adventure/tradeskill bonus 200%
+		account_info.unknown7 = 0; // when 1 (count?) provides free upgrade option for character to lvl 90 (heroic character) -- its a green 'Free' up arrow next to the character that is selected in char select
 		AddData(account_info);
 	}	
 	return new EQ2Packet(OP_AllCharactersDescReplyMsg, getData(), getDataSize());

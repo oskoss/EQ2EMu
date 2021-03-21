@@ -115,6 +115,7 @@ protected:
 private:
 	int32	ID;
 	int32	ip;
+	char	IPAddr[64];
 	int16	port;
 	bool	kicked;
 	bool	pNeverKick;

@@ -54,7 +54,7 @@ struct LS_CharListAccountInfo{
 	int8	unknown4;
 	int32	unknown5[4];
 	int16	unknown6;
-//	int8	unknown7; // adds 'free' option..
+	int8	unknown7; // adds 'free' option..
 };
 #pragma pack()
 

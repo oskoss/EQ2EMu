@@ -64,6 +64,13 @@ LWorld::LWorld(TCPConnection* in_con, bool in_OutgoingLoginUplink, int32 iIP, in
 		ip = iIP;
 	else
 		ip = in_con->GetrIP();
+
+	struct in_addr  in;
+	in.s_addr = in_con->GetrIP();
+	char* ipadd = inet_ntoa(in);
+	if(ipadd)
+		strncpy(IPAddr,ipadd,64);
+
 	if (iPort)
 		port = iPort;
 	else
@@ -100,7 +107,6 @@ LWorld::LWorld(TCPConnection* in_con, bool in_OutgoingLoginUplink, int32 iIP, in
 		OutgoingUplink = false;
 	}
 
-	struct in_addr  in;
 	in.s_addr = GetIP();
 	strcpy(address, inet_ntoa(in));
 	isaddressip = true;
@@ -115,6 +121,7 @@ LWorld::LWorld(int32 in_accountid, char* in_accountname, char* in_worldname, int
 	ip = 0;
 	port = 0;
 	ID = 0;
+	strcpy(IPAddr,"");
 	pClientPort = 0;
 	memset(account, 0, sizeof(account));
 	memset(address, 0, sizeof(address));
@@ -151,6 +158,16 @@ LWorld::LWorld(TCPConnection* in_RemoteLink, int32 in_ip, int32 in_RemoteID, int
 	RemoteID = in_RemoteID;
 	LinkWorldID = iLinkWorldID;
 	ip = in_ip;
+	
+	struct in_addr  in;
+	if(in_RemoteLink)
+		in.s_addr = in_RemoteLink->GetrIP();
+	else if (in_ip)
+		in.s_addr = in_ip;
+	char* ipadd = inet_ntoa(in);
+	if(ipadd)
+		strncpy(IPAddr,ipadd,64);
+
 	port = 0;
 	ID = 0;
 	pClientPort = 0;
@@ -234,7 +251,15 @@ bool LWorld::Process() {
 		return true;
 
 	if(pStatsTimer && pStatsTimer->Check())
+	{
+		if(isAuthenticated && (database.IsServerAccountDisabled(account) || database.IsIPBanned(IPAddr)))
+		{	
+			this->Kick(ERROR_BADPASSWORD);
+			return false;
+		}
+
 		database.UpdateWorldServerStats(this, GetStatus());
+	}
 
 	ServerPacket* pack = 0;
 	while (ret && (pack = Link->PopPacket())) {
@@ -302,6 +327,10 @@ bool LWorld::Process() {
 			UsertoWorldResponse_Struct* seps = (UsertoWorldResponse_Struct*) pack->pBuffer;
 			if (seps->ToID) {
 				LWorld* world = world_list.FindByID(seps->ToID);
+
+				if (this->GetType() != Login) {
+					break;
+				}
 				if (world) {
 					seps->ToID = world->GetRemoteID();
 					world->SendPacket(pack);
@@ -453,41 +482,6 @@ bool LWorld::Process() {
 			break;
 								  }
 		case ServerOP_WorldListUpdate: {
-			if (this->GetType() != Login) {
-				break;
-			}
-			if (pack->size != sizeof(ServerSyncWorldList_Struct)) {
-				break;
-			}
-			ServerSyncWorldList_Struct* sswls = (ServerSyncWorldList_Struct*) pack->pBuffer;
-			if (!CheckServerName(sswls->name)) {
-				//struct in_addr  in;
-				//in.s_addr = sswls->ip;
-				break; // Someone needs to tell the other login server to update it's exe!
-			}
-			LWorld* world = world_list.FindByLink(this->Link, sswls->RemoteID);
-			if (world) {
-				world->SetRemoteInfo(sswls->ip, sswls->accountid, sswls->account, sswls->name, sswls->address, sswls->status, sswls->adminid, sswls->num_players, sswls->num_zones);
-			}
-			else {
-				world = world_list.FindByAccount(sswls->accountid, World);
-				if (world == 0 || sswls->placeholder == false) {
-					if (world) {
-#ifdef _DEBUG
-						cout << "Kick(" << world->GetID() << ") in ServerOP_WorldListUpdate" << endl;
-#endif
-						world->Kick();
-					}
-					world = new LWorld(this->Link, sswls->ip, sswls->RemoteID, sswls->accountid, sswls->account, sswls->name, sswls->address, sswls->status, sswls->adminid, sswls->showdown, sswls->authlevel, sswls->placeholder, this->GetID());
-					LWorld* world2=world_list.FindByID(sswls->RemoteID);
-					if(!world2)
-						world_list.Add(world);
-				}
-			}
-			sswls->RemoteID = world->GetID();
-			if (net.GetLoginMode() != Mesh)
-				world_list.SendPacketLogin(pack, this);
-			cout << "Got world update for '" << sswls->name << "', #" << world->GetID() << endl;
 			break;
 									   }
 		case ServerOP_WorldListRemove: {
@@ -664,16 +658,24 @@ bool LWorld::SetupWorld(char* in_worldname, char* in_worldaddress, char* in_acco
 		strcpy(address, in_worldaddress);
 	}
 	if (strlen(in_worldname) > 3) {
-		int32 id = database.CheckServerAccount(in_account, in_password);
+		char tmpAccount[30];
+		memcpy(tmpAccount, in_account, 29);
+		tmpAccount[29] = '\0';
+
+		int32 id = database.CheckServerAccount(tmpAccount, in_password);
 
 		if(id == 0)
 			return false;
+		if(database.IsServerAccountDisabled(tmpAccount) || database.IsIPBanned(IPAddr) || (isaddressip && database.IsIPBanned(address)))
+			return false;
+		
 		LWorld* world = world_list.FindByID(id);
 		if(world)
 			world->Kick("Ghost Kick!");
 
 		ID = id;
 		accountid = id;
+		strncpy(account,tmpAccount,30);
 		char* name = database.GetServerAccountName(id);
 		if(name)
 			snprintf(worldname, (sizeof(worldname)) - 1, "%s", name);
@@ -684,7 +686,6 @@ bool LWorld::SetupWorld(char* in_worldname, char* in_worldaddress, char* in_acco
 			return false;
 		}
 		//world_list.KickGhostIP(GetIP(), this);
-		account[0] = 0;
 		IsInit = true;
 		ptype = World;
 		world_list.SendWorldChanged(id, true);
@@ -734,7 +735,7 @@ void LWorld::ChangeToPlaceholder() {
 void LWorld::SetRemoteInfo(int32 in_ip, int32 in_accountid, char* in_account, char* in_name, char* in_address, int32 in_status, int32 in_adminid, sint32 in_players, sint32 in_zones) {
 	ip = in_ip;
 	accountid = in_accountid;
-	strcpy(account, in_account);
+//	strcpy(account, in_account);
 	strcpy(worldname, in_name);
 	strcpy(address, in_address);
 	status = in_status;

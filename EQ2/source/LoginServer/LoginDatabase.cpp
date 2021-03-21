@@ -395,6 +395,7 @@ int32 LoginDatabase::SaveCharacter(PacketStruct* create, LoginAccount* acct, int
 	}
 	else {
 		SaveCharacterColors(char_id, "skin_color", create->getType_EQ2_Color_ByName("skin_color"));
+		SaveCharacterColors(char_id, "model_color", create->getType_EQ2_Color_ByName("model_color"));
 		SaveCharacterColors(char_id, "eye_color", create->getType_EQ2_Color_ByName("eye_color"));
 		SaveCharacterColors(char_id, "hair_color1", create->getType_EQ2_Color_ByName("hair_color1"));
 		SaveCharacterColors(char_id, "hair_color2", create->getType_EQ2_Color_ByName("hair_color2"));
@@ -412,6 +413,7 @@ int32 LoginDatabase::SaveCharacter(PacketStruct* create, LoginAccount* acct, int
 		SaveCharacterColors(char_id, "unknown9", create->getType_EQ2_Color_ByName("unknown9"));		
 
 		SaveCharacterColors(char_id, "soga_skin_color", create->getType_EQ2_Color_ByName("soga_skin_color"));
+		SaveCharacterColors(char_id, "soga_model_color", create->getType_EQ2_Color_ByName("soga_model_color"));
 		SaveCharacterColors(char_id, "soga_eye_color", create->getType_EQ2_Color_ByName("soga_eye_color"));
 		SaveCharacterColors(char_id, "soga_hair_color1", create->getType_EQ2_Color_ByName("soga_hair_color1"));
 		SaveCharacterColors(char_id, "soga_hair_color2", create->getType_EQ2_Color_ByName("soga_hair_color2"));
@@ -597,7 +599,7 @@ int32 LoginDatabase::CheckServerAccount(char* name, char* passwd){
 	Query query;
 	MYSQL_ROW row;
 	query.escaped_name = getEscapeString(name);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT lower(password), id from login_worldservers where account='%s'", query.escaped_name);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT lower(password), id from login_worldservers where account='%s' and disabled = 0", query.escaped_name);
 
 	LogWrite(LOGIN__INFO, 0, "Login", "WorldServer CheckServerAccount Account=%s\nSHA=%s", (char*)query.escaped_name, passwd);
 	if(result && mysql_num_rows(result) == 1){
@@ -613,6 +615,43 @@ int32 LoginDatabase::CheckServerAccount(char* name, char* passwd){
 	}
 	return id;
 }
+
+bool LoginDatabase::IsServerAccountDisabled(char* name){
+	Query query;
+	MYSQL_ROW row;
+	query.escaped_name = getEscapeString(name);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id from login_worldservers where account='%s' and disabled = 1", query.escaped_name);
+
+	LogWrite(LOGIN__INFO, 0, "Login", "WorldServer IsServerAccountDisabled Account=%s", (char*)query.escaped_name);
+	if(result && mysql_num_rows(result) > 0){
+		row = mysql_fetch_row(result);
+
+		LogWrite(LOGIN__INFO, 0, "Login", "WorldServer IsServerAccountDisabled Match Account=%s", (char*)query.escaped_name);
+
+		return true;
+	}
+	return false;
+}
+
+bool LoginDatabase::IsIPBanned(char* ipaddr){
+	if(!ipaddr)
+		return false;
+
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ip from login_bannedips where '%s' LIKE CONCAT(ip ,'%%')", ipaddr);
+
+	LogWrite(LOGIN__INFO, 0, "Login", "WorldServer IsServerIPBanned IPPartial=%s", (char*)ipaddr);
+	if(result && mysql_num_rows(result) > 0){
+		row = mysql_fetch_row(result);
+
+		LogWrite(LOGIN__INFO, 0, "Login", "WorldServer IsServerIPBanned Match IPBan=%s", row[0]);
+
+		return true;
+	}
+	return false;
+}
+
 void LoginDatabase::GetServerAccounts(vector<LWorld*>* server_list){
 	Query query;
 	MYSQL_ROW row;

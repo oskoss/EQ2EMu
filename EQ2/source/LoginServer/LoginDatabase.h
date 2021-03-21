@@ -38,6 +38,8 @@ public:
 	LoginAccount* LoadAccount(const char* name, const char* password, bool attemptAccountCreation=true);
 	int32 GetAccountIDByName(const char* name);
 	int32 CheckServerAccount(char* name, char* passwd);
+	bool IsServerAccountDisabled(char* name);
+	bool IsIPBanned(char* ipaddr);
 	void  GetServerAccounts(vector<LWorld*>* server_list);
 	char* GetServerAccountName(int32 id);
 	bool  VerifyDelete(int32 account_id, int32 character_id, const char* name);

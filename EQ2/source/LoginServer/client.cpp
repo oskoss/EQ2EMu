@@ -465,6 +465,22 @@ void Client::CharacterApproved(int32 server_id,int32 char_id)
 			database.LoadCharacters(GetLoginAccount(), GetVersion());
 			
 			SendCharList();
+
+			if (GetVersion() <= 546)
+			{
+				pending_play_char_id = char_id;
+				ServerPacket* outpack = new ServerPacket(ServerOP_UsertoWorldReq, sizeof(UsertoWorldRequest_Struct));
+				UsertoWorldRequest_Struct* req = (UsertoWorldRequest_Struct*)outpack->pBuffer;
+				req->char_id = char_id;
+				req->lsaccountid = GetAccountID();
+				req->worldid = server_id;
+
+				struct in_addr in;
+				in.s_addr = GetIP();
+				strcpy(req->ip_address, inet_ntoa(in));
+				world_server->SendPacket(outpack);
+				delete outpack;
+			}
 		}
 	}
 	else{
