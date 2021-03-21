@@ -6572,8 +6572,9 @@
 <Data ElementName="spell_info" Substruct="WS_SpellInfo" Size="1" />
 <Data ElementName="scribed" Type="int8" Size="1" />
 <Data ElementName="scribed_better_version" Type="int8" Size="1" IfVariableSet="scribed" />
+<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="1" />
 <Data ElementName="require_previous" Type="int8" Size="1" /> <!-- added on 4/26/19 -->
-<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="2" />
+<Data ElementName="require_membership" Type="int8" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemRecipeBook" ClientVersion="57048" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
@@ -6775,8 +6776,9 @@
 <Data ElementName="spell_info" Substruct="WS_SpellInfo" Size="1" />
 <Data ElementName="scribed" Type="int8" Size="1" />
 <Data ElementName="scribed_better_version" Type="int8" Size="1" IfVariableSet="scribed" />
+<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="1" />
 <Data ElementName="require_previous" Type="int8" Size="1" /> <!-- added on 4/26/19 -->
-<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="2" />
+<Data ElementName="require_membership" Type="int8" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemRecipeBook" ClientVersion="57107" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
@@ -6977,8 +6979,9 @@
 <Data ElementName="spell_info" Substruct="WS_SpellInfo" Size="1" />
 <Data ElementName="scribed" Type="int8" Size="1" />
 <Data ElementName="scribed_better_version" Type="int8" Size="1" IfVariableSet="scribed" />
+<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="1" />
 <Data ElementName="require_previous" Type="int8" Size="1" /> <!-- added on 4/26/19 -->
-<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="2" />
+<Data ElementName="require_membership" Type="int8" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemRecipeBook" ClientVersion="58571" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
@@ -7179,8 +7182,9 @@
 <Data ElementName="spell_info" Substruct="WS_SpellInfo" Size="1" />
 <Data ElementName="scribed" Type="int8" Size="1" />
 <Data ElementName="scribed_better_version" Type="int8" Size="1" IfVariableSet="scribed" />
+<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="1" />
 <Data ElementName="require_previous" Type="int8" Size="1" /> <!-- added on 4/26/19 -->
-<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="2" />
+<Data ElementName="require_membership" Type="int8" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemRecipeBook" ClientVersion="58617" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
@@ -7382,8 +7386,9 @@
 <Data ElementName="spell_info" Substruct="WS_SpellInfo" Size="1" />
 <Data ElementName="scribed" Type="int8" Size="1" />
 <Data ElementName="scribed_better_version" Type="int8" Size="1" IfVariableSet="scribed" />
+<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="1" />
 <Data ElementName="require_previous" Type="int8" Size="1" /> <!-- added on 4/26/19 -->
-<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="2" />
+<Data ElementName="require_membership" Type="int8" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemRecipeBook" ClientVersion="60024" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
@@ -7585,8 +7590,9 @@
 <Data ElementName="spell_info" Substruct="WS_SpellInfo" Size="1" />
 <Data ElementName="scribed" Type="int8" Size="1" />
 <Data ElementName="scribed_better_version" Type="int8" Size="1" IfVariableSet="scribed" />
+<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="1" />
 <Data ElementName="require_previous" Type="int8" Size="1" /> <!-- added on 4/26/19 -->
-<Data ElementName="unknown_1188_2_MJ" Type="int8" Size="2" />
+<Data ElementName="require_membership" Type="int8" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemRecipeBook" ClientVersion="60055" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">

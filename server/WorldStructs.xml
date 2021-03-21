@@ -9449,8 +9449,7 @@ to zero and treated like placeholders." />
     <Data ElementName="token_id2" Type="sint32" Size =" 1" />
     <Data ElementName="token_name" Type="EQ2_16Bit_String" Size =" 1" />
   </Data>
-  <Data ElementName="description" Type="EQ2_8Bit_String" Size="1" />
-  <Data ElementName="unknown" Type="int8" Size="1" />
+  <Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
 </Data>
 <Data ElementName="type" Type="int32" />
 <Data ElementName="unknown8" Type="int8" Size="43" />
@@ -9487,8 +9486,7 @@ to zero and treated like placeholders." />
     <Data ElementName="token_id2" Type="sint32" Size =" 1" />
     <Data ElementName="token_name" Type="EQ2_16Bit_String" Size =" 1" />
   </Data>
-  <Data ElementName="description" Type="EQ2_8Bit_String" Size="1" />
-  <Data ElementName="unknown" Type="int8" Size="1" />
+  <Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
 </Data>
 <Data ElementName="type" Type="int32" />
 <Data ElementName="unknown8a" Type="int16" Size="20" />
