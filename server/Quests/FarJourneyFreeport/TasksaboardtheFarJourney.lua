@@ -109,6 +109,7 @@ function CurrentStep(Quest, QuestGiver, Player)
 			spawn = GetSpawnFromList(spawns, i-1)
 			if spawn then
 				ChangeHandIcon(spawn, 1)
+				AddPrimaryEntityCommand(nil, spawn)
 				SpawnSet(NPC, "targetable", 1, true, true)
 			end
 			i = i + 1
