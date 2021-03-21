@@ -669,6 +669,10 @@ public:
 	bool	SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* packet = 0, bool delete_spawn = false);
 
 	void	AddSpawnToGroup(Spawn* spawn, int32 group_id);
+
+	void	QueueStateCommandToClients(int32 spawn_id, int32 state);
+	void	QueueDefaultCommand(int32 spawn_id, std::string command, float distance);
+	void	ProcessQueuedStateCommands();
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
@@ -843,6 +847,7 @@ private:
 	Timer	tracking_timer;
 	Timer	weatherTimer;
 	Timer	widget_timer;
+	Timer	queue_updates;
 	
 	/* Enums */
 	Instance_Type InstanceType;
@@ -947,6 +952,10 @@ private:
 
 	vector<int32> m_pendingSpawnRemove;
 	Mutex MPendingSpawnRemoval;
+
+	std::map<int32, int32> lua_queued_state_commands;
+	std::map<int32, std::map<std::string, float>> lua_spawn_update_command;
+	std::mutex MLuaQueueStateCmd;
 public:
 	Spawn*				GetSpawn(int32 id);
 

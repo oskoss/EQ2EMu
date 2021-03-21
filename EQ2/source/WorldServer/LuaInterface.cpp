@@ -629,6 +629,33 @@ void LuaInterface::RemoveSpawnScript(const char* name) {
 	MSpawnScripts.releasewritelock(__FUNCTION__, __LINE__);
 }
 
+bool LuaInterface::CallItemScript(lua_State* state, int8 num_parameters, std::string* returnValue) {
+	if(shutting_down)
+		return false;
+	if(!state || lua_pcall(state, num_parameters, 1, 0) != 0){
+		if (state){
+			const char* err = lua_tostring(state, -1);
+			LogError("%s: %s", GetScriptName(state), err);
+			lua_pop(state, 1);
+		}
+		return false;
+	}
+
+	std::string result = std::string("");
+	
+	if(lua_isstring(state, -1)){
+		size_t size = 0;
+		const char* str = lua_tolstring(state, -1, &size);
+		if(str)
+			result = string(str);
+	}
+	
+	if(returnValue)
+		*returnValue = std::string(result);
+	
+	return true;
+}
+
 bool LuaInterface::CallItemScript(lua_State* state, int8 num_parameters, sint64* returnValue) {
 	if(shutting_down)
 		return false;
@@ -2048,6 +2075,47 @@ lua_State* LuaInterface::GetRegionScript(const char* name, bool create_new, bool
 }
 
 bool LuaInterface::RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn, sint64* returnValue) {
+	if(!item)
+		return false;
+	lua_State* state = GetItemScript(script_name.c_str(), true, true);
+	if(state){
+		Mutex* mutex = GetItemScriptMutex(script_name.c_str());
+		if(mutex)
+			mutex->readlock(__FUNCTION__, __LINE__);
+		else{
+			LogError("Error getting lock for '%s'", script_name.c_str());
+			UseItemScript(script_name.c_str(), state, false);
+			return false;
+		}
+		lua_getglobal(state, function_name);
+		if (!lua_isfunction(state, lua_gettop(state))){
+			lua_pop(state, 1);
+			mutex->releasereadlock(__FUNCTION__);
+			UseItemScript(script_name.c_str(), state, false);
+			return false;
+		}
+		SetItemValue(state, item);
+		int8 num_parms = 1;
+		if(spawn){
+			SetSpawnValue(state, spawn);
+			num_parms++;
+		}
+		if(!CallItemScript(state, num_parms, returnValue)){
+			if(mutex)
+				mutex->releasereadlock(__FUNCTION__, __LINE__);
+			UseItemScript(script_name.c_str(), state, false);
+			return false;
+		}
+		if(mutex)
+			mutex->releasereadlock(__FUNCTION__, __LINE__);
+		UseItemScript(script_name.c_str(), state, false);
+		return true;
+	}
+	else
+		return false;
+}
+
+bool LuaInterface::RunItemScriptWithReturnString(string script_name, const char* function_name, Item* item, Spawn* spawn, std::string* returnValue) {
 	if(!item)
 		return false;
 	lua_State* state = GetItemScript(script_name.c_str(), true, true);

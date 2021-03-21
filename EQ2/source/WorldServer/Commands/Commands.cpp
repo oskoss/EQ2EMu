@@ -1759,7 +1759,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						Spell* spell = master_spell_list.GetSpell(item->skill_info->spell_id, item->skill_info->spell_tier);
 						int8 old_slot = 0;
 						if (spell) {
-							if (!player->HasSpell(spell->GetSpellID(), spell->GetSpellTier(), true)) {
+
+							int16 tier_up = player->GetTierUp(spell->GetSpellTier());
+							if (rule_manager.GetGlobalRule(R_Spells, RequirePreviousTierScribe)->GetInt8() && !player->HasSpell(spell->GetSpellID(), tier_up, false, true))
+								client->SimpleMessage(CHANNEL_COLOR_RED, "You have not scribed the required previous version of this ability.");
+							else if (!player->HasSpell(spell->GetSpellID(), spell->GetSpellTier(), true)) {
 								old_slot = player->GetSpellSlot(spell->GetSpellID());
 								player->RemoveSpellBookEntry(spell->GetSpellID());
 								player->AddSpellBookEntry(spell->GetSpellID(), spell->GetSpellTier(), old_slot, spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);

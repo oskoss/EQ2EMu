@@ -7009,10 +7009,7 @@ void Client::SendBuyMerchantList(bool sell) {
 
 					sint64 overrideValue = 0;
 					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "item_difficulty", item, player, &overrideValue))
-					{
 						item_difficulty = (sint8)overrideValue;
-						printf("Override difficulty: %i\n",item_difficulty);
-					}
 
 					item_difficulty -= 6;
 					if (item_difficulty < 0)
@@ -7022,8 +7019,12 @@ void Client::SendBuyMerchantList(bool sell) {
 					packet->setArrayDataByName("quantity", ItemInfo.quantity, i);
 					packet->setArrayDataByName("unknown5", 255, i);
 					packet->setArrayDataByName("stack_size2", item->stack_count, i);
-					if (GetVersion() <= 1096)
-						packet->setArrayDataByName("description", item->description.c_str(), i);
+					
+					std::string overrideValueStr;
+					// classic client isn't properly tracking this field, DoF we don't have it identified yet, but no field to cause any issues (can add later if identified)
+					if (GetVersion() >= 546 && item->GetItemScript() && lua_interface && lua_interface->RunItemScriptWithReturnString(item->GetItemScript(), "item_description", item, player, &overrideValueStr))
+						packet->setArrayDataByName("description", overrideValueStr.c_str(), i);
+					
 					// If no price set in the merchant_inventory table then use the old method
 					if (ItemInfo.price_item_id == 0 && ItemInfo.price_item2_id == 0 && ItemInfo.price_coins == 0 && ItemInfo.price_status == 0 && ItemInfo.price_stationcash == 0) {
 						sell_price = (int32)(item->sell_price * multiplier);
@@ -7191,10 +7192,7 @@ void Client::SendSellMerchantList(bool sell) {
 					
 					sint64 overrideValue = 0;
 					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "item_difficulty", item, player, &overrideValue))
-					{
 						item_difficulty = (sint8)overrideValue;
-						printf("Override difficulty: %i\n",item_difficulty);
-					}
 					
 					item_difficulty -= 6;
 					if (item_difficulty < 0)
@@ -7271,10 +7269,7 @@ void Client::SendBuyBackList(bool sell) {
 					
 					sint64 overrideValue = 0;
 					if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "item_difficulty", master_item, player, &overrideValue))
-					{
 						item_difficulty = (sint8)overrideValue;
-						printf("Override difficulty: %i\n",item_difficulty);
-					}
 
 					item_difficulty -= 6;
 					if (item_difficulty < 0)

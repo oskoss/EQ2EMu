@@ -682,7 +682,8 @@ public:
 	void				RemovePendingLootItem(int32 id, int32 item_id);
 	void				RemovePendingLootItems(int32 id);
 	void				AddPendingLootItems(int32 id, vector<Item*>* items);
-	bool				HasSpell(int32 spell_id, int8 tier = 255, bool include_higher_tiers = false);
+	int16				GetTierUp(int16 tier);
+	bool				HasSpell(int32 spell_id, int8 tier = 255, bool include_higher_tiers = false, bool include_possible_scribe = false);
 	bool				HasRecipeBook(int32 recipe_id);
 	void				AddPlayerStatistic(int32 stat_id, sint32 stat_value, int32 stat_date);
 	void				UpdatePlayerStatistic(int32 stat_id, sint32 stat_value, bool overwrite = false);

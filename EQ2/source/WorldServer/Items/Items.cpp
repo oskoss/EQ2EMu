@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <sstream>
 #include <boost/algorithm/string.hpp>
+#include "../Rules/Rules.h"
 
 extern World world;
 extern MasterSpellList master_spell_list;
@@ -38,6 +39,7 @@ extern MasterQuestList master_quest_list;
 extern MasterRecipeList master_recipe_list;
 extern ConfigReader configReader;
 extern LuaInterface* lua_interface;
+extern RuleManager rule_manager;
 
 MasterItemList::MasterItemList(){
 	AddMappedItemStat(ITEM_STAT_ADORNING, std::string("adorning"));
@@ -2184,16 +2186,22 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 							packet->setSubstructDataByName("header_info", "footer_type", 0);
 							
 							spell->SetPacketInformation(packet, player->GetZone()->GetClientBySpawn(player));
-							if (player->HasSpell(skill_info->spell_id, skill_info->spell_tier))
+							if (player->HasSpell(skill_info->spell_id, skill_info->spell_tier, true))
 								packet->setDataByName("scribed", 1);
-							else
+
 								if (packet->GetVersion() >= 927){
 									if (player->HasSpell(skill_info->spell_id, skill_info->spell_tier, true))
-										packet->setAddToPacketByName("better_version", 1);// need to confirm
+										packet->setAddToPacketByName("scribed_better_version", 1);// need to confirm
 								}
 								else
-									packet->setAddToPacketByName("better_version", 0); //if not scribed
-							packet->setDataByName("require_previous", 0);
+									packet->setAddToPacketByName("scribed_better_version", 0); //if not scribed
+							
+							// either don't require previous tier or check that we have the lower tier spells potentially
+							int32 tier_up = player->GetTierUp(skill_info->spell_tier);
+							if (!rule_manager.GetGlobalRule(R_Spells, RequirePreviousTierScribe)->GetInt8() || player->HasSpell(skill_info->spell_id, tier_up, false, true))
+								packet->setDataByName("require_previous", 1, 0);
+							// membership required
+							//packet->setDataByName("unknown_1188_2_MJ", 1, 1);
 							
 						}
 						else {							

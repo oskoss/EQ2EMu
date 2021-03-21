@@ -182,6 +182,7 @@ enum RuleType {
 	EnableCrossZoneTargetBuffs,
 	PlayerSpellSaveStateWaitInterval,
 	PlayerSpellSaveStateCap,
+	RequirePreviousTierScribe,
 
 	/* ZONE TIMERS */
 	RegenTimer,

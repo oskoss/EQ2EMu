@@ -261,6 +261,9 @@ void ZoneServer::Init()
 	spawn_update.Start(rule_manager.GetGlobalRule(R_Zone, SpawnUpdateTimer)->GetInt16());
 	LogWrite(ZONE__DEBUG, 0, "Zone", "SpawnUpdateTimer: %ims", rule_manager.GetGlobalRule(R_Zone, SpawnUpdateTimer)->GetInt16());
 
+	queue_updates.Start(rule_manager.GetGlobalRule(R_Zone, SpawnUpdateTimer)->GetInt16());
+	LogWrite(ZONE__DEBUG, 0, "Zone", "QueueUpdateTimer(inherits SpawnUpdateTimer): %ims", rule_manager.GetGlobalRule(R_Zone, SpawnUpdateTimer)->GetInt16());
+
 	spawn_delete_timer = rule_manager.GetGlobalRule(R_Zone, SpawnDeleteTimer)->GetInt32();
 	LogWrite(ZONE__DEBUG, 0, "Zone", "SpawnDeleteTimer: %ums", spawn_delete_timer);
 
@@ -1596,6 +1599,8 @@ bool ZoneServer::SpawnProcess(){
 			movementMgr->Process();
 		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 
+		if(queue_updates.Check())
+			ProcessQueuedStateCommands();
 		// Do other loops for spawns
 		// tracking, client loop with spawn loop for each client that is tracking, change to a spawn_range_map loop instead of using the main spawn list?
 		//if (tracking_timer.Check())
@@ -5459,16 +5464,8 @@ void ZoneServer::SendUpdateDefaultCommand(Spawn* spawn, const char* command, flo
 		return;
 	}
 
-	Client* client = 0;
-	PacketStruct* packet = 0;
-	vector<Client*>::iterator client_itr;
+	QueueDefaultCommand(spawn->GetID(), std::string(command), distance);
 
-	MClientList.readlock(__FUNCTION__, __LINE__);
-	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
-		client = *client_itr;
-		client->SendDefaultCommand(spawn, command, distance);
-	}
-	
 	if (strlen(command)>0)
 		spawn->SetPrimaryCommand(command, command, distance);
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
@@ -7896,4 +7893,76 @@ void ZoneServer::AddSpawnToGroup(Spawn* spawn, int32 group_id)
 	}
 	groupList->Add(spawn->GetID());
 	spawn->SetSpawnGroupID(group_id);
+}
+
+void ZoneServer::QueueStateCommandToClients(int32 spawn_id, int32 state)
+{
+	if(spawn_id < 1)
+		return;
+
+	MLuaQueueStateCmd.lock();
+	lua_queued_state_commands.insert(make_pair(spawn_id, state));
+	MLuaQueueStateCmd.unlock();
+}
+
+void ZoneServer::QueueDefaultCommand(int32 spawn_id, std::string command, float distance)
+{
+	if(spawn_id < 1)
+		return;
+
+	MLuaQueueStateCmd.lock();
+	lua_spawn_update_command[spawn_id].insert(make_pair(command,distance));
+	MLuaQueueStateCmd.unlock();
+}
+
+void ZoneServer::ProcessQueuedStateCommands() // in a client list lock only
+{
+	vector<Client*>::iterator itr;
+
+	MLuaQueueStateCmd.lock();
+
+	if(lua_queued_state_commands.size() > 0)
+	{
+		std::map<int32, int32>::iterator statecmds;
+		for(statecmds = lua_queued_state_commands.begin(); statecmds != lua_queued_state_commands.end(); statecmds++)
+		{
+			Spawn* spawn = GetSpawnByID(statecmds->first, false);
+			if(!spawn)
+				continue;
+			
+			MClientList.readlock(__FUNCTION__, __LINE__);
+			for (itr = clients.begin(); itr != clients.end(); itr++) {
+				Client* client = *itr;
+				if (client && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn))
+					ClientPacketFunctions::SendStateCommand(client, client->GetPlayer()->GetIDWithPlayerSpawn(spawn), statecmds->second);
+			}
+			MClientList.releasereadlock(__FUNCTION__, __LINE__);
+		}
+		lua_queued_state_commands.clear();
+	}
+
+	if(lua_spawn_update_command.size() > 0)
+	{
+		std::map<int32, std::map<std::string,float>>::iterator updatecmds;
+		for(updatecmds = lua_spawn_update_command.begin(); updatecmds != lua_spawn_update_command.end(); updatecmds++)
+		{
+			Spawn* spawn = GetSpawnByID(updatecmds->first, false);
+			if(!spawn)
+				continue;
+			
+			std::map<std::string,float>::iterator innermap;
+			for(innermap = lua_spawn_update_command[updatecmds->first].begin(); innermap != lua_spawn_update_command[updatecmds->first].end(); innermap++)
+			{
+				MClientList.readlock(__FUNCTION__, __LINE__);
+				for (itr = clients.begin(); itr != clients.end(); itr++) {
+					Client* client = *itr;
+					if (client && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn))
+						client->SendDefaultCommand(spawn, innermap->first.c_str(), innermap->second);
+				}
+				MClientList.releasereadlock(__FUNCTION__, __LINE__);
+			}
+		}
+		lua_spawn_update_command.clear();
+	}
+	MLuaQueueStateCmd.unlock();
 }

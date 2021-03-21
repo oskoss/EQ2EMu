@@ -1828,8 +1828,8 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 				bag_id = 0;
 		}
 
-		if (item_list.items.count(bag_id) > 0 && item_list.items[bag_id][appearance_type].count(slot) > 0)
-			to_item = item_list.items[bag_id][appearance_type][slot];
+		if (item_list.items.count(bag_id) > 0 && item_list.items[bag_id][BASE_EQUIPMENT].count(slot) > 0)
+			to_item = item_list.items[bag_id][BASE_EQUIPMENT][slot];
 		if (to_item && equipList->CanItemBeEquippedInSlot(to_item, ConvertSlotFromClient(item->details.slot_id, version))) {
 			equipList->RemoveItem(index);
 			if(item->details.appearance_type)
@@ -2829,14 +2829,31 @@ vector<SpellBookEntry*>* Player::GetSpellsSaveNeeded(){
 	return ret;
 }
 
-bool Player::HasSpell(int32 spell_id, int8 tier, bool include_higher_tiers){
+int16 Player::GetTierUp(int16 tier)
+{
+	switch(tier)
+	{
+		case 0:
+			break;
+		case 7:
+		case 9:
+			tier -= 2;
+			break;
+		default:
+			tier -= 1;
+		break;
+	}
+
+	return tier;
+}
+bool Player::HasSpell(int32 spell_id, int8 tier, bool include_higher_tiers, bool include_possible_scribe){
 	bool ret = false;
 	vector<SpellBookEntry*>::iterator itr;
 	MSpellsBook.lock();
 	SpellBookEntry* spell = 0;
 	for(itr = spells.begin(); itr != spells.end(); itr++){
 		spell = *itr;
-		if(spell->spell_id == spell_id && (tier == 255 || spell->tier == tier || (include_higher_tiers && spell->tier > tier))){
+		if(spell->spell_id == spell_id && (tier == 255 || spell->tier == tier || (include_higher_tiers && spell->tier > tier) || (include_possible_scribe && tier <= spell->tier))){
 			ret = true;
 			break;
 		}
