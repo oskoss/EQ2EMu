@@ -4338,7 +4338,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 		// If a chest is being dropped add it to the world and set the timer to remove it.
 		if (chest) {
 			AddSpawn(chest);
-			//AddDeadSpawn(chest, 0xFFFFFFFF);
+			AddDeadSpawn(chest, 0xFFFFFFFF);
 			LogWrite(LOOT__DEBUG, 0, "Loot", "Adding a chest to the world...");
 		}
 	}
@@ -5468,7 +5468,6 @@ void ZoneServer::SendUpdateDefaultCommand(Spawn* spawn, const char* command, flo
 
 	if (strlen(command)>0)
 		spawn->SetPrimaryCommand(command, command, distance);
-	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 void ZoneServer::CheckPlayerProximity(Spawn* spawn, Client* client){
@@ -7962,6 +7961,7 @@ void ZoneServer::ProcessQueuedStateCommands() // in a client list lock only
 				}
 				MClientList.releasereadlock(__FUNCTION__, __LINE__);
 			}
+			lua_spawn_update_command[updatecmds->first].clear();
 		}
 		lua_spawn_update_command.clear();
 	}
