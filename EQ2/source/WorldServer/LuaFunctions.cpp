@@ -396,7 +396,7 @@ int EQ2Emu_lua_SendStateCommand(lua_State* state) {
 		}
 		else
 		{
-			spawn->GetZone()->SendStateCommand(spawn, new_state);
+			spawn->GetZone()->QueueStateCommandToClients(spawn->GetID(), new_state);
 			lua_interface->SetBooleanValue(state, true);
 			return 1;
 		}

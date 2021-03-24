@@ -6570,7 +6570,11 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 				else
 					item->details.count = closest->quantity;
 			}
-			if (!player->item_list.HasFreeSlot() && !player->item_list.CanStack(item))
+			bool itemAdded = false;
+			sint64 dispFlags = 0;
+			if (item && item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "buyback_display_flags", item, player, &dispFlags) && (dispFlags & DISPLAY_FLAG_NO_BUY))
+				SimpleMessage(CHANNEL_NARRATIVE, "You do not meet all the requirements to buy this item.");
+			else if (!player->item_list.HasFreeSlot() && !player->item_list.CanStack(item))
 				SimpleMessage(CHANNEL_COLOR_RED, "You do not have any slots available for this item.");
 			else if (player->RemoveCoins(closest->quantity * closest->price)) {
 				bool removed = false;
@@ -6590,6 +6594,7 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 					closest->save_needed = true;
 				}
 				AddItem(item);
+				itemAdded = true;
 				//EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 				//if(outapp)
 					//QueuePacket(outapp);
@@ -6604,6 +6609,9 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 			}
 			else
 				SimpleMessage(CHANNEL_COLOR_RED, "You cannot afford this item.");
+
+			if(!itemAdded)
+				safe_delete(item);
 		}
 	}
 
@@ -6644,6 +6652,12 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 				sell_price = (int32)(master_item->sell_price * multiplier);
 				if (quantity > total_available)
 					quantity = total_available;
+			}
+			sint64 dispFlags = 0;
+			if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "buy_display_flags", master_item, player, &dispFlags) && (dispFlags & DISPLAY_FLAG_NO_BUY))
+			{
+				SimpleMessage(CHANNEL_NARRATIVE, "You do not meet all the requirements to buy this item.");
+				return;
 			}
 			if(quantity < 1)
 			{
@@ -7019,6 +7033,10 @@ void Client::SendBuyMerchantList(bool sell) {
 					packet->setArrayDataByName("quantity", ItemInfo.quantity, i);
 					packet->setArrayDataByName("unknown5", 255, i);
 					packet->setArrayDataByName("stack_size2", item->stack_count, i);
+
+					sint64 dispFlags = 0;
+					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "buy_display_flags", item, player, &dispFlags))
+						packet->setArrayDataByName("display_flags", (int8)dispFlags, i);
 					
 					std::string overrideValueStr;
 					// classic client isn't properly tracking this field, DoF we don't have it identified yet, but no field to cause any issues (can add later if identified)
@@ -7275,6 +7293,11 @@ void Client::SendBuyBackList(bool sell) {
 					if (item_difficulty < 0)
 						item_difficulty *= -1;
 					packet->setArrayDataByName("item_difficulty", item_difficulty, i);
+
+					sint64 dispFlags = 0;
+					if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "buyback_display_flags", master_item, player, &dispFlags))
+						packet->setArrayDataByName("display_flags", (int8)dispFlags, i);
+					
 					if (buyback->quantity == 1)
 						packet->setArrayDataByName("quantity", 0xFFFF, i);
 					else

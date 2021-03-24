@@ -1864,11 +1864,11 @@ bool WorldDatabase::UpdateCharacterTimeStamp(int32 account_id, int32 character_i
 bool WorldDatabase::insertCharacterProperty(Client* client, char* propName, char* propValue) {
 	Query query;
 
-	string update_status = string("update charactersProperties set propvalue='%s' where charid=%i and propname='%s'");
+	string update_status = string("update character_properties set propvalue='%s' where charid=%i and propname='%s'");
 	query.RunQuery2(Q_UPDATE, update_status.c_str(), propValue, client->GetCharacterID(), propName);
 	if (!query.GetAffectedRows())
 	{
-		query.RunQuery2(Q_UPDATE, "insert into charactersProperties (charid, propname, propvalue) values(%i, '%s', '%s')", client->GetCharacterID(), propName, propValue);
+		query.RunQuery2(Q_UPDATE, "insert into character_properties (charid, propname, propvalue) values(%i, '%s', '%s')", client->GetCharacterID(), propName, propValue);
 		if (query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF) {
 			LogWrite(WORLD__ERROR, 0, "World", "Error in insertCharacterProperty query '%s': %s", query.GetQuery(), query.GetError());
 			return false;
@@ -1881,7 +1881,7 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 	Query query;
 	MYSQL_ROW row;
 	int32 id = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT propname, propvalue FROM charactersProperties where charid = %i", client->GetCharacterID());
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT propname, propvalue FROM character_properties where charid = %i", client->GetCharacterID());
 	// no character found
 	if (result == NULL) {
 		LogWrite(PLAYER__ERROR, 0, "Player", "Error loading character properties for '%s'", client->GetPlayer()->GetName());
@@ -2766,12 +2766,14 @@ void WorldDatabase::SaveZoneInfo(int32 zone_id, const char* field, const char* v
 int32 WorldDatabase::GetZoneID(const char* name) {
 	int32 zone_id = 0;
 	Query query;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT `id` FROM zones WHERE `name`='%s'", name);
+	char* escaped = getEscapeString(name);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT `id` FROM zones WHERE `name`=\"%s\"", escaped);
 	if (result && mysql_num_rows(result) > 0) {
 		MYSQL_ROW row;
 		row = mysql_fetch_row(result);
 		zone_id = atoi(row[0]);
 	}
+	safe_delete_array(escaped);
 	return zone_id;
 }
 
@@ -4940,6 +4942,10 @@ int32 WorldDatabase::LoadQuests(){
 				quest->SetEncounterLevel(enc_level);
 				total++;
 				master_quest_list.AddQuest(id, quest);
+			}
+			else
+			{
+				LogWrite(QUEST__ERROR, 5, "Quests", "\tFAILED LOADING QUEST: '%s' (%u), check that script file exists/permissions correct: %s", name, id, (script && strlen(script)) ? script : "Not Set, Missing!");
 			}
 		}
 	}

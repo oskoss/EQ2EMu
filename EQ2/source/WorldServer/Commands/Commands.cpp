@@ -3095,13 +3095,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		}
 		case COMMAND_USE: {
 			Spawn* target = cmdTarget;
-			if (target->IsWidget())
+			if (target && target->IsWidget())
 				((Widget*)target)->HandleUse(client, "use");
 			break;
 		}
 		case COMMAND_OPEN: {
 			Spawn* target = cmdTarget;
-			if (target->IsWidget())
+			if (target && target->IsWidget())
 				((Widget*)target)->HandleUse(client, "Open", WIDGET_TYPE_DOOR);
 			break;
 		}

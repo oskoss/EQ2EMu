@@ -603,6 +603,7 @@ extern MasterItemList master_item_list;
 #define	DISPLAY_FLAG_NO_GUILD_STATUS	8
 #define	DISPLAY_FLAG_NO_BUYBACK			16
 #define	DISPLAY_FLAG_NOT_FOR_SALE		64
+#define	DISPLAY_FLAG_NO_BUY				128 // disables buying on merchant 'buy' list
 
 #pragma pack(1)
 struct ItemStatsValues{

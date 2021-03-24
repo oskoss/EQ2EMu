@@ -1882,9 +1882,6 @@ void ZoneServer::SendSpawnChanges(){
 	Spawn* spawn = 0;
 
 	MSpawnList.readlock(__FUNCTION__, __LINE__);
-
-	int32 max_updates = 100;
-	
 	MutexList<int32>::iterator spawn_iter = changed_spawns.begin();
 	int count = 0;
 	while(spawn_iter.Next()){		
@@ -1895,9 +1892,6 @@ void ZoneServer::SendSpawnChanges(){
 		}
 		if (!spawn)
 			changed_spawns.Remove(spawn_iter->value);
-
-		if(count >= max_updates)
-			break;
 	}
 	//changed_spawns.clear() is not thread safe, advise we rely on what was removed and continue on, get any others in next batch
 
@@ -1906,7 +1900,8 @@ void ZoneServer::SendSpawnChanges(){
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		client->SendSpawnChanges(spawns_to_send);
+		if(client)
+			client->SendSpawnChanges(spawns_to_send);
 	}
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 
