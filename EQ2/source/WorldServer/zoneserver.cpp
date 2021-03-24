@@ -1893,15 +1893,18 @@ void ZoneServer::SendSpawnChanges(){
 		if (!spawn)
 			changed_spawns.Remove(spawn_iter->value);
 	}
-	//changed_spawns.clear() is not thread safe, advise we rely on what was removed and continue on, get any others in next batch
 
 	vector<Client*>::iterator client_itr;
 	Client* client = 0;
+	
 	MClientList.readlock(__FUNCTION__, __LINE__);
-	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
-		client = *client_itr;
-		if(client)
-			client->SendSpawnChanges(spawns_to_send);
+	if(clients.size())
+	{
+		for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
+			client = *client_itr;
+			if(client)
+				client->SendSpawnChanges(spawns_to_send);
+		}
 	}
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 
@@ -3017,7 +3020,9 @@ void ZoneServer::RemoveClient(Client* client)
 
 		LogWrite(ZONE__DEBUG, 0, "Zone", "Calling clients.Remove(client)...");
 		MClientList.writelock(__FUNCTION__, __LINE__);
-		clients.erase(find(clients.begin(), clients.end(), client));
+		std::vector<Client*>::iterator itr2 = find(clients.begin(), clients.end(), client);
+		if (itr2 != clients.end())
+			clients.erase(itr2);
 		MClientList.releasewritelock(__FUNCTION__, __LINE__);
 
 		LogWrite(ZONE__INFO, 0, "Zone", "Scheduling client '%s' for removal.", client->GetPlayer()->GetName());
@@ -4333,7 +4338,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 		// If a chest is being dropped add it to the world and set the timer to remove it.
 		if (chest) {
 			AddSpawn(chest);
-			AddDeadSpawn(chest, 0xFFFFFFFF);
+			//AddDeadSpawn(chest, 0xFFFFFFFF);
 			LogWrite(LOOT__DEBUG, 0, "Loot", "Adding a chest to the world...");
 		}
 	}
@@ -5745,7 +5750,8 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn) {
 
 	LogWrite(ZONE__DEBUG, 7, "Zone", "Processing RemoveSpawnSupportFunctions...");
 
-	RemoveSpellTimersFromSpawn((Entity*)spawn, true);
+	if(spawn->IsEntity())
+		RemoveSpellTimersFromSpawn((Entity*)spawn, true);
 
 	RemoveDamagedSpawn(spawn);
 	spawn->SendSpawnChanges(false);
