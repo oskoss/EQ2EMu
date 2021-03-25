@@ -40,7 +40,6 @@
 #define SPELL_TARGET_NONE			7
 #define SPELL_TARGET_RAID_AE		8
 #define SPELL_TARGET_OTHER_GROUP_AE	9
-#define SPELL_TARGET_ALLGROUPTARGETS 10 // use this with cast/tick only containing DIRECT target/spawn.
 
 
 #define SPELL_BOOK_TYPE_SPELL		0
@@ -190,6 +189,7 @@
 #define SPELL_TYPE_DRINK		14
 #define SPELL_TYPE_ROOT			15
 #define SPELL_TYPE_SNARE		16
+#define SPELL_TYPE_ALLGROUPTARGETS      17
 
 
 struct LUAData{

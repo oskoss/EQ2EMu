@@ -932,7 +932,8 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			target = caster;
 
 		int8 target_type = spell->GetSpellData()->target_type;
-
+		int8 spell_type = spell->GetSpellData()->spell_type;
+		
 		lua_spell->caster = caster;
 		lua_spell->initial_caster_char_id = (caster && caster->IsPlayer()) ? ((Player*)caster)->GetCharacterID() : 0; 
 		lua_spell->spell = spell;
@@ -1048,8 +1049,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			DeleteSpell(lua_spell);
 			return;
 		}
-		int8 spell_type = lua_spell->spell->GetSpellData()->spell_type;
-
+		
 		LuaSpell* conflictSpell = caster->HasLinkedTimerID(lua_spell, target, (spell_type == SPELL_TYPE_DD || spell_type == SPELL_TYPE_DOT));
 		if(conflictSpell)
 		{
@@ -1125,7 +1125,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			return;
 		}
 
-		if (target_type != SPELL_TARGET_SELF && target_type != SPELL_TARGET_GROUP_AE && target_type != SPELL_TARGET_ALLGROUPTARGETS && target_type != SPELL_TARGET_NONE && spell->GetSpellData()->max_aoe_targets == 0)
+		if (target_type != SPELL_TARGET_SELF && target_type != SPELL_TARGET_GROUP_AE && spell_type != SPELL_TYPE_ALLGROUPTARGETS && target_type != SPELL_TARGET_NONE && spell->GetSpellData()->max_aoe_targets == 0)
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Not Self, Not Group AE, Not None, Max Targets = 0", spell->GetName());
 
@@ -1586,7 +1586,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 		}
 	}*/
 	
-	bool allTargets = (spell->spell->GetSpellData()->target_type == SPELL_TARGET_ALLGROUPTARGETS);
+	bool allTargets = (spell->spell->GetSpellData()->spell_type == SPELL_TYPE_ALLGROUPTARGETS);
 	if (!processedSpell)
 		processedSpell = ProcessSpell(spell, true, 0, 0, allTargets);
 
@@ -1944,6 +1944,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 	if (luaspell && luaspell->spell && luaspell->caster && luaspell->spell->GetSpellData()->max_aoe_targets == 0) 
 	{
 		int8 target_type = luaspell->spell->GetSpellData()->target_type;
+		int8 spell_type = luaspell->spell->GetSpellData()->spell_type;
 		Spawn* caster = luaspell->caster;
 		Spawn* target = caster->GetZone()->GetSpawnByID(luaspell->initial_target);
 		SpellData* data = luaspell->spell->GetSpellData();
@@ -2025,7 +2026,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 				}
 			}
 		}
-		else if (target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_ALLGROUPTARGETS || target_type == SPELL_TARGET_RAID_AE) {
+		else if (target_type == SPELL_TARGET_GROUP_AE || spell_type == SPELL_TYPE_ALLGROUPTARGETS || target_type == SPELL_TARGET_RAID_AE) {
 
 			// player handling
 			if (target)
@@ -2107,7 +2108,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 
 		luaspell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 		// Group AE type                            NOTE: Add support for RAID AE to affect raid members once raids have been completed
-		if (target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_ALLGROUPTARGETS || target_type == SPELL_TARGET_RAID_AE) 
+		if (target_type == SPELL_TARGET_GROUP_AE || spell_type == SPELL_TYPE_ALLGROUPTARGETS || target_type == SPELL_TARGET_RAID_AE) 
 		{
 			if (data->icon_backdrop == 316) // single target in a group/raid
 			{
