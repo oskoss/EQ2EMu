@@ -753,7 +753,7 @@ void ClientList::Process() {
 			in.s_addr = client->getConnection()->GetRemoteIP();
 			net.numclients--;
 			LogWrite(LOGIN__INFO, 0, "Login", "Removing client from ip: %s on port %i, Account Name: %s", inet_ntoa(in), ntohs(client->getConnection()->GetRemotePort()), client->GetAccountName());
-			client->getConnection()->SetState(CLOSED);
+			client->getConnection()->Close();
 			net.UpdateWindowTitle();
 			client_list.erase(client);
 		}
