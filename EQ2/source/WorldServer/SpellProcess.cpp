@@ -447,42 +447,67 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 	return ret;
 }
 
-bool SpellProcess::ProcessSpell(LuaSpell* spell, bool first_cast, const char* function, SpellScriptTimer* timer) {
+bool SpellProcess::ProcessSpell(LuaSpell* spell, bool first_cast, const char* function, SpellScriptTimer* timer, bool all_targets) {
 	bool ret = false;
 	if(!spell->state)
 	{
 		LogWrite(SPELL__ERROR, 0, "Spell", "Error: State is NULL!  SpellProcess::ProcessSpell for Spell '%s'", (spell->spell != nullptr) ? spell->spell->GetName() : "Unknown");
 	}
 	else if(lua_interface && !spell->interrupted){
-		std::string functionCall = lua_interface->AddSpawnPointers(spell, first_cast, false, function, timer);
-		vector<LUAData*>* data = spell->spell->GetLUAData();
-		for(int32 i=0;i<data->size();i++){
-			switch(data->at(i)->type){
-				case 0:{
-					lua_interface->SetSInt32Value(spell->state, data->at(i)->int_value);
-					break;
-				}
-				case 1:{
-					lua_interface->SetFloatValue(spell->state, data->at(i)->float_value);
-					break;
-				}
-				case 2:{
-					lua_interface->SetBooleanValue(spell->state, data->at(i)->bool_value);
-					break;
-				}
-				case 3:{
-					lua_interface->SetStringValue(spell->state, data->at(i)->string_value.c_str());
-					break;
-				}
-				default:{
-					LogWrite(SPELL__ERROR, 0, "Spell", "Error: Unknown LUA Type '%i' in SpellProcess::ProcessSpell for Spell '%s'", (int)data->at(i)->type, spell->spell->GetName());
-					return false;
+		if(all_targets)
+		{
+			for(int t=0;t<spell->targets.size();t++)
+			{
+				Spawn* altSpawn = spell->caster->GetZone()->GetSpawnByID(spell->targets[t]);
+				if(altSpawn)
+				{
+					std::string functionCall = ApplyLuaFunction(spell, first_cast, function, timer, altSpawn);
+					if(functionCall.length() < 1)
+						ret = false;
+					else
+						ret = lua_interface->CallSpellProcess(spell, 2 + spell->spell->GetLUAData()->size(), functionCall);
 				}
 			}
+			return true;
 		}
-		ret = lua_interface->CallSpellProcess(spell, 2 + data->size(), functionCall);
+		std::string functionCall = ApplyLuaFunction(spell, first_cast, function, timer);
+		if(functionCall.length() < 1)
+			ret = false;
+		else
+			ret = lua_interface->CallSpellProcess(spell, 2 + spell->spell->GetLUAData()->size(), functionCall);
 	}
 	return ret;
+}
+
+std::string SpellProcess::ApplyLuaFunction(LuaSpell* spell, bool first_cast, const char* function, SpellScriptTimer* timer, Spawn* altTarget)
+{
+	std::string functionCall = lua_interface->AddSpawnPointers(spell, first_cast, false, function, timer, false, altTarget);
+	vector<LUAData*>* data = spell->spell->GetLUAData();
+	for(int32 i=0;i<data->size();i++){
+		switch(data->at(i)->type){
+			case 0:{
+				lua_interface->SetSInt32Value(spell->state, data->at(i)->int_value);
+				break;
+			}
+			case 1:{
+				lua_interface->SetFloatValue(spell->state, data->at(i)->float_value);
+				break;
+			}
+			case 2:{
+				lua_interface->SetBooleanValue(spell->state, data->at(i)->bool_value);
+				break;
+			}
+			case 3:{
+				lua_interface->SetStringValue(spell->state, data->at(i)->string_value.c_str());
+				break;
+			}
+				default:{
+				LogWrite(SPELL__ERROR, 0, "Spell", "Error: Unknown LUA Type '%i' in SpellProcess::ProcessSpell for Spell '%s'", (int)data->at(i)->type, spell->spell->GetName());
+				return string("");
+			}
+		}
+	}
+	return functionCall;
 }
 
 bool SpellProcess::CastPassives(Spell* spell, Entity* caster, bool remove) {
@@ -1050,14 +1075,12 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 					else if(lua_spell->spell->GetSpellData()->spell_type == SPELL_TYPE_DEBUFF)
 					{
 						SpellCannotStack(zone, client, lua_spell->caster, lua_spell, conflictSpell);
-						DeleteSpell(lua_spell);
 						return;
 					}
 				}
 				else
 				{
 					SpellCannotStack(zone, client, lua_spell->caster, lua_spell, conflictSpell);
-					DeleteSpell(lua_spell);
 					return;
 				}	
 			}
@@ -1102,7 +1125,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			return;
 		}
 
-		if (target_type != SPELL_TARGET_SELF && target_type != SPELL_TARGET_GROUP_AE && target_type != SPELL_TARGET_NONE && spell->GetSpellData()->max_aoe_targets == 0)
+		if (target_type != SPELL_TARGET_SELF && target_type != SPELL_TARGET_GROUP_AE && target_type != SPELL_TARGET_ALLGROUPTARGETS && target_type != SPELL_TARGET_NONE && spell->GetSpellData()->max_aoe_targets == 0)
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Not Self, Not Group AE, Not None, Max Targets = 0", spell->GetName());
 
@@ -1562,8 +1585,10 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 			}
 		}
 	}*/
+	
+	bool allTargets = (spell->spell->GetSpellData()->target_type == SPELL_TARGET_ALLGROUPTARGETS);
 	if (!processedSpell)
-		processedSpell = ProcessSpell(spell);
+		processedSpell = ProcessSpell(spell, true, 0, 0, allTargets);
 
 	// Quick hack to prevent a crash on spells that zones the caster (Gate)
 	if (!spell->caster)
@@ -2000,26 +2025,48 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 				}
 			}
 		}
-		else if (target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_RAID_AE) {
+		else if (target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_ALLGROUPTARGETS || target_type == SPELL_TARGET_RAID_AE) {
 
 			// player handling
 			if (target)
 			{
-				if (data->icon_backdrop == 316) // using TARGET backdrop icon
+				if (data->icon_backdrop == 316 || data->icon_backdrop == 312) // using TARGET backdrop icon
 				{
 					// PLAYER LOGIC:
-					if ((target->IsPlayer() && luaspell->caster->IsPlayer() && target != luaspell->caster && ((Player*)target)->GetGroupMemberInfo() != NULL && ((Player*)luaspell->caster)->GetGroupMemberInfo() != NULL
+					if ((data->friendly_spell && (target->IsPlayer() && luaspell->caster->IsPlayer() && target != luaspell->caster && ((Player*)target)->GetGroupMemberInfo() != NULL && ((Player*)luaspell->caster)->GetGroupMemberInfo() != NULL
 						&& ((Player*)target)->GetGroupMemberInfo()->group_id == ((Player*)luaspell->caster)->GetGroupMemberInfo()->group_id))
+						|| (!data->friendly_spell && (target->IsPlayer() && luaspell->caster->IsPlayer() && target != luaspell->caster && ((Player*)target)->GetGroupMemberInfo() != NULL)))
 					{
 						GetPlayerGroupTargets((Player*)target, caster, luaspell, true, false);
-					}//TODO: NEED RAID SUPPORT
+					}
+					//TODO: NEED RAID SUPPORT
 
 					// NPC LOGIC:
-					else if (target->group_id > 0 && target->group_id == luaspell->caster->group_id)
+					else if (target->IsNPC())
 					{
+						// Check to see if the npc is a spawn group by getting the group and checikng if valid
+						vector<Spawn*>* group = ((NPC*)target)->GetSpawnGroup();
+						if (group) 
+						{
+							vector<Spawn*>::iterator itr;
 
+							// iterate through spawn group members
+							for (itr = group->begin(); itr != group->end(); itr++) 
+							{
+								Spawn* group_member = *itr;
+
+								// if NPC group member is (still) an NPC (wtf?) and is alive, send the NPC group member back as a successful target of non-friendly spell group_member->Alive()
+								if (group_member->GetZone() == caster->GetZone() && 
+								group_member->IsNPC() && group_member->Alive() && !((Entity*)group_member)->IsAOEImmune() && (!((Entity*)group_member)->IsMezzed() || group_member == target))
+									luaspell->targets.push_back(group_member->GetID());
+
+								// note: this should generate some hate towards the caster
+							}
+						} // end is spawngroup
+						else
+							luaspell->targets.push_back(target->GetID()); // return single target NPC for non-friendly spell
 					}
-					else
+					else if(data->friendly_spell)
 					{
 						// add self
 						target = NULL;
@@ -2060,7 +2107,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 
 		luaspell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 		// Group AE type                            NOTE: Add support for RAID AE to affect raid members once raids have been completed
-		if (target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_RAID_AE) 
+		if (target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_ALLGROUPTARGETS || target_type == SPELL_TARGET_RAID_AE) 
 		{
 			if (data->icon_backdrop == 316) // single target in a group/raid
 			{

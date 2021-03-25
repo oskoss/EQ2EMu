@@ -233,7 +233,7 @@ public:
 	void			SetConversationValue(lua_State* state, vector<ConversationOption>* conversation);
 	void			SetOptionWindowValue(lua_State* state, vector<OptionWindowOption>* optionWindow);
 
-	std::string		AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast = false, const char* function = 0, SpellScriptTimer* timer = 0, bool passLuaSpell=false);
+	std::string		AddSpawnPointers(LuaSpell* spell, bool first_cast, bool precast = false, const char* function = 0, SpellScriptTimer* timer = 0, bool passLuaSpell=false, Spawn* altTarget = 0);
 	LuaSpell*		GetCurrentSpell(lua_State* state);
 	bool			CallSpellProcess(LuaSpell* spell, int8 num_parameters, std::string functionCalled);
 	LuaSpell*		GetSpell(const char* name);

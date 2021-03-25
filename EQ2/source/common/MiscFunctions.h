@@ -67,6 +67,7 @@ void	Decode(uchar* dst, uchar* src, int16 len);
 string	ToUpper(string input);
 string	ToLower(string input);
 int32 ParseIntValue(string input);
+int64 ParseLongLongValue(string input);
 map<string, string> TranslateBrokerRequest(string request);
 void	MovementDecode(uchar* dst, uchar* newval, uchar* orig, int16 len);
 vector<string>* SplitString(string str, char delim);

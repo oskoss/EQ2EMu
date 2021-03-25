@@ -66,6 +66,10 @@
 #define SKILL_ID_DESTROYING 3429135390
 #define SKILL_ID_MAGIC_AFFINITY 2072844078
 
+#define SKILL_ID_GREATSWORD 2292577688 // aka 2h slashing
+#define SKILL_ID_GREATSPEAR 2380184628 // aka 2h piercing
+#define SKILL_ID_STAFF		3180399725 // aka 2h crushing
+
 /* Each SkillBonus is comprised of multiple possible skill bonus values.  This is so one spell can modify
    more than one skill */
 struct SkillBonusValue {

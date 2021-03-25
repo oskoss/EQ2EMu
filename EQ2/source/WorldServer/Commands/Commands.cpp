@@ -1773,7 +1773,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								player->item_list.RemoveItem(item, true);
 								client->QueuePacket(player->GetSpellBookUpdatePacket(client->GetVersion()));
 								client->QueuePacket(player->SendInventoryUpdate(client->GetVersion()));
-							}
+
+								// force purge client cache and display updated spell for hover over
+								EQ2Packet* app = spell->SerializeSpell(client, false, false);
+								client->QueuePacket(app);
+													}
 						}
 						else
 							LogWrite(COMMAND__ERROR, 0, "Command", "Unknown spell ID: %u and tier: %u", item->skill_info->spell_id, item->skill_info->spell_tier);
@@ -3669,6 +3673,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[0][0]){
 				const char* values = sep->argplus[0];
 				if(values){
+					LogWrite(ITEM__WARNING, 0, "Item", "SearchStores: %s", values);
+
 					map<string, string> str_values = TranslateBrokerRequest(values);
 					vector<Item*>* items = master_item_list.GetItems(str_values);
 					if(items){
@@ -6177,7 +6183,11 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 			LogWrite(MISC__TODO, 1, "TODO", " fix this, need to get how live does it\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 			int16 index1 = atoi(sep->arg[1]);
 			int16 index2 = atoi(sep->arg[2]);
-			EQ2Packet* outapp = client->GetPlayer()->SwapEquippedItems(index1, index2, client->GetVersion());
+			int8 type = 0;
+			if(sep->IsNumber(3))
+				type = atoul(sep->arg[3]); // type 0 is combat, 3 = appearance
+			
+			EQ2Packet* outapp = client->GetPlayer()->SwapEquippedItems(index1, index2, client->GetVersion(), type);
 
 			if(outapp)
 				client->QueuePacket(outapp);

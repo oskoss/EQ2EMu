@@ -264,6 +264,7 @@ extern MasterItemList master_item_list;
 #define ITEM_TAG_MYTHICAL				12
 
 #define ITEM_BROKER_TYPE_ANY			0xFFFFFFFF
+#define ITEM_BROKER_TYPE_ANY64BIT		0xFFFFFFFFFFFFFFFF
 #define ITEM_BROKER_TYPE_ADORNMENT		134217728
 #define ITEM_BROKER_TYPE_AMMO			1024
 #define ITEM_BROKER_TYPE_ATTUNEABLE		16384
@@ -293,6 +294,10 @@ extern MasterItemList master_item_list;
 #define ITEM_BROKER_TYPE_SPELLSCROLL	64
 #define ITEM_BROKER_TYPE_TINKERED		268435456
 #define ITEM_BROKER_TYPE_TRADESKILL		256
+
+#define ITEM_BROKER_TYPE_2H_CRUSH		17179869184
+#define ITEM_BROKER_TYPE_2H_PIERCE		34359738368
+#define ITEM_BROKER_TYPE_2H_SLASH		8589934592
 
 #define ITEM_BROKER_SLOT_ANY			0xFFFFFFFF
 #define ITEM_BROKER_SLOT_AMMO			65536
@@ -988,7 +993,7 @@ public:
 	Item* GetItemByName(const char *name);
 	ItemStatsValues* CalculateItemBonuses(int32 item_id, Entity* entity = 0);
 	ItemStatsValues* CalculateItemBonuses(Item* desc, Entity* entity = 0, ItemStatsValues* values = 0);
-	vector<Item*>* GetItems(string name, int32 itype, int32 ltype, int32 btype, int64 minprice, int64 maxprice, int8 minskill, int8 maxskill, string seller, string adornment, int8 mintier, int8 maxtier, int16 minlevel, int16 maxlevel, sint8 itemclass);
+	vector<Item*>* GetItems(string name, int64 itype, int32 ltype, int32 btype, int64 minprice, int64 maxprice, int8 minskill, int8 maxskill, string seller, string adornment, int8 mintier, int8 maxtier, int16 minlevel, int16 maxlevel, sint8 itemclass);
 	vector<Item*>* GetItems(map<string, string> criteria);
 	void AddItem(Item* item);
 	bool IsBag(int32 item_id);

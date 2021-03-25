@@ -3241,7 +3241,7 @@ void ClientList::RemoveConnection(EQStream* eqs) {
 		for (client_iter = client_list.begin(); client_iter != client_list.end(); client_iter++) {
 			client = *client_iter;
 			if (client->getConnection() == eqs)
-				client->Disconnect(false);
+				client->Disconnect(true);
 		}
 		MClients.releasereadlock(__FUNCTION__, __LINE__);
 	}

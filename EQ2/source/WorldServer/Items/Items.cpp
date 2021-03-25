@@ -88,7 +88,7 @@ MasterItemList::~MasterItemList(){
 	RemoveAll();
 }
 
-vector<Item*>* MasterItemList::GetItems(string name, int32 itype, int32 ltype, int32 btype, int64 minprice, int64 maxprice, int8 minskill, int8 maxskill, string seller, string adornment, int8 mintier, int8 maxtier, int16 minlevel, int16 maxlevel, sint8 itemclass){
+vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, int32 btype, int64 minprice, int64 maxprice, int8 minskill, int8 maxskill, string seller, string adornment, int8 mintier, int8 maxtier, int16 minlevel, int16 maxlevel, sint8 itemclass){
 	vector<Item*>* ret = new vector<Item*>;
 	map<int32,Item*>::iterator iter;
     Item* item = 0;
@@ -101,11 +101,12 @@ vector<Item*>* MasterItemList::GetItems(string name, int32 itype, int32 ltype, i
 	//	chkseller = seller.c_str();
 	//if(adornment.length() > 0)
 	//	chkadornment = adornment.c_str();
+	LogWrite(ITEM__WARNING, 0, "Item", "Get Items: %s (itype: %llu, ltype: %u, btype: %u, minskill: %u, maxskill: %u, mintier: %u, maxtier: %u, minlevel: %u, maxlevel: %u itemclass %i)", name.c_str(), itype, ltype, btype, minskill, maxskill, mintier, maxtier, minlevel, maxlevel, itemclass);
 	bool should_add = true;
 	for(iter = items.begin();iter != items.end(); iter++){
 		item = iter->second;
 		if(item){
-			if(itype != ITEM_BROKER_TYPE_ANY){
+			if(itype != ITEM_BROKER_TYPE_ANY && itype != ITEM_BROKER_TYPE_ANY64BIT){
 				should_add = false;
 				switch(itype){
 					case ITEM_BROKER_TYPE_ADORNMENT:{
@@ -251,6 +252,18 @@ vector<Item*>* MasterItemList::GetItems(string name, int32 itype, int32 ltype, i
 					case ITEM_BROKER_TYPE_TRADESKILL:{
 						if(item->IsTradeskill())
 							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_TYPE_2H_CRUSH:{
+						should_add = item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && item->generic_info.skill_req1 == SKILL_ID_STAFF;
+						break;
+					}
+					case ITEM_BROKER_TYPE_2H_PIERCE:{
+						should_add = item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && item->generic_info.skill_req1 == SKILL_ID_GREATSPEAR;
+						break;
+					}
+					case ITEM_BROKER_TYPE_2H_SLASH:{
+						should_add = item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && item->generic_info.skill_req1 == SKILL_ID_GREATSWORD;
 						break;
 					}
 				}
@@ -635,7 +648,8 @@ vector<Item*>* MasterItemList::GetItems(string name, int32 itype, int32 ltype, i
 				if(maxlevel > 0 && ((item->generic_info.adventure_default_level > 0 && item->generic_info.adventure_default_level > maxlevel) || (item->generic_info.tradeskill_default_level > 0 && item->generic_info.tradeskill_default_level > maxlevel)))
 					continue;
 			}
-			if(mintier > 0 && item->details.tier < mintier)
+			// mintier of 1 is 'ANY'
+			if(mintier > 1 && item->details.tier < mintier)
 				continue;
 			if(maxtier > 0 && item->details.tier > maxtier)
 				continue;
@@ -651,7 +665,7 @@ vector<Item*>* MasterItemList::GetItems(string name, int32 itype, int32 ltype, i
 
 vector<Item*>* MasterItemList::GetItems(map<string, string> criteria){
 	string name, seller, adornment;
-	int32 itype = 0xFFFFFFFF;
+	int64 itype = 0xFFFFFFFFFFFFFFFF;
 	int32 ltype = 0xFFFFFFFF;
 	int32 btype = 0xFFFFFFFF;
 	int64 minprice = 0;
@@ -691,7 +705,7 @@ vector<Item*>* MasterItemList::GetItems(map<string, string> criteria){
 	if(criteria.count("MAXLEVEL") > 0)
 		maxlevel = (int16)ParseIntValue(criteria["MAXLEVEL"]);
 	if(criteria.count("ITYPE") > 0)
-		itype = ParseIntValue(criteria["ITYPE"]);
+		itype = ParseLongLongValue(criteria["ITYPE"]);
 	if(criteria.count("LTYPE") > 0)
 		ltype = ParseIntValue(criteria["LTYPE"]);
 	if(criteria.count("BTYPE") > 0)
@@ -3910,6 +3924,12 @@ bool EquipmentItemList::CheckEquipSlot(Item* tmp, int8 slot){
 		if(tmp->slot_data[i] == slot){
 			Item* tmp_item = GetItem(tmp->slot_data[i]);
 			if(!tmp_item || tmp_item->details.item_id == 0){
+				if(slot == EQ2_SECONDARY_SLOT)
+				{
+					Item* primary = GetItem(EQ2_PRIMARY_SLOT);
+					if(primary && primary->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND)
+						continue;
+				}
 				MEquipmentItems.unlock();
 				return true;
 			}
@@ -3927,6 +3947,12 @@ int8 EquipmentItemList::GetFreeSlot(Item* tmp, int8 slot_id){
 		if(slot_id == 255 || slot == slot_id){
 			Item* tmp_item = GetItem(slot);
 			if(!tmp_item || tmp_item->details.item_id == 0){
+				if(slot == EQ2_SECONDARY_SLOT)
+				{
+					Item* primary = GetItem(EQ2_PRIMARY_SLOT);
+					if(primary && primary->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND)
+						continue;
+				}
 				MEquipmentItems.unlock();
 				return slot;
 			}

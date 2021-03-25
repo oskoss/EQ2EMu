@@ -2016,19 +2016,42 @@ void Player::SetEquippedItemAppearances(){
 	GetZone()->SendSpawnChanges(this);
 }
 
-EQ2Packet* Player::SwapEquippedItems(int8 slot1, int8 slot2, int16 version){
-	Item* item_from = equipment_list.items[slot1];
-	Item* item_to = equipment_list.items[slot2];
-	if(item_from && equipment_list.CanItemBeEquippedInSlot(item_from, slot2)){
+EQ2Packet* Player::SwapEquippedItems(int8 slot1, int8 slot2, int16 version, int16 equip_type){
+	EquipmentItemList* equipList = &equipment_list;
+	
+	// right now client seems to pass 3 for this? Not sure why when other fields has appearance equipment as type 1
+	if(equip_type == 3)
+		equipList = &appearance_equipment_list;
+	
+	Item* item_from = equipList->items[slot1];
+	Item* item_to = equipList->items[slot2];
+	if(item_from && equipList->CanItemBeEquippedInSlot(item_from, slot2)){
 		if(item_to){
-			if(!equipment_list.CanItemBeEquippedInSlot(item_to, slot1))
+			if(!equipList->CanItemBeEquippedInSlot(item_to, slot1))
 				return 0;
-			item_to->details.slot_id = slot1;
+		}
+		equipList->items[slot1] = nullptr;
+		equipList->SetItem(slot2, item_from);
+		if(item_to)
+		{
+			equipList->SetItem(slot1, item_to);
 			item_to->save_needed = true;
 		}
 		item_from->save_needed = true;
-		item_from->details.slot_id = slot2;
-		return equipment_list.serialize(version, this);
+		
+		if (GetClient())
+		{
+			//EquipmentItemList* equipList = &equipment_list;
+			
+			//if(appearance_type)
+			//	equipList = &appearance_equipment_list;
+			
+			if(item_to)
+				GetClient()->QueuePacket(item_to->serialize(version, false, this));
+			GetClient()->QueuePacket(item_from->serialize(version, false, this));
+			GetClient()->QueuePacket(item_list.serialize(this, version));
+		}
+		return equipList->serialize(version, this);
 	}
 	return 0;
 }

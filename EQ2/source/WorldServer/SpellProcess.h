@@ -385,7 +385,8 @@ public:
 
 	void SpellCannotStack(ZoneServer* zone, Client* client, Entity* caster, LuaSpell* lua_spell, LuaSpell* conflictSpell);
 
-	bool ProcessSpell(LuaSpell* spell, bool first_cast = true, const char* function = 0, SpellScriptTimer* timer = 0);
+	bool ProcessSpell(LuaSpell* spell, bool first_cast = true, const char* function = 0, SpellScriptTimer* timer = 0, bool all_targets = false);
+	std::string ApplyLuaFunction(LuaSpell* spell, bool first_cast, const char* function, SpellScriptTimer* timer, Spawn* altTarget = 0);
 
 	void AddActiveSpell(LuaSpell* spell);
 	static void AddSelfAndPet(LuaSpell* spell, Spawn* caster, bool onlyPet=false);

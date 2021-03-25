@@ -568,6 +568,21 @@ int32 ParseIntValue(string input){
 	return ret;
 }
 
+int64 ParseLongLongValue(string input){
+	int64 ret = 0xFFFFFFFFFFFFFFFF;
+	try{
+		if(input.length() > 0){
+#ifdef WIN32
+			ret = _strtoui64(input.c_str(), NULL, 10);
+#else
+			ret = strtoull(input.c_str(), 0, 10);
+#endif
+		}
+	}
+	catch(...){}
+	return ret;
+}
+
 map<string, string> TranslateBrokerRequest(string request){
 	map<string, string> ret;
 	string key;

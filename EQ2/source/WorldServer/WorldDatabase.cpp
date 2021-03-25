@@ -7405,7 +7405,7 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 		if(custom_spell)
 		{
 			if((lua_spell = lua_interface->GetSpell(lua_file.c_str())) == nullptr)
-			{		
+			{
 				LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u, '%s'), custom lua script not loaded, when attempting to load.", spell_id, tier, lua_file.c_str());
 				lua_interface->LoadLuaSpell(lua_file);
 			}
@@ -7458,6 +7458,9 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 		else if(db_spell_type == DB_TYPE_MAINTAINEDEFFECTS)
 		{
 			safe_delete(lua_spell);
+			if(!target_char_id)
+				continue;
+			
 			lua_spell = lua_interface->GetSpell(spell->GetSpellData()->lua_script.c_str());
 			if(lua_spell)
 				lua_spell->spell = spell;
