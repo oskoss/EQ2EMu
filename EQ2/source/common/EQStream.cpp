@@ -651,7 +651,10 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 				//EQApplicationPacket *ap = p->MakeApplicationPacket(app_opcode_size);
 				//InboundQueuePush(ap);
 
-				EQApplicationPacket* ap = p->MakeApplicationPacket(app_opcode_size);
+				MCombineQueueLock.lock();
+				EQProtocolPacket* p2 = ProcessEncryptedData(p->pBuffer, p->size, OP_Fragment);
+				MCombineQueueLock.unlock();
+				EQApplicationPacket* ap = p2->MakeApplicationPacket(2);
 				if (ap->version == 0)
 					ap->version = client_version;
 #ifdef WRITE_PACKETS
@@ -659,7 +662,9 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 #endif
 				//InboundQueuePush(ap);
 				LogWrite(PACKET__INFO, 0, "Packet", "Received unknown packet type, not adding to inbound queue");
+				DumpPacket(ap->pBuffer, ap->size);
 				safe_delete(ap);
+				safe_delete(p2);
 				//SendDisconnect();
 				break;
 		}
