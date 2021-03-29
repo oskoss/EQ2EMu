@@ -1736,14 +1736,22 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if (item->generic_info.max_charges == 0 || item->generic_info.max_charges == 0xFFFF)
 						lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
 					else {
-						if (item->generic_info.display_charges > 0) {
+						if (item->details.count > 0) {
 							lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
-							item->generic_info.display_charges -= 1;
-							item->save_needed = true;
-							client->QueuePacket(item->serialize(client->GetVersion(), false, client->GetPlayer()));
+							if(!item->generic_info.display_charges && item->generic_info.max_charges == 1)
+								client->RemoveItem(item, 1); // end of a set of charges OR an item that uses a stack count of actual item quantity
+							else
+							{
+								item->details.count--; // charges
+								item->save_needed = true;
+								client->QueuePacket(item->serialize(client->GetVersion(), false, client->GetPlayer()));
+							}
 						}
 						else
-							LogWrite(PLAYER__ERROR, 0, "Command", "%s: Item %s (%i) attempted to be used, however display_charges is 0.", client->GetPlayer()->GetName(), item->name.c_str(), item->details.item_id);
+						{
+							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Item is out of charges.");
+							LogWrite(PLAYER__ERROR, 0, "Command", "%s: Item %s (%i) attempted to be used, however details.count is 0.", client->GetPlayer()->GetName(), item->name.c_str(), item->details.item_id);
+						}
 					}
 				}
 			}
@@ -3658,6 +3666,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[1][0] && sep->IsNumber(0) && sep->IsNumber(1)){
 				int32 item_id = atoul(sep->arg[0]);
 				int16 quantity = atoul(sep->arg[1]);
+				Item* item = master_item_list.GetItem(item_id);
+				if(item && item->generic_info.max_charges > 1)
+					quantity = item->generic_info.max_charges;
 				client->AddItem(item_id, quantity);
 			}
 			break;

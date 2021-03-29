@@ -160,7 +160,7 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, i
 						break;
 					}
 					case ITEM_BROKER_TYPE_CRUSHWEAPON:{
-						if(item->IsCrushWeapon())
+						if(item->IsCrushWeapon() && (item->weapon_info->wield_type == ITEM_WIELD_TYPE_DUAL || item->weapon_info->wield_type == ITEM_WIELD_TYPE_SINGLE))
 							should_add = true;
 						break;
 					}
@@ -200,7 +200,7 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, i
 						break;
 					}
 					case ITEM_BROKER_TYPE_PIERCEWEAPON:{
-						if(item->IsPierceWeapon())
+						if(item->IsPierceWeapon() && (item->weapon_info->wield_type == ITEM_WIELD_TYPE_DUAL || item->weapon_info->wield_type == ITEM_WIELD_TYPE_SINGLE))
 							should_add = true;
 						break;
 					}
@@ -235,7 +235,7 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, i
 						break;
 					}
 					case ITEM_BROKER_TYPE_SLASHWEAPON:{
-						if(item->IsSlashWeapon())
+						if(item->IsSlashWeapon() && (item->weapon_info->wield_type == ITEM_WIELD_TYPE_DUAL || item->weapon_info->wield_type == ITEM_WIELD_TYPE_SINGLE))
 							should_add = true;
 						break;
 					}
@@ -619,7 +619,7 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, i
 						break;
 					}
 					default: {
-						LogWrite(ITEM__ERROR, 0, "Item", "Unknown item broker stat type %u", btype);
+						LogWrite(ITEM__DEBUG, 0, "Item", "Unknown item broker stat type %u", btype);
 						LogWrite(ITEM__DEBUG, 0, "Item", "If you have a client before the new expansion this may be the reason.  Please be patient while we update items to support the new client.", btype);
 						break;
 					}
@@ -653,10 +653,14 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, i
 				continue;
 			if(maxtier > 0 && item->details.tier > maxtier)
 				continue;
+
+			/* these skill values are not fields provided in the UI beyond CLASSIC
+			** They are also not in line with skill_min, they provide a scale of 0-6, obselete is 0, 6 is red (cannot be used)
 			if(minskill > 0 && item->generic_info.skill_min < minskill)
 				continue;
 			if(maxskill > 0 && item->generic_info.skill_min > maxskill)
 				continue;
+			*/
 			ret->push_back(item);
 		}
 	}

@@ -2186,9 +2186,10 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 	int8 race_id = create->getType_int8_ByName("race");
 	int8 orig_class_id = create->getType_int8_ByName("class");//Normal server
 	int8 class_id = orig_class_id;
-	if ( create->GetVersion() <= 546 )
+	if ( create->GetVersion() <= 546 ) {
 		class_id = 0; //Classic Server Only
-
+	}
+	
 	int8 gender_id = create->getType_int8_ByName("gender");
 	sint16 auto_admin_status = 0;
 
@@ -2212,15 +2213,17 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 
 	auto_admin_status = GetHighestCharacterAdminStatus(loginID);
 
-	if( auto_admin_status > 0 && auto_admin_gm )
+	if( auto_admin_status > 0 && auto_admin_gm ) {
 		LogWrite(WORLD__WARNING, 0, "World", "New character '%s' granted GM status (%i) from accountID: %i", create->getType_EQ2_16BitString_ByName("name").data.c_str(), auto_admin_status, loginID);
+	}
 	else if( auto_admin_players )
 	{
 		auto_admin_status = rule_manager.GetGlobalRule(R_World, AutoAdminStatusValue)->GetSInt16();
 		LogWrite(WORLD__DEBUG, 0, "World", "New character '%s' granted AutoAdminPlayer status: %i", create->getType_EQ2_16BitString_ByName("name").data.c_str(), auto_admin_status);
 	}
-	else
+	else {
 		auto_admin_status = 0;
+	}
 
 	string create_char = string("Insert into characters (account_id, server_id, name, race, class, gender, deity, body_size, body_age, soga_wing_type, soga_chest_type, soga_legs_type, soga_hair_type, soga_model_type, legs_type, chest_type, wing_type, hair_type, model_type, facial_hair_type, soga_facial_hair_type, created_date, last_saved, admin_status) values(%i, %i, '%s', %i, %i, %i, %i, %f, %f, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, now(), unix_timestamp(), %i)");
 
@@ -2229,7 +2232,7 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 						create->getType_int32_ByName("server_id"), 
 						create->getType_EQ2_16BitString_ByName("name").data.c_str(), 
 						race_id, 
-						orig_class_id,
+						class_id,
 						gender_id, 
 						create->getType_int8_ByName("deity"), 
 						create->getType_float_ByName("body_size"), 
@@ -7683,7 +7686,10 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			if(target_char_id == 0xFFFFFFFF && player->HasPet())
 				targetID = player->GetPet()->GetID();
 			else if(target_char_id == player->GetCharacterID())
+			{
 				targetID = player->GetID();
+				tmpClient = player->GetClient();
+			}
 			else if((tmpClient = zone_list.GetClientByCharID(target_char_id)) != nullptr && tmpClient->GetPlayer())
 				targetID = tmpClient->GetPlayer()->GetID();
 			
