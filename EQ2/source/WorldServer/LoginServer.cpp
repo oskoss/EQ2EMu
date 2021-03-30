@@ -1024,9 +1024,11 @@ int32 LoginServer::DetermineCharacterLoginRequest ( UsertoWorldRequest_Struct* u
 			ipv4addr = ntohl(myaddr.sin_addr.s_addr);
 
 	#else
-		inet_pton(AF_INET, utwr->ip_address, &ipv4addr);
+		result = inet_pton(AF_INET, utwr->ip_address, &ipv4addr);
+		if(result)
+			ipv4addr = ntohl(ipv4addr);
 	#endif
-	if((result > 0 && (ipv4addr = ntohl(ipv4addr)) && IsPrivateAddress(ipv4addr)) || (strcmp(net.GetWorldAddress(), utwr->ip_address)==0) && (strlen(net.GetInternalWorldAddress())>0))
+	if((result > 0 && IsPrivateAddress(ipv4addr)) || (strcmp(net.GetWorldAddress(), utwr->ip_address)==0) && (strlen(net.GetInternalWorldAddress())>0))
 		strcpy(utwrs->ip_address, net.GetInternalWorldAddress());
 	else
 		strcpy(utwrs->ip_address, net.GetWorldAddress());
