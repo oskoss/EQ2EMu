@@ -33,6 +33,7 @@ using namespace std;
 #ifdef WIN32
 #include <process.h>
 #include <WinSock2.h>
+#include <Ws2tcpip.h>
 #include <windows.h>
 
 #define strncasecmp	_strnicmp
@@ -1012,11 +1013,26 @@ int32 LoginServer::DetermineCharacterLoginRequest ( UsertoWorldRequest_Struct* u
 	if(status == -2)
 	utwrs->response = -2;
 	*/
-	//printf("Response is %i for %i\n",utwrs->response,id);
-	if((strcmp(net.GetWorldAddress(), utwr->ip_address)==0) && (strlen(net.GetInternalWorldAddress())>0))
+	//printf("Response is %i for %i\n",utwrs->response,id);struct sockaddr_in sa;
+	int32 ipv4addr = 0;
+	int result = 0;
+	#ifdef WIN32
+		struct sockaddr_in myaddr;
+		ZeroMemory(&myaddr, sizeof(myaddr));
+		result = InetPton(AF_INET, utwr->ip_address, &(myaddr.sin_addr));
+		if(result)
+			ipv4addr = ntohl(myaddr.sin_addr.s_addr);
+
+	#else
+		inet_pton(AF_INET, utwr->ip_address, &ipv4addr);
+	#endif
+	if((result > 0 && (ipv4addr = ntohl(ipv4addr)) && IsPrivateAddress(ipv4addr)) || (strcmp(net.GetWorldAddress(), utwr->ip_address)==0) && (strlen(net.GetInternalWorldAddress())>0))
 		strcpy(utwrs->ip_address, net.GetInternalWorldAddress());
 	else
 		strcpy(utwrs->ip_address, net.GetWorldAddress());
+	
+	LogWrite(CCLIENT__INFO, 0, "World", "New client login attempt from %s, providing %s as the world server address.",utwr->ip_address, utwrs->ip_address );
+
 	utwrs->port = net.GetWorldPort();
 	utwrs->worldid = utwr->worldid;
 	SendPacket(outpack);

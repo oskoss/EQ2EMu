@@ -963,19 +963,21 @@ bool TCPConnection::ProcessReceivedDataAsPackets(char* errbuf) {
 	if (errbuf)
 		errbuf[0] = 0;
 	sint32 base = 0;
-	sint32 size = 7;
+	sint32 size = 0;
 	uchar* buffer;
+	sint32 sizeReq = sizeof(TCPNetPacket_Struct);
 	ServerPacket* pack = 0;
 	while ((recvbuf_used - base) >= size) {
 		TCPNetPacket_Struct* tnps = (TCPNetPacket_Struct*) &recvbuf[base];
 		buffer = tnps->buffer;
 		size = tnps->size;
-		if (size >= MaxTCPReceiveBufferSize) {
+
+		if (size < sizeReq || recvbuf_used < sizeReq || size >= MaxTCPReceiveBufferSize) {
 #if TCPN_DEBUG_Memory >= 1
 			cout << "TCPConnection[" << GetID() << "]::ProcessReceivedDataAsPackets(): size[" << size << "] >= MaxTCPReceiveBufferSize" << endl;
 #endif
 			if (errbuf)
-				snprintf(errbuf, TCPConnection_ErrorBufferSize, "TCPConnection::ProcessReceivedDataAsPackets(): size >= MaxTCPReceiveBufferSize");
+				snprintf(errbuf, TCPConnection_ErrorBufferSize, "TCPConnection::ProcessReceivedDataAsPackets(): size provided %i, recvbuf_used %i, checks failed: struct_size < %i || recvbuf_used < sizeReq || size >= MaxTCPReceiveBufferSize", size, recvbuf_used, sizeReq);
 			return false;
 		}
 		if ((recvbuf_used - base) >= size) {
@@ -986,12 +988,28 @@ bool TCPConnection::ProcessReceivedDataAsPackets(char* errbuf) {
 			// read headers
 			pack->opcode = tnps->opcode;
 			if (tnps->flags.compressed) {
+				sizeReq += 4;
+				if(size < sizeReq || recvbuf_used < sizeReq)
+				{		
+					if (errbuf)
+						snprintf(errbuf, TCPConnection_ErrorBufferSize, "TCPConnection::ProcessReceivedDataAsPackets(Flags.Compressed): size provided %i, recvbuf_used %i, checks failed: struct_size < %i || recvbuf_used < sizeReq", size, recvbuf_used, sizeReq);
+					safe_delete(pack);
+					return false;
+				}
 				pack->compressed = true;
 				pack->InflatedSize = *((sint32*)buffer);
 				pack->size -= 4;
 				buffer += 4;
 			}
 			if (tnps->flags.destination) {
+				sizeReq += 4;
+				if(size < sizeReq || recvbuf_used < sizeReq)
+				{		
+					if (errbuf)
+						snprintf(errbuf, TCPConnection_ErrorBufferSize, "TCPConnection::ProcessReceivedDataAsPackets(Flags.Destination): size provided %i, recvbuf_used %i, checks failed: struct_size < %i || recvbuf_used < sizeReq", size, recvbuf_used, sizeReq);
+					safe_delete(pack);
+					return false;
+				}
 				pack->destination = *((sint32*)buffer);
 				pack->size -= 4;
 				buffer += 4;
@@ -1005,6 +1023,14 @@ bool TCPConnection::ProcessReceivedDataAsPackets(char* errbuf) {
 					{
 						pack->pBuffer = new uchar[pack->InflatedSize];
 						pack->size = InflatePacket(buffer, pack->size, pack->pBuffer, pack->InflatedSize);
+						if(!pack->size)
+						{
+							if (errbuf)
+								snprintf(errbuf, TCPConnection_ErrorBufferSize, "TCPConnection::ProcessReceivedDataAsPackets(InflatePacket): size provided %i, recvbuf_used: %i, sizeReq: %i, could not inflate packet", size, recvbuf_used, sizeReq);
+
+							safe_delete(pack);
+							return false;
+						}
 					}
 					else
 					{
