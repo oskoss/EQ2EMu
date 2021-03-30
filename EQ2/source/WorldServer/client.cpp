@@ -3983,7 +3983,7 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 	char* new_zone_ip = 0;
 	struct in_addr in;
 	in.s_addr = this->GetIP();
-	if (strncmp(inet_ntoa(in), "192.168", 7) == 0 && strlen(net.GetInternalWorldAddress()) > 0)
+	if (IsPrivateAddress(this->GetIP()) && strlen(net.GetInternalWorldAddress()) > 0)
 		new_zone_ip = net.GetInternalWorldAddress();
 	else
 		new_zone_ip = net.GetWorldAddress();
