@@ -120,6 +120,8 @@ Player::Player(){
 	m_playerSpawnHistoryRequired.SetName("Player::player_spawn_history_required");
 	gm_vision = false;
 	SetSaveSpellEffects(true);
+	reset_mentorship = false;
+	all_spells_locked = false;
 }
 Player::~Player(){
 	SetSaveSpellEffects(true);
@@ -2367,6 +2369,7 @@ void Player::AddSpellBookEntry(int32 spell_id, int8 tier, sint32 slot, int32 typ
 	spell->player = this;
 	spell->visible = true;
 	spell->in_use = false;
+	spell->in_remiss = false;
 	MSpellsBook.lock();
 	spells.push_back(spell);
 	MSpellsBook.unlock();
@@ -2675,6 +2678,8 @@ void Player::LockAllSpells() {
 			RemoveSpellStatus((*itr), SPELL_STATUS_LOCK, false);
 	}
 
+	all_spells_locked = true;
+
 	MSpellsBook.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -2685,12 +2690,23 @@ void Player::UnlockAllSpells(bool modify_recast, Spell* exception) {
 		exception_spell_id = exception->GetSpellID();
 	MSpellsBook.writelock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
+		MaintainedEffects* effect = 0;
+		if((effect = GetMaintainedSpell((*itr)->spell_id)) && effect->spell->spell->GetSpellData()->duration_until_cancel)
+			continue;
+
 		if ((*itr)->in_use == false && 
 			 (((*itr)->spell_id != exception_spell_id || 
 			 (*itr)->timer > 0 && (*itr)->timer != exception->GetSpellData()->linked_timer)
 		&& (*itr)->type != SPELL_BOOK_TYPE_TRADESKILL))
 			AddSpellStatus((*itr), SPELL_STATUS_LOCK, modify_recast);
+		else if((*itr)->in_remiss)
+		{
+			AddSpellStatus((*itr), SPELL_STATUS_LOCK);
+			(*itr)->in_remiss = false;
+		}
 	}
+
+	all_spells_locked = false;
 
 	MSpellsBook.releasewritelock(__FUNCTION__, __LINE__);
 }
@@ -2723,7 +2739,10 @@ void Player::UnlockSpell(Spell* spell) {
 		if (spell2->spell_id == spell->GetSpellID() || (spell->GetSpellData()->linked_timer > 0 && spell->GetSpellData()->linked_timer == spell2->timer))
 		{
 			spell2->in_use = false;
-			AddSpellStatus(spell2, SPELL_STATUS_LOCK);
+			if(all_spells_locked)
+				spell2->in_remiss = true;
+			else
+				AddSpellStatus(spell2, SPELL_STATUS_LOCK);
 		}
 	}
 	MSpellsBook.releasewritelock(__FUNCTION__, __LINE__);
@@ -6602,4 +6621,60 @@ void Player::SaveSpellEffects()
 	}
 	MMaintainedSpells.releasereadlock(__FUNCTION__, __LINE__);
 	MSpellEffects.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+void Player::MentorTarget()
+{
+	if(client->GetPlayer()->GetGroupMemberInfo() && client->GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id)
+	{
+		client->GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id = 0;
+		reset_mentorship = true;
+		client->Message(CHANNEL_COMMAND_TEXT, "You stop mentoring, and return to level %u.", client->GetPlayer()->GetLevel());
+	}
+	else if(!reset_mentorship && client->GetPlayer()->GetTarget())
+	{
+		if(client->GetPlayer()->GetTarget()->IsPlayer())
+		{
+			Player* tmpPlayer = (Player*)client->GetPlayer()->GetTarget();
+			if(tmpPlayer->GetGroupMemberInfo() && tmpPlayer->GetGroupMemberInfo()->mentor_target_char_id)
+			{
+				client->Message(CHANNEL_COMMAND_TEXT, "You cannot mentor %s at this time.",tmpPlayer->GetName());
+				return;
+			}
+			if(client->GetPlayer()->group_id > 0 && client->GetPlayer()->GetTarget()->group_id == client->GetPlayer()->group_id)
+			{
+				if(client->GetPlayer()->GetGroupMemberInfo() && !client->GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id && 
+				client->GetPlayer()->GetZone() == client->GetPlayer()->GetTarget()->GetZone())
+				{
+					SetMentorStats(client->GetPlayer()->GetTarget()->GetLevel(), tmpPlayer->GetCharacterID());
+					client->Message(CHANNEL_COMMAND_TEXT, "You are now mentoring %s, reducing your effective level to %u.",client->GetPlayer()->GetTarget()->GetName(), client->GetPlayer()->GetTarget()->GetLevel());
+				}
+			}
+		}
+	}
+}
+
+void Player::SetMentorStats(int32 effective_level, int32 target_char_id)
+{
+	if(client->GetPlayer()->GetGroupMemberInfo())
+		client->GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id = target_char_id;
+	InfoStruct* info = GetInfoStruct();
+	info->set_effective_level(effective_level);
+	client->GetPlayer()->SetTotalHPBase(effective_level * effective_level * 2 + 40);
+	client->GetPlayer()->SetTotalPowerBase((sint32)(effective_level * effective_level * 2.1 + 45));
+	client->GetPlayer()->CalculateBonuses();
+	client->GetPlayer()->SetHP(GetTotalHP());
+	client->GetPlayer()->SetPower(GetTotalPower());
+	info->set_agi_base(effective_level * 2 + 15);
+	info->set_intel_base(effective_level * 2 + 15);
+	info->set_wis_base(effective_level * 2 + 15);
+	info->set_str_base(effective_level * 2 + 15);
+	info->set_sta_base(effective_level * 2 + 15);
+	info->set_cold_base((int16)(effective_level * 1.5 + 10));
+	info->set_heat_base((int16)(effective_level * 1.5 + 10));
+	info->set_disease_base((int16)(effective_level * 1.5 + 10));
+	info->set_mental_base((int16)(effective_level * 1.5 + 10));
+	info->set_magic_base((int16)(effective_level * 1.5 + 10));
+	info->set_divine_base((int16)(effective_level * 1.5 + 10));
+	info->set_poison_base((int16)(effective_level * 1.5 + 10));
 }

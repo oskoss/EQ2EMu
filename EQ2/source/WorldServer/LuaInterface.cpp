@@ -273,6 +273,8 @@ bool LuaInterface::LoadLuaSpell(const char* name) {
 		spell->MSpellTargets.SetName("LuaSpell.MSpellTargets");
 		spell->cancel_after_all_triggers = false;
 		spell->num_triggers = 0;
+		spell->num_calls = 0;
+		spell->is_recast_timer = false;
 		spell->had_triggers = false;
 		spell->had_dmg_remaining = false;
 		spell->slot_pos = 0;
@@ -1847,6 +1849,8 @@ LuaSpell* LuaInterface::GetSpell(const char* name)  {
 		new_spell->MSpellTargets.SetName("LuaSpell.MSpellTargets");
 		new_spell->cancel_after_all_triggers = false;
 		new_spell->num_triggers = 0;
+		new_spell->num_calls = 0;
+		new_spell->is_recast_timer = false;
 		new_spell->had_triggers = false;
 		new_spell->had_dmg_remaining = false;
 		new_spell->slot_pos = 0;

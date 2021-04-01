@@ -814,9 +814,22 @@ void Client::SendCharInfo() {
 	if (version > 546)
 		ClientPacketFunctions::SendHousingList(this);
 	
+	bool groupMentor = false;
 	GetPlayer()->group_id = rejoin_group_id;
 	if(!world.RejoinGroup(this, rejoin_group_id))
 		GetPlayer()->group_id = 0;
+	else
+	{
+		Entity* ent = world.GetGroupManager()->IsPlayerInGroup(rejoin_group_id, GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id);
+		if(ent && ent->IsPlayer())
+		{
+			GetPlayer()->SetMentorStats(ent->GetLevel(), ent->GetID());
+			groupMentor = true;
+		}
+	}
+
+	if(!groupMentor)
+		GetPlayer()->SetMentorStats(GetPlayer()->GetLevel(), 0);
 
 	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_MAINTAINEDEFFECTS);
 	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_SPELLEFFECTS);
@@ -2969,6 +2982,8 @@ bool Client::Process(bool zone_process) {
 	if (pos_update.Check())
 	{
 		ProcessStateCommands();
+		
+		GetPlayer()->ResetMentorship(); // check if we need to asynchronously reset mentorship
 
 		if(GetPlayer()->GetRegionMap())
 			GetPlayer()->GetRegionMap()->TicRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
@@ -3981,8 +3996,6 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 	Save();
 
 	char* new_zone_ip = 0;
-	struct in_addr in;
-	in.s_addr = this->GetIP();
 	if (IsPrivateAddress(this->GetIP()) && strlen(net.GetInternalWorldAddress()) > 0)
 		new_zone_ip = net.GetInternalWorldAddress();
 	else
@@ -4186,6 +4199,10 @@ void Client::HandleVerbRequest(EQApplicationPacket* app) {
 						delete_commands.push_back(player->CreateEntityCommand("kick from group", 10000, "kickfromgroup", "", 0, 0));
 						delete_commands.push_back(player->CreateEntityCommand("make group leader", 10000, "makeleader", "", 0, 0));
 					}
+					if(spawn->IsPlayer() && !player->GetGroupMemberInfo()->mentor_target_char_id)
+						delete_commands.push_back(player->CreateEntityCommand("Mentor", 10000, "mentor", "", 0, 0));
+					else if(spawn->IsPlayer() && player->GetGroupMemberInfo()->mentor_target_char_id == ((Player*)spawn)->GetCharacterID())
+						delete_commands.push_back(player->CreateEntityCommand("Stop Mentoring", 10000, "unmentor", "", 0, 0));
 				}
 				else if (!player->GetGroupMemberInfo() || (player->GetGroupMemberInfo()->leader && world.GetGroupManager()->GetGroupSize(player->GetGroupMemberInfo()->group_id) < 6))
 					delete_commands.push_back(player->CreateEntityCommand("invite to group", 10000, "invite", "", 0, 0));

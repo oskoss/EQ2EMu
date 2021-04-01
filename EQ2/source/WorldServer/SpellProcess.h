@@ -144,6 +144,9 @@ struct RecastTimer{
 	Client*			client;
 	Spell*			spell;
 	Timer*			timer;
+	int32			spell_id;
+	int32			linked_timer;
+	int32			type_group_spell_id;
 };
 
 /// <summary> Handles all spell casts for a zone, only 1 SpellProcess per zone </summary>
@@ -268,7 +271,7 @@ public:
 	/// <summary>Removes the timers for the given spawn</summary>
 	/// <param name='spawn'>Spawn to remove the timers for</param>
 	/// <param name='remove_all'>Remove all timers (cast, recast, active, queue, interrupted)? If false only cast timers are removed</param>
-	void RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all = false, bool delete_recast = true, bool call_expire_function = true);
+	void RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all = false, bool delete_recast = false, bool call_expire_function = true);
 
 	/// <summary>Sets the recast timer for the spell </summary>
 	/// <param name='spell'>The spell to set the recast for</param>

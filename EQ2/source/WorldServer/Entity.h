@@ -1666,14 +1666,6 @@ public:
 
 
 	bool SetInfoStructString(std::string field, std::string value);
-	bool SetInfoStructInt8(std::string field, int8 value);
-	bool SetInfoStructInt16(std::string field, int16 value);
-	bool SetInfoStructInt32(std::string field, int32 value);
-	bool SetInfoStructInt64(std::string field, int64 value);
-	bool SetInfoStructSInt8(std::string field, sint8 value);
-	bool SetInfoStructSInt16(std::string field, sint16 value);
-	bool SetInfoStructSInt32(std::string field, sint32 value);
-	bool SetInfoStructSInt64(std::string field, sint64 value);
 	bool SetInfoStructUInt(std::string field, int64 value);
 	bool SetInfoStructSInt(std::string field, sint64 value);
 	bool SetInfoStructFloat(std::string field, float value);

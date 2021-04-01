@@ -63,6 +63,7 @@ bool PlayerGroup::AddMember(Entity* member) {
 		gmi->client = member->GetZone()->GetClientBySpawn(member);
 	else
 		gmi->client = 0;
+	gmi->mentor_target_char_id = 0;
 
 	member->SetGroupMemberInfo(gmi);
 	member->group_id = gmi->group_id;
@@ -82,7 +83,7 @@ bool PlayerGroup::RemoveMember(Entity* member) {
 	}
 
 	bool ret = false;
-
+	
 	member->SetGroupMemberInfo(0);
 	MGroupMembers.writelock();
 	deque<GroupMemberInfo*>::iterator erase_itr = m_members.end();
@@ -90,6 +91,13 @@ bool PlayerGroup::RemoveMember(Entity* member) {
 	for (itr = m_members.begin(); itr != m_members.end(); itr++) {
 		if (gmi == *itr)
 			erase_itr = itr;
+		
+		if(member->IsPlayer() && (*itr)->mentor_target_char_id == ((Player*)member)->GetCharacterID() && (*itr)->client)
+		{
+			(*itr)->mentor_target_char_id = 0;
+			(*itr)->client->GetPlayer()->EnableResetMentorship();
+		}
+
 		if ((*itr)->client)
 			(*itr)->client->GetPlayer()->SetCharSheetChanged(true);
 	}
@@ -115,6 +123,12 @@ void PlayerGroup::Disband() {
 			if ((*itr)->member->IsBot())
 				((Bot*)(*itr)->member)->Camp();
 		}
+		if((*itr)->mentor_target_char_id && (*itr)->client)
+		{
+			(*itr)->mentor_target_char_id = 0;
+			(*itr)->client->GetPlayer()->EnableResetMentorship();
+		}
+
 		if ((*itr)->client)
 			(*itr)->client->GetPlayer()->SetCharSheetChanged(true);
 
@@ -217,6 +231,15 @@ bool PlayerGroupManager::RemoveGroupMember(int32 group_id, Entity* member) {
 	bool ret = false;
 	bool remove = false;
 	Client* client = 0;
+	if(member->GetGroupMemberInfo()->mentor_target_char_id)
+	{
+		if(member->IsPlayer())
+		{
+			Player* tmpPlayer = (Player*)member;
+			member->GetGroupMemberInfo()->mentor_target_char_id = 0;
+			tmpPlayer->EnableResetMentorship();
+		}
+	}
 	MGroups.writelock(__FUNCTION__, __LINE__);
 
 	if (m_groups.count(group_id) > 0) {
@@ -749,6 +772,28 @@ bool PlayerGroupManager::IsInGroup(int32 group_id, Entity* member) {
 		for (int8 i = 0; i < members->size(); i++) {
 			if (member == members->at(i)->member) {
 				ret = true;
+				break;
+			}
+		}
+		m_groups[group_id]->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+	}
+
+	MGroups.releasereadlock(__FUNCTION__, __LINE__);
+
+	return ret;
+}
+
+Entity* PlayerGroupManager::IsPlayerInGroup(int32 group_id, int32 character_id) {
+	Entity* ret = nullptr;
+
+	MGroups.readlock(__FUNCTION__, __LINE__);
+
+	if (m_groups.count(group_id) > 0) {
+		m_groups[group_id]->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+		deque<GroupMemberInfo*>* members = m_groups[group_id]->GetMembers();
+		for (int8 i = 0; i < members->size(); i++) {
+			if (members->at(i)->member && members->at(i)->member->IsPlayer() && character_id == ((Player*)members->at(i)->member)->GetCharacterID()) {
+				ret = members->at(i)->member;
 				break;
 			}
 		}

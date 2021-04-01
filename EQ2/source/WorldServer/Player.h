@@ -162,6 +162,7 @@ struct SpellBookEntry{
 	int32	timer;
 	bool	save_needed;
 	bool	in_use;
+	bool	in_remiss;
 	Player* player;
 	bool visible;
 };
@@ -976,7 +977,26 @@ public:
 	// bot index, spawn id
 	map<int32, int32> SpawnedBots;
 	bool StopSaveSpellEffects() { return stop_save_spell_effects; }
+
+	void MentorTarget();
+	void SetMentorStats(int32 effective_level, int32 target_char_id = 0);
+
+	bool ResetMentorship() { 
+		bool mentorship_status = reset_mentorship;
+		if(mentorship_status)
+		{
+			SetMentorStats(GetLevel());
+		}
+		reset_mentorship = false;
+		return mentorship_status;
+	}
+
+	void EnableResetMentorship()
+	{
+		reset_mentorship = true;
+	}
 private:
+	bool reset_mentorship;
 	bool range_attack;
 	int16 last_movement_activity;
 	bool returning_from_ld;
@@ -1101,6 +1121,8 @@ private:
 	map<int32, Spawn*>	player_spawn_id_map;
 	map<Spawn*, int32>	player_spawn_reverse_id_map;
 	map<Spawn*, int8>	player_removed_spawns;
+
+	bool all_spells_locked;
 };
 #pragma pack()
 #endif

@@ -896,6 +896,9 @@ private:
 
 #define COMMAND_FROMBROKER           	527
 
+#define COMMAND_MENTOR		           	528
+#define COMMAND_UNMENTOR		        529
+
 
 #define GET_AA_XML						750
 #define ADD_AA							751

@@ -81,6 +81,7 @@ struct LuaSpell{
 	lua_State*		state;
 	string			file_name;
 	Timer			timer;
+	bool			is_recast_timer;
 	int16			num_calls;
 	int16           num_triggers;
 	int8            slot_pos;

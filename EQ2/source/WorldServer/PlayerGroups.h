@@ -45,6 +45,7 @@ struct GroupMemberInfo {
 	bool	leader;
 	Client*	client;
 	Entity*	member;
+	int32	mentor_target_char_id;
 };
 
 /// <summary>Represents a players group in game</summary>
@@ -172,6 +173,7 @@ public:
 	void UpdateGroupBuffs();
 
 	bool IsInGroup(int32 group_id, Entity* member);
+	Entity* IsPlayerInGroup(int32 group_id, int32 char_id);
 	// TODO: Any function below this comment
 	bool IsSpawnInGroup(int32 group_id, string name); // used in follow
 	Player* GetGroupLeader(int32 group_id);

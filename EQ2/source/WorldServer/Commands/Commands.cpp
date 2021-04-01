@@ -4976,8 +4976,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						}
 					break;
 				}
-
-
+		case COMMAND_UNMENTOR:
+		case COMMAND_MENTOR: {
+			client->GetPlayer()->MentorTarget();
+			break;
+		}
 		default: 
 		{
 			LogWrite(COMMAND__WARNING, 0, "Command", "Unhandled command: %s", command->command.data.c_str());
