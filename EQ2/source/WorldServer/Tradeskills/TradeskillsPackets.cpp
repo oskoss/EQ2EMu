@@ -84,7 +84,13 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 				firstID = *itr;
 
 			item = master_item_list.GetItem(*itr);
-
+			if(!item)
+			{
+				LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error creating packet to client missing item %u", *itr);
+				client->Message(CHANNEL_COLOR_RED, "Error producing create recipe packet!  Recipe is trying to find item %u, but it is missing!", *itr);
+				safe_delete(packet);
+				return;
+			}
 			packet->setArrayDataByName("primary_component", item->name.c_str(), i);
 			packet->setArrayDataByName("primary_item_id", (*itr), i);
 			packet->setArrayDataByName("primary_icon", item->details.icon, i);
