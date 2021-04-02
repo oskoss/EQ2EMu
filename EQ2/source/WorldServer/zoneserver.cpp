@@ -7861,17 +7861,17 @@ void ZoneServer::AddPendingSpawnRemove(int32 id)
 
 void ZoneServer::ProcessSpawnRemovals()
 {
+	MSpawnList.writelock(__FUNCTION__, __LINE__);
 	MPendingSpawnRemoval.writelock(__FUNCTION__, __LINE__);
 	if (m_pendingSpawnRemove.size() > 0) {
-		MSpawnList.writelock(__FUNCTION__, __LINE__);
 		vector<int32>::iterator itr2;
 		for (itr2 = m_pendingSpawnRemove.begin(); itr2 != m_pendingSpawnRemove.end(); itr2++) 
 			spawn_list.erase(*itr2);
 
 		m_pendingSpawnRemove.clear();
-		MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 	}
 	MPendingSpawnRemoval.releasewritelock(__FUNCTION__, __LINE__);
+	MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 void ZoneServer::AddSpawnToGroup(Spawn* spawn, int32 group_id)

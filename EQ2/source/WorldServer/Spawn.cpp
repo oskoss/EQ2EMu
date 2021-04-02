@@ -2761,7 +2761,6 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		}
 	}
 
-	MMovementLoop.lock();
 	Spawn* followTarget = GetZone()->GetSpawnByID(m_followTarget, isSpawnListLocked);
 	if (!followTarget && m_followTarget > 0)
 		m_followTarget = 0;
@@ -2770,7 +2769,6 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		// Need to clear m_followTarget before the zoneserver deletes it
 		if (followTarget->GetHP() <= 0) {
 			followTarget = 0;
-			MMovementLoop.unlock();
 			return;
 		}
 
@@ -2809,124 +2807,132 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		}
 	}
 
+	bool movementCase = false;
 	// Movement loop is only for scripted paths
-	else if(!EngagedInCombat() && !IsPauseMovementTimerActive() && !NeedsToResumeMovement() && movement_loop.size() > 0 && movement_index < movement_loop.size() && (!IsNPC() || !((NPC*)this)->m_runningBack)){
-		// Get the target location
-		MovementData* data = movement_loop[movement_index];
-		// need to resume our movement
-		if(resume_movement){
-			if (movement_locations){
-				while (movement_locations->size()){
-					safe_delete(movement_locations->front());
-					movement_locations->pop_front();
-				}
-				movement_locations->clear();
-			}
-
-			data = movement_loop[movement_index];
-			
-			((Entity*)this)->SetSpeed(data->speed);
-			SetSpeed(data->speed);
-			if(!IsWidget())
-				FaceTarget(data->x, data->z);
-			// 0 delay at target location, need to set multiple locations
-			if(data->delay == 0 && movement_loop.size() > 0) {
-				int16 tmp_index = movement_index+1;
-				MovementData* data2 = 0;
-				if(tmp_index < movement_loop.size()) 
-					data2 = movement_loop[tmp_index];
-				else
-					data2 = movement_loop[0];
-				AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);				
-				AddRunningLocation(data2->x, data2->y, data2->z, data2->speed, 0, true, true, "", true);
-			}
-			// delay at target location, only need to set 1 location
-			else
-				AddRunningLocation(data->x, data->y, data->z, data->speed);
-			movement_start_time = 0;
-			resume_movement = false;
-		}
-		// If we are not moving or we have arrived at our destination
-		else if(!IsRunning() || (data && data->x == GetX() && data->y == GetY() && data->z == GetZ())){
-			// If we were moving remove the last running location (the point we just arrived at)
-			if(IsRunning())
-				RemoveRunningLocation();
-
-			// If this waypoint has a delay and we just arrived here (movement_start_time == 0)
-			if(data->delay > 0 && movement_start_time == 0){
-				// Set the current time
-				movement_start_time = Timer::GetCurrentTime2();
-				// If this waypoint had a lua function then call it
-				if(data->lua_function.length() > 0)
-					GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, 0, data->lua_function.c_str());
-
-				int16 nextMove;
-				if ((int16)(movement_index + 1) < movement_loop.size())
-					nextMove = movement_index + 1;
-				else
-					nextMove = 0;
-				// Get the next target location
-				data = movement_loop[nextMove];
-				
-				//Go ahead and face the next location
-				FaceTarget(data->x, data->z);
-			}
-			// If this waypoint has no delay or we have waited the required time (current time >= delay + movement_start_time)
-			else if(data->delay == 0 || (data->delay > 0 && Timer::GetCurrentTime2() >= (data->delay+movement_start_time))) {
-				// if no delay at this waypoint but a lua function for it then call the function
-				if(data->delay == 0 && data->lua_function.length() > 0)
-					GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, 0, data->lua_function.c_str());
-				// Advance the current movement loop index
-				if((int16)(movement_index+1) < movement_loop.size())
-					movement_index++;
-				else
-					movement_index = 0;
-				// Get the next target location
-				data = movement_loop[movement_index];
-				// set the speed for that location
-				SetSpeed(data->speed);
-
-				if(!IsWidget())
-				// turn towards the location
-					FaceTarget(data->x, data->z);
-				// If 0 delay at location get and set data for the point after it
-				if(data->delay == 0 && movement_loop.size() > 0){
+	if(!EngagedInCombat() && !IsPauseMovementTimerActive() && !NeedsToResumeMovement() && (!IsNPC() || !((NPC*)this)->m_runningBack)){
+		MMovementLoop.lock();
+		if(movement_loop.size() > 0 && movement_index < movement_loop.size())
+		{
+			movementCase = true;
+			// Get the target location
+			MovementData* data = movement_loop[movement_index];
+			// need to resume our movement
+			if(resume_movement){
+				if (movement_locations){
 					while (movement_locations->size()){
 						safe_delete(movement_locations->front());
 						movement_locations->pop_front();
 					}
-					// clear current target locations
 					movement_locations->clear();
-					// get the data for the location after out new location
+				}
+
+				data = movement_loop[movement_index];
+				
+				((Entity*)this)->SetSpeed(data->speed);
+				SetSpeed(data->speed);
+				if(!IsWidget())
+					FaceTarget(data->x, data->z);
+				// 0 delay at target location, need to set multiple locations
+				if(data->delay == 0 && movement_loop.size() > 0) {
 					int16 tmp_index = movement_index+1;
 					MovementData* data2 = 0;
 					if(tmp_index < movement_loop.size()) 
 						data2 = movement_loop[tmp_index];
 					else
 						data2 = movement_loop[0];
-					// set the first location (adds it to movement_locations that we just cleared)
-					AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);
-					// set the location after that
+					AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);				
 					AddRunningLocation(data2->x, data2->y, data2->z, data2->speed, 0, true, true, "", true);
 				}
-				// there is a delay at the next location so we only need to set it
+				// delay at target location, only need to set 1 location
 				else
 					AddRunningLocation(data->x, data->y, data->z, data->speed);
-
-				// reset this timer to 0 now that we are moving again
 				movement_start_time = 0;
+				resume_movement = false;
+			}
+			// If we are not moving or we have arrived at our destination
+			else if(!IsRunning() || (data && data->x == GetX() && data->y == GetY() && data->z == GetZ())){
+				// If we were moving remove the last running location (the point we just arrived at)
+				if(IsRunning())
+					RemoveRunningLocation();
+
+				// If this waypoint has a delay and we just arrived here (movement_start_time == 0)
+				if(data->delay > 0 && movement_start_time == 0){
+					// Set the current time
+					movement_start_time = Timer::GetCurrentTime2();
+					// If this waypoint had a lua function then call it
+					if(data->lua_function.length() > 0)
+						GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, 0, data->lua_function.c_str());
+
+					int16 nextMove;
+					if ((int16)(movement_index + 1) < movement_loop.size())
+						nextMove = movement_index + 1;
+					else
+						nextMove = 0;
+					// Get the next target location
+					data = movement_loop[nextMove];
+					
+					//Go ahead and face the next location
+					FaceTarget(data->x, data->z);
+				}
+				// If this waypoint has no delay or we have waited the required time (current time >= delay + movement_start_time)
+				else if(data->delay == 0 || (data->delay > 0 && Timer::GetCurrentTime2() >= (data->delay+movement_start_time))) {
+					// if no delay at this waypoint but a lua function for it then call the function
+					if(data->delay == 0 && data->lua_function.length() > 0)
+						GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, 0, data->lua_function.c_str());
+					// Advance the current movement loop index
+					if((int16)(movement_index+1) < movement_loop.size())
+						movement_index++;
+					else
+						movement_index = 0;
+					// Get the next target location
+					data = movement_loop[movement_index];
+					// set the speed for that location
+					SetSpeed(data->speed);
+
+					if(!IsWidget())
+					// turn towards the location
+						FaceTarget(data->x, data->z);
+					// If 0 delay at location get and set data for the point after it
+					if(data->delay == 0 && movement_loop.size() > 0){
+						while (movement_locations->size()){
+							safe_delete(movement_locations->front());
+							movement_locations->pop_front();
+						}
+						// clear current target locations
+						movement_locations->clear();
+						// get the data for the location after out new location
+						int16 tmp_index = movement_index+1;
+						MovementData* data2 = 0;
+						if(tmp_index < movement_loop.size()) 
+							data2 = movement_loop[tmp_index];
+						else
+							data2 = movement_loop[0];
+						// set the first location (adds it to movement_locations that we just cleared)
+						AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);
+						// set the location after that
+						AddRunningLocation(data2->x, data2->y, data2->z, data2->speed, 0, true, true, "", true);
+					}
+					// there is a delay at the next location so we only need to set it
+					else
+						AddRunningLocation(data->x, data->y, data->z, data->speed);
+
+					// reset this timer to 0 now that we are moving again
+					movement_start_time = 0;
+				}
+			}
+			// moving and not at target location yet
+			else if(GetBaseSpeed() > 0)
+				CalculateRunningLocation();
+			// not moving, have a target location but not at it yet
+			else if (data) {
+				SetSpeed(data->speed);
+				AddRunningLocation(data->x, data->y, data->z, data->speed);
 			}
 		}
-		// moving and not at target location yet
-		else if(GetBaseSpeed() > 0)
-			CalculateRunningLocation();
-		// not moving, have a target location but not at it yet
-		else if (data) {
-			SetSpeed(data->speed);
-			AddRunningLocation(data->x, data->y, data->z, data->speed);
-		}
+		MMovementLoop.unlock();
 	}
-	else if (IsRunning() && !IsPauseMovementTimerActive()) {
+	
+	if (!movementCase && IsRunning() && !IsPauseMovementTimerActive()) {
 		CalculateRunningLocation();
 	}
 	/*else if (IsNPC() && !IsRunning() && !EngagedInCombat() && ((NPC*)this)->GetRunbackLocation()) {
@@ -2936,7 +2942,6 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		resume_movement = true;
 		NeedsToResumeMovement(false);
 	}*/
-	MMovementLoop.unlock();
 }
 
 void Spawn::ResetMovement(){
@@ -3191,6 +3196,8 @@ void Spawn::CalculateRunningLocation(bool stop){
 		SetPos(&appearance.pos.Z3, GetZ(), false);
 	}
 	else if (removed && movement_locations && movement_locations->size() > 0) {
+		if (MMovementLocations)
+			MMovementLocations->readlock(__FUNCTION__, __LINE__);
 		MovementLocation* current_location = movement_locations->at(0);
 		if (movement_locations->size() > 1) {
 			MovementLocation* data = movement_locations->at(1);
@@ -3198,6 +3205,8 @@ void Spawn::CalculateRunningLocation(bool stop){
 		}
 		else
 			RunToLocation(current_location->x, current_location->y, current_location->z, 0, 0, 0);
+		if (MMovementLocations)
+			MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
 	}
 	else if (GetZone() && GetTarget() != NULL && EngagedInCombat())
 	{
