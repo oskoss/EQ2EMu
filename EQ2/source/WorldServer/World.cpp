@@ -2100,6 +2100,58 @@ int32 World::LoadItemBlueStats() {
 	return count;
 }
 
+sint16 World::newValue = 27;
+
+sint16 World::GetItemStatAOMValue(sint16 subtype) {
+	sint16 tmp_subtype = subtype;
+	// this is ugly for now cause I didn't want to map it all out, see a better way later but a lot of these are just slightly shifted
+	if(subtype > 39)
+	{
+		// 88 needs to be something else (crit mitigation)
+		// 19 needs to be something else (ability reuse speed) which is 62
+		if(subtype == 21) // ITEM_STAT_MAXATTPERC
+			tmp_subtype = 20; 
+		else if(subtype == 41) // flurry
+			tmp_subtype = 39;
+		else if(subtype == 47) // flurry
+			tmp_subtype = 41;
+		else if(subtype == 49) // flurry
+			tmp_subtype = 42;
+		else if(subtype == 51) // ITEM_STAT_EXTRASHIELDBLOCKCHANCE
+			tmp_subtype = 44;
+
+			//tmp_subtype = 43 is bountiful harvest
+		else if(subtype == 54 && subtype <= 57) // ITEM_STAT_MELEECRITCHANCE
+			tmp_subtype = subtype - 7;
+		else if(subtype == 59) // ITEM_STAT_POTENCY
+			tmp_subtype = 51;
+		else if(subtype >= 61 && subtype <= 85) // ITEM_STAT_RANGEDWEAPONRANGE
+			tmp_subtype = subtype - 9; //  
+		else if(subtype >= 86 && subtype <= 101) // ITEM_STAT_WEAPONDAMAGEBONUSMELEEONLY
+			tmp_subtype = subtype - 8; //  
+		else if(subtype == 102) // ITEM_STAT_SPELLWEAPONDAMAGEBONUS
+			tmp_subtype = 77; //  
+		else if(subtype >= 103 && subtype <= 110)
+			tmp_subtype = subtype - 9;
+		else if(subtype == 122) // ITEM_STAT_ABILITYDOUBLECASTCHANCE
+			tmp_subtype = 40; //  
+		else if(subtype == 124) // ITEM_STAT_STATUSEARNED
+			tmp_subtype = 27; //  
+		else
+			tmp_subtype += 1;
+		
+		// 80 serves as ranged weapon range increase, but so does 58?
+	}
+	else if((subtype > 18 && subtype < 28) || subtype > 30) // max mana was 18
+		tmp_subtype = subtype - 1;
+	else if(subtype == 5)
+		tmp_subtype = 46;
+	else if(subtype == 4)
+		tmp_subtype = 45;
+	
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Convert type: %i -> %i", subtype, tmp_subtype);
+	return tmp_subtype;
+}
 sint16 World::GetItemStatTOVValue(sint16 subtype) {
 	return (tov_itemstat_conversion[subtype] - 600);
 }

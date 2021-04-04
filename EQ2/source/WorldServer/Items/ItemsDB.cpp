@@ -199,8 +199,8 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	if (result->GetInt8Str("no_transmute") == 1)
 		item->generic_info.item_flags += NO_TRANSMUTE;
 
-	if (result->GetInt8Str("flags_32768") == 1)
-		item->generic_info.item_flags += FLAGS_32768;
+	if (result->GetInt8Str("CURSED_flags_32768") == 1)
+		item->generic_info.item_flags += CURSED;
 
 	if (result->GetInt8Str("ornate") == 1)
 		item->generic_info.item_flags2 += ORNATE;
@@ -285,6 +285,29 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	item->generic_info.body_drop				= result->GetInt8Str("body_drop");
 
 	item->no_buy_back							= (result->GetInt8Str("no_buy_back") == 1);
+
+	item->generic_info.pvp_description			= result->GetInt8Str("bPvpDesc");
+
+	item->generic_info.merc_only				= (result->GetInt8Str("merc_only") == 1);
+	item->generic_info.mount_only				= (result->GetInt8Str("mount_only") == 1);
+	
+	item->generic_info.set_id					= result->GetInt32Str("set_id");
+	
+	item->generic_info.collectable_unk			= result->GetInt8Str("collectable_unk");
+
+	const char* offerQuestName = result->GetFieldValueStr("offers_quest_name");
+	if(offerQuestName)
+		strncpy(item->generic_info.offers_quest_name,offerQuestName,255);
+	else
+		strcpy(item->generic_info.offers_quest_name,"");
+
+	const char* requiredQuestName = result->GetFieldValueStr("required_by_quest_name");
+	if(requiredQuestName)
+		strncpy(item->generic_info.required_by_quest_name,requiredQuestName,255);
+	else
+		strcpy(item->generic_info.required_by_quest_name,"");
+		
+	item->generic_info.transmuted_material		= result->GetInt8Str("transmuted_material");
 }
 
 int32 WorldDatabase::LoadSkillItems()
@@ -301,6 +324,9 @@ int32 WorldDatabase::LoadSkillItems()
 		{
 			id = atoul(row[0]);
 			Item* item = master_item_list.GetItem(id);
+
+			if(!row[1] || !row[2])
+				continue;
 
 			if(item)
 			{
@@ -470,18 +496,20 @@ int32 WorldDatabase::LoadItemsets()
 	int32 total = 0;
 	int32 id = 0;
 
-	if (database_new.Select(&result, "SELECT id, itemset_item_id, item_id, item_icon,item_stack_size,item_list_color,language_type FROM item_details_itemset"))
+	//if (database_new.Select(&result, "SELECT id, itemset_item_id, item_id, item_icon,item_stack_size,item_list_color,language_type FROM item_details_itemset"))
+	if (database_new.Select(&result, "select crate.item_id, crateitem.reward_item_id, crateitem.icon, crateitem.stack_size, crateitem.name_color, crateitem.name, crateitem.language_type from item_details_reward_crate crate, item_details_reward_crate_item crateitem where crateitem.crate_item_id = crate.item_id"))
 	{
 		while (result.Next())
 		{
-			id = result.GetInt32Str("itemset_item_id");
+			id = result.GetInt32(0);
 			Item* item = master_item_list.GetItem(id);
 
 			if (item)
 			{
 				item->SetItemType(ITEM_TYPE_ITEMCRATE);
 				//int32 item_id = result.GetInt32Str("item_id");
-				item->AddSet(result.GetInt32Str("item_id"),0, result.GetInt16Str("item_icon"), result.GetInt16Str("item_stack_size"), result.GetInt32Str("item_list_color"));
+				const char* setName = result.GetString(5);
+				item->AddSet(result.GetInt32(1),0, result.GetInt16(2), result.GetInt16(3), result.GetInt32(4), setName ? string(setName) : string(""), result.GetInt8(6));
 				
 
 				total++;
@@ -687,7 +715,7 @@ int32 WorldDatabase::LoadRangeWeapons()
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, damage_low1, damage_high1, damage_low2, damage_high2, damage_low3, damage_high3, delay, damage_rating, range_low, range_high, damage_type FROM item_details_range");
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, dmg_low, dmg_high, dmg_mastery_low, dmg_mastery_high, dmg_base_low, dmg_base_high, delay, damage_rating, range_low, range_high, damage_type FROM item_details_range");
 	int32 total = 0;
 	int32 id = 0;
 
@@ -761,7 +789,7 @@ int32 WorldDatabase::LoadWeapons()
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, wield_style, damage_low1, damage_high1, damage_low2, damage_high2, damage_low3, damage_high3, delay, damage_rating, damage_type FROM  item_details_weapon");
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, wield_style, dmg_low, dmg_high, dmg_mastery_low, dmg_mastery_high, dmg_base_low, dmg_base_high, delay, damage_rating, damage_type FROM  item_details_weapon");
 	int32 total = 0;
 	int32 id = 0;
 
@@ -930,7 +958,7 @@ int32 WorldDatabase::LoadItemStats()
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, type, subtype, value, text FROM item_stats ORDER BY item_id asc");
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, type, subtype, iValue, fValue, sValue, level FROM item_mod_stats ORDER BY stats_order asc");
 	int32 id = 0;
 	Item* item = 0;
 	int32 total = 0;
@@ -948,12 +976,55 @@ int32 WorldDatabase::LoadItemStats()
 			if(item)
 			{
 				LogWrite(ITEM__DEBUG, 5, "Items", "\tItem Stats for item_id %u", id);
-				LogWrite(ITEM__DEBUG, 5, "Items", "\ttype: %i, sub: %i, val: %.2f, name: %s", atoi(row[1]), atoi(row[2]), atof(row[3]), row[4]);
-				item->AddStat(atoi(row[1]), atoi(row[2]), atof(row[3]), row[4]);
+
+				float fValue = 0.0f;
+				if(row[3])
+					fValue = atof(row[3]);
+				else if(row[4])
+					fValue = atof(row[4]);
+
+				//LogWrite(ITEM__DEBUG, 5, "Items", "\ttype: %i, sub: %i, val: %.2f, name: %s", atoi(row[1]), atoi(row[2]), atof(row[3]), row[4]);
+				item->AddStat(atoi(row[1]), atoi(row[2]), fValue, atoul(row[6]), row[5]);
 				total++;
 			}
 			else
 				LogWrite(ITEM__ERROR, 0, "Items", "Error loading `item_stats`, ID: %i", id);
+		}
+	}
+	return total;
+}
+
+int32 WorldDatabase::LoadItemModStrings()
+{
+	DatabaseResult result;
+
+	int32 id = 0;
+	Item* item = 0;
+	int32 total = 0;
+
+	if( !database_new.Select(&result, "SELECT * FROM item_mod_strings") ) {
+		LogWrite(ITEM__ERROR, 0, "Items", "Cannot load WorldDatabase::LoadItemModStrings in %s, line: %i", __FUNCTION__, __LINE__);
+		return 0;
+	}
+	else {
+		while( result.Next() )
+		{
+			int32 item_id = result.GetInt32Str("item_id");
+			if(id != item_id)
+			{
+				item = master_item_list.GetItem(item_id);
+				id = item_id;
+			}
+			
+			const char* modName = result.GetFieldValueStr("mod");
+			if(item && modName)
+			{
+				Item::ItemStatString* stat_ = new Item::ItemStatString;
+				stat_->stat_string.data = string(modName);
+				stat_->stat_string.size = stat_->stat_string.data.length();
+				item->AddStatString(stat_);
+			}
+			total++;
 		}
 	}
 	return total;
@@ -1019,6 +1090,9 @@ void WorldDatabase::LoadItemList()
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Item Stats...");
 	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Stats", LoadItemStats());
+
+	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Item Stats Mods (Strings)...");
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Stats", LoadItemModStrings());
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Item Effects...");
 	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Effects", LoadItemEffects());

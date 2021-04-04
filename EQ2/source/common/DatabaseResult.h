@@ -42,14 +42,13 @@ public:
 
 	unsigned int GetNumRows() {return result == NULL ? 0 : (unsigned int)mysql_num_rows(result);}
 	
+	const char * GetFieldValue(unsigned int index);
+	const char * GetFieldValueStr(const char *field_name);
 private:
 	MYSQL_RES *result;
 	MYSQL_ROW row;
 	char **field_names;
 	unsigned int num_fields;
-
-	const char * GetFieldValue(unsigned int index);
-	const char * GetFieldValueStr(const char *field_name);
 };
 
 #endif

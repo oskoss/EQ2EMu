@@ -581,6 +581,7 @@ public:
 	void CheckLottoPlayers();
 	void PopulateTOVStatMap();
 	int32 LoadItemBlueStats();
+	sint16 GetItemStatAOMValue(sint16 subtype);
 	sint16 GetItemStatTOVValue(sint16 subtype);
 	sint16 GetItemStatDOVValue(sint16 subtype);
 	sint16 GetItemStatCOEValue(sint16 subtype);
@@ -631,6 +632,7 @@ public:
 	
 	void LoadMaps(std::string zoneFile);
 	Map* GetMap(std::string zoneFile, int32 client_version);
+	static sint16 newValue;
 private:
 	int32 suppressed_warning = 0;
 	map<string, int32> reloading_subsystems;

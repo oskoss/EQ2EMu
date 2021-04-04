@@ -296,6 +296,16 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	int8 i = 0;
 	int8 qty = 0;
 
+	Recipe* playerRecipe = client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID());
+	
+	if(!playerRecipe)
+	{
+		LogWrite(TRADESKILL__ERROR, 0, "Tradeskills", "%s: TradeskillMgr::StopCrafting Error finding player recipe in their recipe book for recipe id %u", client->GetPlayer()->GetName(), recipe->GetID());
+		client->Message(CHANNEL_COLOR_RED, "%s: StopCrafting Error finding player recipe in their recipe book for recipe id %u!", client->GetPlayer()->GetName(), recipe->GetID());
+		if (lock)
+			m_tradeskills.releasewritelock(__FUNCTION__, __LINE__);
+		return;
+	}
 	// cycle through the list of used items and remove them
 	for (itr = tradeskill->usedComponents.begin(); itr != tradeskill->usedComponents.end(); itr++, i++) {
 		// get the quantity to remove, first item in the vectore is always the primary, last is always the fuel
@@ -313,12 +323,18 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 			qty = recipe->GetFuelComponentQuantity();
 
 		// Get the item in the players inventory and remove or reduce the quantity
-		item = client->GetPlayer()->item_list.GetItemFromID(*itr);
-		if (item->details.count <= qty)
+		int32 itmid = *itr;
+		item = client->GetPlayer()->item_list.GetItemFromID(itmid);
+		if (item && item->details.count <= qty)
 			client->GetPlayer()->item_list.RemoveItem(item);
-		else {
+		else if(item) {
 			item->details.count -= qty;
 			item->save_needed = true;
+		}
+		else
+		{
+			LogWrite(TRADESKILL__ERROR, 0, "Tradeskills", "%s: TradeskillMgr::StopCrafting Error finding item %u to remove quantity for recipe id %u", client->GetPlayer()->GetName(), itmid, recipe->GetID());
+			client->Message(CHANNEL_COLOR_RED, "%s: StopCrafting Error finding item %u to remove quantity for recipe id %u!", client->GetPlayer()->GetName(), itmid, recipe->GetID());
 		}
 	}
 
@@ -326,8 +342,8 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	qty = recipe->GetFuelComponentQuantity();	
 	item_id = recipe->components[5][0];
 	if (progress >= 400 && progress < 600) {
-		if (client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->GetHighestStage() < 1) {
-			client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->SetHighestStage(1);
+		if (playerRecipe->GetHighestStage() < 1) {
+			playerRecipe->SetHighestStage(1);
 			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), 1);
 		}
 		if (recipe->products.count(1) > 0) {
@@ -336,8 +352,8 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 		}
 	}
 	else if ((dur < 200 && progress >= 600) || (dur >= 200 && progress >= 600 && progress < 800)) {
-		if (client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->GetHighestStage() < 2) {
-			client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->SetHighestStage(2);
+		if (playerRecipe->GetHighestStage() < 2) {
+			playerRecipe->SetHighestStage(2);
 			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), 2);
 		}
 		if (recipe->products.count(2) > 0) {
@@ -346,8 +362,8 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 		}
 	}
 	else if ((dur >= 200 && dur < 800 && progress >= 800) || (dur >= 800 && progress >= 800 && progress < 1000)) {
-		if (client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->GetHighestStage() < 3) {
-			client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->SetHighestStage(3);
+		if (playerRecipe->GetHighestStage() < 3) {
+			playerRecipe->SetHighestStage(3);
 			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), 3);
 		}
 		if (recipe->products.count(3) > 0) {
@@ -356,8 +372,8 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 		}
 	}
 	else if (dur >= 800 && progress >= 1000) {
-		if (client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->GetHighestStage() < 4) {
-			client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->SetHighestStage(4);
+		if (playerRecipe->GetHighestStage() < 4) {
+			playerRecipe->SetHighestStage(4);
 			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), 4);
 		}
 		if (recipe->products.count(4) > 0) {

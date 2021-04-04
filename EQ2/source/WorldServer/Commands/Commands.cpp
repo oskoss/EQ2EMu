@@ -9937,6 +9937,9 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				safe_delete(packet2);
 			}
 		}
+		else if (atoi(sep->arg[0]) == 28 && sep->IsNumber(1)) {
+			World::newValue = atoi(sep->arg[1]);
+		}
 	}
 	else {
 			PacketStruct* packet2 = configReader.getStruct("WS_ExamineSpellInfo", client->GetVersion());

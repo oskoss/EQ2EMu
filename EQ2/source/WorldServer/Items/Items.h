@@ -143,7 +143,7 @@ extern MasterItemList master_item_list;
 #define STACK_LORE		4096  
 #define LORE_EQUIP		8192  
 #define NO_TRANSMUTE	16384
-#define FLAGS_32768		32768
+#define CURSED			32768
 
 #define ORNATE			1
 #define HEIRLOOM		2
@@ -680,6 +680,7 @@ struct ItemStat{
 	sint16					stat_subtype;
 	int16					stat_type_combined;
 	float					value;
+	int8					level;
 };
 struct ItemSet{
 	int32					item_id;
@@ -687,7 +688,8 @@ struct ItemSet{
 	int16					item_icon;
 	int16					item_stack_size;
 	int32					item_list_color;
-	
+	std::string				name;
+	int8					language;
 };
 struct Classifications{
 	int32					classification_id;  //classifications MJ
@@ -749,6 +751,14 @@ public:
 		int8					usable;
 		int8					harvest;
 		int8					body_drop;
+		int8					pvp_description;
+		int8					merc_only;
+		int8					mount_only;
+		int32					set_id;
+		int8					collectable_unk;
+		char					offers_quest_name[255];
+		char					required_by_quest_name[255];
+		int8					transmuted_material;
 	};
 	struct Armor_Info {
 		int16					mitigation_low;
@@ -836,7 +846,8 @@ public:
 		int16					item_icon;
 		int32					item_stack_size;
 		int32					item_list_color;
-		
+		int32					soe_item_id_unsigned;
+		int32					soe_item_crc_unsigned;
 	};
 	struct Thrown_Info{
 		sint32					range;
@@ -923,8 +934,8 @@ public:
 	void DeleteItemSets();
 	void AddSet(ItemSet* in_set);
 	void AddStatString(ItemStatString* in_stat);
-	void AddStat(int8 type, int16 subtype, float value, char* name = 0);
-	void AddSet(int32 item_id, int32 item_crc, int16 item_icon, int32 item_stack_size, int32 item_list_color);
+	void AddStat(int8 type, int16 subtype, float value, int8 level, char* name = 0);
+	void AddSet(int32 item_id, int32 item_crc, int16 item_icon, int32 item_stack_size, int32 item_list_color, std::string name, int8 language);
 	void SetWeaponType(int8 type);
 	int8 GetWeaponType();
 	bool HasSlot(int8 slot, int8 slot2 = 255);
@@ -1026,6 +1037,7 @@ public:
 	bool  MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8 appearance_type, int8 charges);
 	Item* GetItemFromUniqueID(int32 item_id, bool include_bank = false, bool lock = true);
 	Item* GetItemFromID(int32 item_id, int8 count = 0, bool include_bank = false, bool lock = true);
+	sint32 GetAllStackCountItemFromID(int32 item_id, int8 count = 0, bool include_bank = false, bool lock = true);
 	bool  AssignItemToFreeSlot(Item* item);
 	int16 GetNumberOfFreeSlots();
 	int16 GetNumberOfItems();

@@ -1488,8 +1488,8 @@ bool Item::CheckFlag(int32 flag){
 	int32 value = 0;
 	int32 flag_val = generic_info.item_flags;
 	while(flag_val>0){
-		if (flag_val >= FLAGS_32768) //change this
-			value = FLAGS_32768;
+		if (flag_val >= CURSED) //change this
+			value = CURSED;
 		else if (flag_val >= NO_TRANSMUTE) //change this
 			value = NO_TRANSMUTE;
 		else if (flag_val >= LORE_EQUIP) //change this
@@ -1581,7 +1581,7 @@ void Item::SetSlots(int32 slots){
 		AddSlot(EQ2_TEXTURES_SLOT);
 }
 
-void Item::AddStat(int8 type, int16 subtype, float value, char* name){
+void Item::AddStat(int8 type, int16 subtype, float value, int8 level, char* name){
 	char item_stat_combined_string[8] = {0};
 	if(name && strlen(name) > 0 && type != 1){
 		ItemStatString* stat = new ItemStatString;
@@ -1596,18 +1596,21 @@ void Item::AddStat(int8 type, int16 subtype, float value, char* name){
 		stat->stat_type = type;
 		stat->stat_subtype = subtype;
 		stat->value = value;
+		stat->level = level;
 		snprintf(item_stat_combined_string, 7, "%u%02u", type, subtype);
 		stat->stat_type_combined = atoi(item_stat_combined_string);
 		AddStat(stat);
 	}
 }
-void Item::AddSet(int32 item_id, int32 item_crc, int16 item_icon, int32 item_stack_size, int32 item_list_color){
+void Item::AddSet(int32 item_id, int32 item_crc, int16 item_icon, int32 item_stack_size, int32 item_list_color, std::string name, int8 language){
 	ItemSet* set = new ItemSet;
 	set->item_id = item_id;
 	set->item_icon = item_icon;
 	set->item_crc = item_crc;
 	set->item_stack_size = item_stack_size;
 	set->item_list_color = item_list_color;
+	set->name = string(name);
+	set->language = language;
 	
 	AddSet(set);
 }
@@ -1702,6 +1705,9 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331){  //KA
 					tmp_subtype = world.GetItemStatKAValue(stat->stat_subtype);
 				}
+				else if(client->GetVersion() >= 60085 ) {
+					tmp_subtype = world.GetItemStatAOMValue(stat->stat_subtype);
+				}
 				else if (client->GetVersion() >= 57107){ //TOV
 					tmp_subtype = world.GetItemStatTOVValue(stat->stat_subtype);
 				}
@@ -1733,6 +1739,9 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			if (stat->stat_type == 6){		//Convert stats to proper client
 				if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331){  //KA
 					tmp_subtype = world.GetItemStatKAValue(stat->stat_subtype);
+				}
+				else if(client->GetVersion() >= 60085 ) {
+					tmp_subtype = world.GetItemStatAOMValue(stat->stat_subtype);
 				}
 				else if (client->GetVersion() >= 57107){ //TOV
 					tmp_subtype = world.GetItemStatTOVValue(stat->stat_subtype);
@@ -2345,14 +2354,14 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	if(generic_info.offers_quest_id > 0){
 		Quest* quest = master_quest_list.GetQuest(generic_info.offers_quest_id, false);
 		if(quest){
-			packet->setSubstructDataByName("footer", "offers_quest", quest->GetName());
+			packet->setSubstructDataByName("footer", "offers_quest", strlen(generic_info.offers_quest_name) ? generic_info.offers_quest_name : quest->GetName());
 			packet->setSubstructDataByName("footer", "quest_color", player->GetArrowColor(quest->GetQuestLevel()));
 		}
 	}
 	if(generic_info.part_of_quest_id > 0){
 		Quest* quest = master_quest_list.GetQuest(generic_info.part_of_quest_id, false);
 		if(quest){
-			packet->setSubstructDataByName("footer", "part_of_quest", quest->GetName());
+			packet->setSubstructDataByName("footer", "part_of_quest", strlen(generic_info.required_by_quest_name) ? generic_info.required_by_quest_name : quest->GetName());
 			packet->setSubstructDataByName("footer", "quest_color", player->GetArrowColor(quest->GetQuestLevel()));
 		}
 	}
@@ -3600,6 +3609,44 @@ Item* PlayerItemList::GetItemFromID(int32 id, int8 count, bool include_bank, boo
 	if(lock)
 		MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	return closest;
+}
+
+sint32 PlayerItemList::GetAllStackCountItemFromID(int32 id, int8 count, bool include_bank, bool lock){
+	sint32 stack_count = 0;
+	//first check for an exact count match
+	map<sint32, map<int8, map<int16, Item*>> >::iterator itr;
+	map<int16, Item*>::iterator slot_itr;
+	if(lock)
+		MPlayerItems.readlock(__FUNCTION__, __LINE__);
+	for(itr = items.begin(); itr != items.end(); itr++){
+		if(include_bank || (!include_bank && itr->first >= 0)){
+			for(int8 i=0;i<MAX_EQUIPMENT;i++)
+			{
+				for(slot_itr=itr->second[i].begin();slot_itr!=itr->second[i].end(); slot_itr++){
+					if(slot_itr->second && slot_itr->second->details.item_id == id && (count == 0 || slot_itr->second->details.count == count)){
+						stack_count += slot_itr->second->details.count;
+					}
+				}
+			}
+		}
+	}
+
+	//couldn't find an exact match, look for closest
+	Item* closest = 0;
+	for(itr = items.begin(); itr != items.end(); itr++){
+		if(include_bank || (!include_bank && itr->first >= 0)){
+			for(int8 i=0;i<MAX_EQUIPMENT;i++)
+			{
+				for(slot_itr=itr->second[i].begin();slot_itr!=itr->second[i].end(); slot_itr++){
+					if(slot_itr->second && slot_itr->second->details.item_id == id && slot_itr->second->details.count > count && (closest == 0 || slot_itr->second->details.count < closest->details.count))
+						stack_count += slot_itr->second->details.count;
+				}
+			}
+		}
+	}
+	if(lock)
+		MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+	return stack_count;
 }
 
 Item* PlayerItemList::GetItemFromUniqueID(int32 id, bool include_bank, bool lock){

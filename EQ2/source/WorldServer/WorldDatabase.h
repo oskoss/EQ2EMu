@@ -261,6 +261,7 @@ public:
 	void	ReloadItemList();
 	void	LoadItemList();
 	int32	LoadItemStats();
+	int32	LoadItemModStrings();
 	int32	LoadItemAppearances();
 	int32	LoadItemLevelOverride();
 	int32	LoadItemEffects();

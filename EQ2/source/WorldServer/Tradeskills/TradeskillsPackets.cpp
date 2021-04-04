@@ -40,8 +40,18 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 	else
 		client->GetPlayer()->SetCurrentRecipe(recipeID);
 
+	Recipe* playerRecipe = client->GetPlayer()->GetRecipeList()->GetRecipe(recipeID);
+	
 	// Get the recipe
 	Recipe* recipe = master_recipe_list.GetRecipe(recipeID);
+
+	if(!playerRecipe)
+	{
+		LogWrite(TRADESKILL__ERROR, 0, "Tradeskills", "%s: ClientPacketFunctions::SendCreateFromRecipe Error finding player recipe %s in their recipe book for recipe id %u", client->GetPlayer()->GetName(), client->GetPlayer()->GetName(), recipe ? recipe->GetID() : 0);
+		client->Message(CHANNEL_COLOR_RED, "You do not have %s (%u) in your recipe book.", recipe ? recipe->GetName() : "Unknown", recipe ? recipe->GetID() : 0);
+		return;
+	}
+
 	if (!recipe) {
 		LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error loading recipe (%u) in ClientPacketFunctions::SendCreateFromRecipe()", recipeID);
 		return;
@@ -279,7 +289,17 @@ void ClientPacketFunctions::SendItemCreationUI(Client* client, Recipe* recipe) {
 
 	// Highest stage the player has been able to complete
 	// TODO: store this for the player, for now use 0 (none known)
-	packet->setDataByName("progress_levels_known", client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->GetHighestStage());
+	Recipe* playerRecipe = client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID());
+	
+	if(!playerRecipe)
+	{
+		LogWrite(TRADESKILL__ERROR, 0, "Tradeskills", "%s: ClientPacketFunctions::SendItemCreationUI Error finding player recipe in their recipe book for recipe id %u", client->GetPlayer()->GetName(), recipe->GetID());
+		client->Message(CHANNEL_COLOR_RED, "%s: SendItemCreationUI Error finding player recipe in their recipe book for recipe id %u!", client->GetPlayer()->GetName(), recipe->GetID());
+		safe_delete(packet);
+		return;
+	}
+
+	packet->setDataByName("progress_levels_known", playerRecipe ? playerRecipe->GetHighestStage() : 0);
 
 	packet->setArrayLengthByName("num_process", 4);
 	for (int8 i = 0; i < 4; i++) {
