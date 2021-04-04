@@ -329,3 +329,4 @@
 /server/Maps/lavastorm-1-546.EQ2MapDeflated filter=lfs diff=lfs merge=lfs -text
 /server/Maps/nektulos-1-546.EQ2MapDeflated filter=lfs diff=lfs merge=lfs -text
 /server/Maps/solusekseye-1-546.EQ2MapDeflated filter=lfs diff=lfs merge=lfs -text
+/DB/updates/items_redesign_apr3_2021.rar filter=lfs diff=lfs merge=lfs -text
