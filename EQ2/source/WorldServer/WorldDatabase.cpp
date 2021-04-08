@@ -7416,6 +7416,16 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 
 		Spell* spell = master_spell_list.GetSpell(spell_id, tier);
 		
+		if(!spell)
+		{
+			LogWrite(LUA__ERROR, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u), spell could not be found!", spell_id, tier);
+			Spell* spell = master_spell_list.GetSpell(spell_id, 0);
+			if(spell)
+				LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: GetSpell(%u, %u), identified tier 0 as replacement since the GetSpell failed!", spell_id, tier);
+			else
+				continue;
+		}
+		
 		bool isMaintained = false;
 		bool isExistingLuaSpell = false;
 		MaintainedEffects* effect = nullptr;
