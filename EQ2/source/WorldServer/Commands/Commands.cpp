@@ -1737,15 +1737,26 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
 					else {
 						if (item->details.count > 0) {
-							lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
-							if(!item->generic_info.display_charges && item->generic_info.max_charges == 1)
-								client->RemoveItem(item, 1); // end of a set of charges OR an item that uses a stack count of actual item quantity
-							else
+							std::string itemName = string(item->name);
+							int32 item_id = item->details.item_id;
+							sint64 flags = 0;
+							if(lua_interface->RunItemScript(item->GetItemScript(), "used", item, player, &flags) && flags >= 0)
 							{
-								item->details.count--; // charges
-								item->save_needed = true;
-								client->QueuePacket(item->serialize(client->GetVersion(), false, client->GetPlayer()));
+								//reobtain item make sure it wasn't removed
+								Item* item = player->item_list.GetItemFromIndex(item_index);
+								if(!item)
+									LogWrite(PLAYER__WARNING, 0, "Command", "%s: Item %s (%i) was used, however after the item looks to be removed.", client->GetPlayer()->GetName(), itemName.c_str(), item_id);
+								else if(!item->generic_info.display_charges && item->generic_info.max_charges == 1)
+									client->RemoveItem(item, 1); // end of a set of charges OR an item that uses a stack count of actual item quantity
+								else
+								{
+									item->details.count--; // charges
+									item->save_needed = true;
+									client->QueuePacket(item->serialize(client->GetVersion(), false, client->GetPlayer()));
+								}
 							}
+							else
+									LogWrite(PLAYER__WARNING, 0, "Command", "%s: Item %s (%i) was used, after it returned %i, bypassing any removal/update of items.", client->GetPlayer()->GetName(), itemName.c_str(), item_id, flags);
 						}
 						else
 						{
@@ -9938,7 +9949,7 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 			}
 		}
 		else if (atoi(sep->arg[0]) == 28 && sep->IsNumber(1)) {
-			World::newValue = atoi(sep->arg[1]);
+			World::newValue = strtoull(sep->arg[1], NULL, 0);
 		}
 	}
 	else {

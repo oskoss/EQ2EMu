@@ -229,6 +229,20 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	if (result->GetInt8Str("no_salvage") == 1)
 		item->generic_info.item_flags2 += NO_SALVAGE;
 
+	if (result->GetInt8Str("indestructable") == 1)
+		item->generic_info.item_flags2 += INDESTRUCTABLE;
+		
+	if (result->GetInt8Str("no_experiment") == 1)
+		item->generic_info.item_flags2 += NO_EXPERIMENT;
+
+	if (result->GetInt8Str("house_lore") == 1)
+		item->generic_info.item_flags2 += HOUSE_LORE;
+
+	if (result->GetInt8Str("building_block") == 1)
+		item->generic_info.item_flags2 += BUILDING_BLOCK;
+
+	if (result->GetInt8Str("free_reforge") == 1)
+		item->generic_info.item_flags2 += FREE_REFORGE;
 	
 
 	if( result->GetInt32Str("skill_id_req") == 0 )

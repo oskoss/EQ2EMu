@@ -128,6 +128,8 @@ extern MasterItemList master_item_list;
 #define BANK_SLOT6 1500
 #define BANK_SLOT7 1600
 #define BANK_SLOT8 1700
+
+// FLAGS
 #define ATTUNED			1
 #define ATTUNEABLE		2
 #define ARTIFACT		4
@@ -145,6 +147,7 @@ extern MasterItemList master_item_list;
 #define NO_TRANSMUTE	16384
 #define CURSED			32768
 
+// FLAGS2
 #define ORNATE			1
 #define HEIRLOOM		2
 #define APPEARANCE_ONLY	4
@@ -153,14 +156,14 @@ extern MasterItemList master_item_list;
 #define NO_REPAIR		32
 #define ETHERAL			64
 #define REFINED			128
-#define NO_SALVAGE		256 //not used at this time
-#define FLAGS2_512		512//not used at this time
-#define FLAGS2_1024		1024//not used at this time
-#define FLAGS2_2048		2048//not used at this time
-#define FLAGS2_4096		4096//not used at this time
-#define FLAGS2_8192		8192//not used at this time
-#define FLAGS2_16384	16384//not used at this time
-#define FLAGS2_32768	32768//not used at this time
+#define NO_SALVAGE		256
+#define INDESTRUCTABLE	512
+#define NO_EXPERIMENT	1024
+#define HOUSE_LORE		2048
+#define FLAGS2_4096		4096//AoM: not used at this time
+#define BUILDING_BLOCK	8192
+#define FREE_REFORGE	16384
+#define FLAGS2_32768	32768//AoM: not used at this time
 
 
 #define ITEM_WIELD_TYPE_DUAL		1
@@ -217,7 +220,7 @@ extern MasterItemList master_item_list;
 #define ITEM_MENU_TYPE_DISPLAY_CHARGES  16384//14
 #define ITEM_MENU_TYPE_TEST1			32768//15 Possibly toogle decorator mode
 #define ITEM_MENU_TYPE_NAMEPET		    65536 //16 Right CLick Menu
-#define ITEM_MENU_TYPE_TEST2			131072 //sets a purple background on item
+#define ITEM_MENU_TYPE_MENTORED			131072 //sets a purple background on item
 #define ITEM_MENU_TYPE_CONSUME			262144//18
 #define ITEM_MENU_TYPE_USE			    524288//19
 #define ITEM_MENU_TYPE_CONSUME_OFF		1048576//20
@@ -1112,6 +1115,7 @@ public:
 	int8	GetSlotByItem(Item* item);
 	ItemStatsValues*	CalculateEquipmentBonuses(Entity* entity = 0);
 	EQ2Packet* serialize(int16 version, Player* player);
+	void SendEquippedItems(Player* player);
 	uchar* xor_packet;
 	uchar* orig_packet;
 

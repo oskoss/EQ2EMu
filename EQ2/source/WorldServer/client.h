@@ -483,6 +483,8 @@ public:
 	void AwardCoins(int64 total_coins, std::string reason = string(""));
 
 	void TriggerSpellSave();
+
+	void ClearSentItemDetails() { sent_item_details.clear(); }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

@@ -1247,7 +1247,7 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 			if (((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs, custom_spell_name))
 				success = true;
 		}
-		if (luaspell->targets.size() > 0) {
+		if ((!success || luaspell->spell->GetSpellData()->group_spell) && luaspell->targets.size() > 0) {
 			Spawn* target = 0;
 			ZoneServer* zone = luaspell->caster->GetZone();
 			luaspell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
@@ -1338,7 +1338,7 @@ int EQ2Emu_lua_SpellHealPct(lua_State* state) {
 			if (((Entity*)caster)->SpellHeal(target, distance, luaspell, heal_type, min_heal, max_heal, crit_mod, no_calcs, custom_spell_name))
 				success = true;
 		}
-		if (luaspell->targets.size() > 0) {
+		if ((!success || luaspell->spell->GetSpellData()->group_spell) && luaspell->targets.size() > 0) {
 			Spawn* target = 0;
 			ZoneServer* zone = luaspell->caster->GetZone();
 			luaspell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
@@ -12109,6 +12109,17 @@ int EQ2Emu_lua_PauseMovement(lua_State* state) {
 	int32 delay_in_ms = lua_interface->GetInt32Value(state, 2);
 	if (spawn) {
 		spawn->PauseMovement(delay_in_ms);
+	}
+	lua_interface->ResetFunctionStack(state);
+	return 0;
+}
+
+int EQ2Emu_lua_StopMovement(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn) {
+		spawn->StopMovement();
 	}
 	lua_interface->ResetFunctionStack(state);
 	return 0;

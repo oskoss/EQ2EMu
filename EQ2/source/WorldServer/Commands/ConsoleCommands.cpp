@@ -57,6 +57,7 @@ void ProcessConsoleInput(const char * cmdInput)
 		// world system controls
 		{ &ConsoleGuildCommand,			"guild",	"[params]",	"" },
 		{ &ConsolePlayerCommand,		"player",	"[params]", "" },
+		{ &ConsoleSetAdminPlayer,		"makeadmin",	"[charname] [status=0]", "" },
 		{ &ConsoleZoneCommand,			"zone",		"[command][value]",	"command = help to get help" },
 		{ &ConsoleWorldCommand,			"world",	"[params]", "" },
 		{ &ConsoleGetMOTDCommand,		"getmotd",	"",	"Display current MOTD" },
@@ -217,6 +218,37 @@ bool ConsolePlayerCommand(Seperator *sep)
 	if( strlen(sep->arg[1]) == 0 ) 
 		return false;
 
+	return true;
+}
+
+bool ConsoleSetAdminPlayer(Seperator *sep)
+{
+	if(!sep->arg[1] ||  strlen(sep->arg[1]) == 0)
+		return false;
+
+	sint16 status = 0;
+	if(sep->IsNumber(2))
+		status = atoi(sep->arg[2]);
+	
+	Client* client = zone_list.GetClientByCharName(sep->arg[1]);
+	
+	if(!client) {
+		printf("Client not found by char name, must be logged in\n");
+		return true;
+	}
+
+	if(!client->GetPlayer()) {
+
+		printf("Player is not available for client class, try again\n");
+		return true;
+	}
+
+	client->SetAdminStatus(status);
+	if(status)
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Admin status updated.");
+	database.UpdateAdminStatus(client->GetPlayer()->GetName(), status);
+	printf("Admin status for %s is updated to %i\n", client->GetPlayer()->GetName(), status);
+	
 	return true;
 }
 

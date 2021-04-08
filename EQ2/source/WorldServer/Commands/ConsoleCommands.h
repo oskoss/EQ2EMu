@@ -45,6 +45,7 @@ struct ConsoleCommand
 
 	bool ConsoleGuildCommand(Seperator *sep);
 	bool ConsolePlayerCommand(Seperator *sep);
+	bool ConsoleSetAdminPlayer(Seperator *sep);
 	bool ConsoleWorldCommand(Seperator *sep);
 	bool ConsoleZoneCommand(Seperator *sep);
 	bool ConsoleGetMOTDCommand(Seperator *sep);

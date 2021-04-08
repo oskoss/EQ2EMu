@@ -211,6 +211,7 @@ void RuleManager::Init()
 	RULE_INIT(R_Player, MaxLastNameLength, "20");
 	RULE_INIT(R_Player, MinLastNameLength, "4");
 	RULE_INIT(R_Player, DisableHouseAlignmentRequirement, "1");
+	RULE_INIT(R_Player, MentorItemDecayRate, ".05"); // 5% per level lost when mentoring
 
 	/* PVP */
 	RULE_INIT(R_PVP, AllowPVP, "0");

@@ -658,9 +658,14 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 				//EQApplicationPacket *ap = p->MakeApplicationPacket(app_opcode_size);
 				//InboundQueuePush(ap);
 
+				cout << "Orig Packet: " << p->opcode << endl;
+				DumpPacket(p->pBuffer, p->size);
 				MCombineQueueLock.lock();
 				EQProtocolPacket* p2 = ProcessEncryptedData(p->pBuffer, p->size, OP_Fragment);
 				MCombineQueueLock.unlock();
+				cout << "Decrypted Packet: " << p2->opcode << endl;
+				DumpPacket(p2->pBuffer, p2->size);
+
 				EQApplicationPacket* ap = p2->MakeApplicationPacket(2);
 				if (ap->version == 0)
 					ap->version = client_version;
@@ -669,6 +674,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 #endif
 				//InboundQueuePush(ap);
 				LogWrite(PACKET__INFO, 0, "Packet", "Received unknown packet type, not adding to inbound queue");
+				cout << "AppPacket: " << p2->opcode << endl;
 				DumpPacket(ap->pBuffer, ap->size);
 				safe_delete(ap);
 				safe_delete(p2);

@@ -1013,7 +1013,7 @@ public:
 	void	MoveToLocation(Spawn* spawn, float distance, bool immediate = true, bool isMappedLocation = false);
 	void	AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function);
 	void	ProcessMovement(bool isSpawnListLocked=false);
-	void	ResetMovement();
+	void	ResetMovement(bool inFlight=false);
 	bool	IsRunning();
 	void	CalculateRunningLocation(bool stop = false);
 	void	RunToLocation(float x, float y, float z, float following_x = 0, float following_y = 0, float following_z = 0);
@@ -1204,6 +1204,7 @@ public:
 	std::map<std::map<Region_Node*, ZBSP_Node*>, Region_Status> Regions;
 	Mutex RegionMutex;
 
+	virtual void StopMovement();
 	virtual bool PauseMovement(int32 period_of_time_ms);
 	virtual bool IsPauseMovementTimerActive();
 protected:

@@ -1532,7 +1532,7 @@ void Entity::CalculateSpellBonuses(ItemStatsValues* stats){
 			//We've found the highest tier for this spell id, so add the bonuses
 			vector<BonusValues*>* final_bonuses = &sort_itr->second[key];
 			for (int8 i = 0; i < final_bonuses->size(); i++)
-				world.AddBonuses(stats, final_bonuses->at(i)->type, final_bonuses->at(i)->value, this);
+				world.AddBonuses(nullptr, stats, final_bonuses->at(i)->type, final_bonuses->at(i)->value, this);
 		}
 	}
 }

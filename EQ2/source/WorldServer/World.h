@@ -571,7 +571,7 @@ public:
 	bool RejoinGroup(Client* client, int32 group_id);
 	//bool MakeLeader(Client* leader, string new_leader);
 	
-	void AddBonuses(ItemStatsValues* values, int16 type, sint32 value, Entity* entity);
+	void AddBonuses(Item* item, ItemStatsValues* values, int16 type, sint32 value, Entity* entity);
 	void CreateGuild(const char* guild_name, Client* leader = 0, int32 group_id = 0);
 	void SaveGuilds();
 	void PickRandomLottoDigits(int32* digits);
@@ -632,7 +632,7 @@ public:
 	
 	void LoadMaps(std::string zoneFile);
 	Map* GetMap(std::string zoneFile, int32 client_version);
-	static sint16 newValue;
+	static sint64 newValue;
 private:
 	int32 suppressed_warning = 0;
 	map<string, int32> reloading_subsystems;

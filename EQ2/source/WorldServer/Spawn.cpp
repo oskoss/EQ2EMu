@@ -458,15 +458,16 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 	PacketStruct* info_struct = player->GetSpawnInfoStruct();
 	PacketStruct* pos_struct = player->GetSpawnPosStruct();
 
+	player->info_mutex.writelock(__FUNCTION__, __LINE__);
 	player->vis_mutex.writelock(__FUNCTION__, __LINE__);
+	player->pos_mutex.writelock(__FUNCTION__, __LINE__);
+
+	info_struct->ResetData();
+	InitializeInfoPacketData(player, info_struct);
+	
 	vis_struct->ResetData();
 	InitializeVisPacketData(player, vis_struct);
 
-	player->info_mutex.writelock(__FUNCTION__, __LINE__);
-	info_struct->ResetData();
-	InitializeInfoPacketData(player, info_struct);
-
-	player->pos_mutex.writelock(__FUNCTION__, __LINE__);
 	pos_struct->ResetData();
 	InitializePosPacketData(player, pos_struct);
 
@@ -2810,7 +2811,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	bool movementCase = false;
 	// Movement loop is only for scripted paths
 	if(!EngagedInCombat() && !IsPauseMovementTimerActive() && !NeedsToResumeMovement() && (!IsNPC() || !((NPC*)this)->m_runningBack)){
-		MMovementLoop.lock();
+		MMovementLoop.writelock();
 		if(movement_loop.size() > 0 && movement_index < movement_loop.size())
 		{
 			movementCase = true;
@@ -2828,24 +2829,27 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 
 				data = movement_loop[movement_index];
 				
-				((Entity*)this)->SetSpeed(data->speed);
-				SetSpeed(data->speed);
-				if(!IsWidget())
-					FaceTarget(data->x, data->z);
-				// 0 delay at target location, need to set multiple locations
-				if(data->delay == 0 && movement_loop.size() > 0) {
-					int16 tmp_index = movement_index+1;
-					MovementData* data2 = 0;
-					if(tmp_index < movement_loop.size()) 
-						data2 = movement_loop[tmp_index];
+				if(data)
+				{
+					((Entity*)this)->SetSpeed(data->speed);
+					SetSpeed(data->speed);
+					if(!IsWidget())
+						FaceTarget(data->x, data->z);
+					// 0 delay at target location, need to set multiple locations
+					if(data->delay == 0 && movement_loop.size() > 0) {
+						int16 tmp_index = movement_index+1;
+						MovementData* data2 = 0;
+						if(tmp_index < movement_loop.size()) 
+							data2 = movement_loop[tmp_index];
+						else
+							data2 = movement_loop[0];
+						AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);				
+						AddRunningLocation(data2->x, data2->y, data2->z, data2->speed, 0, true, true, "", true);
+					}
+					// delay at target location, only need to set 1 location
 					else
-						data2 = movement_loop[0];
-					AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);				
-					AddRunningLocation(data2->x, data2->y, data2->z, data2->speed, 0, true, true, "", true);
+						AddRunningLocation(data->x, data->y, data->z, data->speed);
 				}
-				// delay at target location, only need to set 1 location
-				else
-					AddRunningLocation(data->x, data->y, data->z, data->speed);
 				movement_start_time = 0;
 				resume_movement = false;
 			}
@@ -2856,7 +2860,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 					RemoveRunningLocation();
 
 				// If this waypoint has a delay and we just arrived here (movement_start_time == 0)
-				if(data->delay > 0 && movement_start_time == 0){
+				if(data && data->delay > 0 && movement_start_time == 0){
 					// Set the current time
 					movement_start_time = Timer::GetCurrentTime2();
 					// If this waypoint had a lua function then call it
@@ -2875,49 +2879,53 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 					FaceTarget(data->x, data->z);
 				}
 				// If this waypoint has no delay or we have waited the required time (current time >= delay + movement_start_time)
-				else if(data->delay == 0 || (data->delay > 0 && Timer::GetCurrentTime2() >= (data->delay+movement_start_time))) {
+				else if(data && data->delay == 0 || (data && data->delay > 0 && Timer::GetCurrentTime2() >= (data->delay+movement_start_time))) {
 					// if no delay at this waypoint but a lua function for it then call the function
 					if(data->delay == 0 && data->lua_function.length() > 0)
 						GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, 0, data->lua_function.c_str());
-					// Advance the current movement loop index
-					if((int16)(movement_index+1) < movement_loop.size())
-						movement_index++;
-					else
-						movement_index = 0;
-					// Get the next target location
-					data = movement_loop[movement_index];
-					// set the speed for that location
-					SetSpeed(data->speed);
-
-					if(!IsWidget())
-					// turn towards the location
-						FaceTarget(data->x, data->z);
-					// If 0 delay at location get and set data for the point after it
-					if(data->delay == 0 && movement_loop.size() > 0){
-						while (movement_locations->size()){
-							safe_delete(movement_locations->front());
-							movement_locations->pop_front();
-						}
-						// clear current target locations
-						movement_locations->clear();
-						// get the data for the location after out new location
-						int16 tmp_index = movement_index+1;
-						MovementData* data2 = 0;
-						if(tmp_index < movement_loop.size()) 
-							data2 = movement_loop[tmp_index];
+					// since we ran a lua function make sure the movement loop is still alive and accurate
+					if(movement_loop.size() > 0)
+					{
+						// Advance the current movement loop index
+						if((int16)(movement_index+1) < movement_loop.size())
+							movement_index++;
 						else
-							data2 = movement_loop[0];
-						// set the first location (adds it to movement_locations that we just cleared)
-						AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);
-						// set the location after that
-						AddRunningLocation(data2->x, data2->y, data2->z, data2->speed, 0, true, true, "", true);
-					}
-					// there is a delay at the next location so we only need to set it
-					else
-						AddRunningLocation(data->x, data->y, data->z, data->speed);
+							movement_index = 0;
+						// Get the next target location
+						data = movement_loop[movement_index];
+						// set the speed for that location
+						SetSpeed(data->speed);
 
-					// reset this timer to 0 now that we are moving again
-					movement_start_time = 0;
+						if(!IsWidget())
+						// turn towards the location
+							FaceTarget(data->x, data->z);
+						// If 0 delay at location get and set data for the point after it
+						if(data->delay == 0 && movement_loop.size() > 0){
+							while (movement_locations->size()){
+								safe_delete(movement_locations->front());
+								movement_locations->pop_front();
+							}
+							// clear current target locations
+							movement_locations->clear();
+							// get the data for the location after out new location
+							int16 tmp_index = movement_index+1;
+							MovementData* data2 = 0;
+							if(tmp_index < movement_loop.size()) 
+								data2 = movement_loop[tmp_index];
+							else
+								data2 = movement_loop[0];
+							// set the first location (adds it to movement_locations that we just cleared)
+							AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, false, "", true);
+							// set the location after that
+							AddRunningLocation(data2->x, data2->y, data2->z, data2->speed, 0, true, true, "", true);
+						}
+						// there is a delay at the next location so we only need to set it
+						else
+							AddRunningLocation(data->x, data->y, data->z, data->speed);
+
+						// reset this timer to 0 now that we are moving again
+						movement_start_time = 0;
+					}
 				}
 			}
 			// moving and not at target location yet
@@ -2929,7 +2937,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				AddRunningLocation(data->x, data->y, data->z, data->speed);
 			}
 		}
-		MMovementLoop.unlock();
+		MMovementLoop.releasewritelock();
 	}
 	
 	if (!movementCase && IsRunning() && !IsPauseMovementTimerActive()) {
@@ -2944,16 +2952,18 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	}*/
 }
 
-void Spawn::ResetMovement(){
-	MMovementLoop.lock();
+void Spawn::ResetMovement(bool inFlight){
+	if(!inFlight)
+		MMovementLoop.writelock();
 	vector<MovementData*>::iterator itr;
 	for(itr = movement_loop.begin(); itr != movement_loop.end(); itr++){
 		safe_delete(*itr);
 	}
 	movement_loop.clear();
-	MMovementLoop.unlock();
-	resume_movement = true;
 	movement_index = 0;
+	resume_movement = true;
+	if(!inFlight)
+		MMovementLoop.releasewritelock();
 }
 
 void Spawn::AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function){
@@ -4031,6 +4041,11 @@ float Spawn::SpawnAngle(Spawn* target, float selfx, float selfz)
 	angle = angle * 180.0f / 3.1415f;
 
 	return angle;
+}
+
+void Spawn::StopMovement()
+{
+	ResetMovement(true);
 }
 
 bool Spawn::PauseMovement(int32 period_of_time_ms)

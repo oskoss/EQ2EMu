@@ -792,7 +792,7 @@ ItemStatsValues* MasterItemList::CalculateItemBonuses(Item* item, Entity* entity
 					id = stat->stat_type*multiplier + stat->stat_subtype;
 			}
 
-			world.AddBonuses(values, id, stat->value, entity);
+			world.AddBonuses(item, values, id, stat->value, entity);
 		}
 		return values;
 	}
@@ -1445,18 +1445,18 @@ bool Item::CheckFlag2(int32 flag){
 	while (flag_val > 0){
 		if (flag_val >= FLAGS2_32768) 
 			value = FLAGS2_32768;
-		else if (flag_val >= FLAGS2_16384)
-			value = FLAGS2_16384;
-		else if (flag_val >= FLAGS2_8192)
-			value = FLAGS2_8192;
+		else if (flag_val >= FREE_REFORGE)
+			value = FREE_REFORGE;
+		else if (flag_val >= BUILDING_BLOCK)
+			value = BUILDING_BLOCK;
 		else if (flag_val >= FLAGS2_4096)
 			value = FLAGS2_4096;
-		else if (flag_val >= FLAGS2_2048)
-			value = FLAGS2_2048;
-		else if (flag_val >= FLAGS2_1024)
-			value = FLAGS2_1024;
-		else if (flag_val >= FLAGS2_512)
-			value = FLAGS2_512;
+		else if (flag_val >= HOUSE_LORE)
+			value = HOUSE_LORE;
+		else if (flag_val >= NO_EXPERIMENT)
+			value = NO_EXPERIMENT;
+		else if (flag_val >= INDESTRUCTABLE)
+			value = INDESTRUCTABLE;
 		else if (flag_val >= NO_SALVAGE)
 			value = NO_SALVAGE;
 		else if (flag_val >= REFINED)
@@ -1673,6 +1673,16 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	else
 		packet->setSubstructSubstructDataByName("header", "info_header", "packettype", packet_type);
 	packet->setSubstructSubstructDataByName("header", "info_header", "packetsubtype", subtype);  // should be substype
+
+	/*
+0 red
+1 orange
+2 yellow
+3 white
+4 blue
+5 green
+6 grey
+7 purple*/
 	packet->setSubstructDataByName("header_info", "footer_type", 3);
 	packet->setSubstructDataByName("header_info", "item_id", details.item_id);
 	
@@ -1695,6 +1705,13 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		int8 bluemod = 0;
 		for (int32 i = 0; i < item_stats.size(); i++){
 			ItemStat* stat = item_stats[i];
+
+			if(!stat)
+			{
+				LogWrite(ITEM__ERROR, 0, "Item", "%s: %s (itemid: %u) Error Serializing Item: Invalid item in item_stats position %u", client->GetPlayer()->GetName(), this->name.c_str(), this->details.item_id, i);
+				continue;
+			}
+			
 			if (stat->stat_type == 9){
 				bluemod += 1;
 			}
@@ -1769,30 +1786,41 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			if (stat->stat_name.length() > 0)
 				packet->setArrayDataByName("stat_name", stat->stat_name.c_str(), i-dropstat);
 			/* SF client */
-			
+			float statValue = stat->value;
+			if(player)
+			{
+				int32 effective_level = player->GetInfoStructUInt("effective_level");
+				if(effective_level && effective_level < player->GetLevel() && details.recommended_level > effective_level)
+				{
+					int32 diff = details.recommended_level - effective_level;
+					float tmpValue = (float)statValue;
+					statValue = (sint32)(float)(tmpValue / (1.0f + ((float)diff * rule_manager.GetGlobalRule(R_Player, MentorItemDecayRate)->GetFloat())));
+				}
+			}
+
 			if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331) {
 				if (stat->stat_type == 6){
-					packet->setArrayDataByName("value", stat->value , i - dropstat);//63119 or when diety started (this is actually the modified stat
+					packet->setArrayDataByName("value", statValue , i - dropstat);//63119 or when diety started (this is actually the modified stat
 					packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value (this is the unmodified stat
 				}
 				else	{
-					packet->setArrayDataByName("value", (sint16)stat->value , i - dropstat, 0U, true);
+					packet->setArrayDataByName("value", (sint16)statValue , i - dropstat, 0U, true);
 					packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value
 				}
 			}
 			 else if (client->GetVersion() >= 1028) {
 				if (stat->stat_type == 6){
-					packet->setArrayDataByName("value", stat->value , i - dropstat);//63119 or when diety started (this is actually the infused modified stat
+					packet->setArrayDataByName("value", statValue , i - dropstat);//63119 or when diety started (this is actually the infused modified stat
 					packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value (this is the unmodified stat
 				}
 				else {
-					packet->setArrayDataByName("value", (sint16)stat->value , i - dropstat, 0U, true);
+					packet->setArrayDataByName("value", (sint16)statValue , i - dropstat, 0U, true);
 					packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value
 				}
 				
 			}
 			else{
-				packet->setArrayDataByName("value", (sint16)stat->value , i - dropstat);
+				packet->setArrayDataByName("value", (sint16)statValue , i - dropstat);
 				packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value
 			}
 		}
@@ -3360,7 +3388,7 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 		menu_data += ITEM_MENU_TYPE_DISPLAY_CHARGES;
 		menu_data += ITEM_MENU_TYPE_TEST1;
 		menu_data += ITEM_MENU_TYPE_NAMEPET;
-		menu_data += ITEM_MENU_TYPE_TEST2;
+		menu_data += ITEM_MENU_TYPE_MENTORED;
 		menu_data += ITEM_MENU_TYPE_CONSUME;
 		menu_data += ITEM_MENU_TYPE_USE;
 	}
@@ -3786,6 +3814,16 @@ Item* EquipmentItemList::GetItem(int8 slot_id){
 	return items[slot_id];
 }
 
+void EquipmentItemList::SendEquippedItems(Player* player){
+	if(!player->GetClient())
+		return;
+		for(int16 i=0;i<NUM_SLOTS;i++){
+			Item* item = items[i];
+			if(item && item->details.item_id > 0)
+				player->GetClient()->QueuePacket(item->serialize(player->GetClient()->GetVersion(), false, player));
+		}
+}
+
 EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 	EQ2Packet* app = 0;
 	Item* item = 0;
@@ -3807,6 +3845,10 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 		}
 		MEquipmentItems.lock();
 		int32 menu_data = 3;
+		int32 effective_level = player->GetInfoStructUInt("effective_level");
+
+		int32 levelsLowered = (effective_level > 0 && effective_level < player->GetLevel()) ? player->GetLevel() - effective_level : 0;
+
 		for(int16 i=0;i<NUM_SLOTS;i++){
 			menu_data = 3;
 			item = items[i];
@@ -3868,6 +3910,8 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 					else
 						menu_data += ITEM_MENU_TYPE_DISPLAY_CHARGES;
 				}
+				if(levelsLowered && item->details.recommended_level > effective_level)
+					menu_data += ITEM_MENU_TYPE_MENTORED;
 				packet->setSubstructArrayDataByName("items", "menu_type", menu_data, 0, i);
 				packet->setSubstructArrayDataByName("items", "icon", item->details.icon, 0, i);
 				packet->setSubstructArrayDataByName("items", "slot_id", item->details.slot_id, 0, i);

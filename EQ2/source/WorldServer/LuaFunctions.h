@@ -577,6 +577,7 @@ int EQ2Emu_lua_GetShardCreatedTimestamp(lua_State* state);
 int EQ2Emu_lua_DeleteDBShardID(lua_State* state);
 
 int EQ2Emu_lua_PauseMovement(lua_State* state);
+int EQ2Emu_lua_StopMovement(lua_State* state);
 
 int EQ2Emu_lua_GetArrowColor(lua_State* state);
 int EQ2Emu_lua_GetTSArrowColor(lua_State* state);

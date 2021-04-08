@@ -1495,8 +1495,18 @@ bool World::RejoinGroup(Client* client, int32 group_id){
 }
 
 
-void World::AddBonuses(ItemStatsValues* values, int16 type, sint32 value, Entity* entity){
+void World::AddBonuses(Item* item, ItemStatsValues* values, int16 type, sint32 value, Entity* entity){
 	if(values){
+		if(item && entity && entity->IsPlayer())
+		{
+			int32 effective_level = entity->GetInfoStructUInt("effective_level");
+			if(effective_level && effective_level < entity->GetLevel() && item->details.recommended_level > effective_level)
+			{
+				int32 diff = item->details.recommended_level - effective_level;
+				float tmpValue = (float)value;
+				value = (sint32)(float)(tmpValue / (1.0f + ((float)diff * .05f)));
+			}
+		}
 		switch(type){
 			case ITEM_STAT_STR:{
 				values->str += value;
@@ -2100,7 +2110,7 @@ int32 World::LoadItemBlueStats() {
 	return count;
 }
 
-sint16 World::newValue = 27;
+sint64 World::newValue = 27;
 
 sint16 World::GetItemStatAOMValue(sint16 subtype) {
 	sint16 tmp_subtype = subtype;

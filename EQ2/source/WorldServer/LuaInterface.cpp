@@ -1408,6 +1408,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "DeleteDBShardID", EQ2Emu_lua_DeleteDBShardID);
 	
 	lua_register(state, "PauseMovement", EQ2Emu_lua_PauseMovement);
+	lua_register(state, "StopMovement", EQ2Emu_lua_StopMovement);
 	
 	lua_register(state, "GetArrowColor", EQ2Emu_lua_GetArrowColor);
 	lua_register(state, "GetTSArrowColor", EQ2Emu_lua_GetTSArrowColor);

@@ -1716,7 +1716,8 @@ bool Player::DamageEquippedItems(int8 amount, Client* client) {
 		item = equipment_list.items[i];
 		if(item) {
 			item_type = item->generic_info.item_type;
-			if (item->details.item_id > 0 && item_type != ITEM_TYPE_FOOD && item_type != ITEM_TYPE_BAUBLE && item_type != ITEM_TYPE_THROWN){
+			if (item->details.item_id > 0 && item_type != ITEM_TYPE_FOOD && item_type != ITEM_TYPE_BAUBLE && item_type != ITEM_TYPE_THROWN && 
+			!item->CheckFlag2(INDESTRUCTABLE)){
 				ret = true;
 				if((item->generic_info.condition - amount) > 0)
 					item->generic_info.condition -= amount;
@@ -2100,7 +2101,12 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 			return packets;
 		int8 slot = equipList->GetFreeSlot(item, slot_id);
 		bool canEquip = CanEquipItem(item);
-		if (canEquip && item->CheckFlag(ATTUNEABLE)) {
+		if(canEquip && !appearance_type && item->CheckFlag2(APPEARANCE_ONLY))
+		{
+			GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "This item is for appearance slots only.");
+			return packets;
+		}
+		else if (canEquip && item->CheckFlag(ATTUNEABLE)) {
 			PacketStruct* packet = configReader.getStruct("WS_ChoiceWindow", version);
 			char text[255];
 			sprintf(text, "%s must be attuned before it can be equipped. Would you like to attune it now?", item->name.c_str());
@@ -3193,13 +3199,13 @@ void Player::ClearEverything(){
 	player_spawn_history_required.clear();
 	m_playerSpawnHistoryRequired.releasewritelock(__FUNCTION__, __LINE__);
 
-	vis_mutex.writelock(__FUNCTION__, __LINE__);
-	spawn_vis_packet_list.clear();
-	vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
-
 	info_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_info_packet_list.clear();
 	info_mutex.releasewritelock(__FUNCTION__, __LINE__);
+
+	vis_mutex.writelock(__FUNCTION__, __LINE__);
+	spawn_vis_packet_list.clear();
+	vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	pos_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_pos_packet_list.clear();
@@ -4178,8 +4184,8 @@ void Player::RemoveSpawn(Spawn* spawn)
 	LogWrite(PLAYER__DEBUG, 3, "Player", "Remove Spawn '%s' (%u)", spawn->GetName(), spawn->GetID());
 
 	info_mutex.writelock(__FUNCTION__, __LINE__);
-	pos_mutex.writelock(__FUNCTION__, __LINE__);
 	vis_mutex.writelock(__FUNCTION__, __LINE__);
+	pos_mutex.writelock(__FUNCTION__, __LINE__);
 
 	index_mutex.writelock(__FUNCTION__, __LINE__);
 
@@ -5272,13 +5278,13 @@ void Player::ResetRemovedSpawns(){
 void Player::ResetSavedSpawns(){
 	ResetRemovedSpawns();
 
-	vis_mutex.writelock(__FUNCTION__, __LINE__);
-	spawn_vis_packet_list.clear();
-	vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
-
 	info_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_info_packet_list.clear();
 	info_mutex.releasewritelock(__FUNCTION__, __LINE__);
+
+	vis_mutex.writelock(__FUNCTION__, __LINE__);
+	spawn_vis_packet_list.clear();
+	vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	pos_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_pos_packet_list.clear();
@@ -6677,4 +6683,13 @@ void Player::SetMentorStats(int32 effective_level, int32 target_char_id)
 	info->set_magic_base((int16)(effective_level * 1.5 + 10));
 	info->set_divine_base((int16)(effective_level * 1.5 + 10));
 	info->set_poison_base((int16)(effective_level * 1.5 + 10));
+	GetClient()->ClearSentItemDetails();
+	if(GetClient())
+	{
+		EQ2Packet* app = GetEquipmentList()->serialize(GetClient()->GetVersion(), this);
+		if (app) {
+			GetClient()->QueuePacket(app);
+		}
+	}
+	GetEquipmentList()->SendEquippedItems(this);
 }

@@ -71,6 +71,7 @@ enum RuleType {
 	MaxLastNameLength,
 	MinLastNameLength,
 	DisableHouseAlignmentRequirement,
+	MentorItemDecayRate,
 
 	/* PVP */
 	AllowPVP,
