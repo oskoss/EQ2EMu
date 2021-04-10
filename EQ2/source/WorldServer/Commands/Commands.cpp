@@ -4562,7 +4562,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					{
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage: /flag {name} {new_status}");
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW," Standard User: 0");
-						client->SimpleMessage(CHANNEL_COLOR_YELLOW," Admin User: 100");
+						client->Message(CHANNEL_COLOR_YELLOW," Admin User: %i", status);
 					}
 				}
 				break;
