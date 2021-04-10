@@ -4276,6 +4276,11 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	}
 
 	if (player->GetLevel() != new_level) {
+		if(!player->GetGroupMemberInfo() || !player->GetGroupMemberInfo()->mentor_target_char_id)
+		{
+			player->GetInfoStruct()->set_effective_level(new_level);
+		}
+		
 		player->SetLevel(new_level);
 		if (player->GetGroupMemberInfo()) {
 			player->UpdateGroupMemberInfo();
