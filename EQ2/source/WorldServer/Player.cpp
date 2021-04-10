@@ -3563,8 +3563,15 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 		pos_packet_speed = speed;
 		grid_id = appearance.pos.grid_id;
 	}
-	else if (GetBoatSpawn() > 0)
+	else if (GetBoatSpawn() > 0 && !lift_cooldown.Enabled())
+	{
+		lift_cooldown.Start(100, true);
+	}
+	else if(lift_cooldown.Check())
+	{
+		printf("Disable boat\n");
 		SetBoatSpawn(0);
+	}
 
 	if (!IsResurrecting() && !GetBoatSpawn())
 	{

@@ -417,6 +417,7 @@ public:
 	void	ProcessWeather();
 	
 	Spawn*  GetClosestTransportSpawn(float x, float y, float z);
+	Spawn*  GetTransportByRailID(sint64 rail_id);
 	
 	void    ResurrectSpawn(Spawn* spawn, Client* client);
 
@@ -461,6 +462,7 @@ public:
 	void			PlayAnimation(Spawn* spawn, int32 visual_state, Spawn* spawn2 = 0, int8 type = 1);
 	void			AddTransportSpawn(Spawn* spawn);
 	vector<Spawn*>	GetSpawnsByID(int32 id);
+	vector<Spawn*>	GetSpawnsByRailID(sint64 rail_id);
 	bool			IsDusk() { return isDusk; }										// never used, probably meant for lua though
 
 

@@ -523,6 +523,26 @@ int EQ2Emu_lua_GetSpawnListBySpawnID(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_GetSpawnListByRailID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	sint64 rail_id = lua_interface->GetSInt64Value(state, 2);
+	if (spawn) {
+		vector<Spawn*> spawns = spawn->GetZone()->GetSpawnsByRailID(rail_id);
+		if (spawns.size() > 0) {
+			vector<Spawn*>* spawnList = new vector<Spawn*>();
+			vector<Spawn*>::iterator itr;
+			for (itr = spawns.begin(); itr != spawns.end(); itr++) {
+				spawnList->push_back(*itr);
+			}
+			lua_interface->SetSpawnListValue(state, spawnList);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_GetVariableValue(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -1166,14 +1186,15 @@ int EQ2Emu_lua_Shout(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string message = lua_interface->GetStringValue(state, 2);
 	Spawn* player = lua_interface->GetSpawn(state, 3);
+	float dist = lua_interface->GetFloatValue(state, 4);
 	if (spawn && message.length() > 0) {
 		Client* client = 0;
 		if (player && player->IsPlayer())
 			client = spawn->GetZone()->GetClientBySpawn(player);
 		if (client)
-			spawn->GetZone()->HandleChatMessage(client, spawn, 0, CHANNEL_SHOUT, message.c_str(), 30);
+			spawn->GetZone()->HandleChatMessage(client, spawn, 0, CHANNEL_SHOUT, message.c_str(), (dist > 0.0f) ? dist : 30.0f);
 		else
-			spawn->GetZone()->HandleChatMessage(spawn, 0, CHANNEL_SHOUT, message.c_str(), 30);
+			spawn->GetZone()->HandleChatMessage(spawn, 0, CHANNEL_SHOUT, message.c_str(), (dist > 0.0f) ? dist : 30.0f);
 	}
 	lua_interface->ResetFunctionStack(state);
 	return 0;
@@ -7452,6 +7473,20 @@ int EQ2Emu_lua_AddTransportSpawn(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_IsTransportSpawn(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA AddTransportSpawn command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	lua_interface->SetBooleanValue(state, spawn->IsTransportSpawn());
+	return 1;
+}
+
 int EQ2Emu_lua_GetSkillValue(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -12142,6 +12177,20 @@ int EQ2Emu_lua_GetTSArrowColor(lua_State* state) {
 	if (player && player->IsPlayer() && level > 0) {
 		lua_interface->SetInt32Value(state, player->GetTSArrowColor(level));
 		return 1;
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_GetSpawnByRailID(lua_State* state) {
+	ZoneServer* zone = lua_interface->GetZone(state);
+	sint64 rail_id = lua_interface->GetSInt64Value(state, 2);
+
+	if (zone) {
+		Spawn* spawn = zone->GetTransportByRailID(rail_id);
+		if (spawn) {
+			lua_interface->SetSpawnValue(state, spawn);
+			return 1;
+		}
 	}
 	return 0;
 }

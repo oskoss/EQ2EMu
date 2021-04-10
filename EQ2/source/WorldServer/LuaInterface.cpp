@@ -917,6 +917,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "AddSpawnToSpawnList", EQ2Emu_lua_AddSpawnToSpawnList);
 	lua_register(state, "RemoveSpawnFromSpawnList", EQ2Emu_lua_RemoveSpawnFromSpawnList);
 	lua_register(state, "GetSpawnListBySpawnID", EQ2Emu_lua_GetSpawnListBySpawnID);
+	lua_register(state, "GetSpawnListByRailID", EQ2Emu_lua_GetSpawnListByRailID);
 	lua_register(state, "GetSpawnFromList", EQ2Emu_lua_GetSpawnFromList);
 	lua_register(state, "GetSpawnListSize", EQ2Emu_lua_GetSpawnListSize);	
 	lua_register(state, "SetFactionID", EQ2Emu_lua_SetFactionID);
@@ -1135,6 +1136,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetQuestYellow", EQ2Emu_lua_SetQuestYellow);
 	lua_register(state, "CanReceiveQuest", EQ2Emu_lua_CanReceiveQuest);
 	lua_register(state, "AddTransportSpawn", EQ2Emu_lua_AddTransportSpawn);
+	lua_register(state, "IsTransportSpawn", EQ2Emu_lua_IsTransportSpawn);
 
 	// Option window
 	lua_register(state, "CreateOptionWindow", EQ2Emu_lua_CreateOptionWindow);
@@ -1412,6 +1414,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	lua_register(state, "GetArrowColor", EQ2Emu_lua_GetArrowColor);
 	lua_register(state, "GetTSArrowColor", EQ2Emu_lua_GetTSArrowColor);
+	
+	lua_register(state, "GetSpawnByRailID", EQ2Emu_lua_GetSpawnByRailID);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

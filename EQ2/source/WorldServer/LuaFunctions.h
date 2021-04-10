@@ -117,6 +117,7 @@ int EQ2Emu_lua_CreateSpawnList(lua_State* state);
 int EQ2Emu_lua_AddSpawnToSpawnList(lua_State* state);
 int EQ2Emu_lua_RemoveSpawnFromSpawnList(lua_State* state);
 int EQ2Emu_lua_GetSpawnListBySpawnID(lua_State* state); 
+int EQ2Emu_lua_GetSpawnListByRailID(lua_State* state); 
 int EQ2Emu_lua_GetVariableValue(lua_State* state);
 int EQ2Emu_lua_GetCoinMessage(lua_State* state);
 int EQ2Emu_lua_GetSpawnByGroupID(lua_State* state);
@@ -232,6 +233,7 @@ int EQ2Emu_lua_RemoveSpawnIDAccess(lua_State* state);
 int EQ2Emu_lua_HasRecipeBook(lua_State* state);
 int EQ2Emu_lua_SpawnMove(lua_State* state);
 int EQ2Emu_lua_AddTransportSpawn(lua_State* state);
+int EQ2Emu_lua_IsTransportSpawn(lua_State* state);
 int	EQ2Emu_lua_PerformCameraShake(lua_State* state);
 
 //Quest Stuff
@@ -581,4 +583,6 @@ int EQ2Emu_lua_StopMovement(lua_State* state);
 
 int EQ2Emu_lua_GetArrowColor(lua_State* state);
 int EQ2Emu_lua_GetTSArrowColor(lua_State* state);
+
+int EQ2Emu_lua_GetSpawnByRailID(lua_State* state);
 #endif

@@ -1123,6 +1123,7 @@ private:
 	map<Spawn*, int8>	player_removed_spawns;
 
 	bool all_spells_locked;
+	Timer lift_cooldown;
 };
 #pragma pack()
 #endif

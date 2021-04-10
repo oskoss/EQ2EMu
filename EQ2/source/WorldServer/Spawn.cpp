@@ -125,6 +125,8 @@ Spawn::Spawn(){
 	pause_timer.Disable();
 	m_SpawnMutex.SetName("Spawn::SpawnMutex");
 	appearance_equipment_list.SetAppearanceType(1);
+	is_transport_spawn = false;
+	rail_id = 0;
 }
 
 Spawn::~Spawn(){
@@ -2555,7 +2557,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 
 		// if this is either a boat or lift let the client be manipulated by the object
 		// doesn't work for DoF client version 546
-		if (appearance.icon == 28 || appearance.icon == 12)
+		if (this->GetModelType() == 7941 || appearance.icon == 28 || appearance.icon == 12)
 		{
 			temp_activity_status += ACTIVITY_STATUS_ISTRANSPORT_1188;
 		}
@@ -2567,7 +2569,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 			temp_activity_status = 0xFF;
 
 		// this only partially fixes lifts in classic 283 client if you move just as the lift starts to move
-		if (appearance.icon == 28 || appearance.icon == 12)
+		if (this->GetModelType() == 7941 || appearance.icon == 28 || appearance.icon == 12)
 			packet->setDataByName("is_transport", 1);
 
 		if (MeetsSpawnAccessRequirements(spawn))
@@ -2848,7 +2850,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 					}
 					// delay at target location, only need to set 1 location
 					else
-						AddRunningLocation(data->x, data->y, data->z, data->speed);
+						AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, true, "", true);
 				}
 				movement_start_time = 0;
 				resume_movement = false;
@@ -2921,7 +2923,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 						}
 						// there is a delay at the next location so we only need to set it
 						else
-							AddRunningLocation(data->x, data->y, data->z, data->speed);
+							AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, true, "", true);
 
 						// reset this timer to 0 now that we are moving again
 						movement_start_time = 0;

@@ -1207,6 +1207,11 @@ public:
 	virtual void StopMovement();
 	virtual bool PauseMovement(int32 period_of_time_ms);
 	virtual bool IsPauseMovementTimerActive();
+	bool IsTransportSpawn() { return is_transport_spawn; }
+	void SetTransportSpawn(bool val) { is_transport_spawn = val; }
+	
+	sint64 GetRailID() { return rail_id; }
+	void SetRailID(sint64 val) { rail_id = val; }
 protected:
 
 	bool	has_quests_required;
@@ -1306,6 +1311,9 @@ private:
 
 	RegionMap* region_map;
 	Map* current_map;
+
+	bool is_transport_spawn;
+	sint64 rail_id;
 };
 
 #endif

@@ -6244,6 +6244,7 @@ void ZoneServer::AddTransportSpawn(Spawn* spawn){
 		return;
 	MTransportSpawns.writelock(__FUNCTION__, __LINE__);
 	transport_spawns.push_back(spawn->GetID());
+	spawn->SetTransportSpawn(true);
 	MTransportSpawns.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -6270,6 +6271,24 @@ Spawn* ZoneServer::GetClosestTransportSpawn(float x, float y, float z){
 			itr = transport_spawns.erase(itr);
 	}
 	MTransportSpawns.releasewritelock(__FUNCTION__, __LINE__);
+
+	return closest_spawn;
+}
+
+Spawn* ZoneServer::GetTransportByRailID(sint64 rail_id){
+	Spawn* spawn = 0;
+	Spawn* closest_spawn = 0;
+	MTransportSpawns.readlock(__FUNCTION__, __LINE__);
+	vector<int32>::iterator itr = transport_spawns.begin();
+	while(itr != transport_spawns.end()){
+		spawn = GetSpawnByID(*itr);
+		if(spawn && spawn->GetRailID() == rail_id){
+			closest_spawn = spawn;
+			break;
+		}
+		itr++;
+	}
+	MTransportSpawns.releasereadlock(__FUNCTION__, __LINE__);
 
 	return closest_spawn;
 }
@@ -6506,6 +6525,23 @@ vector<Spawn*> ZoneServer::GetSpawnsByID(int32 id) {
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		spawn = itr->second;
 		if (spawn && (spawn->GetDatabaseID() == id))
+			tmp_list.push_back(spawn);
+	}
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+
+	return tmp_list;
+}
+
+
+vector<Spawn*> ZoneServer::GetSpawnsByRailID(sint64 rail_id) {
+	vector<Spawn*> tmp_list;
+	Spawn* spawn;
+
+	map<int32, Spawn*>::iterator itr;
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+		spawn = itr->second;
+		if (spawn && (spawn->GetRailID() == rail_id))
 			tmp_list.push_back(spawn);
 	}
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
