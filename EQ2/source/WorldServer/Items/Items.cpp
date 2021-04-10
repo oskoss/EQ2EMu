@@ -1683,7 +1683,16 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 5 green
 6 grey
 7 purple*/
-	packet->setSubstructDataByName("header_info", "footer_type", 3);
+	int32 color = 3;
+
+	if(player)
+	{
+		int32 effective_level = player->GetInfoStructUInt("effective_level");
+		if(effective_level && effective_level < player->GetLevel() && details.recommended_level > effective_level)
+			color = 7;
+	}
+
+	packet->setSubstructDataByName("header_info", "footer_type", color);
 	packet->setSubstructDataByName("header_info", "item_id", details.item_id);
 	
 	if (!loot_item)
