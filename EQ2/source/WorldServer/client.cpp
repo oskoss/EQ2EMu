@@ -205,6 +205,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	MConversation.SetName("Client::MConversation");
 	save_spell_state_timer.Disable();
 	save_spell_state_time_bucket = 0;
+	player_loading_complete = false;
 }
 
 Client::~Client() {
@@ -1388,6 +1389,13 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		ClientPacketFunctions::SendUpdateSpellBook(this);
 		EQ2Packet* app = new EQ2Packet(OP_DoneLoadingUIResourcesMsg, 0, 0);
 		QueuePacket(app);
+		if(!player_loading_complete)
+		{
+			const char* zone_script = world.GetZoneScript(GetCurrentZone()->GetZoneID());
+			if (zone_script && lua_interface)
+				lua_interface->RunZoneScript(zone_script, "player_loadcomplete", GetCurrentZone(), GetPlayer());
+			player_loading_complete = true;
+		}
 		break;
 	}
 	case OP_DoneLoadingZoneResourcesMsg: {
@@ -9776,7 +9784,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 
 	for (const auto& spawn : spawns) {
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
-		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->NeedsSpawnResent(spawn) || GetPlayer()->GetDistance(spawn) >= SEND_SPAWN_DISTANCE)
+		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->NeedsSpawnResent(spawn))
 			continue;
 
 		if (spawn->vis_changed)

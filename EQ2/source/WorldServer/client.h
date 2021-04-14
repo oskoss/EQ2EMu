@@ -604,6 +604,7 @@ private:
 	Timer save_spell_state_timer; // will be the 're-trigger' to delay
 	int32 save_spell_state_time_bucket; // bucket as we collect over time when timer is reset by new spell effects being casted
 	std::mutex MSaveSpellStateMutex;
+	bool player_loading_complete;
 };
 
 class ClientList {
