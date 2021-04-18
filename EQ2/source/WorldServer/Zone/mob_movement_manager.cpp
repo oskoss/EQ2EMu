@@ -550,7 +550,9 @@ void MobMovementManager::AddMob(Entity *mob)
 void MobMovementManager::RemoveMob(Entity *mob)
 {
 	MobListMutex.writelock();
-	_impl->Entries.erase(mob);
+	auto iter = _impl->Entries.find(mob);
+	if(iter != _impl->Entries.end())
+		_impl->Entries.erase(iter);
 	MobListMutex.releasewritelock();
 }
 
@@ -597,6 +599,7 @@ void MobMovementManager::RotateTo(Entity *who, float to, MobMovementMode mob_mov
 	auto &ent = (*iter);
 
 	if (true != ent.second.Commands.empty()) {
+		MobListMutex.releasereadlock();
 		return;
 	}
 
