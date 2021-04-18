@@ -918,6 +918,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "RemoveSpawnFromSpawnList", EQ2Emu_lua_RemoveSpawnFromSpawnList);
 	lua_register(state, "GetSpawnListBySpawnID", EQ2Emu_lua_GetSpawnListBySpawnID);
 	lua_register(state, "GetSpawnListByRailID", EQ2Emu_lua_GetSpawnListByRailID);
+	lua_register(state, "GetPassengerSpawnList", EQ2Emu_lua_GetPassengerSpawnList);
 	lua_register(state, "GetSpawnFromList", EQ2Emu_lua_GetSpawnFromList);
 	lua_register(state, "GetSpawnListSize", EQ2Emu_lua_GetSpawnListSize);	
 	lua_register(state, "SetFactionID", EQ2Emu_lua_SetFactionID);
@@ -1416,6 +1417,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetTSArrowColor", EQ2Emu_lua_GetTSArrowColor);
 	
 	lua_register(state, "GetSpawnByRailID", EQ2Emu_lua_GetSpawnByRailID);
+	lua_register(state, "SetRailID", EQ2Emu_lua_SetRailID);
+	lua_register(state, "IsZoneLoading", EQ2Emu_lua_IsZoneLoading);
+	lua_register(state, "IsRunning", EQ2Emu_lua_IsRunning);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

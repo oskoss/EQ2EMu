@@ -37,6 +37,7 @@
 extern ConfigReader configReader;
 extern RuleManager rule_manager;
 extern World world;
+extern ZoneList zone_list;
 
 Spawn::Spawn(){ 
 	loot_coins = 0;
@@ -2557,7 +2558,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 
 		// if this is either a boat or lift let the client be manipulated by the object
 		// doesn't work for DoF client version 546
-		if (this->GetModelType() == 7941 || appearance.icon == 28 || appearance.icon == 12)
+		if (appearance.icon == 28 || appearance.icon == 12 || IsTransportSpawn())
 		{
 			temp_activity_status += ACTIVITY_STATUS_ISTRANSPORT_1188;
 		}
@@ -2569,7 +2570,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 			temp_activity_status = 0xFF;
 
 		// this only partially fixes lifts in classic 283 client if you move just as the lift starts to move
-		if (this->GetModelType() == 7941 || appearance.icon == 28 || appearance.icon == 12)
+		if (appearance.icon == 28 || appearance.icon == 12)
 			packet->setDataByName("is_transport", 1);
 
 		if (MeetsSpawnAccessRequirements(spawn))
@@ -2717,7 +2718,7 @@ void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate, bool ma
 
 void Spawn::ProcessMovement(bool isSpawnListLocked){
 	CheckProximities();
-
+	
 	if(IsPlayer()){
 		//Check if player is riding a boat, if so update pos (boat's current location + XYZ offsets)
 		Player* player = ((Player*)this);
@@ -2740,7 +2741,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		FixZ(true);
 
 		int32 newGrid = GetMap()->GetGrid()->GetGridID(this);
-		if (!IsFlyingCreature() && newGrid != 0 && newGrid != appearance.pos.grid_id)
+		if ((IsTransportSpawn() || !IsFlyingCreature()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
 			SetPos(&(appearance.pos.grid_id), newGrid);
 
 		forceMapCheck = false;
@@ -2850,7 +2851,7 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 					}
 					// delay at target location, only need to set 1 location
 					else
-						AddRunningLocation(data->x, data->y, data->z, data->speed, 0, true, true, "", true);
+						AddRunningLocation(data->x, data->y, data->z, data->speed);
 				}
 				movement_start_time = 0;
 				resume_movement = false;
@@ -2878,7 +2879,8 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 					data = movement_loop[nextMove];
 					
 					//Go ahead and face the next location
-					FaceTarget(data->x, data->z);
+					if(data)
+						FaceTarget(data->x, data->z);
 				}
 				// If this waypoint has no delay or we have waited the required time (current time >= delay + movement_start_time)
 				else if(data && data->delay == 0 || (data && data->delay > 0 && Timer::GetCurrentTime2() >= (data->delay+movement_start_time))) {
@@ -2944,6 +2946,11 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	
 	if (!movementCase && IsRunning() && !IsPauseMovementTimerActive()) {
 		CalculateRunningLocation();
+		//last_movement_update = Timer::GetCurrentTime2();
+	}
+	else if(movementCase)
+	{
+		//last_movement_update = Timer::GetCurrentTime2();
 	}
 	/*else if (IsNPC() && !IsRunning() && !EngagedInCombat() && ((NPC*)this)->GetRunbackLocation()) {
 		// Is an npc that is not moving and not engaged in combat but has a run back location set then clear the runback location
@@ -2964,6 +2971,8 @@ void Spawn::ResetMovement(bool inFlight){
 	movement_loop.clear();
 	movement_index = 0;
 	resume_movement = true;
+	ClearRunningLocations();
+
 	if(!inFlight)
 		MMovementLoop.releasewritelock();
 }
@@ -2987,10 +2996,21 @@ void Spawn::AddMovementLocation(float x, float y, float z, float speed, int16 de
 }
 
 bool Spawn::IsRunning(){
-	if(movement_locations && movement_locations->size() > 0)
-		return true;
-	else
-		return false;
+	bool movement = false;
+
+	if(movement_locations && MMovementLocations)
+	{
+		MMovementLocations->readlock(__FUNCTION__, __LINE__);
+		movement = movement_locations->size() > 0;
+		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
+		if(movement)
+			return true;
+	}
+
+	MMovementLoop.lock();
+	movement = movement_loop.size() > 0;
+	MMovementLoop.unlock();
+	return movement;
 }
 
 void Spawn::RunToLocation(float x, float y, float z, float following_x, float following_y, float following_z){
@@ -3163,7 +3183,8 @@ bool Spawn::CalculateChange(){
 			tar_vz = (tar_vz / len) * speed;
 
 			// Distance less then 0.5 just set the npc to the target location
-			if (GetDistance(data->x, data->y, data->z, IsWidget() ? false : true) <= 0.5f) {
+			float dist = (data->speed > 0.5f) ? data->speed : 0.5f;
+			if (GetDistance(data->x, data->y, data->z, IsWidget() ? false : true) <= dist) {
 				SetX(data->x, false);
 				SetZ(data->z, false);
 				SetY(data->y, false, true);
@@ -3180,7 +3201,7 @@ bool Spawn::CalculateChange(){
 			if (GetMap() != nullptr) {
 				Cell* newCell = GetMap()->GetGrid()->GetCell(GetX(), GetZ());
 				int32 newGrid = GetMap()->GetGrid()->GetGridID(this);
-				if (!IsFlyingCreature() && newGrid != 0 && newGrid != appearance.pos.grid_id)
+				if ((!IsFlyingCreature() || IsTransportSpawn()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
 					SetPos(&(appearance.pos.grid_id), newGrid);
 			}
 		}
@@ -3231,7 +3252,13 @@ void Spawn::CalculateRunningLocation(bool stop){
 		}
 		else
 			((Entity*)this)->HaltMovement();
-	} 
+	}
+	else if (!following)
+	{
+		position_changed = true;
+		changed = true;
+		GetZone()->AddChangedSpawn(this);
+	}
 }
 float Spawn::GetFaceTarget(float x, float z) {
 	float angle;
@@ -4129,4 +4156,35 @@ void Spawn::SetWaterCreature() {
 		((Entity*)this)->GetInfoStruct()->set_water_type(0);
 		break;
 	}
+}
+
+void Spawn::AddRailPassenger(int32 char_id)
+{
+	std::lock_guard<std::mutex> lk(m_RailMutex);
+	rail_passengers.insert(make_pair(char_id,true));
+}
+
+void Spawn::RemoveRailPassenger(int32 char_id)
+{
+	std::lock_guard<std::mutex> lk(m_RailMutex);
+	std::map<int32, bool>::iterator itr = rail_passengers.find(char_id);
+	if(itr != rail_passengers.end())
+		rail_passengers.erase(itr);
+}
+
+vector<Spawn*> Spawn::GetPassengersOnRail() {
+	vector<Spawn*> tmp_list;
+	Spawn* spawn;
+	m_RailMutex.lock();
+	std::map<int32, bool>::iterator itr = rail_passengers.begin();
+	while(itr != rail_passengers.end()){
+		Client* client = zone_list.GetClientByCharID(itr->first);
+		if(!client || !client->GetPlayer())
+			continue;
+
+		tmp_list.push_back(client->GetPlayer());
+		itr++;
+	}
+	m_RailMutex.unlock();
+	return tmp_list;
 }

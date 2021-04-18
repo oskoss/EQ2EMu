@@ -485,6 +485,8 @@ public:
 	void TriggerSpellSave();
 
 	void ClearSentItemDetails() { sent_item_details.clear(); }
+
+	bool IsPlayerLoadingComplete() { return player_loading_complete; }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

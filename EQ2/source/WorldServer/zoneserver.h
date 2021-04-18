@@ -88,6 +88,8 @@ class Bot;
 #define SPAWN_SCRIPT_HEAR_SAY			18
 #define SPAWN_SCRIPT_PRESPAWN			19
 #define SPAWN_SCRIPT_USEDOOR			20
+#define SPAWN_SCRIPT_BOARD				21
+#define SPAWN_SCRIPT_EMBARK				22
 
 #define SPAWN_CONDITIONAL_NONE			0
 #define SPAWN_CONDITIONAL_DAY			1
@@ -463,6 +465,7 @@ public:
 	void			AddTransportSpawn(Spawn* spawn);
 	vector<Spawn*>	GetSpawnsByID(int32 id);
 	vector<Spawn*>	GetSpawnsByRailID(sint64 rail_id);
+	void			RemovePlayerPassenger(int32 char_id);
 	bool			IsDusk() { return isDusk; }										// never used, probably meant for lua though
 
 

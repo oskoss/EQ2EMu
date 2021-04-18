@@ -543,6 +543,25 @@ int EQ2Emu_lua_GetSpawnListByRailID(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_GetPassengerSpawnList(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn) {
+		vector<Spawn*> spawns = spawn->GetPassengersOnRail();
+		if (spawns.size() > 0) {
+			lua_createtable(state, spawns.size(), 0);
+			int newTable = lua_gettop(state);
+			for (int32 i = 0; i < spawns.size(); i++) {
+				lua_interface->SetSpawnValue(state, spawns.at(i));
+				lua_rawseti(state, newTable, i + 1);
+			}
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_GetVariableValue(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -12191,6 +12210,50 @@ int EQ2Emu_lua_GetSpawnByRailID(lua_State* state) {
 			lua_interface->SetSpawnValue(state, spawn);
 			return 1;
 		}
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_SetRailID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	sint64 rail_id = lua_interface->GetSInt64Value(state, 2);
+
+	lua_interface->ResetFunctionStack(state);
+
+	bool res = false;
+	if(spawn && spawn->IsTransportSpawn())
+	{
+		//printf("Set rail id %i for %s\n",rail_id,spawn->GetName());
+		spawn->SetRailID(rail_id);
+		res = true;
+	}
+	else if (!spawn) {
+		lua_interface->LogError("%s: LUA SetRailID command error: spawn is not valid, does not exist", lua_interface->GetScriptName(state));
+	}
+	else if(!spawn->IsTransportSpawn()) {
+		lua_interface->LogError("%s: LUA SetRailID command error: spawn %s is not a transport spawn, call AddTransportSpawn(NPC) first", lua_interface->GetScriptName(state), spawn->GetName());
+	}
+	lua_interface->SetBooleanValue(state, res);
+	return 1;
+}
+
+int EQ2Emu_lua_IsZoneLoading(lua_State* state) {
+	ZoneServer* zone = lua_interface->GetZone(state);
+
+	if (zone) {
+		lua_interface->SetBooleanValue(state, zone->IsLoading());
+		return 1;
+	}
+	return 0;
+}
+int EQ2Emu_lua_IsRunning(lua_State* state) {
+	Spawn* spawn = lua_interface->GetSpawn(state);
+
+	if (spawn) {
+		lua_interface->SetBooleanValue(state, spawn->IsRunning());
+		return 1;
 	}
 	return 0;
 }

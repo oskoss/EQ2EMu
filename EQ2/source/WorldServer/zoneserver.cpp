@@ -1168,7 +1168,7 @@ void ZoneServer::CheckRemoveSpawnFromClient(Spawn* spawn) {
 				client->GetPlayer()->WasSentSpawn(spawn->GetID()) && 
 				client->GetPlayer()->WasSpawnRemoved(spawn) == false && 
 				(spawn_range_map.Get(client)->Get(spawn->GetID()) > REMOVE_SPAWN_DISTANCE &&
-					!spawn->IsSign() && !spawn->IsObject() && !spawn->IsWidget())){
+					!spawn->IsSign() && !spawn->IsObject() && !spawn->IsWidget() && !spawn->IsTransportSpawn())){
 				SendRemoveSpawn(client, spawn, packet);
 				spawn_range_map.Get(client)->erase(spawn->GetID());
 			}
@@ -1752,7 +1752,7 @@ void ZoneServer::SendSpawnChangesByDBID(int32 db_id, Client* client, bool overri
 }
 
 void ZoneServer::SendSpawnChanges(Spawn* spawn, Client* client, bool override_changes, bool override_vis_changes){
-	if(client && client->IsReadyForUpdates() && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn) && client->GetPlayer()->GetDistance(spawn) < SEND_SPAWN_DISTANCE){
+	if(client && client->IsReadyForUpdates() && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn) && (spawn->IsTransportSpawn() || client->GetPlayer()->GetDistance(spawn) < SEND_SPAWN_DISTANCE)){
 		EQ2Packet* outapp = spawn->spawn_update_packet(client->GetPlayer(), client->GetVersion(), override_changes, override_vis_changes);
 		if(outapp)
 			client->QueuePacket(outapp);
@@ -2739,6 +2739,14 @@ bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 			}
 			case SPAWN_SCRIPT_USEDOOR: {
 				result = lua_interface->RunSpawnScript(script, "usedoor", npc, spawn, "", is_door_open);
+				break;
+			}
+			case SPAWN_SCRIPT_BOARD: {
+				result = lua_interface->RunSpawnScript(script, "board", npc, spawn);
+				break;
+			}
+			case SPAWN_SCRIPT_EMBARK: {
+				result = lua_interface->RunSpawnScript(script, "embark", npc, spawn);
 				break;
 			}
 			default:
@@ -5748,7 +5756,8 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn) {
 		return;	
 
 	LogWrite(ZONE__DEBUG, 7, "Zone", "Processing RemoveSpawnSupportFunctions...");
-
+	if(spawn->IsPlayer() && spawn->GetZone())
+		spawn->GetZone()->RemovePlayerPassenger(((Player*)spawn)->GetCharacterID());
 	if(spawn->IsEntity())
 		RemoveSpellTimersFromSpawn((Entity*)spawn, true);
 
@@ -6282,6 +6291,7 @@ Spawn* ZoneServer::GetTransportByRailID(sint64 rail_id){
 	vector<int32>::iterator itr = transport_spawns.begin();
 	while(itr != transport_spawns.end()){
 		spawn = GetSpawnByID(*itr);
+		//printf("Rail id: %i vs %i\n", spawn ? spawn->GetRailID() : 0, rail_id);
 		if(spawn && spawn->GetRailID() == rail_id){
 			closest_spawn = spawn;
 			break;
@@ -6536,17 +6546,32 @@ vector<Spawn*> ZoneServer::GetSpawnsByID(int32 id) {
 vector<Spawn*> ZoneServer::GetSpawnsByRailID(sint64 rail_id) {
 	vector<Spawn*> tmp_list;
 	Spawn* spawn;
-
-	map<int32, Spawn*>::iterator itr;
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
-	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-		spawn = itr->second;
-		if (spawn && (spawn->GetRailID() == rail_id))
+	MTransportSpawns.readlock(__FUNCTION__, __LINE__);
+	vector<int32>::iterator itr = transport_spawns.begin();
+	while(itr != transport_spawns.end()){
+		spawn = GetSpawnByID(*itr);
+		if(spawn && spawn->GetRailID() == rail_id){
 			tmp_list.push_back(spawn);
+		}
+		itr++;
 	}
-	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
-
+	MTransportSpawns.releasereadlock(__FUNCTION__, __LINE__);
 	return tmp_list;
+}
+
+void ZoneServer::RemovePlayerPassenger(int32 char_id) {
+	vector<Spawn*> tmp_list;
+	Spawn* spawn;
+	MTransportSpawns.readlock(__FUNCTION__, __LINE__);
+	vector<int32>::iterator itr = transport_spawns.begin();
+	while(itr != transport_spawns.end()){
+		spawn = GetSpawnByID(*itr);
+		if(spawn) {
+			spawn->RemoveRailPassenger(char_id);
+		}
+		itr++;
+	}
+	MTransportSpawns.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 vector<Spawn*> ZoneServer::GetAttackableSpawnsByDistance(Spawn* caster, float distance) {

@@ -1282,7 +1282,15 @@ bool Item::IsCollectable(){
 
 bool Item::HasSlot(int8 slot, int8 slot2){
 	for(int32 i=0;i<slot_data.size();i++){
-		if(slot_data[i] == slot || slot_data[i] == slot2)
+		if(slot_data[i] == EQ2_LRING_SLOT && (slot == EQ2_RRING_SLOT || slot2 == EQ2_RRING_SLOT))
+			return true;
+		else if(slot_data[i] == EQ2_LWRIST_SLOT && (slot == EQ2_RWRIST_SLOT || slot2 == EQ2_RWRIST_SLOT))
+			return true;
+		else if(slot_data[i] == EQ2_EARS_SLOT_1 && (slot == EQ2_EARS_SLOT_2 || slot2 == EQ2_EARS_SLOT_2))
+			return true;
+		else if(slot_data[i] == EQ2_CHARM_SLOT_1 && (slot == EQ2_CHARM_SLOT_2 || slot2 == EQ2_CHARM_SLOT_2))
+			return true;
+		else if(slot_data[i] == slot || slot_data[i] == slot2)
 			return true;
 	}
 	return false;
@@ -4059,6 +4067,15 @@ int8 EquipmentItemList::GetFreeSlot(Item* tmp, int8 slot_id){
 				}
 				MEquipmentItems.unlock();
 				return slot;
+			}
+			else if ( slot == EQ2_LRING_SLOT || slot == EQ2_EARS_SLOT_1 || slot == EQ2_LWRIST_SLOT || slot == EQ2_CHARM_SLOT_1)
+			{
+				Item* rslot = GetItem(slot+1);
+				if(!rslot)
+				{
+					MEquipmentItems.unlock();
+					return slot+1;
+				}
 			}
 		}
 	}

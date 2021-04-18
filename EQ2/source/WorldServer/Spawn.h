@@ -39,6 +39,7 @@
 #include "MutexList.h"
 #include <deque>
 #include <memory> // needed for LS to compile properly on linux
+#include <mutex>
 
 #define DAMAGE_PACKET_TYPE_SIPHON_SPELL		0x41
 #define DAMAGE_PACKET_TYPE_SIPHON_SPELL2	0x49
@@ -1212,6 +1213,9 @@ public:
 	
 	sint64 GetRailID() { return rail_id; }
 	void SetRailID(sint64 val) { rail_id = val; }
+	void AddRailPassenger(int32 char_id);
+	void RemoveRailPassenger(int32 char_id);
+	vector<Spawn*> GetPassengersOnRail();
 protected:
 
 	bool	has_quests_required;
@@ -1314,6 +1318,8 @@ private:
 
 	bool is_transport_spawn;
 	sint64 rail_id;
+	map<int32, bool> rail_passengers;
+	mutex m_RailMutex;
 };
 
 #endif

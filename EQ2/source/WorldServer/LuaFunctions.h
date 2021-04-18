@@ -118,6 +118,7 @@ int EQ2Emu_lua_AddSpawnToSpawnList(lua_State* state);
 int EQ2Emu_lua_RemoveSpawnFromSpawnList(lua_State* state);
 int EQ2Emu_lua_GetSpawnListBySpawnID(lua_State* state); 
 int EQ2Emu_lua_GetSpawnListByRailID(lua_State* state); 
+int EQ2Emu_lua_GetPassengerSpawnList(lua_State* state); 
 int EQ2Emu_lua_GetVariableValue(lua_State* state);
 int EQ2Emu_lua_GetCoinMessage(lua_State* state);
 int EQ2Emu_lua_GetSpawnByGroupID(lua_State* state);
@@ -585,4 +586,7 @@ int EQ2Emu_lua_GetArrowColor(lua_State* state);
 int EQ2Emu_lua_GetTSArrowColor(lua_State* state);
 
 int EQ2Emu_lua_GetSpawnByRailID(lua_State* state);
+int EQ2Emu_lua_SetRailID(lua_State* state);
+int EQ2Emu_lua_IsZoneLoading(lua_State* state);
+int EQ2Emu_lua_IsRunning(lua_State* state);
 #endif

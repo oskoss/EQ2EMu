@@ -3542,6 +3542,12 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 		if (GetBoatSpawn() == 0 && GetZone()) {
 			boat = GetZone()->GetClosestTransportSpawn(GetX(), GetY(), GetZ());
 			SetBoatSpawn(boat);
+			printf("Set boat: %s\n", boat ? boat->GetName() : "notset");
+			if(boat)
+			{
+				boat->AddRailPassenger(GetCharacterID());
+				GetZone()->CallSpawnScript(boat, SPAWN_SCRIPT_BOARD, this);
+			}
 		}
 
 		if (boat || (GetBoatSpawn() && GetZone())) {
@@ -3570,6 +3576,15 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 	else if(lift_cooldown.Check())
 	{
 		printf("Disable boat\n");
+		if(GetBoatSpawn())
+		{
+			Spawn* boat = GetZone()->GetSpawnByID(GetBoatSpawn());
+			if(boat)
+			{
+				boat->RemoveRailPassenger(GetCharacterID());
+				GetZone()->CallSpawnScript(boat, SPAWN_SCRIPT_EMBARK, this);
+			}
+		}
 		SetBoatSpawn(0);
 	}
 
