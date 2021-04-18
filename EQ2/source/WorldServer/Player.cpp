@@ -3582,10 +3582,11 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 			if(boat)
 			{
 				boat->RemoveRailPassenger(GetCharacterID());
-				GetZone()->CallSpawnScript(boat, SPAWN_SCRIPT_EMBARK, this);
+				GetZone()->CallSpawnScript(boat, SPAWN_SCRIPT_DEBOARD, this);
 			}
 		}
 		SetBoatSpawn(0);
+		lift_cooldown.Disable();
 	}
 
 	if (!IsResurrecting() && !GetBoatSpawn())

@@ -2745,8 +2745,8 @@ bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 				result = lua_interface->RunSpawnScript(script, "board", npc, spawn);
 				break;
 			}
-			case SPAWN_SCRIPT_EMBARK: {
-				result = lua_interface->RunSpawnScript(script, "embark", npc, spawn);
+			case SPAWN_SCRIPT_DEBOARD: {
+				result = lua_interface->RunSpawnScript(script, "deboard", npc, spawn);
 				break;
 			}
 			default:
