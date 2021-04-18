@@ -89,6 +89,10 @@ void EQStream::init(bool resetSession) {
 	oversize_offset=0;
 	Factory = NULL;
 
+	rogue_buffer=NULL;
+	roguebuf_offset=0;
+	roguebuf_size=0;
+
 	MRate.lock();
 	RateThreshold=RATEBASE/250;
 	DecayRate=DECAYBASE/250;
@@ -451,7 +455,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 					if (oversize_buffer) {
 						memcpy(oversize_buffer+oversize_offset,p->pBuffer+2,p->size-2);
 						oversize_offset+=p->size-2;
-						//cout << "Oversized is " << oversize_offset << "/" << oversize_length << " (" << (p->size-2) << ") Seq=" << seq << endl;
+						cout << "Oversized is " << oversize_offset << "/" << oversize_length << " (" << (p->size-2) << ") Seq=" << seq << endl;
 						if (oversize_offset==oversize_length) {
 							if (*(p->pBuffer+2)==0x00 && *(p->pBuffer+3)==0x19) {
 								EQProtocolPacket *subp=new EQProtocolPacket(oversize_buffer,oversize_offset);
@@ -485,7 +489,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						oversize_buffer=new unsigned char[oversize_length];
 						memcpy(oversize_buffer,p->pBuffer+6,p->size-6);
 						oversize_offset=p->size-6;
-						//cout << "Oversized is " << oversize_offset << "/" << oversize_length << " (" << (p->size-6) << ") Seq=" << seq << endl;
+						cout << "Oversized is " << oversize_offset << "/" << oversize_length << " (" << (p->size-6) << ") Seq=" << seq << endl;
 					}
 				}
 			}
@@ -660,24 +664,56 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 
 				cout << "Orig Packet: " << p->opcode << endl;
 				DumpPacket(p->pBuffer, p->size);
+				if(p && p->size >= 70){
+					processRSAKey(p);
+				}
 				MCombineQueueLock.lock();
-				EQProtocolPacket* p2 = ProcessEncryptedData(p->pBuffer, p->size, OP_Fragment);
+				EQProtocolPacket* p2 = ProcessEncryptedData(p->pBuffer, p->size, OP_Packet);
 				MCombineQueueLock.unlock();
 				cout << "Decrypted Packet: " << p2->opcode << endl;
 				DumpPacket(p2->pBuffer, p2->size);
+				
+				safe_delete(p2);
+			/*	if(p2)
+				{
+					EQApplicationPacket* ap = p2->MakeApplicationPacket(2);
+					if (ap->version == 0)
+						ap->version = client_version;
+					InboundQueuePush(ap);
+					safe_delete(p2);
+				}*/
+				
+				//EQProtocolPacket* puse = p2;
+			/*	if (!rogue_buffer) {
+						roguebuf_size=puse->size;
+						rogue_buffer=new unsigned char[roguebuf_size];
+						memcpy(rogue_buffer,puse->pBuffer,puse->size);
+						roguebuf_offset=puse->size;
+						cout << "RogueBuf is " << roguebuf_offset << "/" << roguebuf_size << " (" << (p->size-6) << ") NextInSeq=" << NextInSeq << endl;
+					}
+					else {
+						int32 new_size = roguebuf_size + puse->size;
+						uchar* tmp_buffer = new unsigned char[new_size];
+						uchar* ptr = tmp_buffer;
+						
+						memcpy(ptr,rogue_buffer,roguebuf_size);
+						ptr += roguebuf_size;
+						memcpy(ptr,puse->pBuffer,puse->size);
+						roguebuf_offset=puse->size;
 
-				EQApplicationPacket* ap = p2->MakeApplicationPacket(2);
-				if (ap->version == 0)
-					ap->version = client_version;
+						safe_delete_array(rogue_buffer);
+
+						rogue_buffer = tmp_buffer;
+						roguebuf_size = new_size;
+						roguebuf_offset = new_size;
+						cout << "RogueBuf is " << roguebuf_offset << "/" << roguebuf_size << " (" << (p->size-6) << ") NextInSeq=" << NextInSeq << endl;
+				}*/
 #ifdef WRITE_PACKETS
 				WritePackets(ap->GetOpcodeName(), p->pBuffer, p->size, false);
 #endif
 				//InboundQueuePush(ap);
 				LogWrite(PACKET__INFO, 0, "Packet", "Received unknown packet type, not adding to inbound queue");
-				cout << "AppPacket: " << p2->opcode << endl;
-				DumpPacket(ap->pBuffer, ap->size);
-				safe_delete(ap);
-				safe_delete(p2);
+				//safe_delete(p2);
 				//SendDisconnect();
 				break;
 		}
@@ -756,7 +792,7 @@ void EQStream::SendKeyRequest(){
 	memset(&outapp->pBuffer[4], 0xFF, crypto_key_size);
 	memset(&outapp->pBuffer[size-5], 1, 1);
 	memset(&outapp->pBuffer[size-1], 1, 1);
-	EQ2QueuePacket(outapp);
+	EQ2QueuePacket(outapp, true);
 }
 
 void EQStream::EncryptPacket(EQ2Packet* app, int8 compress_offset, int8 offset){
@@ -774,6 +810,13 @@ void EQStream::EQ2QueuePacket(EQ2Packet* app, bool attempted_combine){
 	if(CheckActive()){
 		if(!attempted_combine){
 			MCombineQueueLock.lock();
+	uchar expected[] = { 0x3c, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+
+	if(app->size > 10 && memcmp(app->pBuffer, &expected[0], 10) == 0 )
+	{
+			combine_queue.push_back(app);
+	}
+	else
 			combine_queue.push_back(app);
 			MCombineQueueLock.unlock();
 		}
@@ -873,7 +916,17 @@ void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 	DumpPacket(app);
 #endif
 
-	if(!app->packet_prepared){
+	uchar expected[] = { 0x3c, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+
+	if(app->size > 10 && memcmp(app->pBuffer, &expected[0], 10) == 0 )
+	{
+		printf("Special condition!!\n");
+		if(!app->packet_prepared){
+			if(app->PreparePacket(MaxLen) == 255) //invalid version
+				return;
+		}
+	}
+	else if(!app->packet_prepared){
 		if(app->PreparePacket(MaxLen) == 255) //invalid version
 			return;
 	}
@@ -1596,8 +1649,24 @@ DumpPacket(buffer, length);
 		printf("ResultProcessBuffer:\n");
 		DumpPacket(buffer, newlength);
 #endif
-		EQProtocolPacket p(newbuffer,newlength);
-		ProcessPacket(&p);
+		uint16 opcode=ntohs(*(const uint16 *)newbuffer);
+		if(opcode <= OP_OutOfSession)
+		{
+			EQProtocolPacket p(newbuffer,newlength);
+			ProcessPacket(&p);
+		}
+		else
+		{
+			cout << "2Orig Packet: " << opcode << endl;
+			DumpPacket(newbuffer, newlength);
+			MCombineQueueLock.lock();
+			EQProtocolPacket* p2 = ProcessEncryptedData(newbuffer, newlength, OP_Packet);
+			MCombineQueueLock.unlock();
+			cout << "2Decrypted Packet: " << p2->opcode << endl;
+			DumpPacket(p2->pBuffer, p2->size);
+				
+			safe_delete(p2);
+		}
 		ProcessQueue();
 	} else {
 		cout << "Incoming packet failed checksum:" <<endl;

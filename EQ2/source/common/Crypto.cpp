@@ -34,10 +34,14 @@ int64 Crypto::RSADecrypt(uchar* text, int16 size){
 }
 
 void Crypto::RC4Decrypt(uchar* text, int32 size){
+    MCrypto.lock();
 	client->Cypher(text, size);
+    MCrypto.unlock();
 }
 
 void Crypto::RC4Encrypt(uchar* text, int32 size){
+    MCrypto.lock();
 	server->Cypher(text, size);
+    MCrypto.unlock();
 }
 

@@ -20,6 +20,7 @@
 #ifndef _CRYPTO_H
 #define _CRYPTO_H
 #include <string>
+#include <mutex>
 #include "RC4.h"
 #include "../common/types.h"
 
@@ -58,6 +59,7 @@ private:
 	RC4* client;
 	bool encrypted;
 	int64 rc4_key;
+	mutex MCrypto;
 };
 
 #endif

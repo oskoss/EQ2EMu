@@ -145,6 +145,8 @@ class EQStream {
 		uint8 buffer[8192];
 		unsigned char *oversize_buffer;
 		uint32 oversize_offset,oversize_length;
+		unsigned char *rogue_buffer;
+		uint32 roguebuf_offset,roguebuf_size;
 		uint8 app_opcode_size;
 		EQStreamType StreamType;
 		bool compressed,encoded;
@@ -250,6 +252,7 @@ class EQStream {
 			safe_delete(combine_timer);
 			safe_delete(resend_que_timer);
 			safe_delete_array(oversize_buffer);
+			safe_delete_array(rogue_buffer);
 			deque<EQ2Packet*>::iterator cmb;
 			MCombineQueueLock.lock();
 			for (cmb = combine_queue.begin(); cmb != combine_queue.end(); cmb++){
