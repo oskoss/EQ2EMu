@@ -810,13 +810,6 @@ void EQStream::EQ2QueuePacket(EQ2Packet* app, bool attempted_combine){
 	if(CheckActive()){
 		if(!attempted_combine){
 			MCombineQueueLock.lock();
-	uchar expected[] = { 0x3c, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-
-	if(app->size > 10 && memcmp(app->pBuffer, &expected[0], 10) == 0 )
-	{
-			combine_queue.push_back(app);
-	}
-	else
 			combine_queue.push_back(app);
 			MCombineQueueLock.unlock();
 		}
@@ -915,18 +908,7 @@ void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 	printf( "Before A in %s, line %i:\n", __FUNCTION__, __LINE__);
 	DumpPacket(app);
 #endif
-
-	uchar expected[] = { 0x3c, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-
-	if(app->size > 10 && memcmp(app->pBuffer, &expected[0], 10) == 0 )
-	{
-		printf("Special condition!!\n");
-		if(!app->packet_prepared){
-			if(app->PreparePacket(MaxLen) == 255) //invalid version
-				return;
-		}
-	}
-	else if(!app->packet_prepared){
+	if(!app->packet_prepared){
 		if(app->PreparePacket(MaxLen) == 255) //invalid version
 			return;
 	}
