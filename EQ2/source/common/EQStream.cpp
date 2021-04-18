@@ -289,7 +289,17 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						crypto->RC4Decrypt(p->pBuffer + processed + offset, subpacket_length);
 						LogWrite(PACKET__ERROR, 0, "Packet", "Garbage packet?!:");
 						printf("!!!!!!!!!Garbage Packet!!!!!!!!!!!!! processed: %u, offset: %u, count: %i\n", processed, offset, count);
-						DumpPacket(p->pBuffer + processed + offset, subpacket_length);
+						if(p->pBuffer[processed + offset] == 0xff)
+						{
+							uchar* newbuf = p->pBuffer;
+							newbuf += processed + offset + 1;
+
+							DumpPacket(p->pBuffer + processed + offset, subpacket_length);
+							EQProtocolPacket *subp=new EQProtocolPacket(newbuf, subpacket_length, OP_Packet);
+							subp->copyInfo(p);
+							ProcessPacket(subp, p);
+							delete subp;
+						}
 						if(prevPacket)
 						{
 							printf("prevPacketSize: %u\n", prevPacket->size);
@@ -455,7 +465,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 					if (oversize_buffer) {
 						memcpy(oversize_buffer+oversize_offset,p->pBuffer+2,p->size-2);
 						oversize_offset+=p->size-2;
-						cout << "Oversized is " << oversize_offset << "/" << oversize_length << " (" << (p->size-2) << ") Seq=" << seq << endl;
+						//cout << "Oversized is " << oversize_offset << "/" << oversize_length << " (" << (p->size-2) << ") Seq=" << seq << endl;
 						if (oversize_offset==oversize_length) {
 							if (*(p->pBuffer+2)==0x00 && *(p->pBuffer+3)==0x19) {
 								EQProtocolPacket *subp=new EQProtocolPacket(oversize_buffer,oversize_offset);
@@ -489,7 +499,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						oversize_buffer=new unsigned char[oversize_length];
 						memcpy(oversize_buffer,p->pBuffer+6,p->size-6);
 						oversize_offset=p->size-6;
-						cout << "Oversized is " << oversize_offset << "/" << oversize_length << " (" << (p->size-6) << ") Seq=" << seq << endl;
+						//cout << "Oversized is " << oversize_offset << "/" << oversize_length << " (" << (p->size-6) << ") Seq=" << seq << endl;
 					}
 				}
 			}
@@ -1647,6 +1657,11 @@ DumpPacket(buffer, length);
 			cout << "2Decrypted Packet: " << p2->opcode << endl;
 			DumpPacket(p2->pBuffer, p2->size);
 				
+			EQApplicationPacket* ap = p2->MakeApplicationPacket(2);
+			if (ap->version == 0)
+				ap->version = client_version;
+			InboundQueuePush(ap);
+
 			safe_delete(p2);
 		}
 		ProcessQueue();
