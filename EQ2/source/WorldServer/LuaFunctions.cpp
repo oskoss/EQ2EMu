@@ -3396,6 +3396,9 @@ int EQ2Emu_lua_AddTimer(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state, 5);
 
 	SpawnScriptTimer* timer = new SpawnScriptTimer;
+	if ( time < 10)
+		time = 10;
+	
 	timer->timer = Timer::GetCurrentTime2() + time;
 	timer->function = function;
 	timer->spawn = spawn->GetID();

@@ -3778,7 +3778,8 @@ void ZoneServer::CheckSpawnScriptTimers(){
 		set<SpawnScriptTimer*>::iterator itr;
 		for (itr = spawn_script_timers.begin(); itr != spawn_script_timers.end(); itr++) {
 			timer = *itr;
-			if(timer->current_count < timer->max_count && current_time >= timer->timer){
+			if(remove_spawn_script_timers_list.count(timer) == 0 && 
+				timer->current_count < timer->max_count && current_time >= timer->timer){
 				timer->current_count++;	
 				call_timers.push_back(timer);
 			}

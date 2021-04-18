@@ -778,10 +778,9 @@ void MobMovementManager::DisruptNavigation(Entity* who)
 	if (!who->IsRunning()) {
 		who->MCommandMutex.writelock();
 		ent.second.Commands.clear();
-		MobListMutex.releasereadlock();
 		who->MCommandMutex.releasewritelock();
-		return;
 	}
+	MobListMutex.releasereadlock();
 }
 
 /**
