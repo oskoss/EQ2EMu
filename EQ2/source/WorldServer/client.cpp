@@ -7110,7 +7110,7 @@ void Client::SendBuyMerchantList(bool sell) {
 							}
 						}
 						packet->setArrayDataByName("price", ItemInfo.price_coins, i);
-						packet->setArrayDataByName("status", ItemInfo.price_status, i);
+						packet->setArrayDataByName("status2", ItemInfo.price_status, i);
 						packet->setArrayDataByName("station_cash", ItemInfo.price_stationcash, i);
 					}
 				}
