@@ -2970,10 +2970,7 @@ void Spawn::ResetMovement(bool inFlight){
 	}
 	movement_loop.clear();
 	movement_index = 0;
-
-	if(!inFlight)
-		resume_movement = true;
-
+	resume_movement = true;
 	ClearRunningLocations();
 
 	if(!inFlight)
