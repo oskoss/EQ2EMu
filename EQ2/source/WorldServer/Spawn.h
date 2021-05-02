@@ -1021,6 +1021,7 @@ public:
 	
 	MovementLocation* GetCurrentRunningLocation();
 	MovementLocation* GetLastRunningLocation();
+	void	NewWaypointChange(MovementLocation* data);
 	bool	CalculateChange();
 	void	AddRunningLocation(float x, float y, float z, float speed, float distance_away = 0, bool attackable = true, bool finished_adding_locations = true, string lua_function = "", bool isMapped=false);
 	bool	RemoveRunningLocation();

@@ -3131,10 +3131,26 @@ void Spawn::ClearRunningLocations(){
 	while(RemoveRunningLocation()){}
 }
 
+void Spawn::NewWaypointChange(MovementLocation* data){	
+	if(data){					
+		if(NeedsToResumeMovement()){
+				resume_movement = true;
+				NeedsToResumeMovement(false);
+		}
+		if(!data->attackable)
+			SetHeading(GetSpawnOrigHeading());
+	}
+		
+	if (data && data->lua_function.length() > 0)
+	GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, 0, data->lua_function.c_str());
+
+	RemoveRunningLocation();
+}
+
 bool Spawn::CalculateChange(){
 	bool remove_needed = false;
-	if(movement_locations && MMovementLocations){		
-		MovementLocation* data = 0;
+	MovementLocation* data = 0;
+	if(movement_locations && MMovementLocations){
 		MMovementLocations->readlock(__FUNCTION__, __LINE__);
 		if(movement_locations->size() > 0){
 			// Target location
@@ -3142,68 +3158,58 @@ bool Spawn::CalculateChange(){
 			// If no target or we are at the target location need to remove this point
 			if(!data || (data->x == GetX() && data->y == GetY() && data->z == GetZ()))
 				remove_needed = true;
-			if(data){					
-				if(NeedsToResumeMovement()){
-					resume_movement = true;
-					NeedsToResumeMovement(false);
-				}
-				if(!data->attackable)
-					SetHeading(GetSpawnOrigHeading());
 			}
-		}
 		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
-		if(remove_needed) {
-			if (data && data->lua_function.length() > 0)
-				GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_CUSTOM, 0, data->lua_function.c_str());
+	}
+		
+	if(remove_needed){
+		NewWaypointChange(data);
+	}
+	else if(data){
+		// Speed is per second so we need a time_step (amount of time since the last update) to modify movement by
+		float time_step = (Timer::GetCurrentTime2() - last_movement_update) * 0.001; // * 0.001 is the same as / 1000, float muliplications is suppose to be faster though
 
-			RemoveRunningLocation();
-			//CalculateChange();
+		// Get current location
+		float nx = GetX();
+		float ny = GetY();
+		float nz = GetZ();
+		
+		// Get Forward vecotr
+		float tar_vx = data->x - nx;
+		float tar_vy = data->y - ny;
+		float tar_vz = data->z - nz;
+
+		// Multiply speed by the time_step to get how much should have changed over the last tick
+		float speed = GetSpeed() * time_step;
+
+		// Normalize the forward vector and multiply by speed, this gives us our change in coords, just need to add them to our current coords
+		float len = sqrtf(tar_vx * tar_vx + tar_vy * tar_vy + tar_vz * tar_vz);
+		tar_vx = (tar_vx / len) * speed;
+		tar_vy = (tar_vy / len) * speed;
+		tar_vz = (tar_vz / len) * speed;
+
+		// Distance less then 0.5 just set the npc to the target location
+		if (GetDistance(data->x, data->y, data->z, IsWidget() ? false : true) <= speed) {
+			SetX(data->x, false);
+			SetZ(data->z, false);
+			SetY(data->y, false, true);
+			remove_needed = true;
+			NewWaypointChange(data);
 		}
-		else if(data){
-			// Speed is per second so we need a time_step (amount of time since the last update) to modify movement by
-			float time_step = (Timer::GetCurrentTime2() - last_movement_update) * 0.001; // * 0.001 is the same as / 1000, float muliplications is suppose to be faster though
-
-			// Get current location
-			float nx = GetX();
-			float ny = GetY();
-			float nz = GetZ();
-			
-			// Get Forward vecotr
-			float tar_vx = data->x - nx;
-			float tar_vy = data->y - ny;
-			float tar_vz = data->z - nz;
-
-			// Multiply speed by the time_step to get how much should have changed over the last tick
-			float speed = GetSpeed() * time_step;
-
-			// Normalize the forward vector and multiply by speed, this gives us our change in coords, just need to add them to our current coords
-			float len = sqrtf(tar_vx * tar_vx + tar_vy * tar_vy + tar_vz * tar_vz);
-			tar_vx = (tar_vx / len) * speed;
-			tar_vy = (tar_vy / len) * speed;
-			tar_vz = (tar_vz / len) * speed;
-
-			// Distance less then 0.5 just set the npc to the target location
-			float dist = (data->speed > 0.5f) ? data->speed : 0.5f;
-			if (GetDistance(data->x, data->y, data->z, IsWidget() ? false : true) <= dist) {
-				SetX(data->x, false);
-				SetZ(data->z, false);
-				SetY(data->y, false, true);
-			}
-			else {
-				SetX(nx + tar_vx, false);
-				SetZ(nz + tar_vz, false);
-				if ( IsWidget() )
-					SetY(ny + tar_vy, false, true);
-				else
-					SetY(ny + tar_vy, false);
-			}
-
-			if (GetMap() != nullptr) {
-				Cell* newCell = GetMap()->GetGrid()->GetCell(GetX(), GetZ());
-				int32 newGrid = GetMap()->GetGrid()->GetGridID(this);
-				if ((!IsFlyingCreature() || IsTransportSpawn()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
-					SetPos(&(appearance.pos.grid_id), newGrid);
-			}
+		else {
+			SetX(nx + tar_vx, false);
+			SetZ(nz + tar_vz, false);
+			if ( IsWidget() )
+				SetY(ny + tar_vy, false, true);
+			else
+				SetY(ny + tar_vy, false);
+		}
+	
+		if (GetMap() != nullptr) {
+			Cell* newCell = GetMap()->GetGrid()->GetCell(GetX(), GetZ());
+			int32 newGrid = GetMap()->GetGrid()->GetGridID(this);
+			if ((!IsFlyingCreature() || IsTransportSpawn()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
+				SetPos(&(appearance.pos.grid_id), newGrid);
 		}
 	}
 	return remove_needed;
