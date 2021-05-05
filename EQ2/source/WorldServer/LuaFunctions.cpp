@@ -1096,8 +1096,11 @@ int EQ2Emu_lua_MovementLoopAdd(lua_State* state) {
 	float speed = lua_interface->GetFloatValue(state, 5);
 	int32 delay = lua_interface->GetInt32Value(state, 6); //this should be given as seconds, as it is converted to ms later
 	string function = lua_interface->GetStringValue(state, 7);
+	
+	int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
+	float heading = lua_interface->GetFloatValue(state, 8);
 	if (spawn) {
-		spawn->AddMovementLocation(x, y, z, speed, delay, function.c_str());
+		spawn->AddMovementLocation(x, y, z, speed, delay, function.c_str(), heading, (num_args > 7) ? true : false );
 		spawn->GetZone()->AddMovementNPC(spawn);
 	}
 	lua_interface->ResetFunctionStack(state);

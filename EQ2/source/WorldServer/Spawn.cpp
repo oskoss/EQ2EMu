@@ -2836,7 +2836,9 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				{
 					((Entity*)this)->SetSpeed(data->speed);
 					SetSpeed(data->speed);
-					if(!IsWidget())
+					if(data->use_movement_location_heading)
+						SetHeading(data->heading);
+					else if(!IsWidget())
 						FaceTarget(data->x, data->z);
 					// 0 delay at target location, need to set multiple locations
 					if(data->delay == 0 && movement_loop.size() > 0) {
@@ -2977,7 +2979,7 @@ void Spawn::ResetMovement(bool inFlight){
 		MMovementLoop.releasewritelock();
 }
 
-void Spawn::AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function){
+void Spawn::AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function, float heading, bool include_heading){
 
 	LogWrite(LUA__DEBUG, 5, "LUA", "AddMovementLocation: x: %.2f, y: %.2f, z: %.2f, speed: %.2f, delay: %i, lua: %s",
 		x, y, z, speed, delay, string(lua_function).c_str());
@@ -2990,6 +2992,9 @@ void Spawn::AddMovementLocation(float x, float y, float z, float speed, int16 de
 	data->delay = delay*1000;
 	if(lua_function)
 		data->lua_function = string(lua_function);
+	
+	data->heading = heading;
+	data->use_movement_location_heading = include_heading;
 	MMovementLoop.lock();
 	movement_loop.push_back(data);
 	MMovementLoop.unlock();

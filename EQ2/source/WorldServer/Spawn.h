@@ -182,6 +182,8 @@ struct MovementData{
 	float speed;
 	int32 delay;
 	string lua_function;
+	float heading;
+	bool use_movement_location_heading;
 };
 
 struct BasicInfoStruct{
@@ -1012,7 +1014,7 @@ public:
 	void	InitializeFooterPacketData(Player* player, PacketStruct* packet);
 
 	void	MoveToLocation(Spawn* spawn, float distance, bool immediate = true, bool isMappedLocation = false);
-	void	AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function);
+	void	AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function, float heading, bool include_heading = false);
 	void	ProcessMovement(bool isSpawnListLocked=false);
 	void	ResetMovement(bool inFlight=false);
 	bool	IsRunning();
