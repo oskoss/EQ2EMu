@@ -300,6 +300,12 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 							ProcessPacket(subp, p);
 							delete subp;
 						}
+						else
+						{
+							printf("!!!!!!!!!Garbage Packet Unknown!!!!!!!!!!!!!\n");
+							DumpPacket(p->pBuffer + processed + offset, subpacket_length);
+						}
+						
 						if(prevPacket)
 						{
 							printf("prevPacketSize: %u\n", prevPacket->size);
@@ -1642,7 +1648,7 @@ DumpPacket(buffer, length);
 		DumpPacket(buffer, newlength);
 #endif
 		uint16 opcode=ntohs(*(const uint16 *)newbuffer);
-		if(opcode <= OP_OutOfSession)
+		if(opcode > 0 && opcode <= OP_OutOfSession)
 		{
 			EQProtocolPacket p(newbuffer,newlength);
 			ProcessPacket(&p);
