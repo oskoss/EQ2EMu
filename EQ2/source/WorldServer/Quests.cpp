@@ -22,6 +22,7 @@
 #include "Player.h"
 #include "LuaInterface.h"
 #include "Spells.h"
+#include "RaceTypes/RaceTypes.h"
 #include "../common/Log.h"
 
 #ifdef WIN32
@@ -33,6 +34,7 @@
 extern LuaInterface* lua_interface;
 extern ConfigReader configReader;
 extern MasterFactionList master_faction_list;
+extern MasterRaceTypeList race_types_list;
 
 QuestStep::QuestStep(int32 in_id, int8 in_type, string in_description, vector<int32>* in_ids, int32 in_quantity, const char* in_task_group, vector<Location>* in_locations, float in_max_variation, float in_percentage, int32 in_usableitemid){
 	type = in_type;
@@ -144,6 +146,21 @@ bool QuestStep::CheckStepKillUpdate(int32 id){
 	return ret;
 }
 
+bool QuestStep::CheckStepKillRaceReqUpdate(Spawn* spawn){
+	bool ret = false;
+	if(ids){
+		for(int32 i=0;i<ids->size();i++){
+			if(ids->at(i) == spawn->GetRace() ||
+			ids->at(i) == race_types_list.GetRaceType(spawn->GetModelType()) ||
+			ids->at(i) == race_types_list.GetRaceBaseType(spawn->GetModelType())){
+				ret = true;
+				break;
+			}
+		}
+	}
+	return ret;
+}
+
 bool QuestStep::CheckStepChatUpdate(int32 id){
 	bool ret = false;
 	if(ids){
@@ -198,12 +215,15 @@ bool QuestStep::CheckStepItemUpdate(int32 id){
 	return ret;
 }
 
-bool QuestStep::CheckStepLocationUpdate(float char_x, float char_y, float char_z){
+bool QuestStep::CheckStepLocationUpdate(float char_x, float char_y, float char_z, int32 zone_id){
 	bool ret = false;
 	if (locations) {
 		for (int32 i=0; i < locations->size(); i++) {
 			float total_diff = 0;
 			Location loc = locations->at(i);
+			if(loc.zone_id > 0 && loc.zone_id != zone_id)
+				continue;
+
 			float diff = loc.x - char_x; //Check X
 			if(diff < 0)
 				diff *= -1;
@@ -523,26 +543,31 @@ bool Quest::CheckQuestKillUpdate(Spawn* spawn, bool update){
 	MQuestSteps.lock();
 	for(int32 i=0;i<quest_steps.size(); i++){
 		step = quest_steps[i];
-		if(step && step->GetStepType() == QUEST_STEP_TYPE_KILL && !step->Complete() && step->CheckStepKillUpdate(id)){
-			if (update == true) {
-				bool passed = true;
-				if (step->GetPercentage() < 100)
-					passed = (step->GetPercentage() > MakeRandomFloat(0, 100));
-				if (passed) {
-					//Call the progress action function with the total amount of progress actually granted
-					prog_added = step->AddStepProgress(1);
-					if (lua_interface && progress_actions[step->GetStepID()].length() > 0 && prog_added > 0)
-						lua_interface->CallQuestFunction(this, progress_actions[step->GetStepID()].c_str(), player, prog_added);
-					step_updates.push_back(step);
-					step->SetUpdateName(spawn->GetName());
+		if(!step)
+			continue;
+
+			if((step->GetStepType() == QUEST_STEP_TYPE_KILL && !step->Complete() && step->CheckStepKillUpdate(id)) ||
+			 (step->GetStepType() == QUEST_STEP_TYPE_KILL_RACE_REQ && !step->Complete() && step->CheckStepKillRaceReqUpdate(spawn)))
+			{
+				if (update == true) {
+					bool passed = true;
+					if (step->GetPercentage() < 100)
+						passed = (step->GetPercentage() > MakeRandomFloat(0, 100));
+					if (passed) {
+						//Call the progress action function with the total amount of progress actually granted
+						prog_added = step->AddStepProgress(1);
+						if (lua_interface && progress_actions[step->GetStepID()].length() > 0 && prog_added > 0)
+							lua_interface->CallQuestFunction(this, progress_actions[step->GetStepID()].c_str(), player, prog_added);
+						step_updates.push_back(step);
+						step->SetUpdateName(spawn->GetName());
+						ret = true;
+					}
+					else
+						step_failures.push_back(step);
+				}
+				else {
 					ret = true;
 				}
-				else
-					step_failures.push_back(step);
-			}
-			else {
-				ret = true;
-			}
 		}
 	}
 	MQuestSteps.unlock();
@@ -811,14 +836,14 @@ bool Quest::CheckQuestHarvestUpdate(int32 id, int32 quantity){
 	return ret;
 }
 
-bool Quest::CheckQuestLocationUpdate(float char_x, float char_y, float char_z){
+bool Quest::CheckQuestLocationUpdate(float char_x, float char_y, float char_z, int32 zone_id){
 	QuestStep* step = 0;
 	bool ret = false;
 	int32 prog_added = 0;
 	MQuestSteps.lock();
 	for(int32 i=0;i<quest_steps.size(); i++){
 		step = quest_steps[i];
-		if(step && step->GetStepType() == QUEST_STEP_TYPE_LOCATION && !step->Complete() && step->CheckStepLocationUpdate(char_x, char_y, char_z)){
+		if(step && step->GetStepType() == QUEST_STEP_TYPE_LOCATION && !step->Complete() && step->CheckStepLocationUpdate(char_x, char_y, char_z, zone_id)){
 			//Call the progress action function with the total amount of progress actually granted
 			prog_added = step->AddStepProgress(1);
 			if(lua_interface && progress_actions[step->GetStepID()].length() > 0 && prog_added > 0)

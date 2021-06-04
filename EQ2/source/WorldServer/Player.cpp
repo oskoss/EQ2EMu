@@ -4613,7 +4613,7 @@ vector<Quest*>* Player::CheckQuestsLocationUpdate(){
 	map<int32, Quest*>::iterator itr;
 	MPlayerQuests.lock();
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
-		if(itr->second && itr->second->CheckQuestLocationUpdate(GetX(), GetY(), GetZ())){
+		if(itr->second && itr->second->CheckQuestLocationUpdate(GetX(), GetY(), GetZ(), (GetZone() ? GetZone()->GetZoneID() : 0))){
 			if(!quest_updates)
 				quest_updates = new vector<Quest*>();
 			quest_updates->push_back(itr->second);

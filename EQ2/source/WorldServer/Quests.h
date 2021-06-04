@@ -32,6 +32,7 @@
 #define	QUEST_STEP_TYPE_NORMAL			6
 #define QUEST_STEP_TYPE_CRAFT           7
 #define QUEST_STEP_TYPE_HARVEST         8
+#define	QUEST_STEP_TYPE_KILL_RACE_REQ	9 // kill using race type requirement instead of npc db id
 
 #define QUEST_DISPLAY_STATUS_HIDDEN			0
 #define QUEST_DISPLAY_STATUS_NO_CHECK		1
@@ -57,6 +58,7 @@ struct Location {
 	float x;
 	float y;
 	float z;
+	int32 zone_id;
 };
 
 class QuestStep{
@@ -64,10 +66,11 @@ public:
 	QuestStep(int32 in_id, int8 in_type, string in_description, vector<int32>* in_ids, int32 in_quantity, const char* in_task_group, vector<Location>* in_locations, float in_max_variation, float in_percentage, int32 in_usableitemid);
 	QuestStep(QuestStep* old_step);
 	~QuestStep();
+	bool			CheckStepKillRaceReqUpdate(Spawn* spawn);
 	bool			CheckStepKillUpdate(int32 id);
 	bool			CheckStepChatUpdate(int32 id);
 	bool			CheckStepItemUpdate(int32 id);
-	bool			CheckStepLocationUpdate(float char_x, float char_y, float char_z);
+	bool			CheckStepLocationUpdate(float char_x, float char_y, float char_z, int32 zone_id);
 	bool			CheckStepSpellUpdate(int32 id);
 	int32			AddStepProgress(int32 val);
 	void			SetStepProgress(int32 val);
@@ -160,7 +163,7 @@ public:
 	bool				CheckQuestKillUpdate(Spawn* spawn, bool update = true);
 	bool				CheckQuestChatUpdate(int32 id, bool update = true);
 	bool				CheckQuestItemUpdate(int32 id, int8 quantity = 1);
-	bool				CheckQuestLocationUpdate(float char_x, float char_y, float char_z);
+	bool				CheckQuestLocationUpdate(float char_x, float char_y, float char_z, int32 zone_id);
 	bool				CheckQuestSpellUpdate(Spell* spell);
 	bool                CheckQuestCraftUpdate(int32 id, int32 quantity = 1);
 	bool                CheckQuestHarvestUpdate(int32 id, int32 quantity = 1);

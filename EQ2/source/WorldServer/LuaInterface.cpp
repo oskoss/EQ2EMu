@@ -1104,9 +1104,11 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetQuestRewardComment", EQ2Emu_lua_SetQuestRewardComment);
 	lua_register(state, "SetQuestRewardExp", EQ2Emu_lua_SetQuestRewardExp);
 	lua_register(state, "AddQuestStepKill", EQ2Emu_lua_AddQuestStepKill);
+	lua_register(state, "AddQuestStepKillByRace", EQ2Emu_lua_AddQuestStepKillByRace);
 	lua_register(state, "AddQuestStep", EQ2Emu_lua_AddQuestStep);
 	lua_register(state, "AddQuestStepChat", EQ2Emu_lua_AddQuestStepChat);
 	lua_register(state, "AddQuestStepObtainItem", EQ2Emu_lua_AddQuestStepObtainItem);
+	lua_register(state, "AddQuestStepZoneLoc", EQ2Emu_lua_AddQuestStepZoneLoc);
 	lua_register(state, "AddQuestStepLocation", EQ2Emu_lua_AddQuestStepLocation);
 	lua_register(state, "AddQuestStepSpell", EQ2Emu_lua_AddQuestStepSpell);
 	lua_register(state, "AddQuestStepCraft", EQ2Emu_lua_AddQuestStepCraft);

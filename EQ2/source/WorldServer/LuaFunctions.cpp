@@ -3737,8 +3737,8 @@ int EQ2Emu_lua_AddQuestStep(lua_State* state) {
 	}
 	return 0;
 }
-
-int EQ2Emu_lua_AddQuestStepKill(lua_State* state) {
+int EQ2Emu_lua_AddQuestStepKillLogic(lua_State* state, int8 type)
+{
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
@@ -3752,16 +3752,16 @@ int EQ2Emu_lua_AddQuestStepKill(lua_State* state) {
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
-		int32 npc_id = 0;
+		int32 id = 0;
 		vector<int32>* ids = 0;
 		int i = 0;
-		while ((npc_id = lua_interface->GetInt32Value(state, 8 + i))) {
+		while ((id = lua_interface->GetInt32Value(state, 8 + i))) {
 			if (ids == 0)
 				ids = new vector<int32>;
-			ids->push_back(npc_id);
+			ids->push_back(id);
 			i++;
 		}
-		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_KILL, description, ids, quantity, taskgroup, 0, 0, percentage, 0);
+		QuestStep* quest_step = quest->AddQuestStep(step, type, description, ids, quantity, taskgroup, 0, 0, percentage, 0);
 		if (quest_step && icon > 0 && quantity > 0)
 			quest_step->SetIcon(icon);
 		if (quest->GetPlayer()) {
@@ -3771,6 +3771,13 @@ int EQ2Emu_lua_AddQuestStepKill(lua_State* state) {
 		safe_delete(ids);
 	}
 	return 0;
+}
+int EQ2Emu_lua_AddQuestStepKill(lua_State* state) {
+	return EQ2Emu_lua_AddQuestStepKillLogic(state, QUEST_STEP_TYPE_KILL);
+}
+
+int EQ2Emu_lua_AddQuestStepKillByRace(lua_State* state) {
+	return EQ2Emu_lua_AddQuestStepKillLogic(state, QUEST_STEP_TYPE_KILL_RACE_REQ);
 }
 
 int EQ2Emu_lua_AddQuestStepChat(lua_State* state) {
@@ -3843,6 +3850,47 @@ int EQ2Emu_lua_AddQuestStepObtainItem(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_AddQuestStepZoneLoc(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Quest* quest = lua_interface->GetQuest(state);
+	if (quest) {
+		int32 step = lua_interface->GetInt32Value(state, 2);
+		string description = lua_interface->GetStringValue(state, 3);
+		float max_variation = lua_interface->GetFloatValue(state, 4);
+		string str_taskgroup = lua_interface->GetStringValue(state, 5);
+		int16 icon = lua_interface->GetInt16Value(state, 6);
+		const char* taskgroup = 0;
+		if (str_taskgroup.length() > 0)
+			taskgroup = str_taskgroup.c_str();
+		vector<Location>* locations = 0;
+		int8 i = 7;
+		int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
+		while (true) {
+			Location loc;
+			loc.x = lua_interface->GetFloatValue(state, i);
+			loc.y = lua_interface->GetFloatValue(state, i + 1);
+			loc.z = lua_interface->GetFloatValue(state, i + 2);
+			loc.zone_id = lua_interface->GetInt32Value(state, i + 3);
+
+			if (loc.x == 0 && loc.y == 0 && loc.z == 0)
+				break;
+			if (locations == 0)
+				locations = new vector<Location>;
+			locations->push_back(loc);
+			i += 4;
+		}
+		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_LOCATION, description, 0, 1, taskgroup, locations, max_variation);
+		if (quest_step && icon > 0)
+			quest_step->SetIcon(icon);
+		if (quest->GetPlayer()) {
+			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
+		}
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_AddQuestStepLocation(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -3857,12 +3905,15 @@ int EQ2Emu_lua_AddQuestStepLocation(lua_State* state) {
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
 		vector<Location>* locations = 0;
-		int i = 7;
+		int8 i = 7;
+		int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
 		while (true) {
 			Location loc;
 			loc.x = lua_interface->GetFloatValue(state, i);
 			loc.y = lua_interface->GetFloatValue(state, i + 1);
 			loc.z = lua_interface->GetFloatValue(state, i + 2);
+			loc.zone_id = 0;
+			
 			if (loc.x == 0 && loc.y == 0 && loc.z == 0)
 				break;
 			if (locations == 0)
