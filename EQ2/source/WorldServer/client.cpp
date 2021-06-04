@@ -6539,7 +6539,7 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 				if(total_status_sell_price)
 					Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %i %s to %s for %s and %u Status Points.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str(), status_sell_price);
 				else
-					Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %i %s to %s for %s%s.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
+					Message(CHANNEL_MERCHANT_BUY_SELL, "You sell %i %s to %s for %s.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_sell_price).c_str());
 			}
 			else
 			{
