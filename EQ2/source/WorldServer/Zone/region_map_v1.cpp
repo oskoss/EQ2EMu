@@ -194,7 +194,7 @@ void RegionMapV1::IdentifyRegionsInGrid(Client *client, const glm::vec3 &locatio
 	int region_num = 0;
 
 	int32 grid = 0;
-	if (client->GetPlayer()->GetMap() != nullptr)
+	if (client->GetPlayer()->GetMap() != nullptr && client->GetPlayer()->GetMap()->IsMapLoaded())
 	{
 		grid = client->GetPlayer()->GetMap()->GetGrid()->GetGridIDByLocation(location.x, location.y, location.z);
 	}
