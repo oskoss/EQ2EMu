@@ -186,6 +186,8 @@ public:
 	void	ChangeLevel(int16 old_level, int16 new_level);
 	void	ChangeTSLevel(int16 old_level, int16 new_level);
 	bool	Summon(const char* search_name);
+	std::string	IdentifyInstanceLockout(int32 zoneID, bool displayClient = true);
+	ZoneServer*	IdentifyInstance(int32 zoneID);
 	bool	TryZoneInstance(int32 zoneID, bool zone_coords_valid=false);
 	bool	GotoSpawn(const char* search_name, bool forceTarget=false);
 	void	DisplayDeadWindow();

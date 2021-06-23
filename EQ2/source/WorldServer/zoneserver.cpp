@@ -1209,6 +1209,7 @@ void ZoneServer::RemovePendingDelete(Spawn* spawn) {
 
 void ZoneServer::DeleteSpawns(bool delete_all) {
 	MSpawnDeleteList.writelock(__FUNCTION__, __LINE__);
+	MPendingSpawnRemoval.readlock(__FUNCTION__, __LINE__);
 	if(spawn_delete_list.size() > 0){
 		map<Spawn*, int32>::iterator itr;
 		map<Spawn*, int32>::iterator erase_itr;
@@ -1216,6 +1217,10 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 		Spawn* spawn = 0;
 		for (itr = spawn_delete_list.begin(); itr != spawn_delete_list.end(); ) {
 			if (delete_all || current_time >= itr->second){
+				// we haven't removed it from the spawn list yet..
+				if(!delete_all && m_pendingSpawnRemove.count(itr->first->GetID()))
+					continue;
+				
 				spawn = itr->first;
 				if (spawn && movementMgr != nullptr) {
 					movementMgr->RemoveMob((Entity*)spawn);
@@ -1228,6 +1233,7 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 				itr++;
 		}
 	}
+	MPendingSpawnRemoval.releasereadlock(__FUNCTION__, __LINE__);
 	MSpawnDeleteList.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -2328,7 +2334,7 @@ void ZoneServer::ProcessSpawnLocations()
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
 }
 
-void ZoneServer::AddLoot(NPC* npc){
+void ZoneServer::AddLoot(NPC* npc, Spawn* killer){
 	vector<int32> loot_tables = GetSpawnLootList(npc->GetDatabaseID(), GetZoneID(), npc->GetLevel(), race_types_list.GetRaceType(npc->GetModelType()), npc);
 	if(loot_tables.size() > 0){
 		vector<LootDrop*>* loot_drops = 0;
@@ -2343,7 +2349,8 @@ void ZoneServer::AddLoot(NPC* npc){
 		// the following loop,loops through each table
 		for(loot_list_itr = loot_tables.begin(); loot_list_itr != loot_tables.end(); loot_list_itr++){
 			table = GetLootTable(*loot_list_itr);
-			if(table && table->maxcoin > 0){
+			// if killer is assigned this is on-death, we already assigned coin
+			if(!killer && table && table->maxcoin > 0){
 				chancecoin = rand()%100;
 				if(table->coin_probability >= chancecoin){
 					if(table->maxcoin > table->mincoin)
@@ -2385,6 +2392,36 @@ void ZoneServer::AddLoot(NPC* npc){
 							chancedrop = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 100));
 							for (loot_drop_itr = loot_drops->begin(); loot_drop_itr != loot_drops->end(); loot_drop_itr++) {
 								drop = *loot_drop_itr;
+
+								// if no killer is provided, then we are instantiating the spawn loot, quest related loot should be added on death of the spawn to check against spawn/group members
+								if(drop->no_drop_quest_completed_id && killer == nullptr)
+									continue;
+								else if(!drop->no_drop_quest_completed_id && killer) // skip since this doesn't have a quest id attached and we are doing after-math of death loot additions
+									continue;
+								else if(killer && drop->no_drop_quest_completed_id) // check if the player already completed quest related to item
+								{
+									Player* player = nullptr;
+									if(killer->IsPlayer())
+									{
+										player = (Player*)killer;
+										// player has already completed the quest
+										if(player->GetCompletedQuest(drop->no_drop_quest_completed_id) && !player->GetGroupMemberInfo())
+										{
+											LogWrite(PLAYER__DEBUG, 0, "Player", "%s: Player has completed quest %u, skipping loot item %u", npc->GetName(), drop->no_drop_quest_completed_id, drop->item_id);
+											continue;
+										}
+										else if(player->GetGroupMemberInfo() && world.GetGroupManager()->HasGroupCompletedQuest(player->GetGroupMemberInfo()->group_id, drop->no_drop_quest_completed_id))
+										{
+											LogWrite(PLAYER__DEBUG, 0, "Player", "%s: Group %u has completed quest %u, skipping loot item %u", npc->GetName(), player->GetGroupMemberInfo()->group_id, drop->no_drop_quest_completed_id, drop->item_id);
+											continue;
+										}
+									}
+									else
+									{
+										LogWrite(PLAYER__DEBUG, 0, "Player", "%s: Killer is not a player, skipping loot item %u", npc->GetName(), drop->item_id);
+										continue;
+									}
+								}
 
 								if (npc->HasLootItemID(drop->item_id))
 									continue;
@@ -4227,6 +4264,10 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 
 	if(dead->IsEntity())
 	{
+		// add any special quest related loot (no_drop_quest_completed)
+		if(dead->IsNPC() && killer && killer != dead)
+			AddLoot((NPC*)dead, killer);
+		
 		((Entity*)dead)->InCombat(false);
 		dead->SetInitialState(16512, false); // This will make aerial npc's fall after death
 		dead->SetHP(0);
@@ -7917,7 +7958,7 @@ Spawn* ZoneServer::GetSpawnFromUniqueItemID(int32 unique_id)
 void ZoneServer::AddPendingSpawnRemove(int32 id)
 {
 		MPendingSpawnRemoval.writelock(__FUNCTION__, __LINE__);
-		m_pendingSpawnRemove.push_back(id);
+		m_pendingSpawnRemove.insert(make_pair(id,true));
 		MPendingSpawnRemoval.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -7926,9 +7967,9 @@ void ZoneServer::ProcessSpawnRemovals()
 	MSpawnList.writelock(__FUNCTION__, __LINE__);
 	MPendingSpawnRemoval.writelock(__FUNCTION__, __LINE__);
 	if (m_pendingSpawnRemove.size() > 0) {
-		vector<int32>::iterator itr2;
+		map<int32,bool>::iterator itr2;
 		for (itr2 = m_pendingSpawnRemove.begin(); itr2 != m_pendingSpawnRemove.end(); itr2++) 
-			spawn_list.erase(*itr2);
+			spawn_list.erase(itr2->first);
 
 		m_pendingSpawnRemove.clear();
 	}

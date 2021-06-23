@@ -593,4 +593,6 @@ int EQ2Emu_lua_GetSpawnByRailID(lua_State* state);
 int EQ2Emu_lua_SetRailID(lua_State* state);
 int EQ2Emu_lua_IsZoneLoading(lua_State* state);
 int EQ2Emu_lua_IsRunning(lua_State* state);
+
+int EQ2Emu_lua_GetZoneLockoutTimer(lua_State* state);
 #endif

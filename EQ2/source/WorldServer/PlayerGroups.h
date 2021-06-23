@@ -165,6 +165,7 @@ public:
 	int32 GetGroupSize(int32 group_id);
 
 	void SendGroupQuests(int32 group_id, Client* client);
+	bool HasGroupCompletedQuest(int32 group_id, int32 quest_id);
 
 	void SimpleGroupMessage(int32 group_id, const char* message);
 	void GroupMessage(int32 group_id, const char* message, ...);

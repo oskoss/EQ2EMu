@@ -138,6 +138,23 @@ void Entity::DeleteSpellEffects(bool removeClient)
 	}
 }
 
+void Entity::RemoveSpells()
+{
+	
+	for(int i=0;i<45;i++){
+		if(i<30){
+			if(GetInfoStruct()->maintained_effects[i].spell_id != 0xFFFFFFFF)
+			{
+				GetZone()->GetSpellProcess()->AddSpellCancel(GetInfoStruct()->maintained_effects[i].spell);
+			}
+		}
+		if(GetInfoStruct()->spell_effects[i].spell_id != 0xFFFFFFFF)
+		{
+			RemoveSpellEffect(GetInfoStruct()->spell_effects[i].spell);
+		}
+	}
+}
+
 void Entity::MapInfoStruct()
 {
 /** GETS **/

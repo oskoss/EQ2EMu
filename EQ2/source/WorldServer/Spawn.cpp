@@ -2016,7 +2016,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 	int16 version = packet->GetVersion();
 
 	int32 new_grid_id = 0;
-	if(player->GetMap() != nullptr)
+	if(player->GetMap() != nullptr && player->GetMap()->IsMapLoaded())
 	{
 		std::map<int32,TimedGridData>::iterator itr = established_grid_id.find(version);
 		if ( itr == established_grid_id.end() || itr->second.timestamp <= (Timer::GetCurrentTime2()))

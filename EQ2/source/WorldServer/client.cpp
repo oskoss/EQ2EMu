@@ -3641,19 +3641,13 @@ bool Client::Summon(const char* search_name) {
 		return true;
 }
 
-bool Client::TryZoneInstance(int32 zoneID, bool zone_coords_valid) {
-	ZoneServer* instance_zone = NULL;
-	int8 instanceType = 0;
-
-	// determine if this is a group instanced zone that already exists
-	instance_zone = GetPlayer()->GetGroupMemberInZone(zoneID);
-
-	if (instance_zone != NULL)
-		Zone(instance_zone->GetInstanceID(), zone_coords_valid, true);
-	else if ((instanceType = database.GetInstanceTypeByZoneID(zoneID)) > 0)
-	{
-		// best to check if we already have our own instance!
-		InstanceData* data = GetPlayer()->GetCharacterInstances()->FindInstanceByZoneID(zoneID);
+std::string Client::IdentifyInstanceLockout(int32 zoneID, bool displayClient) {
+	int8 instanceType = database.GetInstanceTypeByZoneID(zoneID);
+	if(instanceType < 1)
+		return std::string("");
+	
+	ZoneServer* instance_zone = nullptr;
+	InstanceData* data = GetPlayer()->GetCharacterInstances()->FindInstanceByZoneID(zoneID);
 		if (data) {
 			// If lockout instances check to see if we are locked out
 			if (instanceType == SOLO_LOCKOUT_INSTANCE || instanceType == GROUP_LOCKOUT_INSTANCE || instanceType == RAID_LOCKOUT_INSTANCE) {
@@ -3690,14 +3684,14 @@ bool Client::TryZoneInstance(int32 zoneID, bool zone_coords_valid) {
 
 					if (hour > 0) {
 						char temp[10];
-						sprintf(temp, " %i", hour);
+						snprintf(temp, 9," %i", hour);
 						time_msg.append(temp);
 						time_msg.append(" hour");
 						time_msg.append((hour > 1) ? "s" : "");
 					}
 					if (min > 0) {
 						char temp[5];
-						sprintf(temp, " %i", min);
+						snprintf(temp, 4," %i", min);
 						time_msg.append(temp);
 						time_msg.append(" minute");
 						time_msg.append((min > 1) ? "s" : "");
@@ -3705,15 +3699,33 @@ bool Client::TryZoneInstance(int32 zoneID, bool zone_coords_valid) {
 					// Only add seconds if minutes and hours are 0
 					if (hour == 0 && min == 0 && sec > 0) {
 						char temp[5];
-						sprintf(temp, " %i", sec);
+						snprintf(temp, 4," %i", sec);
 						time_msg.append(temp);
 						time_msg.append(" second");
 						time_msg.append((sec > 1) ? "s" : "");
 					}
 
-					Message(CHANNEL_COLOR_YELLOW, "You may not enter again for%s.", time_msg.c_str());
-					return true;
+					if(displayClient)
+						Message(CHANNEL_COLOR_YELLOW, "You may not enter again for%s.", time_msg.c_str());
+					return time_msg;
 				}
+			}
+		}
+	return std::string("");
+}
+
+ZoneServer* Client::IdentifyInstance(int32 zoneID) {
+	int8 instanceType = database.GetInstanceTypeByZoneID(zoneID);
+	if(instanceType < 1)
+		return nullptr;
+
+	ZoneServer* instance_zone = nullptr;
+	InstanceData* data = GetPlayer()->GetCharacterInstances()->FindInstanceByZoneID(zoneID);
+		if (data) {
+			std::string lockoutTime = IdentifyInstanceLockout(zoneID);
+			// If lockout instances check to see if we are locked out
+			if (lockoutTime.length() > 0) {
+					return nullptr;
 			}
 
 			// Need to update `character_instances` table with new timestamps (for persistent) and instance id's
@@ -3731,7 +3743,23 @@ bool Client::TryZoneInstance(int32 zoneID, bool zone_coords_valid) {
 				data->instance_id = instance_zone->GetInstanceID();
 			}
 		}
-		else {
+	return instance_zone;
+}
+
+bool Client::TryZoneInstance(int32 zoneID, bool zone_coords_valid) {
+	ZoneServer* instance_zone = NULL;
+	int8 instanceType = 0;
+
+	// determine if this is a group instanced zone that already exists
+	instance_zone = GetPlayer()->GetGroupMemberInZone(zoneID);
+
+	if (instance_zone != NULL)
+		Zone(instance_zone->GetInstanceID(), zone_coords_valid, true);
+	else if ((instanceType = database.GetInstanceTypeByZoneID(zoneID)) > 0)
+	{
+		// best to check if we already have our own instance!
+		if((instance_zone = IdentifyInstance(zoneID)) == nullptr)
+		{
 			switch (instanceType)
 			{
 			case SOLO_LOCKOUT_INSTANCE:
@@ -10313,12 +10341,22 @@ void Client::TempRemoveGroup()
 	{
 		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 		PlayerGroup* group = world.GetGroupManager()->GetGroup(this->GetPlayer()->GetGroupMemberInfo()->group_id);
-		group->MGroupMembers.writelock();
-		this->GetPlayer()->GetGroupMemberInfo()->client = 0;
-		this->GetPlayer()->GetGroupMemberInfo()->member = 0;
-		group->MGroupMembers.releasewritelock();
+		if(group)
+		{
+			group->MGroupMembers.writelock();
+			this->GetPlayer()->GetGroupMemberInfo()->client = 0;
+			this->GetPlayer()->GetGroupMemberInfo()->member = 0;
+			this->GetPlayer()->SetGroupMemberInfo(0);
+			group->MGroupMembers.releasewritelock();
 
-		group->RemoveClientReference(this);
+			group->RemoveClientReference(this);
+		}
+		else
+		{
+			this->GetPlayer()->GetGroupMemberInfo()->client = 0;
+			this->GetPlayer()->GetGroupMemberInfo()->member = 0;
+			this->GetPlayer()->SetGroupMemberInfo(0);
+		}
 
 		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 	}

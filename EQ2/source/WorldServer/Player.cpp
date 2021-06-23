@@ -6685,6 +6685,7 @@ void Player::MentorTarget()
 
 void Player::SetMentorStats(int32 effective_level, int32 target_char_id)
 {
+	RemoveSpells();
 	if(client->GetPlayer()->GetGroupMemberInfo())
 		client->GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id = target_char_id;
 	InfoStruct* info = GetInfoStruct();

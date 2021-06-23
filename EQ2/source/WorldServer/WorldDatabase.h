@@ -612,10 +612,11 @@ public:
 	void				LoadCharacterSpellEffects(int32 char_id, Client *client, int8 db_spell_type);
 private:
 	DatabaseNew			database_new;
-	map<int32, string>	zone_names;
+	std::map<int32, string>	zone_names;
 	string				skills;
 	int32				max_zonename;
 	char**				zonename_array;
+	std::map<int32, int8>	zone_instance_types;
 };
 #endif
 

@@ -1422,6 +1422,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetRailID", EQ2Emu_lua_SetRailID);
 	lua_register(state, "IsZoneLoading", EQ2Emu_lua_IsZoneLoading);
 	lua_register(state, "IsRunning", EQ2Emu_lua_IsRunning);
+	
+	lua_register(state, "GetZoneLockoutTimer", EQ2Emu_lua_GetZoneLockoutTimer);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

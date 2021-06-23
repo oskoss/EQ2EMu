@@ -3902,6 +3902,11 @@ bool WorldDatabase::VerifyZone(const char* name){
 
 int8 WorldDatabase::GetInstanceTypeByZoneID(int32 zoneID)
 {
+
+	std::map<int32, int8>::iterator itr = zone_instance_types.find(zoneID);
+	if(itr != zone_instance_types.end())
+		return itr->second;
+	
 	DatabaseResult result;
 	int8 ret = 0;
 
@@ -3917,6 +3922,7 @@ int8 WorldDatabase::GetInstanceTypeByZoneID(int32 zoneID)
 	{
 		result.Next();
 		ret = (result.GetInt8Str("instance_type+0") == 0) ? 0 : result.GetInt8Str("instance_type+0") - 1;
+		zone_instance_types.insert(make_pair(zoneID, ret));
 		LogWrite(INSTANCE__DEBUG, 0, "Instance", "Found instance type %i for zone_id %u", ret, zoneID);
 	}
 	else

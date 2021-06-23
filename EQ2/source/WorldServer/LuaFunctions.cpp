@@ -12240,6 +12240,7 @@ int EQ2Emu_lua_GetArrowColor(lua_State* state) {
 	Player* player = (Player*)lua_interface->GetSpawn(state);
 	int8 level = lua_interface->GetInt8Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
+
 	if (player && player->IsPlayer() && level > 0) {
 		lua_interface->SetInt32Value(state, player->GetArrowColor(level));
 		return 1;
@@ -12250,6 +12251,7 @@ int EQ2Emu_lua_GetTSArrowColor(lua_State* state) {
 	Player* player = (Player*)lua_interface->GetSpawn(state);
 	int8 level = lua_interface->GetInt8Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
+
 	if (player && player->IsPlayer() && level > 0) {
 		lua_interface->SetInt32Value(state, player->GetTSArrowColor(level));
 		return 1;
@@ -12260,6 +12262,7 @@ int EQ2Emu_lua_GetTSArrowColor(lua_State* state) {
 int EQ2Emu_lua_GetSpawnByRailID(lua_State* state) {
 	ZoneServer* zone = lua_interface->GetZone(state);
 	sint64 rail_id = lua_interface->GetSInt64Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 
 	if (zone) {
 		Spawn* spawn = zone->GetTransportByRailID(rail_id);
@@ -12298,6 +12301,7 @@ int EQ2Emu_lua_SetRailID(lua_State* state) {
 
 int EQ2Emu_lua_IsZoneLoading(lua_State* state) {
 	ZoneServer* zone = lua_interface->GetZone(state);
+	lua_interface->ResetFunctionStack(state);
 
 	if (zone) {
 		lua_interface->SetBooleanValue(state, zone->IsLoading());
@@ -12307,9 +12311,32 @@ int EQ2Emu_lua_IsZoneLoading(lua_State* state) {
 }
 int EQ2Emu_lua_IsRunning(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 
 	if (spawn) {
 		lua_interface->SetBooleanValue(state, spawn->IsRunning());
+		return 1;
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_GetZoneLockoutTimer(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	int32 zoneID = lua_interface->GetInt32Value(state, 2);
+	bool displayClient = lua_interface->GetInt32Value(state, 3);
+	lua_interface->ResetFunctionStack(state);
+
+	if (!player || !player->IsPlayer() || !player->GetClient()) {
+		lua_interface->LogError("%s: LUA GetZoneLockoutTimer command error: player is not valid, does not exist", lua_interface->GetScriptName(state));
+	}
+	else if(!zoneID) {
+		lua_interface->LogError("%s: LUA GetZoneLockoutTimer command error: zoneID is not set.");
+	}
+	else
+	{
+		lua_interface->SetStringValue(state, player->GetClient()->IdentifyInstanceLockout(zoneID, displayClient).c_str());
 		return 1;
 	}
 	return 0;

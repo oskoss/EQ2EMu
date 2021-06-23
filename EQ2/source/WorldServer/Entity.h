@@ -1097,6 +1097,7 @@ public:
 	virtual ~Entity();
 
 	void DeleteSpellEffects(bool removeClient = false);
+	void RemoveSpells();
 	void MapInfoStruct();
 	virtual float GetDodgeChance();
 	virtual void AddMaintainedSpell(LuaSpell* spell);

@@ -83,9 +83,10 @@ bool PlayerGroup::RemoveMember(Entity* member) {
 	}
 
 	bool ret = false;
-	
-	member->SetGroupMemberInfo(0);
+
 	MGroupMembers.writelock();
+	member->SetGroupMemberInfo(0);
+
 	deque<GroupMemberInfo*>::iterator erase_itr = m_members.end();
 	deque<GroupMemberInfo*>::iterator itr;
 	for (itr = m_members.begin(); itr != m_members.end(); itr++) {
@@ -536,6 +537,31 @@ void PlayerGroupManager::SendGroupQuests(int32 group_id, Client* client) {
 		m_groups[group_id]->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 	MGroups.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+bool PlayerGroupManager::HasGroupCompletedQuest(int32 group_id, int32 quest_id) {
+	bool questComplete = true;
+	GroupMemberInfo* info = 0;
+	MGroups.readlock(__FUNCTION__, __LINE__);
+	if (m_groups.count(group_id) > 0) {
+		m_groups[group_id]->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+		deque<GroupMemberInfo*>* members = m_groups[group_id]->GetMembers();
+		deque<GroupMemberInfo*>::iterator itr;
+		for (itr = members->begin(); itr != members->end(); itr++) {
+			info = *itr;
+			if (info->client) {
+				bool isComplete = info->client->GetPlayer()->GetCompletedQuest(quest_id);
+				if(!isComplete)
+				{
+					questComplete = isComplete;
+					break;
+				}
+			}
+		}
+		m_groups[group_id]->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+	}
+	MGroups.releasereadlock(__FUNCTION__, __LINE__);
+	return questComplete;
 }
 
 void PlayerGroupManager::SimpleGroupMessage(int32 group_id, const char* message) {

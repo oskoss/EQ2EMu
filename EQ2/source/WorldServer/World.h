@@ -77,6 +77,7 @@ struct LootDrop{
 	int16	item_charges;
 	bool	equip_item;
 	float	probability;
+	int32	no_drop_quest_completed_id;
 };
 
 struct GroundSpawnEntry {

@@ -290,7 +290,7 @@ public:
 	void	ApplySetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value);
 	void	SetSpawnCommand(Spawn* spawn, int8 type, char* value, Client* client = 0);
 	void	SetSpawnCommand(int32 spawn_id, int8 type, char* value, Client* client = 0);
-	void	AddLoot(NPC* npc);
+	void	AddLoot(NPC* npc, Spawn* killer = nullptr);
 	
 	NPC*	AddNPCSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentry);
 	Object*	AddObjectSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentry);
@@ -955,7 +955,7 @@ private:
 	
 	int32 watchdogTimestamp;
 
-	vector<int32> m_pendingSpawnRemove;
+	std::map<int32, bool> m_pendingSpawnRemove;
 	Mutex MPendingSpawnRemoval;
 
 	std::map<int32, int32> lua_queued_state_commands;
