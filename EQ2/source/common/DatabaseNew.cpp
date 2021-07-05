@@ -161,7 +161,6 @@ bool DatabaseNew::Query(const char *query, ...) {
 
 		if (mysql_errno(&mysql) == CR_SERVER_LOST || mysql_errno(&mysql) == CR_SERVER_GONE_ERROR) {
 			LogWrite(DATABASE__ERROR, 0, "Database", "Lost connection, attempting to recover and retry query...");
-			mysql_close(&mysql);
 			Connect();
 
 			// retry attempt of previous query (1 try and we give up)
