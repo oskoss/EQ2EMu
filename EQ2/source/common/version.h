@@ -38,11 +38,11 @@
 #endif
 
 #if defined(LOGIN)
-#define CURRENT_VERSION	"0.9.2-cygni"
+#define CURRENT_VERSION	"0.9.3-procyon"
 #elif defined(WORLD)
-#define CURRENT_VERSION	"0.9.2-cygni"
+#define CURRENT_VERSION	"0.9.3-procyon"
 #else
-#define CURRENT_VERSION	"0.9.2-cygni"
+#define CURRENT_VERSION	"0.9.3-procyon"
 #endif
 
 #define COMPILE_DATE	__DATE__
