@@ -416,13 +416,18 @@ int EQ2Emu_lua_SpawnSet(lua_State* state) {
 	bool temporary_flag = true;
 	
 	int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
-
+	int8 index = 0;
+	
 	if(num_args >= 5)
+	{
 		temporary_flag = lua_interface->GetBooleanValue(state, 5); // this used to be false, but no one bothered to set it temporary, we don't need to update the DB
+		
+		index = lua_interface->GetInt8Value(state, 6);
+	}
 	
 	int32 type = commands.GetSpawnSetType(variable);
 	if (type != 0xFFFFFFFF && value.length() > 0 && spawn)
-		commands.SetSpawnCommand(0, spawn, type, value.c_str(), !no_update, temporary_flag);
+		commands.SetSpawnCommand(0, spawn, type, value.c_str(), !no_update, temporary_flag, nullptr, index);
 	return 0;
 }
 
@@ -5309,6 +5314,14 @@ int EQ2Emu_lua_SpawnByLocationID(lua_State* state) {
 		else if (location->entities[0]->spawn_type == SPAWN_ENTRY_TYPE_SIGN)
 			spawn = zone->AddSignSpawn(location, location->entities[0]);
 
+		if(spawn && spawn->IsOmittedByDBFlag())
+		{
+			LogWrite(SPAWN__WARNING, 0, "Spawn", "Spawn (%u) was skipped due to a missing expansion / holiday flag being met.", location->entities[0]->spawn_id);
+			safe_delete(spawn);
+			spawn = 0;
+			return 0;
+		}
+
 		if (spawn) {
 			const char* script = 0;
 			for (int x = 0; x < 3; x++) {
@@ -5334,7 +5347,7 @@ int EQ2Emu_lua_SpawnByLocationID(lua_State* state) {
 			return 1;
 		}
 		else {
-			LogWrite(ZONE__ERROR, 0, "Zone", "Error adding spawn to zone");
+			LogWrite(ZONE__ERROR, 0, "Zone", "Error adding spawn by location id to zone %s with location id %u.", zone->GetZoneName(), location_id);
 			safe_delete(spawn);
 		}
 	}
@@ -9913,6 +9926,12 @@ int EQ2Emu_lua_SpawnGroupByID(lua_State* state) {
 			else if (location->entities[0]->spawn_type == SPAWN_ENTRY_TYPE_SIGN)
 				spawn = zone->AddSignSpawn(location, location->entities[0]);
 
+			if(spawn && spawn->IsOmittedByDBFlag())
+			{
+				LogWrite(SPAWN__WARNING, 0, "Spawn", "Spawn (%u) was skipped due to a missing expansion / holiday flag being met (LUA SpawnGroupByID).", location->entities[0]->spawn_id);
+				safe_delete(spawn);
+				continue;
+			}
 			if (spawn) {
 				const char* script = 0;
 				for (int x = 0; x < 3; x++) {
@@ -9938,7 +9957,7 @@ int EQ2Emu_lua_SpawnGroupByID(lua_State* state) {
 				group.push_back(spawn);
 			}
 			else {
-				LogWrite(ZONE__ERROR, 0, "Zone", "Error adding spawn to zone");
+				LogWrite(ZONE__ERROR, 0, "Zone", "Error adding spawn by group id to zone %s with location id %u.", zone->GetZoneName(), group_id);
 				safe_delete(spawn);
 			}
 		}

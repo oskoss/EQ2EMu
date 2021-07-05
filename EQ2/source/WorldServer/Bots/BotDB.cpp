@@ -379,6 +379,14 @@ void WorldDatabase::LoadBotAppearance(Bot* bot) {
 			bot->features.soga_model_color = color;
 			break;
 		}
+		case APPEARANCE_SBS: {
+			bot->features.soga_body_size = color.red;
+			break;
+		}
+		case APPEARANCE_SBA: {
+			bot->features.soga_body_age = color.red;
+			break;
+		}
 		}
 	}
 }

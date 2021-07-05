@@ -91,5 +91,6 @@ Object*	Object::Copy(){
 	new_spawn->SetTransporterID(GetTransporterID());
 	new_spawn->SetDeviceID(GetDeviceID());
 	new_spawn->SetSoundsDisabled(IsSoundsDisabled());
+	new_spawn->SetOmittedByDBFlag(IsOmittedByDBFlag());
 	return new_spawn;
 }

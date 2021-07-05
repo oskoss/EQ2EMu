@@ -2213,6 +2213,10 @@ bool Player::AddItemToBank(Item* item) {
 	return false;
 }
 EQ2Packet* Player::SendInventoryUpdate(int16 version) {
+	// assure any inventory updates are reflected in sell window
+	if(GetClient() && GetClient()->GetMerchantTransaction())
+		GetClient()->SendSellMerchantList();
+	
 	return item_list.serialize(this, version);
 }
 EQ2Packet* Player::MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 new_slot, int8 charges, int8 appearance_type, int16 version) {

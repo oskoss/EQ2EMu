@@ -106,6 +106,7 @@ void WorldDatabase::LoadDataFromRow(MYSQL_ROW row, Item* item)
 	item->generic_info.offers_quest_id = atoul(row[27]);
 	item->generic_info.part_of_quest_id = atoul(row[28]);
 	item->details.recommended_level = atoi(row[29]);
+	item->details.item_locked = false;
 	item->generic_info.adventure_default_level = atoi(row[30]);
 	item->generic_info.max_charges = atoi(row[31]);
 	item->generic_info.display_charges = atoi(row[32]);
@@ -267,6 +268,7 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	item->generic_info.offers_quest_id			= result->GetInt32Str("offers_quest_id");
 	item->generic_info.part_of_quest_id			= result->GetInt32Str("part_of_quest_id");
 	item->details.recommended_level				= result->GetInt16Str("recommended_level");
+	item->details.item_locked					= false;
 	item->generic_info.adventure_default_level	= result->GetInt16Str("adventure_default_level");
 	item->generic_info.max_charges				= result->GetInt16Str("max_charges");
 	item->generic_info.display_charges			= result->GetInt8Str("display_charges");

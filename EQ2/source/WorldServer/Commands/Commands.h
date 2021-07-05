@@ -278,7 +278,8 @@ class Commands{
 public:
 	Commands();
 	~Commands();
-	bool SetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value, bool send_update = true, bool temporary = false, string* temp_value = 0);
+	bool SetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value, bool send_update = true, bool temporary = false, string* temp_value = 0, int8 index = 0);
+	void UpdateDatabaseAppearance(Client* client, Spawn* target, string fieldName, sint8 r, sint8 g, sint8 b);
 	bool SetZoneCommand(Client* client, int32 zone_id, ZoneServer* zone, int8 type, const char* value);
 	RemoteCommands* GetRemoteCommands() { return remote_commands; }
 	void	Process(int32 index, EQ2_16BitString* command_parms, Client* client, Spawn* targetOverride=NULL);
@@ -540,6 +541,25 @@ private:
 #define SPAWN_SET_SOGA_HAIR_HIGHLIGHT					81
 #define SPAWN_SET_SOGA_MODEL_COLOR						82
 #define SPAWN_SET_SOGA_EYE_COLOR						83
+
+#define SPAWN_SET_CHEEK_TYPE							84
+#define SPAWN_SET_CHIN_TYPE								85
+#define SPAWN_SET_EAR_TYPE								86
+#define SPAWN_SET_EYE_BROW_TYPE							87
+#define SPAWN_SET_EYE_TYPE								88
+#define SPAWN_SET_LIP_TYPE								89
+#define SPAWN_SET_NOSE_TYPE								90
+#define SPAWN_SET_BODY_SIZE								91
+#define SPAWN_SET_BODY_AGE								92
+#define SPAWN_SET_SOGA_CHEEK_TYPE						93
+#define SPAWN_SET_SOGA_CHIN_TYPE						94
+#define SPAWN_SET_SOGA_EAR_TYPE							95
+#define SPAWN_SET_SOGA_EYE_BROW_TYPE					96
+#define SPAWN_SET_SOGA_EYE_TYPE							97
+#define SPAWN_SET_SOGA_LIP_TYPE							98
+#define SPAWN_SET_SOGA_NOSE_TYPE						99
+#define SPAWN_SET_SOGA_BODY_SIZE						100
+#define SPAWN_SET_SOGA_BODY_AGE							101
 
 #define ZONE_SET_VALUE_EXPANSION_ID			0
 #define ZONE_SET_VALUE_NAME					1

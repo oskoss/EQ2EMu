@@ -103,6 +103,8 @@ using namespace std;
 #define APPEARANCE_BODY_AGE		47
 #define APPEARANCE_MC			48
 #define APPEARANCE_SMC			49
+#define APPEARANCE_SBS			50
+#define APPEARANCE_SBA			51
 
 #define CHAR_PROPERTY_SPEED			"modify_speed"
 #define CHAR_PROPERTY_FLYMODE		"modify_flymode"

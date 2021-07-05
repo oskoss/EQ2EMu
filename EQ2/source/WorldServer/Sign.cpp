@@ -146,6 +146,7 @@ Sign* Sign::Copy(){
 	new_spawn->SetIncludeLocation(include_location);
 	new_spawn->SetTransporterID(GetTransporterID());
 	new_spawn->SetSoundsDisabled(IsSoundsDisabled());
+	new_spawn->SetOmittedByDBFlag(IsOmittedByDBFlag());
 	return new_spawn;
 }
 

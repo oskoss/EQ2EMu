@@ -118,6 +118,8 @@ struct CharFeatures{
 	sint8				soga_lip_type[3];
 	sint8				soga_chin_type[3];
 	sint8				soga_nose_type[3];
+	sint8				soga_body_size;
+	sint8				soga_body_age;
 	int16				soga_hair_type;
 	int16				soga_hair_face_type;
 	int16				combat_voice;

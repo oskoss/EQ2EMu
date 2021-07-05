@@ -47,6 +47,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "../classes.h"
 #include "../Transmute.h"
 #include "../Zone/SPGrid.h"
+#include "../Bots/Bot.h"
 
 extern WorldDatabase database;
 extern MasterSpellList master_spell_list;
@@ -177,6 +178,25 @@ Commands::Commands(){
 	spawn_set_values["soga_hair_highlight"] = SPAWN_SET_SOGA_HAIR_HIGHLIGHT;
 	spawn_set_values["soga_model_color"] = SPAWN_SET_SOGA_MODEL_COLOR;
 	spawn_set_values["soga_eye_color"] = SPAWN_SET_SOGA_EYE_COLOR;
+	
+	spawn_set_values["cheek_type"] = SPAWN_SET_CHEEK_TYPE;
+	spawn_set_values["chin_type"] = SPAWN_SET_CHIN_TYPE;
+	spawn_set_values["ear_type"] = SPAWN_SET_EAR_TYPE;
+	spawn_set_values["eye_brow_type"] = SPAWN_SET_EYE_BROW_TYPE;
+	spawn_set_values["eye_type"] = SPAWN_SET_EYE_TYPE;
+	spawn_set_values["lip_type"] = SPAWN_SET_LIP_TYPE;
+	spawn_set_values["nose_type"] = SPAWN_SET_NOSE_TYPE;
+	spawn_set_values["body_size"] = SPAWN_SET_BODY_SIZE;
+	spawn_set_values["body_age"] = SPAWN_SET_BODY_AGE;
+	spawn_set_values["soga_cheek_type"] = SPAWN_SET_SOGA_CHEEK_TYPE;
+	spawn_set_values["soga_chin_type"] = SPAWN_SET_SOGA_CHIN_TYPE;
+	spawn_set_values["soga_ear_type"] = SPAWN_SET_SOGA_EAR_TYPE;
+	spawn_set_values["soga_eye_brow_type"] = SPAWN_SET_SOGA_EYE_BROW_TYPE;
+	spawn_set_values["soga_eye_type"] = SPAWN_SET_SOGA_EYE_TYPE;
+	spawn_set_values["soga_lip_type"] = SPAWN_SET_SOGA_LIP_TYPE;
+	spawn_set_values["soga_nose_type"] = SPAWN_SET_SOGA_NOSE_TYPE;
+	spawn_set_values["soga_body_size"] = SPAWN_SET_SOGA_BODY_SIZE;
+	spawn_set_values["soga_body_age"] = SPAWN_SET_SOGA_BODY_AGE;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -215,7 +235,7 @@ int32 Commands::GetSpawnSetType(string val){
 	return 0xFFFFFFFF;
 }
 
-bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value, bool send_update, bool temporary, string* temp_value){
+bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value, bool send_update, bool temporary, string* temp_value, int8 index){
 	if(!target)
 		return false;
 	int32 val = 0;
@@ -673,12 +693,168 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				target->SetAAXPRewards(atoul(value));
 				break;
 			}
+			case SPAWN_SET_CHEEK_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.cheek_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.cheek_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_CHIN_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.chin_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.chin_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_EAR_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.ear_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.ear_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_EYE_BROW_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.eye_brow_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.eye_brow_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_EYE_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.eye_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.eye_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_LIP_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.lip_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.lip_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_NOSE_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.nose_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.nose_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_BODY_SIZE:{
+				if(target->IsEntity()){
+					sprintf(tmp, "%i", ((Entity*)target)->features.body_size);
+					int8 new_value = atoul(value);
+					((Entity*)target)->features.body_size = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_BODY_AGE:{
+				if(target->IsEntity()){
+					sprintf(tmp, "%i", ((Entity*)target)->features.body_age);
+					int8 new_value = atoul(value);
+					((Entity*)target)->features.body_age = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_CHEEK_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.soga_cheek_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_cheek_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_CHIN_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.soga_chin_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_chin_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_EAR_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.soga_ear_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_ear_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_EYE_BROW_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.soga_eye_brow_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_eye_brow_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_EYE_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.soga_eye_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_eye_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_LIP_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sprintf(tmp, "%i", ((Entity*)target)->features.soga_lip_type[index]);
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_lip_type[index] = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_BODY_SIZE:{
+				if(target->IsEntity()){
+					sprintf(tmp, "%i", ((Entity*)target)->features.soga_body_size);
+					int8 new_value = atoul(value);
+					((Entity*)target)->features.soga_body_size = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_BODY_AGE:{
+				if(target->IsEntity()){
+					sprintf(tmp, "%i", ((Entity*)target)->features.soga_body_age);
+					int8 new_value = atoul(value);
+					((Entity*)target)->features.soga_body_age = new_value;
+					((Entity*)target)->info_changed = true;
+				}
+				break;
+			}
 
 			if(temp_value)
 				*temp_value = string(tmp);
 		}
 	}
-	else{
+	else{ 
+		/**** NOT TEMPORARY ELSE STATEMENT ****/
+		/**** MUST RE-DEFINE WHAT IS ALREADY IN THE IF TEMPORARY BLOCK HERE ****/
+
 		switch(type){
 		case SPAWN_SET_VALUE_MERCHANT_MIN_LEVEL: {
 			target->SetMerchantLevelRange(atoul(value), target->GetMerchantMaxLevel());
@@ -1160,9 +1336,181 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				}
 				break;
 			}
+			
+			case SPAWN_SET_CHEEK_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.cheek_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "cheek_type", ((Entity*)target)->features.cheek_type[0], ((Entity*)target)->features.cheek_type[1], ((Entity*)target)->features.cheek_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_CHIN_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.chin_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "chin_type", ((Entity*)target)->features.chin_type[0], ((Entity*)target)->features.chin_type[1], ((Entity*)target)->features.chin_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_EAR_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.ear_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "ear_type", ((Entity*)target)->features.ear_type[0], ((Entity*)target)->features.ear_type[1], ((Entity*)target)->features.ear_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_EYE_BROW_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.eye_brow_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "eye_brow_type", ((Entity*)target)->features.eye_brow_type[0], ((Entity*)target)->features.eye_brow_type[1], ((Entity*)target)->features.eye_brow_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_EYE_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.eye_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "eye_type", ((Entity*)target)->features.eye_type[0], ((Entity*)target)->features.eye_type[1], ((Entity*)target)->features.eye_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_LIP_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.lip_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "lip_type", ((Entity*)target)->features.lip_type[0], ((Entity*)target)->features.lip_type[1], ((Entity*)target)->features.lip_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_NOSE_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.nose_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "nose_type", ((Entity*)target)->features.nose_type[0], ((Entity*)target)->features.nose_type[1], ((Entity*)target)->features.nose_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_BODY_SIZE:{
+				if(target->IsEntity()){
+					int8 new_value = atoul(value);
+					((Entity*)target)->features.body_size = new_value;
+					UpdateDatabaseAppearance(client, target, "body_size", ((Entity*)target)->features.body_size, 0, 0);
+				}
+				break;
+			}
+			case SPAWN_SET_BODY_AGE:{
+				if(target->IsEntity()){
+					int8 new_value = atoul(value);
+					((Entity*)target)->features.body_age = new_value;
+					UpdateDatabaseAppearance(client, target, "body_age", ((Entity*)target)->features.body_age, 0, 0);
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_CHEEK_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_cheek_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "soga_cheek_type", ((Entity*)target)->features.soga_cheek_type[0], ((Entity*)target)->features.soga_cheek_type[1], ((Entity*)target)->features.soga_cheek_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_CHIN_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_chin_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "soga_chin_type", ((Entity*)target)->features.soga_chin_type[0], ((Entity*)target)->features.soga_chin_type[1], ((Entity*)target)->features.soga_chin_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_EAR_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_ear_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "soga_ear_type", ((Entity*)target)->features.soga_ear_type[0], ((Entity*)target)->features.soga_ear_type[1], ((Entity*)target)->features.soga_ear_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_EYE_BROW_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_eye_brow_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "soga_eye_brow_type", ((Entity*)target)->features.soga_eye_brow_type[0], ((Entity*)target)->features.soga_eye_brow_type[1], ((Entity*)target)->features.soga_eye_brow_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_EYE_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_eye_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "soga_eye_type", ((Entity*)target)->features.soga_eye_type[0], ((Entity*)target)->features.soga_eye_type[1], ((Entity*)target)->features.soga_eye_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_LIP_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_lip_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "soga_lip_type", ((Entity*)target)->features.soga_lip_type[0], ((Entity*)target)->features.soga_lip_type[1], ((Entity*)target)->features.soga_lip_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_NOSE_TYPE:{
+				if(target->IsEntity() && index < 3){
+					sint8 new_value = atoi(value);
+					((Entity*)target)->features.soga_nose_type[index] = new_value;
+					UpdateDatabaseAppearance(client, target, "soga_nose_type", ((Entity*)target)->features.soga_nose_type[0], ((Entity*)target)->features.soga_nose_type[1], ((Entity*)target)->features.soga_nose_type[2]);
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_BODY_SIZE:{
+				if(target->IsEntity()){
+					int8 new_value = atoul(value);
+					((Entity*)target)->features.body_size = new_value;
+					UpdateDatabaseAppearance(client, target, "body_size", ((Entity*)target)->features.body_size, 0, 0);
+				}
+				break;
+			}
+			case SPAWN_SET_SOGA_BODY_AGE:{
+				if(target->IsEntity()){
+					int8 new_value = atoul(value);
+					((Entity*)target)->features.body_age = new_value;
+					UpdateDatabaseAppearance(client, target, "body_age", ((Entity*)target)->features.body_age, 0, 0);
+				}
+				break;
+			}
 		}
 	}
 	return true;
+}
+
+void Commands::UpdateDatabaseAppearance(Client* client, Spawn* target, string fieldName, sint8 r, sint8 g, sint8 b)
+{
+	Query replaceQuery;
+
+	if(target->IsBot())
+	{
+		Bot* bot = (Bot*)target;
+		if(bot->BotID)
+			database.SaveBotFloats(bot->BotID, fieldName.c_str(), r, g, b);
+	}
+	else if(target->IsPlayer())
+	{
+		replaceQuery.AddQueryAsync(0, &database, Q_DELETE, "delete from char_colors where char_id=%u and type='%s'", ((Player*)target)->GetCharacterID(), fieldName.c_str());
+		replaceQuery.AddQueryAsync(0, &database, Q_INSERT, "insert into char_colors set char_id=%u, type='%s', red=%i, green=%i, blue=%i", ((Player*)target)->GetCharacterID(), fieldName.c_str(), r, g, b);
+	}
+	else
+	{
+		replaceQuery.AddQueryAsync(0, &database, Q_DELETE, "delete from npc_appearance where spawn_id=%u and type='%s'", target->GetDatabaseID(), fieldName.c_str());
+		replaceQuery.AddQueryAsync(0, &database, Q_INSERT, "insert into npc_appearance set spawn_id=%u, type='%s', red=%i, green=%i, blue=%i", target->GetDatabaseID(), fieldName.c_str(), r, g, b);
+	}
+
+	((Entity*)target)->changed = true;
+	((Entity*)target)->info_changed = true;
+	if(target->GetZone())
+		target->GetZone()->AddChangedSpawn(target);
 }
 
 /* The zone object will be NULL if the zone is not currently running.  We pass both of these in so we can update 
@@ -4258,7 +4606,17 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					else
 					{
 						string name = string(spawn->GetName());
-						if(SetSpawnCommand(client, spawn, set_type, sep->argplus[1]))
+						bool customSetSpawn = false;
+						if(set_type >= SPAWN_SET_CHEEK_TYPE && set_type <= SPAWN_SET_SOGA_NOSE_TYPE)
+						{
+							int8 index = sep->IsNumber(2) ? atoul(sep->arg[2]) : 0;
+
+							// override the standard setspawncommand, we pass arguments different!
+							if(SetSpawnCommand(client, spawn, set_type, sep->arg[1], true, false, nullptr, index))
+								customSetSpawn = true;
+						}
+
+						if(customSetSpawn || SetSpawnCommand(client, spawn, set_type, sep->argplus[1]))
 						{
 							if (set_type == SPAWN_SET_VALUE_EXPANSION_FLAG || set_type == SPAWN_SET_VALUE_HOLIDAY_FLAG)
 							{
@@ -4288,6 +4646,24 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								case SPAWN_SET_VALUE_HOLIDAY_FLAG:
 								case SPAWN_SET_VALUE_FACTION:
 								case SPAWN_SET_AAXP_REWARDS:
+								case SPAWN_SET_CHEEK_TYPE:
+								case SPAWN_SET_CHIN_TYPE:
+								case SPAWN_SET_EAR_TYPE:
+								case SPAWN_SET_EYE_BROW_TYPE:
+								case SPAWN_SET_EYE_TYPE:
+								case SPAWN_SET_LIP_TYPE:
+								case SPAWN_SET_NOSE_TYPE:
+								case SPAWN_SET_BODY_SIZE:
+								case SPAWN_SET_BODY_AGE:
+								case SPAWN_SET_SOGA_CHEEK_TYPE:
+								case SPAWN_SET_SOGA_CHIN_TYPE:
+								case SPAWN_SET_SOGA_EAR_TYPE:
+								case SPAWN_SET_SOGA_EYE_BROW_TYPE:
+								case SPAWN_SET_SOGA_EYE_TYPE:
+								case SPAWN_SET_SOGA_LIP_TYPE:
+								case SPAWN_SET_SOGA_NOSE_TYPE:
+								case SPAWN_SET_SOGA_BODY_SIZE:
+								case SPAWN_SET_SOGA_BODY_AGE:
 								{
 									// not applicable already ran db command
 									break;
@@ -6026,6 +6402,11 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 
 			if(item)
 			{
+				if(item->details.item_locked)
+				{
+					client->SimpleMessage(CHANNEL_COLOR_RED, "You cannot destroy the item in use.");
+					return;
+				}
 				if(item->GetItemScript() && lua_interface)
 					lua_interface->RunItemScript(item->GetItemScript(), "destroyed", item, client->GetPlayer());
 				int32 bag_id = item->details.inv_slot_id;
@@ -6048,6 +6429,11 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 			int8 charges = atoi(sep->arg[4]);
 			Item* item = client->GetPlayer()->item_list.GetItemFromIndex(from_index);
 
+			if(item->details.item_locked)
+			{
+				client->SimpleMessage(CHANNEL_COLOR_RED, "You cannot move the item in use.");
+				return;
+			}
 			if(bag_id == -4 && !client->GetPlayer()->item_list.SharedBankAddAllowed(item))
 			{
 				client->SimpleMessage(CHANNEL_COLOR_RED, "That item (or an item inside) cannot be shared.");
@@ -6143,6 +6529,11 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 				int16 index = atoi(sep->arg[1]);
 				Item* item = client->GetPlayer()->item_list.GetItemFromIndex(index);
 				if (item) {
+					if(item->details.item_locked)
+					{
+						client->SimpleMessage(CHANNEL_COLOR_RED, "You cannot unpack the item in use.");
+						return;
+					}
 					//	client->GetPlayer()->item_list.DestroyItem(index);
 					if (item->item_sets.size() > 0) {
 						for (int32 i = 0; i < item->item_sets.size(); i++) {

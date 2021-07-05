@@ -101,6 +101,7 @@ NPC::NPC(NPC* old_npc){
 		SetSoundsDisabled(old_npc->IsSoundsDisabled());
 		SetFlyingCreature();
 		SetWaterCreature();
+		SetOmittedByDBFlag(old_npc->IsOmittedByDBFlag());
 	}
 }
 

@@ -96,7 +96,7 @@ void WorldDatabase::LoadRuleSetDetails(RuleSet *rule_set) {
 	if (res) {
 		while ((row = mysql_fetch_row(res))) {
 			if (!(rule = rule_set->GetRule(row[0], row[1]))) {
-				LogWrite(RULESYS__ERROR, 0, "Rules", "Unknown rule with category '%s' and type '%s'", row[0], row[1]);
+				LogWrite(RULESYS__WARNING, 0, "Rules", "Unknown rule with category '%s' and type '%s'", row[0], row[1]);
 				continue;
 			}
 			LogWrite(RULESYS__DEBUG, 5, "Rules", "---Setting rule category '%s', type '%s' to value: %s", row[0], row[1], row[2]);

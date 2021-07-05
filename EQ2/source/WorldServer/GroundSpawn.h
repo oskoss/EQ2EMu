@@ -49,6 +49,7 @@ public:
 		new_spawn->SetCollectionSkill(collection_skill.c_str());
 		SetQuestsRequired(new_spawn);
 		new_spawn->forceMapCheck = forceMapCheck;
+		new_spawn->SetOmittedByDBFlag(IsOmittedByDBFlag());
 		return new_spawn;
 	}
 	bool IsGroundSpawn(){ return true; }

@@ -675,6 +675,7 @@ struct ItemCore{
 	int32	unique_id;
 	int8	num_free_slots;
 	int16	recommended_level;
+	bool	item_locked;
 };
 #pragma pack()
 struct ItemStat{

@@ -1121,8 +1121,16 @@ public:
 	void CalculateNewFearpoint();
 
 	void StopMoving() {
-		if (movement_locations)
+		if (movement_locations && MMovementLocations)
+		{
+			MMovementLocations->writelock(__FUNCTION__, __LINE__);
+			while (movement_locations->size()){
+				safe_delete(movement_locations->front());
+				movement_locations->pop_front();
+			}
 			movement_locations->clear();
+			MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
+		}
 	}
 
 	int16 pos_packet_size;
@@ -1219,6 +1227,10 @@ public:
 	void AddRailPassenger(int32 char_id);
 	void RemoveRailPassenger(int32 char_id);
 	vector<Spawn*> GetPassengersOnRail();
+
+	void SetOmittedByDBFlag(bool val) { is_omitted_by_db_flag = val; }
+	bool IsOmittedByDBFlag() { return is_omitted_by_db_flag; }
+	
 protected:
 
 	bool	has_quests_required;
@@ -1323,6 +1335,7 @@ private:
 	sint64 rail_id;
 	map<int32, bool> rail_passengers;
 	mutex m_RailMutex;
+	bool is_omitted_by_db_flag; // this particular spawn is omitted by an expansion or holiday flag
 };
 
 #endif

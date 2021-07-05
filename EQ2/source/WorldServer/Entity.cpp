@@ -3164,6 +3164,8 @@ void Entity::CustomizeAppearance(PacketStruct* packet) {
 
 	features.body_size = body_size;
 	features.body_age = body_age;
+	features.soga_body_size = body_size;
+	features.soga_body_age = body_age;
 	info_changed = true;
 	changed = true;
 }

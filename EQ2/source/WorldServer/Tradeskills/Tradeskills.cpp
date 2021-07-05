@@ -242,6 +242,36 @@ void TradeskillMgr::BeginCrafting(Client* client, vector<int32> components) {
 		return;
 	}
 
+	// TODO: use the vecotr to lock inventory slots
+	vector<int32>::iterator itr;
+	bool missingItem = false;
+	int32 itemid = 0;
+	vector<Item*> tmpItems;
+	for (itr = components.begin(); itr != components.end(); itr++) {
+		itemid = *itr;
+		Item* item = client->GetPlayer()->item_list.GetItemFromID(itemid);
+
+		if(!item)
+		{
+			missingItem = true;
+			break;
+		}
+		
+		item->details.item_locked = true;
+		tmpItems.push_back(item);
+	}
+
+	if (missingItem) {
+		LogWrite(TRADESKILL__ERROR, 0, "Recipe", "Recipe (%u) player missing item %u",itemid);
+		vector<Item*>::iterator itemitr;
+		for (itemitr = tmpItems.begin(); itemitr != tmpItems.end(); itemitr++) {
+			Item* tmpItem = *itemitr;
+			tmpItem->details.item_locked = false;
+		}
+		ClientPacketFunctions::StopCrafting(client);
+		return;
+	}
+
 	ClientPacketFunctions::SendItemCreationUI(client, recipe);
 	Tradeskill* tradeskill = new Tradeskill;
 	tradeskill->player = client->GetPlayer();
@@ -261,13 +291,10 @@ void TradeskillMgr::BeginCrafting(Client* client, vector<int32> components) {
 	// Unlock TS Spells and lock all others
 	client->GetPlayer()->UnlockTSSpells();
 
-	// TODO: use the vecotr to lock inventory slots
-	/*vector<Item*>::iterator itr;
-	for (itr = components.begin(); itr != components.end(); itr++) {
-		Item* item = *itr;
-		//client->GetPlayer()->SendInventoryUpdate
-		item->details.inv_slot_id;
-	}*/
+	client->ClearSentItemDetails();
+	EQ2Packet* outapp = client->GetPlayer()->SendInventoryUpdate(client->GetVersion());
+	if (outapp)
+		client->QueuePacket(outapp);
 }
 
 void TradeskillMgr::StopCrafting(Client* client, bool lock) {
@@ -306,6 +333,7 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 			m_tradeskills.releasewritelock(__FUNCTION__, __LINE__);
 		return;
 	}
+	bool updateInvReq = false;
 	// cycle through the list of used items and remove them
 	for (itr = tradeskill->usedComponents.begin(); itr != tradeskill->usedComponents.end(); itr++, i++) {
 		// get the quantity to remove, first item in the vectore is always the primary, last is always the fuel
@@ -326,16 +354,28 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 		int32 itmid = *itr;
 		item = client->GetPlayer()->item_list.GetItemFromID(itmid);
 		if (item && item->details.count <= qty)
+		{
+			item->details.item_locked = false;
 			client->GetPlayer()->item_list.RemoveItem(item);
+		}
 		else if(item) {
 			item->details.count -= qty;
+			item->details.item_locked = false;
 			item->save_needed = true;
+			updateInvReq = true;
 		}
 		else
 		{
 			LogWrite(TRADESKILL__ERROR, 0, "Tradeskills", "%s: TradeskillMgr::StopCrafting Error finding item %u to remove quantity for recipe id %u", client->GetPlayer()->GetName(), itmid, recipe->GetID());
 			client->Message(CHANNEL_COLOR_RED, "%s: StopCrafting Error finding item %u to remove quantity for recipe id %u!", client->GetPlayer()->GetName(), itmid, recipe->GetID());
 		}
+	}
+
+	if(updateInvReq)
+	{
+		EQ2Packet* outapp = client->GetPlayer()->SendInventoryUpdate(client->GetVersion());
+		if (outapp)
+			client->QueuePacket(outapp);
 	}
 
 	item = 0;

@@ -646,6 +646,10 @@ int8 WorldDatabase::GetAppearanceType(string type){
 		ret = APPEARANCE_MC;
 	else if (type == "soga_model_color")
 		ret = APPEARANCE_SMC;
+	else if (type == "soga_body_size")
+		ret = APPEARANCE_SBS;
+	else if (type == "soga_body_age")
+		ret = APPEARANCE_SBA;
 	return ret;
 }
 
@@ -902,6 +906,14 @@ int32 WorldDatabase::LoadAppearances(ZoneServer* zone, Client* client){
 				entity->features.soga_model_color = color;
 				break;
 			}
+			case APPEARANCE_SBS: {
+				entity->features.soga_body_size = color.red;
+				break;
+			}
+			case APPEARANCE_SBA: {
+				entity->features.soga_body_age = color.red;
+				break;
+			}
 		}
 		entity->info_changed = true;
 	}
@@ -933,13 +945,15 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		*/
 		int32 npcXpackFlag = atoul(row[75]);
 		int32 npcHolidayFlag = atoul(row[76]);
-		if (!CheckExpansionFlags(zone, npcXpackFlag) || !CheckHolidayFlags(zone, npcHolidayFlag))
-			continue;
 
 		id = atoul(row[0]);
 		if(zone->GetNPC(id, true))
 			continue;
 		npc = new NPC();
+		
+		if (!CheckExpansionFlags(zone, npcXpackFlag) || !CheckHolidayFlags(zone, npcHolidayFlag))
+			npc->SetOmittedByDBFlag(true);
+
 		npc->SetDatabaseID(id);
 		strcpy(npc->appearance.name, row[1]);
 		vector<EntityCommand*>* primary_command_list = zone->GetEntityCommandList(atoul(row[9]));
@@ -1207,13 +1221,15 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 	while(result && (row = mysql_fetch_row(result))){
 		int32 signXpackFlag = atoul(row[28]);
 		int32 signHolidayFlag = atoul(row[29]);
-		if (!CheckExpansionFlags(zone, signXpackFlag) || !CheckHolidayFlags(zone, signHolidayFlag))
-			continue;
 
 		id = atoul(row[0]);
 		if(zone->GetSign(id, true))
 			continue;
 		sign = new Sign();
+		
+		if (!CheckExpansionFlags(zone, signXpackFlag) || !CheckHolidayFlags(zone, signHolidayFlag))
+			sign->SetOmittedByDBFlag(true);
+
 		sign->SetDatabaseID(id);
 		strcpy(sign->appearance.name, row[1]);
 		sign->appearance.model_type = atoi(row[2]);
@@ -1294,13 +1310,15 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 	while(result && (row = mysql_fetch_row(result))){
 		int32 widgetXpackFlag = atoul(row[33]);
 		int32 widgetHolidayFlag = atoul(row[34]);
-		if (!CheckExpansionFlags(zone, widgetXpackFlag) || !CheckHolidayFlags(zone, widgetHolidayFlag))
-			continue;
 
 		id = atoul(row[0]);
 		if(zone->GetWidget(id, true))
 			continue;
 		widget = new Widget();
+
+		if (!CheckExpansionFlags(zone, widgetXpackFlag) || !CheckHolidayFlags(zone, widgetHolidayFlag))
+			widget->SetOmittedByDBFlag(true);
+
 		widget->SetDatabaseID(id);
 		strcpy(widget->appearance.name, row[1]);
 		widget->appearance.model_type = atoi(row[2]);
@@ -1398,13 +1416,15 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 
 		int32 objXpackFlag = atoul(row[19]);
 		int32 objHolidayFlag = atoul(row[20]);
-		if (!CheckExpansionFlags(zone, objXpackFlag) || !CheckHolidayFlags(zone, objHolidayFlag))
-			continue;
 
 		id = atoul(row[0]);
 		if(zone->GetObject(id, true))
 			continue;
 		object = new Object();
+		
+		if (!CheckExpansionFlags(zone, objXpackFlag) || !CheckHolidayFlags(zone, objHolidayFlag))
+			object->SetOmittedByDBFlag(true);
+
 		object->SetDatabaseID(id);
 		strcpy(object->appearance.name, row[1]);
 		vector<EntityCommand*>* primary_command_list = zone->GetEntityCommandList(atoul(row[4]));
@@ -1472,13 +1492,15 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 
 		int32 gsXpackFlag = atoul(row[21]);
 		int32 gsHolidayFlag = atoul(row[22]);
-		if (!CheckExpansionFlags(zone, gsXpackFlag) || !CheckHolidayFlags(zone, gsHolidayFlag))
-			continue;
 
 		id = atoul(row[0]);
 		if(zone->GetGroundSpawn(id, true))
 			continue;
 		spawn = new GroundSpawn();
+		
+		if (!CheckExpansionFlags(zone, gsXpackFlag) || !CheckHolidayFlags(zone, gsHolidayFlag))
+			spawn->SetOmittedByDBFlag(true);
+
 		spawn->SetDatabaseID(id);
 		spawn->forceMapCheck = true;
 
@@ -6962,12 +6984,24 @@ void WorldDatabase::LoadAppearance(ZoneServer* zone, int32 spawn_id) {
 			case APPEARANCE_SOGA_U13:{
 				break;
 			}
+			case APPEARANCE_BODY_AGE: {
+				entity->features.body_age = color.red;
+				break;
+			}
 			case APPEARANCE_MC:{
 				entity->features.model_color = color;
 				break;
 			}
 			case APPEARANCE_SMC:{
 				entity->features.soga_model_color = color;
+				break;
+			}
+			case APPEARANCE_SBS: {
+				entity->features.soga_body_size = color.red;
+				break;
+			}
+			case APPEARANCE_SBA: {
+				entity->features.soga_body_age = color.red;
 				break;
 			}
 		}

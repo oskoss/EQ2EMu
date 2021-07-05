@@ -128,6 +128,7 @@ Spawn::Spawn(){
 	appearance_equipment_list.SetAppearanceType(1);
 	is_transport_spawn = false;
 	rail_id = 0;
+	is_omitted_by_db_flag = false;
 }
 
 Spawn::~Spawn(){
@@ -2457,7 +2458,11 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		packet->setColorByName("soga_hair_face_highlight_color", entity->features.soga_hair_face_highlight_color);
 		packet->setColorByName("soga_hair_highlight", entity->features.soga_hair_highlight_color);
 
+		packet->setDataByName("body_size", entity->features.body_size);
 		packet->setDataByName("body_age", entity->features.body_age);
+
+		packet->setDataByName("soga_body_size", entity->features.soga_body_size);
+		packet->setDataByName("soga_body_age", entity->features.soga_body_age);
 	}
 	else {
 		EQ2_Color empty;
@@ -2822,12 +2827,14 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 			MovementData* data = movement_loop[movement_index];
 			// need to resume our movement
 			if(resume_movement){
-				if (movement_locations){
+				if (movement_locations && MMovementLocations){
+					MMovementLocations->writelock(__FUNCTION__, __LINE__);
 					while (movement_locations->size()){
 						safe_delete(movement_locations->front());
 						movement_locations->pop_front();
 					}
 					movement_locations->clear();
+					MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
 				}
 
 				data = movement_loop[movement_index];
@@ -2907,12 +2914,17 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 							FaceTarget(data->x, data->z);
 						// If 0 delay at location get and set data for the point after it
 						if(data->delay == 0 && movement_loop.size() > 0){
-							while (movement_locations->size()){
-								safe_delete(movement_locations->front());
-								movement_locations->pop_front();
+							if(movement_locations && MMovementLocations)
+							{
+								MMovementLocations->writelock(__FUNCTION__, __LINE__);
+								while (movement_locations->size()){
+									safe_delete(movement_locations->front());
+									movement_locations->pop_front();
+								}
+								// clear current target locations
+								movement_locations->clear();
+								MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
 							}
-							// clear current target locations
-							movement_locations->clear();
 							// get the data for the location after out new location
 							int16 tmp_index = movement_index+1;
 							MovementData* data2 = 0;

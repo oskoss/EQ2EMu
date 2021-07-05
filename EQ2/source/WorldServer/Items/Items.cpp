@@ -3476,6 +3476,9 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 		else
 			menu_data += ITEM_MENU_TYPE_DISPLAY_CHARGES;
 	}
+	if(item->details.item_locked) {
+		menu_data += ITEM_MENU_TYPE_BROKEN; // broken is also used to lock item during crafting
+	}
 	// Added the if (overflow) so mouseover examines work properly
 	if (overflow)
 		packet->setSubstructArrayDataByName("items", "unique_id", item->details.item_id, 0, i);
@@ -3776,6 +3779,7 @@ bool EquipmentItemList::AddItem(int8 slot, Item* item){
 		if (curItem) // existing item in slot
 		{
 			MEquipmentItems.unlock();
+			LogWrite(ITEM__ERROR, 0, "Items", "%s: Error in AddItem, curItem %s in slot %u, cannot put %s in slot.", __FUNCTION__, curItem->name.c_str(), slot, item->name.c_str());
 			return false;
 		}
 		

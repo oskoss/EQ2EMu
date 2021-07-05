@@ -2439,6 +2439,10 @@ bool Client::HandleLootItem(Spawn* entity, Item* item) {
 				guild->AddNewGuildEvent(type, "%s has looted the %s %s", Timer::GetUnixTimeStamp(), true, player->GetName(), adjective, item->CreateItemLink(GetVersion()).c_str());
 				guild->SendMessageToGuild(type, "%s has looted the %s %s", player->GetName(), adjective, item->CreateItemLink(GetVersion()).c_str());
 			}
+
+			if (item->GetItemScript() && lua_interface)
+				lua_interface->RunItemScript(item->GetItemScript(), "obtained", item, player);
+			
 			CheckPlayerQuestsItemUpdate(item);
 			return true;
 		}
@@ -6534,6 +6538,11 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 		if (!item)
 			item = player->item_list.GetItemFromID(item_id);
 		if (item && master_item) {
+			if(item->details.item_locked)
+			{
+				SimpleMessage(CHANNEL_COLOR_RED, "You cannot sell the item in use.");
+				return;
+			}
 			int32 sell_price = (int32)(master_item->sell_price * multiplier);
 			if (sell_price > item->sell_price)
 				sell_price = item->sell_price;
@@ -6593,7 +6602,6 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 			if (outapp)
 				QueuePacket(outapp);
 			
-			SendSellMerchantList();
 			if (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY_BACK))
 				SendBuyBackList();
 		}
@@ -6653,15 +6661,12 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 				}
 				AddItem(item);
 				itemAdded = true;
-				//EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
-				//if(outapp)
-					//QueuePacket(outapp);
+				
 				if (removed) {
 					database.DeleteBuyBack(GetCharacterID(), closest->item_id, closest->quantity, closest->price);
 					safe_delete(closest);
 				}
 				
-				SendSellMerchantList();
 				if (!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY_BACK))
 					SendBuyBackList();
 			}
@@ -6745,11 +6750,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 							world.DecreaseMerchantQuantity(spawn->GetMerchantID(), item_id, quantity);
 							SendBuyMerchantList();
 						}
-						//EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
-						//if(outapp)
-						//	QueuePacket(outapp);
 						
-						SendSellMerchantList();
 						if (spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO)
 							PlayLotto(total_buy_price, item->details.item_id);
 					}

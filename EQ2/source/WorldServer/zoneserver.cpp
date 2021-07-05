@@ -2142,9 +2142,16 @@ Spawn* ZoneServer::ProcessSpawnLocation(SpawnLocation* spawnlocation, bool respa
 			if (GetInstanceType() == PERSONAL_HOUSE_INSTANCE)
 				database.GetHouseSpawnInstanceData(this, spawn);
 
-			if (!spawn)
+			if(spawn && spawn->IsOmittedByDBFlag())
 			{
-				LogWrite(ZONE__ERROR, 0, "Zone", "Error adding spawn to zone");
+				LogWrite(SPAWN__WARNING, 0, "Spawn", "Spawn (%u) in spawn location id %u was skipped due to a missing expansion / holiday flag being met (ZoneServer::ProcessSpawnLocation)", spawnlocation->entities[i]->spawn_id, spawnlocation->entities[i]->spawn_location_id);
+				safe_delete(spawn);
+				spawn = 0;
+				continue;
+			}
+			else if (!spawn)
+			{
+				LogWrite(ZONE__ERROR, 0, "Zone", "Error adding spawn by spawn location to zone %s with location id %u, spawn id %u, spawn type %u.", GetZoneName(), spawnlocation->entities[i]->spawn_location_id, spawnlocation->entities[i]->spawn_id, spawnlocation->entities[i]->spawn_type);
 				continue;
 			}
 
@@ -2201,6 +2208,14 @@ Spawn* ZoneServer::ProcessInstanceSpawnLocation(SpawnLocation* spawnlocation, ma
 			else if(spawnlocation->entities[i]->spawn_type == SPAWN_ENTRY_TYPE_SIGN && 
 				(spawnTime = database.CheckSpawnRemoveInfo(instSignSpawns,spawnlocation->entities[i]->spawn_location_id)) > 0)
 				spawn = AddSignSpawn(spawnlocation, spawnlocation->entities[i]);
+
+			if(spawn && spawn->IsOmittedByDBFlag())
+			{
+				LogWrite(SPAWN__WARNING, 0, "Spawn", "Spawn (%u) in spawn location id %u was skipped due to a missing expansion / holiday flag being met (ZoneServer::ProcessInstanceSpawnLocation)", spawnlocation->entities[i]->spawn_id, spawnlocation->entities[i]->spawn_location_id);
+				safe_delete(spawn);
+				spawn = 0;
+				continue;
+			}
 
 			if (GetInstanceType() == PERSONAL_HOUSE_INSTANCE)
 				database.GetHouseSpawnInstanceData(this, spawn);
@@ -2494,7 +2509,7 @@ void ZoneServer::DeterminePosition(SpawnLocation* spawnlocation, Spawn* spawn){
 NPC* ZoneServer::AddNPCSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentry){
 	LogWrite(SPAWN__TRACE, 1, "Spawn", "Enter %s", __FUNCTION__);
 	NPC* npc = GetNewNPC(spawnentry->spawn_id);
-	if(npc){
+	if(npc && !npc->IsOmittedByDBFlag()){
 		DeterminePosition(spawnlocation, npc);
 		npc->SetDatabaseID(spawnentry->spawn_id);
 		npc->SetSpawnLocationID(spawnentry->spawn_location_id);
@@ -2852,7 +2867,7 @@ void ZoneServer::AddTransporter(LocationTransportDestination* loc) {
 Sign* ZoneServer::AddSignSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentry){
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Enter %s", __FUNCTION__);
 	Sign* sign = GetNewSign(spawnentry->spawn_id);
-	if(sign){
+	if(sign && !sign->IsOmittedByDBFlag()){
 		DeterminePosition(spawnlocation, sign);
 		sign->SetDatabaseID(spawnentry->spawn_id);
 		sign->SetSpawnLocationID(spawnentry->spawn_location_id);
@@ -2875,7 +2890,7 @@ Sign* ZoneServer::AddSignSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnen
 Widget* ZoneServer::AddWidgetSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentry){
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Enter %s", __FUNCTION__);
 	Widget* widget = GetNewWidget(spawnentry->spawn_id);
-	if(widget){
+	if(widget && !widget->IsOmittedByDBFlag()){
 		DeterminePosition(spawnlocation, widget);
 		widget->SetDatabaseID(spawnentry->spawn_id);
 		widget->SetSpawnLocationID(spawnentry->spawn_location_id);
@@ -2905,7 +2920,7 @@ Widget* ZoneServer::AddWidgetSpawn(SpawnLocation* spawnlocation, SpawnEntry* spa
 Object* ZoneServer::AddObjectSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentry){
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Enter %s", __FUNCTION__);
 	Object* object = GetNewObject(spawnentry->spawn_id);
-	if(object){
+	if(object && !object->IsOmittedByDBFlag()){
 		DeterminePosition(spawnlocation, object);
 		object->SetDatabaseID(spawnentry->spawn_id);
 		object->SetSpawnLocationID(spawnentry->spawn_location_id);
@@ -2928,7 +2943,7 @@ Object* ZoneServer::AddObjectSpawn(SpawnLocation* spawnlocation, SpawnEntry* spa
 GroundSpawn* ZoneServer::AddGroundSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentry){
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Enter %s", __FUNCTION__);
 	GroundSpawn* spawn = GetNewGroundSpawn(spawnentry->spawn_id);
-	if(spawn){
+	if(spawn && !spawn->IsOmittedByDBFlag()){
 		DeterminePosition(spawnlocation, spawn);
 		spawn->SetDatabaseID(spawnentry->spawn_id);
 		spawn->SetSpawnLocationID(spawnentry->spawn_location_id);
@@ -6980,6 +6995,13 @@ Spawn* ZoneServer::GetSpawn(int32 id){
 			ret = GetNewGroundSpawn(id);
 		else
 			LogWrite(GROUNDSPAWN__ERROR, 0, "GSpawn", "Database inserted ground spawn (%u) but was still unable to retrieve it!", id);
+	}
+
+	if(ret && ret->IsOmittedByDBFlag())
+	{
+		LogWrite(SPAWN__WARNING, 0, "Spawn", "Spawn (%u) was skipped due to a missing expansion / holiday flag being met.", id);
+		safe_delete(ret);
+		ret = 0;
 	}
 
 	if(ret)
