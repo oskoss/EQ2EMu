@@ -255,7 +255,6 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 				printf( "OP_Combined:\n");
 				DumpPacket(p);
 #endif
-				EQProtocolPacket* prevPacket = 0;
 				while(processed<p->size) {
 					if ((subpacket_length=(unsigned char)*(p->pBuffer+processed))==0xff) {
 						subpacket_length = ntohs(*(uint16*)(p->pBuffer + processed + 1));
@@ -271,9 +270,6 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 					if (isSubPacket) {
 						EQProtocolPacket* subp = new EQProtocolPacket(p->pBuffer + processed + offset, subpacket_length);
 						subp->copyInfo(p);
-						//I've seen some garbage packets get sent with wrong protocol opcodes but the rest of the combine is still correct
-						//So don't break if GetProtocolPacket fails
-						prevPacket = subp;
 #ifdef LE_DEBUG
 						printf( "Opcode %i:\n", subp->opcode);
 						DumpPacket(subp);
@@ -302,14 +298,9 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						}
 						else
 						{
-							printf("!!!!!!!!!Garbage Packet Unknown!!!!!!!!!!!!!\n");
+							printf("!!!!!!!!!Garbage Packet Unknown DISCARD!!!!!!!!!!!!!\n");
 							DumpPacket(p->pBuffer + processed + offset, subpacket_length);
-						}
-						
-						if(prevPacket)
-						{
-							printf("prevPacketSize: %u\n", prevPacket->size);
-							DumpPacket(prevPacket);
+							break;
 						}
 					}
 					processed+=subpacket_length+offset;
