@@ -68,6 +68,12 @@ void Brain::Think() {
 		if (target) {
 			LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "%s has %s targeted.", m_body->GetName(), target->GetName());
 			// NPC has an entity that it hates
+			// Set the NPC's target to the most hated entity if it is not already.
+			if (m_body->GetTarget() != target) {
+				m_body->SetTarget(target);				
+			}
+			m_body->FaceTarget(target);
+			// target needs to be set before in combat is engaged
 
 			// If the NPC is not in combat then put them in combat
 			if (!m_body->EngagedInCombat()) {
@@ -75,12 +81,6 @@ void Brain::Think() {
 				m_body->InCombat(true);
 				m_body->GetZone()->CallSpawnScript(m_body, SPAWN_SCRIPT_AGGRO, target);
 			}
-
-			// Set the NPC's target to the most hated entity if it is not already.
-			if (m_body->GetTarget() != target) {
-				m_body->SetTarget(target);				
-			}
-			m_body->FaceTarget(target);
 
 			bool breakWaterPursuit = false;
 			if (m_body->IsWaterCreature() && !m_body->IsFlyingCreature() && !target->InWater())
@@ -667,17 +667,18 @@ void DumbFirePetBrain::Think() {
 
 	if (target) {
 		if (!GetBody()->IsMezzedOrStunned()) {
+			// Set the NPC's target to the most hated entity if it is not already.
+			if (GetBody()->GetTarget() != target) {
+				GetBody()->SetTarget(target);
+				GetBody()->FaceTarget(target);
+			}
+			// target needs to be identified before combat setting
+
 			// If the NPC is not in combat then put them in combat
 			if (!GetBody()->EngagedInCombat()) {
 				//GetBody()->ClearRunningLocations();
 				GetBody()->CalculateRunningLocation(true);
 				GetBody()->InCombat(true);
-			}
-
-			// Set the NPC's target to the most hated entity if it is not already.
-			if (GetBody()->GetTarget() != target) {
-				GetBody()->SetTarget(target);
-				GetBody()->FaceTarget(target);
 			}
 
 			float distance = GetBody()->GetDistance(target);
