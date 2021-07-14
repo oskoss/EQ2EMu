@@ -631,6 +631,7 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 
 		/* loop through the group members and see if any of them have any maintained spells that are group buffs and friendly.
 		if so, update the list of targets and apply/remove effects as needed */
+		vector<Player*> players;
 
 		group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 		for (member_itr = group->GetMembers()->begin(); member_itr != group->GetMembers()->end(); member_itr++) {
@@ -644,6 +645,14 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 			if (!caster->GetMaintainedSpellBySlot(0))
 				continue;
 
+			players.push_back(caster);
+		}
+		group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+
+		vector<Player*>::iterator vitr;
+
+		for (vitr = players.begin(); vitr != players.end(); vitr++) {
+			caster = *vitr;
 			caster->GetMaintainedMutex()->readlock(__FUNCTION__, __LINE__);
 			// go through the player's maintained spells
 			me = caster->GetMaintainedSpells();
@@ -783,7 +792,6 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 			}
 			caster->GetMaintainedMutex()->releasereadlock(__FUNCTION__, __LINE__);
 		}
-		group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 }
 

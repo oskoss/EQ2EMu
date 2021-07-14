@@ -1230,7 +1230,7 @@ public:
 
 	void SetOmittedByDBFlag(bool val) { is_omitted_by_db_flag = val; }
 	bool IsOmittedByDBFlag() { return is_omitted_by_db_flag; }
-	
+
 protected:
 
 	bool	has_quests_required;
