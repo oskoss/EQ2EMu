@@ -1779,6 +1779,11 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 	if(appearance_type)
 		equipList = &appearance_equipment_list;
 		
+	if(index >= NUM_SLOTS) {
+		LogWrite(PLAYER__ERROR, 0, "Player", "%u index is out of range for equip items, bag_id: %i, slot: %u, version: %u, appearance: %u", index, bag_id, slot, version, appearance_type);
+		return packets;
+	}
+
 	Item* item = equipList->items[index];
 	if (item && bag_id == -999) {
 		int8 old_slot = item->details.slot_id;
