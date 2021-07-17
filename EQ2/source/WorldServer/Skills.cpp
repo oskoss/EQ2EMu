@@ -488,6 +488,15 @@ void PlayerSkillList::AddSkillBonus(int32 spell_id, int32 skill_id, float value)
 	}
 }
 
+void PlayerSkillList::ResetPackets() {
+	safe_delete_array(orig_packet);
+	safe_delete_array(xor_packet);
+	orig_packet_size = 0;
+	orig_packet = 0;
+	xor_packet = 0;
+	packet_count = 0;
+}
+
 SkillBonus* PlayerSkillList::GetSkillBonus(int32 spell_id) {
 	SkillBonus *ret = 0;
 	

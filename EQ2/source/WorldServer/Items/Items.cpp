@@ -3747,6 +3747,14 @@ int8 PlayerItemList::FindFreeBankSlot() {
 	return ret;
 }
 
+void PlayerItemList::ResetPackets() {
+	safe_delete_array(orig_packet);
+	safe_delete_array(xor_packet);
+	orig_packet = 0;
+	xor_packet = 0;
+	packet_count = 0;
+}
+
 EquipmentItemList::EquipmentItemList(){
 	orig_packet = 0;
 	xor_packet = 0;
@@ -3769,6 +3777,13 @@ EquipmentItemList::~EquipmentItemList(){
 		safe_delete(items[i]);
 	safe_delete_array(orig_packet);
 	safe_delete_array(xor_packet);
+}
+
+void EquipmentItemList::ResetPackets() {
+	safe_delete_array(orig_packet);
+	safe_delete_array(xor_packet);
+	orig_packet = 0;
+	xor_packet = 0;
 }
 
 bool EquipmentItemList::AddItem(int8 slot, Item* item){

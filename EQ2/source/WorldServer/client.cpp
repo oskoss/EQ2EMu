@@ -289,6 +289,9 @@ void Client::PopulateSkillMap() {
 }
 
 void Client::SendLoginInfo() {
+	if(GetPlayer()->IsReturningFromLD())
+		firstlogin = true;
+
 	if (firstlogin) {
 		LogWrite(WORLD__DEBUG, 0, "World", "Increment Server_Accepted_Connection + 1");
 		world.UpdateServerStatistic(STAT_SERVER_ACCEPTED_CONNECTION, 1);
@@ -301,29 +304,44 @@ void Client::SendLoginInfo() {
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Toggle Character Online...");
 	database.ToggleCharacterOnline(this, 1);
 
-	LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Skills for player '%s'...", player->GetName());
-	int32 count = database.LoadCharacterSkills(GetCharacterID(), player);
+	int32 count = 0;
 
-	LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Spells for player '%s'...", player->GetName());
-	count = database.LoadCharacterSpells(GetCharacterID(), player);
+	if(!GetPlayer()->IsReturningFromLD())
+	{
+		LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Skills for player '%s'...", player->GetName());
+		count = database.LoadCharacterSkills(GetCharacterID(), player);
+
+		LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Spells for player '%s'...", player->GetName());
+		count = database.LoadCharacterSpells(GetCharacterID(), player);
+	}
+	else
+	{
+		LogWrite(CCLIENT__INFO, 0, "Client", "Player is returning from linkdead status (Player does not need reload) thus skipping database loading for '%s'...", player->GetName());
+	}
 	
 	// get the latest character starting skills / spells, may have been updated after character creation
 	world.SyncCharacterAbilities(this);
 
-	count = database.LoadCharacterTitles(GetCharacterID(), player);
-	if (count == 0) {
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "No character titles found!");
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "Initializing starting values - Titles");
-		database.UpdateStartingTitles(GetCharacterID(), player->GetAdventureClass(), player->GetRace(), player->GetGender());
+	if(!GetPlayer()->IsReturningFromLD())
+	{
+		count = database.LoadCharacterTitles(GetCharacterID(), player);
+		if (count == 0) {
+			LogWrite(CCLIENT__DEBUG, 0, "Client", "No character titles found!");
+			LogWrite(CCLIENT__DEBUG, 0, "Client", "Initializing starting values - Titles");
+			database.UpdateStartingTitles(GetCharacterID(), player->GetAdventureClass(), player->GetRace(), player->GetGender());
+		}
 	}
 
-	count = database.LoadCharacterLanguages(GetCharacterID(), player);
-	if (count == 0)
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "No character languages loaded!");
+	if(!GetPlayer()->IsReturningFromLD())
+	{
+		count = database.LoadCharacterLanguages(GetCharacterID(), player);
+		if (count == 0)
+			LogWrite(CCLIENT__DEBUG, 0, "Client", "No character languages loaded!");
 
-	count = database.LoadPlayerRecipeBooks(GetCharacterID(), player);
-	if (count == 0)
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "No character recipe books found!");
+		count = database.LoadPlayerRecipeBooks(GetCharacterID(), player);
+		if (count == 0)
+			LogWrite(CCLIENT__DEBUG, 0, "Client", "No character recipe books found!");
+	}
 
 	ClientPacketFunctions::SendLoginAccepted(this);
 
@@ -340,16 +358,19 @@ void Client::SendLoginInfo() {
 		zone_list.CheckFriendList(this);
 	}
 
-	database.LoadCharacterItemList(GetAccountID(), GetCharacterID(), player, GetVersion());
-	if (firstlogin && player->item_list.GetNumberOfItems() == 0 && player->GetEquipmentList()->GetNumberOfItems() == 0) //re-add starting items if missing
+	if(!GetPlayer()->IsReturningFromLD())
 	{
-		LogWrite(CCLIENT__WARNING, 0, "Client", "Player has no items - reloading starting items: '%s' (%u)", player->GetName(), GetCharacterID());
-		database.UpdateStartingItems(GetCharacterID(), player->GetAdventureClass(), player->GetRace());
 		database.LoadCharacterItemList(GetAccountID(), GetCharacterID(), player, GetVersion());
+		if (firstlogin && player->item_list.GetNumberOfItems() == 0 && player->GetEquipmentList()->GetNumberOfItems() == 0) //re-add starting items if missing
+		{
+			LogWrite(CCLIENT__WARNING, 0, "Client", "Player has no items - reloading starting items: '%s' (%u)", player->GetName(), GetCharacterID());
+			database.UpdateStartingItems(GetCharacterID(), player->GetAdventureClass(), player->GetRace());
+			database.LoadCharacterItemList(GetAccountID(), GetCharacterID(), player, GetVersion());
+		}
+		database.LoadPlayerFactions(this);
+		database.LoadCharacterQuests(this);
+		database.LoadPlayerMail(this);
 	}
-	database.LoadPlayerFactions(this);
-	database.LoadCharacterQuests(this);
-	database.LoadPlayerMail(this);
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 	SendQuestJournal(true, 0, false);
 
@@ -714,7 +735,7 @@ void Client::SendCharInfo() {
 	if (guild)
 		guild->GuildMemberLogin(this, firstlogin);
 
-	app = player->item_list.serialize(GetPlayer(), GetVersion());
+	app = player->GetPlayerItemList()->serialize(GetPlayer(), GetVersion());
 	if (app) {
 		LogWrite(CCLIENT__PACKET, 0, "Client", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
 		//DumpPacket(app);
@@ -730,7 +751,7 @@ void Client::SendCharInfo() {
 		QueuePacket(app);
 	}
 
-	vector<Item*>* items = player->item_list.GetItemsFromBagID(-3); // bank items
+	vector<Item*>* items = player->GetPlayerItemList()->GetItemsFromBagID(-3); // bank items
 	if (items && items->size() > 0) {
 		for (int32 i = 0; i < items->size(); i++) {
 			EQ2Packet* outapp = items->at(i)->serialize(GetVersion(), false, GetPlayer());
@@ -745,7 +766,7 @@ void Client::SendCharInfo() {
 		QueuePacket(app);
 
 	safe_delete(items);
-	items = player->item_list.GetItemsFromBagID(-4); //shared bank items
+	items = player->GetPlayerItemList()->GetItemsFromBagID(-4); //shared bank items
 	if (items && items->size() > 0) {
 		for (int32 i = 0; i < items->size(); i++)
 			QueuePacket(items->at(i)->serialize(GetVersion(), false, GetPlayer()));
@@ -836,6 +857,7 @@ void Client::SendCharInfo() {
 	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_SPELLEFFECTS);
 	GetPlayer()->SetSaveSpellEffects(false);
 	GetPlayer()->SetCharSheetChanged(true);
+	GetPlayer()->SetReturningFromLD(false);
 }
 
 void Client::SendZoneSpawns() {
@@ -9743,12 +9765,12 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 					if (client->GetVersion() == version) {
 						Player* current_player = GetPlayer();
 						SetPlayer(client->GetPlayer());
-						client->SetPlayer(current_player);
-						client->GetPlayer()->SetPendingDeletion(true);
-
-						GetPlayer()->SetPendingDeletion(false);
-						GetPlayer()->ResetSavedSpawns();
+						GetPlayer()->SetClient(this);
 						GetPlayer()->SetReturningFromLD(true);
+						SetCurrentZone(GetPlayer()->GetZone());
+						GetPlayer()->GetZone()->UpdateClientSpawnMap(GetPlayer(), this);
+						client->SetPlayer(current_player);
+						GetPlayer()->ResetSavedSpawns();
 					}
 					ZoneServer* tmpZone = client->GetCurrentZone();
 					tmpZone->RemoveClientImmediately(client);

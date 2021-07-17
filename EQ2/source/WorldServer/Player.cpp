@@ -3005,6 +3005,7 @@ EQ2Packet* Player::GetSpellBookUpdatePacket(int16 version) {
 		int32 total_bytes = packet2->GetTotalPacketSize();
 		safe_delete(packet2);
 		packet->setArrayLengthByName("spell_count", count);
+		
 		if (count > 0) {
 			if (count > spell_count) {
 				uchar* tmp = 0;
@@ -5325,17 +5326,57 @@ void Player::ResetSavedSpawns(){
 	index_mutex.writelock(__FUNCTION__, __LINE__);
 	player_spawn_reverse_id_map.clear();
 	player_spawn_id_map.clear();
+	player_spawn_id_map[1] = this;
+	player_spawn_reverse_id_map[this] = 1;
 	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	m_playerSpawnQuestsRequired.writelock(__FUNCTION__, __LINE__);
 	player_spawn_quests_required.clear();
 	m_playerSpawnQuestsRequired.releasewritelock(__FUNCTION__, __LINE__);
-	info->RemoveOldPackets();
+	if(info)
+		info->RemoveOldPackets();
+	
 	safe_delete_array(movement_packet);
 	safe_delete_array(old_movement_packet);
 }
 
 void Player::SetReturningFromLD(bool val){
+	if(val && val != returning_from_ld)
+	{
+		if(GetPlayerItemList())
+			GetPlayerItemList()->ResetPackets();
+		
+		GetEquipmentList()->ResetPackets();
+		GetAppearanceEquipmentList()->ResetPackets();
+		skill_list.ResetPackets();
+		safe_delete_array(spell_orig_packet);
+		safe_delete_array(spell_xor_packet);
+		spell_orig_packet=0;
+		spell_xor_packet=0;
+		spell_count = 0;
+
+		reset_character_flag(CF_IS_SITTING);
+		if (GetActivityStatus() & ACTIVITY_STATUS_CAMPING)
+			SetActivityStatus(GetActivityStatus() - ACTIVITY_STATUS_CAMPING);
+
+		if (GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD)
+			SetActivityStatus(GetActivityStatus() - ACTIVITY_STATUS_LINKDEAD);
+		
+		SetTempVisualState(0);
+
+		safe_delete_array(spawn_tmp_info_xor_packet);
+		safe_delete_array(spawn_tmp_vis_xor_packet);
+		safe_delete_array(spawn_tmp_pos_xor_packet);
+		spawn_tmp_info_xor_packet = 0;
+		spawn_tmp_vis_xor_packet = 0;
+		spawn_tmp_pos_xor_packet = 0;
+		pos_xor_size = 0;
+		info_xor_size = 0;
+		vis_xor_size = 0;
+		
+		spawn_index = 0;
+	}
+	
 	returning_from_ld = val;
 }
 
@@ -6202,6 +6243,10 @@ void PlayerInfo::RemoveOldPackets(){
 	safe_delete_array(orig_packet);
 	safe_delete_array(pet_changes);
 	safe_delete_array(pet_orig_packet);
+	changes = 0;
+	orig_packet = 0;
+	pet_changes = 0;
+	pet_orig_packet = 0;
 }
 
 PlayerControlFlags::PlayerControlFlags(){

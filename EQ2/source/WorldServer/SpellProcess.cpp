@@ -1338,7 +1338,8 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 		if (lua_spell->targets.size() == 0 && spell->GetSpellData()->max_aoe_targets == 0) 
 		{
-			LogWrite(SPELL__ERROR, 0, "Spell", "SpellProcess::ProcessSpell Unable to find any spell targets for spell '%s'.", spell->GetName());
+			LogWrite(SPELL__ERROR, 0, "Spell", "SpellProcess::ProcessSpell Unable to find any spell targets for spell '%s', spell type: %u, target type %u.", 
+										spell->GetName(), spell->GetSpellData()->spell_type, spell->GetSpellData()->target_type);
 			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			DeleteSpell(lua_spell);
 			return;
@@ -2092,6 +2093,11 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						luaspell->initial_target = caster->GetID();
 						luaspell->initial_target_char_id = (caster && caster->IsPlayer()) ? ((Player*)caster)->GetCharacterID() : 0;
 					}
+					else if(target && target->IsPlayer())
+					{
+						if(!GetPlayerGroupTargets((Player*)target, caster, luaspell, true, false))
+							AddSelfAndPet(luaspell, target);
+					}
 				}
 				else // default self cast for group/raid AE
 				{
@@ -2395,7 +2401,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 		LogWrite(SPELL__WARNING, 0, "Spell", "Warning in %s: Size of targets array is %u", __FUNCTION__, luaspell->targets.size());
 }
 
-void SpellProcess::GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell* luaspell, bool bypassSpellChecks, bool bypassRangeChecks)
+bool SpellProcess::GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell* luaspell, bool bypassSpellChecks, bool bypassRangeChecks)
 {
 	if (bypassSpellChecks || luaspell->spell->GetSpellData()->group_spell > 0 || luaspell->spell->GetSpellData()->icon_backdrop == 312)
 	{
@@ -2421,9 +2427,13 @@ void SpellProcess::GetPlayerGroupTargets(Player* target, Spawn* caster, LuaSpell
 					}
 				}
 				group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+
+				return true;
 			}
 		}
 	}
+
+	return false;
 }
 
 void SpellProcess::GetSpellTargetsTrueAOE(LuaSpell* luaspell) {
@@ -2819,17 +2829,17 @@ void SpellProcess::AddActiveSpell(LuaSpell* spell)
 		active_spells.Add(spell);
 }
 
-void SpellProcess::AddSelfAndPet(LuaSpell* spell, Spawn* caster, bool onlyPet)
+void SpellProcess::AddSelfAndPet(LuaSpell* spell, Spawn* self, bool onlyPet)
 {
 	if(!onlyPet)
-		spell->targets.push_back(caster->GetID());
+		spell->targets.push_back(self->GetID());
 	
-	if(caster->IsEntity() && ((Entity*)caster)->HasPet() && ((Entity*)caster)->GetPet())
-		spell->targets.push_back(((Entity*)caster)->GetPet()->GetID());
-	if(caster->IsEntity() && ((Entity*)caster)->HasPet() && ((Entity*)caster)->GetCharmedPet())
-		spell->targets.push_back(((Entity*)caster)->GetCharmedPet()->GetID());
-	if(!onlyPet && caster->IsEntity() && ((Entity*)caster)->IsPet() && ((Entity*)caster)->GetOwner())
-		spell->targets.push_back(((Entity*)caster)->GetOwner()->GetID());
+	if(self->IsEntity() && ((Entity*)self)->HasPet() && ((Entity*)self)->GetPet())
+		spell->targets.push_back(((Entity*)self)->GetPet()->GetID());
+	if(self->IsEntity() && ((Entity*)self)->HasPet() && ((Entity*)self)->GetCharmedPet())
+		spell->targets.push_back(((Entity*)self)->GetCharmedPet()->GetID());
+	if(!onlyPet && self->IsEntity() && ((Entity*)self)->IsPet() && ((Entity*)self)->GetOwner())
+		spell->targets.push_back(((Entity*)self)->GetOwner()->GetID());
 }
 
 void SpellProcess::AddSelfAndPetToCharTargets(LuaSpell* spell, Spawn* caster, bool onlyPet)

@@ -2971,15 +2971,13 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 	spawn->info_changed = false;
 	spawn->vis_changed = false;
 	spawn->changed = false;
-	if(!spawn->IsPlayer() || (spawn->IsPlayer() && !((Player*)spawn)->IsReturningFromLD())) {
-		// Write locking the spawn list here will cause deadlocks, so instead add it to a temp list that the
-		// main spawn thread will put into the spawn_list when ever it has a chance.
-		MPendingSpawnListAdd.writelock(__FUNCTION__, __LINE__);
-		pending_spawn_list_add.push_back(spawn);
-		MPendingSpawnListAdd.releasewritelock(__FUNCTION__, __LINE__);
-	}
-	else
-		((Player*)spawn)->SetReturningFromLD(false);
+	
+	// Write locking the spawn list here will cause deadlocks, so instead add it to a temp list that the
+	// main spawn thread will put into the spawn_list when ever it has a chance.
+	MPendingSpawnListAdd.writelock(__FUNCTION__, __LINE__);
+	pending_spawn_list_add.push_back(spawn);
+	MPendingSpawnListAdd.releasewritelock(__FUNCTION__, __LINE__);
+	
 	spawn_range.Trigger();
 	spawn_check_add.Trigger();
 
@@ -3101,6 +3099,7 @@ void ZoneServer::RemoveClientImmediately(Client* client) {
 
 	if(client) 
 	{
+		database.ToggleCharacterOnline(client, 0);
 		loginserver.SendImmediateEquipmentUpdatesForChar(client->GetPlayer()->GetCharacterID());
 		if(connected_clients.count(client) > 0)
 		{
@@ -3115,6 +3114,8 @@ void ZoneServer::RemoveClientImmediately(Client* client) {
 			//clients.Remove(client);
 			LogWrite(ZONE__INFO, 0, "Zone", "Removing connection for client '%s'.", client->GetPlayer()->GetName());
 			connected_clients.Remove(client, true);
+			// client is deleted at this point
+			client = 0;
 		}
 		else
 		{
@@ -3125,9 +3126,6 @@ void ZoneServer::RemoveClientImmediately(Client* client) {
 			MClientList.releasewritelock(__FUNCTION__, __LINE__);
 			//clients.Remove(client, true);
 		}
-
-		LogWrite(MISC__TODO, 1, "TODO", "Put Player Online Status updates in a timer eventually\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-		database.ToggleCharacterOnline(client, 0);
 	}
 }
 
@@ -3172,7 +3170,7 @@ void ZoneServer::ClientProcess()
 					}
 
 				}
-				client_spawn_map.Put(client->GetPlayer(), 0);
+				UpdateClientSpawnMap(client->GetPlayer(), 0);
 				client->Disconnect();
 				RemoveClient(client);
 			}
@@ -3191,7 +3189,7 @@ void ZoneServer::ClientProcess()
 							world.GetGroupManager()->GroupMessage(client->GetPlayer()->GetGroupMemberInfo()->group_id, "%s has gone Linkdead.", client->GetPlayer()->GetName());
 					}
 				}
-				client_spawn_map.Put(client->GetPlayer(), 0);
+				UpdateClientSpawnMap(client->GetPlayer(), 0);
 				client->Disconnect();
 				RemoveClient(client);
 			}
@@ -4919,7 +4917,7 @@ void ZoneServer::SendZoneSpawns(Client* client){
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		Spawn* spawn = itr->second;
 		if (spawn) {
-			if(spawn == client->GetPlayer() && client->IsReloadingZone())
+			if(spawn == client->GetPlayer() && (client->IsReloadingZone() || client->GetPlayer()->IsReturningFromLD()))
 			{
 				client->GetPlayer()->SetSpawnMap(spawn);
 			}
@@ -5094,7 +5092,10 @@ vector<ZoneInfoSlideStruct*>* ZoneServer::GenerateTutorialSlides() {
 }
 
 EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
-	client_spawn_map.Put(client->GetPlayer(), client);
+	// this takes place when we get the LoginInfo for returning LD players
+	if(!client->GetPlayer()->IsReturningFromLD())
+		UpdateClientSpawnMap(client->GetPlayer(), client);
+	
 	PacketStruct* packet = configReader.getStruct("WS_ZoneInfo", client->GetVersion());
 	packet->setSmallStringByName("server1",net.GetWorldName());
 	packet->setSmallStringByName("server2",net.GetWorldName());
@@ -8091,4 +8092,10 @@ void ZoneServer::ProcessQueuedStateCommands() // in a client list lock only
 		lua_spawn_update_command.clear();
 	}
 	MLuaQueueStateCmd.unlock();
+}
+
+void ZoneServer::UpdateClientSpawnMap(Player* player, Client* client)
+{
+	// client may be null when passed
+	client_spawn_map.Put(player, client);
 }

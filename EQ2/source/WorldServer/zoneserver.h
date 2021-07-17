@@ -678,6 +678,7 @@ public:
 	void	QueueStateCommandToClients(int32 spawn_id, int32 state);
 	void	QueueDefaultCommand(int32 spawn_id, std::string command, float distance);
 	void	ProcessQueuedStateCommands();
+	void	UpdateClientSpawnMap(Player* player, Client* client);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;

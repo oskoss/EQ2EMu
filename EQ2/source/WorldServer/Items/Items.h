@@ -1085,6 +1085,8 @@ public:
 	void RemoveOverflowItem(Item* item);
 
 	vector<Item*>* GetOverflowItemList();
+	
+	void	ResetPackets();
 
 private:
 	void AddItemToPacket(PacketStruct* packet, Player* player, Item* item, int16 i, bool overflow = false);
@@ -1101,6 +1103,8 @@ public:
 	Item* items[NUM_SLOTS];
 
 	vector<Item*>* GetAllEquippedItems();
+
+	void	ResetPackets();
 
 	bool	HasItem(int32 id);
 	int8	GetNumberOfItems();

@@ -159,6 +159,7 @@ public:
 	map<int32, Skill*>* GetAllSkills();
 	bool HasSkillUpdates();
 
+	void ResetPackets();
 private:
 	volatile bool has_updates;
 	Mutex MSkillUpdates;
