@@ -490,6 +490,8 @@ public:
 	void ClearSentItemDetails() { sent_item_details.clear(); }
 
 	bool IsPlayerLoadingComplete() { return player_loading_complete; }
+
+	int32 GetRejoinGroupID() { return rejoin_group_id; }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

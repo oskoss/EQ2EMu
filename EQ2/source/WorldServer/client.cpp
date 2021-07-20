@@ -10384,11 +10384,11 @@ void Client::TempRemoveGroup()
 		if(group)
 		{
 			group->MGroupMembers.writelock();
+			rejoin_group_id = this->GetPlayer()->GetGroupMemberInfo()->group_id;
 			this->GetPlayer()->GetGroupMemberInfo()->client = 0;
 			this->GetPlayer()->GetGroupMemberInfo()->member = 0;
 			this->GetPlayer()->SetGroupMemberInfo(0);
 			group->MGroupMembers.releasewritelock();
-
 			group->RemoveClientReference(this);
 		}
 		else
