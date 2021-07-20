@@ -417,7 +417,7 @@ int EQ2Emu_lua_SpawnSet(lua_State* state) {
 	
 	int8 num_args = (int8)lua_interface->GetNumberOfArgs(state);
 	int8 index = 0;
-	
+
 	if(num_args >= 5)
 	{
 		temporary_flag = lua_interface->GetBooleanValue(state, 5); // this used to be false, but no one bothered to set it temporary, we don't need to update the DB
@@ -12319,6 +12319,9 @@ int EQ2Emu_lua_SetRailID(lua_State* state) {
 }
 
 int EQ2Emu_lua_IsZoneLoading(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	
 	ZoneServer* zone = lua_interface->GetZone(state);
 	lua_interface->ResetFunctionStack(state);
 
@@ -12329,6 +12332,9 @@ int EQ2Emu_lua_IsZoneLoading(lua_State* state) {
 	return 0;
 }
 int EQ2Emu_lua_IsRunning(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	lua_interface->ResetFunctionStack(state);
 
@@ -12358,5 +12364,89 @@ int EQ2Emu_lua_GetZoneLockoutTimer(lua_State* state) {
 		lua_interface->SetStringValue(state, player->GetClient()->IdentifyInstanceLockout(zoneID, displayClient).c_str());
 		return 1;
 	}
+	return 0;
+}
+
+int EQ2Emu_lua_SetWorldTime(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	
+	int16 newYear = lua_interface->GetInt16Value(state, 1);
+	sint32 newMonth = lua_interface->GetInt16Value(state, 2);
+	int16 newHour = lua_interface->GetInt16Value(state, 3);
+	int16 newMinute = lua_interface->GetInt16Value(state, 4);
+
+	lua_interface->ResetFunctionStack(state);
+	
+	world.MWorldTime.writelock(__FUNCTION__, __LINE__);
+	world.GetWorldTimeStruct()->year = newYear;
+	world.GetWorldTimeStruct()->month = newMonth;
+	world.GetWorldTimeStruct()->hour = newHour;
+	world.GetWorldTimeStruct()->minute = newMinute;
+	world.MWorldTime.releasewritelock(__FUNCTION__, __LINE__);
+	
+	return 0;
+}
+
+int EQ2Emu_lua_GetWorldTimeYear(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	
+	lua_interface->ResetFunctionStack(state);
+	
+	world.MWorldTime.readlock(__FUNCTION__, __LINE__);
+	lua_interface->SetInt32Value(state, world.GetWorldTimeStruct()->year);
+	world.MWorldTime.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return 1;
+}
+
+int EQ2Emu_lua_GetWorldTimeMonth(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	
+	lua_interface->ResetFunctionStack(state);
+	
+	world.MWorldTime.readlock(__FUNCTION__, __LINE__);
+	lua_interface->SetSInt32Value(state, world.GetWorldTimeStruct()->month);
+	world.MWorldTime.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return 1;
+}
+
+int EQ2Emu_lua_GetWorldTimeHour(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	
+	lua_interface->ResetFunctionStack(state);
+	
+	world.MWorldTime.readlock(__FUNCTION__, __LINE__);
+	lua_interface->SetSInt32Value(state, world.GetWorldTimeStruct()->hour);
+	world.MWorldTime.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return 1;
+}
+
+int EQ2Emu_lua_GetWorldTimeMinute(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	
+	lua_interface->ResetFunctionStack(state);
+	
+	world.MWorldTime.readlock(__FUNCTION__, __LINE__);
+	lua_interface->SetSInt32Value(state, world.GetWorldTimeStruct()->minute);
+	world.MWorldTime.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return 1;
+}
+
+int EQ2Emu_lua_SendTimeUpdate(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	lua_interface->ResetFunctionStack(state);
+	
+	world.SendTimeUpdate();
+	
 	return 0;
 }

@@ -226,6 +226,7 @@ void World::init(){
 
 
 PacketStruct* World::GetWorldTime(int16 version){
+	MWorldTime.readlock(__FUNCTION__, __LINE__);
 	PacketStruct* packet = configReader.getStruct("WS_GameWorldTime", version);
 	if(packet){
 		packet->setDataByName("year", world_time.year);
@@ -237,6 +238,7 @@ PacketStruct* World::GetWorldTime(int16 version){
 		packet->setDataByName("unix_time", Timer::GetUnixTimeStamp());
 		packet->setDataByName("unknown2", 1);
 	}
+	MWorldTime.releasereadlock(__FUNCTION__, __LINE__);
 	return packet;
 }
 
@@ -263,10 +265,21 @@ void World::Process(){
 	if(last_checked_time > Timer::GetCurrentTime2())
 		return;
 	last_checked_time = Timer::GetCurrentTime2() + 1000;
+
 	if(save_time_timer.Check())
+	{
+		MWorldTime.readlock(__FUNCTION__, __LINE__);
 		database.SaveWorldTime(&world_time);
+		MWorldTime.releasereadlock(__FUNCTION__, __LINE__);
+	}
+
 	if(time_tick_timer.Check())
+	{
+		MWorldTime.writelock(__FUNCTION__, __LINE__);
 		WorldTimeTick();
+		MWorldTime.releasewritelock(__FUNCTION__, __LINE__);
+	}
+
 	if(vitality_timer.Check())
 		UpdateVitality();
 	if (player_stats_timer.Check())
@@ -350,7 +363,23 @@ void ZoneList::UpdateVitality(float amount)
 	MZoneList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
+void ZoneList::SendTimeUpdate()
+{
+	list<ZoneServer*>::iterator zone_iter;
+	ZoneServer* tmp = 0;
+	MZoneList.readlock(__FUNCTION__, __LINE__);
 
+	for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++)
+	{
+		tmp = *zone_iter;
+		if(tmp && !tmp->isZoneShuttingDown())
+			tmp->WorldTimeUpdateTrigger();
+	}
+
+	MZoneList.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+// should already be ran inside MWorldTime
 void World::WorldTimeTick(){
 	world_time.minute++;
 	//I know it looks complicated, but the nested ifs are to avoid checking all of them every 3 seconds
@@ -661,7 +690,7 @@ bool ZoneList::ClientConnected(int32 account_id){
 	map<string, Client*>::iterator itr;
 	MClientList.lock();
 	for(itr=client_map.begin(); itr != client_map.end(); itr++){
-		if(itr->second && itr->second->GetAccountID() == account_id && (itr->second->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) == 0){
+		if(itr->second && itr->second->GetAccountID() == account_id && itr->second->getConnection() && itr->second->getConnection()->GetState() != CLOSING && itr->second->getConnection()->GetState() != CLOSED && (itr->second->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) == 0){
 			ret = true;
 			break;
 		}
@@ -2542,4 +2571,9 @@ Map* World::GetMap(std::string zoneFile, int32 client_version)
 
 	MWorldMaps.releasereadlock();
 	return nullptr;
+}
+
+void World::SendTimeUpdate()
+{
+	zone_list.SendTimeUpdate();
 }

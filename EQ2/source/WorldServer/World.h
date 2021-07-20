@@ -490,6 +490,8 @@ class ZoneList {
 	void ReloadSpawns();
 
 	void WatchdogHeartbeat();
+
+	void SendTimeUpdate();
 private:
 	Mutex				MClientList;
 	Mutex				MZoneList;
@@ -633,6 +635,13 @@ public:
 	
 	void LoadMaps(std::string zoneFile);
 	Map* GetMap(std::string zoneFile, int32 client_version);
+	
+	void SendTimeUpdate();
+	// just in case we roll over a time as to not send bad times to clients (days before hours, hours before minutes as examples)
+	Mutex MWorldTime;
+
+
+
 	static sint64 newValue;
 private:
 	int32 suppressed_warning = 0;

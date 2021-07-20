@@ -583,11 +583,7 @@ public:
 	void	ClearRemovedSpawn(Spawn* spawn);
 	bool	ShouldSendSpawn(Spawn* spawn);
 	Client* client = 0;
-	void SetLevel(int16 level, bool setUpdateFlags = true) {
-		SetInfo(&appearance.level, level, setUpdateFlags);
-		SetXP(0);
-		SetNeededXP();
-	}
+	void SetLevel(int16 level, bool setUpdateFlags = true);
 
 	Spawn* GetSpawnWithPlayerID(int32 id){
 		Spawn* spawn = 0;
@@ -666,8 +662,6 @@ public:
 	map<int32, Quest*>	player_quests;
 	map<int32, Quest*>*	GetPlayerQuests();
 	map<int32, Quest*>*	GetCompletedPlayerQuests();
-	void				LockQuests();
-	void				UnlockQuests();
 	void				SetFactionValue(int32 faction_id, sint32 value){
 		factions.SetFactionValue(faction_id, value);
 	}
@@ -995,6 +989,8 @@ public:
 	{
 		reset_mentorship = true;
 	}
+	
+	Mutex MPlayerQuests;
 private:
 	bool reset_mentorship;
 	bool range_attack;
@@ -1009,7 +1005,6 @@ private:
 	map<int32, map<int32, bool> >	pending_loot_items;
 	Mutex				MSpellsBook;
 	Mutex				MRecipeBook;
-	Mutex				MPlayerQuests;
 	map<Spawn*, bool>	current_quest_flagged;
 	PlayerFaction		factions;
 	map<int32, Quest*>	completed_quests;

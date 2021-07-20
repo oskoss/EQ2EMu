@@ -910,6 +910,24 @@ public:
 
 		MLootItems.unlock();
 	}
+
+	void ClearNonBodyLoot() {
+
+		MLootItems.lock();
+		vector<Item*>::iterator itr;
+		for (itr = loot_items.begin(); itr != loot_items.end();) {
+			Item* itm = *itr;
+			if(!itm->IsBodyDrop())
+			{
+				itr = loot_items.erase(itr);
+				safe_delete(itm);
+			}
+			else
+				itr++;
+		}
+		MLootItems.unlock();
+	}
+	
 	int32 GetLootCoins() {
 		return loot_coins;
 	}
@@ -919,15 +937,6 @@ public:
 	void AddLootCoins(int32 coins) {
 		loot_coins += coins;
 	}
-
-	void ClearLootList() {
-		vector<Item*>::iterator itr;
-		for (itr = loot_items.begin(); itr != loot_items.end(); itr++)
-			safe_delete(*itr);
-
-		loot_items.clear();
-	}
-
 	Spawn*			GetTarget();
 	void			SetTarget(Spawn* spawn);
 	Spawn*			GetLastAttacker();

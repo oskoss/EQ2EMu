@@ -1424,6 +1424,13 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "IsRunning", EQ2Emu_lua_IsRunning);
 	
 	lua_register(state, "GetZoneLockoutTimer", EQ2Emu_lua_GetZoneLockoutTimer);
+	
+	lua_register(state, "SetWorldTime", EQ2Emu_lua_SetWorldTime);
+	lua_register(state, "GetWorldTimeYear", EQ2Emu_lua_GetWorldTimeYear);
+	lua_register(state, "GetWorldTimeMonth", EQ2Emu_lua_GetWorldTimeMonth);
+	lua_register(state, "GetWorldTimeHour", EQ2Emu_lua_GetWorldTimeHour);
+	lua_register(state, "GetWorldTimeMinute", EQ2Emu_lua_GetWorldTimeMinute);
+	lua_register(state, "SendTimeUpdate", EQ2Emu_lua_SendTimeUpdate);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

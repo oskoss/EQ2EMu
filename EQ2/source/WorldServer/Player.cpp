@@ -224,7 +224,7 @@ EQ2Packet* Player::Move(float x, float y, float z, int16 version, float heading)
 }
 
 void Player::DestroyQuests(){
-	MPlayerQuests.lock();
+	MPlayerQuests.writelock(__FUNCTION__, __LINE__);
 	map<int32, Quest*>::iterator itr;
 	for(itr = completed_quests.begin(); itr != completed_quests.end(); itr++){
 		safe_delete(itr->second);
@@ -238,7 +238,7 @@ void Player::DestroyQuests(){
 		safe_delete(itr->second);
 	}
 	pending_quests.clear();
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 PlayerInfo* Player::GetPlayerInfo(){
@@ -3870,6 +3870,10 @@ float Player::CalculateXP(Spawn* victim){
 	}
 
 	switch(GetArrowColor(victim->GetLevel())){
+		case ARROW_COLOR_GRAY:
+			LogWrite(PLAYER__DEBUG, 5, "XP", "Gray Arrow = No XP");
+			return 0.0f;
+			break;
 		case ARROW_COLOR_GREEN:
 			multiplier = 3.25;
 			LogWrite(PLAYER__DEBUG, 5, "XP", "Green Arrow Multiplier = %.2f", multiplier);
@@ -4256,19 +4260,19 @@ void Player::RemoveSpawn(Spawn* spawn)
 vector<int32> Player::GetQuestIDs(){
 	vector<int32> ret;
 	map<int32, Quest*>::iterator itr;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second)
 			ret.push_back(itr->second->GetQuestID());
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
 vector<Quest*>* Player::CheckQuestsItemUpdate(Item* item){
 	vector<Quest*>* quest_updates = 0;
 	map<int32, Quest*>::iterator itr;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second && itr->second->CheckQuestItemUpdate(item->details.item_id, item->details.count)){
 			if(!quest_updates)
@@ -4276,14 +4280,14 @@ vector<Quest*>* Player::CheckQuestsItemUpdate(Item* item){
 			quest_updates->push_back(itr->second);
 		}
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return quest_updates;
 }
 
 void Player::CheckQuestsCraftUpdate(Item* item, int32 qty){
 	map<int32, Quest*>::iterator itr;
 	vector<Quest*>* update_list = new vector<Quest*>;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second){
 			if(item && qty > 0){
@@ -4293,7 +4297,7 @@ void Player::CheckQuestsCraftUpdate(Item* item, int32 qty){
 			}
 		}
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	if(update_list && update_list->size() > 0){
 		Client* client = GetZone()->GetClientBySpawn(this);
 		if(client){
@@ -4310,7 +4314,7 @@ void Player::CheckQuestsCraftUpdate(Item* item, int32 qty){
 void Player::CheckQuestsHarvestUpdate(Item* item, int32 qty){
 	map<int32, Quest*>::iterator itr;
 	vector<Quest*>* update_list = new vector<Quest*>;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second){
 			if(item && qty > 0){
@@ -4320,7 +4324,7 @@ void Player::CheckQuestsHarvestUpdate(Item* item, int32 qty){
 			}
 		}
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	if(update_list && update_list->size() > 0){
 		Client* client = GetZone()->GetClientBySpawn(this);
 		if(client){
@@ -4337,7 +4341,7 @@ void Player::CheckQuestsHarvestUpdate(Item* item, int32 qty){
 vector<Quest*>* Player::CheckQuestsSpellUpdate(Spell* spell) {
 	vector<Quest*>* quest_updates = 0;
 	map<int32, Quest*>::iterator itr;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for (itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if (itr->second && itr->second->CheckQuestSpellUpdate(spell)) {
 			if (!quest_updates)
@@ -4345,7 +4349,7 @@ vector<Quest*>* Player::CheckQuestsSpellUpdate(Spell* spell) {
 			quest_updates->push_back(itr->second);
 		}
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return quest_updates;
 }
 
@@ -4358,7 +4362,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 		map<int32, Quest*> total_quests = player_quests;
 		if(all_quests && completed_quests.size() > 0)
 			total_quests.insert(completed_quests.begin(), completed_quests.end());
-		MPlayerQuests.lock();
+		MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 		if(total_quests.size() > 0){
 			map<string, int16> quest_types;
 			map<int32, Quest*>::iterator itr;
@@ -4470,7 +4474,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 			//packet->setDataByName("unknown4", 0);
 			packet->setDataByName("visible_quest_id", current_quest_id);
 		}
-		MPlayerQuests.unlock();		
+		MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);		
 		packet->setDataByName("player_crc", crc);
 		packet->setDataByName("player_name", GetName());
 		packet->setDataByName("used_quests", total_quests_num - total_completed_quests);
@@ -4577,51 +4581,51 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 
 Quest* Player::SetStepComplete(int32 id, int32 step){
 	Quest* ret = 0;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if(player_quests.count(id) > 0){
 		if(player_quests[id]->SetStepComplete(step))
 			ret = player_quests[id];
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
 Quest* Player::AddStepProgress(int32 quest_id, int32 step, int32 progress) {
 	Quest* ret = 0;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if (player_quests.count(quest_id) > 0) {
 		if (player_quests[quest_id]->AddStepProgress(step, progress))
 			ret = player_quests[quest_id];
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
 int32 Player::GetStepProgress(int32 quest_id, int32 step_id) {
 	int32 ret = 0;
 
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if (player_quests.count(quest_id) > 0)
 		ret = player_quests[quest_id]->GetStepProgress(step_id);
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 
 	return ret;
 }
 
 void Player::RemoveQuest(int32 id, bool delete_quest){
-	MPlayerQuests.lock();
+	MPlayerQuests.writelock(__FUNCTION__, __LINE__);
 	if(delete_quest){
 		safe_delete(player_quests[id]);
 	}
 	player_quests.erase(id);
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 	SendQuestRequiredSpawns(id);
 }
 
 vector<Quest*>* Player::CheckQuestsLocationUpdate(){
 	vector<Quest*>* quest_updates = 0;
 	map<int32, Quest*>::iterator itr;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second && itr->second->CheckQuestLocationUpdate(GetX(), GetY(), GetZ(), (GetZone() ? GetZone()->GetZoneID() : 0))){
 			if(!quest_updates)
@@ -4629,14 +4633,14 @@ vector<Quest*>* Player::CheckQuestsLocationUpdate(){
 			quest_updates->push_back(itr->second);
 		}
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return quest_updates;
 }
 
 vector<Quest*>* Player::CheckQuestsFailures(){
 	vector<Quest*>* quest_failures = 0;
 	map<int32, Quest*>::iterator itr;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second && itr->second->GetQuestFailures()->size() > 0){
 			if(!quest_failures)
@@ -4644,14 +4648,14 @@ vector<Quest*>* Player::CheckQuestsFailures(){
 			quest_failures->push_back(itr->second);
 		}
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return quest_failures;
 }
 
 vector<Quest*>* Player::CheckQuestsKillUpdate(Spawn* spawn, bool update){
 	vector<Quest*>* quest_updates = 0;
 	map<int32, Quest*>::iterator itr;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second && itr->second->CheckQuestKillUpdate(spawn, update)){
 			if(!quest_updates)
@@ -4659,14 +4663,14 @@ vector<Quest*>* Player::CheckQuestsKillUpdate(Spawn* spawn, bool update){
 			quest_updates->push_back(itr->second);
 		}
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return quest_updates;
 }
 
 vector<Quest*>* Player::CheckQuestsChatUpdate(Spawn* spawn){
 	vector<Quest*>* quest_updates = 0;
 	map<int32, Quest*>::iterator itr;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second && itr->second->CheckQuestChatUpdate(spawn->GetDatabaseID())){
 			if(!quest_updates)
@@ -4674,52 +4678,44 @@ vector<Quest*>* Player::CheckQuestsChatUpdate(Spawn* spawn){
 			quest_updates->push_back(itr->second);
 		}
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return quest_updates;
 }
 
 int16 Player::GetTaskGroupStep(int32 quest_id){
 	Quest* quest = 0;
 	int16 step = 0;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if(player_quests.count(quest_id) > 0){
 		quest = player_quests[quest_id];
 		step = quest->GetTaskGroupStep();
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return step;
 }
 
 bool Player::GetQuestStepComplete(int32 quest_id, int32 step_id){
 	bool ret = false;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if(player_quests.count(quest_id) > 0){
 		Quest* quest = player_quests[quest_id];
 		if ( quest != NULL )
 			ret = quest->GetQuestStepCompleted(step_id);
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
 int16 Player::GetQuestStep(int32 quest_id){
 	Quest* quest = 0;
 	int16 step = 0;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if(player_quests.count(quest_id) > 0){
 		quest = player_quests[quest_id];
 		step = quest->GetQuestStep();
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return step;
-}
-
-void Player::LockQuests(){
-	MPlayerQuests.lock();
-}
-
-void Player::UnlockQuests(){
-	MPlayerQuests.unlock();
 }
 
 map<int32, Quest*>*	Player::GetPlayerQuests(){
@@ -4777,19 +4773,19 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 		vector<int32>* quests = spawn->GetProvidedQuests();
 		Quest* quest = 0;
 		for(int32 i=0;i<quests->size();i++){
-			MPlayerQuests.lock();
+			MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 			if(player_quests.count(quests->at(i)) > 0){
 				if(player_quests[quests->at(i)]->GetCompleted() && player_quests[quests->at(i)]->GetQuestReturnNPC() == spawn->GetDatabaseID()){
 					ret = 2;
-					MPlayerQuests.unlock();
+					MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 					break;
 				}
 			}
-			MPlayerQuests.unlock();
+			MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 			if (CanReceiveQuest(quests->at(i))){
-				MPlayerQuests.lock();
+				master_quest_list.LockQuests();
 				quest = master_quest_list.GetQuest(quests->at(i), false);
-				MPlayerQuests.unlock();
+				master_quest_list.UnlockQuests();
 				if(quest){
 					int8 color = quest->GetFeatherColor();
 					// purple
@@ -4810,12 +4806,12 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 		}
 	}
 	map<int32, Quest*>::iterator itr;
-	MPlayerQuests.lock();
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second->CheckQuestChatUpdate(spawn->GetDatabaseID(), false))
 			ret = 2;
 	}
-	MPlayerQuests.unlock();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	if(ret > 0)
 		current_quest_flagged[spawn] = true;
 	return ret;
@@ -4824,9 +4820,9 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 bool Player::CanReceiveQuest(int32 quest_id){
 	bool passed = true;
 	int32 x;
-	MPlayerQuests.lock();
+	master_quest_list.LockQuests();
 	Quest* quest = master_quest_list.GetQuest(quest_id, false);
-	MPlayerQuests.unlock();
+	master_quest_list.UnlockQuests();
 	if (!quest)
 		passed = false;
 	//check if quest is already completed, and not repeatable
@@ -6770,4 +6766,13 @@ void Player::SetMentorStats(int32 effective_level, int32 target_char_id)
 		}
 	}
 	GetEquipmentList()->SendEquippedItems(this);
+}
+
+void Player::SetLevel(int16 level, bool setUpdateFlags) {
+	if(!GetGroupMemberInfo() || GetGroupMemberInfo()->mentor_target_char_id == 0) {
+		GetInfoStruct()->set_effective_level(level);
+	}
+	SetInfo(&appearance.level, level, setUpdateFlags);
+	SetXP(0);
+	SetNeededXP();
 }

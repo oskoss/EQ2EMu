@@ -149,7 +149,6 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	connected_to_zone = false;
 	connected = false;
 	camp_timer = 0;
-	disconnect_timer = 0;
 	client_zoning = false;
 	player_pos_changed = false;
 	++numclients;
@@ -209,6 +208,28 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 }
 
 Client::~Client() {
+	RemoveClientFromZone();
+
+	//let the stream factory know were done with this stream
+	if (eqs) {
+		eqs->Close();
+		try {
+			eqs->ReleaseFromUse();
+		}
+		catch (...) {}
+	}
+	eqs = NULL;
+
+	//safe_delete(autobootup_timeout);
+
+	safe_delete(CLE_keepalive_timer);
+	safe_delete(connect);
+	--numclients;
+	UpdateWindowTitle(0);
+}
+
+
+void Client::RemoveClientFromZone() {
 	if (current_zone && player) {
 		if (player->GetGroupMemberInfo())
 		{
@@ -225,29 +246,7 @@ Client::~Client() {
 	if (player)
 		zone_list.RemoveClientFromMap(player->GetName(), this);
 
-	//let the stream factory know were done with this stream
-	if (eqs) {
-		eqs->Close();
-		try {
-			eqs->ReleaseFromUse();
-		}
-		catch (...) {}
-	}
-	eqs = NULL;
-
-	//safe_delete(autobootup_timeout);
-
-	safe_delete(disconnect_timer);
 	safe_delete(camp_timer);
-	safe_delete(CLE_keepalive_timer);
-	safe_delete(connect);
-	--numclients;
-
-	MDeletePlayer.writelock(__FUNCTION__, __LINE__);
-	if (player && !player->GetPendingDeletion())
-		safe_delete(player);
-	MDeletePlayer.releasewritelock(__FUNCTION__, __LINE__);
-
 	safe_delete(search_items);
 	safe_delete(current_rez.expire_timer);
 	safe_delete(pending_last_name);
@@ -259,8 +258,13 @@ Client::~Client() {
 		delete tmp;
 		SetTempPlacementSpawn(nullptr);
 	}
-	UpdateWindowTitle(0);
+
+	MDeletePlayer.writelock(__FUNCTION__, __LINE__);
+	if (player && !player->GetPendingDeletion())
+		safe_delete(player);
+	MDeletePlayer.releasewritelock(__FUNCTION__, __LINE__);
 }
+
 
 void Client::QueuePacket(EQ2Packet* app, bool attemptedCombine) {
 	if (eqs) {
@@ -383,6 +387,7 @@ void Client::SendLoginInfo() {
 
 	map<int32, Quest*>::iterator itr;
 	Quest* quest = 0;
+	GetPlayer()->MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for (itr = player->player_quests.begin(); itr != player->player_quests.end(); itr++) {
 		quest = itr->second;
 		if (quest->IsTracked()) {
@@ -392,6 +397,7 @@ void Client::SendLoginInfo() {
 			QueuePacket(itr->second->QuestJournalReply(version, GetNameCRC(), player));
 		}
 	}
+	GetPlayer()->MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 
 	//	SendAchievementsList();
 
@@ -1214,6 +1220,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		if (packet && packet->LoadPacketData(app->pBuffer, app->size)) {
 			int32 quest_id = packet->getType_int32_ByName("quest_id");
 			bool hidden = packet->getType_int8_ByName("visible") == 1 ? false : true;
+			GetPlayer()->MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 			map<int32, Quest*>* player_quests = player->GetPlayerQuests();
 			if (player_quests) {
 				if (player_quests->count(quest_id) > 0)
@@ -1223,6 +1230,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			}
 			else
 				LogWrite(CCLIENT__ERROR, 0, "Client", "OP_QuestJournalSetVisibleMsg error: Unable to get player(%s) quests", player->GetName());
+			GetPlayer()->MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 
 			safe_delete(packet);
 		}
@@ -2238,10 +2246,12 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					continue;
 				LogWrite(CCLIENT__DEBUG, 5, "Client", "quest_id = %u", id);
 				bool tracked = packet->getType_int8_ByName("quest_tracked_0", i) == 1 ? true : false;
+				GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__);
 				if (player->player_quests.count(id) > 0) {
 					player->player_quests[id]->SetTracked(tracked);
 					player->player_quests[id]->SetSaveNeeded(true);
 				}
+				GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 			}
 
 			safe_delete(packet);
@@ -3022,7 +3032,7 @@ bool Client::Process(bool zone_process) {
 		if(GetPlayer()->GetRegionMap())
 			GetPlayer()->GetRegionMap()->TicRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
 		
-		if(player_pos_changed && IsReadyForUpdates() && ( !disconnect_timer || !disconnect_timer->Enabled())) {
+		if(player_pos_changed && IsReadyForUpdates()) {
 			//GetPlayer()->CalculateLocation();
 			client_list.CheckPlayersInvisStatus(this);
 			GetCurrentZone()->SendPlayerPositionChanges(GetPlayer());
@@ -3045,13 +3055,6 @@ bool Client::Process(bool zone_process) {
 		lua_interface->UpdateDebugClients(this);
 	if (quest_pos_timer.Check())
 		CheckPlayerQuestsLocationUpdate();
-	if (camp_timer && camp_timer->Check() && getConnection()) {
-		ResetSendMail();
-		getConnection()->SendDisconnect(false);
-		safe_delete(camp_timer);
-		disconnect_timer = new Timer(2000);
-		disconnect_timer->Start();
-	}
 	if (player->GetSkills()->HasSkillUpdates()) {
 		vector<Skill*>* skills = player->GetSkills()->GetSkillUpdates();
 		if (skills) {
@@ -3065,10 +3068,6 @@ bool Client::Process(bool zone_process) {
 			if (app) QueuePacket(app);
 			safe_delete(skills);
 		}
-	}
-	if (disconnect_timer && disconnect_timer->Check()) {
-		safe_delete(disconnect_timer);
-		ret = false;
 	}
 	m_resurrect.writelock(__FUNCTION__, __LINE__);
 	if (current_rez.should_delete || (current_rez.expire_timer && current_rez.expire_timer->Check(false))) {
@@ -3096,6 +3095,7 @@ bool Client::Process(bool zone_process) {
 	MQuestTimers.writelock(__FUNCTION__, __LINE__);
 	if (quest_timers.size() > 0) {
 		vector<int32>::iterator itr;
+		GetPlayer()->MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 		map<int32, Quest*>* player_quests = player->GetPlayerQuests();
 		for (itr = quest_timers.begin(); itr != quest_timers.end(); itr++) {
 			if (player_quests->count(*itr) > 0 && player_quests->at(*itr)->GetStepTimer() != 0) {
@@ -3106,10 +3106,11 @@ bool Client::Process(bool zone_process) {
 				}
 			}
 			else {
-				quest_timers.erase(itr);
+				itr = quest_timers.erase(itr);
 				break;
 			}
 		}
+		GetPlayer()->MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	}
 	MQuestTimers.releasewritelock(__FUNCTION__, __LINE__);
 
@@ -3118,6 +3119,14 @@ bool Client::Process(bool zone_process) {
 
 	if (player->ControlFlagsChanged())
 		player->SendControlFlagUpdates(this);
+
+	if (camp_timer && camp_timer->Check()) {
+		ResetSendMail();
+		if(getConnection())
+			getConnection()->SendDisconnect(false);
+		safe_delete(camp_timer);
+		ret = false;
+	}
 
 	if (!eqs || (eqs && !eqs->CheckActive()))
 		ret = false;
@@ -4338,11 +4347,6 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	}
 
 	if (player->GetLevel() != new_level) {
-		if(!player->GetGroupMemberInfo() || !player->GetGroupMemberInfo()->mentor_target_char_id)
-		{
-			player->GetInfoStruct()->set_effective_level(new_level);
-		}
-		
 		player->SetLevel(new_level);
 		if (player->GetGroupMemberInfo()) {
 			player->UpdateGroupMemberInfo();
@@ -5454,13 +5458,15 @@ void Client::AddPendingQuest(Quest* quest, bool forced) {
 }
 
 Quest* Client::GetActiveQuest(int32 quest_id) {
+	Quest* quest = 0;
+	GetPlayer()->MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if (player->player_quests.count(quest_id) > 0) {
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Found %u active quests for char_id: %u", player->player_quests.count(quest_id), player->GetCharacterID());
-
-		return player->player_quests[quest_id];
+		quest = player->player_quests[quest_id];
 	}
-
-	return 0;
+	GetPlayer()->MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return quest;
 }
 
 void Client::AcceptQuest(int32 id) {
@@ -5515,6 +5521,7 @@ void Client::SetPlayerQuest(Quest* quest, map<int32, int32>* progress) {
 }
 
 void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets) {
+	GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__);
 	if (player->player_quests.count(quest->GetQuestID()) > 0) {
 		if (player->player_quests[quest->GetQuestID()]->GetQuestFlags() > 0)
 			quest->SetQuestFlags(player->player_quests[quest->GetQuestID()]->GetQuestFlags());
@@ -5522,6 +5529,8 @@ void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets)
 		RemovePlayerQuest(quest->GetQuestID(), false, false);
 	}
 	player->player_quests[quest->GetQuestID()] = quest;
+	GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
+	
 	quest->SetPlayer(player);
 	current_quest_id = quest->GetQuestID();
 	if (send_packets && quest->GetQuestGiver() > 0)
@@ -5550,13 +5559,17 @@ void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets)
 void Client::RemovePlayerQuest(int32 id, bool send_update, bool delete_quest) {
 	if (current_quest_id == id)
 		current_quest_id = 0;
+	GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__);
 	if (player->player_quests.count(id) > 0) {
 		if (delete_quest) {
 			player->player_quests[id]->SetDeleted(true);
 			database.DeleteCharacterQuest(id, GetCharacterID(), player->GetCompletedPlayerQuests()->count(id) > 0);
 		}
-		if (send_update && player->player_quests[id]->GetQuestGiver() > 0)
-			GetCurrentZone()->SendSpawnChangesByDBID(player->player_quests[id]->GetQuestGiver(), this, false, true);
+		int32 quest_giver = player->player_quests[id]->GetQuestGiver();
+		GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
+
+		if (send_update && quest_giver > 0)
+			GetCurrentZone()->SendSpawnChangesByDBID(quest_giver, this, false, true);
 		if (send_update) {
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 			SendQuestJournal(false, 0, true);
@@ -5567,6 +5580,10 @@ void Client::RemovePlayerQuest(int32 id, bool send_update, bool delete_quest) {
 			SendQuestJournal(false, 0, true);
 			GetCurrentZone()->SendAllSpawnsForVisChange(this);
 		}
+	}
+	else {
+		// if we don't have any quests to count then release the write lock
+		GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 	}
 
 }

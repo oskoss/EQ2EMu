@@ -2513,7 +2513,7 @@ void WorldDatabase::SaveCharacterQuests(Client* client){
 	Query query;
 	map<int32, Quest*>::iterator itr;
 	master_quest_list.LockQuests(); //prevent reloading until we are done
-	client->GetPlayer()->LockQuests(); //prevent all quest modifications until we are done
+	client->GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__); //prevent all quest modifications until we are done
 	map<int32, Quest*>* quests = client->GetPlayer()->GetPlayerQuests();
 	for(itr = quests->begin(); itr != quests->end(); itr++){
 		if(client->GetCurrentQuestID() == itr->first){
@@ -2540,7 +2540,7 @@ void WorldDatabase::SaveCharacterQuests(Client* client){
 			itr->second->SetSaveNeeded(false);
 		}
 	}
-	client->GetPlayer()->UnlockQuests();
+	client->GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 	master_quest_list.UnlockQuests();
 
 }

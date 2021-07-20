@@ -195,7 +195,9 @@ enum RuleType {
 	GlobalExpansionFlag,
 	GlobalHolidayFlag,
 
-	DatabaseVersion
+	DatabaseVersion,
+
+	SkipLootGrayMob
 };
 
 class Rule {

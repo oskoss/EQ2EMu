@@ -146,6 +146,7 @@ public:
 	Client(EQStream* ieqs);
     ~Client();
 	
+	void	RemoveClientFromZone();
 	bool	Process(bool zone_process = false);
 	void	Disconnect(bool send_disconnect = true);
 	void	SetConnected(bool val){ connected = val; }
@@ -546,7 +547,6 @@ private:
 	Timer*	CLE_keepalive_timer;
 	Timer*	connect;
 	Timer*	camp_timer;
-	Timer*	disconnect_timer;
 	bool	connected;
 	bool	ready_for_spawns;
 	bool	ready_for_updates;

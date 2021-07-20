@@ -324,6 +324,7 @@ void RuleManager::Init()
 	RULE_INIT(R_Loot, AllowChestUnlockByDropTime, "1"); // when set to 1 we will start a countdown timer to allow anyone to loot once ChestUnlockedTimeDrop elapsed
 	RULE_INIT(R_Loot, ChestUnlockedTimeTrap, "600"); // time in seconds, 10 minutes by default
 	RULE_INIT(R_Loot, AllowChestUnlockByTrapTime, "1"); // when set to 1 we will allow unlocking the chest to all players after the trap is triggered (or chest is open) and period ChestUnlockedTimeTrap elapsed
+	RULE_INIT(R_Loot, SkipLootGrayMob, "1");
 
 	RULE_INIT(R_Spells, NoInterruptBaseChance, "50");
 	RULE_INIT(R_Spells, EnableFizzleSpells, "1"); // enables/disables the 'fizzling' of spells based on can_fizzle in the spells table.  This also enables increasing specialized skills for classes based on spells/abilities.
@@ -340,6 +341,7 @@ void RuleManager::Init()
 	RULE_INIT(R_Expansion, GlobalHolidayFlag, "0");
 
 	RULE_INIT(R_World, DatabaseVersion, "0");
+
 #undef RULE_INIT
 }
 

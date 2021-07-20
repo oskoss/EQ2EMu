@@ -595,4 +595,11 @@ int EQ2Emu_lua_IsZoneLoading(lua_State* state);
 int EQ2Emu_lua_IsRunning(lua_State* state);
 
 int EQ2Emu_lua_GetZoneLockoutTimer(lua_State* state);
+
+int EQ2Emu_lua_SetWorldTime(lua_State* state);
+int EQ2Emu_lua_GetWorldTimeYear(lua_State* state);
+int EQ2Emu_lua_GetWorldTimeMonth(lua_State* state);
+int EQ2Emu_lua_GetWorldTimeHour(lua_State* state);
+int EQ2Emu_lua_GetWorldTimeMinute(lua_State* state);
+int EQ2Emu_lua_SendTimeUpdate(lua_State* state);
 #endif

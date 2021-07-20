@@ -884,7 +884,6 @@ void LoginServer::SendInfo() {
 #ifdef _DEBUG
 	lsi->servertype = 4;
 #endif
-	int8 tmppass[16];
 	string passwdSha512 = sha512(net.GetWorldPassword());
 	memcpy(lsi->password, (char*)passwdSha512.c_str(), passwdSha512.length());
 	strcpy(lsi->address, net.GetWorldAddress());
@@ -965,6 +964,7 @@ int32 LoginServer::DetermineCharacterLoginRequest ( UsertoWorldRequest_Struct* u
 	if(status < 100 && zone_list.ClientConnected(utwr->lsaccountid))
 		status = -9;
 	if(status < 0){
+		LogWrite(WORLD__ERROR, 0, "World", "Login Rejected based on PLAY_ERROR (UserStatus) (MinStatus: %i), UserStatus: %i, CharID: %i",loginserver.minLockedStatus,status,utwr->char_id );
 		switch(status){
 			case -10:
 				utwrs->response = PLAY_ERROR_CHAR_NOT_LOADED;

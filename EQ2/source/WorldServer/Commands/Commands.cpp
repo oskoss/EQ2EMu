@@ -2094,13 +2094,20 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								Item* item = player->item_list.GetItemFromIndex(item_index);
 								if(!item)
 									LogWrite(PLAYER__WARNING, 0, "Command", "%s: Item %s (%i) was used, however after the item looks to be removed.", client->GetPlayer()->GetName(), itemName.c_str(), item_id);
-								else if(!item->generic_info.display_charges && item->generic_info.max_charges == 1)
+								else if(!item->generic_info.display_charges && item->generic_info.max_charges == 1) {
+									client->Message(CHANNEL_NARRATIVE, "%s is out of charges.  It has been removed.", item->name.c_str());
 									client->RemoveItem(item, 1); // end of a set of charges OR an item that uses a stack count of actual item quantity
+								}
 								else
 								{
 									item->details.count--; // charges
 									item->save_needed = true;
 									client->QueuePacket(item->serialize(client->GetVersion(), false, client->GetPlayer()));
+
+									if(!item->details.count) {
+										client->Message(CHANNEL_NARRATIVE, "%s is out of charges.  It has been removed.", item->name.c_str());
+										client->RemoveItem(item, 1); // end of a set of charges OR an item that uses a stack count of actual item quantity
+									}
 								}
 							}
 							else
@@ -2779,7 +2786,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							{
 								Entity* ent = (Entity*)spawn;
 								ent->SetLootCoins(0);
-								ent->ClearLootList();
+								ent->ClearLoot();
 								spawn->GetZone()->AddLoot((NPC*)spawn);
 								client->Message(CHANNEL_COLOR_YELLOW, "Spawn %u active loot purged and reloaded.", spawn->GetDatabaseID());
 							}
@@ -3295,6 +3302,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						  }
 		case COMMAND_SETTIME:{
 			if(sep && sep->arg[0]){
+				
+				world.MWorldTime.writelock(__FUNCTION__, __LINE__);
 				sscanf (sep->arg[0], "%d:%d", &world.GetWorldTimeStruct()->hour, &world.GetWorldTimeStruct()->minute);
 				if(sep->arg[1] && sep->IsNumber(1))
 					world.GetWorldTimeStruct()->month = atoi(sep->arg[1]) - 1; //zero based indexes
@@ -3302,6 +3311,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					world.GetWorldTimeStruct()->day = atoi(sep->arg[2]) - 1; //zero based indexes
 				if(sep->arg[3] && sep->IsNumber(3))
 					world.GetWorldTimeStruct()->year = atoi(sep->arg[3]);
+				world.MWorldTime.releasewritelock(__FUNCTION__, __LINE__);
 				client->GetCurrentZone()->SendTimeUpdateToAllClients();
 			}
 			else{

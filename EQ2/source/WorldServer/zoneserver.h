@@ -679,6 +679,8 @@ public:
 	void	QueueDefaultCommand(int32 spawn_id, std::string command, float distance);
 	void	ProcessQueuedStateCommands();
 	void	UpdateClientSpawnMap(Player* player, Client* client);
+
+	void	WorldTimeUpdateTrigger() { sync_game_time_timer.Trigger(); }
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;

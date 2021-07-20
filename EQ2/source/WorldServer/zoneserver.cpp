@@ -1414,9 +1414,10 @@ bool ZoneServer::Process()
 
 		if(lua_interface)
 			lua_interface->Process();
-
+		world.MWorldTime.readlock(__FUNCTION__, __LINE__);
 		int hour = world.GetWorldTimeStruct()->hour;
 		int minute = world.GetWorldTimeStruct()->minute;
+		world.MWorldTime.releasereadlock(__FUNCTION__, __LINE__);
 
 		if (!isDusk && (hour >= 19 || hour < 8)) {//((hour > dusk_hour || hour < dawn_hour) || ((dusk_hour == hour && minute >= dusk_minute) || (hour == dawn_hour && minute < dawn_minute)))) {
 			isDusk = true;
@@ -2350,6 +2351,31 @@ void ZoneServer::ProcessSpawnLocations()
 }
 
 void ZoneServer::AddLoot(NPC* npc, Spawn* killer){
+	// this function is ran twice, first on spawn of mob, then at death of mob (gray mob check and no_drop_quest_completed_id check)
+
+	// first we see if the skipping of gray mobs loot is enabled, then we move all non body drops
+	if(killer)
+	{
+		int8 skip_loot_gray_mob_flag = rule_manager.GetGlobalRule(R_Loot, SkipLootGrayMob)->GetInt8();
+		if(skip_loot_gray_mob_flag) {
+			Player* player = 0;
+			if(killer->IsPlayer())
+				player = (Player*)killer;
+			else if(killer->IsPet()) {
+				Spawn* owner = ((Entity*)killer)->GetOwner();
+				if(owner->IsPlayer())
+					player = (Player*)owner;
+			}
+			if(player) {
+				int8 difficulty = player->GetArrowColor(npc->GetLevel());
+				if(difficulty == ARROW_COLOR_GRAY) {
+					npc->ClearNonBodyLoot();
+				}
+			}
+		}
+	}
+
+	// check for starting loot of Spawn and death of Spawn loot (no_drop_quest_completed_id)
 	vector<int32> loot_tables = GetSpawnLootList(npc->GetDatabaseID(), GetZoneID(), npc->GetLevel(), race_types_list.GetRaceType(npc->GetModelType()), npc);
 	if(loot_tables.size() > 0){
 		vector<LootDrop*>* loot_drops = 0;
@@ -4135,7 +4161,20 @@ void ZoneServer::SendCalculatedXP(Player* player, Spawn* victim){
 				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 				deque<GroupMemberInfo*>* members = group->GetMembers();
 				deque<GroupMemberInfo*>::iterator itr;
+				bool skipGrayMob = false;
+				
 				for (itr = members->begin(); itr != members->end(); itr++) {
+					GroupMemberInfo* gmi = *itr;
+					if (gmi->client) {
+						Player* group_member = gmi->client->GetPlayer();
+						if(group_member && group_member->GetArrowColor(victim->GetLevel()) == ARROW_COLOR_GRAY) {
+							skipGrayMob = true;
+							break;
+						}
+					}
+				}
+
+				for (itr = members->begin(); !skipGrayMob && itr != members->end(); itr++) {
 					GroupMemberInfo* gmi = *itr;
 					if (gmi->client) {
 						Player* group_member = gmi->client->GetPlayer();
