@@ -688,9 +688,7 @@ void MapRange::AddVersionRange(std::string zoneName) {
   BOOST_FOREACH(boost::filesystem::path
     const & i, make_pair(iter, eod)) {
     if (is_regular_file(i)) {
-		std::string fileName(i.string());
-
-      if (boost::regex_match(fileName, base_match, re)) {
+      if (boost::regex_match(i.string(), base_match, re)) {
         boost::ssub_match base_sub_match = base_match[2];
         boost::ssub_match base_sub_match2 = base_match[5];
 		boost::ssub_match base_sub_match3 = base_match[6];

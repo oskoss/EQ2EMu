@@ -487,11 +487,39 @@ public:
 
 	void TriggerSpellSave();
 
-	void ClearSentItemDetails() { sent_item_details.clear(); }
+	void ClearSentItemDetails() { 
+		MItemDetails.writelock(__FUNCTION__, __LINE__);
+		sent_item_details.clear();
+		MItemDetails.releasewritelock(__FUNCTION__, __LINE__);
+	}
 
 	bool IsPlayerLoadingComplete() { return player_loading_complete; }
 
 	int32 GetRejoinGroupID() { return rejoin_group_id; }
+
+	void ClearSentSpellList() { 
+		MSpellDetails.writelock(__FUNCTION__, __LINE__);
+		sent_spell_details.clear();
+		MSpellDetails.releasewritelock(__FUNCTION__, __LINE__);
+	}
+
+	void UpdateSentSpellList();
+
+	bool CountSentSpell(int32 id, int32 tier) {
+		bool res = false;
+		MSpellDetails.readlock(__FUNCTION__, __LINE__);
+		std::map<int32, int32>::iterator itr = sent_spell_details.find(id);
+		if(itr->second == tier)
+			res = true;
+		MSpellDetails.releasereadlock(__FUNCTION__, __LINE__);
+		return res;
+	}
+
+	void SetSentSpell(int32 id, int32 tier) {
+		MSpellDetails.writelock(__FUNCTION__, __LINE__);
+		sent_spell_details[id] = tier;
+		MSpellDetails.releasewritelock(__FUNCTION__, __LINE__);
+	}
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -526,7 +554,7 @@ private:
 	map<int32, map<int8, string> > conversation_map;
 	int32	current_quest_id;
 	Spawn*	banker;
-	map<int32, bool> sent_spell_details;
+	map<int32, int32> sent_spell_details;
 	map<int32, bool> sent_item_details;
 	Player*	player;
 	int16	version;
@@ -611,6 +639,8 @@ private:
 	int32 save_spell_state_time_bucket; // bucket as we collect over time when timer is reset by new spell effects being casted
 	std::mutex MSaveSpellStateMutex;
 	bool player_loading_complete;
+	Mutex MItemDetails;
+	Mutex MSpellDetails;
 };
 
 class ClientList {

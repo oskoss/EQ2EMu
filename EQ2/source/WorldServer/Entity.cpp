@@ -1238,6 +1238,7 @@ void Entity::CalculateBonuses(){
 	info->add_uncontested_dodge(values->uncontested_dodge);
 	info->add_uncontested_riposte(values->uncontested_riposte);
 
+	info->set_ability_modifier(values->ability_modifier);
 	
 	float full_pct_hit = 100.0f;
 
@@ -1942,7 +1943,7 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 			}
 
 			if (attacker && spell->caster)
-				attacker->DamageSpawn(spell->caster, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, redirectDamage, redirectDamage, 0);
+				attacker->DamageSpawn(spell->caster, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, redirectDamage, redirectDamage, 0, 0, false, false, false, spell);
 		}
 
 		bool shouldRemoveSpell = false;

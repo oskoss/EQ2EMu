@@ -205,6 +205,8 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	save_spell_state_timer.Disable();
 	save_spell_state_time_bucket = 0;
 	player_loading_complete = false;
+	MItemDetails.SetName("Client::MItemDetails");
+	MSpellDetails.SetName("Client::MSpellDetails");
 }
 
 Client::~Client() {
@@ -2710,10 +2712,10 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 				spell = tmpSpell->spell;
 			lua_interface->FindCustomSpellUnlock();
 		}
-
-		if (spell && sent_spell_details.count(id) == 0) {
+		
+		if (spell && !CountSentSpell(id, tier)) {
 			if (!spell->IsCopiedSpell())
-				sent_spell_details[id] = true;
+				SetSentSpell(spell->GetSpellID(), spell->GetSpellTier());
 
 			EQ2Packet* app = spell->SerializeSpell(this, display, trait_display);
 			//DumpPacket(app);
@@ -2755,7 +2757,9 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (!item)
 			item = master_item_list.GetItem(id);
 		if (item) {// && sent_item_details.count(id) == 0){
+			MItemDetails.writelock(__FUNCTION__, __LINE__);
 			sent_item_details[id] = true;
+			MItemDetails.releasewritelock(__FUNCTION__, __LINE__);
 			EQ2Packet* app = item->serialize(GetVersion(), false, GetPlayer());
 			//DumpPacket(app);
 			QueuePacket(app);
@@ -2784,7 +2788,9 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (!item)
 			item = master_item_list.GetItem(id);
 		if (item) {
+			MItemDetails.writelock(__FUNCTION__, __LINE__);
 			sent_item_details[id] = true;
+			MItemDetails.releasewritelock(__FUNCTION__, __LINE__);
 			EQ2Packet* app = item->serialize(GetVersion(), false, GetPlayer());
 			//DumpPacket(app);
 			QueuePacket(app);
@@ -2845,9 +2851,9 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 				lua_interface->FindCustomSpellUnlock();
 			}
 
-			if (spell && sent_spell_details.count(id) == 0) {
+			if (spell && !CountSentSpell(id, tier)) {
 				if (!spell->IsCopiedSpell())
-					sent_spell_details[id] = true;
+					SetSentSpell(spell->GetSpellID(), spell->GetSpellTier());
 				int8 type = 0;
 				if (version <= 283)
 					type = 1;
@@ -2907,7 +2913,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 
 		//if (spell && sent_spell_details.count(spell->GetSpellID()) == 0) {
 		if (!spell->IsCopiedSpell())
-			sent_spell_details[spell->GetSpellID()] = true;
+			SetSentSpell(spell->GetSpellID(), spell->GetSpellTier());
 		//	EQ2Packet* app = spell->SerializeAASpell(this,tier, data, false, GetItemPacketType(GetVersion()), 0x04);
 		EQ2Packet* app = master_spell_list.GetAASpellPacket(id, tier, this, false, 0x4F);//0x45 change version to match client
 		/////////////////////////////////////////GetAASpellPacket(int32 id, int8 tier, Client* client, bool display, int8 packet_type) {
@@ -10611,4 +10617,15 @@ void Client::TriggerSpellSave()
 		}
 	}
 	MSaveSpellStateMutex.unlock();
+}
+
+void Client::UpdateSentSpellList() {
+	MSpellDetails.readlock(__FUNCTION__, __LINE__);
+	std::map<int32, int32>::iterator itr;
+	for(itr = sent_spell_details.begin(); itr != sent_spell_details.end(); itr++) {
+		Spell* spell = master_spell_list.GetSpell(itr->first, itr->second);
+		EQ2Packet* app = spell->SerializeSpell(this, false, false);
+		QueuePacket(app);
+	}
+	MSpellDetails.releasereadlock(__FUNCTION__, __LINE__);
 }

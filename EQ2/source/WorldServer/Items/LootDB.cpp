@@ -110,6 +110,7 @@ void WorldDatabase::LoadGlobalLoot(ZoneServer* zone) {
 				loot->minLevel = result.GetInt8Str("value1");
 				loot->maxLevel = result.GetInt8Str("value2");
 				loot->table_id = table_id;
+				loot->loot_tier = result.GetInt32Str("value4");
 
 				if (loot->minLevel > loot->maxLevel)
 					loot->maxLevel = loot->minLevel;
@@ -124,6 +125,7 @@ void WorldDatabase::LoadGlobalLoot(ZoneServer* zone) {
 				loot->minLevel = result.GetInt8Str("value2");
 				loot->maxLevel = result.GetInt8Str("value3");
 				loot->table_id = table_id;
+				loot->loot_tier = result.GetInt32Str("value4");
 
 				if (loot->minLevel > loot->maxLevel)
 					loot->maxLevel = loot->minLevel;
@@ -138,6 +140,7 @@ void WorldDatabase::LoadGlobalLoot(ZoneServer* zone) {
 				loot->minLevel = result.GetInt8Str("value2");
 				loot->maxLevel = result.GetInt8Str("value3");
 				loot->table_id = table_id;
+				loot->loot_tier = result.GetInt32Str("value4");
 
 				if (loot->minLevel > loot->maxLevel)
 					loot->maxLevel = loot->minLevel;

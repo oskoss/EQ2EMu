@@ -6719,30 +6719,8 @@ void ZoneServer::ResurrectSpawn(Spawn* spawn, Client* client) {
 	}
 
 	if(!no_calcs && caster){
-		//Potency Mod
-		((Entity*)caster)->MStats.lock();
-		heal_amt *=  ((caster->stats[ITEM_STAT_POTENCY] / 100) + 1);
-		power_amt *= ((caster->stats[ITEM_STAT_POTENCY] / 100) + 1);
-		((Entity*)caster)->MStats.unlock();
-
-		//Ability Mod
-		heal_amt += (int32)min((int32)info->get_ability_modifier(), (int32)(heal_amt / 2));
-		power_amt += (int32)min((int32)info->get_ability_modifier(), (int32)(power_amt / 2));
-
-		if(!crit_mod || crit_mod == 1){
-			if(crit_mod == 1) 
-				crit = true;
-			else {
-				// Crit Roll
-				float chance = (float)max((float)0, (float)info->get_crit_chance());
-				crit = (MakeRandomFloat(0, 100) <= chance); 
-			}
-			if(crit){
-				//Apply total crit multiplier with crit bonus
-				heal_amt *= ((info->get_crit_bonus() / 100) + 1.3);
-				power_amt *= ((info->get_crit_bonus() / 100) + 1.3);
-			}
-		}
+		heal_amt = caster->CalculateHealAmount(spawn, heal_amt, crit_mod, &crit);
+		power_amt = caster->CalculateHealAmount(spawn, power_amt, crit_mod, &crit);
 	}
 
 	//Set this rez as a crit to be passed to subspell (not yet used)
@@ -7411,10 +7389,10 @@ vector<int32> ZoneServer::GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 s
 					continue;
 			}
 			bool entryAdded = false;
-			if (loot->minLevel == 0 && loot->maxLevel == 0 && (entryAdded = true)) // successful plan to add set entryAdded to true
+			if (loot->minLevel == 0 && loot->maxLevel == 0 && (!loot->loot_tier || spawn->GetLootTier() >= loot->loot_tier) && (entryAdded = true)) // successful plan to add set entryAdded to true
 				ret.push_back(loot->table_id);
 			else {
-				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel && (entryAdded = true)) // successful plan to add set entryAdded to true
+				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel && (!loot->loot_tier || spawn->GetLootTier() >= loot->loot_tier) && (entryAdded = true)) // successful plan to add set entryAdded to true
 					ret.push_back(loot->table_id);
 			}
 			
@@ -7435,10 +7413,10 @@ vector<int32> ZoneServer::GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 s
 					continue;
 			}
 			bool entryAdded = false;
-			if (loot->minLevel == 0 && loot->maxLevel == 0 && (entryAdded = true)) // successful plan to add set entryAdded to true
+			if (loot->minLevel == 0 && loot->maxLevel == 0 && (!loot->loot_tier || spawn->GetLootTier() >= loot->loot_tier) && (entryAdded = true)) // successful plan to add set entryAdded to true
 				ret.push_back(loot->table_id);
 			else {
-				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel && (entryAdded = true)) // successful plan to add set entryAdded to true
+				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel && (!loot->loot_tier || spawn->GetLootTier() >= loot->loot_tier) && (entryAdded = true)) // successful plan to add set entryAdded to true
 					ret.push_back(loot->table_id);
 			}
 
@@ -7459,10 +7437,10 @@ vector<int32> ZoneServer::GetSpawnLootList(int32 spawn_id, int32 zone_id, int8 s
 					continue;
 			}
 			bool entryAdded = false;
-			if (loot->minLevel == 0 && loot->maxLevel == 0 && (entryAdded = true)) // successful plan to add set entryAdded to true
+			if (loot->minLevel == 0 && loot->maxLevel == 0 && (!loot->loot_tier || spawn->GetLootTier() >= loot->loot_tier) && (entryAdded = true)) // successful plan to add set entryAdded to true
 				ret.push_back(loot->table_id);
 			else {
-				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel && (entryAdded = true)) // successful plan to add set entryAdded to true
+				if (spawn_level >= loot->minLevel && spawn_level <= loot->maxLevel && (!loot->loot_tier || spawn->GetLootTier() >= loot->loot_tier) && (entryAdded = true)) // successful plan to add set entryAdded to true
 					ret.push_back(loot->table_id);
 			}
 

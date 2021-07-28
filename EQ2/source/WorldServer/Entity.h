@@ -1233,7 +1233,7 @@ public:
 	int8			DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, bool spell);
 	float			GetDamageTypeResistPercentage(int8 damage_type);
 	Skill*			GetSkillByWeaponType(int8 type, bool update);
-	bool			DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod = 0, bool is_tick = false, bool no_damage_calcs = false, bool ignore_attacker = false);
+	bool			DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod = 0, bool is_tick = false, bool no_damage_calcs = false, bool ignore_attacker = false, LuaSpell* spell = 0);
 	void			AddHate(Entity* attacker, sint32 hate);
 	bool			CheckInterruptSpell(Entity* attacker);
 	bool			CheckFizzleSpell(LuaSpell* spell);
@@ -1671,6 +1671,13 @@ public:
 	bool SetInfoStructSInt(std::string field, sint64 value);
 	bool SetInfoStructFloat(std::string field, float value);
 
+	sint32 CalculateHateAmount(Spawn* target, sint32 amt);
+	sint32 CalculateHealAmount(Spawn* target, sint32 amt, int8 crit_mod, bool* crit, bool skip_crit_mod = false);
+	sint32 CalculateDamageAmount(Spawn* target, sint32 damage, int8 base_type, int8 damage_type, LuaSpell* spell);
+	sint32 CalculateDamageAmount(Spawn* target, sint32 damage, int8 base_type, int8 damage_type, int8 spell_target_type);
+	sint32 CalculateFormulaByStat(sint32 value, int16 stat);
+	int32 CalculateFormulaByStat(int32 value, int16 stat);
+	int32 CalculateFormulaBonus(int32 value, float percent_bonus);
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		MEquipment;
 	std::mutex		MStats;

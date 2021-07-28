@@ -920,9 +920,9 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("crit_chance", info_struct->get_crit_chance());// dov confirmed
 		//unknown_1096_32_MJ
 		packet->setDataByName("crit_bonus", info_struct->get_crit_bonus());// dov confirmed
-		((Entity*)player)->MStats.lock();
-		packet->setDataByName("potency", player->stats[ITEM_STAT_POTENCY]);//info_struct->get_potency);// dov confirmed
-		((Entity*)player)->MStats.unlock();
+
+		packet->setDataByName("potency", info_struct->get_potency());//info_struct->get_potency);// dov confirmed
+
 		//unknown_1096_33_MJ
 		packet->setDataByName("reuse_speed", info_struct->get_reuse_speed());// dov confirmed
 		packet->setDataByName("recovery_speed", info_struct->get_recovery_speed());// dov confirmed
@@ -1772,7 +1772,7 @@ int8 Player::ConvertSlotFromClient(int8 slot, int16 version) {
 	return slot;
 }
 
-vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version, int8 appearance_type) {
+vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version, int8 appearance_type, bool send_item_updates) {
 	vector<EQ2Packet*>	packets;
 	EquipmentItemList* equipList = &equipment_list;
 	
@@ -1982,6 +1982,13 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 		if (bag && bag->IsBag())
 			packets.push_back(bag->serialize(version, false, this));
 	}
+
+	if(send_item_updates)
+	{
+		GetClient()->UpdateSentSpellList();
+		GetClient()->ClearSentSpellList();
+	}
+
 	return packets;
 }
 
@@ -2134,10 +2141,10 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 				slot = item->slot_data.at(0);
 			else
 				slot = slot_id;
-			packets = UnequipItem(slot, item->details.inv_slot_id, item->details.slot_id, version, appearance_type);
+			packets = UnequipItem(slot, item->details.inv_slot_id, item->details.slot_id, version, appearance_type, false);
 			// If item is a 2handed weapon and something is in the secondary, unequip the secondary
 			if (item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && equipList->GetItem(EQ2_SECONDARY_SLOT) != 0) {
-				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version, appearance_type);
+				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version, appearance_type, false);
 				//packets.reserve(packets.size() + tmp_packets.size());
 				packets.insert(packets.end(), tmp_packets.begin(), tmp_packets.end());
 			}
@@ -2145,7 +2152,7 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 		else if (canEquip && slot < 255) {
 			// If item is a 2handed weapon and something is in the secondary, unequip the secondary
 			if (item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && equipList->GetItem(EQ2_SECONDARY_SLOT) != 0) {
-				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version, appearance_type);
+				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version, appearance_type, false);
 				//packets.reserve(packets.size() + tmp_packets.size());
 				packets.insert(packets.end(), tmp_packets.begin(), tmp_packets.end());
 			}
@@ -2185,6 +2192,10 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 			SetCharSheetChanged(true);
 		}
 	}
+	
+	client->UpdateSentSpellList();
+	client->ClearSentSpellList();
+
 	return packets;
 }
 bool Player::AddItem(Item* item) {

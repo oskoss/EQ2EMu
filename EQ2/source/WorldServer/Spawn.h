@@ -1240,6 +1240,9 @@ public:
 	void SetOmittedByDBFlag(bool val) { is_omitted_by_db_flag = val; }
 	bool IsOmittedByDBFlag() { return is_omitted_by_db_flag; }
 
+	int32 GetLootTier() { return loot_tier; }
+	void SetLootTier(int32 tier) { loot_tier = tier; }
+
 protected:
 
 	bool	has_quests_required;
@@ -1345,6 +1348,8 @@ private:
 	map<int32, bool> rail_passengers;
 	mutex m_RailMutex;
 	bool is_omitted_by_db_flag; // this particular spawn is omitted by an expansion or holiday flag
+
+	int32 loot_tier;
 };
 
 #endif

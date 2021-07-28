@@ -26,12 +26,15 @@
 #include <cmath>
 #include "LuaInterface.h"
 
+#include <boost/regex.hpp>
+
 extern ConfigReader configReader;
 extern WorldDatabase database;
 extern MasterTraitList master_trait_list;
 extern MasterAAList master_aa_list;
 extern MasterSpellList master_spell_list;
 extern LuaInterface* lua_interface;
+extern MasterSkillList master_skill_list;
 
 Spell::Spell(){
 	spell = new SpellData;
@@ -435,9 +438,8 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 						value = lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 					else
 						value = lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-					value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-					int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-					value += mod;
+
+					value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 					string damage = to_string((int)round(value));
 					effect_message.replace(effect_message.find("%DML"), 6, damage);
 				}
@@ -450,9 +452,8 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 						value = lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 					else
 						value = lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-					value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-					int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-					value += mod;
+						
+					value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 					string damage = to_string((int)round(value));
 					effect_message.replace(effect_message.find("%DMH"), 6, damage);
 				}
@@ -465,9 +466,8 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 						value = lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 					else
 						value = lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-					value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-					int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-					value += mod;
+						
+					value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 					string damage = to_string((int)round(value));
 					effect_message.replace(effect_message.find("%LDML"), 7, damage);
 				}
@@ -480,9 +480,8 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 						value = lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 					else
 						value = lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-					value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-					int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-					value += mod;
+						
+					value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 					string damage = to_string((int)round(value));
 					effect_message.replace(effect_message.find("%LDMH"), 7, damage);
 				}
@@ -625,9 +624,8 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 						value = next_spell->lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 					else
 						value = next_spell->lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-					value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-					int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-					value += mod;
+						
+					value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 					string damage = to_string((int)round(value));
 					damage.erase(damage.find_last_not_of('0') + 1, std::string::npos);
 					effect_message.replace(effect_message.find("%DML"), 6, damage);
@@ -641,9 +639,8 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 						value = next_spell->lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 					else
 						value = next_spell->lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-					value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-					int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-					value += mod;
+						
+					value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 					string damage = to_string((int)round(value));
 					damage.erase(damage.find_last_not_of('0') + 1, std::string::npos);
 					effect_message.replace(effect_message.find("%DMH"), 6, damage);
@@ -657,9 +654,8 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 						value = next_spell->lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 					else
 						value = next_spell->lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-					value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-					int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-					value += mod;
+						
+					value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 					string damage = to_string((int)round(value));
 					effect_message.replace(effect_message.find("%LDML"), 7, damage);
 				}
@@ -672,9 +668,8 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 						value = next_spell->lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 					else
 						value = next_spell->lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-					value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-					int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-					value += mod;
+						
+					value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 					string damage = to_string((int)round(value));
 					effect_message.replace(effect_message.find("%LDMH"), 7, damage);
 				}
@@ -819,9 +814,8 @@ void Spell::SetPacketInformation(PacketStruct* packet, Client* client, bool disp
 					value = lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 				else
 					value = lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-				value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-				int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-				value += mod;
+				
+				value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 				string damage = to_string((int)round(value));
 				effect_message.replace(effect_message.find("%DML"), 6, damage);
 			}
@@ -834,9 +828,8 @@ void Spell::SetPacketInformation(PacketStruct* packet, Client* client, bool disp
 					value = lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 				else
 					value = lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-				value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-				int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-				value += mod;
+					
+				value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 				string damage = to_string((int)round(value));
 				effect_message.replace(effect_message.find("%DMH"), 6, damage);
 			}
@@ -849,9 +842,8 @@ void Spell::SetPacketInformation(PacketStruct* packet, Client* client, bool disp
 					value = lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 				else
 					value = lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-				value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-				int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-				value += mod;
+
+				value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 				string damage = to_string((int)round(value));
 				effect_message.replace(effect_message.find("%LDML"), 7, damage);
 			}
@@ -864,11 +856,50 @@ void Spell::SetPacketInformation(PacketStruct* packet, Client* client, bool disp
 					value = lua_data[data_index]->float_value * client->GetPlayer()->GetLevel();
 				else
 					value = lua_data[data_index]->int_value * client->GetPlayer()->GetLevel();
-				value *= ((client->GetPlayer()->GetInfoStruct()->get_potency() / 100) + 1);
-				int32 mod = (int32)min(client->GetPlayer()->GetInfoStruct()->get_ability_modifier(), (float)(value / 2));
-				value += mod;
+				
+				value = client->GetPlayer()->CalculateDamageAmount(nullptr, value, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
 				string damage = to_string((int)round(value));
 				effect_message.replace(effect_message.find("%LDMH"), 7, damage);
+			}
+
+			boost::regex re("([0-9]{1,10})\\s+\\-\\s+([0-9]{1,10})");
+			boost::match_results<std::string::const_iterator> base_match;
+			if (boost::regex_search(effect_message, base_match, re, boost::match_partial)) {
+				boost::ssub_match match = base_match[0];
+				std::size_t midPos = match.str().find(" - ");
+				if(midPos != std::string::npos)
+				{
+					int32 minValue = atoul(match.str().substr(0, midPos).c_str());
+					int32 maxValue = atoul(match.str().substr(midPos+3).c_str());
+
+					int32 newMin = minValue;
+					
+					bool crit = false;
+					Skill* skill = master_skill_list.GetSkill(spell->mastery_skill);
+					std::string skillName = "";
+					
+					if(skill)
+						skillName = skill->name.data;
+
+					if(skillName == "Aggression")
+						newMin = (int32)client->GetPlayer()->CalculateHateAmount(nullptr, (sint32)minValue);
+					else if(spell->friendly_spell && skillName == "Ministration")
+						newMin = (int32)client->GetPlayer()->CalculateHealAmount(nullptr, (sint32)minValue, 0, &crit, true);
+					else
+						newMin = (int32)client->GetPlayer()->CalculateDamageAmount(nullptr, (sint32)minValue, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
+					
+					int32 newMax = maxValue;
+					if(skillName == "Aggression")
+						newMax = (int32)client->GetPlayer()->CalculateHateAmount(nullptr, (sint32)maxValue);
+					else if(spell->friendly_spell && skillName == "Ministration")
+						newMax = (int32)client->GetPlayer()->CalculateHealAmount(nullptr, (sint32)maxValue, 0, &crit, true);
+					else
+						newMax = (int32)client->GetPlayer()->CalculateDamageAmount(nullptr, (sint32)maxValue, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, spell->type, spell->target_type);
+					
+					std::string newStr = std::to_string(newMin) + " - " + std::to_string(newMax);
+
+					effect_message.replace(effect_message.find(match.str()), match.str().size(), newStr);
+				}
 			}
 			//GetZone()->SimpleMessage(CHANNEL_COLOR_SPELL_EFFECT, effect_message.c_str(), victim, 50);
 		}

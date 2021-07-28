@@ -451,7 +451,7 @@ public:
 	vector<EQ2Packet*>	EquipItem(int16 index, int16 version, int8 appearance_type, int8 slot_id = 255);
 	bool CanEquipItem(Item* item);
 	void SetEquippedItemAppearances();
-	vector<EQ2Packet*>	UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version, int8 appearance_type = 0);
+	vector<EQ2Packet*>	UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version, int8 appearance_type = 0, bool send_item_updates = true);
 	int8 ConvertSlotToClient(int8 slot, int16 version);
 	int8 ConvertSlotFromClient(int8 slot, int16 version);
 	EQ2Packet* SwapEquippedItems(int8 slot1, int8 slot2, int16 version, int16 equiptype);

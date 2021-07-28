@@ -243,19 +243,12 @@ PacketStruct* World::GetWorldTime(int16 version){
 }
 
 float World::GetXPRate(){
-	if(xp_rate >= 0)
-		return xp_rate;
-
 	xp_rate = rule_manager.GetGlobalRule(R_Player, XPMultiplier)->GetFloat();
 	LogWrite(WORLD__DEBUG, 0, "World", "Setting Global XP Rate to: %.2f", xp_rate);
 	return xp_rate;
 }
 
-float World::GetTSXPRate()
-{
-	if(ts_xp_rate >= 0)
-		return ts_xp_rate;
-
+float World::GetTSXPRate(){
 	ts_xp_rate = rule_manager.GetGlobalRule(R_Player, TSXPMultiplier)->GetFloat();
 	LogWrite(WORLD__DEBUG, 0, "World", "Setting Global Tradeskill XP Rate to: %.2f", ts_xp_rate);
 	return ts_xp_rate;
@@ -1629,10 +1622,10 @@ void World::AddBonuses(Item* item, ItemStatsValues* values, int16 type, sint32 v
 				values->critbonus += value;
 				break;
 			}
-			/*case ITEM_STAT_POTENCY:{
+			case ITEM_STAT_POTENCY:{
 				values->potency += value;
 				break;
-			}*/
+			}
 			case ITEM_STAT_HATEGAINMOD:{
 				values->hategainmod += value;
 				break;

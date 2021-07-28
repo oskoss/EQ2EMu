@@ -129,6 +129,7 @@ Spawn::Spawn(){
 	is_transport_spawn = false;
 	rail_id = 0;
 	is_omitted_by_db_flag = false;
+	loot_tier = 0;
 }
 
 Spawn::~Spawn(){

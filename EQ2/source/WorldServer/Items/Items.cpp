@@ -1732,11 +1732,14 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			if (stat->stat_type == 9){
 				bluemod += 1;
 			}
-			if (stat->stat_type == 6){		//Convert stats to proper client
+			if (stat->stat_type == 6 || stat->stat_type == 7){		//Convert stats to proper client
 				//if (client->GetVersion() >= 63137){  //TEST
 				//	tmp_subtype =stat->stat_subtype;
 				//}
-				if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331){  //KA
+				if(stat->stat_type == 7){
+					tmp_subtype = stat->stat_subtype;
+				}
+				else if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331){  //KA
 					tmp_subtype = world.GetItemStatKAValue(stat->stat_subtype);
 				}
 				else if(client->GetVersion() >= 60085 ) {
@@ -1770,8 +1773,11 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			
 			
 			
-			if (stat->stat_type == 6){		//Convert stats to proper client
-				if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331){  //KA
+			if (stat->stat_type == 6 || stat->stat_type == 7){		//Convert stats to proper client
+				if(stat->stat_type == 7){
+					tmp_subtype = stat->stat_subtype;
+				}
+				else if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331){  //KA
 					tmp_subtype = world.GetItemStatKAValue(stat->stat_subtype);
 				}
 				else if(client->GetVersion() >= 60085 ) {

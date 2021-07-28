@@ -401,7 +401,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 			else
 				crit_mod = 2;
 		}
-		if(DamageSpawn((Entity*)victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, low_damage, high_damage, spell->GetName(), crit_mod, is_tick, no_calcs) && !luaspell->crit)
+		if(DamageSpawn((Entity*)victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, low_damage, high_damage, spell->GetName(), crit_mod, is_tick, no_calcs, luaspell) && !luaspell->crit)
 			luaspell->crit = true;
 		CheckProcs(PROC_TYPE_OFFENSIVE, victim);
 		CheckProcs(PROC_TYPE_MAGICAL_OFFENSIVE, victim);
@@ -580,33 +580,10 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 		}
 		
 		if (heal_amt > 0){
-			//int32 base_roll = heal_amt;
-			//potency mod
-			MStats.lock();
-			heal_amt *= (stats[ITEM_STAT_POTENCY] / 100 + 1);
-			MStats.unlock();
-
-			//primary stat mod, insert forula here when done
-			//heal_amt += base_roll * (GetPrimaryStat()
-		
-			//Ability Modifier can only be up to half of base roll + potency and primary stat bonus
-			heal_amt += (int32)min(info_struct.get_ability_modifier(), (float)(heal_amt / 2));
-		}
-
-		if(!crit_mod || crit_mod == 1){
-			if(crit_mod == 1) 
-				crit = true;
-			else {
-				// Crit Roll
-				float chance = max((float)0, info_struct.get_crit_chance());
-				crit = (MakeRandomFloat(0, 100) <= chance); 
-			}
-			if(crit){
-				//Apply total crit multiplier with crit bonus
-				heal_amt *= (info_struct.get_crit_bonus() / 100) + 1.3;
-				if(luaspell->spell)
-					luaspell->crit = true;
-			}
+			if(target->IsEntity())
+				heal_amt = (int32)CalculateHealAmount((Entity*)target, (sint32)heal_amt, crit_mod, &crit);
+			else
+				heal_amt = (int32)CalculateHealAmount(nullptr, (sint32)heal_amt, crit_mod, &crit);
 		}
 	}
 
@@ -902,7 +879,7 @@ Skill* Entity::GetSkillByWeaponType(int8 type, bool update) {
 	return 0;
 }
 
-bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod, bool is_tick, bool no_calcs, bool ignore_attacker) {
+bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod, bool is_tick, bool no_calcs, bool ignore_attacker, LuaSpell* spell) {
 	if(!victim || victim->GetHP() == 0)
 		return false;
 
@@ -929,16 +906,8 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 		}
 		//Potency and ability mod is only applied to spells/CAs
 		else { 
-			// Potency mod
-			MStats.lock();
-			damage *= ((stats[ITEM_STAT_POTENCY] / 100) + 1);
-			MStats.unlock();
-
-			// Ability mod can only give up to half of damage after potency
-			int32 mod = (int32)min(info_struct.get_ability_modifier(), (float)(damage / 2));
-			damage += mod;
+			damage = CalculateDamageAmount(victim, damage, type, damage_type, spell);
 		}
-
 
 		if(!crit_mod || crit_mod == 1){
 			//force crit if crit_mod == 1
@@ -1055,6 +1024,8 @@ void Entity::AddHate(Entity* attacker, sint32 hate) {
 	if (IsPet() && ((NPC*)this)->GetOwner()->IsPlayer() && ((((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->get_pet_behavior() & 2) == 0))
 		return;
 
+	hate = attacker->CalculateHateAmount(this, hate);
+	
 	if (IsNPC()) {
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "Add NPC_AI Hate: Victim '%s', Attacker '%s', Hate: %i", GetName(), attacker->GetName(), hate);
 		((NPC*)this)->Brain()->AddHate(attacker, hate);
@@ -1572,4 +1543,120 @@ void Entity::ClearProcs() {
 	m_procList.clear();
 
 	MProcList.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+sint32 Entity::CalculateHateAmount(Spawn* target, sint32 amt) {
+	sint32 hate = amt;
+
+	amt = CalculateFormulaByStat(amt, ITEM_STAT_TAUNT_AMOUNT);
+
+	amt = CalculateFormulaByStat(amt, ITEM_STAT_TAUNT_AND_COMBAT_ART_DAMAGE);
+
+	amt = CalculateFormulaByStat(amt, ITEM_STAT_ABILITY_MODIFIER);
+
+	return amt;
+}
+
+sint32 Entity::CalculateHealAmount(Spawn* target, sint32 amt, int8 crit_mod, bool* crit, bool skip_crit_mod) {
+	amt = CalculateFormulaByStat(amt, ITEM_STAT_HEAL_AMOUNT);
+	
+	amt = CalculateFormulaByStat(amt, ITEM_STAT_SPELL_AND_HEAL);
+
+	//Potency Mod
+	amt = CalculateFormulaByStat(amt, ITEM_STAT_POTENCY);
+	
+	//Ability Mod
+	amt += (int32)min((int32)GetInfoStruct()->get_ability_modifier(), (int32)(amt / 2));
+
+	if(!skip_crit_mod){
+		if(!crit_mod || crit_mod == 1){
+			if(crit_mod == 1) 
+				*crit = true;
+			else if(!*crit) {
+				// Crit Roll
+				float chance = (float)max((float)0, (float)GetInfoStruct()->get_crit_chance());
+				*crit = (MakeRandomFloat(0, 100) <= chance); 
+			}
+			if(*crit){
+				//Apply total crit multiplier with crit bonus
+				amt *= ((GetInfoStruct()->get_crit_bonus() / 100) + 1.3);
+			}
+		}
+	}
+
+	return amt;
+}
+
+sint32 Entity::CalculateDamageAmount(Spawn* target, sint32 damage, int8 base_type, int8 damage_type, LuaSpell* spell) {
+	return CalculateDamageAmount(target, damage, base_type, damage_type, (spell && spell->spell) ? spell->spell->GetSpellData()->target_type : 0);
+}
+
+sint32 Entity::CalculateDamageAmount(Spawn* target, sint32 damage, int8 base_type, int8 damage_type, int8 target_type) {
+	// only spells may add spell damage item stat
+	if(damage_type >= DAMAGE_PACKET_DAMAGE_TYPE_HEAT && damage_type <= DAMAGE_PACKET_DAMAGE_TYPE_POISON)
+	{
+		// https://forums.daybreakgames.com/eq2/index.php?threads/potency-and-ability-mod-what.4316/
+		// Spell damage model assuming 100% crit chance:
+		// (Spell base damage * Base damage modifier * Int bonus * Skill bonus * Potency + Ability modifier) * Crit bonus * Spell double attack
+		/** Spell base damage: Get all master spells
+			Base damage modifier: Very very rare. Available from Wizard aa Wisdom line(Brainstorm). Get it, cherish it.
+			Int bonus: Past 1200 or so int, you will get a 10% increase in spell damage per 30% increase in int. Look at int tooltip to see the numerical value.
+			Skill bonus: Past skill cap, 100 points skill is worth 2% increase in minimum spell damage, which translates to 1% overall increase. Looks at the skill that the spell uses, for wizards mostly disruption. Cap is 6.5*level.
+			Potency: A straight damage modifier, the more you can get the better. No practical cap.
+			Ability modifier: A straight damage modifier. Limited to 50% of the spell base damage, but for a wizard this usually has little consequence. However note that this is not affected by Potency.
+			Crit bonus: A straight damage modifier, the more you can get the better. No practical cap. Wizards got 50% intrinsic Crit Bonus that does not show up in the stat window, just add 50 to stat value for calculations.
+			Spell double cast: A straight damage modifier, the more you can get the better. You won't be able to get very much of this.
+			Makes the spell cast twice with some limitations.
+		**/
+
+		damage = CalculateFormulaByStat(damage, ITEM_STAT_SPELL_DAMAGE);
+	}
+
+	if(base_type == DAMAGE_PACKET_TYPE_SPELL_DAMAGE)
+		damage = CalculateFormulaByStat(damage, ITEM_STAT_SPELL_AND_COMBAT_ART_DAMAGE);
+
+	// combat abilities only bonus
+	if(damage_type <= DAMAGE_PACKET_DAMAGE_TYPE_PIERCE)
+		damage = CalculateFormulaByStat(damage, ITEM_STAT_TAUNT_AND_COMBAT_ART_DAMAGE);
+			
+	// Potency mod
+	damage = CalculateFormulaByStat(damage, ITEM_STAT_POTENCY);
+
+	int32 modifier = 2;
+	if(target_type == SPELL_TARGET_GROUP_AE || target_type == SPELL_TARGET_RAID_AE || target_type == SPELL_TARGET_OTHER_GROUP_AE)
+	{
+		modifier = 3;
+	}
+
+	// Ability mod can only give up to half of damage after potency
+	int32 mod = (int32)min(info_struct.get_ability_modifier(), (float)(damage / modifier));
+	damage += mod;
+
+	return damage;
+}
+
+sint32 Entity::CalculateFormulaByStat(sint32 value, int16 stat) {
+	sint32 outValue = value;
+	MStats.lock();
+	std::map<int16, float>::iterator itr = stats.find(stat);
+	if(itr != stats.end())
+		outValue = (sint32)((float)value * ((itr->second / 100.0f) + 1.0f));
+	MStats.unlock();
+
+	return outValue;
+}
+
+int32 Entity::CalculateFormulaByStat(int32 value, int16 stat) {
+	int32 outValue = value;
+	MStats.lock();
+	std::map<int16, float>::iterator itr = stats.find(stat);
+	if(itr != stats.end())
+		outValue = (int32)((float)value * ((itr->second / 100.0f) + 1.0f));
+	MStats.unlock();
+
+	return outValue;
+}
+
+int32 Entity::CalculateFormulaBonus(int32 value, float percent_bonus) {
+	return (int32)((float)value * ((percent_bonus / 100.0f) + 1.0f));
 }

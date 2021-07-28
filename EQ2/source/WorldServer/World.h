@@ -365,6 +365,7 @@ struct GlobalLoot {
 	int8	minLevel;
 	int8	maxLevel;
 	int32	table_id;
+	int32	loot_tier;
 };
 
 #define TRANSPORT_TYPE_LOCATION		0
