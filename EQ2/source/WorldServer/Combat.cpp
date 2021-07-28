@@ -1546,8 +1546,6 @@ void Entity::ClearProcs() {
 }
 
 sint32 Entity::CalculateHateAmount(Spawn* target, sint32 amt) {
-	sint32 hate = amt;
-
 	amt = CalculateFormulaByStat(amt, ITEM_STAT_TAUNT_AMOUNT);
 
 	amt = CalculateFormulaByStat(amt, ITEM_STAT_TAUNT_AND_COMBAT_ART_DAMAGE);
