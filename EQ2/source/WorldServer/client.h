@@ -509,7 +509,7 @@ public:
 		bool res = false;
 		MSpellDetails.readlock(__FUNCTION__, __LINE__);
 		std::map<int32, int32>::iterator itr = sent_spell_details.find(id);
-		if(itr->second == tier)
+		if(itr != sent_spell_details.end() && itr->second == tier)
 			res = true;
 		MSpellDetails.releasereadlock(__FUNCTION__, __LINE__);
 		return res;
