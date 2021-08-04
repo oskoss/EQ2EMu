@@ -640,6 +640,7 @@ public:
 	vector<Quest*>* CheckQuestsItemUpdate(Item* item);
 	vector<Quest*>* CheckQuestsLocationUpdate();
 	vector<Quest*>* CheckQuestsKillUpdate(Spawn* spawn,bool update = true);
+	bool HasQuestUpdateRequirement(Spawn* spawn);
 	vector<Quest*>* CheckQuestsSpellUpdate(Spell* spell);
 	void CheckQuestsCraftUpdate(Item* item, int32 qty);
 	void CheckQuestsHarvestUpdate(Item* item, int32 qty);

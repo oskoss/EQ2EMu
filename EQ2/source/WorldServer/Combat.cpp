@@ -951,36 +951,51 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 	}
 	else{
 		hit_result = DAMAGE_PACKET_RESULT_SUCCESSFUL;
-		GetZone()->CallSpawnScript(victim, SPAWN_SCRIPT_HEALTHCHANGED, this);
-		int32 prevDmg = damage;
-		damage = victim->CheckWards(this, damage, damage_type);
+		sint32 return_damage = 0;
+		if(GetZone()->CallSpawnScript(victim, SPAWN_SCRIPT_HEALTHCHANGED, this, 0, false, damage, &return_damage) && return_damage != 0)
+		{
+			// anything not 0 (no return) becomes considered 'immune' to the damage
+			if(return_damage < 0) {
+				damage = 0;
+				hit_result = DAMAGE_PACKET_RESULT_NO_DAMAGE;
+			}
+			else if(return_damage != 0) {
+				// otherwise we use what was given back to us (either less or greater)
+				damage = return_damage;
+			}
+		}
+		
+		if(damage) {
+			int32 prevDmg = damage;
+			damage = victim->CheckWards(this, damage, damage_type);
 
-		if (damage < (sint64)prevDmg)
-			useWards = true;
+			if (damage < (sint64)prevDmg)
+				useWards = true;
 
-		victim->TakeDamage(damage);
-		victim->CheckProcs(PROC_TYPE_DAMAGED, this);
+			victim->TakeDamage(damage);
+			victim->CheckProcs(PROC_TYPE_DAMAGED, this);
 
-		if (IsPlayer()) {
-			switch (damage_type) {
-			case DAMAGE_PACKET_DAMAGE_TYPE_SLASH:
-			case DAMAGE_PACKET_DAMAGE_TYPE_CRUSH:
-			case DAMAGE_PACKET_DAMAGE_TYPE_PIERCE:
-				if (((Player*)this)->GetPlayerStatisticValue(STAT_PLAYER_HIGHEST_MELEE_HIT) < damage)
-					((Player*)this)->UpdatePlayerStatistic(STAT_PLAYER_HIGHEST_MELEE_HIT, damage, true);
-				victim->CheckProcs(PROC_TYPE_DAMAGED_MELEE, this);
-				break;
-			case DAMAGE_PACKET_DAMAGE_TYPE_HEAT:
-			case DAMAGE_PACKET_DAMAGE_TYPE_COLD:
-			case DAMAGE_PACKET_DAMAGE_TYPE_MAGIC:
-			case DAMAGE_PACKET_DAMAGE_TYPE_MENTAL:
-			case DAMAGE_PACKET_DAMAGE_TYPE_DIVINE:
-			case DAMAGE_PACKET_DAMAGE_TYPE_DISEASE:
-			case DAMAGE_PACKET_DAMAGE_TYPE_POISON:
-				if (((Player*)this)->GetPlayerStatisticValue(STAT_PLAYER_HIGHEST_MAGIC_HIT) < damage)
-					((Player*)this)->UpdatePlayerStatistic(STAT_PLAYER_HIGHEST_MAGIC_HIT, damage, true);
-				victim->CheckProcs(PROC_TYPE_DAMAGED_MAGIC, this);
-				break;
+			if (IsPlayer()) {
+				switch (damage_type) {
+				case DAMAGE_PACKET_DAMAGE_TYPE_SLASH:
+				case DAMAGE_PACKET_DAMAGE_TYPE_CRUSH:
+				case DAMAGE_PACKET_DAMAGE_TYPE_PIERCE:
+					if (((Player*)this)->GetPlayerStatisticValue(STAT_PLAYER_HIGHEST_MELEE_HIT) < damage)
+						((Player*)this)->UpdatePlayerStatistic(STAT_PLAYER_HIGHEST_MELEE_HIT, damage, true);
+					victim->CheckProcs(PROC_TYPE_DAMAGED_MELEE, this);
+					break;
+				case DAMAGE_PACKET_DAMAGE_TYPE_HEAT:
+				case DAMAGE_PACKET_DAMAGE_TYPE_COLD:
+				case DAMAGE_PACKET_DAMAGE_TYPE_MAGIC:
+				case DAMAGE_PACKET_DAMAGE_TYPE_MENTAL:
+				case DAMAGE_PACKET_DAMAGE_TYPE_DIVINE:
+				case DAMAGE_PACKET_DAMAGE_TYPE_DISEASE:
+				case DAMAGE_PACKET_DAMAGE_TYPE_POISON:
+					if (((Player*)this)->GetPlayerStatisticValue(STAT_PLAYER_HIGHEST_MAGIC_HIT) < damage)
+						((Player*)this)->UpdatePlayerStatistic(STAT_PLAYER_HIGHEST_MAGIC_HIT, damage, true);
+					victim->CheckProcs(PROC_TYPE_DAMAGED_MAGIC, this);
+					break;
+				}
 			}
 		}
 	}

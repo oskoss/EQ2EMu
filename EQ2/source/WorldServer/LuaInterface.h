@@ -255,11 +255,12 @@ public:
 	bool			RunItemScriptWithReturnString(string script_name, const char* function_name, Item* item, Spawn* spawn = 0, std::string* returnValue = 0);
 	bool			CallItemScript(lua_State* state, int8 num_parameters, std::string* returnValue = 0);
 	bool			CallItemScript(lua_State* state, int8 num_parameters, sint64* returnValue = 0);
-	bool			RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn = 0, const char* message = 0, bool is_door_open = false);
+	bool			RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn = 0, const char* message = 0, bool is_door_open = false, sint32 input_value = 0, sint32* return_value = 0);
 	bool			CallSpawnScript(lua_State* state, int8 num_parameters);
 	bool			RunZoneScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn = 0, int32 int32_arg1 = 0, const char* str_arg1 = 0, Spawn* spawn_arg1 = 0, int32 int32_arg2 = 0, const char* str_arg2 = 0, Spawn* spawn_arg2 = 0);
 	bool			RunZoneScriptWithReturn(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn, int32 int32_arg1, int32 int32_arg2, int32 int32_arg3, int32* returnValue = 0);
-	bool			CallZoneScript(lua_State* state, int8 num_parameters, int32* returnValue = 0);
+	bool			CallScriptInt32(lua_State* state, int8 num_parameters, int32* returnValue = 0);
+	bool			CallScriptSInt32(lua_State* state, int8 num_parameters, sint32* returnValue = 0);
 	bool			RunRegionScript(string script_name, const char* function_name, ZoneServer* zone, Spawn* spawn = 0, sint32 int32_arg1 = 0, int32* returnValue = 0);
 	bool			CallRegionScript(lua_State* state, int8 num_parameters, int32* returnValue);
 	void			ResetFunctionStack(lua_State* state);

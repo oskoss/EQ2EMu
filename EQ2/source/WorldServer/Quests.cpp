@@ -133,7 +133,7 @@ int8 QuestStep::GetStepType(){
 	return type;
 }
 
-bool QuestStep::CheckStepKillUpdate(int32 id){
+bool QuestStep::CheckStepReferencedSpawnID(int32 id){
 	bool ret = false;
 	if(ids){
 		for(int32 i=0;i<ids->size();i++){
@@ -534,6 +534,36 @@ vector<QuestStep*>* Quest::GetQuestFailures(){
 	return &step_failures;
 }
 
+bool Quest::CheckQuestReferencedSpawns(Spawn* spawn){
+	QuestStep* step = 0;
+	bool ret = false;
+	int32 spawnDBID = spawn->GetDatabaseID();
+	
+	MQuestSteps.lock();
+	for(int32 i=0;i<quest_steps.size(); i++){
+		step = quest_steps[i];
+		if(!step || step->Complete())
+			continue;
+			switch(step->GetStepType())
+			{
+				case QUEST_STEP_TYPE_KILL:
+				case QUEST_STEP_TYPE_NORMAL: {
+					if(step->CheckStepReferencedSpawnID(spawnDBID))
+						ret = true;
+					
+					break;
+				}
+				case QUEST_STEP_TYPE_KILL_RACE_REQ: {
+					if(step->CheckStepKillRaceReqUpdate(spawn))
+						ret = true;
+
+					break;
+				}
+			}
+	}
+	MQuestSteps.unlock();
+	return ret;
+}
 
 bool Quest::CheckQuestKillUpdate(Spawn* spawn, bool update){
 	QuestStep* step = 0;
@@ -546,7 +576,7 @@ bool Quest::CheckQuestKillUpdate(Spawn* spawn, bool update){
 		if(!step)
 			continue;
 
-			if((step->GetStepType() == QUEST_STEP_TYPE_KILL && !step->Complete() && step->CheckStepKillUpdate(id)) ||
+			if((step->GetStepType() == QUEST_STEP_TYPE_KILL && !step->Complete() && step->CheckStepReferencedSpawnID(id)) ||
 			 (step->GetStepType() == QUEST_STEP_TYPE_KILL_RACE_REQ && !step->Complete() && step->CheckStepKillRaceReqUpdate(spawn)))
 			{
 				if (update == true) {

@@ -2692,7 +2692,7 @@ void ZoneServer::AddSpawnGroupLocation(int32 group_id, int32 location_id, int32 
 	MSpawnGroupAssociation.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char* message, bool is_door_open){
+bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char* message, bool is_door_open, sint32 input_value, sint32* return_value){
 
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Enter %s", __FUNCTION__);
 	if(!npc)
@@ -2778,7 +2778,7 @@ bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 				break;
 									}
 			case SPAWN_SCRIPT_HEALTHCHANGED:{
-				lua_interface->RunSpawnScript(script, "healthchanged", npc, spawn);
+				result = lua_interface->RunSpawnScript(script, "healthchanged", npc, spawn, 0, false, input_value, return_value);
 				break;
 											}
 			case SPAWN_SCRIPT_RANDOMCHAT:{
@@ -4090,7 +4090,8 @@ void ZoneServer::SendAllSpawnsForLevelChange(Client* client) {
 			if (spawn && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
 				SendSpawnChanges(spawn, client, false, true);
 				// Attempt to slow down the packet spam sent to the client
-				Sleep(5);
+				// who the bloody fuck put a Sleep here
+				//Sleep(5);
 			}
 		}
 	}

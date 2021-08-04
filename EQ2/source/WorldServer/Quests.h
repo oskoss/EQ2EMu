@@ -67,7 +67,7 @@ public:
 	QuestStep(QuestStep* old_step);
 	~QuestStep();
 	bool			CheckStepKillRaceReqUpdate(Spawn* spawn);
-	bool			CheckStepKillUpdate(int32 id);
+	bool			CheckStepReferencedSpawnID(int32 id);
 	bool			CheckStepChatUpdate(int32 id);
 	bool			CheckStepItemUpdate(int32 id);
 	bool			CheckStepLocationUpdate(float char_x, float char_y, float char_z, int32 zone_id);
@@ -160,6 +160,7 @@ public:
 	int32				GetStepProgress(int32 step_id);
 	int16				GetTaskGroupStep();
 	bool				QuestStepIsActive(int16 quest_step_id);
+	bool				CheckQuestReferencedSpawns(Spawn* spawn);
 	bool				CheckQuestKillUpdate(Spawn* spawn, bool update = true);
 	bool				CheckQuestChatUpdate(int32 id, bool update = true);
 	bool				CheckQuestItemUpdate(int32 id, int8 quantity = 1);

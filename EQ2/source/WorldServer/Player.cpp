@@ -4678,6 +4678,20 @@ vector<Quest*>* Player::CheckQuestsKillUpdate(Spawn* spawn, bool update){
 	return quest_updates;
 }
 
+bool Player::HasQuestUpdateRequirement(Spawn* spawn){
+	bool reqMet = false;
+	map<int32, Quest*>::iterator itr;
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
+		if(itr->second && itr->second->CheckQuestReferencedSpawns(spawn)){
+			reqMet = true;
+			break;
+		}
+	}
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+	return reqMet;
+}
+
 vector<Quest*>* Player::CheckQuestsChatUpdate(Spawn* spawn){
 	vector<Quest*>* quest_updates = 0;
 	map<int32, Quest*>::iterator itr;

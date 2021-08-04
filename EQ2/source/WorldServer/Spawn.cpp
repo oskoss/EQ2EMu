@@ -315,7 +315,7 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 			if (version < 1188 && quest_flag >= 16)
 				quest_flag = 1;
 			vis_packet->setDataByName("quest_flag", quest_flag);
-			if (player->CheckQuestsKillUpdate(this, false)) {
+			if (player->HasQuestUpdateRequirement(this)) {
 				vis_packet->setDataByName("name_quest_icon", 1);
 			}
 		}
@@ -947,8 +947,6 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 			return 0;
 	}
 
-	static const uchar null_byte = 0;
-
 	uchar* info_changes = 0;
 	uchar* pos_changes = 0;
 	uchar* vis_changes = 0;
@@ -1017,12 +1015,18 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 		memcpy(ptr, &packet_num, sizeof(int32));
 	}
 	ptr += sizeof(int32);
-
-	memcpy(ptr, info_changes ? info_changes : &null_byte, tmp_info_packet_size);
+	if(info_changes)
+		memcpy(ptr, info_changes, tmp_info_packet_size);
+	
 	ptr += info_packet_size;
-	memcpy(ptr, pos_changes ? pos_changes : &null_byte, tmp_pos_packet_size);
+	
+	if(pos_changes)
+		memcpy(ptr, pos_changes, tmp_pos_packet_size);
+	
 	ptr += pos_packet_size;
-	memcpy(ptr, vis_changes ? vis_changes : &null_byte, tmp_vis_packet_size);
+	
+	if(vis_changes)
+		memcpy(ptr, vis_changes, tmp_vis_packet_size);
 
 	EQ2Packet* ret_packet = 0;
 	if(info_packet_size + pos_packet_size + vis_packet_size > 0)
@@ -1330,13 +1334,6 @@ bool Spawn::TakeDamage(int32 damage){
 	}
 	return true;
 }
-
-void Spawn::TakeDamage(Spawn* attacker, int32 damage){
-	if (TakeDamage(damage))
-		GetZone()->CallSpawnScript(this, SPAWN_SCRIPT_HEALTHCHANGED, attacker);
-	SetLastAttacker(attacker);
-}
-
 ZoneServer*	Spawn::GetZone(){
 	return zone;
 }

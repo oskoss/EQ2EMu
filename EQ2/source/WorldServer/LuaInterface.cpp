@@ -702,7 +702,7 @@ bool LuaInterface::CallSpawnScript(lua_State* state, int8 num_parameters) {
 	return true;
 }
 
-bool LuaInterface::CallZoneScript(lua_State* state, int8 num_parameters, int32* returnValue) {
+bool LuaInterface::CallScriptInt32(lua_State* state, int8 num_parameters, int32* returnValue) {
 	if(shutting_down)
 		return false;
 	if (!state || lua_pcall(state, num_parameters, 1, 0) != 0) {
@@ -719,6 +719,32 @@ bool LuaInterface::CallZoneScript(lua_State* state, int8 num_parameters, int32* 
 	if (lua_isnumber(state, -1))
 	{
 		result = (int32)lua_tonumber(state, -1);
+		lua_pop(state, 1);
+	}
+	
+	if(returnValue)
+		*returnValue = result;
+	
+	return true;
+}
+
+bool LuaInterface::CallScriptSInt32(lua_State* state, int8 num_parameters, sint32* returnValue) {
+	if(shutting_down)
+		return false;
+	if (!state || lua_pcall(state, num_parameters, 1, 0) != 0) {
+		if (state){
+			const char* err = lua_tostring(state, -1);
+			LogError("%s: %s", GetScriptName(state), err);
+			lua_pop(state, 1);
+		}
+		return false;
+	}
+	
+	sint32 result = 0;
+	
+	if (lua_isnumber(state, -1))
+	{
+		result = (sint32)lua_tointeger(state, -1);
 		lua_pop(state, 1);
 	}
 	
@@ -2185,7 +2211,7 @@ bool LuaInterface::RunItemScriptWithReturnString(string script_name, const char*
 }
 
 
-bool LuaInterface::RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn, const char* message, bool is_door_open) {
+bool LuaInterface::RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn, const char* message, bool is_door_open, sint32 input_value, sint32* return_value) {
 	if(!npc || spawn_scripts_reloading)
 		return false;
 
@@ -2223,11 +2249,20 @@ bool LuaInterface::RunSpawnScript(string script_name, const char* function_name,
 			SetBooleanValue(state, is_door_open);
 			num_parms++;
 		}
-		else if(message){
+		else {
+			if(message){
 			SetStringValue(state, message);
 			num_parms++;
+			}
+
+			if(!strcmp(function_name,"healthchanged"))
+			{
+				// passes as damage dealt
+				SetSInt32Value(state, input_value);
+				num_parms++;
+			}
 		}
-		if(!CallSpawnScript(state, num_parms)){
+		if(!CallScriptSInt32(state, num_parms, return_value)){
 			if(mutex)
 				mutex->releasereadlock(__FUNCTION__, __LINE__);
 			UseSpawnScript(script_name.c_str(), state, false);
@@ -2292,7 +2327,7 @@ bool LuaInterface::RunZoneScript(string script_name, const char* function_name, 
 			SetSpawnValue(state, spawn_arg2);
 			num_params++;
 		}
-		if (!CallZoneScript(state, num_params)) {
+		if (!CallScriptInt32(state, num_params)) {
 			if (mutex)
 				mutex->releasereadlock(__FUNCTION__, __LINE__);
 			UseZoneScript(script_name.c_str(), state, false);
@@ -2337,7 +2372,7 @@ bool LuaInterface::RunZoneScriptWithReturn(string script_name, const char* funct
 		num_params++;
 		SetInt32Value(state, int32_arg3);
 		num_params++;
-		if (!CallZoneScript(state, num_params, returnValue)) {
+		if (!CallScriptInt32(state, num_params, returnValue)) {
 			if (mutex)
 				mutex->releasereadlock(__FUNCTION__, __LINE__);
 			UseZoneScript(script_name.c_str(), state, false);

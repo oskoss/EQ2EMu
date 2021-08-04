@@ -312,7 +312,7 @@ public:
 	
 	EQ2Packet* GetZoneInfoPacket(Client* client);
 	Spawn*	FindSpawn(Player* searcher, const char* name);
-	bool	CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn = 0, const char* message = 0, bool is_door_open = false);
+	bool	CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn = 0, const char* message = 0, bool is_door_open = false, sint32 input_value = 0, sint32* return_value = 0);
 	void	SendSpawnVisualState(Spawn* spawn, int16 type);
 	void	SendSpellFailedPacket(Client* client, int16 error);
 	void	SendInterruptPacket(Spawn* interrupted, LuaSpell* spell, bool fizzle=false);

@@ -5527,15 +5527,20 @@ void Client::SetPlayerQuest(Quest* quest, map<int32, int32>* progress) {
 }
 
 void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets) {
+	bool lockCleared = false;
 	GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__);
 	if (player->player_quests.count(quest->GetQuestID()) > 0) {
 		if (player->player_quests[quest->GetQuestID()]->GetQuestFlags() > 0)
 			quest->SetQuestFlags(player->player_quests[quest->GetQuestID()]->GetQuestFlags());
-
-		RemovePlayerQuest(quest->GetQuestID(), false, false);
+		int32 questID = quest->GetQuestID();
+		lockCleared = true;
+		GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
+		RemovePlayerQuest(questID, false, false);
 	}
 	player->player_quests[quest->GetQuestID()] = quest;
-	GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
+	
+	if(!lockCleared)
+		GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 	
 	quest->SetPlayer(player);
 	current_quest_id = quest->GetQuestID();

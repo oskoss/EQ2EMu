@@ -41,7 +41,7 @@ void WorldDatabase::LoadGlobalRuleSet() {
 
 	if (rule_set_id > 0 && !rule_manager.SetGlobalRuleSet(rule_set_id))
 		LogWrite(RULESYS__ERROR, 0, "Rules", "Error loading global rule set. A rule set with ID %u does not exist.", rule_set_id);
-	else
+	else if(rule_set_id == 0)
 		LogWrite(RULESYS__ERROR, 0, "Rules", "Variables table is missing default_ruleset_id variable name, this means the global rules will be code-default, database entries not used.  Use query such as \"insert into variables set variable_name='default_ruleset_id',variable_value='1',comment='Default ruleset';\" to resolve.");
 
 }
