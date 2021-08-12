@@ -2776,9 +2776,9 @@ PlayerItemList::~PlayerItemList(){
 
 map<int32, Item*>* PlayerItemList::GetAllItems(){
 	map<int32, Item*>* ret = new map<int32, Item*>;
-	MPlayerItems.writelock(__FUNCTION__, __LINE__);
+	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	ret->insert(indexed_items.begin(), indexed_items.end());
-	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
+	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
@@ -2800,10 +2800,10 @@ Item* PlayerItemList::GetItem(sint32 bag_slot, int16 slot, int8 appearance_type)
 	return ret;
 }
 
-void PlayerItemList::AddItem(Item* item){ //is called with a slot already set
+bool PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 	//quick check to verify item
 	if(!item)
-		return;
+		return false;
 	else{
 		if(item->details.inv_slot_id != 0){
 			Item* bag = GetItemFromUniqueID(item->details.inv_slot_id, true);
@@ -2812,7 +2812,7 @@ void PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 					LogWrite(ITEM__ERROR, 0, "Item", "Error Adding Item: Invalid slot for item unique id: %u (%s - %i), InvSlotID: %u, slotid: %u, numslots: %u", item->details.unique_id, item->name.c_str(), 
 					item->details.item_id, item->details.inv_slot_id, item->details.slot_id, bag->details.num_slots);
 					safe_delete(item);
-					return;
+					return false;
 				}
 			}
 		}
@@ -2835,8 +2835,11 @@ void PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 		new_index = max_index;
 
 	indexed_items[new_index] = item;
+	item->details.index = new_index;
 	items[item->details.inv_slot_id][item->details.appearance_type][item->details.slot_id] = item;
 	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
+
+	return true;
 }
 
 Item* PlayerItemList::GetBag(int8 inventory_slot, bool lock){
@@ -3109,8 +3112,8 @@ bool PlayerItemList::AssignItemToFreeSlot(Item* item){
 							item->details.inv_slot_id = bag->details.bag_id;
 							item->details.slot_id = x;
 							MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
-							AddItem(item);
-							return true;
+							bool ret = AddItem(item);
+							return ret;
 						}
 					}
 				}
@@ -3122,8 +3125,8 @@ bool PlayerItemList::AssignItemToFreeSlot(Item* item){
 				item->details.inv_slot_id = 0;
 				item->details.slot_id = i;
 				MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
-				AddItem(item);
-				return true;
+				bool ret = AddItem(item);
+				return ret;
 			}
 		}
 		MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
@@ -3142,12 +3145,18 @@ void PlayerItemList::RemoveItem(Item* item, bool delete_item){
 		for(itr = items[item->details.bag_id][item->details.appearance_type].begin(); itr != items[item->details.bag_id][item->details.appearance_type].end(); itr++){
 			indexed_items[itr->second->details.index] = 0;
 			if(delete_item){
+				if(itr->second == item) {
+					item = nullptr;
+				}
 				safe_delete(itr->second);
 			}
 		}
 		items.erase(item->details.bag_id);
 	}
 	if(delete_item){
+		map<int32, Item*>::iterator itr = indexed_items.find(item->details.index);
+		if(itr != indexed_items.end() && item == indexed_items[item->details.index])
+			indexed_items[item->details.index] = 0;
 		safe_delete(item);
 	}
 	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
@@ -3242,13 +3251,14 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 			}
 			else {
 				if (item_from->details.count == charges) {
+					MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 					if (item_to) 
 						MoveItem(item_to, item_from->details.inv_slot_id, item_from->details.slot_id, BASE_EQUIPMENT, true);
 
 					MoveItem(item_from, to_bag_id, to, BASE_EQUIPMENT, item_to ? false:true);
-					MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 				}
 				else {
+					MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 					if (item_to) {
 						MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 						return false;
@@ -3259,7 +3269,6 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 					new_item->details.slot_id = to;
 					new_item->details.inv_slot_id = to_bag_id;
 					new_item->details.appearance_type = 0;
-					MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 					new_item->save_needed = true;
 					AddItem(new_item);
 					if (item_from->details.count == 0)
@@ -3289,17 +3298,18 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 				}
 			}
 			else{
-				MoveItem(item_from, item_to->details.bag_id, 0, BASE_EQUIPMENT, true);
 				MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
+				MoveItem(item_from, item_to->details.bag_id, 0, BASE_EQUIPMENT, true);
 				return true;
 			}
 		}
+		MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
+		
 		if (item_to) 
 			MoveItem(item_to, item_from->details.inv_slot_id, item_from->details.slot_id, BASE_EQUIPMENT, true);
 
 		MoveItem(item_from, to_bag_id, to, BASE_EQUIPMENT, item_to ? false:true);
 		
-		MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 		return true;
 	}
 	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
@@ -3548,10 +3558,10 @@ void PlayerItemList::RemoveOverflowItem(Item* item) {
 
 vector<Item*>* PlayerItemList::GetOverflowItemList() {
 	vector<Item*>* ret = new vector<Item*>;
-	MPlayerItems.writelock(__FUNCTION__, __LINE__);
+	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	vector<Item*>::iterator itr= ret->begin();
 	ret->insert(itr, overflowItems.begin(), overflowItems.end());
-	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
+	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 

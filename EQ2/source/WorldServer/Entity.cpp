@@ -1116,6 +1116,9 @@ float Entity::CalculateSkillStatChance(char* skillName, int16 item_stat, float m
 }
 
 void Entity::CalculateBonuses(){
+	if(lua_interface->IsLuaSystemReloading())
+		return;
+
 	InfoStruct* info = &info_struct;
 
 	int16 effective_level = info->get_effective_level() != 0 ? info->get_effective_level() : GetLevel();
@@ -1492,11 +1495,12 @@ vector<BonusValues*>* Entity::GetAllSpellBonuses(LuaSpell* spell) {
 	return list;
 }
 
-void Entity::RemoveSpellBonus(const LuaSpell* spell){
+void Entity::RemoveSpellBonus(const LuaSpell* spell, bool remove_all){
+	// spell can be null!
 	MutexList<BonusValues*>::iterator itr = bonus_list.begin();
 	while(itr.Next()){
-		if(itr.value->luaspell == spell)
-			bonus_list.Remove(itr.value, true);
+		if(itr.value->luaspell == spell || remove_all)
+		bonus_list.Remove(itr.value, true);
 	}
 	
 	if(IsNPC())

@@ -6372,7 +6372,7 @@ bool Client::AddItem(int32 item_id, int16 quantity) {
 	return false;
 }
 
-bool Client::AddItem(Item* item) {
+bool Client::AddItem(Item* item, bool* item_deleted) {
 	if (!item) {
 		return false;
 	}
@@ -6403,6 +6403,10 @@ bool Client::AddItem(Item* item) {
 	else {
 		SimpleMessage(CHANNEL_COLOR_RED, "Could not find free slot to place item.");
 		safe_delete(item);
+
+		if(item_deleted)
+			*item_deleted = true;
+
 		return false;
 	}
 
@@ -6686,6 +6690,7 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 				else
 					item->details.count = closest->quantity;
 			}
+			bool itemDeleted = false;
 			bool itemAdded = false;
 			sint64 dispFlags = 0;
 			if (item && item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "buyback_display_flags", item, player, &dispFlags) && (dispFlags & DISPLAY_FLAG_NO_BUY))
@@ -6709,8 +6714,7 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 					closest->quantity -= quantity;
 					closest->save_needed = true;
 				}
-				AddItem(item);
-				itemAdded = true;
+				itemAdded = AddItem(item, &itemDeleted);
 				
 				if (removed) {
 					database.DeleteBuyBack(GetCharacterID(), closest->item_id, closest->quantity, closest->price);
@@ -6723,7 +6727,7 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 			else
 				SimpleMessage(CHANNEL_COLOR_RED, "You cannot afford this item.");
 
-			if(!itemAdded)
+			if(!itemAdded && !itemDeleted)
 				safe_delete(item);
 		}
 	}
@@ -6794,15 +6798,18 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 							Message(CHANNEL_MERCHANT_BUY_SELL, "You buy %i %s from %s for%s.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_buy_price).c_str());
 						else
 							Message(CHANNEL_MERCHANT_BUY_SELL, "You buy %s from %s for%s.", master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(total_buy_price).c_str());
-						AddItem(item);
-						CheckPlayerQuestsItemUpdate(item);
-						if (item && total_available < 0xFF) {
-							world.DecreaseMerchantQuantity(spawn->GetMerchantID(), item_id, quantity);
-							SendBuyMerchantList();
+						bool itemDeleted = false;
+						AddItem(item, &itemDeleted);
+						if(!itemDeleted) {
+							CheckPlayerQuestsItemUpdate(item);
+							if (item && total_available < 0xFF) {
+								world.DecreaseMerchantQuantity(spawn->GetMerchantID(), item_id, quantity);
+								SendBuyMerchantList();
+							}
+							
+							if (spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO)
+								PlayLotto(total_buy_price, item->details.item_id);
 						}
-						
-						if (spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO)
-							PlayLotto(total_buy_price, item->details.item_id);
 					}
 					else {
 						Message(CHANNEL_COLOR_RED, "You do not have enough coin to purchase %s.", master_item->CreateItemLink(GetVersion()).c_str());
@@ -6888,16 +6895,19 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 								Message(CHANNEL_MERCHANT_BUY_SELL, "You buy %i %s from %s for%s.", quantity, master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(ItemInfo->price_coins * quantity).c_str());
 							else
 								Message(CHANNEL_MERCHANT_BUY_SELL, "You buy %s from %s for%s.", master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(ItemInfo->price_coins * quantity).c_str());
-							AddItem(item);
-							CheckPlayerQuestsItemUpdate(item);
-							if (item && total_available < 0xFF) {
-								world.DecreaseMerchantQuantity(spawn->GetMerchantID(), item_id, quantity);
-								SendBuyMerchantList();
+							bool itemDeleted = false;
+							AddItem(item, &itemDeleted);
+							if(itemDeleted) {
+								CheckPlayerQuestsItemUpdate(item);
+								if (item && total_available < 0xFF) {
+									world.DecreaseMerchantQuantity(spawn->GetMerchantID(), item_id, quantity);
+									SendBuyMerchantList();
+								}
+								
+								SendSellMerchantList();
+								if (spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO)
+									PlayLotto(total_buy_price, item->details.item_id);
 							}
-							
-							SendSellMerchantList();
-							if (spawn->GetMerchantType() & MERCHANT_TYPE_LOTTO)
-								PlayLotto(total_buy_price, item->details.item_id);
 
 						}
 						else {

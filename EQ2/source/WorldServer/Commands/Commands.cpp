@@ -2091,7 +2091,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							if(lua_interface->RunItemScript(item->GetItemScript(), "used", item, player, &flags) && flags >= 0)
 							{
 								//reobtain item make sure it wasn't removed
-								Item* item = player->item_list.GetItemFromIndex(item_index);
+								item = player->item_list.GetItemFromIndex(item_index);
 								if(!item)
 									LogWrite(PLAYER__WARNING, 0, "Command", "%s: Item %s (%i) was used, however after the item looks to be removed.", client->GetPlayer()->GetName(), itemName.c_str(), item_id);
 								else if(!item->generic_info.display_charges && item->generic_info.max_charges == 1) {
@@ -2115,8 +2115,12 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						}
 						else
 						{
+							//reobtain item make sure it wasn't removed
+							item = player->item_list.GetItemFromIndex(item_index);
 							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Item is out of charges.");
-							LogWrite(PLAYER__ERROR, 0, "Command", "%s: Item %s (%i) attempted to be used, however details.count is 0.", client->GetPlayer()->GetName(), item->name.c_str(), item->details.item_id);
+							if(item) {
+								LogWrite(PLAYER__ERROR, 0, "Command", "%s: Item %s (%i) attempted to be used, however details.count is 0.", client->GetPlayer()->GetName(), item->name.c_str(), item->details.item_id);
+							}
 						}
 					}
 				}
@@ -2887,12 +2891,12 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_RELOADSPAWNSCRIPTS:{
 			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Spawn Scripts....");
 			if (lua_interface)
-				lua_interface->SetSpawnScriptsReloading(true);
+				lua_interface->SetLuaSystemReloading(true);
 			world.ResetSpawnScripts();
 			database.LoadSpawnScriptData();
 			if(lua_interface) {
 				lua_interface->DestroySpawnScripts();
-				lua_interface->SetSpawnScriptsReloading(false);
+				lua_interface->SetLuaSystemReloading(false);
 			}
 			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Success!");
 			break;
@@ -2907,15 +2911,22 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 										}
 		case COMMAND_RELOADLUASYSTEM:{
 			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Attempting to reload entire LUA system....");
-			map<Client*, int32> debug_clients = lua_interface->GetDebugClients();
-			safe_delete(lua_interface);
-			lua_interface = new LuaInterface();
-			if(lua_interface)
-				lua_interface->SetSpawnScriptsReloading(true);
 
-			if(lua_interface && debug_clients.size() > 0){
+			world.SetReloadingSubsystem("LuaSystem");
+			
+			if(lua_interface) {
+				lua_interface->SetLuaSystemReloading(true);
+			}
+			
+			zone_list.DeleteSpellProcess();
+			master_spell_list.Reload();
+			if (lua_interface)
+				lua_interface->ReloadSpells();
+			zone_list.LoadSpellProcess();
+			if(lua_interface){
+				map<Client*, int32> debug_clients = lua_interface->GetDebugClients();
 				map<Client*, int32>::iterator itr;
-				for(itr = debug_clients.begin(); itr != debug_clients		.end(); itr++){
+				for(itr = debug_clients.begin(); itr != debug_clients.end(); itr++){
 					if(lua_interface)
 						lua_interface->UpdateDebugClients(itr->first);
 				}
@@ -2927,19 +2938,24 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			world.ResetZoneScripts();
 			database.LoadZoneScriptData();
 
+			if(lua_interface) {
+				lua_interface->DestroySpawnScripts();
+				lua_interface->DestroyRegionScripts();
+				lua_interface->DestroyQuests();
+				lua_interface->DestroyItemScripts();
+				lua_interface->DestroyZoneScripts();
+			}
+
 			int32 quest_count = database.LoadQuests();
 
-			zone_list.DeleteSpellProcess();
-			master_spell_list.Reload();
 			int32 spell_count = 0;
 
 			if(lua_interface) {
-				lua_interface->DestroySpawnScripts();
-				lua_interface->DestroySpells();
 				spell_count = database.LoadSpellScriptData();
-				lua_interface->SetSpawnScriptsReloading(false);
+				lua_interface->SetLuaSystemReloading(false);
 			}
-			zone_list.LoadSpellProcess();
+
+			world.RemoveReloadingSubSystem("LuaSystem");
 
 			client->Message(CHANNEL_COLOR_YELLOW, "Successfully loaded %u spell(s), %u quest(s).", spell_count, quest_count);
 			break;
@@ -3556,7 +3572,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		{
 			int32 id = 0;
 
-			if (sep->IsNumber(0))
+			if (sep && sep->IsNumber(0))
 				id = atoul(sep->arg[0]);
 
 			Spawn* spawn = 0;
@@ -3576,7 +3592,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_PICKUP:
 		{
 			int32 id = 0;
-			if (sep->IsNumber(0))
+			if (sep && sep->IsNumber(0))
 				id = atoul(sep->arg[0]);
 
 			Spawn* spawn = 0;
@@ -5356,14 +5372,17 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							item->details.count = quantity;
 							// use CHANNEL_COLOR_CHAT_RELATIONSHIP as that is the same value (4) as it is in a log for this message
 							client->Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "You created %s.", item->CreateItemLink(client->GetVersion()).c_str());
-							client->AddItem(item);
+							bool itemDeleted = false;
+							client->AddItem(item, &itemDeleted);
 							//Check for crafting quest updates
 							int8 update_amt = 0;
-							if (item->stack_count > 1)
+							if (!itemDeleted && item->stack_count > 1)
 								update_amt = 1;
 							else
 								update_amt = quantity;
-							client->GetPlayer()->CheckQuestsCraftUpdate(item, update_amt);
+
+							if(!itemDeleted)
+								client->GetPlayer()->CheckQuestsCraftUpdate(item, update_amt);
 						}
 
 					}
@@ -6419,16 +6438,16 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 				}
 				if(item->GetItemScript() && lua_interface)
 					lua_interface->RunItemScript(item->GetItemScript(), "destroyed", item, client->GetPlayer());
-				int32 bag_id = item->details.inv_slot_id;
-				database.DeleteItem(client->GetCharacterID(), item, 0);
+			
+				//reobtain item make sure it wasn't removed
+				item = player->item_list.GetItemFromIndex(index);
+				int32 bag_id = 0;
+				if(item){
+					bag_id = item->details.inv_slot_id;
+					database.DeleteItem(client->GetCharacterID(), item, 0);
+				}
 				client->GetPlayer()->item_list.DestroyItem(index);
-				EQ2Packet* outapp = client->GetPlayer()->SendInventoryUpdate(client->GetVersion());
-				client->QueuePacket(outapp);
-
-				outapp = client->GetPlayer()->SendBagUpdate(bag_id, client->GetVersion());
-
-				if (outapp)
-					client->QueuePacket(outapp);
+				client->GetPlayer()->UpdateInventory(bag_id);
 			}
 		}
 		else if(sep->arg[4][0] && strncasecmp("move", sep->arg[0], 4) == 0 && sep->IsNumber(1) && sep->IsNumber(2) && sep->IsNumber(3) && sep->IsNumber(4))
@@ -6477,8 +6496,12 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 				}
 			}
 
-			EQ2Packet* outapp = client->GetPlayer()->MoveInventoryItem(bag_id, from_index, (int8)to_slot, charges, 0, client->GetVersion());
+			bool item_deleted = false;
+			EQ2Packet* outapp = client->GetPlayer()->MoveInventoryItem(bag_id, from_index, (int8)to_slot, charges, 0, &item_deleted, client->GetVersion());
 			client->QueuePacket(outapp);
+
+			if(item_deleted)
+				item = nullptr;
 
 			//removed from bag send update
 			if(old_inventory_id > 0 && item && item->details.inv_slot_id != old_inventory_id)
@@ -6642,10 +6665,13 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 					item->details.slot_id = to_slot;
 					// Flag the item so it gets saved in its new location
 					item->save_needed = true;
+					
 					// Add the item to its new location
-					player->item_list.AddItem(item);
-					// Remove the item from the overflow list
-					player->item_list.RemoveOverflowItem(item);
+					if(player->item_list.AddItem(item)) {
+						// Remove the item from the overflow list
+						player->item_list.RemoveOverflowItem(item);
+					}
+
 					// Send the inventory update packet
 					client->QueuePacket(player->item_list.serialize(player, client->GetVersion()));
 					return;
@@ -6659,8 +6685,9 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 					item->details.inv_slot_id = bag_id;
 					item->details.slot_id = to_slot;
 					item->save_needed = true;
-					player->item_list.AddItem(item);
-					player->item_list.RemoveOverflowItem(item);
+					if(player->item_list.AddItem(item)) {
+						player->item_list.RemoveOverflowItem(item);
+					}
 					client->QueuePacket(player->item_list.serialize(player, client->GetVersion()));
 				}
 				else if (bag_id == -4) {
@@ -6678,8 +6705,9 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 						item->details.inv_slot_id = bag_id;
 						item->details.slot_id = to_slot;
 						item->save_needed = true;
-						player->item_list.AddItem(item);
+						if(player->item_list.AddItem(item)) {
 						player->item_list.RemoveOverflowItem(item);
+						}
 						client->QueuePacket(player->item_list.serialize(player, client->GetVersion()));
 						return;
 					}
@@ -6696,8 +6724,9 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 						item->details.inv_slot_id = bag_id;
 						item->details.slot_id = to_slot;
 						item->save_needed = true;
-						player->item_list.AddItem(item);
+						if(player->item_list.AddItem(item)) {
 						player->item_list.RemoveOverflowItem(item);
+						}
 						client->QueuePacket(player->item_list.serialize(player, client->GetVersion()));
 						return;
 					}

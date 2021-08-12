@@ -381,7 +381,6 @@ void ZoneServer::DeleteSpellProcess(){
 	MMasterSpawnLock.writelock(__FUNCTION__, __LINE__);
 	MMasterZoneLock->lock();
 	reloading_spellprocess = true;
-
 	// Remove spells from NPC's
 	Spawn* spawn = 0;
 	map<int32, Spawn*>::iterator itr;
@@ -390,6 +389,9 @@ void ZoneServer::DeleteSpellProcess(){
 		spawn = itr->second;
 		if(spawn && spawn->IsNPC())
 			((NPC*)spawn)->SetSpells(0);
+		
+		if(spawn->IsEntity())
+			((Entity*)spawn)->RemoveSpellBonus(nullptr, true);
 	}
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 

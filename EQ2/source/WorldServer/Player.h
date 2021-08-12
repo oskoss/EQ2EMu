@@ -507,7 +507,8 @@ public:
 	/// <param name='skill_id'>The id of the skill to check</param>
 	/// <returns>A vector of int32's of the spell id's</returns>
 	vector<int32> GetSpellBookSpellIDBySkill(int32 skill_id);
-	EQ2Packet* MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 new_slot, int8 charges, int8 appearance_type, int16 version = 1);
+	void UpdateInventory(int32 bag_id);
+	EQ2Packet* MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 new_slot, int8 charges, int8 appearance_type, bool* item_deleted, int16 version = 1);
 	bool IsPlayer(){ return true; }
 	MaintainedEffects* GetFreeMaintainedSpellSlot();
 	MaintainedEffects* GetMaintainedSpell(int32 id);
@@ -986,11 +987,11 @@ public:
 		return mentorship_status;
 	}
 
-	void EnableResetMentorship()
-	{
+	void EnableResetMentorship() {
 		reset_mentorship = true;
 	}
 	
+	bool SerializeItemPackets(EquipmentItemList* equipList, vector<EQ2Packet*>* packets, Item* item, int16 version, Item* to_item = 0);
 	Mutex MPlayerQuests;
 private:
 	bool reset_mentorship;

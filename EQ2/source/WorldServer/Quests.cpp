@@ -45,9 +45,9 @@ QuestStep::QuestStep(int32 in_id, int8 in_type, string in_description, vector<in
 		task_group = string(in_task_group);
 	if(type != QUEST_STEP_TYPE_LOCATION) {
 		if (in_ids){
-			ids = new vector<int32>;
+			ids = new std::map<int32, bool>();
 			for(int32 i=0;i<in_ids->size();i++)
-				ids->push_back(in_ids->at(i));
+				ids->insert(make_pair(in_ids->at(i), true));
 		}
 	}
 	else { // location step
@@ -78,9 +78,10 @@ QuestStep::QuestStep(QuestStep* old_step){
 	locations = 0;
 	if(type != QUEST_STEP_TYPE_LOCATION) {
 		if (old_step->ids){
-			ids = new vector<int32>;
-			for(int32 i=0;i<old_step->ids->size();i++)
-				ids->push_back(old_step->ids->at(i));
+			ids = new std::map<int32, bool>();
+			std::map<int32, bool>::iterator itr;
+			for(itr = old_step->ids->begin();itr != old_step->ids->end();itr++)
+				ids->insert(make_pair(itr->first, itr->second));
 		}
 	}
 	else { // location step
@@ -133,15 +134,13 @@ int8 QuestStep::GetStepType(){
 	return type;
 }
 
-bool QuestStep::CheckStepReferencedSpawnID(int32 id){
+bool QuestStep::CheckStepReferencedID(int32 id){
 	bool ret = false;
 	if(ids){
-		for(int32 i=0;i<ids->size();i++){
-			if(ids->at(i) == id){
-				ret = true;
-				break;
-			}
-		}
+		std::map<int32, bool>::iterator itr;
+		itr = ids->find(id);
+		if(itr != ids->end())
+			ret = true;
 	}
 	return ret;
 }
@@ -149,23 +148,12 @@ bool QuestStep::CheckStepReferencedSpawnID(int32 id){
 bool QuestStep::CheckStepKillRaceReqUpdate(Spawn* spawn){
 	bool ret = false;
 	if(ids){
-		for(int32 i=0;i<ids->size();i++){
-			if(ids->at(i) == spawn->GetRace() ||
-			ids->at(i) == race_types_list.GetRaceType(spawn->GetModelType()) ||
-			ids->at(i) == race_types_list.GetRaceBaseType(spawn->GetModelType())){
-				ret = true;
-				break;
-			}
-		}
-	}
-	return ret;
-}
-
-bool QuestStep::CheckStepChatUpdate(int32 id){
-	bool ret = false;
-	if(ids){
-		for(int32 i=0;i<ids->size();i++){
-			if(ids->at(i) == id){
+		std::map<int32, bool>::iterator itr;
+		for(itr = ids->begin();itr != ids->end();itr++){
+			int32 curid = itr->first;
+			if(curid == spawn->GetRace() ||
+			curid == race_types_list.GetRaceType(spawn->GetModelType()) ||
+			curid == race_types_list.GetRaceBaseType(spawn->GetModelType())){
 				ret = true;
 				break;
 			}
@@ -200,19 +188,6 @@ const char* QuestStep::GetUpdateTargetName(){
 
 void QuestStep::SetUpdateTargetName(const char* name){
 	update_target_name = string(name);
-}
-
-bool QuestStep::CheckStepItemUpdate(int32 id){
-	bool ret = false;
-	if(ids){
-		for(int32 i=0;i<ids->size();i++){
-			if(ids->at(i) == id){
-				ret = true;
-				break;
-			}
-		}
-	}
-	return ret;
 }
 
 bool QuestStep::CheckStepLocationUpdate(float char_x, float char_y, float char_z, int32 zone_id){
@@ -250,19 +225,6 @@ bool QuestStep::CheckStepLocationUpdate(float char_x, float char_y, float char_z
 					}
 				}
 			}	
-		}
-	}
-	return ret;
-}
-
-bool QuestStep::CheckStepSpellUpdate(int32 id){
-	bool ret = false;
-	if (ids) {
-		for (int32 i = 0; i < ids->size(); i++) {
-			if (ids->at(i) == id) {
-				ret = true;
-				break;
-			}
 		}
 	}
 	return ret;
@@ -548,7 +510,7 @@ bool Quest::CheckQuestReferencedSpawns(Spawn* spawn){
 			{
 				case QUEST_STEP_TYPE_KILL:
 				case QUEST_STEP_TYPE_NORMAL: {
-					if(step->CheckStepReferencedSpawnID(spawnDBID))
+					if(step->CheckStepReferencedID(spawnDBID))
 						ret = true;
 					
 					break;
@@ -576,7 +538,7 @@ bool Quest::CheckQuestKillUpdate(Spawn* spawn, bool update){
 		if(!step)
 			continue;
 
-			if((step->GetStepType() == QUEST_STEP_TYPE_KILL && !step->Complete() && step->CheckStepReferencedSpawnID(id)) ||
+			if((step->GetStepType() == QUEST_STEP_TYPE_KILL && !step->Complete() && step->CheckStepReferencedID(id)) ||
 			 (step->GetStepType() == QUEST_STEP_TYPE_KILL_RACE_REQ && !step->Complete() && step->CheckStepKillRaceReqUpdate(spawn)))
 			{
 				if (update == true) {
@@ -750,7 +712,7 @@ bool Quest::CheckQuestChatUpdate(int32 id, bool update){
 	MQuestSteps.lock();
 	for(int32 i=0;i<quest_steps.size(); i++){
 		step = quest_steps[i];
-		if(step && step->GetStepType() == QUEST_STEP_TYPE_CHAT && !step->Complete() && step->CheckStepChatUpdate(id)){
+		if(step && step->GetStepType() == QUEST_STEP_TYPE_CHAT && !step->Complete() && step->CheckStepReferencedID(id)){
 			if(update){
 				//Call the progress action function with the total amount of progress actually granted
 				prog_added = step->AddStepProgress(1);
@@ -774,7 +736,7 @@ bool Quest::CheckQuestItemUpdate(int32 id, int8 quantity){
 	MQuestSteps.lock();
 	for(int32 i=0;i<quest_steps.size(); i++){
 		step = quest_steps[i];
-		if(step && step->GetStepType() == QUEST_STEP_TYPE_OBTAIN_ITEM && !step->Complete() && step->CheckStepItemUpdate(id)){
+		if(step && step->GetStepType() == QUEST_STEP_TYPE_OBTAIN_ITEM && !step->Complete() && step->CheckStepReferencedID(id)){
 			bool passed = true;
 			if(step->GetPercentage() < 100)
 				passed = (step->GetPercentage() > MakeRandomFloat(0, 100));
@@ -796,66 +758,42 @@ bool Quest::CheckQuestItemUpdate(int32 id, int8 quantity){
 	return ret;
 }
 
-bool Quest::CheckQuestCraftUpdate(int32 id, int32 quantity){
+bool Quest::CheckQuestRefIDUpdate(int32 id, int32 quantity){
 	QuestStep* step = 0;
 	bool ret = false;
 	int32 prog_added = 0;
 	MQuestSteps.lock();
 	for(int32 i=0;i<quest_steps.size(); i++){
 		step = quest_steps[i];
-		if(step && step->GetStepType() == QUEST_STEP_TYPE_CRAFT && !step->Complete()){
-			vector<int32>* id_list = step->GetUpdateIDs();
-			for(int32 i=0;i<id_list->size(); i++){
-				int32 update_id = id_list->at(i);
-				if(update_id == id){
-					bool passed = true;
-					if(step->GetPercentage() < 100)
-						passed = (step->GetPercentage() > MakeRandomFloat(0, 100));
-					if(passed){
-						//Call the progress action function with the total amount of progress actually granted
-						prog_added = step->AddStepProgress(quantity);
-						if(lua_interface && progress_actions[step->GetStepID()].length() > 0 && prog_added > 0)
-							lua_interface->CallQuestFunction(this, progress_actions[step->GetStepID()].c_str(), player, prog_added);
-						step_updates.push_back(step);
-					}
-					else
-						step_failures.push_back(step);
-					ret = true;
-				}
-			}
-		}
-	}
-	MQuestSteps.unlock();
-	if(ret)
-		SetSaveNeeded(true);
-	return ret;
-}
+		if(step)
+		{
+			if(step->Complete())
+				continue;
 
-bool Quest::CheckQuestHarvestUpdate(int32 id, int32 quantity){
-	QuestStep* step = 0;
-	bool ret = false;
-	int32 prog_added = 0;
-	MQuestSteps.lock();
-	for(int32 i=0;i<quest_steps.size(); i++){
-		step = quest_steps[i];
-		if(step && step->GetStepType() == QUEST_STEP_TYPE_HARVEST && !step->Complete()){
-			vector<int32>* id_list = step->GetUpdateIDs();
-			for(int32 i=0;i<id_list->size(); i++){
-				int32 update_id = id_list->at(i);
-				if(update_id == id){
-					bool passed = true;
-					if(step->GetPercentage() < 100)
-						passed = (step->GetPercentage() > MakeRandomFloat(0, 100));
-					if(passed){
-						//Call the progress action function with the total amount of progress actually granted
-						prog_added = step->AddStepProgress(quantity);
-						if(lua_interface && progress_actions[step->GetStepID()].length() > 0 && prog_added > 0)
-							lua_interface->CallQuestFunction(this, progress_actions[step->GetStepID()].c_str(), player, prog_added);
-						step_updates.push_back(step);
+			switch(step->GetStepType()) {
+				case QUEST_STEP_TYPE_HARVEST:
+				case QUEST_STEP_TYPE_CRAFT: {
+					map<int32, bool>* id_list = step->GetUpdateIDs();
+					map<int32, bool>::iterator itr;
+					for(itr = id_list->begin();itr != id_list->end(); itr++){
+						int32 update_id = itr->first;
+						if(update_id == id){
+							bool passed = true;
+							if(step->GetPercentage() < 100)
+								passed = (step->GetPercentage() > MakeRandomFloat(0, 100));
+							if(passed){
+								//Call the progress action function with the total amount of progress actually granted
+								prog_added = step->AddStepProgress(quantity);
+								if(lua_interface && progress_actions[step->GetStepID()].length() > 0 && prog_added > 0)
+									lua_interface->CallQuestFunction(this, progress_actions[step->GetStepID()].c_str(), player, prog_added);
+								step_updates.push_back(step);
+							}
+							else
+								step_failures.push_back(step);
+							ret = true;
+						}
 					}
-					else
-						step_failures.push_back(step);
-					ret = true;
+					break;
 				}
 			}
 		}
@@ -896,7 +834,7 @@ bool Quest::CheckQuestSpellUpdate(Spell* spell){
 	MQuestSteps.lock();
 	for (int32 i = 0; i < quest_steps.size(); i++) {
 		step = quest_steps[i];
-		if(step && step->GetStepType() == QUEST_STEP_TYPE_SPELL && !step->Complete() && step->CheckStepSpellUpdate(id)){
+		if(step && step->GetStepType() == QUEST_STEP_TYPE_SPELL && !step->Complete() && step->CheckStepReferencedID(id)){
 			bool passed = true;
 			if(step->GetPercentage() < 100)
 				passed = (step->GetPercentage() > MakeRandomFloat(0, 100));

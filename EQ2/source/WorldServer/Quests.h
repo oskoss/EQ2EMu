@@ -67,11 +67,8 @@ public:
 	QuestStep(QuestStep* old_step);
 	~QuestStep();
 	bool			CheckStepKillRaceReqUpdate(Spawn* spawn);
-	bool			CheckStepReferencedSpawnID(int32 id);
-	bool			CheckStepChatUpdate(int32 id);
-	bool			CheckStepItemUpdate(int32 id);
+	bool			CheckStepReferencedID(int32 id);
 	bool			CheckStepLocationUpdate(float char_x, float char_y, float char_z, int32 zone_id);
-	bool			CheckStepSpellUpdate(int32 id);
 	int32			AddStepProgress(int32 val);
 	void			SetStepProgress(int32 val);
 	int32			GetStepProgress();
@@ -84,7 +81,7 @@ public:
 	void			SetDescription(string desc);
 	int16			GetQuestCurrentQuantity();
 	int16			GetQuestNeededQuantity();
-	vector<int32>*  GetUpdateIDs() { return ids; }
+	map<int32, bool>*  GetUpdateIDs() { return ids; }
 	int16			GetIcon();
 	void			SetIcon(int16 in_icon);
 	const char*		GetUpdateTargetName();
@@ -107,7 +104,7 @@ private:
 	int16				icon;
 	int8				type;
 	string				description;
-	vector<int32>*		ids;
+	std::map<int32, bool>*	ids;
 	int32				quantity;
 	string				task_group;
 	vector<Location>*	locations;
@@ -166,8 +163,7 @@ public:
 	bool				CheckQuestItemUpdate(int32 id, int8 quantity = 1);
 	bool				CheckQuestLocationUpdate(float char_x, float char_y, float char_z, int32 zone_id);
 	bool				CheckQuestSpellUpdate(Spell* spell);
-	bool                CheckQuestCraftUpdate(int32 id, int32 quantity = 1);
-	bool                CheckQuestHarvestUpdate(int32 id, int32 quantity = 1);
+	bool                CheckQuestRefIDUpdate(int32 id, int32 quantity = 1);
 
 	int8				GetQuestLevel();
 	int8				GetVisible();

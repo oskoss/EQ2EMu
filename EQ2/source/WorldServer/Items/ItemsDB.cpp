@@ -1306,23 +1306,22 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 						int stacks = item->details.count / 255;
 						int8 remainder = item->details.count % 255;
 						item->details.count = remainder;
+						
 						if (item->details.inv_slot_id == -2)
 							player->item_list.AddOverflowItem(item);
-						else
-							player->item_list.AddItem(item);
-
-
-						for (int stack = 1; stack <= stacks; stack++) {
-							item->details.count = 255;
-							item->details.inv_slot_id = -2;
-							player->item_list.AddOverflowItem(item);
+						else {
+								if(!player->item_list.AddItem(item))
+									item = nullptr;
 						}
 
-
-
-
+						if(item) {
+							for (int stack = 1; stack <= stacks; stack++) {
+								item->details.count = 255;
+								item->details.inv_slot_id = -2;
+								player->item_list.AddOverflowItem(item);
+							}
+						}
 					}
-
 					else {
 						if (item->details.inv_slot_id == -2)
 							player->item_list.AddOverflowItem(item);

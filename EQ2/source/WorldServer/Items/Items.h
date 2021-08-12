@@ -1051,7 +1051,7 @@ public:
 	Item* CanStack(Item* item, bool include_bank = false);
 	
 	void RemoveItem(Item* item, bool delete_item = false);
-	void AddItem(Item* item);
+	bool AddItem(Item* item);
 
 	Item* GetItem(sint32 bag_slot, int16 slot, int8 appearance_type = 0);
 	
@@ -1088,10 +1088,10 @@ public:
 	
 	void	ResetPackets();
 
+	Mutex MPlayerItems;
 private:
 	void AddItemToPacket(PacketStruct* packet, Player* player, Item* item, int16 i, bool overflow = false);
 	void Stack(Item* orig_item, Item* item);
-	Mutex MPlayerItems;
 	int16 packet_count;
 	vector<Item*> overflowItems;
 };

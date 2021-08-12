@@ -40,7 +40,7 @@ extern ZoneList zone_list;
 
 LuaInterface::LuaInterface() {
 	shutting_down = false;
-	spawn_scripts_reloading = false;
+	lua_system_reloading = false;
 	MDebugClients.SetName("LuaInterface::MDebugClients");
 	MSpells.SetName("LuaInterface::MSpells");
 	MSpawnScripts.SetName("LuaInterface::MSpawnScripts");
@@ -125,6 +125,7 @@ LuaInterface::~LuaInterface() {
 	DeletePendingSpells(true);
 	safe_delete(user_data_timer);
 	safe_delete(spell_delete_timer);
+	MLUAMain.unlock();
 }
 
 int LuaInterface::GetNumberOfArgs(lua_State* state) {
@@ -689,7 +690,7 @@ bool LuaInterface::CallItemScript(lua_State* state, int8 num_parameters, sint64*
 }
 
 bool LuaInterface::CallSpawnScript(lua_State* state, int8 num_parameters) {
-	if(shutting_down)
+	if(shutting_down || lua_system_reloading)
 		return false;
 	if(!state || lua_pcall(state, num_parameters, 0, 0) != 0){
 		if (state){
@@ -865,7 +866,7 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 	}
 	if (spell->caster)
 	{
-		spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(spell, false);
+		spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(spell);
 		spell->caster->RemoveProc(0, spell);
 		spell->caster->RemoveMaintainedSpell(spell);
 
@@ -1498,6 +1499,22 @@ void LuaInterface::DeletePendingSpells(bool all) {
 		LuaSpell* spell = 0;
 		for (del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++) {
 			spell = *del_itr;
+			
+			
+			if (spell->caster) {
+				spell->caster->GetZone()->GetSpellProcess()->DeleteActiveSpell(spell);
+			}
+			else if(spell->targets.size() > 0) {
+				spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+				for (int8 i = 0; i < spell->targets.size(); i++) {
+					Spawn* target = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
+					if (!target || !target->IsEntity())
+						continue;
+					target->GetZone()->GetSpellProcess()->DeleteActiveSpell(spell);
+				}
+				spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+			}
+
 			spells_pending_delete.erase(spell);
 
 			if (spell->spell->IsCopiedSpell())
@@ -2025,7 +2042,7 @@ lua_State* LuaInterface::GetItemScript(const char* name, bool create_new, bool u
 }
 
 lua_State* LuaInterface::GetSpawnScript(const char* name, bool create_new, bool use) {
-	if (spawn_scripts_reloading)
+	if (lua_system_reloading)
 		return 0;
 	map<string, map<lua_State*, bool> >::iterator itr;
 	map<lua_State*, bool>::iterator spawn_script_itr;
@@ -2212,7 +2229,7 @@ bool LuaInterface::RunItemScriptWithReturnString(string script_name, const char*
 
 
 bool LuaInterface::RunSpawnScript(string script_name, const char* function_name, Spawn* npc, Spawn* spawn, const char* message, bool is_door_open, sint32 input_value, sint32* return_value) {
-	if(!npc || spawn_scripts_reloading)
+	if(!npc || lua_system_reloading)
 		return false;
 
 	bool isUseDoorFunction = false;

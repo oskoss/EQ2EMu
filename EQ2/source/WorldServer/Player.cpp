@@ -1851,7 +1851,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 				lua_interface->RunItemScript(item->GetItemScript(), "unequipped", item, this);
 
 			if (to_item->GetItemScript() && lua_interface)
-				lua_interface->RunItemScript(item->GetItemScript(), "equipped", to_item, this);
+				lua_interface->RunItemScript(to_item->GetItemScript(), "equipped", to_item, this);
 
 			item_list.RemoveItem(to_item);
 			equipList->SetItem(item->details.slot_id, to_item);
@@ -1861,12 +1861,18 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 			item->details.inv_slot_id = bag_id;
 			item->details.slot_id = slot;
 			item->details.appearance_type = 0;
-			item_list.AddItem(item);
-			item->save_needed = true;
-			SetEquippedItemAppearances();
-			packets.push_back(item->serialize(version, false));
-			packets.push_back(equipList->serialize(version, this));
-			packets.push_back(item_list.serialize(this, version));
+			
+			if(item_list.AddItem(item)) {
+				item->save_needed = true;
+				SetEquippedItemAppearances();
+				// SerializeItemPackets serves item and equipList in opposite order is why we don't use that function here..
+				packets.push_back(item->serialize(version, false));
+				packets.push_back(equipList->serialize(version, this));
+				packets.push_back(item_list.serialize(this, version));
+			}
+			else {
+				LogWrite(PLAYER__ERROR, 0, "Player", "failed to add item to item_list during UnequipItem, index %u, bag id %i, slot %u, version %u, appearance type %u", index, bag_id, slot, version, appearance_type);
+			}
 		}
 		else if (to_item && to_item->IsBag() && to_item->details.num_slots > 0) {
 			bool free_slot = false;
@@ -1886,13 +1892,8 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 					item->details.inv_slot_id = to_item->details.bag_id;
 					item->details.slot_id = i;
 					item->details.appearance_type = to_item->details.appearance_type;
-					item_list.AddItem(item);
-					item->save_needed = true;
-					SetEquippedItemAppearances();
-					packets.push_back(equipList->serialize(version, this));
-					packets.push_back(item->serialize(version, false));
-					packets.push_back(to_item->serialize(version, false, this));
-					packets.push_back(item_list.serialize(this, version));
+					
+					SerializeItemPackets(equipList, &packets, item, version, to_item);
 					free_slot = true;
 					break;
 				}
@@ -1945,12 +1946,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 					item->details.inv_slot_id = bag_id;
 					item->details.slot_id = slot;
 					item->details.appearance_type = 0;
-					item_list.AddItem(item);
-					item->save_needed = true;
-					SetEquippedItemAppearances();
-					packets.push_back(equipList->serialize(version, this));
-					packets.push_back(item->serialize(version, false));
-					packets.push_back(item_list.serialize(this, version));
+					SerializeItemPackets(equipList, &packets, item, version);
 				}
 			}
 			else {
@@ -1969,12 +1965,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 					item->details.inv_slot_id = bag_id;
 					item->details.slot_id = slot;
 					item->details.appearance_type = 0;
-					item_list.AddItem(item);
-					item->save_needed = true;
-					SetEquippedItemAppearances();
-					packets.push_back(equipList->serialize(version, this));
-					packets.push_back(item->serialize(version, false));
-					packets.push_back(item_list.serialize(this, version));
+					SerializeItemPackets(equipList, &packets, item, version);
 				}
 			}
 		}
@@ -2104,17 +2095,23 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 		equipList = &appearance_equipment_list;
 
 	vector<EQ2Packet*>	packets;
-	if (item_list.indexed_items.count(index) == 0)
+	item_list.MPlayerItems.readlock(__FUNCTION__, __LINE__);
+	if (item_list.indexed_items.count(index) == 0) {
+		item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 		return packets;
+	}
 	Item* item = item_list.indexed_items[index];
 	slot_id = ConvertSlotFromClient(slot_id, version);
 	if (item) {
-		if (slot_id != 255 && !item->HasSlot(slot_id))
+		if (slot_id != 255 && !item->HasSlot(slot_id)) {
+			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 			return packets;
+		}
 		int8 slot = equipList->GetFreeSlot(item, slot_id);
 		bool canEquip = CanEquipItem(item);
 		if(canEquip && !appearance_type && item->CheckFlag2(APPEARANCE_ONLY))
 		{
+			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 			GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "This item is for appearance slots only.");
 			return packets;
 		}
@@ -2133,6 +2130,7 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 			packet->setDataByName("unknown4", 1);
 			packets.push_back(packet->serialize());
 			safe_delete(packet);
+			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 			return packets;
 		}
 		if (canEquip && slot == 255)
@@ -2141,20 +2139,36 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 				slot = item->slot_data.at(0);
 			else
 				slot = slot_id;
+			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 			packets = UnequipItem(slot, item->details.inv_slot_id, item->details.slot_id, version, appearance_type, false);
+			// grab player items lock again and assure item still present
+			item_list.MPlayerItems.readlock(__FUNCTION__, __LINE__);
+			if (item_list.indexed_items.count(index) == 0) {
+				item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+				return packets;
+			}
 			// If item is a 2handed weapon and something is in the secondary, unequip the secondary
 			if (item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && equipList->GetItem(EQ2_SECONDARY_SLOT) != 0) {
+				item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version, appearance_type, false);
 				//packets.reserve(packets.size() + tmp_packets.size());
 				packets.insert(packets.end(), tmp_packets.begin(), tmp_packets.end());
 			}
+			
+			// release for delete item / scripting etc
+			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 		}
 		else if (canEquip && slot < 255) {
 			// If item is a 2handed weapon and something is in the secondary, unequip the secondary
 			if (item->IsWeapon() && item->weapon_info->wield_type == ITEM_WIELD_TYPE_TWO_HAND && equipList->GetItem(EQ2_SECONDARY_SLOT) != 0) {
+				item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 				vector<EQ2Packet*> tmp_packets = UnequipItem(EQ2_SECONDARY_SLOT, -999, 0, version, appearance_type, false);
 				//packets.reserve(packets.size() + tmp_packets.size());
 				packets.insert(packets.end(), tmp_packets.begin(), tmp_packets.end());
+			}
+			else {
+				// release for delete item / scripting etc
+				item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 			}
 
 			database.DeleteItem(GetCharacterID(), item, "NOT-EQUIPPED");
@@ -2219,9 +2233,8 @@ bool Player::AddItemToBank(Item* item) {
 			item->details.inv_slot_id = bag;
 			item->details.slot_id = slot;
 			item->save_needed = true;
-			item_list.AddItem(item);
 
-			return true;
+			return item_list.AddItem(item);
 		}
 		else if (item_list.AddOverflowItem(item))
 			return true;
@@ -2235,7 +2248,19 @@ EQ2Packet* Player::SendInventoryUpdate(int16 version) {
 	
 	return item_list.serialize(this, version);
 }
-EQ2Packet* Player::MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 new_slot, int8 charges, int8 appearance_type, int16 version) {
+
+void Player::UpdateInventory(int32 bag_id) {
+
+	EQ2Packet* outapp = client->GetPlayer()->SendInventoryUpdate(client->GetVersion());
+	client->QueuePacket(outapp);
+
+	outapp = client->GetPlayer()->SendBagUpdate(bag_id, client->GetVersion());
+
+	if (outapp)
+		client->QueuePacket(outapp);
+
+}
+EQ2Packet* Player::MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 new_slot, int8 charges, int8 appearance_type, bool* item_deleted, int16 version) {
 	Item* item = item_list.GetItemFromIndex(from_index);
 	int8 result = item_list.MoveItem(to_bag_id, from_index, new_slot, appearance_type, charges);
 	if (result == 1) {
@@ -2244,7 +2269,10 @@ EQ2Packet* Player::MoveInventoryItem(sint32 to_bag_id, int16 from_index, int8 ne
 				item->save_needed = true;
 			else if (item->needs_deletion) {
 				database.DeleteItem(GetCharacterID(), item, 0);
-				safe_delete(item);
+				client->GetPlayer()->item_list.DestroyItem(from_index);
+				client->GetPlayer()->UpdateInventory(to_bag_id);
+				if(item_deleted)
+					*item_deleted = true;
 			}
 		}
 		return item_list.serialize(this, version);
@@ -4302,7 +4330,7 @@ void Player::CheckQuestsCraftUpdate(Item* item, int32 qty){
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second){
 			if(item && qty > 0){
-				if(itr->second->CheckQuestCraftUpdate(item->details.item_id, qty)){
+				if(itr->second->CheckQuestRefIDUpdate(item->details.item_id, qty)){
 					update_list->push_back(itr->second);
 				}
 			}
@@ -4329,7 +4357,7 @@ void Player::CheckQuestsHarvestUpdate(Item* item, int32 qty){
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
 		if(itr->second){
 			if(item && qty > 0){
-				if(itr->second->CheckQuestHarvestUpdate(item->details.item_id, qty)){
+				if(itr->second->CheckQuestRefIDUpdate(item->details.item_id, qty)){
 					update_list->push_back(itr->second);
 				}
 			}
@@ -6800,4 +6828,21 @@ void Player::SetLevel(int16 level, bool setUpdateFlags) {
 	SetInfo(&appearance.level, level, setUpdateFlags);
 	SetXP(0);
 	SetNeededXP();
+}
+
+bool Player::SerializeItemPackets(EquipmentItemList* equipList, vector<EQ2Packet*>* packets, Item* item, int16 version, Item* to_item) {
+	if(item_list.AddItem(item)) {
+		item->save_needed = true;
+		SetEquippedItemAppearances();
+		packets->push_back(equipList->serialize(version, this));
+		packets->push_back(item->serialize(version, false));
+		if(to_item)
+			packets->push_back(to_item->serialize(version, false, this));
+		packets->push_back(item_list.serialize(this, version));
+		return true;
+	}
+	else {
+		LogWrite(PLAYER__ERROR, 0, "Player", "failed to add item to item_list");
+	}
+	return false;
 }

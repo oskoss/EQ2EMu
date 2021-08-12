@@ -290,8 +290,9 @@ public:
 	Mutex*			GetRegionScriptMutex(const char* name);
 	Mutex*			GetQuestMutex(Quest* quest);
 
-	void			SetSpawnScriptsReloading(bool val) { spawn_scripts_reloading = val; }
-
+	void			SetLuaSystemReloading(bool val) { lua_system_reloading = val; }
+	bool			IsLuaSystemReloading() { return lua_system_reloading; }
+	
 	void			AddPendingSpellDelete(LuaSpell* spell);
 
 	void			AddCustomSpell(LuaSpell* spell);
@@ -304,7 +305,7 @@ public:
 	int32			GetFreeCustomSpellID();
 private:
 	bool			shutting_down;
-	bool			spawn_scripts_reloading;
+	bool			lua_system_reloading;
 	map<LuaSpell*, int32> spells_pending_delete;
 	Timer*			user_data_timer;
 	Timer*			spell_delete_timer;

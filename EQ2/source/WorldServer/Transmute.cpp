@@ -233,9 +233,10 @@ void Transmute::CompleteTransmutation(Client* client, Player* player) {
 	if (item1) {
 		item1->details.count = 1;
 		client->Message(89, "     %s", item1->CreateItemLink(client->GetVersion(), false).c_str());
-		client->AddItem(item1);
+		bool itemDeleted = false;
+		client->AddItem(item1, &itemDeleted);
 
-		if (packet) {
+		if (packet && !itemDeleted) {
 			packet->setArrayDataByName("reward_id", item1->details.item_id, 0);
 			if (client->GetVersion() < 860)
 				packet->setItemArrayDataByName("item", item1, player, 0, 0, -1);
@@ -249,9 +250,10 @@ void Transmute::CompleteTransmutation(Client* client, Player* player) {
 	if (item2) {
 		item2->details.count = 1;
 		client->Message(89, "     %s", item2->CreateItemLink(client->GetVersion(), false).c_str());
-		client->AddItem(item2);
+		bool itemDeleted = false;
+		client->AddItem(item2, &itemDeleted);
 
-		if (packet) {
+		if (packet && !itemDeleted) {
 			int32 dataIndex = 1;
 			if (!item1) {
 				packet->setArrayLengthByName("num_rewards", 1);

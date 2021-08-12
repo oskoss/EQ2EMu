@@ -50,7 +50,7 @@ void SpellProcess::RemoveAllSpells(){
 
 	MutexList<LuaSpell*>::iterator active_spells_itr = active_spells.begin();
 	while(active_spells_itr.Next()){
-		DeleteCasterSpell(active_spells_itr->value);
+		DeleteCasterSpell(active_spells_itr->value, "", true);
 	}
 
 	active_spells_itr = active_spells.begin();
@@ -1364,6 +1364,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 		if(!CheckPower(lua_spell)) 
 		{
+			LogWrite(SPELL__WARNING, 1, "Spell", "%s: Caster Lacked Power to cast (%s).", spell->GetName(), caster->GetName());
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_POWER);
 			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			DeleteSpell(lua_spell);
@@ -1372,6 +1373,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 		if (!CheckHP(lua_spell)) 
 		{ 
+			LogWrite(SPELL__WARNING, 1, "Spell", "%s: Caster Lacked Health to cast (%s).", spell->GetName(), caster->GetName());
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_HEALTH);
 			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			DeleteSpell(lua_spell);
@@ -1380,6 +1382,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 		if (!CheckSavagery(lua_spell))
 		{
+			LogWrite(SPELL__WARNING, 1, "Spell", "%s: Caster Lacked Savagery to cast (%s).", spell->GetName(), caster->GetName());
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_SAVAGERY);
 			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			DeleteSpell(lua_spell);
@@ -1388,6 +1391,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 		if (!CheckDissonance(lua_spell))
 		{
+			LogWrite(SPELL__WARNING, 1, "Spell", "%s: Caster Lacked Dissonance to cast (%s).", spell->GetName(), caster->GetName());
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_DISSONANCE);
 			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			DeleteSpell(lua_spell);
@@ -1396,6 +1400,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 		if (!CheckConcentration(lua_spell)) 
 		{
+			LogWrite(SPELL__WARNING, 1, "Spell", "%s: Caster Lacked Concentration to cast (%s).", spell->GetName(), caster->GetName());
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_ENOUGH_CONC);
 			lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 			DeleteSpell(lua_spell);
@@ -2856,4 +2861,8 @@ void SpellProcess::AddSelfAndPetToCharTargets(LuaSpell* spell, Spawn* caster, bo
 		spell->char_id_targets.insert(make_pair(charID, player->GetPet()->GetPetType()));
 	if(!onlyPet)
 		spell->char_id_targets.insert(make_pair(charID, 0x00));
+}
+
+void SpellProcess::DeleteActiveSpell(LuaSpell* spell) {
+	active_spells.Remove(spell);
 }

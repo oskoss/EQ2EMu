@@ -392,63 +392,65 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 						// chat box update for normal item (todo: verify output text)
 						client->Message(CHANNEL_HARVESTING, "You %s %i %s from the %s.", GetHarvestMessageName(true).c_str(), item->details.count, item->CreateItemLink(client->GetVersion(), true).c_str(), GetName());
 						// add Normal item to player inventory
-						client->AddItem(item);
-						//Check if the player has a harvesting quest for this
-						client->GetPlayer()->CheckQuestsHarvestUpdate(item, reward_total);
+						bool itemDeleted = false;
+						client->AddItem(item, &itemDeleted);
 
+						if(!itemDeleted) {
+							//Check if the player has a harvesting quest for this
+							client->GetPlayer()->CheckQuestsHarvestUpdate(item, reward_total);
 
+							// if this is a 10+rare, handle sepErately
+							if (harvest_type == 6 && rare_item == 1) {
+								LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Item ID %u is Normal. Qty %i", item_harvested, item->details.count);
 
-						// if this is a 10+rare, handle sepErately
-						if (harvest_type == 6 && rare_item == 1) {
-							LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Item ID %u is Normal. Qty %i", item_harvested, item->details.count);
+								// send Normal harvest message to client
+								sprintf(tmp, "\\#64FFFFYou have %s:\12\\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item->details.count, item->name.c_str());
+								client->SendPopupMessage(10, tmp, "ui_harvested_normal", 2.25, 0xFF, 0xFF, 0xFF);
+								client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_ITEMS_HARVESTED, item->details.count);
 
-							// send Normal harvest message to client
-							sprintf(tmp, "\\#64FFFFYou have %s:\12\\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item->details.count, item->name.c_str());
-							client->SendPopupMessage(10, tmp, "ui_harvested_normal", 2.25, 0xFF, 0xFF, 0xFF);
-							client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_ITEMS_HARVESTED, item->details.count);
+								// set Rare item harvested
+								master_rare = master_item_list.GetItem(rare_harvested);
+								if (master_rare) {
+									// set details of Rare item
+									item_rare = new Item(master_rare);
+									// count of Rare is always 1
+									item_rare->details.count = 1;
 
-							// set Rare item harvested
-							master_rare = master_item_list.GetItem(rare_harvested);
-							if (master_rare) {
-								// set details of Rare item
-								item_rare = new Item(master_rare);
-								// count of Rare is always 1
-								item_rare->details.count = 1;
+									LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Item ID %u is RARE!", rare_harvested);
 
-								LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Item ID %u is RARE!", rare_harvested);
+									// send Rare harvest message to client
+									sprintf(tmp, "\\#FFFF6ERare item found!\12%s: \\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item_rare->details.count, item_rare->name.c_str());
+									client->Message(CHANNEL_HARVESTING, "You have found a rare item!");
+									client->SendPopupMessage(11, tmp, "ui_harvested_rare", 2.25, 0xFF, 0xFF, 0xFF);
+									client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_RARES_HARVESTED, item_rare->details.count);
+
+									// chat box update for rare item (todo: verify output text)
+									client->Message(CHANNEL_HARVESTING, "You %s %i %s from the %s.", GetHarvestMessageName(true).c_str(), item_rare->details.count, item->CreateItemLink(client->GetVersion(), true).c_str(), GetName());
+									// add Rare item to player inventory
+									client->AddItem(item_rare);
+									//Check if the player has a harvesting quest for this
+									client->GetPlayer()->CheckQuestsHarvestUpdate(item_rare, 1);
+								}
+							}
+							else if (rare_item == 1) {
+								// if harvest signaled rare or imbue type
+								LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Item ID %u is RARE! Qty: %i", item_harvested, item->details.count);
 
 								// send Rare harvest message to client
-								sprintf(tmp, "\\#FFFF6ERare item found!\12%s: \\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item_rare->details.count, item_rare->name.c_str());
+								sprintf(tmp, "\\#FFFF6ERare item found!\12%s: \\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item->details.count, item->name.c_str());
 								client->Message(CHANNEL_HARVESTING, "You have found a rare item!");
 								client->SendPopupMessage(11, tmp, "ui_harvested_rare", 2.25, 0xFF, 0xFF, 0xFF);
-								client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_RARES_HARVESTED, item_rare->details.count);
-
-								// chat box update for rare item (todo: verify output text)
-								client->Message(CHANNEL_HARVESTING, "You %s %i %s from the %s.", GetHarvestMessageName(true).c_str(), item_rare->details.count, item->CreateItemLink(client->GetVersion(), true).c_str(), GetName());
-								// add Rare item to player inventory
-								client->AddItem(item_rare);
-								//Check if the player has a harvesting quest for this
-								client->GetPlayer()->CheckQuestsHarvestUpdate(item_rare, 1);
+								client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_RARES_HARVESTED, item->details.count);
 							}
-						}
-						else if (rare_item == 1) {
-							// if harvest signaled rare or imbue type
-							LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Item ID %u is RARE! Qty: %i", item_harvested, item->details.count);
+							else {
+								// send Normal harvest message to client
+								LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Item ID %u is Normal. Qty %i", item_harvested, item->details.count);
+								sprintf(tmp, "\\#64FFFFYou have %s:\12\\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item->details.count, item->name.c_str());
+								client->SendPopupMessage(10, tmp, "ui_harvested_normal", 2.25, 0xFF, 0xFF, 0xFF);
+								client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_ITEMS_HARVESTED, item->details.count);
+							}
 
-							// send Rare harvest message to client
-							sprintf(tmp, "\\#FFFF6ERare item found!\12%s: \\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item->details.count, item->name.c_str());
-							client->Message(CHANNEL_HARVESTING, "You have found a rare item!");
-							client->SendPopupMessage(11, tmp, "ui_harvested_rare", 2.25, 0xFF, 0xFF, 0xFF);
-							client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_RARES_HARVESTED, item->details.count);
 						}
-						else {
-							// send Normal harvest message to client
-							LogWrite(GROUNDSPAWN__DEBUG, 3, "GSpawn", "Item ID %u is Normal. Qty %i", item_harvested, item->details.count);
-							sprintf(tmp, "\\#64FFFFYou have %s:\12\\#C8FFFF%i %s", GetHarvestMessageName().c_str(), item->details.count, item->name.c_str());
-							client->SendPopupMessage(10, tmp, "ui_harvested_normal", 2.25, 0xFF, 0xFF, 0xFF);
-							client->GetPlayer()->UpdatePlayerStatistic(STAT_PLAYER_ITEMS_HARVESTED, item->details.count);
-						}
-
 					}
 					else {
 						// error!

@@ -1445,7 +1445,8 @@ public:
 	BonusValues* GetSpellBonus(int32 spell_id);
 	vector<BonusValues*>* GetAllSpellBonuses(LuaSpell* spell);
 	bool CheckSpellBonusRemoval(LuaSpell* spell, int16 type);
-	void RemoveSpellBonus(const LuaSpell* spell);
+	void RemoveSpellBonus(const LuaSpell* spell, bool remove_all = false);
+	void RemoveAllSpellBonuses();
 	void CalculateSpellBonuses(ItemStatsValues* stats);
 	void AddMezSpell(LuaSpell* spell);
 	void RemoveMezSpell(LuaSpell* spell);

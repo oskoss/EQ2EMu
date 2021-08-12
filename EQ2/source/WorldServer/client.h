@@ -199,7 +199,7 @@ public:
 	Spawn*	GetBanker();
 	void	SetBanker(Spawn* in_banker);
 	bool	AddItem(int32 item_id, int16 quantity = 0);
-	bool	AddItem(Item* item);
+	bool	AddItem(Item* item, bool* item_deleted = 0);
 	bool	AddItemToBank(int32 item_id, int16 quantity = 0);
 	bool	AddItemToBank(Item* item);
 	bool	RemoveItem(Item *item, int16 quantity, bool force_override_no_delete = false);

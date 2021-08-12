@@ -394,6 +394,7 @@ public:
 	void AddActiveSpell(LuaSpell* spell);
 	static void AddSelfAndPet(LuaSpell* spell, Spawn* self, bool onlyPet=false);
 	static void AddSelfAndPetToCharTargets(LuaSpell* spell, Spawn* caster, bool onlyPet=false);
+	void DeleteActiveSpell(LuaSpell* spell);
 private:
 	Mutex MSpellProcess;
 	MutexMap<Entity*,Spell*> spell_que;
