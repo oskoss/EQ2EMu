@@ -6897,7 +6897,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 								Message(CHANNEL_MERCHANT_BUY_SELL, "You buy %s from %s for%s.", master_item->CreateItemLink(GetVersion()).c_str(), spawn->GetName(), GetCoinMessage(ItemInfo->price_coins * quantity).c_str());
 							bool itemDeleted = false;
 							AddItem(item, &itemDeleted);
-							if(itemDeleted) {
+							if(!itemDeleted) {
 								CheckPlayerQuestsItemUpdate(item);
 								if (item && total_available < 0xFF) {
 									world.DecreaseMerchantQuantity(spawn->GetMerchantID(), item_id, quantity);
