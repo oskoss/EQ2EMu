@@ -1044,7 +1044,16 @@ public:
 	bool	NeedsToResumeMovement(){ return attack_resume_needed; }
 	void	NeedsToResumeMovement(bool val) { attack_resume_needed = val; }
 	bool	HasMovementLoop(){ return movement_loop.size() > 0; }
-	bool	HasMovementLocations() { return movement_locations ? movement_locations->size() > 0 : false; }
+	bool	HasMovementLocations() { 
+			bool hasLocations = false;
+			if (MMovementLocations)
+				MMovementLocations->readlock(__FUNCTION__, __LINE__);
+				hasLocations = movement_locations ? movement_locations->size() > 0 : false;
+			if (MMovementLocations)
+				MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
+			return hasLocations;
+	}
+
 	Timer*	GetRunningTimer();
 	float	GetFaceTarget(float x, float z);
 	void	FaceTarget(float x, float z);

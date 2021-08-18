@@ -3055,21 +3055,29 @@ void Spawn::RunToLocation(float x, float y, float z, float following_x, float fo
 
 MovementLocation* Spawn::GetCurrentRunningLocation(){
 	MovementLocation* ret = 0;
-	if(movement_locations && movement_locations->size() > 0){
+	if(MMovementLocations)
 		MMovementLocations->readlock(__FUNCTION__, __LINE__);
+	
+	if(movement_locations && movement_locations->size() > 0){
 		ret = movement_locations->front();
-		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
 	}
+
+	if(MMovementLocations)
+		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
 MovementLocation* Spawn::GetLastRunningLocation(){
 	MovementLocation* ret = 0;
-	if(movement_locations && movement_locations->size() > 0){
+	if(MMovementLocations)
 		MMovementLocations->readlock(__FUNCTION__, __LINE__);
+		
+	if(movement_locations && movement_locations->size() > 0){
 		ret = movement_locations->back();
-		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
 	}
+
+	if(MMovementLocations)
+		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
@@ -3238,7 +3246,7 @@ void Spawn::CalculateRunningLocation(bool stop){
 		return;
 	else if (!pauseTimerEnabled && !stop)
 		last_location_update = Timer::GetCurrentTime2();
-
+	bool continueElseIf = true;
 	bool removed = CalculateChange();
 	if (stop || pauseTimerEnabled) {
 		//following = false;
@@ -3248,21 +3256,27 @@ void Spawn::CalculateRunningLocation(bool stop){
 		SetPos(&appearance.pos.X3, GetX(), false);
 		SetPos(&appearance.pos.Y3, GetY(), false);
 		SetPos(&appearance.pos.Z3, GetZ(), false);
+		continueElseIf = false;
 	}
-	else if (removed && movement_locations && movement_locations->size() > 0) {
+	else if (removed && movement_locations && MMovementLocations) {
 		if (MMovementLocations)
 			MMovementLocations->readlock(__FUNCTION__, __LINE__);
-		MovementLocation* current_location = movement_locations->at(0);
-		if (movement_locations->size() > 1) {
-			MovementLocation* data = movement_locations->at(1);
-			RunToLocation(current_location->x, current_location->y, current_location->z, data->x, data->y, data->z);
-		}
-		else
-			RunToLocation(current_location->x, current_location->y, current_location->z, 0, 0, 0);
+			if(movement_locations->size() > 0) {
+				MovementLocation* current_location = movement_locations->at(0);
+				if (movement_locations->size() > 1) {
+					MovementLocation* data = movement_locations->at(1);
+					RunToLocation(current_location->x, current_location->y, current_location->z, data->x, data->y, data->z);
+				}
+				else
+					RunToLocation(current_location->x, current_location->y, current_location->z, 0, 0, 0);
+				
+				continueElseIf = false;
+			}
 		if (MMovementLocations)
 			MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
 	}
-	else if (GetZone() && GetTarget() != NULL && EngagedInCombat())
+	
+	if (continueElseIf && GetZone() && GetTarget() != NULL && EngagedInCombat())
 	{
 		if (GetDistance(GetTarget()) > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
 		{
@@ -3274,7 +3288,7 @@ void Spawn::CalculateRunningLocation(bool stop){
 		else
 			((Entity*)this)->HaltMovement();
 	}
-	else if (!following)
+	else if (continueElseIf && !following)
 	{
 		position_changed = true;
 		changed = true;

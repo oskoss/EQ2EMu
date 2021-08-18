@@ -718,7 +718,7 @@ int EQ2Emu_lua_GetFactionAmount(lua_State* state) {
 	Player* player = (Player*)lua_interface->GetSpawn(state);
 	int32 faction_id = lua_interface->GetInt32Value(state, 2);
 	if (player && player->IsPlayer() && faction_id > 0) {
-		lua_interface->SetInt32Value(state, player->GetFactions()->GetFactionValue(faction_id));
+		lua_interface->SetSInt32Value(state, player->GetFactions()->GetFactionValue(faction_id));
 		return 1;
 	}
 	return 0;

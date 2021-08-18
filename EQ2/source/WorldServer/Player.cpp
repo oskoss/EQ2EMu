@@ -2154,9 +2154,10 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 				//packets.reserve(packets.size() + tmp_packets.size());
 				packets.insert(packets.end(), tmp_packets.begin(), tmp_packets.end());
 			}
-			
-			// release for delete item / scripting etc
-			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+			else {
+				// release for delete item / scripting etc
+				item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+			}
 		}
 		else if (canEquip && slot < 255) {
 			// If item is a 2handed weapon and something is in the secondary, unequip the secondary
@@ -2205,6 +2206,14 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 			}
 			SetCharSheetChanged(true);
 		}
+		else {
+				// clear items lock
+				item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+		}
+	}
+	else {
+			// clear items lock
+			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	}
 	
 	client->UpdateSentSpellList();

@@ -232,6 +232,9 @@ Client::~Client() {
 
 
 void Client::RemoveClientFromZone() {
+	if(player && player->GetZone())
+		player->GetZone()->GetSpellProcess()->RemoveSpellTimersFromSpawn(player, true);
+		
 	if (current_zone && player) {
 		if (player->GetGroupMemberInfo())
 		{
