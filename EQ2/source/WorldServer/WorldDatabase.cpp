@@ -7651,8 +7651,10 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 					safe_delete(lua_spell);
 				continue;
 			}
-			
-			info->spell_effects[effect_slot].expire_timestamp = Timer::GetCurrentTime2() + expire_timestamp;
+			if(spell->GetSpellData()->duration_until_cancel)
+				info->spell_effects[effect_slot].expire_timestamp = 0xFFFFFFFF;
+			else
+				info->spell_effects[effect_slot].expire_timestamp = Timer::GetCurrentTime2() + expire_timestamp;
 			info->spell_effects[effect_slot].icon = icon;
 			info->spell_effects[effect_slot].icon_backdrop = icon_backdrop;
 			info->spell_effects[effect_slot].spell_id = spell_id;
@@ -7771,7 +7773,10 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			info->maintained_effects[effect_slot].slot_pos = slot_pos;
 			info->maintained_effects[effect_slot].target = targetID;
 			info->maintained_effects[effect_slot].target_type = target_type;
-			info->maintained_effects[effect_slot].expire_timestamp = Timer::GetCurrentTime2() + expire_timestamp;
+			if(spell->GetSpellData()->duration_until_cancel)
+				info->maintained_effects[effect_slot].expire_timestamp = 0xFFFFFFFF;
+			else
+				info->maintained_effects[effect_slot].expire_timestamp = Timer::GetCurrentTime2() + expire_timestamp;
 			info->maintained_effects[effect_slot].icon = icon;
 			info->maintained_effects[effect_slot].icon_backdrop = icon_backdrop;
 			info->maintained_effects[effect_slot].spell_id = spell_id;

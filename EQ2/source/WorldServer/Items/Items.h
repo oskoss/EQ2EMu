@@ -1101,6 +1101,7 @@ public:
 	EquipmentItemList(const EquipmentItemList& list);
 	~EquipmentItemList();
 	Item* items[NUM_SLOTS];
+	Mutex MEquipmentItems;
 
 	vector<Item*>* GetAllEquippedItems();
 
@@ -1127,7 +1128,6 @@ public:
 	void	SetAppearanceType(int8 type) { AppearanceType = type; }
 	int8	GetAppearanceType() { return AppearanceType; }
 private:
-	Mutex MEquipmentItems;
 	int8 AppearanceType; // 0 for normal equip, 1 for appearance
 };
 

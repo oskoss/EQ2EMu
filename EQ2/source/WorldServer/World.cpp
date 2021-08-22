@@ -1679,8 +1679,11 @@ void World::AddBonuses(Item* item, ItemStatsValues* values, int16 type, sint32 v
 				break;
 			}*/
 			default: {
-				if (entity)
+				if (entity) {
+					entity->MStats.lock();
 					entity->stats[type] += value;
+					entity->MStats.unlock();
+				}
 				break;
 					 }
 		}

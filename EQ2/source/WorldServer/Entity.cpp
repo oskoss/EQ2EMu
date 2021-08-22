@@ -793,9 +793,6 @@ void Entity::DoRegenUpdate(){
 			SetHP(GetTotalHP());
 		else
 			SetHP(hp + temp);
-
-		LogWrite(MISC__TODO, 1, "TODO", "Fix this later for mobs\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-
 	}
 	if(GetPower() < GetTotalPower()){
 		sint16 temp = GetInfoStruct()->get_power_regen();
@@ -804,8 +801,6 @@ void Entity::DoRegenUpdate(){
 			SetPower(GetTotalPower());
 		else
 			SetPower(power + temp);
-
-		LogWrite(MISC__TODO, 1, "TODO", "Fix this later for mobs\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	}
 }
 
@@ -1129,8 +1124,6 @@ void Entity::CalculateBonuses(){
 	info->set_cur_mitigation(info->get_mitigation_base());
 	info->set_base_avoidance_pct(info->get_avoidance_base());
 
-	LogWrite(MISC__TODO, 1, "TODO", "Calculate via current spells\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-
 	info->set_disease(info->get_disease_base());
 	info->set_divine(info->get_divine_base());
 	info->set_heat(info->get_heat_base());
@@ -1174,7 +1167,10 @@ void Entity::CalculateBonuses(){
 
 	info->set_offensivespeed(0);
 
+	MStats.lock();
 	stats.clear();
+	MStats.unlock();
+
 	ItemStatsValues* values = equipment_list.CalculateEquipmentBonuses(this);
 	CalculateSpellBonuses(values);
 	info->add_sta((float)values->sta);

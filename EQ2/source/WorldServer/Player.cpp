@@ -1712,6 +1712,7 @@ bool Player::DamageEquippedItems(int8 amount, Client* client) {
 	bool ret = false;
 	int8 item_type;
 	Item* item = 0;
+	equipment_list.MEquipmentItems.readlock(__FUNCTION__, __LINE__);
 	for(int8 i=0;i<NUM_SLOTS;i++){
 		item = equipment_list.items[i];
 		if(item) {
@@ -1729,6 +1730,8 @@ bool Player::DamageEquippedItems(int8 amount, Client* client) {
 			}
 		}
 	}
+	equipment_list.MEquipmentItems.releasereadlock(__FUNCTION__, __LINE__);
+
 	return ret;
 }
 
@@ -1783,8 +1786,10 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 		LogWrite(PLAYER__ERROR, 0, "Player", "%u index is out of range for equip items, bag_id: %i, slot: %u, version: %u, appearance: %u", index, bag_id, slot, version, appearance_type);
 		return packets;
 	}
-
+	equipList->MEquipmentItems.readlock(__FUNCTION__, __LINE__);
 	Item* item = equipList->items[index];
+	equipList->MEquipmentItems.releasereadlock(__FUNCTION__, __LINE__);
+
 	if (item && bag_id == -999) {
 		int8 old_slot = item->details.slot_id;
 		if (item_list.AssignItemToFreeSlot(item)) {
@@ -1836,9 +1841,17 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 				bag_id = 0;
 		}
 
+		item_list.MPlayerItems.readlock(__FUNCTION__, __LINE__);
 		if (item_list.items.count(bag_id) > 0 && item_list.items[bag_id][BASE_EQUIPMENT].count(slot) > 0)
 			to_item = item_list.items[bag_id][BASE_EQUIPMENT][slot];
+
+		bool canEquipToSlot = false;
 		if (to_item && equipList->CanItemBeEquippedInSlot(to_item, ConvertSlotFromClient(item->details.slot_id, version))) {
+			canEquipToSlot = true;
+		}
+		item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+
+		if (canEquipToSlot) {
 			equipList->RemoveItem(index);
 			if(item->details.appearance_type)
 				database.DeleteItem(GetCharacterID(), item, "APPEARANCE");
@@ -1877,7 +1890,10 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 		else if (to_item && to_item->IsBag() && to_item->details.num_slots > 0) {
 			bool free_slot = false;
 			for (int8 i = 0; i < to_item->details.num_slots; i++) {
-				if (item_list.items[to_item->details.bag_id][appearance_type].count(i) == 0) {
+				item_list.MPlayerItems.readlock(__FUNCTION__, __LINE__);
+				int32 count = item_list.items[to_item->details.bag_id][appearance_type].count(i);
+				item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+				if (count == 0) {
 					SetEquipment(0, item->details.slot_id);
 
 					if(item->details.appearance_type)
@@ -2029,14 +2045,19 @@ EQ2Packet* Player::SwapEquippedItems(int8 slot1, int8 slot2, int16 version, int1
 	if(equip_type == 3)
 		equipList = &appearance_equipment_list;
 	
+	equipList->MEquipmentItems.readlock(__FUNCTION__, __LINE__);
 	Item* item_from = equipList->items[slot1];
 	Item* item_to = equipList->items[slot2];
+	equipList->MEquipmentItems.releasereadlock(__FUNCTION__, __LINE__);
+
 	if(item_from && equipList->CanItemBeEquippedInSlot(item_from, slot2)){
 		if(item_to){
 			if(!equipList->CanItemBeEquippedInSlot(item_to, slot1))
 				return 0;
 		}
+		equipList->MEquipmentItems.writelock(__FUNCTION__, __LINE__);
 		equipList->items[slot1] = nullptr;
+		equipList->MEquipmentItems.releasewritelock(__FUNCTION__, __LINE__);
 		equipList->SetItem(slot2, item_from);
 		if(item_to)
 		{

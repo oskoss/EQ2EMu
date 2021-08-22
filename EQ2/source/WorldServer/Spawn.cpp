@@ -2563,6 +2563,9 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		// doesn't work for DoF client version 546
 		if (appearance.icon == 28 || appearance.icon == 12 || IsTransportSpawn())
 		{
+			// there is some other flags that setting with a transport breaks their solidity/ability to properly transport
+			// thus we just consider the following flags for now as all necessary
+			temp_activity_status = ACTIVITY_STATUS_SOLID_1188;
 			temp_activity_status += ACTIVITY_STATUS_ISTRANSPORT_1188;
 		}
 	}
