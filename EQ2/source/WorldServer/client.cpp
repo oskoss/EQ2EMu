@@ -234,7 +234,7 @@ Client::~Client() {
 void Client::RemoveClientFromZone() {
 	if(player && player->GetZone())
 		player->GetZone()->GetSpellProcess()->RemoveSpellTimersFromSpawn(player, true);
-		
+
 	if (current_zone && player) {
 		if (player->GetGroupMemberInfo())
 		{
@@ -5525,8 +5525,11 @@ void Client::SetPlayerQuest(Quest* quest, map<int32, int32>* progress) {
 				lua_interface->CallQuestFunction(quest, "Reload", player, step->GetStepID());
 		}
 	}
-	if (lua_interface)
+	if (lua_interface && step)
 		lua_interface->CallQuestFunction(quest, "CurrentStep", player, step->GetStepID());
+	else if(!step) {
+		LogWrite(QUEST__ERROR, 0, "Client", "Missing step for quest %s (ID %u), cannot CallQuestFunction for CurrentStep", quest->GetName(), quest->GetQuestID());
+	}
 }
 
 void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets) {
