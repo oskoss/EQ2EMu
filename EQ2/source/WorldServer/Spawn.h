@@ -1251,6 +1251,8 @@ public:
 	int32 GetLootTier() { return loot_tier; }
 	void SetLootTier(int32 tier) { loot_tier = tier; }
 
+	void SetDeletedSpawn(bool val) { deleted_spawn = val; }
+	bool IsDeletedSpawn() { return deleted_spawn; }
 protected:
 
 	bool	has_quests_required;
@@ -1358,6 +1360,8 @@ private:
 	bool is_omitted_by_db_flag; // this particular spawn is omitted by an expansion or holiday flag
 
 	int32 loot_tier;
+
+	bool deleted_spawn;
 };
 
 #endif

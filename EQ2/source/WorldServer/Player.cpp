@@ -5027,7 +5027,9 @@ bool Player::ShouldSendSpawn(Spawn* spawn){
 	// Think invalid spawns are coming from the mutex list, if spawn is invalid return false.
 	try
 	{
-		if((WasSentSpawn(spawn->GetID()) == false || NeedsSpawnResent(spawn)) && (!spawn->IsPrivateSpawn() || spawn->AllowedAccess(this)))
+		if(spawn->IsDeletedSpawn())
+			return false;
+		else if((WasSentSpawn(spawn->GetID()) == false || NeedsSpawnResent(spawn)) && (!spawn->IsPrivateSpawn() || spawn->AllowedAccess(this)))
 			return true;
 	}
 	catch (...)

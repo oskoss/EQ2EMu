@@ -130,6 +130,7 @@ Spawn::Spawn(){
 	rail_id = 0;
 	is_omitted_by_db_flag = false;
 	loot_tier = 0;
+	deleted_spawn = false;
 }
 
 Spawn::~Spawn(){

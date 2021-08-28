@@ -729,6 +729,7 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 			spawn = itr->second;
 			if(spawn && !spawn->IsPlayer()){
 				bool dispatched = false;
+				spawn->SetDeletedSpawn(true);
 				if(spawn->IsBot())
 				{
 					((Bot*)spawn)->Camp(true);
@@ -837,10 +838,14 @@ void ZoneServer::RepopSpawns(Client* client, Spawn* in_spawn){
 		vector<Spawn*>::iterator itr;
 		for(itr = spawns->begin(); itr != spawns->end(); itr++){
 			spawn = *itr;
+			spawn->SetDeletedSpawn(true);
 			SendRemoveSpawn(client, spawn, packet);
 		}
 	}
 	safe_delete(spawns);
+	if(in_spawn)
+		in_spawn->SetDeletedSpawn(true);
+
 	SendRemoveSpawn(client, in_spawn, packet);
 	spawn_check_add.Trigger();
 	safe_delete(packet);
@@ -3946,6 +3951,8 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 
 	if (spawn_expire_timers.count(spawn->GetID()) > 0)
 		spawn_expire_timers.erase(spawn->GetID());
+	
+	spawn->SetDeletedSpawn(true);
 	
 	// we will remove the spawn ptr and entry in the spawn_list later.. it is not safe right now (lua? client process? spawn process? etc? too many factors)
 	if(erase_from_spawn_list)
