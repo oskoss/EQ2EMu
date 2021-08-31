@@ -370,11 +370,13 @@ bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell, string reason)
 	return ret;
 }
 
-bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells){
+bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, bool lock_spell_process){
+	if(lock_spell_process)
+		MSpellProcess.lock();
+
 	bool ret = false;
 	Spawn* target = 0;
 	if(spell) {
-		bool hasTimer = !IsReady(spell->spell, spell->caster);
 		if (active_spells.count(spell) > 0)
 			active_spells.Remove(spell);
 		if (spell->caster) {
@@ -455,7 +457,11 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 		}
 		if(lua_interface)
 			lua_interface->RemoveSpell(spell, true, SpellScriptTimersHasSpell(spell), reason, removing_all_spells);
-	}
+	}	
+	
+	if(lock_spell_process)
+		MSpellProcess.unlock();
+	
 	return ret;
 }
 
@@ -1895,7 +1901,10 @@ void SpellProcess::Interrupted(Entity* caster, Spawn* interruptor, int16 error_c
 	}
 }
 
-void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast, bool call_expire_function){
+void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast, bool call_expire_function, bool lock_spell_process){
+	if(lock_spell_process)
+		MSpellProcess.lock();
+
 	int32 i = 0;
 	if(cast_timers.size() > 0){		
 		CastTimer* cast_timer = 0;
@@ -1958,6 +1967,9 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 			}
 		}
 	}
+	
+	if(lock_spell_process)
+		MSpellProcess.unlock();
 }
 
 void SpellProcess::GetSpellTargets(LuaSpell* luaspell) 

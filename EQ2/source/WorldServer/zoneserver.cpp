@@ -209,7 +209,7 @@ ZoneServer::~ZoneServer() {
 
 	// moved to the bottom as we want spawns deleted first, this used to be above Spawn deletion which is a big no no
 	safe_delete(spellProcess);
-	
+
 	LogWrite(ZONE__INFO, 0, "Zone", "Completed zone shutdown of '%s'", zone_name);
 	--numzones;
 	UpdateWindowTitle(0);
@@ -478,7 +478,7 @@ void ZoneServer::DeleteData(bool boot_clients){
 			}
 			else{
 				RemoveHeadingTimer(spawn); // called in RemoveSpawnSupportFunctions()
-				RemoveSpawnSupportFunctions(spawn);
+				RemoveSpawnSupportFunctions(spawn, true);
 				AddPendingDelete(spawn);
 			}
 		}
@@ -770,7 +770,7 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 				if(spawn->IsPlayer())
 					tmp_player_list.Add(spawn);
 				else {
-					RemoveSpawnSupportFunctions(spawn);	
+				RemoveSpawnSupportFunctions(spawn, true);
 					AddPendingDelete(spawn);
 				}
 			}
@@ -1662,7 +1662,7 @@ void ZoneServer::CheckDeadSpawnRemoval() {
 				{
 					dead_spawns.erase(spawn->GetID());
 					MDeadSpawns.releasewritelock(__FUNCTION__, __LINE__);
-					RemoveSpawn(spawn, true, true, true);
+					RemoveSpawn(spawn, true, true, true, true, true);
 					MDeadSpawns.writelock(__FUNCTION__, __LINE__);
 				}
 			}
@@ -3122,7 +3122,7 @@ void ZoneServer::RemoveClient(Client* client)
 		
 		client->GetPlayer()->DeleteSpellEffects(true);
 		
-		RemoveSpawn(client->GetPlayer(), false);
+		RemoveSpawn(client->GetPlayer(), false, true, true, true, true);
 		connected_clients.Remove(client, true, DisconnectClientTimer); // changed from a hardcoded 30000 (30 sec) to the DisconnectClientTimer rule
 	}
 }
@@ -3926,7 +3926,7 @@ void ZoneServer::RemoveFromRangeMap(Client* client){
 }
 */
 
-void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool lock, bool erase_from_spawn_list) 
+void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool lock, bool erase_from_spawn_list, bool lock_spell_process) 
 {
 	LogWrite(ZONE__DEBUG, 3, "Zone", "Processing RemoveSpawn function for %s (%i)...", spawn->GetName(),spawn->GetID());
 
@@ -3937,7 +3937,7 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 		movementMgr->RemoveMob((Entity*)spawn);
 	}
 
-	RemoveSpawnSupportFunctions(spawn);
+	RemoveSpawnSupportFunctions(spawn, lock_spell_process);
 	if (reloading)
 		RemoveDeadEnemyList(spawn);
 
@@ -3953,7 +3953,7 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 		spawn_expire_timers.erase(spawn->GetID());
 	
 	spawn->SetDeletedSpawn(true);
-	
+
 	// we will remove the spawn ptr and entry in the spawn_list later.. it is not safe right now (lua? client process? spawn process? etc? too many factors)
 	if(erase_from_spawn_list)
 		AddPendingSpawnRemove(spawn->GetID());
@@ -4302,7 +4302,7 @@ void ZoneServer::Despawn(Spawn* spawn, int32 timer){
 	if(!spawn || spawn->IsPlayer())
 		return;
 
-	RemoveSpawnSupportFunctions(spawn);
+	RemoveSpawnSupportFunctions(spawn, true);
 	if(spawn->IsEntity())
 		((Entity*)spawn)->InCombat(false);
 	if(timer == 0)
@@ -5825,9 +5825,9 @@ void ZoneServer::RemoveLocationGrids() {
 	location_grids.clear(true);
 }
 
-void ZoneServer::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast, bool call_expire_function){
+void ZoneServer::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast, bool call_expire_function, bool lock_spell_process){
 	if(spellProcess)
-		spellProcess->RemoveSpellTimersFromSpawn(spawn, remove_all, delete_recast, call_expire_function);
+		spellProcess->RemoveSpellTimersFromSpawn(spawn, remove_all, delete_recast, call_expire_function, lock_spell_process);
 }
 
 void ZoneServer::Interrupted(Entity* caster, Spawn* interruptor, int16 error_code, bool cancel, bool from_movement){
@@ -5858,7 +5858,7 @@ void ZoneServer::ProcessEntityCommand(EntityCommand* entity_command, Entity* cas
 		spellProcess->ProcessEntityCommand(this, entity_command, caster, target, lock);
 }
 
-void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn) {
+void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_process) {
 	if(!spawn)
 		return;	
 
@@ -5866,7 +5866,7 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn) {
 	if(spawn->IsPlayer() && spawn->GetZone())
 		spawn->GetZone()->RemovePlayerPassenger(((Player*)spawn)->GetCharacterID());
 	if(spawn->IsEntity())
-		RemoveSpellTimersFromSpawn((Entity*)spawn, true);
+		RemoveSpellTimersFromSpawn((Entity*)spawn, true, true, true, lock_spell_process);
 
 	RemoveDamagedSpawn(spawn);
 	spawn->SendSpawnChanges(false);

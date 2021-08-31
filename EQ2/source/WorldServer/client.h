@@ -163,10 +163,9 @@ public:
 	void	SimpleMessage(int8 color, const char* message);
 	void	Message(int8 type, const char* message, ...);
 	void	SendSpellUpdate(Spell* spell, bool add_silently = false, bool add_to_hotbar = true);
-	void	Zone(ZoneServer* new_zone, bool set_coords = true);
-	void	Zone(const char* new_zone, bool set_coords = true);
-	void	Zone(int32 zoneid, bool set_coords = true);
-	void	Zone(int32 instanceid, bool set_coords = true, bool byInstanceID=false);
+	void	Zone(ZoneServer* new_zone, bool set_coords = true, bool is_spell = false);
+	void	Zone(const char* new_zone, bool set_coords = true, bool is_spell = false);
+	void	Zone(int32 instanceid, bool set_coords = true, bool byInstanceID=false, bool is_spell = false);
 	void	SendZoneInfo();
 	void	SendZoneSpawns();
 	void	HandleVerbRequest(EQApplicationPacket* app);
@@ -203,7 +202,7 @@ public:
 	bool	AddItemToBank(int32 item_id, int16 quantity = 0);
 	bool	AddItemToBank(Item* item);
 	bool	RemoveItem(Item *item, int16 quantity, bool force_override_no_delete = false);
-	void	ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destinations, int32 transport_id = 0);
+	void	ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destinations, int32 transport_id = 0, bool is_spell = false);
 	void	ProcessTeleportLocation(EQApplicationPacket* app); 
 
 	void	UpdateCharacterInstances();
@@ -331,7 +330,7 @@ public:
 	bool	GateAllowed();
 	bool	BindAllowed();
 	bool	Bind();
-	bool	Gate();
+	bool	Gate(bool is_spell = false);
 	void	SendChatRelationship(int8 type, const char* name);
 	void	SendFriendList();
 	void	SendIgnoreList();

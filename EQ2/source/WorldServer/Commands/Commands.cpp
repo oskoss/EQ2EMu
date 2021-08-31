@@ -2645,7 +2645,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if(dead && dead->IsPlayer() == false){
 					dead->SetHP(0);
 					if(sep && sep->arg[0] && sep->IsNumber(0) && atoi(sep->arg[0]) == 1)
-						client->GetCurrentZone()->RemoveSpawn(dead, true);
+						client->GetCurrentZone()->RemoveSpawn(dead, true, true, true, true, true);
 					else
 						client->GetPlayer()->KillSpawn(dead);
 				}else{
@@ -3444,7 +3444,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						{
 							client->Message(CHANNEL_COLOR_YELLOW,"Zoning to %s...", zonestr);
 							if(isInstance)
-								client->Zone(instanceID,true,true);
+								client->Zone(instanceID,true,true,false);
 							else
 								client->Zone(zonestr);
 						}
@@ -3612,7 +3612,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			query.RunQuery2(Q_INSERT, "delete from spawn_instance_data where spawn_id = %u and spawn_location_id = %u and pickup_item_id = %u", spawn->GetDatabaseID(), spawn->GetSpawnLocationID(), spawn->GetPickupItemID());
 
 			if (database.RemoveSpawnFromSpawnLocation(spawn)) {
-				client->GetCurrentZone()->RemoveSpawn(spawn, true, true);
+				client->GetCurrentZone()->RemoveSpawn(spawn, true, true, true, true, true);
 			}
 
 			// we had a UI Window displayed, update the house items
@@ -3741,7 +3741,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if (client->GetTempPlacementSpawn())
 					{
 						Spawn* tmp = client->GetTempPlacementSpawn();
-						client->GetCurrentZone()->RemoveSpawn(tmp);
+						client->GetCurrentZone()->RemoveSpawn(tmp, true, true, true, true, true);
 						client->SetTempPlacementSpawn(nullptr);
 					}
 
@@ -4772,7 +4772,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(spawn && !spawn->IsPlayer()){
 				if(spawn->GetSpawnLocationID() > 0){
 					if(database.RemoveSpawnFromSpawnLocation(spawn)){
-						client->GetCurrentZone()->RemoveSpawn(spawn, true, false);
+						client->GetCurrentZone()->RemoveSpawn(spawn, true, false, true, true, true);
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully removed spawn from zone");
 					}
 					else
@@ -5596,7 +5596,7 @@ void Commands::Command_CancelMaintained(Client* client, Seperator* sep)
 	//	if (spell && spell->GetSpellData()->friendly_spell)  -- NOTE::You can cancel hostile maintained spells, 
 		                                                     // just not spelleffects/dets - Foof
 		//{
-			if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell, "canceled"))
+			if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell, "canceled", false, true))
 				client->Message(CHANNEL_COLOR_RED, "The maintained spell could not be cancelled.");
 	//	}
 		//else

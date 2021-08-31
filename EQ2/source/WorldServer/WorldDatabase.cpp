@@ -3448,7 +3448,7 @@ int32 WorldDatabase::SaveCombinedSpawnLocation(ZoneServer* zone, Spawn* in_spawn
 		}
 		for(itr=spawns->begin();itr!=spawns->end();itr++){
 			spawn = *itr;
-			zone->RemoveSpawn(spawn);
+			zone->RemoveSpawn(spawn, true, true, true, true, true);
 		}
 		safe_delete(spawns);
 	}

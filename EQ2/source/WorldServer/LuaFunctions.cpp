@@ -1632,6 +1632,7 @@ int EQ2Emu_lua_AddHate(lua_State* state) {
 int EQ2Emu_lua_Zone(lua_State* state) {
 	if (!lua_interface)
 		return 0;
+	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 	ZoneServer* zone = lua_interface->GetZone(state);
 	Spawn* player = lua_interface->GetSpawn(state, 2);
 	Client* client = 0;
@@ -2120,7 +2121,9 @@ int EQ2Emu_lua_SetSpeed(lua_State* state) {
 	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		spawn->SetSpeed(value);
-		((Entity*)spawn)->SetSpeed(value);
+		
+		if(spawn->IsEntity())
+			((Entity*)spawn)->SetSpeed(value);
 		if (spawn->IsPlayer()) {
 			Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
 			if (client) {
@@ -4226,8 +4229,10 @@ int EQ2Emu_lua_Harvest(lua_State* state) {
 			LogWrite(MISC__TODO, 1, "TODO", "Cancel harvest if skill insufficient; Func: %s, Line: %i", __FUNCTION__, __LINE__);
 
 			((GroundSpawn*)node)->ProcessHarvest(client);
-			if (((GroundSpawn*)node)->GetNumberHarvests() == 0)
-				player->GetZone()->RemoveSpawn(node, true);
+			if (((GroundSpawn*)node)->GetNumberHarvests() == 0) {
+				LuaSpell* spell = lua_interface->GetCurrentSpell(state);
+				player->GetZone()->RemoveSpawn(node, true, true, true, true, (spell != nullptr) ? false : true);
+			}
 		}
 	}
 	else if (player && player->IsPlayer()) {
@@ -4283,12 +4288,13 @@ int EQ2Emu_lua_Bind(lua_State* state) {
 int EQ2Emu_lua_Gate(lua_State* state) {
 	if (!lua_interface)
 		return 0;
+	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	if (spawn) {
 		if (spawn->IsPlayer()) {
 			Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
 			if (client) {
-				if (!client->Gate())
+				if (!client->Gate((spell != nullptr) ? true : false))
 					client->SimpleMessage(CHANNEL_COLOR_RED, "Unable to gate.");
 			}
 		}
@@ -10962,6 +10968,7 @@ int EQ2Emu_lua_SendTransporters(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 
+	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	Spawn* player = lua_interface->GetSpawn(state, 2);
 	int32 transport_id = lua_interface->GetInt32Value(state, 3);
@@ -10981,7 +10988,7 @@ int EQ2Emu_lua_SendTransporters(lua_State* state) {
 		if (destinations.size())
 		{
 			client->SetTemporaryTransportID(transport_id);
-			client->ProcessTeleport(spawn, &destinations, transport_id);
+			client->ProcessTeleport(spawn, &destinations, transport_id, (spell != nullptr) ? true : false);
 		}
 		else
 			client->Message(CHANNEL_COLOR_RED, "There are no transporters available (ID: %u)", transport_id);

@@ -262,7 +262,7 @@ public:
 
 	/// <summary>Remove the given spell from the ZpellProcess</summary>
 	/// <param name='spell'>LuaSpell to remove</param>
-	bool DeleteCasterSpell(LuaSpell* spell, string reason="", bool removing_all_spells = false);
+	bool DeleteCasterSpell(LuaSpell* spell, string reason="", bool removing_all_spells = false, bool lock_spell_process = false);
 
 	/// <summary>Interrupt the spell</summary>
 	/// <param name='interrupt'>InterruptStruct that contains all the info</param>
@@ -271,7 +271,7 @@ public:
 	/// <summary>Removes the timers for the given spawn</summary>
 	/// <param name='spawn'>Spawn to remove the timers for</param>
 	/// <param name='remove_all'>Remove all timers (cast, recast, active, queue, interrupted)? If false only cast timers are removed</param>
-	void RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all = false, bool delete_recast = false, bool call_expire_function = true);
+	void RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all = false, bool delete_recast = false, bool call_expire_function = true, bool lock_spell_process = false);
 
 	/// <summary>Sets the recast timer for the spell </summary>
 	/// <param name='spell'>The spell to set the recast for</param>

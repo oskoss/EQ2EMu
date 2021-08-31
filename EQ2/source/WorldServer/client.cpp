@@ -233,7 +233,7 @@ Client::~Client() {
 
 void Client::RemoveClientFromZone() {
 	if(player && player->GetZone())
-		player->GetZone()->GetSpellProcess()->RemoveSpellTimersFromSpawn(player, true);
+		player->GetZone()->GetSpellProcess()->RemoveSpellTimersFromSpawn(player, true, false, true, true);
 
 	if (current_zone && player) {
 		if (player->GetGroupMemberInfo())
@@ -676,7 +676,7 @@ void Client::HandlePlayerRevive(int32 point_id)
 		if(shard->GetSpawnScript() && strlen(shard->GetSpawnScript()) > 0)
 			originalZone->CallSpawnScript(shard, SPAWN_SCRIPT_PRESPAWN);
 
-		originalZone->RemoveSpawn(player, false);
+		originalZone->RemoveSpawn(player, false, true, true, true, true);
 
 		originalZone->AddSpawn(shard);
 		
@@ -1302,7 +1302,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		if (GetTempPlacementSpawn())
 		{
 			Spawn* tmp = GetTempPlacementSpawn();
-			GetCurrentZone()->RemoveSpawn(tmp);
+			GetCurrentZone()->RemoveSpawn(tmp, true, true, true, true, true);
 			SetTempPlacementSpawn(nullptr);
 			SetPlacementUniqueItemID(0);
 			break; // break out early if we are tied to a temp spawn
@@ -3344,7 +3344,7 @@ void ClientList::Remove(Client* client, bool remove_data) {
 void Client::SetCurrentZone(int32 id) {
 	if (current_zone) {
 		//current_zone->GetCombat()->RemoveHate(player);
-		current_zone->RemoveSpawn(player, false);
+		current_zone->RemoveSpawn(player, false, true, true, true, true);
 	}
 	SetCurrentZone(zone_list.Get(id));
 
@@ -3353,7 +3353,7 @@ void Client::SetCurrentZone(int32 id) {
 void Client::SetCurrentZoneByInstanceID(int32 id, int32 zoneid) {
 	if (current_zone) {
 		//current_zone->GetCombat()->RemoveHate(player);
-		current_zone->RemoveSpawn(player, false);
+		current_zone->RemoveSpawn(player, false, true, true, true, true);
 	}
 	SetCurrentZone(zone_list.GetByInstanceID(id, zoneid));
 
@@ -3798,7 +3798,7 @@ bool Client::TryZoneInstance(int32 zoneID, bool zone_coords_valid) {
 	instance_zone = GetPlayer()->GetGroupMemberInZone(zoneID);
 
 	if (instance_zone != NULL)
-		Zone(instance_zone->GetInstanceID(), zone_coords_valid, true);
+		Zone(instance_zone->GetInstanceID(), zone_coords_valid);
 	else if ((instanceType = database.GetInstanceTypeByZoneID(zoneID)) > 0)
 	{
 		// best to check if we already have our own instance!
@@ -4013,12 +4013,12 @@ bool Client::CheckZoneAccess(const char* zoneName) {
 	return true;
 }
 
-void Client::Zone(int32 instanceid, bool set_coords, bool byInstanceID) {
-	Zone(zone_list.GetByInstanceID(instanceid), set_coords);
+void Client::Zone(int32 instanceid, bool set_coords, bool byInstanceID, bool is_spell) {
+	Zone(zone_list.GetByInstanceID(instanceid), set_coords, is_spell);
 
 }
 
-void Client::Zone(ZoneServer* new_zone, bool set_coords) {
+void Client::Zone(ZoneServer* new_zone, bool set_coords, bool is_spell) {
 	if (!new_zone) {
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Zone Request Denied! No 'new_zone' value");
 		return;
@@ -4039,7 +4039,7 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 	((Entity*)player)->DismissAllPets();
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Removing player from current zone...", __FUNCTION__);
-	GetCurrentZone()->RemoveSpawn(player, false);
+	GetCurrentZone()->RemoveSpawn(player, false, true, true, true, !is_spell);
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting zone to '%s'...", __FUNCTION__, new_zone->GetZoneName());
 	SetCurrentZone(new_zone);
@@ -4098,10 +4098,10 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords) {
 	}
 }
 
-void Client::Zone(const char* new_zone, bool set_coords)
+void Client::Zone(const char* new_zone, bool set_coords, bool is_spell)
 {
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Zone Request to '%s'", new_zone);
-	Zone(zone_list.Get(new_zone), set_coords);
+	Zone(zone_list.Get(new_zone), set_coords, is_spell);
 }
 
 float Client::DistanceFrom(Client* client) {
@@ -8256,7 +8256,7 @@ bool Client::Bind() {
 	return true;
 }
 
-bool Client::Gate() {
+bool Client::Gate(bool is_spell) {
 	if (player->GetPlayerInfo()->GetBindZoneID() == 0)
 		return false;
 
@@ -8266,7 +8266,7 @@ bool Client::Gate() {
 		player->SetY(player->GetPlayerInfo()->GetBindZoneY());
 		player->SetZ(player->GetPlayerInfo()->GetBindZoneZ());
 		player->SetHeading(player->GetPlayerInfo()->GetBindZoneHeading());
-		Zone(zone, false);
+		Zone(zone, false, is_spell);
 
 		return true;
 	}
@@ -8274,7 +8274,7 @@ bool Client::Gate() {
 	return false;
 }
 
-void Client::ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destinations, int32 transport_id) {
+void Client::ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destinations, int32 transport_id, bool is_spell) {
 	if (!destinations || !spawn) {
 		return;
 	}
@@ -8316,9 +8316,9 @@ void Client::ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destin
 				GetPlayer()->SetZ(destination->destination_z);
 				GetPlayer()->SetHeading(destination->destination_heading);
 				if (instance_zone)
-					Zone(instance_zone->GetInstanceID(), false, true);
+					Zone(instance_zone->GetInstanceID(), false, true, is_spell);
 				else
-					Zone(new_zone, false);
+					Zone(new_zone, false, is_spell);
 			}
 		}
 		if (destination->message.length() > 0)

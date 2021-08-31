@@ -306,7 +306,7 @@ public:
 	
 	void	AddSpawnGroupChance(int32 group_id, float percent);
 	
-	void	RemoveSpawn(Spawn* spawn, bool delete_spawn = true, bool respawn = true, bool lock = true, bool erase_from_spawn_list = true);
+	void	RemoveSpawn(Spawn* spawn, bool delete_spawn = true, bool respawn = true, bool lock = true, bool erase_from_spawn_list = true, bool lock_spell_process = false);
 	void	ProcessSpawnLocations();
 	void	SendQuestUpdates(Client* client, Spawn* spawn = 0);
 	
@@ -394,7 +394,7 @@ public:
 	void	LoadSpellProcess();
 	void	LockAllSpells(Player* player);
 	void	UnlockAllSpells(Player* player);
-	void	RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast = true, bool call_expire_function = true);
+	void	RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast = true, bool call_expire_function = true, bool lock_spell_process = false);
 	void	Interrupted(Entity* caster, Spawn* interruptor, int16 error_code, bool cancel = false, bool from_movement = false);
 	Spell*	GetSpell(Entity* caster);
 	void	ProcessSpell(Spell* spell, Entity* caster, Spawn* target = 0, bool lock = true, bool harvest_spell = false, LuaSpell* customSpell = 0, int16 custom_cast_time = 0, bool in_heroic_opp = false);
@@ -742,7 +742,7 @@ private:
 	void	RemoveLocationProximities();																		// never used outside zone server
 	void	CheckLocationProximity();																			// never used outside zone server
 	void	CheckLocationGrids();																				// never used outside zone server
-	void	RemoveSpawnSupportFunctions(Spawn* spawn);															// never used outside zone server
+	void	RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_process = false);															// never used outside zone server
 	void	ReloadTransporters();																				// never used outside zone server
 	void	DeleteSpawns(bool delete_all);																		// never used outside zone server
 	void	AddPendingDelete(Spawn* spawn);																		// never used outside zone server
