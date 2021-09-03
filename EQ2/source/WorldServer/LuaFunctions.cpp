@@ -3376,6 +3376,7 @@ int EQ2Emu_lua_QuestReturnNPC(lua_State* state) {
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
 	int32 spawn_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest && spawn_id > 0)
 		quest->SetQuestReturnNPC(spawn_id);
 	return 0;
@@ -3386,25 +3387,25 @@ int EQ2Emu_lua_AddTimer(lua_State* state) {
 		return 0;
 
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 time = lua_interface->GetInt32Value(state, 2);
+	string function = lua_interface->GetStringValue(state, 3);
+	int32 max_count = lua_interface->GetInt32Value(state, 4);
+	Spawn* player = lua_interface->GetSpawn(state, 5);
+	lua_interface->ResetFunctionStack(state);
+
 	if (!spawn) {
 		lua_interface->LogError("%s: LUA AddTimer command error: spawn is not valid", lua_interface->GetScriptName(state));
 		return 0;
 	}
-
-	int32 time = lua_interface->GetInt32Value(state, 2);
 	if (time <= 0) {
 		lua_interface->LogError("%s: LUA AddTimer command error: time is not set", lua_interface->GetScriptName(state));
 		return 0;
 	}
 
-	string function = lua_interface->GetStringValue(state, 3);
 	if (function.length() == 0) {
 		lua_interface->LogError("%s: LUA AddTimer command error: function is not set", lua_interface->GetScriptName(state));
 		return 0;
 	}
-
-	int32 max_count = lua_interface->GetInt32Value(state, 4);
-	Spawn* player = lua_interface->GetSpawn(state, 5);
 
 	SpawnScriptTimer* timer = new SpawnScriptTimer;
 	if ( time < 10)
@@ -3423,11 +3424,33 @@ int EQ2Emu_lua_AddTimer(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_StopTimer(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	string function = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
+
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA StopTimer command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if(!spawn->GetZone()) {
+		lua_interface->LogError("%s: LUA StopTimer command error: spawn has no zone to check spawn timers", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	spawn->GetZone()->StopSpawnScriptTimer(spawn, function);
+
+	return 0;
+}
+
 int EQ2Emu_lua_GetQuest(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (player && player->IsPlayer() && quest_id > 0) {
 		lua_interface->SetQuestValue(state, ((Player*)player)->player_quests[quest_id]);
 		return 1;
@@ -3440,6 +3463,7 @@ int EQ2Emu_lua_QuestIsComplete(lua_State* state) {
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (player && player->IsPlayer() && quest_id > 0 && (((Player*)player)->player_quests.count(quest_id) > 0)) {
 		Quest* quest = ((Player*)player)->player_quests[quest_id];
 		if (quest)
@@ -3454,6 +3478,7 @@ int EQ2Emu_lua_HasCompletedQuest(lua_State* state) {
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (player && player->IsPlayer() && quest_id > 0) {
 		lua_interface->SetBooleanValue(state, (((Player*)player)->GetCompletedQuest(quest_id) != 0));
 		return 1;
@@ -3466,6 +3491,7 @@ int EQ2Emu_lua_ProvidesQuest(lua_State* state) {
 		return 0;
 	Spawn* npc = lua_interface->GetSpawn(state);
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (npc && !npc->IsPlayer() && quest_id > 0)
 		npc->AddProvidedQuest(quest_id);
 	return 0;
@@ -3478,6 +3504,7 @@ int EQ2Emu_lua_OfferQuest(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state, 2);
 	int32 quest_id = lua_interface->GetInt32Value(state, 3);
 	bool forced = lua_interface->GetBooleanValue(state, 4);
+	lua_interface->ResetFunctionStack(state);
 
 	/* NPC is allowed to be null */
 	if (player && player->IsPlayer() && quest_id > 0) {
@@ -3513,8 +3540,9 @@ int EQ2Emu_lua_AddQuestPrereqClass(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int8 class_id = lua_interface->GetInt8Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int8 class_id = lua_interface->GetInt8Value(state, 2);
 		quest->AddPrereqClass(class_id);
 	}
 	return 0;
@@ -3524,8 +3552,9 @@ int EQ2Emu_lua_AddQuestPrereqRace(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int8 race = lua_interface->GetInt8Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int8 race = lua_interface->GetInt8Value(state, 2);
 		quest->AddPrereqRace(race);
 	}
 	return 0;
@@ -3535,8 +3564,9 @@ int EQ2Emu_lua_AddQuestPrereqModelType(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int16 model_type = lua_interface->GetInt16Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int16 model_type = lua_interface->GetInt16Value(state, 2);
 		quest->AddPrereqModelType(model_type);
 	}
 	return 0;
@@ -3547,12 +3577,14 @@ int EQ2Emu_lua_AddQuestPrereqTradeskillLevel(lua_State* state) {
 		return 0;
 
 	Quest* quest = lua_interface->GetQuest(state);
+	int8 level = lua_interface->GetInt8Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+
 	if (!quest) {
 		lua_interface->LogError("%s: LUA AddQuestPrereqTradeskillLevel command error: quest is not valid", lua_interface->GetScriptName(state));
 		return 0;
 	}
 
-	int8 level = lua_interface->GetInt8Value(state, 2);
 	quest->SetPrereqTSLevel(level);
 	return 0;
 }
@@ -3562,12 +3594,13 @@ int EQ2Emu_lua_AddQuestPrereqTradeskillClass(lua_State* state) {
 		return 0;
 
 	Quest* quest = lua_interface->GetQuest(state);
+	int8 class_id = lua_interface->GetInt8Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (!quest) {
 		lua_interface->LogError("%s: LUA AddQuestPrereqTradeskillClass command error: quest is not valid", lua_interface->GetScriptName(state));
 		return 0;
 	}
 
-	int8 class_id = lua_interface->GetInt8Value(state, 2);
 	quest->AddPrereqTradeskillClass(class_id);
 	return 0;
 }
@@ -3576,10 +3609,11 @@ int EQ2Emu_lua_AddQuestPrereqFaction(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 faction_id = lua_interface->GetInt32Value(state, 2);
+	sint32 min = lua_interface->GetSInt32Value(state, 3);
+	sint32 max = lua_interface->GetSInt32Value(state, 4);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int32 faction_id = lua_interface->GetInt32Value(state, 2);
-		sint32 min = lua_interface->GetSInt32Value(state, 3);
-		sint32 max = lua_interface->GetSInt32Value(state, 4);
 		quest->AddPrereqFaction(faction_id, min, max);
 	}
 	return 0;
@@ -3589,9 +3623,10 @@ int EQ2Emu_lua_AddQuestSelectableRewardItem(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 item_id = lua_interface->GetInt32Value(state, 2);
+	int8 quantity = lua_interface->GetInt8Value(state, 3);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int32 item_id = lua_interface->GetInt32Value(state, 2);
-		int8 quantity = lua_interface->GetInt8Value(state, 3);
 		if (quantity == 0)
 			quantity = 1;
 		Item* master_item = master_item_list.GetItem(item_id);
@@ -3629,9 +3664,10 @@ int EQ2Emu_lua_AddQuestRewardItem(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 item_id = lua_interface->GetInt32Value(state, 2);
+	int8 quantity = lua_interface->GetInt32Value(state, 3);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int32 item_id = lua_interface->GetInt32Value(state, 2);
-		int8 quantity = lua_interface->GetInt32Value(state, 3);
 		if (quantity == 0)
 			quantity = 1;
 		Item* master_item = master_item_list.GetItem(item_id);
@@ -3648,11 +3684,12 @@ int EQ2Emu_lua_AddQuestRewardCoin(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 copper = lua_interface->GetInt32Value(state, 2);
+	int32 silver = lua_interface->GetInt32Value(state, 3);
+	int32 gold = lua_interface->GetInt32Value(state, 4);
+	int32 plat = lua_interface->GetInt32Value(state, 5);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int32 copper = lua_interface->GetInt32Value(state, 2);
-		int32 silver = lua_interface->GetInt32Value(state, 3);
-		int32 gold = lua_interface->GetInt32Value(state, 4);
-		int32 plat = lua_interface->GetInt32Value(state, 5);
 		quest->AddRewardCoins(copper, silver, gold, plat);
 	}
 	return 0;
@@ -3664,6 +3701,7 @@ int EQ2Emu_lua_AddQuestRewardFaction(lua_State* state) {
 	Quest* quest = lua_interface->GetQuest(state);
 	int32 faction_id = lua_interface->GetInt32Value(state, 2);
 	sint32 amount = lua_interface->GetSInt32Value(state, 3);
+	lua_interface->ResetFunctionStack(state);
 	if (quest && faction_id > 0 && amount != 0)
 		quest->AddRewardFaction(faction_id, amount);
 	return 0;
@@ -3673,8 +3711,9 @@ int EQ2Emu_lua_SetQuestRewardStatus(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 status = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int32 status = lua_interface->GetInt32Value(state, 2);
 		quest->SetRewardStatus(status);
 	}
 	return 0;
@@ -3684,8 +3723,9 @@ int EQ2Emu_lua_SetStatusTmpReward(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 status = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int32 status = lua_interface->GetInt32Value(state, 2);
 		quest->SetStatusTmpReward(status);
 	}
 	return 0;
@@ -3696,8 +3736,9 @@ int EQ2Emu_lua_SetCoinTmpReward(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int64 coins = lua_interface->GetInt64Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int64 coins = lua_interface->GetInt64Value(state, 2);
 		quest->SetCoinTmpReward(coins);
 	}
 	return 0;
@@ -3708,8 +3749,9 @@ int EQ2Emu_lua_SetQuestRewardComment(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	string comment = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		string comment = lua_interface->GetStringValue(state, 2);
 		quest->SetRewardComment(comment);
 	}
 	return 0;
@@ -3719,8 +3761,9 @@ int EQ2Emu_lua_SetQuestRewardExp(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 exp = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int32 exp = lua_interface->GetInt32Value(state, 2);
 		quest->SetRewardXP(exp);
 	}
 	return 0;
@@ -3728,18 +3771,18 @@ int EQ2Emu_lua_SetQuestRewardExp(lua_State* state) {
 
 int EQ2Emu_lua_AddQuestStep(lua_State* state) {
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	int32 quantity = lua_interface->GetInt32Value(state, 4);
+	float percentage = lua_interface->GetFloatValue(state, 5);
+	string str_taskgroup = lua_interface->GetStringValue(state, 6);
+	int16 icon = lua_interface->GetInt16Value(state, 7);
+	int32 usableitemid = lua_interface->GetInt32Value(state, 8);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		int32 quantity = lua_interface->GetInt32Value(state, 4);
-		float percentage = lua_interface->GetFloatValue(state, 5);
-		string str_taskgroup = lua_interface->GetStringValue(state, 6);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
 		
-		int16 icon = lua_interface->GetInt16Value(state, 7);
-		int32 usableitemid = lua_interface->GetInt32Value(state, 8);
 		
 		int32 id = 0;
 		vector<int32>* ids = 0;
@@ -3759,6 +3802,7 @@ int EQ2Emu_lua_AddQuestStep(lua_State* state) {
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 int EQ2Emu_lua_AddQuestStepKillLogic(lua_State* state, int8 type)
@@ -3766,13 +3810,13 @@ int EQ2Emu_lua_AddQuestStepKillLogic(lua_State* state, int8 type)
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	int32 quantity = lua_interface->GetInt32Value(state, 4);
+	float percentage = lua_interface->GetFloatValue(state, 5);
+	string str_taskgroup = lua_interface->GetStringValue(state, 6);
+	int16 icon = lua_interface->GetInt16Value(state, 7);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		int32 quantity = lua_interface->GetInt32Value(state, 4);
-		float percentage = lua_interface->GetFloatValue(state, 5);
-		string str_taskgroup = lua_interface->GetStringValue(state, 6);
-		int16 icon = lua_interface->GetInt16Value(state, 7);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
@@ -3795,6 +3839,7 @@ int EQ2Emu_lua_AddQuestStepKillLogic(lua_State* state, int8 type)
 		}
 		safe_delete(ids);
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 int EQ2Emu_lua_AddQuestStepKill(lua_State* state) {
@@ -3809,12 +3854,12 @@ int EQ2Emu_lua_AddQuestStepChat(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	int32 quantity = lua_interface->GetInt32Value(state, 4);
+	string str_taskgroup = lua_interface->GetStringValue(state, 5);
+	int16 icon = lua_interface->GetInt16Value(state, 6);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		int32 quantity = lua_interface->GetInt32Value(state, 4);
-		string str_taskgroup = lua_interface->GetStringValue(state, 5);
-		int16 icon = lua_interface->GetInt16Value(state, 6);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
@@ -3837,6 +3882,7 @@ int EQ2Emu_lua_AddQuestStepChat(lua_State* state) {
 		}
 		safe_delete(ids);
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 
@@ -3844,13 +3890,13 @@ int EQ2Emu_lua_AddQuestStepObtainItem(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	int32 quantity = lua_interface->GetInt32Value(state, 4);
+	float percentage = lua_interface->GetFloatValue(state, 5);
+	string str_taskgroup = lua_interface->GetStringValue(state, 6);
+	int16 icon = lua_interface->GetInt16Value(state, 7);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		int32 quantity = lua_interface->GetInt32Value(state, 4);
-		float percentage = lua_interface->GetFloatValue(state, 5);
-		string str_taskgroup = lua_interface->GetStringValue(state, 6);
-		int16 icon = lua_interface->GetInt16Value(state, 7);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
@@ -3872,6 +3918,7 @@ int EQ2Emu_lua_AddQuestStepObtainItem(lua_State* state) {
 		}
 		safe_delete(ids);
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 
@@ -3879,12 +3926,12 @@ int EQ2Emu_lua_AddQuestStepZoneLoc(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	float max_variation = lua_interface->GetFloatValue(state, 4);
+	string str_taskgroup = lua_interface->GetStringValue(state, 5);
+	int16 icon = lua_interface->GetInt16Value(state, 6);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		float max_variation = lua_interface->GetFloatValue(state, 4);
-		string str_taskgroup = lua_interface->GetStringValue(state, 5);
-		int16 icon = lua_interface->GetInt16Value(state, 6);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
@@ -3913,6 +3960,7 @@ int EQ2Emu_lua_AddQuestStepZoneLoc(lua_State* state) {
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 
@@ -3920,12 +3968,12 @@ int EQ2Emu_lua_AddQuestStepLocation(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	float max_variation = lua_interface->GetFloatValue(state, 4);
+	string str_taskgroup = lua_interface->GetStringValue(state, 5);
+	int16 icon = lua_interface->GetInt16Value(state, 6);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		float max_variation = lua_interface->GetFloatValue(state, 4);
-		string str_taskgroup = lua_interface->GetStringValue(state, 5);
-		int16 icon = lua_interface->GetInt16Value(state, 6);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
@@ -3954,18 +4002,19 @@ int EQ2Emu_lua_AddQuestStepLocation(lua_State* state) {
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 int EQ2Emu_lua_AddQuestUsableItem(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	float max_variation = lua_interface->GetFloatValue(state, 4);
+	string str_taskgroup = lua_interface->GetStringValue(state, 5);
+	int16 icon = lua_interface->GetInt16Value(state, 6);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		float max_variation = lua_interface->GetFloatValue(state, 4);
-		string str_taskgroup = lua_interface->GetStringValue(state, 5);
-		int16 icon = lua_interface->GetInt16Value(state, 6);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
@@ -3991,17 +4040,18 @@ int EQ2Emu_lua_AddQuestUsableItem(lua_State* state) {
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 int EQ2Emu_lua_AddQuestStepSpell(lua_State* state) {
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	int32 quantity = lua_interface->GetInt32Value(state, 4);
+	float percentage = lua_interface->GetFloatValue(state, 5);
+	string str_taskgroup = lua_interface->GetStringValue(state, 6);
+	int16 icon = lua_interface->GetInt16Value(state, 7);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		int32 quantity = lua_interface->GetInt32Value(state, 4);
-		float percentage = lua_interface->GetFloatValue(state, 5);
-		string str_taskgroup = lua_interface->GetStringValue(state, 6);
-		int16 icon = lua_interface->GetInt16Value(state, 7);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
@@ -4023,6 +4073,7 @@ int EQ2Emu_lua_AddQuestStepSpell(lua_State* state) {
 		}
 		safe_delete(ids);
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 
@@ -4030,13 +4081,13 @@ int EQ2Emu_lua_AddQuestStepCraft(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	int32 quantity = lua_interface->GetInt32Value(state, 4);
+	float percentage = lua_interface->GetFloatValue(state, 5);
+	string str_taskgroup = lua_interface->GetStringValue(state, 6);
+	int16 icon = lua_interface->GetInt16Value(state, 7);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		int32 quantity = lua_interface->GetInt32Value(state, 4);
-		float percentage = lua_interface->GetFloatValue(state, 5);
-		string str_taskgroup = lua_interface->GetStringValue(state, 6);
-		int16 icon = lua_interface->GetInt16Value(state, 7);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
@@ -4058,6 +4109,7 @@ int EQ2Emu_lua_AddQuestStepCraft(lua_State* state) {
 		}
 		safe_delete(ids);
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 
@@ -4065,13 +4117,13 @@ int EQ2Emu_lua_AddQuestStepHarvest(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string description = lua_interface->GetStringValue(state, 3);
+	int32 quantity = lua_interface->GetInt32Value(state, 4);
+	float percentage = lua_interface->GetFloatValue(state, 5);
+	string str_taskgroup = lua_interface->GetStringValue(state, 6);
+	int16 icon = lua_interface->GetInt16Value(state, 7);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string description = lua_interface->GetStringValue(state, 3);
-		int32 quantity = lua_interface->GetInt32Value(state, 4);
-		float percentage = lua_interface->GetFloatValue(state, 5);
-		string str_taskgroup = lua_interface->GetStringValue(state, 6);
-		int16 icon = lua_interface->GetInt16Value(state, 7);
 		const char* taskgroup = 0;
 		if (str_taskgroup.length() > 0)
 			taskgroup = str_taskgroup.c_str();
@@ -4093,6 +4145,7 @@ int EQ2Emu_lua_AddQuestStepHarvest(lua_State* state) {
 		}
 		safe_delete(ids);
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 
@@ -4100,8 +4153,9 @@ int EQ2Emu_lua_SetQuestCompleteAction(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	string action = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		string action = lua_interface->GetStringValue(state, 2);
 		if (action.length() > 0)
 			quest->SetCompleteAction(action);
 	}
@@ -4112,9 +4166,10 @@ int EQ2Emu_lua_AddQuestStepCompleteAction(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string action = lua_interface->GetStringValue(state, 3);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string action = lua_interface->GetStringValue(state, 3);
 		if (step > 0 && action.length() > 0)
 			quest->AddCompleteAction(step, action);
 	}
@@ -4125,9 +4180,10 @@ int EQ2Emu_lua_AddQuestStepProgressAction(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
+	int32 step = lua_interface->GetInt32Value(state, 2);
+	string action = lua_interface->GetStringValue(state, 3);
+	lua_interface->ResetFunctionStack(state);
 	if (quest) {
-		int32 step = lua_interface->GetInt32Value(state, 2);
-		string action = lua_interface->GetStringValue(state, 3);
 		if (step > 0 && action.length() > 0)
 			quest->AddProgressAction(step, action);
 	}
@@ -4139,6 +4195,7 @@ int EQ2Emu_lua_UpdateQuestDescription(lua_State* state) {
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
 	string description = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest && description.length() > 0)
 		quest->SetDescription(description);
 	return 0;
@@ -4149,6 +4206,7 @@ int EQ2Emu_lua_SetCompletedDescription(lua_State* state) {
 		return 0;
 	Quest* quest = lua_interface->GetQuest(state);
 	string description = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest && description.length() > 0)
 		quest->SetCompletedDescription(description);
 	return 0;
@@ -4161,6 +4219,7 @@ int EQ2Emu_lua_UpdateQuestTaskGroupDescription(lua_State* state) {
 	int32 step = lua_interface->GetInt32Value(state, 2);
 	string description = lua_interface->GetStringValue(state, 3);
 	bool display_bullets = (lua_interface->GetInt8Value(state, 4) == 1);
+	lua_interface->ResetFunctionStack(state);
 	if (quest && step > 0 && description.length() > 0) {
 		quest->SetTaskGroupDescription(step, description, display_bullets);
 	/*	if (quest->GetPlayer()) {
@@ -4178,6 +4237,7 @@ int EQ2Emu_lua_UpdateQuestStepDescription(lua_State* state) {
 	Quest* quest = lua_interface->GetQuest(state);
 	int32 step = lua_interface->GetInt32Value(state, 2);
 	string description = lua_interface->GetStringValue(state, 3);
+	lua_interface->ResetFunctionStack(state);
 	if (quest && step > 0 && description.length() > 0) {
 		quest->SetStepDescription(step, description);
 		/*if (quest->GetPlayer()) {
@@ -4192,6 +4252,7 @@ int EQ2Emu_lua_UpdateQuestStepDescription(lua_State* state) {
 int EQ2Emu_lua_UpdateQuestZone(lua_State* state) {
 	Quest* quest = lua_interface->GetQuest(state);
 	string zone = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	if (quest && zone.length() > 0)
 		quest->SetZone(zone);
 	return 0;
@@ -4240,6 +4301,7 @@ int EQ2Emu_lua_Harvest(lua_State* state) {
 		if (client)
 			client->Message(CHANNEL_COLOR_RED, "Invalid target for this spell.");
 	}
+	lua_interface->ResetFunctionStack(state);
 	return 0;
 }
 
@@ -4252,6 +4314,7 @@ int EQ2Emu_lua_Bind(lua_State* state) {
 	float y = lua_interface->GetFloatValue(state, 4);
 	float z = lua_interface->GetFloatValue(state, 5);
 	float h = lua_interface->GetFloatValue(state, 6);
+	lua_interface->ResetFunctionStack(state);
 
 	if (!spawn) {
 		lua_interface->LogError("%s: LUA Bind command error: spawn is not valid", lua_interface->GetScriptName(state));
@@ -4290,6 +4353,7 @@ int EQ2Emu_lua_Gate(lua_State* state) {
 		return 0;
 	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		if (spawn->IsPlayer()) {
 			Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
@@ -4307,6 +4371,7 @@ int EQ2Emu_lua_IsBindAllowed(lua_State* state) {
 		return 0;
 	bool ret = false;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		if (spawn->IsPlayer()) {
 			Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
@@ -4323,6 +4388,7 @@ int EQ2Emu_lua_IsGateAllowed(lua_State* state) {
 		return 0;
 	bool ret = false;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		if (spawn->IsPlayer()) {
 			Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
@@ -4336,6 +4402,7 @@ int EQ2Emu_lua_IsGateAllowed(lua_State* state) {
 
 int EQ2Emu_lua_IsAlive(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		lua_interface->SetBooleanValue(state, spawn->Alive());
 		return 1;
@@ -4347,6 +4414,7 @@ int EQ2Emu_lua_IsInCombat(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn && spawn->IsEntity()) {
 		lua_interface->SetBooleanValue(state, ((Entity*)spawn)->EngagedInCombat());
 		return 1;
@@ -4358,6 +4426,7 @@ int EQ2Emu_lua_SendMessage(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string message = lua_interface->GetStringValue(state, 2);
 	string color_str = lua_interface->GetStringValue(state, 3);
+	lua_interface->ResetFunctionStack(state);
 	int8 color = CHANNEL_NARRATIVE;
 	if (spawn && spawn->IsPlayer() && message.length() > 0) {
 		Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
@@ -4386,6 +4455,7 @@ int EQ2Emu_lua_SendPopUpMessage(lua_State* state) {
 	int8 red = lua_interface->GetInt8Value(state, 3);
 	int8 green = lua_interface->GetInt8Value(state, 4);
 	int8 blue = lua_interface->GetInt8Value(state, 5);
+	lua_interface->ResetFunctionStack(state);
 
 	if (!spawn) {
 		lua_interface->LogError("%s: LUA SendPopUpMessage command error: Spawn is not valid.", lua_interface->GetScriptName(state));
@@ -4406,6 +4476,7 @@ int EQ2Emu_lua_SetServerControlFlag(lua_State* state) {
 	int8 param = lua_interface->GetInt8Value(state, 2);
 	int8 param_value = lua_interface->GetInt8Value(state, 3);
 	int8 value = lua_interface->GetInt8Value(state, 4);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn && spawn->IsPlayer() && (param >= 1 && param <= 5)) {
 		Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
 		if (client) {
@@ -4442,6 +4513,7 @@ int EQ2Emu_lua_SetServerControlFlag(lua_State* state) {
 
 int EQ2Emu_lua_ToggleTracking(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn && spawn->IsPlayer()) {
 		if (((Player*)spawn)->GetIsTracking())
 			spawn->GetZone()->AddPlayerTracking((Player*)spawn);
@@ -4461,6 +4533,7 @@ int EQ2Emu_lua_AddPrimaryEntityCommand(lua_State* state) {
 	int16 cast_time = lua_interface->GetInt16Value(state, 7);
 	int32 spell_visual = lua_interface->GetInt32Value(state, 8);
 	bool denyListDefault = (lua_interface->GetInt8Value(state, 9) == 1);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		if (distance == 0)
 			distance = 10.0f;
@@ -4486,6 +4559,7 @@ int EQ2Emu_lua_HasSpell(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state);
 	int32 spellid = lua_interface->GetInt32Value(state, 2);
 	int16 tier = lua_interface->GetInt16Value(state, 3);
+	lua_interface->ResetFunctionStack(state);
 	if (player && player->IsPlayer()) {
 		lua_interface->SetBooleanValue(state, ((Player*)player)->HasSpell(spellid, tier, true));
 		return 1;
@@ -4505,6 +4579,7 @@ int EQ2Emu_lua_AddSpellBookEntry(lua_State* state) {
 	if (num_args > 4) {
 		add_to_hotbar = lua_interface->GetBooleanValue(state, 5);
 	}
+	lua_interface->ResetFunctionStack(state);
 	Spell* spell = master_spell_list.GetSpell(spellid, tier);
 	if (player && spell && player->IsPlayer()) {
 		Client* client = player->GetClient();
@@ -4550,6 +4625,7 @@ int EQ2Emu_lua_HasFreeSlot(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (player && player->IsPlayer()) {
 		lua_interface->SetBooleanValue(state, ((Player*)player)->item_list.HasFreeSlot());
 		return 1;
@@ -4561,6 +4637,7 @@ int EQ2Emu_lua_Attack(lua_State* state) {
 	if (lua_interface) {
 		Spawn* npc = lua_interface->GetSpawn(state);
 		Spawn* player = lua_interface->GetSpawn(state, 2);
+		lua_interface->ResetFunctionStack(state);
 		if (npc && player && npc->IsNPC() && player->IsPlayer())
 			((NPC*)npc)->AddHate((Entity*)player, 100);
 	}
@@ -4571,6 +4648,7 @@ int EQ2Emu_lua_ApplySpellVisual(lua_State* state) {
 	if (lua_interface) {
 		Spawn* target = lua_interface->GetSpawn(state);
 		int32 spell_visual = lua_interface->GetInt32Value(state, 2);
+		lua_interface->ResetFunctionStack(state);
 		if (target && target->GetZone())
 			target->GetZone()->SendCastSpellPacket(spell_visual, target);
 	}
@@ -4582,6 +4660,7 @@ int EQ2Emu_lua_HasCollectionsToHandIn(lua_State* state) {
 
 	if (lua_interface) {
 		player = lua_interface->GetSpawn(state);
+		lua_interface->ResetFunctionStack(state);
 		if (player && player->IsPlayer()) {
 			lua_interface->SetBooleanValue(state, ((Player*)player)->GetCollectionList()->HasCollectionsToHandIn());
 			return 1;
@@ -4597,6 +4676,7 @@ int EQ2Emu_lua_HandInCollections(lua_State* state) {
 
 	if (lua_interface) {
 		player = lua_interface->GetSpawn(state);
+		lua_interface->ResetFunctionStack(state);
 		if (player && ((Player*)player)->IsPlayer() && ((Player*)player)->GetCollectionList()->HasCollectionsToHandIn())
 			if ((client = player->GetZone()->GetClientBySpawn(player)))
 				client->HandInCollections();
@@ -4610,6 +4690,7 @@ int EQ2Emu_lua_UseWidget(lua_State* state) {
 
 	if (lua_interface) {
 		widget = lua_interface->GetSpawn(state);
+		lua_interface->ResetFunctionStack(state);
 		if (widget && widget->IsWidget())
 			((Widget*)widget)->HandleUse(nullptr, "");
 	}
@@ -4626,6 +4707,7 @@ int EQ2Emu_lua_SetSpellList(lua_State* state) {
 		spawn = lua_interface->GetSpawn(state);
 		primary_list = lua_interface->GetInt32Value(state, 2);
 		secondary_list = lua_interface->GetInt32Value(state, 3);
+		lua_interface->ResetFunctionStack(state);
 
 		if (!spawn->IsNPC()) {
 			lua_interface->LogError("%s: LUA SetSpellList command error: Spawn was not a valid NPC", lua_interface->GetScriptName(state));
@@ -4644,6 +4726,7 @@ int EQ2Emu_lua_GetPet(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		if (spawn->IsEntity() && ((Entity*)spawn)->GetPet()) {
 			lua_interface->SetSpawnValue(state, ((Entity*)spawn)->GetPet());
@@ -4657,6 +4740,7 @@ int EQ2Emu_lua_GetCharmedPet(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		if (spawn->IsEntity() && ((Entity*)spawn)->GetCharmedPet()) {
 			lua_interface->SetSpawnValue(state, ((Entity*)spawn)->GetCharmedPet());
@@ -4670,6 +4754,7 @@ int EQ2Emu_lua_GetDeityPet(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		if (spawn->IsEntity() && ((Entity*)spawn)->GetDeityPet()) {
 			lua_interface->SetSpawnValue(state, ((Entity*)spawn)->GetDeityPet());
@@ -4683,6 +4768,7 @@ int EQ2Emu_lua_GetCosmeticPet(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (spawn) {
 		if (spawn->IsEntity() && ((Entity*)spawn)->GetCosmeticPet()) {
 			lua_interface->SetSpawnValue(state, ((Entity*)spawn)->GetCosmeticPet());
@@ -4697,6 +4783,7 @@ int EQ2Emu_lua_Charm(lua_State* state) {
 	Spawn* owner = lua_interface->GetSpawn(state);
 	Spawn* pet = lua_interface->GetSpawn(state, 2);
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
+	lua_interface->ResetFunctionStack(state);
 	if (!luaspell) {
 		lua_interface->LogError("%s: LUA Charm command error: Spell is not valid, charm can only be used in spell scripts.", lua_interface->GetScriptName(state));
 		return 0;
@@ -4741,6 +4828,7 @@ int EQ2Emu_lua_GetGroup(lua_State* state) {
 		return 0;
 
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
 	if (!spawn) {
 		lua_interface->LogError("%s: LUA GetGroup command error: spawn is not valid", lua_interface->GetScriptName(state));
 		return 0;

@@ -681,6 +681,7 @@ public:
 	void	UpdateClientSpawnMap(Player* player, Client* client);
 
 	void	WorldTimeUpdateTrigger() { sync_game_time_timer.Trigger(); }
+	void	StopSpawnScriptTimer(Spawn* spawn, std::string functionName);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;

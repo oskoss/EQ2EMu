@@ -1003,6 +1003,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "MovementLoopAdd", EQ2Emu_lua_MovementLoopAdd);
 	lua_register(state, "GetCurrentZoneSafeLocation", EQ2Emu_lua_GetCurrentZoneSafeLocation);
 	lua_register(state, "AddTimer", EQ2Emu_lua_AddTimer);
+	lua_register(state, "StopTimer", EQ2Emu_lua_StopTimer);
 	lua_register(state, "Harvest", EQ2Emu_lua_Harvest);
 	lua_register(state, "SetAttackable", EQ2Emu_lua_SetAttackable);
 

@@ -3813,6 +3813,24 @@ void ZoneServer::ApplySetSpawnCommand(Client* client, Spawn* target, int8 type, 
 	}
 }
 
+void ZoneServer::StopSpawnScriptTimer(Spawn* spawn, std::string functionName){
+	MSpawnScriptTimers.writelock(__FUNCTION__, __LINE__);
+	MRemoveSpawnScriptTimersList.writelock(__FUNCTION__, __LINE__);
+	if(spawn_script_timers.size() > 0){
+		set<SpawnScriptTimer*>::iterator itr;
+		SpawnScriptTimer* timer = 0;
+		for (itr = spawn_script_timers.begin(); itr != spawn_script_timers.end(); itr++) {
+			timer = *itr;
+			if(timer->spawn == spawn->GetID() && (functionName == "" || timer->function == functionName) && remove_spawn_script_timers_list.count(timer) == 0) {
+				itr = spawn_script_timers.erase(itr);
+				safe_delete(timer);
+			}
+		}
+	}
+	MRemoveSpawnScriptTimersList.releasewritelock(__FUNCTION__, __LINE__);
+	MSpawnScriptTimers.releasewritelock(__FUNCTION__, __LINE__);
+}
+
 void ZoneServer::DeleteSpawnScriptTimers(Spawn* spawn, bool all){
 	MSpawnScriptTimers.writelock(__FUNCTION__, __LINE__);
 	MRemoveSpawnScriptTimersList.writelock(__FUNCTION__, __LINE__);

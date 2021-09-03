@@ -292,6 +292,7 @@ int EQ2Emu_lua_QuestIsComplete(lua_State* state);
 int EQ2Emu_lua_QuestReturnNPC(lua_State* state);
 int EQ2Emu_lua_GetQuest(lua_State* state);
 int EQ2Emu_lua_AddTimer(lua_State* state);
+int EQ2Emu_lua_StopTimer(lua_State* state);
 int EQ2Emu_lua_Harvest(lua_State* state);
 int EQ2Emu_lua_SetCompleteFlag(lua_State* state);
 int EQ2Emu_lua_CanReceiveQuest(lua_State* state);
