@@ -3871,7 +3871,7 @@ void ZoneServer::DeleteSpawnScriptTimers() {
 void ZoneServer::CheckSpawnScriptTimers(){
 	DeleteSpawnScriptTimers();
 	SpawnScriptTimer* timer = 0;
-	vector<SpawnScriptTimer*> call_timers;
+	vector<SpawnScriptTimer> call_timers;
 	MSpawnScriptTimers.readlock(__FUNCTION__, __LINE__);
 	MRemoveSpawnScriptTimersList.writelock(__FUNCTION__, __LINE__);
 	if(spawn_script_timers.size() > 0){
@@ -3882,7 +3882,13 @@ void ZoneServer::CheckSpawnScriptTimers(){
 			if(remove_spawn_script_timers_list.count(timer) == 0 && 
 				timer->current_count < timer->max_count && current_time >= timer->timer){
 				timer->current_count++;	
-				call_timers.push_back(timer);
+				SpawnScriptTimer tmpTimer;
+				tmpTimer.current_count = timer->current_count;
+				tmpTimer.function = timer->function;
+				tmpTimer.player = timer->player;
+				tmpTimer.spawn = timer->spawn;
+				tmpTimer.max_count = timer->max_count;
+				call_timers.push_back(tmpTimer);
 			}
 			if(timer->current_count >= timer->max_count && remove_spawn_script_timers_list.count(timer) == 0)
 				remove_spawn_script_timers_list.insert(timer);
@@ -3891,10 +3897,10 @@ void ZoneServer::CheckSpawnScriptTimers(){
 	MRemoveSpawnScriptTimersList.releasewritelock(__FUNCTION__, __LINE__);
 	MSpawnScriptTimers.releasereadlock(__FUNCTION__, __LINE__);
 	if(call_timers.size() > 0){
-		vector<SpawnScriptTimer*>::iterator itr;
+		vector<SpawnScriptTimer>::iterator itr;
 		for(itr = call_timers.begin(); itr != call_timers.end(); itr++){
-			timer = *itr;
-			CallSpawnScript(GetSpawnByID(timer->spawn), SPAWN_SCRIPT_TIMER, timer->player > 0 ? GetSpawnByID(timer->player) : 0, timer->function.c_str());
+			SpawnScriptTimer tmpTimer = (SpawnScriptTimer)*itr;
+			CallSpawnScript(GetSpawnByID(tmpTimer.spawn), SPAWN_SCRIPT_TIMER, tmpTimer.player > 0 ? GetSpawnByID(tmpTimer.player) : 0, tmpTimer.function.c_str());
 		}
 	}
 }
