@@ -1924,8 +1924,8 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 			spell = itr->value;
 			if (!spell)
 				continue;
-			if (spell->spell->GetSpellData()->persist_though_death)
-				continue;
+			//if (spell->spell->GetSpellData()->persist_though_death)
+			//	continue;
 			if(spell->caster == spawn && call_expire_function){
 				DeleteCasterSpell(spell, "expired", remove_all);
 				continue;
@@ -2633,6 +2633,9 @@ void SpellProcess::RemoveTargetFromSpell(LuaSpell* spell, Spawn* target){
 	LogWrite(SPELL__DEBUG, 0, "Spell", "%s RemoveTargetFromSpell %s (%u).", spell->spell->GetName(), target->GetName(), target->GetID());
 	MRemoveTargetList.writelock(__FUNCTION__, __LINE__);
 
+	if(spell->caster && spell->caster == target)
+		spell->caster = nullptr;
+
 	if (!remove_target_list[spell])
 		remove_target_list[spell] = new vector<int32>;
 	remove_target_list[spell]->push_back(target->GetID());
@@ -2660,6 +2663,9 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 				remove_targets = remove_itr->second;
 				if (remove_targets && targets){
 					for (remove_target_itr = remove_targets->begin(); remove_target_itr != remove_targets->end(); remove_target_itr++){
+						if(!spell->caster || !spell->caster->GetZone())
+							continue;
+							
 						remove_spawn = spell->caster->GetZone()->GetSpawnByID((*remove_target_itr));
 						if (remove_spawn) {
 							spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
