@@ -1924,12 +1924,12 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 			spell = itr->value;
 			if (!spell)
 				continue;
-			//if (spell->spell->GetSpellData()->persist_though_death)
-			//	continue;
 			if(spell->caster == spawn && call_expire_function){
 				DeleteCasterSpell(spell, "expired", remove_all);
 				continue;
 			}
+			if (spell->spell->GetSpellData()->persist_through_death)
+				continue;
 
 			spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 			for (i = 0; i < spell->targets.size(); i++){
@@ -2665,7 +2665,7 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 					for (remove_target_itr = remove_targets->begin(); remove_target_itr != remove_targets->end(); remove_target_itr++){
 						if(!spell->caster || !spell->caster->GetZone())
 							continue;
-							
+
 						remove_spawn = spell->caster->GetZone()->GetSpawnByID((*remove_target_itr));
 						if (remove_spawn) {
 							spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);

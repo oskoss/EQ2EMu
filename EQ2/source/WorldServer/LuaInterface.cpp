@@ -831,16 +831,18 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 		lua_pcall(spell->state, 3, 0, 0); 
 		ResetFunctionStack(spell->state);
 	}
-
+	
 	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
-	for (int8 i = 0; i < spell->targets.size(); i++) {
-		Spawn* target = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
-		if (!target || !target->IsEntity())
-			continue;
+	if(spell->caster) {
+		for (int8 i = 0; i < spell->targets.size(); i++) {
+			Spawn* target = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
+			if (!target || !target->IsEntity())
+				continue;
 
-		((Entity*)target)->RemoveProc(0, spell);
-		((Entity*)target)->RemoveSpellEffect(spell);
-		((Entity*)target)->RemoveSpellBonus(spell);
+			((Entity*)target)->RemoveProc(0, spell);
+			((Entity*)target)->RemoveSpellEffect(spell);
+			((Entity*)target)->RemoveSpellBonus(spell);
+		}
 	}
 
 	multimap<int32,int8>::iterator entries;

@@ -117,7 +117,7 @@ Spell::Spell(Spell* host_spell)
 		spell->name = EQ2_8BitString(host_spell->GetSpellData()->name);
 		spell->not_maintained = host_spell->GetSpellData()->not_maintained;
 		spell->num_levels = host_spell->GetSpellData()->num_levels;
-		spell->persist_though_death = host_spell->GetSpellData()->persist_though_death;
+		spell->persist_through_death = host_spell->GetSpellData()->persist_through_death;
 		spell->power_by_level = host_spell->GetSpellData()->power_by_level;
 		spell->power_req = host_spell->GetSpellData()->power_req;
 		spell->power_req_percent = host_spell->GetSpellData()->power_req_percent;
@@ -1636,9 +1636,9 @@ bool Spell::GetSpellData(lua_State* state, std::string field)
 		lua_interface->SetBooleanValue(state, GetSpellData()->cast_while_moving);
 		valSet = true;
 	}
-	else if (field == "persist_though_death")
+	else if (field == "persist_through_death")
 	{
-		lua_interface->SetBooleanValue(state, GetSpellData()->persist_though_death);
+		lua_interface->SetBooleanValue(state, GetSpellData()->persist_through_death);
 		valSet = true;
 	}
 	else if (field == "not_maintained")
@@ -2057,10 +2057,10 @@ bool Spell::SetSpellData(lua_State* state, std::string field, int8 fieldArg)
 		GetSpellData()->cast_while_moving = cast_while_moving;
 		valSet = true;
 	}
-	else if (field == "persist_though_death")
+	else if (field == "persist_through_death")
 	{
-		bool persist_though_death = lua_interface->GetBooleanValue(state, fieldArg);
-		GetSpellData()->persist_though_death = persist_though_death;
+		bool persist_through_death = lua_interface->GetBooleanValue(state, fieldArg);
+		GetSpellData()->persist_through_death = persist_through_death;
 		valSet = true;
 	}
 	else if (field == "not_maintained")

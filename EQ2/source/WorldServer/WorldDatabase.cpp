@@ -4646,7 +4646,7 @@ void WorldDatabase::LoadSpells()
 			data->friendly_spell			= result.GetInt8Str("friendly_spell");
 			data->group_spell				= result.GetInt8Str("group_spell");
 			data->is_active					= result.GetInt8Str("is_active");
-			data->persist_though_death      = ( result.GetInt8Str("persist_through_death") == 1);
+			data->persist_through_death      = ( result.GetInt8Str("persist_through_death") == 1);
 			data->cast_while_moving         = ( result.GetInt8Str("cast_while_moving") == 1);
 			data->not_maintained            = ( result.GetInt8Str("not_maintained") == 1);
 			data->is_aa						= (result.GetInt8Str("is_aa") == 1);
