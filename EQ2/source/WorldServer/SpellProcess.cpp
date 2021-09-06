@@ -1936,7 +1936,7 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 				if (spawn->GetID() == spell->targets.at(i)){
 					if (spawn->IsEntity())
 						((Entity*)spawn)->RemoveSpellEffect(spell);
-					RemoveTargetFromSpell(spell, spawn);
+					RemoveTargetFromSpell(spell, spawn, remove_all);
 					break;
 				}
 			}
@@ -2626,14 +2626,14 @@ void SpellProcess::ClearSpellScriptTimerList() {
 	MSpellScriptTimers.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-void SpellProcess::RemoveTargetFromSpell(LuaSpell* spell, Spawn* target){
+void SpellProcess::RemoveTargetFromSpell(LuaSpell* spell, Spawn* target, bool removeCaster){
 	if (!spell || !target)
 		return;
 
 	LogWrite(SPELL__DEBUG, 0, "Spell", "%s RemoveTargetFromSpell %s (%u).", spell->spell->GetName(), target->GetName(), target->GetID());
 	MRemoveTargetList.writelock(__FUNCTION__, __LINE__);
 
-	if(spell->caster && spell->caster == target)
+	if(removeCaster && spell->caster && spell->caster == target)
 		spell->caster = nullptr;
 
 	if (!remove_target_list[spell])

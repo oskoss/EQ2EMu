@@ -405,7 +405,7 @@ public:
 	void	SendUpdateTitles(Client *client, Title *suffix = 0, Title *prefix = 0);
 	void	SendUpdateTitles(Spawn *spawn, Title *suffix = 0, Title *prefix = 0);
 	
-	void    RemoveTargetFromSpell(LuaSpell* spell, Spawn* target);
+	void    RemoveTargetFromSpell(LuaSpell* spell, Spawn* target, bool remove_caster = false);
 
 	/// <summary>Set the rain levl in the zone</summary>
 	/// <param name='val'>Level of rain in the zone 0.0 - 1.1 (rain starts at 0.76)</param>

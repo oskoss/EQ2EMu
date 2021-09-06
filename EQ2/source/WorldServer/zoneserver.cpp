@@ -6869,9 +6869,9 @@ void ZoneServer::DismissAllPets() {
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-void ZoneServer::RemoveTargetFromSpell(LuaSpell* spell, Spawn* target){
+void ZoneServer::RemoveTargetFromSpell(LuaSpell* spell, Spawn* target, bool remove_caster){
 	if (spellProcess)
-		spellProcess->RemoveTargetFromSpell(spell, target);
+		spellProcess->RemoveTargetFromSpell(spell, target, remove_caster);
 }
 
 void ZoneServer::ClearHate(Entity* entity) {

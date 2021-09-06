@@ -365,7 +365,7 @@ public:
 
 	MutexList<LuaSpell*>* GetActiveSpells() { return &active_spells; }
 
-	void RemoveTargetFromSpell(LuaSpell* spell, Spawn* target);
+	void RemoveTargetFromSpell(LuaSpell* spell, Spawn* target, bool remove_caster = false);
 	void CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete = true, bool removing_all_spells = false);
 
 	/// <summary>Adds a solo HO to the SpellProcess</summary>
