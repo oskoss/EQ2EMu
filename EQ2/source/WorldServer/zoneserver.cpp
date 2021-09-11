@@ -1234,6 +1234,14 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 				}
 				erase_itr = itr++;
 				spawn_delete_list.erase(erase_itr);
+				
+				MSpawnList.writelock(__FUNCTION__, __LINE__);
+				std::map<int32, Spawn*>::iterator sitr = spawn_list.find(spawn->GetID());
+				if(sitr != spawn_list.end()) {
+					spawn_list.erase(sitr);
+				}
+				MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
+			
 				safe_delete(spawn);
 			}
 			else
