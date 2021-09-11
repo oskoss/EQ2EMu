@@ -3233,7 +3233,6 @@ bool Spawn::CalculateChange(){
 		}
 	
 		if (GetMap() != nullptr) {
-			Cell* newCell = GetMap()->GetGrid()->GetCell(GetX(), GetZ());
 			int32 newGrid = GetMap()->GetGrid()->GetGridID(this);
 			if ((!IsFlyingCreature() || IsTransportSpawn()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
 				SetPos(&(appearance.pos.grid_id), newGrid);
@@ -3755,7 +3754,7 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 
 
 void Spawn::FixZ(bool forceUpdate) {
-	if (IsPlayer() || IsFlyingCreature() || !GetZone() || (IsObject() && GetZone()->GetInstanceType() == Instance_Type::PERSONAL_HOUSE_INSTANCE)) {
+	if (IsPlayer() || IsFlyingCreature() || !GetZone() || IsObject()) {
 		return;
 	}
 	/*
