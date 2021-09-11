@@ -3176,7 +3176,7 @@ void PlayerItemList::DestroyItem(int16 index){
 		}
 		items.erase(item->details.bag_id);
 	}
-	if(items.count(item->details.inv_slot_id) > 0 && items[item->details.inv_slot_id][item->details.appearance_type].count(item->details.slot_id) > 0)
+	if(item && items.count(item->details.inv_slot_id) > 0 && items[item->details.inv_slot_id][item->details.appearance_type].count(item->details.slot_id) > 0)
 		items[item->details.inv_slot_id][item->details.appearance_type].erase(item->details.slot_id);
 	indexed_items[index] = 0;
 	safe_delete(item);
