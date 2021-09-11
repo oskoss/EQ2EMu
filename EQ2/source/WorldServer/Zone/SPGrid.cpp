@@ -22,7 +22,6 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 
 SPGrid::SPGrid(string file, int32 cellSize) {
 	m_ZoneFile = file;
-	m_CellSize = cellSize;
 	m_MinX = 0;
 	m_MinZ = 0;
 	m_MaxX = 0;
@@ -62,10 +61,6 @@ bool SPGrid::Init() {
 		LogWrite(ZONE__ERROR, 0, "SPGrid", "SPGrid::Init() m_ZoneFile is empty.");
 		return false;
 	}
-
-	// Make sure we have a cell size
-	if (m_CellSize == 0)
-		m_CellSize = CELLSIZEDEFAULT;
 
 	// Open the map file for this zone
 	string filePath = "Maps/" + m_ZoneFile + ".EQ2Map";
@@ -108,15 +103,9 @@ bool SPGrid::Init() {
 	// in both the X and Z direction
 	float width = m_MaxX - m_MinX;
 	float height = m_MaxZ - m_MinZ;
-	m_NumCellsX = ceil(width / m_CellSize);
-	m_NumCellsZ = ceil(height / m_CellSize);
-	LogWrite(ZONE__DEBUG, 0, "SPGrid", "CellSize = %u, x cells = %u, z cells = %u", m_CellSize, m_NumCellsX, m_NumCellsZ);
 
-	// Allocate all the cells
-	m_Cells.resize(m_NumCellsZ * m_NumCellsX);
-
-	m_NumFaceCellsX = ceil(width / FACECELLSIZEDEFAULT);
-	m_NumFaceCellsZ = ceil(height / FACECELLSIZEDEFAULT);
+	m_NumFaceCellsX = ceil(width / CELLSIZEDEFAULT);
+	m_NumFaceCellsZ = ceil(height / CELLSIZEDEFAULT);
 	m_FaceCells.resize(m_NumFaceCellsX * m_NumFaceCellsZ);
 
 	// Read the number of grids
@@ -184,103 +173,7 @@ bool SPGrid::Init() {
 
 	fclose(file);
 
-	/*map<int32, vector<Face*> >::iterator itr;
-	vector<Face*>::iterator itr2;
-	for (int32 i = 0; i < m_Cells.size(); i++) {
-		Cell& cell = m_Cells[i];
-
-		for (itr = cell.FaceList.begin(); itr != cell.FaceList.end(); itr++) {
-			float min_x = 0.0f;
-			float min_y = 0.0f;
-			float min_z = 0.0f;
-			float max_x = 0.0f;
-			float max_y = 0.0f;
-			float max_z = 0.0f;
-
-			for (itr2 = (*itr).second.begin(); itr2 != (*itr).second.end(); itr2++) {
-				Face* face = (*itr2);
-				if (min_x == 0.0f || face->Vertex1[0] < min_x)
-					min_x = face->Vertex1[0];
-				if (face->Vertex2[0] < min_x)
-					min_x = face->Vertex2[0];
-				if (face->Vertex3[0] < min_x)
-					min_x = face->Vertex3[0];
-
-				if (min_y == 0.0f || face->Vertex1[1] < min_y)
-					min_y = face->Vertex1[1];
-				if (face->Vertex2[1] < min_y)
-					min_y = face->Vertex2[1];
-				if (face->Vertex3[1] < min_y)
-					min_y = face->Vertex3[1];
-
-				if (min_z == 0.0f || face->Vertex1[2] < min_z)
-					min_z = face->Vertex1[2];
-				if (face->Vertex2[2] < min_z)
-					min_z = face->Vertex2[2];
-				if (face->Vertex3[2] < min_z)
-					min_z = face->Vertex3[2];
-
-				// Max bounds
-				if (max_x == 0.0f || face->Vertex1[0] > max_x)
-					max_x = face->Vertex1[0];
-				if (face->Vertex2[0] > max_x)
-					max_x = face->Vertex2[0];
-				if (face->Vertex3[0] > max_x)
-					max_x = face->Vertex3[0];
-
-				if (max_y == 0.0f || face->Vertex1[1] > max_y)
-					max_y = face->Vertex1[1];
-				if (face->Vertex2[1] > max_y)
-					max_y = face->Vertex2[1];
-				if (face->Vertex3[1] > max_y)
-					max_y = face->Vertex3[1];
-
-				if (max_z == 0.0f || face->Vertex1[2] > max_z)
-					max_z = face->Vertex1[2];
-				if (face->Vertex2[2] > max_z)
-					max_z = face->Vertex2[2];
-				if (face->Vertex3[2] > max_z)
-					max_z = face->Vertex3[2];
-			}
-
-			GridBounds* bounds = new GridBounds;
-			bounds->MinBounds[0] = min_x;
-			bounds->MinBounds[1] = min_y;
-			bounds->MinBounds[2] = min_z;
-
-			bounds->MaxBounds[0] = max_x;
-			bounds->MaxBounds[1] = max_y;
-			bounds->MaxBounds[2] = max_z;
-
-			cell.GridBounds[(*itr).first] = bounds;
-		}
-	}*/
-
 	return true;
-}
-
-Cell* SPGrid::GetCell(int32 x, int32 z) {
-	if (x >= m_NumCellsX)
-		x = m_NumCellsX - 1;
-
-	if (z >= m_NumCellsZ)
-		z = m_NumCellsZ - 1;
-
-	return &m_Cells[z * m_NumCellsX + x];
-}
-
-Cell* SPGrid::GetCell(float x, float z) {
-	// As cell grid coordinates are all positive we need to
-	// modify the coordinates by subtracting the min bounds
-	float newX = x - m_MinX;
-	float newZ = z - m_MinZ;
-
-	// Get the cell coordinates by doing int division
-	// with the modified coordinates and the cell size
-	int32 CellX = (int32)(newX / m_CellSize);
-	int32 CellZ = (int32)(newZ / m_CellSize);
-
-	return GetCell(CellX, CellZ);
 }
 
 FaceCell* SPGrid::GetFaceCell(int32 x, int32 z) {
@@ -301,8 +194,8 @@ FaceCell* SPGrid::GetFaceCell(float x, float z) {
 
 	// Get the cell coordinates by doing int division
 	// with the modified coordinates and the cell size
-	int32 CellX = (int32)(newX / FACECELLSIZEDEFAULT);
-	int32 CellZ = (int32)(newZ / FACECELLSIZEDEFAULT);
+	int32 CellX = (int32)(newX / CELLSIZEDEFAULT);
+	int32 CellZ = (int32)(newZ / CELLSIZEDEFAULT);
 
 	return GetFaceCell(CellX, CellZ);
 }
@@ -342,7 +235,7 @@ int32 SPGrid::GetGridID(Spawn * spawn) {
 	// Create the starting point for the trace
 	float point[3];
 	point[0] = spawn->GetX();
-	point[1] = spawn->GetY() + 3.0f + (float)(spawn->GetCollisionRadius()/32.0f); // Small bump to make sure we are above ground when we do the trace
+	point[1] = spawn->GetY() + (float)(spawn->GetSize()/6.0f); // Small bump to make sure we are above ground when we do the trace
 	point[2] = spawn->GetZ();
 
 	// Create the direction for the trace, as we want what

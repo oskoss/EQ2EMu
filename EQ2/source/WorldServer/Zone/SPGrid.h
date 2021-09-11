@@ -60,12 +60,6 @@ public:
 	// Sets up the spacial partioning grid
 	bool Init();
 
-	// Get cell based on cell coordinates
-	Cell* GetCell(int32 x, int32 z);
-
-	// Get cell based on world coordinates
-	Cell* GetCell(float x, float z);
-
 	// Adds a face to the cells it needs to be in and sets its GridID
 	void AddFace(Face* face, int32 grid);
 
@@ -94,21 +88,15 @@ public:
 
 		float width = m_MaxX - m_MinX;
 		float height = m_MaxZ - m_MinZ;
-		// Allocate all the cells
-		m_Cells.resize(m_NumCellsZ * m_NumCellsX);
 
-		m_NumFaceCellsX = ceil(width / FACECELLSIZEDEFAULT);
-		m_NumFaceCellsZ = ceil(height / FACECELLSIZEDEFAULT);
+		m_NumFaceCellsX = ceil(width / CELLSIZEDEFAULT);
+		m_NumFaceCellsZ = ceil(height / CELLSIZEDEFAULT);
 		m_FaceCells.resize(m_NumFaceCellsX * m_NumFaceCellsZ);
 	}
 private:
-	// 1-D array for cells as it is better performance wise then 2-D
-	std::vector<Cell> m_Cells;
-
 	std::vector<FaceCell> m_FaceCells;
 
 	string m_ZoneFile;
-	int32 m_CellSize;
 
 	float m_MinX;
 	float m_MinZ;
