@@ -239,6 +239,8 @@ public:
 	void addZero(){
 		num_commands++;
 		EQ2_RemoteCommandString add;
+		add.handler = 0;
+		add.required_status = 300;
 		add.command.size = 0;
 		commands.push_back(add);
 	}
