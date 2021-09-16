@@ -122,7 +122,7 @@ extern ChestTrapList chest_trap_list;
 
 using namespace std;
 
-Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000), delayTimer(500), transmuteID(0) {
+Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000), delayTimer(500), transmuteID(0), temp_placement_timer(10) {
 	eqs = ieqs;
 	ip = eqs->GetrIP();
 	port = ntohs(eqs->GetrPort());
@@ -207,6 +207,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	player_loading_complete = false;
 	MItemDetails.SetName("Client::MItemDetails");
 	MSpellDetails.SetName("Client::MSpellDetails");
+	hasSentTempPlacementSpawn = false;
 }
 
 Client::~Client() {
@@ -232,6 +233,12 @@ Client::~Client() {
 
 
 void Client::RemoveClientFromZone() {
+	if (GetTempPlacementSpawn() && GetCurrentZone()) {
+		Spawn* tmp = GetTempPlacementSpawn();
+		SetTempPlacementSpawn(nullptr);
+		GetCurrentZone()->RemoveSpawn(tmp, true, false, true, true, true);
+	}
+
 	if(player && player->GetZone())
 		player->GetZone()->GetSpellProcess()->RemoveSpellTimersFromSpawn(player, true, false, true, true);
 
@@ -256,13 +263,6 @@ void Client::RemoveClientFromZone() {
 	safe_delete(current_rez.expire_timer);
 	safe_delete(pending_last_name);
 	safe_delete_array(incoming_paperdoll.image_bytes);
-
-	if (GetTempPlacementSpawn())
-	{
-		Spawn* tmp = GetTempPlacementSpawn();
-		delete tmp;
-		SetTempPlacementSpawn(nullptr);
-	}
 
 	MDeletePlayer.writelock(__FUNCTION__, __LINE__);
 	if (player && !player->GetPendingDeletion())
@@ -1302,9 +1302,9 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		if (GetTempPlacementSpawn())
 		{
 			Spawn* tmp = GetTempPlacementSpawn();
-			GetCurrentZone()->RemoveSpawn(tmp, true, true, true, true, true);
 			SetTempPlacementSpawn(nullptr);
 			SetPlacementUniqueItemID(0);
+			GetCurrentZone()->RemoveSpawn(tmp, true, false, true, true, true);
 			break; // break out early if we are tied to a temp spawn
 		}
 
@@ -3032,6 +3032,13 @@ bool Client::Process(bool zone_process) {
 	}
 	MSaveSpellStateMutex.unlock();
 
+	if (temp_placement_timer.Check()) {
+		if(GetTempPlacementSpawn() && GetPlayer()->WasSentSpawn(GetTempPlacementSpawn()->GetID()) && !hasSentTempPlacementSpawn) {
+			SendMoveObjectMode(GetTempPlacementSpawn(), 0);
+			hasSentTempPlacementSpawn = true;
+			temp_placement_timer.Disable();
+		}
+	}
 	if (pos_update.Check())
 	{
 		ProcessStateCommands();
@@ -10649,4 +10656,13 @@ void Client::UpdateSentSpellList() {
 		QueuePacket(app);
 	}
 	MSpellDetails.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+void Client::SetTempPlacementSpawn(Spawn* tmp) { 
+	tempPlacementSpawn = tmp;
+	hasSentTempPlacementSpawn = false;
+	if(tempPlacementSpawn)
+		temp_placement_timer.Start();
+	else
+		temp_placement_timer.Disable();
 }

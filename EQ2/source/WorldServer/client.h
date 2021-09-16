@@ -423,7 +423,8 @@ public:
 	void SendHailCommand(Spawn* target);
 	void SendDefaultCommand(Spawn* spawn, const char* command, float distance);
 
-	void SetTempPlacementSpawn(Spawn* tmp) { tempPlacementSpawn = tmp; }
+	void SetTempPlacementSpawn(Spawn* tmp);
+	
 	Spawn* GetTempPlacementSpawn() { return tempPlacementSpawn; }
 
 	void SetPlacementUniqueItemID(int32 id) { placement_unique_item_id = id; }
@@ -587,6 +588,7 @@ private:
 	Timer	pos_update;
 	Timer	quest_pos_timer;
 	Timer	lua_debug_timer;
+	Timer	temp_placement_timer;
 	bool	player_pos_changed;
 	bool HandlePacket(EQApplicationPacket *app);
 	EQStream* eqs;
@@ -621,6 +623,7 @@ private:
 	Spawn* tempPlacementSpawn;
 	int32 placement_unique_item_id;
 	bool hasOwnerOrEditAccess;
+	bool hasSentTempPlacementSpawn;
 
 	int32 temporary_transport_id;
 

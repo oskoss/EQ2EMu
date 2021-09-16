@@ -3745,12 +3745,14 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->SetTempPlacementSpawn(nullptr);
 					}
 
-					Spawn* spawn = new Object();
+					Object* obj = new Object();
+					Spawn* spawn = (Spawn*)obj;
 					memset(&spawn->appearance, 0, sizeof(spawn->appearance));
-					spawn->SetID(Spawn::NextID());
+					strcpy(spawn->appearance.name, "temp");
 					spawn->SetX(client->GetPlayer()->GetX());
 					spawn->SetY(client->GetPlayer()->GetY());
 					spawn->SetZ(client->GetPlayer()->GetZ());
+					spawn->appearance.pos.collision_radius = 32;
 					spawn->SetHeading(client->GetPlayer()->GetHeading());
 					spawn->SetSpawnOrigX(spawn->GetX());
 					spawn->SetSpawnOrigY(spawn->GetY());
@@ -3762,12 +3764,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
 					spawn->SetModelType(item && item->generic_info.appearance_id ? item->generic_info.appearance_id : 1472);
 					spawn->SetZone(client->GetCurrentZone());
-					client->GetCurrentZone()->SendSpawn(spawn, client);
-
 					client->SetTempPlacementSpawn(spawn);
 					client->SetPlacementUniqueItemID(uniqueid);
-
-					client->SendMoveObjectMode(spawn, 0);
+					client->GetCurrentZone()->AddSpawn(spawn);
 				}
 			}
 			break;
