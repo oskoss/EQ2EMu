@@ -349,8 +349,6 @@ public:
 	void	AddWidgetTimer(Spawn* widget, float time);
 	bool	HasWidgetTimer(Spawn* widget);
 	
-	void	AddHeadingTimer(Spawn* spawn);
-	
 	void	Despawn(Spawn* spawn, int32 timer);
 	
 	void	RepopSpawns(Client* client, Spawn* spawn);
@@ -730,8 +728,6 @@ private:
 	void	DeleteSpawnScriptTimers(Spawn* spawn, bool all = false);											// never used outside zone server
 	void	DeleteSpawnScriptTimers();																			// never used outside zone server
 	void	CheckSpawnScriptTimers();																			// never used outside zone server
-	void	CheckHeadingTimers();																				// never used outside zone server
-	void	RemoveHeadingTimer(Spawn* spawn);																	// never used outside zone server
 	void	PrepareSpawnID(Player* player, Spawn* spawn);														// never used outside zone server
 	void	RemoveMovementNPC(Spawn* spawn);																	// never used outside zone server
 	bool	CheckNPCAttacks(NPC* npc, Spawn* victim, Client* client = 0);										// never used outside zone server
@@ -780,7 +776,6 @@ private:
 	/* Mutex Maps */
 	MutexMap<Spawn*, Client*>						client_spawn_map;								// ok
 	MutexMap<Client*, int32>						drowning_victims;
-	MutexMap<Spawn*, int32>							heading_timers;
 	MutexMap<int32, int32>							movement_spawns;								// 1st int32 = spawn id
 	MutexMap<int32, PlayerProximity*>				player_proximities;								// 1st int32 = spawn id
 	MutexMap<int32, Player*>						players_tracking;

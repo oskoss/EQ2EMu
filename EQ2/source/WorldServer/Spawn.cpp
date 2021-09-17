@@ -3367,9 +3367,12 @@ void Spawn::FaceTarget(float x, float z){
 void Spawn::FaceTarget(Spawn* target, bool disable_action_state){
 	if(!target)
 		return;
-	FaceTarget(target->GetX(), target->GetZ());
 	if(GetHP() > 0 && target->IsPlayer() && !EngagedInCombat()){
-		GetZone()->AddHeadingTimer(this);
+		if(IsNPC()) {
+			((NPC*)this)->StartRunback();
+			((NPC*)this)->PauseMovement(30000);
+		}
+		FaceTarget(target->GetX(), target->GetZ());
 		if(disable_action_state)
 			SetTempActionState(0);
 	}

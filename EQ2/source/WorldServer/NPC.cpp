@@ -255,6 +255,7 @@ bool NPC::PauseMovement(int32 period_of_time_ms)
 		StartRunback();
 	
 	RunToLocation(GetX(),GetY(),GetZ());
+	
 	pause_timer.Start(period_of_time_ms, true);
 
 	return true;

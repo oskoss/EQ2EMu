@@ -477,7 +477,6 @@ void ZoneServer::DeleteData(bool boot_clients){
 					client->Disconnect();
 			}
 			else{
-				RemoveHeadingTimer(spawn); // called in RemoveSpawnSupportFunctions()
 				RemoveSpawnSupportFunctions(spawn, true);
 				AddPendingDelete(spawn);
 			}
@@ -563,7 +562,6 @@ void ZoneServer::DeleteData(bool boot_clients){
 	ClearDeadSpawns();
 
 	// Clear lists
-	heading_timers.clear();
 	movement_spawns.clear();
 	respawn_timers.clear();
 	transport_spawns.clear();
@@ -1454,10 +1452,6 @@ bool ZoneServer::Process()
 		// damaged spawns loop, spawn related, move to spawn thread?
 		if(regenTimer.Check())
 			RegenUpdate();
-
-		// heading_timers loop
-		if(!zoneShuttingDown)
-			CheckHeadingTimers();
 
 		// respawn_timers loop
 		if(respawn_timer.Check() && !zoneShuttingDown)
@@ -3595,30 +3589,6 @@ void ZoneServer::PlaySoundFile(Client* client, const char* name, float origin_x,
 		MClientList.releasereadlock(__FUNCTION__, __LINE__);
 		safe_delete(packet);
 		safe_delete(outapp);
-	}
-}
-
-void ZoneServer::AddHeadingTimer(Spawn* spawn){
-	heading_timers.Put(spawn, Timer::GetCurrentTime2() + 30000);
-}
-
-void ZoneServer::RemoveHeadingTimer(Spawn* spawn){
-	heading_timers.erase(spawn);
-}
-
-void ZoneServer::CheckHeadingTimers(){
-	if(heading_timers.size() > 0){
-		MutexMap<Spawn*, int32>::iterator itr = heading_timers.begin();
-		Spawn* spawn = 0;
-		int32 current_time = Timer::GetCurrentTime2();
-		while(itr.Next()){
-			if(current_time >= itr->second){
-				spawn = itr->first;
-				spawn->SetHeading(spawn->GetSpawnOrigHeading());
-				spawn->SetTempActionState(-1);
-				heading_timers.erase(itr->first);
-			}
-		}
 	}
 }
 
@@ -5926,7 +5896,6 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_proce
 				quick_database_id_lookup.erase(spawn->GetDatabaseID());
 		}
 
-		RemoveHeadingTimer(spawn);
 		DeleteSpawnScriptTimers(spawn);
 		RemovePlayerProximity(spawn);
 	}

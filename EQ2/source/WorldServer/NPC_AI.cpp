@@ -153,6 +153,8 @@ void Brain::Think() {
 						case 6: // artificially 1500ms per 250ms Think() call
 							if (m_body->GetRunbackLocation()->gridid > 0)
 								m_body->SetLocation(m_body->GetRunbackLocation()->gridid);
+								if(m_body->GetTempActionState() == 0)
+									m_body->SetTempActionState(-1);
 							m_body->SetHeading(m_body->m_runbackHeadingDir1,m_body->m_runbackHeadingDir2,false);
 							m_body->ClearRunback();
 							m_body->SetHP(m_body->GetTotalHP());
