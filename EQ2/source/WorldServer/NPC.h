@@ -80,7 +80,7 @@ public:
 	void	SetAppearanceID(int32 id){ appearance_id = id; }
 	int32	GetAppearanceID(){ return appearance_id; }
 	bool	IsNPC(){ return true; }
-	void	StartRunback();
+	void	StartRunback(bool reset_hp_on_runback = false);
 	void	InCombat(bool val);
 	bool	HandleUse(Client* client, string type);
 	void	SetRandomize(int32 value) {appearance.randomize = value;}
@@ -113,7 +113,7 @@ public:
 	int8	GetCastPercentage();
 	void	SetSkills(map<string, Skill*>* in_skills);
 	void	SetSpells(vector<Spell*>* in_spells);
-	void	SetRunbackLocation(float x, float y, float z, int32 gridid);
+	void	SetRunbackLocation(float x, float y, float z, int32 gridid, bool set_hp_runback = false);
 	MovementLocation* GetRunbackLocation();
 	float	GetRunbackDistance();
 	void	Runback(float distance=0.0f, bool stopFollowing = true);

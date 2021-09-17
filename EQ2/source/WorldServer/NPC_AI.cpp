@@ -155,9 +155,14 @@ void Brain::Think() {
 								m_body->SetLocation(m_body->GetRunbackLocation()->gridid);
 								if(m_body->GetTempActionState() == 0)
 									m_body->SetTempActionState(-1);
+
 							m_body->SetHeading(m_body->m_runbackHeadingDir1,m_body->m_runbackHeadingDir2,false);
+
+							if(m_body->GetRunbackLocation()->reset_hp_on_runback)
+								m_body->SetHP(m_body->GetTotalHP());
+
 							m_body->ClearRunback();
-							m_body->SetHP(m_body->GetTotalHP());
+							
 							m_body->GetZone()->AddChangedSpawn(m_body);
 						break;
 						default: // captures case 1 up to case 5 to turn around / reset hp

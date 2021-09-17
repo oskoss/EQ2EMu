@@ -173,7 +173,7 @@ void NPC::SetSpells(vector<Spell*>* in_spells){
 	spells = in_spells;
 }
 
-void NPC::SetRunbackLocation(float x, float y, float z, int32 gridid){
+void NPC::SetRunbackLocation(float x, float y, float z, int32 gridid, bool set_hp_runback){
 	safe_delete(runback);
 	runback = new MovementLocation;
 	runback->x = x;
@@ -181,6 +181,7 @@ void NPC::SetRunbackLocation(float x, float y, float z, int32 gridid){
 	runback->z = z;
 	runback->gridid = gridid;
 	runback->stage = 0;
+	runback->reset_hp_on_runback = set_hp_runback;
 }
 
 MovementLocation* NPC::GetRunbackLocation(){
@@ -236,12 +237,12 @@ void NPC::ClearRunback(){
 	NeedsToResumeMovement(false);
 }
 
-void NPC::StartRunback()
+void NPC::StartRunback(bool reset_hp_on_runback)
 {
 	if(GetRunbackLocation())
 		return;
 
-	SetRunbackLocation(GetX(), GetY(), GetZ(), GetLocation());
+	SetRunbackLocation(GetX(), GetY(), GetZ(), GetLocation(), reset_hp_on_runback);
 	m_runbackHeadingDir1 = appearance.pos.Dir1;
 	m_runbackHeadingDir2 = appearance.pos.Dir2;
 }
@@ -284,7 +285,7 @@ void NPC::InCombat(bool val){
 	if(!in_combat && val){
 		// if not a pet and no current run back location set then set one to the current location
 		if(!IsPet() && !GetRunbackLocation()) {
-			StartRunback();
+			StartRunback(true);
 		}
 	}
 

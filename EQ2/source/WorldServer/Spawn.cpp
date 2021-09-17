@@ -3116,6 +3116,7 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 	data->attackable = attackable;
 	data->lua_function = lua_function;
 	data->gridid = 0; // used for runback defaults
+	data->reset_hp_on_runback = false;
 
 	MMovementLocations->writelock(__FUNCTION__, __LINE__);
 	if(movement_locations->size() > 0)
@@ -3372,10 +3373,10 @@ void Spawn::FaceTarget(Spawn* target, bool disable_action_state){
 			((NPC*)this)->StartRunback();
 			((NPC*)this)->PauseMovement(30000);
 		}
-		FaceTarget(target->GetX(), target->GetZ());
 		if(disable_action_state)
 			SetTempActionState(0);
 	}
+	FaceTarget(target->GetX(), target->GetZ());
 }
 
 bool Spawn::MeetsSpawnAccessRequirements(Player* player){

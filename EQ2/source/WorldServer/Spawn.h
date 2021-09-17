@@ -222,6 +222,7 @@ struct MovementLocation{
 	bool	mapped;
 	int32	gridid;
 	int8	stage;
+	bool	reset_hp_on_runback;
 };
 
 struct SpawnUpdate {
