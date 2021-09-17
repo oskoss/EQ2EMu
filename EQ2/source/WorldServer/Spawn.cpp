@@ -2697,7 +2697,7 @@ void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate, bool ma
 	if(!spawn)
 		return;
 	SetRunningTo(spawn);
-	FaceTarget(spawn);
+	FaceTarget(spawn, false);
 
 	if (!IsPlayer() && distance > 0.0f)
 	{
@@ -3369,12 +3369,13 @@ void Spawn::FaceTarget(Spawn* target, bool disable_action_state){
 	if(!target)
 		return;
 	if(GetHP() > 0 && target->IsPlayer() && !EngagedInCombat()){
-		if(IsNPC()) {
-			((NPC*)this)->StartRunback();
-			((NPC*)this)->PauseMovement(30000);
-		}
-		if(disable_action_state)
+		if(!IsPet() && disable_action_state) {
+			if(IsNPC()) {
+				((NPC*)this)->StartRunback();
+				((NPC*)this)->PauseMovement(30000);
+			}
 			SetTempActionState(0);
+		}
 	}
 	FaceTarget(target->GetX(), target->GetZ());
 }

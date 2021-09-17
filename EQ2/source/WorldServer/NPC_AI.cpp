@@ -72,7 +72,7 @@ void Brain::Think() {
 			if (m_body->GetTarget() != target) {
 				m_body->SetTarget(target);				
 			}
-			m_body->FaceTarget(target);
+			m_body->FaceTarget(target, false);
 			// target needs to be set before in combat is engaged
 
 			// If the NPC is not in combat then put them in combat
@@ -110,7 +110,7 @@ void Brain::Think() {
 
 				if(!m_body->IsCasting() && (!HasRecovered() || !ProcessSpell(target, distance))) {
 					LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "%s is attempting melee on %s.", m_body->GetName(), target->GetName());
-					m_body->FaceTarget(target);
+					m_body->FaceTarget(target, false);
 					ProcessMelee(target, distance);
 				}
 			}
@@ -162,7 +162,7 @@ void Brain::Think() {
 								m_body->SetHP(m_body->GetTotalHP());
 
 							m_body->ClearRunback();
-							
+
 							m_body->GetZone()->AddChangedSpawn(m_body);
 						break;
 						default: // captures case 1 up to case 5 to turn around / reset hp
@@ -677,7 +677,7 @@ void DumbFirePetBrain::Think() {
 			// Set the NPC's target to the most hated entity if it is not already.
 			if (GetBody()->GetTarget() != target) {
 				GetBody()->SetTarget(target);
-				GetBody()->FaceTarget(target);
+				GetBody()->FaceTarget(target, false);
 			}
 			// target needs to be identified before combat setting
 
@@ -692,7 +692,7 @@ void DumbFirePetBrain::Think() {
 
 			if(GetBody()->CheckLoS(target) && !GetBody()->IsCasting() && (!HasRecovered() || !ProcessSpell(target, distance))) {
 				LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "%s is attempting melee on %s.", GetBody()->GetName(), target->GetName());
-				GetBody()->FaceTarget(target);
+				GetBody()->FaceTarget(target, false);
 				ProcessMelee(target, distance);
 			}
 		}

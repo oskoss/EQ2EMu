@@ -284,7 +284,12 @@ void NPC::InCombat(bool val){
 	}
 	if(!in_combat && val){
 		// if not a pet and no current run back location set then set one to the current location
-		if(!IsPet() && !GetRunbackLocation()) {
+		bool hadRunback = (GetRunbackLocation() != nullptr);
+		if(hadRunback) {
+			pause_timer.Disable();
+			ClearRunback();
+		}
+		if(!IsPet() && !hadRunback) {
 			StartRunback(true);
 		}
 	}
