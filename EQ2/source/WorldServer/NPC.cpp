@@ -289,7 +289,7 @@ void NPC::InCombat(bool val){
 			pause_timer.Disable();
 			ClearRunback();
 		}
-		if(!IsPet() && !hadRunback) {
+		if(!IsPet()) {
 			StartRunback(true);
 		}
 	}
