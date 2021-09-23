@@ -116,6 +116,7 @@ Player::Player(){
 	vis_mutex.SetName("Player::vis_mutex");
 	info_mutex.SetName("Player::info_mutex");
 	index_mutex.SetName("Player::index_mutex");
+	spawn_mutex.SetName("Player::spawn_mutex");
 	m_playerSpawnQuestsRequired.SetName("Player::player_spawn_quests_required");
 	m_playerSpawnHistoryRequired.SetName("Player::player_spawn_history_required");
 	gm_vision = false;
@@ -177,7 +178,6 @@ Player::~Player(){
 	safe_delete(info);
 	index_mutex.writelock(__FUNCTION__, __LINE__);
 	player_spawn_reverse_id_map.clear();
-	player_removed_spawns.clear();
 	player_spawn_id_map.clear();
 	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
@@ -3257,9 +3257,18 @@ SpellEffects* Player::GetSpellEffects() {
 	return GetInfoStruct()->spell_effects;
 }
 
+// call inside info_mutex
+void Player::ClearRemovalTimers(){
+	map<int32, SpawnRemoval*>::iterator itr;
+	for(itr = spawn_removal_list.begin(); itr != spawn_removal_list.end();) {
+		SpawnRemoval* sr = itr->second;
+		itr = spawn_removal_list.erase(itr);
+		safe_delete(sr);
+	}
+}
+
 void Player::ClearEverything(){
 	index_mutex.writelock(__FUNCTION__, __LINE__);
-	player_removed_spawns.clear();
 	player_spawn_id_map.clear();
 	player_spawn_reverse_id_map.clear();
 	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
@@ -3277,6 +3286,11 @@ void Player::ClearEverything(){
 	}
 	player_spawn_history_required.clear();
 	m_playerSpawnHistoryRequired.releasewritelock(__FUNCTION__, __LINE__);
+
+	spawn_mutex.writelock(__FUNCTION__, __LINE__);
+	ClearRemovalTimers();
+	spawn_packet_sent.clear();
+	spawn_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	info_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_info_packet_list.clear();
@@ -3621,9 +3635,10 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 		if (GetBoatSpawn() == 0 && GetZone()) {
 			boat = GetZone()->GetClosestTransportSpawn(GetX(), GetY(), GetZ());
 			SetBoatSpawn(boat);
-			printf("Set boat: %s\n", boat ? boat->GetName() : "notset");
 			if(boat)
 			{
+				LogWrite(PLAYER__DEBUG, 0, "Player", "Set Player %s (%u) on Boat: %s", 
+					GetName(), GetCharacterID(), boat ? boat->GetName() : "notset");
 				boat->AddRailPassenger(GetCharacterID());
 				GetZone()->CallSpawnScript(boat, SPAWN_SCRIPT_BOARD, this);
 			}
@@ -3654,12 +3669,13 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 	}
 	else if(lift_cooldown.Check())
 	{
-		printf("Disable boat\n");
 		if(GetBoatSpawn())
 		{
 			Spawn* boat = GetZone()->GetSpawnByID(GetBoatSpawn());
 			if(boat)
 			{
+				LogWrite(PLAYER__DEBUG, 0, "Player", "Remove Player %s (%u) from Boat: %s", 
+					GetName(), GetCharacterID(), boat ? boat->GetName() : "notset");
 				boat->RemoveRailPassenger(GetCharacterID());
 				GetZone()->CallSpawnScript(boat, SPAWN_SCRIPT_DEBOARD, this);
 			}
@@ -3782,15 +3798,114 @@ bool Player::CheckPlayerInfo(){
 	return info != 0;
 }
 
-bool Player::NeedsSpawnResent(Spawn* spawn){
-	return WasSentSpawn(spawn->GetID()) && WasSpawnRemoved(spawn);
+bool Player::SetSpawnSentState(Spawn* spawn, SpawnState state) {
+	bool val = true;
+	spawn_mutex.writelock(__FUNCTION__, __LINE__);
+	int16 index = GetIndexForSpawn(spawn);
+	if(index > 0 && state == SpawnState::SPAWN_STATE_SENDING) {
+		LogWrite(PLAYER__WARNING, 0, "Player", "Spawn ALREADY INDEXED for Player %s (%u).  Spawn %s (index %u) in state %u.", 
+			GetName(), GetCharacterID(), spawn->GetName(), index, state);
+		// we don't do anything this spawn is already populated by the player 
+	}
+	else {
+		LogWrite(PLAYER__DEBUG, 0, "Player", "Spawn for Player %s (%u).  Spawn %s (index %u) in state %u.", 
+			GetName(), GetCharacterID(), spawn->GetName(), index, state);
+		
+		map<int32,int8>::iterator itr = spawn_packet_sent.find(spawn->GetID());
+		if(itr != spawn_packet_sent.end())
+			itr->second = state;
+		else
+			spawn_packet_sent.insert(make_pair(spawn->GetID(), state));
+
+		if(state == SpawnState::SPAWN_STATE_REMOVING && 
+			spawn_removal_list.count(spawn->GetID()) == 0) {
+			spawn_removal_list.erase(spawn->GetID());
+			SpawnRemoval* removal = new SpawnRemoval;
+			removal->index_id = index;
+			removal->spawn_removal_timer = Timer(1000, true);
+			removal->spawn_removal_timer.Start();
+			spawn_removal_list.insert(make_pair(spawn->GetID(),removal));
+		}
+	}
+	spawn_mutex.releasewritelock(__FUNCTION__, __LINE__);
+	return val;
+}
+
+void Player::CheckSpawnRemovalQueue() {
+	if(!GetClient()->IsReadyForUpdates())
+		return;
+
+	spawn_mutex.writelock(__FUNCTION__, __LINE__);
+	map<int32, SpawnRemoval*>::iterator itr;
+	for(itr = spawn_removal_list.begin(); itr != spawn_removal_list.end();) {
+		if(itr->second->spawn_removal_timer.Check()) {
+			map<int32, int8>::iterator sent_itr = spawn_packet_sent.find(itr->first);
+			LogWrite(PLAYER__DEBUG, 0, "Player", "Spawn for Player %s (%u).  Spawn index %u in state %u.", 
+				GetName(), GetCharacterID(), itr->second->index_id, sent_itr->second);
+			switch(sent_itr->second) {
+				case SpawnState::SPAWN_STATE_REMOVING: {
+					if(itr->second->index_id) {
+						PacketStruct* packet = packet = configReader.getStruct("WS_DestroyGhostCmd", GetClient()->GetVersion());
+						packet->setDataByName("spawn_index", itr->second->index_id);
+						packet->setDataByName("delete", 1);	
+						
+						GetClient()->QueuePacket(packet->serialize(), true);
+						safe_delete(packet);
+					}
+					sent_itr->second = SpawnState::SPAWN_STATE_REMOVING_SLEEP;
+					itr++;
+					break;
+				}
+				case SpawnState::SPAWN_STATE_REMOVING_SLEEP: {
+					map<int32, int8>::iterator sent_itr = spawn_packet_sent.find(itr->first);
+					sent_itr->second = SpawnState::SPAWN_STATE_REMOVED;
+					SpawnRemoval* sr = itr->second;
+					itr = spawn_removal_list.erase(itr);
+					safe_delete(sr);
+					break;
+				}
+			}
+		}
+		else
+			itr++;
+	}
+	spawn_mutex.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 bool Player::WasSentSpawn(int32 spawn_id){
-	bool ret;
-	info_mutex.readlock(__FUNCTION__, __LINE__);
-	ret = spawn_info_packet_list.count(spawn_id) == 1;
-	info_mutex.releasereadlock(__FUNCTION__, __LINE__);
+	if(GetID() == spawn_id)
+		return true;
+
+	bool ret = false;
+	spawn_mutex.readlock(__FUNCTION__, __LINE__);
+	map<int32, int8>::iterator itr = spawn_packet_sent.find(spawn_id);
+	if(itr != spawn_packet_sent.end() && itr->second == SpawnState::SPAWN_STATE_SENT) {
+		ret = true;
+	}
+	spawn_mutex.releasereadlock(__FUNCTION__, __LINE__);
+	return ret;
+}
+
+bool Player::IsSendingSpawn(int32 spawn_id){
+	bool ret = false;
+	spawn_mutex.readlock(__FUNCTION__, __LINE__);
+	map<int32, int8>::iterator itr = spawn_packet_sent.find(spawn_id);
+	if(itr != spawn_packet_sent.end() && itr->second == SpawnState::SPAWN_STATE_SENDING) {
+		ret = true;
+	}
+	spawn_mutex.releasereadlock(__FUNCTION__, __LINE__);
+	return ret;
+}
+
+bool Player::IsRemovingSpawn(int32 spawn_id){
+	bool ret = false;
+	spawn_mutex.readlock(__FUNCTION__, __LINE__);
+	map<int32, int8>::iterator itr = spawn_packet_sent.find(spawn_id);
+	if(itr != spawn_packet_sent.end() && 
+		(itr->second == SpawnState::SPAWN_STATE_REMOVING || itr->second == SpawnState::SPAWN_STATE_REMOVING_SLEEP)) {
+		ret = true;
+	}
+	spawn_mutex.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
@@ -4277,10 +4392,15 @@ int16 Player::GetIndexForSpawn(Spawn* spawn) {
 bool Player::WasSpawnRemoved(Spawn* spawn){
 	bool wasRemoved = false;
 
-	index_mutex.readlock(__FUNCTION__, __LINE__);
-	if(player_removed_spawns.count(spawn) > 0)
+	if(IsRemovingSpawn(spawn->GetID()))
+		return false;
+	
+	spawn_mutex.readlock(__FUNCTION__, __LINE__);
+	map<int32, int8>::iterator itr = spawn_packet_sent.find(spawn_id);
+	if(itr != spawn_packet_sent.end() && itr->second == SpawnState::SPAWN_STATE_REMOVED) {
 		wasRemoved = true;
-	index_mutex.releasereadlock(__FUNCTION__, __LINE__);
+	}
+	spawn_mutex.releasereadlock(__FUNCTION__, __LINE__);
 
 	return wasRemoved;
 }
@@ -4289,13 +4409,13 @@ void Player::RemoveSpawn(Spawn* spawn)
 {
 	LogWrite(PLAYER__DEBUG, 3, "Player", "Remove Spawn '%s' (%u)", spawn->GetName(), spawn->GetID());
 
+	SetSpawnSentState(spawn, SpawnState::SPAWN_STATE_REMOVING);
+	
 	info_mutex.writelock(__FUNCTION__, __LINE__);
 	vis_mutex.writelock(__FUNCTION__, __LINE__);
 	pos_mutex.writelock(__FUNCTION__, __LINE__);
 
 	index_mutex.writelock(__FUNCTION__, __LINE__);
-
-	player_removed_spawns[spawn] = 1;
 
 	if (player_spawn_reverse_id_map[spawn] && player_spawn_id_map.count(player_spawn_reverse_id_map[spawn]) > 0)
 		player_spawn_id_map.erase(player_spawn_reverse_id_map[spawn]);
@@ -4305,9 +4425,6 @@ void Player::RemoveSpawn(Spawn* spawn)
 
 	if (player_spawn_id_map.count(spawn->GetID()) && player_spawn_id_map[spawn->GetID()] == spawn)
 		player_spawn_id_map.erase(spawn->GetID());
-
-	if (player_spawn_reverse_id_map.count(spawn))
-		player_spawn_reverse_id_map.erase(spawn);
 
 	int32 id = spawn->GetID();
 	if (spawn_info_packet_list.count(id))
@@ -5015,27 +5132,12 @@ bool Player::CanReceiveQuest(int32 quest_id){
 	return passed;
 }
 
-void Player::ClearRemovedSpawn(Spawn* spawn){
-	index_mutex.writelock(__FUNCTION__, __LINE__);
-	if(player_removed_spawns.count(spawn) > 0)
-		player_removed_spawns.erase(spawn);
-	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
-}
-
 bool Player::ShouldSendSpawn(Spawn* spawn){
-	// Added a try catch to attempt to prevent a zone crash when an invalid spawn is passed to this function.
-	// Think invalid spawns are coming from the mutex list, if spawn is invalid return false.
-	try
-	{
-		if(spawn->IsDeletedSpawn())
-			return false;
-		else if((WasSentSpawn(spawn->GetID()) == false || NeedsSpawnResent(spawn)) && (!spawn->IsPrivateSpawn() || spawn->AllowedAccess(this)))
-			return true;
-	}
-	catch (...)
-	{
-		LogWrite(SPAWN__ERROR, 0, "Spawn", "Invalid spawn passes to player->ShouldSendSpawn()");
-	}
+	if(spawn->IsDeletedSpawn() || IsSendingSpawn(spawn->GetID()) || IsRemovingSpawn(spawn->GetID()))
+		return false;
+	else if((WasSentSpawn(spawn->GetID()) == false) && (!spawn->IsPrivateSpawn() || spawn->AllowedAccess(this)))
+		return true;
+	
 	return false;
 }
 
@@ -5386,11 +5488,11 @@ PlayerItemList*	Player::GetPlayerItemList(){
 	return &item_list;
 }
 
-void Player::ResetRemovedSpawns(){
-	player_removed_spawns.clear();
-}
 void Player::ResetSavedSpawns(){
-	ResetRemovedSpawns();
+	spawn_mutex.writelock(__FUNCTION__, __LINE__);
+	ClearRemovalTimers();
+	spawn_packet_sent.clear();
+	spawn_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	info_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_info_packet_list.clear();
@@ -6548,8 +6650,11 @@ void Player::RemoveTargetInvisHistory(int32 targetID)
 	target_invis_history.erase(targetID);
 }
 
-void Player::SetSpawnMap(Spawn* spawn)
+bool Player::SetSpawnMap(Spawn* spawn)
 {
+	if(!client->GetPlayer()->SetSpawnSentState(spawn, SpawnState::SPAWN_STATE_SENDING))
+		return false;
+
 	index_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_id += 1;
 	if (spawn_index == 255)
@@ -6564,6 +6669,7 @@ void Player::SetSpawnMap(Spawn* spawn)
 
 	player_spawn_reverse_id_map.insert(make_pair(spawn,tmp_id));
 	index_mutex.releasewritelock(__FUNCTION__, __LINE__);
+	return true;
 }
 
 NPC* Player::InstantiateSpiritShard(float origX, float origY, float origZ, float origHeading, int32 origGridID, ZoneServer* origZone)

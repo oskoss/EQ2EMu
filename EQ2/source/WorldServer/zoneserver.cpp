@@ -1076,8 +1076,8 @@ void ZoneServer::CheckSpawnRange(Spawn* spawn){
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-void ZoneServer::PrepareSpawnID(Player* player, Spawn* spawn){
-	player->SetSpawnMap(spawn);
+bool ZoneServer::PrepareSpawnID(Player* player, Spawn* spawn){
+	return player->SetSpawnMap(spawn);
 }
 
 void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
@@ -1108,10 +1108,11 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 				}
 				if (spawn && spawn != client->GetPlayer() && client->GetPlayer()->ShouldSendSpawn(spawn)) {
 					if ((!initial_login && spawn_iter->second <= SEND_SPAWN_DISTANCE) || (initial_login && (spawn_iter->second <= (SEND_SPAWN_DISTANCE / 2) || spawn->IsWidget()))) {
-						if (closest_spawns.count(spawn_iter->second) == 0)
-							closest_spawns[spawn_iter->second] = new vector<Spawn*>();
-						closest_spawns[spawn_iter->second]->push_back(spawn);
-						PrepareSpawnID(client->GetPlayer(), spawn);
+						if(PrepareSpawnID(client->GetPlayer(), spawn)) {
+							if (closest_spawns.count(spawn_iter->second) == 0)
+								closest_spawns[spawn_iter->second] = new vector<Spawn*>();
+							closest_spawns[spawn_iter->second]->push_back(spawn);
+						}
 					}
 				}
 			}
@@ -1121,7 +1122,6 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 		for (itr = closest_spawns.begin(); itr != closest_spawns.end(); ) {
 			for (spawn_iter2 = itr->second->begin(); spawn_iter2 != itr->second->end(); spawn_iter2++) {
 				spawn = *spawn_iter2;
-				client->GetPlayer()->ClearRemovedSpawn(spawn);
 				SendSpawn(spawn, client);
 				if (client->ShouldTarget() && client->GetCombineSpawn() == spawn)
 					client->TargetSpawn(spawn);
@@ -1171,6 +1171,7 @@ void ZoneServer::CheckRemoveSpawnFromClient(Spawn* spawn) {
 
 			if(spawn && spawn != client->GetPlayer() && 
 				client->GetPlayer()->WasSentSpawn(spawn->GetID()) && 
+				!client->GetPlayer()->IsRemovingSpawn(spawn->GetID()) && 
 				client->GetPlayer()->WasSpawnRemoved(spawn) == false && 
 				(spawn_range_map.Get(client)->Get(spawn->GetID()) > REMOVE_SPAWN_DISTANCE &&
 					!spawn->IsSign() && !spawn->IsObject() && !spawn->IsWidget() && !spawn->IsTransportSpawn())){
@@ -1768,7 +1769,7 @@ void ZoneServer::SendSpawnChangesByDBID(int32 db_id, Client* client, bool overri
 }
 
 void ZoneServer::SendSpawnChanges(Spawn* spawn, Client* client, bool override_changes, bool override_vis_changes){
-	if(client && client->IsReadyForUpdates() && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn) && (spawn->IsTransportSpawn() || client->GetPlayer()->GetDistance(spawn) < SEND_SPAWN_DISTANCE)){
+	if(client && client->IsReadyForUpdates() && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && (spawn->IsTransportSpawn() || client->GetPlayer()->GetDistance(spawn) < SEND_SPAWN_DISTANCE)){
 		EQ2Packet* outapp = spawn->spawn_update_packet(client->GetPlayer(), client->GetVersion(), override_changes, override_vis_changes);
 		if(outapp)
 			client->QueuePacket(outapp);
@@ -1942,7 +1943,7 @@ void ZoneServer::SendPlayerPositionChanges(Player* player){
 		MClientList.readlock(__FUNCTION__, __LINE__);
 		for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 			client = *client_itr;
-			if(player != client->GetPlayer() && client->GetPlayer()->WasSentSpawn(player->GetID()) && client->GetPlayer()->WasSpawnRemoved(player) == false){
+			if(player != client->GetPlayer() && client->GetPlayer()->WasSentSpawn(player->GetID())){
 				EQ2Packet* outapp = player->player_position_update_packet(client->GetPlayer(), client->GetVersion());
 				if(outapp)
 					client->QueuePacket(outapp);
@@ -3076,14 +3077,21 @@ void ZoneServer::RemoveClient(Client* client)
 
 		if(!zoneShuttingDown && !client->IsZoning())
 		{
+			world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
 			GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
+			int32 group_id = 0;
 			if (gmi) {
-				int32 size = world.GetGroupManager()->GetGroupSize(gmi->group_id);
+				group_id = gmi->group_id;
+			}
+			world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+			if (group_id) {
+				int32 size = world.GetGroupManager()->GetGroupSize(group_id);
 				if (size > 1) {
 					bool send_left_message = size > 2;
-					world.GetGroupManager()->RemoveGroupMember(gmi->group_id, client->GetPlayer());
+					// removegroupmember can delete the gmi, so make sure we still have a group_id after
+					world.GetGroupManager()->RemoveGroupMember(group_id, client->GetPlayer());
 					if (send_left_message)
-						world.GetGroupManager()->GroupMessage(gmi->group_id, "%s has left the group.", client->GetPlayer()->GetName());
+						world.GetGroupManager()->GroupMessage(group_id, "%s has left the group.", client->GetPlayer()->GetName());
 				}
 			}
 			if( (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0)
@@ -3140,7 +3148,7 @@ void ZoneServer::RemoveClientImmediately(Client* client) {
 		{
 			if (!client->IsZoning() && (guild = client->GetPlayer()->GetGuild()))
 				guild->GuildMemberLogoff(client->GetPlayer());
-
+			
 			MClientList.writelock(__FUNCTION__, __LINE__);
 			std::vector<Client*>::iterator itr = find(clients.begin(), clients.end(), client);
 			if (itr != clients.end())
@@ -3259,7 +3267,7 @@ void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, 
 			if (client->GetPlayer() != from)
 				packet->setMediumStringByName("to", client->GetPlayer()->GetName());
 			packet->setDataByName("channel", client->GetMessageChannelColor(channel));
-			if (from && ((from == client->GetPlayer()) || (client->GetPlayer()->WasSentSpawn(from->GetID()) && !client->GetPlayer()->WasSpawnRemoved(from))))
+			if (from && ((from == client->GetPlayer()) || (client->GetPlayer()->WasSentSpawn(from->GetID()))))
 				packet->setDataByName("from_spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(from));
 			else
 				packet->setDataByName("from_spawn_id", 0xFFFFFFFF);
@@ -3371,9 +3379,17 @@ void ZoneServer::UpdateVitality(float amount){
 void ZoneServer::SendSpawn(Spawn* spawn, Client* client){
 	EQ2Packet* outapp = spawn->serialize(client->GetPlayer(), client->GetVersion());
 
-	LogWrite(ZONE__DEBUG, 7, "Zone", "%s: Processing SendSpawn for spawn index %u (%s)...", client->GetPlayer()->GetName(), client->GetPlayer()->GetIndexForSpawn(spawn), spawn->GetName());
-	if(outapp)
-		client->QueuePacket(outapp);
+	if(!client->GetPlayer()->IsSendingSpawn(spawn->GetID())) {
+		safe_delete(outapp);
+	}
+	else {
+		LogWrite(ZONE__DEBUG, 7, "Zone", "%s: Processing SendSpawn for spawn index %u (%s)...", client->GetPlayer()->GetName(), client->GetPlayer()->GetIndexForSpawn(spawn), spawn->GetName());
+		if(outapp)
+			client->QueuePacket(outapp);
+
+		client->GetPlayer()->SetSpawnSentState(spawn, SpawnState::SPAWN_STATE_SENT);
+	}
+
 	/*
 	vis flags:
 	2 = show icon
@@ -3516,7 +3532,7 @@ void ZoneServer::PlayFlavor(Spawn* spawn, const char* mp3, const char* text, con
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(!client || !client->IsConnected() || !client->GetPlayer()->WasSentSpawn(spawn->GetID()) || client->GetPlayer()->WasSpawnRemoved(spawn) || client->GetPlayer()->GetDistance(spawn) > 30)
+		if(!client || !client->IsConnected() || !client->GetPlayer()->WasSentSpawn(spawn->GetID()) || client->GetPlayer()->GetDistance(spawn) > 30)
 			continue;
 		PlayFlavor(client, spawn, mp3, text, emote, key1, key2, language);
 	}
@@ -3533,7 +3549,7 @@ void ZoneServer::PlayVoice(Spawn* spawn, const char* mp3, int32 key1, int32 key2
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(!client || !client->IsConnected() || !client->GetPlayer()->WasSentSpawn(spawn->GetID()) || client->GetPlayer()->WasSpawnRemoved(spawn))
+		if(!client || !client->IsConnected() || !client->GetPlayer()->WasSentSpawn(spawn->GetID()))
 			continue;
 		PlayVoice(client, spawn, mp3, key1, key2);
 	}
@@ -3720,11 +3736,9 @@ bool ZoneServer::SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* pac
 	if(!client || !spawn)
 		return false;
 
-	int16 index = client->GetPlayer()->GetIndexForSpawn(spawn);
-	int32 cur_id = client->GetPlayer()->GetIDWithPlayerSpawn(spawn);
-	bool wasRemoved = client->GetPlayer()->WasSpawnRemoved(spawn);
-	LogWrite(ZONE__DEBUG, 7, "Zone", "%s: Processing SendRemoveSpawn for spawn index %u (%s)...cur_id: %i, wasremoved:: %i", client->GetPlayer()->GetName(), index, spawn->GetName(), cur_id, wasRemoved);
-	if(packet && index > 0 && !wasRemoved)
+	spawn->RemoveSpawnFromPlayer(client->GetPlayer());
+//	LogWrite(ZONE__DEBUG, 7, "Zone", "%s: Processing SendRemoveSpawn for spawn index %u (%s)...cur_id: %i, wasremoved:: %i", client->GetPlayer()->GetName(), index, spawn->GetName(), cur_id, wasRemoved);
+/*	if(packet && index > 0 && !wasRemoved)
 	{
 		packet->ResetData();
 
@@ -3737,7 +3751,8 @@ bool ZoneServer::SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* pac
 		client->QueuePacket(packet->serialize());
 		return true;
 	}
-	return false;
+	return false;*/
+	return true;
 }
 
 void ZoneServer::SetSpawnCommand(Spawn* spawn, int8 type, char* value, Client* client){
@@ -3932,6 +3947,29 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 {
 	LogWrite(ZONE__DEBUG, 3, "Zone", "Processing RemoveSpawn function for %s (%i)...", spawn->GetName(),spawn->GetID());
 
+	PacketStruct* packet = 0;
+	int16 packet_version = 0;
+	Client* client = 0;
+
+	vector<Client*>::iterator client_itr;
+
+	MClientList.readlock(__FUNCTION__, __LINE__);
+	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
+		client = *client_itr;
+
+		if (client && (client->GetVersion() > 283 || !client->IsZoning() || client->GetPlayer() != spawn)) { //don't send destroy ghost of 283 client when zoning
+			if (client->GetPlayer()->HasTarget() && client->GetPlayer()->GetTarget() == spawn)
+				client->GetPlayer()->SetTarget(0);
+			if(client->GetPlayer()->WasSentSpawn(spawn->GetID()) || client->GetPlayer()->IsSendingSpawn(spawn->GetID()))
+				SendRemoveSpawn(client, spawn, packet, delete_spawn);
+			if (spawn_range_map.count(client) > 0)
+				spawn_range_map.Get(client)->erase(spawn->GetID());
+		}
+	}
+	MClientList.releasereadlock(__FUNCTION__, __LINE__);
+
+	safe_delete(packet);
+
 	spawn->RemoveSpawnProximities();
 	RemoveSpawnProximities(spawn);
 
@@ -3960,35 +3998,6 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 	if(erase_from_spawn_list)
 		AddPendingSpawnRemove(spawn->GetID());
 
-	PacketStruct* packet = 0;
-	int16 packet_version = 0;
-	Client* client = 0;
-
-	vector<Client*>::iterator client_itr;
-
-	MClientList.readlock(__FUNCTION__, __LINE__);
-	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
-		client = *client_itr;
-
-		if (client && (client->GetVersion() > 283 || !client->IsZoning() || client->GetPlayer() != spawn)) { //don't send destroy ghost of 283 client when zoning
-			if (client->IsConnected() && (!packet || packet_version != client->GetVersion()))
-			{
-				safe_delete(packet);
-				packet_version = client->GetVersion();
-				packet = configReader.getStruct("WS_DestroyGhostCmd", packet_version);
-			}
-
-			if (client->GetPlayer()->HasTarget() && client->GetPlayer()->GetTarget() == spawn)
-				client->GetPlayer()->SetTarget(0);
-
-			SendRemoveSpawn(client, spawn, packet, delete_spawn);
-			if (spawn_range_map.count(client) > 0)
-				spawn_range_map.Get(client)->erase(spawn->GetID());
-		}
-	}
-	MClientList.releasereadlock(__FUNCTION__, __LINE__);
-
-	safe_delete(packet);
 	if(respawn && !spawn->IsPlayer() && spawn->GetRespawnTime() > 0 && spawn->GetSpawnLocationID() > 0)
 	{
 		LogWrite(ZONE__DEBUG, 3, "Zone", "Handle NPC Respawn for '%s'.", spawn->GetName());
@@ -4084,7 +4093,7 @@ void ZoneServer::SendQuestUpdates(Client* client, Spawn* spawn){
 		return;
 
 	if(spawn){
-		if(client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn))
+		if(client->GetPlayer()->WasSentSpawn(spawn->GetID()))
 			SendSpawnChanges(spawn, client, false, true);
 	}
 	else{
@@ -4098,7 +4107,7 @@ void ZoneServer::SendAllSpawnsForLevelChange(Client* client) {
 		MutexMap<int32, float >::iterator itr = spawn_range_map.Get(client)->begin();
 		while (itr.Next()) {
 			spawn = GetSpawnByID(itr->first);
-			if (spawn && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
+			if (spawn && client->GetPlayer()->WasSentSpawn(spawn->GetID())) {
 				SendSpawnChanges(spawn, client, false, true);
 				// Attempt to slow down the packet spam sent to the client
 				// who the bloody fuck put a Sleep here
@@ -4115,7 +4124,7 @@ void ZoneServer::SendAllSpawnsForSeeInvisChange(Client* client) {
 		MutexMap<int32, float >::iterator itr = spawn_range_map.Get(client)->begin();
 		while (itr.Next()) {
 			spawn = GetSpawnByID(itr->first);
-			if (spawn && spawn->IsEntity() && (((Entity*)spawn)->IsInvis() || ((Entity*)spawn)->IsStealthed()) && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
+			if (spawn && spawn->IsEntity() && (((Entity*)spawn)->IsInvis() || ((Entity*)spawn)->IsStealthed()) && client->GetPlayer()->WasSentSpawn(spawn->GetID())) {
 				SendSpawnChanges(spawn, client, true, true);
 			}
 		}
@@ -4129,7 +4138,7 @@ void ZoneServer::SendAllSpawnsForVisChange(Client* client, bool limitToEntities)
 		MutexMap<int32, float >::iterator itr = spawn_range_map.Get(client)->begin();
 		while (itr.Next()) {
 			spawn = GetSpawnByID(itr->first);
-			if (spawn && (!limitToEntities || (limitToEntities && spawn->IsEntity())) && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn)) {
+			if (spawn && (!limitToEntities || (limitToEntities && spawn->IsEntity())) && client->GetPlayer()->WasSentSpawn(spawn->GetID())) {
 				SendSpawnChanges(spawn, client, false, true);
 			}
 		}
@@ -4527,8 +4536,6 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 			client = *client_itr;
 			if(!client->GetPlayer()->WasSentSpawn(victim_id) || (attacker_id != 0xFFFFFFFF && !client->GetPlayer()->WasSentSpawn(attacker_id)) )
 				continue;
-			else if(client->GetPlayer()->WasSpawnRemoved(dead) || (attacker_id != 0xFFFFFFFF && client->GetPlayer()->WasSpawnRemoved(killer)))
-				continue;
 			else if(killer && killer->GetDistance(client->GetPlayer()) > HEAR_SPAWN_DISTANCE)
 				continue;
 
@@ -4608,8 +4615,6 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
 		if (!client || (client->GetPlayer() != attacker && client->GetPlayer() != victim && ((attacker && client->GetPlayer()->WasSentSpawn(attacker->GetID()) == false) || (victim && client->GetPlayer()->WasSentSpawn(victim->GetID()) == false))))
-			continue;
-		if ((attacker && client->GetPlayer()->WasSpawnRemoved(attacker)) || (victim && client->GetPlayer()->WasSpawnRemoved(victim)))
 			continue;
 		if (attacker && attacker->GetDistance(client->GetPlayer()) > 50)
 			continue;
@@ -4725,8 +4730,6 @@ void ZoneServer::SendHealPacket(Spawn* caster, Spawn* target, int16 heal_type, i
 		client = *client_itr;
 		if(!client || (client->GetPlayer() != caster && ((caster && client->GetPlayer()->WasSentSpawn(caster->GetID()) == false) || (target && client->GetPlayer()->WasSentSpawn(target->GetID()) == false))))
 			continue;
-		if((caster && client->GetPlayer()->WasSpawnRemoved(caster)) || (caster && client->GetPlayer()->WasSpawnRemoved(target)))
-			continue;
 		if(caster && caster->GetDistance(client->GetPlayer()) > 50)
 			continue;
 		if(target && target->GetDistance(client->GetPlayer()) > 50)
@@ -4758,8 +4761,6 @@ void ZoneServer::SendThreatPacket(Spawn* caster, Spawn* target, int32 threat_amt
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
 		if(!client || (client->GetPlayer() != caster && ((caster && client->GetPlayer()->WasSentSpawn(caster->GetID()) == false) || (target && client->GetPlayer()->WasSentSpawn(target->GetID()) == false))))
-			continue;
-		if((caster && client->GetPlayer()->WasSpawnRemoved(caster)) || (caster && client->GetPlayer()->WasSpawnRemoved(target)))
 			continue;
 		if(caster && caster->GetDistance(client->GetPlayer()) > 50)
 			continue;
@@ -4808,7 +4809,7 @@ void ZoneServer::SendInterruptPacket(Spawn* interrupted, LuaSpell* spell, bool f
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(!client || !client->GetPlayer()->WasSentSpawn(interrupted->GetID()) || client->GetPlayer()->WasSpawnRemoved(interrupted))
+		if(!client || !client->GetPlayer()->WasSentSpawn(interrupted->GetID()))
 			continue;
 		packet = configReader.getStruct(fizzle ? "WS_SpellFizzle" : "WS_Interrupt", client->GetVersion());
 		if(packet){
@@ -4908,7 +4909,7 @@ void ZoneServer::SendCastEntityCommandPacket(EntityCommand* entity_command, int3
 		MClientList.readlock(__FUNCTION__, __LINE__);
 		for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 			client = *client_itr;
-			if (!client || !client->GetPlayer()->WasSentSpawn(spawn_id) || client->GetPlayer()->WasSpawnRemoved(spawn) || !client->GetPlayer()->WasSentSpawn(target_id) || client->GetPlayer()->WasSpawnRemoved(target))
+			if (!client || !client->GetPlayer()->WasSentSpawn(spawn_id) || !client->GetPlayer()->WasSentSpawn(target_id))
 				continue;
 			PacketStruct* packet = configReader.getStruct("WS_HearCastSpell", client->GetVersion());
 			if (packet) {
@@ -4970,7 +4971,8 @@ void ZoneServer::SendZoneSpawns(Client* client){
 		if (spawn) {
 			if(spawn == client->GetPlayer() && (client->IsReloadingZone() || client->GetPlayer()->IsReturningFromLD()))
 			{
-				client->GetPlayer()->SetSpawnMap(spawn);
+				if(!client->GetPlayer()->SetSpawnMap(spawn))
+					continue;
 			}
 			
 			CheckSpawnRange(client, spawn, true);
@@ -6564,7 +6566,7 @@ void ZoneServer::HidePrivateSpawn(Spawn* spawn) {
 	while (itr->Next()) {
 		client = itr->value;
 		player = client->GetPlayer();
-		if (player->WasSentSpawn(spawn->GetID()) && !player->WasSpawnRemoved(spawn)) {
+		if (player->WasSentSpawn(spawn->GetID())) {
 			if (!packet || packet_version != client->GetVersion()) {
 				safe_delete(packet);
 				packet_version = client->GetVersion();
@@ -6812,8 +6814,6 @@ void ZoneServer::SendDispellPacket(Entity* caster, Spawn* target, string dispell
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++){
 		client = *client_itr;
 		if(!client || !(player = client->GetPlayer()) || (player != caster && ((caster && player->WasSentSpawn(caster->GetID()) == false) || (target && player->WasSentSpawn(target->GetID()) == false))))
-			continue;
-		if((caster && player->WasSpawnRemoved(caster)) || (caster && player->WasSpawnRemoved(target)))
 			continue;
 		if(caster && caster->GetDistance(player) > 50)
 			continue;
@@ -7683,7 +7683,7 @@ void ZoneServer::SendStateCommand(Spawn* spawn, int32 state) {
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (itr = clients.begin(); itr != clients.end(); itr++) {
 		Client* client = *itr;
-		if (client && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn))
+		if (client && client->GetPlayer()->WasSentSpawn(spawn->GetID()))
 			ClientPacketFunctions::SendStateCommand(client, client->GetPlayer()->GetIDWithPlayerSpawn(spawn), state);
 	}
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
@@ -8087,7 +8087,7 @@ void ZoneServer::ProcessQueuedStateCommands() // in a client list lock only
 			MClientList.readlock(__FUNCTION__, __LINE__);
 			for (itr = clients.begin(); itr != clients.end(); itr++) {
 				Client* client = *itr;
-				if (client && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn))
+				if (client && client->GetPlayer()->WasSentSpawn(spawn->GetID()))
 					ClientPacketFunctions::SendStateCommand(client, client->GetPlayer()->GetIDWithPlayerSpawn(spawn), statecmds->second);
 			}
 			MClientList.releasereadlock(__FUNCTION__, __LINE__);
@@ -8110,7 +8110,7 @@ void ZoneServer::ProcessQueuedStateCommands() // in a client list lock only
 				MClientList.readlock(__FUNCTION__, __LINE__);
 				for (itr = clients.begin(); itr != clients.end(); itr++) {
 					Client* client = *itr;
-					if (client && client->GetPlayer()->WasSentSpawn(spawn->GetID()) && !client->GetPlayer()->WasSpawnRemoved(spawn))
+					if (client && client->GetPlayer()->WasSentSpawn(spawn->GetID()))
 						client->SendDefaultCommand(spawn, innermap->first.c_str(), innermap->second);
 				}
 				MClientList.releasereadlock(__FUNCTION__, __LINE__);

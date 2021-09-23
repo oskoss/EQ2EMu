@@ -453,6 +453,7 @@ public:
 	void SetRejoinGroupID(int32 id) { rejoin_group_id = id; }
 
 	void TempRemoveGroup();
+	void ReplaceGroupClient(Client* new_client);
 
 	void SendWaypoints();
 
@@ -589,6 +590,7 @@ private:
 	Timer	quest_pos_timer;
 	Timer	lua_debug_timer;
 	Timer	temp_placement_timer;
+	Timer	spawn_removal_timer;
 	bool	player_pos_changed;
 	bool HandlePacket(EQApplicationPacket *app);
 	EQStream* eqs;

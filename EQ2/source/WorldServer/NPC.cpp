@@ -287,7 +287,8 @@ void NPC::InCombat(bool val){
 		bool hadRunback = (GetRunbackLocation() != nullptr);
 		if(hadRunback) {
 			pause_timer.Disable();
-			ClearRunback();
+			if(!GetRunbackLocation()->reset_hp_on_runback) // if we aren't resetting hp it isn't a real reset point, just face target swings
+				ClearRunback();
 		}
 		if(!IsPet()) {
 			StartRunback(true);

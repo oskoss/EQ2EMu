@@ -178,7 +178,7 @@ int EQ2Emu_lua_PlayFlavor(lua_State* state) {
 		if (player && player->IsPlayer())
 			client = spawn->GetZone()->GetClientBySpawn(player);
 		if (client) {
-			if (((Player*)player)->WasSentSpawn(spawn->GetID()) && !((Player*)player)->WasSpawnRemoved(spawn))
+			if (((Player*)player)->WasSentSpawn(spawn->GetID()))
 				spawn->GetZone()->PlayFlavor(client, spawn, mp3, text, emote, key1, key2, language);
 		}
 		else
@@ -775,7 +775,7 @@ int EQ2Emu_lua_PlayVoice(lua_State* state) {
 		if (player && player->IsPlayer())
 			client = spawn->GetZone()->GetClientBySpawn(player);
 		if (client) {
-			if (((Player*)player)->WasSentSpawn(spawn->GetID()) && !((Player*)player)->WasSpawnRemoved(spawn))
+			if (((Player*)player)->WasSentSpawn(spawn->GetID()))
 				spawn->GetZone()->PlayVoice(client, spawn, mp3_string.c_str(), key1, key2);
 		}
 		else
@@ -10332,6 +10332,12 @@ int EQ2Emu_lua_Evac(lua_State* state) {
 					PacketStruct* packet = configReader.getStruct("WS_TeleportWithinZone", client->GetVersion());
 					if (packet)
 					{
+						PacketStruct* packet2 = configReader.getStruct("WS_DestroyGhostCmd", client->GetVersion());
+						packet2->setDataByName("spawn_index", client->GetPlayer()->GetIndexForSpawn(target2));
+						packet2->setDataByName("delete", 1);	
+										
+						client->QueuePacket(packet2->serialize(), true);
+						safe_delete(packet2);
 						client->SetReloadingZone(true);
 						packet->setDataByName("x", x);
 						packet->setDataByName("y", y);

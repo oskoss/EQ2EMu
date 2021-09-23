@@ -95,7 +95,6 @@ void ClientPacketFunctions::SendCharacterData ( Client* client ){
 	EQ2Packet* outapp = client->GetPlayer()->serialize(client->GetPlayer(), client->GetVersion());
 	//DumpPacket(outapp);
 	client->QueuePacket(outapp);
-	//client->GetPlayer()->ClearRemovedSpawn(client->GetPlayer());
 }
 
 void ClientPacketFunctions::SendCharacterSheet ( Client* client ){

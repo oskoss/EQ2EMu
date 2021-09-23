@@ -122,7 +122,7 @@ extern ChestTrapList chest_trap_list;
 
 using namespace std;
 
-Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000), delayTimer(500), transmuteID(0), temp_placement_timer(10) {
+Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000), delayTimer(500), transmuteID(0), temp_placement_timer(10), spawn_removal_timer(250) {
 	eqs = ieqs;
 	ip = eqs->GetrIP();
 	port = ntohs(eqs->GetrPort());
@@ -208,6 +208,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	MItemDetails.SetName("Client::MItemDetails");
 	MSpellDetails.SetName("Client::MSpellDetails");
 	hasSentTempPlacementSpawn = false;
+	spawn_removal_timer.Start();
 }
 
 Client::~Client() {
@@ -693,9 +694,7 @@ void Client::HandlePlayerRevive(int32 point_id)
 void Client::SendCharInfo() {
 	EQ2Packet* app;
 
-	if(IsReloadingZone())
-	{
-		GetPlayer()->ResetRemovedSpawns();
+	if(IsReloadingZone()){
 		SetReloadingZone(false);
 	}
 
@@ -1756,8 +1755,14 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		memcpy(&index, app->pBuffer, sizeof(int16));
 		if (index == 0xFFFF)
 			GetPlayer()->SetTarget(0);
-		else
-			GetPlayer()->SetTarget(GetPlayer()->GetSpawnByIndex(index));
+		else {
+			Spawn* spawn = GetPlayer()->GetSpawnByIndex(index);
+			if(spawn)
+				GetPlayer()->SetTarget(spawn);
+			else {
+		LogWrite(PLAYER__ERROR, 1, "Player", "Player %s tried to target %u index, but that index was not valid.", GetPlayer()->GetName(), index);
+			}
+		}
 		if (GetPlayer()->GetTarget())
 			GetCurrentZone()->CallSpawnScript(GetPlayer()->GetTarget(), SPAWN_SCRIPT_TARGETED, GetPlayer());
 		//player->SetTarget((int16*)app->pBuffer);
@@ -3007,6 +3012,10 @@ bool Client::Process(bool zone_process) {
 		player->UnlockAllSpells(true);
 
 		should_load_spells = false;
+	}
+
+	if(spawn_removal_timer.Check() && GetPlayer()) {
+		GetPlayer()->CheckSpawnRemovalQueue();
 	}
 
 	if (delayedLogin && delayTimer.Enabled() && delayTimer.Check())
@@ -9814,6 +9823,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 				if (client->GetCurrentZone() && !client->IsZoning()) {
 					//swap players, allowing the client to resume his LD'd player (ONLY if same version of the client)
 					if (client->GetVersion() == version) {
+						client->ReplaceGroupClient(this);
 						Player* current_player = GetPlayer();
 						SetPlayer(client->GetPlayer());
 						GetPlayer()->SetClient(this);
@@ -9886,7 +9896,7 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 
 	for (const auto& spawn : spawns) {
 		int16 index = GetPlayer()->GetIndexForSpawn(spawn);
-		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()) || GetPlayer()->NeedsSpawnResent(spawn))
+		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()))
 			continue;
 
 		if (spawn->vis_changed)
@@ -10120,7 +10130,7 @@ void Client::SendHailCommand(Spawn* spawn)
 
 void Client::SendDefaultCommand(Spawn* spawn, const char* command, float distance)
 {
-	if (GetPlayer()->WasSentSpawn(spawn->GetID()) && GetPlayer()->WasSpawnRemoved(spawn) == false) {
+	if (GetPlayer()->WasSentSpawn(spawn->GetID())) {
 		PacketStruct* packet = configReader.getStruct("WS_SetDefaultCommand", GetVersion());
 		if (packet) {
 			packet->setDataByName("spawn_id", GetPlayer()->GetIDWithPlayerSpawn(spawn));
@@ -10407,6 +10417,31 @@ void Client::SendShowBook(Spawn* sender, string title, vector<Item::BookPage*> p
 
 	QueuePacket(packet->serialize());
 	safe_delete(packet);
+}
+
+void Client::ReplaceGroupClient(Client* new_client)
+{
+	if (this->GetPlayer()->GetGroupMemberInfo())
+	{
+		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(this->GetPlayer()->GetGroupMemberInfo()->group_id);
+		if(group)
+		{
+			group->MGroupMembers.writelock();
+			rejoin_group_id = this->GetPlayer()->GetGroupMemberInfo()->group_id;
+			this->GetPlayer()->GetGroupMemberInfo()->client = new_client;
+			this->GetPlayer()->GetGroupMemberInfo()->member = GetPlayer();
+			group->MGroupMembers.releasewritelock();
+		}
+		else
+		{
+			this->GetPlayer()->GetGroupMemberInfo()->client = 0;
+			this->GetPlayer()->GetGroupMemberInfo()->member = 0;
+			this->GetPlayer()->SetGroupMemberInfo(0);
+		}
+
+		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+	}
 }
 
 void Client::TempRemoveGroup()

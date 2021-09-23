@@ -932,7 +932,7 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 	ptr += info_size;
 	memcpy(ptr, pos_changes, tmp_pos_packet_size);
 	EQ2Packet* ret_packet = new EQ2Packet(OP_ClientCmdMsg, tmp, size);
-	DumpPacket(ret_packet);
+//	DumpPacket(ret_packet);
 	delete[] tmp;
 	delete[] pos_changes;
 	return ret_packet;
@@ -1037,6 +1037,7 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 	safe_delete_array(vis_changes);
 	safe_delete_array(pos_changes);
 	m_Update.releasewritelock(__FUNCTION__, __LINE__);
+	
 	return ret_packet;
 }
 

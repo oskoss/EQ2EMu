@@ -108,6 +108,7 @@ bool PlayerGroup::RemoveMember(Entity* member) {
 	}
 	MGroupMembers.releasewritelock();
 
+	member->SetGroupMemberInfo(nullptr);
 	safe_delete(gmi);
 	if (member->IsBot())
 		((Bot*)member)->Camp();

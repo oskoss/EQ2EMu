@@ -167,6 +167,14 @@ struct SpellBookEntry{
 	bool visible;
 };
 
+enum SpawnState{
+	SPAWN_STATE_NONE=0,
+	SPAWN_STATE_SENDING=1,
+	SPAWN_STATE_SENT=2,
+	SPAWN_STATE_REMOVING=3,
+	SPAWN_STATE_REMOVING_SLEEP=4,
+	SPAWN_STATE_REMOVED=5
+};
 #define QUICKBAR_NORMAL		1
 #define QUICKBAR_INV_SLOT	2
 #define QUICKBAR_MACRO		3
@@ -201,6 +209,11 @@ struct LoginAppearances {
 	int8	h_green;
 	int8	h_blue;
 	bool	update_needed;
+};
+
+struct SpawnRemoval {
+	Timer spawn_removal_timer;
+	int16 index_id;
 };
 
 class PlayerLoginAppearance {
@@ -418,7 +431,10 @@ public:
 		art_level = new_lvl;
 		}*/
 	bool WasSentSpawn(int32 spawn_id);
-	bool NeedsSpawnResent(Spawn* spawn);
+	bool IsSendingSpawn(int32 spawn_id);
+	bool IsRemovingSpawn(int32 spawn_id);
+	bool SetSpawnSentState(Spawn* spawn, SpawnState state);
+	void CheckSpawnRemovalQueue();
 	void SetSideSpeed(float side_speed, bool updateFlags = true) {
 		SetPos(&appearance.pos.SideSpeed, side_speed, updateFlags);
 	}
@@ -570,6 +586,7 @@ public:
 	void	CalculateLocation();
 	void	SetSpawnDeleteTime(int32 id, int32 time);
 	int32	GetSpawnDeleteTime(int32 id);
+	void	ClearRemovalTimers();
 	void	ClearEverything();
 	bool	IsFullyLoggedIn();
 	void	SetFullyLoggedIn(bool val);
@@ -581,7 +598,6 @@ public:
 	int16	GetIndexForSpawn(Spawn* spawn);
 	bool	WasSpawnRemoved(Spawn* spawn);
 	void	RemoveSpawn(Spawn* spawn);
-	void	ClearRemovedSpawn(Spawn* spawn);
 	bool	ShouldSendSpawn(Spawn* spawn);
 	Client* client = 0;
 	void SetLevel(int16 level, bool setUpdateFlags = true);
@@ -606,7 +622,7 @@ public:
 		return id;
 	}
 
-	void SetSpawnMap(Spawn* spawn);
+	bool SetSpawnMap(Spawn* spawn);
 
 	void SetSpawnMapIndex(Spawn* spawn, int32 index)
 	{
@@ -695,7 +711,6 @@ public:
 	void				SetGroupInformation(PacketStruct* packet);
 
 
-	void				ResetRemovedSpawns();
 	void				ResetSavedSpawns();
 	bool				IsReturningFromLD();
 	void				SetReturningFromLD(bool val);
@@ -925,6 +940,7 @@ public:
 	Mutex pos_mutex;
 	Mutex vis_mutex;
 	Mutex index_mutex;
+	Mutex spawn_mutex;
 
 	void SetTempMount(int32 id) { tmp_mount_model = id; }
 	int32 GetTempMount() { return tmp_mount_model; }
@@ -1010,10 +1026,12 @@ private:
 	map<Spawn*, bool>	current_quest_flagged;
 	PlayerFaction		factions;
 	map<int32, Quest*>	completed_quests;
-	bool				charsheet_changed;
+		bool				charsheet_changed;
 	map<int32, string>	spawn_vis_packet_list;
 	map<int32, string>	spawn_info_packet_list;
 	map<int32, string>	spawn_pos_packet_list;
+	map<int32, int8> spawn_packet_sent;
+	map<int32, SpawnRemoval*> spawn_removal_list;
 	uchar*				movement_packet;
 	uchar*				old_movement_packet;
 	uchar*				spell_orig_packet;
@@ -1117,7 +1135,6 @@ private:
 
 	map<int32, Spawn*>	player_spawn_id_map;
 	map<Spawn*, int32>	player_spawn_reverse_id_map;
-	map<Spawn*, int8>	player_removed_spawns;
 
 	bool all_spells_locked;
 	Timer lift_cooldown;
