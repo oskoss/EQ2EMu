@@ -925,7 +925,7 @@ void NPC::SetBrain(::Brain* brain) {
 	// Again, had to use the '::' to refer to the Brain class and not the function defined in the NPC class
 	MBrain.writelock(__FUNCTION__, __LINE__);
 	// Check to make sure the NPC the brain controls matches this npc
-	if (brain->GetBody() != this) {
+	if (brain && brain->GetBody() != this) {
 		LogWrite(NPC_AI__ERROR, 0, "NPC_AI", "Brain body does not match the npc we tried to assign the brain to.");
 		MBrain.releasewritelock(__FUNCTION__, __LINE__);
 		return;

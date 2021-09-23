@@ -521,6 +521,9 @@ public:
 		sent_spell_details[id] = tier;
 		MSpellDetails.releasewritelock(__FUNCTION__, __LINE__);
 	}
+
+	void	DisableSave() { disable_save = true; }
+	bool	IsSaveDisabled() { return disable_save; }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -645,6 +648,7 @@ private:
 	bool player_loading_complete;
 	Mutex MItemDetails;
 	Mutex MSpellDetails;
+	bool disable_save;
 };
 
 class ClientList {

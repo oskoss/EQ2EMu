@@ -209,6 +209,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	MSpellDetails.SetName("Client::MSpellDetails");
 	hasSentTempPlacementSpawn = false;
 	spawn_removal_timer.Start();
+	disable_save = false;
 }
 
 Client::~Client() {
@@ -789,7 +790,9 @@ void Client::SendCharInfo() {
 	GetPlayer()->ChangePrimaryWeapon();
 	GetPlayer()->ChangeSecondaryWeapon();
 	GetPlayer()->ChangeRangedWeapon();
-	database.LoadBuyBacks(this);
+	if(!GetPlayer()->IsReturningFromLD()) {
+		database.LoadBuyBacks(this);
+	}
 	if (version > 546)
 		master_aa_list.DisplayAA(this, 0, 0);
 
@@ -865,6 +868,7 @@ void Client::SendCharInfo() {
 
 	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_MAINTAINEDEFFECTS);
 	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_SPELLEFFECTS);
+
 	GetPlayer()->SetSaveSpellEffects(false);
 	GetPlayer()->SetCharSheetChanged(true);
 	GetPlayer()->SetReturningFromLD(false);
@@ -9823,6 +9827,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 				if (client->GetCurrentZone() && !client->IsZoning()) {
 					//swap players, allowing the client to resume his LD'd player (ONLY if same version of the client)
 					if (client->GetVersion() == version) {
+						client->DisableSave();
 						client->ReplaceGroupClient(this);
 						Player* current_player = GetPlayer();
 						SetPlayer(client->GetPlayer());
@@ -9831,6 +9836,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 						SetCurrentZone(GetPlayer()->GetZone());
 						GetPlayer()->GetZone()->UpdateClientSpawnMap(GetPlayer(), this);
 						client->SetPlayer(current_player);
+						GetPlayer()->GetZone()->UpdateClientSpawnMap(current_player, client);
 						GetPlayer()->ResetSavedSpawns();
 					}
 					ZoneServer* tmpZone = client->GetCurrentZone();

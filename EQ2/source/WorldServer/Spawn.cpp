@@ -709,8 +709,8 @@ uchar* Spawn::spawn_info_changes(Player* player, int16 version){
 		return nullptr;
 	}
 
-	uchar* tmp = new uchar[size + 10];
-	size = Pack(tmp, xor_info_packet, size, size, version);
+	uchar* tmp = new uchar[size + 1000];
+	size = Pack(tmp, xor_info_packet, size, size+1000, version);
 	player->info_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	int32 orig_size = size;
@@ -1083,8 +1083,8 @@ uchar* Spawn::spawn_info_changes_ex(Player* player, int16 version) {
 		return nullptr;
 	}
 
-	uchar* tmp = new uchar[size + 10];
-	size = Pack(tmp, xor_info_packet, size, size, version);
+	uchar* tmp = new uchar[size + 1000];
+	size = Pack(tmp, xor_info_packet, size, size+1000, version);
 
 	player->info_mutex.releasewritelock(__FUNCTION__, __LINE__);
 

@@ -1251,7 +1251,7 @@ void Entity::ProcessCombat() {
 void NPC::ProcessCombat() {
 	MBrain.writelock(__FUNCTION__, __LINE__);
 	// Check to see if it is time to call the AI again
-	if (GetHP() > 0 && Timer::GetCurrentTime2() >= (m_brain->LastTick() + m_brain->Tick())) {
+	if (m_brain && GetHP() > 0 && Timer::GetCurrentTime2() >= (m_brain->LastTick() + m_brain->Tick())) {
 		// Probably never want to use the following log, will spam the console for every NPC in a zone 4 times a second
 		//LogWrite(NPC_AI__DEBUG, 9, "NPC_AI", "%s is thinking...", GetName());
 		m_brain->Think();

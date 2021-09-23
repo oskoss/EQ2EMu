@@ -28,6 +28,7 @@ using namespace std;
 #include <regex>
 #include "Commands/Commands.h"
 #include "Zone/pathfinder_interface.h"
+#include "NPC_AI.h"
 
 #ifdef WIN32
 #include <WinSock2.h>
@@ -1086,7 +1087,7 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 		return;
 	}
 
-	if (!initial_login && !client->GetInitialSpawnsSent() || (!initial_login && !client->IsReadyForUpdates()))
+	if (!initial_login && !client->GetInitialSpawnsSent() || (!initial_login && !client->IsReadyForSpawns()))
 		return;
 
 	Spawn* spawn = 0;
@@ -1231,6 +1232,14 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 				if (spawn && movementMgr != nullptr) {
 					movementMgr->RemoveMob((Entity*)spawn);
 				}
+
+				// delete brain if it has one
+				if(spawn->IsNPC()) {
+					NPC* tmpNPC = (NPC*)spawn;
+					if(tmpNPC->Brain())
+						tmpNPC->SetBrain(nullptr);
+				}
+
 				erase_itr = itr++;
 				spawn_delete_list.erase(erase_itr);
 				
@@ -3142,33 +3151,12 @@ void ZoneServer::RemoveClientImmediately(Client* client) {
 
 	if(client) 
 	{
-		database.ToggleCharacterOnline(client, 0);
-		loginserver.SendImmediateEquipmentUpdatesForChar(client->GetPlayer()->GetCharacterID());
-		if(connected_clients.count(client) > 0)
-		{
-			if (!client->IsZoning() && (guild = client->GetPlayer()->GetGuild()))
-				guild->GuildMemberLogoff(client->GetPlayer());
-			
-			MClientList.writelock(__FUNCTION__, __LINE__);
-			std::vector<Client*>::iterator itr = find(clients.begin(), clients.end(), client);
-			if (itr != clients.end())
-				clients.erase(itr);
-			MClientList.releasewritelock(__FUNCTION__, __LINE__);
-			//clients.Remove(client);
-			LogWrite(ZONE__INFO, 0, "Zone", "Removing connection for client '%s'.", client->GetPlayer()->GetName());
-			connected_clients.Remove(client, true);
-			// client is deleted at this point
-			client = 0;
-		}
-		else
-		{
-			MClientList.writelock(__FUNCTION__, __LINE__);
-			std::vector<Client*>::iterator itr = find(clients.begin(), clients.end(), client);
-			if (itr != clients.end())
-				clients.erase(itr);
-			MClientList.releasewritelock(__FUNCTION__, __LINE__);
+		MClientList.writelock(__FUNCTION__, __LINE__);
+		std::vector<Client*>::iterator itr = find(clients.begin(), clients.end(), client);
+		if (itr != clients.end())
+			clients.erase(itr);
+		MClientList.releasewritelock(__FUNCTION__, __LINE__);
 			//clients.Remove(client, true);
-		}
 	}
 }
 
@@ -3969,7 +3957,7 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 
 	safe_delete(packet);
-
+	
 	spawn->RemoveSpawnProximities();
 	RemoveSpawnProximities(spawn);
 
