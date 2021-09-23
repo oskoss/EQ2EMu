@@ -728,7 +728,7 @@ private:
 	void	DeleteSpawnScriptTimers(Spawn* spawn, bool all = false);											// never used outside zone server
 	void	DeleteSpawnScriptTimers();																			// never used outside zone server
 	void	CheckSpawnScriptTimers();																			// never used outside zone server
-	void	PrepareSpawnID(Player* player, Spawn* spawn);														// never used outside zone server
+	bool	PrepareSpawnID(Player* player, Spawn* spawn);														// never used outside zone server
 	void	RemoveMovementNPC(Spawn* spawn);																	// never used outside zone server
 	bool	CheckNPCAttacks(NPC* npc, Spawn* victim, Client* client = 0);										// never used outside zone server
 	bool	AggroVictim(NPC* npc, Spawn* victim, Client* client = 0);											// never used outside zone server
