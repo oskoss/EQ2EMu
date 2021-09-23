@@ -1299,7 +1299,7 @@ bool PacketStruct::LoadPacketData(uchar* data, int32 data_len) {
 				DataStruct* data_struct2 = findStruct(name, 0);
 				type = getType_int16(data_struct2);
 				// If stat_type == 6 we use a float, else we use sint16
-				if (type != 6)
+				if (type != 6 && type != 7)
 					useType2 = true;
 				safe_delete(varnames);
 			}
