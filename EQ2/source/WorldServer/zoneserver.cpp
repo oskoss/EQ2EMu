@@ -3733,7 +3733,7 @@ Spawn* ZoneServer::GetSpawnByID(int32 id, bool spawnListLocked) {
 
 bool ZoneServer::SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* packet, bool delete_spawn)
 {
-	if(!client || !spawn)
+	if(!client || !spawn || (client && client->GetPlayer() == spawn))
 		return false;
 
 	spawn->RemoveSpawnFromPlayer(client->GetPlayer());
