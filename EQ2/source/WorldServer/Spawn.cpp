@@ -888,7 +888,6 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 	}
 
 	int32 tmp_pos_packet_size = pos_packet_size;
-	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 
 	int32 size = info_size + tmp_pos_packet_size + vis_size + 8;
 	if (version >= 284)
@@ -935,6 +934,7 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 	ptr += sizeof(int32);
 	ptr += info_size;
 	memcpy(ptr, pos_changes, tmp_pos_packet_size);
+	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 	EQ2Packet* ret_packet = new EQ2Packet(OP_ClientCmdMsg, tmp, size);
 //	DumpPacket(ret_packet);
 	delete[] tmp;
