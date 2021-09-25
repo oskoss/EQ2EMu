@@ -3373,7 +3373,7 @@ void ZoneServer::SendSpawn(Spawn* spawn, Client* client){
 	else {
 		LogWrite(ZONE__DEBUG, 7, "Zone", "%s: Processing SendSpawn for spawn index %u (%s)...", client->GetPlayer()->GetName(), client->GetPlayer()->GetIndexForSpawn(spawn), spawn->GetName());
 		if(outapp)
-			client->QueuePacket(outapp);
+			client->QueuePacket(outapp, true);
 
 		client->GetPlayer()->SetSpawnSentState(spawn, SpawnState::SPAWN_STATE_SENT);
 	}

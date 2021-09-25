@@ -3849,7 +3849,7 @@ void Player::CheckSpawnRemovalQueue() {
 						packet->setDataByName("spawn_index", itr->second->index_id);
 						packet->setDataByName("delete", 1);	
 						
-						GetClient()->QueuePacket(packet->serialize(), true);
+						GetClient()->QueuePacket(packet->serialize());
 						safe_delete(packet);
 					}
 					sent_itr->second = SpawnState::SPAWN_STATE_REMOVING_SLEEP;

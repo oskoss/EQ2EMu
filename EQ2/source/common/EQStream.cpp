@@ -915,10 +915,7 @@ void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 	printf( "Before A in %s, line %i:\n", __FUNCTION__, __LINE__);
 	DumpPacket(app);
 #endif
-	if(app->eq2_compressed || app->packet_encrypted) {
-		return;
-	}
-	else if(!app->packet_prepared){
+	if(!app->packet_prepared){
 		if(app->PreparePacket(MaxLen) == 255) //invalid version
 			return;
 	}
@@ -937,7 +934,7 @@ void EQStream::PreparePacket(EQ2Packet* app, int8 offset){
 		if (compressed_offset)
 			app->eq2_compressed = true;
 	}
-	if(StreamType!=UnknownStream && !app->packet_encrypted){
+	if(!app->packet_encrypted){
 		EncryptPacket(app, compressed_offset, offset);
 		if(app->size > 2 && app->pBuffer[2] == 0){
 			uchar* new_buffer = new uchar[app->size+1];

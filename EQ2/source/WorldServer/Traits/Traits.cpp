@@ -189,6 +189,11 @@ EQ2Packet* MasterTraitList::GetTraitListPacket (Client* client)
 			//LogWrite(SPELL__INFO, 0, "AA", "Character Traits Size...%i ", traits_size);
 			for (itr3 = itr2->second.begin(); itr3 != itr2->second.end(); itr3++, count++) {
 				// Jabantiz: cant have more then 5 traits per line
+				tmp_spell = master_spell_list.GetSpell((*itr3)->spellID, (*itr3)->tier);
+				if(!tmp_spell) {
+					LogWrite(SPELL__ERROR, 0, "Traits", "Could not find SpellID %u and Tier %i in Master Spell List (line: %i)", (*itr3)->spellID, (*itr3)->tier, __LINE__);
+					continue;
+				}
 				if (count > 4)
 					break;
 
@@ -198,7 +203,6 @@ EQ2Packet* MasterTraitList::GetTraitListPacket (Client* client)
 
 				strcpy(temp, sTrait);
 				strcat(sTrait, "_icon");
-				tmp_spell = master_spell_list.GetSpell((*itr3)->spellID, (*itr3)->tier);
 				if (tmp_spell)
 					packet->setArrayDataByName(sTrait, tmp_spell->GetSpellIcon(), index);
 				else
@@ -266,6 +270,11 @@ EQ2Packet* MasterTraitList::GetTraitListPacket (Client* client)
 
 		for (itr3 = itr2->second.begin(); itr3 != itr2->second.end(); itr3++, count++) {
 			// Jabantiz: cant have more then 5 traits per line
+			tmp_spell = master_spell_list.GetSpell((*itr3)->spellID, (*itr3)->tier);
+			if(!tmp_spell) {
+				LogWrite(SPELL__ERROR, 0, "Traits", "Could not find SpellID %u and Tier %i in Master Spell List (line: %i)", (*itr3)->spellID, (*itr3)->tier, __LINE__);
+				continue;
+			}
 			if (count > 4)
 				break;
 			if (client->GetPlayer()->HasSpell((*itr3)->spellID, (*itr3)->tier)) {
@@ -277,7 +286,6 @@ EQ2Packet* MasterTraitList::GetTraitListPacket (Client* client)
 
 			strcpy(temp, sTrait);
 			strcat(sTrait, "_icon");
-			tmp_spell = master_spell_list.GetSpell((*itr3)->spellID, (*itr3)->tier);
 
 			if (tmp_spell)
 				packet->setArrayDataByName(sTrait, tmp_spell->GetSpellIcon(), index);

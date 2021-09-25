@@ -10332,12 +10332,6 @@ int EQ2Emu_lua_Evac(lua_State* state) {
 					PacketStruct* packet = configReader.getStruct("WS_TeleportWithinZone", client->GetVersion());
 					if (packet)
 					{
-						PacketStruct* packet2 = configReader.getStruct("WS_DestroyGhostCmd", client->GetVersion());
-						packet2->setDataByName("spawn_index", client->GetPlayer()->GetIndexForSpawn(target2));
-						packet2->setDataByName("delete", 1);	
-										
-						client->QueuePacket(packet2->serialize(), true);
-						safe_delete(packet2);
 						client->SetReloadingZone(true);
 						packet->setDataByName("x", x);
 						packet->setDataByName("y", y);

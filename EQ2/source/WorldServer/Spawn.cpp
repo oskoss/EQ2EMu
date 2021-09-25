@@ -516,6 +516,10 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 	player->AddSpawnVisPacketForXOR(id, (uchar*)vis_data->c_str(), vis_data->length());
 	player->AddSpawnInfoPacketForXOR(id, (uchar*)info_data->c_str(), info_data->length());
 
+	int32 vislength = vis_data->length();
+	int32 poslength = pos_data->length();
+	int32 infolength = info_data->length();
+
 	uchar* ptr = part2;
 	memcpy(ptr, pos_data->c_str(), pos_data->length());
 	ptr += pos_data->length();
@@ -603,9 +607,9 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 	if (offset > 0)
 		DumpPacket(part2, part2_size);
 
-	uchar tmp[1100];
+	uchar tmp[4000];
 	bool reverse = (version > 283);
-	part2_size = Pack(tmp, part2, part2_size, 1100, version, reverse);
+	part2_size = Pack(tmp, part2, part2_size, 4000, version, reverse);
 	int32 total_size = part1->length() + part2_size + 3;
 	if (part3)
 		total_size += part3->length();
@@ -661,7 +665,7 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 		memcpy(ptr, part3->c_str(), part3->length());
 	delete[] part2;
 
-	//	printf("%s (%i): p1: %i, p2:% i (%i), p3:% i, ts: %i\n", GetName(), GetID(), part1->length(), part2_size, origPart2Size, part3->length(), total_size);
+	//printf("SpawnPacket %s (id: %u, index: %u) to %s: p1: %i, p2: %i, p3: %i, ts: %i. poslength: %u, infolength: %u, vislength: %u\n", GetName(), GetID(), index, player->GetName(), part1->length(), part2_size, (part3 != nullptr) ? part3->length() : -1, total_size, poslength, infolength, vislength);
 
 	EQ2Packet* ret = new EQ2Packet(OP_ClientCmdMsg, final_packet, final_packet_size);
 	delete[] final_packet;
@@ -1085,7 +1089,6 @@ uchar* Spawn::spawn_info_changes_ex(Player* player, int16 version) {
 
 	uchar* tmp = new uchar[size + 1000];
 	size = Pack(tmp, xor_info_packet, size, size+1000, version);
-
 	player->info_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	int32 orig_size = size;
