@@ -26,7 +26,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 
 class Spawn;
 
-#define CELLSIZEDEFAULT 150
+#define CELLSIZEDEFAULT 30
 #define FACECELLSIZEDEFAULT 15
 
 struct Face {

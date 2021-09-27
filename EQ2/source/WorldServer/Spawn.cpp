@@ -934,11 +934,11 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 	ptr += sizeof(int32);
 	ptr += info_size;
 	memcpy(ptr, pos_changes, tmp_pos_packet_size);
+	delete[] pos_changes;
 	m_Update.releasewritelock(__FUNCTION__, __LINE__);
 	EQ2Packet* ret_packet = new EQ2Packet(OP_ClientCmdMsg, tmp, size);
 //	DumpPacket(ret_packet);
 	delete[] tmp;
-	delete[] pos_changes;
 	return ret_packet;
 }
 
@@ -2022,6 +2022,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 	int32 new_grid_id = 0;
 	if(player->GetMap() != nullptr && player->GetMap()->IsMapLoaded())
 	{
+		m_GridMutex.writelock(__FUNCTION__, __LINE__);
 		std::map<int32,TimedGridData>::iterator itr = established_grid_id.find(version);
 		if ( itr == established_grid_id.end() || itr->second.timestamp <= (Timer::GetCurrentTime2()))
 		{
@@ -2033,6 +2034,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 		}
 		else
 			new_grid_id = itr->second.grid_id;
+		m_GridMutex.releasewritelock(__FUNCTION__, __LINE__);
 	}
 	
 	packet->setDataByName("pos_grid_id", new_grid_id != 0 ? new_grid_id : appearance.pos.grid_id);
@@ -3237,11 +3239,25 @@ bool Spawn::CalculateChange(){
 				SetY(ny + tar_vy, false);
 		}
 	
+		int32 newGrid = appearance.pos.grid_id;
 		if (GetMap() != nullptr) {
-			int32 newGrid = GetMap()->GetGrid()->GetGridID(this);
-			if ((!IsFlyingCreature() || IsTransportSpawn()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
-				SetPos(&(appearance.pos.grid_id), newGrid);
+			m_GridMutex.writelock(__FUNCTION__, __LINE__);
+			std::map<int32,TimedGridData>::iterator itr = established_grid_id.begin();
+			if ( itr == established_grid_id.end() || itr->second.timestamp <= (Timer::GetCurrentTime2()))
+			{
+				newGrid = GetMap()->GetGrid()->GetGridIDByLocation(GetX(),GetY(),GetZ());
+				TimedGridData data;
+				data.grid_id = newGrid;
+				data.timestamp = Timer::GetCurrentTime2()+1000;
+				established_grid_id.insert(make_pair(0, data));
+			}
+			else
+				newGrid = itr->second.grid_id;
+			m_GridMutex.releasewritelock(__FUNCTION__, __LINE__);
 		}
+
+		if ((!IsFlyingCreature() || IsTransportSpawn()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
+			SetPos(&(appearance.pos.grid_id), newGrid);
 	}
 	return remove_needed;
 }

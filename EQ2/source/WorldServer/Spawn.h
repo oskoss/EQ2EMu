@@ -1363,6 +1363,7 @@ private:
 	int32 loot_tier;
 
 	bool deleted_spawn;
+	Mutex m_GridMutex;
 };
 
 #endif
