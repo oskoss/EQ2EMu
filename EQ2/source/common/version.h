@@ -38,11 +38,11 @@
 #endif
 
 #if defined(LOGIN)
-#define CURRENT_VERSION	"0.9.3-sco"
+#define CURRENT_VERSION	"0.9.4-geminorum"
 #elif defined(WORLD)
-#define CURRENT_VERSION	"0.9.3-sco"
+#define CURRENT_VERSION	"0.9.4-geminorum"
 #else
-#define CURRENT_VERSION	"0.9.3-sco"
+#define CURRENT_VERSION	"0.9.4-geminorum"
 #endif
 
 #define COMPILE_DATE	__DATE__
