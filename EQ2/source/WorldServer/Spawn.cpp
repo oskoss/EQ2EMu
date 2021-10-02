@@ -2028,6 +2028,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 			if(itr != established_grid_id.end() && itr->second.x == GetX() && itr->second.z == GetZ() && !itr->second.npc_save) {
 				itr->second.timestamp = Timer::GetCurrentTime2()+100;
 				itr->second.npc_save = false;
+				new_grid_id = itr->second.grid_id;
 			}
 			else {
 				auto loc = glm::vec3(GetX(), GetZ(), GetY());
@@ -3253,6 +3254,7 @@ bool Spawn::CalculateChange(){
 				if(itr != established_grid_id.end() && itr->second.x == GetX() && itr->second.z == GetZ()) {
 					itr->second.timestamp = Timer::GetCurrentTime2()+1000;
 					itr->second.npc_save = true;
+					newGrid = itr->second.grid_id;
 				}
 				else {
 					auto loc = glm::vec3(GetX(), GetZ(), GetY());
@@ -3811,7 +3813,7 @@ void Spawn::FixZ(bool forceUpdate) {
 	glm::vec3 current_loc(GetX(), GetZ(), GetY());
 
 	uint32 GridID = 0;
-	float new_z = GetZ();
+	float new_z = GetY();
 	if(GetMap() != nullptr) {
 		float new_z = GetMap()->FindBestZ(current_loc, nullptr, &GridID);
 
