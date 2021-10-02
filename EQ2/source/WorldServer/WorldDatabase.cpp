@@ -7259,8 +7259,10 @@ void WorldDatabase::GetHouseSpawnInstanceData(ZoneServer* zone, Spawn* spawn)
 
 		if (spawn->GetZone() != nullptr && spawn->GetMap() != nullptr && spawn->GetMap()->IsMapLoaded())
 		{
-			int32 newGrid = spawn->GetMap()->GetGrid()->GetGridID(spawn);
-			spawn->SetPos(&(spawn->appearance.pos.grid_id), newGrid);
+			auto loc = glm::vec3(spawn->GetX(),spawn->GetZ(),spawn->GetY());
+			uint32 GridID = 0;
+			float new_z = spawn->GetMap()->FindBestZ(loc, nullptr, &GridID);
+			spawn->SetPos(&(spawn->appearance.pos.grid_id), GridID);
 		}
 	}
 }

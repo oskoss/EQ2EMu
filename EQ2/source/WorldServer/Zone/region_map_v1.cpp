@@ -196,7 +196,8 @@ void RegionMapV1::IdentifyRegionsInGrid(Client *client, const glm::vec3 &locatio
 	int32 grid = 0;
 	if (client->GetPlayer()->GetMap() != nullptr && client->GetPlayer()->GetMap()->IsMapLoaded())
 	{
-		grid = client->GetPlayer()->GetMap()->GetGrid()->GetGridIDByLocation(location.x, location.y, location.z);
+		auto loc = glm::vec3(location.x, location.z, location.y);
+		float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &grid);
 	}
 	else
 		client->SimpleMessage(CHANNEL_COLOR_RED, "No map to establish grid id, using grid id 0 (attempt match all).");

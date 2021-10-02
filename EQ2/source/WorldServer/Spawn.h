@@ -242,6 +242,10 @@ struct SpawnData {
 struct TimedGridData {
 	int32 timestamp;
 	int32 grid_id;
+	float x;
+	float y;
+	float z;
+	bool npc_save;
 };
 
 class Spawn {

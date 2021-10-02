@@ -60,14 +60,12 @@ ThreadReturnType LoadMapAsync(void* mapToLoad)
 	THREAD_RETURN(NULL);
 }
 
-Map::Map(string zonename, string file, SPGrid* grid) {
+Map::Map(string zonename, string file) {
 	CheckMapMutex.SetName(file + "MapMutex");
 	SetMapLoaded(false);
 	m_ZoneName = zonename;
 	m_ZoneFile = file;
 	imp = nullptr;
-	mGrid = grid;
-	m_CellSize = CELLSIZEDEFAULT;
 }
 
 Map::~Map() {
@@ -76,10 +74,9 @@ Map::~Map() {
 		imp->rm->release();
 		safe_delete(imp);
 	}
-	safe_delete(mGrid);
 }
 
-float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result)
+float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID)
 {
 	if (!IsMapLoaded())
 		return BEST_Z_INVALID;
@@ -96,7 +93,7 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result)
 	float hit_distance;
 	bool hit = false;
 
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID);
 	if(hit) {
 		return result->z;
 	}
@@ -104,7 +101,7 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result)
 	// Find nearest Z above us
 	
 	to.z = -BEST_Z_INVALID;
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID);
 	if (hit)
 	{
 		return result->z;
@@ -131,9 +128,9 @@ float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result) {
 	glm::vec3 to(start.x, start.y, BEST_Z_INVALID);
 	float hit_distance;
 	bool hit = false;
-	
+	uint32 grid_id = 0;
 	// first check is below us
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)grid_id);
 	if (hit) {
 		ClosestZ = result->z;
 		
@@ -141,7 +138,7 @@ float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result) {
 	
 	// Find nearest Z above us
 	to.z = -BEST_Z_INVALID;
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)grid_id);
 	if (hit) {
 		if (std::abs(from.z - result->z) < std::abs(ClosestZ - from.z))
 			return result->z;
@@ -155,7 +152,7 @@ bool Map::LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::ve
 		return false;
 	if(!imp)
 		return false;
-	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)result, nullptr, nullptr);
+	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)result, nullptr, nullptr, nullptr);
 }
 
 bool Map::LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, glm::vec3 *result) {
@@ -252,7 +249,7 @@ bool Map::CheckLoS(glm::vec3 myloc, glm::vec3 oloc)
 	if(!imp)
 		return false;
 
-	return !imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, nullptr, nullptr);
+	return !imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, nullptr, nullptr, nullptr);
 }
 
 // returns true if a collision happens
@@ -262,10 +259,10 @@ bool Map::DoCollisionCheck(glm::vec3 myloc, glm::vec3 oloc, glm::vec3 &outnorm, 
 	if(!imp)
 		return false;
 
-	return imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, (RmReal *)&outnorm, (RmReal *)&distance);
+	return imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, (RmReal *)&outnorm, (RmReal *)&distance, nullptr);
 }
 
-Map *Map::LoadMapFile(std::string zonename, std::string file, SPGrid* grid) {
+Map *Map::LoadMapFile(std::string zonename, std::string file) {
 
 	std::string filename = "Maps/";
 	filename += file;
@@ -279,7 +276,7 @@ Map *Map::LoadMapFile(std::string zonename, std::string file, SPGrid* grid) {
 
 	LogWrite(MAP__INFO, 7, "Map", "Attempting to load Map File [{%s}]", filename.c_str());
 
-	auto m = new Map(zonename, file, grid);
+	auto m = new Map(zonename, file);
 	m->SetMapLoading(true);
 	m->SetFileName(filename);
 #ifdef WIN32
@@ -371,15 +368,13 @@ bool Map::LoadV2(FILE* f) {
 	m_NumCellsX = ceil(width / m_CellSize);
 	m_NumCellsZ = ceil(height / m_CellSize);
 
-	if (mGrid != nullptr)
-		mGrid->InitValues(m_MinX, m_MaxX, m_MinZ, m_MaxZ, m_NumCellsX, m_NumCellsZ);
-
 	// Read the number of grids
 	int32 NumGrids;
 	fread(&NumGrids, sizeof(int32), 1, f);
 
 	std::vector<glm::vec3> verts;
 	std::vector<uint32> indices;
+	std::vector<uint32> grids;
 
 	uint32 face_count = 0;
 	// Loop through the grids loading the face list
@@ -434,23 +429,7 @@ bool Map::LoadV2(FILE* f) {
 			verts.push_back(c);
 			indices.push_back((uint32)sz + 2);
 
-			if (mGrid != nullptr)
-			{
-				Face* face = new Face;
-				face->Vertex1[0] = x1;
-				face->Vertex1[1] = y1;
-				face->Vertex1[2] = z1;
-
-				face->Vertex2[0] = x2;
-				face->Vertex2[1] = y2;
-				face->Vertex2[2] = z2;
-
-				face->Vertex3[0] = x3;
-				face->Vertex3[1] = y3;
-				face->Vertex3[2] = z3;
-
-				mGrid->AddFace(face, GridID);
-			}
+			grids.push_back((uint32)GridID);
 		}
 	}
 	face_count = face_count / 3;
@@ -463,7 +442,7 @@ bool Map::LoadV2(FILE* f) {
 		imp = new impl;
 	}
 
-	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0]);
+	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0], &grids[0]);
 
 	if (!imp->rm) {
 		delete imp;
@@ -527,9 +506,6 @@ bool Map::LoadV2Deflated(FILE* f) {
 	m_NumCellsX = ceil(width / m_CellSize);
 	m_NumCellsZ = ceil(height / m_CellSize);
 
-	if (mGrid != nullptr)
-		mGrid->InitValues(m_MinX, m_MaxX, m_MinZ, m_MaxZ, m_NumCellsX, m_NumCellsZ);
-
 	// Read the number of grids
 	int32 NumGrids;
 	srcbuf->sgetn(buf,sizeof(int32));
@@ -537,6 +513,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 
 	std::vector<glm::vec3> verts;
 	std::vector<uint32> indices;
+	std::vector<uint32> grids;
 
 	uint32 face_count = 0;
 	// Loop through the grids loading the face list
@@ -596,23 +573,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 			verts.push_back(c);
 			indices.push_back((uint32)sz + 2);
 
-			if (mGrid != nullptr)
-			{
-				Face* face = new Face;
-				face->Vertex1[0] = x1;
-				face->Vertex1[1] = y1;
-				face->Vertex1[2] = z1;
-
-				face->Vertex2[0] = x2;
-				face->Vertex2[1] = y2;
-				face->Vertex2[2] = z2;
-
-				face->Vertex3[0] = x3;
-				face->Vertex3[1] = y3;
-				face->Vertex3[2] = z3;
-
-				mGrid->AddFace(face, GridID);
-			}
+			grids.push_back(GridID);
 		}
 	}
 	face_count = face_count / 3;
@@ -625,7 +586,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 		imp = new impl;
 	}
 
-	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0]);
+	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0], &grids[0]);
 
 	file.close();
 	safe_delete_array(buf);
@@ -699,8 +660,7 @@ void MapRange::AddVersionRange(std::string zoneName) {
 		std::string baseMatch3(base_sub_match3.str().c_str());
         LogWrite(MAP__INFO, 0, "Map", "Map To Load: %s, size: %i, string: %s, min: %s, max: %s\n", i.string().c_str(), base_match.size(), baseMatch.c_str(), baseMatch2.c_str(), baseMatch3.c_str());
 
-        SPGrid * Grid = new SPGrid(base_sub_match.str().c_str(), 0);
-        Map * zonemap = Map::LoadMapFile(zoneName, base_sub_match.str().c_str(), Grid);
+        Map * zonemap = Map::LoadMapFile(zoneName, base_sub_match.str().c_str());
 
         int32 min_version = 0, max_version = 0;
         if (strlen(base_sub_match2.str().c_str()) > 0)

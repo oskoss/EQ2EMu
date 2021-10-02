@@ -650,8 +650,10 @@ public:
 							RmReal *hitLocation,
 							RmReal *hitNormal,
 							RmReal *hitDistance,
+							RmUint32 *GridID,
 							const RmReal *vertices,
 							const RmUint32 *indices,
+							const RmUint32 *grids,
 							RmReal &nearestDistance,
 							NodeInterface *callback,
 							RmUint32 *raycastTriangles,
@@ -708,6 +710,9 @@ public:
 								{
 									*hitDistance = t;
 								}
+								if(GridID) {
+									*GridID = grids[tri];
+								}
 								nearestTriIndex = tri;
 								hit = true;
 							}
@@ -719,11 +724,11 @@ public:
 			{
 				if ( mLeft )
 				{
-					mLeft->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,vertices,indices,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
+					mLeft->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,GridID,vertices,indices,grids,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
 				}
 				if ( mRight )
 				{
-					mRight->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,vertices,indices,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
+					mRight->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,GridID,vertices,indices,grids,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
 				}
 			}
 		}
@@ -738,7 +743,7 @@ class MyRaycastMesh : public RaycastMesh, public NodeInterface
 {
 public:
 
-	MyRaycastMesh(RmUint32 vcount,const RmReal *vertices,RmUint32 tcount,const RmUint32 *indices,RmUint32 maxDepth,RmUint32 minLeafSize,RmReal minAxisSize)
+	MyRaycastMesh(RmUint32 vcount,const RmReal *vertices,RmUint32 tcount,const RmUint32 *indices,const RmUint32 *grids,RmUint32 maxDepth,RmUint32 minLeafSize,RmReal minAxisSize)
 	{
 		mRaycastFrame = 0;
 		if ( maxDepth < 2 )
@@ -765,6 +770,8 @@ public:
 		memcpy(mIndices,indices,sizeof(RmUint32)*tcount*3);
 		mRaycastTriangles = (RmUint32 *)::malloc(tcount*sizeof(RmUint32));
 		memset(mRaycastTriangles,0,tcount*sizeof(RmUint32));
+		mGrids = (RmUint32 *)::malloc(sizeof(RmUint32)*tcount);
+		memcpy(mGrids,grids,sizeof(RmUint32)*tcount);
 		mRoot = getNode();
 		mFaceNormals = NULL;
 		new ( mRoot ) NodeAABB(mVcount,mVertices,mTcount,mIndices,maxDepth,minLeafSize,minAxisSize,this,mLeafTriangles);
@@ -777,9 +784,10 @@ public:
 		::free(mIndices);
 		::free(mFaceNormals);
 		::free(mRaycastTriangles);
+		::free(mGrids);
 	}
 
-	virtual bool raycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance)
+	virtual bool raycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance,RmUint32 *GridID)
 	{
 		bool ret = false;
 
@@ -795,7 +803,7 @@ public:
 		dir[2]*=recipDistance;
 		mRaycastFrame++;
 		RmUint32 nearestTriIndex=TRI_EOF;
-		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,mVertices,mIndices,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex);
+		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,GridID,mVertices,mIndices,mGrids,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex);
 		return ret;
 	}
 
@@ -844,7 +852,7 @@ public:
 		faceNormal[2] = src[2];
 	}
 
-	virtual bool bruteForceRaycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance)
+	virtual bool bruteForceRaycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance,RmUint32 *GridID)
 	{
 		bool ret = false;
 
@@ -896,6 +904,10 @@ public:
 					{
 						*hitDistance = t;
 					}
+
+					if(GridID) {
+						*GridID = mGrids[tri];
+					}
 					ret = true;
 				}
 			}
@@ -915,6 +927,7 @@ public:
 	RmUint32		mMaxNodeCount;
 	NodeAABB		*mNodes;
 	TriVector		mLeafTriangles;
+	RmUint32		*mGrids;
 };
 
 };
@@ -928,11 +941,11 @@ RaycastMesh * createRaycastMesh(RmUint32 vcount,		// The number of vertices in t
 								const RmReal *vertices,		// The array of vertex positions in the format x1,y1,z1..x2,y2,z2.. etc.
 								RmUint32 tcount,		// The number of triangles in the source triangle mesh
 								const RmUint32 *indices, // The triangle indices in the format of i1,i2,i3 ... i4,i5,i6, ...
+								const RmUint32 *grids,
 								RmUint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
 								RmUint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
-								RmReal	minAxisSize	// once a particular axis is less than this size, stop sub-dividing.
-								)
+								RmReal	minAxisSize )	// once a particular axis is less than this size, stop sub-dividing.
 {
-	auto m = new MyRaycastMesh(vcount, vertices, tcount, indices, maxDepth, minLeafSize, minAxisSize);
+	auto m = new MyRaycastMesh(vcount, vertices, tcount, indices, grids, maxDepth, minLeafSize, minAxisSize);
 	return static_cast< RaycastMesh * >(m);
 }

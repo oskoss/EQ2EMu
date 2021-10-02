@@ -257,8 +257,6 @@ struct ZoneInfoSlideStruct {
 	vector<ZoneInfoSlideStructTransitionInfo*> slide_transition_info;
 };
 
-class SPGrid;
-
 // need to attempt to clean this up and add xml comments, remove unused code, find a logical way to sort the functions maybe by get/set/process/add etc...
 class ZoneServer {
 public:

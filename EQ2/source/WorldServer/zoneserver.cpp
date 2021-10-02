@@ -83,7 +83,6 @@ extern int errno;
 #include <algorithm>
 #include <random>
 
-#include "Zone/SPGrid.h"
 #include "Bots/Bot.h"
 
 #ifdef WIN32

@@ -30,7 +30,6 @@
 #include "Rules/Rules.h"
 #include "World.h"
 #include "LuaInterface.h"
-#include "Zone/SPGrid.h"
 #include "Bots/Bot.h"
 #include "Zone/raycast_mesh.h"
 
@@ -2026,11 +2025,22 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 		std::map<int32,TimedGridData>::iterator itr = established_grid_id.find(version);
 		if ( itr == established_grid_id.end() || itr->second.timestamp <= (Timer::GetCurrentTime2()))
 		{
-			new_grid_id = player->GetMap()->GetGrid()->GetGridIDByLocation(GetX(),GetY(),GetZ());
-			TimedGridData data;
-			data.grid_id = new_grid_id;
-			data.timestamp = Timer::GetCurrentTime2()+100;
-			established_grid_id.insert(make_pair(packet->GetVersion(), data));
+			if(itr != established_grid_id.end() && itr->second.x == GetX() && itr->second.z == GetZ() && !itr->second.npc_save) {
+				itr->second.timestamp = Timer::GetCurrentTime2()+100;
+				itr->second.npc_save = false;
+			}
+			else {
+				auto loc = glm::vec3(GetX(), GetZ(), GetY());
+				float new_z = player->GetMap()->FindBestZ(loc, nullptr, &new_grid_id);
+				TimedGridData data;
+				data.grid_id = new_grid_id;
+				data.x = GetX();
+				data.y = GetY();
+				data.z = GetZ();
+				data.npc_save = false;
+				data.timestamp = Timer::GetCurrentTime2()+100;
+				established_grid_id.insert(make_pair(packet->GetVersion(), data));
+			}
 		}
 		else
 			new_grid_id = itr->second.grid_id;
@@ -2752,11 +2762,6 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	if (forceMapCheck && GetZone() != nullptr && GetMap() != nullptr && GetMap()->IsMapLoaded())
 	{
 		FixZ(true);
-
-		int32 newGrid = GetMap()->GetGrid()->GetGridID(this);
-		if ((IsTransportSpawn() || !IsFlyingCreature()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
-			SetPos(&(appearance.pos.grid_id), newGrid);
-
 		forceMapCheck = false;
 	}
 
@@ -3245,11 +3250,22 @@ bool Spawn::CalculateChange(){
 			std::map<int32,TimedGridData>::iterator itr = established_grid_id.begin();
 			if ( itr == established_grid_id.end() || itr->second.timestamp <= (Timer::GetCurrentTime2()))
 			{
-				newGrid = GetMap()->GetGrid()->GetGridIDByLocation(GetX(),GetY(),GetZ());
-				TimedGridData data;
-				data.grid_id = newGrid;
-				data.timestamp = Timer::GetCurrentTime2()+1000;
-				established_grid_id.insert(make_pair(0, data));
+				if(itr != established_grid_id.end() && itr->second.x == GetX() && itr->second.z == GetZ()) {
+					itr->second.timestamp = Timer::GetCurrentTime2()+1000;
+					itr->second.npc_save = true;
+				}
+				else {
+					auto loc = glm::vec3(GetX(), GetZ(), GetY());
+					float new_z = GetMap()->FindBestZ(loc, nullptr, &newGrid);
+					TimedGridData data;
+					data.grid_id = newGrid;
+					data.x = GetX();
+					data.y = GetY();
+					data.z = GetZ();
+					data.npc_save = true;
+					data.timestamp = Timer::GetCurrentTime2()+1000;
+					established_grid_id.insert(make_pair(0, data));
+				}
 			}
 			else
 				newGrid = itr->second.grid_id;
@@ -3779,7 +3795,7 @@ float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
 
 
 void Spawn::FixZ(bool forceUpdate) {
-	if (IsPlayer() || IsFlyingCreature() || !GetZone() || IsObject()) {
+	if (!GetZone()) {
 		return;
 	}
 	/*
@@ -3793,7 +3809,20 @@ void Spawn::FixZ(bool forceUpdate) {
 	
 	// we do the inwater check here manually to avoid double calling for a Z coordinate
 	glm::vec3 current_loc(GetX(), GetZ(), GetY());
-	float new_z = GetFixedZ(current_loc, 1);
+
+	uint32 GridID = 0;
+	float new_z = GetZ();
+	if(GetMap() != nullptr) {
+		float new_z = GetMap()->FindBestZ(current_loc, nullptr, &GridID);
+
+		if ((IsTransportSpawn() || !IsFlyingCreature()) && GridID != 0 && GridID != appearance.pos.grid_id)
+			SetPos(&(appearance.pos.grid_id), GridID);
+	}
+
+	// no need to go any further for players, flying creatures or objects, just needed the grid id set
+	if (IsPlayer() || IsFlyingCreature() || IsObject()) {
+		return;
+	}
 	
 	if ( region_map != nullptr )
 	{

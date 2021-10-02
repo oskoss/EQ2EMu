@@ -27,17 +27,16 @@
 #include "../../common/Mutex.h"
 #include "position.h"
 #include <stdio.h>
-#include "SPGrid.h"
 
 #define BEST_Z_INVALID -99999
 
 class Map
 {
 public:
-	Map(string zonename, string filename, SPGrid* grid=nullptr);
+	Map(string zonename, string filename);
 	~Map();
 
-	float FindBestZ(glm::vec3 &start, glm::vec3 *result);
+	float FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID = 0);
 	float FindClosestZ(glm::vec3 &start, glm::vec3 *result);
 	bool LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *result);
 	bool LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, glm::vec3 *result);
@@ -46,7 +45,7 @@ public:
 
 	bool Load(const std::string& filename);
 
-	static Map *LoadMapFile(std::string zonename, std::string file, SPGrid* grid=nullptr);
+	static Map *LoadMapFile(std::string zonename, std::string file);
 
 	std::string GetFileName() { return m_ZoneFile; }
 	void SetMapLoaded(bool val) {
@@ -80,8 +79,6 @@ public:
 	float GetMaxZ() { return m_MaxZ; }
 
 	void SetFileName(std::string newfile) { m_FileName = string(newfile); }
-	
-	SPGrid* GetGrid() { return mGrid; }
 private:
 	void RotateVertex(glm::vec3 &v, float rx, float ry, float rz);
 	void ScaleVertex(glm::vec3 &v, float sx, float sy, float sz);
@@ -110,7 +107,6 @@ private:
 	bool mapLoaded;
 	bool mapLoading;
 	Mutex CheckMapMutex;
-	SPGrid* mGrid;
 };
 
 class MapRange {

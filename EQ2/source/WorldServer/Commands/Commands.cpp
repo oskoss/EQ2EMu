@@ -46,7 +46,6 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "../RaceTypes/RaceTypes.h"
 #include "../classes.h"
 #include "../Transmute.h"
-#include "../Zone/SPGrid.h"
 #include "../Bots/Bot.h"
 
 extern WorldDatabase database;
@@ -5844,7 +5843,6 @@ void Commands::Command_StopFollow(Client* client, Seperator* sep)
 	}
 }
 
-#include "../Zone/SPGrid.h"
 /* 
 	Function: Command_Grid()
 	Purpose	: Show player's current Grid ID
@@ -5857,8 +5855,10 @@ void Commands::Command_Grid(Client* client)
 	client->Message(CHANNEL_COLOR_YELLOW, "Your Grid ID is %u", client->GetPlayer()->appearance.pos.grid_id);
 
 	if (client->GetPlayer()->GetMap() != nullptr) {
-		int32 grid = client->GetPlayer()->GetMap()->GetGrid()->GetGridID(client->GetPlayer());
-		client->Message(CHANNEL_COLOR_YELLOW, "SPGrid result is %u", grid);
+			auto loc = glm::vec3(client->GetPlayer()->GetX(), client->GetPlayer()->GetZ(), client->GetPlayer()->GetY());
+			uint32 GridID = 0;
+			float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &GridID);
+			client->Message(CHANNEL_COLOR_YELLOW, "Grid result is %u, at EQ2 Y coordinate %f", GridID, new_z);
 	}
 }
 
