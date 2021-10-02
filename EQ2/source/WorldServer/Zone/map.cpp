@@ -365,8 +365,6 @@ bool Map::LoadV2(FILE* f) {
 	// in both the X and Z direction
 	float width = m_MaxX - m_MinX;
 	float height = m_MaxZ - m_MinZ;
-	m_NumCellsX = ceil(width / m_CellSize);
-	m_NumCellsZ = ceil(height / m_CellSize);
 
 	// Read the number of grids
 	int32 NumGrids;
@@ -503,8 +501,6 @@ bool Map::LoadV2Deflated(FILE* f) {
 	// in both the X and Z direction
 	float width = m_MaxX - m_MinX;
 	float height = m_MaxZ - m_MinZ;
-	m_NumCellsX = ceil(width / m_CellSize);
-	m_NumCellsZ = ceil(height / m_CellSize);
 
 	// Read the number of grids
 	int32 NumGrids;

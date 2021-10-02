@@ -96,12 +96,6 @@ private:
 	float m_MaxX;
 	float m_MaxZ;
 
-	int32 m_NumCellsX;
-	int32 m_NumCellsZ;
-
-	int32 m_NumFaceCellsX;
-	int32 m_NumFaceCellsZ;
-
 	struct impl;
 	impl *imp;
 	bool mapLoaded;
