@@ -3374,7 +3374,7 @@ void ZoneServer::SendSpawn(Spawn* spawn, Client* client){
 		if(outapp)
 			client->QueuePacket(outapp, true);
 
-		client->GetPlayer()->SetSpawnSentState(spawn, SpawnState::SPAWN_STATE_SENT);
+		client->GetPlayer()->SetSpawnSentState(spawn, SpawnState::SPAWN_STATE_SENT_WAIT);
 	}
 
 	/*

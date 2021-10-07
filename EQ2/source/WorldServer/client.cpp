@@ -1068,13 +1068,6 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		safe_delete(request);
 		break;
 	}
-	case OP_SysClient: {
-		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SysClient", opcode, opcode);
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
-		SetReadyForUpdates();
-		ProcessStateCommands();
-		break;
-	}
 	case OP_MapRequest: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_MapRequest", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_MapRequest", GetVersion());
@@ -1647,15 +1640,23 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		GetCurrentZone()->GetTradeskillMgr()->StopCrafting(this);
 		break;
 	}
+	case OP_SysClient:
 	case OP_SignalMsg: {
+		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SysClient/OP_SignalMsg", opcode, opcode);
+
 		PacketStruct* packet = configReader.getStruct("WS_Signal", GetVersion());
 		if (packet) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 			EQ2_16BitString str = packet->getType_EQ2_16BitString_ByName("signal");
 			if (str.size > 0) {
 				if (strcmp(str.data.c_str(), "sys_client_avatar_ready") == 0) {
+					LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
 					SetReadyForUpdates();
 					GetPlayer()->SendSpawnChanges(true);
+					ProcessStateCommands();
+				}
+				else {
+					LogWrite(CCLIENT__WARNING, 0, "Player %s reported SysClient/SignalMsg state %s.", GetPlayer()->GetName(), str.data.c_str());
 				}
 				const char* zone_script = world.GetZoneScript(player->GetZone()->GetZoneID());
 				if (zone_script && lua_interface)
@@ -3019,7 +3020,7 @@ bool Client::Process(bool zone_process) {
 	}
 
 	if(spawn_removal_timer.Check() && GetPlayer()) {
-		GetPlayer()->CheckSpawnRemovalQueue();
+		GetPlayer()->CheckSpawnStateQueue();
 	}
 
 	if (delayedLogin && delayTimer.Enabled() && delayTimer.Check())

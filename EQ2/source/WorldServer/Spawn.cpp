@@ -2230,7 +2230,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 		packet->setDataByName("pos_move_type", 16);
 	}
 
-	if (!IsPlayer())
+	if (!IsPlayer()) // has to be 2 or NPC's warp around when moving
 		packet->setDataByName("pos_movement_mode", 2);
 	
 	if(version <= 910)

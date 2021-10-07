@@ -361,11 +361,6 @@ bool Map::LoadV2(FILE* f) {
 	fread(&m_MaxX, sizeof(float), 1, f);
 	fread(&m_MaxZ, sizeof(float), 1, f);
 
-	// Calculate how many cells we need
-	// in both the X and Z direction
-	float width = m_MaxX - m_MinX;
-	float height = m_MaxZ - m_MinZ;
-
 	// Read the number of grids
 	int32 NumGrids;
 	fread(&NumGrids, sizeof(int32), 1, f);
@@ -496,11 +491,6 @@ bool Map::LoadV2Deflated(FILE* f) {
 	memcpy(&m_MaxX,&buf[0],sizeof(float));
 	srcbuf->sgetn(buf,sizeof(float));
 	memcpy(&m_MaxZ,&buf[0],sizeof(float));
-
-	// Calculate how many cells we need
-	// in both the X and Z direction
-	float width = m_MaxX - m_MinX;
-	float height = m_MaxZ - m_MinZ;
 
 	// Read the number of grids
 	int32 NumGrids;

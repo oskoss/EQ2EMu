@@ -170,10 +170,11 @@ struct SpellBookEntry{
 enum SpawnState{
 	SPAWN_STATE_NONE=0,
 	SPAWN_STATE_SENDING=1,
-	SPAWN_STATE_SENT=2,
-	SPAWN_STATE_REMOVING=3,
-	SPAWN_STATE_REMOVING_SLEEP=4,
-	SPAWN_STATE_REMOVED=5
+	SPAWN_STATE_SENT_WAIT=2,
+	SPAWN_STATE_SENT=3,
+	SPAWN_STATE_REMOVING=4,
+	SPAWN_STATE_REMOVING_SLEEP=5,
+	SPAWN_STATE_REMOVED=6
 };
 #define QUICKBAR_NORMAL		1
 #define QUICKBAR_INV_SLOT	2
@@ -211,8 +212,8 @@ struct LoginAppearances {
 	bool	update_needed;
 };
 
-struct SpawnRemoval {
-	Timer spawn_removal_timer;
+struct SpawnQueueState {
+	Timer spawn_state_timer;
 	int16 index_id;
 };
 
@@ -434,7 +435,7 @@ public:
 	bool IsSendingSpawn(int32 spawn_id);
 	bool IsRemovingSpawn(int32 spawn_id);
 	bool SetSpawnSentState(Spawn* spawn, SpawnState state);
-	void CheckSpawnRemovalQueue();
+	void CheckSpawnStateQueue();
 	void SetSideSpeed(float side_speed, bool updateFlags = true) {
 		SetPos(&appearance.pos.SideSpeed, side_speed, updateFlags);
 	}
@@ -1031,7 +1032,7 @@ private:
 	map<int32, string>	spawn_info_packet_list;
 	map<int32, string>	spawn_pos_packet_list;
 	map<int32, int8> spawn_packet_sent;
-	map<int32, SpawnRemoval*> spawn_removal_list;
+	map<int32, SpawnQueueState*> spawn_state_list;
 	uchar*				movement_packet;
 	uchar*				old_movement_packet;
 	uchar*				spell_orig_packet;
