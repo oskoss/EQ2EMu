@@ -2122,14 +2122,20 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 		return packets;
 	}
 	Item* item = item_list.indexed_items[index];
+	int8 orig_slot_id = slot_id;
 	slot_id = ConvertSlotFromClient(slot_id, version);
 	if (item) {
+		if(orig_slot_id == 255 && item->CheckFlag2(APPEARANCE_ONLY)) {
+			appearance_type = 1;
+			equipList = &appearance_equipment_list;
+		}
 		if (slot_id != 255 && !item->HasSlot(slot_id)) {
 			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 			return packets;
 		}
 		int8 slot = equipList->GetFreeSlot(item, slot_id);
 		bool canEquip = CanEquipItem(item);
+		
 		if(canEquip && !appearance_type && item->CheckFlag2(APPEARANCE_ONLY))
 		{
 			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);

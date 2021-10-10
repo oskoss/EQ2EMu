@@ -1656,7 +1656,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					ProcessStateCommands();
 				}
 				else {
-					LogWrite(CCLIENT__WARNING, 0, "Player %s reported SysClient/SignalMsg state %s.", GetPlayer()->GetName(), str.data.c_str());
+					LogWrite(CCLIENT__WARNING, 0, "Client", "Player %s reported SysClient/SignalMsg state %s.", GetPlayer()->GetName(), str.data.c_str());
 				}
 				const char* zone_script = world.GetZoneScript(player->GetZone()->GetZoneID());
 				if (zone_script && lua_interface)
