@@ -3491,6 +3491,9 @@ bool Player::HasActiveSpellEffect(Spell* spell, Spawn* target){
 
 void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version)
 {
+	if(GetClient() && GetClient()->IsReloadingZone())
+		return;
+
 	LogWrite(PLAYER__DEBUG, 7, "Player", "Enter: %s", __FUNCTION__); // trace
 
 	// XML structs may be to slow to use in this portion of the code as a single
@@ -3811,6 +3814,10 @@ bool Player::SetSpawnSentState(Spawn* spawn, SpawnState state) {
 	if(index > 0 && (state == SpawnState::SPAWN_STATE_SENDING)) {
 		LogWrite(PLAYER__WARNING, 0, "Player", "Spawn ALREADY INDEXED for Player %s (%u).  Spawn %s (index %u) attempted to state %u.", 
 			GetName(), GetCharacterID(), spawn->GetName(), index, state);
+			if(GetClient()->IsReloadingZone()) {
+				spawn_packet_sent.insert(make_pair(spawn->GetID(), state));
+				val = false;
+			}
 		// we don't do anything this spawn is already populated by the player 
 	}
 	else {
@@ -3864,11 +3871,15 @@ void Player::CheckSpawnStateQueue() {
 					break;
 				}
 				case SpawnState::SPAWN_STATE_REMOVING: {
+					if(itr->first == GetID() && GetClient()->IsReloadingZone()) {
+						itr->second->spawn_state_timer.Disable();
+						continue;
+					}
+					
 					if(itr->second->index_id) {
 						PacketStruct* packet = packet = configReader.getStruct("WS_DestroyGhostCmd", GetClient()->GetVersion());
 						packet->setDataByName("spawn_index", itr->second->index_id);
 						packet->setDataByName("delete", 1);	
-						
 						GetClient()->QueuePacket(packet->serialize());
 						safe_delete(packet);
 					}
@@ -3882,6 +3893,11 @@ void Player::CheckSpawnStateQueue() {
 					SpawnQueueState* sr = itr->second;
 					itr = spawn_state_list.erase(itr);
 					safe_delete(sr);
+					break;
+				}
+				default: {
+					// reset
+					itr->second->spawn_state_timer.Disable();
 					break;
 				}
 			}
@@ -6677,8 +6693,21 @@ void Player::RemoveTargetInvisHistory(int32 targetID)
 
 bool Player::SetSpawnMap(Spawn* spawn)
 {
-	if(!client->GetPlayer()->SetSpawnSentState(spawn, SpawnState::SPAWN_STATE_SENDING))
+	if(!client->GetPlayer()->SetSpawnSentState(spawn, SpawnState::SPAWN_STATE_SENDING)) {
+		/*index_mutex.writelock(__FUNCTION__, __LINE__);
+		spawn_id += 1;
+		if (spawn_index == 255)
+			spawn_index += 1; //just so we dont have to worry about overloading
+
+		map<int32, Spawn*>::iterator itr = player_spawn_id_map.find(player_spawn_reverse_id_map[this]);
+		if(itr != player_spawn_id_map.end()) {
+			player_spawn_id_map.erase(itr);
+		}
+		player_spawn_id_map[spawn_id] = spawn;
+		player_spawn_reverse_id_map[this] = spawn_id;
+		index_mutex.releasewritelock(__FUNCTION__, __LINE__);*/
 		return false;
+	}
 
 	index_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_id += 1;
@@ -7008,4 +7037,44 @@ bool Player::SerializeItemPackets(EquipmentItemList* equipList, vector<EQ2Packet
 		LogWrite(PLAYER__ERROR, 0, "Player", "failed to add item to item_list");
 	}
 	return false;
+}
+
+void Player::AddGMVisualFilter(int32 filter_type, int32 filter_value, char* filter_search_str, int16 visual_tag) {
+	if(MatchGMVisualFilter(filter_type, filter_value, filter_search_str) > 0)
+		return;
+
+	vis_mutex.writelock(__FUNCTION__, __LINE__);
+	GMTagFilter filter;
+	filter.filter_type = filter_type;
+	filter.filter_value = filter_value;
+	memset(filter.filter_search_criteria, 0, sizeof(filter.filter_search_criteria));
+	if(filter_search_str)
+		memcpy(&filter.filter_search_criteria, filter_search_str, strnlen(filter_search_str, sizeof(filter.filter_search_criteria)));
+
+	filter.visual_tag = visual_tag;
+	gm_visual_filters.push_back(filter);
+	vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+int16 Player::MatchGMVisualFilter(int32 filter_type, int32 filter_value, char* filter_search_str, bool in_vismutex_lock) {
+	if(!in_vismutex_lock)
+		vis_mutex.readlock(__FUNCTION__, __LINE__);
+	int16 tag_id = 0;
+	vector<GMTagFilter>::iterator itr = gm_visual_filters.begin();
+	for(;itr != gm_visual_filters.end();itr++) {
+		if(itr->filter_type == filter_type && itr->filter_value == filter_value) {
+			if(filter_search_str && !strcasecmp(filter_search_str, itr->filter_search_criteria)) {
+				tag_id = itr->visual_tag;
+				break;
+			}
+		}
+	}
+	if(!in_vismutex_lock)
+		vis_mutex.releasereadlock(__FUNCTION__, __LINE__);
+	return tag_id;
+}
+void Player::ClearGMVisualFilters() {
+	vis_mutex.writelock(__FUNCTION__, __LINE__);
+	gm_visual_filters.clear();
+	vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
 }

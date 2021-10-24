@@ -150,6 +150,11 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	connected = false;
 	camp_timer = 0;
 	client_zoning = false;
+	zoning_id = 0;
+	zoning_x = 0;
+	zoning_y = 0;
+	zoning_z = 0;
+	zoning_instance_id = 0;
 	player_pos_changed = false;
 	++numclients;
 	if (world.GetServerStatisticValue(STAT_SERVER_MOST_CONNECTIONS) < numclients)
@@ -210,6 +215,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	hasSentTempPlacementSpawn = false;
 	spawn_removal_timer.Start();
 	disable_save = false;
+	SetZoningDestination(nullptr);
 }
 
 Client::~Client() {
@@ -694,11 +700,6 @@ void Client::HandlePlayerRevive(int32 point_id)
 
 void Client::SendCharInfo() {
 	EQ2Packet* app;
-
-	if(IsReloadingZone()){
-		SetReloadingZone(false);
-	}
-
 	
 	player->SetEquippedItemAppearances();
 
@@ -740,7 +741,15 @@ void Client::SendCharInfo() {
 	ClientPacketFunctions::SendLoginCommandMessages(this);
 
 	GetCurrentZone()->AddSpawn(player);
-	
+	if(IsReloadingZone() && (zoning_x || zoning_y || zoning_z)) {
+			GetPlayer()->SetX(zoning_x);
+			GetPlayer()->SetY(zoning_y);
+			GetPlayer()->SetZ(zoning_z);
+			GetPlayer()->SetHeading(zoning_h);
+
+			EQ2Packet* packet = GetPlayer()->Move(zoning_x, zoning_y, zoning_z, GetVersion(), zoning_h);		
+			QueuePacket(packet);
+	}
 	//SendCollectionList();
 	Guild* guild = player->GetGuild();
 	if (guild)
@@ -805,6 +814,9 @@ void Client::SendCharInfo() {
 	if (zone_script && lua_interface)
 		lua_interface->RunZoneScript(zone_script, "player_entry", GetCurrentZone(), GetPlayer());
 	this->client_zoning = false;
+	this->zoning_id = 0;
+	this->zoning_instance_id = 0;
+	SetZoningDestination(nullptr);
 	if (player->GetHP() < player->GetTotalHP() || player->GetPower() < player->GetTotalPower())
 		GetCurrentZone()->AddDamagedSpawn(player);
 
@@ -1503,7 +1515,38 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		}
 		else
 		{
+			if(zoning_destination)
+				SetCurrentZone(zoning_destination);
 			LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_ReadyToZoneMsg", opcode, opcode);
+			bool succeed_override_zone = true;
+			if(!GetCurrentZone()) {
+				LogWrite(WORLD__ERROR, 0, "World", "OP_ReadyToZone: Player %s attempting to zone and zone is not there!  Emergency boot!", player->GetName());
+				if(zoning_instance_id) {
+					ZoneServer* zone = zone_list.GetByInstanceID(zoning_instance_id, zoning_id, true);
+					if(!zone) {
+						LogWrite(WORLD__WARNING, 0, "World", "OP_ReadyToZone: Emergency boot failed for %s, unable to get zoneserver instance id %u zone id %u.", player->GetName(), zoning_instance_id, zoning_id);
+						succeed_override_zone = false;
+					}
+					else {
+					SetCurrentZone(zone);
+					LogWrite(WORLD__WARNING, 0, "World", "OP_ReadyToZone: Unique instance has been created for %s through emergency boot!", player->GetName());
+
+					}
+				}
+				else if(zoning_id) {
+					
+					ZoneServer* zone = zone_list.Get(zoning_id, true, true);
+					if(!zone) {
+						LogWrite(WORLD__WARNING, 0, "World", "OP_ReadyToZone: Emergency boot failed for %s, unable to get zoneserver zone id %u.", player->GetName(), zoning_id);
+						succeed_override_zone = false;
+					}
+					else {
+					SetCurrentZone(zone);
+					LogWrite(WORLD__WARNING, 0, "World", "OP_ReadyToZone: Unique zone has been created for %s through emergency boot!", player->GetName());
+					}
+				}
+			}
+			
 			if (client_zoning)
 				LogWrite(WORLD__INFO, 0, "World", "OP_ReadyToZone: Player %s zoning to %s", player->GetName(), GetCurrentZone()->GetZoneName());
 			else
@@ -1648,12 +1691,21 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		if (packet) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 			EQ2_16BitString str = packet->getType_EQ2_16BitString_ByName("signal");
-			if (str.size > 0) {
-				if (strcmp(str.data.c_str(), "sys_client_avatar_ready") == 0) {
+			if (strcmp(str.data.c_str(), "sys_client_avatar_ready") == 0) {
 					LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
+					SetReloadingZone(false);
+					if(GetPlayer()->IsDeletedSpawn()) {
+						GetPlayer()->SetDeletedSpawn(false);
+					}
+					ResetZoningCoords();
 					SetReadyForUpdates();
 					GetPlayer()->SendSpawnChanges(true);
 					ProcessStateCommands();
+					GetPlayer()->changed = true;
+					GetPlayer()->info_changed = true;
+					GetPlayer()->vis_changed = true;
+					player_pos_changed = true;
+					GetPlayer()->AddChangedZoneSpawn();
 				}
 				else {
 					LogWrite(CCLIENT__WARNING, 0, "Client", "Player %s reported SysClient/SignalMsg state %s.", GetPlayer()->GetName(), str.data.c_str());
@@ -1663,7 +1715,6 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				{
 					lua_interface->RunZoneScript(zone_script, "signal_changed", player->GetZone(), player, 0, str.data.c_str());
 				}
-			}
 		}
 		break;
 	}
@@ -3011,7 +3062,7 @@ bool Client::Process(bool zone_process) {
 		delete app;
 	}
 
-	if (GetCurrentZone() && GetCurrentZone()->GetSpawnByID(GetPlayer()->GetID()) && should_load_spells) {
+	if (GetCurrentZone() && !GetCurrentZone()->IsLoading() && GetCurrentZone()->GetSpawnByID(GetPlayer()->GetID()) && should_load_spells) {
 		player->ApplyPassiveSpells();
 		//database.LoadCharacterActiveSpells(player);
 		player->UnlockAllSpells(true);
@@ -4044,8 +4095,11 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords, bool is_spell) {
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "Zone Request Denied! No 'new_zone' value");
 		return;
 	}
-
+	
 	client_zoning = true;
+	zoning_id = new_zone->GetZoneID();
+	zoning_instance_id = new_zone->GetInstanceID();
+	
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting player Resurrecting to 'true'", __FUNCTION__);
 	player->SetResurrecting(true);
 
@@ -4063,8 +4117,9 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords, bool is_spell) {
 	GetCurrentZone()->RemoveSpawn(player, false, true, true, true, !is_spell);
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting zone to '%s'...", __FUNCTION__, new_zone->GetZoneName());
+	SetZoningDestination(new_zone);
 	SetCurrentZone(new_zone);
-
+	
 	if (player->GetGroupMemberInfo())
 	{
 		LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Player in group, updating group info...", __FUNCTION__);
@@ -4091,6 +4146,12 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords, bool is_spell) {
 		player->SetY(GetCurrentZone()->GetSafeY());
 		player->SetZ(GetCurrentZone()->GetSafeZ());
 		player->SetHeading(GetCurrentZone()->GetSafeHeading());
+			
+		SetZoningCoords(GetCurrentZone()->GetSafeX(), GetCurrentZone()->GetSafeY(), 
+						GetCurrentZone()->GetSafeZ(), GetCurrentZone()->GetSafeHeading());
+	}
+	else {
+		ResetZoningCoords();
 	}
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Saving Player info...", __FUNCTION__);

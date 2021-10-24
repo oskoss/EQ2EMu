@@ -542,49 +542,58 @@ void ZoneList::Remove(ZoneServer* zone) {
 	zlist.remove(zone);
 	MZoneList.releasewritelock(__FUNCTION__, __LINE__);
 }
-ZoneServer* ZoneList::Get(const char* zone_name, bool loadZone) {
+ZoneServer* ZoneList::Get(const char* zone_name, bool loadZone, bool skip_existing_zones) {
 	list<ZoneServer*>::iterator zone_iter;
 	ZoneServer* tmp = 0;
 	ZoneServer* ret = 0;
-	MZoneList.readlock(__FUNCTION__, __LINE__);
-	for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++){
-		tmp = *zone_iter;
-		if (!tmp->isZoneShuttingDown() && !tmp->IsInstanceZone() && strlen(zone_name) == strlen(tmp->GetZoneName()) && 
-			strncasecmp(tmp->GetZoneName(), zone_name, strlen(zone_name))==0){
-			if(tmp->NumPlayers() < 30 || tmp->IsCityZone())
-				ret = tmp;
-			break;
-		}
-	}
 
-	MZoneList.releasereadlock(__FUNCTION__, __LINE__);
+	if(!skip_existing_zones) {
+		MZoneList.readlock(__FUNCTION__, __LINE__);
+		for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++){
+			tmp = *zone_iter;
+			if (!tmp->isZoneShuttingDown() && !tmp->IsInstanceZone() && strlen(zone_name) == strlen(tmp->GetZoneName()) && 
+				strncasecmp(tmp->GetZoneName(), zone_name, strlen(zone_name))==0){
+				if(tmp->NumPlayers() < 30 || tmp->IsCityZone())
+					ret = tmp;
+				break;
+			}
+		}
+
+		MZoneList.releasereadlock(__FUNCTION__, __LINE__);
+	}
 
 	if(!ret )
 	{
 		if ( loadZone )
 		{
-			ret = new ZoneServer(zone_name);
+			ret = new ZoneServer(zone_name, true);
 			database.LoadZoneInfo(ret);
 			ret->Init();
 		}
 	}
+	else if(ret && loadZone) {
+		ret->IncrementIncomingClients();
+	}
 	return ret;
 }
 
-ZoneServer* ZoneList::Get(int32 id, bool loadZone) {
+ZoneServer* ZoneList::Get(int32 id, bool loadZone, bool skip_existing_zones) {
 	list<ZoneServer*>::iterator zone_iter;
 	ZoneServer* tmp = 0;
 	ZoneServer* ret = 0;
-	MZoneList.readlock(__FUNCTION__, __LINE__);
-	for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++){
-		tmp = *zone_iter;
-		if(!tmp->isZoneShuttingDown() && !tmp->IsInstanceZone() && tmp->GetZoneID() == id){
-			if(tmp->NumPlayers() < 30 || tmp->IsCityZone())
-				ret = tmp;
-			break;
+	if(!skip_existing_zones) {
+		MZoneList.readlock(__FUNCTION__, __LINE__);
+		for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++){
+			tmp = *zone_iter;
+			if(!tmp->isZoneShuttingDown() && !tmp->IsInstanceZone() && tmp->GetZoneID() == id){
+				if(tmp->NumPlayers() < 30 || tmp->IsCityZone())
+					ret = tmp;
+				break;
+			}
 		}
+		MZoneList.releasereadlock(__FUNCTION__, __LINE__);
 	}
-	MZoneList.releasereadlock(__FUNCTION__, __LINE__);
+
 	if(ret)
 		tmp = ret;
 	else if (loadZone) {
@@ -618,22 +627,25 @@ void ZoneList::SendZoneList(Client* client) {
 	MZoneList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-ZoneServer* ZoneList::GetByInstanceID(int32 id, int32 zone_id) {
+ZoneServer* ZoneList::GetByInstanceID(int32 id, int32 zone_id, bool skip_existing_zones) {
 	list<ZoneServer*>::iterator zone_iter;
 	ZoneServer* tmp = 0;
 	ZoneServer* ret = 0;
-	MZoneList.readlock(__FUNCTION__, __LINE__);
-	if ( id > 0 )
-	{
-		for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++){
-			tmp = *zone_iter;
-			if(tmp->GetInstanceID() == id){
-					ret = tmp;
-					break;
+	if(!skip_existing_zones) {
+		MZoneList.readlock(__FUNCTION__, __LINE__);
+		if ( id > 0 )
+		{
+			for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++){
+				tmp = *zone_iter;
+				if(tmp->GetInstanceID() == id){
+						ret = tmp;
+						break;
+				}
 			}
 		}
+		MZoneList.releasereadlock(__FUNCTION__, __LINE__);
 	}
-	MZoneList.releasereadlock(__FUNCTION__, __LINE__);
+
 	if(ret)
 		tmp = ret;
 	else if ( zone_id > 0 ){
@@ -705,6 +717,31 @@ bool ZoneList::ClientConnected(int32 account_id){
 	return ret;
 }
 
+void ZoneList::RemoveClientZoneReference(ZoneServer* zone){
+	map<string, Client*>::iterator itr;
+	MClientList.lock();
+	for(itr=client_map.begin(); itr != client_map.end(); itr++){
+		if(itr->second) {
+			if(itr->second->GetCurrentZone() == zone) {
+				itr->second->SetCurrentZone(nullptr);
+			}
+			if(itr->second->GetZoningDestination() == zone) {
+				itr->second->SetZoningDestination(nullptr);
+			}
+		}
+	}
+	MClientList.unlock();
+	
+	list<ZoneServer*>::iterator zone_iter;
+	ZoneServer* tmp = 0;
+	MZoneList.readlock(__FUNCTION__, __LINE__);
+	for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++){
+		tmp = *zone_iter;
+		if(tmp)
+			tmp->RemoveClientsFromZone(zone);
+	}
+	MZoneList.releasereadlock(__FUNCTION__, __LINE__);
+}
 void ZoneList::ReloadClientQuests(){
 	list<ZoneServer*>::iterator zone_iter;
 	ZoneServer* tmp = 0;
@@ -2135,7 +2172,7 @@ int32 World::LoadItemBlueStats() {
 	return count;
 }
 
-sint64 World::newValue = 27;
+sint64 World::newValue = 0;
 
 sint16 World::GetItemStatAOMValue(sint16 subtype) {
 	sint16 tmp_subtype = subtype;

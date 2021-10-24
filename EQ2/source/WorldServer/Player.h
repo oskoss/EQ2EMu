@@ -167,6 +167,20 @@ struct SpellBookEntry{
 	bool visible;
 };
 
+struct GMTagFilter {
+	int32	filter_type;
+	int32	filter_value;
+	char	filter_search_criteria[256];
+	int16	visual_tag;
+};
+
+enum GMTagFilterType {
+	GMFILTERTYPE_NONE=0,
+	GMFILTERTYPE_FACTION=1,
+	GMFILTERTYPE_SPAWNGROUP=2,
+	GMFILTERTYPE_RACE=3,
+	GMFILTERTYPE_GROUNDSPAWN=4
+};
 enum SpawnState{
 	SPAWN_STATE_NONE=0,
 	SPAWN_STATE_SENDING=1,
@@ -1009,7 +1023,12 @@ public:
 	}
 	
 	bool SerializeItemPackets(EquipmentItemList* equipList, vector<EQ2Packet*>* packets, Item* item, int16 version, Item* to_item = 0);
+
+	void AddGMVisualFilter(int32 filter_type, int32 filter_value, char* filter_search_str, int16 visual_tag);
+	int16 MatchGMVisualFilter(int32 filter_type, int32 filter_value, char* filter_search_str, bool in_vismutex_lock = false);
+	void ClearGMVisualFilters();
 	Mutex MPlayerQuests;
+	float   pos_packet_speed;
 private:
 	bool reset_mentorship;
 	bool range_attack;
@@ -1053,7 +1072,6 @@ private:
 	map<string, int8>	friend_list;
 	map<string, int8>	ignore_list;
 	bool                pending_deletion;
-	float               pos_packet_speed;
 	PlayerControlFlags  control_flags;
 
 	map<int32, bool>	target_invis_history;
@@ -1139,6 +1157,8 @@ private:
 
 	bool all_spells_locked;
 	Timer lift_cooldown;
+
+	vector<GMTagFilter> gm_visual_filters;
 };
 #pragma pack()
 #endif

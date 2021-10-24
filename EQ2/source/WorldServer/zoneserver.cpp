@@ -119,7 +119,13 @@ extern MasterSkillList master_skill_list;
 int32 MinInstanceID = 1000;
 
 // JA: Moved most default values to Rules and risky initializers to ZoneServer::Init() - 2012.12.07
-ZoneServer::ZoneServer(const char* name) {
+ZoneServer::ZoneServer(const char* name, bool incoming_clients) {
+	if(incoming_clients)
+		IncrementIncomingClients();
+	else
+		incoming_clients = 0;
+	MIncomingClients.SetName("ZoneServer::MIncomingClients");
+
 	depop_zone = false;
 	repop_zone = false;
 	respawns_allowed = true;
@@ -162,6 +168,8 @@ ZoneServer::ZoneServer(const char* name) {
 	watchdogTimestamp = Timer::GetCurrentTime2();
 
 	MPendingSpawnRemoval.SetName("ZoneServer::MPendingSpawnRemoval");
+
+	lifetime_client_count = 0;
 }
 
 ZoneServer::~ZoneServer() {
@@ -191,7 +199,6 @@ ZoneServer::~ZoneServer() {
 
 	MMasterSpawnLock.releasewritelock(__FUNCTION__, __LINE__);
 	MMasterZoneLock->unlock();
-	safe_delete(MMasterZoneLock);
 	world.UpdateServerStatistic(STAT_SERVER_NUM_ACTIVE_ZONES, -1);
 
 	// If lockout, public, tradeskill, or quest instance delete from db when zone shuts down
@@ -214,6 +221,21 @@ ZoneServer::~ZoneServer() {
 	--numzones;
 	UpdateWindowTitle(0);
 	zone_list.Remove(this);
+	zone_list.RemoveClientZoneReference(this);
+	safe_delete(MMasterZoneLock);
+}
+
+void ZoneServer::IncrementIncomingClients() { 
+	MIncomingClients.writelock(__FUNCTION__, __LINE__);
+	incoming_clients++;
+	MIncomingClients.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void ZoneServer::DecrementIncomingClients() { 
+	MIncomingClients.writelock(__FUNCTION__, __LINE__);
+	if(incoming_clients)
+		incoming_clients--;
+	MIncomingClients.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 void ZoneServer::Init()
@@ -1122,7 +1144,10 @@ void ZoneServer::CheckSendSpawnToClient(Client* client, bool initial_login) {
 		for (itr = closest_spawns.begin(); itr != closest_spawns.end(); ) {
 			for (spawn_iter2 = itr->second->begin(); spawn_iter2 != itr->second->end(); spawn_iter2++) {
 				spawn = *spawn_iter2;
-				SendSpawn(spawn, client);
+
+				if(!client->IsReloadingZone() || (client->IsReloadingZone() && spawn != client->GetPlayer()))
+					SendSpawn(spawn, client);
+				
 				if (client->ShouldTarget() && client->GetCombineSpawn() == spawn)
 					client->TargetSpawn(spawn);
 			}
@@ -1391,8 +1416,15 @@ bool ZoneServer::Process()
 			}
 		}
 
-		if(shutdownTimer.Enabled() && shutdownTimer.Check())
-			zoneShuttingDown = true;
+		if(shutdownTimer.Enabled() && shutdownTimer.Check() && connected_clients.size(true) == 0) {
+			//if(lifetime_client_count)
+				zoneShuttingDown = true;
+			/*else { // allow up to 120 seconds then timeout
+				LogWrite(ZONE__WARNING, 0, "Zone", "No clients have connected to zone '%s' and the shutdown timer has counted down -- will delay shutdown for 120 seconds.", GetZoneName());
+				shutdownTimer.Start(120000, true);
+				lifetime_client_count = 1;
+			}*/
+		}
 
 		if (reloading_spellprocess){
 			MMasterZoneLock->unlock();
@@ -3054,6 +3086,8 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 
 void ZoneServer::AddClient(Client* client){
 	MClientList.writelock(__FUNCTION__, __LINE__);
+	lifetime_client_count++;
+	DecrementIncomingClients();
 	clients.push_back(client);
 	MClientList.releasewritelock(__FUNCTION__, __LINE__);
 
@@ -3139,7 +3173,7 @@ void ZoneServer::RemoveClient(Client* client)
 		database.ToggleCharacterOnline(client, 0);
 		
 		client->GetPlayer()->DeleteSpellEffects(true);
-		
+
 		RemoveSpawn(client->GetPlayer(), false, true, true, true, true);
 		connected_clients.Remove(client, true, DisconnectClientTimer); // changed from a hardcoded 30000 (30 sec) to the DisconnectClientTimer rule
 	}
@@ -3163,15 +3197,25 @@ void ZoneServer::ClientProcess()
 {
 	if(connected_clients.size(true) == 0)
 	{
-		if(!IsCityZone() && !AlwaysLoaded() && !shutdownTimer.Enabled())
+		MIncomingClients.readlock(__FUNCTION__, __LINE__);
+		bool shutdownDelayCheck = shutdownDelayTimer.Check();
+		if((!IsCityZone() && !AlwaysLoaded() && !shutdownTimer.Enabled()) || shutdownDelayCheck)
 		{
-			LogWrite(ZONE__INFO, 0, "Zone", "Starting zone shutdown timers...");
-			shutdownTimer.Start();
+			if(incoming_clients && !shutdownDelayTimer.Enabled()) {
+				LogWrite(ZONE__INFO, 0, "Zone", "Incoming clients (%u) expected for %s, delaying shutdown timer...", incoming_clients, GetZoneName());
+				shutdownDelayTimer.Start(120000, true);
+			}
+			else if(!incoming_clients || shutdownDelayCheck) {
+				LogWrite(ZONE__INFO, 0, "Zone", "Starting zone shutdown timer for %s...", GetZoneName());
+				shutdownTimer.Start();
+			}
 		}
+		MIncomingClients.releasereadlock(__FUNCTION__, __LINE__);
 		return;
 	}
 
-	shutdownTimer.Disable();	
+	shutdownTimer.Disable();
+	shutdownDelayTimer.Disable();	
 	Client* client = 0;		
 	MutexList<Client*>::iterator iterator = connected_clients.begin();
 
@@ -8113,4 +8157,19 @@ void ZoneServer::UpdateClientSpawnMap(Player* player, Client* client)
 {
 	// client may be null when passed
 	client_spawn_map.Put(player, client);
+}
+
+void ZoneServer::RemoveClientsFromZone(ZoneServer* zone) {
+	vector<Client*>::iterator itr;
+	MClientList.readlock(__FUNCTION__, __LINE__);
+	for (itr = clients.begin(); itr != clients.end(); itr++) {
+		Client* client = *itr;
+		if(client->GetCurrentZone() == zone) {
+			client->SetCurrentZone(nullptr);
+		}
+		if(client->GetZoningDestination() == zone) {
+			client->SetZoningDestination(nullptr);
+		}
+	}
+	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }

@@ -405,9 +405,9 @@ class ZoneList {
 	
 	void Add(ZoneServer* zone);
 	void Remove(ZoneServer* zone);
-	ZoneServer*	Get(int32 id, bool loadZone = true);
-	ZoneServer* Get(const char* zone_name, bool loadZone=true);
-	ZoneServer* GetByInstanceID(int32 id, int32 zone_id=0);
+	ZoneServer*	Get(int32 id, bool loadZone = true, bool skip_existing_zones = false);
+	ZoneServer* Get(const char* zone_name, bool loadZone=true, bool skip_existing_zones = false);
+	ZoneServer* GetByInstanceID(int32 id, int32 zone_id=0, bool skip_existing_zones = false);
 
 	/// <summary>Get the instance for the given zone id with the lowest population</summary>
 	/// <param name='zone_id'>The id of the zone to look up</param>
@@ -476,6 +476,7 @@ class ZoneList {
 		MClientList.unlock();
 	}
 	bool ClientConnected(int32 account_id);
+	void RemoveClientZoneReference(ZoneServer* zone);
 	void ReloadClientQuests();
 	bool DepopFinished();
 	void Depop();

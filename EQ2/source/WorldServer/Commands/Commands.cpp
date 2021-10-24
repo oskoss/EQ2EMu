@@ -3790,6 +3790,98 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					else
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "GM Vision Disabled!");
 				}
+				else if (strcmp(sep->arg[0], "tag") == 0)
+				{
+					int32 value = 0;
+					int16 tag_icon = 0;
+					// groundspawn has special exception -1 argument so it needs to be handled here
+					if(sep->arg[2] && sep->arg[3] && ((tag_icon = atoul(sep->arg[3])) > 0) || (strncasecmp(sep->arg[1], "groundspawn", 11) == 0)) {
+						value = atoul(sep->arg[2]);
+						if(strncasecmp(sep->arg[1], "faction", 7) == 0){
+							if(!value) {
+								client->SimpleMessage(CHANNEL_COLOR_RED, "Need to supply a valid faction id.");
+								break;
+							}
+							if(!tag_icon) {
+								client->SimpleMessage(CHANNEL_COLOR_RED, "Need to supply a valid tag icon id.");
+								break;
+							}
+							client->GetPlayer()->AddGMVisualFilter(GMTagFilterType::GMFILTERTYPE_FACTION, value, "", tag_icon);
+							client->GetCurrentZone()->SendAllSpawnsForVisChange(client, false);
+							client->Message(CHANNEL_COLOR_RED, "Adding faction id %u with tag icon %u.", value, tag_icon);
+						}
+						else if(strncasecmp(sep->arg[1], "spawngroup", 10) == 0){
+							if(value>0) {
+								value = 1;
+							}
+							if(!tag_icon) {
+								client->SimpleMessage(CHANNEL_COLOR_RED, "Need to supply a valid tag icon id.");
+								break;
+							}
+							client->GetPlayer()->AddGMVisualFilter(GMTagFilterType::GMFILTERTYPE_SPAWNGROUP, value, "", tag_icon);
+							client->GetCurrentZone()->SendAllSpawnsForVisChange(client, false);
+							client->Message(CHANNEL_COLOR_RED, "Adding spawn group tag \"%s\" with tag icon %u.", (value == 1) ? "on" : "off", tag_icon);
+						}
+						else if(strncasecmp(sep->arg[1], "race", 5) == 0){
+							if(!value) {
+								client->SimpleMessage(CHANNEL_COLOR_RED, "Need to supply a valid race id.");
+								break;
+							}
+							if(!tag_icon) {
+								client->SimpleMessage(CHANNEL_COLOR_RED, "Need to supply a valid tag icon id.");
+								break;
+							}
+							client->GetPlayer()->AddGMVisualFilter(GMTagFilterType::GMFILTERTYPE_RACE, value, "", tag_icon);
+							client->GetCurrentZone()->SendAllSpawnsForVisChange(client, false);
+							client->Message(CHANNEL_COLOR_RED, "Adding race id %u with tag icon %u.", value, tag_icon);
+						}
+						else if(strncasecmp(sep->arg[1], "groundspawn", 11) == 0){
+							// one less argument value field not tag_icon for this one
+							if(!value) {
+								client->SimpleMessage(CHANNEL_COLOR_RED, "Need to supply a valid tag icon id.");
+								break;
+							}
+							client->GetPlayer()->AddGMVisualFilter(GMTagFilterType::GMFILTERTYPE_GROUNDSPAWN, 1, "", value);
+							client->GetCurrentZone()->SendAllSpawnsForVisChange(client, false);
+							client->Message(CHANNEL_COLOR_RED, "Adding groundspawns with tag icon %u.", value);
+						}
+					}
+					else {
+						if(strncasecmp(sep->arg[1], "clear", 5) == 0){
+							client->GetPlayer()->ClearGMVisualFilters();
+							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "GM Tags Cleared!");
+							client->GetCurrentZone()->SendAllSpawnsForVisChange(client, false);
+						}
+						else {
+						client->SimpleMessage(CHANNEL_COLOR_RED, "GM Tagging Missing Arguments:");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/gm tag [type] [value] [visual_icon_display]");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/gm tag clear - Clears all GM visual tags");
+
+						client->SimpleMessage(CHANNEL_COLOR_RED, "Visual Type Options:");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "type: faction, value: faction id of spawn(s)");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "type: spawngroup, value: 1 to show grouped, 0 to show not grouped");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "type: race, value: race id (either against base race or race id in spawn details)");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "type: groundspawn, value: (not used)");
+
+						client->SimpleMessage(CHANNEL_COLOR_RED, "Visual Icon Options:");
+
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, 
+						"1 = skull, 2 = shield half dark blue / half light blue, 3 = purple? star, 4 = yellow sword, 5 = red X, 6 = green flame");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, 
+						"7 = Number \"1\", 8 = Number \"2\", 9 = Number \"3\", 10 = Number \"4\", 11 = Number \"5\", 12 = Number \"6\"");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, 
+						"25 = shield, 26 = green plus, 27 = crossed swords, 28 = bow with arrow in it, 29 = light blue lightning bolt");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, 
+						"30 = bard instrument (hard to see), 31 = writ with shield, 32 = writ with green +, 33 = writ with crossed sword");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, 
+						"34 = writ with bow, 35 = writ with light blue lightning bolt, 36 = same as 30, 37 = party with crossed sword, shield and lightning bolt");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, 
+						"38 = shaking hands green background, 39 = shaking hands dark green background, unlocked keylock");
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, 
+						"40 = red aura icon with black shadow of person and big red aura, 41 = green aura icon with black shadow of person big green aura");
+						}
+					}
+				}
 				else if (strcmp(sep->arg[0], "regiondebug") == 0)
 				{
 					client->SetRegionDebug(onOff);

@@ -260,9 +260,11 @@ struct ZoneInfoSlideStruct {
 // need to attempt to clean this up and add xml comments, remove unused code, find a logical way to sort the functions maybe by get/set/process/add etc...
 class ZoneServer {
 public:
-	ZoneServer(const char* file);
+	ZoneServer(const char* file, bool incoming_clients=false);
     ~ZoneServer();
 	
+	void		IncrementIncomingClients();
+	void		DecrementIncomingClients();
 	void		Init();
 	bool		Process();
 	bool		SpawnProcess();
@@ -675,9 +677,12 @@ public:
 	void	QueueDefaultCommand(int32 spawn_id, std::string command, float distance);
 	void	ProcessQueuedStateCommands();
 	void	UpdateClientSpawnMap(Player* player, Client* client);
+	void	RemoveClientsFromZone(ZoneServer* zone);
 
 	void	WorldTimeUpdateTrigger() { sync_game_time_timer.Trigger(); }
 	void	StopSpawnScriptTimer(Spawn* spawn, std::string functionName);
+
+	Client*	RemoveZoneServerFromClient(ZoneServer* zone);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
@@ -756,7 +761,7 @@ private:
 	void	InitWeather();																						// never used outside zone server
 	///<summary>Dismiss all pets in the zone, useful when the spell process needs to be reloaded</summary>
 	void DismissAllPets();																						// never used outside zone server
-
+	
 	/* Mutex Lists */
 	MutexList<int32> changed_spawns;										// int32 = spawn id
 	vector<Client*> clients;
@@ -809,6 +814,7 @@ private:
 	Mutex	MSpawnLocationList;
 	Mutex	MSpawnDeleteList;
 	Mutex	MClientList;
+	Mutex	MIncomingClients;
 	
 	/* Maps */
 	map<int32, int32>							dead_spawns;
@@ -850,6 +856,7 @@ private:
 	Timer	weatherTimer;
 	Timer	widget_timer;
 	Timer	queue_updates;
+	Timer	shutdownDelayTimer;
 	
 	/* Enums */
 	Instance_Type InstanceType;
@@ -1093,6 +1100,9 @@ public:
 	void ReloadSpawns();
 
 	void SendStateCommand(Spawn* spawn, int32 state);
+
+	int32 lifetime_client_count;
+	int32 incoming_clients;
 };
 
 #endif

@@ -219,6 +219,10 @@ public:
 		current_zone = zone;
 		player->SetZone(zone, GetVersion());
 	}
+	void	SetZoningDestination(ZoneServer* zone) {
+		zoning_destination = zone;
+	}
+	ZoneServer* GetZoningDestination() { return zoning_destination; }
 	Player*	GetPlayer(){ return player; }
 	EQStream*	getConnection(){ return eqs; }
 
@@ -524,6 +528,18 @@ public:
 
 	void	DisableSave() { disable_save = true; }
 	bool	IsSaveDisabled() { return disable_save; }
+	void	ResetZoningCoords() { 
+		zoning_x = 0;
+		zoning_y = 0;
+		zoning_z = 0;
+		zoning_h = 0;
+	}
+	void	SetZoningCoords(float x, float y, float z, float h) { 
+		zoning_x = x;
+		zoning_y = y;
+		zoning_z = z;
+		zoning_h = h;
+	}
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -587,6 +603,13 @@ private:
 	bool	seencharsel;
 	bool	connected_to_zone;
 	bool	client_zoning;
+	int32	zoning_id;
+	int32	zoning_instance_id;
+	ZoneServer* zoning_destination;
+	float	zoning_x;
+	float	zoning_y;
+	float	zoning_z;
+	float	zoning_h;
 	bool	firstlogin;
 	bool	new_client_login;
 	Timer	pos_update;

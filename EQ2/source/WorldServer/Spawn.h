@@ -1250,6 +1250,8 @@ public:
 	void RemoveRailPassenger(int32 char_id);
 	vector<Spawn*> GetPassengersOnRail();
 
+	void SetAppearancePosition(float x, float y, float z);
+	
 	void SetOmittedByDBFlag(bool val) { is_omitted_by_db_flag = val; }
 	bool IsOmittedByDBFlag() { return is_omitted_by_db_flag; }
 

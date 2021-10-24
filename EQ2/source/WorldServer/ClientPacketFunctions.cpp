@@ -92,9 +92,11 @@ void ClientPacketFunctions::SendGameWorldTime ( Client* client ){
 
 void ClientPacketFunctions::SendCharacterData ( Client* client ){
 	client->GetPlayer()->SetCharacterID(client->GetCharacterID());
-	EQ2Packet* outapp = client->GetPlayer()->serialize(client->GetPlayer(), client->GetVersion());
-	//DumpPacket(outapp);
-	client->QueuePacket(outapp);
+	if(!client->IsReloadingZone()) {
+		EQ2Packet* outapp = client->GetPlayer()->serialize(client->GetPlayer(), client->GetVersion());
+		//DumpPacket(outapp);
+		client->QueuePacket(outapp);
+	}
 }
 
 void ClientPacketFunctions::SendCharacterSheet ( Client* client ){

@@ -32,11 +32,13 @@
 #include "LuaInterface.h"
 #include "Bots/Bot.h"
 #include "Zone/raycast_mesh.h"
+#include "RaceTypes/RaceTypes.h"
 
 extern ConfigReader configReader;
 extern RuleManager rule_manager;
 extern World world;
 extern ZoneList zone_list;
+extern MasterRaceTypeList race_types_list;
 
 Spawn::Spawn(){ 
 	loot_coins = 0;
@@ -251,6 +253,20 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 
 	if (IsPlayer())
 		appearance.pos.grid_id = 0xFFFFFFFF;
+
+	int8 tag_icon = 0;
+
+	int32 tmp_id = 0;
+	if(faction_id && (tag_icon = player->MatchGMVisualFilter(GMTagFilterType::GMFILTERTYPE_FACTION, faction_id, "", true)) > 0);
+	else if(IsGroundSpawn() && (tag_icon = player->MatchGMVisualFilter(GMTagFilterType::GMFILTERTYPE_GROUNDSPAWN, 1, "", true)) > 0);
+	else if((this->GetSpawnGroupID() && (tag_icon = player->MatchGMVisualFilter(GMTagFilterType::GMFILTERTYPE_SPAWNGROUP, 1, "", true)) > 0) ||
+			(!this->GetSpawnGroupID() && (tag_icon = player->MatchGMVisualFilter(GMTagFilterType::GMFILTERTYPE_SPAWNGROUP, 0, "", true)) > 0));
+	else if((this->GetRace() && (tag_icon = player->MatchGMVisualFilter(GMTagFilterType::GMFILTERTYPE_RACE, GetRace(), "", true)) > 0));
+	else if(((tmp_id = race_types_list.GetRaceType(GetModelType()) > 0) && (tag_icon = player->MatchGMVisualFilter(GMTagFilterType::GMFILTERTYPE_RACE, tmp_id, "", true)) > 0));
+	else if(((tmp_id = race_types_list.GetRaceBaseType(GetModelType()) > 0) && (tag_icon = player->MatchGMVisualFilter(GMTagFilterType::GMFILTERTYPE_RACE, tmp_id, "", true)) > 0));
+	else if(IsEntity() && (tag_icon = ((Entity*)this)->GetInfoStruct()->get_tag1()) > 0);
+	
+	vis_packet->setDataByName("tag1", tag_icon);
 
 	if (IsPlayer())
 		vis_packet->setDataByName("player", 1);
@@ -4281,4 +4297,24 @@ vector<Spawn*> Spawn::GetPassengersOnRail() {
 	}
 	m_RailMutex.unlock();
 	return tmp_list;
+}
+
+void Spawn::SetAppearancePosition(float x, float y, float z) {
+	appearance.pos.X = x;
+	appearance.pos.Y = y;
+	appearance.pos.Z = z;
+	appearance.pos.X2 = appearance.pos.X;
+	appearance.pos.Y2 = appearance.pos.Y;
+	appearance.pos.Z2 = appearance.pos.Z;
+	appearance.pos.X3 = appearance.pos.X;
+	appearance.pos.Y3 = appearance.pos.Y;
+	appearance.pos.Z3 = appearance.pos.Z;
+		
+	SetSpeedX(0);
+	SetSpeedY(0);
+	SetSpeedZ(0);
+	if(IsPlayer()) {
+		((Player*)this)->SetSideSpeed(0);
+		((Player*)this)->pos_packet_speed = 0;
+	}
 }
