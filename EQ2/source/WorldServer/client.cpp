@@ -1687,7 +1687,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	case OP_SignalMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SysClient/OP_SignalMsg", opcode, opcode);
 
-		PacketStruct* packet = configReader.getStruct("WS_Signal", GetVersion());
+		PacketStruct* packet = configReader.getStruct("WS_Signal", 1);
 		if (packet) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 			EQ2_16BitString str = packet->getType_EQ2_16BitString_ByName("signal");
@@ -9380,7 +9380,6 @@ void Client::HandInCollections() {
 			return;
 		}
 	}
-
 }
 
 void Client::AcceptCollectionRewards(Collection* collection, int32 selectable_item_id) {
