@@ -343,10 +343,7 @@ public:
 	void	SetItemSearch(vector<Item*>* items);
 	vector<Item*>* GetSearchItems();
 	void	SearchStore(int32 page);
-	void	SetPlayer(Player* new_player){
-		player = new_player;
-		player->SetClient(this);
-	}
+	void	SetPlayer(Player* new_player);
 
 	void	AddPendingQuestAcceptReward(Quest* quest);
 	void	AddPendingQuestReward(Quest* quest, bool update=true);

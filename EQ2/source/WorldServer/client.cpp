@@ -10768,3 +10768,11 @@ void Client::SetTempPlacementSpawn(Spawn* tmp) {
 	else
 		temp_placement_timer.Disable();
 }
+
+void Client::SetPlayer(Player* new_player) {
+	if (player && player != new_player)
+		zone_list.RemoveClientFromMap(player->GetName(), this);
+
+	player = new_player;
+	player->SetClient(this);
+}
