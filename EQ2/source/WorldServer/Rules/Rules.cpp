@@ -313,7 +313,7 @@ void RuleManager::Init()
 	/* ZONE TIMERS */
 	RULE_INIT(R_Zone, RegenTimer, "6000");
 	RULE_INIT(R_Zone, ClientSaveTimer, "60000");
-	RULE_INIT(R_Zone, DefaultZoneShutdownTimer, "300000");
+	RULE_INIT(R_Zone, ShutdownDelayTimer, "120000");
 	RULE_INIT(R_Zone, WeatherTimer, "60000");						// default: 1 minute
 	RULE_INIT(R_Zone, SpawnDeleteTimer, "30000");					// default: 30 seconds, how long a spawn pointer is held onto after being removed from the world before deleting it
 

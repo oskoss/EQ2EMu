@@ -1006,6 +1006,8 @@ public:
 	int32	GetMerchantID();
 	void	SetMerchantType(int8 val);
 	int8	GetMerchantType();
+	void	SetCollector(bool is_it) { is_collector = is_it; }
+	bool	IsCollector() { return is_collector; }
 	void	SetMerchantLevelRange(int32 minLvl = 0, int32 maxLvl = 0);
 	bool	IsClientInMerchantLevelRange(Client* ent, bool sendMessageIfDenied = true);
 	int32	GetMerchantMinLevel();
@@ -1251,7 +1253,7 @@ public:
 	vector<Spawn*> GetPassengersOnRail();
 
 	void SetAppearancePosition(float x, float y, float z);
-	
+
 	void SetOmittedByDBFlag(bool val) { is_omitted_by_db_flag = val; }
 	bool IsOmittedByDBFlag() { return is_omitted_by_db_flag; }
 
@@ -1370,6 +1372,7 @@ private:
 
 	bool deleted_spawn;
 	Mutex m_GridMutex;
+	bool is_collector;
 };
 
 #endif

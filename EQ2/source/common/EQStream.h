@@ -46,6 +46,7 @@ using namespace std;
 
 typedef enum {
 	ESTABLISHED,
+	WAIT_CLOSE,
 	CLOSING,
 	DISCONNECTING,
 	CLOSED
@@ -156,6 +157,7 @@ class EQStream {
 		//uint32 buffer_len;
 
 		uint16 sessionAttempts;
+		uint16 reconnectAttempt;
 		bool streamactive;
 
 		uint32 Session, Key;
@@ -239,7 +241,8 @@ class EQStream {
 		int16	client_version;
 		int16	GetClientVersion(){ return client_version; }
 		void	SetClientVersion(int16 version){ client_version = version; }
-
+		void	ResetSessionAttempts() { reconnectAttempt = 0; }
+		bool	HasSessionAttempts() { return reconnectAttempt>0; }
 		EQStream() { init(); remote_ip = 0; remote_port = 0; State = CLOSED; StreamType = UnknownStream; compressed = true; 
 		encoded = false; app_opcode_size = 2;}
 		EQStream(sockaddr_in addr);
@@ -351,7 +354,7 @@ class EQStream {
 		static EQProtocolPacket *Read(int eq_fd, sockaddr_in *from);
 
 		void Close() { SendDisconnect(); }
-		bool CheckActive() { return GetState()==ESTABLISHED; }
+		bool CheckActive() { return (GetState()==ESTABLISHED); }
 		bool CheckClosed() { return GetState()==CLOSED; }
 		void SetOpcodeSize(uint8 s) { app_opcode_size = s; }
 		void SetStreamType(EQStreamType t);

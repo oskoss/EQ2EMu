@@ -107,6 +107,7 @@ void EQStream::init(bool resetSession) {
 	retransmittimer = Timer::GetCurrentTime2();
 	retransmittimeout = 500 * RETRANSMIT_TIMEOUT_MULT;
 
+	reconnectAttempt = 0;
 	if (uint16(SequencedBase + SequencedQueue.size()) != NextOutSeq) {
 		LogWrite(PACKET__DEBUG, 9, "Packet",  "init Invalid Sequenced queue: BS %u + SQ %u != NOS %u", SequencedBase, SequencedQueue.size(), NextOutSeq);
 	}
@@ -258,10 +259,13 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 				while(processed<p->size) {
 					if ((subpacket_length=(unsigned char)*(p->pBuffer+processed))==0xff) {
 						subpacket_length = ntohs(*(uint16*)(p->pBuffer + processed + 1));
+						//printf("OP_Combined subpacket_length %u\n",subpacket_length);
 						offset = 3;
 					}
 					else
 						offset = 1;
+					
+					//printf("OP_Combined processed %u p->size %u subpacket length %u count %i\n",processed, p->size, subpacket_length, count);
 					count++;
 #ifdef LE_DEBUG
 					printf( "OP_Combined Packet %i (%u) (%u):\n", count, subpacket_length, processed);
@@ -538,6 +542,10 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 				}
 
 				sessionAttempts++;
+				if(GetState() == WAIT_CLOSE) {
+					printf("WAIT_CLOSE Reconnect with streamactive %u, sessionAttempts %u\n", streamactive, sessionAttempts);
+					reconnectAttempt++;
+				}
 				init(GetState() != ESTABLISHED);
 				OutboundQueueClear();
 				SessionRequest *Request=(SessionRequest *)p->pBuffer;
@@ -653,6 +661,8 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 				NonSequencedPush(new EQProtocolPacket(OP_SessionStatResponse,p->pBuffer,p->size));
 				if(!crypto->isEncrypted())
 					SendKeyRequest();
+				else
+					SendSessionResponse();
 			}
 			break;
 			case OP_SessionStatResponse: {
@@ -1465,7 +1475,7 @@ char temp[15];
 	if (length>=2) {
 		DumpPacket(buffer, length);
 		p=new EQProtocolPacket(buffer[1],&buffer[2],length-2);
-
+		//printf("Read packet: opcode %i length %u, expected-length: %u\n",buffer[1], length, p->size);
 		uint32 ip=from->sin_addr.s_addr;
 		sprintf(temp,"%d.%d.%d.%d:%d",
 			*(unsigned char *)&ip,
@@ -1513,7 +1523,7 @@ void EQStream::SendSessionRequest()
 void EQStream::SendDisconnect(bool setstate)
 {
 	try{
-		if(GetState() != ESTABLISHED)
+		if(GetState() != ESTABLISHED && GetState() != WAIT_CLOSE)
 			return;
 		
 		EQProtocolPacket *out=new EQProtocolPacket(OP_SessionDisconnect,NULL,sizeof(uint32)+sizeof(int16));
@@ -1639,9 +1649,12 @@ DumpPacket(buffer, length);
 		DumpPacket(buffer, newlength);
 #endif
 		uint16 opcode=ntohs(*(const uint16 *)newbuffer);
+		//printf("Read packet: opcode %i newlength %u, newbuffer2len: %u, newbuffer3len: %u\n",opcode, newlength, newbuffer[2], newbuffer[3]);
 		if(opcode > 0 && opcode <= OP_OutOfSession)
 		{
 			EQProtocolPacket p(newbuffer,newlength);
+			if(opcode == 3)
+				DumpPacket(newbuffer, newlength);
 			ProcessPacket(&p);
 		}
 		else

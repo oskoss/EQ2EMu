@@ -120,10 +120,11 @@ int32 MinInstanceID = 1000;
 
 // JA: Moved most default values to Rules and risky initializers to ZoneServer::Init() - 2012.12.07
 ZoneServer::ZoneServer(const char* name, bool incoming_clients) {
+	incoming_clients = 0;
+	
 	if(incoming_clients)
 		IncrementIncomingClients();
-	else
-		incoming_clients = 0;
+	
 	MIncomingClients.SetName("ZoneServer::MIncomingClients");
 
 	depop_zone = false;
@@ -3173,7 +3174,11 @@ void ZoneServer::RemoveClient(Client* client)
 		database.ToggleCharacterOnline(client, 0);
 		
 		client->GetPlayer()->DeleteSpellEffects(true);
-
+		
+		if(client->getConnection()) {
+			client->getConnection()->ResetSessionAttempts();
+			client->getConnection()->SetState(EQStreamState::WAIT_CLOSE);
+		}
 		RemoveSpawn(client->GetPlayer(), false, true, true, true, true);
 		connected_clients.Remove(client, true, DisconnectClientTimer); // changed from a hardcoded 30000 (30 sec) to the DisconnectClientTimer rule
 	}
@@ -3203,7 +3208,13 @@ void ZoneServer::ClientProcess()
 		{
 			if(incoming_clients && !shutdownDelayTimer.Enabled()) {
 				LogWrite(ZONE__INFO, 0, "Zone", "Incoming clients (%u) expected for %s, delaying shutdown timer...", incoming_clients, GetZoneName());
-				shutdownDelayTimer.Start(120000, true);
+				int32 timerDelay = rule_manager.GetGlobalRule(R_Zone, ShutdownDelayTimer)->GetInt32();
+
+				if(timerDelay < 10) {
+					LogWrite(ZONE__INFO, 0, "Zone", "Overriding %s shutdown delay timer as other clients are incoming, value %u too short, setting to 10...", GetZoneName(), timerDelay);
+					timerDelay = 10;
+				}
+				shutdownDelayTimer.Start(timerDelay, true);
 			}
 			else if(!incoming_clients || shutdownDelayCheck) {
 				LogWrite(ZONE__INFO, 0, "Zone", "Starting zone shutdown timer for %s...", GetZoneName());
@@ -3228,6 +3239,10 @@ void ZoneServer::ClientProcess()
 #endif
 			if(zoneShuttingDown || !client->Process(true))
 			{
+				if(client->getConnection() && client->getConnection()->HasSessionAttempts()) {
+					printf("Client has an attempt to reconnect..\n");
+					continue;
+				}
 				if(!zoneShuttingDown && !client->IsZoning())
 				{
 					LogWrite(ZONE__DEBUG, 0, "Zone", "Client is disconnecting in %s (camping = %s)", __FUNCTION__, (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0 ? "false" : "true");

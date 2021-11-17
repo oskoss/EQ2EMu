@@ -57,6 +57,7 @@ NPC::NPC(NPC* old_npc){
 		}
 		else
 			size = old_npc->size;
+		SetCollector(old_npc->IsCollector());
 		SetMerchantID(old_npc->GetMerchantID());
 		SetMerchantType(old_npc->GetMerchantType());
 		SetMerchantLevelRange(old_npc->GetMerchantMinLevel(), old_npc->GetMerchantMaxLevel());

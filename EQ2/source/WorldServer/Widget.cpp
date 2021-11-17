@@ -128,6 +128,7 @@ Widget*	Widget::Copy(){
 	}
 	else
 		new_spawn->size = size;
+	new_spawn->SetCollector(IsCollector());
 	new_spawn->SetMerchantID(merchant_id);
 	new_spawn->SetMerchantType(merchant_type);
 	new_spawn->SetMerchantLevelRange(GetMerchantMinLevel(), GetMerchantMaxLevel());

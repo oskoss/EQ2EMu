@@ -1017,6 +1017,10 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->appearance.activity_status = atoi(row[34]);
 		npc->faction_id = atoul(row[35]);
 		if(row[36]){
+			std::string sub_title = std::string(row[36]);
+			if(strncmp(row[36],"<Collector>", 11) == 0) {
+				npc->SetCollector(true);
+			}
 			if(strlen(row[36]) < sizeof(npc->appearance.sub_title))
 				strcpy(npc->appearance.sub_title, row[36]);
 			else
@@ -6701,6 +6705,10 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		npc->appearance.activity_status = result.GetInt16(34);
 		npc->faction_id = result.GetInt32(35);
 		if(!result.IsNull(36)){
+			std::string sub_title = std::string(result.GetString(36));
+			if(sub_title.find("Collector") != std::string::npos) {
+				npc->SetCollector(true);
+			}
 			if(strlen(result.GetString(36)) < sizeof(npc->appearance.sub_title))
 				strcpy(npc->appearance.sub_title, result.GetString(36));
 			else

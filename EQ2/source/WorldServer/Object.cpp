@@ -61,6 +61,7 @@ void Object::HandleUse(Client* client, string command){
 
 Object*	Object::Copy(){
 	Object* new_spawn = new Object();
+	new_spawn->SetCollector(IsCollector());
 	new_spawn->SetMerchantID(merchant_id);
 	new_spawn->SetMerchantType(merchant_type);
 	new_spawn->SetMerchantLevelRange(GetMerchantMinLevel(), GetMerchantMaxLevel());

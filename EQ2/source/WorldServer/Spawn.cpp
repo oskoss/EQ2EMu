@@ -132,6 +132,7 @@ Spawn::Spawn(){
 	is_omitted_by_db_flag = false;
 	loot_tier = 0;
 	deleted_spawn = false;
+	is_collector = false;
 }
 
 Spawn::~Spawn(){
@@ -282,7 +283,6 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 		}
 
 	}
-
 	if (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1) {
 		if (!IsGroundSpawn()) {
 			int8 arrow_color = ARROW_COLOR_WHITE;
@@ -2367,7 +2367,10 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		packet->setDataByName("action_state", GetTempActionState());
 	else
 		packet->setDataByName("action_state", appearance.action_state);
-	if (GetTempVisualState() >= 0)
+	
+	if(IsCollector() && spawn->GetCollectionList()->HasCollectionsToHandIn())
+		packet->setDataByName("visual_state", 6674);
+	else if (GetTempVisualState() >= 0)
 		packet->setDataByName("visual_state", GetTempVisualState());
 	else
 		packet->setDataByName("visual_state", appearance.visual_state);
@@ -2824,7 +2827,30 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				
 					SetSpeed(speed);
 			}
-			MovementLocation* loc = GetCurrentRunningLocation();
+			MovementLocation tmpLoc;
+			MovementLocation* loc = 0;
+			if(MMovementLocations) {
+				MMovementLocations->readlock(__FUNCTION__, __LINE__);
+				
+				if(movement_locations && movement_locations->size() > 0){
+					loc = movement_locations->front();
+					if(loc) {
+						tmpLoc.attackable = loc->attackable;
+						tmpLoc.gridid = loc->gridid;
+						tmpLoc.lua_function = string(loc->lua_function);
+						tmpLoc.mapped = loc->mapped;
+						tmpLoc.reset_hp_on_runback = loc->reset_hp_on_runback;
+						tmpLoc.speed = loc->speed;
+						tmpLoc.stage = loc->stage;
+						tmpLoc.x = loc->x;
+						tmpLoc.y = loc->y;
+						tmpLoc.z = loc->z;
+						loc = &tmpLoc;
+					}
+				}
+				MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
+			}
+
 			float dist = GetDistance(followTarget, true);
 			if ((!EngagedInCombat() && m_followDistance > 0 && dist <= m_followDistance) || 
 				(dist <= rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())) {
@@ -3131,8 +3157,10 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 		x = x - (GetX() - x)*distance_away/distance;
 		z = z - (GetZ() - z)*distance_away/distance;
 	}
+	
 	if(!movement_locations){
 		movement_locations = new deque<MovementLocation*>();
+		safe_delete(MMovementLocations);
 		MMovementLocations = new Mutex();
 	}
 	MovementLocation* data = new MovementLocation;
@@ -3206,11 +3234,25 @@ void Spawn::NewWaypointChange(MovementLocation* data){
 bool Spawn::CalculateChange(){
 	bool remove_needed = false;
 	MovementLocation* data = 0;
+	MovementLocation tmpLoc;
 	if(movement_locations && MMovementLocations){
 		MMovementLocations->readlock(__FUNCTION__, __LINE__);
 		if(movement_locations->size() > 0){
 			// Target location
 			data = movement_locations->front();
+			if(data) {
+				tmpLoc.attackable = data->attackable;
+				tmpLoc.gridid = data->gridid;
+				tmpLoc.lua_function = string(data->lua_function);
+				tmpLoc.mapped = data->mapped;
+				tmpLoc.reset_hp_on_runback = data->reset_hp_on_runback;
+				tmpLoc.speed = data->speed;
+				tmpLoc.stage = data->stage;
+				tmpLoc.x = data->x;
+				tmpLoc.y = data->y;
+				tmpLoc.z = data->z;
+				data = &tmpLoc;
+			}
 			// If no target or we are at the target location need to remove this point
 			if(!data || (data->x == GetX() && data->y == GetY() && data->z == GetZ()))
 				remove_needed = true;

@@ -188,7 +188,7 @@ enum RuleType {
 	/* ZONE TIMERS */
 	RegenTimer,
 	ClientSaveTimer,
-	DefaultZoneShutdownTimer,
+	ShutdownDelayTimer,
 	WeatherTimer,
 	SpawnDeleteTimer,
 

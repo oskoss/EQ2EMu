@@ -5004,7 +5004,6 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 		LogWrite(PLAYER__ERROR, 0, "Player", "CheckQuestFlag() called with an invalid spawn");
 		return ret;
 	}
-
 	if(spawn->HasProvidedQuests()){
 		vector<int32>* quests = spawn->GetProvidedQuests();
 		Quest* quest = 0;
