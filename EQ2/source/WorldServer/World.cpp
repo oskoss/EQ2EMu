@@ -442,8 +442,9 @@ bool ZoneList::HandleGlobalChatMessage(Client* from, char* to, int16 channel, co
 		LogWrite(WORLD__ERROR, 0, "World", "HandleGlobalChatMessage() called with an invalid client");
 		return false;
 	}
-
-	if(channel == CHANNEL_PRIVATE_TELL){
+//Devnoob: commented this out because it always results in "You Tell you: 'xyz'"...code was implemented to permit tells between client versions. Replaced with original version.
+//Todo: Fix it :P
+/*	if(channel == CHANNEL_PRIVATE_TELL){
 		Client* find_client = zone_list.GetClientByCharName(to);
 		if(!find_client || find_client->GetPlayer()->IsIgnored(from->GetPlayer()->GetName()))
 			return false;
@@ -460,7 +461,62 @@ bool ZoneList::HandleGlobalChatMessage(Client* from, char* to, int16 channel, co
 				from->HandleTellMessage(find_client, find_client->GetPlayer()->GetAwayMessage().c_str());
 			}
 		}
+	}*/
+
+	if(channel == CHANNEL_PRIVATE_TELL){
+		Client* find_client = zone_list.GetClientByCharName(to);
+		if(!find_client || find_client->GetPlayer()->IsIgnored(from->GetPlayer()->GetName()))
+			return false;
+		else if(find_client == from)
+		{
+			from->Message(CHANNEL_COLOR_RED,"You must be very lonely...(ERROR: Cannot send tell to self)");
+		}
+		else
+		{
+			PacketStruct* packet = configReader.getStruct("WS_HearChat", from->GetVersion());
+			if(packet){
+				packet->setMediumStringByName("from", from->GetPlayer()->GetName());
+				packet->setMediumStringByName("to", find_client->GetPlayer()->GetName());
+				packet->setDataByName("channel", CHANNEL_PRIVATE_TELL);
+				packet->setDataByName("from_spawn_id", 0xFFFFFFFF);
+				packet->setDataByName("to_spawn_id", 0xFFFFFFFF);
+				packet->setDataByName("unknown2", 1, 1);
+				packet->setDataByName("show_bubble", 1);
+				packet->setDataByName("understood", 1);
+				packet->setDataByName("time", 2); 
+				packet->setMediumStringByName("message", message);
+				if(channel_name)
+					packet->setMediumStringByName("channel_name", channel_name);
+				EQ2Packet* outpacket = packet->serialize();
+				//DumpPacket(outpacket);
+				find_client->QueuePacket(outpacket->Copy());
+				from->QueuePacket(outpacket);
+				safe_delete(packet);
+			}
+			if (find_client->GetPlayer()->get_character_flag(CF_AFK)) {
+				PacketStruct* packet2 = configReader.getStruct("WS_HearChat", from->GetVersion());
+				if (packet2) {
+					packet2->setMediumStringByName("from", find_client->GetPlayer()->GetName());
+					packet2->setMediumStringByName("to", from->GetPlayer()->GetName());
+					packet2->setDataByName("channel", CHANNEL_PRIVATE_TELL);
+					packet2->setDataByName("from_spawn_id", 0xFFFFFFFF);
+					packet2->setDataByName("to_spawn_id", 0xFFFFFFFF);
+					packet2->setDataByName("unknown2", 1, 1);
+					packet2->setDataByName("show_bubble", 1);
+					packet2->setDataByName("understood", 1);
+					packet2->setDataByName("time", 2);
+					packet2->setMediumStringByName("message", find_client->GetPlayer()->GetAwayMessage().c_str());
+					if (channel_name)
+						packet2->setMediumStringByName("channel_name", channel_name);
+					EQ2Packet* outpacket = packet2->serialize();
+					from->QueuePacket(outpacket->Copy());
+					find_client->QueuePacket(outpacket);
+					safe_delete(packet2);
+				}
+			}
+		}
 	}
+
 	else if(channel == CHANNEL_GROUP_SAY) {
 		GroupMemberInfo* gmi = from->GetPlayer()->GetGroupMemberInfo();
 		if(gmi)
