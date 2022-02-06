@@ -3621,13 +3621,13 @@ int8 Client::GetMessageChannelColor(int8 channel_type) {
 	return channel_type;
 }
 
-void Client::HandleTellMessage(Client* from, const char* message) {
+void Client::HandleTellMessage(Client* from, const char* message, const char* to=NULL) {
 	if (!from || GetPlayer()->IsIgnored(from->GetPlayer()->GetName()))
 		return;
 	PacketStruct* packet = configReader.getStruct("WS_HearChat", GetVersion());
 	if (packet) {
 		packet->setDataByName("from", from->GetPlayer()->GetName());
-		packet->setDataByName("to", GetPlayer()->GetName());
+		packet->setDataByName("to", to);
 		packet->setDataByName("channel", GetMessageChannelColor(CHANNEL_PRIVATE_TELL));
 		packet->setDataByName("from_spawn_id", 0xFFFFFFFF);
 		packet->setDataByName("to_spawn_id", 0xFFFFFFFF);
