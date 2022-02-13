@@ -894,7 +894,8 @@ void UpdateWindowTitle(char* iNewTitle) {
 		snprintf(tmp, sizeof(tmp), "World: %s", iNewTitle);
 	}
 	else {
-		snprintf(tmp, sizeof(tmp), "%s, Version: %s: %i Clients(s) in %i Zones(s)", EQ2EMU_MODULE, CURRENT_VERSION, numclients, numzones);
+		string servername = net.GetWorldName();
+		snprintf(tmp, sizeof(tmp), "%s (%s), Version: %s: %i Clients(s) in %i Zones(s)", EQ2EMU_MODULE, servername.c_str(), CURRENT_VERSION, numclients, numzones);
 	}
 	// Zero terminate ([max - 1] = 0) the string to prevent a warning 
 	tmp[499] = 0;
