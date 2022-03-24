@@ -10362,6 +10362,14 @@ int EQ2Emu_lua_Evac(lua_State* state) {
 			Client* client = target->GetZone()->GetClientBySpawn(target);
 			if (client) {
 				client->GetCurrentZone()->ClearHate(client->GetPlayer());
+				
+				int numargs = lua_interface->GetNumberOfArgs(state);		
+				if(numargs == 4) {
+					x = lua_interface->GetFloatValue(state,1);
+					y = lua_interface->GetFloatValue(state,2);
+					z = lua_interface->GetFloatValue(state,3);
+					h = lua_interface->GetFloatValue(state,4);
+				}
 
 				client->SetReloadingZone(true);
 				target->SetX(x);
