@@ -10395,13 +10395,24 @@ int EQ2Emu_lua_Evac(lua_State* state) {
 		}
 	}
 	else {
+
 		LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 		ZoneServer* zone = spell->caster->GetZone();
+
 		float x = spell->caster->GetZone()->GetSafeX();
 		float y = spell->caster->GetZone()->GetSafeY();
 		float z = spell->caster->GetZone()->GetSafeZ();
 		float h = spell->caster->GetZone()->GetSafeHeading();
 
+		int numargs = lua_interface->GetNumberOfArgs(state);
+		
+		if(numargs == 4) {
+			x = lua_interface->GetFloatValue(state,1);
+			y = lua_interface->GetFloatValue(state,2);
+			z = lua_interface->GetFloatValue(state,3);
+			h = lua_interface->GetFloatValue(state,4);
+		}
+	
 		spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 		for (int32 i = 0; i < spell->targets.size(); i++) {
 			Spawn* target2 = zone->GetSpawnByID(spell->targets.at(i));
