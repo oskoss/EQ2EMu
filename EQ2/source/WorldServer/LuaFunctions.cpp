@@ -1495,16 +1495,22 @@ int EQ2Emu_lua_SummonItem(lua_State* state) {
 	int32 item_id = lua_interface->GetInt32Value(state, 2);
 	bool send_messages = (lua_interface->GetInt8Value(state, 3) == 1);
 	string location = lua_interface->GetStringValue(state, 4);
+	int item_count = lua_interface->GetInt8Value(state,5);
+	
+	//devn00b: if we dont have a count, assume 1 item.
+	if(!item_count) {
+		item_count = 1;
+	}
+	
 	lua_interface->ResetFunctionStack(state);
-
 
 	if (spawn && spawn->IsPlayer()) {
 		Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
 		if (client && item_id > 0) {
 			if (strncasecmp(location.c_str(), "bank", 4) == 0)
-				lua_interface->SetBooleanValue(state, client->AddItemToBank(item_id, 1));
+				lua_interface->SetBooleanValue(state, client->AddItemToBank(item_id, item_count));
 			else
-				lua_interface->SetBooleanValue(state, client->AddItem(item_id, 1));
+				lua_interface->SetBooleanValue(state, client->AddItem(item_id, item_count));
 			if (send_messages) {
 				Item* item = master_item_list.GetItem(item_id);
 				if (item) {
