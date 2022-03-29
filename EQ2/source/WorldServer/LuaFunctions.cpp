@@ -1488,6 +1488,7 @@ int EQ2Emu_lua_AddItem(lua_State* state) {
 	return 1;
 }
 
+
 int EQ2Emu_lua_SummonItem(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -1495,7 +1496,7 @@ int EQ2Emu_lua_SummonItem(lua_State* state) {
 	int32 item_id = lua_interface->GetInt32Value(state, 2);
 	bool send_messages = (lua_interface->GetInt8Value(state, 3) == 1);
 	string location = lua_interface->GetStringValue(state, 4);
-	int item_count = lua_interface->GetInt8Value(state,5);
+	int16 item_count = lua_interface->GetInt16Value(state,5);
 	
 	//devn00b: if we dont have a count, assume 1 item.
 	if(!item_count) {
