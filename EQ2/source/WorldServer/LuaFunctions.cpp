@@ -1515,9 +1515,18 @@ int EQ2Emu_lua_SummonItem(lua_State* state) {
 			if (send_messages) {
 				Item* item = master_item_list.GetItem(item_id);
 				if (item) {
+					if(item_count > 1) {
+						client->Message(CHANNEL_COLOR_YELLOW, "You receive %i %s.", item_count, item->CreateItemLink(client->GetVersion()).c_str());
+						string popup_text1 = "You receive "+ item_count;
+						string popup_text2 = "  " + item->name;
+						string popup_text  = popup_text1 + popup_text2;
+						client->SendPopupMessage(10, popup_text.c_str(), "ui_harvested_normal", 3, 0xFF, 0xFF, 0xFF);
+						// return 1;
+					} else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You receive %s.", item->CreateItemLink(client->GetVersion()).c_str());
 					string popup_text = "You receive " + item->name;
 					client->SendPopupMessage(10, popup_text.c_str(), "ui_harvested_normal", 3, 0xFF, 0xFF, 0xFF);
+					}
 				}
 			}
 			return 1;
