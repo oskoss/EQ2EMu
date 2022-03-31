@@ -6738,6 +6738,22 @@ int EQ2Emu_lua_CompareSpawns(lua_State* state) {
 	return 1;
 }
 
+int EQ2Emu_lua_ClearRunback(lua_State* state){
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA ClearRunback command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!spawn->IsNPC()) {
+		lua_interface->LogError("%s: LUA ClearRunback command error: spawn is not an NPC", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	((NPC*)spawn)->ClearRunback();
+	return 0;
+}
+
 int EQ2Emu_lua_Runback(lua_State* state) {
 	if (!lua_interface)
 		return 0;

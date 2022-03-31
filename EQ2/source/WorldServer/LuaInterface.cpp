@@ -1219,6 +1219,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetOwner", EQ2Emu_lua_GetOwner);
 	lua_register(state, "SetInCombat", EQ2Emu_lua_SetInCombat);
 	lua_register(state, "CompareSpawns", EQ2Emu_lua_CompareSpawns);
+	lua_register(state, "ClearRunback", EQ2Emu_lua_ClearRunback);
 	lua_register(state, "Runback", EQ2Emu_lua_Runback);
 	lua_register(state, "GetRunbackDistance", EQ2Emu_lua_GetRunbackDistance);
 	lua_register(state, "IsCasting", EQ2Emu_lua_IsCasting);

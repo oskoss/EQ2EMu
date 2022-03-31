@@ -357,6 +357,7 @@ int EQ2Emu_lua_IsPet(lua_State* state);
 int EQ2Emu_lua_GetOwner(lua_State* state);
 int EQ2Emu_lua_SetInCombat(lua_State* state);
 int EQ2Emu_lua_CompareSpawns(lua_State* state);
+int EQ2Emu_lua_ClearRunback(lua_State* state);
 int EQ2Emu_lua_Runback(lua_State* state);
 int EQ2Emu_lua_GetRunbackDistance(lua_State* state);
 int EQ2Emu_lua_IsCasting(lua_State* state);
