@@ -2176,8 +2176,13 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 							// iterate through list of group members
 							for (itr = members->begin(); itr != members->end(); itr++)
 							{
+
 								// get group member player info
 								Entity* group_member = (*itr)->member;
+								
+								if(!group_member){
+									continue;
+								}
 
 								LogWrite(SPELL__DEBUG, 0, "Player", "%s is group member for spell %s", group_member->GetName(), luaspell->spell->GetName());
 								// if the group member is in the casters zone, and is alive
@@ -2345,7 +2350,8 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						{
 							group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 							deque<GroupMemberInfo*>* members = group->GetMembers();
-
+							if(!members)
+								return;
 							// iterate through players group members
 							for (itr = members->begin(); itr != members->end(); itr++)
 							{
@@ -2389,10 +2395,13 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 
 						deque<GroupMemberInfo*>::iterator itr;
 						PlayerGroup* group = world.GetGroupManager()->GetGroup(((Player*)target)->GetGroupMemberInfo()->group_id);
+						
 						if (group)
 						{
 							group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 							deque<GroupMemberInfo*>* members = group->GetMembers();
+							if(!members)
+								return;
 							Entity* group_member = 0;
 							for (itr = members->begin(); itr != members->end(); itr++) {
 								group_member = (*itr)->member;

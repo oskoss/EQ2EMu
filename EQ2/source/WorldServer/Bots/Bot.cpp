@@ -306,7 +306,9 @@ Spell* Bot::GetHealSpell() {
 		deque<GroupMemberInfo*>* members = group->GetMembers();
 		for (int8 i = 0; i < members->size(); i++) {
 			Entity* member = members->at(i)->member;
-
+			if(!member)
+				continue;
+			
 			if (!member->Alive())
 				continue;
 
@@ -395,6 +397,8 @@ Spell* Bot::GetHoTWardSpell() {
 	{
 		group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 		deque<GroupMemberInfo*>* members = group->GetMembers();
+		if(!members)
+			return 0;
 		for (int8 i = 0; i < members->size(); i++) {
 			Entity* member = members->at(i)->member;
 			int8 percent = 0;

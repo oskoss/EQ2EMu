@@ -46,6 +46,10 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 								group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 								deque<GroupMemberInfo*>* members = group->GetMembers();
 								deque<GroupMemberInfo*>::iterator itr;
+								
+								if(!members)
+									return;
+								
 								for (itr = members->begin(); itr != members->end(); itr++) {
 									if ((*itr)->member->IsBot() && ((Bot*)(*itr)->member)->GetOwner() == client->GetPlayer()) {
 										((Bot*)(*itr)->member)->SetCombatTarget(target->GetID());
@@ -107,7 +111,11 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 			if (group)
 			{
 				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
-				deque<GroupMemberInfo*>* members = group->GetMembers();
+				deque<GroupMemberInfo*>* members = group->GetMembers(); 
+				
+				if(!members)
+					return;
+				
 				for (int8 i = 0; i < members->size(); i++) {
 					GroupMemberInfo* gmi2 = members->at(i);
 					if (gmi2->member->IsBot() && ((Bot*)gmi2->member)->GetOwner() == client->GetPlayer()) {
@@ -159,7 +167,7 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 		else if (strncasecmp("stopfollow", sep->arg[0], 10) == 0) {
 			if (sep->IsSet(1) && sep->IsNumber(1)) {
 				int32 index = atoi(sep->arg[1]);
-
+ 
 				// Check if bot is currently spawned and if so camp it out
 				if (client->GetPlayer()->SpawnedBots.count(index) > 0) {
 					Spawn* bot = client->GetCurrentZone()->GetSpawnByID(client->GetPlayer()->SpawnedBots[index]);
@@ -185,6 +193,10 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 						deque<GroupMemberInfo*>* members = group->GetMembers();
 						for (int8 i = 0; i < members->size(); i++) {
 							Entity* member = members->at(i)->member;
+							
+							if(!member)
+								continue;
+							
 							if (member->IsBot() && ((Bot*)member)->GetOwner() == player) {
 								member->appearance.pos.grid_id = player->appearance.pos.grid_id;
 								member->SetX(player->GetX());

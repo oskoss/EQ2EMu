@@ -406,6 +406,10 @@ void ClientPacketFunctions::SendItemCreationUI(Client* client, Recipe* recipe) {
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
 			size++;
 			Spell* spell = master_spell_list.GetSpell(*itr,1);
+			if(!spell) {
+				
+				return;
+			}
 			if (size > 6) {
 				// only 6 slots for skills on the ui
 				break;

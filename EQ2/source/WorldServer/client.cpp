@@ -5141,6 +5141,8 @@ void Client::CastGroupOrSelf(Entity* source, uint32 spellID, uint32 spellTier, f
 			{
 				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 				deque<GroupMemberInfo*>* members = group->GetMembers();
+				if(!members)
+					return;
 				for (int8 i = 0; i < members->size(); i++) {
 					Entity* member = members->at(i)->member;
 
@@ -10668,8 +10670,9 @@ void Client::ConsumeFoodDrink(Item* item, int32 slot)
 			item->save_needed = true;
 		}
 		else {
-			GetPlayer()->GetEquipmentList()->RemoveItem(slot, true);
 			database.DeleteItem(GetPlayer()->GetCharacterID(), item, "EQUIPPED");
+			GetPlayer()->GetEquipmentList()->RemoveItem(slot, true);
+			
 		}
 		GetPlayer()->SetCharSheetChanged(true);
 		QueuePacket(player->GetEquipmentList()->serialize(GetVersion(), player));

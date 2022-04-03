@@ -6548,7 +6548,12 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 			sint32 bag_id = atol(sep->arg[3]);
 			int8 charges = atoi(sep->arg[4]);
 			Item* item = client->GetPlayer()->item_list.GetItemFromIndex(from_index);
-
+			
+			if(!item) {
+				client->SimpleMessage(CHANNEL_COLOR_RED, "You have no item.");
+				return;
+			}
+			
 			if(item->details.item_locked)
 			{
 				client->SimpleMessage(CHANNEL_COLOR_RED, "You cannot move the item in use.");
