@@ -50,7 +50,7 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 								for (itr = members->begin(); itr != members->end(); itr++) {
 									if ((*itr)->member->IsBot() && ((Bot*)(*itr)->member)->GetOwner() == client->GetPlayer()) {
                                       								
-										if(!members)
+										if(!member)
 											return;
                                       
 										((Bot*)(*itr)->member)->SetCombatTarget(target->GetID());
