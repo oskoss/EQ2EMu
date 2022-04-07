@@ -47,11 +47,11 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 								deque<GroupMemberInfo*>* members = group->GetMembers();
 								deque<GroupMemberInfo*>::iterator itr;
 								
-								for (itr = members->begin(); itr != members->end(); itr++) {
+ 								for (itr = members->begin(); itr != members->end(); itr++) {
+//devn00b compile says this is no good, commenting out for now.
+//if(!member) 
+//  continue;
 									if ((*itr)->member->IsBot() && ((Bot*)(*itr)->member)->GetOwner() == client->GetPlayer()) {
-                                      								
-										if(!member)
-											return;
                                       
 										((Bot*)(*itr)->member)->SetCombatTarget(target->GetID());
 									}
