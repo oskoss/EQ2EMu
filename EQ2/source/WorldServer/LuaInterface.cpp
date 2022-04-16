@@ -953,6 +953,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetFactionID", EQ2Emu_lua_SetFactionID);
 	lua_register(state, "GetFactionID", EQ2Emu_lua_GetFactionID);
 	lua_register(state, "GetFactionAmount", EQ2Emu_lua_GetFactionAmount);
+	lua_register(state, "ChangeFaction", EQ2Emu_lua_ChangeFaction);
 	lua_register(state, "GetGender", EQ2Emu_lua_GetGender);
 	lua_register(state, "GetTarget", EQ2Emu_lua_GetTarget);
 	lua_register(state, "HasFreeSlot", EQ2Emu_lua_HasFreeSlot);

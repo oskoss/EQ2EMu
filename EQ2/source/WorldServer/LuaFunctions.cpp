@@ -12712,3 +12712,53 @@ int EQ2Emu_lua_SendTimeUpdate(lua_State* state) {
 	
 	return 0;
 }
+
+int EQ2Emu_lua_ChangeFaction(lua_State* state) {
+	bool update_result = false;
+	Faction* faction = 0;	
+
+	Player* player = (Player*)lua_interface->GetSpawn(state);
+	Client* client = player->GetZone()->GetClientBySpawn(player);
+	int32 faction_id = lua_interface->GetInt32Value(state, 2);
+	sint32 increase = lua_interface->GetInt32Value(state, 3);
+	lua_interface->ResetFunctionStack(state);
+
+	if (player && player->IsPlayer() && faction_id > 0) {
+
+		bool hasfaction = database.VerifyFactionID(player->GetCharacterID(),faction_id);
+		if(hasfaction == 0) {
+			//they do not have the faction. Lets get the default value and feed it in.
+			sint32 defaultfaction = master_faction_list.GetDefaultFactionValue(faction_id);
+			//add the default faction for the player.
+			database.AddDefaultFaction(player->GetCharacterID(), faction_id, defaultfaction);
+			//load the clients factions. without this it gets reset to -100 on character save.
+			database.LoadPlayerFactions(client);
+		}
+
+		if(increase >= 0) {
+			update_result = player->GetFactions()->IncreaseFaction(faction_id,increase);
+			faction = master_faction_list.GetFaction(faction_id);
+
+			if(faction && update_result)
+				client->Message(CHANNEL_FACTION, "Your faction standing with %s got better.", faction->name.c_str());
+				else if(faction)
+					client->Message(CHANNEL_FACTION, "Your faction standing with %s could not possibly get any better.", faction->name.c_str());
+			return 1;
+
+		}
+
+		if(increase < 0){
+			//change the negative to a positive, since thats how decreasefaction() likes it.
+			increase *= -1;
+
+			update_result = player->GetFactions()->DecreaseFaction(faction_id,increase);
+			faction = master_faction_list.GetFaction(faction_id);
+			if(faction && update_result)
+				client->Message(CHANNEL_FACTION, "Your faction standing with %s got worse.", faction->name.c_str());
+			else if(faction)
+				client->Message(CHANNEL_FACTION, "Your faction standing with %s could not possibly get any worse.", faction->name.c_str());
+			return 1;
+		}
+	}
+	return 0;
+}

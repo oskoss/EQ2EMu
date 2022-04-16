@@ -132,6 +132,7 @@ int EQ2Emu_lua_GetSpawnLocationPlacementID(lua_State* state);
 int EQ2Emu_lua_GetFactionAmount(lua_State* state);
 int EQ2Emu_lua_SetFactionID(lua_State* state);
 int EQ2Emu_lua_GetFactionID(lua_State* state);
+int EQ2Emu_lua_ChangeFaction(lua_State* state);
 int EQ2Emu_lua_GetGender(lua_State* state);
 int EQ2Emu_lua_GetTarget(lua_State* state);
 int EQ2Emu_lua_HasFreeSlot(lua_State* state);
