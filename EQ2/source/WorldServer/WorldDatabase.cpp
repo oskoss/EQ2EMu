@@ -7935,3 +7935,21 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 	}
 
 }
+
+//devn00b: We need to handle non-found factions so the subtraction/addition works on 1st kill. Need to find a better way to handle this, but for now..
+bool WorldDatabase::VerifyFactionID(int32 char_id, int32 faction_id) {
+	DatabaseResult result;
+	database_new.Select(&result, "SELECT COUNT(id) as faction_exists from character_factions where faction_id=%u and char_id=%u", faction_id, char_id);
+
+	if (result.Next() && result.GetInt32Str("faction_exists") == 0) 
+		return false;
+	
+	return true;
+}
+//devn00b: handle adding default faction value to the db when a player discovers it
+void WorldDatabase::AddDefaultFaction(int32 char_id, int32 faction_id, sint32 faction_value) {
+	Query query;
+	//TODO: there is probably a better way to do this rather than writing to the db. I'll figure it out at some point.
+	query.RunQuery2(Q_INSERT, "insert into character_factions (char_id, faction_id, faction_level ) values (%u,%u,%i)",char_id, faction_id, faction_value);
+    //query.RunQuery2(Q_INSERT, "update character_factions set faction_level = %i where char_id=%u and faction_id=%u", faction_value, char_id, faction_id);
+}
