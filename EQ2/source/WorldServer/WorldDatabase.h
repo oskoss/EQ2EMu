@@ -223,7 +223,6 @@ public:
 	bool	LoadPlayerFactions(Client* client);
 	void	SavePlayerFactions(Client* client);
 	bool    VerifyFactionID(int32 char_id, int32 faction_id);
-	void    AddDefaultFaction(int32 char_id, int32 faction_id, sint32 faction_value);
 	void	LoadSpawnScriptData();
 	void	LoadZoneScriptData();
 	int32	LoadSpellScriptData();

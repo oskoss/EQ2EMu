@@ -12730,9 +12730,7 @@ int EQ2Emu_lua_ChangeFaction(lua_State* state) {
 			//they do not have the faction. Lets get the default value and feed it in.
 			sint32 defaultfaction = master_faction_list.GetDefaultFactionValue(faction_id);
 			//add the default faction for the player.
-			database.AddDefaultFaction(player->GetCharacterID(), faction_id, defaultfaction);
-			//load the clients factions. without this it gets reset to -100 on character save.
-			database.LoadPlayerFactions(client);
+			player->SetFactionValue(faction_id, defaultfaction);
 		}
 
 		if(increase >= 0) {

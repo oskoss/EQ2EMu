@@ -7946,10 +7946,3 @@ bool WorldDatabase::VerifyFactionID(int32 char_id, int32 faction_id) {
 	
 	return true;
 }
-//devn00b: handle adding default faction value to the db when a player discovers it
-void WorldDatabase::AddDefaultFaction(int32 char_id, int32 faction_id, sint32 faction_value) {
-	Query query;
-	//TODO: there is probably a better way to do this rather than writing to the db. I'll figure it out at some point.
-	query.RunQuery2(Q_INSERT, "insert into character_factions (char_id, faction_id, faction_level ) values (%u,%u,%i)",char_id, faction_id, faction_value);
-    //query.RunQuery2(Q_INSERT, "update character_factions set faction_level = %i where char_id=%u and faction_id=%u", faction_value, char_id, faction_id);
-}
