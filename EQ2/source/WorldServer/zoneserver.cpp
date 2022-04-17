@@ -4295,7 +4295,7 @@ void ZoneServer::ProcessFaction(Spawn* spawn, Client* client)
 		{
 			//make sure the player has discovered the faction before we do anything with it, otherwise add it.
 			bool hasfaction = database.VerifyFactionID(player->GetCharacterID(), spawn->GetFactionID()); 
-			database.VerifyFactionID(player->GetCharacterID(),spawn->GetFactionID());
+			
 			if(hasfaction == 0) {
 				//they do not have the faction. Lets get the default value and feed it in.
 				sint32 defaultfaction = master_faction_list.GetDefaultFactionValue(spawn->GetFactionID());
