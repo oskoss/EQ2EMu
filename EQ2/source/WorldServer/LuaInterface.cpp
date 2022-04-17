@@ -1067,6 +1067,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "HasPendingLootItem", EQ2Emu_lua_HasPendingLootItem);
 	lua_register(state, "HasPendingLoot", EQ2Emu_lua_HasPendingLoot);
 	lua_register(state, "SetLootCoin", EQ2Emu_lua_SetLootCoin);
+	lua_register(state, "HasCoin", EQ2Emu_lua_HasCoin);
 	lua_register(state, "GetLootCoin", EQ2Emu_lua_GetLootCoin);
 	lua_register(state, "SetPlayerProximityFunction", EQ2Emu_lua_SetPlayerProximityFunction);
 	lua_register(state, "SetLocationProximityFunction", EQ2Emu_lua_SetLocationProximityFunction);

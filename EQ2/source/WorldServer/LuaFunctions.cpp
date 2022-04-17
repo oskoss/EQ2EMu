@@ -12762,3 +12762,21 @@ int EQ2Emu_lua_ChangeFaction(lua_State* state) {
 	}
 	return 0;
 }
+
+int EQ2Emu_lua_HasCoin(lua_State* state) {
+	bool hascoin = 0;
+	Player* player = (Player*)lua_interface->GetSpawn(state);
+	int32 coins = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+		
+if (player && player->IsPlayer()) {
+	hascoin = player->HasCoins(coins);
+	if(hascoin == 0) {
+		return 0;
+	}
+	if(hascoin == 1) {
+		return 1;
+	}
+
+}
+}

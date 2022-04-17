@@ -74,6 +74,7 @@ int EQ2Emu_lua_SetStaBase(lua_State* state);
 int EQ2Emu_lua_SetStrBase(lua_State* state);
 int EQ2Emu_lua_SetAgiBase(lua_State* state);
 int EQ2Emu_lua_SetLootCoin(lua_State* state);
+int EQ2Emu_lua_HasCoin(lua_State* state);
 int EQ2Emu_lua_SetQuestYellow(lua_State* state);
 
 //Gets
