@@ -12743,6 +12743,8 @@ int EQ2Emu_lua_ChangeFaction(lua_State* state) {
 				client->Message(CHANNEL_FACTION, "Your faction standing with %s got better.", faction->name.c_str());
 				else if(faction)
 					client->Message(CHANNEL_FACTION, "Your faction standing with %s could not possibly get any better.", faction->name.c_str());
+					
+				lua_interface->SetBooleanValue(state, true);
 			return 1;
 
 		}
@@ -12757,10 +12759,13 @@ int EQ2Emu_lua_ChangeFaction(lua_State* state) {
 				client->Message(CHANNEL_FACTION, "Your faction standing with %s got worse.", faction->name.c_str());
 			else if(faction)
 				client->Message(CHANNEL_FACTION, "Your faction standing with %s could not possibly get any worse.", faction->name.c_str());
+				
+			lua_interface->SetBooleanValue(state, true);
 			return 1;
 		}
 	}
-	return 0;
+	lua_interface->SetBooleanValue(state, false);
+	return 1;
 }
 
 int EQ2Emu_lua_HasCoin(lua_State* state) {
@@ -12772,9 +12777,11 @@ int EQ2Emu_lua_HasCoin(lua_State* state) {
 if (player && player->IsPlayer()) {
 	hascoin = player->HasCoins(coins);
 	if(hascoin == 0) {
-		return 0;
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
 	}
 	if(hascoin == 1) {
+		lua_interface->SetBooleanValue(state, true);
 		return 1;
 	}
 
