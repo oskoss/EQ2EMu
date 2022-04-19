@@ -19,9 +19,11 @@
 */
 #include "Factions.h"
 #include "client.h"
+#include "Player.h"
 
 extern MasterFactionList master_faction_list;
 extern ConfigReader configReader;
+
 
 PlayerFaction::PlayerFaction(){
 	MFactionUpdateNeeded.SetName("PlayerFaction::MFactionUpdateNeeded");
@@ -115,8 +117,11 @@ EQ2Packet* PlayerFaction::FactionUpdate(int16 version){
 sint32 PlayerFaction::GetFactionValue(int32 faction_id){
 	if(faction_id <= 10)
 		return 0;
-	if(faction_values.count(faction_id) == 0)
-		return master_faction_list.GetDefaultFactionValue(faction_id); //faction_values[faction_id] = master_faction_list.GetDefaultFactionValue(faction_id);
+
+	//devn00b: This always seems to return 1, even if the player infact has no faction. since we handle this via a check in zoneserver.cpp (processfaction)
+	//if(faction_values.count(faction_id) == 0)
+	//return master_faction_list.GetDefaultFactionValue(faction_id); //faction_values[faction_id] = master_faction_list.GetDefaultFactionValue(faction_id);
+
 	return faction_values[faction_id];
 }
 

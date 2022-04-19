@@ -4291,17 +4291,19 @@ void ZoneServer::ProcessFaction(Spawn* spawn, Client* client)
 		vector<int32>* factions = 0;
 		Player* player = client->GetPlayer();
 
+		bool hasfaction = database.VerifyFactionID(player->GetCharacterID(), spawn->GetFactionID());
+		//if 0 they dont have an entry in the db for this faction. if one they do and we can skip it.
+		if(hasfaction == 0) {
+			//Find out the default for this faction
+			sint32 defaultfaction = master_faction_list.GetDefaultFactionValue(spawn->GetFactionID());
+			//add the default faction for the player.
+			player->SetFactionValue(spawn->GetFactionID(), defaultfaction);
+			//save the character so the new default gets written to the db. 
+			client->Save();
+		}
+
 		if(player->GetFactions()->ShouldDecrease(spawn->GetFactionID()))
 		{
-			//make sure the player has discovered the faction before we do anything with it, otherwise add it.
-			bool hasfaction = database.VerifyFactionID(player->GetCharacterID(), spawn->GetFactionID()); 
-			
-			if(hasfaction == 0) {
-				//they do not have the faction. Lets get the default value and feed it in.
-				sint32 defaultfaction = master_faction_list.GetDefaultFactionValue(spawn->GetFactionID());
-				//add the default faction for the player.
-				player->SetFactionValue(spawn->GetFactionID(), defaultfaction);
-			}
 
 			update_result = player->GetFactions()->DecreaseFaction(spawn->GetFactionID());
 			faction = master_faction_list.GetFaction(spawn->GetFactionID());
@@ -4321,6 +4323,7 @@ void ZoneServer::ProcessFaction(Spawn* spawn, Client* client)
 				{
 					if(player->GetFactions()->ShouldIncrease(*itr))
 					{
+
 						update_result = player->GetFactions()->IncreaseFaction(*itr);
 						faction = master_faction_list.GetFaction(*itr);
 
