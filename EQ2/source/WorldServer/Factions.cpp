@@ -19,7 +19,6 @@
 */
 #include "Factions.h"
 #include "client.h"
-#include "Player.h"
 
 extern MasterFactionList master_faction_list;
 extern ConfigReader configReader;
