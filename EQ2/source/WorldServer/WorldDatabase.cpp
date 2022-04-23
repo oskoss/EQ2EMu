@@ -972,10 +972,11 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->appearance.encounter_level = atoi(row[4]);
 		npc->appearance.race = atoi(row[5]);
 		//npc->appearance.lua_race_id = atoi(row[75]);
-		if (atoi(row[74]) > 0) {
+		//devn00b: this never gets used..and is set correctly below...removing.
+		/*if (atoi(row[74]) > 0) {
 			int16 xxx = atoi(row[75]);
 			int8 yyy = 0;
-		}
+		}*/
 		npc->appearance.model_type = atoi(row[6]);
 		npc->appearance.soga_model_type = atoi(row[62]);
 		npc->appearance.adventure_class = atoi(row[7]);
@@ -2303,6 +2304,8 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 	UpdateStartingSkillbar(char_id, class_id, race_id);
 	UpdateStartingTitles(char_id, class_id, race_id, gender_id);
 	InsertCharacterStats(char_id, class_id, race_id);
+	UpdateStartingLanguage(char_id, race_id, create->getType_int8_ByName("starting_zone"));
+
 
 	AddNewPlayerToServerGuild(loginID, char_id);
 
@@ -4273,6 +4276,7 @@ void WorldDatabase::LoadFactionList() {
 
 void WorldDatabase::SavePlayerFactions(Client* client){
 	LogWrite(PLAYER__DEBUG, 3, "Player", "Saving Player Factions...");
+	
 	Query query;
 	map<int32, sint32>* factions = client->GetPlayer()->GetFactions()->GetFactionValues();
 	map<int32, sint32>::iterator itr;
@@ -4855,7 +4859,11 @@ bool WorldDatabase::DeleteCharacter(int32 account_id, int32 character_id){
 		guild->RemoveGuildMember(character_id);
 
 	Query query;
+	Query query2;
 	query.RunQuery2(Q_DELETE, "DELETE FROM characters WHERE id=%u AND account_id=%u", character_id, account_id);
+	//delete languages
+	query2.RunQuery2(Q_DELETE, "DELETE FROM character_languages WHERE char_id=%u", character_id);
+
 	if(!query.GetAffectedRows())
 	{
 		//No error just in case ppl try doing stupid stuff
@@ -7945,4 +7953,38 @@ bool WorldDatabase::VerifyFactionID(int32 char_id, int32 faction_id) {
 		return false;
 	
 	return true;
+}
+
+//using int/32 for starting city, should be large enough to support future zones (LOL). TODO: Will probably need more support bolted on, to support PVP and such.
+void WorldDatabase::UpdateStartingLanguage(int32 char_id, uint8 race_id, int32 starting_city)
+{
+	int8 rule = rule_manager.GetGlobalRule(R_World, StartingZoneLanguages)->GetInt8();
+	//this should never need to be done but lets make sure we got all the stuff we need. char_id at min since used for both.
+	if(!char_id || rule == 0 && !race_id ||rule == 1 && !starting_city)
+		return;
+
+	//check the rule, and that they gave us a race, if so use default entries to match live.
+	if(rule == 0 && race_id >= 0) {
+		Query query;
+		LogWrite(PLAYER__DEBUG, 0, "Player", "Adding default Languages for race: %i, for char_id: %u. No Custom Used.", race_id, char_id);
+		query.RunQuery2(Q_INSERT, "INSERT IGNORE INTO character_languages (char_id, language_id) VALUES (%i,(SELECT language_id FROM starting_languages WHERE race=%i))",char_id, race_id);
+		return;
+	}
+	//if we have a starting city supplied, and the rule is set to use it, deal with it
+	if(rule == 1) {
+		Query query;
+		MYSQL_ROW row;
+		MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT language_id from starting_languages where starting_city=%i",starting_city);
+		LogWrite(PLAYER__DEBUG, 0, "Player", "Adding Custom Languages for starting_city: %i.", starting_city);
+		if (result)	{
+			if (mysql_num_rows(result) > 0)	{
+				while (result && (row = mysql_fetch_row(result))){
+				//add custom languages to the character_languages db.
+					query.RunQuery2(Q_INSERT, "INSERT IGNORE INTO character_languages (char_id, language_id) VALUES (%i,%i)",char_id, atoi(row[0]));
+				}
+			}
+		}
+	
+	}
+return;
 }

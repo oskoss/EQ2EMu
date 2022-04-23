@@ -144,6 +144,7 @@ enum RuleType {
 	SaveHeadshotImage,
 	SendPaperdollImagesToLogin,
 	TreasureChestDisabled,
+	StartingZoneLanguages,
 	StartingZoneRuleFlag,
 
 	/* ZONE */

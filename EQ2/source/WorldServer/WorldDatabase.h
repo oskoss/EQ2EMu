@@ -500,6 +500,7 @@ public:
 	int32				LoadCharacterLanguages(int32 char_id, Player *player);
 	int16				GetCharacterCurrentLang(int32 char_id, Player *player);
 	void				SaveCharacterCurrentLang(int32 id, int32 char_id, Client *client);
+	void 				UpdateStartingLanguage(int32 char_id, uint8 race_id, int32 starting_city=0);
 
 	/// <summary>Saves the given language for the given player</summary>
 	/// <param name='char_id'>Character ID to save the language to</param>
