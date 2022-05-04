@@ -438,7 +438,7 @@ void Entity::MapInfoStruct()
 	set_float_funcs["drunk"] = l::bind(&InfoStruct::set_drunk, &info_struct, l::_1);
 
 	set_sint16_funcs["power_regen"] = l::bind(&InfoStruct::set_power_regen, &info_struct, l::_1);
-	set_sint16_funcs["hp_region"] = l::bind(&InfoStruct::set_hp_regen, &info_struct, l::_1);
+	set_sint16_funcs["hp_regen"] = l::bind(&InfoStruct::set_hp_regen, &info_struct, l::_1);
 
 	set_int8_funcs["power_regen_override"] = l::bind(&InfoStruct::set_power_regen_override, &info_struct, l::_1);
 	set_int8_funcs["hp_region_override"] = l::bind(&InfoStruct::set_hp_regen_override, &info_struct, l::_1);
