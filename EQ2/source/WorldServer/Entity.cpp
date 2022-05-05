@@ -441,7 +441,7 @@ void Entity::MapInfoStruct()
 	set_sint16_funcs["hp_regen"] = l::bind(&InfoStruct::set_hp_regen, &info_struct, l::_1);
 
 	set_int8_funcs["power_regen_override"] = l::bind(&InfoStruct::set_power_regen_override, &info_struct, l::_1);
-	set_int8_funcs["hp_region_override"] = l::bind(&InfoStruct::set_hp_regen_override, &info_struct, l::_1);
+	set_int8_funcs["hp_regen_override"] = l::bind(&InfoStruct::set_hp_regen_override, &info_struct, l::_1);
 	
 	set_int8_funcs["water_type"] = l::bind(&InfoStruct::set_water_type, &info_struct, l::_1);
 	set_int8_funcs["flying_type"] = l::bind(&InfoStruct::set_flying_type, &info_struct, l::_1);
