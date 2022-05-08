@@ -48,6 +48,9 @@ struct SpawnEntry{
 	int32	respawn;
 	int32	expire_time;
 	int32	expire_offset;
+	int32   lvl_override;
+	int32	hp_override;
+	int32   mp_override;
 };
 class SpawnLocation{
 public:

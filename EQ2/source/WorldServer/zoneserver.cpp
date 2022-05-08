@@ -2593,6 +2593,14 @@ NPC* ZoneServer::AddNPCSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentr
 		npc->SetSpawnEntryID(spawnentry->spawn_entry_id);
 		npc->SetRespawnTime(spawnentry->respawn);
 		npc->SetExpireTime(spawnentry->expire_time);
+		//devn00b add overrides for some spawns
+		if(spawnentry->hp_override > 0)
+			npc->SetHP(spawnentry->hp_override);
+		if(spawnentry->lvl_override > 0)
+			npc->SetLevel(spawnentry->lvl_override);
+		if(spawnentry->mp_override > 0)
+			npc->SetPower(spawnentry->mp_override);
+
 		if (spawnentry->expire_time > 0)
 			AddSpawnExpireTimer(npc, spawnentry->expire_time, spawnentry->expire_offset);
 		AddLoot(npc);
