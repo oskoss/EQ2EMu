@@ -48,9 +48,23 @@ struct SpawnEntry{
 	int32	respawn;
 	int32	expire_time;
 	int32	expire_offset;
+	//devn00b: added spawn location overrides, added these to accomodate.
 	int32   lvl_override;
 	int32	hp_override;
 	int32   mp_override;
+	int32   str_override;
+	int32   sta_override;
+	int32   wis_override;
+	int32   int_override;
+	int32   agi_override;
+	int32	heat_override;
+	int32	cold_override;
+	int32	magic_override;
+	int32	mental_override;
+	int32	divine_override;
+	int32	disease_override;
+	int32	poison_override;
+	int32   difficulty_override; //aka EncounterLevel
 };
 class SpawnLocation{
 public:

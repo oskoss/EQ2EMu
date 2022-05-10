@@ -2587,20 +2587,75 @@ NPC* ZoneServer::AddNPCSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentr
 	LogWrite(SPAWN__TRACE, 1, "Spawn", "Enter %s", __FUNCTION__);
 	NPC* npc = GetNewNPC(spawnentry->spawn_id);
 	if(npc && !npc->IsOmittedByDBFlag()){
+		InfoStruct* info = npc->GetInfoStruct();
 		DeterminePosition(spawnlocation, npc);
 		npc->SetDatabaseID(spawnentry->spawn_id);
 		npc->SetSpawnLocationID(spawnentry->spawn_location_id);
 		npc->SetSpawnEntryID(spawnentry->spawn_entry_id);
 		npc->SetRespawnTime(spawnentry->respawn);
 		npc->SetExpireTime(spawnentry->expire_time);
-		//devn00b add overrides for some spawns
-		if(spawnentry->hp_override > 0)
-			npc->SetHP(spawnentry->hp_override);
-		if(spawnentry->lvl_override > 0)
-			npc->SetLevel(spawnentry->lvl_override);
-		if(spawnentry->mp_override > 0)
-			npc->SetPower(spawnentry->mp_override);
 
+		//devn00b add overrides for some spawns
+		if(spawnentry->hp_override > 0){
+			npc->SetHP(spawnentry->hp_override);
+		}
+		if(spawnentry->lvl_override > 0){
+			npc->SetLevel(spawnentry->lvl_override);
+		}
+		if(spawnentry->mp_override > 0){
+			npc->SetPower(spawnentry->mp_override); 
+		}
+		if(spawnentry->str_override > 0){
+			info->set_str_base(spawnentry->str_override);
+			info->set_str(spawnentry->str_override);
+		}
+		if(spawnentry->sta_override > 0){
+			info->set_sta_base(spawnentry->sta_override);
+			info->set_sta(spawnentry->sta_override);
+		}
+		if(spawnentry->wis_override > 0){
+			info->set_wis_base(spawnentry->wis_override);
+			info->set_wis(spawnentry->wis_override);
+		}
+		if(spawnentry->int_override > 0){
+			info->set_intel_base(spawnentry->int_override);
+			info->set_intel(spawnentry->int_override);
+		}		
+		if(spawnentry->agi_override > 0){
+			info->set_agi_base(spawnentry->agi_override);
+			info->set_agi(spawnentry->agi_override);
+		}				
+		if(spawnentry->heat_override > 0){
+			info->set_heat_base(spawnentry->heat_override);
+			info->set_heat(spawnentry->heat_override);
+		}	
+		if(spawnentry->cold_override > 0){
+			info->set_cold_base(spawnentry->cold_override);
+			info->set_cold(spawnentry->cold_override);
+		}		
+		if(spawnentry->magic_override > 0){
+			info->set_magic_base(spawnentry->magic_override);
+			info->set_magic(spawnentry->magic_override);
+		}
+		if(spawnentry->mental_override > 0){
+			info->set_mental_base(spawnentry->mental_override);
+			info->set_mental(spawnentry->mental_override);
+		}
+		if(spawnentry->divine_override > 0){
+			info->set_divine_base(spawnentry->divine_override);
+			info->set_divine(spawnentry->divine_override);
+		}
+		if(spawnentry->disease_override > 0){
+			info->set_disease_base(spawnentry->disease_override);
+			info->set_disease(spawnentry->disease_override);
+		}
+		if(spawnentry->poison_override > 0){
+			info->set_poison_base(spawnentry->poison_override);
+			info->set_poison(spawnentry->poison_override);
+		}
+		if(spawnentry->difficulty_override > 0){
+			npc->SetEncounterLevel(spawnentry->difficulty_override, 1);
+		}
 		if (spawnentry->expire_time > 0)
 			AddSpawnExpireTimer(npc, spawnentry->expire_time, spawnentry->expire_offset);
 		AddLoot(npc);

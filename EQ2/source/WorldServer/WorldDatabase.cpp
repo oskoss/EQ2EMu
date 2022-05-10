@@ -3134,6 +3134,7 @@ int32 WorldDatabase::ProcessSpawnLocations(ZoneServer* zone, const char* sql_que
 				spawn_location = new SpawnLocation();
 			}
 			SpawnEntry* entry = new SpawnEntry;
+
 			spawn_location_id = atoul(row[0]);
 			entry->spawn_location_id = spawn_location_id;
 			entry->spawn_entry_id = atoul(row[1]);
@@ -3143,10 +3144,23 @@ int32 WorldDatabase::ProcessSpawnLocations(ZoneServer* zone, const char* sql_que
 			entry->respawn = atoul(row[11]);
 			entry->expire_time = atoul(row[14]);
 			entry->expire_offset = atoul(row[15]);
-			//devn00b add stat overrides
+			//devn00b add stat overrides. Just a slight increase in size. Used in ZoneServer::AddNPCSpawn.
 			entry->lvl_override = atoul(row[19]);
 			entry->hp_override = atoul(row[20]);
 			entry->mp_override = atoul(row[21]);
+			entry->str_override = atoul(row[22]);
+			entry->sta_override = atoul(row[23]);
+			entry->wis_override = atoul(row[24]);
+			entry->int_override = atoul(row[25]);
+			entry->agi_override = atoul(row[26]);
+			entry->heat_override = atoul(row[27]);
+			entry->cold_override = atoul(row[28]);
+			entry->magic_override = atoul(row[29]);
+			entry->mental_override = atoul(row[30]);
+			entry->divine_override = atoul(row[31]);
+			entry->disease_override = atoul(row[32]);
+			entry->poison_override = atoul(row[33]);
+			entry->difficulty_override = atoul(row[34]);
 			spawn_location->x = atof(row[2]);
 			spawn_location->y = atof(row[3]);
 			spawn_location->z = atof(row[4]);
@@ -3197,11 +3211,11 @@ void WorldDatabase::LoadSpawns(ZoneServer* zone)
 
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Enter LoadSpawns");
 
-	npcs = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_npcs sn where sn.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_NPC);
-	objects = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_objects so where so.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_OBJECT);
-	widgets = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_widgets sw where sw.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_WIDGET);
-	signs = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_signs ss where ss.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_SIGN);
-	ground_spawns = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_ground sg where sg.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_GROUNDSPAWN);
+	npcs = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override, slp.str_override, slp.sta_override, slp.wis_override, slp.int_override, slp.agi_override, slp.heat_override, slp.cold_override, slp.magic_override, slp.mental_override, slp.divine_override, slp.disease_override, slp.poison_override, difficulty_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_npcs sn where sn.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_NPC);
+	objects = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override, slp.str_override, slp.sta_override, slp.wis_override, slp.int_override, slp.agi_override, slp.heat_override, slp.cold_override, slp.magic_override, slp.mental_override, slp.divine_override, slp.disease_override, slp.poison_override, difficulty_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_objects so where so.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_OBJECT);
+	widgets = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override, slp.str_override, slp.sta_override, slp.wis_override, slp.int_override, slp.agi_override, slp.heat_override, slp.cold_override, slp.magic_override, slp.mental_override, slp.divine_override, slp.disease_override, slp.poison_override, difficulty_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_widgets sw where sw.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_WIDGET);
+	signs = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override, slp.str_override, slp.sta_override, slp.wis_override, slp.int_override, slp.agi_override, slp.heat_override, slp.cold_override, slp.magic_override, slp.mental_override, slp.divine_override, slp.disease_override, slp.poison_override, difficulty_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_signs ss where ss.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_SIGN);
+	ground_spawns = ProcessSpawnLocations(zone, "SELECT sln.id, sle.id, slp.x, slp.y, slp.z, slp.x_offset, slp.y_offset, slp.z_offset, slp.heading, sle.spawn_id, sle.spawnpercentage, slp.respawn, slp.grid_id, slp.id, slp.expire_timer, slp.expire_offset, slp.pitch, slp.roll, sle.condition, slp.lvl_override, slp.hp_override, slp.mp_override, slp.str_override, slp.sta_override, slp.wis_override, slp.int_override, slp.agi_override, slp.heat_override, slp.cold_override, slp.magic_override, slp.mental_override, slp.divine_override, slp.disease_override, slp.poison_override, difficulty_override FROM spawn_location_placement slp, spawn_location_name sln, spawn_location_entry sle, spawn_ground sg where sg.spawn_id = sle.spawn_id and sln.id = sle.spawn_location_id and sln.id = slp.spawn_location_id and slp.zone_id=%i ORDER BY sln.id, sle.id", SPAWN_ENTRY_TYPE_GROUNDSPAWN);
 	spawn_groups = LoadSpawnLocationGroups(zone);
 	spawn_group_associations = LoadSpawnLocationGroupAssociations(zone);
 	spawn_group_chances = LoadSpawnGroupChances(zone);
