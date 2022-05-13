@@ -11547,11 +11547,11 @@ Player* player = client->GetPlayer();
 	}
 	
 	client->SimpleMessage(CHANNEL_NARRATIVE, "Listing Available Moods:");
-	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "none");
-	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "afraid");
-	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "angry");
-	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "happy");
-	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "sad");
-	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "tired");
+	client->SimpleMessage(CHANNEL_NARRATIVE, "none");
+	client->SimpleMessage(CHANNEL_NARRATIVE, "afraid");
+	client->SimpleMessage(CHANNEL_NARRATIVE, "angry");
+	client->SimpleMessage(CHANNEL_NARRATIVE, "happy");
+	client->SimpleMessage(CHANNEL_NARRATIVE, "sad");
+	client->SimpleMessage(CHANNEL_NARRATIVE, "tired");
 	return;
 }
