@@ -975,7 +975,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 				packet->setDataByName("house_zone", house_name.c_str());
 		}
 		else
-			packet->setDataByName("house_zone", "abcdefghijklmnopqrst");
+			packet->setDataByName("house_zone", "None");
 		//unknown_1096_45_MJ		
 		if (bind_zone_id > 0){
 			string bind_name = database.GetZoneName(bind_zone_id);
@@ -983,18 +983,9 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 				packet->setDataByName("bind_zone", bind_name.c_str());
 		}
 		else
-			packet->setDataByName("bind_zone", "abcdefghijklmnopqrst");
-		//
-
-
-
-
-
-
-
-
-
-
+			packet->setDataByName("bind_zone", "None");
+			
+			
 		((Entity*)player)->MStats.lock();
 		packet->setDataByName("rare_harvest_chance", player->stats[ITEM_STAT_RARE_HARVEST_CHANCE]);
 		packet->setDataByName("max_crafting", player->stats[ITEM_STAT_MAX_CRAFTING]);

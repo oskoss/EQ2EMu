@@ -336,6 +336,8 @@ public:
 	void Command_LocationList(Client* client, Seperator* sep);
 	void Command_LocationRemove(Client* client, Seperator* sep);
 	void Command_Merchant(Client* client, Seperator* sep, int handler);
+	//devn00b
+	void Command_Mood(Client* client, Seperator* sep);
 
 	void Command_Modify(Client* client); // usage function
 	void Command_ModifyCharacter(Client* client, Seperator* sep);
@@ -932,7 +934,7 @@ private:
 #define CANCEL_AA_PROFILE				757
 #define SAVE_AA_PROFILE					758
 
-
+#define COMMAND_MOOD				800
 
 
 #define COMMAND_MODIFY				1000 // INSERT INTO `commands`(`id`,`type`,`command`,`subcommand`,`handler`,`required_status`) VALUES ( NULL,'1','modify','','1000','200'); 

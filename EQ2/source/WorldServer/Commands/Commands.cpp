@@ -4584,6 +4584,14 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if (spawn->IsNPC())
 					client->Message(CHANNEL_COLOR_YELLOW, "Randomize: %u", ((NPC*)spawn)->GetRandomize());
 
+				client->Message(CHANNEL_COLOR_YELLOW, "Heat Resist/Base: %u/%u",((NPC*)spawn)->GetHeatResistance(), ((NPC*)spawn)->GetHeatResistanceBase());					
+				client->Message(CHANNEL_COLOR_YELLOW, "Cold Resist/Base: %u/%u",((NPC*)spawn)->GetColdResistance(), ((NPC*)spawn)->GetColdResistanceBase());
+				client->Message(CHANNEL_COLOR_YELLOW, "Magic Resist/Base: %u/%u",((NPC*)spawn)->GetMagicResistance(), ((NPC*)spawn)->GetMagicResistanceBase());
+				client->Message(CHANNEL_COLOR_YELLOW, "Mental Resist/Base: %u/%u",((NPC*)spawn)->GetMentalResistance(), ((NPC*)spawn)->GetMentalResistanceBase());
+				client->Message(CHANNEL_COLOR_YELLOW, "Divine Resist/Base: %u/%u",((NPC*)spawn)->GetDivineResistance(), ((NPC*)spawn)->GetDivineResistanceBase());
+				client->Message(CHANNEL_COLOR_YELLOW, "Disease Resist/Base: %u/%u",((NPC*)spawn)->GetDiseaseResistance(), ((NPC*)spawn)->GetDiseaseResistanceBase());
+				client->Message(CHANNEL_COLOR_YELLOW, "Poison Resist/Base: %u/%u",((NPC*)spawn)->GetPoisonResistance(), ((NPC*)spawn)->GetPoisonResistanceBase());
+
 				string details;
 				details += "\\#0000FFName:	" + string(spawn->GetName()) + "\n";
 				details += "Type:	" + string(type) + "\n";
@@ -5389,6 +5397,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_DUEL_SURRENDER		: { Command_DuelSurrender(client, sep); break; }
 		case COMMAND_DUEL_TOGGLE		: { Command_DuelToggle(client, sep); break; }
 		case COMMAND_SPAWN_TEMPLATE		: { Command_SpawnTemplate(client, sep); break; }
+		//devn00b
+		case COMMAND_MOOD				: { Command_Mood(client, sep); break;}
 
 		case COMMAND_MODIFY				: { Command_Modify(client); break; }
 		case COMMAND_MODIFY_CHARACTER	: { Command_ModifyCharacter(client, sep); break; }
@@ -11495,4 +11505,53 @@ void Commands::Command_MoveCharacter(Client* client, Seperator* sep) {
 		else
 			client->Message(CHANNEL_COLOR_RED, "Query FAILED to run: %s", query);
 	}
+}
+
+void Commands::Command_Mood(Client* client, Seperator* sep) {
+Player* player = client->GetPlayer();
+
+	if( sep && sep->arg[0] )
+	{
+		const char* value = sep->arg[0];
+		// process single-param commands first
+		if( strncasecmp(value, "angry", strlen(value)) == 0 ) 
+		{
+			player->SetMoodState(11852, 1);
+			return;
+		}
+		else if( strncasecmp(value, "afraid", strlen(value)) == 0 ) 
+		{
+			player->SetMoodState(11851, 1);
+			return;
+		} 
+		else if( strncasecmp(value, "happy", strlen(value)) == 0 ) 
+		{
+			player->SetMoodState(11854, 1);
+			return;
+		} 
+		else if( strncasecmp(value, "sad", strlen(value)) == 0 ) {
+			player->SetMoodState(11856, 1);
+			return;
+		}
+		else if( strncasecmp(value, "tired", strlen(value)) == 0 ) 
+		{
+			player->SetMoodState(11857,1);
+			return;
+		}
+		else if( strncasecmp(value, "none", strlen(value)) == 0 ) 
+		{
+			player->SetMoodState(11855, 1);
+			return;
+		}
+
+	}
+	
+	client->SimpleMessage(CHANNEL_NARRATIVE, "Listing Available Moods:");
+	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "none");
+	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "afraid");
+	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "angry");
+	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "happy");
+	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "sad");
+	client->SimpleMessage(CHANNEL_COLOR_YELLOW, "tired");
+	return;
 }
