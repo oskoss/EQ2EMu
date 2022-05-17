@@ -303,6 +303,7 @@ void Entity::MapInfoStruct()
 
 	get_int8_funcs["interaction_flag"] = l::bind(&InfoStruct::get_interaction_flag, &info_struct);
 	get_int8_funcs["tag1"] = l::bind(&InfoStruct::get_tag1, &info_struct);
+	get_int16_funcs["mood"] = l::bind(&InfoStruct::get_mood, &info_struct);
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -450,6 +451,7 @@ void Entity::MapInfoStruct()
 
 	set_int8_funcs["interaction_flag"] = l::bind(&InfoStruct::set_interaction_flag, &info_struct, l::_1);
 	set_int8_funcs["tag1"] = l::bind(&InfoStruct::set_tag1, &info_struct, l::_1);
+	set_int16_funcs["mood"] = l::bind(&InfoStruct::set_mood, &info_struct, l::_1);
 
 }
 

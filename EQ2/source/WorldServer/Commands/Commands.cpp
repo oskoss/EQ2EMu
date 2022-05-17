@@ -11513,37 +11513,78 @@ Player* player = client->GetPlayer();
 	if( sep && sep->arg[0] )
 	{
 		const char* value = sep->arg[0];
-		// process single-param commands first
+		InfoStruct* info = player->GetInfoStruct();
+		int32 cid = client->GetCharacterID();
+		char* characterName = database.GetCharacterName(cid);
+		char tmp[1024]; // our emote string "xyz appears zyx"
+		//char properties vals
+		char* pname = "mood";
+		char* pval; // mood value
+		bool pt; //used to verify return from DB.
+
+		//This should never be seen.
+		sprintf(tmp, " ");
 		if( strncasecmp(value, "angry", strlen(value)) == 0 ) 
 		{
+			sprintf(tmp, "%s appears angry", characterName);
+			pval = "11852";
 			player->SetMoodState(11852, 1);
-			return;
+			info->set_mood(11852);
+			pt = database.insertCharacterProperty(client, pname, pval);
 		}
 		else if( strncasecmp(value, "afraid", strlen(value)) == 0 ) 
 		{
+			sprintf(tmp, "%s appears afraid", characterName);
+			pval = "11851";
 			player->SetMoodState(11851, 1);
-			return;
+			info->set_mood(11851);
+			pt = database.insertCharacterProperty(client, pname, pval);
 		} 
 		else if( strncasecmp(value, "happy", strlen(value)) == 0 ) 
 		{
+			sprintf(tmp, "%s appears happy", characterName);
+			pval = "11854";
 			player->SetMoodState(11854, 1);
-			return;
+			info->set_mood(11854);
+			pt = database.insertCharacterProperty(client, pname, pval);
 		} 
 		else if( strncasecmp(value, "sad", strlen(value)) == 0 ) {
+			sprintf(tmp, "%s appears sad", characterName);
+			pval = "11856";
 			player->SetMoodState(11856, 1);
-			return;
+			info->set_mood(11856);
+			pt = database.insertCharacterProperty(client, pname, pval);
 		}
 		else if( strncasecmp(value, "tired", strlen(value)) == 0 ) 
 		{
-			player->SetMoodState(11857,1);
-			return;
+			sprintf(tmp, "%s appears tired", characterName);
+			pval = "11857";
+			player->SetMoodState(11857, 1);
+			info->set_mood(11857);
+			pt = database.insertCharacterProperty(client, pname, pval);
 		}
 		else if( strncasecmp(value, "none", strlen(value)) == 0 ) 
 		{
+			//using 11855 mood_idle for none, I assume thats what its for?
+			pval = "11855";
 			player->SetMoodState(11855, 1);
+			info->set_mood(11855);
+			pt = database.insertCharacterProperty(client, pname, pval);
+			//return since we have nothing left to do. No emote for none.
 			return;
-		}
-
+		}else{
+			client->SimpleMessage(CHANNEL_NARRATIVE, "Listing Available Moods:");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "none");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "afraid");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "angry");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "happy");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "sad");
+			client->SimpleMessage(CHANNEL_NARRATIVE, "tired");
+			return;
+			}
+			
+		client->GetPlayer()->GetZone()->HandleChatMessage(0, 0, CHANNEL_EMOTE, tmp);
+		return;
 	}
 	
 	client->SimpleMessage(CHANNEL_NARRATIVE, "Listing Available Moods:");

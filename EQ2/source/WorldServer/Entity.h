@@ -259,6 +259,7 @@ struct InfoStruct{
 
 		interaction_flag_ = 0;
 		tag1_ = 0;
+		mood_ = 0;
 	}
 
 
@@ -413,6 +414,7 @@ struct InfoStruct{
 
 		interaction_flag_ = oldStruct->get_interaction_flag();
 		tag1_ = oldStruct->get_tag1();
+		mood_ = oldStruct->get_mood();
 	}
 
 	//mutable std::shared_mutex mutex_;
@@ -577,6 +579,7 @@ struct InfoStruct{
 
 	int8	get_interaction_flag() { std::lock_guard<std::mutex> lk(classMutex); return interaction_flag_; }
 	int8	get_tag1() { std::lock_guard<std::mutex> lk(classMutex); return tag1_; }
+	int16	get_mood() { std::lock_guard<std::mutex> lk(classMutex); return mood_; }
 
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
@@ -825,6 +828,7 @@ struct InfoStruct{
 
 	void	set_interaction_flag(int8 value) { std::lock_guard<std::mutex> lk(classMutex); interaction_flag_ = value; }
 	void	set_tag1(int8 value) { std::lock_guard<std::mutex> lk(classMutex); tag1_ = value; }
+	void	set_mood(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mood_ = value; }
 
 	void	ResetEffects(Spawn* spawn)
 	{
@@ -996,6 +1000,7 @@ private:
 
 	int8			interaction_flag_;
 	int8			tag1_;
+	int16			mood_;
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;
 };
