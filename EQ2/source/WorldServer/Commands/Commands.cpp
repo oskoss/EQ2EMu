@@ -4583,7 +4583,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->Message(CHANNEL_COLOR_YELLOW, "Emote State: %i, Pitch: %f, Roll: %f, Hide Hood: %i", spawn->GetEmoteState(), spawn->GetPitch(), spawn->GetRoll(), spawn->appearance.hide_hood);
 				if (spawn->IsNPC())
 					client->Message(CHANNEL_COLOR_YELLOW, "Randomize: %u", ((NPC*)spawn)->GetRandomize());
-
+				if (spawn->IsNPC()){
 				client->Message(CHANNEL_COLOR_YELLOW, "Heat Resist/Base: %u/%u",((NPC*)spawn)->GetHeatResistance(), ((NPC*)spawn)->GetHeatResistanceBase());					
 				client->Message(CHANNEL_COLOR_YELLOW, "Cold Resist/Base: %u/%u",((NPC*)spawn)->GetColdResistance(), ((NPC*)spawn)->GetColdResistanceBase());
 				client->Message(CHANNEL_COLOR_YELLOW, "Magic Resist/Base: %u/%u",((NPC*)spawn)->GetMagicResistance(), ((NPC*)spawn)->GetMagicResistanceBase());
@@ -4591,7 +4591,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->Message(CHANNEL_COLOR_YELLOW, "Divine Resist/Base: %u/%u",((NPC*)spawn)->GetDivineResistance(), ((NPC*)spawn)->GetDivineResistanceBase());
 				client->Message(CHANNEL_COLOR_YELLOW, "Disease Resist/Base: %u/%u",((NPC*)spawn)->GetDiseaseResistance(), ((NPC*)spawn)->GetDiseaseResistanceBase());
 				client->Message(CHANNEL_COLOR_YELLOW, "Poison Resist/Base: %u/%u",((NPC*)spawn)->GetPoisonResistance(), ((NPC*)spawn)->GetPoisonResistanceBase());
-
+				}
+				
 				string details;
 				details += "\\#0000FFName:	" + string(spawn->GetName()) + "\n";
 				details += "Type:	" + string(type) + "\n";
