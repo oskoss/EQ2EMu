@@ -27,7 +27,7 @@ EQ2Packet* LS_CharSelectList::serialize(int16 version){
 		account_info.account_id = account_id;
 		account_info.unknown1 = 0xFFFFFFFF;
 		account_info.unknown2 = 0;
-		account_info.unknown3 = 10;
+		account_info.maxchars = 10;
 		account_info.unknown4 = 0;
 		AddData(account_info);
 	}
@@ -36,13 +36,13 @@ EQ2Packet* LS_CharSelectList::serialize(int16 version){
 		account_info.account_id = account_id;
 		account_info.unknown1 = 0xFFFFFFFF;
 		account_info.unknown2 = 0;
-		account_info.unknown3 = 10;
+		account_info.maxchars = 30; //devn00b:Corrected unknown and increased maxchars from 10 to 30.
 		account_info.unknown4 = 0;
 		for (int i = 0; i < 3; i++)
 			account_info.unknown5[i] = 0xFFFFFFFF;
 		account_info.unknown5[3] = 0;
-		account_info.unknown6 = 0xFFFF; // sets Veteran Bonus under 'Select Character' yellow (vs greyed out), adventure/tradeskill bonus 200%
-		account_info.unknown7 = 0; // when 1 (count?) provides free upgrade option for character to lvl 90 (heroic character) -- its a green 'Free' up arrow next to the character that is selected in char select
+		account_info.vet_adv_bonus = 1;
+		account_info.vet_trade_bonus = 0;
 		AddData(account_info);
 	}	
 	return new EQ2Packet(OP_AllCharactersDescReplyMsg, getData(), getDataSize());
