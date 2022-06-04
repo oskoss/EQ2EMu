@@ -50,6 +50,7 @@ public:
 		SetQuestsRequired(new_spawn);
 		new_spawn->forceMapCheck = forceMapCheck;
 		new_spawn->SetOmittedByDBFlag(IsOmittedByDBFlag());
+		new_spawn->SetLootTier(GetLootTier());
 		return new_spawn;
 	}
 	bool IsGroundSpawn(){ return true; }
