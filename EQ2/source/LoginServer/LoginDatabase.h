@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "../common/database.h"
+#include "../common/DatabaseNew.h"
 #include "../common/types.h"
 #include "../common/MiscFunctions.h"
 #include "../common/servertalk.h"
@@ -78,5 +79,11 @@ public:
 	bool ResetWorldServerStatsConnectedTime( LWorld* world );
 	void RemoveOldWorldServerStats();
 	void ResetWorldStats();
+	//devn00b temp
+	bool ConnectNewDatabase();
+	void SetServerEquipmentAppearances(int32 server_id, map<int32, LoginEquipmentUpdate> equip_updates); // JohnAdams: login appearances
+	int32 GetLoginCharacterIDFromWorldCharID(int32 server_id, int32 char_id); // JohnAdams: login appearances
+	void RemoveDeletedCharacterData();
+	DatabaseNew	dbLogin;
 };
 #endif

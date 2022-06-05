@@ -7,6 +7,8 @@
 #include "../common/debug.h"
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 using namespace std;
 
 #ifdef WIN32
@@ -21,6 +23,7 @@ using namespace std;
 #endif
 
 #include "../common/Log.h"
+#include "../common/DatabaseNew.h"
 #include "LoginDatabase.h"
 #include "LoginAccount.h"
 #include "../common/MiscFunctions.h"
@@ -31,6 +34,16 @@ using namespace std;
 extern LoginDatabase database;
 extern LWorldList world_list;
 
+
+bool LoginDatabase::ConnectNewDatabase() {
+	return dbLogin.Connect();
+}
+
+void LoginDatabase::RemoveDeletedCharacterData()
+{
+	dbLogin.Query("DELETE FROM login_char_colors WHERE login_characters_id IN (SELECT id FROM login_characters WHERE deleted = 1)");
+	dbLogin.Query("DELETE FROM login_equipment WHERE login_characters_id IN (SELECT id FROM login_characters WHERE deleted = 1)");
+}
 
 void LoginDatabase::SetZoneInformation(int32 server_id, int32 zone_id, int32 version, PacketStruct* packet){	
 	if(packet){
@@ -107,6 +120,65 @@ string LoginDatabase::GetZoneDescription(char* name){
 	}
 	return ret;
 }
+
+
+int32 LoginDatabase::GetLoginCharacterIDFromWorldCharID(int32 server_id, int32 char_id)
+{
+	int32 ret;
+	Query query;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id FROM login_characters WHERE server_id = %u AND char_id = %u AND deleted = 0 LIMIT 0,1", server_id, char_id);
+	MYSQL_ROW row;
+	if((row = mysql_fetch_row(result))) {
+		ret = atoi(row[0]);
+	}
+
+	return ret;
+}
+
+void LoginDatabase::SetServerEquipmentAppearances(int32 server_id, map<int32, LoginEquipmentUpdate> equip_updates)
+{
+	if(equip_updates.size() > 0)
+	{
+
+		LogWrite(LOGIN__DEBUG, 0, "Login", "Saving appearance info from world %u...", server_id);
+
+		map<int32, LoginEquipmentUpdate>::iterator equip_itr;
+		stringstream ss;
+		ss << "replace into login_equipment (login_characters_id, equip_type, red, green, blue, highlight_red, highlight_green, highlight_blue, slot) values";
+		int count=0;
+		int32 char_id = 0;
+
+		for(equip_itr = equip_updates.begin(); equip_itr != equip_updates.end(); equip_itr++)
+		{
+			char_id = GetLoginCharacterIDFromWorldCharID(server_id, (int32)equip_itr->second.world_char_id);
+
+			if( char_id == 0 ) // invalid character/world match
+				continue;
+
+			LogWrite(LOGIN__DEBUG, 5, "Login", "--Processing character %u, slot %i , type %i", char_id, (int32)equip_itr->second.slot,(int32)equip_itr->second.type);
+
+			if(count > 0)
+				ss << ", ";
+
+			ss << "(" << char_id << ", ";
+			ss << (int32)equip_itr->second.equip_type << ", ";
+			ss << (int32)equip_itr->second.red << ", ";
+			ss << (int32)equip_itr->second.green << ", ";
+			ss << (int32)equip_itr->second.blue << ", ";
+			ss << (int32)equip_itr->second.highlight_red << ", ";
+			ss << (int32)equip_itr->second.highlight_green << ", ";
+			ss << (int32)equip_itr->second.highlight_blue << ", ";
+			ss << (int32)equip_itr->second.slot << ")";
+
+			count++;
+		}
+
+		if( !dbLogin.Query(ss.str().c_str()) )
+			LogWrite(LOGIN__ERROR, 0, "Login", "Error saving login_equipment data");
+
+	}
+}
+
 
 void LoginDatabase::SetServerZoneDescriptions(int32 server_id, map<int32, LoginZoneUpdate> zone_descriptions){
 	if(zone_descriptions.size() > 0){
@@ -231,8 +303,7 @@ void LoginDatabase::LoadCharacters(LoginAccount* acct, int16 version){
 			uchar tmp[] = {0xFF, 0xFF, 0xFF, 0x61, 0x00, 0x2C, 0x04, 0xA5, 0x09, 0x02, 0x0F, 0x00, 0x00};
 			for(size_t y=0;y<sizeof(tmp);y++)
 				player->packet->setDataByName("unknown11", tmp[y], y);
-
-			MYSQL_RES* result3 = query2.RunQuery2(Q_SELECT, "SELECT slot, equip_type, red, green, blue, highlight_red, highlight_green, highlight_blue from login_equipment where login_characters_id=%i order by slot",id);
+			MYSQL_RES* result3 = query2.RunQuery2(Q_SELECT, "SELECT slot, equip_type, red, green, blue, highlight_red, highlight_green, highlight_blue from login_equipment where login_characters_id=%i order by slot",atoi(row[21]));
 			if(result3){
 				for(int i=0;(row3 = mysql_fetch_row(result3)) && i<24; i++){
 					player->packet->setEquipmentByName("equip", atoi(row3[1]), atoi(row3[2]), atoi(row3[3]), atoi(row3[4]), atoi(row3[5]), atoi(row3[6]), atoi(row3[7]), atoi(row3[0]));

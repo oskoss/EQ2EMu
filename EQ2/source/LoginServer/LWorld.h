@@ -33,6 +33,7 @@
 #include "client.h"
 
 #define MAX_UPDATE_COUNT	20
+#define MAX_LOGIN_APPEARANCE_COUNT	100
 
 #ifdef WIN32
 	void ServerUpdateLoop(void* tmp);
@@ -182,6 +183,10 @@ public:
 	bool	WriteXML();
 
 	void	ListWorldsToConsole();
+	//devn00b temp
+	void	AddServerEquipmentUpdates(LWorld* world, map<int32, LoginEquipmentUpdate> updates);
+	void	ProcessLSEquipUpdates();
+	void	RequestServerEquipUpdates(LWorld* world);
 
 	void	SetUpdateServerList ( bool var ) { UpdateServerList = var; }
 	bool	ContinueServerUpdates(){ return server_update_thread; }
@@ -210,6 +215,16 @@ private:
 
 	TCPServer*				tcplistener;
 	TCPConnection*			OutLink;
+
+	//devn00b temp
+	// JohnAdams: login appearances, copied from above
+	map<int32, map<int32, bool> > equip_updates_already_used;
+	MutexMap<int32, int32> equip_update_timeouts;
+	MutexMap<int32, int32> awaiting_equip_update;
+	MutexMap<LWorld*, int32> last_equip_updated;
+	MutexMap<int32, map<int32, LoginEquipmentUpdate> > server_equip_updates;
+	//
+	///
 
 	// holds the world server list so we don't have to create it for every character
 	// logging in

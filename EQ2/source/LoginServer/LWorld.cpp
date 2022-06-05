@@ -545,6 +545,52 @@ bool LWorld::Process() {
 				Kick("Possible Hacking Attempt");
 			break;
 		}
+
+		case ServerOP_LoginEquipment: {
+			LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode %04X (%i): ServerOP_LoginEquipment", pack->opcode, pack->opcode);
+
+			pack->Inflate();
+			EquipmentUpdateList_Struct* updates = 0;
+			if(pack->size >= sizeof(EquipmentUpdateList_Struct) && ((EquipmentUpdateList_Struct*)pack->pBuffer)->total_updates <= MAX_LOGIN_APPEARANCE_COUNT){
+				updates = (EquipmentUpdateList_Struct*)pack->pBuffer;
+				EquipmentUpdate_Struct* equip = 0;
+				int32 pos = sizeof(EquipmentUpdateList_Struct);
+				sint16 num_updates = 0;
+				map<int32, LoginEquipmentUpdate> equip_updates;
+				LoginEquipmentUpdate update;
+				while(pos < pack->size && num_updates < updates->total_updates){
+					equip = (EquipmentUpdate_Struct*)(pack->pBuffer+pos);
+					update.world_char_id	= equip->world_char_id;
+					update.equip_type		= equip->equip_type;
+					update.red				= equip->red;
+					update.green			= equip->green;
+					update.blue				= equip->blue;
+					update.highlight_red	= equip->highlight_red;
+					update.highlight_green	= equip->highlight_green;
+					update.highlight_blue	= equip->highlight_blue;
+					update.slot				= equip->slot;
+					pos += sizeof(EquipmentUpdate_Struct);
+					num_updates++;
+					equip_updates[equip->id] = update; // JohnAdams: I think I need item_appearances.id from World here?
+				}
+
+				LogWrite(LOGIN__DEBUG, 1, "Login", "Processing %i Login Appearance Updates...", num_updates);
+				if(equip_updates.size() == updates->total_updates)
+				{
+					world_list.AddServerEquipmentUpdates(this, equip_updates);
+				}
+				else
+				{
+					LogWrite(LOGIN__ERROR, 0, "Login", "Error processing login appearance updates for server: %s\n\t%s, function %s, line %i", GetAccount(), __FILE__, __FUNCTION__, __LINE__);
+				}
+			}
+			else
+			{
+				LogWrite(LOGIN__ERROR, 0, "Login", "World ID '%i', Possible Hacking Attempt (func: %s, line: %i", GetAccountID(), __FUNCTION__, __LINE__);
+				Kick("Possible Hacking Attempt");
+			}
+			break;
+									  }
 		case ServerOP_BugReport:{
 			if(pack->size == sizeof(BugReport)){
 				BugReport* report = (BugReport*)pack->pBuffer;
@@ -1342,6 +1388,24 @@ void LWorldList::AddServerZoneUpdates(LWorld* world, map<int32, LoginZoneUpdate>
 	}
 	server_zone_updates.Put(server_id, updates);
 }
+//devn00b temp
+
+void LWorldList::AddServerEquipmentUpdates(LWorld* world, map<int32, LoginEquipmentUpdate> updates){
+	int32 server_id = world->GetID();
+	map<int32, LoginEquipmentUpdate>::iterator itr;
+	for(itr = updates.begin(); itr != updates.end(); itr++){
+		LogWrite(MISC__TODO, 1, "TODO", "JA: Until we learn what this does, can't risk worlds being kicked performing login appearance updates...\n%s, func: %s, line: %i", __FILE__, __FUNCTION__, __LINE__);
+
+		/*if(equip_updates_already_used.size() >= 1500 || equip_updates_already_used[server_id].count(itr->first) > 0)
+		{
+			LogWrite(LOGIN__ERROR, 0, "Login", "World ID '%i': Hacking attempt. (function: %s, line: %i", world->GetAccountID(), __FUNCTION__, __LINE__);
+			world->Kick("Hacking attempt.");
+			return;
+		}*/
+		equip_updates_already_used[server_id][itr->first] = true;
+	}
+	server_equip_updates.Put(server_id, updates);
+}
 
 void LWorldList::RequestServerUpdates(LWorld* world){
 	if(world){
@@ -1385,8 +1449,71 @@ void LWorldList::ProcessServerUpdates(){
 			}
 		}
 	}
+	ProcessLSEquipUpdates();
+	MWorldMap.releasereadlock();
+
+
+}
+void LWorldList::RequestServerEquipUpdates(LWorld* world)
+{
+	if(world)
+	{
+		ServerPacket *pack_equip = new ServerPacket(ServerOP_LoginEquipment, sizeof(EquipmentUpdateRequest_Struct));
+		EquipmentUpdateRequest_Struct *request_equip = (EquipmentUpdateRequest_Struct *)pack_equip->pBuffer;
+		request_equip->max_per_batch = MAX_LOGIN_APPEARANCE_COUNT; // item appearance data smaller, request more at a time?
+		LogWrite(LOGIN__DEBUG, 1, "Login", "Sending equipment update requests to world: (%s)... (Batch Size: %i)", world->GetName(), request_equip->max_per_batch);
+		world->SendPacket(pack_equip);
+		delete pack_equip;
+		equip_update_timeouts.Put(world->GetID(), Timer::GetCurrentTime2() + 30000);
+	}
+}
+void LWorldList::ProcessLSEquipUpdates()
+{
+	// process login_equipment updates
+	MutexMap<int32, map<int32, LoginEquipmentUpdate> >::iterator itr_equip = server_equip_updates.begin();
+	while(itr_equip.Next())
+	{
+		if(itr_equip->second.size() > 0)
+		{
+			LogWrite(LOGIN__DEBUG, 1, "Login", "Setting Login Appearances...");
+			database.SetServerEquipmentAppearances(itr_equip->first, itr_equip->second);
+			if(itr_equip->second.size() == MAX_LOGIN_APPEARANCE_COUNT)			
+				awaiting_equip_update.Put(itr_equip->first, Timer::GetCurrentTime2() + 10000); //only process 100 updates in a 10 second period to avoid network problems
+			server_equip_updates.erase(itr_equip->first);
+		}
+		if(equip_update_timeouts.count(itr_equip->first) == 0 || equip_update_timeouts.Get(itr_equip->first) <= Timer::GetCurrentTime2())
+		{
+			LogWrite(LOGIN__DEBUG, 1, "Login", "Clearing Login Appearances Update Timers...");
+			equip_update_timeouts.erase(itr_equip->first);
+			server_equip_updates.erase(itr_equip->first);
+		}
+	}
+	LWorld* world = 0;
+	MWorldMap.readlock();
+	map<int32, LWorld*>::iterator map_itr;
+	for(map_itr = worldmap.begin(); map_itr != worldmap.end(); map_itr++)
+	{
+		world = map_itr->second;
+		if(world && world->GetID())
+		{
+			if(last_equip_updated.count(world) == 0 || last_equip_updated.Get(world) <= Timer::GetCurrentTime2())
+			{
+				LogWrite(LOGIN__DEBUG, 1, "Login", "Clearing Login Appearances Update Counters...");
+				equip_updates_already_used[world->GetID()].clear();
+				RequestServerEquipUpdates(world);
+				last_equip_updated.Put(world, Timer::GetCurrentTime2() + 900000); // every 15 mins
+			}
+			if( awaiting_equip_update.count(world->GetID()) > 0 && awaiting_equip_update.Get(world->GetID()) <= Timer::GetCurrentTime2())
+			{
+				LogWrite(LOGIN__DEBUG, 1, "Login", "Erase awaiting equip updates...");
+				awaiting_equip_update.erase(world->GetID());
+				RequestServerEquipUpdates(world);
+			}
+		}
+	}
 	MWorldMap.releasereadlock();
 }
+
 
 ThreadReturnType ServerUpdateLoop(void* tmp) {
 #ifdef WIN32

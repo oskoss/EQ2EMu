@@ -6,7 +6,8 @@ SF= ../common/Log.o ../common/timer.o ../common/packet_dump.o ../common/unix.o \
    ../common/EQEMuError.o ../common/misc.o ../common/Crypto.o ../common/RC4.o \
    .obj/debug.o .obj/database.o .obj/EQStream.o ../common/xmlParser.o \
    .obj/EQStreamFactory.o .obj/EQPacket.o ../common/CRC16.o ../common/packet_functions.o \
-   ../common/Condition.o ../common/opcodemgr.o ../common/PacketStruct.o ../common/ConfigReader.o
+   ../common/Condition.o ../common/opcodemgr.o ../common/PacketStruct.o ../common/ConfigReader.o \
+   ../common/DatabaseNew.o ../common/DatabaseResult.o
 
 CC=g++
 LINKER=gcc
