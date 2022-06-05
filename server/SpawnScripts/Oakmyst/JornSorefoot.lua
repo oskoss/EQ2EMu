@@ -8,7 +8,7 @@
 
 local BARBARIAN = 0
 local QUEST_FROM_BURK = 66
-local QUEST_1 = 18
+local QUEST_1 = 5220
 local QUEST_OAKMYST_LAST = 208
 
 function spawn(NPC)
@@ -38,7 +38,7 @@ function hailed(NPC, Spawn)
 			if GetRace(Spawn) == BARBARIAN then
 				MightyTired(NPC, Spawn, conversation)
 			else
-				PlayFlavor(NPC, "voiceover/english/tutorial_revamp/jorn_sorefoot/qey_adv01_oakmyst_revamp/qst_jorn_notonquest_df0ceb3e.mp3", "Gnomes... Bah!Who needs 'em?", "", 1750870039, 1562498784, Spawn)
+				PlayFlavor(NPC, "voiceover/english/tutorial_revamp/jorn_sorefoot/qey_adv01_oakmyst_revamp/qst_jorn_notonquest_df0ceb3e.mp3", "Gnomes... Bah! Who needs 'em?", "", 1750870039, 1562498784, Spawn)
 			end
 		end
 	end
@@ -77,7 +77,7 @@ end
 
 function MightyTired(NPC, Spawn, conversation)
 	AddConversationOption(conversation, "Why are you tired?", "BeenWorkingHard")
-	StartConversation(conversation, NPC, Spawn, "I'm mighty tired right now, mighty tired indeed.")
+	StartConversation(conversation, NPC, Spawn, "I'm mighty tired right now, mighty indeed.")
 end
 
 function BeenWorkingHard(NPC, Spawn)

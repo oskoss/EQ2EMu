@@ -9,7 +9,7 @@
 local FAVORS_QUEST_ID = 521
 
 function spawn(NPC)
-
+    SetRequiredQuest(NPC, FAVORS_QUEST_ID, 2, 0)
 end
 
 function hailed(NPC, Spawn)

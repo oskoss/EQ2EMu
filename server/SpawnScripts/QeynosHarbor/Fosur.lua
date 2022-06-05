@@ -6,23 +6,24 @@
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
 
+dofile("SpawnScripts/Generic/GenericGuardVoiceOvers.lua")
+
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+waypoints(NPC)	
 end
 
 function respawn(NPC)
 	spawn(NPC)
 end
 
-function InRange(NPC, Spawn)
-end
 
-function LeaveRange(NPC, Spawn)
-end
+function InRange(NPC, Spawn)
+		CheckFaction(NPC, Spawn, "Qeynos")
+	end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-
-	PlayFlavor(NPC, "voiceover/english/dwarf_eco_good_1/ft/service/guard/dwarf_guard_service_good_1_hail_gf_ed0d92f8.mp3", "I hate the night shift!  If the gnolls don't attack now I may die of boredom.", "grumble", 2490266027, 3636789093, Spawn)
-end
+		GenericGuardHail(NPC, Spawn)
+	end
 

@@ -25,15 +25,11 @@ end
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
+		PlayFlavor(NPC, "voiceover_new\voiceover\english\algan_tinmizer\qey_village06\ebikwobblecog000.mp3", "Greetings!  Looking for a bashcogglinator or perhaps a metefozic thermogauge?", "", 1689589577, 4560189, Spawn)
 
-	local choice = math.random(1,1)
-
-	if choice == 1 then
-		PlayFlavor(NPC, "", "Greetings!  Looking for a bashcogglinator or perhaps a metefozic thermogauge?", "", 1689589577, 4560189, Spawn)
-	else
 	end
 
-		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1040.mp3", "", "", 0, 0, Spawn)
+	PlayFlavor(NPC, "voiceover_new\voiceover\english\algan_tinmizer\qey_village06\ebikwobblecog000.mp3", "", "", 1689589577, 4560189, Spawn)
 		AddConversationOption(conversation, "I found this bag of cogs and sprockets and I believe it belongs to you.", "dlg_1_1")
 		AddConversationOption(conversation, "Nothing I need. I will be going now.")
 	StartConversation(conversation, NPC, Spawn, "Greetings!  Looking for a bashcogglinator or perhaps a metefozic thermogauge?")
@@ -51,7 +47,7 @@ function hailed(NPC, Spawn)
 		StartConversation(conversation, NPC, Spawn, "Greetings!  Looking for a bashcogglinator or perhaps a metefozic thermogauge?")
 	end
 
-end
+
 
 function dlg_1_1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)

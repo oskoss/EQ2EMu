@@ -6,16 +6,20 @@
 	Script Notes	:	
 --]]
 
-function spawn(NPC)
 
+function spawn(NPC)
+    SetTempVariable(NPC, "FeedCounter", "0")
+    SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")		
 end
 
-function hailed(NPC, Spawn)
-    FaceTarget(NPC, Spawn)
+function InRange(NPC,Spawn)
+    if HasItem(Spawn, 10399, 0) then
+        SendMessage(Spawn, "The Guurok hisses loudly, almost like it can sense you.", "white")
+    end
 end
 
 function respawn(NPC)
-         spawn(NPC)
+    spawn(NPC)
 end
 
 

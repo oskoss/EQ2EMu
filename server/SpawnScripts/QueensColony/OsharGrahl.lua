@@ -20,8 +20,7 @@ function respawn(NPC)
 end
 
 function Animations(NPC)
-        math.randomseed(os.time())
-        local choice = math.random (1,2)
+        local choice = MakeRandomInt(1,2)
 
         if choice == 1 then
                 PlayAnimation(NPC, 891)
@@ -29,24 +28,22 @@ function Animations(NPC)
                 PlayAnimation(NPC, 13008)
         end
 
-        local time = math.random (30000,40000)         
+        local time = MakeRandomInt(30000,40000)         
         AddTimer(NPC, time, "Animations")
 end
 
 function Text(NPC)
-        math.randomseed(os.time())
-        local choice = math.random (1,3)
+        local choice = MakeRandomInt(1,3)
 
         if choice == 1 then
-                Say(NPC, "Night or day, I'll prrrotect you friend.")
-                Emote(NPC, "flexes.") 
+	    	    PlayFlavor(NPC, "", "Night or day, I'll prrrotect you friend.", "flex", 0, 0 )
         elseif choice == 2 then
-                Say(NPC, "All this sand in my fur, bah!")
-                Emote(NPC, "shakes.") 
+                Say(NPC, "")
+       	    	PlayFlavor(NPC, "", "All this sand in my fur, bah!", "scratch", 0, 0 )
         else
                 Say(NPC, "Our poor home... lost.")
         end
 
-        local time2 = math.random (60000,240000)       
+        local time2 = MakeRandomInt(60000,240000)       
 	AddTimer(NPC, time2, "Text")	
 end

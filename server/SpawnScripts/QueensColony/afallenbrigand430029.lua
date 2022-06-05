@@ -8,6 +8,9 @@
 
 function spawn(NPC)
         SpawnSet(NPC, "difficulty", "6") 
+        SpawnSet(NPC, "hp", 150)
+        SpawnSet(NPC, "power", 80)
+
 	waypoints(NPC)
 end
 
@@ -56,7 +59,16 @@ function aggro(NPC, Spawn)
 end
 
 function death(NPC, Spawn)
-        math.randomseed(os.time())
+     	if IsPlayer(Spawn) then
+		local chance = math.random(1, 100)
+		if chance <= 35 then
+			local skull = SpawnMob(GetZone(Spawn), 2530192, false, GetX(NPC), GetY(NPC), GetZ(NPC))
+			if skull ~= nil then
+				SpawnSet(skull, "expire", "1000")
+			end
+	    end
+	end
+	math.randomseed(os.time())
         local choice = math.random(1,2)
 
         if choice == 1 then

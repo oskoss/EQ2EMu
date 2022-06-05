@@ -1,30 +1,27 @@
 --[[
 	Script Name	: SpawnScripts/ElddarGrove/Junala.lua
 	Script Purpose	: Junala 
-	Script Author	: John Adams
-	Script Date	: 2008.09.28
-	Script Notes	: Auto-Generated Conversation from PacketParser Data
+	Script Author	: Dorbin
+	Script Date	: 2022.05.01
+	Script Notes	:
 --]]
 
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
 
 function spawn(NPC)
 	waypoints(NPC)
+    SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
 end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	choice = math.random(1,3)
-
-	if choice == 1 then
-		PlayFlavor(NPC, "voiceover/english/kerran_eco_good_1/ft/kerran/kerran_eco_good_1_hail_gf_28445ab7.mp3", "I don't spend as much time grooming as the others say I do.", "sulk", 2675025847, 2696760246, Spawn)
-	elseif choice == 2 then
-		PlayFlavor(NPC, "voiceover/english/kerran_eco_good_1/ft/kerran/kerran_eco_good_1_hail_gf_6c9e41c6.mp3", "Don't think that I'm silly, I just happen to like the simple little things.", "flustered", 1426227770, 2304966225, Spawn)
-	elseif choice == 3 then
-		PlayFlavor(NPC, "voiceover/english/kerran_eco_good_1/ft/kerran/kerran_eco_good_1_hail_gf_63881722.mp3", "I'm trying to find a new seasoning for my dried fish.", "ponder", 3802648946, 1171453079, Spawn)
-	else
-	end
-
+    GenericEcologyHail(NPC, Spawn, faction)
 end
+
+function InRange(NPC,Spawn)
+    GenericEcologyCallout(NPC, Spawn, faction)
+    end
+
 
 function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 605.96, -20.89, -259.09, 2, 0)
@@ -35,16 +32,18 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 727.35, -17.06, -285.49, 2, 0)
 	MovementLoopAddLocation(NPC, 734.16, -17.04, -294.26, 2, 0)
 	MovementLoopAddLocation(NPC, 765.1, -18.47, -326.74, 2, 0)
+	MovementLoopAddLocation(NPC, 782.61, -20.65, -340.07, 2, 1)
+	MovementLoopAddLocation(NPC, 782.61, -20.65, -340.07, 2, math.random(8,12),"EcologyEmotes")
 	MovementLoopAddLocation(NPC, 782.61, -20.65, -340.07, 2, 0)
 	MovementLoopAddLocation(NPC, 770.4, -19.3, -332.35, 2, 0)
-	MovementLoopAddLocation(NPC, 753.74, -20.15, -332.09, 2, 0)
+	MovementLoopAddLocation(NPC, 753.74, -20.15, -332.09, 2, math.random(0,8))
 	MovementLoopAddLocation(NPC, 742.81, -20.21, -332.7, 2, 0)
 	MovementLoopAddLocation(NPC, 712.98, -17.1, -329.32, 2, 0)
 	MovementLoopAddLocation(NPC, 686.74, -19.94, -317.7, 2, 0)
 	MovementLoopAddLocation(NPC, 657.75, -20.95, -289.69, 2, 0)
 	MovementLoopAddLocation(NPC, 652.1, -21.54, -292.41, 2, 0)
 	MovementLoopAddLocation(NPC, 647.82, -16.62, -334.4, 2, 0)
-	MovementLoopAddLocation(NPC, 678.13, -13.8, -354.18, 2, 0)
+	MovementLoopAddLocation(NPC, 678.13, -13.8, -354.18, 2, math.random(0,8))
 	MovementLoopAddLocation(NPC, 730.27, -20.06, -375.56, 2, 0)
 	MovementLoopAddLocation(NPC, 707.55, -15.61, -383.54, 2, 0)
 	MovementLoopAddLocation(NPC, 697.97, -14.96, -419.59, 2, 0)
@@ -52,7 +51,7 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 710.67, -20.53, -452.09, 2, 0)
 	MovementLoopAddLocation(NPC, 746.91, -22.31, -474.65, 2, 0)
 	MovementLoopAddLocation(NPC, 766, -21.8, -491.51, 2, 0)
-	MovementLoopAddLocation(NPC, 781.11, -22.01, -508.27, 2, 0)
+	MovementLoopAddLocation(NPC, 781.11, -22.01, -508.27, 2, math.random(0,8))
 	MovementLoopAddLocation(NPC, 797.01, -22.28, -536.9, 2, 0)
 	MovementLoopAddLocation(NPC, 807.31, -21.34, -533.66, 2, 0)
 	MovementLoopAddLocation(NPC, 798.56, -22.21, -535.94, 2, 0)
@@ -63,7 +62,7 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 709.61, -19.78, -445.62, 2, 0)
 	MovementLoopAddLocation(NPC, 702.09, -16.88, -427.62, 2, 0)
 	MovementLoopAddLocation(NPC, 698.2, -13.79, -406.51, 2, 0)
-	MovementLoopAddLocation(NPC, 678.26, -11.62, -394.41, 2, 0)
+	MovementLoopAddLocation(NPC, 678.26, -11.62, -394.41, 2, math.random(0,8))
 	MovementLoopAddLocation(NPC, 648.9, -11.71, -398.5, 2, 0)
 	MovementLoopAddLocation(NPC, 591.21, -18.51, -409.57, 2, 0)
 	MovementLoopAddLocation(NPC, 589.83, -18.82, -394.65, 2, 0)
@@ -71,7 +70,7 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 600.09, -20.02, -368.1, 2, 0)
 	MovementLoopAddLocation(NPC, 544.86, -19.53, -359.49, 2, 0)
 	MovementLoopAddLocation(NPC, 542.58, -20.61, -338.53, 2, 0)
-	MovementLoopAddLocation(NPC, 547.61, -21.13, -303.98, 2, 0)
+	MovementLoopAddLocation(NPC, 547.61, -21.13, -303.98, 2, math.random(0,8))
 	MovementLoopAddLocation(NPC, 521.75, -20.73, -290.78, 2, 0)
 	MovementLoopAddLocation(NPC, 547.61, -21.13, -303.98, 2, 0)
 	MovementLoopAddLocation(NPC, 542.58, -20.61, -338.53, 2, 0)
@@ -88,7 +87,7 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 713.99, -20.93, -455.41, 2, 0)
 	MovementLoopAddLocation(NPC, 751.67, -22.16, -473.85, 2, 0)
 	MovementLoopAddLocation(NPC, 770.84, -21.8, -491.93, 2, 0)
-	MovementLoopAddLocation(NPC, 784.07, -21.95, -507.11, 2, 0)
+	MovementLoopAddLocation(NPC, 784.07, -21.95, -507.11, 2, math.random(0,8))
 	MovementLoopAddLocation(NPC, 798.56, -22.21, -535.94, 2, 0)
 	MovementLoopAddLocation(NPC, 807.31, -21.34, -533.66, 2, 0)
 	MovementLoopAddLocation(NPC, 797.01, -22.28, -536.9, 2, 0)
@@ -102,7 +101,7 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 730.27, -20.06, -375.56, 2, 0)
 	MovementLoopAddLocation(NPC, 678.13, -13.8, -354.18, 2, 0)
 	MovementLoopAddLocation(NPC, 647.82, -16.62, -334.4, 2, 0)
-	MovementLoopAddLocation(NPC, 652.1, -21.54, -292.41, 2, 0)
+	MovementLoopAddLocation(NPC, 652.1, -21.54, -292.41, 2, math.random(0,8))
 	MovementLoopAddLocation(NPC, 657.75, -20.95, -289.69, 2, 0)
 	MovementLoopAddLocation(NPC, 686.74, -19.94, -317.7, 2, 0)
 	MovementLoopAddLocation(NPC, 712.98, -17.1, -329.32, 2, 0)
@@ -111,7 +110,7 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 770.4, -19.3, -332.35, 2, 0)
 	MovementLoopAddLocation(NPC, 782.61, -20.65, -340.07, 2, 0)
 	MovementLoopAddLocation(NPC, 765.1, -18.47, -326.74, 2, 0)
-	MovementLoopAddLocation(NPC, 734.16, -17.04, -294.26, 2, 0)
+	MovementLoopAddLocation(NPC, 734.16, -17.04, -294.26, 2, math.random(0,8))
 	MovementLoopAddLocation(NPC, 727.35, -17.06, -285.49, 2, 0)
 	MovementLoopAddLocation(NPC, 695.49, -16.99, -266.47, 2, 0)
 	MovementLoopAddLocation(NPC, 668.9, -17.01, -245.59, 2, 0)

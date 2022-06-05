@@ -39,3 +39,10 @@ function enter_location(Zone, Player, GridID)
 		SendPopUpMessage(Player, "Sunset Meadow", 255, 255, 0)
 	end
 end
+
+function player_entry(Zone, Spawn)
+AddPlayerMail(Spawn, "EQ2EmulatorDevTeam", "Welcome", "Welcome to EQ2Emulator, this project is currently in Pre-Alpha. We appreciate feedback and bug reports for existing content, and are always looking for additional talent! Thank you for testing and enjoy your stay!  -The EQ2EMU Team", 2)
+SendPopUpMessage(Player, "The Queen's Colony", 230, 230, 230)
+end
+
+

@@ -6,6 +6,7 @@
 	Script Notes	:	Locations collected from Live
 --]]
 
+
 function spawn(NPC)
 	waypoints(NPC)
 end
@@ -15,15 +16,19 @@ function hailed(NPC, Spawn)
 end
 
 function respawn(NPC)
- waypoints(NPC)
 end
 
 function waypoints(NPC)
-	MovementLoopAddLocation(NPC, 7.03, -4, -161.23, 2, math.random(1,10))
-	MovementLoopAddLocation(NPC, 6.92, -0.03, -146.21, 2, 0)
-	MovementLoopAddLocation(NPC, 3.57, 0.3, -141.32, 2, math.random(1,10))
-	MovementLoopAddLocation(NPC, 6.92, -0.03, -146.21, 2, 0)
-	MovementLoopAddLocation(NPC, 7.03, -4, -161.23, 2, math.random(1,10))
+	MovementLoopAddLocation(NPC, 5.28, 0, -118.84, 2, 5)
+	MovementLoopAddLocation(NPC, 10.65, 0, -122.66, 2, 5)
+	MovementLoopAddLocation(NPC, 6.04, 0, -119.85, 2, 5)
+	MovementLoopAddLocation(NPC, 11.72, 0, -123.32, 2, 5)
+	MovementLoopAddLocation(NPC, 11.22, 0, -118.37, 2, 5)
+	MovementLoopAddLocation(NPC, 7.37, 0, -130.11, 2, 5)
+	MovementLoopAddLocation(NPC, 11.02, 0, -125.83, 2, 5)
+	MovementLoopAddLocation(NPC, 7.23, 0.18, -132.72, 2, 5)
+	MovementLoopAddLocation(NPC, 3.99, 0, -121.36, 2, 5)
 end
+
 
 

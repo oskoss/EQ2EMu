@@ -3,8 +3,9 @@
 	Script Purpose	:	Waypoint Path for treeskipper.lua
 	Script Author	:	Devn00b
 	Script Date		:	04/11/2020 04:12:39 PM
-	Script Notes	:	Locations collected from Live
+	Script Notes	:	Locations collected from Live - Dialog modified 2022.04.22 Dorbin
 --]]
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
@@ -12,25 +13,40 @@ function spawn(NPC)
 end
 
 function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
+    if GetFactionAmount(Spawn,11) <0 then
+    FaceTarget(NPC, Spawn)
+    PlayFlavor(NPC, "", "", "noway", 0, 0, Spawn)
+    else
+SaySomething(NPC, Spawn)
+end
 end
 
-function respawn(NPC)
-		spawn(NPC)
-	end
 function InRange(NPC, Spawn)
+   if GetFactionAmount(Spawn,11) <0 then
+    FaceTarget(NPC, Spawn)
+    PlayFlavor(NPC, "", "", "shakefist", 0, 0, Spawn)
+    else
+    if math.MakeRandomInt(1,100) <=25 then
+    SaySomething(NPC, Spawn)
+    end
+    end
+end
+
+function SaySomething(NPC, Spawn)
+    
+	FaceTarget(NPC, Spawn)
 		local choice = math.random(1,5)
 
 	if choice == 1 then
-		PlayFlavor(NPC, "voiceover/english/human_eco_good_tunarianalliance/ft/eco/good/human_eco_good_tunarianalliance_hail_gm_1bda6347.mp3", "The destructive methods of the Qeynos Guard will ravage that which it seeks to defend.", "", 421213855, 4168573173, Spawn)
+		PlayFlavor(NPC, "voiceover/english/human_eco_good_tunarianalliance/ft/eco/good/human_eco_good_tunarianalliance_hail_gm_1bda6347.mp3", "The destructive methods of the Qeynos Guard will ravage that which it seeks to defend.", "nod", 421213855, 4168573173, Spawn)
 	elseif choice == 2 then
 		PlayFlavor(NPC, "voiceover/english/human_eco_good_tunarianalliance/ft/eco/good/human_eco_good_tunarianalliance_hail_gm_e274bc0f.mp3", "The mechanical beasts of the Ironforge Exchange belch forth black clouds to choke out life within the forests.", "", 1242578412, 4198131350, Spawn)
 	elseif choice == 3 then
-		PlayFlavor(NPC, "voiceover/english/human_eco_good_tunarianalliance/ft/eco/good/human_eco_good_tunarianalliance_hail_gm_c57df74b.mp3", "I fear that the Concordium is unable to control its disciples. If corrupted the sorcerers would surely bring harm to the woodlands and their creatures.", "", 63339104, 2681140716, Spawn)
+		PlayFlavor(NPC, "voiceover/english/human_eco_good_tunarianalliance/ft/eco/good/human_eco_good_tunarianalliance_hail_gm_c57df74b.mp3", "I fear that the Concordium is unable to control its disciples. If corrupted the sorcerers would surely bring harm to the woodlands and their creatures.", "ponder", 63339104, 2681140716, Spawn)
 	elseif choice == 4 then
-		PlayFlavor(NPC, "voiceover/english/human_eco_good_tunarianalliance/ft/eco/good/human_eco_good_tunarianalliance_hail_gm_2c2d0ef6.mp3", "The Tunarian Alliance preserves our memories of the breathing trees and singing streams of Jaggedpine.", "", 1912930054, 3530428976, Spawn)
+		PlayFlavor(NPC, "voiceover/english/human_eco_good_tunarianalliance/ft/eco/good/human_eco_good_tunarianalliance_hail_gm_2c2d0ef6.mp3", "The Tunarian Alliance preserves our memories of the breathing trees and singing streams of Jaggedpine.", "agree", 1912930054, 3530428976, Spawn)
 	elseif choice == 5 then
-		PlayFlavor(NPC, "voiceover/english/human_eco_good_tunarianalliance/ft/eco/good/human_eco_good_tunarianalliance_hail_gm_24723d84.mp3", "While the land suffers and cries out for immediate protection the Celestial Watch is content to look to myths and superstitions for our salvation.", "", 1704735533, 1025969438, Spawn)
+		PlayFlavor(NPC, "voiceover/english/human_eco_good_tunarianalliance/ft/eco/good/human_eco_good_tunarianalliance_hail_gm_24723d84.mp3", "While the land suffers and cries out for immediate protection the Celestial Watch is content to look to myths and superstitions for our salvation.", "agree", 1704735533, 1025969438, Spawn)
 	else
 	end
 end
@@ -40,7 +56,8 @@ end
 
 function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 448.85, -20.75, 212.18, 2, 0)
-	MovementLoopAddLocation(NPC, 448.56, -19.39, 195.8, 2, 0)
+	MovementLoopAddLocation(NPC, 448.56, -19.39, 195.8, 2, 1)
+	MovementLoopAddLocation(NPC, 448.56, -19.39, 195.8, 2, 8,"EcologyEmotes")
 	MovementLoopAddLocation(NPC, 462.67, -20.87, 199.08, 2, 0)
 	MovementLoopAddLocation(NPC, 495.29, -11.85, 144.64, 2, 0)
 	MovementLoopAddLocation(NPC, 527.8, -10.55, 150.67, 2, 0)
@@ -72,7 +89,8 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 461.95, -21.96, 232.57, 2, 0)
 	MovementLoopAddLocation(NPC, 449.24, -20.76, 213.14, 2, 0)
 	MovementLoopAddLocation(NPC, 449.13, -19.36, 195.78, 2, 0)
-	MovementLoopAddLocation(NPC, 449.24, -20.76, 213.14, 2, 0)
+	MovementLoopAddLocation(NPC, 449.24, -20.76, 213.14, 2, 2)
+	MovementLoopAddLocation(NPC, 449.24, -20.76, 213.14, 2, 8,"EcologyEmotes")	
 	MovementLoopAddLocation(NPC, 461.95, -21.96, 232.57, 2, 0)
 	MovementLoopAddLocation(NPC, 483.4, -20.64, 240.69, 2, 0)
 	MovementLoopAddLocation(NPC, 559.17, -17.69, 243.04, 2, 0)

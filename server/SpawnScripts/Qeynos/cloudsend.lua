@@ -5,16 +5,23 @@
 	Script Date		:	04/10/2020 01:50:27 PM
 	Script Notes	:	Locations collected from Live
 --]]
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
+
 
 function spawn(NPC)
 	waypoints(NPC)
+SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
 end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	PlayFlavor(NPC, "voiceover/english/optional2/woodelf_eco_good_2/ft/woodelf/woodelf_eco_good_2_aoi_gf_e67f1023.mp3", "Such a beautiful day!  All I need now is a nice vintage of elven mulberry and my relaxation will be complete.", "stretch", 3245673411, 1934163553, Spawn)
+GenericEcologyHail(NPC, Spawn, faction)
 end
 
+function InRange(NPC,Spawn)
+    GenericEcologyCallout(NPC, Spawn, faction)
+    end
+    
 function respawn(NPC)
 		spawn(NPC)
 	end
@@ -35,7 +42,9 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 691.11, -19.52, 195.05, 2, 0)
 	MovementLoopAddLocation(NPC, 703.6, -19.54, 190.78, 2, 0)
 	MovementLoopAddLocation(NPC, 701.32, -19.5, 176.4, 2, 0)
-	MovementLoopAddLocation(NPC, 669, -21.16, 146.49, 2, 0)
+	MovementLoopAddLocation(NPC, 669, -21.16, 146.49, 2, 2)
+	MovementLoopAddLocation(NPC, 669, -21.16, 146.49, 2, 8,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 669, -21.16, 146.49, 2, 1)
 	MovementLoopAddLocation(NPC, 702.39, -19.53, 174.71, 2, 0)
 	MovementLoopAddLocation(NPC, 705.45, -19.53, 193.19, 2, 0)
 	MovementLoopAddLocation(NPC, 689.3, -19.52, 199.08, 2, 0)
@@ -49,7 +58,9 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 689.3, -19.52, 199.08, 2, 0)
 	MovementLoopAddLocation(NPC, 705.45, -19.53, 193.19, 2, 0)
 	MovementLoopAddLocation(NPC, 702.39, -19.53, 174.71, 2, 0)
-	MovementLoopAddLocation(NPC, 669, -21.16, 146.49, 2, 0)
+	MovementLoopAddLocation(NPC, 669, -21.16, 146.49, 2, 2)
+	MovementLoopAddLocation(NPC, 669, -21.16, 146.49, 2, 8,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 669, -21.16, 146.49, 2, 1)
 	MovementLoopAddLocation(NPC, 701.32, -19.5, 176.4, 2, 0)
 	MovementLoopAddLocation(NPC, 703.6, -19.54, 190.78, 2, 0)
 	MovementLoopAddLocation(NPC, 691.11, -19.52, 195.05, 2, 0)

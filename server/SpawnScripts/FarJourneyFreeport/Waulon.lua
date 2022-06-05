@@ -1,10 +1,3 @@
---[[
-    Script Name    : SpawnScripts/FarJourneyFreeport/Waulon.lua
-    Script Author  : Cynnar
-    Script Date    : 2019.09.28 03:09:55
-    Script Purpose : 
-                   : 
---]]
 require "SpawnScripts/Generic/DialogModule"
 
 function spawn(NPC)
@@ -84,4 +77,3 @@ end
 function respawn(NPC)
 
 end
-

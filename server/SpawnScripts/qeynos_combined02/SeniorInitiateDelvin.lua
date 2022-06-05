@@ -7,8 +7,8 @@
 
 This script is quite complex and allows for all the behaviours of Delvin on Live: He can move left or right
 around the building and at each of the four corners he will either make a short or long pause, or he will step
-around a bit (intiaited by one of several emotes). He can also make between 1 and 3 rounds before going back 
-inside, where upon returning he may bow.
+around a bit (initiated by one of several emotes). He can also make between 1 and 3 rounds before going back 
+inside, and when returning he may bow.
 
 Not implemented yet: proximity for his conversation (it is using hail for now) and he also sometimes runs back 
 which is not included at it looks a bit odd.
@@ -60,7 +60,7 @@ function go_outside(NPC)
 end
 
 function pick_special_event(NPC)
---  First trip is initiated. Delvin alays does something special on first round (sometimes nothing)
+--  First trip is initiated. Most of the times Delvin does something special on first round (sometimes nothing)
     NumberOfTrips = 1
 
     math.randomseed(os.time())
@@ -556,7 +556,7 @@ function and_back_again(NPC)
 end
 
 function end_of_trip(NPC)
---  This function is needed to give neough delay for the emote to trigger
+--  This function is needed to give enough delay for the emote to trigger
     AddTimer(NPC, math.random(1000,1500), "extra_delay_for_bow")  
 end
 

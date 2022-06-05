@@ -9,7 +9,8 @@
 QUEST = 454
 
 function spawn(NPC)
-
+	SetPlayerProximityFunction(NPC, 10, "SpawnAccess", "SpawnAccess")
+	AddSpawnAccess(NPC, NPC)
 end
 
 function casted_on(NPC, Spawn, SpellName)
@@ -21,9 +22,18 @@ function casted_on(NPC, Spawn, SpellName)
 	end
 end
 
+function SpawnAccess(NPC, Spawn)
+	if HasQuest(Spawn, QUEST) and GetQuestStep(Spawn, QUEST) == 1 or GetQuestStep(Spawn, QUEST) == 2 or GetQuestStep(Spawn, QUEST) == 3 then
+		AddSpawnAccess(NPC, Spawn)
+        else
+                RemoveSpawnAccess(NPC, Spawn)
+	end
+end
+
+
 
 
 function respawn(NPC)
-
+spawn(NPC)
 end
 
