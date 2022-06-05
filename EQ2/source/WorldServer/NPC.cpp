@@ -103,6 +103,7 @@ NPC::NPC(NPC* old_npc){
 		SetFlyingCreature();
 		SetWaterCreature();
 		SetOmittedByDBFlag(old_npc->IsOmittedByDBFlag());
+		SetLootTier(old_npc->GetLootTier());
 	}
 }
 

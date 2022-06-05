@@ -9,6 +9,8 @@
 local AMBUSHED_QUEST_ID = 509
 
 function spawn(NPC)
+    
+SetRequiredQuest(NPC, AMBUSHED_QUEST_ID, 2, 1,0,0)
 
 end
 

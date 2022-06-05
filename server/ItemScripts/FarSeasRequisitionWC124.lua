@@ -8,7 +8,6 @@
 
 local quest = 5212
 
-local quest = 527
 
 function examined(Item, Player)
 	if not HasQuest(Player, quest) then

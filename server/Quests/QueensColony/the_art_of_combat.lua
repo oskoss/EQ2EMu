@@ -3,7 +3,6 @@
     Script Author  : Zcoretri
     Script Date    : 2015.07.30
     Script Purpose : Handles the quest, "The Art of Combat"
-
         Zone       : The Queens Colony
         Quest Giver: Murrar Shar
         Preceded by: None
@@ -38,9 +37,8 @@ end
 
 function step1_complete_talkToHayl(Quest, QuestGiver, Player)
     UpdateQuestStepDescription(Quest, 1, "I have spoken with Hayl McGuinness.")
-    UpdateQuestTaskGroupDescription(Quest, 1, "I have spoken with Hayl McGuinness.")
-	
-    AddQuestStepKill(Quest, 2, "I need to defeat a sparring partner in combat. There are several sparring partners just north of Trainer Hayl McGuinness.", 1, 100, "I need to learn about combat from Trainer Hayl McGuinness.", 0, 2530000, 2530001, 2530002, 2530220, 2530221, 2530222)
+	UpdateQuestTaskGroupDescription(Quest, 1, "I have spoken with Hayl McGuinness.")
+    AddQuestStep(Quest, 2, "I need to defeat a sparring partner in combat. There are several sparring partners just north of Trainer Hayl McGuinness.", 1, 100, "I need to learn about combat from Trainer Hayl McGuinness.", 11, 0, 2530070)
     AddQuestStepCompleteAction(Quest, 2, "step2_complete_killedSparringPartner")
 end
 
@@ -61,7 +59,7 @@ function step3_complete_talkToHayl(Quest, QuestGiver, Player)
 end
 
 function step4_complete_talkToMurrar(Quest, QuestGiver, Player)
-    UpdateQuestDescription(Quest, "I have learned some of the basics of combat from Trainer Hayl McGuinness at the Queen's Colony. Hopefully this knowledge helps me serve Qeynos and uncover the trouble here.")
+   -- UpdateQuestDescription(Quest, "I have learned some of the basics of combat from Trainer Hayl McGuinness at the Queen's Colony. Hopefully this knowledge helps me serve Qeynos and uncover the trouble here.")
 --    UpdateQuestTaskGroupDescription(Quest, "I have reported back to Murrar Shar.")
     GiveQuestReward(Quest, Player)
 end
@@ -75,4 +73,3 @@ function Reload(Quest, QuestGiver, Player, Step)
 	step3_complete_talkToHayl(Quest, QuestGiver, Player)
     end
 end
-

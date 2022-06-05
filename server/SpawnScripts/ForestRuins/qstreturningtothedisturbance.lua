@@ -26,7 +26,7 @@ local BUSH_MODEL_ID = 3908
 
 
 function spawn(NPC)
-	--SetRequiredQuest(NPC, 522,1)
+   SetRequiredQuest(NPC, 522,1)
 end
 
 

@@ -5,18 +5,24 @@
 	Script Date		:	04/10/2020 04:46:03 PM
 	Script Notes	:	Locations collected from Live
 --]]
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
+
+local TimeCheck = false
+local CalloutTimeCheck = false
+local FactionCalloutTimeCheck = false
 
 function spawn(NPC)
 	waypoints(NPC)
+SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
 end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	PlayFlavor(NPC, "voiceover/english/froglok_eco_good_1/ft/froglok/froglok_eco_good_1_hail_gf_a64f6eec.mp3", "What hast thou done?  When thou greets a Daughter of Marr, a small bow is in order.", "", 2184035287, 59673464, Spawn)
+    GenericEcologyHail(NPC, Spawn, faction)
 end
 
-function respawn(NPC)
-	spawn(NPC)
+function InRange(NPC,Spawn)
+    GenericEcologyCallout(NPC, Spawn, faction)
 end
 
 function waypoints(NPC)
@@ -75,10 +81,10 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 718.14, -19.55, 192.61, 2, 0)
 	MovementLoopAddLocation(NPC, 719.53, -19.58, 190.1, 2, 0)
 	MovementLoopAddLocation(NPC, 719.49, -19.64, 187.17, 2, 0)
-	MovementLoopAddLocation(NPC, 718.4, -19.6, 184.27, 2, 0)
+	MovementLoopAddLocation(NPC, 718.4, -19.6, 184.27, 2, 7)
 	MovementLoopAddLocation(NPC, 716.28, -19.45, 181.76, 2, 0)
 	MovementLoopAddLocation(NPC, 713.7, -19.4, 179.73, 2, 0)
-	MovementLoopAddLocation(NPC, 707.61, -19.46, 175.9, 2, 0)
+	MovementLoopAddLocation(NPC, 707.61, -19.46, 175.9, 2, 7)
 end
 
 

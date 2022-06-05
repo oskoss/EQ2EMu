@@ -15,7 +15,30 @@ local WOOD_ELF_QUEST_5 = 217 -- A Tribute for Ulinir
 function spawn(NPC)
 	ProvidesQuest(NPC, WOOD_ELF_QUEST_3)
 	ProvidesQuest(NPC, WOOD_ELF_QUEST_5)
+	SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
 end
+
+function respawn(NPC)
+	spawn(NPC)
+end
+
+function InRange(NPC, Spawn)
+    if math.random(1, 100) <= 60 then
+        choice = math.random(1,3)
+         if choice ==1 then
+         PlayFlavor(NPC, "", "", "ponder", 0, 0, Spawn)
+         elseif choice ==3 then
+         PlayFlavor(NPC, "", "", "sniff", 0, 0, Spawn)
+        elseif choice ==4 then
+         PlayFlavor(NPC, "", "", "hello", 0, 0, Spawn)
+         FaceTarget(NPC, Spawn)
+        else
+        PlayFlavor(NPC, "", "", "cough", 0, 0, Spawn)
+         end
+    end
+end
+
+
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
@@ -146,6 +169,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function IsMyTributeComplete(NPC, Spawn, conversation)
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/davyn_thornbranch/qey_village05/quests/davyn_thornbranch/davyn_thornbranch010.mp3", "", "", 3747511411, 3979607357, Spawn)
 	AddConversationOption(conversation, "Aelis said I needed to do a task for you as part of the tribute creation.", "dlg_12_1")
 	AddConversationOption(conversation, "No, not yet.")
 	StartConversation(conversation, NPC, Spawn, "Is my tribute complete?")
@@ -197,7 +221,7 @@ function FoundWolfYet(NPC, Spawn, conversation)
 	if GetQuestStep(Spawn, WOOD_ELF_QUEST_3) == 5 then
 		AddConversationOption(conversation, "Yes, the wolf is dead.", "dlg_21_1")
 	end
-	
+	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/davyn_thornbranch/qey_village05/quests/davyn_thornbranch/davyn_thornbranch014.mp3", "", "", 3240548911, 582138521, Spawn)
 	AddConversationOption(conversation, "No, not yet.")
 	StartConversation(conversation, NPC, Spawn, "Have you found the wolf yet?")
 end
@@ -227,6 +251,7 @@ end
 -----------------------------------------------------------------------------------------------------------------------
 
 function HowGoesWorkOnTribute(NPC, Spawn, conversation)
+    PlayFlavor(NPC, "voiceover/english/tutorial_revamp/davyn_thornbranch/qey_village05/quests/davyn_thornbranch/davyn_thornbranch017.mp3", "", "", 846132167, 3864459263, Spawn)
 	AddConversationOption(conversation, "You mean your tribute?", "MeantTributeMine")
 	AddConversationOption(conversation, "I am not quite done.")
 	StartConversation(conversation, NPC, Spawn, "How goes work on your tribute?")

@@ -6,18 +6,15 @@
                    : 
 --]]
 
-function spawn(NPC)
+local ZarvonnsLegacy = 446
 
+function spawn(NPC)
 end
 
-function casted_on(NPC, Spawn, use)
-if not HasQuest(Spawn, 446) then
-SetAccessToEntityCommand(NPC, Spawn ,"use",0)
-end 
-  end
+
 
 
 function respawn(NPC)
-
+spawn(NPC)
 end
 

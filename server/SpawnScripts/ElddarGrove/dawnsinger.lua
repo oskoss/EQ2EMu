@@ -3,19 +3,24 @@
 	Script Purpose	:	Waypoint Path for dawnsinger.lua
 	Script Author	:	Devn00b
 	Script Date		:	07/31/2020 09:03:35 PM
-	Script Notes	:	Locations collected from Live
+	Script Notes	:	Locations collected from Live -  Updated Dialogue 05/01/2022 Dorbin
 --]]
+
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
 
 function spawn(NPC)
 	waypoints(NPC)
+    SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
 end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
+    GenericEcologyHail(NPC, Spawn, faction)
 end
 
-function respawn(NPC)
-end
+function InRange(NPC,Spawn)
+    GenericEcologyCallout(NPC, Spawn, faction)
+    end
 
 function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 513.51, -20.71, -284.46, 2, math.random(0,5))
@@ -30,7 +35,9 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 651.42, -21.58, -307.12, 2, math.random(0,5))
 	MovementLoopAddLocation(NPC, 647.38, -18.93, -262.7, 2, math.random(0,5))
 	MovementLoopAddLocation(NPC, 631.82, -19.65, -257.29, 2, math.random(0,5))
-	MovementLoopAddLocation(NPC, 628.44, -19.96, -255.61, 2, math.random(0,20))
+	MovementLoopAddLocation(NPC, 628.44, -19.96, -255.61, 2, 1)
+	MovementLoopAddLocation(NPC, 628.44, -19.96, -255.61, 2, math.random(8,20),"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 628.44, -19.96, -255.61, 2, 1)
 	MovementLoopAddLocation(NPC, 640.68, -18.94, -258.81, 2, math.random(0,5))
 	MovementLoopAddLocation(NPC, 652.34, -19.09, -269.21, 2, math.random(0,5))
 	MovementLoopAddLocation(NPC, 685.73, -19.57, -279.16, 2, math.random(0,5))

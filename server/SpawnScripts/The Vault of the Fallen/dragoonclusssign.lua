@@ -1,0 +1,45 @@
+--[[
+    Script Name    : SpawnScripts/The Vault of the Fallen/dragoonclusssign.lua
+    Script Author  : Premierio015
+    Script Date    : 2021.07.17 04:07:52
+    Script Purpose : 
+                   : 
+--]]
+
+local TseralithDoorQuest = 5325
+
+function spawn(NPC)
+ 	SetPlayerProximityFunction(NPC, 10, "InRange")
+end
+
+
+
+function InRange(NPC, Spawn)
+    if HasQuest(Spawn, TseralithDoorQuest) then
+     AddPrimaryEntityCommand(Spawn, NPC, "inspect", 5, "inspect", "", 100)    
+    SpawnSet(NPC, "show_command_icon", 1)
+    SpawnSet(NPC, "display_hand_icon", 1)
+end
+   end
+
+
+function casted_on(NPC, Spawn, SpellName)
+		if SpellName == "inspect" then
+		  local zone = GetZone(Spawn)
+		  local Dragoon = GetSpawnByLocationID(zone, 133772412)
+		  if Dragoon == nil then
+	     SpawnByLocationID(zone, 133772412)-- Dragoon C'Luss
+	  SetAccessToEntityCommand(Spawn,NPC,"inspect", 0)
+    SpawnSet(NPC, "show_command_icon", 0)
+    SpawnSet(NPC, "display_hand_icon", 0)
+end
+end
+end
+
+
+ 
+
+
+function respawn(NPC)
+	spawn(NPC)
+end

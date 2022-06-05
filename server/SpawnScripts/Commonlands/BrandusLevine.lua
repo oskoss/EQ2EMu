@@ -10,26 +10,49 @@
 local TheMysteriousMissingShipment = 421
 local StartingtheNegotiations = 424
 local FinishingtheNegotiations = 425
+local  CollectingOnWhatIsEarned = 423
+
 
 function spawn(NPC)
-ProvidesQuest(NPC, TheMysteriousMissingShipment)
-ProvidesQuest(NPC, StartingtheNegotiations)
-ProvidesQuest(NPC, FinishingtheNegotiations)
+SetPlayerProximityFunction(NPC, 10, "InRange")    
 end
 
-
+function InRange(NPC, Spawn)
+if not HasCompletedQuest(Spawn, TheMysteriousMissingShipment) then
+ProvidesQuest(NPC, TheMysteriousMissingShipment)
+  SetInfoFlag(NPC)
+SetVisualFlag(NPC)
+elseif HasCompletedQuest(Spawn, TheMysteriousMissingShipment) then
+ProvidesQuest(NPC, StartingtheNegotiations)
+  SetInfoFlag(NPC)
+SetVisualFlag(NPC)
+elseif HasCompletedQuest(Spawn, StartingtheNegotiations) then
+ProvidesQuest(NPC, FinishingtheNegotiations)
+  SetInfoFlag(NPC)
+SetVisualFlag(NPC)
+end
+   end
 
 
 function hailed(NPC, Spawn)
     FaceTarget(NPC, Spawn)
     conversation = CreateConversation()
     if not HasQuest(Spawn, TheMysteriousMissingShipment) and not HasCompletedQuest(Spawn, TheMysteriousMissingShipment) then
+    if GetDeity(Spawn) ~= 1  then
     PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1034.mp3", "", "ponder", 0, 0, Spawn)
     AddConversationOption(conversation, "Another person who needs help?  Fine, what do you need?", "dlg1")
     AddConversationOption(conversation, "I'll help you only if it pays well.", "dlg3")
     AddConversationOption(conversation, "I would be happy to help you.", "dlg2")
     AddConversationOption(conversation, "You have to be kidding me.  No thanks, find another lackey, I'm busy with my own important things.")
     StartConversation(conversation, NPC, Spawn, "Hrmmm... You do have the look of a citizen about you.  You're not just random rabble from the streets.  I could use your help.")
+    elseif GetDeity(Spawn) == 1 then
+    PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1034.mp3", "", "peer", 0, 0, Spawn)    
+	AddConversationOption(conversation, "No, you have it wrong I'm a loyal Freeport citizen.", "qey_citizen")
+	AddConversationOption(conversation, "I'm touring the countryside looking for evil to smite.  You wouldn't happen to be evil would you?", "qey_citizen2")
+	AddConversationOption(conversation, "Yes, I'm from Qeynos, may I ask why you want to know?", "dlg5")
+	AddConversationOption(conversation, "I think this conversation is over.")
+	StartConversation(conversation, NPC, Spawn, "You don't look like you're from around here.  You have the stink of flower gardens about you.  What are you doing on this side of the world outlander?")
+    end
     elseif HasQuest(Spawn, TheMysteriousMissingShipment) and GetQuestStep(Spawn, TheMysteriousMissingShipment) == 1 or GetQuestStep(Spawn, StartingtheNegotiations) <= 8 and HasQuest(Spawn, StartingtheNegotiations) or HasQuest(Spawn, FinishingtheNegotiations) and GetQuestStep(Spawn, FinishingtheNegotiations) == 1 or GetQuestStep(Spawn, FinishingtheNegotiations) == 3 or GetQuestStep(Spawn, FinishingtheNegotiations) == 4   then
     PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1034.mp3", "", "no", 0, 0, Spawn)
     AddConversationOption(conversation, "I'll be back when I'm done.")
@@ -57,9 +80,33 @@ function hailed(NPC, Spawn)
     dlg18(NPC, Spawn)
     elseif GetQuestStep(Spawn,  FinishingtheNegotiations) == 6 then
     dlg22(NPC, Spawn)
+    elseif HasCompletedQuest(Spawn, CollectingOnWhatIsEarned) and not HasCompletedQuest(Spawn, StartingtheNegotiations) and not HasQuest(Spawn, StartingtheNegotiations)  then
+    dlg25(NPC, Spawn)
    end    
 end
    
+   
+function qey_citizen(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	local conversation = CreateConversation()
+	AddConversationOption(conversation, "A Freeport guard asking me for help, this is interesting, what do you need?", "dlg5")
+	AddConversationOption(conversation, "I don't think so.")
+	StartConversation(conversation, NPC, Spawn, "Sure you are, and I'm Antonia Bayle, pleasure to meet you friend citizen.  How about we both drop the act and I ask you for a little help?")
+end
+
+function qey_citizen2(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	local conversation = CreateConversation()
+	AddConversationOption(conversation, "Alright, I'm interested, what is it you need help with?", "dlg5")
+	AddConversationOption(conversation, "I'll never help a guard from Freeport!")
+	StartConversation(conversation, NPC, Spawn, "I wish you luck with that, but no, I'm not evil and smiting me wouldn't get you any richer now would it?  Look, I'm just wanting a little help here or is that too much to ask of someone from that city of dancing fay and sugar cookies?")
+end
+
+
+
+
+
+
 
 function dlg1(NPC, Spawn)
  FaceTarget(NPC, Spawn)
@@ -174,7 +221,7 @@ function dlg13(NPC, Spawn)
   FaceTarget(NPC, Spawn)
   PlayFlavor(NPC, "brandus_levine/commonlands/quests/brandus_levine/brandus_levine019.mp3", "", "", 2588958758, 3569990697, Spawn)
   conversation = CreateConversation()
-  AddConversationOption(conversation, "Thank you Brandus, I knew you'd see things my way.")
+  AddConversationOption(conversation, "Thank you Brandus, I knew you'd see things my way.", "dlg25")
   AddConversationOption(conversation, "That's more like it.  I'll be back soon.")
   StartConversation(conversation, NPC, Spawn, "I can do that if it'll keep you quiet.  I don't have any coin on me here though, bad idea walking around with a lot of money on the docks you understand.  Go to the Crossroads, I have a business partner named Anders Blackhammer who can give you the profits from our last venture.  Tell him that I sent you.")
 end
@@ -279,22 +326,40 @@ AddConversationOption(conversation, "Thank you.  It's a pleasure doing business 
 StartConversation(conversation, NPC, Spawn, "Ah yes, your reward.  Here it is.  Remember that I have more work and more rewards when you return.")
 end
 
+function dlg25(NPC, Spawn)
+    FaceTarget(NPC, Spawn)
+    conversation = CreateConversation()
+	AddConversationOption(conversation, "Anders attacked me when I approached him!  I'm going to make you take a long walk off this short dock!", "dlg26")
+	AddConversationOption(conversation, "I suppose I deserved that.  Can we forget about it and get back to business?", "dlg10")
+	StartConversation(conversation, NPC, Spawn, "You return?  I take it your conversation with Anders went better for you than I thought.")
+end
+
+function dlg26(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	local conversation = CreateConversation()
+	AddConversationOption(conversation, "Clearly.")
+	StartConversation(conversation, NPC, Spawn, "I can't say that's wise.  You lay a finger on me and you'll never see another sunrise if you sleep in Freeport again, understand?")
+end
+
+
+
 -- QUEST OFFER FUNCTIONS
 
 function offer2(NPC, Spawn)
-FaceTarget(NPC, Spawn)
 OfferQuest(NPC, Spawn, StartingtheNegotiations)
 end
 
 
 function offer3(NPC, Spawn)
-FaceTarget(NPC, Spawn)
 OfferQuest(NPC, Spawn, FinishingtheNegotiations)
 end
 
 function offer1(NPC, Spawn)
-FaceTarget(NPC, Spawn)
 OfferQuest(NPC, Spawn, TheMysteriousMissingShipment)
+end
+
+function offer4(NPC, Spawn)
+    
 end
 
 function respawn(NPC)

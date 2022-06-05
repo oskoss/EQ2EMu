@@ -6,15 +6,22 @@
 	Script Notes	:	Locations collected from Live
 --]]
 
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
+
 function spawn(NPC)
 	waypoints(NPC)
+SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
 end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	PlayFlavor(NPC, "", "I am not at all interested in fish, so please, do not mention them to me.", "", 1689589577, 4560189, Spawn)
-	end
+    GenericRaceCheckHail(NPC, Spawn)
+end
 
+function InRange(NPC,Spawn)
+    GenericRaceCheckCallout(NPC, Spawn)
+    end
+    
 function respawn(NPC)
 		spawn(NPC)
 	end
@@ -55,7 +62,9 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 679.41, -20.65, 159.21, 2, 0)
 	MovementLoopAddLocation(NPC, 672.93, -21.19, 142.14, 2, 0)
 	MovementLoopAddLocation(NPC, 668.19, -21.31, 130.46, 2, 0)
-	MovementLoopAddLocation(NPC, 662.02, -20.96, 103.28, 2, 0)
+	MovementLoopAddLocation(NPC, 662.02, -20.96, 103.28, 2, 2)
+	MovementLoopAddLocation(NPC, 662.02, -20.96, 103.28, 2, 8,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 662.02, -20.96, 103.28, 2, 1)
 	MovementLoopAddLocation(NPC, 668.19, -21.31, 130.46, 2, 0)
 	MovementLoopAddLocation(NPC, 672.93, -21.19, 142.14, 2, 0)
 	MovementLoopAddLocation(NPC, 679.41, -20.65, 159.21, 2, 0)

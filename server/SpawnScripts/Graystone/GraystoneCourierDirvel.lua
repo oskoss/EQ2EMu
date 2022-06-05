@@ -65,7 +65,7 @@ function hailed(NPC, Spawn)
 	if HasQuest(Spawn, LATESHIPMENT) and GetQuestStep(Spawn, LATESHIPMENT) == 2 then
 		BusyWithQuest(NPC, Spawn)
 	else
-		Say(NPC, "Please come back later. I am very, very busy.", Spawn)
+	PlayFlavor(NPC, "voiceover/english/graystone_courier_dirvel/qey_village03/quests/graystone_courier/graystone_courier001.mp3", "Please come back later. I am very, very busy", "no", 2607292878, 3490339113, Spawn)
 	end
 end
 
@@ -111,20 +111,20 @@ function RandomSay(NPC)
    choice = math.random(1, 7)
 
    if choice == 1 then
-      PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_366d0c73.mp3", "I need a break like Lucan needs a vacation.", "", 2879789175, 2017987376)
+      PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_366d0c73.mp3", "I need a break like Lucan needs a vacation.", "tap", 2879789175, 2017987376)
    elseif choice == 2 then
-      PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_4829cb8c.mp3", "Hey, look at that! Another late package. Who would've thought, huh?", "", 4258041512, 25774857)
+      PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_4829cb8c.mp3", "Hey, look at that! Another late package. Who would've thought, huh?", "shrug", 4258041512, 25774857)
    elseif choice == 3 then
-      PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_6b384f5f.mp3", "Wow, this shipment is days old!", "", 3859597953, 2582422318)
+      PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_6b384f5f.mp3", "Wow, this shipment is days old!", "boggle", 3859597953, 2582422318)
    elseif choice == 4 then
-      PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_b8328015.mp3", "Goodness, I don't think I'll ever get done with this work.", "", 1615569956, 1679588116)
+      PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_b8328015.mp3", "Goodness, I don't think I'll ever get done with this work.", "sigh", 1615569956, 1679588116)
    elseif choice == 5 then
-      PlayFlavor(Spawn, "voiceover/english/voice_emotes/greetings/greetings_3_1002.mp3", "", "", 0, 0)
+		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_guile_3ac0d6f0.mp3", "Delivery for... sigh... for Guile... the pig... I hate my job.", "pout", 1412857443, 3143121599, Spawn)
    elseif choice == 6 then
-      Say(NPC, "Why did I ever accept this job?")
+		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_c7c31a67.mp3", "Why did I ever accept this job?", "facepalm", 2739030688, 2415016119, Spawn)
    elseif choice == 7 then
-      Say(NPC, "There has to be a more efficient way of doing this.")
+		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_bd161ed7.mp3", "There has to be a more efficient way of doing this.", "sniff", 3239550892, 1210876271, Spawn)
    else
-      Say(NPC, "Noob scatman did this wrong.")
+		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/graystone_courier_dirvel/qey_village03/quest_graystone_courier_blarg_43368900.mp3", "If I have to read one more shipment I'm going to faint!", "sigh", 2554894210, 211258977, Spawn)
    end
 end

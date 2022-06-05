@@ -5,35 +5,24 @@
 	Script Date		:	04/11/2020 06:08:55 PM
 	Script Notes	:	Locations collected from Live
 --]]
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
 
 function spawn(NPC)
 	waypoints(NPC)
-	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
 end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
+GenericEcologyHail(NPC, Spawn, faction)
 end
+
+function InRange(NPC,Spawn)
+    GenericEcologyCallout(NPC, Spawn, faction)
+    end
 
 function respawn(NPC)
 	spawn(NPC)
-end
-
-function InRange(NPC, Spawn)
-	local choice = math.random(1,5)
-
-	if choice == 1 then
-		PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_hail_gf_cbbaf023.mp3", "I've gotta get rid of these clothes; they're so one-hundred years ago.", "grumble", 3038038462, 3464193459, Spawn)
-	elseif choice == 2 then
-		PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_hail_gf_5b0f480.mp3", "I'm tired of waiting!  I want to make something of myself!", "pout", 3723196832, 16921270, Spawn)
-	elseif choice == 3 then
-		PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_hail_gf_4a0665a0.mp3", "I'm so depressed!  I had to work all day!", "sad", 3176397311, 2616932103, Spawn)
-	elseif choice == 4 then
-		PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_hail_gf_1f61925a.mp3", "Are my roots showing?  I think I'll go for a light blueberry mixed with jum-jum highlights.", "ponder", 4153154191, 497875539, Spawn)
-	elseif choice == 5 then
-		PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_hail_gf_5c8eceae.mp3", "My ancestors don't understand me.  They're from a completely different era.", "flustered", 2843616704, 1740340084, Spawn)
-	else
-	end
 end
 
 function LeaveRange(NPC, Spawn)
@@ -58,7 +47,7 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 503.39, -11.43, 143.13, 2, 0)
 	MovementLoopAddLocation(NPC, 507.44, -10.22, 117.68, 2, 0)
 	MovementLoopAddLocation(NPC, 489.85, -11.47, 134.57, 2, 0)
-	MovementLoopAddLocation(NPC, 490.98, -12.08, 147.47, 2, 0)
+	MovementLoopAddLocation(NPC, 490.98, -12.08, 147.47, 2, 7)
 	MovementLoopAddLocation(NPC, 456.49, -22.12, 234.19, 2, 0)
 	MovementLoopAddLocation(NPC, 501.47, -19.69, 242.25, 2, 0)
 	MovementLoopAddLocation(NPC, 540.32, -18.02, 242.34, 2, 0)
@@ -75,7 +64,13 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 701.02, -19.49, 177.69, 2, 0)
 	MovementLoopAddLocation(NPC, 682.19, -20.54, 161.17, 2, 0)
 	MovementLoopAddLocation(NPC, 675.84, -21.06, 146.15, 2, 0)
-	MovementLoopAddLocation(NPC, 673.27, -21.16, 136.85, 2, 0)
+    MovementLoopAddLocation(NPC, 673.27, -21.16, 136.85, 2, 0)
+	MovementLoopAddLocation(NPC, 677.07, -21, 135.21, 2, 2)
+	MovementLoopAddLocation(NPC, 677.07, -21, 135.21, 2, 8,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 677.07, -21, 135.21, 2, 1)
+	MovementLoopAddLocation(NPC, 662.02, -20.96, 103.28, 2, 2)
+	MovementLoopAddLocation(NPC, 662.02, -20.96, 103.28, 2, 8,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 662.02, -20.96, 103.28, 2, 1)
 	MovementLoopAddLocation(NPC, 677.07, -21, 135.21, 2, 0)
 	MovementLoopAddLocation(NPC, 673.27, -21.16, 136.85, 2, 0)
 	MovementLoopAddLocation(NPC, 675.84, -21.06, 146.15, 2, 0)

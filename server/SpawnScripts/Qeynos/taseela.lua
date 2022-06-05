@@ -6,30 +6,22 @@
 	Script Notes	:	Locations collected from Live
 --]]
 
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
+
+
 function spawn(NPC)
 	waypoints(NPC)
+SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
 end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	
-	local choice = math.random(1,6)
-
-	if choice == 1 then
-		PlayFlavor(NPC, "voiceover/english/halfling_eco_good_1/ft/halfling/halfling_eco_good_1_hail_gf_bc49d3d0.mp3", "Laziness is nothing more than the habit of resting before you get tired.", "yawn", 2068417649, 3867807288, Spawn)
-	elseif choice == 2 then
-		PlayFlavor(NPC, "voiceover/english/halfling_eco_good_1/ft/halfling/halfling_eco_good_1_hail_gf_a3259538.mp3", "You should head by the tavern later on! Every night in Qeynos is cause for celebration.", "cheer", 3875741901, 4154770080, Spawn)
-	elseif choice == 3 then
-		PlayFlavor(NPC, "voiceover/english/halfling_eco_good_1/ft/halfling/halfling_eco_good_1_hail_gf_5b6e8d2f.mp3", "Do you like muffins?  Muffins are my favorite, I eat them every chance I get.", "sigh", 4155434475, 829232573, Spawn)
-	elseif choice == 4 then
-		PlayFlavor(NPC, "voiceover/english/halfling_eco_good_1/ft/halfling/halfling_eco_good_1_hail_gf_3dc6b124.mp3", "Get the wash, get the wash.  This whole city would fall apart if I didn't deliver the clothes on time.  ", "frustrated", 4277096439, 928366048, Spawn)
-	elseif choice == 5 then
-		PlayFlavor(NPC, "voiceover/english/halfling_eco_good_1/ft/halfling/halfling_eco_good_1_hail_gf_1b77439f.mp3", "Be on the lookout, friend!  I just spoke to the guards.  I've no doubt gnolls are scouting the nearby area.", "lookaway", 495282965, 1739106402, Spawn)
-	elseif choice == 6 then
-		PlayFlavor(NPC, "voiceover/english/halfling_eco_good_1/ft/halfling/halfling_eco_good_1_hail_gf_6594953c.mp3", "If a thing isn't worth saying, you sing it.", "wink", 1056697572, 3706271932, Spawn)
-	else
-	end
+GenericEcologyHail(NPC, Spawn, faction)
 end
+
+function InRange(NPC,Spawn)
+    GenericEcologyCallout(NPC, Spawn, faction)
+    end
 
 function respawn(NPC)
 	spawn(NPC)
@@ -56,14 +48,15 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 516.38, -10.45, 149.36, 2, 0)
 	MovementLoopAddLocation(NPC, 528.67, -10.51, 150.52, 2, 0)
 	MovementLoopAddLocation(NPC, 540.31, -10.49, 150.73, 2, 0)
-	MovementLoopAddLocation(NPC, 545.51, -10.54, 150.86, 2, 0)
+	MovementLoopAddLocation(NPC, 545.51, -10.54, 150.86, 2, 0,"Door1")
 	MovementLoopAddLocation(NPC, 546.39, -9.56, 136.3, 2, 0)
 	MovementLoopAddLocation(NPC, 538.73, -9.56, 132.99, 2, 0)
 	MovementLoopAddLocation(NPC, 538.95, -9.56, 130.4, 2, 0)
 	MovementLoopAddLocation(NPC, 546.87, -8.54, 130.88, 2, 0)
+	MovementLoopAddLocation(NPC, 546.87, -8.54, 130.88, 2, 8,"EcologyEmotes")
 	MovementLoopAddLocation(NPC, 555.09, -9.56, 130.96, 2, 0)
 	MovementLoopAddLocation(NPC, 555.19, -9.56, 134.75, 2, 0)
-	MovementLoopAddLocation(NPC, 546.18, -9.56, 134.86, 2, 0)
+	MovementLoopAddLocation(NPC, 546.18, -9.56, 134.86, 2, 0,"Door1")
 	MovementLoopAddLocation(NPC, 546.45, -10.56, 151.11, 2, 0)
 	MovementLoopAddLocation(NPC, 585.38, -10.44, 147.7, 2, 0)
 	MovementLoopAddLocation(NPC, 617.72, -12.21, 145.89, 2, 0)
@@ -77,7 +70,9 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 682.89, -19.33, 197.87, 2, 0)
 	MovementLoopAddLocation(NPC, 706.09, -19.54, 190.22, 2, 0)
 	MovementLoopAddLocation(NPC, 711.17, -19.89, 168.56, 2, 0)
-	MovementLoopAddLocation(NPC, 712.74, -20.86, 161.78, 2, 0)
+	MovementLoopAddLocation(NPC, 712.74, -20.86, 161.78, 2, 1)
+	MovementLoopAddLocation(NPC, 712.74, -20.86, 161.78, 2, 8,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 712.74, -20.86, 161.78, 2, 1)
 	MovementLoopAddLocation(NPC, 715.26, -19.93, 167.66, 2, 0)
 	MovementLoopAddLocation(NPC, 723.3, -19.61, 192.39, 2, 0)
 	MovementLoopAddLocation(NPC, 709.6, -19.52, 197.11, 2, 0)
@@ -111,7 +106,9 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 709.6, -19.52, 197.11, 2, 0)
 	MovementLoopAddLocation(NPC, 723.3, -19.61, 192.39, 2, 0)
 	MovementLoopAddLocation(NPC, 715.26, -19.93, 167.66, 2, 0)
-	MovementLoopAddLocation(NPC, 712.74, -20.86, 161.78, 2, 0)
+	MovementLoopAddLocation(NPC, 712.74, -20.86, 161.78, 2, 1)
+	MovementLoopAddLocation(NPC, 712.74, -20.86, 161.78, 2, 8,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 712.74, -20.86, 161.78, 2, 1)
 	MovementLoopAddLocation(NPC, 711.17, -19.89, 168.56, 2, 0)
 	MovementLoopAddLocation(NPC, 706.09, -19.54, 190.22, 2, 0)
 	MovementLoopAddLocation(NPC, 682.89, -19.33, 197.87, 2, 0)
@@ -125,13 +122,14 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 617.72, -12.21, 145.89, 2, 0)
 	MovementLoopAddLocation(NPC, 585.38, -10.44, 147.7, 2, 0)
 	MovementLoopAddLocation(NPC, 546.45, -10.56, 151.11, 2, 0)
-	MovementLoopAddLocation(NPC, 546.18, -9.56, 134.86, 2, 0)
+	MovementLoopAddLocation(NPC, 546.18, -9.56, 134.86, 2, 0,"Door1")
 	MovementLoopAddLocation(NPC, 555.19, -9.56, 134.75, 2, 0)
 	MovementLoopAddLocation(NPC, 555.09, -9.56, 130.96, 2, 0)
+	MovementLoopAddLocation(NPC, 555.09, -9.56, 130.96, 2, 8,"EcologyEmotes")
 	MovementLoopAddLocation(NPC, 546.87, -8.54, 130.88, 2, 0)
 	MovementLoopAddLocation(NPC, 538.95, -9.56, 130.4, 2, 0)
 	MovementLoopAddLocation(NPC, 538.73, -9.56, 132.99, 2, 0)
-	MovementLoopAddLocation(NPC, 546.39, -9.56, 136.3, 2, 0)
+	MovementLoopAddLocation(NPC, 546.39, -9.56, 136.3, 2, 0,"Door1")
 	MovementLoopAddLocation(NPC, 545.51, -10.54, 150.86, 2, 0)
 	MovementLoopAddLocation(NPC, 540.31, -10.49, 150.73, 2, 0)
 	MovementLoopAddLocation(NPC, 528.67, -10.51, 150.52, 2, 0)
@@ -155,4 +153,10 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 471.7, -20.99, 193.86, 2, 0)
 end
 
+function Door1(NPC,Spawn)
+    local door = GetSpawn(NPC, 2310200)
+--    if door == closed then 
+    UseWidget(door)
+--    end
+end
 

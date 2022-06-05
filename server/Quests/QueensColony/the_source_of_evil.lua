@@ -15,6 +15,7 @@ function Init(Quest)
 	AddQuestStepCompleteAction(Quest, 1, "step1_complete_talkedToSorcerer")
 end
 
+
 function Accepted(Quest, QuestGiver, Player)
 	if QuestGiver ~= nil then
 		if GetDistance(Player, QuestGiver) < 30 then
@@ -95,7 +96,7 @@ function questComplete(Quest, QuestGiver, Player)
 	UpdateQuestDescription(Quest, "I was able to help Sorcerer Oofala and destroyed the totems that had spread the evil into the village. Removing the totems brought forth an evil champion that I took care of as well. The Dark Blademaster had an insignia of the Freeport Militia in his belongings. Sorcerer Oofala then sent me to try and help High Chieftan Grexx at the nearby tree house as time was pressing to try and save them. High Chieftan Grexx sent me into the nearby cave to take care of the necromancer that was tainting the island. I took care of the necromancer and returned to both High Chieftan Grexx and Murrar Shar for their respective rewards.")
 	GiveQuestReward(Quest, Player)
 end
-
+    
 function Reload(Quest, QuestGiver, Player, Step)
 	if Step == 1 then
 		step1_complete_talkedToSorcerer(Quest, QuestGiver, Player)
