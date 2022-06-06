@@ -155,7 +155,7 @@ void LoginDatabase::SetServerEquipmentAppearances(int32 server_id, map<int32, Lo
 			if( char_id == 0 ) // invalid character/world match
 				continue;
 
-			LogWrite(LOGIN__DEBUG, 5, "Login", "--Processing character %u, slot %i , type %i", char_id, (int32)equip_itr->second.slot,(int32)equip_itr->second.type);
+			LogWrite(LOGIN__DEBUG, 5, "Login", "--Processing character %u, slot %i", char_id, (int32)equip_itr->second.slot);
 
 			if(count > 0)
 				ss << ", ";
