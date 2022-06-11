@@ -233,6 +233,14 @@ Client::~Client() {
 
 	//safe_delete(autobootup_timeout);
 
+	vector<QueuedQuest*>::iterator itr;
+	QueuedQuest* queued_quest = 0;
+	for (itr = quest_queue.begin(); itr != quest_queue.end(); itr++) {
+		queued_quest = *itr;
+		safe_delete(queued_quest);
+	}
+	quest_queue.clear();
+	
 	safe_delete(CLE_keepalive_timer);
 	safe_delete(connect);
 	--numclients;
@@ -5446,9 +5454,16 @@ void Client::CheckQuestQueue() {
 	QueuedQuest* queued_quest = 0;
 	for (itr = quest_queue.begin(); itr != quest_queue.end(); itr++) {
 		queued_quest = *itr;
-		SendQuestUpdateStepImmediately(queued_quest->quest, queued_quest->step, queued_quest->display_quest_helper);
-		if(queued_quest->quest && queued_quest->quest->GetTurnedIn()) //update the journal so the old quest isn't the one displayed in the client's quest helper
-			SendQuestJournal();
+		
+		Quest* quest = GetPlayer()->GetAnyQuest(queued_quest->quest_id);
+		if(quest) {
+			SendQuestUpdateStepImmediately(quest, queued_quest->step, queued_quest->display_quest_helper);
+			if(quest->GetTurnedIn()) //update the journal so the old quest isn't the one displayed in the client's quest helper
+				SendQuestJournal();
+		}
+		else {
+			LogWrite(CCLIENT__ERROR, 0, "Client", "Queued Quest ID %u missing for Player %s, cannot send quest step update.", queued_quest->quest_id, GetPlayer()->GetName());
+		}
 		safe_delete(queued_quest);
 	}
 	quest_queue.clear();
@@ -5712,7 +5727,7 @@ void Client::SendQuestUpdateStepImmediately(Quest* quest, int32 step, bool displ
 
 void Client::SendQuestUpdateStep(Quest* quest, int32 step, bool display_quest_helper) {
 	QueuedQuest* item = new QueuedQuest;
-	item->quest = quest;
+	item->quest_id = quest->GetQuestID();
 	item->step = step;
 	item->display_quest_helper = display_quest_helper;
 	MQuestQueue.writelock();

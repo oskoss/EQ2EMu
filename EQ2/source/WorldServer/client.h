@@ -54,7 +54,7 @@ struct ConversationOption;
 #define MAIL_TYPE_GM		2
 
 struct QueuedQuest{
-	Quest* quest;
+	int32 quest_id;
 	int32 step;
 	bool display_quest_helper;
 };
