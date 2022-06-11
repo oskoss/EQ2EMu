@@ -5374,13 +5374,13 @@ void Client::BankDeposit(int64 amount) {
 void Client::AddPendingQuestAcceptReward(Quest* quest)
 {
 	MPendingQuestAccept.lock();
-	pending_quest_accept.push_back(quest);
+	pending_quest_accept.push_back(quest->GetQuestID());
 	MPendingQuestAccept.unlock();
 }
 
 void Client::AddPendingQuestReward(Quest* quest, bool update) {
 	MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
-	quest_pending_reward.push_back(quest);
+	quest_pending_reward.push_back(quest->GetQuestID());
 	quest_updates = update;
 	MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
 
@@ -5414,16 +5414,26 @@ void Client::ProcessQuestUpdates() {
 			}
 		}
 	}
+	MQuestPendingUpdates.readlock(__FUNCTION__, __LINE__);
 	if (quest_pending_reward.size() > 0) {
-		vector<Quest*>::iterator itr;
-		vector<Quest*> tmp_quest_rewards;
+		MQuestPendingUpdates.releasereadlock(__FUNCTION__, __LINE__);
+		vector<int32>::iterator itr;
+		vector<int32> tmp_quest_rewards;
 		MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
 		tmp_quest_rewards.insert(tmp_quest_rewards.begin(), quest_pending_reward.begin(), quest_pending_reward.end());
 		quest_pending_reward.clear();
 		MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
 		for (itr = tmp_quest_rewards.begin(); itr != tmp_quest_rewards.end(); itr++) {
-			GiveQuestReward(*itr);
+			int32 questID = *itr;
+			Quest* quest = GetPlayer()->GetAnyQuest(questID);
+			if(quest) {
+				GiveQuestReward(quest);
+			} else {
+				LogWrite(CCLIENT__ERROR, 0, "Client", "Quest ID %u missing for Player %s, skipping quest id from tmp_quest_rewards.", questID, GetPlayer()->GetName());
+			}
 		}
+	} else {
+		MQuestPendingUpdates.releasereadlock(__FUNCTION__, __LINE__);
 	}
 	quest_updates = false;
 
@@ -5801,13 +5811,19 @@ void Client::ReloadQuests() {
 
 Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
 	bool found_quest = false;
-	vector<Quest*>::iterator itr;
+	vector<int32>::iterator itr;
 	vector<Item*>* items = 0;
+	int32 questID = 0;
 	Quest* quest = 0;
 	MPendingQuestAccept.lock();
 	for (itr = pending_quest_accept.begin(); itr != pending_quest_accept.end(); itr++) {
-		quest = *itr;
-
+		questID = *itr;
+		quest = GetPlayer()->GetAnyQuest(questID);
+		if(!quest) {
+			LogWrite(CCLIENT__ERROR, 0, "Client", "Quest ID %u missing for Player %s, removing quest id from pending_quest_accept.", questID, GetPlayer()->GetName());
+			pending_quest_accept.erase(itr);
+			continue;
+		}
 		if(quest->GetQuestTemporaryState())
 			items = quest->GetTmpRewardItems();
 		else
@@ -5915,7 +5931,7 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 	}
 	else {
 		MPendingQuestAccept.lock();
-		pending_quest_accept.push_back(quest);
+		pending_quest_accept.push_back(quest->GetQuestID());
 		MPendingQuestAccept.unlock();
 		SimpleMessage(CHANNEL_COLOR_RED, "You do not have enough free slots!  Free some slots and try again.");
 		DisplayQuestComplete(quest, quest->GetQuestTemporaryState(), quest->GetQuestTemporaryDescription());

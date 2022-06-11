@@ -545,7 +545,7 @@ private:
 	void	AddStepProgress(int32 quest_id, int32 step, int32 progress);
 	map<int32, map<int32, int32> > quest_pending_updates;
 	vector<QueuedQuest*> quest_queue;
-	vector<Quest*> quest_pending_reward;
+	vector<int32> quest_pending_reward;
 	volatile bool	quest_updates;
 	Mutex	MQuestPendingUpdates;
 	Mutex	MQuestQueue;
@@ -559,7 +559,7 @@ private:
 	Spawn*	merchant_transaction;
 	Spawn*	mail_transaction;
 	Mutex	MPendingQuestAccept;
-	vector<Quest*> pending_quest_accept;	
+	vector<int32> pending_quest_accept;	
 	bool	lua_debug;
 	bool	should_target;
 	Spawn*	combine_spawn;

@@ -4953,6 +4953,14 @@ map<int32, Quest*>*	Player::GetCompletedPlayerQuests(){
 	return &completed_quests;
 }
 
+Quest* Player::GetAnyQuest(int32 quest_id) {
+	if(completed_quests.count(quest_id) > 0)
+		return completed_quests[quest_id];
+	if(player_quests.count(quest_id) > 0)
+		return player_quests[quest_id];
+	
+	return 0;
+}
 Quest* Player::GetCompletedQuest(int32 quest_id){
 	if(completed_quests.count(quest_id) > 0)
 		return completed_quests[quest_id];

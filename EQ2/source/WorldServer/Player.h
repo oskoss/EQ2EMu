@@ -689,6 +689,7 @@ public:
 	map<int32, vector<int32>*>   player_spawn_history_required;
 	Mutex				m_playerSpawnQuestsRequired;
 	Mutex				m_playerSpawnHistoryRequired;
+	Quest*  GetAnyQuest(int32 quest_id);
 	Quest*	GetCompletedQuest(int32 quest_id);
 	void	AddCompletedQuest(Quest* quest);
 	map<int32, Quest*>	pending_quests;
