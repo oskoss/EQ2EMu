@@ -81,8 +81,6 @@ NPC::NPC(NPC* old_npc){
 		movement_interrupted = false;
 		old_npc->SetQuestsRequired(this);
 		SetTransporterID(old_npc->GetTransporterID());
-
-		SetAttackType(old_npc->GetAttackType());
 		SetAIStrategy(old_npc->GetAIStrategy());
 		SetPrimarySpellList(old_npc->GetPrimarySpellList());
 		SetSecondarySpellList(old_npc->GetSecondarySpellList());
@@ -727,10 +725,6 @@ Skill* NPC::GetSkillByID(int32 id, bool check_update){
 		return ret;
 	}
 	return 0;
-}
-
-void NPC::SetAttackType(int8 type){
-	attack_type = type;
 }
 
 int8 NPC::GetAttackType(){

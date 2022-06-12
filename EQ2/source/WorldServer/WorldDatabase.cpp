@@ -1030,7 +1030,6 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->SetMerchantID(atoul(row[37]));
 		npc->SetMerchantType(atoi(row[38]));
 		npc->SetSizeOffset(atoi(row[39]));
-		npc->SetAttackType(atoi(row[40]));
 		npc->SetAIStrategy(atoi(row[41]));
 		npc->SetPrimarySpellList(atoul(row[42]));
 		npc->SetSecondarySpellList(atoul(row[43]));
@@ -1039,6 +1038,7 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->SetEquipmentListID(atoul(row[46]));
 
 		InfoStruct* info = npc->GetInfoStruct();
+		info->set_attack_type(atoi(row[40]));
 		info->set_str_base(atoi(row[47]));
 		info->set_sta_base(atoi(row[48]));
 		info->set_wis_base(atoi(row[49]));		
@@ -6743,7 +6743,6 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		npc->SetMerchantID(result.GetInt32(37));
 		npc->SetMerchantType(result.GetInt8(38));
 		npc->SetSizeOffset(result.GetInt8(39));
-		npc->SetAttackType(result.GetInt8(40));
 		npc->SetAIStrategy(result.GetInt8(41));
 		npc->SetPrimarySpellList(result.GetInt32(42));
 		npc->SetSecondarySpellList(result.GetInt32(43));
@@ -6752,6 +6751,7 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		npc->SetEquipmentListID(result.GetInt32(46));
 
 		InfoStruct* info = npc->GetInfoStruct();
+		info->set_attack_type(result.GetInt8(40));
 		info->set_str_base(result.GetInt16(47));
 		info->set_sta_base(result.GetInt16(48));
 		info->set_wis_base(result.GetInt16(49));		

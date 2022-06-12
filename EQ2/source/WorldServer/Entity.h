@@ -89,28 +89,6 @@ struct DetrimentalEffects {
 	float   total_time;
 };
 
-struct CombatData{
-	int32			range_last_attack_time;
-	int32			primary_last_attack_time;
-	int32			secondary_last_attack_time;
-	int16			primary_attack_delay;
-	int16			secondary_attack_delay;
-	int16			ranged_attack_delay;
-	int8			primary_weapon_type;
-	int8			secondary_weapon_type;
-	int8			ranged_weapon_type;
-	int32			primary_weapon_damage_low;
-	int32			primary_weapon_damage_high;
-	int32			secondary_weapon_damage_low;
-	int32			secondary_weapon_damage_high;
-	int32			ranged_weapon_damage_low;
-	int32			ranged_weapon_damage_high;
-	int8			wield_type;
-	int16           primary_weapon_delay;
-	int16           secondary_weapon_delay;
-	int16           ranged_weapon_delay;
-};
-
 struct InfoStruct{
 	InfoStruct()
 	{
@@ -260,6 +238,31 @@ struct InfoStruct{
 		interaction_flag_ = 0;
 		tag1_ = 0;
 		mood_ = 0;
+		
+		range_last_attack_time_ = 0;
+		primary_last_attack_time_ = 0;
+		secondary_last_attack_time_ = 0;
+		primary_attack_delay_ = 0;
+		secondary_attack_delay_ = 0;
+		ranged_attack_delay_ = 0;
+		primary_weapon_type_ = 0;
+		secondary_weapon_type_ = 0;
+		ranged_weapon_type_ = 0;
+		primary_weapon_damage_low_ = 0;
+		primary_weapon_damage_high_ = 0;
+		secondary_weapon_damage_low_ = 0;
+		secondary_weapon_damage_high_ = 0;
+		ranged_weapon_damage_low_ = 0;
+		ranged_weapon_damage_high_ = 0;
+		wield_type_ = 0;
+		attack_type_ = 0;
+		primary_weapon_delay_ = 0;
+		secondary_weapon_delay_ = 0;
+		ranged_weapon_delay_ = 0;
+		
+		override_primary_weapon_ = 0;
+		override_secondary_weapon_ = 0;
+		override_ranged_weapon_ = 0;
 	}
 
 
@@ -415,6 +418,31 @@ struct InfoStruct{
 		interaction_flag_ = oldStruct->get_interaction_flag();
 		tag1_ = oldStruct->get_tag1();
 		mood_ = oldStruct->get_mood();
+		
+		range_last_attack_time_ = oldStruct->get_range_last_attack_time();
+		primary_last_attack_time_ = oldStruct->get_primary_last_attack_time();;
+		secondary_last_attack_time_ = oldStruct->get_secondary_last_attack_time();;
+		primary_attack_delay_ = oldStruct->get_primary_attack_delay();
+		secondary_attack_delay_ = oldStruct->get_secondary_attack_delay();
+		ranged_attack_delay_ = oldStruct->get_ranged_attack_delay();
+		primary_weapon_type_ = oldStruct->get_primary_weapon_type();
+		secondary_weapon_type_ = oldStruct->get_secondary_weapon_type();
+		ranged_weapon_type_ = oldStruct->get_ranged_weapon_type();
+		primary_weapon_damage_low_ = oldStruct->get_primary_weapon_damage_low();
+		primary_weapon_damage_high_ = oldStruct->get_primary_weapon_damage_high();
+		secondary_weapon_damage_low_ = oldStruct->get_secondary_weapon_damage_low();
+		secondary_weapon_damage_high_ = oldStruct->get_secondary_weapon_damage_high();
+		ranged_weapon_damage_low_ = oldStruct->get_ranged_weapon_damage_low();
+		ranged_weapon_damage_high_ = oldStruct->get_ranged_weapon_damage_high();
+		wield_type_ = oldStruct->get_wield_type();
+		attack_type_ = oldStruct->get_attack_type();
+		primary_weapon_delay_ = oldStruct->get_primary_weapon_delay();
+		secondary_weapon_delay_ = oldStruct->get_secondary_weapon_delay();
+		ranged_weapon_delay_ = oldStruct->get_ranged_weapon_delay();
+		
+		override_primary_weapon_ = oldStruct->get_override_primary_weapon();
+		override_secondary_weapon_ = oldStruct->get_override_secondary_weapon();
+		override_ranged_weapon_ = oldStruct->get_override_ranged_weapon();
 	}
 
 	//mutable std::shared_mutex mutex_;
@@ -580,6 +608,36 @@ struct InfoStruct{
 	int8	get_interaction_flag() { std::lock_guard<std::mutex> lk(classMutex); return interaction_flag_; }
 	int8	get_tag1() { std::lock_guard<std::mutex> lk(classMutex); return tag1_; }
 	int16	get_mood() { std::lock_guard<std::mutex> lk(classMutex); return mood_; }
+
+	int32	get_range_last_attack_time() { std::lock_guard<std::mutex> lk(classMutex); return range_last_attack_time_; }
+	int32	get_primary_last_attack_time() { std::lock_guard<std::mutex> lk(classMutex); return primary_last_attack_time_; }
+	int32	get_secondary_last_attack_time() { std::lock_guard<std::mutex> lk(classMutex); return secondary_last_attack_time_; }
+	
+	int16	get_primary_attack_delay() { std::lock_guard<std::mutex> lk(classMutex); return primary_attack_delay_; }
+	int16	get_secondary_attack_delay() { std::lock_guard<std::mutex> lk(classMutex); return secondary_attack_delay_; }
+	int16	get_ranged_attack_delay() { std::lock_guard<std::mutex> lk(classMutex); return ranged_attack_delay_; }
+	
+	int8	get_primary_weapon_type() { std::lock_guard<std::mutex> lk(classMutex); return primary_weapon_type_; }
+	int8	get_secondary_weapon_type() { std::lock_guard<std::mutex> lk(classMutex); return secondary_weapon_type_; }
+	int8	get_ranged_weapon_type() { std::lock_guard<std::mutex> lk(classMutex); return ranged_weapon_type_; }
+
+	int32	get_primary_weapon_damage_low() { std::lock_guard<std::mutex> lk(classMutex); return primary_weapon_damage_low_; }
+	int32	get_primary_weapon_damage_high() { std::lock_guard<std::mutex> lk(classMutex); return primary_weapon_damage_high_; }
+	int32	get_secondary_weapon_damage_low() { std::lock_guard<std::mutex> lk(classMutex); return secondary_weapon_damage_low_; }
+	int32	get_secondary_weapon_damage_high() { std::lock_guard<std::mutex> lk(classMutex); return secondary_weapon_damage_high_; }
+	int32	get_ranged_weapon_damage_low() { std::lock_guard<std::mutex> lk(classMutex); return ranged_weapon_damage_low_; }
+	int32	get_ranged_weapon_damage_high() { std::lock_guard<std::mutex> lk(classMutex); return ranged_weapon_damage_high_; }
+
+	int8	get_wield_type() { std::lock_guard<std::mutex> lk(classMutex); return wield_type_; }
+	int8	get_attack_type() { std::lock_guard<std::mutex> lk(classMutex); return attack_type_; }
+
+	int16	get_primary_weapon_delay() { std::lock_guard<std::mutex> lk(classMutex); return primary_weapon_delay_; }
+	int16	get_secondary_weapon_delay() { std::lock_guard<std::mutex> lk(classMutex); return primary_weapon_delay_; }
+	int16	get_ranged_weapon_delay() { std::lock_guard<std::mutex> lk(classMutex); return primary_weapon_delay_; }
+	
+	int8	get_override_primary_weapon() { std::lock_guard<std::mutex> lk(classMutex); return override_primary_weapon_; }
+	int8	get_override_secondary_weapon() { std::lock_guard<std::mutex> lk(classMutex); return override_secondary_weapon_; }
+	int8	get_override_ranged_weapon() { std::lock_guard<std::mutex> lk(classMutex); return override_ranged_weapon_; }
 
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
@@ -830,6 +888,36 @@ struct InfoStruct{
 	void	set_tag1(int8 value) { std::lock_guard<std::mutex> lk(classMutex); tag1_ = value; }
 	void	set_mood(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mood_ = value; }
 
+	void	set_range_last_attack_time(int32 value) { std::lock_guard<std::mutex> lk(classMutex); range_last_attack_time_ = value; }
+	void	set_primary_last_attack_time(int32 value) { std::lock_guard<std::mutex> lk(classMutex); primary_last_attack_time_ = value; }
+	void	set_secondary_last_attack_time(int32 value) { std::lock_guard<std::mutex> lk(classMutex); secondary_last_attack_time_ = value; }
+	
+	void	set_primary_attack_delay(int16 value) { std::lock_guard<std::mutex> lk(classMutex); primary_attack_delay_ = value; }
+	void	set_secondary_attack_delay(int16 value) { std::lock_guard<std::mutex> lk(classMutex); secondary_attack_delay_ = value; }
+	void	set_ranged_attack_delay(int16 value) { std::lock_guard<std::mutex> lk(classMutex); ranged_attack_delay_ = value; }
+
+	void	set_primary_weapon_type(int8 value) { std::lock_guard<std::mutex> lk(classMutex); primary_weapon_type_ = value; }
+	void	set_secondary_weapon_type(int8 value) { std::lock_guard<std::mutex> lk(classMutex); secondary_weapon_type_ = value; }
+	void	set_ranged_weapon_type(int8 value) { std::lock_guard<std::mutex> lk(classMutex); ranged_weapon_type_ = value; }
+	
+	void	set_primary_weapon_damage_low(int32 value) { std::lock_guard<std::mutex> lk(classMutex); primary_weapon_damage_low_ = value; }
+	void	set_primary_weapon_damage_high(int32 value) { std::lock_guard<std::mutex> lk(classMutex); primary_weapon_damage_high_ = value; }
+	void	set_secondary_weapon_damage_low(int32 value) { std::lock_guard<std::mutex> lk(classMutex); secondary_weapon_damage_low_ = value; }
+	void	set_secondary_weapon_damage_high(int32 value) { std::lock_guard<std::mutex> lk(classMutex); secondary_weapon_damage_high_ = value; }
+	void	set_ranged_weapon_damage_low(int32 value) { std::lock_guard<std::mutex> lk(classMutex); ranged_weapon_damage_low_ = value; }
+	void	set_ranged_weapon_damage_high(int32 value) { std::lock_guard<std::mutex> lk(classMutex); ranged_weapon_damage_high_ = value; }
+	
+	void	set_wield_type(int8 value) { std::lock_guard<std::mutex> lk(classMutex); wield_type_ = value; }
+	void	set_attack_type(int8 value) { std::lock_guard<std::mutex> lk(classMutex); attack_type_ = value; }
+	
+	void	set_primary_weapon_delay(int16 value) { std::lock_guard<std::mutex> lk(classMutex); primary_weapon_delay_ = value; }
+	void	set_secondary_weapon_delay(int16 value) { std::lock_guard<std::mutex> lk(classMutex); secondary_weapon_delay_ = value; }
+	void	set_ranged_weapon_delay(int16 value) { std::lock_guard<std::mutex> lk(classMutex); ranged_weapon_delay_ = value; }
+	
+	void	set_override_primary_weapon(int8 value) { std::lock_guard<std::mutex> lk(classMutex); override_secondary_weapon_ = value; }
+	void	set_override_secondary_weapon(int8 value) { std::lock_guard<std::mutex> lk(classMutex); override_secondary_weapon_ = value; }
+	void	set_override_ranged_weapon(int8 value) { std::lock_guard<std::mutex> lk(classMutex); override_ranged_weapon_ = value; }
+	
 	void	ResetEffects(Spawn* spawn)
 	{
 		for(int i=0;i<45;i++){
@@ -1001,6 +1089,32 @@ private:
 	int8			interaction_flag_;
 	int8			tag1_;
 	int16			mood_;
+	
+	int32			range_last_attack_time_;
+	int32			primary_last_attack_time_;
+	int32			secondary_last_attack_time_;
+	int16			primary_attack_delay_;
+	int16			secondary_attack_delay_;
+	int16			ranged_attack_delay_;
+	int8			primary_weapon_type_;
+	int8			secondary_weapon_type_;
+	int8			ranged_weapon_type_;
+	int32			primary_weapon_damage_low_;
+	int32			primary_weapon_damage_high_;
+	int32			secondary_weapon_damage_low_;
+	int32			secondary_weapon_damage_high_;
+	int32			ranged_weapon_damage_low_;
+	int32			ranged_weapon_damage_high_;
+	int8			wield_type_;
+	int8			attack_type_;
+	int16           primary_weapon_delay_;
+	int16           secondary_weapon_delay_;
+	int16           ranged_weapon_delay_;
+	
+	int8			override_primary_weapon_;
+	int8			override_secondary_weapon_;
+	int8			override_ranged_weapon_;
+	
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;
 };
@@ -1198,19 +1312,19 @@ public:
 	int32	GetRangeLastAttackTime();
 	void	SetRangeLastAttackTime(int32 time);
 	int16	GetRangeAttackDelay();
-	int16   GetRangeWeaponDelay() {return ranged_combat_data.ranged_weapon_delay;}
-	void    SetRangeWeaponDelay(int16 new_delay) {ranged_combat_data.ranged_weapon_delay = new_delay * 100;}
-	void    SetRangeAttackDelay(int16 new_delay) {ranged_combat_data.ranged_attack_delay = new_delay;}
+	int16   GetRangeWeaponDelay();
+	void    SetRangeWeaponDelay(int16 new_delay);
+	void    SetRangeAttackDelay(int16 new_delay);
 	int32	GetPrimaryLastAttackTime();
 	int16	GetPrimaryAttackDelay();
 	void	SetPrimaryAttackDelay(int16 new_delay);
 	void	SetPrimaryLastAttackTime(int32 new_time);
-	void    SetPrimaryWeaponDelay(int16 new_delay) {melee_combat_data.primary_weapon_delay = new_delay * 100;}
+	void    SetPrimaryWeaponDelay(int16 new_delay);
 	int32	GetSecondaryLastAttackTime();
 	int16	GetSecondaryAttackDelay();
 	void	SetSecondaryAttackDelay(int16 new_delay);
 	void	SetSecondaryLastAttackTime(int32 new_time);
-	void    SetSecondaryWeaponDelay(int16 new_delay) {melee_combat_data.primary_weapon_delay = new_delay * 100;}
+	void    SetSecondaryWeaponDelay(int16 new_delay);
 	int32	GetPrimaryWeaponMinDamage();
 	int32	GetPrimaryWeaponMaxDamage();
 	int32	GetSecondaryWeaponMinDamage();
@@ -1221,8 +1335,8 @@ public:
 	int8	GetSecondaryWeaponType();
 	int8	GetRangedWeaponType();
 	int8	GetWieldType();
-	int16   GetPrimaryWeaponDelay() {return melee_combat_data.primary_weapon_delay;}
-	int16   GetSecondaryWeaponDelay() {return melee_combat_data.secondary_weapon_delay;}
+	int16   GetPrimaryWeaponDelay();
+	int16   GetSecondaryWeaponDelay();
 	bool	IsDualWield();
 	bool	BehindTarget(Spawn* target);
 	bool	FlankingTarget(Spawn* target);
@@ -1717,8 +1831,6 @@ private:
 	float	last_heading;
 	bool	casting;
 	InfoStruct		info_struct;
-	CombatData melee_combat_data;
-	CombatData ranged_combat_data;
 	map<int8, int8> det_count_list;
 	Mutex MDetriments;
 	vector<DetrimentalEffects> detrimental_spell_effects;

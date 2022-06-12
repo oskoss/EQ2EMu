@@ -196,6 +196,7 @@ Commands::Commands(){
 	spawn_set_values["soga_nose_type"] = SPAWN_SET_SOGA_NOSE_TYPE;
 	spawn_set_values["soga_body_size"] = SPAWN_SET_SOGA_BODY_SIZE;
 	spawn_set_values["soga_body_age"] = SPAWN_SET_SOGA_BODY_AGE;
+	spawn_set_values["attack_type"] = SPAWN_SET_ATTACK_TYPE;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -845,6 +846,14 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				}
 				break;
 			}
+			case SPAWN_SET_ATTACK_TYPE:{
+				if(target->IsEntity()){
+					sprintf(tmp, "%u", ((Entity*)target)->GetInfoStruct()->get_attack_type());
+					int8 new_value = atoul(value);
+					((Entity*)target)->GetInfoStruct()->set_attack_type(new_value);
+				}
+				break;
+			}
 
 			if(temp_value)
 				*temp_value = string(tmp);
@@ -1477,6 +1486,21 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 					int8 new_value = atoul(value);
 					((Entity*)target)->features.body_age = new_value;
 					UpdateDatabaseAppearance(client, target, "body_age", ((Entity*)target)->features.body_age, 0, 0);
+				}
+				break;
+			}
+			case SPAWN_SET_ATTACK_TYPE:{
+				if(target->IsEntity()){
+					int8 new_value = atoul(value);
+					((Entity*)target)->GetInfoStruct()->set_attack_type(new_value);
+					if(target->IsNPC()) {
+						if(target->GetDatabaseID()) {
+							Query spawnNPCQuery;					
+							spawnNPCQuery.AddQueryAsync(0, &database, Q_INSERT, "update spawn_npc set attack_type=%u where id=%u", new_value, target->GetDatabaseID());
+						} else if(client) {
+							client->Message(CHANNEL_COLOR_RED, "Invalid spawn to update the database (NPC only) or no database id for the NPC present.");
+						}
+					}
 				}
 				break;
 			}
@@ -4789,6 +4813,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								case SPAWN_SET_SOGA_NOSE_TYPE:
 								case SPAWN_SET_SOGA_BODY_SIZE:
 								case SPAWN_SET_SOGA_BODY_AGE:
+								case SPAWN_SET_ATTACK_TYPE:
 								{
 									// not applicable already ran db command
 									break;

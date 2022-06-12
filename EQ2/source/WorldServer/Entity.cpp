@@ -52,8 +52,6 @@ Entity::Entity(){
 	regen_power_rate = 0;
 	in_combat = false;
 	casting = false;
-	memset(&melee_combat_data, 0, sizeof(CombatData));
-	memset(&ranged_combat_data, 0, sizeof(CombatData));
 	//memset(&info_struct, 0, sizeof(InfoStruct));
 	memset(&features, 0, sizeof(CharFeatures));
 	memset(&equipment, 0, sizeof(EQ2_Equipment));
@@ -304,6 +302,36 @@ void Entity::MapInfoStruct()
 	get_int8_funcs["interaction_flag"] = l::bind(&InfoStruct::get_interaction_flag, &info_struct);
 	get_int8_funcs["tag1"] = l::bind(&InfoStruct::get_tag1, &info_struct);
 	get_int16_funcs["mood"] = l::bind(&InfoStruct::get_mood, &info_struct);
+	
+	get_int32_funcs["range_last_attack_time"] = l::bind(&InfoStruct::get_range_last_attack_time, &info_struct);
+	get_int32_funcs["primary_last_attack_time"] = l::bind(&InfoStruct::get_primary_last_attack_time, &info_struct);
+	get_int32_funcs["secondary_last_attack_time"] = l::bind(&InfoStruct::get_secondary_last_attack_time, &info_struct);
+	
+	get_int16_funcs["primary_attack_delay"] = l::bind(&InfoStruct::get_primary_attack_delay, &info_struct);
+	get_int16_funcs["secondary_attack_delay"] = l::bind(&InfoStruct::get_secondary_attack_delay, &info_struct);
+	get_int16_funcs["ranged_attack_delay"] = l::bind(&InfoStruct::get_ranged_attack_delay, &info_struct);
+	
+	get_int8_funcs["primary_weapon_type"] = l::bind(&InfoStruct::get_primary_weapon_type, &info_struct);
+	get_int8_funcs["secondary_weapon_type"] = l::bind(&InfoStruct::get_secondary_weapon_type, &info_struct);
+	get_int8_funcs["ranged_weapon_type"] = l::bind(&InfoStruct::get_ranged_weapon_type, &info_struct);
+	
+	get_int32_funcs["primary_weapon_damage_low"] = l::bind(&InfoStruct::get_primary_weapon_damage_low, &info_struct);
+	get_int32_funcs["primary_weapon_damage_high"] = l::bind(&InfoStruct::get_primary_weapon_damage_high, &info_struct);
+	get_int32_funcs["secondary_weapon_damage_low"] = l::bind(&InfoStruct::get_secondary_weapon_damage_low, &info_struct);
+	get_int32_funcs["secondary_weapon_damage_high"] = l::bind(&InfoStruct::get_secondary_weapon_damage_high, &info_struct);
+	get_int32_funcs["ranged_weapon_damage_low"] = l::bind(&InfoStruct::get_ranged_weapon_damage_low, &info_struct);
+	get_int32_funcs["ranged_weapon_damage_high"] = l::bind(&InfoStruct::get_ranged_weapon_damage_high, &info_struct);
+	
+	get_int8_funcs["wield_type"] = l::bind(&InfoStruct::get_wield_type, &info_struct);
+	get_int8_funcs["attack_type"] = l::bind(&InfoStruct::get_attack_type, &info_struct);
+	
+	get_int16_funcs["primary_weapon_delay"] = l::bind(&InfoStruct::get_primary_weapon_delay, &info_struct);
+	get_int16_funcs["secondary_weapon_delay"] = l::bind(&InfoStruct::get_secondary_weapon_delay, &info_struct);
+	get_int16_funcs["ranged_weapon_delay"] = l::bind(&InfoStruct::get_ranged_weapon_delay, &info_struct);
+	
+	get_int8_funcs["override_primary_weapon"] = l::bind(&InfoStruct::get_override_primary_weapon, &info_struct);
+	get_int8_funcs["override_secondary_weapon"] = l::bind(&InfoStruct::get_override_secondary_weapon, &info_struct);
+	get_int8_funcs["override_ranged_weapon"] = l::bind(&InfoStruct::get_override_ranged_weapon, &info_struct);
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -453,6 +481,35 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["tag1"] = l::bind(&InfoStruct::set_tag1, &info_struct, l::_1);
 	set_int16_funcs["mood"] = l::bind(&InfoStruct::set_mood, &info_struct, l::_1);
 
+	set_int32_funcs["range_last_attack_time"] = l::bind(&InfoStruct::set_range_last_attack_time, &info_struct, l::_1);
+	set_int32_funcs["primary_last_attack_time"] = l::bind(&InfoStruct::set_primary_last_attack_time, &info_struct, l::_1);
+	set_int32_funcs["secondary_last_attack_time"] = l::bind(&InfoStruct::set_secondary_last_attack_time, &info_struct, l::_1);
+	
+	set_int16_funcs["primary_attack_delay"] = l::bind(&InfoStruct::set_primary_attack_delay, &info_struct, l::_1);
+	set_int16_funcs["secondary_attack_delay"] = l::bind(&InfoStruct::set_secondary_attack_delay, &info_struct, l::_1);
+	set_int16_funcs["ranged_attack_delay"] = l::bind(&InfoStruct::set_ranged_attack_delay, &info_struct, l::_1);
+	
+	set_int8_funcs["primary_weapon_type"] = l::bind(&InfoStruct::set_primary_weapon_type, &info_struct, l::_1);
+	set_int8_funcs["secondary_weapon_type"] = l::bind(&InfoStruct::set_secondary_weapon_type, &info_struct, l::_1);
+	set_int8_funcs["ranged_weapon_type"] = l::bind(&InfoStruct::set_ranged_weapon_type, &info_struct, l::_1);
+	
+	set_int32_funcs["primary_weapon_damage_low"] = l::bind(&InfoStruct::set_primary_weapon_damage_low, &info_struct, l::_1);
+	set_int32_funcs["primary_weapon_damage_high"] = l::bind(&InfoStruct::set_primary_weapon_damage_high, &info_struct, l::_1);
+	set_int32_funcs["secondary_weapon_damage_low"] = l::bind(&InfoStruct::set_secondary_weapon_damage_low, &info_struct, l::_1);
+	set_int32_funcs["secondary_weapon_damage_high"] = l::bind(&InfoStruct::set_secondary_weapon_damage_high, &info_struct, l::_1);
+	set_int32_funcs["ranged_weapon_damage_low"] = l::bind(&InfoStruct::set_ranged_weapon_damage_low, &info_struct, l::_1);
+	set_int32_funcs["ranged_weapon_damage_high"] = l::bind(&InfoStruct::set_ranged_weapon_damage_high, &info_struct, l::_1);
+	
+	set_int8_funcs["wield_type"] = l::bind(&InfoStruct::set_wield_type, &info_struct, l::_1);
+	set_int8_funcs["attack_type"] = l::bind(&InfoStruct::set_attack_type, &info_struct, l::_1);
+	
+	set_int16_funcs["primary_weapon_delay"] = l::bind(&InfoStruct::set_primary_weapon_delay, &info_struct, l::_1);
+	set_int16_funcs["secondary_weapon_delay"] = l::bind(&InfoStruct::set_secondary_weapon_delay, &info_struct, l::_1);
+	set_int16_funcs["ranged_weapon_delay"] = l::bind(&InfoStruct::set_ranged_weapon_delay, &info_struct, l::_1);
+	
+	set_int8_funcs["override_primary_weapon"] = l::bind(&InfoStruct::set_override_primary_weapon, &info_struct, l::_1);
+	set_int8_funcs["override_secondary_weapon"] = l::bind(&InfoStruct::set_override_secondary_weapon, &info_struct, l::_1);
+	set_int8_funcs["override_ranged_weapon"] = l::bind(&InfoStruct::set_override_ranged_weapon, &info_struct, l::_1);
 }
 
 bool Entity::HasMoved(bool include_heading){
@@ -598,15 +655,15 @@ void Entity::IsCasting(bool val){
 }
 
 int32 Entity::GetRangeLastAttackTime(){
-	return ranged_combat_data.range_last_attack_time;
+	return GetInfoStruct()->get_range_last_attack_time();
 }
 
 void Entity::SetRangeLastAttackTime(int32 time){
-	ranged_combat_data.range_last_attack_time = time;
+	GetInfoStruct()->set_range_last_attack_time(time);
 }
 
 int16 Entity::GetRangeAttackDelay(){
-	return ranged_combat_data.ranged_attack_delay;
+	return GetInfoStruct()->get_ranged_attack_delay();
 //	if(IsPlayer()){
 //		Item* item = ((Player*)this)->GetEquipmentList()->GetItem(EQ2_RANGE_SLOT);
 //		if(item && item->IsRanged())
@@ -616,142 +673,191 @@ int16 Entity::GetRangeAttackDelay(){
 }
 
 int32 Entity::GetPrimaryLastAttackTime(){
-	return melee_combat_data.primary_last_attack_time;
+	return GetInfoStruct()->get_primary_last_attack_time();
 }
 
 int16 Entity::GetPrimaryAttackDelay(){
-	return melee_combat_data.primary_attack_delay;
+	return GetInfoStruct()->get_primary_attack_delay();
 }
 
 void Entity::SetPrimaryAttackDelay(int16 new_delay){
-	melee_combat_data.primary_attack_delay = new_delay;
+	GetInfoStruct()->set_primary_attack_delay(new_delay);
 }
 
 void Entity::SetPrimaryLastAttackTime(int32 new_time){
-	melee_combat_data.primary_last_attack_time = new_time;
+	GetInfoStruct()->set_primary_last_attack_time(new_time);
 }
 
 int32 Entity::GetSecondaryLastAttackTime(){
-	return melee_combat_data.secondary_last_attack_time;
+	return GetInfoStruct()->get_secondary_last_attack_time();
 }
 
 int16 Entity::GetSecondaryAttackDelay(){
-	return melee_combat_data.secondary_attack_delay;
+	return GetInfoStruct()->get_secondary_attack_delay();
 }
 
 void Entity::SetSecondaryAttackDelay(int16 new_delay){
-	melee_combat_data.secondary_attack_delay = new_delay;
+	GetInfoStruct()->set_secondary_attack_delay(new_delay);
 }
 
 void Entity::SetSecondaryLastAttackTime(int32 new_time){
-	melee_combat_data.secondary_last_attack_time = new_time;
+	GetInfoStruct()->set_secondary_last_attack_time(new_time);
 }
 
 void Entity::ChangePrimaryWeapon(){
+	if(GetInfoStruct()->get_override_primary_weapon()) {
+		return;
+	}
+	
 	Item* item = equipment_list.GetItem(EQ2_PRIMARY_SLOT);
 	if(item && item->details.item_id > 0 && item->IsWeapon()){
-		melee_combat_data.primary_weapon_delay = item->weapon_info->delay * 100;
-		melee_combat_data.primary_weapon_damage_low = item->weapon_info->damage_low3;
-		melee_combat_data.primary_weapon_damage_high = item->weapon_info->damage_high3;
-		melee_combat_data.primary_weapon_type = item->GetWeaponType();
-		melee_combat_data.wield_type = item->weapon_info->wield_type;
+		GetInfoStruct()->set_primary_weapon_delay(item->weapon_info->delay * 100);
+		GetInfoStruct()->set_primary_weapon_damage_low(item->weapon_info->damage_low3);
+		GetInfoStruct()->set_primary_weapon_damage_high(item->weapon_info->damage_high3);
+		GetInfoStruct()->set_primary_weapon_type(item->GetWeaponType());
+		GetInfoStruct()->set_wield_type(item->weapon_info->wield_type);
 	}
 	else{
 		int16 effective_level = GetInfoStruct()->get_effective_level();
 		if ( !effective_level )
 			effective_level = GetLevel();
 
-		melee_combat_data.primary_weapon_delay = 2000;
-		melee_combat_data.primary_weapon_damage_low = (int32)(1 + effective_level * .2);
-		melee_combat_data.primary_weapon_damage_high = (int32)(5 + effective_level * (effective_level/5));
-		if(IsNPC())
-			melee_combat_data.primary_weapon_type = ((NPC*)this)->GetAttackType();
-		else
-			melee_combat_data.primary_weapon_type = 1;
-		melee_combat_data.wield_type = 2;
+			GetInfoStruct()->set_primary_weapon_delay(2000);		
+			GetInfoStruct()->set_primary_weapon_damage_low((int32)1 + effective_level * .2);
+			GetInfoStruct()->set_primary_weapon_damage_high((int32)(5 + effective_level * (effective_level/5)));
+			if(GetInfoStruct()->get_attack_type() > 0) {
+				GetInfoStruct()->set_primary_weapon_type(GetInfoStruct()->get_attack_type());
+			}
+			else {
+				GetInfoStruct()->set_primary_weapon_type(1);
+			}
+			GetInfoStruct()->set_wield_type(2);
 	}
-	if(IsNPC())
-		melee_combat_data.primary_weapon_damage_high += (int32)(GetInfoStruct()->get_str() / 10);
-	else
-		melee_combat_data.primary_weapon_damage_high += (int32)(GetInfoStruct()->get_str() / 25);
+	
+	int32 weapon_dmg_high = GetInfoStruct()->get_primary_weapon_damage_high();
+	if(IsNPC()) {
+		GetInfoStruct()->set_primary_weapon_damage_high(weapon_dmg_high + (int32)((GetInfoStruct()->get_str() / 10)));
+	}
+	else { 
+		GetInfoStruct()->set_primary_weapon_damage_high(weapon_dmg_high + (int32)((GetInfoStruct()->get_str() / 25)));
+	}
 }
 
 void Entity::ChangeSecondaryWeapon(){
+	if(GetInfoStruct()->get_override_secondary_weapon()) {
+		return;
+	}
+	
 	Item* item = equipment_list.GetItem(EQ2_SECONDARY_SLOT);
 	if(item && item->details.item_id > 0 && item->IsWeapon()){
-		melee_combat_data.secondary_weapon_delay = item->weapon_info->delay * 100;
-		melee_combat_data.secondary_weapon_damage_low = item->weapon_info->damage_low3;
-		melee_combat_data.secondary_weapon_damage_high = item->weapon_info->damage_high3;
-		melee_combat_data.secondary_weapon_type = item->GetWeaponType();
+		GetInfoStruct()->set_secondary_weapon_delay(item->weapon_info->delay * 100);
+		GetInfoStruct()->set_secondary_weapon_damage_low(item->weapon_info->damage_low3);
+		GetInfoStruct()->set_secondary_weapon_damage_high(item->weapon_info->damage_high3);
+		GetInfoStruct()->set_secondary_weapon_type(item->GetWeaponType());
 	}
 	else{
 		int16 effective_level = GetInfoStruct()->get_effective_level();
 		if ( !effective_level )
 			effective_level = GetLevel();
 
-		melee_combat_data.secondary_weapon_delay = 2000;
-		melee_combat_data.secondary_weapon_damage_low = (int32)(1 + effective_level * .2);
-		melee_combat_data.secondary_weapon_damage_high = (int32)(5 + effective_level * (effective_level/6));
-		melee_combat_data.secondary_weapon_type = 1;
+		GetInfoStruct()->set_secondary_weapon_delay(2000);
+		GetInfoStruct()->set_secondary_weapon_damage_low((int32)(1 + effective_level * .2));
+		GetInfoStruct()->set_secondary_weapon_damage_high((int32)(5 + effective_level * (effective_level/6)));
+		GetInfoStruct()->set_secondary_weapon_type(1);
 	}
-	if(IsNPC())
-		melee_combat_data.secondary_weapon_damage_high += (int32)(GetInfoStruct()->get_str() / 10);
-	else
-		melee_combat_data.secondary_weapon_damage_high += (int32)(GetInfoStruct()->get_str() / 25);
+	
+	int32 weapon_dmg_high = GetInfoStruct()->get_secondary_weapon_damage_high();
+	if(IsNPC()) {
+		GetInfoStruct()->set_secondary_weapon_damage_high(weapon_dmg_high + (int32)((GetInfoStruct()->get_str() / 10)));
+	}
+	else {
+		GetInfoStruct()->set_secondary_weapon_damage_high(weapon_dmg_high + (int32)((GetInfoStruct()->get_str() / 25)));
+	}
 }
 
 void Entity::ChangeRangedWeapon(){
+	if(GetInfoStruct()->get_override_ranged_weapon()) {
+		return;
+	}
+	
 	Item* item = equipment_list.GetItem(EQ2_RANGE_SLOT);
 	if(item && item->details.item_id > 0 && item->IsRanged()){
-		ranged_combat_data.ranged_weapon_delay = item->ranged_info->weapon_info.delay*100;
-		ranged_combat_data.ranged_weapon_damage_low = item->ranged_info->weapon_info.damage_low3;
-		ranged_combat_data.ranged_weapon_damage_high = item->ranged_info->weapon_info.damage_high3;
-		ranged_combat_data.ranged_weapon_type = item->GetWeaponType();
+		GetInfoStruct()->set_ranged_weapon_delay(item->ranged_info->weapon_info.delay*100);
+		GetInfoStruct()->set_ranged_weapon_damage_low(item->ranged_info->weapon_info.damage_low3);
+		GetInfoStruct()->set_ranged_weapon_damage_high(item->ranged_info->weapon_info.damage_high3);
+		GetInfoStruct()->set_ranged_weapon_type(item->GetWeaponType());
 	}
 }
 
 int32 Entity::GetPrimaryWeaponMinDamage(){
-	return melee_combat_data.primary_weapon_damage_low;
+	return GetInfoStruct()->get_primary_weapon_damage_low();
 }
 
 int32 Entity::GetPrimaryWeaponMaxDamage(){
-	return melee_combat_data.primary_weapon_damage_high;
+	return GetInfoStruct()->get_primary_weapon_damage_high();
+}
+
+int16 Entity::GetPrimaryWeaponDelay(){
+	return GetInfoStruct()->get_primary_weapon_delay();
+}
+
+int16 Entity::GetSecondaryWeaponDelay(){
+	return GetInfoStruct()->get_secondary_weapon_delay();
 }
 
 int32 Entity::GetSecondaryWeaponMinDamage(){
-	return melee_combat_data.secondary_weapon_damage_low;
+	return GetInfoStruct()->get_secondary_weapon_damage_low();
 }
 
 int32 Entity::GetSecondaryWeaponMaxDamage(){
-	return melee_combat_data.secondary_weapon_damage_high;
+	return GetInfoStruct()->get_secondary_weapon_damage_high();
 }
 
 int8 Entity::GetPrimaryWeaponType(){
-	return melee_combat_data.primary_weapon_type;
+	return GetInfoStruct()->get_primary_weapon_type();
 }
 
 int8 Entity::GetSecondaryWeaponType(){
-	return melee_combat_data.secondary_weapon_type;
+	return GetInfoStruct()->get_secondary_weapon_type();
 }
 
 int32 Entity::GetRangedWeaponMinDamage(){
-	return ranged_combat_data.ranged_weapon_damage_low;
+	return GetInfoStruct()->get_ranged_weapon_damage_low();
 }
 
 int32 Entity::GetRangedWeaponMaxDamage(){
-	return ranged_combat_data.ranged_weapon_damage_high;
+	return GetInfoStruct()->get_ranged_weapon_damage_high();
 }
 
 int8 Entity::GetRangedWeaponType(){
-	return ranged_combat_data.ranged_weapon_type;
+	return GetInfoStruct()->get_ranged_weapon_type();
 }
 
 bool Entity::IsDualWield(){
-	return melee_combat_data.wield_type == 1;
+	return GetInfoStruct()->get_wield_type() == 1;
 }
 
 int8 Entity::GetWieldType(){
-	return melee_combat_data.wield_type;
+	return GetInfoStruct()->get_wield_type();
+}
+
+int16 Entity::GetRangeWeaponDelay(){
+	return GetInfoStruct()->get_ranged_weapon_delay();
+}
+
+void Entity::SetRangeWeaponDelay(int16 new_delay){
+	GetInfoStruct()->set_ranged_weapon_delay(new_delay * 100);
+}
+void Entity::SetRangeAttackDelay(int16 new_delay){
+	GetInfoStruct()->set_ranged_attack_delay(new_delay);
+}
+
+void Entity::SetPrimaryWeaponDelay(int16 new_delay){
+	GetInfoStruct()->set_primary_weapon_delay(new_delay * 100);
+}
+
+void Entity::SetSecondaryWeaponDelay(int16 new_delay){
+	GetInfoStruct()->set_primary_weapon_delay(new_delay * 100);
 }
 
 bool Entity::BehindTarget(Spawn* target){
