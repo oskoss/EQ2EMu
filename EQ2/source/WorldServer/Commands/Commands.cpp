@@ -1496,7 +1496,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 					if(target->IsNPC()) {
 						if(target->GetDatabaseID()) {
 							Query spawnNPCQuery;					
-							spawnNPCQuery.AddQueryAsync(0, &database, Q_INSERT, "update spawn_npc set attack_type=%u where id=%u", new_value, target->GetDatabaseID());
+							spawnNPCQuery.AddQueryAsync(0, &database, Q_INSERT, "update spawn_npcs set attack_type=%u where id=%u", new_value, target->GetDatabaseID());
 						} else if(client) {
 							client->Message(CHANNEL_COLOR_RED, "Invalid spawn to update the database (NPC only) or no database id for the NPC present.");
 						}
