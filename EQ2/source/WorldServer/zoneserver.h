@@ -592,6 +592,9 @@ public:
 
 	int32	GetHolidayFlag() { return holiday_flag; }
 	void	SetHolidayFlag(int32 val) { holiday_flag = val; }
+//devn00b test
+	int32	GetCanBind() { return can_bind; }
+	void	SetCanBind(int32 val) { can_bind = val; }
 
 	void	RemoveClientImmediately(Client* client);
 
@@ -905,6 +908,8 @@ private:
 	int32	spawn_delete_timer;
 	int32	expansion_flag;
 	int32	holiday_flag;
+	//devn00b:test
+	int		can_bind;
 	map<int16, PacketStruct*> versioned_pos_structs;
 	map<int16, PacketStruct*> versioned_info_structs;
 	map<int16, PacketStruct*> versioned_vis_structs;

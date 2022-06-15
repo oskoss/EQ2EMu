@@ -8355,13 +8355,18 @@ bool Client::GateAllowed() {
 }
 
 bool Client::BindAllowed() {
-
-	LogWrite(MISC__TODO, 1, "TODO", "possibly add a check here to see if a player is allowed to bind in this spot, allow anywhere for now\nfile: %s, func: %s, line: %i", __FILE__, __FUNCTION__, __LINE__);
-
-	return true;
+	ZoneServer* zone = GetCurrentZone();
+//	int canbind;
+	bool canbind = zone->GetCanBind();
+	return canbind;
 }
 
 bool Client::Bind() {
+	int canbind = BindAllowed();
+	cout << "\n\n--------------------DEV2------------------- [" << canbind << "]\n\n";
+	if(canbind == 0) {
+		return false;
+	}
 	player->GetPlayerInfo()->SetBindZone(GetCurrentZone()->GetZoneID());
 	player->GetPlayerInfo()->SetBindX(player->GetX());
 	player->GetPlayerInfo()->SetBindY(player->GetY());

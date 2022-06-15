@@ -160,6 +160,7 @@ ZoneServer::ZoneServer(const char* name, bool incoming_clients) {
 	reloading_spellprocess = false;
 	expansion_flag = 0;
 	holiday_flag = 0;
+	can_bind = 1; 
 	MMasterZoneLock = new CriticalSection(MUTEX_ATTRIBUTE_RECURSIVE);
 	
 	pathing = nullptr;
