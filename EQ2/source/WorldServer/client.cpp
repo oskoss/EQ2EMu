@@ -8356,17 +8356,17 @@ bool Client::GateAllowed() {
 
 bool Client::BindAllowed() {
 	ZoneServer* zone = GetCurrentZone();
-//	int canbind;
+
 	bool canbind = zone->GetCanBind();
 	return canbind;
 }
 
 bool Client::Bind() {
 	int canbind = BindAllowed();
-	cout << "\n\n--------------------DEV2------------------- [" << canbind << "]\n\n";
+	
 	if(canbind == 0) {
 		return false;
-	}
+	} 
 	player->GetPlayerInfo()->SetBindZone(GetCurrentZone()->GetZoneID());
 	player->GetPlayerInfo()->SetBindX(player->GetX());
 	player->GetPlayerInfo()->SetBindY(player->GetY());
