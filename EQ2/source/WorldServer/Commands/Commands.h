@@ -566,6 +566,7 @@ private:
 #define SPAWN_SET_SOGA_BODY_AGE							101
 
 #define SPAWN_SET_ATTACK_TYPE							102
+#define SPAWN_SET_RACE_TYPE								103
 
 #define ZONE_SET_VALUE_EXPANSION_ID			0
 #define ZONE_SET_VALUE_NAME					1

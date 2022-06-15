@@ -19,6 +19,7 @@
 */
 
 #include "RaceTypes.h"
+#include <string.h>
 
 MasterRaceTypeList::MasterRaceTypeList() {
 
@@ -28,18 +29,63 @@ MasterRaceTypeList::~MasterRaceTypeList() {
 
 }
 
-void MasterRaceTypeList::AddRaceType(int16 model_id, int16 raceType_id) {
-	if (m_raceList.count(model_id) == 0)
-		m_raceList[model_id] = raceType_id;
+bool MasterRaceTypeList::AddRaceType(int16 model_id, int16 race_type_id, const char* category, const char* subcategory, const char* modelname, bool allow_override) {
+	if (m_raceList.count(model_id) == 0 || allow_override) {
+		RaceTypeStructure rts;
+		m_raceList[model_id].race_type_id = race_type_id;
+		if(category != NULL) {
+			strncpy(m_raceList[model_id].category, category, 64);
+		} else {
+			strcpy(m_raceList[model_id].category,"");
+		}
+		
+		if(subcategory != NULL) {
+			strncpy(m_raceList[model_id].subcategory, subcategory, 64);
+		} else {
+			strcpy(m_raceList[model_id].subcategory,"");
+		}
+		
+		if(modelname != NULL) {
+			strncpy(m_raceList[model_id].modelname, modelname, 64);
+		} else {
+			strcpy(m_raceList[model_id].modelname,"");
+		}
+		
+		return true;
+	}
+	
+	return false;
 }
 
 int16 MasterRaceTypeList::GetRaceType(int16 model_id) {
 	int16 ret = 0;
 
 	if (m_raceList.count(model_id) > 0)
-		ret = m_raceList[model_id];
+		ret = m_raceList[model_id].race_type_id;
 
 	return ret;
+}
+
+char* MasterRaceTypeList::GetRaceTypeCategory(int16 model_id) {
+	if(m_raceList.count(model_id)  > 0 && strlen(m_raceList[model_id].category) > 0)
+		return m_raceList[model_id].category;
+	
+	return "";
+}
+
+char* MasterRaceTypeList::GetRaceTypeSubCategory(int16 model_id) {
+	if(m_raceList.count(model_id)  > 0 && strlen(m_raceList[model_id].subcategory) > 0)
+		return m_raceList[model_id].subcategory;
+	
+	return "";
+}
+
+
+char* MasterRaceTypeList::GetRaceTypeModelName(int16 model_id) {
+	if(m_raceList.count(model_id)  > 0 && strlen(m_raceList[model_id].modelname) > 0)
+		return m_raceList[model_id].modelname;
+	
+	return "";
 }
 
 int16 MasterRaceTypeList::GetRaceBaseType(int16 model_id) {
@@ -48,7 +94,7 @@ int16 MasterRaceTypeList::GetRaceBaseType(int16 model_id) {
 	if (m_raceList.count(model_id) == 0)
 		return ret;
 
-	int16 race = m_raceList[model_id];
+	int16 race = m_raceList[model_id].race_type_id;
 	if (race >= DRAGONKIND && race < FAY)
 		ret = DRAGONKIND;
 	else if (race >= FAY && race < MAGICAL)

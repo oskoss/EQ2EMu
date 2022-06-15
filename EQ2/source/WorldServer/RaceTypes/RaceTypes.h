@@ -282,6 +282,12 @@
 #define LYKULAKWEREWOLVES	346
 #define WEREWOLF			347
  
+struct RaceTypeStructure {
+		int16 race_type_id;
+		char category[64];
+		char subcategory[64];
+		char modelname[250];
+};
 
 class MasterRaceTypeList {
 public:
@@ -290,20 +296,26 @@ public:
 
 	/// <summary>Add a race type define to the list</summary>
 	/// <param name='model_id'>The id of the model</param>
-	/// <param name=raceType_id'>The id of the race type</param>
-	void AddRaceType(int16 model_id, int16 raceType_id);
+	/// <param name=race_type_id'>The id of the race type</param>
+	/// <param name=category'>The category of the race type</param>
+	/// <param name=subcategory'>The subcategory of the race type</param>
+	/// <param name=modelname'>The model name of the model id</param>
+	bool AddRaceType(int16 model_id, int16 race_type_id, const char* category, const char* subcategory, const char* modelname, bool allow_override = false);
 
 	/// <summary>Gets the race type for the given model</summary>
 	/// <param name='model_id'>The model id to get the race type for</param>
 	int16 GetRaceType(int16 model_id);
-
+	char* GetRaceTypeCategory(int16 model_id);
+	char* GetRaceTypeSubCategory(int16 model_id);
+	char* GetRaceTypeModelName(int16 model_id);
+	
 	/// <summary>Gets the base race type for the given model</summary>
 	/// <param name='model_id'>The model id to get the base race type for</param>
 	int16 GetRaceBaseType(int16 model_id);
 
 private:
 	// model id, race type id
-	map<int16, int16> m_raceList;
+	map<int16, RaceTypeStructure> m_raceList;
 };
 
 #endif

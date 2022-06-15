@@ -197,6 +197,7 @@ Commands::Commands(){
 	spawn_set_values["soga_body_size"] = SPAWN_SET_SOGA_BODY_SIZE;
 	spawn_set_values["soga_body_age"] = SPAWN_SET_SOGA_BODY_AGE;
 	spawn_set_values["attack_type"] = SPAWN_SET_ATTACK_TYPE;
+	spawn_set_values["race_type"] = SPAWN_SET_RACE_TYPE;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -263,6 +264,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 					case SPAWN_SET_SOGA_HAIR_FACE_HIGHLIGHT_COLOR:
 					case SPAWN_SET_SOGA_HAIR_HIGHLIGHT:
 					case SPAWN_SET_SOGA_EYE_COLOR:
+					case SPAWN_SET_RACE_TYPE:
 					// ignore these are colors can't pass as a integer value
 						break;
 					default:
@@ -851,6 +853,29 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 					sprintf(tmp, "%u", ((Entity*)target)->GetInfoStruct()->get_attack_type());
 					int8 new_value = atoul(value);
 					((Entity*)target)->GetInfoStruct()->set_attack_type(new_value);
+				}
+				break;
+			}
+			case SPAWN_SET_RACE_TYPE:{
+				if(target->GetModelType() > 0){
+					Seperator* tmpsep = new Seperator(value, ' ', 3, 500, true);
+					if (tmpsep->IsNumber(0))
+					{
+						int16 race_type = atoul(value);
+						const char* category = tmpsep->IsSet(1) ? tmpsep->arg[1] : "NULL";
+						const char* subcategory = tmpsep->IsSet(2) ? tmpsep->arg[2] : "NULL";
+						const char* model_name = tmpsep->IsSet(3) ? tmpsep->arg[3] : "NULL";
+						if(race_types_list.AddRaceType(target->GetModelType(), race_type, category, subcategory, model_name)) {
+							if(client) {
+								client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Race type added to memory, however not saved to database.");
+							}
+								
+						}
+						else {							
+								client->SimpleMessage(CHANNEL_COLOR_RED, "Model type already on the race_types_list, use spawn set database to override and update database.");
+						}
+					}
+					safe_delete(tmpsep);
 				}
 				break;
 			}
@@ -1501,6 +1526,30 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 							client->Message(CHANNEL_COLOR_RED, "Invalid spawn to update the database (NPC only) or no database id for the NPC present.");
 						}
 					}
+				}
+				break;
+			}
+			case SPAWN_SET_RACE_TYPE:{
+				if(target->GetModelType() > 0){
+					Seperator* tmpsep = new Seperator(value, ' ', 3, 500, true);
+					if (tmpsep->IsNumber(0))
+					{
+						Query typequery;
+						int16 race_type = atoul(value);
+						const char* category = tmpsep->IsSet(1) ? tmpsep->arg[1] : "NULL";
+						const char* subcategory = tmpsep->IsSet(2) ? tmpsep->arg[2] : "NULL";
+						const char* model_name = tmpsep->IsSet(3) ? tmpsep->arg[3] : "NULL";
+						if(race_types_list.AddRaceType(target->GetModelType(), race_type, category, subcategory, model_name)) {	
+							client->Message(CHANNEL_COLOR_YELLOW, "Model Type %u Race type %u inserted into memory + replaced into database, Model Type: %u set to Race Type: %u, Category: %s, SubCategory: %s, Model Name: %s.", race_type, target->GetModelType(), race_type, category, subcategory, model_name);
+							typequery.AddQueryAsync(0, &database, Q_INSERT, "insert into race_types (model_type, race_id, category, subcategory, model_name) values(%u, %u, '%s', '%s', '%s')", target->GetModelType(), race_type, category, subcategory, model_name);
+						}
+						else {
+							client->Message(CHANNEL_COLOR_RED, "Model Type: %u Race type %u overrided in memory + replaced into database, Model Type: %u set to Race Type: %u, Category: %s, SubCategory: %s, Model Name: %s.", race_type, target->GetModelType(), race_type, category, subcategory, model_name);
+							race_types_list.AddRaceType(target->GetModelType(), race_type, category, subcategory, model_name, true);
+							typequery.AddQueryAsync(0, &database, Q_INSERT, "update race_types set race_id=%u, category='%s', subcategory='%s', model_name='%s' where model_type=%u", race_type, category, subcategory, model_name, target->GetModelType());
+						}
+					}
+					safe_delete(tmpsep);
 				}
 				break;
 			}
@@ -4586,6 +4635,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					type = "Widget";
 				else if (spawn->IsGroundSpawn())
 					type = "GroundSpawn";
+				
+				int16 race_type = race_types_list.GetRaceType(spawn->GetModelType());
+				int16 race_base_type = race_types_list.GetRaceBaseType(spawn->GetModelType());
+				char* category = race_types_list.GetRaceTypeCategory(spawn->GetModelType());
+				char* subcategory = race_types_list.GetRaceTypeSubCategory(spawn->GetModelType());
+				char* modelname = race_types_list.GetRaceTypeModelName(spawn->GetModelType());
+				
 				client->Message(CHANNEL_COLOR_YELLOW, "Name: %s, %s ID: %u", spawn->GetName(), type, spawn->GetDatabaseID());
 				client->Message(CHANNEL_COLOR_YELLOW, "Last Name: %s, Sub-Title: %s, Prefix: %s, Suffix: %s", spawn->GetLastName(), spawn->GetSubTitle(), spawn->GetPrefixTitle(), spawn->GetSuffixTitle());
 				client->Message(CHANNEL_COLOR_YELLOW, "Spawn Location ID: %u, Spawn Group ID: %u", spawn->GetSpawnLocationID(), spawn->GetSpawnGroupID());
@@ -4601,7 +4657,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					client->Message(CHANNEL_COLOR_YELLOW, "Facial Hair Type: %i, Hair Type: %i, Chest Type: %i, Legs Type: %i", ((Entity*)spawn)->GetFacialHairType(), ((Entity*)spawn)->GetHairType(), ((Entity*)spawn)->GetChestType(), ((Entity*)spawn)->GetLegsType());
 					client->Message(CHANNEL_COLOR_YELLOW, "Soga Facial Hair Type: %i, Soga Hair Type: %i, Wing Type: %i", ((Entity*)spawn)->GetSogaFacialHairType(), ((Entity*)spawn)->GetSogaHairType(), ((Entity*)spawn)->GetWingType());
 				}
-				client->Message(CHANNEL_COLOR_YELLOW, "Model Type: %i, Soga Race Type: %i", spawn->GetModelType(), spawn->GetSogaModelType());
+
+				client->Message(CHANNEL_COLOR_YELLOW, "Model Type: %i, Soga Race Type: %i, Race Type: %u, Race Base Type: %u, Race Category: %s (subcategory: %s), Model Name: %s.", spawn->GetModelType(), spawn->GetSogaModelType(), race_type, race_base_type, category, subcategory, modelname);
 				client->Message(CHANNEL_COLOR_YELLOW, "Primary Command Type: %u, Secondary Command Type: %u", spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID());
 				client->Message(CHANNEL_COLOR_YELLOW, "Visual State: %i, Action State: %i, Mood State: %i, Initial State: %i, Activity Status: %i", spawn->GetVisualState(), spawn->GetActionState(), spawn->GetMoodState(), spawn->GetInitialState(), spawn->GetActivityStatus());
 				client->Message(CHANNEL_COLOR_YELLOW, "Emote State: %i, Pitch: %f, Roll: %f, Hide Hood: %i", spawn->GetEmoteState(), spawn->GetPitch(), spawn->GetRoll(), spawn->appearance.hide_hood);
@@ -4658,8 +4715,12 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				details2 += "Show Level:		" + to_string(spawn->GetShowLevel()) + "\n";
 				details2 += "Show Command Icon:	" + to_string(spawn->GetShowCommandIcon()) + "\n";
 				details2 += "Display Hand Icon:	" + to_string(spawn->GetShowHandIcon()) + "\n";
-				details2 += "Model Type:		" + to_string(spawn->GetModelType()) + "\n";
+				details2 += "Model Type:	" + to_string(spawn->GetModelType()) + "\n";
 				details2 += "Soga Race Type:	" + to_string(spawn->GetSogaModelType()) + "\n";
+				details2 += "Race Type:			" + to_string(race_type) + "\n";
+				details2 += "Race Base Type:	" + to_string(race_base_type) + "\n";
+				details2 += "Race Category (Sub Category): "	 + std::string(category) + " (" + std::string(subcategory) + ")\n";
+				details2 += "Model Name:	"	  + std::string(modelname) + "\n";
 				details2 += "Primary Command ID:	" + to_string(spawn->GetPrimaryCommandListID()) + "\n";
 				details2 += "Secondary Cmd ID:	" + to_string(spawn->GetSecondaryCommandListID()) + "\n";
 				details2 += "Visual State:		" + to_string(spawn->GetVisualState()) + "\n";
@@ -4814,6 +4875,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								case SPAWN_SET_SOGA_BODY_SIZE:
 								case SPAWN_SET_SOGA_BODY_AGE:
 								case SPAWN_SET_ATTACK_TYPE:
+								case SPAWN_SET_RACE_TYPE:
 								{
 									// not applicable already ran db command
 									break;
