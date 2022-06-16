@@ -8060,7 +8060,9 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 							Client* to_client = zone_list.GetClientByCharID(player_to_id);
 							if (to_client) {
 								to_client->GetPlayer()->AddMail(mail);
-								to_client->SimpleMessage(CHANNEL_NARRATIVE, "You've got mail! :)");
+								to_client->SimpleMessage(CHANNEL_NARRATIVE, "You have unread mail in your mailbox.");
+								string popup_text = "You have unread mail!";
+								to_client->SendPopupMessage(10, popup_text.c_str(), "", 3, 0xFF, 0xFF, 0xFF);
 							}
 							database.SavePlayerMail(mail);
 							ResetSendMail(false, false);
