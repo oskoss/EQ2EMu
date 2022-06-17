@@ -6965,11 +6965,13 @@ void Player::MentorTarget()
 			}
 			if(client->GetPlayer()->group_id > 0 && client->GetPlayer()->GetTarget()->group_id == client->GetPlayer()->group_id)
 			{
-				if(client->GetPlayer()->GetGroupMemberInfo() && !client->GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id && 
-				client->GetPlayer()->GetZone() == client->GetPlayer()->GetTarget()->GetZone())
+				if(client->GetPlayer()->GetGroupMemberInfo() && !client->GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id && client->GetPlayer()->GetZone() == client->GetPlayer()->GetTarget()->GetZone() && client->GetPlayer()->GetTarget()->GetName() != client->GetPlayer()->GetName())
 				{
 					SetMentorStats(client->GetPlayer()->GetTarget()->GetLevel(), tmpPlayer->GetCharacterID());
 					client->Message(CHANNEL_COMMAND_TEXT, "You are now mentoring %s, reducing your effective level to %u.",client->GetPlayer()->GetTarget()->GetName(), client->GetPlayer()->GetTarget()->GetLevel());
+				}
+				if(client->GetPlayer()->GetTarget()->GetName() == client->GetPlayer()->GetName()) {
+					client->Message(CHANNEL_COMMAND_TEXT, "You cannot mentor yourself.");
 				}
 			}
 		}
