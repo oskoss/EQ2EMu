@@ -8347,12 +8347,12 @@ void Client::ResetSendMail(bool cancel, bool needslock) {
 }
 
 bool Client::GateAllowed() {
-	ZoneServer* zone = zone_list.Get(player->GetPlayerInfo()->GetBindZoneID());
+	ZoneServer* zone = GetCurrentZone();
 
-	LogWrite(MISC__TODO, 1, "TODO", "possibly add a check here to see if a player is allowed to gate from this spot, allow for now\nfile: %s, func: %s, line: %i", __FILE__, __FUNCTION__, __LINE__);
-
-	if (zone)
-		return true;
+	if (zone){ 
+	return cangate;
+	}
+		
 	return false;
 }
 
@@ -8367,6 +8367,7 @@ bool Client::Bind() {
 	int canbind = BindAllowed();
 	
 	if(canbind == 0) {
+		
 		return false;
 	} 
 	player->GetPlayerInfo()->SetBindZone(GetCurrentZone()->GetZoneID());
@@ -8384,6 +8385,11 @@ bool Client::Gate(bool is_spell) {
 
 	ZoneServer* zone = zone_list.Get(player->GetPlayerInfo()->GetBindZoneID());
 	if (zone) {
+		int cangate = GateAllowed();
+		if(cangate == 0) {
+			SimpleMessage(CHANNEL_NARRATIVE, "You cant cast recall spells in this zone.");
+			return false;
+		}
 		player->SetX(player->GetPlayerInfo()->GetBindZoneX());
 		player->SetY(player->GetPlayerInfo()->GetBindZoneY());
 		player->SetZ(player->GetPlayerInfo()->GetBindZoneZ());

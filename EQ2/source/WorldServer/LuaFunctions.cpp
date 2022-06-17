@@ -11044,7 +11044,6 @@ int EQ2Emu_lua_GetZoneHolidayFlag(lua_State* state) {
 	return 0;
 }
 
-//devn00b test
 int EQ2Emu_lua_SetCanBind(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -11062,7 +11061,6 @@ int EQ2Emu_lua_GetCanBind(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state);
 	ZoneServer* zone = player->GetZone();
 	if (zone) {
-		cout << "\n\n-----dev---- We Got zone!\n\n";
 		lua_interface->SetInt32Value(state, zone->GetCanBind());
 		return 1;
 	}
