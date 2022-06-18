@@ -8373,7 +8373,7 @@ bool Client::Bind() {
 	int canbind = BindAllowed();
 	
 	if(canbind == 0) {
-		
+		Message(CHANNEL_MERCHANT, "You cannot bind at this location.");		
 		return false;
 	} 
 	player->GetPlayerInfo()->SetBindZone(GetCurrentZone()->GetZoneID());
@@ -8381,20 +8381,20 @@ bool Client::Bind() {
 	player->GetPlayerInfo()->SetBindY(player->GetY());
 	player->GetPlayerInfo()->SetBindZ(player->GetZ());
 	player->GetPlayerInfo()->SetBindHeading(player->GetHeading());
-
+	Message(CHANNEL_MERCHANT, "Your spirit has been bound to this location.");
 	return true;
 }
 
 bool Client::Gate(bool is_spell) {
 	if (player->GetPlayerInfo()->GetBindZoneID() == 0)
-		SimpleMessage(CHANNEL_NARRATIVE, "You can not cast recall spells. You have no bind location set.");
+		SimpleMessage(CHANNEL_MERCHANT, "You can not cast recall spells. You have no bind location set.");
 		return false;
 
 	ZoneServer* zone = zone_list.Get(player->GetPlayerInfo()->GetBindZoneID());
 	if (zone) {
 		int cangate = GateAllowed();
 		if(cangate == 0) {
-			SimpleMessage(CHANNEL_NARRATIVE, "You can not cast recall spells in this zone.");
+			SimpleMessage(CHANNEL_MERCHANT, "You can not cast recall spells in this zone.");
 			return false;
 		}
 		player->SetX(player->GetPlayerInfo()->GetBindZoneX());
