@@ -12808,3 +12808,63 @@ if (player && player->IsPlayer()) {
 
 }
 }
+
+int EQ2Emu_lua_GetLootTier(lua_State* state) {
+	int32 loot_tier = 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
+
+	if (spawn) {
+		loot_tier = spawn->GetLootTier();
+		lua_interface->SetInt32Value(state, loot_tier);
+		return 1;
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_SetLootTier(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 loot_tier = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	
+	if (spawn) {
+		spawn->SetLootTier(loot_tier);
+		lua_interface->SetBooleanValue(state, true);
+		return 1;
+	}
+
+	lua_interface->SetBooleanValue(state, false);
+	return 1;
+}
+
+int EQ2Emu_lua_GetLootDropType(lua_State* state) {
+	int32 loot_drop_type = 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
+
+	if (spawn) {
+		loot_drop_type = spawn->GetLootDropType();
+		lua_interface->SetInt32Value(state, loot_drop_type);
+		return 1;
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_SetLootDropType(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 loot_drop_type = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	
+	if (spawn) {
+		spawn->SetLootDropType(loot_drop_type);
+		lua_interface->SetBooleanValue(state, true);
+		return 1;
+	}
+
+	lua_interface->SetBooleanValue(state, false);
+	return 1;
+}

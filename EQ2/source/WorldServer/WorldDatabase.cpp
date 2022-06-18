@@ -926,7 +926,7 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 	NPC* npc = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, npc.water_type, npc.flying_type, s.loot_tier\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, npc.water_type, npc.flying_type, s.loot_tier, s.loot_drop_type\n"
 													"FROM spawn s\n"
 													"INNER JOIN spawn_npcs npc\n"
 													"ON s.id = npc.spawn_id\n"
@@ -1090,6 +1090,8 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 
 		npc->SetLootTier(atoul(row[83]));
 		
+		npc->SetLootDropType(atoul(row[84]));
+		
 		zone->AddNPC(id, npc);
 		total++;
 		LogWrite(NPC__DEBUG, 5, "NPC", "---Loading NPC: '%s' (%u)", npc->appearance.name, id);
@@ -1213,7 +1215,7 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 	Sign* sign = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_signs ss\n"
 												  "ON s.id = ss.spawn_id\n"
@@ -1289,6 +1291,8 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 		sign->SetAAXPRewards(atoul(row[33]));
 
 		sign->SetLootTier(atoul(row[34]));
+		
+		sign->SetLootDropType(atoul(row[35]));
 
 		zone->AddSign(id, sign);
 		total++;
@@ -1305,7 +1309,7 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 	Widget* widget = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_widgets sw\n"
 												  "ON s.id = sw.spawn_id\n"
@@ -1395,6 +1399,8 @@ void WorldDatabase::LoadWidgets(ZoneServer* zone){
 		widget->SetAAXPRewards(atoul(row[38]));
 
 		widget->SetLootTier(atoul(row[39]));
+		
+		widget->SetLootDropType(atoul(row[40]));
 
 		zone->AddWidget(id, widget);
 		total++;
@@ -1411,7 +1417,7 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 	Object* object = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_objects so\n"
 												  "ON s.id = so.spawn_id\n"
@@ -1474,6 +1480,8 @@ void WorldDatabase::LoadObjects(ZoneServer* zone){
 		object->SetAAXPRewards(atoul(row[24]));
 
 		object->SetLootTier(atoul(row[25]));
+		
+		object->SetLootDropType(atoul(row[26]));
 
 		zone->AddObject(id, object);
 		total++;
@@ -1490,7 +1498,7 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 	GroundSpawn* spawn = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.aaxp_rewards, s.loot_tier\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_ground sg\n"
 												  "ON s.id = sg.spawn_id\n"
@@ -1555,6 +1563,8 @@ void WorldDatabase::LoadGroundSpawns(ZoneServer* zone){
 
 		spawn->SetLootTier(atoul(row[25]));
 
+		spawn->SetLootDropType(atoul(row[26]));
+		
 		zone->AddGroundSpawn(id, spawn);
 		total++;
 		LogWrite(GROUNDSPAWN__DEBUG, 5, "GSpawn", "---Loading GroundSpawn: '%s' (%u)", spawn->appearance.name, id);
@@ -6347,7 +6357,7 @@ bool WorldDatabase::LoadSign(ZoneServer* zone, int32 spawn_id) {
 	Sign* sign = 0;
 	int32 id = 0;
 	DatabaseResult result;
-	database_new.Select(&result, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier\n"
+	database_new.Select(&result, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_signs ss\n"
 								 "ON ss.spawn_id = s.id\n"
@@ -6407,6 +6417,7 @@ bool WorldDatabase::LoadSign(ZoneServer* zone, int32 spawn_id) {
 
 		sign->SetLootTier(result.GetInt32(32));
 
+		sign->SetLootDropType(result.GetInt32(33));
 		zone->AddSign(id, sign);
 
 
@@ -6422,7 +6433,7 @@ bool WorldDatabase::LoadWidget(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier\n"
+	database_new.Select(&result, "SELECT sw.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, sw.widget_id, sw.widget_x, sw.widget_y, sw.widget_z, s.command_primary, s.command_secondary, s.collision_radius, sw.include_heading, sw.include_location, sw.icon, sw.type, sw.open_heading, sw.open_y, sw.action_spawn_id, sw.open_sound_file, sw.close_sound_file, sw.open_duration, sw.closed_heading, sw.linked_spawn_id, sw.close_y, s.transport_id, s.size_offset, sw.house_id, sw.open_x, sw.open_z, sw.close_x, sw.close_z, s.display_hand_icon, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_widgets sw\n"
 								 "ON sw.spawn_id = s.id\n"
@@ -6489,6 +6500,8 @@ bool WorldDatabase::LoadWidget(ZoneServer* zone, int32 spawn_id) {
 
 		widget->SetLootTier(result.GetInt32(37));
 
+		widget->SetLootDropType(result.GetInt32(38));
+		
 		zone->AddWidget(id, widget);
 
 		LogWrite(WIDGET__DEBUG, 0, "Widget", "Loaded Widget: '%s' (%u).", widget->appearance.name, spawn_id);
@@ -6504,7 +6517,7 @@ bool WorldDatabase::LoadObject(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier\n"
+	database_new.Select(&result, "SELECT so.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, s.transport_id, s.size_offset, so.device_id, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_objects so\n"
 								 "ON so.spawn_id = s.id\n"
@@ -6549,6 +6562,8 @@ bool WorldDatabase::LoadObject(ZoneServer* zone, int32 spawn_id) {
 
 		object->SetLootTier(result.GetInt32(23));
 
+		object->SetLootDropType(result.GetInt32(24));
+		
 		zone->AddObject(id, object);
 
 		LogWrite(OBJECT__DEBUG, 0, "Object", "Loaded Object: '%s' (%u).", object->appearance.name, spawn_id);
@@ -6564,7 +6579,7 @@ bool WorldDatabase::LoadGroundSpawn(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.disable_sounds, s.aaxp_rewards, s.loot_tier\n"
+	database_new.Select(&result, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.disable_sounds, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_ground sg\n"
 								 "ON sg.spawn_id = s.id\n"
@@ -6609,6 +6624,8 @@ bool WorldDatabase::LoadGroundSpawn(ZoneServer* zone, int32 spawn_id) {
 
 		spawn->SetLootTier(result.GetInt32(23));
 
+		spawn->SetLootDropType(result.GetInt32(24));
+		
 		zone->AddGroundSpawn(id, spawn);
 
 		if (!zone->GetGroundSpawnEntries(spawn->GetGroundSpawnEntryID()))
@@ -6663,7 +6680,7 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 										
-	database_new.Select(&result, "SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier\n"
+	database_new.Select(&result, "SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_npcs npc\n"
 								 "ON npc.spawn_id = s.id\n"
@@ -6799,6 +6816,8 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 
 		npc->SetLootTier(result.GetInt32(79));
 
+		npc->SetLootDropType(result.GetInt32(80));
+		
 		zone->AddNPC(id, npc);
 
 		//skipped spells/skills/equipment as it is all loaded, the following rely on a spawn to load

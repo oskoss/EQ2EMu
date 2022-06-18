@@ -4521,23 +4521,38 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 	dead->SetActionState(0);
 	dead->SetTempActionState(0);
 
-	// If dead is an npc get the encounter and loop through it giving out the rewards, no rewards for pets
-	if (dead->IsNPC() && !dead->IsPet() && !dead->IsBot()) {
-		Spawn* spawn = 0;
-		int8 size = encounter->size();
 		// Needs npc to have access to the encounter list for who is allowed to loot
 		NPC* chest = 0;
-
-		if (!((NPC*)dead)->Brain()->PlayerInEncounter()) {
+		
+		if (dead->IsNPC() && !((NPC*)dead)->Brain()->PlayerInEncounter()) {
 			dead->SetLootCoins(0);
 			dead->ClearLoot();
 		}
 
+		Spawn* groupMemberAlive = nullptr;
 		// If dead has loot attempt to drop a chest
 		if (dead->HasLoot()) {
-			chest = ((NPC*)dead)->DropChest();
+			if(!(groupMemberAlive = dead->IsSpawnGroupMembersAlive(dead))) {
+				LogWrite(SPAWN__ERROR, 0, "Spawn", "%s: Dead drops chest", dead->GetName());
+				chest = ((Entity*)dead)->DropChest();
+			}
+			else {
+				switch(dead->GetLootDropType()) {
+					case 0: 
+						// default drop all chest type as a group
+						dead->TransferLoot(groupMemberAlive);
+					break;
+					case 1:
+						// this is a primary mob it drops its own loot
+						chest = ((Entity*)dead)->DropChest();
+					break;
+			}
 		}
-
+	}
+	// If dead is an npc get the encounter and loop through it giving out the rewards, no rewards for pets
+	if (dead->IsNPC() && !dead->IsPet() && !dead->IsBot()) {
+		Spawn* spawn = 0;
+		int8 size = encounter->size();
 
 		for (int8 i = 0; i < encounter->size(); i++) {
 			spawn = GetSpawnByID(encounter->at(i), spawnListLocked);
@@ -4589,15 +4604,15 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 			if (chest && spawn && spawn->IsEntity())
 				chest->Brain()->AddToEncounter((Entity*)spawn);
 		}
-
-		// If a chest is being dropped add it to the world and set the timer to remove it.
-		if (chest) {
-			AddSpawn(chest);
-			AddDeadSpawn(chest, 0xFFFFFFFF);
-			LogWrite(LOOT__DEBUG, 0, "Loot", "Adding a chest to the world...");
-		}
 	}
-
+	
+	// If a chest is being dropped add it to the world and set the timer to remove it.
+	if (chest) {
+		AddSpawn(chest);
+		AddDeadSpawn(chest, 0xFFFFFFFF);
+		LogWrite(LOOT__DEBUG, 0, "Loot", "Adding a chest to the world...");
+	}
+		
 	// Reset client pointer
 	client = 0;
 

@@ -877,18 +877,28 @@ public:
 		if (master_item) {
 			Item* item = new Item(master_item);
 			item->details.count = charges;
+			LockLoot();
 			loot_items.push_back(item);
+			UnlockLoot();
 		}
 	}
 	void AddLootItem(Item* item) {
-		if(item)
+		if(item) {
+			LockLoot();
 			loot_items.push_back(item);
+			UnlockLoot();
+		}
 	}
 	bool HasLoot() {
-		if (loot_items.size() == 0 && loot_coins == 0)
+		LockLoot();
+		if (loot_items.size() == 0 && loot_coins == 0) {
+			UnlockLoot();
 			return false;
+		}
+		UnlockLoot();
 		return true;
 	}
+	void TransferLoot(Spawn* spawn);
 	bool HasLootItemID(int32 id);
 	int32 GetLootItemID();
 	Item* LootItem(int32 id);
@@ -934,13 +944,20 @@ public:
 	}
 	
 	int32 GetLootCoins() {
-		return loot_coins;
+		LockLoot();
+		int32 coins = loot_coins;
+		UnlockLoot();
+		return coins;
 	}
 	void SetLootCoins(int32 val) {
+		LockLoot();
 		loot_coins = val;
+		UnlockLoot();
 	}
 	void AddLootCoins(int32 coins) {
+		LockLoot();
 		loot_coins += coins;
+		UnlockLoot();
 	}
 	Spawn*			GetTarget();
 	void			SetTarget(Spawn* spawn);
@@ -982,6 +999,7 @@ public:
 	vector<Spawn*>* GetSpawnGroup();
 	bool	HasSpawnGroup();
 	bool	IsInSpawnGroup(Spawn* spawn);
+	Spawn*	IsSpawnGroupMembersAlive(Spawn* ignore_spawn=nullptr, bool npc_only = true);
 	void	SendSpawnChanges(bool val){ send_spawn_changes = val; }
 	void	SetSpawnGroupID(int32 id);
 	int32	GetSpawnGroupID();
@@ -1259,6 +1277,9 @@ public:
 
 	int32 GetLootTier() { return loot_tier; }
 	void SetLootTier(int32 tier) { loot_tier = tier; }
+	
+	int32 GetLootDropType() { return loot_drop_type; }
+	void SetLootDropType(int32 type) { loot_drop_type = type; }
 
 	void SetDeletedSpawn(bool val) { deleted_spawn = val; }
 	bool IsDeletedSpawn() { return deleted_spawn; }
@@ -1369,6 +1390,7 @@ private:
 	bool is_omitted_by_db_flag; // this particular spawn is omitted by an expansion or holiday flag
 
 	int32 loot_tier;
+	int32 loot_drop_type;
 
 	bool deleted_spawn;
 	Mutex m_GridMutex;

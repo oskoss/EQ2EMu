@@ -131,6 +131,7 @@ Spawn::Spawn(){
 	rail_id = 0;
 	is_omitted_by_db_flag = false;
 	loot_tier = 0;
+	loot_drop_type = 0;
 	deleted_spawn = false;
 	is_collector = false;
 }
@@ -3565,6 +3566,23 @@ bool Spawn::IsInSpawnGroup(Spawn* spawn) {
 	return ret;
 }
 
+Spawn* Spawn::IsSpawnGroupMembersAlive(Spawn* ignore_spawn, bool npc_only) {
+	Spawn* ret = nullptr;
+	if (MSpawnGroup && HasSpawnGroup()) {
+		
+		MSpawnGroup->readlock(__FUNCTION__, __LINE__);
+		vector<Spawn*>::iterator itr;
+		for (itr = spawn_group_list->begin(); itr != spawn_group_list->end(); itr++) {
+			if ((*itr) != ignore_spawn && (*itr)->Alive() && (!npc_only || (npc_only && (*itr)->IsNPC()))) {
+				ret = (*itr);
+				break;
+			}
+		}
+		MSpawnGroup->releasereadlock(__FUNCTION__, __LINE__);
+	}
+	return ret;
+}
+
 void Spawn::AddSpawnToGroup(Spawn* spawn){
 	if(!spawn)
 		return;
@@ -3947,6 +3965,26 @@ Item* Spawn::LootItem(int32 id) {
 	}
 	MLootItems.unlock();
 	return ret;
+}
+
+void Spawn::TransferLoot(Spawn* spawn) {
+	if(spawn == this || spawn == nullptr)
+		return; // mmm no
+
+	vector<Item*>::iterator itr;
+	MLootItems.lock();
+	for (itr = loot_items.begin(); itr != loot_items.end();) {
+		if (!(*itr)->IsBodyDrop()) {
+			spawn->AddLootItem(*itr);
+			vector<Item*>::iterator tmpItr = itr;
+			
+			itr = loot_items.erase(tmpItr);
+		}
+		else {
+			itr++;
+		}
+	}
+	MLootItems.unlock();
 }
 
 int32 Spawn::GetLootItemID() {
