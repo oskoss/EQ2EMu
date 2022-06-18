@@ -4479,8 +4479,10 @@ int EQ2Emu_lua_IsGateAllowed(lua_State* state) {
 	if (spawn) {
 		if (spawn->IsPlayer()) {
 			Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
-			if (client)
-				ret = client->GateAllowed();
+			ZoneServer* zone = lua_interface->GetZone(state);
+			if (client && zone){
+					ret = zone->GetCanGate();
+			}
 		}
 	}
 	lua_interface->SetBooleanValue(state, ret);

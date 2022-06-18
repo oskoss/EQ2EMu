@@ -8352,8 +8352,8 @@ void Client::ResetSendMail(bool cancel, bool needslock) {
 
 bool Client::GateAllowed() {
 	ZoneServer* zone = GetCurrentZone();
-	bool cangate = zone->GetCanGate();
 	if (zone){ 
+	bool cangate = zone->GetCanGate();
 	return cangate;
 	}
 		

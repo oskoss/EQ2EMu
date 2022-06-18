@@ -9,10 +9,19 @@
 -- Teleports you to your recall point.
 function precast(Caster, Target)
     if GetBoundZoneID(Caster) == 0 then
+        SendMessage(Caster, "You are a failure", "red")
         return false
     end
 
-    return true
+    if(IsGateAllowed(Caster))
+    then
+        return true   
+    else
+        SendMessage(Caster, "You cannot use Call to Home from this location.", "red")
+        return false
+    end
+
+ return true
 end
 
 function cast(Caster, Target)
