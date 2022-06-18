@@ -7069,7 +7069,10 @@ void Client::RepairItem(int32 item_id) {
 					SendRepairList();
 			}
 			else {
-				LogWrite(MISC__TODO, 1, "TODO", " Send pop up that says 'Not enough coin.'\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
+				string popup_text = "You do not have enough coin to repair ";
+				string popup_item = item->CreateItemLink(GetVersion()).c_str();
+				popup_text.append(popup_item);
+				SendPopupMessage(10, popup_text.c_str(), "", 3, 0xFF, 0xFF, 0xFF);
 				Message(CHANNEL_MERCHANT, "You do not have enough coin to repair %s.", item->CreateItemLink(GetVersion()).c_str());
 				PlaySound("buy_failed");
 			}
@@ -7105,7 +7108,8 @@ void Client::RepairAllItems() {
 					SendRepairList();
 			}
 			else {
-				LogWrite(MISC__TODO, 1, "TODO", "Send pop up that says 'Not enough coin.'\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
+				string popup_text = "You do not have enough coin to repair all of your items. ";
+				SendPopupMessage(10, popup_text.c_str(), "", 3, 0xFF, 0xFF, 0xFF);
 				SimpleMessage(CHANNEL_MERCHANT, "You do not have enough coin to repair all of your items.");
 				PlaySound("buy_failed");
 			}
