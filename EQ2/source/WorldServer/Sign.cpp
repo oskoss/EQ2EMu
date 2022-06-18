@@ -149,6 +149,7 @@ Sign* Sign::Copy(){
 	new_spawn->SetSoundsDisabled(IsSoundsDisabled());
 	new_spawn->SetOmittedByDBFlag(IsOmittedByDBFlag());
 	new_spawn->SetLootTier(GetLootTier());
+	new_spawn->SetLootDropType(GetLootDropType());
 	return new_spawn;
 }
 

@@ -1467,6 +1467,11 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetWorldTimeHour", EQ2Emu_lua_GetWorldTimeHour);
 	lua_register(state, "GetWorldTimeMinute", EQ2Emu_lua_GetWorldTimeMinute);
 	lua_register(state, "SendTimeUpdate", EQ2Emu_lua_SendTimeUpdate);
+	
+	lua_register(state, "GetLootTier", EQ2Emu_lua_GetLootTier);
+	lua_register(state, "SetLootTier", EQ2Emu_lua_SetLootTier);
+	lua_register(state, "GetLootDropType", EQ2Emu_lua_GetLootDropType);
+	lua_register(state, "SetLootDropType", EQ2Emu_lua_SetLootDropType);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

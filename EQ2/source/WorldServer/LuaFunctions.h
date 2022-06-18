@@ -609,4 +609,11 @@ int EQ2Emu_lua_GetWorldTimeMonth(lua_State* state);
 int EQ2Emu_lua_GetWorldTimeHour(lua_State* state);
 int EQ2Emu_lua_GetWorldTimeMinute(lua_State* state);
 int EQ2Emu_lua_SendTimeUpdate(lua_State* state);
+
+
+int EQ2Emu_lua_SetLootTier(lua_State* state);
+int EQ2Emu_lua_GetLootTier(lua_State* state);
+
+int EQ2Emu_lua_SetLootDropType(lua_State* state);
+int EQ2Emu_lua_GetLootDropType(lua_State* state);
 #endif
