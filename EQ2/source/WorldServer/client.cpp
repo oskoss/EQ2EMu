@@ -8394,9 +8394,10 @@ bool Client::Bind() {
 }
 
 bool Client::Gate(bool is_spell) {
-	if (player->GetPlayerInfo()->GetBindZoneID() == 0)
+	if (player->GetPlayerInfo()->GetBindZoneID() == 0) {
 		SimpleMessage(CHANNEL_MERCHANT, "You can not cast recall spells. You have no bind location set.");
 		return false;
+	}
 
 	ZoneServer* zone = zone_list.Get(player->GetPlayerInfo()->GetBindZoneID());
 	if (zone) {

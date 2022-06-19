@@ -508,6 +508,9 @@ int EQ2Emu_lua_GetZoneHolidayFlag(lua_State* state);
 int EQ2Emu_lua_SetCanBind(lua_State* state);
 int EQ2Emu_lua_GetCanBind(lua_State* state);
 
+int EQ2Emu_lua_GetCanGate(lua_State* state);
+int EQ2Emu_lua_SetCanGate(lua_State* state);
+
 int EQ2Emu_lua_AddSpawnProximity(lua_State* state);
 
 int EQ2Emu_lua_CanSeeInvis(lua_State* state);
