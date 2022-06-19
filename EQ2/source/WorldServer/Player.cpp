@@ -3821,7 +3821,12 @@ bool Player::SetSpawnSentState(Spawn* spawn, SpawnState state) {
 		else
 			spawn_packet_sent.insert(make_pair(spawn->GetID(), state));
 		if(state == SPAWN_STATE_SENT_WAIT) {
-			spawn_state_list.erase(spawn->GetID());
+			map<int32,SpawnQueueState*>::iterator state_itr;
+			if((state_itr = spawn_state_list.find(spawn->GetID())) != spawn_state_list.end()) {
+				safe_delete(state_itr->second);
+				spawn_state_list.erase(state_itr);
+			}
+			
 			SpawnQueueState* removal = new SpawnQueueState;
 			removal->index_id = index;
 			removal->spawn_state_timer = Timer(500, true);

@@ -119,10 +119,10 @@ extern MasterSkillList master_skill_list;
 int32 MinInstanceID = 1000;
 
 // JA: Moved most default values to Rules and risky initializers to ZoneServer::Init() - 2012.12.07
-ZoneServer::ZoneServer(const char* name, bool incoming_clients) {
+ZoneServer::ZoneServer(const char* name, bool incoming_client) {
 	incoming_clients = 0;
 	
-	if(incoming_clients)
+	if(incoming_client)
 		IncrementIncomingClients();
 	
 	MIncomingClients.SetName("ZoneServer::MIncomingClients");
@@ -3282,8 +3282,13 @@ void ZoneServer::ClientProcess()
 				shutdownDelayTimer.Start(timerDelay, true);
 			}
 			else if(!incoming_clients || shutdownDelayCheck) {
-				LogWrite(ZONE__INFO, 0, "Zone", "Starting zone shutdown timer for %s...", GetZoneName());
-				shutdownTimer.Start();
+				if(!shutdownTimer.Enabled()) {
+					LogWrite(ZONE__INFO, 0, "Zone", "Starting zone shutdown timer for %s...", GetZoneName());
+					shutdownTimer.Start();
+				}
+				else {
+					LogWrite(ZONE__INFO, 0, "Zone", "zone shutdown timer for %s has %u remaining...", GetZoneName(), shutdownTimer.GetRemainingTime());
+				}
 			}
 		}
 		MIncomingClients.releasereadlock(__FUNCTION__, __LINE__);
@@ -4533,7 +4538,6 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 		// If dead has loot attempt to drop a chest
 		if (dead->HasLoot()) {
 			if(!(groupMemberAlive = dead->IsSpawnGroupMembersAlive(dead))) {
-				LogWrite(SPAWN__ERROR, 0, "Spawn", "%s: Dead drops chest", dead->GetName());
 				chest = ((Entity*)dead)->DropChest();
 			}
 			else {

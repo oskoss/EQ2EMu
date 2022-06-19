@@ -3976,9 +3976,7 @@ void Spawn::TransferLoot(Spawn* spawn) {
 	for (itr = loot_items.begin(); itr != loot_items.end();) {
 		if (!(*itr)->IsBodyDrop()) {
 			spawn->AddLootItem(*itr);
-			vector<Item*>::iterator tmpItr = itr;
-			
-			itr = loot_items.erase(tmpItr);
+			itr = loot_items.erase(itr);
 		}
 		else {
 			itr++;

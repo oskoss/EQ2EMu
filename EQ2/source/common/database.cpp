@@ -464,7 +464,7 @@ void Database::PurgeDBInstances()
 	map<Database*, bool>::iterator itr;
 	DBInstanceMutex.writelock(__FUNCTION__, __LINE__);
 	for (itr = dbInstances.begin(); itr != dbInstances.end(); itr++) {
-		Database* tmpInst = itr->first;
+		WorldDatabase* tmpInst = (WorldDatabase*)itr->first;
 		safe_delete(tmpInst);
 	}
 	dbInstances.clear();

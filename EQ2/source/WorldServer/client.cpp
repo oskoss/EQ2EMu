@@ -284,6 +284,14 @@ void Client::RemoveClientFromZone() {
 	if (player && !player->GetPendingDeletion())
 		safe_delete(player);
 	MDeletePlayer.releasewritelock(__FUNCTION__, __LINE__);
+	
+	deque<BuyBackItem*>::iterator itr;
+	MBuyBack.writelock(__FUNCTION__, __LINE__);
+	for (itr = buy_back_items.begin(); itr != buy_back_items.end();) {
+		safe_delete(*itr);
+		itr = buy_back_items.erase(itr);
+	}
+	MBuyBack.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 
