@@ -291,7 +291,6 @@ public:
 	map<int32, vector<LevelArray*> >*	LoadSpellClasses();
 	void	LoadTransporters(ZoneServer* zone);
 	void	LoadTransportMaps(ZoneServer* zone);
-	void	LoadDataFromRow(MYSQL_ROW row, Item* item); // JA - eventually get rid of this function when all DB calls are converted
 	void	LoadDataFromRow(DatabaseResult *result, Item* item);
 	void	LoadCharacterItemList(int32 account_id, int32 char_id, Player* player, int16);
 	bool	loadCharacter(const char* name, int32 account_id, Client* client);

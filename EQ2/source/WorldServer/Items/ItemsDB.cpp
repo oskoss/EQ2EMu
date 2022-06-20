@@ -30,111 +30,6 @@
 
 extern World world;
 
-void WorldDatabase::LoadDataFromRow(MYSQL_ROW row, Item* item) 
-{
-// this is too much on top of already having the top level load item debug msg
-//	LogWrite(ITEM__DEBUG, 5, "Items", "\tSetting details for item ID: %u", strtoul(row[0], NULL, 0));
-	item->details.item_id = strtoul(row[0], NULL, 0);
-	int8 size = strlen(row[1]);
-
-	if(size > 63)
-		size = 63;
-
-	item->name = string(row[1]);
-	item->lowername = ToLower(item->name);
-	item->details.icon = atoi(row[2]);
-	item->details.count = atoi(row[3]);
-	item->details.tier = atoi(row[4]);
-	item->generic_info.weight = atoi(row[5]);
-
-	if(row[6] && strlen(row[6]))
-		item->description = string(row[6]);
-
-	item->generic_info.show_name = atoi(row[7]);
-
-	if(atoi(row[8]))
-		item->generic_info.item_flags += ATTUNEABLE;
-
-	if(atoi(row[9]))
-		item->generic_info.item_flags += ARTIFACT;
-
-	if(atoi(row[10]))
-		item->generic_info.item_flags += LORE;
-
-	if(atoi(row[11]))
-		item->generic_info.item_flags += TEMPORARY;
-
-	if(atoi(row[12]))
-		item->generic_info.item_flags += NO_TRADE;
-
-	if(atoi(row[13]))
-		item->generic_info.item_flags += NO_VALUE;
-
-	if(atoi(row[14]))
-		item->generic_info.item_flags += NO_ZONE;
-
-	if(atoi(row[15]))
-		item->generic_info.item_flags += NO_DESTROY;
-
-	if(atoi(row[16]))
-		item->generic_info.item_flags += CRAFTED;
-
-	if(atoi(row[17]))
-		item->generic_info.item_flags += GOOD_ONLY;
-
-	if(atoi(row[18]))
-		item->generic_info.item_flags += EVIL_ONLY;
-
-	if(atoul(row[19]) == 0)
-		item->generic_info.skill_req1 = 0xFFFFFFFF;
-	else
-		item->generic_info.skill_req1 = atoul(row[19]);
-
-	if(atoul(row[20]) == 0)
-		item->generic_info.skill_req2 = 0xFFFFFFFF;
-	else
-		item->generic_info.skill_req2 = atoul(row[20]);
-
-	item->generic_info.skill_min = atoi(row[21]);
-
-	if(atoul(row[23])>0)
-		item->SetSlots(atoul(row[23]));
-
-	item->sell_price = atoul(row[24]);
-	item->stack_count = atoi(row[25]);
-	item->generic_info.collectable = atoi(row[26]);
-	item->generic_info.offers_quest_id = atoul(row[27]);
-	item->generic_info.part_of_quest_id = atoul(row[28]);
-	item->details.recommended_level = atoi(row[29]);
-	item->details.item_locked = false;
-	item->generic_info.adventure_default_level = atoi(row[30]);
-	item->generic_info.max_charges = atoi(row[31]);
-	item->generic_info.display_charges = atoi(row[32]);
-	item->generic_info.tradeskill_default_level = atoi(row[33]);
-
-	#ifdef WIN32
-			item->generic_info.adventure_classes = _strtoui64(row[34], NULL, 10);
-			item->generic_info.tradeskill_classes = _strtoui64(row[35], NULL, 10);
-	#else
-			item->generic_info.adventure_classes = strtoull(row[34], 0, 10);
-			item->generic_info.tradeskill_classes = strtoull(row[35], 0, 10);
-	#endif
-
-	if(row[36] && strlen(row[36])){
-		item->SetItemScript(row[36]);
-		LogWrite(ITEM__DEBUG, 5, "LUA", "\tLoading LUA Item Script: '%s'", item->item_script.c_str());
-	}
-
-	if(item->generic_info.max_charges > 0)
-		item->details.count = item->generic_info.max_charges;
-
-	if(item->details.count == 0)
-		item->details.count = 1;
-
-	item->generic_info.usable = atoi(row[37]);
-	item->details.soe_id = atoi(row[39]);
-}
-
 // handle new database class til all functions are converted
 void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item) 
 {
@@ -167,7 +62,7 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 
 	if( result->GetInt8Str("lore") == 1 )
 		item->generic_info.item_flags += LORE;
-
+	
 	if( result->GetInt8Str("temporary") == 1 )
 		item->generic_info.item_flags += TEMPORARY;
 
@@ -192,6 +87,9 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	if( result->GetInt8Str("evil_only") == 1 )
 		item->generic_info.item_flags += EVIL_ONLY;
 
+	if( result->GetInt8Str("stacklore") == 1 )
+		item->generic_info.item_flags += STACK_LORE;
+	
 	// add more Flags/Flags2 here
 
 	if (result->GetInt8Str("lore_equip") == 1)
@@ -1156,11 +1054,20 @@ void WorldDatabase::SaveItems(Client* client)
 	{
 		item = item_iter->second;
 
-		if(item && item->save_needed)
-		{
-			LogWrite(ITEM__DEBUG, 5, "Items", "SaveItems: Acct: %u, Char: %u, Item: %u, NOT-EQUIPPED", client->GetAccountID(), client->GetCharacterID(), item);
-			SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "NOT-EQUIPPED");
-			item->save_needed = false;
+		if(item) {
+			if(item->needs_deletion || (client->IsZoning() && item->CheckFlag(NO_ZONE))) {
+				DeleteItem(client->GetCharacterID(), item, 0);
+				client->GetPlayer()->item_list.DestroyItem(item->details.index);
+				if(!client->IsZoning()) {
+					client->QueuePacket(client->GetPlayer()->SendInventoryUpdate(client->GetVersion()));
+				}
+			}
+			else if(item->save_needed)
+			{
+				LogWrite(ITEM__DEBUG, 5, "Items", "SaveItems: Acct: %u, Char: %u, Item: %u, NOT-EQUIPPED", client->GetAccountID(), client->GetCharacterID(), item);
+				SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "NOT-EQUIPPED");
+				item->save_needed = false;
+			}
 		}
 	}
 	safe_delete(items);
@@ -1171,12 +1078,21 @@ void WorldDatabase::SaveItems(Client* client)
 	{
 		item = equipped_list->at(i);
 
-		if(item && item->save_needed)
+		if(item)
 		{
-			if(item->details.appearance_type)
-				SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "APPEARANCE");
-			else
-				SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "EQUIPPED");
+			if(item->needs_deletion || (client->IsZoning() && item->CheckFlag(NO_ZONE))) {
+				DeleteItem(client->GetCharacterID(), item, 0);
+				client->GetPlayer()->item_list.DestroyItem(item->details.index);
+				if(!client->IsZoning()) {
+					client->QueuePacket(client->GetPlayer()->SendInventoryUpdate(client->GetVersion()));
+				}
+			}
+			else if(item->save_needed) {
+				if(item->details.appearance_type)
+					SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "APPEARANCE");
+				else
+					SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "EQUIPPED");
+			}
 			item->save_needed = false;
 		}
 	}
@@ -1189,10 +1105,19 @@ void WorldDatabase::SaveItems(Client* client)
 	{
 		item = appearance_equipped_list->at(i);
 
-		if(item && item->save_needed)
+		if(item)
 		{
-			SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "APPEARANCE");
-			item->save_needed = false;
+			if(item->needs_deletion || (client->IsZoning() && item->CheckFlag(NO_ZONE))) {
+				DeleteItem(client->GetCharacterID(), item, 0);
+				client->GetPlayer()->item_list.DestroyItem(item->details.index);
+				if(!client->IsZoning()) {
+					client->QueuePacket(client->GetPlayer()->SendInventoryUpdate(client->GetVersion()));
+				}
+			}
+			else if(item->save_needed) {
+				SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "APPEARANCE");
+				item->save_needed = false;
+			}
 		}
 	}
 	safe_delete(appearance_equipped_list);
@@ -1201,10 +1126,19 @@ void WorldDatabase::SaveItems(Client* client)
 	for (int32 i = 0; i < overflow->size(); i++){
 		item = overflow->at(i);
 		if (item) {
-			sint16 slot = item->details.slot_id;
-			item->details.slot_id = i;
-			SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "NOT-EQUIPPED");
-			item->details.slot_id = slot;
+			if(item->needs_deletion || (client->IsZoning() && item->CheckFlag(NO_ZONE))) {
+				DeleteItem(client->GetCharacterID(), item, 0);
+				client->GetPlayer()->item_list.DestroyItem(item->details.index);
+				if(!client->IsZoning()) {
+					client->QueuePacket(client->GetPlayer()->SendInventoryUpdate(client->GetVersion()));
+				}
+			}
+			else {
+				sint16 slot = item->details.slot_id;
+				item->details.slot_id = i;
+				SaveItem(client->GetAccountID(), client->GetCharacterID(), item, "NOT-EQUIPPED");
+				item->details.slot_id = slot;
+			}
 		}
 	}
 	safe_delete(overflow);

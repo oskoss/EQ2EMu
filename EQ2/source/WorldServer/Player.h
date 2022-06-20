@@ -410,6 +410,12 @@ private:
 	Mutex MFlagChanges;
 };
 
+enum AddItemType {
+	NOT_SET = 0,
+	BUY_FROM_BROKER = 1,
+	GM_COMMAND = 2
+};
+
 class Player : public Entity{
 public:
 	Player();
@@ -498,7 +504,7 @@ public:
 	Quest* SetStepComplete(int32 quest_id, int32 step);
 	Quest* AddStepProgress(int32 quest_id, int32 step, int32 progress);
 	int32  GetStepProgress(int32 quest_id, int32 step_id);
-	bool AddItem(Item* item);
+	bool AddItem(Item* item, AddItemType type = AddItemType::NOT_SET);
 	bool AddItemToBank(Item* item);
 	int16 GetSpellSlotMappingCount();
 	int16 GetSpellPacketCount();

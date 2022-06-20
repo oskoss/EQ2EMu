@@ -1283,6 +1283,9 @@ public:
 
 	void SetDeletedSpawn(bool val) { deleted_spawn = val; }
 	bool IsDeletedSpawn() { return deleted_spawn; }
+	
+	EquipmentItemList equipment_list;
+	EquipmentItemList appearance_equipment_list;
 protected:
 
 	bool	has_quests_required;
@@ -1316,8 +1319,6 @@ protected:
 	int32			pickup_unique_item_id;
 	map<int32, vector<int16>* > required_quests;
 	map<int32, LUAHistory*> required_history;
-	EquipmentItemList equipment_list;
-	EquipmentItemList appearance_equipment_list;
 
 	MutexList<SpawnProximity*> spawn_proximities;
 

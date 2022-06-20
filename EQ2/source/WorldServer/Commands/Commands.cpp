@@ -4217,7 +4217,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				Item* item = master_item_list.GetItem(item_id);
 				if(item && item->generic_info.max_charges > 1)
 					quantity = item->generic_info.max_charges;
-				client->AddItem(item_id, quantity);
+				client->AddItem(item_id, quantity, AddItemType::BUY_FROM_BROKER);
 			}
 			break;
 		}
@@ -6620,9 +6620,12 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 
 			if(item)
 			{
-				if(item->details.item_locked)
-				{
+				if(item->details.item_locked) {
 					client->SimpleMessage(CHANNEL_COLOR_RED, "You cannot destroy the item in use.");
+					return;
+				}
+				else if(item->CheckFlag(NO_DESTROY)) {
+					client->SimpleMessage(CHANNEL_COLOR_RED, "You can't destroy this item.");
 					return;
 				}
 				if(item->GetItemScript() && lua_interface)

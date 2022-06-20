@@ -1575,7 +1575,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 				int16 tmpsize = modifyPos + 128;
 				if (tmpsize > size)
 					tmpsize = size;
-				DumpPacket(ptr2, tmpsize - modifyPos);
+				//DumpPacket(ptr2, tmpsize - modifyPos);
 			}
 			size = Pack(tmp, changes, size, size, version, reverse);
 			//DumpPacket(tmp, size);
@@ -2126,12 +2126,34 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 		}
 		int8 slot = equipList->GetFreeSlot(item, slot_id);
 		bool canEquip = CanEquipItem(item);
+		int32 conflictSlot = 0;
 		
 		if(canEquip && !appearance_type && item->CheckFlag2(APPEARANCE_ONLY))
 		{
 			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 			GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "This item is for appearance slots only.");
 			return packets;
+		}
+		else if(canEquip && (conflictSlot = equipList->CheckSlotConflict(item)) > 0) {
+			bool abort = true;
+			switch(conflictSlot) {
+				case LORE:
+					GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "Lore conflict, cannot equip this item.");
+					break;
+				case LORE_EQUIP:
+					GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "You already have this item equipped, you cannot equip another.");
+					break;
+				case STACK_LORE:
+					GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "Cannot equip as it exceeds lore stack.");
+					break;
+				default:
+					abort = false;
+					break;
+			}
+			if(abort) {
+				item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+				return packets;
+			}
 		}
 		else if (canEquip && item->CheckFlag(ATTUNEABLE)) {
 			PacketStruct* packet = configReader.getStruct("WS_ChoiceWindow", version);
@@ -2239,9 +2261,36 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 
 	return packets;
 }
-bool Player::AddItem(Item* item) {
+bool Player::AddItem(Item* item, AddItemType type) {
+	int32 conflictItemList = 0, conflictequipmentList = 0, conflictAppearanceEquipmentList = 0;
+	int16 lore_stack_count = 0;
 	if (item && item->details.item_id > 0) {
-		if (item_list.AssignItemToFreeSlot(item)) {
+		if( ((conflictItemList = item_list.CheckSlotConflict(item, true, true, &lore_stack_count)) == LORE ||
+		   (conflictequipmentList = equipment_list.CheckSlotConflict(item, true, &lore_stack_count)) == LORE ||
+		   (conflictAppearanceEquipmentList = appearance_equipment_list.CheckSlotConflict(item, true, &lore_stack_count)) == LORE) && !item->CheckFlag(STACK_LORE)) {
+			   
+			switch(type)
+			{
+				case AddItemType::BUY_FROM_BROKER:
+				client->Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "You already own this item and cannot have another.");
+				break;
+				default:
+				client->Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "You cannot obtain %s due to lore conflict.", item->name.c_str());
+				break;			
+			}
+			return false;
+		}
+		else if(conflictItemList == STACK_LORE || conflictequipmentList == STACK_LORE || 
+				conflictAppearanceEquipmentList == STACK_LORE) {
+					switch(type)
+					{
+						default:
+						client->Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "You already have one stack of the LORE item: %s.", item->name.c_str());
+						break;			
+					}
+			return false;
+		}
+		else if (item_list.AssignItemToFreeSlot(item)) {
 			item->save_needed = true;
 			return true;
 		}
@@ -3835,7 +3884,6 @@ bool Player::SetSpawnSentState(Spawn* spawn, SpawnState state) {
 		}
 		else if(state == SpawnState::SPAWN_STATE_REMOVING && 
 			spawn_state_list.count(spawn->GetID()) == 0) {
-			spawn_state_list.erase(spawn->GetID());
 			SpawnQueueState* removal = new SpawnQueueState;
 			removal->index_id = index;
 			removal->spawn_state_timer = Timer(1000, true);

@@ -3373,7 +3373,6 @@ EQ2Packet* PlayerItemList::serialize(Player* player, int16 version){
 #endif
 		packet->setDataByName("equip_flag",0);
 		app = packet->serializeCountPacket(version, 1, orig_packet, xor_packet);
-		DumpPacket(app);
 		safe_delete(packet);
 	}
 	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
@@ -3771,6 +3770,82 @@ void PlayerItemList::ResetPackets() {
 	packet_count = 0;
 }
 
+
+int32 PlayerItemList::CheckSlotConflict(Item* item, bool check_lore_only, bool lock, int16* lore_stack_count) {
+	bool is_lore = false;
+	bool is_stack_lore = false;
+	if(!(is_lore = item->CheckFlag(LORE)) && !(is_stack_lore = item->CheckFlag(STACK_LORE)) && check_lore_only) {
+		return 0;
+	}
+	
+	if(!check_lore_only && !is_lore && !is_stack_lore && !item->CheckFlag(LORE_EQUIP)) {
+		return 0;
+	}
+	
+	
+	int32 conflict = 0;
+	
+	if(lock)
+		MPlayerItems.readlock(__FUNCTION__, __LINE__);
+	
+	map<sint32, map<int8, map<int16, Item*>> >::iterator itr;
+	map<int16, Item*>::iterator slot_itr;
+	
+	for(itr = items.begin(); itr != items.end(); itr++){
+		for(slot_itr=itr->second[0].begin();slot_itr!=itr->second[0].end(); slot_itr++){
+			if(slot_itr->second && slot_itr->second->details.item_id == item->details.item_id){
+				if(lore_stack_count) {
+					*lore_stack_count += slot_itr->second->details.count;
+				}
+				if(!is_stack_lore && slot_itr->second->CheckFlag(LORE)) {
+					conflict = LORE;
+					break;
+				}
+				else if(is_stack_lore && (*lore_stack_count + item->details.count) > slot_itr->second->stack_count) {
+					conflict = STACK_LORE;
+					break;
+				}
+				else if(!check_lore_only && slot_itr->second->CheckFlag(LORE_EQUIP)) {
+					conflict = LORE_EQUIP;
+					break;
+				}
+			}
+		}
+			
+		if(conflict > 0)
+			break;
+		
+		for(slot_itr=itr->second[1].begin();slot_itr!=itr->second[1].end(); slot_itr++){
+			if(slot_itr->second && slot_itr->second->details.item_id == item->details.item_id){
+				if(lore_stack_count) {
+					*lore_stack_count += slot_itr->second->details.count;
+				}
+				if(!is_stack_lore && slot_itr->second->CheckFlag(LORE)) {
+					conflict = LORE;
+					break;
+				}
+				else if(is_stack_lore && (*lore_stack_count + item->details.count) > slot_itr->second->stack_count) {
+					conflict = STACK_LORE;
+					break;
+				}
+				else if(!check_lore_only && slot_itr->second->CheckFlag(LORE_EQUIP)) {
+					conflict = LORE_EQUIP;
+					break;
+				}
+			}
+		}
+		
+		if(conflict > 0)
+			break;
+	}
+
+	if(lock)
+		MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return conflict;
+}
+
+
 EquipmentItemList::EquipmentItemList(){
 	orig_packet = 0;
 	xor_packet = 0;
@@ -4116,6 +4191,42 @@ int8 EquipmentItemList::GetFreeSlot(Item* tmp, int8 slot_id){
 	}
 	MEquipmentItems.unlock();
 	return 255;
+}
+
+int32 EquipmentItemList::CheckSlotConflict(Item* item, bool check_lore_only, int16* lore_stack_count) {
+	bool is_lore = false;
+	bool is_stack_lore = false;
+	if(!(is_lore = item->CheckFlag(LORE)) && !(is_stack_lore = item->CheckFlag(STACK_LORE)) && check_lore_only) {
+		return 0;
+	}
+	
+	if(!check_lore_only && !is_lore && !is_stack_lore && !item->CheckFlag(LORE_EQUIP)) {
+		return 0;
+	}
+	
+	int32 conflict = 0;
+	MEquipmentItems.lock();
+	for(int8 i=0;i<NUM_SLOTS;i++){
+		if(items[i] && items[i]->details.item_id == item->details.item_id) {
+			if(lore_stack_count)
+				*lore_stack_count += items[i]->details.count;
+			if(!is_stack_lore && items[i]->CheckFlag(LORE)) {
+				conflict = LORE;
+				break;
+			}
+			else if(is_stack_lore && (*lore_stack_count + item->details.count) > items[i]->stack_count) {
+				conflict = STACK_LORE;
+				break;
+			}
+			else if(!check_lore_only && items[i]->CheckFlag(LORE_EQUIP)) {
+				conflict = LORE_EQUIP;
+				break;
+			}
+		}
+	}
+
+	MEquipmentItems.unlock();
+	return conflict;
 }
 
 int8 EquipmentItemList::GetSlotByItem(Item* item) {

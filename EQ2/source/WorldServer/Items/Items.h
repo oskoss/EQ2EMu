@@ -1088,6 +1088,8 @@ public:
 	
 	void	ResetPackets();
 
+	int32	CheckSlotConflict(Item* tmp, bool check_lore_only = false, bool lock_mutex = true, int16* lore_stack_count = 0);
+	
 	Mutex MPlayerItems;
 private:
 	void AddItemToPacket(PacketStruct* packet, Player* player, Item* item, int16 i, bool overflow = false);
@@ -1095,6 +1097,7 @@ private:
 	int16 packet_count;
 	vector<Item*> overflowItems;
 };
+
 class EquipmentItemList{
 public:
 	EquipmentItemList();
@@ -1118,6 +1121,8 @@ public:
 	bool	CheckEquipSlot(Item* tmp, int8 slot);
 	bool	CanItemBeEquippedInSlot(Item* tmp, int8 slot);
 	int8	GetFreeSlot(Item* tmp, int8 slot_id = 255);
+	int32	CheckSlotConflict(Item* tmp, bool check_lore_only = false, int16* lore_stack_count = 0);
+	
 	int8	GetSlotByItem(Item* item);
 	ItemStatsValues*	CalculateEquipmentBonuses(Entity* entity = 0);
 	EQ2Packet* serialize(int16 version, Player* player);

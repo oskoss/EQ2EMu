@@ -3400,7 +3400,7 @@ void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, 
 			if (channel_name)
 				packet->setMediumStringByName("channel_name", channel_name);
 			EQ2Packet* outapp = packet->serialize();
-			DumpPacket(outapp);
+			//DumpPacket(outapp);
 			client->QueuePacket(outapp);
 			safe_delete(packet);
 		}

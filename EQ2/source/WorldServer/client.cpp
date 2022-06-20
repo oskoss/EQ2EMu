@@ -2091,8 +2091,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_BuyPlayerHouseMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_BuyPlayerHouseMsg", opcode, opcode);
-		DumpPacket(app);
-
+		
 		PacketStruct* packet = configReader.getStruct("WS_BuyHouse", GetVersion());
 		if (packet) {
 			packet->LoadPacketData(app->pBuffer, app->size);
@@ -2148,7 +2147,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_EnterHouseMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_EnterHouseMsg", opcode, opcode);
-		DumpPacket(app);
+		
 		PacketStruct* packet = configReader.getStruct("WS_EnterHouse", GetVersion());
 		if (packet) {
 			packet->LoadPacketData(app->pBuffer, app->size);
@@ -2169,7 +2168,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_PayHouseUpkeepMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_PayHouseUpkeepMsg", opcode, opcode);
-		DumpPacket(app);
+		
 		PacketStruct* packet = configReader.getStruct("WS_PayUpkeep", GetVersion());
 
 		if (packet) {
@@ -2303,7 +2302,6 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				}
 			}
 		}
-		DumpPacket(app);
 		break;
 	}
 	case OP_QuestJournalWaypointMsg: {
@@ -2522,6 +2520,18 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 bool Client::HandleLootItem(Spawn* entity, Item* item) {
 	if (!item) {
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to find item to loot!");
+		return false;
+	}
+	int32 conflictItemList = 0, conflictequipmentList = 0, conflictAppearanceEquipmentList = 0;
+	int16 lore_stack_count = 0;
+	if(((conflictItemList = player->item_list.CheckSlotConflict(item, true, true, &lore_stack_count)) == LORE ||
+	   (conflictequipmentList = player->equipment_list.CheckSlotConflict(item, true, &lore_stack_count)) == LORE ||
+	   (conflictAppearanceEquipmentList = player->appearance_equipment_list.CheckSlotConflict(item, true, &lore_stack_count)) == LORE) && !item->CheckFlag(STACK_LORE)) {
+		Message(CHANNEL_COLOR_RED, "You cannot loot %s due to lore conflict.", item->name.c_str());
+		return false;
+	}
+	else if(conflictItemList == STACK_LORE || conflictequipmentList == STACK_LORE || conflictAppearanceEquipmentList == STACK_LORE) {
+		Message(CHANNEL_COLOR_RED, "You cannot loot %s due to stack lore conflict.", item->name.c_str());
 		return false;
 	}
 	if (player->item_list.HasFreeSlot() || player->item_list.CanStack(item)) {
@@ -5032,7 +5042,6 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 			outapp = packet->serialize();
 		}
 		if (outapp) {
-			DumpPacket(outapp);
 			QueuePacket(outapp);
 		}
 		safe_delete_array(data);
@@ -6485,7 +6494,7 @@ void Client::SaveCombineSpawns(const char* name) {
 	combine_spawn = 0;
 }
 
-bool Client::AddItem(int32 item_id, int16 quantity) {
+bool Client::AddItem(int32 item_id, int16 quantity, AddItemType type) {
 	Item* master_item = master_item_list.GetItem(item_id);
 	Item* item = 0;
 	if (master_item)
@@ -6493,7 +6502,8 @@ bool Client::AddItem(int32 item_id, int16 quantity) {
 	if (item) {
 		if (quantity > 0)
 			item->details.count = quantity;
-		return AddItem(item);
+		
+		return AddItem(item, nullptr, type);
 	}
 	else
 		Message(CHANNEL_COLOR_RED, "Could not find item with id of: %i", item_id);
@@ -6501,7 +6511,7 @@ bool Client::AddItem(int32 item_id, int16 quantity) {
 	return false;
 }
 
-bool Client::AddItem(Item* item, bool* item_deleted) {
+bool Client::AddItem(Item* item, bool* item_deleted, AddItemType type) {
 	if (!item) {
 		return false;
 	}
@@ -6509,7 +6519,7 @@ bool Client::AddItem(Item* item, bool* item_deleted) {
 		if (GetVersion() <= 283 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
 			item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;		
 	}
-	if (player->AddItem(item)) {
+	if (player->AddItem(item, type)) {
 		EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 		if (outapp) {
 			//DumpPacket(outapp);
@@ -6530,7 +6540,7 @@ bool Client::AddItem(Item* item, bool* item_deleted) {
 			lua_interface->RunItemScript(item->GetItemScript(), "obtained", item, player);
 	}
 	else {
-		SimpleMessage(CHANNEL_COLOR_RED, "Could not find free slot to place item.");
+		// likely lore conflict
 		safe_delete(item);
 
 		if(item_deleted)
@@ -6579,7 +6589,7 @@ bool Client::AddItemToBank(Item* item) {
 			lua_interface->RunItemScript(item->GetItemScript(), "obtained", item, player);
 	}
 	else {
-		SimpleMessage(CHANNEL_COLOR_RED, "Could not find free slot to place item.");
+		// likely lore conflict
 		safe_delete(item);
 		return false;
 	}
@@ -7928,7 +7938,6 @@ void Client::SendMailList() {
 			p->setDataByName("unknown3", 0x01F4);
 			p->setDataByName("unknown4", 0x01000000);
 			EQ2Packet* pack = p->serialize();
-			DumpPacket(pack->pBuffer, pack->size);
 			QueuePacket(pack);
 			safe_delete(p);
 		}
@@ -7987,7 +7996,6 @@ void Client::DisplayMailMessage(int32 mail_id) {
 				mail->already_read = true;
 				mail->save_needed = true;
 				EQ2Packet* pack = packet->serialize();
-				DumpPacket(pack);
 				QueuePacket(pack);
 				safe_delete(packet);
 				// trying to update this causes the window not to open
@@ -8112,6 +8120,11 @@ void Client::DeleteMail(int32 mail_id, bool from_database) {
 }
 bool Client::AddMailItem(Item* item)
 {
+	if(item && (item->CheckFlag(LORE) || item->CheckFlag(STACK_LORE))) {
+		Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "Lore items cannot be mailed.");
+		return false;
+	}
+	
 	bool ret = false;
 	if (GetMailTransaction()) {
 		MMailWindowMutex.lock();

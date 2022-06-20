@@ -2616,7 +2616,7 @@ int EQ2Emu_lua_AddControlEffect(lua_State* state) {
 					lua_interface->LogError("%s: Unhandled control effect type of %u.", lua_interface->GetScriptName(state), type);
 			}
 			else
-				lua_interface->LogError("%s: Error applying control effect on non entity '%s'.", lua_interface->GetScriptName(state), target->GetName());
+				lua_interface->LogError("%s: Error applying control effect on non entity '%s'.", lua_interface->GetScriptName(state), (target != nullptr) ? target->GetName() : "NO_TARGET");
 		}
 		luaspell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 	}
@@ -2685,7 +2685,7 @@ int EQ2Emu_lua_AddControlEffect(lua_State* state) {
 			lua_interface->LogError("%s: Unhandled control effect type of %u.", lua_interface->GetScriptName(state), type);
 	}
 	else
-		lua_interface->LogError("%s: Error applying control effect on non entity '%s'.", lua_interface->GetScriptName(state), spawn->GetName());
+		lua_interface->LogError("%s: Error applying control effect on non entity '%s'.", lua_interface->GetScriptName(state), (spawn != nullptr) ? spawn->GetName() : "NO_SPAWN");
 	return 0;
 }
 

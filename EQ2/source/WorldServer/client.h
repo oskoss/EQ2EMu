@@ -197,8 +197,8 @@ public:
 	void	BankDeposit(int64 amount);
 	Spawn*	GetBanker();
 	void	SetBanker(Spawn* in_banker);
-	bool	AddItem(int32 item_id, int16 quantity = 0);
-	bool	AddItem(Item* item, bool* item_deleted = 0);
+	bool	AddItem(int32 item_id, int16 quantity = 0, AddItemType type = AddItemType::NOT_SET);
+	bool	AddItem(Item* item, bool* item_deleted = 0, AddItemType type = AddItemType::NOT_SET);
 	bool	AddItemToBank(int32 item_id, int16 quantity = 0);
 	bool	AddItemToBank(Item* item);
 	bool	RemoveItem(Item *item, int16 quantity, bool force_override_no_delete = false);

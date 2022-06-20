@@ -620,8 +620,8 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 		}
 		cout << "setting offset: " << offset << " to: " << value << endl;
 	}
-	if (offset > 0)
-		DumpPacket(part2, part2_size);
+	//if (offset > 0)
+	//	DumpPacket(part2, part2_size);
 
 	uchar tmp[4000];
 	bool reverse = (version > 283);
