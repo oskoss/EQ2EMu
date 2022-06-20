@@ -8949,9 +8949,9 @@ void Client::InspectPlayer(Player* player_to_inspect) {
 			packet->setDataByName("power", player_to_inspect->GetPower());
 			packet->setDataByName("power_max", player_to_inspect->GetTotalPower());
 			packet->setDataByName("power_base", player_to_inspect->GetTotalPowerBase());
-			packet->setDataByName("mitigation", 0);
+			packet->setDataByName("mitigation", player_to_inspect->GetInfoStruct()->get_cur_mitigation());
 			packet->setDataByName("unknown1", 0);
-			packet->setDataByName("avoidance", player_to_inspect->GetInfoStruct()->get_cur_avoidance());
+			packet->setDataByName("avoidance", player_to_inspect->GetInfoStruct()->get_avoidance_display()*10.0f);
 			packet->setDataByName("unknown2", 0);
 			packet->setDataByName("mitigation_percentage", 0);
 			packet->setDataByName("strength", player_to_inspect->GetStr());
