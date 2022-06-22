@@ -285,7 +285,7 @@ void WorldDatabase::SaveGuildMembers(Guild* guild) {
 		gm = itr->second;
 		LogWrite(GUILD__DEBUG, 5, "Guilds", "Saving Guild Member '%s' (%u) data...", gm->name, gm->character_id);
 		query.RunQuery2(Q_INSERT, "INSERT INTO `guild_members` (`guild_id`, `char_id`, `recruiter_id`, `guild_status`, `points`, `rank_id`, `member_flags`, `join_date`, `note`, `officer_note`, `recruiting_message`, `recruiter_picture_data`) VALUES (%u, %u, %u, %u, %f, %u, %u, %u, '%s', '%s', '%s', NULL) ON DUPLICATE KEY UPDATE `guild_id`=%u, `recruiter_id`=%u, `guild_status`=%u, `points`=%f, `rank_id`=%u, `member_flags`=%u, `join_date`=%u, `note`='%s', `officer_note`='%s', `recruiting_message`='%s', `recruiter_picture_data`=NULL", guild->GetID(), gm->character_id, gm->recruiter_id, gm->guild_status, gm->points, gm->rank, gm->member_flags, gm->join_date, getSafeEscapeString(gm->note.c_str()).c_str(), getSafeEscapeString(gm->officer_note.c_str()).c_str(), getSafeEscapeString(gm->recruiter_description.c_str()).c_str(), guild->GetID(), gm->recruiter_id, gm->guild_status, gm->points, gm->rank, gm->member_flags, gm->join_date, getSafeEscapeString(gm->note.c_str()).c_str(), getSafeEscapeString(gm->officer_note.c_str()).c_str(), getSafeEscapeString(gm->recruiter_description.c_str()).c_str());
-		if (gm->recruiter_picture_data_size > 0 && gm->recruiter_picture_data) {
+		if (gm && gm->recruiter_picture_data_size > 0 && gm->recruiter_picture_data) {
 			stringstream ss_hex;
 			stringstream ss_query;
 			ss_hex.flags(ios::hex);

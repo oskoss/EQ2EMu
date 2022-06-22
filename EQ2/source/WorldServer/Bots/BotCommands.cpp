@@ -51,7 +51,7 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 //devn00b compile says this is no good, commenting out for now.
 //if(!member) 
 //  continue;
-									if ((*itr)->member->IsBot() && ((Bot*)(*itr)->member)->GetOwner() == client->GetPlayer()) {
+									if ((*itr)->member && (*itr)->member->IsBot() && ((Bot*)(*itr)->member)->GetOwner() == client->GetPlayer()) {
                                       
 										((Bot*)(*itr)->member)->SetCombatTarget(target->GetID());
 									}

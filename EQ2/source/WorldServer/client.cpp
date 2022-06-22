@@ -6736,6 +6736,11 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 				SimpleMessage(CHANNEL_COLOR_RED, "You cannot sell the item in use.");
 				return;
 			}
+			else if(item->CheckFlag(NO_VALUE))
+			{
+				SimpleMessage(CHANNEL_COLOR_RED, "This item has no value.");
+				return;
+			}
 			int32 sell_price = (int32)(master_item->sell_price * multiplier);
 			if (sell_price > item->sell_price)
 				sell_price = item->sell_price;
@@ -7074,25 +7079,31 @@ void Client::RepairItem(int32 item_id) {
 		if (!item)
 			item = player->GetEquipmentList()->GetItemFromItemID(item_id);
 		if (item) {
-			int32 repair_cost = item->CalculateRepairCost();
-			if (player->RemoveCoins((int32)repair_cost)) {
-				item->generic_info.condition = 100;
-				item->save_needed = true;
-				QueuePacket(player->GetEquipmentList()->serialize(GetVersion(), player));
-				QueuePacket(player->SendInventoryUpdate(GetVersion()));
-				QueuePacket(item->serialize(version, false, player));
-				Message(CHANNEL_MERCHANT, "You give %s %s to repair your %s.", spawn->GetName(), GetCoinMessage(repair_cost).c_str(), item->CreateItemLink(GetVersion()).c_str());
-				PlaySound("coin_cha_ching");
-				if (spawn->GetMerchantType() & MERCHANT_TYPE_REPAIR)
-					SendRepairList();
+			if(item->CheckFlag(NO_REPAIR)) {
+				Message(CHANNEL_MERCHANT, "The mender was unable to repair your items.");
+				PlaySound("buy_failed");
 			}
 			else {
-				string popup_text = "You do not have enough coin to repair ";
-				string popup_item = item->CreateItemLink(GetVersion()).c_str();
-				popup_text.append(popup_item);
-				SendPopupMessage(10, popup_text.c_str(), "", 3, 0xFF, 0xFF, 0xFF);
-				Message(CHANNEL_MERCHANT, "You do not have enough coin to repair %s.", item->CreateItemLink(GetVersion()).c_str());
-				PlaySound("buy_failed");
+				int32 repair_cost = item->CalculateRepairCost();
+				if (player->RemoveCoins((int32)repair_cost)) {
+					item->generic_info.condition = 100;
+					item->save_needed = true;
+					QueuePacket(player->GetEquipmentList()->serialize(GetVersion(), player));
+					QueuePacket(player->SendInventoryUpdate(GetVersion()));
+					QueuePacket(item->serialize(version, false, player));
+					Message(CHANNEL_MERCHANT, "You give %s %s to repair your %s.", spawn->GetName(), GetCoinMessage(repair_cost).c_str(), item->CreateItemLink(GetVersion()).c_str());
+					PlaySound("coin_cha_ching");
+					if (spawn->GetMerchantType() & MERCHANT_TYPE_REPAIR)
+						SendRepairList();
+				}
+				else {
+					string popup_text = "You do not have enough coin to repair ";
+					string popup_item = item->CreateItemLink(GetVersion()).c_str();
+					popup_text.append(popup_item);
+					SendPopupMessage(10, popup_text.c_str(), "", 3, 0xFF, 0xFF, 0xFF);
+					Message(CHANNEL_MERCHANT, "You do not have enough coin to repair %s.", item->CreateItemLink(GetVersion()).c_str());
+					PlaySound("buy_failed");
+				}
 			}
 		}
 	}
@@ -7847,7 +7858,7 @@ vector<Item*>* Client::GetRepairableItems() {
 	if (equipped_items && equipped_items->size() > 0) {
 		for (int32 i = 0; i < equipped_items->size(); i++) {
 			Item* item = equipped_items->at(i);
-			if (item && item->generic_info.condition < 100)
+			if (item && !item->CheckFlag(NO_REPAIR) && item->generic_info.condition < 100)
 				repairable_items->push_back(item);
 		}
 	}
@@ -7855,7 +7866,7 @@ vector<Item*>* Client::GetRepairableItems() {
 		map<int32, Item*>::iterator itr;
 		for (itr = items->begin(); itr != items->end(); itr++) {
 			Item* item = itr->second;
-			if (item && item->generic_info.condition < 100)
+			if (item && !item->CheckFlag(NO_REPAIR) && item->generic_info.condition < 100)
 				repairable_items->push_back(item);
 		}
 	}

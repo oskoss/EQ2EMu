@@ -2143,8 +2143,20 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if (sep && sep->arg[0] && sep->IsNumber(0)){
 				int32 slot_id = atoul(sep->arg[0]);
 				Item* item = player->GetEquipmentList()->GetItem(slot_id);
-				if (item && item->generic_info.usable && item->GetItemScript())
-					lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
+				if (item && item->generic_info.usable && item->GetItemScript()) {
+					if(!item->CheckFlag2(INDESTRUCTABLE) && item->generic_info.condition == 0) {
+						client->SimpleMessage(CHANNEL_COLOR_RED, "This item is broken and must be repaired at a mender before it can be used");
+					}
+					else if (item->CheckFlag(EVIL_ONLY) && client->GetPlayer()->GetAlignment() != ALIGNMENT_EVIL) {
+							client->Message(0, "%s requires an evil race.", item->name.c_str());
+					}
+					else if (item->CheckFlag(GOOD_ONLY) && client->GetPlayer()->GetAlignment() != ALIGNMENT_GOOD) {
+							client->Message(0, "%s requires a good race.", item->name.c_str());
+					}
+					else {
+						lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
+					}
+				}
 			}
 			break;
 		}
@@ -2153,7 +2165,16 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				int32 item_index = atoul(sep->arg[0]);
 				Item* item = player->item_list.GetItemFromIndex(item_index);
 				if (item && item->GetItemScript()) {
-					if (item->generic_info.max_charges == 0 || item->generic_info.max_charges == 0xFFFF)
+					if(!item->CheckFlag2(INDESTRUCTABLE) && item->generic_info.condition == 0) {
+						client->SimpleMessage(CHANNEL_COLOR_RED, "This item is broken and must be repaired at a mender before it can be used");
+					}
+					else if (item->CheckFlag(EVIL_ONLY) && client->GetPlayer()->GetAlignment() != ALIGNMENT_EVIL) {
+							client->Message(0, "%s requires an evil race.", item->name.c_str());
+					}
+					else if (item->CheckFlag(GOOD_ONLY) && client->GetPlayer()->GetAlignment() != ALIGNMENT_GOOD) {
+							client->Message(0, "%s requires a good race.", item->name.c_str());
+					}
+					else if (item->generic_info.max_charges == 0 || item->generic_info.max_charges == 0xFFFF)
 						lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
 					else {
 						if (item->details.count > 0) {
@@ -3678,18 +3699,18 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if (!spawn || !client->HasOwnerOrEditAccess() || !spawn->GetPickupItemID())
 				break;
 
-			client->AddItem(spawn->GetPickupItemID(), 1);
+			if(client->AddItem(spawn->GetPickupItemID(), 1)) {
+				Query query;
+				query.RunQuery2(Q_INSERT, "delete from spawn_instance_data where spawn_id = %u and spawn_location_id = %u and pickup_item_id = %u", spawn->GetDatabaseID(), spawn->GetSpawnLocationID(), spawn->GetPickupItemID());
 
-			Query query;
-			query.RunQuery2(Q_INSERT, "delete from spawn_instance_data where spawn_id = %u and spawn_location_id = %u and pickup_item_id = %u", spawn->GetDatabaseID(), spawn->GetSpawnLocationID(), spawn->GetPickupItemID());
+				if (database.RemoveSpawnFromSpawnLocation(spawn)) {
+					client->GetCurrentZone()->RemoveSpawn(spawn, true, true, true, true, true);
+				}
 
-			if (database.RemoveSpawnFromSpawnLocation(spawn)) {
-				client->GetCurrentZone()->RemoveSpawn(spawn, true, true, true, true, true);
+				// we had a UI Window displayed, update the house items
+				if ( id > 0 )
+					client->GetCurrentZone()->SendHouseItems(client);
 			}
-
-			// we had a UI Window displayed, update the house items
-			if ( id > 0 )
-				client->GetCurrentZone()->SendHouseItems(client);
 
 			break;
 		}
@@ -5992,7 +6013,7 @@ void Commands::Command_Follow(Client* client, Seperator* sep)
 			// Loop through the group members
 			for (itr = members->begin(); itr != members->end(); itr++) {
 				// If a group member matches a target
-				if ((*itr)->member == client->GetPlayer()->GetTarget()) {
+				if ((*itr)->member && (*itr)->member == client->GetPlayer()->GetTarget()) {
 					// toggle the flag and break the loop
 					targetInGroup = true;
 					break;
@@ -6826,21 +6847,25 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 		}
 		else if(sep->arg[2][0] && strncasecmp("swap_equip", sep->arg[0], 10) == 0 && sep->IsNumber(1) && sep->IsNumber(2))
 		{
-			LogWrite(MISC__TODO, 1, "TODO", " fix this, need to get how live does it\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-			int16 index1 = atoi(sep->arg[1]);
-			int16 index2 = atoi(sep->arg[2]);
-			int8 type = 0;
-			if(sep->IsNumber(3))
-				type = atoul(sep->arg[3]); // type 0 is combat, 3 = appearance
-			
-			EQ2Packet* outapp = client->GetPlayer()->SwapEquippedItems(index1, index2, client->GetVersion(), type);
+			if(client->GetPlayer()->EngagedInCombat()) {
+				client->SimpleMessage(CHANNEL_COLOR_RED, "You may not swap items while in combat.");
+			}
+			else {
+				int16 index1 = atoi(sep->arg[1]);
+				int16 index2 = atoi(sep->arg[2]);
+				int8 type = 0;
+				if(sep->IsNumber(3))
+					type = atoul(sep->arg[3]); // type 0 is combat, 3 = appearance
+				
+				EQ2Packet* outapp = client->GetPlayer()->SwapEquippedItems(index1, index2, client->GetVersion(), type);
 
-			if(outapp)
-				client->QueuePacket(outapp);
-			else
-			{
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to swap items");
-				return;
+				if(outapp)
+					client->QueuePacket(outapp);
+				else
+				{
+					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to swap items");
+					return;
+				}
 			}
 		}
 		else if (sep->arg[2][0] && strncasecmp("pop", sep->arg[0], 3) == 0 && sep->IsNumber(1) && sep->IsNumber(2)) 

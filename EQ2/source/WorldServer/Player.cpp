@@ -2077,7 +2077,13 @@ bool Player::CanEquipItem(Item* item) {
 	if (item) {
 		Client* client = GetZone()->GetClientBySpawn(this);
 		if (client) {
-			if (item->IsArmor() || item->IsWeapon() || item->IsFood() || item->IsRanged() || item->IsShield() || item->IsBauble() || item->IsAmmo() || item->IsThrown()) {
+			if (item->CheckFlag(EVIL_ONLY) && GetAlignment() != ALIGNMENT_EVIL) {
+					client->Message(0, "%s requires an evil race.", item->name.c_str());
+			}
+			else if (item->CheckFlag(GOOD_ONLY) && GetAlignment() != ALIGNMENT_GOOD) {
+					client->Message(0, "%s requires a good race.", item->name.c_str());
+			}
+			else if (item->IsArmor() || item->IsWeapon() || item->IsFood() || item->IsRanged() || item->IsShield() || item->IsBauble() || item->IsAmmo() || item->IsThrown()) {
 				if ((item->generic_info.skill_req1 == 0 || item->generic_info.skill_req1 == 0xFFFFFFFF || skill_list.HasSkill(item->generic_info.skill_req1)) && (item->generic_info.skill_req2 == 0 || item->generic_info.skill_req2 == 0xFFFFFFFF || skill_list.HasSkill(item->generic_info.skill_req2))) {
 					int16 override_level = item->GetOverrideLevel(GetAdventureClass(), GetTradeskillClass());
 					if (override_level > 0 && override_level <= GetLevel())

@@ -1233,7 +1233,7 @@ bool Item::IsShield(){
 
 bool Item::IsAdornment(){
 	LogWrite(MISC__TODO, 1, "TODO", "Item Adornments\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-	return generic_info.item_type == ITEM_TYPE_ADORNMENT;
+	return generic_info.item_type == ITEM_TYPE_ADORNMENT && !CheckFlag2(ORNATE);
 }
 
 bool Item::IsAmmo(){

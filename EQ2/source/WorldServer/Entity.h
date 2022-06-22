@@ -89,6 +89,11 @@ struct DetrimentalEffects {
 	float   total_time;
 };
 
+enum RACE_ALIGNMENT {
+	ALIGNMENT_EVIL=0,
+	ALIGNMENT_GOOD=1
+	// neutral?
+};
 struct InfoStruct{
 	InfoStruct()
 	{
