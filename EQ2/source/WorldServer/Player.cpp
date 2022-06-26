@@ -7137,3 +7137,63 @@ void Player::ClearGMVisualFilters() {
 	gm_visual_filters.clear();
 	vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
 }
+
+int Player::GetPVPAlignment(){
+	int bind_zone = GetPlayerInfo()->GetBindZoneID();
+	int alignment = 0;
+
+	if(bind_zone && bind_zone != 0){
+	//0 is good.
+	//1 is evil.
+	//2 is neutral aka haven players.
+			switch(bind_zone){
+			//good zones
+				case 114: //Gfay
+				case 221: //Qeynos Harbor
+				case 222: //North Qeynos
+				case 231: //South Qeynos
+				case 233: //Nettleville
+				case 234: //Starcrest
+				case 235: //Graystone
+				case 236: //CastleView
+				case 237: //Willowood
+				case 238: //Baubbleshire
+				case 470: //Frostfang
+				case 589: //Qeynos Combined 1
+				case 660: //Qeynos Combined 2
+					alignment = 0; //good
+					break;
+				//evil zones				
+				case 128: //East Freeport
+				case 134: //Big Bend
+				case 135: //Stonestair
+				case 136: //Temple St.
+				case 137: //Beggars Ct.
+				case 138: //Longshadow
+				case 139: //Scale Yard
+				case 144: //North Freeport
+				case 166: //South Freeport
+				case 168: //West Freeport
+				case 184: //Neriak
+				case 644: //BigBend2
+				case 645: //Stonestair2
+				case 646: //Temple St2
+				case 647: //Beggars Ct2
+				case 648: //LongShadow2
+				case 649: //Scale Yard2
+					alignment = 1; //evil
+					break;
+				//Neutral (MajDul?)
+				case 45: //haven
+				case 46: //MajDul
+					alignment = 2;
+					break;
+				
+				default:
+					alignment = -1; //error
+			}
+		//return -1 (error), 0 (good), 1 (evil), or 2 (Neutral)
+		return alignment;
+	}
+	return -1; //error
+}

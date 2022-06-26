@@ -1034,6 +1034,7 @@ public:
 	void AddGMVisualFilter(int32 filter_type, int32 filter_value, char* filter_search_str, int16 visual_tag);
 	int16 MatchGMVisualFilter(int32 filter_type, int32 filter_value, char* filter_search_str, bool in_vismutex_lock = false);
 	void ClearGMVisualFilters();
+	int GetPVPAlignment();
 	Mutex MPlayerQuests;
 	float   pos_packet_speed;
 private:

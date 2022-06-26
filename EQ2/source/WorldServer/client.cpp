@@ -8952,6 +8952,17 @@ void Client::BeginWaypoint(const char* waypoint_name, float x, float y, float z)
 }
 
 void Client::InspectPlayer(Player* player_to_inspect) {
+	int source_pvp_alignment = GetPlayer()->GetPVPAlignment();
+	int target_pvp_alignment = player_to_inspect->GetPVPAlignment();
+	bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
+
+	if(pvp_allowed == true){
+		if(source_pvp_alignment != target_pvp_alignment){
+			Message(CHANNEL_COLOR_RED, "You can not inspect players of different alignments.");
+			return;
+		}
+	}
+	
 	if (player_to_inspect) {
 		PacketStruct* packet = configReader.getStruct("WS_InspectPlayer", GetVersion());
 		if (packet) {
