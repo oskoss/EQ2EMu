@@ -146,6 +146,7 @@ enum RuleType {
 	TreasureChestDisabled,
 	StartingZoneLanguages,
 	StartingZoneRuleFlag,
+	EnforceRacialAlignment,
 
 	/* ZONE */
 	MinZoneLevelOverrideStatus,

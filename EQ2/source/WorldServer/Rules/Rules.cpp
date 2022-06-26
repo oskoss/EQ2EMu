@@ -292,6 +292,7 @@ void RuleManager::Init()
 																	// 2 - (isle of refuge)
 																	// 4 - send to 'new' starting zones, won't support old clients
 																	// 5+ - send to new and old starting zones as needed
+	RULE_INIT(R_World, EnforceRacialAlignment, "1");
 	//INSERT INTO `ruleset_details`(`id`, `ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (NULL, '1', 'R_World', '', '', '')
 
 	/* ZONE */

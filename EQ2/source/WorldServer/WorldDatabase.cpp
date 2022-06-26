@@ -47,6 +47,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "Zone/ChestTrap.h"
 #include "../common/version.h"
 #include "SpellProcess.h"
+#include "races.h"
 
 extern Classes classes;
 extern Commands commands;
@@ -1730,7 +1731,7 @@ bool WorldDatabase::loadCharacter(const char* ch_name, int32 account_id, Client*
 	MYSQL_ROW row, row4;
 	int32 id = 0;
 	query.escaped_name = getEscapeString(ch_name);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, current_zone_id, x, y, z, heading, admin_status, race, model_type, class, deity, level, gender, tradeskill_class, tradeskill_level, wing_type, hair_type, chest_type, legs_type, soga_wing_type, soga_hair_type, soga_chest_type, soga_legs_type, 0xFFFFFFFF - crc32(name), facial_hair_type, soga_facial_hair_type, instance_id, group_id, last_saved, DATEDIFF(curdate(), created_date) as accage FROM characters where name='%s' and account_id=%i AND deleted = 0", query.escaped_name, account_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, current_zone_id, x, y, z, heading, admin_status, race, model_type, class, deity, level, gender, tradeskill_class, tradeskill_level, wing_type, hair_type, chest_type, legs_type, soga_wing_type, soga_hair_type, soga_chest_type, soga_legs_type, 0xFFFFFFFF - crc32(name), facial_hair_type, soga_facial_hair_type, instance_id, group_id, last_saved, DATEDIFF(curdate(), created_date) as accage, alignment FROM characters where name='%s' and account_id=%i AND deleted = 0", query.escaped_name, account_id);
 	// no character found
 	if ( result == NULL ) {
 		LogWrite(PLAYER__ERROR, 0, "Player", "Error loading character for '%s'", ch_name);
@@ -1805,6 +1806,8 @@ SOGA chars looked ok in LoginServer screen tho... odd.
 
 		if (row[29])
 			client->GetPlayer()->GetPlayerInfo()->SetAccountAge(atoi(row[29]));
+
+		client->GetPlayer()->GetInfoStruct()->set_alignment(atoi(row[30]));
 
 		LoadCharacterFriendsIgnoreList(client->GetPlayer());
 		MYSQL_RES* result4 = query4.RunQuery2(Q_SELECT, "SELECT `guild_id` FROM `guild_members` WHERE `char_id`=%u", id);
@@ -2236,6 +2239,8 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 	if ( create->GetVersion() <= 546 ) {
 		class_id = 0; //Classic Server Only
 	}
+	
+	create->PrintPacket();
 	
 	int8 gender_id = create->getType_int8_ByName("gender");
 	sint16 auto_admin_status = 0;
@@ -3671,6 +3676,7 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 	int8 choice = create->getType_int8_ByName("starting_zone"); // 0 = far journey, 1 = isle of refuge
 	int8 deity = create->getType_int8_ByName("deity"); // aka 'alignment' for early DOF, 0 = evil, 1 = good
 	int32 startingZoneRuleFlag = rule_manager.GetGlobalRule(R_World, StartingZoneRuleFlag)->GetInt32();
+	bool enforceRacialAlignment = rule_manager.GetGlobalRule(R_World, EnforceRacialAlignment)->GetBool();
 	
 	if((startingZoneRuleFlag == 1 || startingZoneRuleFlag == 2) && packetVersion > 546)
 	{
@@ -3687,7 +3693,7 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 	if(startingZoneRuleFlag > 0)
 		whereRuleFlag = string(" AND ruleflag & " + std::to_string(startingZoneRuleFlag));
 	
-	string syntaxSelect("SELECT z.name, sz.zone_id, z.safe_x, z.safe_y, z.safe_z, sz.x, sz.y, sz.z, sz.heading, sz.is_instance, z.city_zone FROM");
+	string syntaxSelect("SELECT z.name, sz.zone_id, z.safe_x, z.safe_y, z.safe_z, sz.x, sz.y, sz.z, sz.heading, sz.is_instance, z.city_zone, sz.start_alignment FROM");
 	if ( class_id == 0 )
 		result = query.RunQuery2(Q_SELECT, "%s starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id = 255 AND race_id IN (%i, 255) AND deity IN (%i, 255) AND choice = %u AND (min_version = 0 or min_version <= %u) AND (max_version = 0 or max_version >= %u)%s",
 			syntaxSelect.c_str(), race_id, deity, choice, packetVersion, packetVersion, whereRuleFlag.c_str());
@@ -3708,6 +3714,7 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 		int32 zone_id = 0;
 		int32 instance_id = 0;
 		int8 starting_city = 0;
+		sint8 start_alignment = 0;
 
 		if( result && (row = mysql_fetch_row(result)) )
 		{
@@ -3742,8 +3749,36 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 			is_instance = atoul(row[i++]);
 
 			starting_city = atoul(row[i++]);
+			
+			start_alignment = atoi(row[i++]);
 		}
 
+
+		// all EQ2 clients hard-code these restrictions in some form (later clients added Neutral instead of good/evil only)
+		// good races
+		if(enforceRacialAlignment && (race_id == DWARF || race_id == FROGLOK || race_id == HALFLING ||
+		    race_id == HIGH_ELF || race_id == WOOD_ELF || race_id == FAE)) {
+				start_alignment = ALIGNMENT_GOOD; // always should good
+		}
+		else if(start_alignment == ALIGNMENT_EVIL && deity == ALIGNMENT_GOOD) {
+			if (enforceRacialAlignment && (race_id == AERAKYN || race_id == RATONGA || race_id == BARBARIAN || race_id == ERUDITE ||
+				race_id == HUMAN || race_id == VAMPIRE || race_id == HALF_ELF || race_id == GNOME || race_id == KERRA)) {
+					if(zone_id != 21 && zone_id != 25 && zone_id != 26 && zone_id != 27) { // far journey zones
+						start_alignment = ALIGNMENT_EVIL;
+					}
+					else {
+						start_alignment = deity;
+					}
+			}
+			else if(enforceRacialAlignment) {
+				LogWrite(WORLD__WARNING, 0, "World", "Starting alignment seems unexpected, zone id %u, race id %u, deity(alignment) choice: %u, start alignment: %i", zone_id, race_id, deity, start_alignment);
+			}
+		}
+		else if(enforceRacialAlignment && (race_id != DWARF && race_id != FROGLOK && race_id != HALFLING &&
+		    race_id != HIGH_ELF && race_id != WOOD_ELF && race_id != FAE)) {
+				start_alignment = ALIGNMENT_EVIL;
+		}
+			
 		if(is_instance) // should only be true if we get a result
 		{
 			// this will force a pre-load
@@ -3756,8 +3791,8 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 			}
 		}
 		
-		query2.RunQuery2(Q_UPDATE, "UPDATE characters SET current_zone_id = %u, x = %f, y = %f, z = %f, heading = %f, starting_city = %i, instance_id = %u WHERE id = %u", 
-			zone_id, x, y, z, heading, starting_city, instance_id, char_id);
+		query2.RunQuery2(Q_UPDATE, "UPDATE characters SET current_zone_id = %u, x = %f, y = %f, z = %f, heading = %f, starting_city = %i, instance_id = %u, alignment = %u WHERE id = %u", 
+			zone_id, x, y, z, heading, starting_city, instance_id, start_alignment, char_id);
 
 		if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF){
 			LogWrite(PLAYER__ERROR, 0, "Player", "Error in UpdateStartingZone custom starting_zones, query: '%s': %s", query2.GetQuery(), query2.GetError());
@@ -4013,7 +4048,7 @@ void WorldDatabase::Save(Client* client){
 	int32 zone_id = 0;
 	if(client->GetCurrentZone())
 		zone_id = client->GetCurrentZone()->GetZoneID();
-	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update characters set current_zone_id=%u, x=%f, y=%f, z=%f, heading=%f, level=%i,instance_id=%i,last_saved=%i, `class`=%i, `tradeskill_level`=%i, `tradeskill_class`=%i, `group_id`=%u where id = %u", zone_id, player->GetX(), player->GetY(), player->GetZ(), player->GetHeading(), player->GetLevel(), instance_id, client->GetLastSavedTimeStamp(), client->GetPlayer()->GetAdventureClass(), client->GetPlayer()->GetTSLevel(), client->GetPlayer()->GetTradeskillClass(), client->GetPlayer()->GetGroupMemberInfo() ? client->GetPlayer()->GetGroupMemberInfo()->group_id : client->GetRejoinGroupID(), client->GetCharacterID());
+	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update characters set current_zone_id=%u, x=%f, y=%f, z=%f, heading=%f, level=%i,instance_id=%i,last_saved=%i, `class`=%i, `tradeskill_level`=%i, `tradeskill_class`=%i, `group_id`=%u, deity = %u, alignment = %u where id = %u", zone_id, player->GetX(), player->GetY(), player->GetZ(), player->GetHeading(), player->GetLevel(), instance_id, client->GetLastSavedTimeStamp(), client->GetPlayer()->GetAdventureClass(), client->GetPlayer()->GetTSLevel(), client->GetPlayer()->GetTradeskillClass(), client->GetPlayer()->GetGroupMemberInfo() ? client->GetPlayer()->GetGroupMemberInfo()->group_id : client->GetRejoinGroupID(), client->GetCharacterID(), client->GetPlayer()->GetDeity(), client->GetPlayer()->GetInfoStruct()->get_alignment());
 	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %f, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, status_points = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s', assigned_aa = %i, unassigned_aa = %i, tradeskill_aa = %i, unassigned_tradeskill_aa = %i, prestige_aa = %i, unassigned_prestige_aa = %i, tradeskill_prestige_aa = %i, unassigned_tradeskill_prestige_aa = %i where char_id = %u",
 		player->GetHP(), player->GetPower(), player->GetStrBase(), player->GetStaBase(), player->GetAgiBase(), player->GetWisBase(), player->GetIntBase(), player->GetHeatResistanceBase(), player->GetColdResistanceBase(), player->GetMagicResistanceBase(),
 		player->GetMentalResistanceBase(), player->GetDivineResistanceBase(), player->GetDiseaseResistanceBase(), player->GetPoisonResistanceBase(), player->GetCoinsCopper(), player->GetCoinsSilver(), player->GetCoinsGold(), player->GetCoinsPlat(), player->GetTotalHPBase(), player->GetTotalPowerBase(), player->GetXP(), player->GetNeededXP(), player->GetXPDebt(), player->GetXPVitality(), player->GetTSXP(), player->GetNeededTSXP(), player->GetTSXPVitality(), player->GetBankCoinsCopper(),
@@ -6783,7 +6818,7 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		info->set_divine_base(result.GetInt16(56));
 		info->set_disease_base(result.GetInt16(57));
 		info->set_poison_base(result.GetInt16(58));
-		info->set_alignment(result.GetInt8(64));
+		info->set_alignment(result.GetSInt8(64));
 
 		npc->SetAggroRadius(result.GetFloat(59));
 		npc->SetCastPercentage(result.GetInt8(60));
