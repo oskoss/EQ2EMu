@@ -3701,7 +3701,6 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 			result = query.RunQuery2(Q_SELECT, "%s starting_zones sz, zones z WHERE sz.zone_id = z.id AND class_id IN (%i, %i, %i, 255) AND race_id IN (%i, 255) AND deity IN (%i, 255) AND choice IN (%i, 255) AND (min_version = 0 or min_version <= %u) AND (max_version = 0 or max_version >= %u)%s",
 		syntaxSelect.c_str(), classes.GetBaseClass(class_id), classes.GetSecondaryBaseClass(class_id), class_id, race_id, deity, choice, packetVersion, packetVersion, whereRuleFlag.c_str());
 
-	// TODO: verify client version so clients do not crash trying to enter zones they do not own (paks)
 	if(result && mysql_num_rows(result) > 0)
 	{
 		string zone_name = "ERROR";
@@ -3755,25 +3754,25 @@ void WorldDatabase::UpdateStartingZone(int32 char_id, int8 class_id, int8 race_i
 
 
 		// all EQ2 clients hard-code these restrictions in some form (later clients added Neutral instead of good/evil only)
-		// good races
+		// start with good races only
 		if(enforceRacialAlignment && (race_id == DWARF || race_id == FROGLOK || race_id == HALFLING ||
 		    race_id == HIGH_ELF || race_id == WOOD_ELF || race_id == FAE)) {
 				start_alignment = ALIGNMENT_GOOD; // always should good
 		}
+		// we drop into this case because it is a special check compared to the straigt good/evil checks on top and below
 		else if(start_alignment == ALIGNMENT_EVIL && deity == ALIGNMENT_GOOD) {
 			if (enforceRacialAlignment && (race_id == AERAKYN || race_id == RATONGA || race_id == BARBARIAN || race_id == ERUDITE ||
 				race_id == HUMAN || race_id == VAMPIRE || race_id == HALF_ELF || race_id == GNOME || race_id == KERRA)) {
-					if(zone_id != 21 && zone_id != 25 && zone_id != 26 && zone_id != 27) { // far journey zones
-						start_alignment = ALIGNMENT_EVIL;
+					if(zone_id == 21 || zone_id == 25 || zone_id == 26 || zone_id == 27) { // far journey zones
+						start_alignment = deity; // inheriting the clients alignment of 'good' due to the fact we start in far journey and it is a shared instance right now (farjourneyfreeport)
 					}
-					else {
-						start_alignment = deity;
-					}
+					// otherwise we use the starting zone alignment since these particular races can be evil which will be set in start_alignment of 0 within starting_zones (neriak, freeport, etc.)
 			}
 			else if(enforceRacialAlignment) {
 				LogWrite(WORLD__WARNING, 0, "World", "Starting alignment seems unexpected, zone id %u, race id %u, deity(alignment) choice: %u, start alignment: %i", zone_id, race_id, deity, start_alignment);
 			}
 		}
+		// anyone else is simply evil with the enforcement check
 		else if(enforceRacialAlignment && (race_id != DWARF && race_id != FROGLOK && race_id != HALFLING &&
 		    race_id != HIGH_ELF && race_id != WOOD_ELF && race_id != FAE)) {
 				start_alignment = ALIGNMENT_EVIL;
