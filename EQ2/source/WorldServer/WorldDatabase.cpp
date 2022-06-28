@@ -7599,10 +7599,8 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			if(effect->spell && effect->spell_id == spell_id)
 			{
 				safe_delete(lua_spell);
-				effect->spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 				if(tmpCaster->GetCurrentZone() == player->GetZone())
-					effect->spell->targets.push_back(client->GetPlayer()->GetID());
-				effect->spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+					spellProcess->AddLuaSpellTarget(effect->spell, client->GetPlayer()->GetID());
 				lua_spell = effect->spell;
 				spell = effect->spell->spell;
 				isExistingLuaSpell = true;
@@ -7883,7 +7881,7 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			if(tmpClient && lua_spell->initial_target_char_id == tmpClient->GetCharacterID())
 			{
 				lua_spell->initial_target = tmpClient->GetPlayer()->GetID();
-				lua_spell->targets.push_back(lua_spell->initial_target);
+				spellProcess->AddLuaSpellTarget(lua_spell, lua_spell->initial_target, false);
 			}
 			
 			spellProcess->ProcessSpell(lua_spell, true, "cast", timer);
@@ -7990,9 +7988,7 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 
 		LogWrite(LUA__WARNING, 0, "LUA", "WorldDatabase::LoadCharacterSpellEffects: %s using caster %s to reload bonuses for spell %s.", player->GetName(), caster ? caster->GetName() : "?", tmpSpell->spell->GetName());
 		
-		tmpSpell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
-		tmpSpell->targets.push_back(target->GetID());
-		tmpSpell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+		spellProcess->AddLuaSpellTarget(tmpSpell, target->GetID());
 
 		target->AddSpellEffect(tmpSpell, tmpSpell->timer.GetRemainingTime() != 0 ? tmpSpell->timer.GetRemainingTime() : 0);
 		vector<BonusValues*>* sb_list = caster->GetAllSpellBonuses(tmpSpell);
@@ -8033,31 +8029,29 @@ void WorldDatabase::UpdateStartingLanguage(int32 char_id, uint8 race_id, int32 s
 {
 	int8 rule = rule_manager.GetGlobalRule(R_World, StartingZoneLanguages)->GetInt8();
 	//this should never need to be done but lets make sure we got all the stuff we need. char_id at min since used for both.
-	if(!char_id || rule == 0 && !race_id ||rule == 1 && !starting_city)
+	if(!char_id || (rule == 0 && !race_id) || (rule == 1 && !starting_city))
 		return;
 
+	std::string query_string = "SELECT language_id FROM starting_languages ";
 	//check the rule, and that they gave us a race, if so use default entries to match live.
 	if(rule == 0 && race_id >= 0) {
-		Query query;
-		LogWrite(PLAYER__DEBUG, 0, "Player", "Adding default Languages for race: %i, for char_id: %u. No Custom Used.", race_id, char_id);
-		query.RunQuery2(Q_INSERT, "INSERT IGNORE INTO character_languages (char_id, language_id) VALUES (%i,(SELECT language_id FROM starting_languages WHERE race=%i))",char_id, race_id);
-		return;
+		query_string.append("WHERE race=" + std::to_string(race_id));
 	}
 	//if we have a starting city supplied, and the rule is set to use it, deal with it
-	if(rule == 1) {
-		Query query;
-		MYSQL_ROW row;
-		MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT language_id from starting_languages where starting_city=%i",starting_city);
-		LogWrite(PLAYER__DEBUG, 0, "Player", "Adding Custom Languages for starting_city: %i.", starting_city);
-		if (result)	{
-			if (mysql_num_rows(result) > 0)	{
-				while (result && (row = mysql_fetch_row(result))){
-				//add custom languages to the character_languages db.
-					query.RunQuery2(Q_INSERT, "INSERT IGNORE INTO character_languages (char_id, language_id) VALUES (%i,%i)",char_id, atoi(row[0]));
-				}
+	else if(rule == 1) {
+		query_string.append("WHERE starting_city=" + std::to_string(starting_city) + " or (starting_city=0 and race_id=" + std::to_string(race_id));
+	}
+	
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT,query_string.c_str());
+	LogWrite(PLAYER__DEBUG, 0, "Player", "Adding Languages for starting_city: %i based on rule R_World:StartingZoneLanguages value %u", starting_city, rule);
+	if (result)	{
+		if (mysql_num_rows(result) > 0)	{
+			while (result && (row = mysql_fetch_row(result))){
+			//add custom languages to the character_languages db.
+				query.RunQuery2(Q_INSERT, "INSERT IGNORE INTO character_languages (char_id, language_id) VALUES (%u,%u)",char_id, atoul(row[0]));
 			}
 		}
-	
 	}
-return;
 }

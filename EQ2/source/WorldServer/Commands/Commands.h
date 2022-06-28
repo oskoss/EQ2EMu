@@ -445,6 +445,8 @@ public:
 	void Command_Bot_Inv(Client* client, Seperator* sep);
 	void Command_Bot_Settings(Client* client, Seperator* sep);
 	void Command_Bot_Help(Client* client, Seperator* sep);
+	
+	void Command_CancelEffect(Client* client, Seperator* sep);
 
 	// AA Commands
 	void Get_AA_Xml(Client* client, Seperator* sep);
@@ -925,6 +927,8 @@ private:
 
 #define COMMAND_MENTOR		           	528
 #define COMMAND_UNMENTOR		        529
+
+#define COMMAND_CANCEL_EFFECT			530
 
 
 #define GET_AA_XML						750

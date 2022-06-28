@@ -5606,6 +5606,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			client->GetPlayer()->MentorTarget();
 			break;
 		}
+		case COMMAND_CANCEL_EFFECT	: { Command_CancelEffect(client, sep); break; }
 		default: 
 		{
 			LogWrite(COMMAND__WARNING, 0, "Command", "Unhandled command: %s", command->command.data.c_str());
@@ -5799,17 +5800,15 @@ void Commands::Command_CancelMaintained(Client* client, Seperator* sep)
 	if (sep && sep->arg[0] && sep->IsNumber(0)) 
 	{
 		int32 spell_index = atoul(sep->arg[0]);
+		if(spell_index > 29)
+			return;
+		
+		client->GetPlayer()->MMaintainedSpells.readlock(__FUNCTION__, __LINE__);
 		MaintainedEffects mEffects = client->GetPlayer()->GetInfoStruct()->maintained_effects[spell_index];
-		//Spell* spell = master_spell_list.GetSpell(mEffects.spell_id, mEffects.tier);
-
-	//	if (spell && spell->GetSpellData()->friendly_spell)  -- NOTE::You can cancel hostile maintained spells, 
-		                                                     // just not spelleffects/dets - Foof
-		//{
-			if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell, "canceled", false, true))
-				client->Message(CHANNEL_COLOR_RED, "The maintained spell could not be cancelled.");
-	//	}
-		//else
-			//client->Message(CHANNEL_COLOR_RED, "You can only cancel friendly spells!");
+		client->GetPlayer()->MMaintainedSpells.releasereadlock(__FUNCTION__, __LINE__);
+		
+		if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell, "canceled", false, true))
+			client->Message(CHANNEL_COLOR_RED, "The maintained spell could not be cancelled.");
 	}
 }
 
@@ -11711,4 +11710,28 @@ Player* player = client->GetPlayer();
 	client->SimpleMessage(CHANNEL_NARRATIVE, "sad");
 	client->SimpleMessage(CHANNEL_NARRATIVE, "tired");
 	return;
+}
+
+/* 
+	Function: Command_CancelEffect()
+	Purpose	: Cancels (good) effect spells
+	Example	: /cancel_effect spell_id - would cancel the spell with the <spell_id> value in spell effects list
+*/ 
+void Commands::Command_CancelEffect(Client* client, Seperator* sep)
+{
+	if (sep && sep->arg[0] && sep->IsNumber(0)) 
+	{
+		int32 spell_id = atoul(sep->arg[0]);
+		
+		SpellEffects* effect = client->GetPlayer()->GetSpellEffect(spell_id);
+		if(!effect || effect->spell->spell->GetSpellData()->det_type) {
+			return;
+		}
+		
+		MaintainedEffects* meffect = effect->caster->GetMaintainedSpell(spell_id);
+		
+		if (!meffect || !meffect->spell || !meffect->spell->caster || 
+		!meffect->spell->caster->GetZone()->GetSpellProcess()->DeleteCasterSpell(meffect->spell, "canceled", false, true, client->GetPlayer()))
+			client->Message(CHANNEL_COLOR_RED, "The spell effect could not be cancelled.");
+	}
 }

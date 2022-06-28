@@ -2791,6 +2791,18 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 
 	if (EngagedInCombat())
 	{
+		if(IsEntity() && (((Entity*)this)->IsMezzedOrStunned() || ((Entity*)this)->IsRooted())) {
+			SetAppearancePosition(GetX(),GetY(),GetZ());
+			if ( IsEntity() )
+				((Entity*)this)->SetSpeed(0.0f);
+			
+			SetSpeed(0.0f);
+			position_changed = true;
+			changed = true;
+			GetZone()->AddChangedSpawn(this);
+			StopMovement();
+			return;
+		}
 		int locations = 0;
 		if (movement_locations && MMovementLocations)
 		{
@@ -3088,7 +3100,7 @@ bool Spawn::IsRunning(){
 }
 
 void Spawn::RunToLocation(float x, float y, float z, float following_x, float following_y, float following_z){
-	if(IsPauseMovementTimerActive())
+	if(IsPauseMovementTimerActive() || (IsEntity() && (((Entity*)this)->IsMezzedOrStunned() || ((Entity*)this)->IsRooted())))
 		return;
 	
 	if(!IsWidget())

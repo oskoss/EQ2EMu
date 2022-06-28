@@ -1025,7 +1025,12 @@ void Entity::RemoveSpellEffect(LuaSpell* spell) {
 		changed = true;
 		info_changed = true;
 		AddChangedZoneSpawn();
+		
+		if(IsPlayer()) {
+			((Player*)this)->SetCharSheetChanged(true);
+		}
 	}
+
 	MSpellEffects.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -1702,6 +1707,11 @@ void Entity::RemoveMezSpell(LuaSpell* spell) {
 			((Player*)this)->SetPlayerControlFlag(1, 16, false);
 			if (!IsRooted())
 				((Player*)this)->SetPlayerControlFlag(1, 8, false);
+		}		
+		
+		if(!IsPlayer()) {
+			GetZone()->movementMgr->StopNavigation((Entity*)this);
+			((Spawn*)this)->StopMovement();
 		}
 	}
 }
@@ -1808,6 +1818,11 @@ void Entity::RemoveStunSpell(LuaSpell* spell) {
 				((Player*)this)->SetPlayerControlFlag(1, 8, false);
 			if (!IsStifled() && !IsFeared())
 				GetZone()->UnlockAllSpells((Player*)this);
+		}		
+		
+		if(!IsPlayer()) {
+			GetZone()->movementMgr->StopNavigation((Entity*)this);
+			((Spawn*)this)->StopMovement();
 		}
 	}
 }
@@ -2547,6 +2562,11 @@ void Entity::RemoveRootSpell(LuaSpell* spell) {
 		else {
 			// GetHighestSnare() will return 1.0f if no snares returning the spawn to full speed
 			SetSpeedMultiplier(GetHighestSnare());
+		}
+	
+		if(!IsPlayer()) {
+			GetZone()->movementMgr->StopNavigation((Entity*)this);
+			((Spawn*)this)->StopMovement();
 		}
 	}
 }

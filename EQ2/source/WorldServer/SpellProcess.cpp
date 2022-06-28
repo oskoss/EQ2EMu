@@ -282,8 +282,9 @@ void SpellProcess::Process(){
 	MSpellProcess.unlock();
 }
 bool SpellProcess::IsReady(Spell* spell, Entity* caster){
-	if(caster->IsCasting())
+	if(caster->IsCasting()) {
 		return false;
+	}
 	bool ret = true;	
 	RecastTimer* recast_timer = 0;
 	MutexList<RecastTimer*>::iterator itr = recast_timers.begin();
@@ -370,13 +371,40 @@ bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell, string reason)
 	return ret;
 }
 
-bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, bool lock_spell_process){
+bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, bool lock_spell_process, Spawn* remove_target){
 	if(lock_spell_process)
 		MSpellProcess.lock();
 
 	bool ret = false;
 	Spawn* target = 0;
+	bool target_valid = false;
 	if(spell) {
+		
+		spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
+		if(remove_target && spell->targets.size() > 1) {
+			for (int32 i = 0; i < spell->targets.size(); i++) {		
+				if(remove_target->GetID() == spell->targets.at(i)) {
+					if(remove_target->IsEntity()){
+						spell->removed_targets.push_back(remove_target->GetID());
+						((Entity*)remove_target)->RemoveProc(0, spell);
+						((Entity*)remove_target)->RemoveSpellEffect(spell);
+						((Entity*)remove_target)->RemoveSpellBonus(spell);
+						if(spell->spell->GetSpellData()->det_type > 0 && (spell->spell->GetSpellDuration() > 0 || spell->spell->GetSpellData()->duration_until_cancel))
+							((Entity*)remove_target)->RemoveDetrimentalSpell(spell);
+					}
+					spell->targets.erase(spell->targets.begin()+i, spell->targets.begin()+i+1);
+					target_valid = true;
+					break;
+				}
+			}
+			spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+			if(lock_spell_process) {
+				MSpellProcess.unlock();
+			}
+			return target_valid;
+		}
+		spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+		
 		if (active_spells.count(spell) > 0)
 			active_spells.Remove(spell);
 		if (spell->caster) {
@@ -398,11 +426,13 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 				{
 					CheckRecast(spell->spell, spell->caster);
 					if (spell->caster && spell->caster->IsPlayer())
-						SendSpellBookUpdate(spell->caster->GetZone()->GetClientBySpawn(spell->caster));
+						SendSpellBookUpdate(((Player*)spell->caster)->GetClient());
 				}
 			}
-			if(IsReady(spell->spell, spell->caster) && spell->caster->IsPlayer())
+			if(IsReady(spell->spell, spell->caster) && spell->caster->IsPlayer()) {
 				((Player*)spell->caster)->UnlockSpell(spell->spell);
+				SendSpellBookUpdate(((Player*)spell->caster)->GetClient());
+			}
 			
 			spell->caster->RemoveProc(0, spell);
 			spell->caster->RemoveMaintainedSpell(spell);
@@ -412,12 +442,16 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 			for (int32 i = 0; i < spell->targets.size(); i++) {
 				target = zone->GetSpawnByID(spell->targets.at(i));
 				if(target && target->IsEntity()){
+					spell->removed_targets.push_back(target->GetID());
+					((Entity*)target)->RemoveProc(0, spell);
 					((Entity*)target)->RemoveSpellEffect(spell);
+					((Entity*)target)->RemoveSpellBonus(spell);
 					if(spell->spell->GetSpellData()->det_type > 0 && (spell->spell->GetSpellDuration() > 0 || spell->spell->GetSpellData()->duration_until_cancel))
 						((Entity*)target)->RemoveDetrimentalSpell(spell);
 				}
 				else{
 					spell->caster->RemoveSpellEffect(spell);
+					spell->caster->RemoveSpellBonus(spell);
 					if(spell->spell->GetSpellData()->det_type > 0 && (spell->spell->GetSpellDuration() > 0 || spell->spell->GetSpellData()->duration_until_cancel))
 						spell->caster->RemoveDetrimentalSpell(spell);
 				}
@@ -963,9 +997,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if (!harvest_spell)
 			GetSpellTargets(lua_spell);
 		else{
-			lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
-			lua_spell->targets.push_back(target_id);
-			lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+			AddLuaSpellTarget(lua_spell, target_id);
 		}
 			
 
@@ -1999,7 +2031,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 									target = secondary_target;
 									luaspell->initial_target = target->GetID();
 									luaspell->initial_target_char_id = (target && target->IsPlayer()) ? ((Player*)target)->GetCharacterID() : 0;
-									luaspell->targets.push_back(target->GetID());
+									AddLuaSpellTarget(luaspell, target->GetID());
 								}
 								else if (secondary_target && secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner()->IsPlayer())
 									implied = true;
@@ -2008,7 +2040,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 							{
 								luaspell->initial_target = target->GetID();
 								luaspell->initial_target_char_id = (target && target->IsPlayer()) ? ((Player*)target)->GetCharacterID() : 0;
-								luaspell->targets.push_back(target->GetID());
+								AddLuaSpellTarget(luaspell, target->GetID());
 							}
 						}
 					}   // if spell is not friendly
@@ -2025,7 +2057,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 								implied = true;
 								luaspell->initial_target = target->GetID();
 								luaspell->initial_target_char_id = (target && target->IsPlayer()) ? ((Player*)target)->GetCharacterID() : 0;
-								luaspell->targets.push_back(target->GetID());
+								AddLuaSpellTarget(luaspell, target->GetID());
 								GetPlayerGroupTargets((Player*)target, caster, luaspell);
 
 							}
@@ -2034,7 +2066,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 								implied = true;
 								luaspell->initial_target = secondary_target->GetID();
 								luaspell->initial_target_char_id = (secondary_target && secondary_target->IsPlayer()) ? ((Player*)secondary_target)->GetCharacterID() : 0;
-								luaspell->targets.push_back(secondary_target->GetID());
+								AddLuaSpellTarget(luaspell, secondary_target->GetID());
 								GetPlayerGroupTargets((Player*)secondary_target, caster, luaspell);
 							}
 						}
@@ -2055,7 +2087,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 					if (target->IsPlayer() && ((Entity*)caster)->AttackAllowed((Entity*)target)) {
 						luaspell->initial_target = target->GetID();
 						luaspell->initial_target_char_id = (target && target->IsPlayer()) ? ((Player*)target)->GetCharacterID() : 0;
-						luaspell->targets.push_back(target->GetID());
+						AddLuaSpellTarget(luaspell, target->GetID());
 					}
 				}
 			}
@@ -2093,13 +2125,13 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 								// if NPC group member is (still) an NPC (wtf?) and is alive, send the NPC group member back as a successful target of non-friendly spell group_member->Alive()
 								if (group_member->GetZone() == caster->GetZone() && 
 								group_member->IsNPC() && group_member->Alive() && !((Entity*)group_member)->IsAOEImmune() && (!((Entity*)group_member)->IsMezzed() || group_member == target))
-									luaspell->targets.push_back(group_member->GetID());
+									AddLuaSpellTarget(luaspell, group_member->GetID());
 
 								// note: this should generate some hate towards the caster
 							}
 						} // end is spawngroup
 						else
-							luaspell->targets.push_back(target->GetID()); // return single target NPC for non-friendly spell
+							AddLuaSpellTarget(luaspell, target->GetID()); // return single target NPC for non-friendly spell
 					}
 					else if(data->friendly_spell)
 					{
@@ -2152,7 +2184,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 			if (data->icon_backdrop == 316) // single target in a group/raid
 			{
 				if (target)
-					luaspell->targets.push_back(target->GetID());
+					AddLuaSpellTarget(luaspell, target->GetID(), false);
 			}
 			// is friendly
 			else if (data->friendly_spell) 
@@ -2194,13 +2226,13 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 										SpellProcess::AddSelfAndPetToCharTargets(luaspell, group_member);		
 									}
 									else if (group_member->GetZone() == luaspell->caster->GetZone()) {
-										luaspell->targets.push_back(group_member->GetID());
+										AddLuaSpellTarget(luaspell, group_member->GetID(), false);
 										if (group_member->HasPet()) {
 											Entity* pet = group_member->GetPet();
 											if (!pet)
 												pet = group_member->GetCharmedPet();
 											if (pet)
-												luaspell->targets.push_back(pet->GetID());
+												AddLuaSpellTarget(luaspell, pet->GetID(), false);
 												
 											LogWrite(SPELL__DEBUG, 0, "Player", "%s added a pet %s (%u) for spell %s", group_member->GetName(), pet ? pet->GetName() : "", pet ? pet->GetID() : 0, luaspell->spell->GetName());
 										}
@@ -2228,14 +2260,14 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 							Spawn* group_member = *itr;
 
 							if (group_member->IsNPC() && group_member->Alive()){
-								luaspell->targets.push_back(group_member->GetID());
+								AddLuaSpellTarget(luaspell, group_member->GetID(), false);
 								if (((Entity*)group_member)->HasPet()){
 									Entity* pet = ((Entity*)group_member)->GetPet();
 									if (pet)
-									    luaspell->targets.push_back(pet->GetID());
+										AddLuaSpellTarget(luaspell, pet->GetID(), false);
 									pet = ((Entity*)group_member)->GetCharmedPet();
 									if (pet)
-										luaspell->targets.push_back(pet->GetID());
+										AddLuaSpellTarget(luaspell, pet->GetID(), false);
 								}
 							}
 						}
@@ -2249,7 +2281,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 		} // end is Group AE
 
 		else if (target_type == SPELL_TARGET_SELF && caster)
-			luaspell->targets.push_back(caster->GetID()); // if spell is SELF, return caster
+			AddLuaSpellTarget(luaspell, caster->GetID(), false); // if spell is SELF, return caster
 
 		else if (target_type == SPELL_TARGET_CASTER_PET && caster && caster->IsEntity() && ((Entity*)caster)->HasPet()) {
 			AddSelfAndPet(luaspell, caster, true);
@@ -2268,14 +2300,14 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 					{
 						// if caster is in a group, and target is a player and targeted player is a group member
 						if (((Player*)caster)->GetGroupMemberInfo() && (target->IsPlayer() || target->IsBot() || target->IsPet()) && ((Player*)caster)->IsGroupMember((Entity*)target))
-							luaspell->targets.push_back(target->GetID()); // return the target
+							AddLuaSpellTarget(luaspell, target->GetID(), false); // return the target
 						else
-							luaspell->targets.push_back(caster->GetID()); // else return the caster
+							AddLuaSpellTarget(luaspell, caster->GetID(), false); // else return the caster
 					}
 					else if (target->IsPlayer() || target->IsBot()) // else it is not raid, group only or group spell
-						luaspell->targets.push_back(target->GetID()); // return target for single spell
+						AddLuaSpellTarget(luaspell, target->GetID(), false); // return target for single spell
 					else if ((luaspell->targets.size() < 1) || (!target->IsPet() || (((Entity*)target)->GetOwner() && !((Entity*)target)->GetOwner()->IsPlayer()))) 
-						luaspell->targets.push_back(caster->GetID()); // and if no target, cast on self
+						AddLuaSpellTarget(luaspell, caster->GetID(), false); // and if no target, cast on self
 				}
 				else if (caster->IsNPC()) // caster is an NPC
 				{
@@ -2285,24 +2317,24 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						if (caster->IsBot() && (target->IsBot() || target->IsPlayer())) {
 							GroupMemberInfo* gmi = ((Entity*)caster)->GetGroupMemberInfo();
 							if (gmi && target->IsEntity() && world.GetGroupManager()->IsInGroup(gmi->group_id, (Entity*)target)) {
-								luaspell->targets.push_back(target->GetID()); // return the target
+								AddLuaSpellTarget(luaspell, target->GetID(), false); // return the target
 							}
 							else
 								AddSelfAndPet(luaspell, caster);
 						}
 						// if NPC caster is in a group, and target is a player and targeted player is a group member
 						else if (((NPC*)caster)->HasSpawnGroup() && target->IsNPC() && ((NPC*)caster)->IsInSpawnGroup((NPC*)target))
-							luaspell->targets.push_back(target->GetID()); // return the target
+							AddLuaSpellTarget(luaspell, target->GetID(), false); // return the target
 						else
 							AddSelfAndPet(luaspell, caster);
 					}
 					else if (target->IsNPC())
-						luaspell->targets.push_back(target->GetID()); // return target for single spell
+						AddLuaSpellTarget(luaspell, target->GetID(), false); // return target for single spell
 					else {
 						if (caster->IsBot() && (target->IsBot() || target->IsPlayer()))
-							luaspell->targets.push_back(target->GetID());
+							AddLuaSpellTarget(luaspell, target->GetID(), false);
 						else
-							luaspell->targets.push_back(caster->GetID()); // and if no target, cast on self
+							AddLuaSpellTarget(luaspell, caster->GetID(), false); // and if no target, cast on self
 					}
 				} // end is player
 			} // end is friendly
@@ -2326,13 +2358,13 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 							// if NPC group member is (still) an NPC (wtf?) and is alive, send the NPC group member back as a successful target of non-friendly spell group_member->Alive()
 							if (group_member->GetZone() == caster->GetZone() && 
 							group_member->IsNPC() && group_member->Alive() && !((Entity*)group_member)->IsAOEImmune() && (!((Entity*)group_member)->IsMezzed() || group_member == target))
-								luaspell->targets.push_back(group_member->GetID());
+								AddLuaSpellTarget(luaspell, group_member->GetID(), false);
 
 							// note: this should generate some hate towards the caster
 						}
 					} // end is spawngroup
 					else
-						luaspell->targets.push_back(target->GetID()); // return single target NPC for non-friendly spell
+						AddLuaSpellTarget(luaspell, target->GetID(), false); // return single target NPC for non-friendly spell
 
 					safe_delete(group);
 				} // end is NPC
@@ -2360,7 +2392,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 								// if the group member is in the same zone as caster, and group member is alive, and group member is within distance
 								if (group_member && group_member->GetZone() == caster->GetZone() && group_member->Alive() && caster->GetDistance(group_member) <= data->range
 									&& (group_member == target || !group_member->IsAOEImmune()))
-									luaspell->targets.push_back(group_member->GetID()); // add as target
+									AddLuaSpellTarget(luaspell, group_member->GetID(), false); // add as target
 							}
 							group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 						}
@@ -2368,11 +2400,11 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 					}
 					else
-						luaspell->targets.push_back(target->GetID()); // player not in group
+						AddLuaSpellTarget(luaspell, target->GetID(), false); // player not in group
 				} // end is caster player or npc
 			}
 			else if (target)
-				luaspell->targets.push_back(target->GetID()); // is not friendly nor a group spell
+				AddLuaSpellTarget(luaspell, target->GetID(), false); // is not friendly nor a group spell
 		}
 		//Rez spells
 		else if(target && target_type == SPELL_TARGET_ENEMY_CORPSE){
@@ -2380,7 +2412,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 			if(data->friendly_spell){
 				//target is player
 				if(target->IsPlayer()){
-					luaspell->targets.push_back(target->GetID());
+					AddLuaSpellTarget(luaspell, target->GetID(), false);
 				}
 			}
 		}
@@ -2407,7 +2439,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 								group_member = (*itr)->member;
 								//Check if group member is in the same zone in range of the spell and dead
 								if (group_member && group_member->GetZone() == target->GetZone() && !group_member->Alive() && target->GetDistance(group_member) <= data->radius) {
-									luaspell->targets.push_back(group_member->GetID());
+									AddLuaSpellTarget(luaspell, group_member->GetID(), false);
 								}
 							}
 							group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
@@ -2416,7 +2448,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 					}
 					else
-						luaspell->targets.push_back(target->GetID());
+						AddLuaSpellTarget(luaspell, target->GetID(), false);
 				}
 			}
 		}
@@ -2480,7 +2512,7 @@ void SpellProcess::GetSpellTargetsTrueAOE(LuaSpell* luaspell) {
 			if (i == 0){
 				if (luaspell->initial_target && luaspell->caster->GetID() != luaspell->initial_target){
 					//this is the "Direct" target and aoe can't be avoided
-					luaspell->targets.push_back(luaspell->initial_target);
+					AddLuaSpellTarget(luaspell, luaspell->initial_target, false);
 					ignore_target = luaspell->initial_target;
 				}
 				if (luaspell->targets.size() >= luaspell->spell->GetSpellData()->max_aoe_targets)
@@ -2498,7 +2530,7 @@ void SpellProcess::GetSpellTargetsTrueAOE(LuaSpell* luaspell) {
 				//If this spawn is immune to aoe, continue
 				if (((Entity*)spawn)->IsAOEImmune() || ((Entity*)spawn)->IsMezzed())
 					continue;
-				luaspell->targets.push_back(spawn->GetID());
+				AddLuaSpellTarget(luaspell, spawn->GetID(), false);
 			}
 
 			if (luaspell->targets.size() >= luaspell->spell->GetSpellData()->max_aoe_targets)
@@ -2864,14 +2896,14 @@ void SpellProcess::AddActiveSpell(LuaSpell* spell)
 void SpellProcess::AddSelfAndPet(LuaSpell* spell, Spawn* self, bool onlyPet)
 {
 	if(!onlyPet)
-		spell->targets.push_back(self->GetID());
+		AddLuaSpellTarget(spell, self->GetID(), false);
 	
 	if(self->IsEntity() && ((Entity*)self)->HasPet() && ((Entity*)self)->GetPet())
-		spell->targets.push_back(((Entity*)self)->GetPet()->GetID());
+		AddLuaSpellTarget(spell, ((Entity*)self)->GetPet()->GetID(), false);
 	if(self->IsEntity() && ((Entity*)self)->HasPet() && ((Entity*)self)->GetCharmedPet())
-		spell->targets.push_back(((Entity*)self)->GetCharmedPet()->GetID());
+		AddLuaSpellTarget(spell, ((Entity*)self)->GetCharmedPet()->GetID(), false);
 	if(!onlyPet && self->IsEntity() && ((Entity*)self)->IsPet() && ((Entity*)self)->GetOwner())
-		spell->targets.push_back(((Entity*)self)->GetOwner()->GetID());
+		AddLuaSpellTarget(spell, ((Entity*)self)->GetOwner()->GetID(), false);
 }
 
 void SpellProcess::AddSelfAndPetToCharTargets(LuaSpell* spell, Spawn* caster, bool onlyPet)
@@ -2892,4 +2924,20 @@ void SpellProcess::AddSelfAndPetToCharTargets(LuaSpell* spell, Spawn* caster, bo
 
 void SpellProcess::DeleteActiveSpell(LuaSpell* spell) {
 	active_spells.Remove(spell);
+}
+
+bool SpellProcess::AddLuaSpellTarget(LuaSpell* lua_spell, int32 id, bool lock_spell_targets) {
+	bool ret = false;
+	if(lock_spell_targets)
+		lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
+	
+	if(std::find(lua_spell->removed_targets.begin(), lua_spell->removed_targets.end(), id) == lua_spell->removed_targets.end()) {
+		lua_spell->targets.push_back(id);
+		ret = true;
+	}
+	
+	if(lock_spell_targets)
+		lua_spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+	
+	return ret;
 }

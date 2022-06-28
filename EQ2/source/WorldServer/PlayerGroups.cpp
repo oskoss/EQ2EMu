@@ -691,10 +691,14 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 						client = (*target_itr)->client;
 
 						has_effect = false;
-
-						if (group_member->GetSpellEffect(spell->GetSpellID(), caster))
+						
+						if (group_member->GetSpellEffect(spell->GetSpellID(), caster)) {
 							has_effect = true;
-
+						}
+						if(!has_effect && (std::find(luaspell->removed_targets.begin(), 
+							luaspell->removed_targets.end(), group_member->GetID()) != luaspell->removed_targets.end())) {
+							continue;
+						}
 						// Check if player is within range of the caster
 						if (!rule_manager.GetGlobalRule(R_Spells, EnableCrossZoneGroupBuffs)->GetInt8() && 
 								(group_member->GetZone() != caster->GetZone() || caster->GetDistance(group_member) > spell->GetSpellData()->radius)) {

@@ -6762,6 +6762,7 @@ void ZoneServer::PlayAnimation(Spawn* spawn, int32 visual_state, Spawn* spawn2, 
 				packet->setDataByName("anim_type", visual_state);
 				client->QueuePacket(packet->serialize());
 			}
+			safe_delete(packet);
 			return;
 		}
 		if(hide_type == 2)
@@ -6777,16 +6778,24 @@ void ZoneServer::PlayAnimation(Spawn* spawn, int32 visual_state, Spawn* spawn2, 
 			continue;
 		if(exclude_spawn == client->GetPlayer())
 			continue;
-
-		packet = configReader.getStruct("WS_CannedEmote", client->GetVersion());
-		if (packet) {
-			packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(spawn));
-			packet->setDataByName("anim_type", visual_state);
-			client->QueuePacket(packet->serialize());
+		if(!client->IsReadyForUpdates()) // client is not in world yet so we shouldn't be sending animations of spawns yet
+			continue;
+		
+		if(!packet || packet->GetVersion() != client->GetVersion()) {
 			safe_delete(packet);
+			packet = configReader.getStruct("WS_CannedEmote", client->GetVersion());
+		}
+		if (packet) {
+			int32 spawn_id = client->GetPlayer()->GetIDWithPlayerSpawn(spawn);
+			if(spawn_id) {
+				packet->setDataByName("spawn_id", spawn_id);
+				packet->setDataByName("anim_type", visual_state);
+				client->QueuePacket(packet->serialize());
+			}
 		}
 	}
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
+	safe_delete(packet);
 }
 
 vector<Spawn*> ZoneServer::GetSpawnsByID(int32 id) {

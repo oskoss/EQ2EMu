@@ -76,6 +76,7 @@ struct LuaSpell{
 	int32			initial_target;
 	int32			initial_target_char_id;
 	vector<int32>	targets;
+	vector<int32>	removed_targets; // previously cancelled, expired, used, so on
 	multimap<int32, int8> char_id_targets;
 	Spell*			spell;
 	lua_State*		state;

@@ -1331,8 +1331,9 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 		return 0;
 
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
-	if (!luaspell)
+	if(!luaspell || luaspell->resisted) {
 		return 0;
+	}
 	Spawn* caster = luaspell->caster;
 	string heal_type = lua_interface->GetStringValue(state);//power, heal ect
 	int32 min_heal = lua_interface->GetInt32Value(state, 2);
@@ -1378,8 +1379,9 @@ int EQ2Emu_lua_SpellHealPct(lua_State* state) {
 		return 0;
 
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
-	if (!luaspell)
+	if(!luaspell || luaspell->resisted) {
 		return 0;
+	}
 	Spawn* caster = luaspell->caster;
 	string heal_type = lua_interface->GetStringValue(state);//power, heal ect
 	float percentage = lua_interface->GetFloatValue(state, 2);
@@ -1690,6 +1692,11 @@ int EQ2Emu_lua_AddHate(lua_State* state) {
 	sint32 amount = lua_interface->GetSInt32Value(state, 3);
 	bool send_packet = lua_interface->GetInt8Value(state, 4) == 1 ? true : false;
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
+	
+	if(!luaspell || luaspell->resisted) {
+		return 0;
+	}
+	
 	if (entity && entity->IsEntity() && amount != 0) {
 		if (luaspell) {
 			ZoneServer* zone = luaspell->caster->GetZone();
@@ -1809,8 +1816,9 @@ int EQ2Emu_lua_SpellDamage(lua_State* state) {
 		return 0;
 	Spawn* target = lua_interface->GetSpawn(state);
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
-	if (!luaspell)
+	if(!luaspell || luaspell->resisted) {
 		return 0;
+	}
 	Spawn* caster = luaspell->caster;
 	sint32 type = lua_interface->GetSInt32Value(state, 2);
 	int32 min_damage = lua_interface->GetInt32Value(state, 3);
@@ -2236,6 +2244,10 @@ int EQ2Emu_lua_AddSpellBonus(lua_State* state) {
 	const int16 type = lua_interface->GetInt16Value(state, 2);
 	const float value = lua_interface->GetFloatValue(state, 3);
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
+	
+	if(!luaspell || luaspell->resisted) {
+		return 0;
+	}
 
 	int64 class_req = 0;
 	int32 class_id = 0;
@@ -2323,6 +2335,10 @@ int EQ2Emu_lua_AddSpawnSpellBonus(lua_State* state) {
 
 	if (!luaspell || !luaspell->spell) {
 		lua_interface->LogError("%s: LUA AddSpawnSpellBonus command error: can only be used in a spell script", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	if(luaspell->resisted) {
 		return 0;
 	}
 
@@ -2423,6 +2439,9 @@ int EQ2Emu_lua_AddSkillBonus(lua_State* state) {
 	if (value != 0) {
 		int32 spell_id = 0;
 		if (luaspell && luaspell->spell && luaspell->caster) {
+			if(luaspell->resisted) {
+				return 0;
+			}
 			spell_id = luaspell->spell->GetSpellID();
 			ZoneServer* zone = luaspell->caster->GetZone();
 			Spawn* target = 0;
@@ -2481,6 +2500,9 @@ int EQ2Emu_lua_RemoveSkillBonus(lua_State* state) {
 	if (spawn && spawn->IsPlayer()) {
 		int32 spell_id = 0;
 		if (luaspell && luaspell->spell) {
+			if(luaspell->resisted) {
+				return 0;
+			}
 			spell_id = luaspell->spell->GetSpellID();
 			ZoneServer* zone = luaspell->caster->GetZone();
 			Spawn* target = 0;
@@ -2531,6 +2553,11 @@ int EQ2Emu_lua_AddControlEffect(lua_State* state) {
 	int8 type = lua_interface->GetInt32Value(state, 2);
 	bool only_add_spawn = lua_interface->GetInt8Value(state, 3) == 1;
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
+	
+	if(luaspell && luaspell->resisted) {
+		return 0;
+	}
+	
 	if (!only_add_spawn && luaspell && luaspell->spell && luaspell->caster && type != 0) {
 		ZoneServer* zone = luaspell->caster->GetZone();
 		Spawn* target = 0;
@@ -4877,7 +4904,10 @@ int EQ2Emu_lua_Charm(lua_State* state) {
 		lua_interface->LogError("%s: LUA Charm command error: Spell is not valid, charm can only be used in spell scripts.", lua_interface->GetScriptName(state));
 		return 0;
 	}
-
+	
+	if(luaspell->resisted) {
+		return 0;
+	}
 	if (owner && pet && owner->IsEntity() && pet->IsNPC()) {
 		((Entity*)owner)->SetCharmedPet((Entity*)pet);
 		pet->SetPet(true);
@@ -5152,7 +5182,11 @@ int EQ2Emu_lua_SummonPet(lua_State* state) {
 		lua_interface->LogError("%s: LUA SummonPet command error: valid spell not found, SummonPet can only be used in spell scripts", lua_interface->GetScriptName(state));
 		return 0;
 	}
-
+	
+	if(luaspell->resisted) {
+		return 0;
+	}
+	
 	// Get a pointer to a spawn with the given DB ID and check if the pointer is valid
 	Spawn* pet = spawn->GetZone()->GetSpawn(pet_id);
 	if (!pet) {
@@ -5281,6 +5315,10 @@ int EQ2Emu_lua_SummonDeityPet(lua_State* state) {
 		lua_interface->LogError("%s: LUA SummonDeityPet command error: valid spell not found, SummonDeityPet can only be used in spell scripts", lua_interface->GetScriptName(state));
 		return 0;
 	}
+	
+	if(luaspell->resisted) {
+		return 0;
+	}
 
 	Spawn* pet = spawn->GetZone()->GetSpawn(pet_id);
 	if (!pet) {
@@ -5368,7 +5406,11 @@ int EQ2Emu_lua_SummonCosmeticPet(lua_State* state) {
 		lua_interface->LogError("%s: LUA SummonCosmeticPet command error: valid spell not found, SummonCosmeticPet can only be used in spell scripts", lua_interface->GetScriptName(state));
 		return 0;
 	}
-
+	
+	if(luaspell->resisted) {
+		return 0;
+	}
+	
 	Spawn* pet = spawn->GetZone()->GetSpawn(pet_id);
 	if (!pet) {
 		lua_interface->LogError("%s: LUA SummonCosmeticPet command error: Could not find spawn with id of %u.", lua_interface->GetScriptName(state), pet_id);
@@ -6067,7 +6109,11 @@ int EQ2Emu_lua_AddWard(lua_State* state) {
 	int32 maxHitCount = lua_interface->GetInt32Value(state, 8);
 
 	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
-
+	
+	if(!spell || spell->resisted) {
+		return 0;
+	}
+	
 	bool ward_was_added = false;
 
 	ZoneServer* zone = spell->caster->GetZone();
@@ -6136,7 +6182,10 @@ int EQ2Emu_lua_AddToWard(lua_State* state) {
 	int32 amount = lua_interface->GetInt32Value(state);
 	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 	WardInfo* ward = 0;
-
+	
+	if(!spell || spell->resisted) {
+		return 0;
+	}
 	ZoneServer* zone = spell->caster->GetZone();
 	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 	if (zone->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
@@ -6234,7 +6283,11 @@ int EQ2Emu_lua_RemoveWard(lua_State* state) {
 		return 0;
 
 	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
-
+	
+	if(!spell) {
+		return 0;
+	}
+	
 	ZoneServer* zone = spell->caster->GetZone();
 	Spawn* target = 0;
 	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
@@ -7611,6 +7664,10 @@ int EQ2Emu_lua_SummonDumbFirePet(lua_State* state) {
 		lua_interface->LogError("%s: LUA SummonDumbFirePet command error: valid spell not found, SummonPet can only be used in spell scripts", lua_interface->GetScriptName(state));
 		return 0;
 	}
+	
+	if(luaspell->resisted) {
+		return 0;
+	}
 
 	// Get a pointer to a spawn with the given DB ID and check if the pointer is valid
 	Spawn* pet = spawn->GetZone()->GetSpawn(pet_id);
@@ -8038,7 +8095,11 @@ int EQ2Emu_lua_AddProc(lua_State* state) {
 		lua_interface->LogError("%s: LUA AddProc command error: can only use with an item provided or inside a spell script", lua_interface->GetScriptName(state));
 		return 0;
 	}
-
+	
+	if(spell && spell->resisted) {
+		return 0;
+	}
+	
 	if (spell && use_all_spelltargets) {
 		Spawn* target;
 		spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
@@ -8796,6 +8857,10 @@ int EQ2Emu_lua_AddThreatTransfer(lua_State* state) {
 		lua_interface->LogError("%s: LUA AddThreatTransfer command error: can only be used in a spell script", lua_interface->GetScriptName(state));
 		return 0;
 	}
+	
+	if(spell->resisted) {
+		return 0;
+	}
 
 	if (((Entity*)caster)->GetThreatTransfer()) {
 		return 0;
@@ -8851,7 +8916,11 @@ int EQ2Emu_lua_CureByType(lua_State* state) {
 	string cure_name = lua_interface->GetStringValue(state, 3);
 	int8 cure_level = lua_interface->GetInt8Value(state, 4);
 	Spawn* target = lua_interface->GetSpawn(state, 5);
-
+	
+	if(!spell || spell->resisted) {
+		return 0;
+	}
+	
 	if (target) {
 		if (!target->IsEntity()) {
 			lua_interface->LogError("%s: LUA CureByType command error: spawn override must be entity if used", lua_interface->GetScriptName(state));
@@ -8889,7 +8958,11 @@ int EQ2Emu_lua_CureByControlEffect(lua_State* state) {
 		lua_interface->LogError("%s: LUA CureByControlEffect command error: can only be used in a spell script", lua_interface->GetScriptName(state));
 		return 0;
 	}
-
+	
+	if(spell->resisted) {
+		return 0;
+	}
+	
 	int8 cure_count = lua_interface->GetInt8Value(state);
 	int8 cure_type = lua_interface->GetInt8Value(state, 2);
 	string cure_name = lua_interface->GetStringValue(state, 3);
@@ -9195,6 +9268,10 @@ int EQ2Emu_lua_AddImmunitySpell(lua_State* state) {
 		lua_interface->LogError("%s: LUA AddImmunitySpell command error: This must be used in a spellscript", lua_interface->GetScriptName(state));
 		return 0;
 	}
+	
+	if(spell->resisted) {
+		return 0;
+	}
 
 	if (spawn) {
 		if (!spawn->IsEntity()) {
@@ -9264,7 +9341,11 @@ int EQ2Emu_lua_SetSpellSnareValue(lua_State* state) {
 		lua_interface->LogError("%s: LUA SetSpellSnareValue command error: This can only be used in a spell script!", lua_interface->GetScriptName(state));
 		return 0;
 	}
-
+	
+	if(spell->resisted) {
+		return 0;
+	}
+	
 	float snare = lua_interface->GetFloatValue(state);
 	Spawn* spawn = lua_interface->GetSpawn(state, 2);
 
@@ -10439,6 +10520,10 @@ int EQ2Emu_lua_Evac(lua_State* state) {
 	else {
 
 		LuaSpell* spell = lua_interface->GetCurrentSpell(state);
+		
+		if(!spell)
+			return 0;
+		
 		ZoneServer* zone = spell->caster->GetZone();
 
 		float x = spell->caster->GetZone()->GetSafeX();
