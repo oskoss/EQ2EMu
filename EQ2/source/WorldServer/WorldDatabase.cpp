@@ -8039,7 +8039,7 @@ void WorldDatabase::UpdateStartingLanguage(int32 char_id, uint8 race_id, int32 s
 	}
 	//if we have a starting city supplied, and the rule is set to use it, deal with it
 	else if(rule == 1) {
-		query_string.append("WHERE starting_city=" + std::to_string(starting_city) + " or (starting_city=0 and race_id=" + std::to_string(race_id));
+		query_string.append("WHERE starting_city=" + std::to_string(starting_city) + " or (starting_city=0 and race_id=" + std::to_string(race_id) + ")");
 	}
 	
 	Query query;
