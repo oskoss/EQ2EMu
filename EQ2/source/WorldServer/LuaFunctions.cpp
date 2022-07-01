@@ -12917,6 +12917,7 @@ if (player && player->IsPlayer()) {
 	}
 
 }
+  return 0;
 }
 
 int EQ2Emu_lua_GetLootTier(lua_State* state) {
