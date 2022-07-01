@@ -886,3 +886,27 @@ void PlayerGroup::UpdateGroupMemberInfo(Entity* ent, bool groupMembersLocked) {
 	if(!groupMembersLocked)
 		MGroupMembers.releasewritelock();
 }
+
+Entity* PlayerGroup::GetGroupMemberByPosition(Entity* seeker, int32 mapped_position) {
+	Entity* ret = nullptr;
+
+	deque<GroupMemberInfo*>::iterator itr;
+	
+	MGroupMembers.readlock();
+	
+	int32 count = 1;
+	for (itr = m_members.begin(); itr != m_members.end(); itr++) {
+		if ((*itr)->member == seeker) {
+			continue;
+		}
+		count++;
+		if(count >= mapped_position) {
+			ret = (Entity*)(*itr)->member;
+			break;
+		}
+	}
+	
+	MGroupMembers.releasereadlock();
+
+	return ret;
+}

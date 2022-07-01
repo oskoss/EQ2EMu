@@ -7818,6 +7818,20 @@ int EQ2Emu_lua_GetItemType(lua_State* state) {
 	return 1;
 }
 
+int EQ2Emu_lua_GetItemEffectType(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Item* item = lua_interface->GetItem(state);
+
+	if (!item) {
+		lua_interface->LogError("%s: LUA GetItemEffectType command error: item pointer is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	lua_interface->SetInt32Value(state, item->effect_type);
+	return 1;
+}
+
 int EQ2Emu_lua_AddTransportSpawn(lua_State* state) {
 	if (!lua_interface)
 		return 0;
@@ -8909,18 +8923,14 @@ int EQ2Emu_lua_CureByType(lua_State* state) {
 		return 0;
 
 	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
-	if (!spell) {
-		lua_interface->LogError("%s: LUA CureByType command error: can only be used in a spell script", lua_interface->GetScriptName(state));
-		return 0;
-	}
-
 	int8 cure_count = lua_interface->GetInt8Value(state);
 	int8 cure_type = lua_interface->GetInt8Value(state, 2);
 	string cure_name = lua_interface->GetStringValue(state, 3);
 	int8 cure_level = lua_interface->GetInt8Value(state, 4);
 	Spawn* target = lua_interface->GetSpawn(state, 5);
+	Spawn* caster = lua_interface->GetSpawn(state, 6); // optional
 	
-	if(!spell || spell->resisted) {
+	if(spell && spell->resisted) {
 		return 0;
 	}
 	
@@ -8930,13 +8940,21 @@ int EQ2Emu_lua_CureByType(lua_State* state) {
 			return 0;
 		}
 
-		if (((Entity*)target)->GetDetTypeCount(cure_type) > 0)
-			((Entity*)target)->CureDetrimentByType(cure_count, cure_type, cure_name.length() > 0 ? cure_name : (string)spell->spell->GetName(), spell->caster, cure_level);
+		if (((Entity*)target)->GetDetTypeCount(cure_type) > 0) {
+			std::string alternate_name = "item";
+			if(spell)
+				alternate_name = std::string(spell->spell->GetName());
+			
+			if(!caster && spell)
+				caster = (Spawn*)spell->caster;
+			
+			((Entity*)target)->CureDetrimentByType(cure_count, cure_type, cure_name.length() > 0 ? cure_name : alternate_name, (Entity*)caster, cure_level);
+		}
 	}
 	else {
 		ZoneServer* zone = spell->caster->GetZone();
 		vector<int32> targets = spell->targets;
-
+		vector<Entity*> targets_to_cure;
 		spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 		for (int8 i = 0; i < targets.size(); i++) {
 			target = zone->GetSpawnByID(targets.at(i));
@@ -8944,10 +8962,16 @@ int EQ2Emu_lua_CureByType(lua_State* state) {
 			if (!target || !target->IsEntity())
 				continue;
 
-			if (((Entity*)target)->GetDetTypeCount(cure_type) > 0)
-				((Entity*)target)->CureDetrimentByType(cure_count, cure_type, cure_name.length() > 0 ? cure_name : (string)spell->spell->GetName(), spell->caster, cure_level);
+			if (((Entity*)target)->GetDetTypeCount(cure_type) > 0) {
+				targets_to_cure.push_back((Entity*)target);
+			}
 		}
 		spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+		
+		vector<Entity*>::iterator itr;
+		for(itr = targets_to_cure.begin(); itr != targets_to_cure.end(); itr++) {
+			((Entity*)*itr)->CureDetrimentByType(cure_count, cure_type, cure_name.length() > 0 ? cure_name : (string)spell->spell->GetName(), spell->caster, cure_level);
+		}
 	}
 	return 0;
 }

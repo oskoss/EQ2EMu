@@ -188,6 +188,12 @@ enum RuleType {
 	PlayerSpellSaveStateWaitInterval,
 	PlayerSpellSaveStateCap,
 	RequirePreviousTierScribe,
+	CureSpellID,
+	CureCurseSpellID,
+	CureNoxiousSpellID,
+	CureMagicSpellID,
+	CureTraumaSpellID,
+	CureArcaneSpellID,
 
 	/* ZONE TIMERS */
 	RegenTimer,

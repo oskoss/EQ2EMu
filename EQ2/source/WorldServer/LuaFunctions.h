@@ -146,6 +146,7 @@ int EQ2Emu_lua_UnequipSlot(lua_State* state);
 int EQ2Emu_lua_SetEquipment(lua_State* state);
 int EQ2Emu_lua_GetItemByID(lua_State* state);
 int EQ2Emu_lua_GetItemType(lua_State* state);
+int EQ2Emu_lua_GetItemEffectType(lua_State* state);
 int EQ2Emu_lua_GetSpellName(lua_State* state);
 
 //Misc

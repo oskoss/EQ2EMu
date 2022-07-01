@@ -252,7 +252,7 @@ public:
 	const char*		GetScriptName(lua_State* state);
 
 	void			RemoveSpawnScript(const char* name);
-	bool			RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn = 0, sint64* returnValue = 0);
+	bool			RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn = 0, Spawn* target = 0, sint64* returnValue = 0);
 	bool			RunItemScriptWithReturnString(string script_name, const char* function_name, Item* item, Spawn* spawn = 0, std::string* returnValue = 0);
 	bool			CallItemScript(lua_State* state, int8 num_parameters, std::string* returnValue = 0);
 	bool			CallItemScript(lua_State* state, int8 num_parameters, sint64* returnValue = 0);

@@ -1653,8 +1653,6 @@ DumpPacket(buffer, length);
 		if(opcode > 0 && opcode <= OP_OutOfSession)
 		{
 			EQProtocolPacket p(newbuffer,newlength);
-			if(opcode == 3)
-				DumpPacket(newbuffer, newlength);
 			ProcessPacket(&p);
 		}
 		else

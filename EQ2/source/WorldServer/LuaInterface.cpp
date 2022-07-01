@@ -966,6 +966,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetEquippedItemBySlot", EQ2Emu_lua_GetEquippedItemBySlot);
 	lua_register(state, "GetItemByID", EQ2Emu_lua_GetItemByID);
 	lua_register(state, "GetItemType", EQ2Emu_lua_GetItemType);
+	lua_register(state, "GetItemEffectType", EQ2Emu_lua_GetItemEffectType);
 	lua_register(state, "GetSpellName", EQ2Emu_lua_GetSpellName);
 	lua_register(state, "PerformCameraShake", EQ2Emu_lua_PerformCameraShake);
 	lua_register(state, "GetModelType", EQ2Emu_lua_GetModelType);
@@ -2162,7 +2163,7 @@ lua_State* LuaInterface::GetRegionScript(const char* name, bool create_new, bool
 	return ret;
 }
 
-bool LuaInterface::RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn, sint64* returnValue) {
+bool LuaInterface::RunItemScript(string script_name, const char* function_name, Item* item, Spawn* spawn, Spawn* target, sint64* returnValue) {
 	if(!item)
 		return false;
 	lua_State* state = GetItemScript(script_name.c_str(), true, true);
@@ -2186,6 +2187,10 @@ bool LuaInterface::RunItemScript(string script_name, const char* function_name, 
 		int8 num_parms = 1;
 		if(spawn){
 			SetSpawnValue(state, spawn);
+			num_parms++;
+		}
+		if(target){
+			SetSpawnValue(state, target);
 			num_parms++;
 		}
 		if(!CallItemScript(state, num_parms, returnValue)){

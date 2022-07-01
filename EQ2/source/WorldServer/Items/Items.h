@@ -614,6 +614,16 @@ extern MasterItemList master_item_list;
 #define	DISPLAY_FLAG_NOT_FOR_SALE		64
 #define	DISPLAY_FLAG_NO_BUY				128 // disables buying on merchant 'buy' list
 
+enum ItemEffectType {
+	NO_EFFECT_TYPE=0,
+	EFFECT_CURE_TYPE_TRAUMA=1,
+	EFFECT_CURE_TYPE_ARCANE=2,
+	EFFECT_CURE_TYPE_NOXIOUS=3,
+	EFFECT_CURE_TYPE_ELEMENTAL=4,
+	EFFECT_CURE_TYPE_CURSE=5,
+	EFFECT_CURE_TYPE_MAGIC=6,
+	EFFECT_CURE_TYPE_ALL=7
+};
 #pragma pack(1)
 struct ItemStatsValues{
 	sint16			str;
@@ -922,6 +932,7 @@ public:
 	bool 					needs_deletion;
 	std::time_t				created;
 	std::map<int32, bool>	grouped_char_ids;
+	ItemEffectType			effect_type;
 	
 	void AddEffect(string effect, int8 percentage, int8 subbulletflag);
 	void AddBookPage(int8 page, string page_text,int8 valign, int8 halign);

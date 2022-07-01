@@ -6865,7 +6865,7 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 			bool itemDeleted = false;
 			bool itemAdded = false;
 			sint64 dispFlags = 0;
-			if (item && item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "buyback_display_flags", item, player, &dispFlags) && (dispFlags & DISPLAY_FLAG_NO_BUY))
+			if (item && item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "buyback_display_flags", item, player, nullptr, &dispFlags) && (dispFlags & DISPLAY_FLAG_NO_BUY))
 				SimpleMessage(CHANNEL_NARRATIVE, "You do not meet all the requirements to buy this item.");
 			else if (!player->item_list.HasFreeSlot() && !player->item_list.CanStack(item))
 				SimpleMessage(CHANNEL_COLOR_RED, "You do not have any slots available for this item.");
@@ -6943,7 +6943,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 					quantity = total_available;
 			}
 			sint64 dispFlags = 0;
-			if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "buy_display_flags", master_item, player, &dispFlags) && (dispFlags & DISPLAY_FLAG_NO_BUY))
+			if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "buy_display_flags", master_item, player, nullptr, &dispFlags) && (dispFlags & DISPLAY_FLAG_NO_BUY))
 			{
 				SimpleMessage(CHANNEL_NARRATIVE, "You do not meet all the requirements to buy this item.");
 				return;
@@ -7323,7 +7323,7 @@ void Client::SendBuyMerchantList(bool sell) {
 						item_difficulty = ARROW_COLOR_WHITE;
 
 					sint64 overrideValue = 0;
-					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "item_difficulty", item, player, &overrideValue))
+					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "item_difficulty", item, player, nullptr, &overrideValue))
 						item_difficulty = (sint8)overrideValue;
 
 					item_difficulty -= 6;
@@ -7336,7 +7336,7 @@ void Client::SendBuyMerchantList(bool sell) {
 					packet->setArrayDataByName("stack_size2", item->stack_count, i);
 
 					sint64 dispFlags = 0;
-					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "buy_display_flags", item, player, &dispFlags))
+					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "buy_display_flags", item, player, nullptr, &dispFlags))
 						packet->setArrayDataByName("display_flags", (int8)dispFlags, i);
 					
 					std::string overrideValueStr;
@@ -7510,7 +7510,7 @@ void Client::SendSellMerchantList(bool sell) {
 						item_difficulty = ARROW_COLOR_WHITE;
 					
 					sint64 overrideValue = 0;
-					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "item_difficulty", item, player, &overrideValue))
+					if (item->GetItemScript() && lua_interface && lua_interface->RunItemScript(item->GetItemScript(), "item_difficulty", item, player, nullptr, &overrideValue))
 						item_difficulty = (sint8)overrideValue;
 					
 					item_difficulty -= 6;
@@ -7587,7 +7587,7 @@ void Client::SendBuyBackList(bool sell) {
 						item_difficulty = ARROW_COLOR_WHITE;
 					
 					sint64 overrideValue = 0;
-					if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "item_difficulty", master_item, player, &overrideValue))
+					if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "item_difficulty", master_item, player, nullptr, &overrideValue))
 						item_difficulty = (sint8)overrideValue;
 
 					item_difficulty -= 6;
@@ -7596,7 +7596,7 @@ void Client::SendBuyBackList(bool sell) {
 					packet->setArrayDataByName("item_difficulty", item_difficulty, i);
 
 					sint64 dispFlags = 0;
-					if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "buyback_display_flags", master_item, player, &dispFlags))
+					if (master_item->GetItemScript() && lua_interface && lua_interface->RunItemScript(master_item->GetItemScript(), "buyback_display_flags", master_item, player, nullptr, &dispFlags))
 						packet->setArrayDataByName("display_flags", (int8)dispFlags, i);
 					
 					if (buyback->quantity == 1)
@@ -7902,6 +7902,35 @@ vector<Item*>* Client::GetRepairableItems() {
 	safe_delete(items);
 
 	return repairable_items;
+}
+
+
+vector<Item*>* Client::GetItemsByEffectType(ItemEffectType type, ItemEffectType type2) {
+	if(type == NO_EFFECT_TYPE)
+		return nullptr;
+	
+	vector<Item*>* return_items = new vector<Item*>;
+	vector<Item*>* equipped_items = player->GetEquipmentList()->GetAllEquippedItems();
+	map<int32, Item*>* items = player->GetItemList();
+	if (equipped_items && equipped_items->size() > 0) {
+		for (int32 i = 0; i < equipped_items->size(); i++) {
+			Item* item = equipped_items->at(i);
+			if (item && (item->effect_type == type || (type2 != NO_EFFECT_TYPE && item->effect_type == type2)))
+				return_items->push_back(item);
+		}
+	}
+	if (items && items->size() > 0) {
+		map<int32, Item*>::iterator itr;
+		for (itr = items->begin(); itr != items->end(); itr++) {
+			Item* item = itr->second;
+			if (item && (item->effect_type == type || (type2 != NO_EFFECT_TYPE && item->effect_type == type2)))
+				return_items->push_back(item);
+		}
+	}
+	safe_delete(equipped_items);
+	safe_delete(items);
+
+	return return_items;
 }
 
 void Client::SendMailList() {
@@ -10901,4 +10930,69 @@ void Client::SetPlayer(Player* new_player) {
 
 	player = new_player;
 	player->SetClient(this);
+}
+
+bool Client::UseItem(Item* item, Spawn* target) {
+	if (item && item->GetItemScript()) {
+		int16 item_index = item->details.index;
+		if(!item->CheckFlag2(INDESTRUCTABLE) && item->generic_info.condition == 0) {
+			SimpleMessage(CHANNEL_COLOR_RED, "This item is broken and must be repaired at a mender before it can be used");
+		}
+		else if (item->CheckFlag(EVIL_ONLY) && GetPlayer()->GetAlignment() != ALIGNMENT_EVIL) {
+			Message(0, "%s requires an evil race.", item->name.c_str());
+		}
+		else if (item->CheckFlag(GOOD_ONLY) && GetPlayer()->GetAlignment() != ALIGNMENT_GOOD) {
+			Message(0, "%s requires a good race.", item->name.c_str());
+		}
+		else if (item->generic_info.max_charges == 0 || item->generic_info.max_charges == 0xFFFF) {
+			lua_interface->RunItemScript(item->GetItemScript(), "used", item, player, target);
+			return true;
+		}
+		else {
+			if (item->details.count > 0) {
+				std::string itemName = string(item->name);
+				int32 item_id = item->details.item_id;
+				sint64 flags = 0;
+				if(lua_interface->RunItemScript(item->GetItemScript(), "used", item, player, target, &flags) && flags >= 0)
+				{
+					//reobtain item make sure it wasn't removed
+					item = player->item_list.GetItemFromIndex(item_index);
+					if(!item) {
+						LogWrite(PLAYER__WARNING, 0, "Command", "%s: Item %s (%i) was used, however after the item looks to be removed.", GetPlayer()->GetName(), itemName.c_str(), item_id);
+						return true;
+					}
+					else if(!item->generic_info.display_charges && item->generic_info.max_charges == 1) {
+						Message(CHANNEL_NARRATIVE, "%s is out of charges.  It has been removed.", item->name.c_str());
+						RemoveItem(item, 1); // end of a set of charges OR an item that uses a stack count of actual item quantity
+						return true;
+					}
+					else
+					{
+						item->details.count--; // charges
+						item->save_needed = true;
+						QueuePacket(item->serialize(GetVersion(), false, GetPlayer()));
+						if(!item->details.count) {
+							Message(CHANNEL_NARRATIVE, "%s is out of charges.  It has been removed.", item->name.c_str());
+							RemoveItem(item, 1); // end of a set of charges OR an item that uses a stack count of actual item quantity
+						}
+						return true;
+					}
+				}
+				else {
+					LogWrite(PLAYER__WARNING, 0, "Command", "%s: Item %s (%i) was used, after it returned %i, bypassing any removal/update of items.", GetPlayer()->GetName(), itemName.c_str(), item_id, flags);
+					return true;
+				}
+			}
+			else
+			{
+				//reobtain item make sure it wasn't removed
+				item = player->item_list.GetItemFromIndex(item_index);
+				SimpleMessage(CHANNEL_COLOR_YELLOW, "Item is out of charges.");
+				if(item) {
+					LogWrite(PLAYER__ERROR, 0, "Command", "%s: Item %s (%i) attempted to be used, however details.count is 0.", GetPlayer()->GetName(), item->name.c_str(), item->details.item_id);
+				}
+			}
+		}
+	}
+	return false;
 }

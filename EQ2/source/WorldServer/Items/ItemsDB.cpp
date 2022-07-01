@@ -187,6 +187,8 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 		item->SetItemScript(string(result->GetStringStr("lua_script")));
 		LogWrite(ITEM__DEBUG, 5, "LUA", "--Loading LUA Item Script: '%s'", item->item_script.c_str());
 	}
+	
+	item->effect_type 							= (ItemEffectType)result->GetInt32Str("effect_type");
 
 	if(item->generic_info.max_charges > 0)
 		item->details.count						= item->generic_info.max_charges;

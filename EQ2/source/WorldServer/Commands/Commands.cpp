@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <sys/types.h>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include "Commands.h"
 #include "../ClientPacketFunctions.h"
 #include "../../common/version.h"
@@ -2154,7 +2157,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							client->Message(0, "%s requires a good race.", item->name.c_str());
 					}
 					else {
-						lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
+						lua_interface->RunItemScript(item->GetItemScript(), "used", item, player, player->GetTarget());
 					}
 				}
 			}
@@ -2164,59 +2167,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if (sep && sep->arg[0] && sep->IsNumber(0)) {
 				int32 item_index = atoul(sep->arg[0]);
 				Item* item = player->item_list.GetItemFromIndex(item_index);
-				if (item && item->GetItemScript()) {
-					if(!item->CheckFlag2(INDESTRUCTABLE) && item->generic_info.condition == 0) {
-						client->SimpleMessage(CHANNEL_COLOR_RED, "This item is broken and must be repaired at a mender before it can be used");
-					}
-					else if (item->CheckFlag(EVIL_ONLY) && client->GetPlayer()->GetAlignment() != ALIGNMENT_EVIL) {
-							client->Message(0, "%s requires an evil race.", item->name.c_str());
-					}
-					else if (item->CheckFlag(GOOD_ONLY) && client->GetPlayer()->GetAlignment() != ALIGNMENT_GOOD) {
-							client->Message(0, "%s requires a good race.", item->name.c_str());
-					}
-					else if (item->generic_info.max_charges == 0 || item->generic_info.max_charges == 0xFFFF)
-						lua_interface->RunItemScript(item->GetItemScript(), "used", item, player);
-					else {
-						if (item->details.count > 0) {
-							std::string itemName = string(item->name);
-							int32 item_id = item->details.item_id;
-							sint64 flags = 0;
-							if(lua_interface->RunItemScript(item->GetItemScript(), "used", item, player, &flags) && flags >= 0)
-							{
-								//reobtain item make sure it wasn't removed
-								item = player->item_list.GetItemFromIndex(item_index);
-								if(!item)
-									LogWrite(PLAYER__WARNING, 0, "Command", "%s: Item %s (%i) was used, however after the item looks to be removed.", client->GetPlayer()->GetName(), itemName.c_str(), item_id);
-								else if(!item->generic_info.display_charges && item->generic_info.max_charges == 1) {
-									client->Message(CHANNEL_NARRATIVE, "%s is out of charges.  It has been removed.", item->name.c_str());
-									client->RemoveItem(item, 1); // end of a set of charges OR an item that uses a stack count of actual item quantity
-								}
-								else
-								{
-									item->details.count--; // charges
-									item->save_needed = true;
-									client->QueuePacket(item->serialize(client->GetVersion(), false, client->GetPlayer()));
-
-									if(!item->details.count) {
-										client->Message(CHANNEL_NARRATIVE, "%s is out of charges.  It has been removed.", item->name.c_str());
-										client->RemoveItem(item, 1); // end of a set of charges OR an item that uses a stack count of actual item quantity
-									}
-								}
-							}
-							else
-									LogWrite(PLAYER__WARNING, 0, "Command", "%s: Item %s (%i) was used, after it returned %i, bypassing any removal/update of items.", client->GetPlayer()->GetName(), itemName.c_str(), item_id, flags);
-						}
-						else
-						{
-							//reobtain item make sure it wasn't removed
-							item = player->item_list.GetItemFromIndex(item_index);
-							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Item is out of charges.");
-							if(item) {
-								LogWrite(PLAYER__ERROR, 0, "Command", "%s: Item %s (%i) attempted to be used, however details.count is 0.", client->GetPlayer()->GetName(), item->name.c_str(), item->details.item_id);
-							}
-						}
-					}
-				}
+				client->UseItem(item, client->GetPlayer()->GetTarget() ? client->GetPlayer()->GetTarget() : client->GetPlayer());
 			}
 			break;
 							   }
@@ -5606,7 +5557,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			client->GetPlayer()->MentorTarget();
 			break;
 		}
-		case COMMAND_CANCEL_EFFECT	: { Command_CancelEffect(client, sep); break; }
+		case COMMAND_CANCEL_EFFECT: { Command_CancelEffect(client, sep); break; }
+		case COMMAND_CUREPLAYER: { Command_CurePlayer(client, sep); break; }
 		default: 
 		{
 			LogWrite(COMMAND__WARNING, 0, "Command", "Unhandled command: %s", command->command.data.c_str());
@@ -11733,5 +11685,129 @@ void Commands::Command_CancelEffect(Client* client, Seperator* sep)
 		if (!meffect || !meffect->spell || !meffect->spell->caster || 
 		!meffect->spell->caster->GetZone()->GetSpellProcess()->DeleteCasterSpell(meffect->spell, "canceled", false, true, client->GetPlayer()))
 			client->Message(CHANNEL_COLOR_RED, "The spell effect could not be cancelled.");
+	}
+}
+
+
+/* 
+	Function: Command_CurePlayer()
+	Purpose	: Identifies spell to cast for cure based on type
+	Example	: /cureplayer ??
+	https://eq2.fandom.com/wiki/Update:58
+	New command /cureplayer [playername|group or raid position][trauma|arcane|noxious|elemental|curse] optional [spell|potion]
+
+    Example: /cureplayer g0 noxious spell
+        Will attempt to cure yourself of a noxious detriment with only spells and without using potions (even if you have them).
+    Example: /cureplayer r4 noxious
+        Will attempt to cure the character in raid slot 4 of a noxious detriment using a spell or potion (whichever is available).
+*/ 
+void Commands::Command_CurePlayer(Client* client, Seperator* sep)
+{
+	Entity* target = nullptr;
+	bool use_spells = true;
+	bool use_potions = true;
+	if (sep && sep->arg[0] && sep->arg[1]) {
+		if(sep->arg[2]) {
+			std::string type(sep->arg[2]);
+			boost::algorithm::to_lower(type);
+			if(type == "potion")
+				use_spells = false;
+			else if(type == "spell")
+				use_potions = false;
+		}
+		
+		if(strlen(sep->arg[0]) > 1 && isdigit(sep->arg[0][1])) {
+			int32 mapped_position = (int32)(sep->arg[0][1]) - 48;
+			
+			// TODO: RAID Support ('r' argument)
+			if(sep->arg[0][0] == 'g' && !mapped_position) {
+				target = (Entity*)client->GetPlayer();
+			}
+			else {
+				GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
+				if (gmi && gmi->group_id) {
+					PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+					if(group) {
+						target = group->GetGroupMemberByPosition(client->GetPlayer(), mapped_position);
+					}
+				}
+			}
+		}
+		else {
+				Client* target_client = zone_list.GetClientByCharName(sep->arg[0]);
+				if(target_client && target_client->GetPlayer() && target_client->GetPlayer()->GetZone() == client->GetPlayer()->GetZone()) {
+					target = (Entity*)target_client->GetPlayer();
+				}
+		}
+		
+		ItemEffectType type = EFFECT_CURE_TYPE_ALL;
+		bool successful_spell = false;
+		bool successful_potion = false;
+		if(target) {
+			SpellBookEntry* entry = nullptr;
+			std::string str(sep->arg[1]);
+			boost::algorithm::to_lower(str);
+					if(str == "arcane") {
+						type = EFFECT_CURE_TYPE_ARCANE;
+						// cure arcane spell missing in DB?
+						if(use_spells && rule_manager.GetGlobalRule(R_Spells, CureArcaneSpellID)->GetInt32()) {
+							entry = client->GetPlayer()->GetSpellBookSpell(rule_manager.GetGlobalRule(R_Spells, CureArcaneSpellID)->GetInt32()); // cure noxious
+						}
+					}
+					else if(str == "trauma") {
+						type = EFFECT_CURE_TYPE_TRAUMA;
+						// cure trauma spell missing in DB?
+						if(use_spells && rule_manager.GetGlobalRule(R_Spells, CureTraumaSpellID)->GetInt32()) {
+							entry = client->GetPlayer()->GetSpellBookSpell(rule_manager.GetGlobalRule(R_Spells, CureTraumaSpellID)->GetInt32()); // cure noxious
+						}
+					}
+					else if(str == "noxious") {
+						type = EFFECT_CURE_TYPE_NOXIOUS;
+						if(use_spells && rule_manager.GetGlobalRule(R_Spells, CureNoxiousSpellID)->GetInt32()) {
+							entry = client->GetPlayer()->GetSpellBookSpell(rule_manager.GetGlobalRule(R_Spells, CureNoxiousSpellID)->GetInt32()); // cure noxious
+						}
+					}
+					else if(str == "curse") {
+						type = EFFECT_CURE_TYPE_CURSE;
+						if(use_spells && rule_manager.GetGlobalRule(R_Spells, CureCurseSpellID)->GetInt32()) {
+							entry = client->GetPlayer()->GetSpellBookSpell(rule_manager.GetGlobalRule(R_Spells, CureCurseSpellID)->GetInt32()); // cure curse
+						}
+					}
+					else if(str == "magic") {
+						type = EFFECT_CURE_TYPE_MAGIC;
+						if(use_spells && rule_manager.GetGlobalRule(R_Spells, CureMagicSpellID)->GetInt32()) {
+							entry = client->GetPlayer()->GetSpellBookSpell(rule_manager.GetGlobalRule(R_Spells, CureMagicSpellID)->GetInt32()); // cure magic
+						}
+					}
+				
+				if(use_spells) {
+					// check if any of the specific cure types are available, if not then check the base cures
+					if(!entry && rule_manager.GetGlobalRule(R_Spells, CureSpellID)->GetInt32()) {
+						entry = client->GetPlayer()->GetSpellBookSpell(rule_manager.GetGlobalRule(R_Spells, CureSpellID)->GetInt32()); // cure
+					}
+					
+					if(entry) {
+						Spell* spell = master_spell_list.GetSpell(entry->spell_id, entry->tier);
+						target->GetZone()->ProcessSpell(spell, (Entity*)client->GetPlayer(), target, true, false);
+						successful_spell = true;
+					}
+				}
+		}
+		
+		if(!successful_spell && use_potions && target && type != NO_EFFECT_TYPE) {
+			vector<Item*>* potential_items = client->GetItemsByEffectType(type, EFFECT_CURE_TYPE_ALL);
+			if (potential_items && potential_items->size() > 0) {
+				vector<Item*>::iterator itr;
+				for (itr = potential_items->begin(); itr != potential_items->end(); itr++)
+				{
+					Item* item = *itr;
+					if(client->UseItem(item, target)) {
+						successful_potion = true;
+						break;
+					}
+				}
+			}
+			safe_delete(potential_items);
+		}
 	}
 }

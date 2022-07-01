@@ -841,6 +841,7 @@ Item::Item(){
 	no_buy_back = false;
 	no_sale = false;
 	created = std::time(nullptr);
+	effect_type = NO_EFFECT_TYPE;
 }
 
 Item::Item(Item* in_item){
@@ -860,6 +861,7 @@ Item::Item(Item* in_item){
 	no_sale = in_item->no_sale;
 	created = in_item->created;
 	grouped_char_ids.insert(in_item->grouped_char_ids.begin(), in_item->grouped_char_ids.end());
+	effect_type = in_item->effect_type;
 }
 
 Item::~Item(){

@@ -1,0 +1,1 @@
+alter table items add column effect_type int(10) unsigned not null default 0;

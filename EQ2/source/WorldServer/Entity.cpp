@@ -2224,7 +2224,9 @@ void Entity::CureDetrimentByType(int8 cure_count, int8 det_type, string cure_nam
 			caster_class2 = info_struct->get_class2();
 			caster_class3 = info_struct->get_class3();
 			pass_level_check = false;
+			bool has_level_checks = false;
 			for (int32 x = 0; x < levels->size(); x++){
+				has_level_checks = true;
 				level_class = levels->at(x)->adventure_class;
 				if (!cure_level || ((caster_class1 == level_class || caster_class2 == level_class || caster_class3 == level_class)
 					&& cure_level >= (levels->at(x)->spell_level / 10))){
@@ -2232,7 +2234,8 @@ void Entity::CureDetrimentByType(int8 cure_count, int8 det_type, string cure_nam
 					break;
 				}
 			}
-			if (pass_level_check){
+			
+			if (pass_level_check || !has_level_checks){
 				remove_list.push_back(det->spell);
 				cure_count--;
 				if (cure_count == 0)
@@ -2244,11 +2247,10 @@ void Entity::CureDetrimentByType(int8 cure_count, int8 det_type, string cure_nam
 
 	for (int32 i = 0; i<remove_list.size(); i++){
 		spell = remove_list.at(i);
+		
+		LogWrite(PLAYER__ERROR, 0, "Debug", "Remove spell %s", remove_list.at(i)->spell->GetName());
 		GetZone()->SendDispellPacket(caster, this, cure_name, (string)remove_list.at(i)->spell->GetName(), DISPELL_TYPE_CURE);
-		if (GetZone())
-			GetZone()->RemoveTargetFromSpell(spell, this);
-		RemoveSpellEffect(spell);
-		RemoveDetrimentalSpell(spell);
+		GetZone()->GetSpellProcess()->DeleteCasterSpell(spell, "cured", false, true, this);
 	}
 	remove_list.clear();
 }

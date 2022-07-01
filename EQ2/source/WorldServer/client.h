@@ -322,6 +322,7 @@ public:
 	void	AddBuyBack(int32 unique_id, int32 item_id, int16 quantity, int32 price, bool save_needed = true);
 	deque<BuyBackItem*>*	GetBuyBacks();
 	vector<Item*>* GetRepairableItems();
+	vector<Item*>* GetItemsByEffectType(ItemEffectType type, ItemEffectType secondary_effect = NO_EFFECT_TYPE);
 	void	SendMailList();
 	void	DisplayMailMessage(int32 mail_id);
 	void	HandleSentMail(EQApplicationPacket* app);
@@ -537,6 +538,8 @@ public:
 		zoning_z = z;
 		zoning_h = h;
 	}
+	
+	bool	UseItem(Item* item, Spawn* target = nullptr);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

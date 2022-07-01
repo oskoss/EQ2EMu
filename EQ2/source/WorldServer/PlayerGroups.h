@@ -86,7 +86,8 @@ public:
 
 	void RemoveClientReference(Client* remove);
 	void UpdateGroupMemberInfo(Entity* ent, bool groupMembersLocked=false);
-
+	Entity* GetGroupMemberByPosition(Entity* seeker, int32 mapped_position);
+	
 	Mutex MGroupMembers;				// Mutex for the group members
 private:
 	int32					m_id;		// ID of this group
