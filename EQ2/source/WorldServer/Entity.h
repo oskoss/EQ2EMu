@@ -1687,7 +1687,7 @@ public:
 	void SetSpeed(float val, bool override_ = false) { if ((base_speed == 0.0f && val > 0.0f) || override_) base_speed = val;  speed = val; }
 	void SetSpeedMultiplier(float val) { speed_multiplier = val; }
 
-	void SetThreatTransfer(ThreatTransfer* transfer) { m_threatTransfer = transfer; }
+	void SetThreatTransfer(ThreatTransfer* transfer);
 	ThreatTransfer* GetThreatTransfer() { return m_threatTransfer; }
 	int8 GetTraumaCount();
 	int8 GetArcaneCount();

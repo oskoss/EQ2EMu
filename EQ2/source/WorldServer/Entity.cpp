@@ -105,6 +105,7 @@ Entity::~Entity(){
 	immunities.clear();
 	if(!IsPlayer())
 		DeleteSpellEffects();
+	safe_delete(m_threatTransfer);
 }
 
 void Entity::DeleteSpellEffects(bool removeClient)
@@ -2139,6 +2140,10 @@ float Entity::GetAirSpeed() {
 	return ret;
 }
 
+void Entity::SetThreatTransfer(ThreatTransfer* transfer) {
+	safe_delete(m_threatTransfer);
+	m_threatTransfer = transfer;	
+}
 int8 Entity::GetTraumaCount() {
 	return det_count_list[DET_TYPE_TRAUMA];
 }

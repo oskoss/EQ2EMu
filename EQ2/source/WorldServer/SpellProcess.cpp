@@ -379,7 +379,6 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 	Spawn* target = 0;
 	bool target_valid = false;
 	if(spell) {
-		
 		spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 		if(remove_target && spell->targets.size() > 1) {
 			for (int32 i = 0; i < spell->targets.size(); i++) {		
@@ -408,6 +407,9 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 		if (active_spells.count(spell) > 0)
 			active_spells.Remove(spell);
 		if (spell->caster) {
+			if(spell->caster->GetThreatTransfer() && spell->caster->GetThreatTransfer()->Spell == spell) {
+				spell->caster->SetThreatTransfer(nullptr);
+			}
 			if (spell->spell->GetSpellData()->cast_type == SPELL_CAST_TYPE_TOGGLE){
 				
 				int8 actual_concentration = spell->spell->GetSpellData()->req_concentration;

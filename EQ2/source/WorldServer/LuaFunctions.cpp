@@ -8894,8 +8894,11 @@ int EQ2Emu_lua_RemoveThreatTransfer(lua_State* state) {
 
 	if (((Entity*)spawn)->GetThreatTransfer() && ((Entity*)spawn)->GetThreatTransfer()->Spell == spell) {
 		ThreatTransfer* transfer = ((Entity*)spawn)->GetThreatTransfer();
-		((Entity*)spawn)->SetThreatTransfer(0);
-		safe_delete(transfer);
+		if(transfer && transfer->Spell != spell) {
+			lua_interface->LogError("%s: LUA RemoveThreatTransfer called, but there was a different spell set for the threat transfer.", lua_interface->GetScriptName(state));
+			return 0;
+		}
+		((Entity*)spawn)->SetThreatTransfer(nullptr);
 	}
 
 	return 0;
