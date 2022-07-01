@@ -26,7 +26,7 @@ public:
 	bool HasAcceptedTrade(Entity* character);
 	void CancelTrade(Entity* character);
 
-	int8 CheckItem(Entity* trader, Item* item, bool other_is_bot);
+	int8 CheckItem(Entity* trader, Item* item, Entity* other);
 
 private:
 

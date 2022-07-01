@@ -840,6 +840,7 @@ Item::Item(){
 	generic_info.condition = 100;
 	no_buy_back = false;
 	no_sale = false;
+	created = std::time(nullptr);
 }
 
 Item::Item(Item* in_item){
@@ -857,6 +858,8 @@ Item::Item(Item* in_item){
 	spell_tier = in_item->spell_tier;
 	no_buy_back = in_item->no_buy_back;
 	no_sale = in_item->no_sale;
+	created = in_item->created;
+	grouped_char_ids.insert(in_item->grouped_char_ids.begin(), in_item->grouped_char_ids.end());
 }
 
 Item::~Item(){

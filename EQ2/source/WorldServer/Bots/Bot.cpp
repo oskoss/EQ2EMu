@@ -57,6 +57,24 @@ void Bot::GiveItem(int32 item_id) {
 	}
 }
 
+void Bot::GiveItem(Item* item) {
+	if (item) {
+		int8 slot = GetEquipmentList()->GetFreeSlot(item);
+		if (slot != 255) {
+			GetEquipmentList()->AddItem(slot, item);
+			SetEquipment(item, slot);
+			database.SaveBotItem(BotID, item->details.item_id, slot);
+			if (slot == 0) {
+				ChangePrimaryWeapon();
+				if (IsBot())
+					LogWrite(PLAYER__ERROR, 0, "Bot", "Changing bot primary weapon.");
+			}
+
+			CalculateBonuses();
+		}
+	}
+}
+
 void Bot::RemoveItem(Item* item) {
 	int8 slot = GetEquipmentList()->GetSlotByItem(item);
 	if (slot != 255) {

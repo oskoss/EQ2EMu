@@ -3,9 +3,11 @@
 #include "Entity.h"
 #include "Bots/Bot.h"
 #include "../common/Log.h"
+#include "Rules/Rules.h"
 
 extern ConfigReader configReader;
 extern MasterItemList master_item_list;
+extern RuleManager rule_manager;
 
 Trade::Trade(Entity* trader1, Entity* trader2) {
 	this->trader1 = trader1;
@@ -36,7 +38,7 @@ int8 Trade::AddItemToTrade(Entity* character, Item* item, int8 quantity, int8 sl
 	}
 
 	Entity* other = GetTradee(character);
-	int8 result = CheckItem(character, item, other->IsBot());
+	int8 result = CheckItem(character, item, other);
 
 	if (result == 0) {
 		if (character == trader1) {
@@ -59,11 +61,16 @@ int8 Trade::AddItemToTrade(Entity* character, Item* item, int8 quantity, int8 sl
 	return result;
 }
 
-int8 Trade::CheckItem(Entity* trader, Item* item, bool other_is_bot) {
+int8 Trade::CheckItem(Entity* trader, Item* item, Entity* other) {
 	int8 ret = 0;
 	map<int8, TradeItemInfo>* list = 0;
 	map<int8, TradeItemInfo>::iterator itr;
 
+	bool other_is_bot = false;
+	
+	if(other)
+		other_is_bot = other->IsBot();
+	
 	if (trader == trader1)
 		list = &trader1_items;
 	else if (trader == trader2)
@@ -83,8 +90,17 @@ int8 Trade::CheckItem(Entity* trader, Item* item, bool other_is_bot) {
 			if (!other_is_bot) {
 				if (item->CheckFlag(NO_TRADE))
 					ret = 2;
-				if (item->CheckFlag2(HEIRLOOM))
-					ret = 3;
+				if (item->CheckFlag2(HEIRLOOM)) {
+					if(item->grouped_char_ids.find(((Player*)other)->GetCharacterID()) != item->grouped_char_ids.end()) {
+					double diffInSeconds = 0.0; std::difftime(std::time(nullptr), item->created);
+						if(item->CheckFlag(ATTUNED) || ((diffInSeconds = std::difftime(std::time(nullptr), item->created)) && diffInSeconds >= rule_manager.GetGlobalRule(R_Player, HeirloomItemShareExpiration)->GetFloat())) {
+							ret = 3; // denied heirloom cannot be transferred to outside of group after 48 hours (by rule setting) or if already attuned
+						}
+					}
+					else {
+						ret = 3; // not part of the group/raid
+					}
+				}
 			}
 		}
 	}
@@ -243,8 +259,8 @@ void Trade::Trader2ItemAdd(Item* item, int8 quantity, int8 slot) {
 
 void Trade::CompleteTrade() {
 	map<int8, TradeItemInfo>::iterator itr;
-	map<int32, int8> trader1_item_ids;
-	map<int32, int8>::iterator itr2;
+	vector<Item*> trader1_item_pass;
+	vector<Item*>::iterator itr2;
 	string log_string = "TradeComplete:\n";
 
 	if (trader1->IsPlayer()) {
@@ -259,14 +275,19 @@ void Trade::CompleteTrade() {
 			player->RemoveCoins(trader1_coins);
 			for (itr = trader1_items.begin(); itr != trader1_items.end(); itr++) {
 				// client->RemoveItem can delete the item so we need to store the item id's and quantity to give to trader2
-				trader1_item_ids[itr->second.item->details.item_id] = itr->second.quantity;
+				Item* newitem = new Item(itr->second.item);
+				newitem->details.count = itr->second.quantity;
+				trader1_item_pass.push_back(newitem);
+				
 				log_string += itr->second.item->name + " (" + to_string(itr->second.item->details.item_id) + ") x" + to_string(itr->second.quantity) + "\n";
 				client->RemoveItem(itr->second.item, itr->second.quantity);
 			}
 
 			player->AddCoins(trader2_coins);
 			for (itr = trader2_items.begin(); itr != trader2_items.end(); itr++) {
-				client->AddItem(itr->second.item->details.item_id, itr->second.quantity);
+				Item* newitem = new Item(itr->second.item);
+				newitem->details.count = itr->second.quantity;
+				client->AddItem(newitem, nullptr);
 			}
 
 			PacketStruct* packet = configReader.getStruct("WS_PlayerTrade", client->GetVersion());
@@ -297,8 +318,8 @@ void Trade::CompleteTrade() {
 			}
 
 			player->AddCoins(trader1_coins);
-			for (itr2 = trader1_item_ids.begin(); itr2 != trader1_item_ids.end(); itr2++) {
-				client->AddItem(itr2->first, itr2->second);
+			for (itr2 = trader1_item_pass.begin(); itr2 != trader1_item_pass.end(); itr2++) {
+				client->AddItem(*itr2, nullptr);
 			}
 
 			PacketStruct* packet = configReader.getStruct("WS_PlayerTrade", client->GetVersion());
@@ -317,9 +338,9 @@ void Trade::CompleteTrade() {
 			bot->RemoveItem(itr->second.item);
 		}
 
-		for (itr2 = trader1_item_ids.begin(); itr2 != trader1_item_ids.end(); itr2++) {
-			bot->GiveItem(itr2->first);
-		}
+		for (itr2 = trader1_item_pass.begin(); itr2 != trader1_item_pass.end(); itr2++) {
+			bot->GiveItem(*itr2);
+		}	
 		bot->FinishTrade();
 	}
 

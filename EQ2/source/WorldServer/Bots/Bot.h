@@ -15,6 +15,7 @@ public:
 	bool IsBot() { return true; }
 
 	void GiveItem(int32 item_id);
+	void GiveItem(Item* item);
 	void RemoveItem(Item* item);
 	void TradeItemAdded(Item* item);
 	void AddItemToTrade(int8 slot);

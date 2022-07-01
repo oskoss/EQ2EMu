@@ -21,6 +21,7 @@
 #define __EQ2_ITEMS__
 #include <map>
 #include <vector>
+#include <ctime>
 #include "../../common/types.h"
 #include "../../common/DataBuffer.h"
 #include "../../common/MiscFunctions.h"
@@ -918,6 +919,10 @@ public:
 	string					item_script;
 	bool					no_buy_back;
 	bool					no_sale;
+	bool 					needs_deletion;
+	std::time_t				created;
+	std::map<int32, bool>	grouped_char_ids;
+	
 	void AddEffect(string effect, int8 percentage, int8 subbulletflag);
 	void AddBookPage(int8 page, string page_text,int8 valign, int8 halign);
 	int32 GetMaxSellValue();
@@ -996,7 +1001,6 @@ public:
 	bool CheckFlag2(int32 flag);
 	void AddSlot(int8 slot_id);
 	void SetSlots(int32 slots);
-	bool needs_deletion;
 };
 class MasterItemList{
 public:

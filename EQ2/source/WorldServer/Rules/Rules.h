@@ -72,6 +72,8 @@ enum RuleType {
 	MinLastNameLength,
 	DisableHouseAlignmentRequirement,
 	MentorItemDecayRate,
+	TemporaryItemLogoutTime,
+	HeirloomItemShareExpiration,
 
 	/* PVP */
 	AllowPVP,

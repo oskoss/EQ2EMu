@@ -27,8 +27,10 @@
 #include "../WorldDatabase.h"
 #include "Items.h"
 #include "../World.h"
+#include "../Rules/Rules.h"
 
 extern World world;
+extern RuleManager rule_manager;
 
 // handle new database class til all functions are converted
 void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item) 
@@ -1055,6 +1057,9 @@ void WorldDatabase::SaveItems(Client* client)
 		item = item_iter->second;
 
 		if(item) {
+			if(item->CheckFlag(TEMPORARY)) {
+					item->save_needed = true; // we need to keep updating the timestamp so it doesn't expire
+			}
 			if(item->needs_deletion || (client->IsZoning() && item->CheckFlag(NO_ZONE))) {
 				DeleteItem(client->GetCharacterID(), item, 0);
 				client->GetPlayer()->item_list.DestroyItem(item->details.index);
@@ -1080,6 +1085,9 @@ void WorldDatabase::SaveItems(Client* client)
 
 		if(item)
 		{
+			if(item->CheckFlag(TEMPORARY)) {
+					item->save_needed = true; // we need to keep updating the timestamp so it doesn't expire
+			}
 			if(item->needs_deletion || (client->IsZoning() && item->CheckFlag(NO_ZONE))) {
 				DeleteItem(client->GetCharacterID(), item, 0);
 				client->GetPlayer()->item_list.DestroyItem(item->details.index);
@@ -1107,6 +1115,9 @@ void WorldDatabase::SaveItems(Client* client)
 
 		if(item)
 		{
+			if(item->CheckFlag(TEMPORARY)) {
+					item->save_needed = true; // we need to keep updating the timestamp so it doesn't expire
+			}
 			if(item->needs_deletion || (client->IsZoning() && item->CheckFlag(NO_ZONE))) {
 				DeleteItem(client->GetCharacterID(), item, 0);
 				client->GetPlayer()->item_list.DestroyItem(item->details.index);
@@ -1126,6 +1137,9 @@ void WorldDatabase::SaveItems(Client* client)
 	for (int32 i = 0; i < overflow->size(); i++){
 		item = overflow->at(i);
 		if (item) {
+			if(item->CheckFlag(TEMPORARY)) {
+					item->save_needed = true; // we need to keep updating the timestamp so it doesn't expire
+			}
 			if(item->needs_deletion || (client->IsZoning() && item->CheckFlag(NO_ZONE))) {
 				DeleteItem(client->GetCharacterID(), item, 0);
 				client->GetPlayer()->item_list.DestroyItem(item->details.index);
@@ -1152,6 +1166,13 @@ void WorldDatabase::SaveItem(int32 account_id, int32 char_id, Item* item, const 
 	string update_item = string("REPLACE INTO character_items (id, type, char_id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value, no_sale, account_id, login_checksum) VALUES (%u, '%s', %u, %i, %u, '%s', %i, %i, %i, %i, %i, %i, %i, %u, %u, %u, 0)");
 	query.AddQueryAsync(char_id, this, Q_REPLACE, update_item.c_str(), item->details.unique_id, type, char_id, item->details.slot_id, item->details.item_id,
 		getSafeEscapeString(item->creator.c_str()).c_str(),item->adorn0,item->adorn1,item->adorn2, item->generic_info.condition, item->CheckFlag(ATTUNED) ? 1 : 0, item->details.inv_slot_id, item->details.count, item->GetMaxSellValue(), item->no_sale, account_id);
+	if(item->CheckFlag2(HEIRLOOM)) {
+		std::map<int32, bool>::iterator itr;
+		for(itr = item->grouped_char_ids.begin(); itr != item->grouped_char_ids.end(); itr++) {
+			string addmembers_query = string("REPLACE INTO character_items_group_members (unique_id, character_id) VALUES (%u, %u)");
+			query.AddQueryAsync(char_id, this, Q_REPLACE, addmembers_query.c_str(), item->details.unique_id, itr->first);
+		}
+	}
 }
 
 void WorldDatabase::DeleteItem(int32 char_id, Item* item, const char* type) 
@@ -1173,6 +1194,11 @@ void WorldDatabase::DeleteItem(int32 char_id, Item* item, const char* type)
 		delete_item = string("DELETE FROM character_items WHERE char_id = %u AND (id = %u OR bag_id = %u)");
 		query.RunQuery2(Q_DELETE, delete_item.c_str(), char_id, item->details.unique_id, item->details.unique_id);
 	}
+	
+	if(item->CheckFlag2(HEIRLOOM)) {
+		delete_item = string("DELETE FROM character_items_group_members WHERE unique_id = %u");
+		query.RunQuery2(Q_DELETE, delete_item.c_str(), item->details.unique_id);
+	}
 }
 
 void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Player* player, int16 version) 
@@ -1181,7 +1207,7 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT type, id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value, no_sale FROM character_items where char_id = %u or (bag_id = -4 and account_id = %u) ORDER BY slot asc", char_id, account_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT type, id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value, no_sale, UNIX_TIMESTAMP(last_saved), UNIX_TIMESTAMP(created) FROM character_items where char_id = %u or (bag_id = -4 and account_id = %u) ORDER BY slot asc", char_id, account_id);
 
 	if(result)
 	{
@@ -1189,9 +1215,8 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 
 		while(result && (row = mysql_fetch_row(result)))
 		{
-			LogWrite(ITEM__DEBUG, 5, "Items", "\tLoading character item: %u, slot: %i", strtoul(row[1], NULL, 0), atoi(row[2]));
+			LogWrite(ITEM__DEBUG, 5, "Items", "Loading character item: %u, slot: %i", strtoul(row[1], NULL, 0), atoi(row[2]));
 			Item* master_item = master_item_list.GetItem(strtoul(row[3], NULL, 0));
-
 			if(master_item)
 			{
 				Item* item = new Item(master_item);
@@ -1203,6 +1228,19 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 
 				item->save_needed = false;
 
+				// we need the items basics (unique id slot id bag id) to continue this temporary check
+				if(item->CheckFlag(TEMPORARY)) {
+					std::time_t last_saved =  static_cast<std::time_t>(atoul(row[14]));
+					double timeInSeconds = std::difftime(std::time(nullptr), last_saved);
+						LogWrite(ITEM__INFO, 0, "Items", "Character ID %u has a temporary item %s time in seconds %f last saved.", char_id, item->name.c_str(), timeInSeconds);
+					if(timeInSeconds >= rule_manager.GetGlobalRule(R_Player, TemporaryItemLogoutTime)->GetFloat()) {
+						DeleteItem(char_id, item, 0);
+						LogWrite(ITEM__INFO, 0, "Items", "\tCharacter ID %u had a temporary item %s which was removed due to time limit.", char_id, item->name.c_str());
+						safe_delete(item);
+						continue;
+					}
+				}
+				
 				if(row[4])
 					item->creator = string(row[4]);//creator
 				item->adorn0 = atoi(row[5]); //adorn0
@@ -1220,6 +1258,21 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 
 					item->generic_info.item_flags += ATTUNED;
 				}
+				
+				if(item->CheckFlag2(HEIRLOOM)) {
+					MYSQL_ROW row2;
+					MYSQL_RES* result2 = query.RunQuery2(Q_SELECT, "SELECT character_id from character_items_group_members where unique_id = %u", item->details.unique_id);
+
+					if(result2)
+					{
+						bool ret = true;
+
+						while(result2 && (row2 = mysql_fetch_row(result2)))
+						{
+							item->grouped_char_ids.insert(std::make_pair(atoul(row2[0]),true));
+						}
+					}
+				}
 
 				item->details.inv_slot_id = atol(row[10]); //bag_id
 				item->details.count = atoi(row[11]); //count
@@ -1227,6 +1280,8 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 				item->no_sale = (atoul(row[13]) == 1);
 				item->details.appearance_type = 0;
 
+				// position 14 is used for the last_saved timestamp (primarily for checking temporary items on login)
+				item->created = static_cast<std::time_t>(atoul(row[15]));
 				
 				if(strncasecmp(row[0], "EQUIPPED", 8)==0)
 					ret = player->GetEquipmentList()->AddItem(item->details.slot_id, item);

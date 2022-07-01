@@ -212,7 +212,8 @@ void RuleManager::Init()
 	RULE_INIT(R_Player, MinLastNameLength, "4");
 	RULE_INIT(R_Player, DisableHouseAlignmentRequirement, "1");
 	RULE_INIT(R_Player, MentorItemDecayRate, ".05"); // 5% per level lost when mentoring
-
+	RULE_INIT(R_Player, TemporaryItemLogoutTime, "1800.0"); // time in seconds (double) for temporary item to decay after being logged out for a period of time, 30 min is the default
+	RULE_INIT(R_Player, HeirloomItemShareExpiration, "172800.0"); // 2 days ('48 hours') in seconds
 	/* PVP */
 	RULE_INIT(R_PVP, AllowPVP, "0");
 	RULE_INIT(R_PVP, LevelRange, "4");

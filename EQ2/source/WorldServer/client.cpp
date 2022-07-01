@@ -2536,6 +2536,34 @@ bool Client::HandleLootItem(Spawn* entity, Item* item) {
 	}
 	if (player->item_list.HasFreeSlot() || player->item_list.CanStack(item)) {
 		if (player->item_list.AssignItemToFreeSlot(item)) {
+			
+			if(item->CheckFlag2(HEIRLOOM)) { // TODO: RAID Support
+				GroupMemberInfo* gmi = GetPlayer()->GetGroupMemberInfo();
+				if (gmi && gmi->group_id)
+				{
+					PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+					if (group)
+					{
+						group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+						deque<GroupMemberInfo*>* members = group->GetMembers();
+						if(members) {
+							for (int8 i = 0; i < members->size(); i++) {
+								Entity* member = members->at(i)->member;
+
+								if ((member->GetZone() != this->GetPlayer()->GetZone()))
+									continue;
+								
+								if(member->IsPlayer()) {
+										item->grouped_char_ids.insert(std::make_pair(((Player*)member)->GetCharacterID(), true));
+										item->save_needed = true;
+								}
+							}
+						}
+						group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+					}
+				}
+			}
+			
 			int8 type = CHANNEL_LOOT;
 			if (entity) {
 				Message(type, "You loot %s from the corpse of %s", item->CreateItemLink(GetVersion()).c_str(), entity->GetName());
