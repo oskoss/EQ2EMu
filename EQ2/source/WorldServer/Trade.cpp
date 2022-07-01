@@ -91,7 +91,7 @@ int8 Trade::CheckItem(Entity* trader, Item* item, Entity* other) {
 				if (item->CheckFlag(NO_TRADE))
 					ret = 2;
 				if (item->CheckFlag2(HEIRLOOM)) {
-					if(item->grouped_char_ids.find(((Player*)other)->GetCharacterID()) != item->grouped_char_ids.end()) {
+					if(other->IsPlayer() && item->grouped_char_ids.find(((Player*)other)->GetCharacterID()) != item->grouped_char_ids.end()) {
 					double diffInSeconds = 0.0; std::difftime(std::time(nullptr), item->created);
 						if(item->CheckFlag(ATTUNED) || ((diffInSeconds = std::difftime(std::time(nullptr), item->created)) && diffInSeconds >= rule_manager.GetGlobalRule(R_Player, HeirloomItemShareExpiration)->GetFloat())) {
 							ret = 3; // denied heirloom cannot be transferred to outside of group after 48 hours (by rule setting) or if already attuned
