@@ -713,10 +713,14 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 			int32 master_skill_reduce = rule_manager.GetGlobalRule(R_Spells, MasterSkillReduceSpellResist)->GetInt32();
 			if(master_skill_reduce < 1)
 				master_skill_reduce = 25;
+			if(IsPlayer() && lua_spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_TRADESKILL && 
+			   !((Player*)this)->GetSkills()->HasSkill(lua_spell->spell->GetSpellData()->mastery_skill)) {
+				((Player*)this)->AddSkill(lua_spell->spell->GetSpellData()->mastery_skill, 1, ((Player*)this)->GetLevel() * 5, true);
+			}
 			
-			Skill* master_skill = GetSkillByID(lua_spell->spell->GetSpellData()->mastery_skill, false);
-			if(master_skill && (master_skill->name.data == "Subjugation" || master_skill->name.data == "Disruption" || 
-				master_skill->name.data == "Ordination" || master_skill->name.data == "Aggression")) {
+			Skill* master_skill = GetSkillByID(lua_spell->spell->GetSpellData()->mastery_skill, true);
+			if(master_skill && (lua_spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_TRADESKILL || 
+			  ((master_skill->name.data == "Subjugation" || master_skill->name.data == "Disruption" || master_skill->name.data == "Ordination" || master_skill->name.data == "Aggression")))) {
 				bonus += master_skill->current_val / master_skill_reduce;
 			}
 		}

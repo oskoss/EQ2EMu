@@ -1768,8 +1768,10 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 	}
 
 	// if the caster is a player and the spell is a tradeskill spell check for a tradeskill event
-	if (client && spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_TRADESKILL)
-		client->GetCurrentZone()->GetTradeskillMgr()->CheckTradeskillEvent(client, spell->spell->GetSpellData()->icon);
+	if (client && spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_TRADESKILL) {
+		spell->resisted = (spell->caster->DetermineHit(target ? target : spell->caster, 255, 0, true, spell) == DAMAGE_PACKET_RESULT_RESIST);
+		client->GetCurrentZone()->GetTradeskillMgr()->CheckTradeskillEvent(client, spell->resisted ? 0 : spell->spell->GetSpellData()->icon);
+	}
 
 
 	if (spell->spell->GetSpellData()->friendly_spell && zone->GetSpawnByID(spell->initial_target))
