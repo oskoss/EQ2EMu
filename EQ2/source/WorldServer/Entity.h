@@ -1808,6 +1808,15 @@ public:
 	sint32 CalculateFormulaByStat(sint32 value, int16 stat);
 	int32 CalculateFormulaByStat(int32 value, int16 stat);
 	int32 CalculateFormulaBonus(int32 value, float percent_bonus);
+	
+	float GetStat(int32 item_stat) {
+		float item_chance_or_skill = 0.0f;
+		MStats.lock();
+		item_chance_or_skill = stats[item_stat];
+		MStats.unlock();
+		return item_chance_or_skill;
+	}
+		
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		MEquipment;
 	std::mutex		MStats;

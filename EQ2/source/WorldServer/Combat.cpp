@@ -721,7 +721,14 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 			Skill* master_skill = GetSkillByID(lua_spell->spell->GetSpellData()->mastery_skill, true);
 			if(master_skill && (lua_spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_TRADESKILL || 
 			  ((master_skill->name.data == "Subjugation" || master_skill->name.data == "Disruption" || master_skill->name.data == "Ordination" || master_skill->name.data == "Aggression")))) {
-				bonus += master_skill->current_val / master_skill_reduce;
+				float item_stat_bonus = 0.0f;
+				int32 item_stat = master_item_list.GetItemStatIDByName(::ToLower(master_skill->name.data));
+				if(item_stat != 0xFFFF) {
+					MStats.lock();
+					item_stat_bonus = GetStat(item_stat);
+					MStats.unlock();
+				}
+				bonus += (master_skill->current_val + item_stat_bonus) / master_skill_reduce;
 			}
 		}
 		

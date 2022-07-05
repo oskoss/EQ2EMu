@@ -1263,7 +1263,16 @@ int16 Spell::GetPowerRequired(Spawn* spawn){
 				int32 ministration_skill_reduce = rule_manager.GetGlobalRule(R_Spells, MinistrationPowerReductionSkill)->GetInt32();
 				if(ministration_skill_reduce < 1)
 					ministration_skill_reduce = 25;
-				float reduction = skill->current_val / ministration_skill_reduce;
+				
+				float item_stat_bonus = 0.0f;
+				int32 item_stat = master_item_list.GetItemStatIDByName(::ToLower(skill->name.data));
+				if(item_stat != 0xFFFF) {
+					((Entity*)spawn)->MStats.lock();
+					item_stat_bonus = ((Entity*)spawn)->GetStat(item_stat);
+					((Entity*)spawn)->MStats.unlock();
+				}
+				
+				float reduction = (skill->current_val + item_stat_bonus) / ministration_skill_reduce;
 				
 				if(reduction > ministry_reduction_percent)
 					reduction = ministry_reduction_percent;
