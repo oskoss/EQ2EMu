@@ -372,14 +372,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 		return false;
 
 	Spell* spell = luaspell->spell;
-	float bonus = 0;
 	Skill* skill = nullptr;
-	if(spell->GetSpellData()->resistibility > 0)
-		bonus -= (1 - spell->GetSpellData()->resistibility)*100;
-
-	skill = GetSkillByID(spell->GetSpellData()->mastery_skill, false);
-	if(skill)
-		bonus += skill->current_val / 25;
 
 	int8 hit_result = 0;
 	bool is_tick = false; // if spell is already active, this is a tick
@@ -390,7 +383,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 	else if(spell->GetSpellData()->type == SPELL_BOOK_TYPE_COMBAT_ART)
 		hit_result = DetermineHit(victim, damage_type, 0, false);
 	else
-		hit_result = DetermineHit(victim, damage_type, 0, true);
+		hit_result = DetermineHit(victim, damage_type, 0, true, luaspell);
 		
 	if(hit_result == DAMAGE_PACKET_RESULT_SUCCESSFUL) {
 		luaspell->last_spellattack_hit = true;
@@ -674,7 +667,7 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 	return true;
 }
 
-int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, bool spell){
+int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, bool is_caster_spell, LuaSpell* lua_spell){
 	if(!victim) {
 		return DAMAGE_PACKET_RESULT_MISS;
 	}
@@ -685,7 +678,7 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 
 	bool behind = false;
 	// Monk added with Brawler to 360 degree support per KoS Prima Official eGuide Fighter: Monk, pg 138, denoted '360-Degree Avoidance!'
-	if(!victim->IsEntity() || (!spell && victim->GetAdventureClass() != BRAWLER && victim->GetAdventureClass() != MONK && (behind = BehindTarget(victim)))) {
+	if(!victim->IsEntity() || (!is_caster_spell && victim->GetAdventureClass() != BRAWLER && victim->GetAdventureClass() != MONK && (behind = BehindTarget(victim)))) {
 		return DAMAGE_PACKET_RESULT_SUCCESSFUL;
 	}
 
@@ -700,12 +693,36 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 		{
 			MStats.lock();
 			skillAddedByWeapon = stats[skillID];
+			if(!is_caster_spell) {
+				float item_stat_weapon_skill = stats[ITEM_STAT_WEAPON_SKILLS];
+				skillAddedByWeapon += item_stat_weapon_skill;
+			}
 			MStats.unlock();
 		}
 	}
 	
 	if (skill)
 		bonus += (skill->current_val+skillAddedByWeapon) / 25;
+		
+	if(is_caster_spell && lua_spell) {
+		if(lua_spell->spell->GetSpellData()->resistibility > 0)
+			bonus -= (1.0f - lua_spell->spell->GetSpellData()->resistibility)*100.0f;
+	
+		// Here we take into account Subjugation, Disruption and Ordination (debuffs)
+		if(lua_spell->spell->GetSpellData()->mastery_skill) {
+			int32 master_skill_reduce = rule_manager.GetGlobalRule(R_Spells, MasterSkillReduceSpellResist)->GetInt32();
+			if(master_skill_reduce < 1)
+				master_skill_reduce = 25;
+			
+			Skill* master_skill = GetSkillByID(lua_spell->spell->GetSpellData()->mastery_skill, false);
+			if(master_skill && (master_skill->name.data == "Subjugation" || master_skill->name.data == "Disruption" || 
+				master_skill->name.data == "Ordination" || master_skill->name.data == "Aggression")) {
+				bonus += master_skill->current_val / master_skill_reduce;
+			}
+		}
+		
+	}
+	
 	if (victim->IsEntity())
 		bonus -= ((Entity*)victim)->GetDamageTypeResistPercentage(damage_type);
 
@@ -716,7 +733,7 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 	if(skill)
 		roll_chance -= skill->current_val / 25;
 
-	if(!spell){ // melee or range attack		
+	if(!is_caster_spell){ // melee or range attack		
 		skill = GetSkillByName("Offense", true); //add this skill for NPCs
 		if(skill)
 			roll_chance -= skill->current_val / 25;

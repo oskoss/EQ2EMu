@@ -948,6 +948,24 @@ int32 WorldDatabase::LoadItemModStrings()
 	return total;
 }
 
+void WorldDatabase::LoadBrokerItemStats()
+{
+	DatabaseResult result;
+
+	if( !database_new.Select(&result, "SELECT * FROM broker_item_map") ) {
+		LogWrite(ITEM__ERROR, 0, "Items", "Cannot load WorldDatabase::LoadItemModStrings in %s, line: %i", __FUNCTION__, __LINE__);
+	}
+	else {
+		while( result.Next() )
+		{
+			int32 version_range1 = result.GetInt32Str("version_range1");
+			int32 version_range2 = result.GetInt32Str("version_range2");
+			int64 client_bitmask = result.GetInt64Str("client_bitmask");
+			int64 server_bitmask = result.GetInt64Str("server_bitmask");
+			master_item_list.AddBrokerItemMapRange(version_range1, version_range2, client_bitmask, server_bitmask);
+		}
+	}
+}
 void WorldDatabase::ReloadItemList() 
 {
 	LogWrite(ITEM__DEBUG, 0, "Items", "Unloading Item List...");
@@ -1020,6 +1038,9 @@ void WorldDatabase::LoadItemList()
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Item Level Overrides...");
 	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Level Overrides", LoadItemLevelOverride());
+	
+	LoadBrokerItemStats();
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded Broker Item Stat Map Versioning");
 
 	LogWrite(ITEM__INFO, 0, "Items", "Loaded %u Total Item%s (took %u seconds)", total, ( total == 1 ) ? "" : "s", Timer::GetUnixTimeStamp() - t_now);
 }

@@ -349,7 +349,23 @@ extern MasterItemList master_item_list;
 #define ITEM_BROKER_STAT_TYPE_DBL_ATTACK	1048576
 #define ITEM_BROKER_STAT_TYPE_ABILITY_MOD	2097152
 #define ITEM_BROKER_STAT_TYPE_POTENCY		4194304
-
+#define ITEM_BROKER_STAT_TYPE_AEAUTOATTACK	8388608
+#define ITEM_BROKER_STAT_TYPE_ATTACKSPEED	16777216
+#define ITEM_BROKER_STAT_TYPE_BLOCKCHANCE	33554432
+#define ITEM_BROKER_STAT_TYPE_CASTINGSPEED	67108864
+#define ITEM_BROKER_STAT_TYPE_CRITBONUS		134217728
+#define ITEM_BROKER_STAT_TYPE_CRITCHANCE	268435456
+#define ITEM_BROKER_STAT_TYPE_DPS			536870912
+#define ITEM_BROKER_STAT_TYPE_FLURRYCHANCE	1073741824
+#define ITEM_BROKER_STAT_TYPE_HATEGAIN		2147483648
+#define ITEM_BROKER_STAT_TYPE_MITIGATION	4294967296
+#define ITEM_BROKER_STAT_TYPE_MULTI_ATTACK	8589934592
+#define ITEM_BROKER_STAT_TYPE_RECOVERY		17179869184
+#define ITEM_BROKER_STAT_TYPE_REUSE_SPEED	34359738368
+#define ITEM_BROKER_STAT_TYPE_SPELL_WPNDMG	68719476736
+#define ITEM_BROKER_STAT_TYPE_STRIKETHROUGH	137438953472
+#define ITEM_BROKER_STAT_TYPE_TOUGHNESS		274877906944
+#define ITEM_BROKER_STAT_TYPE_WEAPONDMG		549755813888
 
 
 #define OVERFLOW_SLOT 0xFFFFFFFE
@@ -950,7 +966,7 @@ public:
 	void SetAppearance(int16 type, int8 red, int8 green, int8 blue, int8 highlight_red, int8 highlight_green, int8 highlight_blue);
 	void SetAppearance(ItemAppearance* appearance);
 	void AddStat(ItemStat* in_stat);
-	bool HasStat(uint32 statID);
+	bool HasStat(uint32 statID, std::string statName = std::string(""));
 	void DeleteItemSets();
 	void AddSet(ItemSet* in_set);
 	void AddStatString(ItemStatString* in_stat);
@@ -1023,8 +1039,8 @@ public:
 	Item* GetItemByName(const char *name);
 	ItemStatsValues* CalculateItemBonuses(int32 item_id, Entity* entity = 0);
 	ItemStatsValues* CalculateItemBonuses(Item* desc, Entity* entity = 0, ItemStatsValues* values = 0);
-	vector<Item*>* GetItems(string name, int64 itype, int32 ltype, int32 btype, int64 minprice, int64 maxprice, int8 minskill, int8 maxskill, string seller, string adornment, int8 mintier, int8 maxtier, int16 minlevel, int16 maxlevel, sint8 itemclass);
-	vector<Item*>* GetItems(map<string, string> criteria);
+	vector<Item*>* GetItems(string name, int64 itype, int64 ltype, int64 btype, int64 minprice, int64 maxprice, int8 minskill, int8 maxskill, string seller, string adornment, int8 mintier, int8 maxtier, int16 minlevel, int16 maxlevel, sint8 itemclass);
+	vector<Item*>* GetItems(map<string, string> criteria, Client* client_to_map);
 	void AddItem(Item* item);
 	bool IsBag(int32 item_id);
 	void RemoveAll();
@@ -1034,8 +1050,15 @@ public:
 	int32 GetItemStatIDByName(std::string name);
 	std::string GetItemStatNameByID(int32 id);
 	void AddMappedItemStat(int32 id, std::string lower_case_name);
+	
+
+	void AddBrokerItemMapRange(int32 min_version, int32 max_version, int64 client_bitmask, int64 server_bitmask);
+	map<VersionRange*, map<int64,int64>>::iterator FindBrokerItemMapVersionRange(int32 min_version, int32 max_version);
+	map<VersionRange*, map<int64,int64>>::iterator FindBrokerItemMapByVersion(int32 version);
+
 	map<std::string, int32> mappedItemStatsStrings; 
 	map<int32, std::string> mappedItemStatTypeIDs; 
+	std::map<VersionRange*, std::map<int64,int64>> broker_item_map;
 };
 class PlayerItemList {
 public:

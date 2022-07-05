@@ -366,14 +366,6 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 
 				int16 skill_max_with_bonuses = CalculateSkillMaxValue(skill->skill_id, skill->max_val);
 				int16 skill_with_bonuses = int(CalculateSkillValue(skill->skill_id, skill->current_val));
-				if (skill->skill_id == 613995491) {
-					int x_current = skill->current_val;
-					int x_previous = skill->previous_val;
-					int x_max = skill->max_val;
-					int x_delta2 = skill_max_with_bonuses - skill->max_val;
-					int xxx = 1;
-				}
-
 				packet->setArrayDataByName("skill_id", skill->skill_id, i);
 				if (version <= 546 && skill->skill_type >= SKILL_TYPE_GENERAL) { //covert it to DOF types
 					packet->setArrayDataByName("type", skill->skill_type-2, i);					

@@ -339,13 +339,16 @@ void RuleManager::Init()
 	RULE_INIT(R_Spells, PlayerSpellSaveStateWaitInterval, "100"); // time in milliseconds we wait before performing a save when the spell save trigger is activated, allows additional actions to take place until the cap is hit
 	RULE_INIT(R_Spells, PlayerSpellSaveStateCap, "1000"); // sets a maximum wait time before we queue a spell state save to the DB, given a lot can go on in a short period with players especially in combat, maybe good to have this at a higher interval.
 	RULE_INIT(R_Spells, RequirePreviousTierScribe, "0"); // requires step up apprentice -> apprentice (handcrafted?) -> journeyman (handcrafted?) -> adept -> expert -> master
-	RULE_INIT(R_Spells, CureSpellID, "110003");
-	RULE_INIT(R_Spells, CureCurseSpellID, "110004");
-	RULE_INIT(R_Spells, CureNoxiousSpellID, "110005");
-	RULE_INIT(R_Spells, CureMagicSpellID, "210006");
-	RULE_INIT(R_Spells, CureTraumaSpellID, "0");
-	RULE_INIT(R_Spells, CureArcaneSpellID, "0");
-	
+	RULE_INIT(R_Spells, CureSpellID, "110003"); // Base Cure spell that was used after they removed cure types
+	RULE_INIT(R_Spells, CureCurseSpellID, "110004"); // Curse Spell ID in the spells database
+	RULE_INIT(R_Spells, CureNoxiousSpellID, "110005"); // Noxious/Poison Spell ID in the spells database
+	RULE_INIT(R_Spells, CureMagicSpellID, "210006"); // Magic/Elemental Spell ID in the spells database
+	RULE_INIT(R_Spells, CureTraumaSpellID, "0"); // Trauma/Mental Spell ID in the spells database
+	RULE_INIT(R_Spells, CureArcaneSpellID, "0"); // Arcane/Heat Spell ID in the spells database
+	RULE_INIT(R_Spells, MinistrationSkillID, "366253016"); // ministration skill id used to map power reduction rule MinistrationPowerReductionMax
+	RULE_INIT(R_Spells, MinistrationPowerReductionMax, "15.0"); // max percentage of power reduction for spells with ministration mastery skill (default is 15.0 for 15%)
+	RULE_INIT(R_Spells, MinistrationPowerReductionSkill, "25"); // divides by integer value to establish how much skill req for higher power reduction
+	RULE_INIT(R_Spells, MasterSkillReduceSpellResist, "25"); // divides by integer value to establish how much skill bonus for reducing spell resistance on target
 	
 	RULE_INIT(R_Expansion, GlobalExpansionFlag, "0");
 	RULE_INIT(R_Expansion, GlobalHolidayFlag, "0");

@@ -86,9 +86,69 @@ void MasterItemList::AddMappedItemStat(int32 id, std::string lower_case_name)
 
 MasterItemList::~MasterItemList(){
 	RemoveAll();
+	
+	map<VersionRange*, map<int64,int64>>::iterator itr;
+	for (itr = broker_item_map.begin(); itr != broker_item_map.end(); itr++)
+	{
+		VersionRange* range = itr->first;
+		delete range;
+	}
+
+	broker_item_map.clear();
 }
 
-vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, int32 btype, int64 minprice, int64 maxprice, int8 minskill, int8 maxskill, string seller, string adornment, int8 mintier, int8 maxtier, int16 minlevel, int16 maxlevel, sint8 itemclass){
+
+void MasterItemList::AddBrokerItemMapRange(int32 min_version, int32 max_version,
+	int64 client_bitmask, int64 server_bitmask)
+{
+	map<VersionRange*, map<int64,int64>>::iterator itr = FindBrokerItemMapVersionRange(min_version, max_version);
+	if (itr != broker_item_map.end()) {
+		itr->second.insert(make_pair(client_bitmask, server_bitmask));
+		return;
+	}
+
+	VersionRange* range = new VersionRange(min_version, max_version);
+	broker_item_map[range][client_bitmask] = server_bitmask;
+}
+
+map<VersionRange*, map<int64,int64>>::iterator MasterItemList::FindBrokerItemMapVersionRange(int32 min_version, int32 max_version)
+{
+	map<VersionRange*, map<int64,int64>>::iterator itr;
+	for (itr = broker_item_map.begin(); itr != broker_item_map.end(); itr++)
+	{
+		VersionRange* range = itr->first;
+		// if min and max version are both in range
+		if (range->GetMinVersion() <= min_version && max_version <= range->GetMaxVersion())
+			return itr;
+		// if the min version is in range, but max range is 0
+		else if (range->GetMinVersion() <= min_version && range->GetMaxVersion() == 0)
+			return itr;
+		// if min version is 0 and max_version has a cap
+		else if (range->GetMinVersion() == 0 && max_version <= range->GetMaxVersion())
+			return itr;
+	}
+
+	return broker_item_map.end();
+}
+
+map<VersionRange*, map<int64,int64>>::iterator MasterItemList::FindBrokerItemMapByVersion(int32 version)
+{
+	map<VersionRange*, map<int64,int64>>::iterator enditr = broker_item_map.end();
+	map<VersionRange*, map<int64,int64>>::iterator itr;
+	for (itr = broker_item_map.begin(); itr != broker_item_map.end(); itr++)
+	{
+		VersionRange* range = itr->first;
+		// if min and max version are both in range
+		if(range->GetMinVersion() == 0 && range->GetMaxVersion() == 0)
+			enditr = itr;
+		else if (version >= range->GetMinVersion() && version <= range->GetMaxVersion())
+			return itr;
+	}
+
+	return enditr;
+}
+
+vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int64 ltype, int64 btype, int64 minprice, int64 maxprice, int8 minskill, int8 maxskill, string seller, string adornment, int8 mintier, int8 maxtier, int16 minlevel, int16 maxlevel, sint8 itemclass){
 	vector<Item*>* ret = new vector<Item*>;
 	map<int32,Item*>::iterator iter;
     Item* item = 0;
@@ -101,7 +161,7 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, i
 	//	chkseller = seller.c_str();
 	//if(adornment.length() > 0)
 	//	chkadornment = adornment.c_str();
-	LogWrite(ITEM__WARNING, 0, "Item", "Get Items: %s (itype: %llu, ltype: %u, btype: %u, minskill: %u, maxskill: %u, mintier: %u, maxtier: %u, minlevel: %u, maxlevel: %u itemclass %i)", name.c_str(), itype, ltype, btype, minskill, maxskill, mintier, maxtier, minlevel, maxlevel, itemclass);
+	LogWrite(ITEM__WARNING, 0, "Item", "Get Items: %s (itype: %llu, ltype: %llu, btype: %llu, minskill: %u, maxskill: %u, mintier: %u, maxtier: %u, minlevel: %u, maxlevel: %u itemclass %i)", name.c_str(), itype, ltype, btype, minskill, maxskill, mintier, maxtier, minlevel, maxlevel, itemclass);
 	bool should_add = true;
 	for(iter = items.begin();iter != items.end(); iter++){
 		item = iter->second;
@@ -373,249 +433,237 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, i
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_DEF:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_DEFLECTIONCHANCE) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_DEFENSE, GetItemStatNameByID(ITEM_STAT_DEFENSE));
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_STR:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_STR) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_STR);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_STA:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_STA) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_STA);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_AGI:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_AGI) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_AGI);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_WIS:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_WIS) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_WIS);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_INT:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_INT) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_INT);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_HEALTH:{
-							for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_STR) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_HEALTH);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_POWER:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_STR) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_POWER);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_HEAT:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_VS_HEAT) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_VS_HEAT);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_COLD:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_VS_COLD) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_VS_COLD);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_MAGIC:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_VS_MAGIC) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_VS_MAGIC);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_MENTAL:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_VS_MENTAL) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_VS_MENTAL);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_DIVINE:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_VS_DIVINE) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_VS_DIVINE);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_POISON:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_VS_POISON) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_VS_POISON);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_DISEASE:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_VS_DISEASE) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_VS_DISEASE);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_CRUSH:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_DMG_CRUSH) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_DMG_CRUSH);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_SLASH:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_DMG_SLASH) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_DMG_SLASH);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_PIERCE:{
-						for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_DMG_PIERCE) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_DMG_PIERCE);
 						if (stat_found)
 							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_CRITICAL: {
-						/*for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_STR) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_CRITICALMITIGATION);
 						if (stat_found)
-							should_add = true;*/
-						LogWrite(ITEM__DEBUG, 0, "Item", "Scatman debugging :).  This needs to be updated when fully support the new expansion");
+							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_DBL_ATTACK:{
-						/*for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_STR) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_MULTIATTACKCHANCE);
 						if (stat_found)
-							should_add = true;*/
-						LogWrite(ITEM__DEBUG, 0, "Item", "Scatman debugging :).  This needs to be updated when fully support the new expansion");
+							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_ABILITY_MOD:{
-						/*for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_STR) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_ABILITY_MODIFIER);
 						if (stat_found)
-							should_add = true;*/
-						LogWrite(ITEM__DEBUG, 0, "Item", "Scatman debugging :).  This needs to be updated when fully support the new expansion");
+							should_add = true;
 						break;
 					}
 					case ITEM_BROKER_STAT_TYPE_POTENCY:{
-						/*for (itr = item->item_stats.begin(); itr != item->item_stats.end() && !stat_found; itr++) {
-							if ((*itr)->stat_type_combined == ITEM_STAT_STR) {
-								stat_found = true;
-								break;
-							}
-						}
+						stat_found = item->HasStat(ITEM_STAT_POTENCY);
 						if (stat_found)
-							should_add = true;*/
-						LogWrite(ITEM__DEBUG, 0, "Item", "Scatman debugging :).  This needs to be updated when fully support the new expansion");
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_AEAUTOATTACK:{
+						stat_found = item->HasStat(ITEM_STAT_AEAUTOATTACKCHANCE);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_ATTACKSPEED:{
+						stat_found = item->HasStat(ITEM_STAT_ATTACKSPEED);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_BLOCKCHANCE:{
+						stat_found = item->HasStat(ITEM_STAT_EXTRASHIELDBLOCKCHANCE);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_CASTINGSPEED:{
+						stat_found = item->HasStat(ITEM_STAT_ABILITYCASTINGSPEED);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_CRITBONUS:{
+						stat_found = item->HasStat(ITEM_STAT_CRITBONUS);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_CRITCHANCE:{
+						stat_found = item->HasStat(ITEM_STAT_MELEECRITCHANCE);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_DPS:{
+						stat_found = item->HasStat(ITEM_STAT_DPS);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_FLURRYCHANCE:{
+						stat_found = item->HasStat(ITEM_STAT_FLURRY);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_HATEGAIN:{
+						stat_found = item->HasStat(ITEM_STAT_HATEGAINMOD);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_MITIGATION:{
+						stat_found = item->HasStat(ITEM_STAT_ARMORMITIGATIONINCREASE);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_MULTI_ATTACK:{
+						stat_found = item->HasStat(ITEM_STAT_MULTIATTACKCHANCE);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_RECOVERY:{
+						stat_found = item->HasStat(ITEM_STAT_ABILITYRECOVERYSPEED);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_REUSE_SPEED:{
+						stat_found = item->HasStat(ITEM_STAT_ABILITYREUSESPEED);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_SPELL_WPNDMG:{
+						stat_found = item->HasStat(ITEM_STAT_SPELLWEAPONDAMAGEBONUS);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_STRIKETHROUGH:{
+						stat_found = item->HasStat(ITEM_STAT_STRIKETHROUGH);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_TOUGHNESS:{
+						stat_found = item->HasStat(ITEM_STAT_PVPTOUGHNESS);
+						if (stat_found)
+							should_add = true;
+						break;
+					}
+					case ITEM_BROKER_STAT_TYPE_WEAPONDMG:{
+						stat_found = item->HasStat(ITEM_STAT_WEAPONDAMAGEBONUS);
+						if (stat_found)
+							should_add = true;
 						break;
 					}
 					default: {
@@ -667,11 +715,11 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int32 ltype, i
 	return ret;
 }
 
-vector<Item*>* MasterItemList::GetItems(map<string, string> criteria){
+vector<Item*>* MasterItemList::GetItems(map<string, string> criteria, Client* client_to_map){
 	string name, seller, adornment;
-	int64 itype = 0xFFFFFFFFFFFFFFFF;
-	int32 ltype = 0xFFFFFFFF;
-	int32 btype = 0xFFFFFFFF;
+	int64 itype = ITEM_BROKER_TYPE_ANY64BIT;
+	int64 ltype = ITEM_BROKER_TYPE_ANY64BIT;
+	int64 btype = ITEM_BROKER_TYPE_ANY64BIT;
 	int64 minprice = 0;
 	int64 maxprice = 0;
 	int8 minskill = 0;
@@ -711,11 +759,19 @@ vector<Item*>* MasterItemList::GetItems(map<string, string> criteria){
 	if(criteria.count("ITYPE") > 0)
 		itype = ParseLongLongValue(criteria["ITYPE"]);
 	if(criteria.count("LTYPE") > 0)
-		ltype = ParseIntValue(criteria["LTYPE"]);
+		ltype = ParseLongLongValue(criteria["LTYPE"]);
 	if(criteria.count("BTYPE") > 0)
-		btype = ParseIntValue(criteria["BTYPE"]);
+		btype = ParseLongLongValue(criteria["BTYPE"]);
 	if(criteria.count("SKILLNAME") > 0)
 		itemclass = world.GetClassID(criteria["SKILLNAME"].c_str());
+	
+	if(client_to_map) {
+		map<VersionRange*, map<int64,int64>>::iterator itr = FindBrokerItemMapByVersion(client_to_map->GetVersion());
+		if(itr != broker_item_map.end() && itr->second.find(btype) != itr->second.end()) {
+			LogWrite(ITEM__DEBUG, 0, "Item", "Found broker mapping, btype %u becomes %llu", btype, itr->second[btype]);
+			btype = itr->second[btype];
+		}
+	}
 	return GetItems(name, itype, ltype, btype, minprice, maxprice, minskill, maxskill, seller, adornment, mintier, maxtier, minlevel, maxlevel, itemclass);
 }
 
@@ -1162,11 +1218,17 @@ void Item::AddStat(ItemStat* in_stat){
 	item_stats.push_back(in_stat);
 }
 
-bool Item::HasStat(uint32 statID)
+bool Item::HasStat(uint32 statID, std::string statNameLower)
 {
 	vector<ItemStat*>::iterator itr;
 	for (itr = item_stats.begin(); itr != item_stats.end(); itr++) {
-		if ((*itr)->stat_type_combined == statID) {
+		if (statID > 99 && statID < 200 && 
+		(*itr)->stat_type == 1 && ::ToLower((*itr)->stat_name) == statNameLower) {
+			return true;
+			break;
+		}
+		else if((*itr)->stat_type_combined == statID && (statNameLower.length() < 1 || 
+			(::ToLower((*itr)->stat_name) == statNameLower))) {
 			return true;
 			break;
 		}

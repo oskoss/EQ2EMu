@@ -194,6 +194,10 @@ enum RuleType {
 	CureMagicSpellID,
 	CureTraumaSpellID,
 	CureArcaneSpellID,
+	MinistrationSkillID,
+	MinistrationPowerReductionMax,
+	MinistrationPowerReductionSkill,
+	MasterSkillReduceSpellResist,
 
 	/* ZONE TIMERS */
 	RegenTimer,

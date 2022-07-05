@@ -287,6 +287,7 @@ public:
 	int32	LoadWeapons();
 	int32	LoadRanged();
 	int32   LoadHouseContainers();
+	void	LoadBrokerItemStats();
 
 	map<int32, vector<LevelArray*> >*	LoadSpellClasses();
 	void	LoadTransporters(ZoneServer* zone);

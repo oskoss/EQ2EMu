@@ -25,6 +25,7 @@
 #include "AltAdvancement/AltAdvancement.h"
 #include <cmath>
 #include "LuaInterface.h"
+#include "Rules/Rules.h"
 
 #include <boost/regex.hpp>
 
@@ -35,6 +36,7 @@ extern MasterAAList master_aa_list;
 extern MasterSpellList master_spell_list;
 extern LuaInterface* lua_interface;
 extern MasterSkillList master_skill_list;
+extern RuleManager rule_manager;
 
 Spell::Spell(){
 	spell = new SpellData;
@@ -1248,6 +1250,32 @@ int16 Spell::GetPowerRequired(Spawn* spawn){
 		if(result >= (((int16)result) + .5))
 			result++;
 		power_req = (int16)result;
+	}
+	if(spawn && spawn->IsPlayer()) {
+		int32 ministry_skill_id = rule_manager.GetGlobalRule(R_Spells, MinistrationSkillID)->GetInt32();
+		if(spell->mastery_skill == ministry_skill_id) { // ministration offers a power reduction
+			Skill* skill = ((Player*)spawn)->GetSkillByID(spell->mastery_skill, false);
+			if(skill) {
+				float ministry_reduction_percent = rule_manager.GetGlobalRule(R_Spells, MinistrationPowerReductionMax)->GetFloat();
+				if(ministry_reduction_percent <= 0.0f)
+					ministry_reduction_percent = 15.0f;
+				
+				int32 ministration_skill_reduce = rule_manager.GetGlobalRule(R_Spells, MinistrationPowerReductionSkill)->GetInt32();
+				if(ministration_skill_reduce < 1)
+					ministration_skill_reduce = 25;
+				float reduction = skill->current_val / ministration_skill_reduce;
+				
+				if(reduction > ministry_reduction_percent)
+					reduction = ministry_reduction_percent;
+				int16 power_to_reduce = (int16)(float)(power_req * (ministry_reduction_percent/100.0f)) * (reduction / ministry_reduction_percent);
+				if(power_to_reduce > power_req) {
+					power_req = 0;
+				}
+				else {
+					power_req = power_req - power_to_reduce;
+				}
+			}
+		}
 	}
 	return power_req;
 }

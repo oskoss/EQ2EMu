@@ -1359,7 +1359,7 @@ public:
 	bool			SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8 damage_type, int32 low_damage, int32 high_damage, int8 crit_mod = 0, bool no_calcs = false);
 	bool			ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32 high_damage, string name, string success_msg, string effect_msg);
 	bool            SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string heal_type, int32 low_heal, int32 high_heal, int8 crit_mod = 0, bool no_calcs = false, string custom_spell_name="");
-	int8			DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, bool spell);
+	int8			DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, bool is_caster_spell, LuaSpell* lua_spell = nullptr);
 	float			GetDamageTypeResistPercentage(int8 damage_type);
 	Skill*			GetSkillByWeaponType(int8 type, bool update);
 	bool			DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod = 0, bool is_tick = false, bool no_damage_calcs = false, bool ignore_attacker = false, LuaSpell* spell = 0);

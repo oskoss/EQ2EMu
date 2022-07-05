@@ -4207,7 +4207,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					LogWrite(ITEM__WARNING, 0, "Item", "SearchStores: %s", values);
 
 					map<string, string> str_values = TranslateBrokerRequest(values);
-					vector<Item*>* items = master_item_list.GetItems(str_values);
+					vector<Item*>* items = master_item_list.GetItems(str_values, client);
 					if(items){
 						client->SetItemSearch(items);
 						client->SearchStore(0);
