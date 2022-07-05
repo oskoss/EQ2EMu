@@ -837,18 +837,17 @@ ItemStatsValues* MasterItemList::CalculateItemBonuses(Item* item, Entity* entity
 					id = stat->stat_type*multiplier + stat->stat_subtype;
 			else
 			{
-				int32 tmp_id = master_item_list.GetItemStatIDByName(stat->stat_name);
+				int32 tmp_id = master_item_list.GetItemStatIDByName(::ToLower(stat->stat_name));
 				if(tmp_id != 0xFFFFFFFF)
 				{
 					id = tmp_id;
-					if(!value)
-						value = stat->stat_subtype;		
+					value = stat->stat_subtype;		
 				}
 				else
 					id = stat->stat_type*multiplier + stat->stat_subtype;
 			}
 
-			world.AddBonuses(item, values, id, stat->value, entity);
+			world.AddBonuses(item, values, id, value, entity);
 		}
 		return values;
 	}
