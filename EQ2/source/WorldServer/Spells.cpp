@@ -1267,9 +1267,7 @@ int16 Spell::GetPowerRequired(Spawn* spawn){
 				float item_stat_bonus = 0.0f;
 				int32 item_stat = master_item_list.GetItemStatIDByName(::ToLower(skill->name.data));
 				if(item_stat != 0xFFFFFFFF) {
-					((Entity*)spawn)->MStats.lock();
 					item_stat_bonus = ((Entity*)spawn)->GetStat(item_stat);
-					((Entity*)spawn)->MStats.unlock();
 				}
 				
 				float reduction = (skill->current_val + item_stat_bonus) / ministration_skill_reduce;

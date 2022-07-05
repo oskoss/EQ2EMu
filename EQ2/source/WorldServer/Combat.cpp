@@ -724,9 +724,7 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 				float item_stat_bonus = 0.0f;
 				int32 item_stat = master_item_list.GetItemStatIDByName(::ToLower(master_skill->name.data));
 				if(item_stat != 0xFFFFFFFF) {
-					MStats.lock();
 					item_stat_bonus = GetStat(item_stat);
-					MStats.unlock();
 				}
 				bonus += (master_skill->current_val + item_stat_bonus) / master_skill_reduce;
 			}
