@@ -3702,6 +3702,7 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 				break;
 			}
 			case UPDATE_ACTIVITY_JUMPING:
+			case UPDATE_ACTIVITY_JUMPING_AOM:
 			case UPDATE_ACTIVITY_FALLING:
 			case UPDATE_ACTIVITY_FALLING_AOM: {
 				if(GetInitialState() != 1024) {
