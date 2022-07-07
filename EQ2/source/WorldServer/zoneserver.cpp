@@ -702,7 +702,7 @@ void ZoneServer::RegenUpdate(){
 				((Entity*)spawn)->DoRegenUpdate();
 			if(spawn->IsPlayer()){
 				Client* client = GetClientBySpawn(spawn);
-				if(client && client->IsConnected())
+				if(client && client->IsReadyForUpdates())
 					client->QueuePacket(client->GetPlayer()->GetPlayerInfo()->serialize(client->GetVersion()));
 			}
 		}
@@ -909,7 +909,7 @@ bool ZoneServer::CheckNPCAttacks(NPC* npc, Spawn* victim, Client* client){
 		return true;
 
 	if (client) {
-		if (client->IsConnected() && npc->CanSeeInvis(client->GetPlayer()) && client->GetPlayer()->GetFactions()->ShouldAttack(npc->GetFactionID()) && npc->AttackAllowed((Entity*)victim, false)) {
+		if (client->IsReadyForUpdates() && npc->CanSeeInvis(client->GetPlayer()) && client->GetPlayer()->GetFactions()->ShouldAttack(npc->GetFactionID()) && npc->AttackAllowed((Entity*)victim, false)) {
 			if (!npc->EngagedInCombat() && client->GetPlayer()->GetArrowColor(npc->GetLevel()) != ARROW_COLOR_GRAY) {
 				AggroVictim(npc, victim, client);
 			}
@@ -3648,7 +3648,7 @@ void ZoneServer::PlayFlavor(Spawn* spawn, const char* mp3, const char* text, con
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(!client || !client->IsConnected() || !client->GetPlayer()->WasSentSpawn(spawn->GetID()) || client->GetPlayer()->GetDistance(spawn) > 30)
+		if(!client || !client->IsReadyForUpdates() || !client->GetPlayer()->WasSentSpawn(spawn->GetID()) || client->GetPlayer()->GetDistance(spawn) > 30)
 			continue;
 		PlayFlavor(client, spawn, mp3, text, emote, key1, key2, language);
 	}
@@ -3665,7 +3665,7 @@ void ZoneServer::PlayVoice(Spawn* spawn, const char* mp3, int32 key1, int32 key2
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(!client || !client->IsConnected() || !client->GetPlayer()->WasSentSpawn(spawn->GetID()))
+		if(!client || !client->IsReadyForUpdates() || !client->GetPlayer()->WasSentSpawn(spawn->GetID()))
 			continue;
 		PlayVoice(client, spawn, mp3, key1, key2);
 	}
@@ -3715,7 +3715,7 @@ void ZoneServer::PlaySoundFile(Client* client, const char* name, float origin_x,
 					outapp = packet->serialize();
 				}
 			}
-			if(outapp && client && client->IsConnected())
+			if(outapp && client && client->IsReadyForUpdates())
 				client->QueuePacket(outapp->Copy());
 		}
 		MClientList.releasereadlock(__FUNCTION__, __LINE__);
@@ -5812,7 +5812,7 @@ void ZoneServer::CheckLocationProximity() {
 		MutexList<Client*>::iterator iterator = connected_clients.begin();
 		while(iterator.Next()){
 			client = iterator->value;
-			if (client->IsConnected() && client->IsReadyForSpawns() && !client->IsZoning()) {
+			if (client->IsConnected() && client->IsReadyForUpdates() && !client->IsZoning()) {
 				try {
 					MutexList<LocationProximity*>::iterator itr = location_proximities.begin();
 					LocationProximity* prox = 0;

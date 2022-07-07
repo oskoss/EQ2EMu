@@ -94,9 +94,10 @@ void Transmute::HandleItemResponse(Client* client, Player* player, int32 req_id,
 	Skill* skill = player->GetSkillByName("Transmuting");
 
 	int32 required_skill = (std::max<int32>(item_level, 5) - 5) * 5;
-	if (!skill || skill->current_val < required_skill) {
+	sint32 item_stat_bonus = player->GetStat(ITEM_STAT_TRANSMUTING);
+	if (!skill || (skill->current_val+item_stat_bonus) < required_skill) {
 		client->Message(CHANNEL_COLOR_RED, "You need at least %u Transmuting skill to transmute the %s."
-			" You have %u Transmuting skill.", required_skill, item->name.c_str(), skill ? skill->current_val : 0);
+			" You have %u Transmuting skill.", required_skill, item->name.c_str(), skill ? (skill->current_val+item_stat_bonus) : 0);
 		return;
 	}
 
@@ -284,15 +285,15 @@ void Transmute::CompleteTransmutation(Client* client, Player* player) {
 
 	//Skill up roll
 	int32 max_trans_level = skill->current_val / 5 + 5;
-	int32 level_dif = max_trans_level - item_level;
-	if (level_dif >= 5 || skill->current_val >= skill->max_val) {
+	sint32 level_dif = (sint32)max_trans_level - (sint32)item_level;
+	if (level_dif > 10 || skill->current_val >= skill->max_val) {
 		//No skill up possible
 		LogWrite(SKILL__DEBUG, 7, "Skill", "Transmuting skill up not possible.  level_dif = %u, skill val = %u, skill max val = %u", level_dif, skill->current_val, skill->max_val);
 		return;
 	}
 	
-	//40% Base chance of a skillup at max item level, 20% overall decrease per level difference
-	const int32 SKILLUP_PERCENT_CHANCE_MAX = 40;
+	//50% Base chance of a skillup at max item level, 20% overall decrease per level difference
+	const int32 SKILLUP_PERCENT_CHANCE_MAX = 50;
 	int32 required_roll = SKILLUP_PERCENT_CHANCE_MAX * (1.f - (item_level <= 5 ?  0.f : (level_dif * .2f)));
 	roll = MakeRandomInt(1, 100);
 	//LogWrite(SKILL__ERROR, 0, "Skill", "Skill up roll results, roll = %u, required_roll = %u", roll, required_roll);

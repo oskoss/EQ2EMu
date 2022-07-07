@@ -74,6 +74,10 @@ enum RuleType {
 	MentorItemDecayRate,
 	TemporaryItemLogoutTime,
 	HeirloomItemShareExpiration,
+	SwimmingSkillMinSpeed,
+	SwimmingSkillMaxSpeed,
+	SwimmingSkillMinBreathLength,
+	SwimmingSkillMaxBreathLength,
 
 	/* PVP */
 	AllowPVP,

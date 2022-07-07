@@ -2129,7 +2129,21 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 	}
 
 	if (IsPlayer()) {
-		packet->setDataByName("pos_swim_speed_modifier", 20);
+		Skill* skill = ((Player*)this)->GetSkillByName("Swimming", false);
+		sint16 swim_modifier = rule_manager.GetGlobalRule(R_Player, SwimmingSkillMinSpeed)->GetSInt16();
+		if(skill) {
+			sint16 max_val = 450;
+			if(skill->max_val > 0)
+				max_val = skill->max_val;
+			sint16 max_swim_mod = rule_manager.GetGlobalRule(R_Player, SwimmingSkillMaxSpeed)->GetSInt16();
+			float diff = (float)(skill->current_val + ((Player*)this)->GetStat(ITEM_STAT_SWIMMING)) / (float)max_val;
+			sint16 diff_mod = (sint16)(float)max_swim_mod * diff;
+			if(diff_mod > max_swim_mod)
+				swim_modifier = max_swim_mod;
+			else if(diff_mod > swim_modifier)
+				swim_modifier = diff_mod;
+		}
+		packet->setDataByName("pos_swim_speed_modifier", swim_modifier);
 		packet->setDataByName("pos_x_velocity", TransformFromFloat(GetSpeedX(), 5));
 		packet->setDataByName("pos_y_velocity", TransformFromFloat(GetSpeedY(), 5));
 		packet->setDataByName("pos_z_velocity", TransformFromFloat(GetSpeedZ(), 5));

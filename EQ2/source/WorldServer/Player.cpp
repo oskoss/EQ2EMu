@@ -840,7 +840,22 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("curse_count", 49);// added with spells leave here for testing//dov confirmed
 	//	packet->setDataByName("unknown_1096_17_MJ", 30);//unknown_1096_17_MJ
 		//////Maintained effects go here, but are below
-		packet->setDataByName("breath", 30);
+		
+		Skill* skill = player->GetSkillByName("Swimming", false);
+		float breath_modifier = rule_manager.GetGlobalRule(R_Player, SwimmingSkillMinBreathLength)->GetFloat();
+		if(skill) {
+			int32 max_val = 450;
+			if(skill->max_val > 0)
+				max_val = skill->max_val;
+			float diff = (float)(skill->current_val + player->GetStat(ITEM_STAT_SWIMMING)) / (float)max_val;
+			float max_breath_mod = rule_manager.GetGlobalRule(R_Player, SwimmingSkillMaxBreathLength)->GetFloat();
+			float diff_mod = max_breath_mod * diff;
+			if(diff_mod > max_breath_mod)
+				breath_modifier = max_breath_mod;
+			else if(diff_mod > breath_modifier)
+				breath_modifier = diff_mod;
+		}
+		packet->setDataByName("breath", breath_modifier);
 		//packet->setDataByName("unknown_1096_18_MJ", 1000);//16880
 		packet->setDataByName("melee_pri_dmg_min", player->GetPrimaryWeaponMinDamage());// dov confirmed
 		packet->setDataByName("melee_pri_dmg_max", player->GetPrimaryWeaponMaxDamage());// dov confirmed
@@ -3665,17 +3680,45 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 
 	SetHeading((sint16)(direction1 * 64), (sint16)(direction2 * 64));
 	if (activity != last_movement_activity) {
-		if (GetZone() && GetZone()->GetDrowningVictim(this) && (activity == UPDATE_ACTIVITY_RUNNING || activity == UPDATE_ACTIVITY_IN_WATER_ABOVE)) // not drowning anymore
-			GetZone()->RemoveDrowningVictim(this);
-
-		if ((activity == UPDATE_ACTIVITY_DROWNING || activity == UPDATE_ACTIVITY_DROWNING2) && GetZone() && !GetInvulnerable()) //drowning
-			GetZone()->AddDrowningVictim(this);
-
-		if (activity == UPDATE_ACTIVITY_JUMPING || activity == UPDATE_ACTIVITY_FALLING)
-			SetInitialState(1024);
-		else if (GetInitialState() == 1024)
-			SetInitialState(16512);
-
+		switch(activity) {
+			case UPDATE_ACTIVITY_RUNNING:
+			case UPDATE_ACTIVITY_RUNNING_AOM:
+			case UPDATE_ACTIVITY_IN_WATER_ABOVE:
+			case UPDATE_ACTIVITY_IN_WATER_BELOW:
+			case UPDATE_ACTIVITY_MOVE_WATER_ABOVE_AOM:
+			case UPDATE_ACTIVITY_MOVE_WATER_BELOW_AOM: {
+				if(GetZone() && GetZone()->GetDrowningVictim(this))
+					GetZone()->RemoveDrowningVictim(this);
+				
+				break;
+			}
+			case UPDATE_ACTIVITY_DROWNING:
+			case UPDATE_ACTIVITY_DROWNING2:
+			case UPDATE_ACTIVITY_DROWNING_AOM:
+			case UPDATE_ACTIVITY_DROWNING2_AOM: {
+				if(GetZone() && !GetInvulnerable()) {
+					GetZone()->AddDrowningVictim(this);
+				}
+				break;
+			}
+			case UPDATE_ACTIVITY_JUMPING:
+			case UPDATE_ACTIVITY_FALLING:
+			case UPDATE_ACTIVITY_FALLING_AOM: {
+				if(GetInitialState() != 1024) {
+					SetInitialState(1024);
+				}
+				else if(GetInitialState() == 1024) {
+					if(activity == UPDATE_ACTIVITY_JUMPING_AOM) {
+						SetInitialState(UPDATE_ACTIVITY_JUMPING_AOM);
+					}
+					else {
+						SetInitialState(16512);
+					}	
+				}
+				break;
+			}
+		}
+		
 		last_movement_activity = activity;
 	}
 
@@ -3774,7 +3817,7 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 		appearance.pos.grid_id = grid_id;
 	}
 	if (activity == UPDATE_ACTIVITY_IN_WATER_ABOVE || activity == UPDATE_ACTIVITY_IN_WATER_BELOW) {
-		if (MakeRandomFloat(0, 100) < 25)
+		if (MakeRandomFloat(0, 100) < 25 && InWater())
 			GetSkillByName("Swimming", true);
 	}
 	// don't have to uncomment the print packet but you MUST uncomment the safe_delete() for xml structs
