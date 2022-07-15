@@ -1033,6 +1033,7 @@ public:
 	void	SetQuestsRequired(Spawn* new_spawn);
 	void	SetQuestsRequired(int32 quest_id, int16 quest_step);
 	bool	HasQuestsRequired();
+	bool	HasHistoryRequired();
 	void	SetRequiredHistory(int32 event_id, int32 value1, int32 value2);
 	void	SetTransporterID(int32 id);
 	int32	GetTransporterID();
@@ -1289,6 +1290,7 @@ public:
 protected:
 
 	bool	has_quests_required;
+	bool	has_history_required;
 	bool	send_spawn_changes;
 	bool	invulnerable;
 	bool	attack_resume_needed;

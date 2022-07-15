@@ -119,6 +119,7 @@ Spawn::Spawn(){
 	pickup_unique_item_id = 0;
 	disable_sounds = false;
 	has_quests_required = false;
+	has_history_required = false;
 	is_flying_creature = false;
 	is_water_creature = false;
 	region_map = nullptr;
@@ -410,12 +411,18 @@ void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
 		footer->setDataByName("widget_x", sign->GetWidgetX());
 		footer->setDataByName("widget_y", sign->GetWidgetY());
 		footer->setDataByName("widget_z", sign->GetWidgetZ());
+		
+		int8 showSignText = 1;
+		if((HasQuestsRequired() || HasHistoryRequired()) && !MeetsSpawnAccessRequirements(player)) {
+			showSignText = 0;
+		}
+		
 		if (sign->GetSignTitle())
 			footer->setMediumStringByName("title", sign->GetSignTitle());
 		if (sign->GetSignDescription())
 			footer->setMediumStringByName("description", sign->GetSignDescription());
 		footer->setDataByName("sign_distance", sign->GetSignDistance());
-		footer->setDataByName("show", 1);
+		footer->setDataByName("show", showSignText);
 		// in live we see that the language is set when the player does not have it, otherwise its left as 00's.
 		if(!player->HasLanguage(sign->GetLanguage())) {
 			footer->setDataByName("language", sign->GetLanguage());
@@ -2004,9 +2011,12 @@ void Spawn::SetQuestsRequired(int32 quest_id, int16 quest_step){
 	m_requiredQuests.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-bool Spawn::HasQuestsRequired()
-{
+bool Spawn::HasQuestsRequired(){
 	return has_quests_required;
+}
+
+bool Spawn::HasHistoryRequired(){
+	return has_history_required;
 }
 
 void Spawn::SetRequiredHistory(int32 event_id, int32 value1, int32 value2){
@@ -2023,6 +2033,7 @@ void Spawn::SetRequiredHistory(int32 event_id, int32 value1, int32 value2){
 		required_history[event_id] = set_value;
 		safe_delete(tmp_value);
 	}
+	has_history_required = true;
 	m_requiredHistory.releasewritelock(__FUNCTION__, __LINE__);
 }
 
