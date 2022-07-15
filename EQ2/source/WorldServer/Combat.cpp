@@ -1247,8 +1247,7 @@ void Entity::HandleDeathExperienceDebt(Spawn* killer)
 			{
 				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 				deque<GroupMemberInfo*>* members = group->GetMembers();
-				if(!members)
-					return;
+
 				int32 size = members->size();
 				float xpDebtPerMember = ruleDebt/(float)size;
 				deque<GroupMemberInfo*>::iterator itr;

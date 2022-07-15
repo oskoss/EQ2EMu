@@ -415,10 +415,13 @@ Spell* Bot::GetHoTWardSpell() {
 	{
 		group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 		deque<GroupMemberInfo*>* members = group->GetMembers();
-		if(!members)
-			return 0;
+
 		for (int8 i = 0; i < members->size(); i++) {
 			Entity* member = members->at(i)->member;
+			
+			if(!member)
+				continue;
+			
 			int8 percent = 0;
 			if (member->GetHP() > 0)
 				percent = (int8)(((float)member->GetHP() / member->GetTotalHP()) * 100);

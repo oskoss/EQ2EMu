@@ -403,7 +403,6 @@ void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
 			footer->setDataByName("widget_z", widget->GetWidgetZ());
 		}
 		footer->setDataByName("widget_id", widget->GetWidgetID());
-		footer->setDataByName("unknown3c", 6);
 	}
 	else if (IsSign()){
 		Sign* sign = (Sign*)this;
@@ -411,13 +410,16 @@ void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
 		footer->setDataByName("widget_x", sign->GetWidgetX());
 		footer->setDataByName("widget_y", sign->GetWidgetY());
 		footer->setDataByName("widget_z", sign->GetWidgetZ());
-		footer->setDataByName("unknown2b", 6);
 		if (sign->GetSignTitle())
 			footer->setMediumStringByName("title", sign->GetSignTitle());
 		if (sign->GetSignDescription())
 			footer->setMediumStringByName("description", sign->GetSignDescription());
 		footer->setDataByName("sign_distance", sign->GetSignDistance());
 		footer->setDataByName("show", 1);
+		// in live we see that the language is set when the player does not have it, otherwise its left as 00's.
+		if(!player->HasLanguage(sign->GetLanguage())) {
+			footer->setDataByName("language", sign->GetLanguage());
+		}
 	}
 
 	if ( IsPlayer())

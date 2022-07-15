@@ -1216,7 +1216,7 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 	Sign* sign = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type, ss.language\n"
 												  "FROM spawn s\n"
 												  "INNER JOIN spawn_signs ss\n"
 												  "ON s.id = ss.spawn_id\n"
@@ -1295,6 +1295,8 @@ void WorldDatabase::LoadSigns(ZoneServer* zone){
 		
 		sign->SetLootDropType(atoul(row[35]));
 
+		sign->SetLanguage(atoul(row[36]));
+		
 		zone->AddSign(id, sign);
 		total++;
 
@@ -3425,14 +3427,14 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 		}
 		else if(spawn->IsSign()){
 			Sign* sign = (Sign*)spawn;
-			query.RunQuery2(Q_UPDATE, "update spawn_signs, spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s', type='%s', zone_id = %u, widget_id = %u, title='%s', widget_x = %f, widget_y = %f, widget_z = %f, icon = %u, description='%s', sign_distance = %f, zone_x = %f, zone_y = %f, zone_z = %f, zone_heading = %f, include_heading = %u, include_location = %u, merchant_min_level = %u, merchant_max_level = %u where spawn_signs.spawn_id = spawn.id and spawn.id = %u",
+			query.RunQuery2(Q_UPDATE, "update spawn_signs, spawn set name='%s', race=%i, model_type=%i, show_name=%i, attackable=%i, show_level=%i, show_command_icon=%i, display_hand_icon=%i, size=%i, hp=%u, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, faction_id=%u, suffix ='%s', prefix='%s', last_name='%s', type='%s', zone_id = %u, widget_id = %u, title='%s', widget_x = %f, widget_y = %f, widget_z = %f, icon = %u, description='%s', sign_distance = %f, zone_x = %f, zone_y = %f, zone_z = %f, zone_heading = %f, include_heading = %u, include_location = %u, merchant_min_level = %u, merchant_max_level = %u, language = %u where spawn_signs.spawn_id = spawn.id and spawn.id = %u",
 				name.c_str(), spawn->GetRace(), spawn->GetModelType(), spawn->appearance.display_name, spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, spawn->GetSize(),
 				spawn->GetTotalHP(), spawn->GetTotalPower(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->GetFactionID(),
 				suffix.c_str(), prefix.c_str(), last_name.c_str(), sign->GetSignType(), sign->GetSignZoneID(), 
 				sign->GetWidgetID(), sign->GetSignTitle(), sign->GetWidgetX(), sign->GetWidgetY(), sign->GetWidgetZ(), 
 				sign->GetIconValue(), sign->GetSignDescription(), sign->GetSignDistance(), sign->GetSignZoneX(), 
 				sign->GetSignZoneY(), sign->GetSignZoneZ(), sign->GetSignZoneHeading(), sign->GetIncludeHeading(), 
-				sign->GetIncludeLocation(), spawn->GetMerchantMinLevel(), spawn->GetMerchantMaxLevel(), spawn->GetDatabaseID());
+				sign->GetIncludeLocation(), spawn->GetMerchantMinLevel(), spawn->GetMerchantMaxLevel(), sign->GetLanguage(), spawn->GetDatabaseID());
 		}
 	}
 	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
@@ -6391,7 +6393,7 @@ bool WorldDatabase::LoadSign(ZoneServer* zone, int32 spawn_id) {
 	Sign* sign = 0;
 	int32 id = 0;
 	DatabaseResult result;
-	database_new.Select(&result, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
+	database_new.Select(&result, "SELECT ss.spawn_id, s.name, s.model_type, s.size, s.show_command_icon, ss.widget_id, ss.widget_x, ss.widget_y, ss.widget_z, s.command_primary, s.command_secondary, s.collision_radius, ss.icon, ss.type, ss.title, ss.description, ss.sign_distance, ss.zone_id, ss.zone_x, ss.zone_y, ss.zone_z, ss.zone_heading, ss.include_heading, ss.include_location, s.transport_id, s.size_offset, s.display_hand_icon, s.visual_state, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type, ss.language\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_signs ss\n"
 								 "ON ss.spawn_id = s.id\n"
@@ -6452,6 +6454,9 @@ bool WorldDatabase::LoadSign(ZoneServer* zone, int32 spawn_id) {
 		sign->SetLootTier(result.GetInt32(32));
 
 		sign->SetLootDropType(result.GetInt32(33));
+		
+		sign->SetLanguage(result.GetInt8(34));
+		
 		zone->AddSign(id, sign);
 
 

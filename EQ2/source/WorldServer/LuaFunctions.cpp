@@ -1019,6 +1019,12 @@ int EQ2Emu_lua_StartDialogConversation(lua_State* state) {
 	string mp3 = lua_interface->GetStringValue(state, 6);
 	int32 key1 = lua_interface->GetInt32Value(state, 7);
 	int32 key2 = lua_interface->GetInt32Value(state, 8);
+	int8 language = lua_interface->GetInt8Value(state, 9);
+	
+	int numargs = lua_interface->GetNumberOfArgs(state);
+	int8 can_close = 1;
+	if(numargs > 9)
+		can_close = lua_interface->GetInt32Value(state, 10);
 
 	lua_interface->ResetFunctionStack(state);
 	if (conversation && text.length() > 0 && (spawn || item) && player && player->IsPlayer()) {
@@ -1030,15 +1036,15 @@ int EQ2Emu_lua_StartDialogConversation(lua_State* state) {
 					type++;
 
 				if (mp3.length() > 0)
-					client->DisplayConversation((Entity*)spawn, type, conversation, const_cast<char*>(text.c_str()), mp3.c_str(), key1, key2);
+					client->DisplayConversation((Entity*)spawn, type, conversation, const_cast<char*>(text.c_str()), mp3.c_str(), key1, key2, language, can_close);
 				else
-					client->DisplayConversation((Entity*)spawn, type, conversation, const_cast<char*>(text.c_str()));
+					client->DisplayConversation((Entity*)spawn, type, conversation, const_cast<char*>(text.c_str()), nullptr, 0, 0, language, can_close);
 			}
 			else {
 				if (mp3.length() > 0)
-					client->DisplayConversation(item, conversation, const_cast<char*>(text.c_str()), type, mp3.c_str(), key1, key2);
+					client->DisplayConversation(item, conversation, const_cast<char*>(text.c_str()), type, mp3.c_str(), key1, key2, language, can_close);
 				else
-					client->DisplayConversation(item, conversation, const_cast<char*>(text.c_str()), type);
+					client->DisplayConversation(item, conversation, const_cast<char*>(text.c_str()), type, nullptr, 0, 0, language, can_close);
 			}
 		}
 	}
@@ -1046,29 +1052,6 @@ int EQ2Emu_lua_StartDialogConversation(lua_State* state) {
 	lua_interface->SetConversationValue(state, NULL);
 	return 0;
 }
-
-/*int EQ2Emu_lua_StartItemConversation(lua_State* state){
-	if(!lua_interface)
-		return 0;
-	vector<ConversationOption>* conversation = lua_interface->GetConversation(state);
-	Item* item = lua_interface->GetItem(state, 2);
-	Spawn* player = lua_interface->GetSpawn(state, 3);
-	string text = lua_interface->GetStringValue(state, 4);
-	string mp3 = lua_interface->GetStringValue(state, 5);
-	int32 key1 = lua_interface->GetInt32Value(state, 6);
-	int32 key2 = lua_interface->GetInt32Value(state, 7);
-	if(conversation && text.length() > 0 && item && player && player->IsPlayer()){
-		Client* client = player->GetZone()->GetClientBySpawn(player);
-		if(client){
-			if(mp3.length() > 0)
-				client->DisplayConversation(item, conversation, (char*)text.c_str(), mp3.c_str(), key1, key2);
-			else
-				client->DisplayConversation(item, conversation, (char*)text.c_str());
-		}
-		safe_delete(conversation);
-	}
-	return 0;
-}*/
 
 int EQ2Emu_lua_StartConversation(lua_State* state) {
 	if (!lua_interface)
@@ -1080,13 +1063,20 @@ int EQ2Emu_lua_StartConversation(lua_State* state) {
 	string mp3 = lua_interface->GetStringValue(state, 5);
 	int32 key1 = lua_interface->GetInt32Value(state, 6);
 	int32 key2 = lua_interface->GetInt32Value(state, 7);
+	int8 language = lua_interface->GetInt32Value(state, 8);
+	
+	int numargs = lua_interface->GetNumberOfArgs(state);
+	int8 can_close = 1;
+	if(numargs > 8)
+		can_close = lua_interface->GetInt32Value(state, 9);
+	
 	lua_interface->ResetFunctionStack(state);
 	if (conversation && conversation->size() > 0 && text.length() > 0 && source && player && player->IsPlayer()) {
 		Client* client = source->GetZone()->GetClientBySpawn(player);
 		if (mp3.length() > 0)
-			client->DisplayConversation(source, 1, conversation, text.c_str(), mp3.c_str(), key1, key2);
+			client->DisplayConversation(source, 1, conversation, text.c_str(), mp3.c_str(), key1, key2, language, can_close);
 		else
-			client->DisplayConversation(source, 1, conversation, text.c_str());
+			client->DisplayConversation(source, 1, conversation, text.c_str(), nullptr, 0, 0, language, can_close);
 		safe_delete(conversation);
 		lua_interface->SetConversationValue(state, NULL);
 	}

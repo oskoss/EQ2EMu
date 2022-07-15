@@ -1303,7 +1303,12 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			int32 response_index = packet->getType_int32_ByName("response");
 			if (GetCurrentZone()) {
 				MConversation.readlock();
-				Spawn* spawn = conversation_spawns[conversation_id];
+				int32 spawn_id = conversation_spawns[conversation_id];
+				Spawn* spawn = nullptr;
+				if(spawn_id) {
+					spawn = GetCurrentZone()->GetSpawnByID(spawn_id);
+				}
+				
 				Item* item = conversation_items[conversation_id];
 				MConversation.releasereadlock();
 				if (conversation_map.count(conversation_id) > 0 && conversation_map[conversation_id].count(response_index) > 0) {
@@ -2549,6 +2554,8 @@ bool Client::HandleLootItem(Spawn* entity, Item* item) {
 						if(members) {
 							for (int8 i = 0; i < members->size(); i++) {
 								Entity* member = members->at(i)->member;
+								if(!member)
+									continue;
 
 								if ((member->GetZone() != this->GetPlayer()->GetZone()))
 									continue;
@@ -5194,11 +5201,12 @@ void Client::CastGroupOrSelf(Entity* source, uint32 spellID, uint32 spellTier, f
 			{
 				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 				deque<GroupMemberInfo*>* members = group->GetMembers();
-				if(!members)
-					return;
+
 				for (int8 i = 0; i < members->size(); i++) {
 					Entity* member = members->at(i)->member;
-
+					if(!member)
+						continue;
+					
 					if (!member->Alive() || (member->GetZone() != source->GetZone()))
 						continue;
 					// if we have a radius provided then check if the group member is outside the radius or not
@@ -6323,12 +6331,13 @@ void Client::GiveQuestReward(Quest* quest) {
 	RemovePlayerQuest(quest->GetQuestID(), true, false);	
 }
 
-void Client::DisplayConversation(int32 conversation_id, int32 spawn_id, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2) {
+void Client::DisplayConversation(int32 conversation_id, int32 spawn_id, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2, int8 language, int8 can_close) {
 	PacketStruct* packet = configReader.getStruct("WS_DialogOpen", GetVersion());
 	if (packet) {
 		packet->setDataByName("conversation_id", conversation_id);
 		packet->setDataByName("text", text);
-		packet->setDataByName("unknown2", 1);
+		packet->setDataByName("language", language); // default 0
+		packet->setDataByName("can_close", can_close); // default 1
 		conversation_map[conversation_id].clear();
 		if (conversations) {
 			packet->setArrayLengthByName("num_responses", conversations->size());
@@ -6350,7 +6359,7 @@ void Client::DisplayConversation(int32 conversation_id, int32 spawn_id, vector<C
 
 }
 
-void Client::DisplayConversation(Item* item, vector<ConversationOption>* conversations, const char* text, int8 type, const char* mp3, int32 key1, int32 key2) {
+void Client::DisplayConversation(Item* item, vector<ConversationOption>* conversations, const char* text, int8 type, const char* mp3, int32 key1, int32 key2, int8 language, int8 can_close) {
 	if (!item || !text || !conversations || conversations->size() == 0) {
 		return;
 	}
@@ -6363,13 +6372,13 @@ void Client::DisplayConversation(Item* item, vector<ConversationOption>* convers
 	conversation_items[conversation_id] = item;
 	MConversation.releasewritelock();
 	if (type == 4)
-		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(player), conversations, text, mp3, key1, key2);
+		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(player), conversations, text, mp3, key1, key2, language, can_close);
 	else
-		DisplayConversation(conversation_id, 0xFFFFFFFF, conversations, text, mp3, key1, key2);
+		DisplayConversation(conversation_id, 0xFFFFFFFF, conversations, text, mp3, key1, key2, language, can_close);
 
 }
 
-void Client::DisplayConversation(Spawn* src, int8 type, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2) {
+void Client::DisplayConversation(Spawn* src, int8 type, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2, int8 language, int8 can_close) {
 	if (!src || !(type == 1 || type == 2 || type == 3) || !text /*|| !conversations || conversations->size() == 0*/) {
 		return;
 	}
@@ -6379,18 +6388,18 @@ void Client::DisplayConversation(Spawn* src, int8 type, vector<ConversationOptio
 		conversation_id = next_conversation_id;
 	}
 	MConversation.writelock();
-	conversation_spawns[conversation_id] = src;
+	conversation_spawns[conversation_id] = src->GetID();
 	MConversation.releasewritelock();
 
 	/* Spawns can start two different types of conversations.
 	 * Type 1: The chat type with bubbles.
 	 * Type 2: The dialog type with the blue box. */
 	if (type == 1)
-		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(src), conversations, text, mp3, key1, key2);
+		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(src), conversations, text, mp3, key1, key2, language, can_close);
 	else if (type == 2)
-		DisplayConversation(conversation_id, 0xFFFFFFFF, conversations, text, mp3, key1, key2);
+		DisplayConversation(conversation_id, 0xFFFFFFFF, conversations, text, mp3, key1, key2, language, can_close);
 	else //if (type == 3)
-		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(player), conversations, text, mp3, key1, key2);
+		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(player), conversations, text, mp3, key1, key2, language, can_close);
 
 }
 
@@ -6409,7 +6418,7 @@ void Client::CloseDialog(int32 conversation_id) {
 		conversation_items.erase(itr);
 	}
 	
-	std::map<int32, Spawn*>::iterator itr2 = conversation_spawns.find(conversation_id);
+	std::map<int32, int32>::iterator itr2 = conversation_spawns.find(conversation_id);
 
 	while((itr2 = conversation_spawns.find(conversation_id)) != conversation_spawns.end())
 	{
@@ -6423,9 +6432,9 @@ int32 Client::GetConversationID(Spawn* spawn, Item* item) {
 	int32 conversation_id = 0;
 	MConversation.readlock();
 	if (spawn) {
-		map<int32, Spawn*>::iterator itr;
+		map<int32, int32>::iterator itr;
 		for (itr = conversation_spawns.begin(); itr != conversation_spawns.end(); itr++) {
-			if (itr->second == spawn) {
+			if (itr->second == spawn->GetID()) {
 				conversation_id = itr->first;
 				break;
 			}
@@ -10461,9 +10470,17 @@ bool Client::PopulateHouseSpawnFinalize()
 				query.RunQuery2(Q_INSERT, "insert into spawn_instance_data set spawn_id = %u, spawn_location_id = %u, pickup_item_id = %u, pickup_unique_item_id = %u", tmp->GetDatabaseID(), tmp->GetSpawnLocationID(), tmp->GetPickupItemID(), uniqueID);
 			}
 
-			database.DeleteItem(GetCharacterID(), uniqueItem, 0);
-			GetPlayer()->item_list.RemoveItem(uniqueItem, true);
-			QueuePacket(GetPlayer()->SendInventoryUpdate(GetVersion()));
+			if(lua_interface->RunItemScript(uniqueItem->GetItemScript(), "placed", uniqueItem, GetPlayer(), tmp))
+			{
+				uniqueItem = GetPlayer()->item_list.GetItemFromUniqueID(uniqueID);
+			}
+			
+			if(uniqueItem) {
+				database.DeleteItem(GetCharacterID(), uniqueItem, 0);
+				GetPlayer()->item_list.RemoveItem(uniqueItem, true);
+				QueuePacket(GetPlayer()->SendInventoryUpdate(GetVersion()));
+			}
+			
 			SetPlacementUniqueItemID(0);
 		}
 		return true;

@@ -4709,6 +4709,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				details3 += "Speed:	" + to_string(spawn->GetSpeed()) + "\n";
 				details3 += "BaseSpeed:	" + to_string(spawn->GetBaseSpeed()) + "\n";
 
+				if(spawn->IsSign()) {
+					details3 += "Sign Language: " + to_string(((Sign*)spawn)->GetLanguage()) + "\n";
+				}
+				
 				if(spawn->IsEntity())
 				{
 					Entity* ent = (Entity*)spawn;

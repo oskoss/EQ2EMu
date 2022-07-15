@@ -370,15 +370,31 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 				if (version <= 546 && skill->skill_type >= SKILL_TYPE_GENERAL) { //covert it to DOF types
 					packet->setArrayDataByName("type", skill->skill_type-2, i);					
 				}
-				else
+				else if(version >= 60085 && skill->skill_type >= 12) {
+					packet->setArrayDataByName("type", skill->skill_type-1, i);
+				}
+				else {
 					packet->setArrayDataByName("type", skill->skill_type, i);
-				packet->setArrayDataByName("current_val", skill->current_val, i);
-				packet->setArrayDataByName("base_val", skill->current_val, i);// skill->
-				packet->setArrayDataByName("skill_delta", 0, i);// skill_with_bonuses- skill->current_val
-				packet->setArrayDataByName("skill_delta2", skill_max_with_bonuses - skill->max_val, i);// skill_max_with_bonuses - skill->max_val, i);
-				packet->setArrayDataByName("max_val", skill->max_val, i);
-				packet->setArrayDataByName("display_minval", skill->display, i);
-				packet->setArrayDataByName("display_maxval", skill->display, i);
+				}
+				
+				int16 current_val = skill->current_val;
+				
+				if(skill->skill_type == SKILL_TYPE_LANGUAGE) { // 13 is language in the DB?? 14 is the skill type though
+					packet->setArrayDataByName("language_unknown", skill->skill_id, i);
+					packet->setArrayDataByName("display_maxval", 1, i);
+					packet->setArrayDataByName("max_val", 1, i);
+				}
+				else {
+					packet->setArrayDataByName("max_val", skill->max_val, i);
+					packet->setArrayDataByName("display_minval", skill->display, i);
+					packet->setArrayDataByName("display_maxval", skill->display, i);
+					packet->setArrayDataByName("skill_delta", 0, i);// skill_with_bonuses- skill->current_val
+					packet->setArrayDataByName("skill_delta2", skill_max_with_bonuses - skill->max_val, i);// skill_max_with_bonuses - skill->max_val, i);
+				}
+				
+				packet->setArrayDataByName("current_val", current_val, i);
+				packet->setArrayDataByName("base_val", current_val, i);
+				
 				i++;
 			}
 		}

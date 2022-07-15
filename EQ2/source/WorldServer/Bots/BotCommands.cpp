@@ -114,11 +114,10 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 				group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 				deque<GroupMemberInfo*>* members = group->GetMembers(); 
 				
-				if(!members)
-					return;
-				
 				for (int8 i = 0; i < members->size(); i++) {
 					GroupMemberInfo* gmi2 = members->at(i);
+					if(!gmi2 || !gmi2->member)
+						continue;
 					if (gmi2->member->IsBot() && ((Bot*)gmi2->member)->GetOwner() == client->GetPlayer()) {
 						((Bot*)gmi2->member)->SetMainTank(target);
 						client->Message(CHANNEL_COMMAND_TEXT, "Setting main tank for %s to %s", gmi2->member->GetName(), target->GetName());

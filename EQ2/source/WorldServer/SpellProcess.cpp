@@ -2386,8 +2386,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						{
 							group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 							deque<GroupMemberInfo*>* members = group->GetMembers();
-							if(!members)
-								return;
+							
 							// iterate through players group members
 							for (itr = members->begin(); itr != members->end(); itr++)
 							{
@@ -2436,8 +2435,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						{
 							group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 							deque<GroupMemberInfo*>* members = group->GetMembers();
-							if(!members)
-								return;
+							
 							Entity* group_member = 0;
 							for (itr = members->begin(); itr != members->end(); itr++) {
 								group_member = (*itr)->member;

@@ -48,6 +48,7 @@ Sign::Sign(){
 	include_location = false;
 	include_heading = false;
 	zone_id = 0;
+	language = 0;
 }
 
 Sign::~Sign(){
@@ -150,6 +151,7 @@ Sign* Sign::Copy(){
 	new_spawn->SetOmittedByDBFlag(IsOmittedByDBFlag());
 	new_spawn->SetLootTier(GetLootTier());
 	new_spawn->SetLootDropType(GetLootDropType());
+	new_spawn->SetLanguage(GetLanguage());
 	return new_spawn;
 }
 

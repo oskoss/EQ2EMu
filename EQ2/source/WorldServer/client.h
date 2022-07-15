@@ -285,9 +285,9 @@ public:
 	void	AcceptQuestReward(Quest* quest, int32 item_id);
 	Quest*	GetPendingQuestAcceptance(int32 item_id);
 	Quest*	GetActiveQuest(int32 quest_id);
-	void	DisplayConversation(int32 conversation_id, int32 spawn_id, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2);
-	void	DisplayConversation(Item* item, vector<ConversationOption>* conversations, const char* text, int8 type, const char* mp3 = 0, int32 key1 = 0, int32 key2 = 0);
-	void	DisplayConversation(Spawn* src, int8 type, vector<ConversationOption>* conversations, const char* text, const char* mp3 = 0, int32 key1 = 0, int32 key2 = 0);
+	void	DisplayConversation(int32 conversation_id, int32 spawn_id, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2, int8 language = 0, int8 can_close = 1);
+	void	DisplayConversation(Item* item, vector<ConversationOption>* conversations, const char* text, int8 type, const char* mp3 = 0, int32 key1 = 0, int32 key2 = 0, int8 language = 0, int8 can_close = 1);
+	void	DisplayConversation(Spawn* src, int8 type, vector<ConversationOption>* conversations, const char* text, const char* mp3 = 0, int32 key1 = 0, int32 key2 = 0, int8 language = 0, int8 can_close = 1);
 	void	CloseDialog(int32 conversation_id);
 	int32	GetConversationID(Spawn* spawn, Item* item);
 	void	CombineSpawns(float radius, Spawn* spawn);
@@ -568,7 +568,7 @@ private:
 	Spawn*	combine_spawn;
 	int8	num_active_failures;
 	int32	next_conversation_id;
-	map<int32, Spawn*> conversation_spawns;
+	map<int32, int32> conversation_spawns;
 	map<int32, Item*> conversation_items;
 	Mutex MConversation;
 	map<int32, map<int8, string> > conversation_map;

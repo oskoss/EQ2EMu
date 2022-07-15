@@ -6100,6 +6100,10 @@ void Player::AddAAEntry(int16 template_id, int8 tab_id, int32 aa_id, int16 order
 	
 }
 void Player::AddLanguage(int32 id, const char *name, bool save_needed){
+	Skill* skill = master_skill_list.GetSkillByName(name);
+	if(skill && !GetSkills()->HasSkill(skill->skill_id)) {
+		AddSkill(skill->skill_id, 1, skill->max_val, true);
+	}
 	// Check to see if the player already has the language
 	if (HasLanguage(id))
 		return;

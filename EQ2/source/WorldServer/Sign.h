@@ -66,7 +66,9 @@ public:
 	bool	GetIncludeLocation();
 	void	SetIncludeHeading(bool val);
 	bool	GetIncludeHeading();
-
+	void	SetLanguage(int8 in_language) { language = in_language; }
+	int8	GetLanguage() { return language; }
+	
 private:
 	string	description;
 	string	title;
@@ -83,6 +85,7 @@ private:
 	float	sign_distance;
 	bool	include_location;
 	bool	include_heading;
+	int8	language;
 };
 
 #endif
