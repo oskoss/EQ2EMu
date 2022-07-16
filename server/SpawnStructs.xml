@@ -2458,6 +2458,17 @@
 <Data ElementName="sign_distance" Type="float" Size="1" />
 <Data ElementName="show" Type="int16" Size="1" />
 </Struct>
+<Struct Name="WS_SignWidgetSpawnStruct_Footer" ClientVersion="546">
+<Data ElementName="widget_id" Type="int32" Size="1" />
+<Data ElementName="widget_x" Type="float" Size="1" />
+<Data ElementName="widget_y" Type="float" Size="1" />
+<Data ElementName="widget_z" Type="float" Size="1" />
+<Data ElementName="title" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
+<Data ElementName="sign_distance" Type="float" Size="1" />
+<Data ElementName="show" Type="int16" Size="1" />
+<Data ElementName="language" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_SignWidgetSpawnStruct_Footer" ClientVersion="547">
 <Data ElementName="name" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="unknown1a" Type="float" Size="1" />
@@ -2471,6 +2482,7 @@
 <Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="sign_distance" Type="float" Size="1" />
 <Data ElementName="show" Type="int16" Size="1" />
+<Data ElementName="language" Type="int8" Size="1" />
 </Struct>
 <Struct Name="WS_SignWidgetSpawnStruct_Footer" ClientVersion="882">
 <Data ElementName="name" Type="EQ2_16Bit_String" Size="1" />

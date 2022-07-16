@@ -8937,7 +8937,7 @@ to zero and treated like placeholders." />
 <Data ElementName="closeable" Type="int8" />
 <Data ElementName="spawn_id" Type="int32" />
 <Data ElementName="voice" Type="EQ2_16Bit_String" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="language" Type="int8" Size="1" />
 <Data ElementName="key1" Type="int32" Size="1" />
 <Data ElementName="key2" Type="int32" Size="1" />
 </Struct>
@@ -8950,10 +8950,10 @@ to zero and treated like placeholders." />
   <Data ElementName="response" Type="EQ2_16Bit_String" Size="1" />
 </Data>
 <Data ElementName="unknown3" Type="int8" />
-<Data ElementName="unknown2" Type="int8" />
+<Data ElementName="can_close" Type="int8" />
 <Data ElementName="spawn_id" Type="int32" />
 <Data ElementName="voice" Type="EQ2_16Bit_String" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="language" Type="int8" Size="1" />
 <Data ElementName="key1" Type="int32" Size="1" />
 <Data ElementName="key2" Type="int32" Size="1" />
 </Struct>
