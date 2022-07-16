@@ -726,9 +726,6 @@ public:
 	int8 GetRace(){
 		return appearance.race;
 	}
-	int8 GetLuaRaceId() {
-		return appearance.lua_race_id;
-	}
 	int32 GetSize(){
 		return size;
 	}

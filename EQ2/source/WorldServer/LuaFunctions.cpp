@@ -1851,7 +1851,9 @@ int EQ2Emu_lua_SpellDamage(lua_State* state) {
 
 					if (race_req.size() > 0) {
 						for (int8 i = 0; i < race_req.size(); i++) {
-							if (target->GetLuaRaceId() == race_req[i]) {
+						if(race_req[i] == target->GetRace() ||
+							race_req[i] == race_types_list.GetRaceType(target->GetModelType()) ||
+							race_req[i] == race_types_list.GetRaceBaseType(target->GetModelType())) {
 								race_match = true;
 							}
 						}
@@ -1872,7 +1874,9 @@ int EQ2Emu_lua_SpellDamage(lua_State* state) {
 			//check class and race/faction here
 			if (race_req.size() > 0) {
 				for (int8 i = 0; i < race_req.size(); i++) {
-					if (target->GetLuaRaceId() == race_req[i]) {
+					if(race_req[i] == target->GetRace() ||
+						race_req[i] == race_types_list.GetRaceType(target->GetModelType()) ||
+						race_req[i] == race_types_list.GetRaceBaseType(target->GetModelType())) {
 						race_match = true;
 					}
 				}

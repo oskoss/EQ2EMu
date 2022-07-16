@@ -6852,8 +6852,7 @@ NPC* Player::InstantiateSpiritShard(float origX, float origY, float origZ, float
 		npc->appearance.race = GetRace();
 		npc->appearance.gender = GetGender();
 		npc->appearance.adventure_class = GetAdventureClass();
-		 
-		//npc->appearance.lua_race_id = result.GetInt16(74);
+		
 		npc->appearance.model_type = GetModelType();
 		npc->appearance.soga_model_type = GetSogaModelType();
 		npc->appearance.display_name = 1;

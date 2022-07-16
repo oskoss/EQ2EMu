@@ -466,9 +466,14 @@ void PlayerGroupManager::RemoveGroupBuffs(int32 group_id, Client* client) {
 	if (group && client) {
 		/* first remove all spell effects this group member has on them from other group members */
 		player = client->GetPlayer();
-		se = player->GetSpellEffects();
+		bool recoup_lock = true;
 		for (int i = 0; i < NUM_SPELL_EFFECTS; i++) {
-			if (se[i].spell_id != 0xFFFFFFFF) {
+			if(recoup_lock) {
+				player->GetSpellEffectMutex()->readlock(__FUNCTION__, __LINE__);
+				recoup_lock = false;
+				se = player->GetSpellEffects();
+			}
+			if (se && se[i].spell_id != 0xFFFFFFFF) {
 				//If the client is the caster, don't remove the spell
 				if (se[i].caster == player)
 					continue;
@@ -478,6 +483,9 @@ void PlayerGroupManager::RemoveGroupBuffs(int32 group_id, Client* client) {
 				/* is this a friendly group spell? */
 				if (spell && spell->GetSpellData()->group_spell && spell->GetSpellData()->friendly_spell) {
 
+					player->GetSpellEffectMutex()->releasereadlock(__FUNCTION__, __LINE__);
+					recoup_lock = true;
+					// we have to remove our spell effect mutex lock since RemoveSpellEffect needs a write lock to remove it
 					//Remove all group buffs not cast by this player
 					player->RemoveSpellEffect(luaspell);
 					player->RemoveSpellBonus(luaspell);
@@ -500,6 +508,9 @@ void PlayerGroupManager::RemoveGroupBuffs(int32 group_id, Client* client) {
 					}
 				}
 			}
+		}
+		if(!recoup_lock) { // we previously set a readlock that we now release
+			player->GetSpellEffectMutex()->releasereadlock(__FUNCTION__, __LINE__);
 		}
 		packet = client->GetPlayer()->GetSkills()->GetSkillPacket(client->GetVersion());
 		if (packet)

@@ -972,12 +972,6 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->appearance.level =		atoi(row[2]);
 		npc->appearance.encounter_level = atoi(row[4]);
 		npc->appearance.race = atoi(row[5]);
-		//npc->appearance.lua_race_id = atoi(row[75]);
-		//devn00b: this never gets used..and is set correctly below...removing.
-		/*if (atoi(row[74]) > 0) {
-			int16 xxx = atoi(row[75]);
-			int8 yyy = 0;
-		}*/
 		npc->appearance.model_type = atoi(row[6]);
 		npc->appearance.soga_model_type = atoi(row[62]);
 		npc->appearance.adventure_class = atoi(row[7]);
@@ -1140,8 +1134,6 @@ void WorldDatabase::LoadSpiritShards(ZoneServer* zone){
 		shard->appearance.race = atoul(row[3]);
 		shard->appearance.gender = atoul(row[4]);
 		shard->appearance.adventure_class = atoul(row[5]);
-		 
-		//shard->appearance.lua_race_id = result.GetInt16(74);
 		shard->appearance.model_type = atoul(row[6]);
 		shard->appearance.soga_model_type = atoul(row[7]);
 		shard->appearance.display_name = 1;
@@ -6746,8 +6738,6 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		npc->appearance.level =		result.GetInt8(2);
 		npc->appearance.encounter_level = result.GetInt8(4);
 		npc->appearance.race = result.GetInt8(5);
-		 
-		//npc->appearance.lua_race_id = result.GetInt16(74);
 		npc->appearance.model_type = result.GetInt16(6);
 		npc->appearance.soga_model_type = result.GetInt16(62);
 		npc->appearance.adventure_class = result.GetInt8(7);
