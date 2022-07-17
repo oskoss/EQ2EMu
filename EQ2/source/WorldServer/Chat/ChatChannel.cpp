@@ -147,7 +147,10 @@ bool ChatChannel::TellChannel(Client *client, const char *message, const char* n
 		packet_struct->setDataByName("message", message);
 		packet_struct->setDataByName("channel_name", name);
 		packet_struct->setDataByName("show_bubble", 1);
-		packet_struct->setDataByName("understood", 1);
+		
+		if (client->GetPlayer()->GetCurrentLanguage() == 0 || to_client->GetPlayer()->HasLanguage(client->GetPlayer()->GetCurrentLanguage())) {
+			packet_struct->setDataByName("understood", 1);
+		}
 		packet_struct->setDataByName("unknown4", 0);
 		
 		to_client->QueuePacket(packet_struct->serialize());
