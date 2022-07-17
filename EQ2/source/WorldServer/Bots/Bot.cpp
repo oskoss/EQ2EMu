@@ -146,7 +146,7 @@ bool Bot::CanEquipItem(Item* item) {
 void Bot::MessageGroup(string msg) {
 	GroupMemberInfo* gmi = GetGroupMemberInfo();
 	if (gmi)
-		world.GetGroupManager()->GroupChatMessage(gmi->group_id, this, msg.c_str());
+		world.GetGroupManager()->GroupChatMessage(gmi->group_id, this, 0, msg.c_str());
 }
 
 void Bot::GetNewSpells() {

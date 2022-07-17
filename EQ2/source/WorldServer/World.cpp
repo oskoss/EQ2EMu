@@ -437,7 +437,7 @@ void ZoneList::CheckFriendZoned(Client* client){
 	MClientList.unlock();
 }
 
-bool ZoneList::HandleGlobalChatMessage(Client* from, char* to, int16 channel, const char* message, const char* channel_name){
+bool ZoneList::HandleGlobalChatMessage(Client* from, char* to, int16 channel, const char* message, const char* channel_name, int32 current_language_id){
 	if (!from) {
 		LogWrite(WORLD__ERROR, 0, "World", "HandleGlobalChatMessage() called with an invalid client");
 		return false;
@@ -453,11 +453,11 @@ bool ZoneList::HandleGlobalChatMessage(Client* from, char* to, int16 channel, co
 		else
 		{
 			const char* whoto = find_client->GetPlayer()->GetName();
-			find_client->HandleTellMessage(from, message, whoto);
-			from->HandleTellMessage(from, message, whoto);
+			find_client->HandleTellMessage(from, message, whoto, from->GetPlayer()->GetCurrentLanguage());
+			from->HandleTellMessage(from, message, whoto, from->GetPlayer()->GetCurrentLanguage());
 			if (find_client->GetPlayer()->get_character_flag(CF_AFK)) {
-				find_client->HandleTellMessage(find_client, find_client->GetPlayer()->GetAwayMessage().c_str(),whoto);
-				from->HandleTellMessage(find_client, find_client->GetPlayer()->GetAwayMessage().c_str(),whoto);
+				find_client->HandleTellMessage(find_client, find_client->GetPlayer()->GetAwayMessage().c_str(),whoto, from->GetPlayer()->GetCurrentLanguage());
+				from->HandleTellMessage(find_client, find_client->GetPlayer()->GetAwayMessage().c_str(),whoto, from->GetPlayer()->GetCurrentLanguage());
 			}
 		}
 	}
@@ -474,7 +474,7 @@ bool ZoneList::HandleGlobalChatMessage(Client* from, char* to, int16 channel, co
 		for(zone_iter=zlist.begin(); zone_iter!=zlist.end();zone_iter++){
 			zs = *zone_iter;
 			if(zs)
-				zs->HandleChatMessage(from->GetPlayer(), to, channel, message, 0, channel_name);
+				zs->HandleChatMessage(from->GetPlayer(), to, channel, message, 0, channel_name, true, current_language_id);
 		}
 		MZoneList.releasereadlock(__FUNCTION__, __LINE__);
 	}

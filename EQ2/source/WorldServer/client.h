@@ -159,7 +159,7 @@ public:
 	void	QueuePacket(EQ2Packet* app, bool attemptedCombine=false);
 	void	SendLoginInfo();
 	int8	GetMessageChannelColor(int8 channel_type);
-	void	HandleTellMessage(Client* from, const char* message, const char* to);
+	void	HandleTellMessage(Client* from, const char* message, const char* to, int32 current_language_id);
 	void	SimpleMessage(int8 color, const char* message);
 	void	Message(int8 type, const char* message, ...);
 	void	SendSpellUpdate(Spell* spell, bool add_silently = false, bool add_to_hotbar = true);

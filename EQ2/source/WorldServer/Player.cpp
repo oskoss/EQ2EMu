@@ -123,6 +123,7 @@ Player::Player(){
 	SetSaveSpellEffects(true);
 	reset_mentorship = false;
 	all_spells_locked = false;
+	current_language_id = 0;
 }
 Player::~Player(){
 	SetSaveSpellEffects(true);

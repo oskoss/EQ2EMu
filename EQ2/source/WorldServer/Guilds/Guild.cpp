@@ -2211,7 +2211,7 @@ void Guild::HandleGuildSay(Client* sender, const char* message) {
 			continue;
 			
 		if (permissions.Get(itr->second->rank)->Get(GUILD_PERMISSIONS_SEE_GUILD_CHAT))
-			client->GetCurrentZone()->HandleChatMessage(client, sender->GetPlayer(), client->GetPlayer()->GetName(), CHANNEL_GUILD_SAY, message, 0, 0, false);
+			client->GetCurrentZone()->HandleChatMessage(client, sender->GetPlayer(), client->GetPlayer()->GetName(), CHANNEL_GUILD_SAY, message, 0, 0, false, sender->GetPlayer()->GetCurrentLanguage());
 	}
 	mMembers.releasereadlock(__FUNCTION__, __LINE__);
 	LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild Say");
@@ -2240,7 +2240,7 @@ void Guild::HandleOfficerSay(Client* sender, const char* message) {
 			continue;
 
 		if (permissions.Get(itr->second->rank)->Get(GUILD_PERMISSIONS_SEE_OFFICER_CHAT))
-			client->GetCurrentZone()->HandleChatMessage(client, sender->GetPlayer(), client->GetPlayer()->GetName(), CHANNEL_OFFICER_SAY, message, 0, 0, false);
+			client->GetCurrentZone()->HandleChatMessage(client, sender->GetPlayer(), client->GetPlayer()->GetName(), CHANNEL_OFFICER_SAY, message, 0, 0, false, sender->GetPlayer()->GetCurrentLanguage());
 	}
 	mMembers.releasereadlock(__FUNCTION__, __LINE__);
 	LogWrite(GUILD__DEBUG, 0, "Guilds", "Officer Say");

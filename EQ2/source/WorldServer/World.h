@@ -424,7 +424,7 @@ class ZoneList {
 	void CheckFriendZoned(Client* client);
 
 	// move to Chat/Chat.h?
-	bool HandleGlobalChatMessage(Client* from, char* to, int16 channel, const char* message, const char* channel_name = 0);
+	bool HandleGlobalChatMessage(Client* from, char* to, int16 channel, const char* message, const char* channel_name = 0, int32 current_language_id = 0);
 	void HandleGlobalBroadcast(const char* message);
 	void HandleGlobalAnnouncement(const char* message);
 	//

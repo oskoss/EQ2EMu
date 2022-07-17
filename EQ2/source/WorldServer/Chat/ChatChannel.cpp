@@ -143,7 +143,7 @@ bool ChatChannel::TellChannel(Client *client, const char *message, const char* n
 
 		packet_struct->setDataByName("to", to_client->GetPlayer()->GetName());
 		packet_struct->setDataByName("channel", to_client->GetMessageChannelColor(CHANNEL_CUSTOM_CHANNEL));
-		packet_struct->setDataByName("language", 0);
+		packet_struct->setDataByName("language", client->GetPlayer()->GetCurrentLanguage());
 		packet_struct->setDataByName("message", message);
 		packet_struct->setDataByName("channel_name", name);
 		packet_struct->setDataByName("show_bubble", 1);

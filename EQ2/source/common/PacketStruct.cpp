@@ -2401,7 +2401,6 @@ void PacketStruct::PrintPacket() {
 				break;
 			}
 			case DATA_STRUCT_ITEM: {
-				printf("EQ2_Item %s\tIsSet:  %u", ds->GetName(), ds->IsSet());
 				if (ds->GetItemSize() > 0) {
 					DumpPacket((uchar*)GetStructPointer(ds), ds->GetItemSize());
 				}

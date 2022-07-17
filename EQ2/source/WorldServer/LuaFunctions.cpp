@@ -1240,15 +1240,16 @@ int EQ2Emu_lua_Say(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string message = lua_interface->GetStringValue(state, 2);
 	Spawn* player = lua_interface->GetSpawn(state, 3);
-	int32 language = lua_interface->GetInt32Value(state, 4);
+	float dist = lua_interface->GetFloatValue(state, 4);
+	int32 language = lua_interface->GetInt32Value(state, 5);
 	if (spawn && message.length() > 0) {
 		Client* client = 0;
 		if (player && player->IsPlayer())
 			client = spawn->GetZone()->GetClientBySpawn(player);
 		if (client)
-			spawn->GetZone()->HandleChatMessage(client, spawn, 0, CHANNEL_SAY, message.c_str(), 30, 0, true, language);
+			spawn->GetZone()->HandleChatMessage(client, spawn, 0, CHANNEL_SAY, message.c_str(), (dist > 0.0f) ? dist : 30.0f, 0, true, language);
 		else
-			spawn->GetZone()->HandleChatMessage(spawn, 0, CHANNEL_SAY, message.c_str(), 30, 0, true, language);
+			spawn->GetZone()->HandleChatMessage(spawn, 0, CHANNEL_SAY, message.c_str(), (dist > 0.0f) ? dist : 30.0f, 0, true, language);
 	}
 	lua_interface->ResetFunctionStack(state);
 	return 0;
@@ -1261,14 +1262,15 @@ int EQ2Emu_lua_Shout(lua_State* state) {
 	string message = lua_interface->GetStringValue(state, 2);
 	Spawn* player = lua_interface->GetSpawn(state, 3);
 	float dist = lua_interface->GetFloatValue(state, 4);
+	int32 language = lua_interface->GetInt32Value(state, 5);
 	if (spawn && message.length() > 0) {
 		Client* client = 0;
 		if (player && player->IsPlayer())
 			client = spawn->GetZone()->GetClientBySpawn(player);
 		if (client)
-			spawn->GetZone()->HandleChatMessage(client, spawn, 0, CHANNEL_SHOUT, message.c_str(), (dist > 0.0f) ? dist : 30.0f);
+			spawn->GetZone()->HandleChatMessage(client, spawn, 0, CHANNEL_SHOUT, message.c_str(), (dist > 0.0f) ? dist : 30.0f, 0, true, language);
 		else
-			spawn->GetZone()->HandleChatMessage(spawn, 0, CHANNEL_SHOUT, message.c_str(), (dist > 0.0f) ? dist : 30.0f);
+			spawn->GetZone()->HandleChatMessage(spawn, 0, CHANNEL_SHOUT, message.c_str(), (dist > 0.0f) ? dist : 30.0f, 0, true, language);
 	}
 	lua_interface->ResetFunctionStack(state);
 	return 0;
@@ -1280,14 +1282,16 @@ int EQ2Emu_lua_SayOOC(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	string message = lua_interface->GetStringValue(state, 2);
 	Spawn* player = lua_interface->GetSpawn(state, 3);
+	float dist = lua_interface->GetFloatValue(state, 4);
+	int32 language = lua_interface->GetInt32Value(state, 5);
 	if (spawn && message.length() > 0) {
 		Client* client = 0;
 		if (player && player->IsPlayer())
 			client = spawn->GetZone()->GetClientBySpawn(player);
 		if (client)
-			spawn->GetZone()->HandleChatMessage(client, spawn, 0, CHANNEL_OUT_OF_CHARACTER, message.c_str(), 30);
+			spawn->GetZone()->HandleChatMessage(client, spawn, 0, CHANNEL_OUT_OF_CHARACTER, message.c_str(), (dist > 0.0f) ? dist : 30.0f, 0, true, language);
 		else
-			spawn->GetZone()->HandleChatMessage(spawn, 0, CHANNEL_OUT_OF_CHARACTER, message.c_str(), 30);
+			spawn->GetZone()->HandleChatMessage(spawn, 0, CHANNEL_OUT_OF_CHARACTER, message.c_str(), (dist > 0.0f) ? dist : 30.0f, 0, true, language);
 	}
 	lua_interface->ResetFunctionStack(state);
 	return 0;

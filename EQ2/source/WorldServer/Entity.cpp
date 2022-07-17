@@ -1236,7 +1236,6 @@ void Entity::CalculateBonuses(){
 	info->set_block(info->get_block_base());
 	
 	info->set_cur_attack(info->get_attack_base());
-	info->set_cur_mitigation(info->get_mitigation_base());
 	info->set_base_avoidance_pct(info->get_avoidance_base());
 
 	info->set_disease(info->get_disease_base());
@@ -1288,6 +1287,8 @@ void Entity::CalculateBonuses(){
 
 	ItemStatsValues* values = equipment_list.CalculateEquipmentBonuses(this);
 	CalculateSpellBonuses(values);
+	
+	info->set_cur_mitigation(info->get_mitigation_base());
 	info->add_sta((float)values->sta);
 	info->add_str((float)values->str);
 	info->add_agi((float)values->agi);

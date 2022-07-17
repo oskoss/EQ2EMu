@@ -3682,7 +3682,7 @@ int8 Client::GetMessageChannelColor(int8 channel_type) {
 	return channel_type;
 }
 
-void Client::HandleTellMessage(Client* from, const char* message, const char* to=NULL) {
+void Client::HandleTellMessage(Client* from, const char* message, const char* to, int32 current_language_id) {
 	if (!from || GetPlayer()->IsIgnored(from->GetPlayer()->GetName()))
 		return;
 	PacketStruct* packet = configReader.getStruct("WS_HearChat", GetVersion());
@@ -3694,8 +3694,13 @@ void Client::HandleTellMessage(Client* from, const char* message, const char* to
 		packet->setDataByName("to_spawn_id", 0xFFFFFFFF);
 		packet->setDataByName("unknown2", 1, 1);
 		packet->setDataByName("show_bubble", 1);
-		packet->setDataByName("understood", 1);
+		
+		if (current_language_id == 0 || GetPlayer()->HasLanguage(current_language_id)) {
+			packet->setDataByName("understood", 1);
+		}
+		
 		packet->setDataByName("time", 2);
+		packet->setDataByName("language", current_language_id);
 		packet->setMediumStringByName("message", message);
 		EQ2Packet* outpacket = packet->serialize();
 		QueuePacket(outpacket);			
@@ -9732,6 +9737,7 @@ void Client::SendLanguagesUpdate(int32 id) {
 	list<Language*>::iterator itr;
 	Language* language;
 	int32 i = 0;
+	GetPlayer()->SetCurrentLanguage(id);
 	PacketStruct* packet = configReader.getStruct("WS_Languages", GetVersion());
 	if (packet) {
 		packet->setArrayLengthByName("num_languages", languages->size());

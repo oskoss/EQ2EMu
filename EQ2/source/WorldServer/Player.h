@@ -1047,6 +1047,10 @@ public:
 	int16 MatchGMVisualFilter(int32 filter_type, int32 filter_value, char* filter_search_str, bool in_vismutex_lock = false);
 	void ClearGMVisualFilters();
 	int GetPVPAlignment();
+	
+	int32	GetCurrentLanguage() { return current_language_id; }
+	void	SetCurrentLanguage(int32 language_id) { current_language_id = language_id; }
+	
 	Mutex MPlayerQuests;
 	float   pos_packet_speed;
 private:
@@ -1179,6 +1183,8 @@ private:
 	Timer lift_cooldown;
 
 	vector<GMTagFilter> gm_visual_filters;
+	
+	int32 current_language_id;
 };
 #pragma pack()
 #endif

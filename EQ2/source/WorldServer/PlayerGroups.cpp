@@ -163,13 +163,13 @@ void PlayerGroup::SimpleGroupMessage(const char* message) {
 	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-void PlayerGroup::GroupChatMessage(Spawn* from, const char* message) {
+void PlayerGroup::GroupChatMessage(Spawn* from, int32 language, const char* message) {
 	deque<GroupMemberInfo*>::iterator itr;
 	MGroupMembers.readlock(__FUNCTION__, __LINE__);
 	for(itr = m_members.begin(); itr != m_members.end(); itr++) {
 		GroupMemberInfo* info = *itr;
 		if(info && info->client && info->client->GetCurrentZone())
-			info->client->GetCurrentZone()->HandleChatMessage(info->client, from, 0, CHANNEL_GROUP_SAY, message, 0);
+			info->client->GetCurrentZone()->HandleChatMessage(info->client, from, 0, CHANNEL_GROUP_SAY, message, 0, 0, true, language);
 	}
 	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 }
@@ -595,11 +595,11 @@ void PlayerGroupManager::GroupMessage(int32 group_id, const char* message, ...) 
 	SimpleGroupMessage(group_id, buffer);
 }
 
-void PlayerGroupManager::GroupChatMessage(int32 group_id, Spawn* from, const char* message) {
+void PlayerGroupManager::GroupChatMessage(int32 group_id, Spawn* from, int32 language, const char* message) {
 	MGroups.readlock(__FUNCTION__, __LINE__);
 
 	if (m_groups.count(group_id) > 0)
-		m_groups[group_id]->GroupChatMessage(from, message);
+		m_groups[group_id]->GroupChatMessage(from, language, message);
 
 	MGroups.releasereadlock(__FUNCTION__, __LINE__);
 }

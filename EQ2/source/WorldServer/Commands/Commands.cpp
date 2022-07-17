@@ -2437,7 +2437,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 				if (spawn->IsNPC())
 					show_bubble = false;
-				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SAY, tmp, HEAR_SPAWN_DISTANCE, 0, show_bubble);
+				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SAY, tmp, HEAR_SPAWN_DISTANCE, 0, show_bubble, client->GetPlayer()->GetCurrentLanguage());
 				if(spawn->IsPlayer() == false && spawn->Alive() && spawn->GetDistance(client->GetPlayer()) < rule_manager.GetGlobalRule(R_Spawn, HailDistance)->GetInt32()){
 					if(spawn->IsNPC() && ((NPC*)spawn)->EngagedInCombat())
 						spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_HAILED_BUSY, client->GetPlayer());
@@ -2460,13 +2460,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}
 			else {
 				string tmp = "Hail";
-				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SAY, tmp.c_str(), HEAR_SPAWN_DISTANCE, 0, true);
+				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SAY, tmp.c_str(), HEAR_SPAWN_DISTANCE, 0, true, client->GetPlayer()->GetCurrentLanguage());
 			}
 			break;
 						  }
 		case COMMAND_SAY:{
 			if (sep && sep->arg[0][0]) {
-				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SAY, sep->argplus[0], HEAR_SPAWN_DISTANCE);
+				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SAY, sep->argplus[0], HEAR_SPAWN_DISTANCE, 0, true, client->GetPlayer()->GetCurrentLanguage());
 				if (cmdTarget && !(cmdTarget->IsPlayer()))
 					client->GetCurrentZone()->CallSpawnScript(cmdTarget, SPAWN_SCRIPT_HEAR_SAY, client->GetPlayer(), sep->argplus[0]);
 			}
@@ -2476,7 +2476,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						 }
 		case COMMAND_TELL:{
 			if(sep && sep->arg[0] && sep->argplus[1]){
-				if(!zone_list.HandleGlobalChatMessage(client, sep->arg[0], CHANNEL_PRIVATE_TELL, sep->argplus[1]))
+				if(!zone_list.HandleGlobalChatMessage(client, sep->arg[0], CHANNEL_PRIVATE_TELL, sep->argplus[1], 0, client->GetPlayer()->GetCurrentLanguage()))
 					client->Message(CHANNEL_COLOR_RED,"Unable to find client %s",sep->arg[0]);
 			}else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /tell {character_name} {message}");
@@ -2484,14 +2484,14 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						  }
 		case COMMAND_SHOUT:{
 			if(sep && sep->arg[0][0])
-				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SHOUT, sep->argplus[0]);
+				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_SHOUT, sep->argplus[0], 0, 0, true, client->GetPlayer()->GetCurrentLanguage());
 			else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /shout {message}");
 			break;
 						   }
 		case COMMAND_AUCTION:{
 			if(sep && sep->arg[0][0])
-				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_AUCTION, sep->argplus[0]);
+				client->GetCurrentZone()->HandleChatMessage(client->GetPlayer(), 0, CHANNEL_AUCTION, sep->argplus[0], 0, 0, true, client->GetPlayer()->GetCurrentLanguage());
 			else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /auction {message}");
 			break;
@@ -2499,7 +2499,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_OOC:{
 			//For now ooc will be the global chat channel, eventually when we create more channels we will create a global chat channel
 			if(sep && sep->arg[0][0])
-				zone_list.HandleGlobalChatMessage(client, 0, CHANNEL_OUT_OF_CHARACTER, sep->argplus[0]);
+				zone_list.HandleGlobalChatMessage(client, 0, CHANNEL_OUT_OF_CHARACTER, sep->argplus[0], 0, client->GetPlayer()->GetCurrentLanguage());
 			else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /ooc {message}");
 			break;
@@ -3056,7 +3056,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_GROUPSAY:{
 			GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
 			if(sep && sep->arg[0] && gmi)
-				world.GetGroupManager()->GroupChatMessage(gmi->group_id, client->GetPlayer(), sep->argplus[0]);
+				world.GetGroupManager()->GroupChatMessage(gmi->group_id, client->GetPlayer(), client->GetPlayer()->GetCurrentLanguage(), sep->argplus[0]);
 			break;
 		}
 		case COMMAND_GROUPINVITE: {

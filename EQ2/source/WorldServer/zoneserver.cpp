@@ -999,8 +999,6 @@ void ZoneServer::RemoveDeadEnemyList(Spawn *spawn)
 	vector<int32> *spawns;
 	vector<int32>::iterator itr;
 
-	LogWrite(ZONE__DEBUG, 7, "Zone", "Processing RemoveDeadEnemyList...");
-
 	m_npc_faction_list.writelock(__FUNCTION__, __LINE__);
 	if (npc_faction_list.count(faction_id) > 0) {
 		spawns = npc_faction_list[faction_id];
@@ -3391,7 +3389,9 @@ void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, 
 			packet->setMediumStringByName("message", message);
 			packet->setDataByName("language", language);
 
-			if (language > 0 && !client->GetPlayer()->HasLanguage(language))
+			bool hasLanguage = client->GetPlayer()->HasLanguage(language);
+			printf("Client: %s has %u language: %u\n", client->GetPlayer()->GetName(), language, hasLanguage);
+			if (language > 0 && !hasLanguage)
 				packet->setDataByName("understood", 0);
 			else
 				packet->setDataByName("understood", 1);
@@ -6018,8 +6018,7 @@ void ZoneServer::ProcessEntityCommand(EntityCommand* entity_command, Entity* cas
 void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_process) {
 	if(!spawn)
 		return;	
-
-	LogWrite(ZONE__DEBUG, 7, "Zone", "Processing RemoveSpawnSupportFunctions...");
+	
 	if(spawn->IsPlayer() && spawn->GetZone())
 		spawn->GetZone()->RemovePlayerPassenger(((Player*)spawn)->GetCharacterID());
 	if(spawn->IsEntity())
