@@ -3390,7 +3390,6 @@ void ZoneServer::HandleChatMessage(Client* client, Spawn* from, const char* to, 
 			packet->setDataByName("language", language);
 
 			bool hasLanguage = client->GetPlayer()->HasLanguage(language);
-			printf("Client: %s has %u language: %u\n", client->GetPlayer()->GetName(), language, hasLanguage);
 			if (language > 0 && !hasLanguage)
 				packet->setDataByName("understood", 0);
 			else
