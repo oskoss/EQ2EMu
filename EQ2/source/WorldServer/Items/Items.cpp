@@ -310,7 +310,7 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int64 ltype, i
 						break;
 					}
 					case ITEM_BROKER_TYPE_TRADESKILL:{
-						if(item->IsTradeskill())
+						if(item->crafted == 1)
 							should_add = true;
 						break;
 					}

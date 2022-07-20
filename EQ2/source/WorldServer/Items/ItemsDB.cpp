@@ -174,7 +174,6 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	item->generic_info.display_charges			= result->GetInt8Str("display_charges");
 	item->generic_info.tradeskill_default_level	= result->GetInt16Str("tradeskill_default_level");
 
-
 	item->generic_info.adventure_classes		= result->GetInt64Str("adventure_classes");
 	item->generic_info.tradeskill_classes		= result->GetInt64Str("tradeskill_classes");
 
@@ -222,6 +221,8 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 		strcpy(item->generic_info.required_by_quest_name,"");
 		
 	item->generic_info.transmuted_material		= result->GetInt8Str("transmuted_material");
+	
+	item->crafted = result->GetInt8Str("crafted");
 }
 
 int32 WorldDatabase::LoadSkillItems()
