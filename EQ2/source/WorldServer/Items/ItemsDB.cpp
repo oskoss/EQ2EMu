@@ -174,13 +174,9 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	item->generic_info.display_charges			= result->GetInt8Str("display_charges");
 	item->generic_info.tradeskill_default_level	= result->GetInt16Str("tradeskill_default_level");
 
-#ifdef WIN32
+
 	item->generic_info.adventure_classes		= result->GetInt64Str("adventure_classes");
 	item->generic_info.tradeskill_classes		= result->GetInt64Str("tradeskill_classes");
-#else
-	item->generic_info.adventure_classes		= result->GetInt64Str("adventure_classes");
-	item->generic_info.tradeskill_classes		= result->GetInt64Str("tradeskill_classes");
-#endif
 
 	if( !result->IsNullStr("lua_script") && strlen(result->GetStringStr("lua_script")) > 0 )
 	{
