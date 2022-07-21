@@ -223,6 +223,8 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	item->generic_info.transmuted_material		= result->GetInt8Str("transmuted_material");
 	
 	item->crafted = result->GetInt8Str("crafted");
+	item->tinkered = result->GetInt8Str("tinkered");
+	
 }
 
 int32 WorldDatabase::LoadSkillItems()

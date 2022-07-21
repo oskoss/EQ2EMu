@@ -305,7 +305,9 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int64 ltype, i
 						break;
 					}
 					case ITEM_BROKER_TYPE_TINKERED:{
-						if(item->IsTinkered())
+						//this is handled by item->tinkered
+						//if(item->IsTinkered())
+						if(item->tinkered == 1)
 							should_add = true;
 						break;
 					}
@@ -1447,11 +1449,11 @@ bool Item::IsHarvest() {
 bool Item::IsBodyDrop() {
 	return generic_info.body_drop == 1;
 }
-
-bool Item::IsTradeskill(){
+//devn00b: temp: this is now covered with item->crafted.
+/*bool Item::IsTradeskill(){
 	LogWrite(MISC__TODO, 1, "TODO", "Item Is Crafted\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	return false;
-}
+}*/
 
 void Item::SetItemType(int8 in_type){
 	generic_info.item_type = in_type;

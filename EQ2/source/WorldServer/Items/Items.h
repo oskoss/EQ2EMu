@@ -949,7 +949,8 @@ public:
 	std::time_t				created;
 	std::map<int32, bool>	grouped_char_ids;
 	ItemEffectType			effect_type;
-	int8 					crafted;
+	bool 					crafted;
+	bool					tinkered;
 	
 	void AddEffect(string effect, int8 percentage, int8 subbulletflag);
 	void AddBookPage(int8 page, string page_text,int8 valign, int8 halign);
