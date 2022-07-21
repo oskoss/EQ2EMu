@@ -305,8 +305,6 @@ vector<Item*>* MasterItemList::GetItems(string name, int64 itype, int64 ltype, i
 						break;
 					}
 					case ITEM_BROKER_TYPE_TINKERED:{
-						//this is handled by item->tinkered
-						//if(item->IsTinkered())
 						if(item->tinkered == 1)
 							should_add = true;
 						break;
@@ -1421,8 +1419,7 @@ bool Item::IsRecipeBook(){
 }
 
 bool Item::IsSalesDisplay(){
-	LogWrite(MISC__TODO, 1, "TODO", "Item Sales Displays\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-	return false;
+	return generic_info.item_type == ITEM_TYPE_HOUSE_CONTAINER; 
 }
 
 bool Item::IsSlashWeapon(){
@@ -1432,11 +1429,13 @@ bool Item::IsSlashWeapon(){
 bool Item::IsSpellScroll(){
 	return IsSkill();
 }
-
+//item->tinkered.
+/*
 bool Item::IsTinkered(){
 	LogWrite(MISC__TODO, 1, "TODO", "Item Is Tinkered\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	return false;
 }
+*/
 
 bool Item::IsThrown(){
 	return generic_info.item_type == ITEM_TYPE_THROWN;
@@ -1449,7 +1448,7 @@ bool Item::IsHarvest() {
 bool Item::IsBodyDrop() {
 	return generic_info.body_drop == 1;
 }
-//devn00b: temp: this is now covered with item->crafted.
+//item->crafted
 /*bool Item::IsTradeskill(){
 	LogWrite(MISC__TODO, 1, "TODO", "Item Is Crafted\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	return false;
