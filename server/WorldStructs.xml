@@ -9876,7 +9876,8 @@ to zero and treated like placeholders." />
 <Struct Name="WS_EqShowBook" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqShowBookCmd" >
 <Data ElementName="spawn_id" Type="int32" Size="1" />
 <Data ElementName="book_title" Type="EQ2_16Bit_String" Size="1" />
-<Data ElementName="unknown" Type="int16" Size="1" />
+<Data ElementName="language" Type="int8" Size="1" />
+<Data ElementName="unknown1" Type="int8" Size="1" />
 <Data ElementName="book_type" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="unknown2" Type="int16" Size="1" />
 <Data ElementName="num_pages" Type="int8" Size="1" />
@@ -9891,7 +9892,8 @@ to zero and treated like placeholders." />
 <Struct Name="WS_EqShowBook" ClientVersion="1096" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqShowBookCmd" >
 <Data ElementName="spawn_id" Type="int32" Size="1" />
 <Data ElementName="book_title" Type="EQ2_16Bit_String" Size="1" />
-<Data ElementName="unknown" Type="int16" Size="1" />
+<Data ElementName="language" Type="int8" Size="1" />
+<Data ElementName="unknown1" Type="int8" Size="1" />
 <Data ElementName="book_type" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="unknown2" Type="int8" Size="1" />
 <Data ElementName="unknown3" Type="int16" Size="1" />

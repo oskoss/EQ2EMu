@@ -604,6 +604,7 @@ public:
 
 	void				LoadStartingSkills(World* world);
 	void				LoadStartingSpells(World* world);
+	void				LoadVoiceOvers(World* world);
 
 	int32				CreateSpiritShard(const char* name, int32 level, int8 race, int8 gender, int8 adventure_class, 
 									  int16 model_type, int16 soga_model_type, int16 hair_type, int16 hair_face_type, int16 wing_type,

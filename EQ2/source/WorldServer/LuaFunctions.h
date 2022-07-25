@@ -194,6 +194,7 @@ int EQ2Emu_lua_GetCharacterID(lua_State* state);
 int EQ2Emu_lua_MovementLoopAdd(lua_State* state);
 int EQ2Emu_lua_GetCurrentZoneSafeLocation(lua_State* state);
 int EQ2Emu_lua_PlayFlavor(lua_State* state);
+int EQ2Emu_lua_PlayFlavorID(lua_State* state);
 int EQ2Emu_lua_PlaySound(lua_State* state);
 int EQ2Emu_lua_PlayVoice(lua_State* state);
 int EQ2Emu_lua_PlayAnimation(lua_State* state);

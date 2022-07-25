@@ -224,6 +224,7 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	
 	item->crafted = result->GetInt8Str("crafted");
 	item->tinkered = result->GetInt8Str("tinkered");
+	item->book_language = result->GetInt8Str("book_language");
 	
 }
 

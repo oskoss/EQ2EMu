@@ -32,6 +32,7 @@ using namespace std;
 #define CLIENT_TIMEOUT 60000
 struct TransportDestination;
 struct ConversationOption;
+struct VoiceOverStruct;
 
 #define MAIL_SEND_RESULT_SUCCESS				0
 #define MAIL_SEND_RESULT_UNKNOWN_PLAYER			1
@@ -446,8 +447,8 @@ public:
 
 	void SendFlightAutoMount(int32 path_id, int16 mount_id = 0, int8 mount_red_color = 0xFF, int8 mount_green_color = 0xFF, int8 mount_blue_color=0xFF);
 
-	void SendShowBook(Spawn* sender, string title, int8 num_pages, ...);
-	void SendShowBook(Spawn* sender, string title, vector<Item::BookPage*> pages);
+	void SendShowBook(Spawn* sender, string title, int8 language, int8 num_pages, ...);
+	void SendShowBook(Spawn* sender, string title, int8 language, vector<Item::BookPage*> pages);
 
 	void SetTemporaryTransportID(int32 id) { temporary_transport_id = id; }
 	int32 GetTemporaryTransportID() { return temporary_transport_id; }
@@ -540,6 +541,8 @@ public:
 	}
 	
 	bool	UseItem(Item* item, Spawn* target = nullptr);
+	
+	void	SendPlayFlavor(Spawn* spawn, int8 language, VoiceOverStruct* non_garble, VoiceOverStruct* garble, bool success = false, bool garble_success = false);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

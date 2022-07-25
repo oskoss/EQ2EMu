@@ -132,6 +132,7 @@ World::~World(){
 	tov_itemstat_conversion.clear();
 
 	PurgeStartingLists();
+	PurgeVoiceOvers();
 
 	map<std::string, RegionMapRange*>::iterator itr3;
 	for (itr3 = region_maps.begin(); itr3 != region_maps.end(); itr3++)
@@ -170,6 +171,7 @@ void World::init(){
 	LogWrite(WORLD__DEBUG, 1, "World", "-Load `visual states` complete!");
 
 	LoadStartingLists();
+	LoadVoiceOvers();
 
 	LogWrite(WORLD__DEBUG, 1, "World", "-Setting system parameters...");
 	Variable* var = variables.FindVariable("gametime");
@@ -2411,7 +2413,18 @@ void World::PurgeStartingLists()
 		safe_delete(tmpMap);
 	}
 	starting_spells.clear();
+	
 
+	for(int type=0;type<3;type++) {
+		multimap<int32, multimap<int16, VoiceOverStruct>*>::iterator vos_itr;
+
+		for (vos_itr = voiceover_map[type].begin(); vos_itr != voiceover_map[type].end(); vos_itr++)
+		{
+			multimap<int16, VoiceOverStruct>* tmpMap = vos_itr->second;
+			safe_delete(tmpMap);
+		}
+		voiceover_map[type].clear();
+	}
 	MStartingLists.releasewritelock();
 }
 
@@ -2610,4 +2623,147 @@ Map* World::GetMap(std::string zoneFile, int32 client_version)
 void World::SendTimeUpdate()
 {
 	zone_list.SendTimeUpdate();
+}
+
+void World::LoadVoiceOvers()
+{
+	LogWrite(WORLD__DEBUG, 1, "World", "-Loading `voiceovers`...");
+	database.LoadVoiceOvers(this);
+}
+
+
+void World::PurgeVoiceOvers()
+{
+	MVoiceOvers.writelock();
+	for(int type=0;type<MAX_VOICEOVER_TYPE+1;type++) {
+		multimap<int32, multimap<int16, VoiceOverStruct>*>::iterator vos_itr;
+
+		for (vos_itr = voiceover_map[type].begin(); vos_itr != voiceover_map[type].end(); vos_itr++)
+		{
+			multimap<int16, VoiceOverStruct>* tmpMap = vos_itr->second;
+			safe_delete(tmpMap);
+		}
+		voiceover_map[type].clear();
+	}
+	MVoiceOvers.releasewritelock();
+}
+
+
+bool World::FindVoiceOver(int8 type, int32 id, int16 index, VoiceOverStruct* struct_, bool* find_garbled, VoiceOverStruct* garble_struct_) {
+	// if we complete both requirements, based on struct_ and garble_struct_  being passed when required by ptr not being null
+	bool succeed = false;
+	if(type > MAX_VOICEOVER_TYPE) {
+		LogWrite(WORLD__ERROR, 0, "World", "Voice over %u out of range, max voiceover type is %u...", type, MAX_VOICEOVER_TYPE);
+		return succeed;
+	}
+	
+	MVoiceOvers.readlock();
+	multimap<int32, multimap<int16, VoiceOverStruct>*>::iterator itr = voiceover_map[type].find(id);
+	if(itr != voiceover_map[type].end()) {
+			std::pair<VOMapIterator, VOMapIterator> result = itr->second->equal_range(index);
+			int count = std::distance(result.first, result.second);
+			bool tries_attempt = true; // abort out the while loop
+			bool non_garble_found = false;
+			int rand = 0; // use to randomize the voiceover selection
+			int pos = 0;
+			int tries = 0;
+			bool has_ungarbled = false;
+			bool has_garbled = false;
+			int8 garble_link_id = 0; // used to match ungarbled to garbled when the link id is set in the DB
+			while(tries_attempt) {
+				pos = 0;
+				rand = MakeRandomInt(0, count);
+				if ( tries == 3 || non_garble_found || (find_garbled && (*find_garbled)))
+					rand = 0; // override, too many tries, or we otherwise found one garbled/ungarbled lets try to link it
+				for (VOMapIterator it = result.first; it != result.second; it++) {
+					if(!it->second.is_garbled) {
+						has_ungarbled = true;
+					}
+					else {
+						has_garbled = true;
+					}
+					pos++;
+					
+					// if there is only 1 entry in the voiceover list we aren't going to bother skipping
+					if(count > 1 && pos < rand) {
+						continue;
+					}
+					if(!it->second.is_garbled && (garble_link_id == 0 || it->second.garble_link_id == garble_link_id)) {
+						garble_link_id = it->second.garble_link_id;
+						non_garble_found = true;
+						if(struct_) {
+							CopyVoiceOver(struct_, &it->second);
+						}
+						
+						if(!find_garbled || ((*find_garbled))) {
+							if(find_garbled)
+								*find_garbled = true;
+							tries_attempt = false;
+							succeed = true;
+							break;
+						}
+					}
+					else if(find_garbled && !(*find_garbled) && it->second.is_garbled && (garble_link_id == 0 || it->second.garble_link_id == garble_link_id)) { 
+						*find_garbled = true;
+						garble_link_id = it->second.garble_link_id;
+						if(garble_struct_) {
+							CopyVoiceOver(garble_struct_, &it->second);
+							if(!struct_ || non_garble_found) {
+								tries_attempt = false;
+								succeed = true;
+								break;
+							}
+						}
+					}
+				}
+				tries++;
+				if(!tries_attempt || (tries > 0 && !has_ungarbled && (!find_garbled || *find_garbled == true || !has_garbled)) || tries > 3)
+					break;
+			}
+	}
+	MVoiceOvers.releasereadlock();
+	
+	return succeed;
+}
+
+void World::AddVoiceOver(int8 type, int32 id, int16 index, VoiceOverStruct* struct_) {
+	if(type > MAX_VOICEOVER_TYPE) {
+		LogWrite(WORLD__ERROR, 0, "World", "Voice over %u out of range, max voiceover type is %u...", type, MAX_VOICEOVER_TYPE);
+		return;
+	}
+	
+	VoiceOverStruct tmpStruct;
+	tmpStruct.mp3_string = std::string(struct_->mp3_string);
+	tmpStruct.text_string = std::string(struct_->text_string);
+	tmpStruct.emote_string = std::string(struct_->emote_string);
+	tmpStruct.key1 = struct_->key1;
+	tmpStruct.key2 = struct_->key2;
+	tmpStruct.is_garbled = struct_->is_garbled;
+	
+	MVoiceOvers.writelock();
+	if(!voiceover_map[type].count(id))
+	{
+		multimap<int16, VoiceOverStruct>* vo_struct = new multimap<int16, VoiceOverStruct>();
+		vo_struct->insert(make_pair(index, tmpStruct));
+		voiceover_map[type].insert(make_pair(id, vo_struct));
+	}
+	else
+	{
+		multimap<int32, multimap<int16, VoiceOverStruct>*>::const_iterator itr = voiceover_map[type].find(id);
+		itr->second->insert(make_pair(index, tmpStruct));
+	}
+	MVoiceOvers.releasewritelock();
+}
+
+void World::CopyVoiceOver(VoiceOverStruct* struct1, VoiceOverStruct* struct2) {
+	if(!struct1 || !struct2)
+		return;
+	
+	struct1->mp3_string = std::string(struct2->mp3_string);
+	struct1->text_string = std::string(struct2->text_string);
+	struct1->emote_string = std::string(struct2->emote_string);
+	struct1->key1 = struct2->key1;
+	struct1->key2 = struct2->key2;
+	struct1->is_garbled = struct2->is_garbled;
+	struct1->garble_link_id = struct2->garble_link_id;
 }

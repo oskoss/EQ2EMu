@@ -1057,6 +1057,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetSpawnByGroupID", EQ2Emu_lua_GetSpawnByGroupID);
 	lua_register(state, "GetSpawnByLocationID", EQ2Emu_lua_GetSpawnByLocationID);
 	lua_register(state, "PlayFlavor", EQ2Emu_lua_PlayFlavor);
+	lua_register(state, "PlayFlavorID", EQ2Emu_lua_PlayFlavorID);
 	lua_register(state, "PlaySound", EQ2Emu_lua_PlaySound);
 	lua_register(state, "PlayVoice", EQ2Emu_lua_PlayVoice);
 	lua_register(state, "PlayAnimation", EQ2Emu_lua_PlayAnimation);

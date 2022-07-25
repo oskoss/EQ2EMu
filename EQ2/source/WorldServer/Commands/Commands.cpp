@@ -1833,6 +1833,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload rules");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload transporters");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload startabilities");
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload voiceovers");
 		break;
 	}
 	case COMMAND_RELOADSTRUCTS: {
@@ -1946,6 +1947,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
 		break;
 	}
+	case COMMAND_RELOAD_VOICEOVERS: {
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Voiceovers...");
+		world.PurgeVoiceOvers();
+		world.LoadVoiceOvers();
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
+		break;
+	}
 	case COMMAND_READ: {
 		if (sep && sep->arg[1][0] && sep->IsNumber(1)) {
 			if (strcmp(sep->arg[0], "read") == 0) {
@@ -1953,7 +1961,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				Item* item = client->GetPlayer()->item_list.GetItemFromIndex(item_index);
 				if (item) {
 					Spawn* spawn = cmdTarget;
-					client->SendShowBook(client->GetPlayer(), item->name, item->book_pages);
+					client->SendShowBook(client->GetPlayer(), item->name, item->book_language, item->book_pages);
 					break;
 				}
 			}
@@ -3867,7 +3875,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							client->GetCurrentZone()->SendAllSpawnsForVisChange(client, false);
 							client->Message(CHANNEL_COLOR_RED, "Adding spawn group tag \"%s\" with tag icon %u.", (value == 1) ? "on" : "off", tag_icon);
 						}
-						else if(strncasecmp(sep->arg[1], "race", 5) == 0){
+						else if(strncasecmp(sep->arg[1], "race", 4 == 0)){
 							if(!value) {
 								client->SimpleMessage(CHANNEL_COLOR_RED, "Need to supply a valid race id.");
 								break;
@@ -4742,7 +4750,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				}
 
 				string title = string(spawn->GetName()) + "(" + to_string(spawn->GetDatabaseID()) + ")";
-				client->SendShowBook(client->GetPlayer(), title, 4, details, details2, details3, details4);
+				client->SendShowBook(client->GetPlayer(), title, 0, 4, details, details2, details3, details4);
 			}
 			else {
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Syntax: /spawn details (radius)");

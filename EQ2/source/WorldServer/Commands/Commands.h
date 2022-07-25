@@ -932,6 +932,8 @@ private:
 #define COMMAND_CANCEL_EFFECT			530
 #define COMMAND_CUREPLAYER			531
 
+#define COMMAND_RELOAD_VOICEOVERS		532
+
 
 #define GET_AA_XML						750
 #define ADD_AA							751

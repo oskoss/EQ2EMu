@@ -951,6 +951,7 @@ public:
 	ItemEffectType			effect_type;
 	bool 					crafted;
 	bool					tinkered;
+	int8					book_language;
 	
 	void AddEffect(string effect, int8 percentage, int8 subbulletflag);
 	void AddBookPage(int8 page, string page_text,int8 valign, int8 halign);

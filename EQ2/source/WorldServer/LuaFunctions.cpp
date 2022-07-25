@@ -188,6 +188,33 @@ int EQ2Emu_lua_PlayFlavor(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_PlayFlavorID(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	
+	int8 type = lua_interface->GetInt8Value(state, 2);
+	int32 id = lua_interface->GetInt32Value(state, 3);
+	int16 index = lua_interface->GetInt16Value(state, 4);
+	Spawn* player = lua_interface->GetSpawn(state, 5);
+	int8 language = lua_interface->GetInt8Value(state, 6);
+	lua_interface->ResetFunctionStack(state);
+	if (spawn) {
+			Client* client = 0;
+			if (player && player->IsPlayer())
+				client = spawn->GetZone()->GetClientBySpawn(player);
+			if (client) {
+				VoiceOverStruct non_garble, garble;
+				bool garble_success = false;
+				bool success = world.FindVoiceOver(type, id, index, &non_garble, &garble_success, &garble);
+				client->SendPlayFlavor(spawn, language, &non_garble, &garble, success, garble_success);
+			}
+			else
+				spawn->GetZone()->PlayFlavorID(spawn, type, id, index, language);	
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_PlaySound(lua_State* state) {
 	if (!lua_interface)
 		return 0;

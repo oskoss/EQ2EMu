@@ -897,6 +897,7 @@ Item::Item(){
 	no_sale = false;
 	created = std::time(nullptr);
 	effect_type = NO_EFFECT_TYPE;
+	book_language = 0;
 }
 
 Item::Item(Item* in_item){
@@ -917,6 +918,7 @@ Item::Item(Item* in_item){
 	created = in_item->created;
 	grouped_char_ids.insert(in_item->grouped_char_ids.begin(), in_item->grouped_char_ids.end());
 	effect_type = in_item->effect_type;
+	book_language = in_item->book_language;
 }
 
 Item::~Item(){
@@ -1140,6 +1142,7 @@ void Item::SetItem(Item* old_item){
 	slot_data = old_item->slot_data;
 	spell_id = old_item->spell_id;
 	spell_tier = old_item->spell_tier;
+	book_language = old_item->book_language;
 }
 
 bool Item::CheckArchetypeAdvSubclass(int8 adventure_class, map<int8, int16>* adv_class_levels) {

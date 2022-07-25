@@ -10530,7 +10530,7 @@ void Client::SendFlightAutoMount(int32 path_id, int16 mount_id, int8 mount_red_c
 		((Entity*)GetPlayer())->SetMount(mount_id, mount_red_color, mount_green_color, mount_blue_color);
 }
 
-void Client::SendShowBook(Spawn* sender, string title, int8 num_pages, ...)
+void Client::SendShowBook(Spawn* sender, string title, int8 language, int8 num_pages, ...)
 {
 	if (!sender)
 	{
@@ -10547,7 +10547,9 @@ void Client::SendShowBook(Spawn* sender, string title, int8 num_pages, ...)
 	packet->setDataByName("book_title", title.c_str());
 	packet->setDataByName("book_type", "simple");
 	packet->setDataByName("unknown2", 1);
-
+	if(language > 0 && !GetPlayer()->HasLanguage(language))
+		packet->setDataByName("language", language);
+	
 	if (GetVersion() > 546)
 		packet->setDataByName("unknown5", 1, 4);
 
@@ -10596,7 +10598,7 @@ void Client::SendShowBook(Spawn* sender, string title, int8 num_pages, ...)
 	safe_delete(packet);
 }
 
-void Client::SendShowBook(Spawn* sender, string title, vector<Item::BookPage*> pages)
+void Client::SendShowBook(Spawn* sender, string title, int8 language, vector<Item::BookPage*> pages)
 {
 	if (!sender)
 	{
@@ -10613,6 +10615,9 @@ void Client::SendShowBook(Spawn* sender, string title, vector<Item::BookPage*> p
 	packet->setDataByName("book_title", title.c_str());
 	packet->setDataByName("book_type", "simple");
 	packet->setDataByName("unknown2", 1);
+	
+	if(language > 0 && !GetPlayer()->HasLanguage(language))
+		packet->setDataByName("language", language);
 
 	if (GetVersion() > 546)
 		packet->setDataByName("unknown5", 1, 4);
@@ -11018,4 +11023,22 @@ bool Client::UseItem(Item* item, Spawn* target) {
 		}
 	}
 	return false;
+}
+
+void Client::SendPlayFlavor(Spawn* spawn, int8 language, VoiceOverStruct* non_garble, 
+								VoiceOverStruct* garble, bool success, bool garble_success) {
+		VoiceOverStruct* resStruct = nullptr;
+		
+		if(language == 0 || GetPlayer()->HasLanguage(language)) {
+			if(success) {
+				resStruct = non_garble;
+			}
+		}
+		else if(garble_success) {
+			resStruct = garble;
+		}
+		
+		if(resStruct) {
+			GetPlayer()->GetZone()->PlayFlavor(this, spawn, resStruct->mp3_string.c_str(), resStruct->text_string.c_str(), resStruct->emote_string.c_str(), resStruct->key1, resStruct->key2, language);
+		}
 }

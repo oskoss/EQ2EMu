@@ -3654,6 +3654,29 @@ void ZoneServer::PlayFlavor(Spawn* spawn, const char* mp3, const char* text, con
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
+void ZoneServer::PlayFlavorID(Spawn* spawn, int8 type, int32 id, int16 index, int8 language){
+	if(!spawn)
+		return;
+
+	Client* client = 0;
+	vector<Client*>::iterator client_itr;
+
+	VoiceOverStruct non_garble, garble;
+	bool garble_success = false;
+	bool success = world.FindVoiceOver(type, id, index, &non_garble, &garble_success, &garble);
+	
+	VoiceOverStruct* resStruct = nullptr;
+	MClientList.readlock(__FUNCTION__, __LINE__);
+	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
+		client = *client_itr;
+		if(!client || !client->IsReadyForUpdates() || !client->GetPlayer()->WasSentSpawn(spawn->GetID()) || client->GetPlayer()->GetDistance(spawn) > 30)
+			continue;
+		
+		client->SendPlayFlavor(spawn, language, &non_garble, &garble, success, garble_success);
+	}
+	MClientList.releasereadlock(__FUNCTION__, __LINE__);
+}
+
 void ZoneServer::PlayVoice(Spawn* spawn, const char* mp3, int32 key1, int32 key2){
 	if(!spawn || !mp3)
 		return;

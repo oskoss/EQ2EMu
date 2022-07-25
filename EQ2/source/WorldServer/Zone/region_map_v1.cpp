@@ -64,7 +64,6 @@ std::string RegionMapV1::TestFile(std::string testFile)
 	string tmpScript("RegionScripts/");
 	tmpScript.append(mZoneNameLower);
 	tmpScript.append("/" + tmpStr + ".lua");
-	printf("File to test : %s\n",tmpScript.c_str());
 	std::ifstream f(tmpScript.c_str());
 	return f.good() ? tmpScript : string("");
 }

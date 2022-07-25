@@ -7416,6 +7416,42 @@ void WorldDatabase::LoadStartingSkills(World* world)
 }
 
 
+void WorldDatabase::LoadVoiceOvers(World* world)
+{
+	int32 total = 0;
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT type_id, id, indexed, mp3_string, text_string, emote_string, key1, key2, garbled, garble_link_id FROM voiceovers");
+
+	if (result)
+	{
+		if (mysql_num_rows(result) > 0)
+		{
+			Skill* skill = 0;
+
+			while (result && (row = mysql_fetch_row(result)))
+			{
+
+				VoiceOverStruct vos;
+				vos.mp3_string = std::string(row[3]);
+				vos.text_string = std::string(row[4]);
+				vos.emote_string = std::string(row[5]);
+				vos.key1 = atoul(row[6]);
+				vos.key2 = atoul(row[7]);
+				vos.is_garbled = atoul(row[8]);
+				vos.garble_link_id = atoul(row[9]);
+				int8 type = atoul(row[0]);
+				int32 id = atoul(row[1]);
+				int16 index = atoul(row[2]);
+				world->AddVoiceOver(type, id, index, &vos);
+				total++;
+			}
+		}
+	}
+	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u Voiceover(s)", total);
+}
+
+
 void WorldDatabase::LoadStartingSpells(World* world)
 {
 	world->MStartingLists.writelock();

@@ -398,6 +398,17 @@ struct StartingSpell
 	int32 knowledge_slot;
 };
 
+#define MAX_VOICEOVER_TYPE 2
+struct VoiceOverStruct{
+	string				mp3_string;
+	string				text_string;
+	string				emote_string;
+	int32				key1;
+	int32				key2;
+	bool				is_garbled;
+	int8				garble_link_id;
+};
+
 class ZoneList {
 	public:
 	ZoneList();
@@ -642,10 +653,17 @@ public:
 	// just in case we roll over a time as to not send bad times to clients (days before hours, hours before minutes as examples)
 	Mutex MWorldTime;
 
-
-
+	void LoadVoiceOvers();
+	void PurgeVoiceOvers();
+	typedef std::multimap<int16, VoiceOverStruct>::iterator VOMapIterator;
+	bool FindVoiceOver(int8 type, int32 id, int16 index, VoiceOverStruct* struct_ = nullptr, bool* find_garbled = nullptr, VoiceOverStruct* garble_struct_ = nullptr);
+	void AddVoiceOver(int8 type, int32 id, int16 index, VoiceOverStruct* struct_);
+	void CopyVoiceOver(VoiceOverStruct* struct1, VoiceOverStruct* struct2);
+	Mutex MVoiceOvers;
+	
 	static sint64 newValue;
 private:
+	multimap<int32, multimap<int16, VoiceOverStruct>*> voiceover_map[3];
 	int32 suppressed_warning = 0;
 	map<string, int32> reloading_subsystems;
 	//void RemovePlayerFromGroup(PlayerGroup* group, GroupMemberInfo* info, bool erase = true);
