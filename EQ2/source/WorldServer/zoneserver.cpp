@@ -2824,7 +2824,7 @@ bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 			int count = 0;
 			for (int s = 0; s < strlen(npc->GetName()); s++)
 			{
-				if (isalnum(npc->GetName()[s]))
+				if (isalnum((unsigned char)npc->GetName()[s]))
 				{
 					tmpScript += npc->GetName()[s];
 					count++;

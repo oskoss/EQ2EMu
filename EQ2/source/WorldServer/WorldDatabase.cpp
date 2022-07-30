@@ -2972,7 +2972,7 @@ string WorldDatabase::GetExpansionIDByVersion(int16 version)
 void WorldDatabase::LoadSpecialZones(){
 	Query query;
 	ZoneServer* zone = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, name, always_loaded, city_zone FROM zones where always_loaded = 1 or city_zone = 1");
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, name, always_loaded FROM zones where always_loaded = 1");
 	if(result && mysql_num_rows(result) > 0) {
 		MYSQL_ROW row;
 		while(result && (row = mysql_fetch_row(result))){
@@ -2981,7 +2981,7 @@ void WorldDatabase::LoadSpecialZones(){
 			zone->Init();
 
 			zone->SetAlwaysLoaded(atoi(row[2]) == 1);
-			zone->SetCityZone(atoi(row[3]) == 1);
+//			zone->SetCityZone(atoi(row[3]) == 1);
 		}
 	}
 }
