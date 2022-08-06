@@ -190,6 +190,8 @@ struct InfoStruct{
 		mitigation_skill1_ = 0;
 		mitigation_skill2_ = 0;
 		mitigation_skill3_ = 0;
+		mitigation_pve_ = 0;
+		mitigation_pvp_ = 0;
 		ability_modifier_ = 0;
 		critical_mitigation_ = 0;
 		block_chance_ = 0;
@@ -370,6 +372,8 @@ struct InfoStruct{
 		mitigation_skill1_ = oldStruct->get_mitigation_skill1();
 		mitigation_skill2_ = oldStruct->get_mitigation_skill2();
 		mitigation_skill3_ = oldStruct->get_mitigation_skill3();
+		mitigation_pve_ = oldStruct->get_mitigation_pve();
+		mitigation_pvp_ = oldStruct->get_mitigation_pvp();
 		ability_modifier_ = oldStruct->get_ability_modifier();
 		critical_mitigation_ = oldStruct->get_critical_mitigation();
 		block_chance_ = oldStruct->get_block_chance();
@@ -557,6 +561,9 @@ struct InfoStruct{
 	int16	 get_mitigation_skill1() { std::lock_guard<std::mutex> lk(classMutex); return mitigation_skill1_; }
 	int16	 get_mitigation_skill2() { std::lock_guard<std::mutex> lk(classMutex); return mitigation_skill2_; }
 	int16	 get_mitigation_skill3() { std::lock_guard<std::mutex> lk(classMutex); return mitigation_skill3_; }
+	
+	int16	 get_mitigation_pve() { std::lock_guard<std::mutex> lk(classMutex); return mitigation_pve_; }
+	int16	 get_mitigation_pvp() { std::lock_guard<std::mutex> lk(classMutex); return mitigation_pvp_; }
 
 	float	 get_ability_modifier() { std::lock_guard<std::mutex> lk(classMutex); return ability_modifier_; }
 	float	 get_critical_mitigation() { std::lock_guard<std::mutex> lk(classMutex); return critical_mitigation_; }
@@ -792,6 +799,9 @@ struct InfoStruct{
 	void	set_mitigation_skill1(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill1_ = value; }
 	void	set_mitigation_skill2(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill2_ = value; }
 	void	set_mitigation_skill3(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill3_ = value; }
+	
+	void	set_mitigation_pve(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_pve_ = value; }
+	void	set_mitigation_pvp(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_pvp_ = value; }
 
 	void	add_mitigation_skill1(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill1_ += value; }
 	void	add_mitigation_skill2(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill2_ += value; }
@@ -1037,6 +1047,8 @@ private:
 	int16			mitigation_skill1_;
 	int16			mitigation_skill2_;
 	int16			mitigation_skill3_;
+	int16			mitigation_pve_;
+	int16			mitigation_pvp_;
 	float			ability_modifier_;
 	float			critical_mitigation_;
 	float			block_chance_;
@@ -1363,6 +1375,7 @@ public:
 	float			GetDamageTypeResistPercentage(int8 damage_type);
 	Skill*			GetSkillByWeaponType(int8 type, bool update);
 	bool			DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod = 0, bool is_tick = false, bool no_damage_calcs = false, bool ignore_attacker = false, LuaSpell* spell = 0);
+	float			CalculateMitigation(int8 type = DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE, int8 damage_type = 0, int16 attacker_level = 0, bool for_pvp = false);
 	void			AddHate(Entity* attacker, sint32 hate);
 	bool			CheckInterruptSpell(Entity* attacker);
 	bool			CheckFizzleSpell(LuaSpell* spell);

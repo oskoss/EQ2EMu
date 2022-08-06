@@ -142,6 +142,18 @@ struct WaypointInfo {
 	int8 type;
 };
 
+struct QuestRewardData {
+	int32 quest_id;
+	bool is_temporary;
+	std::string description;
+	bool is_collection;
+	bool has_displayed;
+	int64 tmp_coin;
+	int32 tmp_status;
+	bool db_saved;
+	int32 db_index;
+};
+
 class Client {
 public:
 	Client(EQStream* ieqs);
@@ -280,8 +292,8 @@ public:
 	void	SendQuestFailure(Quest* quest);
 	void	SendQuestUpdateStep(Quest* quest, int32 step, bool display_quest_helper = true);
 	void	SendQuestUpdateStepImmediately(Quest* quest, int32 step, bool display_quest_helper = true);
-	void	DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards=0, vector<Item*>* selectable_rewards=0, map<int32, sint32>* factions=0, const char* header="Quest Reward!", int32 status_points=0, const char* text=0);
-	void	DisplayQuestComplete(Quest* quest, bool tempReward = false, std::string customDescription = string(""));
+	void	DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards=0, vector<Item*>* selectable_rewards=0, map<int32, sint32>* factions=0, const char* header="Quest Reward!", int32 status_points=0, const char* text=0, bool was_displayed = false);
+	void	DisplayQuestComplete(Quest* quest, bool tempReward = false, std::string customDescription = string(""), bool was_displayed = false);
 	void	DisplayRandomizeFeatures(int32 features);
 	void	AcceptQuestReward(Quest* quest, int32 item_id);
 	Quest*	GetPendingQuestAcceptance(int32 item_id);
@@ -348,7 +360,10 @@ public:
 	void	SetPlayer(Player* new_player);
 
 	void	AddPendingQuestAcceptReward(Quest* quest);
-	void	AddPendingQuestReward(Quest* quest, bool update=true);
+	void	AddPendingQuestReward(Quest* quest, bool update=true, bool is_temporary = false, std::string description = std::string(""));
+	bool	HasQuestRewardQueued(int32 quest_id, bool is_temporary, bool is_collection);
+	void	QueueQuestReward(int32 quest_id, bool is_temporary, bool is_collection, bool has_displayed, int64 tmp_coin, int32 tmp_status, std::string description, bool db_saved=false, int32 index=0);
+	void	RemoveQueuedQuestReward();
 	void	AddPendingQuestUpdate(int32 quest_id, int32 step_id, int32 progress = 0xFFFFFFFF);
 	void	ProcessQuestUpdates();	
 	void	AddWaypoint(const char* waypoint_name, int8 waypoint_category, int32 spawn_id);
@@ -543,15 +558,18 @@ public:
 	bool	UseItem(Item* item, Spawn* target = nullptr);
 	
 	void	SendPlayFlavor(Spawn* spawn, int8 language, VoiceOverStruct* non_garble, VoiceOverStruct* garble, bool success = false, bool garble_success = false);
+	void	SaveQuestRewardData(bool force_refresh = false);
+	void	UpdateCharacterRewardData(QuestRewardData* data);
+	void	SetQuestUpdateState(bool val) { quest_updates = val; }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
-	void	GiveQuestReward(Quest* quest);
+	void	GiveQuestReward(Quest* quest, bool has_displayed = false);
 	void	SetStepComplete(int32 quest_id, int32 step);
 	void	AddStepProgress(int32 quest_id, int32 step, int32 progress);
 	map<int32, map<int32, int32> > quest_pending_updates;
 	vector<QueuedQuest*> quest_queue;
-	vector<int32> quest_pending_reward;
+	vector<QuestRewardData> quest_pending_reward;
 	volatile bool	quest_updates;
 	Mutex	MQuestPendingUpdates;
 	Mutex	MQuestQueue;

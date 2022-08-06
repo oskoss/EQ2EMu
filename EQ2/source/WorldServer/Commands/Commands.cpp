@@ -4133,7 +4133,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			int32 selectable_item_id = 0;
 			//Quest *quest = 0;
 			Collection *collection = 0;
-			
 			/* no idea what the first argument is for (faction maybe?)
 			   if the reward has a selectable item reward, it's sent as the second argument
 			   if neither of these are included in the reward, there is no sep
@@ -4144,10 +4143,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				selectable_item_id = atoul(sep->arg[1]);
 			}
 
-			//if ((quest = player->GetPendingQuestReward()))
-			//	client->AcceptQuestRewards(quest, selectable_item_id);
-
-			/* the below needs to go away eventually and be redone */
+			/* this logic here may seem unexpected, but the quest queue response for GetPendingQuestAcceptance is only populated if it is the current reward displayed to the client based on a quest
+			** Otherwise it will likely be a DoF client scenario (pending item rewards, selectable item rewards) which is specifying an item id
+			** lastly it will be a collection which also supplies an item id and you can only have one pending collection turn in at a time (they queue against Client::HandInCollections
+			*/
 			int32 item_id = 0;
 			if(sep && sep->arg[0][0] && sep->IsNumber(0))
 				item_id = atoul(sep->arg[0]);
@@ -4157,12 +4156,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				break;
 			}
 			bool collectedItems = false;
-			if (collection = player->GetPendingCollectionReward())
-			{
-				client->AcceptCollectionRewards(collection, selectable_item_id);
-				collectedItems = true;
-			}
-			else if (client->GetPlayer()->HasPendingItemRewards()) {
+			if (client->GetPlayer()->HasPendingItemRewards()) {
 				vector<Item*> items = client->GetPlayer()->GetPendingItemRewards();
 				if (items.size() > 0) {
 					collectedItems = true;
@@ -4170,6 +4164,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->GetPlayer()->AddItem(new Item(items[i]));
 					}
 					client->GetPlayer()->ClearPendingItemRewards();
+					client->GetPlayer()->SetActiveReward(false);
 				}
 				map<int32, Item*> selectable_item = client->GetPlayer()->GetPendingSelectableItemReward(item_id);
 				if (selectable_item.size() > 0) {
@@ -4179,8 +4174,15 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->GetPlayer()->AddItem(new Item(itr->second));
 						client->GetPlayer()->ClearPendingSelectableItemRewards(itr->first);
 					}
+					client->GetPlayer()->SetActiveReward(false);
 				}
 			}
+			else if (collection = player->GetPendingCollectionReward())
+			{
+				client->AcceptCollectionRewards(collection, (selectable_item_id > 0) ? selectable_item_id : item_id);
+				collectedItems = true;
+			}
+			
 			if (collectedItems) {
 				EQ2Packet* outapp = client->GetPlayer()->SendInventoryUpdate(client->GetVersion());
 				if (outapp)
@@ -7729,6 +7731,10 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 				quest_id = atoul(sep->arg[1]);
 				Quest* quest = client->GetPlayer()->player_quests[quest_id];
 
+				if(!quest) {
+					client->Message(CHANNEL_COLOR_RED, "Quest not found!");
+					return;
+				}
 				if (sep && sep->arg[2] && sep->IsNumber(1))
 				{
 					step = atoul(sep->arg[2]);

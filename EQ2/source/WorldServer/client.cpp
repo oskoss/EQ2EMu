@@ -402,6 +402,7 @@ void Client::SendLoginInfo() {
 		}
 		database.LoadPlayerFactions(this);
 		database.LoadCharacterQuests(this);
+		database.LoadCharacterQuestRewards(this);
 		database.LoadPlayerMail(this);
 	}
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
@@ -5444,12 +5445,73 @@ void Client::AddPendingQuestAcceptReward(Quest* quest)
 	MPendingQuestAccept.unlock();
 }
 
-void Client::AddPendingQuestReward(Quest* quest, bool update) {
-	MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
-	quest_pending_reward.push_back(quest->GetQuestID());
+void Client::AddPendingQuestReward(Quest* quest, bool update, bool is_temporary, std::string description) {
+	QueueQuestReward(quest->GetQuestID(), is_temporary, false, false, (is_temporary ? quest->GetCoinTmpReward() : 0), 
+	(is_temporary ? quest->GetStatusTmpReward() : 0), description, false, 0);
 	quest_updates = update;
-	MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
+	if(quest_updates) {
+		SaveQuestRewardData(true);
+	}
 
+}
+
+void Client::QueueQuestReward(int32 quest_id, bool is_temporary, bool is_collection, bool has_displayed, int64 tmp_coin, int32 tmp_status, std::string description, bool db_saved, int32 index) {
+	if(HasQuestRewardQueued(quest_id, is_temporary, is_collection))
+		return;
+	
+	QuestRewardData data;
+	data.quest_id = quest_id;
+	data.is_temporary = is_temporary;
+	data.is_collection = is_collection;
+	data.has_displayed = has_displayed;
+	data.tmp_coin = tmp_coin;
+	data.tmp_status = tmp_status;
+	data.description = std::string(description);
+	data.db_saved = db_saved;
+	data.db_index = index;
+	MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
+	quest_pending_reward.push_back(data);
+	MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+bool Client::HasQuestRewardQueued(int32 quest_id, bool is_temporary, bool is_collection) {
+	
+	bool success = false;
+	MQuestPendingUpdates.readlock(__FUNCTION__, __LINE__);
+	if (quest_pending_reward.size() > 0) {
+		vector<QuestRewardData>::iterator itr;
+		
+		for (itr = quest_pending_reward.begin(); itr != quest_pending_reward.end(); itr++) {
+			int32 questID = (*itr).quest_id;
+			bool temporary = (*itr).is_temporary;
+			bool collection = (*itr).is_collection;
+			if( questID == quest_id && is_temporary == temporary && is_collection == collection ) {
+				success = true;
+				break;
+			}
+		}
+	}
+	MQuestPendingUpdates.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return success;
+}
+
+void Client::RemoveQueuedQuestReward() {
+	MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
+	if(quest_pending_reward.size() > 0) {
+		QuestRewardData data = quest_pending_reward.at(0);
+		if(data.db_saved) {
+			Query query;
+			query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete FROM character_quest_rewards where char_id = %u and indexed = %u", GetCharacterID(), data.db_index);
+			if(data.is_temporary && data.quest_id) {
+				query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete FROM character_quest_temporary_rewards where char_id = %u and quest_id = %u", GetCharacterID(), data.quest_id);
+			}
+		}
+		quest_pending_reward.erase(quest_pending_reward.begin());
+	}
+	MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
+	
+	SaveQuestRewardData(true);
 }
 
 void Client::AddPendingQuestUpdate(int32 quest_id, int32 step_id, int32 progress) {
@@ -5461,6 +5523,9 @@ void Client::AddPendingQuestUpdate(int32 quest_id, int32 step_id, int32 progress
 }
 
 void Client::ProcessQuestUpdates() {
+	if(!GetPlayer()->IsFullyLoggedIn())
+		return;
+
 	if (quest_pending_updates.size() > 0) {
 		map<int32, map<int32, int32> > tmp_quest_updates;
 		MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
@@ -5483,17 +5548,41 @@ void Client::ProcessQuestUpdates() {
 	MQuestPendingUpdates.readlock(__FUNCTION__, __LINE__);
 	if (quest_pending_reward.size() > 0) {
 		MQuestPendingUpdates.releasereadlock(__FUNCTION__, __LINE__);
-		vector<int32>::iterator itr;
-		vector<int32> tmp_quest_rewards;
+		
+		// only able to display one reward at a time
+		if(GetPlayer()->IsActiveReward())
+			return;
+		
+		Query query;
+		vector<QuestRewardData>::iterator itr;
+		vector<QuestRewardData> tmp_quest_rewards;
 		MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
-		tmp_quest_rewards.insert(tmp_quest_rewards.begin(), quest_pending_reward.begin(), quest_pending_reward.end());
-		quest_pending_reward.clear();
+		tmp_quest_rewards.insert(tmp_quest_rewards.begin(), quest_pending_reward.begin(), quest_pending_reward.begin()+1);
 		MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
+		
 		for (itr = tmp_quest_rewards.begin(); itr != tmp_quest_rewards.end(); itr++) {
-			int32 questID = *itr;
-			Quest* quest = GetPlayer()->GetAnyQuest(questID);
-			if(quest) {
-				GiveQuestReward(quest);
+			int32 questID = (*itr).quest_id;
+			Quest* quest = 0;
+			if((*itr).is_collection && GetPlayer()->GetPendingCollectionReward()) {
+				DisplayCollectionComplete(GetPlayer()->GetPendingCollectionReward());
+				GetPlayer()->SetActiveReward(true);
+				(*itr).has_displayed = true;
+				
+				UpdateCharacterRewardData(&(*itr));
+			}
+			else if(questID > 0 && (quest = GetPlayer()->GetAnyQuest(questID))) {
+				quest->SetQuestTemporaryState((*itr).is_temporary, (*itr).description);
+				if((*itr).is_temporary) {
+					quest->SetStatusTmpReward((*itr).tmp_status);
+					quest->SetCoinTmpReward((*itr).tmp_coin);
+				}
+				GiveQuestReward(quest, (*itr).has_displayed);
+				GetPlayer()->SetActiveReward(true);
+				(*itr).has_displayed = true;
+				
+				UpdateCharacterRewardData(&(*itr));
+				// only able to display one reward at a time
+				break;
 			} else {
 				LogWrite(CCLIENT__ERROR, 0, "Client", "Quest ID %u missing for Player %s, skipping quest id from tmp_quest_rewards.", questID, GetPlayer()->GetName());
 			}
@@ -5501,7 +5590,15 @@ void Client::ProcessQuestUpdates() {
 	} else {
 		MQuestPendingUpdates.releasereadlock(__FUNCTION__, __LINE__);
 	}
-	quest_updates = false;
+	
+	MQuestPendingUpdates.readlock(__FUNCTION__, __LINE__);
+	if (quest_pending_reward.size() > 0) {
+		quest_updates = true;
+	}
+	else {
+		quest_updates = false;
+	}
+	MQuestPendingUpdates.releasereadlock(__FUNCTION__, __LINE__);
 
 }
 
@@ -5961,7 +6058,11 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 			totalItems += items->size();
 		}
 	}
-
+	
+	RemoveQueuedQuestReward();
+	
+	GetPlayer()->SetActiveReward(false);
+		
 	if (free_slots >= num_slots_needed || (player->item_list.HasFreeBagSlot() && master_item && master_item->IsBag() && master_item->bag_info->num_slots >= totalItems)) {
 		if (master_item)
 			AddItem(item_id);
@@ -5994,31 +6095,34 @@ void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
 				AwardCoins(total_coins, std::string("for completing ").append(quest->GetName()));
 
 			player->GetInfoStruct()->add_status_points(quest->GetStatusTmpReward());
-			
-			quest->SetQuestTemporaryState(false);
 		}
-		else
-			player->GetInfoStruct()->add_status_points(quest->GetStatusPoints());
+		else {
+			player->GetInfoStruct()->add_status_points(quest->GetStatusPoints());		
+		}
 		
+		quest->SetQuestTemporaryState(false);
 		player->SetCharSheetChanged(true);
 	}
 	else {
-		MPendingQuestAccept.lock();
-		pending_quest_accept.push_back(quest->GetQuestID());
-		MPendingQuestAccept.unlock();
+		GetPlayer()->SetActiveReward(true);
+		AddPendingQuestAcceptReward(quest);
 		SimpleMessage(CHANNEL_COLOR_RED, "You do not have enough free slots!  Free some slots and try again.");
 		DisplayQuestComplete(quest, quest->GetQuestTemporaryState(), quest->GetQuestTemporaryDescription());
 	}
 
 }
 
-void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards, vector<Item*>* selectable_rewards, map<int32, sint32>* factions, const char* header, int32 status_points, const char* text) {
+void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards, vector<Item*>* selectable_rewards, map<int32, sint32>* factions, const char* header, int32 status_points, const char* text, bool was_displayed) {
 	if (coin == 0 && (!rewards || rewards->size() == 0) && (!selectable_rewards || selectable_rewards->size() == 0) && (!factions || factions->size() == 0) && status_points == 0 && text == 0 && (!quest || (quest->GetCoinsReward() == 0 && quest->GetCoinsRewardMax() == 0))) {
 		/*if (quest)
 			text = quest->GetName();
 		else*/
 		return;//nothing to give
 	}
+	
+	GetPlayer()->ClearPendingSelectableItemRewards(0, true);
+	GetPlayer()->ClearPendingItemRewards();
+	
 	PacketStruct* packet2 = configReader.getStruct("WS_QuestRewardPackMsg", GetVersion());
 	if (packet2) {
 		int32 source_id = 0;
@@ -6036,7 +6140,7 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 		}
 		if (rewarded_coin > coin)
 			coin = rewarded_coin;
-		if (!quest) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+		if (!quest && !was_displayed) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
 			if (coin > 0) {
 				player->AddCoins(coin);
 				PlaySound("coin_cha_ching");
@@ -6045,7 +6149,7 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 		packet2->setSubstructDataByName("reward_data", "unknown1", 255);
 		packet2->setSubstructDataByName("reward_data", "reward", header);
 		packet2->setSubstructDataByName("reward_data", "max_coin", coin);
-		if (player->GetGuild()) {
+		if (player->GetGuild() && !was_displayed) {
 			if (!quest) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
 				player->GetInfoStruct()->add_status_points(status_points);
 				player->SetCharSheetChanged(true);
@@ -6107,16 +6211,12 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 	}
 }
 
-void Client::DisplayQuestComplete(Quest* quest, bool tempReward, std::string customDescription) {	
+void Client::DisplayQuestComplete(Quest* quest, bool tempReward, std::string customDescription, bool was_displayed) {	
 	if (!quest)
 		return;
 	
-	quest->SetQuestTemporaryState(tempReward, customDescription);
-	
-	AddPendingQuestAcceptReward(quest);
-	
 	if (GetVersion() <= 546) {
-		DisplayQuestRewards(quest, 0, quest->GetRewardItems(), quest->GetSelectableRewardItems(), quest->GetRewardFactions(), "Quest Complete!", quest->GetStatusPoints());
+		DisplayQuestRewards(quest, 0, quest->GetRewardItems(), quest->GetSelectableRewardItems(), quest->GetRewardFactions(), "Quest Complete!", quest->GetStatusPoints(), customDescription.c_str(), was_displayed);
 		return;
 	}
 	PacketStruct* packet = configReader.getStruct("WS_QuestComplete", GetVersion());
@@ -6289,51 +6389,59 @@ void Client::DisplayRandomizeFeatures(int32 flags) {
 
 }
 
-void Client::GiveQuestReward(Quest* quest) {
+void Client::GiveQuestReward(Quest* quest, bool has_displayed) {
 	current_quest_id = 0;
 
-	if(!quest->GetQuestTemporaryState())
+	if(!quest->GetQuestTemporaryState() && !has_displayed)
 	{
 		quest->IncrementCompleteCount();
 		player->AddCompletedQuest(quest);
 	}
 	
+	AddPendingQuestAcceptReward(quest);
+		
 	DisplayQuestComplete(quest, quest->GetQuestTemporaryState(), quest->GetQuestTemporaryDescription());
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Send Quest Journal...");
 	SendQuestJournal();
 	
-	if(quest->GetQuestTemporaryState())
+	if(quest->GetQuestTemporaryState()) {
 		return;
-	
-	player->RemoveQuest(quest->GetQuestID(), false);
-	if (quest->GetExpReward() > 0) {
-		int16 level = player->GetLevel();
-		int32 xp = quest->GetExpReward();
-		if (player->AddXP(xp)) {
-			Message(CHANNEL_REWARD, "You gain %u experience!", (int32)xp);
-			if (player->GetLevel() != level)
-				ChangeLevel(level, player->GetLevel());
-			player->SetCharSheetChanged(true);
-		}
 	}
-	if (quest->GetTSExpReward() > 0) {
-		int8 ts_level = player->GetTSLevel();
-		int32 xp = quest->GetTSExpReward();
-		if (player->AddTSXP(xp)) {
-			Message(CHANNEL_REWARD, "You gain %u tradeskill experience!", (int32)xp);
-			if (player->GetTSLevel() != ts_level)
-				ChangeTSLevel(ts_level, player->GetTSLevel());
-			player->SetCharSheetChanged(true);
+
+	if(!has_displayed) {
+		if (quest->GetExpReward() > 0) {
+			int16 level = player->GetLevel();
+			int32 xp = quest->GetExpReward();
+			if (player->AddXP(xp)) {
+				Message(CHANNEL_REWARD, "You gain %u experience!", (int32)xp);
+				if (player->GetLevel() != level)
+					ChangeLevel(level, player->GetLevel());
+				player->SetCharSheetChanged(true);
+			}
 		}
+		if (quest->GetTSExpReward() > 0) {
+			int8 ts_level = player->GetTSLevel();
+			int32 xp = quest->GetTSExpReward();
+			if (player->AddTSXP(xp)) {
+				Message(CHANNEL_REWARD, "You gain %u tradeskill experience!", (int32)xp);
+				if (player->GetTSLevel() != ts_level)
+					ChangeTSLevel(ts_level, player->GetTSLevel());
+				player->SetCharSheetChanged(true);
+			}
+		}
+		int64 total_coins = quest->GetGeneratedCoin();
+		if (total_coins > 0)
+			AwardCoins(total_coins, std::string("for completing ").append(quest->GetName()));
+		
+		player->RemoveQuest(quest->GetQuestID(), false);
 	}
-	int64 total_coins = quest->GetGeneratedCoin();
-	if (total_coins > 0)
-		AwardCoins(total_coins, std::string("for completing ").append(quest->GetName()));
 	
 	if (quest->GetQuestGiver() > 0)
 		GetCurrentZone()->SendSpawnChangesByDBID(quest->GetQuestGiver(), this, false, true);
 	
-	RemovePlayerQuest(quest->GetQuestID(), true, false);	
+	if(!has_displayed) {
+		RemovePlayerQuest(quest->GetQuestID(), true, false);	
+	}
 }
 
 void Client::DisplayConversation(int32 conversation_id, int32 spawn_id, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2, int8 language, int8 can_close) {
@@ -8805,6 +8913,7 @@ void Client::SetReadyForSpawns(bool val) {
 			world.GetGroupManager()->GroupMessage(GetPlayer()->GetGroupMemberInfo()->group_id, "%s has returned from Linkdead.", GetPlayer()->GetName());
 		}
 	}
+	GetPlayer()->SetActiveReward(false);
 	zone_list.CheckFriendZoned(this);
 
 }
@@ -9043,9 +9152,8 @@ void Client::InspectPlayer(Player* player_to_inspect) {
 			packet->setDataByName("gender", player_to_inspect->GetGender());
 			packet->setDataByName("adventure_level", player_to_inspect->GetLevel());
 
-			LogWrite(MISC__TODO, 1, "TODO", "Put mentored level here (adventure_level_effective)\nfile: %s, func: %s, line: %i", __FILE__, __FUNCTION__, __LINE__);
-
-			packet->setDataByName("adventure_level_effective", player_to_inspect->GetLevel());
+			int16 effective_level = player_to_inspect->GetInfoStruct()->get_effective_level() != 0 ? player_to_inspect->GetInfoStruct()->get_effective_level() : player_to_inspect->GetLevel();
+			packet->setDataByName("adventure_level_effective", effective_level);
 			packet->setDataByName("adventure_class", player_to_inspect->GetAdventureClass());
 			packet->setDataByName("tradeskill_level", player_to_inspect->GetTSLevel());
 			packet->setDataByName("tradeskill_class", player_to_inspect->GetTradeskillClass());
@@ -9543,10 +9651,25 @@ void Client::HandInCollections() {
 		collection = itr->second;
 		if (collection->GetIsReadyToTurnIn()) {
 			player->SetPendingCollectionReward(collection);
-			DisplayCollectionComplete(collection);
-
-			return;
+			MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
+			QuestRewardData data;
+			data.quest_id = 0;
+			data.is_temporary = false;
+			data.description = std::string("");
+			data.is_collection = true;
+			data.has_displayed = false;
+			data.tmp_coin = 0;
+			data.tmp_status = 0;
+			data.db_saved = false;
+			data.db_index = 0;
+			quest_pending_reward.push_back(data);
+			MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
+			quest_updates = true;
+			break;
 		}
+	}
+	if(quest_updates) {
+		SaveQuestRewardData(true);
 	}
 }
 
@@ -9567,8 +9690,7 @@ void Client::AcceptCollectionRewards(Collection* collection, int32 selectable_it
 	num_slots = player->GetPlayerItemList()->GetNumberOfFreeSlots();
 	if (num_slots < num_slots_needed) {
 		SimpleMessage(CHANNEL_COLOR_RED, "You do not have enough free slots. Free up some slots and try again");
-		HandInCollections();
-
+		DisplayCollectionComplete(collection);
 		return;
 	}
 
@@ -9606,6 +9728,11 @@ void Client::AcceptCollectionRewards(Collection* collection, int32 selectable_it
 
 	/* reset the pending collection reward and check for my collections that the player needs to hand in */
 	player->SetPendingCollectionReward(0);
+	
+	RemoveQueuedQuestReward();
+	
+	GetPlayer()->SetActiveReward(false);
+	
 	HandInCollections();
 
 }
@@ -11041,4 +11168,56 @@ void Client::SendPlayFlavor(Spawn* spawn, int8 language, VoiceOverStruct* non_ga
 		if(resStruct) {
 			GetPlayer()->GetZone()->PlayFlavor(this, spawn, resStruct->mp3_string.c_str(), resStruct->text_string.c_str(), resStruct->emote_string.c_str(), resStruct->key1, resStruct->key2, language);
 		}
+}
+
+void Client::SaveQuestRewardData(bool force_refresh) {
+		Query query;
+		if(force_refresh) {
+			query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete from character_quest_rewards where char_id = %u", 
+							GetCharacterID());
+							
+			query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete from character_quest_temporary_rewards where char_id = %u", 
+							GetCharacterID());
+		}
+		vector<QuestRewardData>::iterator itr;
+		vector<QuestRewardData> tmp_quest_rewards;
+		MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
+		int index = 0;
+		for (itr = quest_pending_reward.begin(); itr != quest_pending_reward.end(); itr++) {
+			int32 questID = (*itr).quest_id;
+			if(!(*itr).db_saved || force_refresh) {
+				query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "replace into character_quest_rewards (char_id, indexed, quest_id, is_temporary, is_collection, has_displayed, tmp_coin, tmp_status, description) values(%u, %u, %u, %u, %u, %u, %I64u, %u, '%s')", 
+					GetCharacterID(), index, questID, (*itr).is_temporary, (*itr).is_collection, (*itr).has_displayed, (*itr).tmp_coin, (*itr).tmp_status, database.getSafeEscapeString((*itr).description.c_str()).c_str());
+				(*itr).db_saved = true;
+				(*itr).db_index = index;
+				if((*itr).is_temporary) {
+					std::vector<int32> items;
+					Quest* quest = GetPlayer()->GetAnyQuest(questID);
+					if(quest) {
+						quest->GetTmpRewardItemsByID(&items);
+						if(!force_refresh && items.size() > 0) {
+							query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "delete from character_quest_temporary_rewards where char_id = %u and quest_id = %u", 
+								GetCharacterID(), questID);
+						}
+						for(int i=0;i<items.size();i++) {
+							query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "replace into character_quest_temporary_rewards (char_id, quest_id, item_id) values(%u, %u, %u)", 
+								GetCharacterID(), questID, items[i]);
+						}
+					}
+				}
+			}
+			index++;
+		}
+		MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void Client::UpdateCharacterRewardData(QuestRewardData* data) {
+	
+	if(!data)
+		return;
+	if(data->db_saved) {
+		Query query;
+		query.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, "update character_quest_rewards set is_temporary = %u, is_collection = %u, has_displayed = %u, tmp_coin = %I64u, tmp_status = %u, description = '%s' where char_id=%u and indexed=%u and quest_id=%u", 
+			data->is_temporary, data->is_collection, data->has_displayed, data->tmp_coin, data->tmp_status, database.getSafeEscapeString(data->description.c_str()).c_str(), GetCharacterID(), data->db_index, data->quest_id);
+	}
 }

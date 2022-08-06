@@ -265,7 +265,7 @@ public:
 
 	void RemoveEquipmentUpdates()
 	{
-		appearanceList->clear();
+	 	appearanceList->clear();
 		safe_delete(appearanceList);
 	}
 
@@ -865,7 +865,7 @@ public:
 	PlayerLanguagesList* GetPlayerLanguages() { return &player_languages_list; }
 	bool				HasLanguage(int32 id);
 	bool				HasLanguage(const char* name);
-	bool                CanReceiveQuest(int32 quest_id);
+	bool                CanReceiveQuest(int32 quest_id, int8* ret = 0);
 	float               GetBoatX() { if (info) return info->GetBoatX(); return 0; }
 	float               GetBoatY() { if (info) return info->GetBoatY(); return 0; }
 	float               GetBoatZ() { if (info) return info->GetBoatZ(); return 0; }
@@ -1051,6 +1051,9 @@ public:
 	int32	GetCurrentLanguage() { return current_language_id; }
 	void	SetCurrentLanguage(int32 language_id) { current_language_id = language_id; }
 	
+	void	SetActiveReward(bool val) { active_reward = val; }
+	bool	IsActiveReward() { return active_reward; }
+	
 	Mutex MPlayerQuests;
 	float   pos_packet_speed;
 private:
@@ -1185,6 +1188,8 @@ private:
 	vector<GMTagFilter> gm_visual_filters;
 	
 	int32 current_language_id;
+	
+	bool active_reward;
 };
 #pragma pack()
 #endif

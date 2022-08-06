@@ -276,7 +276,7 @@ public:
 	void			LogError(const char* error, ...);
 
 
-	void			CallQuestFunction(Quest* quest, const char* function, Spawn* player, int32 step_id = 0xFFFFFFFF);
+	bool			CallQuestFunction(Quest* quest, const char* function, Spawn* player, int32 step_id = 0xFFFFFFFF, int32* returnValue = 0);
 	void			RemoveDebugClients(Client* client);
 	void			UpdateDebugClients(Client* client);
 	void			ProcessErrorMessage(const char* message);

@@ -403,9 +403,9 @@ Mutex*  LuaInterface::GetQuestMutex(Quest* quest) {
 	return ret;
 }
 
-void LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* player, int32 step_id) {
+bool LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* player, int32 step_id, int32* returnValue) {
 	if(shutting_down)
-		return;
+		return false;
 	lua_State* state = 0;
 	if(quest){
 		LogWrite(LUA__DEBUG, 0, "LUA", "Quest: %s, function: %s", quest->GetName(), function);
@@ -413,6 +413,7 @@ void LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* 
 		mutex->lock();
 		if(quest_states.count(quest->GetQuestID()) > 0)
 			state = quest_states[quest->GetQuestID()];
+		bool success = false; // if no state then we return false
 		if(state){
 			int8 arg_count = 3;
 			lua_getglobal(state, function);
@@ -424,16 +425,14 @@ void LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* 
 				SetInt32Value(state, step_id);
 				arg_count++;
 			}
-			if(lua_pcall(state, arg_count, 0, 0) != 0){
-				LogError("%s: Error processing quest function '%s': %s ", GetScriptName(state), function, lua_tostring(state, -1));
-				lua_pop(state, 1);
-				mutex->unlock();
-				return;
-			}
+			
+			success = CallScriptInt32(state, arg_count, returnValue);
 		}
 		mutex->unlock();
 		LogWrite(LUA__DEBUG, 0, "LUA", "Done!");
+		return success;
 	}
+	return false;
 }
 
 Quest* LuaInterface::LoadQuest(int32 id, const char* name, const char* type, const char* zone, int8 level, const char* description, char* script_name) {

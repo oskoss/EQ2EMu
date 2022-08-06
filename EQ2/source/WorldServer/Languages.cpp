@@ -41,7 +41,15 @@ MasterLanguagesList::~MasterLanguagesList(){
 	Clear();
 }
 
+
+// don't bother calling this beyond its deconstructor its not thread-safe
 void MasterLanguagesList::Clear(){
+	list<Language*>::iterator itr;
+	Language* language = 0;
+	for(itr = languages_list.begin(); itr != languages_list.end(); itr++){
+		language = *itr;
+		safe_delete(language);
+	}
 	languages_list.clear();
 }
 

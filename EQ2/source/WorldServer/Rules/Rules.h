@@ -83,6 +83,7 @@ enum RuleType {
 	AllowPVP,
 	LevelRange,
 	InvisPlayerDiscoveryRange,
+	PVPMitigationModByLevel,
 
 	/* COMBAT */
 	MaxCombatRange,
@@ -96,6 +97,12 @@ enum RuleType {
 	SpiritShardSpawnScript,
 	ShardDebtRecoveryPercent,
 	ShardRecoveryByRadius,
+	EffectiveMitigationCapLevel,
+	CalculatedMitigationCapLevel,
+	MitigationLevelEffectivenessMax,
+	MitigationLevelEffectivenessMin,
+	MaxMitigationAllowed,
+	MaxMitigationAllowedPVP,
 
 	/* SPAWN */
 	SpeedMultiplier,

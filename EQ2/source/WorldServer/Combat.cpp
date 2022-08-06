@@ -912,6 +912,7 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 	int8 hit_result = 0;
 	int16 blow_type = 0;
 	sint32 damage = 0;
+	sint32 damage_before_crit = 0;
 	bool crit = false;
 
 	if(low_damage > high_damage)
@@ -949,6 +950,7 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 					crit = true;
 			}
 			if(crit){
+				damage_before_crit = damage;
 				//Apply total crit multiplier with crit bonus
 				if(info_struct.get_crit_bonus() > 0)
 					damage *= (1.3 + (info_struct.get_crit_bonus() / 100));
@@ -963,8 +965,21 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 			}
 		}
 
-		// TODO: Mitigation equation from http://www.guildportal.com/Guild.aspx?GuildID=20881&TabID=189653&ForumID=95908&TopicID=9024250
-		
+		if(type == DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE || type == DAMAGE_PACKET_TYPE_SIMPLE_CRIT_DMG || type == DAMAGE_PACKET_TYPE_RANGE_DAMAGE) {			
+			int16 effective_level_attacker = GetInfoStruct()->get_effective_level() != 0 ? GetInfoStruct()->get_effective_level() : GetLevel();
+			float mit_percentage = CalculateMitigation(type, damage_type, effective_level_attacker, (IsPlayer() && victim->IsPlayer()));
+			sint32 damage_to_reduce = (damage * mit_percentage);
+			if(damage_to_reduce > damage)
+				damage = 0;
+			else
+				damage -= damage_to_reduce;
+			
+			// if we reduce damage back below crit level then its no longer a crit, but we don't go below base damage
+			if(type == DAMAGE_PACKET_TYPE_SIMPLE_CRIT_DMG && damage <= damage_before_crit) {
+				damage = damage_before_crit;
+				type = DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE;
+			}
+		}
 	}
 
 	LogWrite(MISC__TODO, 3, "TODO", "Take players armor into account\nfile: %s, func: %s, line: %i)", __FILE__, __FUNCTION__, __LINE__);
@@ -1055,6 +1070,73 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 	}
 	
 	return crit;
+}
+
+float Entity::CalculateMitigation(int8 type, int8 damage_type, int16 effective_level_attacker, bool for_pvp) {
+	int16 effective_level_victim = GetInfoStruct()->get_effective_level() != 0 ? GetInfoStruct()->get_effective_level() : GetLevel();
+	if(effective_level_attacker < 1 && effective_level_victim)
+		effective_level_attacker = effective_level_victim;
+	else
+		effective_level_attacker = 1;
+
+	int32 effective_mit_cap = effective_level_victim * rule_manager.GetGlobalRule(R_Combat, EffectiveMitigationCapLevel)->GetInt32();
+	float max_mit = (float)GetInfoStruct()->get_max_mitigation();
+	if(max_mit == 0.0f)
+		max_mit = effective_level_victim * 100.0f;
+	
+	int32 mit_to_use = 0;
+	switch(type) {
+	
+		case DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE:
+		case DAMAGE_PACKET_TYPE_RANGE_DAMAGE:
+			mit_to_use = GetInfoStruct()->get_cur_mitigation();
+		break;
+		case DAMAGE_PACKET_TYPE_SIMPLE_CRIT_DMG:
+			// since critical mitigation is a percentage we will reverse the mit value so we can add skill from specific types of weapons
+			mit_to_use = (int32)((float)GetInfoStruct()->get_max_mitigation() * (float)(GetInfoStruct()->get_critical_mitigation()/100.0f));
+		break;
+		
+	}
+	
+	switch(damage_type) {
+			case DAMAGE_PACKET_DAMAGE_TYPE_SLASH:
+				mit_to_use += GetInfoStruct()->get_mitigation_skill1(); // slash
+			break;
+			case DAMAGE_PACKET_DAMAGE_TYPE_PIERCE:
+				mit_to_use += GetInfoStruct()->get_mitigation_skill2(); // pierce
+			break;
+			case DAMAGE_PACKET_DAMAGE_TYPE_CRUSH:
+				mit_to_use += GetInfoStruct()->get_mitigation_skill3(); // crush
+			break;
+			default:
+			// do nothing
+			break;
+	}
+	
+	if(for_pvp) {
+		mit_to_use += effective_level_victim * rule_manager.GetGlobalRule(R_Combat, MitigationLevelEffectivenessMax)->GetInt32();
+	}
+	
+	if(mit_to_use > effective_mit_cap) {
+		mit_to_use = effective_mit_cap;
+	}
+	float level_diff = ((float)effective_level_victim / (float)effective_level_attacker);
+	if(level_diff > rule_manager.GetGlobalRule(R_Combat, MitigationLevelEffectivenessMax)->GetFloat()) {
+		level_diff = rule_manager.GetGlobalRule(R_Combat, MitigationLevelEffectivenessMax)->GetFloat();
+	}
+	else if(level_diff < rule_manager.GetGlobalRule(R_Combat, MitigationLevelEffectivenessMax)->GetFloat()) {
+		level_diff = rule_manager.GetGlobalRule(R_Combat, MitigationLevelEffectivenessMin)->GetFloat();
+	}
+	float mit_percentage = ((float)mit_to_use / max_mit) * level_diff;
+	
+	if(!for_pvp && mit_percentage > rule_manager.GetGlobalRule(R_Combat, MaxMitigationAllowed)->GetFloat()) {
+		mit_percentage = rule_manager.GetGlobalRule(R_Combat, MaxMitigationAllowed)->GetFloat();
+	}
+	else if(for_pvp && mit_percentage > rule_manager.GetGlobalRule(R_Combat, MaxMitigationAllowedPVP)->GetFloat()) {
+		mit_percentage = rule_manager.GetGlobalRule(R_Combat, MaxMitigationAllowedPVP)->GetFloat();
+	} 
+	
+	return mit_percentage;
 }
 
 void Entity::AddHate(Entity* attacker, sint32 hate) {

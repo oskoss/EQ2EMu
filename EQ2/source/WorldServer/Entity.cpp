@@ -249,6 +249,8 @@ void Entity::MapInfoStruct()
 	get_int16_funcs["mitigation_skill1"] = l::bind(&InfoStruct::get_mitigation_skill1, &info_struct);
 	get_int16_funcs["mitigation_skill2"] = l::bind(&InfoStruct::get_mitigation_skill2, &info_struct);
 	get_int16_funcs["mitigation_skill3"] = l::bind(&InfoStruct::get_mitigation_skill3, &info_struct);
+	get_int16_funcs["mitigation_pve"] = l::bind(&InfoStruct::get_mitigation_pve, &info_struct);
+	get_int16_funcs["mitigation_pvp"] = l::bind(&InfoStruct::get_mitigation_pvp, &info_struct);
 	get_float_funcs["ability_modifier"] = l::bind(&InfoStruct::get_ability_modifier, &info_struct);
 	get_float_funcs["critical_mitigation"] = l::bind(&InfoStruct::get_critical_mitigation, &info_struct);
 	get_float_funcs["block_chance"] = l::bind(&InfoStruct::get_block_chance, &info_struct);
@@ -427,6 +429,8 @@ void Entity::MapInfoStruct()
 	set_int16_funcs["mitigation_skill1"] = l::bind(&InfoStruct::set_mitigation_skill1, &info_struct, l::_1);
 	set_int16_funcs["mitigation_skill2"] = l::bind(&InfoStruct::set_mitigation_skill2, &info_struct, l::_1);
 	set_int16_funcs["mitigation_skill3"] = l::bind(&InfoStruct::set_mitigation_skill3, &info_struct, l::_1);
+	set_int16_funcs["mitigation_pve"] = l::bind(&InfoStruct::set_mitigation_pve, &info_struct, l::_1);
+	set_int16_funcs["mitigation_pvp"] = l::bind(&InfoStruct::set_mitigation_pvp, &info_struct, l::_1);
 	set_float_funcs["ability_modifier"] = l::bind(&InfoStruct::set_ability_modifier, &info_struct, l::_1);
 	set_float_funcs["critical_mitigation"] = l::bind(&InfoStruct::set_critical_mitigation, &info_struct, l::_1);
 	set_float_funcs["block_chance"] = l::bind(&InfoStruct::set_block_chance, &info_struct, l::_1);
@@ -1289,6 +1293,15 @@ void Entity::CalculateBonuses(){
 	CalculateSpellBonuses(values);
 	
 	info->set_cur_mitigation(info->get_mitigation_base());
+	
+	int32 calc_mit_cap = effective_level * rule_manager.GetGlobalRule(R_Combat, CalculatedMitigationCapLevel)->GetInt32();
+	info->set_max_mitigation(calc_mit_cap);
+	
+	int16 mit_percent = (int16)(CalculateMitigation() * 1000.0f);
+	info->set_mitigation_pve(mit_percent);
+	mit_percent = (int16)(CalculateMitigation(DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE,0,0,true) * 1000.0f);
+	info->set_mitigation_pvp(mit_percent);
+	
 	info->add_sta((float)values->sta);
 	info->add_str((float)values->str);
 	info->add_agi((float)values->agi);
@@ -1397,10 +1410,10 @@ void Entity::CalculateBonuses(){
 					else if (skill->short_name.data == "buckler") 
 						baseBlock = 3.0f;
 				}
-				if(GetLevel() > mitigation)
-					block_pct = log10f((float)mitigation/((float)GetLevel()*10.0f));
+				if(effective_level > mitigation)
+					block_pct = log10f((float)mitigation/((float)effective_level*10.0f));
 				else
-					block_pct = log10f(((float)GetLevel()/(float)mitigation)) * log10f(GetLevel()) * 2.0f;
+					block_pct = log10f(((float)effective_level/(float)mitigation)) * log10f(effective_level) * 2.0f;
 				
 				if(block_pct < 0.0f)
 					block_pct *= -1.0f;
@@ -1441,7 +1454,7 @@ void Entity::CalculateBonuses(){
 
 	float dodge_actual = 0.0f;
 	if(full_pct_hit > 0.0f)
-		dodge_actual = dodge_pct * (full_pct_hit / 100.0f) + (log10f(GetLevel() * GetAgi()) / 100.0f);
+		dodge_actual = dodge_pct * (full_pct_hit / 100.0f) + (log10f(effective_level * GetAgi()) / 100.0f);
 
 	info->set_avoidance_base(dodge_actual);
 

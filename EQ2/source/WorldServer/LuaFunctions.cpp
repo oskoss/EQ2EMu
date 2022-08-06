@@ -4092,6 +4092,7 @@ int EQ2Emu_lua_AddQuestStepZoneLoc(lua_State* state) {
 			i += 4;
 		}
 		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_LOCATION, description, 0, 1, taskgroup, locations, max_variation);
+		safe_delete(locations); // gets duplicated into new table in QuestStep constructor
 		if (quest_step && icon > 0)
 			quest_step->SetIcon(icon);
 		if (quest->GetPlayer()) {
@@ -4134,6 +4135,7 @@ int EQ2Emu_lua_AddQuestStepLocation(lua_State* state) {
 			i += 3;
 		}
 		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_LOCATION, description, 0, 1, taskgroup, locations, max_variation);
+		safe_delete(locations); // gets duplicated into new table in QuestStep constructor
 		if (quest_step && icon > 0)
 			quest_step->SetIcon(icon);
 		if (quest->GetPlayer()) {
@@ -4407,9 +4409,7 @@ int EQ2Emu_lua_GiveQuestReward(lua_State* state) {
 	if (quest && spawn) {
 		if (spawn->IsPlayer()) {
 			Client* client = spawn->GetZone()->GetClientBySpawn(spawn);
-			if (client)
-			{
-				client->AddPendingQuestAcceptReward(quest);
+			if (client) {
 				client->AddPendingQuestReward(quest);
 			}
 		}
@@ -6034,8 +6034,7 @@ int EQ2Emu_lua_GiveQuestItem(lua_State* state)
 				itemsAddedSuccessfully = false;
 		}
 	}
-	client->AddPendingQuestAcceptReward(quest);
-	client->DisplayQuestComplete(quest, true, description);
+	client->AddPendingQuestReward(quest, true, true, description); // queue for display
 	
 	lua_interface->SetBooleanValue(state, itemsAddedSuccessfully);
 	return 1;

@@ -1833,6 +1833,88 @@ SOGA chars looked ok in LoginServer screen tho... odd.
 	return false;
 }
 
+void WorldDatabase::LoadCharacterQuestRewards(Client* client) {
+		Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT indexed, quest_id, is_temporary, is_collection, has_displayed, tmp_coin, tmp_status, description FROM character_quest_rewards where char_id = %u ORDER BY indexed asc", client->GetCharacterID());
+	int8 count = 0;
+	if(result)
+	{
+		while(result && (row = mysql_fetch_row(result)))
+		{
+			int32 index = atoul(row[0]);
+			int32 quest_id = atoul(row[1]);
+
+			bool is_temporary = atoul(row[2]);
+
+			bool is_collection = atoul(row[3]);
+
+			bool has_displayed = atoul(row[4]);
+
+			
+		int64 tmp_coin = 0;
+#ifdef WIN32
+			tmp_coin = _strtoui64(row[5], NULL, 10);
+#else
+			tmp_coin = strtoull(row[5], 0, 10);
+#endif
+
+
+			int32 tmp_status = atoul(row[6]);
+			
+			std::string description = std::string("");
+			
+			if(row[7]) {
+				std::string description = std::string(row[7]);
+			}
+			
+			if(is_collection) { 			
+				map<int32, Collection*>* collections = client->GetPlayer()->GetCollectionList()->GetCollections();
+				map<int32, Collection*>::iterator itr;
+				Collection* collection = 0;
+				for (itr = collections->begin(); itr != collections->end(); itr++) {
+					collection = itr->second;
+				if (collection->GetIsReadyToTurnIn()) {
+						client->GetPlayer()->SetPendingCollectionReward(collection);
+						break;
+					}
+				}
+			}
+			if(is_temporary) {
+				LoadCharacterQuestTemporaryRewards(client, quest_id);
+			}
+			client->QueueQuestReward(quest_id, is_temporary, is_collection, has_displayed, tmp_coin, tmp_status, description, true, index);
+			count++;
+		}
+	}
+	
+	if(count) {
+		client->SetQuestUpdateState(true);
+	}
+}
+
+
+void WorldDatabase::LoadCharacterQuestTemporaryRewards(Client* client, int32 quest_id) {
+		Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id FROM character_quest_temporary_rewards where char_id = %u and quest_id = %u", client->GetCharacterID(), quest_id);
+	int8 count = 0;
+	if(result)
+	{
+		while(result && (row = mysql_fetch_row(result)))
+		{
+			int32 item_id = atoul(row[0]);
+			Quest* quest = client->GetPlayer()->GetAnyQuest(quest_id);
+			if(quest) {
+				Item* item = master_item_list.GetItem(item_id);
+				if(item) {
+					quest->AddTmpRewardItem(new Item(item));
+				}
+			}
+		}
+	}
+}
+
 bool WorldDatabase::InsertCharacterStats(int32 character_id, int8 class_id, int8 race_id){
 	Query query1;
 	Query query2;
@@ -4085,6 +4167,7 @@ void WorldDatabase::Save(Client* client){
 	SavePlayerSpells(client);
 	SavePlayerMail(client);
 	SavePlayerCollections(client);
+	client->SaveQuestRewardData();
 
 	LogWrite(PLAYER__INFO, 3, "Player", "Player '%s' (%u) data saved.", player->GetName(), player->GetCharacterID());
 }
@@ -4924,6 +5007,9 @@ bool WorldDatabase::DeleteCharacter(int32 account_id, int32 character_id){
 	query.RunQuery2(Q_DELETE, "DELETE FROM characters WHERE id=%u AND account_id=%u", character_id, account_id);
 	//delete languages
 	query2.RunQuery2(Q_DELETE, "DELETE FROM character_languages WHERE char_id=%u", character_id);
+	//delete quest rewards
+	query2.RunQuery2(Q_DELETE, "DELETE FROM character_quest_rewards WHERE char_id=%u", character_id);
+	query2.RunQuery2(Q_DELETE, "DELETE FROM character_quest_temporary_rewards WHERE char_id=%u", character_id);
 
 	if(!query.GetAffectedRows())
 	{

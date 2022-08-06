@@ -124,6 +124,7 @@ Player::Player(){
 	reset_mentorship = false;
 	all_spells_locked = false;
 	current_language_id = 0;
+	active_reward = false;
 }
 Player::~Player(){
 	SetSaveSpellEffects(true);
@@ -703,8 +704,9 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("stat_bonus_damage", 95); //stat_bonus_damage
 		packet->setDataByName("mitigation_cur", info_struct->get_cur_mitigation());// confirmed DoV
 		packet->setDataByName("mitigation_base", info_struct->get_mitigation_base());// confirmed DoV
-		packet->setDataByName("mitigation_pct_pve", 392); // % calculation Mitigation % vs PvE 392 = 39.2%// confirmed DoV
-		packet->setDataByName("mitigation_pct_pvp", 559); // % calculation Mitigation % vs PvP 559 = 55.9%// confirmed DoV
+		
+		packet->setDataByName("mitigation_pct_pve", info_struct->get_mitigation_pve()); // % calculation Mitigation % vs PvE 392 = 39.2%// confirmed DoV
+		packet->setDataByName("mitigation_pct_pvp", info_struct->get_mitigation_pvp()); // % calculation Mitigation % vs PvP 559 = 55.9%// confirmed DoV
 		packet->setDataByName("toughness", 0);//toughness// confirmed DoV
 		packet->setDataByName("toughness_resist_dmg_pvp", 0);//toughness_resist_dmg_pvp 73 = 7300% // confirmed DoV 
 		packet->setDataByName("avoidance_pct", (int16)info_struct->get_avoidance_display()*10.0f);//avoidance_pct 192 = 19.2% // confirmed DoV
@@ -5058,10 +5060,10 @@ map<int32, Quest*>*	Player::GetCompletedPlayerQuests(){
 }
 
 Quest* Player::GetAnyQuest(int32 quest_id) {
-	if(completed_quests.count(quest_id) > 0)
-		return completed_quests[quest_id];
 	if(player_quests.count(quest_id) > 0)
 		return player_quests[quest_id];
+	if(completed_quests.count(quest_id) > 0)
+		return completed_quests[quest_id];
 	
 	return 0;
 }
@@ -5120,7 +5122,12 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 				}
 			}
 			MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
-			if (CanReceiveQuest(quests->at(i))){
+			int8 flag = 0;
+			if (CanReceiveQuest(quests->at(i), &flag)){
+				if(flag) {
+					ret = flag;
+					break;
+				}
 				master_quest_list.LockQuests();
 				quest = master_quest_list.GetQuest(quests->at(i), false);
 				master_quest_list.UnlockQuests();
@@ -5155,7 +5162,7 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 	return ret;
 }
 
-bool Player::CanReceiveQuest(int32 quest_id){
+bool Player::CanReceiveQuest(int32 quest_id, int8* ret){
 	bool passed = true;
 	int32 x;
 	master_quest_list.LockQuests();
@@ -5264,6 +5271,18 @@ bool Player::CanReceiveQuest(int32 quest_id){
 			}
 			else
 				passed = false;
+		}
+	}
+	
+	int32 flag = 0;
+	if(lua_interface->CallQuestFunction(quest, "ReceiveQuestCriteria", this, 0xFFFFFFFF, &flag)) {
+		if(ret)
+			*ret = flag;
+		if(!flag) {
+			passed = false;
+		}
+		else {
+			passed = true;
 		}
 	}
 

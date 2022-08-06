@@ -224,6 +224,7 @@ void RuleManager::Init()
 	RULE_INIT(R_PVP, AllowPVP, "0");
 	RULE_INIT(R_PVP, LevelRange, "4");
 	RULE_INIT(R_PVP, InvisPlayerDiscoveryRange, "20"); // value > 0 sets radius inner to see, = 0 means always seen, -1 = never seen
+	RULE_INIT(R_PVP, PVPMitigationModByLevel, "25"); // gives a bonus to mitigation for PVP combat to offset the percentage level * mod (default 25)
 
 	/* COMBAT */
 	RULE_INIT(R_Combat, MaxCombatRange, "4.0");
@@ -237,6 +238,12 @@ void RuleManager::Init()
 	RULE_INIT(R_Combat, SpiritShardSpawnScript, "SpawnScripts/Generic/SpiritShard.lua");
 	RULE_INIT(R_Combat, ShardDebtRecoveryPercent, "25.00"); // recovered percentage of debt upon obtainig shard, 25/100 means 25%.  If there is .5 DeathExperienceDebt, .5*25% = .125,  .5 - .125 = .375
 	RULE_INIT(R_Combat, ShardRecoveryByRadius, "1"); // allow shards to auto pick up by radius, not requiring to click/right click the shard
+	RULE_INIT(R_Combat, EffectiveMitigationCapLevel, "80"); // level multiplier for max effective cap, level * 80 (default)
+	RULE_INIT(R_Combat, CalculatedMitigationCapLevel, "100"); // The cap to calculate your mitigation from is [level*100].
+	RULE_INIT(R_Combat, MitigationLevelEffectivenessMax, "1.5"); // ratio victim level / attacker level for max effectiveness, when victim is higher level cap can reach 1.5
+	RULE_INIT(R_Combat, MitigationLevelEffectivenessMin, ".5"); // ratio victim level / attacker level for min effectiveness
+	RULE_INIT(R_Combat, MaxMitigationAllowed, ".75"); // percentage max mitigation allowed, eg. 75% of damage can be mitigated max in PVE
+	RULE_INIT(R_Combat, MaxMitigationAllowedPVP, ".75"); // percentage max mitigation allowed, eg. 75% of damage can be mitigated max in PVP
 
 	/* SPAWN */
 	RULE_INIT(R_Spawn, SpeedMultiplier, "300"); // note: this value was 1280 until 6/1/2009, then was 600 til Sep 2009, when it became 300...?

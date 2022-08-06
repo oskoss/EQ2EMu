@@ -3126,8 +3126,9 @@ bool PlayerItemList::GetFirstFreeSlot(sint32* bag_id, sint16* slot) {
 }
 
 Item* PlayerItemList::CanStack(Item* item, bool include_bank){
-	if(!item)
+	if(!item || item->stack_count < 2)
 		return 0;
+	
 	Item* ret = 0;
 	map<sint32, map<int8, map<int16, Item*>> >::iterator itr;
 	map<int16, Item*>::iterator slot_itr;
@@ -3135,13 +3136,13 @@ Item* PlayerItemList::CanStack(Item* item, bool include_bank){
 	for(itr = items.begin(); itr != items.end(); itr++){
 		if(include_bank || (!include_bank && itr->first >= 0)){
 			for(slot_itr=itr->second[0].begin();slot_itr!=itr->second[0].end(); slot_itr++){
-				if(slot_itr->second && slot_itr->second->details.item_id == item->details.item_id && ((slot_itr->second->details.count + item->details.count) <= slot_itr->second->stack_count)){
+				if(slot_itr->second && slot_itr->second->details.item_id == item->details.item_id && (((slot_itr->second->details.count ? slot_itr->second->details.count : 1) + (item->details.count > 0 ? item->details.count : 1)) <= slot_itr->second->stack_count)){
 					ret = slot_itr->second;
 					break;
 				}
 			}
 			for(slot_itr=itr->second[1].begin();slot_itr!=itr->second[1].end(); slot_itr++){
-				if(slot_itr->second && slot_itr->second->details.item_id == item->details.item_id && ((slot_itr->second->details.count + item->details.count) <= slot_itr->second->stack_count)){
+				if(slot_itr->second && slot_itr->second->details.item_id == item->details.item_id && (((slot_itr->second->details.count ? slot_itr->second->details.count : 1) + (item->details.count > 0 ? item->details.count : 1)) <= slot_itr->second->stack_count)){
 					ret = slot_itr->second;
 					break;
 				}
@@ -3416,8 +3417,9 @@ EQ2Packet* PlayerItemList::serialize(Player* player, int16 version){
 				safe_delete_array(xor_packet);
 				xor_packet = new uchar[packet_size * size];
 			}
-			packet_count = size;
 		}
+		
+		packet_count = size;
 		
 		for(int16 i = 0; i < indexed_items.size(); i++){
 			item = indexed_items[i];
@@ -3574,9 +3576,10 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 	packet->setSubstructArrayDataByName("items", "menu_type", menu_data, 0, i);
 	if (overflow)
 		packet->setSubstructArrayDataByName("items", "index", 0xFFFF, 0, i);
-	else
+	else {
 		packet->setSubstructArrayDataByName("items", "index", i, 0, i);
-	item->details.index = i;
+		item->details.index = i;
+	}
 	packet->setSubstructArrayDataByName("items", "icon", item->details.icon, 0, i);
 	packet->setSubstructArrayDataByName("items", "slot_id", item->details.slot_id, 0, i);
 	if (client->GetVersion() <= 1208) {

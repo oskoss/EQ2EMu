@@ -1475,6 +1475,13 @@ void Quest::AddTmpRewardItem(Item* item){
 	tmp_reward_items.push_back(item);
 }
 
+void Quest::GetTmpRewardItemsByID(std::vector<int32>* items) {
+	if(!items)
+		return;
+	for(int32 i=0;i<tmp_reward_items.size();i++)
+		items->push_back(tmp_reward_items[i]->details.item_id);
+}
+
 void Quest::AddRewardCoins(int32 copper, int32 silver, int32 gold, int32 plat){
 	reward_coins = copper + (silver*100) + (gold*10000) + ((int64)plat*1000000);
 }
