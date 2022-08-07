@@ -5998,7 +5998,7 @@ Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
 			items = quest->GetTmpRewardItems();
 		else
 			items = quest->GetRewardItems();
-		if (item_id == 0 && items && items->size() > 0) {
+		if (item_id == 0) {
 			found_quest = true;
 		}
 		else {
