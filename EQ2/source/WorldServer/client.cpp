@@ -241,6 +241,14 @@ Client::~Client() {
 	}
 	quest_queue.clear();
 	
+	vector<QuestRewardData*>::iterator rwd_itr;
+	QuestRewardData* quest_rwd_data = 0;
+	for (rwd_itr = quest_pending_reward.begin(); rwd_itr != quest_pending_reward.end(); rwd_itr++) {
+		quest_rwd_data = *rwd_itr;
+		safe_delete(quest_rwd_data);
+	}
+	quest_pending_reward.clear();
+	
 	safe_delete(CLE_keepalive_timer);
 	safe_delete(connect);
 	--numclients;
@@ -5459,16 +5467,16 @@ void Client::QueueQuestReward(int32 quest_id, bool is_temporary, bool is_collect
 	if(HasQuestRewardQueued(quest_id, is_temporary, is_collection))
 		return;
 	
-	QuestRewardData data;
-	data.quest_id = quest_id;
-	data.is_temporary = is_temporary;
-	data.is_collection = is_collection;
-	data.has_displayed = has_displayed;
-	data.tmp_coin = tmp_coin;
-	data.tmp_status = tmp_status;
-	data.description = std::string(description);
-	data.db_saved = db_saved;
-	data.db_index = index;
+	QuestRewardData* data = new QuestRewardData;
+	data->quest_id = quest_id;
+	data->is_temporary = is_temporary;
+	data->is_collection = is_collection;
+	data->has_displayed = has_displayed;
+	data->tmp_coin = tmp_coin;
+	data->tmp_status = tmp_status;
+	data->description = std::string(description);
+	data->db_saved = db_saved;
+	data->db_index = index;
 	MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
 	quest_pending_reward.push_back(data);
 	MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
@@ -5479,12 +5487,12 @@ bool Client::HasQuestRewardQueued(int32 quest_id, bool is_temporary, bool is_col
 	bool success = false;
 	MQuestPendingUpdates.readlock(__FUNCTION__, __LINE__);
 	if (quest_pending_reward.size() > 0) {
-		vector<QuestRewardData>::iterator itr;
+		vector<QuestRewardData*>::iterator itr;
 		
 		for (itr = quest_pending_reward.begin(); itr != quest_pending_reward.end(); itr++) {
-			int32 questID = (*itr).quest_id;
-			bool temporary = (*itr).is_temporary;
-			bool collection = (*itr).is_collection;
+			int32 questID = (*itr)->quest_id;
+			bool temporary = (*itr)->is_temporary;
+			bool collection = (*itr)->is_collection;
 			if( questID == quest_id && is_temporary == temporary && is_collection == collection ) {
 				success = true;
 				break;
@@ -5499,12 +5507,12 @@ bool Client::HasQuestRewardQueued(int32 quest_id, bool is_temporary, bool is_col
 void Client::RemoveQueuedQuestReward() {
 	MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
 	if(quest_pending_reward.size() > 0) {
-		QuestRewardData data = quest_pending_reward.at(0);
-		if(data.db_saved) {
+		QuestRewardData* data = quest_pending_reward.at(0);
+		if(data->db_saved) {
 			Query query;
-			query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete FROM character_quest_rewards where char_id = %u and indexed = %u", GetCharacterID(), data.db_index);
-			if(data.is_temporary && data.quest_id) {
-				query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete FROM character_quest_temporary_rewards where char_id = %u and quest_id = %u", GetCharacterID(), data.quest_id);
+			query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete FROM character_quest_rewards where char_id = %u and indexed = %u", GetCharacterID(), data->db_index);
+			if(data->is_temporary && data->quest_id) {
+				query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete FROM character_quest_temporary_rewards where char_id = %u and quest_id = %u", GetCharacterID(), data->quest_id);
 			}
 		}
 		quest_pending_reward.erase(quest_pending_reward.begin());
@@ -5554,33 +5562,33 @@ void Client::ProcessQuestUpdates() {
 			return;
 		
 		Query query;
-		vector<QuestRewardData>::iterator itr;
-		vector<QuestRewardData> tmp_quest_rewards;
+		vector<QuestRewardData*>::iterator itr;
+		vector<QuestRewardData*> tmp_quest_rewards;
 		MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
 		tmp_quest_rewards.insert(tmp_quest_rewards.begin(), quest_pending_reward.begin(), quest_pending_reward.begin()+1);
 		MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
 		
 		for (itr = tmp_quest_rewards.begin(); itr != tmp_quest_rewards.end(); itr++) {
-			int32 questID = (*itr).quest_id;
+			int32 questID = (*itr)->quest_id;
 			Quest* quest = 0;
-			if((*itr).is_collection && GetPlayer()->GetPendingCollectionReward()) {
+			if((*itr)->is_collection && GetPlayer()->GetPendingCollectionReward()) {
 				DisplayCollectionComplete(GetPlayer()->GetPendingCollectionReward());
 				GetPlayer()->SetActiveReward(true);
-				(*itr).has_displayed = true;
+				(*itr)->has_displayed = true;
 				
-				UpdateCharacterRewardData(&(*itr));
+				UpdateCharacterRewardData((*itr));
 			}
 			else if(questID > 0 && (quest = GetPlayer()->GetAnyQuest(questID))) {
-				quest->SetQuestTemporaryState((*itr).is_temporary, (*itr).description);
-				if((*itr).is_temporary) {
-					quest->SetStatusTmpReward((*itr).tmp_status);
-					quest->SetCoinTmpReward((*itr).tmp_coin);
+				quest->SetQuestTemporaryState((*itr)->is_temporary, (*itr)->description);
+				if((*itr)->is_temporary) {
+					quest->SetStatusTmpReward((*itr)->tmp_status);
+					quest->SetCoinTmpReward((*itr)->tmp_coin);
 				}
-				GiveQuestReward(quest, (*itr).has_displayed);
+				GiveQuestReward(quest, (*itr)->has_displayed);
 				GetPlayer()->SetActiveReward(true);
-				(*itr).has_displayed = true;
+				(*itr)->has_displayed = true;
 				
-				UpdateCharacterRewardData(&(*itr));
+				UpdateCharacterRewardData((*itr));
 				// only able to display one reward at a time
 				break;
 			} else {
@@ -9652,16 +9660,16 @@ void Client::HandInCollections() {
 		if (collection->GetIsReadyToTurnIn()) {
 			player->SetPendingCollectionReward(collection);
 			MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
-			QuestRewardData data;
-			data.quest_id = 0;
-			data.is_temporary = false;
-			data.description = std::string("");
-			data.is_collection = true;
-			data.has_displayed = false;
-			data.tmp_coin = 0;
-			data.tmp_status = 0;
-			data.db_saved = false;
-			data.db_index = 0;
+			QuestRewardData* data = new QuestRewardData;
+			data->quest_id = 0;
+			data->is_temporary = false;
+			data->description = std::string("");
+			data->is_collection = true;
+			data->has_displayed = false;
+			data->tmp_coin = 0;
+			data->tmp_status = 0;
+			data->db_saved = false;
+			data->db_index = 0;
 			quest_pending_reward.push_back(data);
 			MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
 			quest_updates = true;
@@ -11179,18 +11187,18 @@ void Client::SaveQuestRewardData(bool force_refresh) {
 			query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "delete from character_quest_temporary_rewards where char_id = %u", 
 							GetCharacterID());
 		}
-		vector<QuestRewardData>::iterator itr;
-		vector<QuestRewardData> tmp_quest_rewards;
+		vector<QuestRewardData*>::iterator itr;
+		vector<QuestRewardData*> tmp_quest_rewards;
 		MQuestPendingUpdates.writelock(__FUNCTION__, __LINE__);
 		int index = 0;
 		for (itr = quest_pending_reward.begin(); itr != quest_pending_reward.end(); itr++) {
-			int32 questID = (*itr).quest_id;
-			if(!(*itr).db_saved || force_refresh) {
+			int32 questID = (*itr)->quest_id;
+			if(!(*itr)->db_saved || force_refresh) {
 				query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "replace into character_quest_rewards (char_id, indexed, quest_id, is_temporary, is_collection, has_displayed, tmp_coin, tmp_status, description) values(%u, %u, %u, %u, %u, %u, %I64u, %u, '%s')", 
-					GetCharacterID(), index, questID, (*itr).is_temporary, (*itr).is_collection, (*itr).has_displayed, (*itr).tmp_coin, (*itr).tmp_status, database.getSafeEscapeString((*itr).description.c_str()).c_str());
-				(*itr).db_saved = true;
-				(*itr).db_index = index;
-				if((*itr).is_temporary) {
+					GetCharacterID(), index, questID, (*itr)->is_temporary, (*itr)->is_collection, (*itr)->has_displayed, (*itr)->tmp_coin, (*itr)->tmp_status, database.getSafeEscapeString((*itr)->description.c_str()).c_str());
+				(*itr)->db_saved = true;
+				(*itr)->db_index = index;
+				if((*itr)->is_temporary) {
 					std::vector<int32> items;
 					Quest* quest = GetPlayer()->GetAnyQuest(questID);
 					if(quest) {

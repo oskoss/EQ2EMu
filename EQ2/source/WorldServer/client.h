@@ -569,7 +569,7 @@ private:
 	void	AddStepProgress(int32 quest_id, int32 step, int32 progress);
 	map<int32, map<int32, int32> > quest_pending_updates;
 	vector<QueuedQuest*> quest_queue;
-	vector<QuestRewardData> quest_pending_reward;
+	vector<QuestRewardData*> quest_pending_reward;
 	volatile bool	quest_updates;
 	Mutex	MQuestPendingUpdates;
 	Mutex	MQuestQueue;

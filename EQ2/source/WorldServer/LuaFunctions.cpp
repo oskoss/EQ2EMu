@@ -4174,6 +4174,7 @@ int EQ2Emu_lua_AddQuestUsableItem(lua_State* state) {
 			i += 3;
 		}
 		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_LOCATION, description, 0, 1, taskgroup, locations, max_variation);
+		safe_delete(locations); // gets duplicated into new table in QuestStep constructor
 		if (quest_step && icon > 0)
 			quest_step->SetIcon(icon);
 		if (quest->GetPlayer()) {
