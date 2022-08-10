@@ -3700,10 +3700,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					map<string,Deposit>::iterator itr = ph->depositsMap.find(string(client->GetPlayer()->GetName()));
 					if (itr != ph->depositsMap.end())
 					{
-						snprintf(query, 256, "update character_house_deposits set timestamp = %u, amount = amount + %I64u, last_amount = %I64u, status = status + %u, last_status = %u where house_id = %u and instance_id = %u and name='%s'", Timer::GetUnixTimeStamp(), outValCoin, outValCoin, outValStatus, outValStatus, ph->house_id, ph->instance_id, client->GetPlayer()->GetName());
+						snprintf(query, 256, "update character_house_deposits set timestamp = %u, amount = amount + %llu, last_amount = %llu, status = status + %u, last_status = %u where house_id = %u and instance_id = %u and name='%s'", Timer::GetUnixTimeStamp(), outValCoin, outValCoin, outValStatus, outValStatus, ph->house_id, ph->instance_id, client->GetPlayer()->GetName());
 					}
 					else
-						snprintf(query, 256, "insert into character_house_deposits set timestamp = %u, house_id = %u, instance_id = %u, name='%s', amount = %I64u, status = %u", Timer::GetUnixTimeStamp(), ph->house_id, ph->instance_id, client->GetPlayer()->GetName(), outValCoin, outValStatus);
+						snprintf(query, 256, "insert into character_house_deposits set timestamp = %u, house_id = %u, instance_id = %u, name='%s', amount = %llu, status = %u", Timer::GetUnixTimeStamp(), ph->house_id, ph->instance_id, client->GetPlayer()->GetName(), outValCoin, outValStatus);
 
 					if (database.RunQuery(query, strnlen(query, 256)))
 					{

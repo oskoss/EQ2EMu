@@ -11194,7 +11194,7 @@ void Client::SaveQuestRewardData(bool force_refresh) {
 		for (itr = quest_pending_reward.begin(); itr != quest_pending_reward.end(); itr++) {
 			int32 questID = (*itr)->quest_id;
 			if(!(*itr)->db_saved || force_refresh) {
-				query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "replace into character_quest_rewards (char_id, indexed, quest_id, is_temporary, is_collection, has_displayed, tmp_coin, tmp_status, description) values(%u, %u, %u, %u, %u, %u, %I64u, %u, '%s')", 
+				query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "replace into character_quest_rewards (char_id, indexed, quest_id, is_temporary, is_collection, has_displayed, tmp_coin, tmp_status, description) values(%u, %u, %u, %u, %u, %u, %llu, %u, '%s')", 
 					GetCharacterID(), index, questID, (*itr)->is_temporary, (*itr)->is_collection, (*itr)->has_displayed, (*itr)->tmp_coin, (*itr)->tmp_status, database.getSafeEscapeString((*itr)->description.c_str()).c_str());
 				(*itr)->db_saved = true;
 				(*itr)->db_index = index;
@@ -11225,7 +11225,7 @@ void Client::UpdateCharacterRewardData(QuestRewardData* data) {
 		return;
 	if(data->db_saved) {
 		Query query;
-		query.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, "update character_quest_rewards set is_temporary = %u, is_collection = %u, has_displayed = %u, tmp_coin = %I64u, tmp_status = %u, description = '%s' where char_id=%u and indexed=%u and quest_id=%u", 
+		query.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, "update character_quest_rewards set is_temporary = %u, is_collection = %u, has_displayed = %u, tmp_coin = %llu, tmp_status = %u, description = '%s' where char_id=%u and indexed=%u and quest_id=%u", 
 			data->is_temporary, data->is_collection, data->has_displayed, data->tmp_coin, data->tmp_status, database.getSafeEscapeString(data->description.c_str()).c_str(), GetCharacterID(), data->db_index, data->quest_id);
 	}
 }

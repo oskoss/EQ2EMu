@@ -33,7 +33,7 @@ void WorldDatabase::SetHouseUpkeepDue(int32 char_id, int32 house_id, int32 insta
 
 void WorldDatabase::UpdateHouseEscrow(int32 house_id, int32 instance_id, int64 amount_coins, int32 amount_status) {
 	Query query;
-	string update = string("UPDATE character_houses set escrow_coins = %I64u, escrow_status = %u where house_id = %u and instance_id = %u");
+	string update = string("UPDATE character_houses set escrow_coins = %llu, escrow_status = %u where house_id = %u and instance_id = %u");
 	query.RunQuery2(Q_UPDATE, update.c_str(), amount_coins, amount_status, house_id, instance_id);
 }
 
@@ -126,6 +126,6 @@ void WorldDatabase::AddHistory(PlayerHouse* house, char* name, char* reason, int
 	house->history.push_back(h);
 
 	Query query;
-	string insert = string("INSERT INTO character_house_history (timestamp, house_id, instance_id, name, amount, status, reason, pos_flag) VALUES (%u, %u, %u, '%s', %I64u, %u, '%s', %u) ");
+	string insert = string("INSERT INTO character_house_history (timestamp, house_id, instance_id, name, amount, status, reason, pos_flag) VALUES (%u, %u, %u, '%s', %llu, %u, '%s', %u) ");
 	query.RunQuery2(Q_INSERT, insert.c_str(), timestamp, house->house_id, house->instance_id, name, amount, status, reason, pos_flag);
 }
