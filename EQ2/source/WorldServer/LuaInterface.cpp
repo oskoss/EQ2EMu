@@ -410,7 +410,7 @@ bool LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* 
 	if(quest){
 		LogWrite(LUA__DEBUG, 0, "LUA", "Quest: %s, function: %s", quest->GetName(), function);
 		Mutex* mutex = GetQuestMutex(quest);
-		mutex->lock();
+		mutex->readlock(__FUNCTION__, __LINE__);
 		if(quest_states.count(quest->GetQuestID()) > 0)
 			state = quest_states[quest->GetQuestID()];
 		bool success = false; // if no state then we return false
@@ -428,7 +428,7 @@ bool LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* 
 			
 			success = CallScriptInt32(state, arg_count, returnValue);
 		}
-		mutex->unlock();
+		mutex->releasereadlock(__FUNCTION__, __LINE__);
 		LogWrite(LUA__DEBUG, 0, "LUA", "Done!");
 		return success;
 	}
