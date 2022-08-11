@@ -324,7 +324,6 @@ public:
 	void Command_GuildsRemove(Client* client, Seperator* sep);
 	void Command_InspectPlayer(Client* client, Seperator* sep);
 	void Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteCommandString* command);
-	void Command_IRC(Client* client, Seperator* sep);
 	void Command_Languages(Client* client, Seperator* sep);
 	void Command_SetLanguage(Client* client, Seperator* sep);
 	void Command_LastName(Client* client, Seperator* sep);
@@ -862,7 +861,6 @@ private:
 #define COMMAND_TITLE_FIX			289
 #define COMMAND_LANGUAGES			290
 #define COMMAND_SET_LANGUAGE		291
-#define COMMAND_IRC					292
 #define COMMAND_ACCEPT_ADVANCEMENT	293
 
 #define COMMAND_JOIN_CHANNEL			294

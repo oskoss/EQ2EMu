@@ -22,10 +22,8 @@
 #include "../../common/Log.h"
 #include "../../common/ConfigReader.h"
 #include "../../common/PacketStruct.h"
-#include "../IRC/IRC.h"
 
 extern ConfigReader configReader;
-extern IRC irc;
 
 Chat::Chat() {
 	m_channels.SetName("Chat::Channels");
@@ -272,27 +270,6 @@ bool Chat::TellChannel(Client *client, const char *channel_name, const char *mes
 				ret = (*itr)->TellChannelClient(client, message, name);
 			else
 				ret = (*itr)->TellChannel(client, message, name);
-
-			// if client = null then it came from irc, don't send it back to irc
-			if (client) {
-				IRCServer* server = 0;
-				bool global = false;
-				string msg;
-				const char* safe_name = irc.GetSafeChannelName(channel_name);
-
-				// If global irc channel add "PlayerName says: " to the begining of the message
-				if ((*itr)->IsGlobalIRCChannel()) {
-					server = irc.GetGlobalServer();
-					msg = string(client->GetPlayer()->GetName()) + string(" says: ") + string(message);
-					global = true;
-				}
-				else
-					server = irc.GetServer(client);
-
-				// if global channel don't send a client and send the modified message
-				if (server && server->GetChannel(safe_name))
-					irc.Say(global ? 0 : client, channel_name, global ? msg.c_str() : message);
-			}
 
 			break;
 		}

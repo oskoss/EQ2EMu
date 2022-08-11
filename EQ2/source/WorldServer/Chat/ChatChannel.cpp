@@ -20,7 +20,6 @@ ChatChannel::ChatChannel() {
 	level_restriction = 0;
 	races = 0;
 	classes = 0;
-	m_globalIRCChannel = false;
 }
 
 ChatChannel::~ChatChannel() {

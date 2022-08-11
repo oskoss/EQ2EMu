@@ -18,7 +18,6 @@
     along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// JA: for when we add world channel or IRC configs
 
 #include "../../common/Log.h"
 #include "Chat.h"

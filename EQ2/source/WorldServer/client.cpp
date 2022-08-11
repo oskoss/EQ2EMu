@@ -36,7 +36,6 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "Variables.h"
 #include "Rules/Rules.h"
 #include "Titles.h"
-#include "IRC/IRC.h"
 #include "Chat/Chat.h"
 #include "SpellProcess.h"
 #include "Zone/ChestTrap.h"
@@ -114,7 +113,6 @@ extern GuildList guild_list;
 extern MasterCollectionList master_collection_list;
 extern MasterAchievementList master_achievement_list;
 extern RuleManager rule_manager;
-extern IRC irc;
 extern Chat chat;
 extern MasterAAList master_aa_list;
 extern MasterAAList master_tree_nodes;
@@ -844,9 +842,6 @@ void Client::SendCharInfo() {
 	SetZoningDestination(nullptr);
 	if (player->GetHP() < player->GetTotalHP() || player->GetPower() < player->GetTotalPower())
 		GetCurrentZone()->AddDamagedSpawn(player);
-
-	if (firstlogin && rule_manager.GetGlobalRule(R_World, IRCGlobalEnabled)->GetBool())
-		Message(CHANNEL_BROADCAST, "This server has a global IRC channel, join the world channel %s to use", rule_manager.GetGlobalRule(R_World, IRCChan)->GetString());
 
 	if (firstlogin)
 		firstlogin = false;

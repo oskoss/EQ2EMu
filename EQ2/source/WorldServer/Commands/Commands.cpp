@@ -41,7 +41,6 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../common/Log.h"
 #include "../../common/MiscFunctions.h"
 #include "../Languages.h"
-#include "../IRC/IRC.h"
 #include "../Traits/Traits.h"
 #include "../Chat/Chat.h"
 #include "../Rules/Rules.h"
@@ -68,7 +67,6 @@ extern MasterSkillList master_skill_list;
 extern MasterFactionList master_faction_list;
 extern GuildList guild_list;
 extern MasterLanguagesList master_languages_list;
-extern IRC irc;
 extern Chat chat;
 extern RuleManager rule_manager;
 extern MasterAAList master_aa_list;
@@ -5398,7 +5396,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_LOCATION_REMOVE	: { Command_LocationRemove(client, sep); break; }
 		case COMMAND_GRID				: { Command_Grid(client); break; }
 		case COMMAND_TRY_ON				: { Command_TryOn(client, sep); break; }
-		case COMMAND_IRC				: { Command_IRC(client, sep); break; }
 		case COMMAND_RANDOMIZE			: { Command_Randomize(client, sep); break; }
 		case COMMAND_AFK				: { Command_AFK(client, sep); break; }
 		case COMMAND_SHOW_CLOAK			: { Command_ShowCloak(client, sep); break; }
@@ -6942,59 +6939,6 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 
 }
 
-/* 
-	Function: Command_IRC()
-	Purpose	: Handle the IRC functions
-	Params	: IRC Commands
-	Dev		: Scatman
-	Example	: /irc say #Channel Hello World!
-*/ 
-void Commands::Command_IRC(Client* client, Seperator* sep)
-{
-	if (!rule_manager.GetGlobalRule(R_World, IRCEnabled)->GetBool()) {
-		client->SimpleMessage(CHANNEL_STATUS, "IRC is currently disabled on this server");
-		return;
-	}
-
-	if (sep && sep->arg[0][0]) {
-		if (strcasecmp(sep->arg[0], "say") == 0) {
-			if (sep->arg[1][0] && sep->arg[2][0]) {
-				if (sep->IsNumber(sep->arg[1]))
-					irc.Say(client, atoul(sep->arg[1]), sep->argplus[2]);
-				else
-					irc.Say(client, sep->arg[1], sep->argplus[2]);
-			}
-			else
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage: /irc say <channel name | channel index> <message>");
-		}
-		else if (strcasecmp(sep->arg[0], "join") == 0) {
-			if (sep->arg[1][0])
-				irc.JoinChannel(client, sep->arg[1]);
-			else
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage: /irc join <channel name>");
-		}
-		else if (strcasecmp(sep->arg[0], "leave") == 0) {
-			if (sep->arg[1][0])
-				irc.LeaveChannel(client, sep->arg[1]);
-			else
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage: /irc leave <channel name>");
-		}
-		else if (strcasecmp(sep->arg[0], "list") == 0)
-			irc.ListChannels(client);
-		else if (strcasecmp(sep->arg[0], "connect") == 0) {
-			if (sep->arg[1][0] && sep->arg[2][0] && sep->IsNumber(2))
-				irc.ConnectToServer(client, sep->arg[1], atoi(sep->arg[2]), sep->arg[3]);
-			else
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage: /irc connect <host> <port> (nick)");
-		}
-		else if (strcasecmp(sep->arg[0], "disconnect") == 0)
-			irc.DisconnectFromServer(client);
-		else
-			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Unknown IRC command.");
-	}
-	else
-		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Unknown IRC command.");
-}
 /* 
 	Function: Command_Languages()
 	Purpose	: Show's languages the player knows

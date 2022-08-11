@@ -291,11 +291,6 @@ void RuleManager::Init()
 	RULE_INIT(R_World, EditorURL, "www.eq2emulator.net");			// default: www.eq2emulator.net
 	RULE_INIT(R_World, EditorIncludeID, "0");						// default: 0 (0 = disabled, 1 = enabled)
 	RULE_INIT(R_World, EditorOfficialServer, "0");					// default: 0 (0 = disabled, 1 = enabled)
-	RULE_INIT(R_World, IRCEnabled, "0");							// default: 0 (0 = disabled, 1 = enabled)
-	RULE_INIT(R_World, IRCGlobalEnabled, "0");						// default: 0 (0 = disabled, 1 = enabled)
-	RULE_INIT(R_World, IRCAddress, "irc.eq2emulator.net");			// default: irc.eq2emulator.net
-	RULE_INIT(R_World, IRCPort, "6667");							// default: 6667
-	RULE_INIT(R_World, IRCChan, "#EQ2Emu");							// default: #EQ2Emu
 	RULE_INIT(R_World, SavePaperdollImage, "1");					// default: true
 	RULE_INIT(R_World, SaveHeadshotImage, "1");						// default: true
 	RULE_INIT(R_World, SendPaperdollImagesToLogin, "1");			// default: true

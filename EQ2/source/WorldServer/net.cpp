@@ -54,7 +54,6 @@ using namespace std;
 #include "Guilds/Guild.h"
 #include "Commands/ConsoleCommands.h"
 #include "Traits/Traits.h"
-#include "IRC/IRC.h"
 #include "Transmute.h"
 #include "Zone/ChestTrap.h"
 
@@ -102,7 +101,6 @@ extern MasterSkillList master_skill_list;
 extern MasterItemList master_item_list;
 extern GuildList guild_list;
 extern Variables variables;
-extern IRC irc;
 ConfigReader configReader;
 int32 MasterItemList::next_unique_id = 0;
 int last_signal = 0;
@@ -374,20 +372,7 @@ int main(int argc, char** argv) {
 		database.LoadSpecialZones();
 		map<EQStream*, int32> connecting_clients;
 		map<EQStream*, int32>::iterator cc_itr;
-
-		// Check to see if a global channel is enabled, if so try to connect to it
-		if (rule_manager.GetGlobalRule(R_World, IRCGlobalEnabled)->GetBool()) {
-			LogWrite(CHAT__INFO, 0, "IRC", "Starting global IRC server...");
-			// Set the irc nick name to: ServerName[IRCBot]
-			string world_name = net.GetWorldName();
-			// Remove all white spaces from the server name
-			world_name.erase(std::remove(world_name.begin(), world_name.end(), ' '), world_name.end());
-			string nick = world_name + string("[IRCBot]");
-			// Connect the global server
-			irc.ConnectToGlobalServer(rule_manager.GetGlobalRule(R_World, IRCAddress)->GetString(), rule_manager.GetGlobalRule(R_World, IRCPort)->GetInt16(), nick.c_str());
-		}
-
-		// JohnAdams - trying to make multi-char console input
+		
 		LogWrite(WORLD__DEBUG, 0, "Thread", "Starting console command thread...");
 #ifdef WIN32
 		_beginthread(EQ2ConsoleListener, 0, NULL);
@@ -491,9 +476,6 @@ int main(int argc, char** argv) {
 		}
 	}
 	LogWrite(WORLD__DEBUG, 0, "World", "The world is ending!");
-
-	LogWrite(WORLD__DEBUG, 0, "IRC", "Shutting IRC down");
-	irc.SetRunning(false);
 
 	LogWrite(WORLD__DEBUG, 0, "World", "Shutting down zones...");
 	zone_list.ShutDownZones();

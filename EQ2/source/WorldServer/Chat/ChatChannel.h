@@ -33,8 +33,7 @@ using namespace std;
 enum ChatChannelType {
 	CHAT_CHANNEL_TYPE_NONE = 0,
 	CHAT_CHANNEL_TYPE_WORLD,
-	CHAT_CHANNEL_TYPE_CUSTOM,
-	CHAT_CHANNEL_TYPE_IRC
+	CHAT_CHANNEL_TYPE_CUSTOM
 };
 
 class ChatChannel {
@@ -66,8 +65,6 @@ public:
 	bool TellChannelClient(Client* to_client, const char* message, const char* name2 = 0);
 	bool SendChannelUserList(Client *client);
 
-	void SetGlobalIRCChannel(bool val) { m_globalIRCChannel = val; }
-	bool IsGlobalIRCChannel() { return m_globalIRCChannel; }
 
 private:
 	char name[CHAT_CHANNEL_MAX_NAME + 1];
@@ -77,7 +74,6 @@ private:
 	int16 level_restriction;
 	int64 races;
 	int64 classes;
-	bool m_globalIRCChannel;
 };
 
 #endif

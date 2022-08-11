@@ -39,7 +39,6 @@
 #include "Achievements/Achievements.h"
 #include "Recipes/Recipe.h"
 #include "Rules/Rules.h"
-#include "IRC/IRC.h"
 #include "../common/Log.h"
 #include "Traits/Traits.h"
 #include "Chat/Chat.h"
@@ -81,7 +80,6 @@ map<int16,OpcodeManager*>EQOpcodeManager;
 map<int16, int16> EQOpcodeVersions;
 WorldDatabase database;
 GuildList guild_list;
-IRC irc;
 Chat chat;
 
 extern ConfigReader configReader;
@@ -215,12 +213,10 @@ void World::init(){
 	LogWrite(RULESYS__DEBUG, 1, "Rules", "-Loading Rule Sets...");
 	database.LoadRuleSets();
 	LogWrite(RULESYS__DEBUG, 1, "Rules", "-Load Rule Sets complete!");
-
-	LogWrite(CHAT__DEBUG, 1, "IRC", "-Starting IRC thread...");
+	
 	LoadItemBlueStats();
 	//PopulateTOVStatMap();
 	group_buff_updates.Start(rule_manager.GetGlobalRule(R_Client, GroupSpellsTimer)->GetInt32());
-	irc.Start();
 }
 
 
