@@ -34,7 +34,7 @@ public:
 	
 	virtual bool Mutable() { return(false); }
 	virtual bool LoadOpcodes(const char *filename) = 0;
-	virtual bool LoadOpcodes(map<string, uint16>* eq) = 0;
+	virtual bool LoadOpcodes(map<string, uint16>* eq, std::string* missingOpcodes = nullptr) = 0;
 	virtual bool ReloadOpcodes(const char *filename) = 0;
 	
 	virtual uint16 EmuToEQ(const EmuOpcode emu_op) = 0;
@@ -57,7 +57,7 @@ protected:
 					//in a shared manager, this dosent protect others
 	
 	static bool LoadOpcodesFile(const char *filename, OpcodeSetStrategy *s);
-	static bool LoadOpcodesMap(map<string, uint16>* eq, OpcodeSetStrategy *s);
+	static bool LoadOpcodesMap(map<string, uint16>* eq, OpcodeSetStrategy *s, std::string* missingOpcodes = nullptr);
 };
 
 class MutableOpcodeManager : public OpcodeManager {
@@ -74,7 +74,7 @@ public:
 	virtual ~SharedOpcodeManager() {}
 	
 	virtual bool LoadOpcodes(const char *filename);
-	virtual bool LoadOpcodes(map<string, uint16>* eq);
+	virtual bool LoadOpcodes(map<string, uint16>* eq, std::string* missingOpcodes = nullptr);
 	virtual bool ReloadOpcodes(const char *filename);
 	
 	virtual uint16 EmuToEQ(const EmuOpcode emu_op);
@@ -97,7 +97,7 @@ public:
 	
 	virtual bool Editable() { return(true); }
 	virtual bool LoadOpcodes(const char *filename);
-	virtual bool LoadOpcodes(map<string, uint16>* eq);
+	virtual bool LoadOpcodes(map<string, uint16>* eq, std::string* missingOpcodes = nullptr);
 	virtual bool ReloadOpcodes(const char *filename);
 	
 	virtual uint16 EmuToEQ(const EmuOpcode emu_op);
@@ -126,7 +126,7 @@ public:
 	NullOpcodeManager();
 	
 	virtual bool LoadOpcodes(const char *filename);
-	virtual bool LoadOpcodes(map<string, uint16>* eq);
+	virtual bool LoadOpcodes(map<string, uint16>* eq, std::string* missingOpcodes = nullptr);
 	virtual bool ReloadOpcodes(const char *filename);
 	
 	virtual uint16 EmuToEQ(const EmuOpcode emu_op);
@@ -144,7 +144,7 @@ public:
 	EmptyOpcodeManager();
 	
 	virtual bool LoadOpcodes(const char *filename);
-	virtual bool LoadOpcodes(map<string, uint16>* eq);
+	virtual bool LoadOpcodes(map<string, uint16>* eq, std::string* missingOpcodes = nullptr);
 	virtual bool ReloadOpcodes(const char *filename);
 	
 	virtual uint16 EmuToEQ(const EmuOpcode emu_op);

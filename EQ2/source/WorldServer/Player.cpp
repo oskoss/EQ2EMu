@@ -2555,40 +2555,46 @@ void Player::ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 ma
 	//pattern : 0 - zigzag, 1 - down, 2 - across
 	MSpellsBook.lock();
 
+	std::vector<SpellBookEntry*> sort_spells(spells);
+	
 	if (!maxlvl_only)
 	{
 		switch (sort_by)
 		{
 		case 0:
 			if (!order)
-				stable_sort(spells.begin(), spells.end(), SortSpellEntryByName);
+				stable_sort(sort_spells.begin(), sort_spells.end(), SortSpellEntryByName);
 			else
-				stable_sort(spells.begin(), spells.end(), SortSpellEntryByNameReverse);
+				stable_sort(sort_spells.begin(), sort_spells.end(), SortSpellEntryByNameReverse);
 			break;
 		case 1:
 			if (!order)
-				stable_sort(spells.begin(), spells.end(), SortSpellEntryByLevel);
+				stable_sort(sort_spells.begin(), sort_spells.end(), SortSpellEntryByLevel);
 			else
-				stable_sort(spells.begin(), spells.end(), SortSpellEntryByLevelReverse);
+				stable_sort(sort_spells.begin(), sort_spells.end(), SortSpellEntryByLevelReverse);
 			break;
 		case 2:
 			if (!order)
-				stable_sort(spells.begin(), spells.end(), SortSpellEntryByCategory);
+				stable_sort(sort_spells.begin(), sort_spells.end(), SortSpellEntryByCategory);
 			else
-				stable_sort(spells.begin(), spells.end(), SortSpellEntryByCategoryReverse);
+				stable_sort(sort_spells.begin(), sort_spells.end(), SortSpellEntryByCategoryReverse);
 			break;
 		}
 	}
 
 	vector<SpellBookEntry*>::iterator itr;
 	SpellBookEntry* spell = 0;
-	int i = 0;
 	map<string, SpellBookEntry*> tmpSpells;
 	vector<SpellBookEntry*> resultSpells;
-	for (itr = spells.begin(); itr != spells.end(); itr++) {
+	
+	int32 i = 0;
+	int8 page_book_count = 0;
+	int32 last_start_point = 0;
+	
+	for (itr = sort_spells.begin(); itr != sort_spells.end(); itr++) {
 		spell = *itr;
 
-		if (spell->type != book_type || spell->slot == -1)
+		if (spell->type != book_type)
 			continue;
 
 		if (maxlvl_only)
@@ -2627,9 +2633,12 @@ void Player::ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 ma
 			resultSpells.push_back(spell);
 		}
 		spell->slot = i;
-		i++;
+		
+			Spell* tmpspell = 0;
+			tmpspell = master_spell_list.GetSpell(spell->spell_id, spell->tier);
+		GetSpellBookSlotSort(pattern, &i, &page_book_count, &last_start_point);
 	} // end for loop for setting slots
-
+	
 	if (maxlvl_only)
 	{
 		switch (sort_by)
@@ -2655,13 +2664,15 @@ void Player::ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 ma
 		}
 
 		i = 0;
+		page_book_count = 0;
+		last_start_point = 0;
 		vector<SpellBookEntry*>::iterator tmpItr;
 		for (tmpItr = resultSpells.begin(); tmpItr != resultSpells.end(); tmpItr++) {
 			((SpellBookEntry*)*tmpItr)->slot = i;
-			i++;
+			GetSpellBookSlotSort(pattern, &i, &page_book_count, &last_start_point);
 		}
 	}
-
+	
 	MSpellsBook.unlock();
 }
 
@@ -3162,8 +3173,8 @@ EQ2Packet* Player::GetSpellBookUpdatePacket(int16 version) {
 				}
 				spell_xor_packet = new uchar[count * total_bytes];
 				memset(spell_xor_packet, 0, count * total_bytes);
-				spell_count = count;
 			}
+			spell_count = count;
 			MSpellsBook.lock();
 			for (int32 i = 0; i < spells.size(); i++) {
 				spell_entry = (SpellBookEntry*)spells[i];
@@ -4936,7 +4947,10 @@ void Player::RemoveQuest(int32 id, bool delete_quest){
 	if(delete_quest){
 		safe_delete(player_quests[id]);
 	}
-	player_quests.erase(id);
+	map<int32, Quest*>::iterator itr = player_quests.find(id);
+	if(itr != player_quests.end()) {
+		player_quests.erase(itr);
+	}
 	MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 	SendQuestRequiredSpawns(id);
 }
@@ -5021,7 +5035,9 @@ int16 Player::GetTaskGroupStep(int32 quest_id){
 	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if(player_quests.count(quest_id) > 0){
 		quest = player_quests[quest_id];
-		step = quest->GetTaskGroupStep();
+		if(quest) {
+			step = quest->GetTaskGroupStep();
+		}
 	}
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return step;
@@ -5045,7 +5061,9 @@ int16 Player::GetQuestStep(int32 quest_id){
 	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if(player_quests.count(quest_id) > 0){
 		quest = player_quests[quest_id];
-		step = quest->GetQuestStep();
+		if(quest) {
+			step = quest->GetQuestStep();
+		}
 	}
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return step;
@@ -7263,4 +7281,49 @@ int Player::GetPVPAlignment(){
 		return alignment;
 	}
 	return -1; //error
+}
+
+void Player::GetSpellBookSlotSort(int32 pattern, int32* i, int8* page_book_count, int32* last_start_point) {
+	switch(pattern) {
+		case 1: { // down
+			*i = (*i) + 2;
+			(*page_book_count)++;
+			if(*page_book_count > 3) {
+				if(((*i) % 2) == 0) {
+					(*i) = (*last_start_point) + 1;
+				}
+				else {
+					(*last_start_point) = (*last_start_point) + 8;
+					(*i) = (*last_start_point);
+				}
+				(*page_book_count) = 0;
+			}
+			break;
+		}
+		case 2: { // across
+			(*page_book_count)++;
+			switch(*page_book_count) {
+				case 1:
+				case 3:	{
+					(*i)++;
+					break;
+				}
+				case 2: {
+					(*i) = (*i) + 7;
+					break;
+				}
+				case 4: {
+					(*last_start_point) = (*last_start_point) + 2;
+					(*i) = (*last_start_point);
+					(*page_book_count) = 0;
+					break;
+				}
+			}
+			break;
+		}
+		default: { // zig-zag
+			(*i)++;
+			break;
+		}
+	}
 }

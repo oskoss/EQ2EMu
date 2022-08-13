@@ -9738,6 +9738,7 @@ void Client::AcceptCollectionRewards(Collection* collection, int32 selectable_it
 	
 	HandInCollections();
 
+	GetPlayer()->GetZone()->SendSubSpawnUpdates(SUBSPAWN_TYPES::COLLECTOR);
 }
 
 void Client::SendRecipeList() {
@@ -11222,5 +11223,32 @@ void Client::UpdateCharacterRewardData(QuestRewardData* data) {
 		Query query;
 		query.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, "update character_quest_rewards set is_temporary = %u, is_collection = %u, has_displayed = %u, tmp_coin = %llu, tmp_status = %u, description = '%s' where char_id=%u and indexed=%u and quest_id=%u", 
 			data->is_temporary, data->is_collection, data->has_displayed, data->tmp_coin, data->tmp_status, database.getSafeEscapeString(data->description.c_str()).c_str(), GetCharacterID(), data->db_index, data->quest_id);
+	}
+}
+
+void Client::AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i) {
+	if(recipe == nullptr)
+		return;
+	
+	GetPlayer()->GetRecipeList()->AddRecipe(recipe);
+	database.SavePlayerRecipe(GetPlayer(), recipe->GetID());
+	Message(CHANNEL_NARRATIVE, "Recipe: \"%s\" put in recipe book.", recipe->GetName());
+
+	if (packet && GetRecipeListSent()) {
+		packet->setArrayDataByName("id", recipe->GetID(), *i);
+		packet->setArrayDataByName("tier", recipe->GetTier(), *i);
+		packet->setArrayDataByName("level", recipe->GetLevel(), *i);
+		packet->setArrayDataByName("icon", recipe->GetIcon(), *i);
+		packet->setArrayDataByName("classes", recipe->GetClasses(), *i);
+		packet->setArrayDataByName("skill", recipe->GetSkill(), *i);
+		packet->setArrayDataByName("technique", recipe->GetTechnique(), *i);
+		packet->setArrayDataByName("knowledge", recipe->GetKnowledge(), *i);
+		packet->setArrayDataByName("unknown2", recipe->GetUnknown2(), *i);
+		packet->setArrayDataByName("recipe_name", recipe->GetName(), *i);
+		packet->setArrayDataByName("recipe_book", recipe->GetBook(), *i);
+		packet->setArrayDataByName("unknown3", recipe->GetUnknown3(), *i);
+		if(i) {
+			(*i)++;
+		}
 	}
 }

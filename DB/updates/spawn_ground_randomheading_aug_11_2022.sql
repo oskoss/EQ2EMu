@@ -1,0 +1,1 @@
+alter table spawn_ground add column randomize_heading tinyint(3) unsigned default 1;

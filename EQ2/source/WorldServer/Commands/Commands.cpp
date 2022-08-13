@@ -2187,7 +2187,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						Spell* spell = master_spell_list.GetSpell(item->skill_info->spell_id, item->skill_info->spell_tier);
 						int8 old_slot = 0;
 						if (spell) {
-
+							if(!spell->ScribeAllowed(client->GetPlayer())) {
+								client->SimpleMessage(CHANNEL_COLOR_RED, "You do not meet one of the requirements to scribe, due to class or level.");
+								break;
+							}
 							int16 tier_up = player->GetTierUp(spell->GetSpellTier());
 							if (rule_manager.GetGlobalRule(R_Spells, RequirePreviousTierScribe)->GetInt8() && !player->HasSpell(spell->GetSpellID(), tier_up, false, true))
 								client->SimpleMessage(CHANNEL_COLOR_RED, "You have not scribed the required previous version of this ability.");
@@ -2205,7 +2208,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								// force purge client cache and display updated spell for hover over
 								EQ2Packet* app = spell->SerializeSpell(client, false, false);
 								client->QueuePacket(app);
-													}
+							}
 						}
 						else
 							LogWrite(COMMAND__ERROR, 0, "Command", "Unknown spell ID: %u and tier: %u", item->skill_info->spell_id, item->skill_info->spell_tier);
@@ -2218,6 +2221,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							client->Message(CHANNEL_NARRATIVE, "Your tradeskill level is not high enough to scribe this book.");
 							safe_delete(recipe_book);
 						}
+						else if(recipe_book && !recipe_book->CanUseRecipeByClass(item, client->GetPlayer()->GetTradeskillClass())) {
+							client->Message(CHANNEL_NARRATIVE, "Your tradeskill class cannot use this recipe.");
+							safe_delete(recipe_book);
+						}
 						else if (recipe_book && !(client->GetPlayer()->GetRecipeBookList()->HasRecipeBook(item->details.item_id))) {
 							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Valid recipe book that the player doesn't have");
 							// Add recipe book to the players list
@@ -2226,43 +2233,34 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							// Get a list of all recipes this book contains
 							vector<Recipe*>* book_recipes = master_recipe_list.GetRecipes(recipe_book->GetBookName());
 							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "%i recipes found for %s book", book_recipes->size(), recipe_book->GetBookName());
-
+							
+							int16 i = 0;
 							// Create the packet to send to update the players recipe list
 							PacketStruct* packet = 0;
 							if (client->GetRecipeListSent()) {
 								packet = configReader.getStruct("WS_RecipeList", client->GetVersion());
-
-								if (packet)
+								if(packet && book_recipes->size() < 1 && item->recipebook_info) {
+									packet->setArrayLengthByName("num_recipes", item->recipebook_info->recipes.size());
+									for(int32 r = 0; r < item->recipebook_info->recipes.size(); r++){
+										Recipe* recipe = master_recipe_list.GetRecipeByName(item->recipebook_info->recipes.at(r).c_str());
+										if(recipe) {
+											Recipe* player_recipe = new Recipe(recipe);
+											client->AddRecipeToPlayer(recipe, packet, &i);
+										}
+									}
+								}
+								else if (packet)
 									packet->setArrayLengthByName("num_recipes", book_recipes->size());
 							}
 
 							// loop through the list
 							vector<Recipe*>::iterator itr;
-							int16 i = 0;
 							for (itr = book_recipes->begin(); itr != book_recipes->end(); itr++) {
 								// check to see if the player already has this recipe some how
 								if (!client->GetPlayer()->GetRecipeList()->GetRecipe((*itr)->GetID())) {
 									// Player doesn't already have this recipe so lets add it
 									Recipe* recipe = new Recipe(master_recipe_list.GetRecipe((*itr)->GetID()));
-									client->GetPlayer()->GetRecipeList()->AddRecipe(recipe);
-									database.SavePlayerRecipe(client->GetPlayer(), recipe->GetID());
-									client->Message(CHANNEL_NARRATIVE, "Recipe: \"%s\" put in recipe book.", recipe->GetName());
-
-									if (packet && client->GetRecipeListSent()) {
-										packet->setArrayDataByName("id", recipe->GetID(), i);
-										packet->setArrayDataByName("tier", recipe->GetTier(), i);
-										packet->setArrayDataByName("level", recipe->GetLevel(), i);
-										packet->setArrayDataByName("icon", recipe->GetIcon(), i);
-										packet->setArrayDataByName("classes", recipe->GetClasses(), i);
-										packet->setArrayDataByName("skill", recipe->GetSkill(), i);
-										packet->setArrayDataByName("technique", recipe->GetTechnique(), i);
-										packet->setArrayDataByName("knowledge", recipe->GetKnowledge(), i);
-										packet->setArrayDataByName("unknown2", recipe->GetUnknown2(), i);
-										packet->setArrayDataByName("recipe_name", recipe->GetName(), i);
-										packet->setArrayDataByName("recipe_book", recipe->GetBook(), i);
-										packet->setArrayDataByName("unknown3", recipe->GetUnknown3(), i);
-										i++;
-									}
+									client->AddRecipeToPlayer(recipe, packet, &i);
 								}
 							}
 							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Done adding recipes");

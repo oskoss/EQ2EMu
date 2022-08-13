@@ -6699,7 +6699,7 @@ bool WorldDatabase::LoadGroundSpawn(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 
-	database_new.Select(&result, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.disable_sounds, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
+	database_new.Select(&result, "SELECT sg.spawn_id, s.name, s.race, s.model_type, s.command_primary, s.command_secondary, s.targetable, s.size, s.show_name, s.visual_state, s.attackable, s.show_level, s.show_command_icon, s.display_hand_icon, s.faction_id, s.collision_radius, sg.number_harvests, sg.num_attempts_per_harvest, sg.groundspawn_id, sg.collection_skill, s.size_offset, s.disable_sounds, s.aaxp_rewards, s.loot_tier, s.loot_drop_type, sg.randomize_heading\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_ground sg\n"
 								 "ON sg.spawn_id = s.id\n"
@@ -6745,6 +6745,8 @@ bool WorldDatabase::LoadGroundSpawn(ZoneServer* zone, int32 spawn_id) {
 		spawn->SetLootTier(result.GetInt32(23));
 
 		spawn->SetLootDropType(result.GetInt32(24));
+		
+		spawn->SetRandomizeHeading(result.GetInt32(25));
 		
 		zone->AddGroundSpawn(id, spawn);
 

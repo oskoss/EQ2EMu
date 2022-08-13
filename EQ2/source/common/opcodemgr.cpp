@@ -41,7 +41,7 @@ using namespace std;
 OpcodeManager::OpcodeManager() {
 	loaded = false;
 }
-bool OpcodeManager::LoadOpcodesMap(map<string, uint16>* eq, OpcodeSetStrategy *s){
+bool OpcodeManager::LoadOpcodesMap(map<string, uint16>* eq, OpcodeSetStrategy *s, std::string* missingOpcodes){
 	//do the mapping and store them in the shared memory array
 	bool ret = true;
 	EmuOpcode emu_op;
@@ -59,7 +59,17 @@ bool OpcodeManager::LoadOpcodesMap(map<string, uint16>* eq, OpcodeSetStrategy *s
 		//find the opcode in the file
 		res = eq->find(op_name);
 		if(res == eq->end()) {
-			LogWrite(OPCODE__WARNING, 1, "Opcode", "Opcode %s is missing from the opcodes table.", op_name);
+			if(missingOpcodes) {
+				if(missingOpcodes->size() < 1) {
+					missingOpcodes->append(op_name);
+				}
+				else {
+					missingOpcodes->append(", " + std::string(op_name));
+				}
+			}
+			else {
+				LogWrite(OPCODE__WARNING, 1, "Opcode", "Opcode %s is missing from the opcodes table.", op_name);
+			}
 			s->Set(emu_op, 0xFFFF);
 			continue;	//continue to give them a list of all missing opcodes
 		}
@@ -156,7 +166,7 @@ RegularOpcodeManager::~RegularOpcodeManager() {
 	safe_delete_array(eq_to_emu);
 }
 
-bool RegularOpcodeManager::LoadOpcodes(map<string, uint16>* eq) {
+bool RegularOpcodeManager::LoadOpcodes(map<string, uint16>* eq, std::string* missingOpcodes) {
 	NormalMemStrategy s;
 	s.it = this;
 	MOpcodes.lock();
@@ -170,7 +180,7 @@ bool RegularOpcodeManager::LoadOpcodes(map<string, uint16>* eq) {
 	//dont need to set eq_to_emu cause every element should get a value
 	memset(eq_to_emu, 0, sizeof(EmuOpcode)*MAX_EQ_OPCODE);
 	
-	bool ret = LoadOpcodesMap(eq, &s);
+	bool ret = LoadOpcodesMap(eq, &s, missingOpcodes);
 	MOpcodes.unlock();
 	return ret;
 }
@@ -263,7 +273,7 @@ NullOpcodeManager::NullOpcodeManager()
 : MutableOpcodeManager() {
 }
 
-bool NullOpcodeManager::LoadOpcodes(map<string, uint16>* eq) {
+bool NullOpcodeManager::LoadOpcodes(map<string, uint16>* eq, std::string* missingOpcodes) {
 	return(true);
 }
 
@@ -292,7 +302,7 @@ bool EmptyOpcodeManager::LoadOpcodes(const char *filename) {
 	return(true);
 }
 
-bool EmptyOpcodeManager::LoadOpcodes(map<string, uint16>* eq) {
+bool EmptyOpcodeManager::LoadOpcodes(map<string, uint16>* eq, std::string* missingOpcodes) {
 	return(true);
 }
 

@@ -561,6 +561,9 @@ public:
 	void	SaveQuestRewardData(bool force_refresh = false);
 	void	UpdateCharacterRewardData(QuestRewardData* data);
 	void	SetQuestUpdateState(bool val) { quest_updates = val; }
+	
+	void	AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i);
+	
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

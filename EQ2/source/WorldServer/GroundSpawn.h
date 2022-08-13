@@ -52,6 +52,7 @@ public:
 		new_spawn->SetOmittedByDBFlag(IsOmittedByDBFlag());
 		new_spawn->SetLootTier(GetLootTier());
 		new_spawn->SetLootDropType(GetLootDropType());
+		new_spawn->SetRandomizeHeading(GetRandomizeHeading());
 		return new_spawn;
 	}
 	bool IsGroundSpawn(){ return true; }
@@ -69,6 +70,9 @@ public:
 	string GetHarvestSpellType();
 	string GetHarvestSpellName();
 	void HandleUse(Client* client, string type);
+	
+	void SetRandomizeHeading(bool val) { randomize_heading = val; }
+	bool GetRandomizeHeading() { return randomize_heading; }
 private:
 	int8	number_harvests;
 	int8	num_attempts_per_harvest;
@@ -76,6 +80,7 @@ private:
 	string	collection_skill;
 	Mutex	MHarvest;
 	Mutex	MHarvestUse;
+	bool 	randomize_heading;
 };
 #endif
 

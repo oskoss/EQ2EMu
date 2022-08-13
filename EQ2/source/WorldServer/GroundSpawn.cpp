@@ -37,6 +37,7 @@ GroundSpawn::GroundSpawn(){
 	groundspawn_id = 0;
 	MHarvest.SetName("GroundSpawn::MHarvest");
 	MHarvestUse.SetName("GroundSpawn::MHarvestUse");
+	randomize_heading = true; // we by default randomize heading of groundspawns DB overrides
 }
 
 GroundSpawn::~GroundSpawn(){

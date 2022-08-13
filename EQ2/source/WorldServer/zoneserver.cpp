@@ -178,6 +178,7 @@ ZoneServer::ZoneServer(const char* name, bool incoming_client) {
 ZoneServer::~ZoneServer() {
 	zoneShuttingDown = true;  //ensure other threads shut down too
 	//allow other threads to properly shut down
+	LogWrite(ZONE__INFO, 0, "Zone", "Initiating zone shutdown of '%s'", zone_name);
 	while (spawnthread_active || initial_spawn_threads_active > 0){
 		if (spawnthread_active)
 			LogWrite(ZONE__DEBUG, 7, "Zone", "Zone shutdown waiting on spawn thread");
@@ -185,7 +186,6 @@ ZoneServer::~ZoneServer() {
 			LogWrite(ZONE__DEBUG, 7, "Zone", "Zone shutdown waiting on initial spawn thread");
 		Sleep(10);
 	}
-	LogWrite(ZONE__INFO, 0, "Zone", "Initiating zone shutdown of '%s'", zone_name);
 	changed_spawns.clear(true);
 	transport_spawns.clear();
 	safe_delete(tradeskillMgr);
@@ -1273,6 +1273,13 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 				if(sitr != spawn_list.end()) {
 					spawn_list.erase(sitr);
 				}
+				
+				if(spawn->IsCollector()) {
+					std::map<int32, Spawn*>::iterator subitr = subspawn_list[SUBSPAWN_TYPES::COLLECTOR].find(spawn->GetID());
+					if(subitr != subspawn_list[SUBSPAWN_TYPES::COLLECTOR].end()) {
+						subspawn_list[SUBSPAWN_TYPES::COLLECTOR].erase(subitr);
+					}
+				}
 				MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 			
 				safe_delete(spawn);
@@ -1625,8 +1632,10 @@ bool ZoneServer::SpawnProcess(){
 		if (pending_spawn_list_remove.size() > 0) {
 			MSpawnList.writelock(__FUNCTION__, __LINE__);
 			vector<int32>::iterator itr2;
-			for (itr2 = pending_spawn_list_remove.begin(); itr2 != pending_spawn_list_remove.end(); itr2++) 
+			for (itr2 = pending_spawn_list_remove.begin(); itr2 != pending_spawn_list_remove.end(); itr2++) {
 				spawn_list.erase(*itr2);
+				subspawn_list[SUBSPAWN_TYPES::COLLECTOR].erase(*itr2);
+			}
 
 			pending_spawn_list_remove.clear();
 			MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
@@ -1645,6 +1654,10 @@ bool ZoneServer::SpawnProcess(){
 				Spawn* spawn = *itr2;
 				if (spawn)
 					spawn_list[spawn->GetID()] = spawn;
+				
+				if(spawn->IsCollector()) {
+					subspawn_list[SUBSPAWN_TYPES::COLLECTOR].insert(make_pair(spawn->GetID(),spawn));
+				}
 			}
 
 			pending_spawn_list_add.clear();
@@ -3090,6 +3103,15 @@ GroundSpawn* ZoneServer::AddGroundSpawn(SpawnLocation* spawnlocation, SpawnEntry
 		spawn->SetSpawnEntryID(spawnentry->spawn_entry_id);
 		spawn->SetRespawnTime(spawnentry->respawn);
 		spawn->SetExpireTime(spawnentry->expire_time);
+		
+		if(spawn->GetRandomizeHeading()) {
+			float rand_heading = MakeRandomFloat(0.0f, 360.0f);
+			spawn->SetHeading(rand_heading);
+		}
+		else {
+			spawn->SetHeading(spawnlocation->heading);
+		}
+		
 		if (spawnentry->expire_time > 0)
 			AddSpawnExpireTimer(spawn, spawnentry->expire_time, spawnentry->expire_offset);
 
@@ -4482,8 +4504,12 @@ void ZoneServer::Despawn(Spawn* spawn, int32 timer){
 	AddDeadSpawn(spawn, timer);
 }
 
-void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, bool send_packet, int8 damage_type, int16 kill_blow_type)
+void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, bool send_packet, int8 type, int8 damage_type, int16 kill_blow_type)
 {
+	bool isSpell = (type == DAMAGE_PACKET_TYPE_SIPHON_SPELL || type == DAMAGE_PACKET_TYPE_SIPHON_SPELL2 ||
+					type == DAMAGE_PACKET_TYPE_SPELL_DAMAGE || type == DAMAGE_PACKET_TYPE_SPELL_CRIT_DMG || 
+					type == DAMAGE_PACKET_TYPE_SPELL_DAMAGE2 || type == DAMAGE_PACKET_TYPE_SPELL_DAMAGE3);
+	
 	MDeadSpawns.readlock(__FUNCTION__, __LINE__);
 	if(!dead || this->dead_spawns.count(dead->GetID()) > 0) {
 		MDeadSpawns.releasereadlock(__FUNCTION__, __LINE__);
@@ -4524,7 +4550,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 		if (dead->Alive())
 			return;
 
-		RemoveSpellTimersFromSpawn(dead, true, !dead->IsPlayer());
+		RemoveSpellTimersFromSpawn(dead, true, !dead->IsPlayer(), true, !isSpell);
 
 		if(dead->IsPlayer()) 
 		{
@@ -4670,7 +4696,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 
 
 	// Remove the support functions for the dead spawn
-	RemoveSpawnSupportFunctions(dead);
+	RemoveSpawnSupportFunctions(dead, !isSpell);
 
 	// Erase the expire timer if it has one
 	if (spawn_expire_timers.count(dead->GetID()) > 0)
@@ -6294,13 +6320,21 @@ void ZoneServer::FindSpawn(Client* client, char* regSearchStr)
 		client->SimpleMessage(CHANNEL_COLOR_RED, "Try/Catch ZoneServer::FindSpawn(Client*, char* regSearchStr) failure.");
 		return;
 	}
+	std::regex re;
+	try {
+		re = std::regex(resString, std::regex_constants::icase);
+	}
+	catch(...) {
+		client->SimpleMessage(CHANNEL_COLOR_RED, "Invalid regex for FindSpawn.");
+		return;
+	}
+	
 	client->Message(CHANNEL_NARRATIVE, "RegEx Search Spawn List: %s", regSearchStr);
 	client->Message(CHANNEL_NARRATIVE, "Database ID | Spawn Name | X , Y , Z");
 	client->Message(CHANNEL_NARRATIVE, "========================");
 	map<int32, Spawn*>::iterator itr;
 	MSpawnList.readlock(__FUNCTION__, __LINE__);
 	int32 spawnsFound = 0;
-	std::regex re(resString, std::regex_constants::icase);
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		Spawn* spawn = itr->second;
 		if (!spawn || !spawn->GetName())
@@ -8202,8 +8236,10 @@ void ZoneServer::ProcessSpawnRemovals()
 	MPendingSpawnRemoval.writelock(__FUNCTION__, __LINE__);
 	if (m_pendingSpawnRemove.size() > 0) {
 		map<int32,bool>::iterator itr2;
-		for (itr2 = m_pendingSpawnRemove.begin(); itr2 != m_pendingSpawnRemove.end(); itr2++) 
+		for (itr2 = m_pendingSpawnRemove.begin(); itr2 != m_pendingSpawnRemove.end(); itr2++) {
 			spawn_list.erase(itr2->first);
+			subspawn_list[SUBSPAWN_TYPES::COLLECTOR].erase(itr2->first);
+		}
 
 		m_pendingSpawnRemove.clear();
 	}
@@ -8324,4 +8360,15 @@ void ZoneServer::RemoveClientsFromZone(ZoneServer* zone) {
 		}
 	}
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+void ZoneServer::SendSubSpawnUpdates(SUBSPAWN_TYPES subtype) {
+	std::map<int32, Spawn*>::iterator subitr;
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	for(subitr = subspawn_list[subtype].begin(); subitr !=  subspawn_list[subtype].end(); subitr++) {
+		subitr->second->changed = true;
+		subitr->second->info_changed = true;
+		AddChangedSpawn(subitr->second);
+	}
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }

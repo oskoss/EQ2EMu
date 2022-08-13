@@ -1998,7 +1998,7 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 			while(itr.Next()){
 				interrupt = itr->value;
 				if(interrupt && interrupt->interrupted == spawn){
-					interrupt_list.Remove(interrupt);
+					interrupt_list.Remove(interrupt, true);
 				}
 			}
 		}

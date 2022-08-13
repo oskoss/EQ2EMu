@@ -1060,7 +1060,7 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 	}
 
 	if (victim->GetHP() <= 0)
-		KillSpawn(victim, damage_type, blow_type);
+		KillSpawn(victim, type, damage_type, blow_type);
 	else {
 		victim->CheckProcs(PROC_TYPE_DEFENSIVE, this);
 		if (spell_name)
@@ -1257,7 +1257,7 @@ bool Entity::CheckInterruptSpell(Entity* attacker) {
 	return false;
 }
 
-void Entity::KillSpawn(Spawn* dead, int8 damage_type, int16 kill_blow_type) {
+void Entity::KillSpawn(Spawn* dead, int8 type, int8 damage_type, int16 kill_blow_type) {
 	if(!dead)
 		return;
 
@@ -1303,7 +1303,7 @@ void Entity::KillSpawn(Spawn* dead, int8 damage_type, int16 kill_blow_type) {
 	dead->ClearRunningLocations();
 	dead->CalculateRunningLocation(true);
 
-	GetZone()->KillSpawn(true, dead, this, true, damage_type, kill_blow_type);
+	GetZone()->KillSpawn(true, dead, this, true, type, damage_type, kill_blow_type);
 }
 
 void Entity::HandleDeathExperienceDebt(Spawn* killer)

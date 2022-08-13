@@ -22,9 +22,12 @@
 
 #include "../../common/types.h"
 #include "../../common/Mutex.h"
+#include "../classes.h"
+
 #include <string.h>
 #include <map>
 
+class Item;
 using namespace std;
 
 struct RecipeProducts {
@@ -85,6 +88,16 @@ public:
 	int32 GetTechnique() {return technique;}
 	int32 GetKnowledge() {return knowledge;}
 	int32 GetClasses() {return classes;}
+	//class_id = classes.GetTSBaseClass(spawn->GetTradeskillClass())  bit-match on class ids 1-13
+	//secondary_class_id = classes.GetSecondaryTSBaseClass(spawn->GetTradeskillClass()) bit-match on class ids 1-13
+	//tertiary_class_id = spawn->GetTradeskillClass() (direct match)
+	bool CanUseRecipeByClass(Item* item, int8 class_id) {
+    /* any can use bit combination of 1+2
+	   adornments = 1
+	   artisan = 2	
+	*/
+	return item->generic_info.tradeskill_classes < 4 || (1 << class_id) & item->generic_info.tradeskill_classes;
+	}
 	int32 GetUnknown2() {return unknown2;}
 	int32 GetUnknown3() {return unknown3;}
 	int32 GetUnknown4() {return unknown4;}

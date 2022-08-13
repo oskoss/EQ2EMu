@@ -2084,8 +2084,6 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 		include_heading = false;
 	else if (IsSign() && ((Sign*)this)->GetIncludeHeading() == false)
 		include_heading = false;
-	else if (IsGroundSpawn())
-		include_heading = false;
 
 	if (include_heading){
 		packet->setDataByName("pos_heading1", appearance.pos.Dir1);

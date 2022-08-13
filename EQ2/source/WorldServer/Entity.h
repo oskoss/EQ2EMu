@@ -1379,7 +1379,7 @@ public:
 	void			AddHate(Entity* attacker, sint32 hate);
 	bool			CheckInterruptSpell(Entity* attacker);
 	bool			CheckFizzleSpell(LuaSpell* spell);
-	void			KillSpawn(Spawn* dead, int8 damage_type = 0, int16 kill_blow_type = 0);
+	void			KillSpawn(Spawn* dead, int8 type = 0, int8 damage_type = 0, int16 kill_blow_type = 0);
 	void			HandleDeathExperienceDebt(Spawn* killer);
 	void            SetAttackDelay(bool primary = false, bool ranged = false);
 	float           CalculateAttackSpeedMod();

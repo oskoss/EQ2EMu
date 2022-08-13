@@ -196,14 +196,40 @@ int main(int argc, char** argv) {
 	EQOpcodeVersions = database.GetVersions();
 	map<int16,int16>::iterator version_itr;
 	int16 version1 = 0;
+	int16 prevVersion = 0;
+	std::string prevString = std::string("");
+	std::string builtString = std::string("");
 	for (version_itr = EQOpcodeVersions.begin(); version_itr != EQOpcodeVersions.end(); version_itr++) {
 		version1 = version_itr->first;
 		EQOpcodeManager[version1] = new RegularOpcodeManager();
 		map<string, uint16> eq = database.GetOpcodes(version1);
-		if(!EQOpcodeManager[version1]->LoadOpcodes(&eq)) {
+		std::string missingOpcodesList = std::string("");
+		if(!EQOpcodeManager[version1]->LoadOpcodes(&eq, &missingOpcodesList)) {
 			LogWrite(INIT__ERROR, 0, "Init", "Loading opcodes failed. Make sure you have sourced the opcodes.sql file!");
 			return false;
 		}
+		
+		if(version1 == 0) // we don't need to display version 0
+			continue;
+		
+		if(prevString.size() > 0) {
+			if(prevString == missingOpcodesList) {
+				builtString += ", " + std::to_string(version1);
+			}
+			else {
+					LogWrite(OPCODE__WARNING, 1, "Opcode", "Opcodes %s.", builtString.c_str());
+					builtString = std::string("");
+					prevString = std::string("");
+			}
+		}
+		if(prevString.size() < 1) {
+			prevString = std::string(missingOpcodesList);
+			builtString = std::string(missingOpcodesList + " are missing from the opcodes table for version(s) " + std::to_string(version1));
+		}
+	}
+
+	if(builtString.size() > 0) {
+		LogWrite(OPCODE__WARNING, 1, "Opcode", "Opcodes %s.", builtString.c_str());
 	}
 
 	LogWrite(WORLD__DEBUG, 1, "World", "-Loading structs...");
@@ -956,7 +982,7 @@ void NetConnection::WelcomeHeader()
 #ifdef _WIN32
 	SetConsoleTextAttribute(console, FOREGROUND_YELLOW_BOLD);
 #endif
-	printf("\n\nCopyright (C) 2007-2021 EQ2Emulator. https://www.eq2emu.com \n\n");
+	printf("\n\nCopyright (C) 2007-2022 EQ2Emulator. https://www.eq2emu.com \n\n");
 	printf("EQ2Emulator is free software: you can redistribute it and/or modify\n");
 	printf("it under the terms of the GNU General Public License as published by\n");
 	printf("the Free Software Foundation, either version 3 of the License, or\n");

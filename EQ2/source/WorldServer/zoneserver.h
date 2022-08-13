@@ -257,6 +257,11 @@ struct ZoneInfoSlideStruct {
 	vector<ZoneInfoSlideStructTransitionInfo*> slide_transition_info;
 };
 
+enum SUBSPAWN_TYPES {
+	COLLECTOR = 0,
+	MAX_SUBSPAWN_TYPE = 20
+};
+
 // need to attempt to clean this up and add xml comments, remove unused code, find a logical way to sort the functions maybe by get/set/process/add etc...
 class ZoneServer {
 public:
@@ -334,7 +339,7 @@ public:
 	
 	vector<Entity*> GetPlayers();
 	
-	void	KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, bool send_packet = true, int8 damage_type = 0, int16 kill_blow_type = 0);
+	void	KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, bool send_packet = true, int8 type = 0, int8 damage_type = 0, int16 kill_blow_type = 0);
 	
 	void	SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, int8 type2, int8 damage_type, int16 damage, const char* spell_name);
 	void    SendHealPacket(Spawn* caster, Spawn* target, int16 type, int32 heal_amt, const char* spell_name);
@@ -690,6 +695,8 @@ public:
 	void	StopSpawnScriptTimer(Spawn* spawn, std::string functionName);
 
 	Client*	RemoveZoneServerFromClient(ZoneServer* zone);
+	
+	void	SendSubSpawnUpdates(SUBSPAWN_TYPES subtype);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
@@ -834,6 +841,9 @@ private:
 
 	/* Lists */
 	list<Spawn*>	pending_spawn_list_add;
+	
+	/* Specialized Lists to update specific scenarios */
+	std::map<int32, Spawn*>	subspawn_list[SUBSPAWN_TYPES::MAX_SUBSPAWN_TYPE];
 	
 	/* Vectors */
 	vector<RevivePoint*>*	revive_points;
