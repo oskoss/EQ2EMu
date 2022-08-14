@@ -1364,6 +1364,16 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				SimpleMessage(CHANNEL_COLOR_RED, "This is not your home!");
 				break;
 			}
+			
+			
+			int32 uniqueID = spawn->GetPickupUniqueItemID();
+			if(uniqueID) {
+				Item* uniqueItem = GetPlayer()->item_list.GetItemFromUniqueID(uniqueID);
+				if(uniqueItem && uniqueItem->CheckFlag2(HOUSE_LORE) && GetCurrentZone()->HouseItemSpawnExists(uniqueItem->details.item_id)) {
+					Message(CHANNEL_COLOR_RED, "Item %s is house lore and you cannot place another.", uniqueItem->name.c_str());
+					break;
+				}
+			}
 
 			// handles instantiation logic + adding to zone of a new house object
 			PopulateHouseSpawn(place_object);
@@ -10607,7 +10617,8 @@ bool Client::PopulateHouseSpawnFinalize()
 				query.RunQuery2(Q_INSERT, "insert into spawn_instance_data set spawn_id = %u, spawn_location_id = %u, pickup_item_id = %u, pickup_unique_item_id = %u", tmp->GetDatabaseID(), tmp->GetSpawnLocationID(), tmp->GetPickupItemID(), uniqueID);
 			}
 
-			if(lua_interface->RunItemScript(uniqueItem->GetItemScript(), "placed", uniqueItem, GetPlayer(), tmp))
+			if(uniqueItem->GetItemScript() && 
+				lua_interface->RunItemScript(uniqueItem->GetItemScript(), "placed", uniqueItem, GetPlayer(), tmp))
 			{
 				uniqueItem = GetPlayer()->item_list.GetItemFromUniqueID(uniqueID);
 			}

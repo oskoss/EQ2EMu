@@ -1280,6 +1280,15 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 						subspawn_list[SUBSPAWN_TYPES::COLLECTOR].erase(subitr);
 					}
 				}
+				
+				if(spawn->GetPickupItemID()) {
+					std::map<int32, Spawn*>::iterator subitr = subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].find(spawn->GetPickupItemID());
+					if(subitr != subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].end() && subitr->second == spawn) {
+						subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].erase(subitr);
+					}
+					housing_spawn_map.erase(spawn->GetID());
+				}
+				
 				MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 			
 				safe_delete(spawn);
@@ -1635,6 +1644,12 @@ bool ZoneServer::SpawnProcess(){
 			for (itr2 = pending_spawn_list_remove.begin(); itr2 != pending_spawn_list_remove.end(); itr2++) {
 				spawn_list.erase(*itr2);
 				subspawn_list[SUBSPAWN_TYPES::COLLECTOR].erase(*itr2);
+				
+				std::map<int32,int32>::iterator hsmitr = housing_spawn_map.find(*itr2);
+				if(hsmitr != housing_spawn_map.end()) {
+					subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].erase(hsmitr->second);
+					housing_spawn_map.erase(hsmitr);
+				}
 			}
 
 			pending_spawn_list_remove.clear();
@@ -1657,6 +1672,10 @@ bool ZoneServer::SpawnProcess(){
 				
 				if(spawn->IsCollector()) {
 					subspawn_list[SUBSPAWN_TYPES::COLLECTOR].insert(make_pair(spawn->GetID(),spawn));
+				}
+				if(spawn->GetPickupItemID()) {
+					subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].insert(make_pair(spawn->GetPickupItemID(),spawn));
+					housing_spawn_map.insert(make_pair(spawn->GetID(), spawn->GetPickupItemID()));
 				}
 			}
 
@@ -8239,6 +8258,12 @@ void ZoneServer::ProcessSpawnRemovals()
 		for (itr2 = m_pendingSpawnRemove.begin(); itr2 != m_pendingSpawnRemove.end(); itr2++) {
 			spawn_list.erase(itr2->first);
 			subspawn_list[SUBSPAWN_TYPES::COLLECTOR].erase(itr2->first);
+			
+			std::map<int32,int32>::iterator hsmitr = housing_spawn_map.find(itr2->first);
+			if(hsmitr != housing_spawn_map.end()) {
+				subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].erase(hsmitr->second);
+				housing_spawn_map.erase(hsmitr);
+			}
 		}
 
 		m_pendingSpawnRemove.clear();
@@ -8371,4 +8396,16 @@ void ZoneServer::SendSubSpawnUpdates(SUBSPAWN_TYPES subtype) {
 		AddChangedSpawn(subitr->second);
 	}
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+bool ZoneServer::HouseItemSpawnExists(int32 item_id) {
+	bool exists = false;
+	std::map<int32, Spawn*>::iterator subitr;
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	subitr = subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].find(item_id);
+	if(subitr != subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].end()) {
+		exists = true;
+	}
+	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+	return exists;
 }

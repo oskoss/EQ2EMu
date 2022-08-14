@@ -259,6 +259,7 @@ struct ZoneInfoSlideStruct {
 
 enum SUBSPAWN_TYPES {
 	COLLECTOR = 0,
+	HOUSE_ITEM_SPAWN = 1,
 	MAX_SUBSPAWN_TYPE = 20
 };
 
@@ -697,6 +698,7 @@ public:
 	Client*	RemoveZoneServerFromClient(ZoneServer* zone);
 	
 	void	SendSubSpawnUpdates(SUBSPAWN_TYPES subtype);
+	bool	HouseItemSpawnExists(int32 item_id);	
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
@@ -844,6 +846,7 @@ private:
 	
 	/* Specialized Lists to update specific scenarios */
 	std::map<int32, Spawn*>	subspawn_list[SUBSPAWN_TYPES::MAX_SUBSPAWN_TYPE];
+	std::map<int32, int32>	housing_spawn_map;
 	
 	/* Vectors */
 	vector<RevivePoint*>*	revive_points;

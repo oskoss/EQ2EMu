@@ -2634,8 +2634,6 @@ void Player::ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 ma
 		}
 		spell->slot = i;
 		
-			Spell* tmpspell = 0;
-			tmpspell = master_spell_list.GetSpell(spell->spell_id, spell->tier);
 		GetSpellBookSlotSort(pattern, &i, &page_book_count, &last_start_point);
 	} // end for loop for setting slots
 	

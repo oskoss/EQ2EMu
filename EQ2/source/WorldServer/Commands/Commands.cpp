@@ -3785,6 +3785,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->Message(CHANNEL_COLOR_RED, "This item has not been configured in the database, %s (%u) needs an entry where ?? has the model type id, eg. insert into item_appearances set item_id=%u,equip_type=??;", item->name.c_str(), item->details.item_id, item->details.item_id);
 						break;
 					}
+					else if(item->CheckFlag2(HOUSE_LORE) && client->GetCurrentZone()->HouseItemSpawnExists(item->details.item_id)) {
+						client->Message(CHANNEL_COLOR_RED, "Item %s is house lore and you cannot place another.", item->name.c_str());
+						break;
+					}
 
 					if (client->GetTempPlacementSpawn())
 					{
@@ -3792,6 +3796,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->GetCurrentZone()->RemoveSpawn(tmp, true, true, true, true, true);
 						client->SetTempPlacementSpawn(nullptr);
 					}
+					
 
 					Object* obj = new Object();
 					Spawn* spawn = (Spawn*)obj;
