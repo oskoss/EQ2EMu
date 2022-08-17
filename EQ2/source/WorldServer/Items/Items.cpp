@@ -2548,7 +2548,7 @@ PacketStruct* Item::PrepareItem(int16 version, bool merchant_item, bool loot_ite
 	PacketStruct* packet = 0;
 	if(loot_item && version > 546)
 		packet = configReader.getStruct("WS_LootItemGeneric", version);
-	else{		
+	else{
 		int8 tmpType = generic_info.item_type;
 		if (version <= 283 && generic_info.item_type > ITEM_TYPE_RECIPE)
 			tmpType = 0;

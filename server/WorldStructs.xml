@@ -15405,8 +15405,57 @@ to zero and treated like placeholders." />
 <Data ElementName="biography_array" Type="Array" ArraySizeVariable="num_chars">
 	<Data ElementName="biography_char" Type="char" />
 </Data>
-<Data ElementName="unknown14" Type="int8" Size="1" />
-<Data ElementName="unknown_name" Type="EQ2_8Bit_String" />
+<Data ElementName="unknown14" Type="int8" Size="6" />
+<Data ElementName="slot_0" Type="EQ2_Item" />
+<Data ElementName="slot_1" Type="EQ2_Item" />
+<Data ElementName="slot_2" Type="EQ2_Item" />
+<Data ElementName="slot_3" Type="EQ2_Item" />
+<Data ElementName="slot_4" Type="EQ2_Item" />
+<Data ElementName="slot_5" Type="EQ2_Item" />
+<Data ElementName="slot_6" Type="EQ2_Item" />
+<Data ElementName="slot_7" Type="EQ2_Item" />
+<Data ElementName="slot_8" Type="EQ2_Item" />
+<Data ElementName="slot_9" Type="EQ2_Item" />
+<Data ElementName="slot_10" Type="EQ2_Item" />
+<Data ElementName="slot_11" Type="EQ2_Item" />
+<Data ElementName="slot_12" Type="EQ2_Item" />
+<Data ElementName="slot_13" Type="EQ2_Item" />
+<Data ElementName="slot_14" Type="EQ2_Item" />
+<Data ElementName="slot_15" Type="EQ2_Item" />
+<Data ElementName="slot_16" Type="EQ2_Item" />
+<Data ElementName="slot_17" Type="EQ2_Item" />
+<Data ElementName="slot_18" Type="EQ2_Item" />
+<Data ElementName="slot_19" Type="EQ2_Item" />
+<Data ElementName="slot_20" Type="EQ2_Item" />
+<Data ElementName="slot_21" Type="EQ2_Item" />
+<Data ElementName="slot_22" Type="EQ2_Item" />
+<Data ElementName="slot_23" Type="EQ2_Item" />
+<Data ElementName="slot_24" Type="EQ2_Item" />
+<Data ElementName="slot_25" Type="EQ2_Item" />
+<Data ElementName="slot_26" Type="EQ2_Item" />
+<Data ElementName="slot_27" Type="EQ2_Item" />
+<Data ElementName="slot_28" Type="EQ2_Item" />
+<Data ElementName="slot_29" Type="EQ2_Item" />
+<Data ElementName="slot_30" Type="EQ2_Item" />
+<Data ElementName="slot_31" Type="EQ2_Item" />
+<Data ElementName="slot_32" Type="EQ2_Item" />
+<Data ElementName="slot_33" Type="EQ2_Item" />
+<Data ElementName="slot_34" Type="EQ2_Item" />
+<Data ElementName="slot_35" Type="EQ2_Item" />
+<Data ElementName="slot_36" Type="EQ2_Item" />
+<Data ElementName="slot_37" Type="EQ2_Item" />
+<Data ElementName="slot_38" Type="EQ2_Item" />
+<Data ElementName="slot_39" Type="EQ2_Item" />
+<Data ElementName="slot_40" Type="EQ2_Item" />
+<Data ElementName="slot_41" Type="EQ2_Item" />
+<Data ElementName="slot_42" Type="EQ2_Item" />
+<Data ElementName="slot_43" Type="EQ2_Item" />
+<Data ElementName="slot_44" Type="EQ2_Item" />
+<Data ElementName="slot_45" Type="EQ2_Item" />
+<Data ElementName="slot_46" Type="EQ2_Item" />
+<Data ElementName="slot_47" Type="EQ2_Item" />
+<Data ElementName="slot_48" Type="EQ2_Item" />
+<Data ElementName="slot_49" Type="EQ2_Item" /> <!-- Item.h potential max slot number, NUM_SLOTS(24) * 2 + 1 = 49 -->
 <!-- <Data ElementName="equipment_start" Type="int8" Size="5810" />
       <Data ElementName="Achievement_size" Type="int32" Size="1" /> -->
 </Struct>

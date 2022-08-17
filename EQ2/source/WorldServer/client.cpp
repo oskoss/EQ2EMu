@@ -9226,14 +9226,23 @@ void Client::InspectPlayer(Player* player_to_inspect) {
 			for (size_t i = 0; i < biography.length(); i++)
 				packet->setArrayDataByName("biography_char", biography[i], i);
 
-			LogWrite(MISC__TODO, 0, "TODO", "Why is inspect player weapons commented out? in func: %s, line: %i", __FUNCTION__, __LINE__);
-			/*Item* pw = player_to_inspect->GetEquipmentList()->GetItem(0);
-			if (pw)
-				packet->setItemByName("primary", pw, player_to_inspect, 0);
-			Item* sw = player_to_inspect->GetEquipmentList()->GetItem(1);
-			if (sw)
-				packet->setItemByName("secondary", sw, player_to_inspect, 0);*/
-				//DumpPacket(packet->serialize());
+			for(int32 s=0;s<NUM_SLOTS;s++) {
+				int32 slot = s*2;
+				
+				char item_slot_name[64], item_slot_name_appearance[64];
+				_snprintf(item_slot_name,64,"slot_%u",slot);
+				int32 slot_appearance = (s*2)+1;
+				_snprintf(item_slot_name_appearance,64,"slot_%u",slot_appearance);
+				Item* pw = player_to_inspect->GetEquipmentList()->GetItem(s);
+				packet->setItemByName(item_slot_name, pw, this->GetPlayer(), 0, 13);
+				if(s <= EQ2_FEET_SLOT || s == EQ2_RANGE_SLOT || s == EQ2_CLOAK_SLOT) {
+					pw = player_to_inspect->GetAppearanceEquipmentList()->GetItem(s);
+					packet->setItemByName(item_slot_name_appearance, pw, this->GetPlayer(), 0, 13);	
+				}
+				else {
+					packet->setItemByName(item_slot_name_appearance, nullptr, this->GetPlayer(), 0, 13);	
+				}
+			}
 			QueuePacket(packet->serialize());
 			safe_delete(packet);
 		}
