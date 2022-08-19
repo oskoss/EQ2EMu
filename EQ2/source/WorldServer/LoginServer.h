@@ -53,19 +53,6 @@ public:
 	void SendPacket(ServerPacket* pack) { tcpc->SendPacket(pack); }
 	int8 GetState() { return tcpc->GetState(); }
 	bool Connected() { return tcpc->Connected(); }
-	int32 ProcessTableUpdates(uchar* data);
-	int32 ProcessDataUpdates(uchar* data);
-	void ProcessTableUpdate(uchar* data);
-	void ProcessDataUpdate(uchar* data);
-	bool CheckAndWait(Timer* timer);
-	bool UpdatesAuto(){ return updates_always; }
-	void UpdatesAuto(bool val){ updates_always = val; }
-	void UpdatesAsk(bool val){ updates_ask = val; }
-	bool UpdatesAsk(){ return updates_ask; }
-	void UpdatesVerbose(bool val){ updates_verbose = val; }
-	bool UpdatesVerbose(){ return updates_verbose; }
-	void UpdatesAutoData(bool val){ updates_auto_data = val; }
-	bool UpdatesAutoData(){ return updates_auto_data; }
 
 	void SendFilterNameResponse ( int8 resp , int32 acct_id , int32 char_id );
 
@@ -90,17 +77,8 @@ private:
 	int32	LoginServerIP;
 	int32	UpdateServerIP;
 	int16	LoginServerPort;
-	int16	UpdateServerPort;
-	bool updates_ask;
-	bool updates_always;
-	bool updates_verbose;
-	bool updates_auto_data;
-	bool update_server_verified;
-	bool update_server_completed;
+
 	uchar* data_waiting;
-	string last_data_update_table;
-	deque<uchar*> table_updates_waiting;
-	deque<uchar*> data_updates_waiting;
 	MutexMap<int32, LoginZoneUpdate>* zone_updates;
 	MutexMap<int32, LoginEquipmentUpdate>* loginEquip_updates;
 	int32 last_checked_time;

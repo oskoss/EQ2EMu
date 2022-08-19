@@ -4491,7 +4491,6 @@ void WorldDatabase::LoadPlayerMail(Client* client, bool new_only) {
 				if ( time_sent > Timer::GetUnixTimeStamp() )
 					continue; // should have not been received yet
 
-
 				hasMail = true;
 				Mail* mail = new Mail;
 				mail->mail_id = atoul(row[0]);
@@ -4562,100 +4561,6 @@ void WorldDatabase::GetPetNames(ZoneServer* zone)
 	}
 }
 
-int32 WorldDatabase::CheckTableVersions(char* tablename) {
-	Query query;
-	char* escaped_name = getEscapeString(tablename);
-	LogWrite(INIT__PATCHER_DEBUG, 1, "Patcher", "\tChecking current version for table: %s", tablename);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT version FROM table_versions WHERE name='%s';", escaped_name);
-	int32 ret_version = 0;
-	if(result && mysql_num_rows(result) > 0)
-	{
-		MYSQL_ROW row;
-		row = mysql_fetch_row(result);
-		ret_version = atoul(row[0]);
-	}
-	safe_delete_array(escaped_name);
-	return ret_version;
-}
-
-bool WorldDatabase::RunDatabaseQueries(TableQuery* queries, bool output_result, bool data){
-	for(int16 i=0;i<queries->num_queries;i++){
-		Query query;
-		if(string(queries->GetQuery(i)).length() > 5)
-			query.RunQuery2(string(queries->GetQuery(i)), Q_UPDATE);
-		if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
-		{
-			if(output_result)
-				LogWrite(INIT__PATCHER_ERROR, 0, "Patcher", "FAILED!");
-			LogWrite(INIT__PATCHER_ERROR, 0, "Patcher", "Error in updating tables query '%s': %s", query.GetQuery(), query.GetError());
-			return false;
-		}
-	}
-	if(output_result)
-		LogWrite(INIT__PATCHER_DEBUG, 0, "Patcher", "SUCCESS!");
-	if(data)
-		UpdateDataTableVersion(queries->tablename, queries->latest_version);
-	else
-		UpdateTableVersion(queries->tablename, queries->latest_version);
-	return true;
-}
-
-void WorldDatabase::UpdateDataTableVersion(char* name, int32 version){
-	Query query;
-	char* escaped_name = getEscapeString(name);
-	query.RunQuery2(Q_UPDATE, "update table_versions set download_version=%u where name='%s'", version, escaped_name);
-	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
-	{
-		LogWrite(INIT__PATCHER_ERROR, 0, "Patcher", "Error in updating version table query '%s': %s", query.GetQuery(), query.GetError());
-	}
-	safe_delete_array(escaped_name);
-}
-
-void WorldDatabase::UpdateTableVersion(char* name, int32 version){
-	Query query;
-	char* escaped_name = getEscapeString(name);
-	query.RunQuery2(Q_UPDATE, "INSERT into table_versions (name, version) values('%s', %u) ON DUPLICATE KEY UPDATE version=%u", escaped_name, version, version);
-	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
-	{
-		LogWrite(WORLD__ERROR, 0, "Patcher", "Error in updating version table query '%s': %s", query.GetQuery(), query.GetError());
-	}
-	safe_delete_array(escaped_name);
-}
-
-bool WorldDatabase::CheckVersionTable() {
-	Query query;
-
-	// todo: suppress SQL errors while this command is running, because ERROR is normal on a new DB creation (Zcoretri)
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SHOW COLUMNS FROM table_versions");
-	if(result && mysql_num_rows(result) > 0) {
-		LogWrite(INIT__PATCHER_DEBUG, 0, "Patcher", "--DB Schema exists! Checking for updates...");
-		return true;
-	}
-	else {
-		LogWrite(INIT__PATCHER_ERROR, 0, "Patcher", "Version Table NOT Found! Creating...");
-		Query query2;
-		query2.RunQuery2(Q_UPDATE, "CREATE TABLE `table_versions` (`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT, `name` VARCHAR(64) NOT NULL DEFAULT '',`version` INT(10) UNSIGNED NOT NULL DEFAULT '0',`download_version` INT(10) UNSIGNED NOT NULL DEFAULT '0',PRIMARY KEY  (`id`),UNIQUE KEY `UniqueName` (`name`)) ENGINE=INNODB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci;");
-
-		LogWrite(INIT__PATCHER_DEBUG, 0, "Patcher", "--Setting table_version = 1...");
-		Query query3;
-		query3.RunQuery2(Q_INSERT, "INSERT INTO table_versions (name, version) VALUES ('table_versions', 1)");
-	}
-	return false;
-}
-
-sint32 WorldDatabase::GetLatestDataTableVersion(char* name){
-	Query query;
-	char* escaped_name = getEscapeString(name);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT download_version FROM table_versions where name='%s'", escaped_name);
-	sint32 ret_version = 0;
-	if(result && mysql_num_rows(result) > 0) {
-		MYSQL_ROW row;
-		row = mysql_fetch_row(result);
-		ret_version = atol(row[0]);
-	}
-	safe_delete_array(escaped_name);
-	return ret_version;
-}
 
 int32 WorldDatabase::GetMaxHotBarID(){
 	Query query;
@@ -6110,34 +6015,6 @@ bool WorldDatabase::LocationExists(int32 location_id) {
 			ret = true;
 	}
 	return ret;
-}
-
-bool WorldDatabase::GetTableVersions(vector<TableVersion*>* table_versions) {
-	DatabaseResult result;
-	TableVersion *table_version;
-	bool success;
-
-	//don't treat 1146 (table not found) as an error since the patch server will create it
-	database_new.SetIgnoredErrno(1146);
-
-	success = database_new.Select(&result, "SELECT `name`,`version`,`download_version`\n"
-										   "FROM `table_versions`\n");
-	
-	database_new.RemoveIgnoredErrno(1146);
-
-	if (!success)
-		return false;
-
-	while (result.Next()) {
-		table_version = (TableVersion *)malloc(sizeof(*table_version));
-		table_version->name_len = (unsigned int)strlcpy(table_version->name, result.GetString(0), sizeof(table_version->name));
-		table_version->version = result.GetInt32(1);
-		table_version->data_version = result.GetInt32(2);
-
-		table_versions->push_back(table_version);
-	}
-
-	return true;
 }
 
 bool WorldDatabase::QueriesFromFile(const char * file) {
