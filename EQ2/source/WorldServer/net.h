@@ -54,9 +54,7 @@ public:
 			loginport[i] = LOGIN_PORT;
 		}
 		listening_socket = 0;
-		updateport = 0;
 		memset(worldname, 0, sizeof(worldname));
-		memset(updateaddress, 0, sizeof(updateaddress));
 		memset(worldaccount, 0, sizeof(worldaccount));
 		memset(worldpassword, 0, sizeof(worldpassword));
 		memset(worldaddress, 0, sizeof(worldaddress));
@@ -74,7 +72,6 @@ public:
 	bool LoginServerInfo;
 	bool UpdateStats;
 	char* GetLoginInfo(int16* oPort);
-	char* GetUpdateServerInfo(int16* oPort);
 	inline char* GetLoginAddress(int8 i)	{ return loginaddress[i]; }
 	inline int16 GetLoginPort(int8 i)		{ return loginport[i]; }
 	inline char* GetWorldName()			{ return worldname; }
@@ -88,9 +85,7 @@ public:
 private:
 	int		listening_socket;
 	char	loginaddress[3][255];
-	char	updateaddress[255];
 	int16	loginport[3];
-	int16	updateport;
 	char	worldname[201];
 	char	worldaccount[31];
 	char	worldpassword[31];

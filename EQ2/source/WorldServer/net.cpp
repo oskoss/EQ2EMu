@@ -86,8 +86,6 @@ LuaInterface* lua_interface = new LuaInterface();
 #include "Languages.h"
 #include "Achievements/Achievements.h"
 
-#include "Patch/patch.h"
-
 volatile bool RunLoops = true;
 sint32 numclients = 0;
 sint32 numzones = 0;
@@ -110,7 +108,7 @@ MasterLanguagesList master_languages_list;
 ChestTrapList chest_trap_list;
 extern MasterAchievementList master_achievement_list;
 extern map<int16, int16> EQOpcodeVersions;
-PatchServer patch;
+
 
 ThreadReturnType ItemLoad (void* tmp);
 ThreadReturnType AchievmentLoad (void* tmp);
@@ -166,28 +164,7 @@ int main(int argc, char** argv) {
 	srand(time(NULL));
 
 	net.ReadLoginINI();
-	if(loginserver.UpdatesAuto() || loginserver.UpdatesAsk() || loginserver.UpdatesAutoData()){
-		LogWrite(INIT__PATCHER_INFO, 0, "Patcher", "Connecting to DB PatchServer...");
-		// Old DB patch server
-		/*int16 updateport = 0;
-		char* updateaddress = net.GetUpdateServerInfo(&updateport);
-		loginserver.ConnectToUpdateServer(updateaddress, updateport);
-		LogWrite(INIT__PATCHER_INFO, 0, "Patcher", "DB Update check completed...");*/
-
 		
-		//New patch server
-		if (!patch.IsEnabled())
-			LogWrite(INIT__PATCHER_INFO, 0, "Patcher", "Not checking patch server for updates");
-		else {
-			bool success = patch.Start();
-			if (success)
-				success = patch.Process();
-			patch.Stop();
-			//if (patch.QuitAfter())
-				//looping = false;
-		}
-	}
-	
 	// JA: Grouping all System (core) data loads together for timing purposes
 	LogWrite(WORLD__INFO, 0, "World", "Loading System Data...");
 	int32 t_now = Timer::GetUnixTimeStamp();
@@ -731,20 +708,6 @@ bool NetConnection::ReadLoginINI() {
 					strncpy (worldaddress, buf, 250);
 				}
 			}
-			if (!strncasecmp(type, "autotableupdates", 16)) {
-				if(strlen(buf) >= 3 && !strncasecmp(buf, "ask", 3))
-					loginserver.UpdatesAsk(true);
-				else if(strlen(buf) >= 6 && !strncasecmp(buf, "always", 6))
-					loginserver.UpdatesAuto(true);
-			}
-			if (!strncasecmp (type, "autotableverbose", 16)) {
-				if(strlen(buf) >= 4 && !strncasecmp(buf, "true", 4))
-					loginserver.UpdatesVerbose(true);
-			}
-			if (!strncasecmp (type, "autotabledata", 13)) {
-				if(strlen(buf) >= 4 && !strncasecmp(buf, "true", 4))
-					loginserver.UpdatesAutoData(true);
-			}
 			if (!strncasecmp (type, "internalworldaddress", 20)) {
 				if (strlen(buf) >= 3) {
 					strncpy(internalworldaddress, buf, 20);
@@ -828,52 +791,11 @@ bool NetConnection::ReadLoginINI() {
 	}
 	fclose (f);
 
-	f=fopen (MAIN_INI_FILE, "r");
-	do {
-		if (fgets (buf, 200, f) == NULL || feof(f))
-		{
-			LogWrite(INIT__ERROR, 0, "Init", "[UpdateServer] block not found in %s", MAIN_INI_FILE);
-			fclose (f);
-			return true;
-		}
-
-	}
-	while (strncasecmp (buf, "[UpdateServer]\n", 15) != 0 && strncasecmp (buf, "[UpdateServer]\r\n", 16) != 0);
-
-	while (!feof (f))
-	{
-#ifdef WIN32
-		if (fscanf (f, "%[^=]=%[^\n]\r\n", type, buf) == 2)
-#else
-		if (fscanf (f, "%[^=]=%[^\r\n]\n", type, buf) == 2)
-#endif
-		{
-			if (!strcasecmp(type, "updateserveraddress")) {
-				strncpy (updateaddress, buf, 250);
-				patch.SetHost(buf);
-			}
-			if (!strcasecmp(type, "updateserverport")) {
-				updateport=atoi(buf);
-				patch.SetPort(buf);
-			}
-		}
-	}
-	fclose (f);
-	
 	LogWrite(INIT__DEBUG, 0, "Init", "%s read...", MAIN_INI_FILE);
 	LoginServerInfo=1;
 	return true;
 }
 
-char* NetConnection::GetUpdateServerInfo(int16* oPort) {
-	if (oPort == 0)
-		return 0;
-	if (updateaddress[0] == 0)
-		return 0;
-
-	*oPort = updateport;
-	return updateaddress;
-}
 
 char* NetConnection::GetLoginInfo(int16* oPort) {
 	if (oPort == 0)
