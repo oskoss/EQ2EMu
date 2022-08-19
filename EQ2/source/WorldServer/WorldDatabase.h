@@ -475,7 +475,6 @@ public:
 	int32	LoadPlayerRecipeBooks(int32 char_id, Player *player);
 	void	SavePlayerRecipeBook(Player* player, int32 recipebook_id);
 	void	LoadRecipeComponents();
-	void	LoadRecipeProducts();
 	void	UpdatePlayerRecipe(Player* player, int32 recipe_id, int8 highest_rank);
 	void	SavePlayerRecipe(Player* player, int32 recipe_id);
 

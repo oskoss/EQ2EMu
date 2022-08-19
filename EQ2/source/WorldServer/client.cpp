@@ -10875,7 +10875,13 @@ void Client::CreateMail(int32 charID, std::string fromName, std::string subjectN
 int8 mailType, int32 copper, int32 silver, int32 gold, int32 platinum, int32 item_id, int16 stack_size, int32 time_sent, int32 expire_time)
 {
 	Mail mail;
-	memset(&mail,0,sizeof(Mail));
+	mail.mail_id = 0;
+	mail.already_read = 0;
+	mail.postage_cost = 0;
+	mail.attachment_cost = 0;
+	mail.save_needed = 1;
+	//uhh...mail has std::strings so
+	//memset(&mail,0,sizeof(Mail));
 	mail.player_to_id = charID;
 	mail.player_from = fromName;
 	mail.subject = subjectName;
@@ -11250,7 +11256,13 @@ void Client::AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i) {
 	if(recipe == nullptr)
 		return;
 	
-	GetPlayer()->GetRecipeList()->AddRecipe(recipe);
+	PlayerRecipeList* prl = GetPlayer()->GetRecipeList();
+	if (prl->GetRecipe(recipe->GetID())) {
+		delete recipe;
+		return;
+	}
+
+	prl->AddRecipe(recipe);
 	database.SavePlayerRecipe(GetPlayer(), recipe->GetID());
 	Message(CHANNEL_NARRATIVE, "Recipe: \"%s\" put in recipe book.", recipe->GetName());
 

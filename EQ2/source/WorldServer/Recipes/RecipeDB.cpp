@@ -31,67 +31,121 @@ extern MasterRecipeList master_recipe_list;
 extern MasterRecipeBookList master_recipebook_list;
 
 void WorldDatabase::LoadRecipes() {
-	Recipe *recipe;
-	Query query;
-	MYSQL_ROW row;
-	MYSQL_RES *res;
+	DatabaseResult res;
 
-	res = query.RunQuery2(Q_SELECT,	"SELECT `recipe_id`,`tier`,`level`,`icon`,`skill_level`,`technique`,`knowledge`,`name`,`book`,`device`,`product_classes`,`unknown2`,`unknown3`,`unknown4`, "
-									"`product_item_id`, `product_name`, `product_qty`, `primary_comp_title`, `build_comp_title`, `build2_comp_title`, `build3_comp_title`, `build4_comp_title`, "
-									"`build_comp_qty`, `build2_comp_qty`, `build3_comp_qty`, `build4_comp_qty`, `fuel_comp_title`, `fuel_comp_qty`\n"
-									"FROM `recipes`");
-	if (res) {
-		while ((row = mysql_fetch_row(res))) {
-			recipe = new Recipe();
-			recipe->SetID(atoul(row[0]));
-			recipe->SetTier(atoi(row[1]));
-			recipe->SetLevel(atoi(row[2]));
-			recipe->SetIcon(atoi(row[3]));
-			recipe->SetSkill(atoul(row[4]));
-			recipe->SetTechnique(atoul(row[5]));
-			recipe->SetKnowledge(atoul(row[6]));
-			recipe->SetName(row[7]);
-			recipe->SetBook(row[8]);
-			recipe->SetDevice(row[9]);
-			recipe->SetClasses(atoul(row[10]));
-			recipe->SetUnknown2(atoul(row[11]));
-			recipe->SetUnknown3(atoul(row[12]));
-			recipe->SetUnknown4(atoul(row[13]));
+	bool status = database_new.Select(&res, 
+		"SELECT r.`id`,r.`level`,r.`icon`,r.`skill_level`,r.`technique`,r.`knowledge`,r.`name`,i.`name` as `book`,r.`bench`,ipc.`adventure_classes`, "
+		"r.`stage4_id`, r.`name`, r.`stage4_qty`, pcl.`name` as primary_comp_title, fcl.name as `fuel_comp_title`, r.fuel_comp_qty, "
+		"bc.`name` AS build_comp_title, bc.qty AS build_comp_qty, bc2.`name` AS build2_comp_title, bc2.qty AS build2_comp_qty, "
+		"bc3.`name` AS build3_comp_title, bc3.qty AS build3_comp_qty, bc4.`name` AS build4_comp_title, bc4.qty AS build4_comp_qty,\n"
+		"r.stage0_id, r.stage1_id, r.stage2_id, r.stage3_id, r.stage4_id, r.stage0_qty, r.stage1_qty, r.stage2_qty, r.stage3_qty, r.stage4_qty,\n"
+		"r.stage0_byp_id, r.stage1_byp_id, r.stage2_byp_id, r.stage3_byp_id, r.stage4_byp_id, r.stage0_byp_qty, r.stage1_byp_qty, r.stage2_byp_qty, r.stage3_byp_qty, r.stage4_byp_qty\n"
+		"FROM `recipe` r\n"
+		"LEFT JOIN ((SELECT item_id, soe_recipe_crc FROM item_details_recipe_items GROUP BY soe_recipe_crc) as idri) ON idri.soe_recipe_crc = r.soe_id\n"
+		"LEFT JOIN items i ON idri.item_id = i.id\n"
+		"INNER JOIN items ipc ON r.stage4_id = ipc.id\n"
+		"INNER JOIN recipe_comp_list pcl ON r.primary_comp_list = pcl.id\n"
+		"INNER JOIN recipe_comp_list fcl ON r.fuel_comp_list = fcl.id\n"
+		"LEFT JOIN (SELECT rsc.recipe_id, rsc.comp_list, rsc.`index`, rcl.`name`, rsc.qty FROM recipe_secondary_comp rsc INNER JOIN recipe_comp_list rcl ON rcl.id = rsc.comp_list WHERE `index` = 0) AS bc ON bc.recipe_id = r.id\n"
+		"LEFT JOIN (SELECT rsc.recipe_id, rsc.comp_list, rsc.`index`, rcl.`name`, rsc.qty FROM recipe_secondary_comp rsc INNER JOIN recipe_comp_list rcl ON rcl.id = rsc.comp_list WHERE `index` = 1) AS bc2 ON bc2.recipe_id = r.id\n"
+		"LEFT JOIN (SELECT rsc.recipe_id, rsc.comp_list, rsc.`index`, rcl.`name`, rsc.qty FROM recipe_secondary_comp rsc INNER JOIN recipe_comp_list rcl ON rcl.id = rsc.comp_list WHERE `index` = 2) AS bc3 ON bc3.recipe_id = r.id\n"
+		"LEFT JOIN (SELECT rsc.recipe_id, rsc.comp_list, rsc.`index`, rcl.`name`, rsc.qty FROM recipe_secondary_comp rsc INNER JOIN recipe_comp_list rcl ON rcl.id = rsc.comp_list WHERE `index` = 3) AS bc4 ON bc4.recipe_id = r.id\n"
+		"WHERE r.bHaveAllProducts AND r.`bench` IN ('chemistry_table','work_desk','forge','stove and keg','sewing_table','woodworking_table','work_bench')");
 
-			LogWrite(TRADESKILL__DEBUG, 5, "Recipes", "Loading recipe: %s (%u)", recipe->GetName(), recipe->GetID());
+	if (!status)
+		return;
 
-			recipe->SetProductID(atoul(row[14]));
-			recipe->SetProductName(row[15]);
-			recipe->SetProductQuantity(atoi(row[16]));
-			recipe->SetPrimaryComponentTitle(row[17]);
-			recipe->SetBuildComponentTitle(row[18]);
-			if (row[19] != NULL)
-				recipe->SetBuild2ComponentTitle(row[19]);
-			if (row[20] != NULL)
-				recipe->SetBuild3ComponentTitle(row[20]);
-			if (row[21] != NULL)
-				recipe->SetBuild4ComponentTitle(row[21]);
-			recipe->SetBuild1ComponentQuantity(atoi(row[22]));
-			if (row[23] != NULL)
-				recipe->SetBuild2ComponentQuantity(atoi(row[23]));
-			if (row[24] != NULL)
-				recipe->SetBuild3ComponentQuantity(atoi(row[24]));
-			if (row[25] != NULL)
-				recipe->SetBuild4ComponentQuantity(atoi(row[25]));
-			recipe->SetFuelComponentTitle(row[26]);
-			recipe->SetFuelComponentQuantity(atoi(row[27]));
+	while (res.Next()) {
+		int32 i = 0;
+		Recipe* recipe = new Recipe();
+		recipe->SetID(res.GetInt32(i++));
+		recipe->SetLevel(res.GetSInt32(i++));
+		recipe->SetTier(recipe->GetLevel() / 10);
+		recipe->SetIcon(res.GetInt32(i++));
+		recipe->SetSkill(res.GetInt32(i++));
+		recipe->SetTechnique(res.GetInt32(i++));
+		recipe->SetKnowledge(res.GetInt32(i++));
+		recipe->SetName(res.GetString(i++));
+		recipe->SetBook(res.GetString(i++));
 
-			LogWrite(TRADESKILL__DEBUG, 7, "Recipes", "Loading recipe: %s (%u)", recipe->GetName(), recipe->GetID());
-
-			if (!master_recipe_list.AddRecipe(recipe)) {
-				LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error adding recipe '%s' - duplicate ID: %u", recipe->GetName(), recipe->GetID()); 
-				safe_delete(recipe);
-				continue;
-			}
+		//Convert the device string
+		string device = res.GetString(i++);
+		int32 deviceID = 0;
+		if (device == "chemistry_table") {
+			device = "Chemistry Table";
+			deviceID = 3;
 		}
+		else if (device == "work_desk") {
+			device = "Engraved Desk";
+			deviceID = 4;
+		}
+		else if (device == "forge") {
+			device = "Forge";
+			deviceID = 2;
+		}
+		else if (device == "stove and keg") {
+			device = "Stove & Keg";
+			deviceID = 7;
+		}
+		else if (device == "sewing_table") {
+			device = "Sewing Table & Mannequin";
+			deviceID = 1;
+		}
+		else if (device == "woodworking_table") {
+			device = "Woodworking Table";
+			deviceID = 6;
+		}
+		else if (device == "work_bench") {
+			device = "Work Bench";
+			deviceID = 5;
+		}
+		recipe->SetDevice(device.c_str());
+		recipe->SetUnknown2(deviceID);
+
+		recipe->SetClasses(res.GetInt64(i++));	
+		recipe->SetUnknown3(0);
+		recipe->SetUnknown4(0);
+
+		LogWrite(TRADESKILL__DEBUG, 5, "Recipes", "Loading recipe: %s (%u)", recipe->GetName(), recipe->GetID());
+
+		recipe->SetProductID(res.GetInt32(i++));
+		recipe->SetProductName(res.GetString(i++));
+		recipe->SetProductQuantity(res.GetInt8(i++));
+		recipe->SetPrimaryComponentTitle(res.GetString(i++));
+		recipe->SetFuelComponentTitle(res.GetString(i++));
+		recipe->SetFuelComponentQuantity(res.GetInt8(i++));
+
+		recipe->SetBuildComponentTitle(res.GetString(i++));
+		recipe->SetBuild1ComponentQuantity(res.GetInt8(i++));
+		recipe->SetBuild2ComponentTitle(res.GetString(i++));
+		recipe->SetBuild2ComponentQuantity(res.GetInt8(i++));
+		recipe->SetBuild3ComponentTitle(res.GetString(i++));
+		recipe->SetBuild3ComponentQuantity(res.GetInt8(i++));
+		recipe->SetBuild4ComponentTitle(res.GetString(i++));
+		recipe->SetBuild4ComponentQuantity(res.GetInt8(i++));
+
+		LogWrite(TRADESKILL__DEBUG, 7, "Recipes", "Loading recipe: %s (%u)", recipe->GetName(), recipe->GetID());
+
+		if (!master_recipe_list.AddRecipe(recipe)) {
+			LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error adding recipe '%s' - duplicate ID: %u", recipe->GetName(), recipe->GetID());
+			delete recipe;
+			continue;
+		}
+
+		//Products/By-Products
+		for (int8 stage = 0; stage < 5; stage++) {
+			RecipeProducts* rp = new RecipeProducts;
+			rp->product_id = res.GetInt32(i);
+			rp->product_qty = res.GetInt8(i + 5);
+			rp->byproduct_id = res.GetInt32(i + 10);
+			rp->byproduct_qty = res.GetInt8(i + 15);
+			recipe->products[stage] = rp;
+			i++;
+		}
+		//Advance i past all the product info
+		//i += 15;
 	}
 	LoadRecipeComponents();
-	LoadRecipeProducts();
 
 	LogWrite(TRADESKILL__DEBUG, 0, "Recipes", "\tLoaded %u recipes", master_recipe_list.Size());
 }
@@ -102,13 +156,13 @@ void WorldDatabase::LoadRecipeBooks(){
 	MYSQL_ROW row;
 	MYSQL_RES *res;
 
-	res = query.RunQuery2(Q_SELECT, "SELECT id, name FROM items WHERE item_type='Recipe'");
+	res = query.RunQuery2(Q_SELECT, "SELECT id, name, tradeskill_default_level FROM items WHERE item_type='Recipe'");
 	if (res){
 		while ((row = mysql_fetch_row(res))){
 			recipe = new Recipe();
 			recipe->SetBookID(atoul(row[0]));
 			recipe->SetBookName(row[1]);
-
+			recipe->SetLevel(atoi(row[2]));
 			LogWrite(TRADESKILL__DEBUG, 5, "Recipes", "Loading Recipe Books: %s (%u)", recipe->GetBookName(), recipe->GetBookID());
 
 			if (!master_recipebook_list.AddRecipeBook(recipe)){
@@ -192,69 +246,60 @@ int32 WorldDatabase::LoadPlayerRecipeBooks(int32 char_id, Player *player) {
 
 void WorldDatabase::SavePlayerRecipeBook(Player* player, int32 recipebook_id){
 	Query query;
-	query.RunQuery2(Q_INSERT, "INSERT INTO character_recipe_books (char_id, recipebook_id) VALUES(%u, %u)", player->GetCharacterID(), recipebook_id);
-	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
-		LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error in SavePlayerRecipeBook query '%s' : %s", query.GetQuery(), query.GetError());
+	query.AddQueryAsync(player->GetCharacterID(), this, Q_INSERT, "INSERT INTO character_recipe_books (char_id, recipebook_id) VALUES(%u, %u)", player->GetCharacterID(), recipebook_id);
+	//if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
+		//LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error in SavePlayerRecipeBook query '%s' : %s", query.GetQuery(), query.GetError());
 }
 
 void WorldDatabase::SavePlayerRecipe(Player* player, int32 recipe_id) {
 	Query query;
-	query.RunQuery2(Q_INSERT, "INSERT INTO character_recipes (char_id, recipe_id) VALUES (%u, %u)", player->GetCharacterID(), recipe_id);
-	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
-		LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error in SavePlayerRecipeBook query '%s' : %s", query.GetQuery(), query.GetError());
+	query.AddQueryAsync(player->GetCharacterID(), this, Q_INSERT, "INSERT INTO character_recipes (char_id, recipe_id) VALUES (%u, %u)", player->GetCharacterID(), recipe_id);
+	//if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
+		//LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error in SavePlayerRecipeBook query '%s' : %s", query.GetQuery(), query.GetError());
 }
 
 void WorldDatabase::LoadRecipeComponents() {
-	Query query;
-	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT `recipe_id`, `item_id`, `slot_id` FROM `recipe_components` ORDER BY `recipe_id` asc");
-	int32 id = 0;
-	Recipe* recipe = 0;
-	if (result && mysql_num_rows(result) > 0) {
-		while (result && (row = mysql_fetch_row(result))) {
-			if (id != strtoul(row[0], NULL, 0)) {
-				id = strtoul(row[0], NULL, 0);
-				recipe = master_recipe_list.GetRecipe(id);
-			}
-			if (recipe) {
-				recipe->AddBuildComp(atoi(row[1]), atoi(row[2]));
-			}
-			else
-				LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error loading `recipe_build_comps`, Recipe ID: %u", id);
-		}
-	}
-}
+	DatabaseResult res;
+	bool status = database_new.Select(&res,
+		"SELECT r.id, pc.item_id AS primary_comp, fc.item_id AS fuel_comp, sc.item_id as secondary_comp, rsc.`index` + 1 AS slot\n"
+		"FROM recipe r\n"
+		"INNER JOIN (select comp_list, item_id FROM recipe_comp_list_item GROUP BY comp_list) as pc ON r.primary_comp_list = pc.comp_list\n"
+		"INNER JOIN (select comp_list, item_id FROM recipe_comp_list_item GROUP BY comp_list) as fc ON r.fuel_comp_list = fc.comp_list\n"
+		"LEFT JOIN recipe_secondary_comp rsc ON rsc.recipe_id = r.id\n"
+		"LEFT JOIN (select comp_list, item_id FROM recipe_comp_list_item GROUP BY comp_list) as sc ON rsc.comp_list = sc.comp_list\n"
+		"WHERE r.bHaveAllProducts\n"
+		"ORDER BY r.id, rsc.`index` ASC");
 
-void WorldDatabase::LoadRecipeProducts() {
-	Query query;
-	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT `recipe_id`, `stage`, `product_id`, `byproduct_id`, `product_qty`, `byproduct_qty` FROM `recipe_products` ORDER BY `recipe_id` ASC");
-	int32 id = 0;
+	if (!status) {
+		return;
+	}
+
 	Recipe* recipe = 0;
-	if (result && mysql_num_rows(result) > 0) {
-		while (result && (row = mysql_fetch_row(result))) {
-			if (id != strtoul(row[0], NULL, 0)) {
-				id = strtoul(row[0], NULL, 0);
-				recipe = master_recipe_list.GetRecipe(id);
+	int32 id = 0;
+	while (res.Next()) {
+		int32 tmp = res.GetInt32(0);
+		if (id != tmp) {
+			id = tmp;
+			recipe = master_recipe_list.GetRecipe(id);
+
+			if (!recipe) {
+				continue;
 			}
-			if (recipe) {
-				int8 stage = atoi(row[1]);
-				RecipeProducts* rp = new RecipeProducts;
-				rp->product_id = atoul(row[2]);
-				rp->byproduct_id = atoul(row[3]);
-				rp->product_qty = atoi(row[4]);
-				rp->byproduct_qty = atoi(row[5]);
-				recipe->products[stage] = rp;
-			}
-			else
-				LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error loading `recipe_products`, Recipe ID: %u", id);
+
+			recipe->AddBuildComp(res.GetInt32(1), 0);
+			recipe->AddBuildComp(res.GetInt32(2), 5);
 		}
+		if (recipe && !res.IsNull(3)) {
+			recipe->AddBuildComp(res.GetInt32(3), res.GetInt8(4));
+		}
+		//else
+			//LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error loading `recipe_build_comps`, Recipe ID: %u", id);
 	}
 }
 
 void WorldDatabase::UpdatePlayerRecipe(Player* player, int32 recipe_id, int8 highest_stage) {
 	Query query;
-	query.RunQuery2(Q_UPDATE, "UPDATE `character_recipes` SET `highest_stage` = %i WHERE `char_id` = %u AND `recipe_id` = %u", highest_stage, player->GetCharacterID(), recipe_id);
+	query.AddQueryAsync(player->GetCharacterID(), this, Q_UPDATE, "UPDATE `character_recipes` SET `highest_stage` = %i WHERE `char_id` = %u AND `recipe_id` = %u", highest_stage, player->GetCharacterID(), recipe_id);
 }
 
 /*

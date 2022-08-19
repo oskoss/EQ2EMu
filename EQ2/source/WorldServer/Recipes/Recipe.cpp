@@ -61,6 +61,12 @@ Recipe::Recipe(Recipe *in){
 	strncpy(book_name, in->GetBookName(), sizeof(book_name));
 	strncpy(book, in->GetBook(), sizeof(book));
 	strncpy(device, in->GetDevice(), sizeof(device));
+	strncpy(product_name, in->product_name, sizeof(product_name));
+	strncpy(primary_build_comp_title, in->primary_build_comp_title, sizeof(primary_build_comp_title));
+	strncpy(build1_comp_title, in->build1_comp_title, sizeof(build1_comp_title));
+	strncpy(build2_comp_title, in->build2_comp_title, sizeof(build2_comp_title));
+	strncpy(build3_comp_title, in->build3_comp_title, sizeof(build3_comp_title));
+	strncpy(build4_comp_title, in->build4_comp_title, sizeof(build4_comp_title));
 	level = in->GetLevel();
 	tier = in->GetTier();
 	icon = in->GetIcon();
@@ -145,14 +151,14 @@ int32 MasterRecipeList::Size() {
 	return ret;
 }
 
-vector<Recipe*>* MasterRecipeList::GetRecipes(const char* book_name) {
-	vector<Recipe*>* ret = new vector<Recipe*>;
+vector<Recipe*> MasterRecipeList::GetRecipes(const char* book_name) {
+	vector<Recipe*> ret;;
 	map<int32, Recipe *>::iterator itr;
 
 	m_recipes.writelock(__FUNCTION__, __LINE__);
 	for (itr = recipes.begin(); itr != recipes.end(); itr++) {
 		if (::ToLower(string(book_name)) == ::ToLower(string(itr->second->GetBook())))
-			ret->push_back(itr->second);
+			ret.push_back(itr->second);
 	}
 	m_recipes.releasewritelock(__FUNCTION__, __LINE__);
 

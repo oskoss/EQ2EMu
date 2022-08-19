@@ -181,7 +181,7 @@ public:
 	/// <summary>Gets all the recipes for the given book name</summary>
 	/// <param name="book_name">Book name to get recipes for</param>
 	/// <returns>A vector of all the recipes for the given book</returns>
-	vector<Recipe*>* GetRecipes(const char* book_name);
+	vector<Recipe*> GetRecipes(const char* book_name);
 	
 	/// <summary>Gets a recipe with the given name</summary>
 	/// <param name='name'>The name of the recipe to get</param>

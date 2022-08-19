@@ -2231,38 +2231,47 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							client->GetPlayer()->GetRecipeBookList()->AddRecipeBook(recipe_book);
 
 							// Get a list of all recipes this book contains
-							vector<Recipe*>* book_recipes = master_recipe_list.GetRecipes(recipe_book->GetBookName());
-							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "%i recipes found for %s book", book_recipes->size(), recipe_book->GetBookName());
+							vector<Recipe*> recipes = master_recipe_list.GetRecipes(recipe_book->GetBookName());
+							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "%i recipes found for %s book", recipes.size(), recipe_book->GetBookName());
+
+							if (recipes.empty() && item->recipebook_info) {
+								//Backup I guess if the recipe book is empty for whatever reason?
+								for (auto& itr : item->recipebook_info->recipes) {
+									Recipe* r = master_recipe_list.GetRecipeByName(itr.c_str());
+									if (r) {
+										recipes.push_back(r);
+									}
+								}
+							}
 							
+							//Filter out duplicate recipes the player already has
+							for (auto itr = recipes.begin(); itr != recipes.end();) {
+								Recipe* recipe = *itr;
+								if (client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())) {
+									itr = recipes.erase(itr);
+								}
+								else itr++;
+							}
+
 							int16 i = 0;
 							// Create the packet to send to update the players recipe list
 							PacketStruct* packet = 0;
-							if (client->GetRecipeListSent()) {
+							if (!recipes.empty() && client->GetRecipeListSent()) {
 								packet = configReader.getStruct("WS_RecipeList", client->GetVersion());
-								if(packet && book_recipes->size() < 1 && item->recipebook_info) {
-									packet->setArrayLengthByName("num_recipes", item->recipebook_info->recipes.size());
-									for(int32 r = 0; r < item->recipebook_info->recipes.size(); r++){
-										Recipe* recipe = master_recipe_list.GetRecipeByName(item->recipebook_info->recipes.at(r).c_str());
-										if(recipe) {
-											Recipe* player_recipe = new Recipe(recipe);
-											client->AddRecipeToPlayer(recipe, packet, &i);
-										}
-									}
+								if (packet) {
+									packet->setArrayLengthByName("num_recipes", recipes.size());
 								}
-								else if (packet)
-									packet->setArrayLengthByName("num_recipes", book_recipes->size());
 							}
 
-							// loop through the list
-							vector<Recipe*>::iterator itr;
-							for (itr = book_recipes->begin(); itr != book_recipes->end(); itr++) {
-								// check to see if the player already has this recipe some how
-								if (!client->GetPlayer()->GetRecipeList()->GetRecipe((*itr)->GetID())) {
-									// Player doesn't already have this recipe so lets add it
-									Recipe* recipe = new Recipe(master_recipe_list.GetRecipe((*itr)->GetID()));
-									client->AddRecipeToPlayer(recipe, packet, &i);
+							for (int32 r = 0; r < recipes.size(); r++) {
+								Recipe* recipe = recipes[r];
+								if (recipe) {
+									Recipe* player_recipe = new Recipe(recipe);
+									client->AddRecipeToPlayer(player_recipe, packet, &i);
 								}
 							}
+
+
 							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Done adding recipes");
 							database.SavePlayerRecipeBook(client->GetPlayer(), recipe_book->GetBookID());
 							database.DeleteItem(client->GetCharacterID(), item, 0);
