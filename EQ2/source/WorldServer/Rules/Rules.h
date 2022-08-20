@@ -103,6 +103,8 @@ enum RuleType {
 	MitigationLevelEffectivenessMin,
 	MaxMitigationAllowed,
 	MaxMitigationAllowedPVP,
+	StrengthNPC,
+	StrengthOther,
 
 	/* SPAWN */
 	SpeedMultiplier,

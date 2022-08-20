@@ -4381,14 +4381,7 @@ void ZoneServer::SendCalculatedXP(Player* player, Spawn* victim){
 						if(group_member) {
 							float xp = group_member->CalculateXP(victim) / members->size();
 							if (xp > 0) {
-								int16 level = group_member->GetLevel();
-								if (group_member->AddXP((int32)xp)) {
-									gmi->client->Message(CHANNEL_REWARD, "You gain %u experience!", (int32)xp);
-									LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u experience (GroupID %u)", group_member->GetName(), (int32)xp, player->GetGroupMemberInfo()->group_id);
-									if (group_member->GetLevel() != level)
-										gmi->client->ChangeLevel(level, group_member->GetLevel());
-									group_member->SetCharSheetChanged(true);
-								}
+								group_member->AddXP((int32)xp);
 							}
 						}
 					}
@@ -4404,14 +4397,7 @@ void ZoneServer::SendCalculatedXP(Player* player, Spawn* victim){
 				Client* client = GetClientBySpawn(player);
 				if(!client)
 					return;
-				int16 level = player->GetLevel();
-				if (player->AddXP((int32)xp)) {
-					client->Message(CHANNEL_REWARD, "You gain %u XP!", (int32)xp);
-					LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u experience.", player->GetName(), (int32)xp);
-					if(player->GetLevel() != level)
-						client->ChangeLevel(level, player->GetLevel());
-					player->SetCharSheetChanged(true);
-				}
+				player->AddXP((int32)xp);
 			}
 		}
 	}
@@ -4660,14 +4646,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 
 						float xp = ((Player*)spawn)->CalculateXP(dead) / size;
 						if (xp > 0) {
-							int16 level = spawn->GetLevel();
-							if (((Player*)spawn)->AddXP((int32)xp)) {
-								client->Message(CHANNEL_REWARD, "You gain %u XP!", (int32)xp);
-								LogWrite(PLAYER__DEBUG, 0, "Player", "Player: %s earned %u experience.", spawn->GetName(), (int32)xp);
-								if (spawn->GetLevel() != level)
-									client->ChangeLevel(level, spawn->GetLevel());
-								((Player*)spawn)->SetCharSheetChanged(true);
-							}
+							((Player*)spawn)->AddXP((int32)xp);
 						}
 					}
 				}

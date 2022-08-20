@@ -1999,7 +1999,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 			packets.push_back(bag->serialize(version, false, this));
 	}
 
-	if(send_item_updates)
+	if(send_item_updates && GetClient())
 	{
 		GetClient()->UpdateSentSpellList();
 		GetClient()->ClearSentSpellList();
@@ -2155,20 +2155,25 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 		if(canEquip && !appearance_type && item->CheckFlag2(APPEARANCE_ONLY))
 		{
 			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
-			GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "This item is for appearance slots only.");
+			if(GetClient()) {
+				GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "This item is for appearance slots only.");
+			}
 			return packets;
 		}
 		else if(canEquip && (conflictSlot = equipList->CheckSlotConflict(item)) > 0) {
 			bool abort = true;
 			switch(conflictSlot) {
 				case LORE:
-					GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "Lore conflict, cannot equip this item.");
+					if(GetClient())
+						GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "Lore conflict, cannot equip this item.");
 					break;
 				case LORE_EQUIP:
-					GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "You already have this item equipped, you cannot equip another.");
+					if(GetClient())
+						GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "You already have this item equipped, you cannot equip another.");
 					break;
 				case STACK_LORE:
-					GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "Cannot equip as it exceeds lore stack.");
+					if(GetClient())
+						GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "Cannot equip as it exceeds lore stack.");
 					break;
 				default:
 					abort = false;
@@ -3472,8 +3477,12 @@ void Player::AddSpellEffect(LuaSpell* luaspell, int32 override_expire_time){
 
 		if(luaspell->caster && luaspell->caster->IsPlayer() && luaspell->caster != this)
 		{
-			GetClient()->TriggerSpellSave();
-			((Player*)luaspell->caster)->GetClient()->TriggerSpellSave();
+			if(GetClient()) {
+				GetClient()->TriggerSpellSave();
+			}
+			if(((Player*)luaspell->caster)->GetClient()) {
+				((Player*)luaspell->caster)->GetClient()->TriggerSpellSave();
+			}
 		}
 	}	
 }
@@ -3916,7 +3925,7 @@ bool Player::SetSpawnSentState(Spawn* spawn, SpawnState state) {
 	if(index > 0 && (state == SpawnState::SPAWN_STATE_SENDING)) {
 		LogWrite(PLAYER__WARNING, 0, "Player", "Spawn ALREADY INDEXED for Player %s (%u).  Spawn %s (index %u) attempted to state %u.", 
 			GetName(), GetCharacterID(), spawn->GetName(), index, state);
-			if(GetClient()->IsReloadingZone()) {
+			if(GetClient() && GetClient()->IsReloadingZone()) {
 				spawn_packet_sent.insert(make_pair(spawn->GetID(), state));
 				val = false;
 			}
@@ -3958,7 +3967,7 @@ bool Player::SetSpawnSentState(Spawn* spawn, SpawnState state) {
 }
 
 void Player::CheckSpawnStateQueue() {
-	if(!GetClient()->IsReadyForUpdates())
+	if(!GetClient() || !GetClient()->IsReadyForUpdates())
 		return;
 
 	spawn_mutex.writelock(__FUNCTION__, __LINE__);
@@ -4400,6 +4409,9 @@ int32 Player::GetTSXP() {
 }
 
 bool Player::AddXP(int32 xp_amount){
+	if(!GetClient()) // potential linkdead player
+		return false;
+	
 	MStats.lock();
 	xp_amount += (int32)(((float)xp_amount) * stats[ITEM_STAT_COMBATEXPMOD]) / 100;
 	MStats.unlock();
@@ -4430,14 +4442,18 @@ bool Player::AddXP(int32 xp_amount){
 	}
 	
 	// used up in xp debt
-	if(!xp_amount)
+	if(!xp_amount) {
+		SetCharSheetChanged(true);
 		return true;
+	}
 
+	int32 prev_level = GetLevel();
 	float current_xp_percent = ((float)GetXP()/(float)GetNeededXP())*100;
 	float miniding_min_percent = ((int)(current_xp_percent/10)+1)*10;
 	while((xp_amount + GetXP()) >= GetNeededXP()){
 		if (!CheckLevelStatus(GetLevel() + 1)) {
 			GetZone()->GetClientBySpawn(this)->SimpleMessage(CHANNEL_COLOR_RED, "You do not have the required status to level up anymore!");
+			SetCharSheetChanged(true);	
 			return false;
 		}
 		xp_amount -= GetNeededXP() - GetXP();
@@ -4451,6 +4467,15 @@ bool Player::AddXP(int32 xp_amount){
 		SetPower(GetTotalPower());
 		GetZone()->SendCastSpellPacket(332, this, this); //send mini level up spell effect
 	}
+	
+	if(GetClient()) {
+		GetClient()->Message(CHANNEL_REWARD, "You gain %u experience!", (int32)xp_amount);
+			
+		if (prev_level != GetLevel())
+			GetClient()->ChangeLevel(prev_level, GetLevel());
+	}
+		
+	SetCharSheetChanged(true);			
 	return true;
 }
 

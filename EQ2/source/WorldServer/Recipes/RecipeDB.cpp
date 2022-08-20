@@ -187,7 +187,13 @@ void WorldDatabase::LoadPlayerRecipes(Player *player){
 	res = query.RunQuery2(Q_SELECT, "SELECT recipe_id, highest_stage FROM character_recipes WHERE char_id = %u", player->GetCharacterID());
 	if (res) {
 		while ((row = mysql_fetch_row(res))){
-			recipe = new Recipe(master_recipe_list.GetRecipe(atoul(row[0])));
+			int32 recipe_id = atoul(row[0]);
+			Recipe* master_recipe = master_recipe_list.GetRecipe(recipe_id);
+			if(!master_recipe) {
+				LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error adding recipe %u to player '%s' - duplicate ID", atoul(row[0]), player->GetName());
+				continue;
+			}
+			recipe = new Recipe(master_recipe);
 			recipe->SetHighestStage(atoi(row[1]));
 
 			LogWrite(TRADESKILL__DEBUG, 5, "Recipes", "Loading recipe: %s (%u) for player: %s (%u)", recipe->GetName(), recipe->GetID(), player->GetName(), player->GetCharacterID());

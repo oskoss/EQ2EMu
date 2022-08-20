@@ -10766,13 +10766,9 @@ int EQ2Emu_lua_GiveExp(lua_State* state) {
 		return 0;
 	Spawn* player = lua_interface->GetSpawn(state);
 	int32 amount = lua_interface->GetInt32Value(state, 2);
+	
 	if (player && player->IsPlayer() && amount > 0) {
 		((Player*)player)->AddXP(amount);
-		((Player*)player)->SetCharSheetChanged(true);
-		Client* client = player->GetZone()->GetClientBySpawn(player);
-		if (client) {
-			client->SimpleMessage(CHANNEL_REWARD, "You gain experience!");
-		}
 	}
 	return 0;
 }

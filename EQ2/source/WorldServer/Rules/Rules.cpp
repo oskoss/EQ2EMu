@@ -244,6 +244,8 @@ void RuleManager::Init()
 	RULE_INIT(R_Combat, MitigationLevelEffectivenessMin, ".5"); // ratio victim level / attacker level for min effectiveness
 	RULE_INIT(R_Combat, MaxMitigationAllowed, ".75"); // percentage max mitigation allowed, eg. 75% of damage can be mitigated max in PVE
 	RULE_INIT(R_Combat, MaxMitigationAllowedPVP, ".75"); // percentage max mitigation allowed, eg. 75% of damage can be mitigated max in PVP
+	RULE_INIT(R_Combat, StrengthNPC, "10"); // divider for strength NPC only str/x = additional dmg to low/high dmg
+	RULE_INIT(R_Combat, StrengthOther, "25"); // divider for strength other than NPC str/x = additional dmg to low/high dmg
 
 	/* SPAWN */
 	RULE_INIT(R_Spawn, SpeedMultiplier, "300"); // note: this value was 1280 until 6/1/2009, then was 600 til Sep 2009, when it became 300...?

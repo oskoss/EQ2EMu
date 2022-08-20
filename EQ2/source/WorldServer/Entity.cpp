@@ -714,6 +714,7 @@ void Entity::ChangePrimaryWeapon(){
 		return;
 	}
 	
+	int32 str_offset_dmg = GetStrengthDamage();
 	Item* item = equipment_list.GetItem(EQ2_PRIMARY_SLOT);
 	if(item && item->details.item_id > 0 && item->IsWeapon()){
 		GetInfoStruct()->set_primary_weapon_delay(item->weapon_info->delay * 100);
@@ -728,8 +729,8 @@ void Entity::ChangePrimaryWeapon(){
 			effective_level = GetLevel();
 
 			GetInfoStruct()->set_primary_weapon_delay(2000);		
-			GetInfoStruct()->set_primary_weapon_damage_low((int32)1 + effective_level * .2);
-			GetInfoStruct()->set_primary_weapon_damage_high((int32)(5 + effective_level * (effective_level/5)));
+			GetInfoStruct()->set_primary_weapon_damage_low((int32)1 + (effective_level * .2) + str_offset_dmg);
+			GetInfoStruct()->set_primary_weapon_damage_high((int32)(5 + effective_level * (effective_level/5)) + str_offset_dmg);
 			if(GetInfoStruct()->get_attack_type() > 0) {
 				GetInfoStruct()->set_primary_weapon_type(GetInfoStruct()->get_attack_type());
 			}
@@ -738,14 +739,6 @@ void Entity::ChangePrimaryWeapon(){
 			}
 			GetInfoStruct()->set_wield_type(2);
 	}
-	
-	int32 weapon_dmg_high = GetInfoStruct()->get_primary_weapon_damage_high();
-	if(IsNPC()) {
-		GetInfoStruct()->set_primary_weapon_damage_high(weapon_dmg_high + (int32)((GetInfoStruct()->get_str() / 10)));
-	}
-	else { 
-		GetInfoStruct()->set_primary_weapon_damage_high(weapon_dmg_high + (int32)((GetInfoStruct()->get_str() / 25)));
-	}
 }
 
 void Entity::ChangeSecondaryWeapon(){
@@ -753,11 +746,13 @@ void Entity::ChangeSecondaryWeapon(){
 		return;
 	}
 	
+	int32 str_offset_dmg = GetStrengthDamage();
+	
 	Item* item = equipment_list.GetItem(EQ2_SECONDARY_SLOT);
 	if(item && item->details.item_id > 0 && item->IsWeapon()){
 		GetInfoStruct()->set_secondary_weapon_delay(item->weapon_info->delay * 100);
-		GetInfoStruct()->set_secondary_weapon_damage_low(item->weapon_info->damage_low3);
-		GetInfoStruct()->set_secondary_weapon_damage_high(item->weapon_info->damage_high3);
+		GetInfoStruct()->set_secondary_weapon_damage_low(item->weapon_info->damage_low3 + str_offset_dmg);
+		GetInfoStruct()->set_secondary_weapon_damage_high(item->weapon_info->damage_high3 + str_offset_dmg);
 		GetInfoStruct()->set_secondary_weapon_type(item->GetWeaponType());
 	}
 	else{
@@ -766,17 +761,9 @@ void Entity::ChangeSecondaryWeapon(){
 			effective_level = GetLevel();
 
 		GetInfoStruct()->set_secondary_weapon_delay(2000);
-		GetInfoStruct()->set_secondary_weapon_damage_low((int32)(1 + effective_level * .2));
-		GetInfoStruct()->set_secondary_weapon_damage_high((int32)(5 + effective_level * (effective_level/6)));
+		GetInfoStruct()->set_secondary_weapon_damage_low((int32)(1 + effective_level * .2) + str_offset_dmg);
+		GetInfoStruct()->set_secondary_weapon_damage_high((int32)(5 + effective_level * (effective_level/6)) + str_offset_dmg);
 		GetInfoStruct()->set_secondary_weapon_type(1);
-	}
-	
-	int32 weapon_dmg_high = GetInfoStruct()->get_secondary_weapon_damage_high();
-	if(IsNPC()) {
-		GetInfoStruct()->set_secondary_weapon_damage_high(weapon_dmg_high + (int32)((GetInfoStruct()->get_str() / 10)));
-	}
-	else {
-		GetInfoStruct()->set_secondary_weapon_damage_high(weapon_dmg_high + (int32)((GetInfoStruct()->get_str() / 25)));
 	}
 }
 
@@ -792,6 +779,23 @@ void Entity::ChangeRangedWeapon(){
 		GetInfoStruct()->set_ranged_weapon_damage_high(item->ranged_info->weapon_info.damage_high3);
 		GetInfoStruct()->set_ranged_weapon_type(item->GetWeaponType());
 	}
+}
+
+int32 Entity::GetStrengthDamage() {
+	int32 str_offset = 1;
+	if(IsNPC()) {
+		str_offset = rule_manager.GetGlobalRule(R_Combat, StrengthNPC)->GetInt32();
+		if(str_offset < 1)
+			str_offset = 1;
+	}
+	else {
+		str_offset = rule_manager.GetGlobalRule(R_Combat, StrengthOther)->GetInt32();
+		if(str_offset < 1)
+			str_offset = 1;
+		
+	}
+	int32 str_offset_dmg = (int32)((GetInfoStruct()->get_str() / str_offset));
+	return str_offset_dmg;
 }
 
 int32 Entity::GetPrimaryWeaponMinDamage(){

@@ -840,6 +840,7 @@ void Client::SendCharInfo() {
 	this->zoning_id = 0;
 	this->zoning_instance_id = 0;
 	SetZoningDestination(nullptr);
+	
 	if (player->GetHP() < player->GetTotalHP() || player->GetPower() < player->GetTotalPower())
 		GetCurrentZone()->AddDamagedSpawn(player);
 
@@ -4621,6 +4622,7 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	player_skills->SetSkillCapsByType(SKILL_TYPE_GENERAL, new_skill_cap);
 	player_skills->SetSkillCapsByType(SKILL_TYPE_SPELLCASTING, new_skill_cap);
 	player_skills->SetSkillCapsByType(SKILL_TYPE_AVOIDANCE, new_skill_cap);
+	player_skills->SetSkillCapsByType(SKILL_TYPE_WEAPONRY, new_skill_cap);
 	
 	if (new_level > player->GetTSLevel())
 		player_skills->SetSkillCapsByType(SKILL_TYPE_HARVESTING, new_skill_cap);
@@ -6423,14 +6425,8 @@ void Client::GiveQuestReward(Quest* quest, bool has_displayed) {
 
 	if(!has_displayed) {
 		if (quest->GetExpReward() > 0) {
-			int16 level = player->GetLevel();
 			int32 xp = quest->GetExpReward();
-			if (player->AddXP(xp)) {
-				Message(CHANNEL_REWARD, "You gain %u experience!", (int32)xp);
-				if (player->GetLevel() != level)
-					ChangeLevel(level, player->GetLevel());
-				player->SetCharSheetChanged(true);
-			}
+			player->AddXP(xp);
 		}
 		if (quest->GetTSExpReward() > 0) {
 			int8 ts_level = player->GetTSLevel();
@@ -9733,10 +9729,8 @@ void Client::AcceptCollectionRewards(Collection* collection, int32 selectable_it
 			}
 		}
 	}
-
 	if (collection->GetRewardXP() > 0) {
 		player->AddXP((int32)collection->GetRewardXP());
-		SimpleMessage(CHANNEL_COLOR_YELLOW, "You gain experience!");
 	}
 	if (collection->GetRewardCoin() > 0) {
 		player->AddCoins(collection->GetRewardCoin());
