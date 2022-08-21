@@ -275,10 +275,6 @@
     <ClCompile Include="..\..\source\WorldServer\HeroicOp\HeroicOpPackets.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Housing\HousingDB.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Housing\HousingPackets.cpp" />
-    <ClCompile Include="..\..\source\WorldServer\IRC\IRC.cpp" />
-    <ClCompile Include="..\..\source\WorldServer\IRC\IRCChannel.cpp" />
-    <ClCompile Include="..\..\source\WorldServer\IRC\IRCMessage.cpp" />
-    <ClCompile Include="..\..\source\WorldServer\IRC\IRCServer.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Items\Items.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Items\ItemsDB.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Items\Loot.cpp" />
@@ -291,10 +287,6 @@
     <ClCompile Include="..\..\source\WorldServer\NPC.cpp" />
     <ClCompile Include="..\..\source\WorldServer\NPC_AI.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Object.cpp" />
-    <ClCompile Include="..\..\source\WorldServer\Patch\buffer.cpp" />
-    <ClCompile Include="..\..\source\WorldServer\Patch\patch.cpp" />
-    <ClCompile Include="..\..\source\WorldServer\Patch\tcp-client.cpp" />
-    <ClCompile Include="..\..\source\WorldServer\Patch\tcp.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Player.cpp" />
     <ClCompile Include="..\..\source\WorldServer\PlayerGroups.cpp" />
     <ClCompile Include="..\..\source\WorldServer\Quests.cpp" />
@@ -410,11 +402,6 @@
     <ClInclude Include="..\..\source\WorldServer\GroundSpawn.h" />
     <ClInclude Include="..\..\source\WorldServer\Guilds\Guild.h" />
     <ClInclude Include="..\..\source\WorldServer\HeroicOp\HeroicOp.h" />
-    <ClInclude Include="..\..\source\WorldServer\IRC\IRC.h" />
-    <ClInclude Include="..\..\source\WorldServer\IRC\IRCChannel.h" />
-    <ClInclude Include="..\..\source\WorldServer\IRC\IRCMessage.h" />
-    <ClInclude Include="..\..\source\WorldServer\IRC\IRCReplyCodes.h" />
-    <ClInclude Include="..\..\source\WorldServer\IRC\IRCServer.h" />
     <ClInclude Include="..\..\source\WorldServer\Items\Items.h" />
     <ClInclude Include="..\..\source\WorldServer\Items\Loot.h" />
     <ClInclude Include="..\..\source\WorldServer\Languages.h" />
@@ -429,10 +416,6 @@
     <ClInclude Include="..\..\source\WorldServer\NPC.h" />
     <ClInclude Include="..\..\source\WorldServer\NPC_AI.h" />
     <ClInclude Include="..\..\source\WorldServer\Object.h" />
-    <ClInclude Include="..\..\source\WorldServer\Patch\buffer.h" />
-    <ClInclude Include="..\..\source\WorldServer\Patch\patch.h" />
-    <ClInclude Include="..\..\source\WorldServer\Patch\tcp-client.h" />
-    <ClInclude Include="..\..\source\WorldServer\Patch\tcp.h" />
     <ClInclude Include="..\..\source\WorldServer\Player.h" />
     <ClInclude Include="..\..\source\WorldServer\PlayerGroups.h" />
     <ClInclude Include="..\..\source\WorldServer\Quests.h" />
