@@ -386,8 +386,10 @@ int main(int argc, char** argv) {
 #endif
 		//
 
-		// just before starting loops, announce how to get console help
+		// just before starting loops, announce how to get console help (only to windows)
+#ifdef WIN32      
 		LogWrite(WORLD__INFO, 0, "Console", "Type 'help' or '?' and press enter for menu options.");
+#endif      
 
 
 		std::chrono::time_point<std::chrono::system_clock> frame_prev = std::chrono::system_clock::now();
