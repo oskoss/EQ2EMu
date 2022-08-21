@@ -202,7 +202,7 @@ void Entity::MeleeAttack(Spawn* victim, float distance, bool primary, bool multi
 		CancelAllStealth();
 		
 
-	int8 hit_result = DetermineHit(victim, damage_type, 0, false);
+	int8 hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE, damage_type, 0, false);
 	if(hit_result == DAMAGE_PACKET_RESULT_SUCCESSFUL){		
 		/*if(GetAdventureClass() == MONK){
 			max_damage*=3;
@@ -285,7 +285,7 @@ void Entity::RangeAttack(Spawn* victim, float distance, Item* weapon, Item* ammo
 
 	if(weapon && weapon->IsRanged() && ammo && ammo->IsAmmo() && ammo->IsThrown()) {
 		if(weapon->ranged_info->range_low <= distance && (weapon->ranged_info->range_high + ammo->thrown_info->range) >= distance) {
-			int8 hit_result = DetermineHit(victim, ammo->thrown_info->damage_type, ammo->thrown_info->hit_bonus, false);
+			int8 hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_RANGE_DAMAGE, ammo->thrown_info->damage_type, ammo->thrown_info->hit_bonus, false);
 			if(hit_result == DAMAGE_PACKET_RESULT_SUCCESSFUL) {
 				DamageSpawn((Entity*)victim, DAMAGE_PACKET_TYPE_RANGE_DAMAGE, ammo->thrown_info->damage_type, weapon->ranged_info->weapon_info.damage_low3, weapon->ranged_info->weapon_info.damage_high3+ammo->thrown_info->damage_modifier, 0);
 				if (!multi_attack) {
@@ -381,9 +381,9 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 		is_tick = true;
 	}
 	else if(spell->GetSpellData()->type == SPELL_BOOK_TYPE_COMBAT_ART)
-		hit_result = DetermineHit(victim, damage_type, 0, false);
+		hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, 0, false);
 	else
-		hit_result = DetermineHit(victim, damage_type, 0, true, luaspell);
+		hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, 0, true, luaspell);
 		
 	if(hit_result == DAMAGE_PACKET_RESULT_SUCCESSFUL) {
 		luaspell->last_spellattack_hit = true;
@@ -488,7 +488,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 }
 
 bool Entity::ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32 high_damage, string name, string success_msg, string effect_msg) {
-	int8 hit_result = DetermineHit(victim, damage_type, 0, true);
+	int8 hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, 0, true);
 
 	if (hit_result == DAMAGE_PACKET_RESULT_SUCCESSFUL) {
 		DamageSpawn((Entity*)victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, low_damage, high_damage, name.c_str());
@@ -667,7 +667,7 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 	return true;
 }
 
-int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, bool is_caster_spell, LuaSpell* lua_spell){
+int8 Entity::DetermineHit(Spawn* victim, int8 type, int8 damage_type, float ToHitBonus, bool is_caster_spell, LuaSpell* lua_spell){
 	if(!victim) {
 		return DAMAGE_PACKET_RESULT_MISS;
 	}
@@ -677,13 +677,16 @@ int8 Entity::DetermineHit(Spawn* victim, int8 damage_type, float ToHitBonus, boo
 	}
 
 	bool behind = false;
+	
+	// move this above the if statement to assure skill-ups on successful damage return
+	Skill* skill = GetSkillByWeaponType(type, damage_type, true);
+	
 	// Monk added with Brawler to 360 degree support per KoS Prima Official eGuide Fighter: Monk, pg 138, denoted '360-Degree Avoidance!'
 	if(!victim->IsEntity() || (!is_caster_spell && victim->GetAdventureClass() != BRAWLER && victim->GetAdventureClass() != MONK && (behind = BehindTarget(victim)))) {
 		return DAMAGE_PACKET_RESULT_SUCCESSFUL;
 	}
 
 	float bonus = ToHitBonus;
-	Skill* skill = GetSkillByWeaponType(damage_type, true);
 
 	float skillAddedByWeapon = 0.0f;
 	if(skill)
@@ -884,8 +887,11 @@ float Entity::GetDamageTypeResistPercentage(int8 damage_type) {
 	return ret;
 }
 
-Skill* Entity::GetSkillByWeaponType(int8 type, bool update) {
-	switch(type) {
+Skill* Entity::GetSkillByWeaponType(int8 type, int8 damage_type, bool update) {
+	if(type == DAMAGE_PACKET_TYPE_RANGE_DAMAGE) {
+		return GetSkillByName("Ranged", update);
+	}
+	switch(damage_type) {
 	case DAMAGE_PACKET_DAMAGE_TYPE_SLASH: // slash
 		return GetSkillByName("Slashing", update);
 	case DAMAGE_PACKET_DAMAGE_TYPE_CRUSH: // crush

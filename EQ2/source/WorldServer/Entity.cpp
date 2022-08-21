@@ -772,11 +772,13 @@ void Entity::ChangeRangedWeapon(){
 		return;
 	}
 	
+	int32 str_offset_dmg = GetStrengthDamage();
+	
 	Item* item = equipment_list.GetItem(EQ2_RANGE_SLOT);
 	if(item && item->details.item_id > 0 && item->IsRanged()){
 		GetInfoStruct()->set_ranged_weapon_delay(item->ranged_info->weapon_info.delay*100);
-		GetInfoStruct()->set_ranged_weapon_damage_low(item->ranged_info->weapon_info.damage_low3);
-		GetInfoStruct()->set_ranged_weapon_damage_high(item->ranged_info->weapon_info.damage_high3);
+		GetInfoStruct()->set_ranged_weapon_damage_low(item->ranged_info->weapon_info.damage_low3 + str_offset_dmg);
+		GetInfoStruct()->set_ranged_weapon_damage_high(item->ranged_info->weapon_info.damage_high3 + str_offset_dmg);
 		GetInfoStruct()->set_ranged_weapon_type(item->GetWeaponType());
 	}
 }
