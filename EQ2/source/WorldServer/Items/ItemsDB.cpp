@@ -228,11 +228,13 @@ void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item)
 	
 }
 
-int32 WorldDatabase::LoadSkillItems()
+int32 WorldDatabase::LoadSkillItems(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, spell_id, spell_tier FROM item_details_skill");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, spell_id, spell_tier FROM item_details_skill%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -262,11 +264,13 @@ int32 WorldDatabase::LoadSkillItems()
 	return total;
 }
 
-int32 WorldDatabase::LoadShields()
+int32 WorldDatabase::LoadShields(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, mitigation_low, mitigation_high FROM item_details_shield");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, mitigation_low, mitigation_high FROM item_details_shield%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -292,11 +296,13 @@ int32 WorldDatabase::LoadShields()
 	}
 	return total;
 }
-int32 WorldDatabase::LoadAdornments()
+int32 WorldDatabase::LoadAdornments(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, duration, item_types,slot_type FROM item_details_adornments");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, duration, item_types,slot_type FROM item_details_adornments%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -331,11 +337,13 @@ int32 WorldDatabase::LoadClassifications()
 	return total;
 }
 
-int32 WorldDatabase::LoadBaubles()
+int32 WorldDatabase::LoadBaubles(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, cast, recovery, duration, recast, display_slot_optional, display_cast_time, display_bauble_type, effect_radius, max_aoe_targets, display_until_cancelled FROM item_details_bauble");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, cast, recovery, duration, recast, display_slot_optional, display_cast_time, display_bauble_type, effect_radius, max_aoe_targets, display_until_cancelled FROM item_details_bauble%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -370,13 +378,14 @@ int32 WorldDatabase::LoadBaubles()
 	return total;
 }
 
-int32 WorldDatabase::LoadBooks()
+int32 WorldDatabase::LoadBooks(int32 item_id)
 {
 	DatabaseResult result;
 	int32 total = 0;
 	int32 id = 0;
 
-	if( database_new.Select(&result, "SELECT item_id, language, author, title FROM item_details_book") )
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	if( database_new.Select(&result, "SELECT item_id, language, author, title FROM item_details_book%s", (item_id == 0) ? "" : select_query_addition.c_str()) )
 	{
 		while( result.Next() )
 		{
@@ -408,14 +417,15 @@ int32 WorldDatabase::LoadBooks()
 
 	return total;
 }
-int32 WorldDatabase::LoadItemsets()
+int32 WorldDatabase::LoadItemsets(int32 item_id)
 {
 	DatabaseResult result;
 	int32 total = 0;
 	int32 id = 0;
 
+	std::string select_query_addition = std::string(" and crate.item_id = ") + std::to_string(item_id);
 	//if (database_new.Select(&result, "SELECT id, itemset_item_id, item_id, item_icon,item_stack_size,item_list_color,language_type FROM item_details_itemset"))
-	if (database_new.Select(&result, "select crate.item_id, crateitem.reward_item_id, crateitem.icon, crateitem.stack_size, crateitem.name_color, crateitem.name, crateitem.language_type from item_details_reward_crate crate, item_details_reward_crate_item crateitem where crateitem.crate_item_id = crate.item_id"))
+	if (database_new.Select(&result, "select crate.item_id, crateitem.reward_item_id, crateitem.icon, crateitem.stack_size, crateitem.name_color, crateitem.name, crateitem.language_type from item_details_reward_crate crate, item_details_reward_crate_item crateitem where crateitem.crate_item_id = crate.item_id%s", (item_id == 0) ? "" : select_query_addition.c_str()))
 	{
 		while (result.Next())
 		{
@@ -439,11 +449,13 @@ int32 WorldDatabase::LoadItemsets()
 
 	return total;
 }
-int32 WorldDatabase::LoadHouseItem()
+int32 WorldDatabase::LoadHouseItem(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, rent_reduction, status_rent_reduction, coin_rent_reduction, house_only FROM item_details_house");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, rent_reduction, status_rent_reduction, coin_rent_reduction, house_only FROM item_details_house%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -471,11 +483,13 @@ int32 WorldDatabase::LoadHouseItem()
 	return total;
 }
 
-int32 WorldDatabase::LoadRecipeBookItems()
+int32 WorldDatabase::LoadRecipeBookItems(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, name FROM item_details_recipe_items");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, name FROM item_details_recipe_items%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -501,12 +515,14 @@ int32 WorldDatabase::LoadRecipeBookItems()
 	return total;
 }
 
-int32 WorldDatabase::LoadHouseContainers(){
+int32 WorldDatabase::LoadHouseContainers(int32 item_id){
 	DatabaseResult result;
 	int32 total = 0;
 	int32 id = 0;
 
-	if( database_new.Select(&result, "SELECT item_id, num_slots, allowed_types, broker_commission, fence_commission FROM item_details_house_container") )
+
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	if( database_new.Select(&result, "SELECT item_id, num_slots, allowed_types, broker_commission, fence_commission FROM item_details_house_container%s", (item_id == 0) ? "" : select_query_addition.c_str()) )
 	{
 		while (result.Next() )
 		{
@@ -533,11 +549,13 @@ int32 WorldDatabase::LoadHouseContainers(){
 	return total;
 }
 
-int32 WorldDatabase::LoadArmor()
+int32 WorldDatabase::LoadArmor(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, mitigation_low, mitigation_high FROM item_details_armor");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, mitigation_low, mitigation_high FROM item_details_armor%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -563,11 +581,13 @@ int32 WorldDatabase::LoadArmor()
 	return total;
 }
 
-int32 WorldDatabase::LoadBags()
+int32 WorldDatabase::LoadBags(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, num_slots, weight_reduction FROM item_details_bag");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, num_slots, weight_reduction FROM item_details_bag%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 	if(result)
@@ -595,11 +615,13 @@ int32 WorldDatabase::LoadBags()
 	return total;
 }
 
-int32 WorldDatabase::LoadFoods()
+int32 WorldDatabase::LoadFoods(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, type, level, duration, satiation FROM item_details_food");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, type, level, duration, satiation FROM item_details_food%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -629,11 +651,13 @@ int32 WorldDatabase::LoadFoods()
 	return total;
 }
 
-int32 WorldDatabase::LoadRangeWeapons()
+int32 WorldDatabase::LoadRangeWeapons(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, dmg_low, dmg_high, dmg_mastery_low, dmg_mastery_high, dmg_base_low, dmg_base_high, delay, damage_rating, range_low, range_high, damage_type FROM item_details_range");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, dmg_low, dmg_high, dmg_mastery_low, dmg_mastery_high, dmg_base_low, dmg_base_high, delay, damage_rating, range_low, range_high, damage_type FROM item_details_range%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -669,11 +693,13 @@ int32 WorldDatabase::LoadRangeWeapons()
 	return total;
 }
 
-int32 WorldDatabase::LoadThrownWeapons()
+int32 WorldDatabase::LoadThrownWeapons(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, range_bonus, damage_bonus, hit_bonus, damage_type FROM item_details_thrown");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, range_bonus, damage_bonus, hit_bonus, damage_type FROM item_details_thrown%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -703,11 +729,13 @@ int32 WorldDatabase::LoadThrownWeapons()
 	return total;
 }
 
-int32 WorldDatabase::LoadWeapons()
+int32 WorldDatabase::LoadWeapons(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, wield_style, dmg_low, dmg_high, dmg_mastery_low, dmg_mastery_high, dmg_base_low, dmg_base_high, delay, damage_rating, damage_type FROM  item_details_weapon");
+	
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, wield_style, dmg_low, dmg_high, dmg_mastery_low, dmg_mastery_high, dmg_base_low, dmg_base_high, delay, damage_rating, damage_type FROM  item_details_weapon%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 total = 0;
 	int32 id = 0;
 
@@ -742,11 +770,13 @@ int32 WorldDatabase::LoadWeapons()
 	return total;
 }
 
-int32 WorldDatabase::LoadItemAppearances()
+int32 WorldDatabase::LoadItemAppearances(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, equip_type, red, green, blue, highlight_red, highlight_green, highlight_blue FROM item_appearances ORDER BY item_id asc");
+	
+	std::string select_query_addition = std::string("where item_id = ") + std::to_string(item_id) + " ";
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, equip_type, red, green, blue, highlight_red, highlight_green, highlight_blue FROM item_appearances %sORDER BY item_id asc", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 id = 0;
 	Item* item = 0;
 	int32 total = 0;
@@ -775,11 +805,13 @@ int32 WorldDatabase::LoadItemAppearances()
 	return total;
 }
 
-int32 WorldDatabase::LoadItemEffects()
+int32 WorldDatabase::LoadItemEffects(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, effect, percentage, bullet FROM item_effects ORDER BY item_id, id");
+	
+	std::string select_query_addition = std::string("where item_id = ") + std::to_string(item_id) + " ";
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, effect, percentage, bullet FROM item_effects %sORDER BY item_id, id", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 id = 0;
 	Item* item = 0;
 	int32 total = 0;
@@ -807,11 +839,13 @@ int32 WorldDatabase::LoadItemEffects()
 	}
 	return total;
 }
-int32 WorldDatabase::LoadBookPages()
+int32 WorldDatabase::LoadBookPages(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, page, page_text, page_text_valign, page_text_halign FROM item_details_book_pages ORDER BY item_id, id");
+	
+	std::string select_query_addition = std::string("where item_id = ") + std::to_string(item_id) + " ";
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, page, page_text, page_text_valign, page_text_halign FROM item_details_book_pages %sORDER BY item_id, id", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 id = 0;
 	Item* item = 0;
 	int32 total = 0;
@@ -839,11 +873,13 @@ int32 WorldDatabase::LoadBookPages()
 	}
 	return total;
 }
-int32 WorldDatabase::LoadItemLevelOverride()
+int32 WorldDatabase::LoadItemLevelOverride(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, adventure_class_id, tradeskill_class_id, level FROM item_levels_override ORDER BY item_id asc");
+	
+	std::string select_query_addition = std::string("where item_id = ") + std::to_string(item_id) + " ";
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, adventure_class_id, tradeskill_class_id, level FROM item_levels_override %sORDER BY item_id asc", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 id = 0;
 	Item* item = 0;
 	int32 total = 0;
@@ -872,11 +908,13 @@ int32 WorldDatabase::LoadItemLevelOverride()
 	return total;
 }
 
-int32 WorldDatabase::LoadItemStats()
+int32 WorldDatabase::LoadItemStats(int32 item_id)
 {
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, type, subtype, iValue, fValue, sValue, level FROM item_mod_stats ORDER BY stats_order asc");
+	
+	std::string select_query_addition = std::string("where item_id = ") + std::to_string(item_id) + " ";
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, type, subtype, iValue, fValue, sValue, level FROM item_mod_stats %sORDER BY stats_order asc", (item_id == 0) ? "" : select_query_addition.c_str());
 	int32 id = 0;
 	Item* item = 0;
 	int32 total = 0;
@@ -912,7 +950,7 @@ int32 WorldDatabase::LoadItemStats()
 	return total;
 }
 
-int32 WorldDatabase::LoadItemModStrings()
+int32 WorldDatabase::LoadItemModStrings(int32 item_id)
 {
 	DatabaseResult result;
 
@@ -920,7 +958,8 @@ int32 WorldDatabase::LoadItemModStrings()
 	Item* item = 0;
 	int32 total = 0;
 
-	if( !database_new.Select(&result, "SELECT * FROM item_mod_strings") ) {
+	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	if( !database_new.Select(&result, "SELECT * FROM item_mod_strings%s", (item_id == 0) ? "" : select_query_addition.c_str()) ) {
 		LogWrite(ITEM__ERROR, 0, "Items", "Cannot load WorldDatabase::LoadItemModStrings in %s, line: %i", __FUNCTION__, __LINE__);
 		return 0;
 	}
@@ -953,7 +992,7 @@ void WorldDatabase::LoadBrokerItemStats()
 	DatabaseResult result;
 
 	if( !database_new.Select(&result, "SELECT * FROM broker_item_map") ) {
-		LogWrite(ITEM__ERROR, 0, "Items", "Cannot load WorldDatabase::LoadItemModStrings in %s, line: %i", __FUNCTION__, __LINE__);
+		LogWrite(ITEM__ERROR, 0, "Items", "Cannot load WorldDatabase::LoadBrokerItemStats in %s, line: %i", __FUNCTION__, __LINE__);
 	}
 	else {
 		while( result.Next() )
@@ -966,14 +1005,16 @@ void WorldDatabase::LoadBrokerItemStats()
 		}
 	}
 }
-void WorldDatabase::ReloadItemList() 
+void WorldDatabase::ReloadItemList(int32 item_id) 
 {
 	LogWrite(ITEM__DEBUG, 0, "Items", "Unloading Item List...");
-	master_item_list.RemoveAll();
-	LoadItemList();
+	if(!item_id) {
+		master_item_list.RemoveAll();
+	}
+	LoadItemList(item_id);
 }
 
-void WorldDatabase::LoadItemList()
+void WorldDatabase::LoadItemList(int32 item_id)
 {
 	DatabaseResult result;
 
@@ -981,8 +1022,8 @@ void WorldDatabase::LoadItemList()
 	int32 total = 0;
 	int32 normal_items = 0;
 	string item_type;
-
-	if( !database_new.Select(&result, "SELECT * FROM items") )
+	std::string select_query_addition = std::string(" where id = ") + std::to_string(item_id);
+	if( !database_new.Select(&result, "SELECT * FROM items%s", (item_id == 0) ? "" : select_query_addition.c_str()) )
 		LogWrite(ITEM__ERROR, 0, "Items", "Cannot load items in %s, line: %i", __FUNCTION__, __LINE__);
 	else
 	{
@@ -1005,42 +1046,44 @@ void WorldDatabase::LoadItemList()
 	}
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Normal Items", normal_items);
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Baubles", LoadBaubles());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Bags", LoadBags());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Books", LoadBooks());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Sets", LoadItemsets());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u House Items", LoadHouseItem());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Food Items", LoadFoods());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Weapons", LoadWeapons());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Ranged Weapons", LoadRangeWeapons());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Thrown Weapons", LoadThrownWeapons());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Armor Pieces", LoadArmor());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Shields", LoadShields());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Skill Items", LoadSkillItems());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Adornment Items", LoadAdornments());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Recipe Book Items", LoadRecipeBookItems());
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u House Containers", LoadHouseContainers());
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Baubles", LoadBaubles(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Bags", LoadBags(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Books", LoadBooks(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Sets", LoadItemsets(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u House Items", LoadHouseItem(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Food Items", LoadFoods(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Weapons", LoadWeapons(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Ranged Weapons", LoadRangeWeapons(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Thrown Weapons", LoadThrownWeapons(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Armor Pieces", LoadArmor(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Shields", LoadShields(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Skill Items", LoadSkillItems(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Adornment Items", LoadAdornments(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Recipe Book Items", LoadRecipeBookItems(item_id));
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u House Containers", LoadHouseContainers(item_id));
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Item Appearances...");
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Appearances", LoadItemAppearances());
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Appearances", LoadItemAppearances(item_id));
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Item Stats...");
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Stats", LoadItemStats());
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Stats", LoadItemStats(item_id));
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Item Stats Mods (Strings)...");
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Stats", LoadItemModStrings());
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Stats", LoadItemModStrings(item_id));
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Item Effects...");
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Effects", LoadItemEffects());
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Effects", LoadItemEffects(item_id));
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Book Pages...");
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Book Pages", LoadBookPages());
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Book Pages", LoadBookPages(item_id));
 
 	LogWrite(ITEM__DEBUG, 0, "Items", "Loading Item Level Overrides...");
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Level Overrides", LoadItemLevelOverride());
+	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded %u Item Level Overrides", LoadItemLevelOverride(item_id));
 	
-	LoadBrokerItemStats();
-	LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded Broker Item Stat Map Versioning");
+	if(!item_id) {
+		LoadBrokerItemStats();
+		LogWrite(ITEM__DEBUG, 0, "Items", "\tLoaded Broker Item Stat Map Versioning");
+	}
 
 	LogWrite(ITEM__INFO, 0, "Items", "Loaded %u Total Item%s (took %u seconds)", total, ( total == 1 ) ? "" : "s", Timer::GetUnixTimeStamp() - t_now);
 }

@@ -569,6 +569,8 @@ private:
 
 #define SPAWN_SET_ATTACK_TYPE							102
 #define SPAWN_SET_RACE_TYPE								103
+#define SPAWN_SET_LOOT_TIER								104
+#define SPAWN_SET_LOOT_DROP_TYPE						105
 
 #define ZONE_SET_VALUE_EXPANSION_ID			0
 #define ZONE_SET_VALUE_NAME					1

@@ -865,6 +865,12 @@ void MasterItemList::RemoveAll(){
 }
 
 void MasterItemList::AddItem(Item* item){
+	map<int32, Item*>::iterator iter;
+	if((iter = items.find(item->details.item_id)) != items.end()) {
+		Item* tmpItem = items[item->details.item_id];
+		items.erase(iter);
+		safe_delete(tmpItem);
+	}
 	items[item->details.item_id] = item;
 }
 

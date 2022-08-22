@@ -199,6 +199,8 @@ Commands::Commands(){
 	spawn_set_values["soga_body_age"] = SPAWN_SET_SOGA_BODY_AGE;
 	spawn_set_values["attack_type"] = SPAWN_SET_ATTACK_TYPE;
 	spawn_set_values["race_type"] = SPAWN_SET_RACE_TYPE;
+	spawn_set_values["loot_tier"] = SPAWN_SET_LOOT_TIER;
+	spawn_set_values["loot_drop_type"] = SPAWN_SET_LOOT_DROP_TYPE;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -880,6 +882,22 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				}
 				break;
 			}
+			case SPAWN_SET_LOOT_TIER:{
+				if(target->IsEntity()){
+					sprintf(tmp, "%u", target->GetLootTier());
+					int32 new_value = atoul(value);
+					target->SetLootTier(new_value);
+				}
+				break;
+			}
+			case SPAWN_SET_LOOT_DROP_TYPE:{
+				if(target->IsEntity()){
+					sprintf(tmp, "%u", target->GetLootDropType());
+					int32 new_value = atoul(value);
+					target->SetLootDropType(new_value);
+				}
+				break;
+			}
 
 			if(temp_value)
 				*temp_value = string(tmp);
@@ -903,7 +921,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			if (target->GetDatabaseID() > 0)
 			{
 				char query[256];
-				snprintf(query, 256, "update spawn set expansion_flag=%u where id=%i", atoul(value), target->GetDatabaseID());
+				snprintf(query, 256, "update spawn set expansion_flag=%u where id=%u", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
 					if(client)
@@ -917,7 +935,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			if (target->GetDatabaseID() > 0)
 			{
 				char query[256];
-				snprintf(query, 256, "update spawn set holiday_flag=%u where id=%i", atoul(value), target->GetDatabaseID());
+				snprintf(query, 256, "update spawn set holiday_flag=%u where id=%u", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
 					if(client)
@@ -931,7 +949,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 			if (target->GetDatabaseID() > 0)
 			{
 				char query[256];
-				snprintf(query, 256, "update spawn set aaxp_rewards=%u where id=%i", atoul(value), target->GetDatabaseID());
+				snprintf(query, 256, "update spawn set aaxp_rewards=%u where id=%u", atoul(value), target->GetDatabaseID());
 				if (database.RunQuery(query, strnlen(query, 256)))
 				{
 					if(client)
@@ -1551,6 +1569,38 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 						}
 					}
 					safe_delete(tmpsep);
+				}
+				break;
+			}
+			case SPAWN_SET_LOOT_TIER:{
+				int32 new_value = atoul(value);
+				target->SetLootTier(new_value);
+					
+				if (target->GetDatabaseID() > 0)
+				{
+					char query[256];
+					snprintf(query, 256, "update spawn set loot_tier=%u where id=%u", atoul(value), target->GetDatabaseID());
+					if (database.RunQuery(query, strnlen(query, 256)))
+					{
+						if(client)
+							client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
+					}
+				}
+				break;
+			}
+			case SPAWN_SET_LOOT_DROP_TYPE:{
+				int32 new_value = atoul(value);
+				target->SetLootDropType(new_value);
+				
+				if (target->GetDatabaseID() > 0)
+				{
+					char query[256];
+					snprintf(query, 256, "update spawn set loot_drop_type=%u where id=%u", atoul(value), target->GetDatabaseID());
+					if (database.RunQuery(query, strnlen(query, 256)))
+					{
+						if(client)
+							client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
+					}
 				}
 				break;
 			}
@@ -4872,6 +4922,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								case SPAWN_SET_SOGA_BODY_AGE:
 								case SPAWN_SET_ATTACK_TYPE:
 								case SPAWN_SET_RACE_TYPE:
+								case SPAWN_SET_LOOT_TIER:
+								case SPAWN_SET_LOOT_DROP_TYPE:
 								{
 									// not applicable already ran db command
 									break;
@@ -5171,10 +5223,27 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							   }
 		case COMMAND_RELOAD_ITEMS:{
 			LogWrite(COMMAND__INFO, 0, "Command", "Reloading items..");
-			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Started Reloading items (this might take a few minutes...)");
-			database.ReloadItemList();
-			database.LoadMerchantInformation();
-			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Finished Reloading items.");
+			
+			int32 item_id = (sep && sep->arg[0]) ? atoul(sep->arg[0]) : 0;
+			if(item_id > 0) {
+				client->Message(CHANNEL_COLOR_YELLOW, "Reloading item %u based on /reload items [item_id].", item_id);
+			}
+			else {
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Started Reloading items (this might take a few minutes...)");
+			}
+			
+			database.ReloadItemList(item_id);
+			
+			if(!item_id) {
+				database.LoadMerchantInformation(); // we skip if there is only a reload of single item not all items
+			}
+			
+			if(item_id > 0) {
+				client->Message(CHANNEL_COLOR_YELLOW, "Reloaded item %u.", item_id);
+			}
+			else {
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Finished Reloading items.");
+			}
 			break;
 								  }
 		case COMMAND_ENABLE_ABILITY_QUE:{
