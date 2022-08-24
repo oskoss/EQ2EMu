@@ -8276,6 +8276,7 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 							if (postage_cost > 0 || attachment_cost > 0)
 								PlaySoundA("coin_cha_ching");*/
 							mail->save_needed = false;
+							database.SavePlayerMail(mail);
 							Client* to_client = zone_list.GetClientByCharID(player_to_id);
 							if (to_client) {
 								to_client->GetPlayer()->AddMail(mail);
@@ -8283,7 +8284,6 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 								string popup_text = "You have unread mail!";
 								to_client->SendPopupMessage(10, popup_text.c_str(), "", 3, 0xFF, 0xFF, 0xFF);
 							}
-							database.SavePlayerMail(mail);
 							ResetSendMail(false, false);
 						}
 						else
