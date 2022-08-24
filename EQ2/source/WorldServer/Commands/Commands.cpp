@@ -2662,7 +2662,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 									  }
 		case COMMAND_SET_MAIL_ITEM: {
-			if(sep && sep->IsNumber(0) && sep->IsNumber(2))
+			if(sep && sep->IsNumber(0) && sep->IsNumber(1))
 			{
 				Item* item = client->GetPlayer()->item_list.GetItemFromIndex(atoul(sep->arg[0]));
 				if(item)
