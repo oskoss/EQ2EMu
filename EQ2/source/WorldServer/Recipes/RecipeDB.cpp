@@ -50,7 +50,7 @@ void WorldDatabase::LoadRecipes() {
 		"LEFT JOIN (SELECT rsc.recipe_id, rsc.comp_list, rsc.`index`, rcl.`name`, rsc.qty FROM recipe_secondary_comp rsc INNER JOIN recipe_comp_list rcl ON rcl.id = rsc.comp_list WHERE `index` = 1) AS bc2 ON bc2.recipe_id = r.id\n"
 		"LEFT JOIN (SELECT rsc.recipe_id, rsc.comp_list, rsc.`index`, rcl.`name`, rsc.qty FROM recipe_secondary_comp rsc INNER JOIN recipe_comp_list rcl ON rcl.id = rsc.comp_list WHERE `index` = 2) AS bc3 ON bc3.recipe_id = r.id\n"
 		"LEFT JOIN (SELECT rsc.recipe_id, rsc.comp_list, rsc.`index`, rcl.`name`, rsc.qty FROM recipe_secondary_comp rsc INNER JOIN recipe_comp_list rcl ON rcl.id = rsc.comp_list WHERE `index` = 3) AS bc4 ON bc4.recipe_id = r.id\n"
-		"WHERE r.bHaveAllProducts AND r.`bench` IN ('chemistry_table','work_desk','forge','stove and keg','sewing_table','woodworking_table','work_bench')");
+		"WHERE r.bHaveAllProducts");
 
 	if (!status)
 		return;
@@ -59,7 +59,7 @@ void WorldDatabase::LoadRecipes() {
 		int32 i = 0;
 		Recipe* recipe = new Recipe();
 		recipe->SetID(res.GetInt32(i++));
-		recipe->SetLevel(res.GetSInt32(i++));
+		recipe->SetLevel(res.GetInt32(i++));
 		recipe->SetTier(recipe->GetLevel() / 10);
 		recipe->SetIcon(res.GetInt32(i++));
 		recipe->SetSkill(res.GetInt32(i++));
