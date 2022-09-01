@@ -154,10 +154,7 @@ void Guild::AddEXPCurrent(sint64 exp, bool send_packet) {
 	if (exp > 0 && level < GUILD_MAX_LEVEL) {
 		exp_current += exp;
 		if (exp_current >= exp_to_next_level) {
-
-			LogWrite(MISC__TODO, 1, "TODO", "Do we know what guild is leveling here yet?");
-
-			LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild Level UP! New Level: %i (current XP: %ul)", level, exp_current);
+			LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild %s Level UP! New Level: %i (current XP: %ul)", name, level, exp_current);
 			int64 left_over = exp_current - exp_to_next_level;
 			level++;
 			exp_to_next_level *= 2;
@@ -417,7 +414,6 @@ GuildMember * Guild::GetGuildMemberOnline(Client *client) {
 GuildMember * Guild::GetGuildMember(Player *player) {
 
 	assert(player);
-	LogWrite(MISC__TODO, 1, "TODO", "Figure out how to log this in %s: %i", __FUNCTION__, __LINE__);
 	return GetGuildMember(player->GetCharacterID());
 }
 
@@ -977,7 +973,6 @@ bool Guild::AddPointsToAll(Client *client, float points, const char *comment, bo
 			LogWrite(GUILD__DEBUG, 0, "Guilds", "\tAwarded By: %s +%.1f pts to Player: %s", client->GetPlayer()->GetName(), points, gm->name);
 		}
 
-		LogWrite(MISC__TODO, 1, "TODO", "Comment that this is temporary?\n%s, %s, %i", __FILE__, __FUNCTION__, __LINE__);
 		SendGuildMember(gm); //tmp
 	}
 	mMembers.releasereadlock(__FUNCTION__, __LINE__);
@@ -1024,7 +1019,6 @@ bool Guild::AddPointsToAllOnline(Client *client, float points, const char *comme
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild: %s", GetName());
 		LogWrite(GUILD__DEBUG, 0, "Guilds", "\tAwarded By: %s +%.1f pts to Player: %s", client->GetPlayer()->GetName(), points, gm->name);
 
-		LogWrite(MISC__TODO, 1, "TODO", "Comment that this is temporary?\n%s, %s, %i", __FILE__, __FUNCTION__, __LINE__);
 		SendGuildMember(gm); //tmp
 
 	}
@@ -1089,7 +1083,6 @@ bool Guild::AddPointsToGroup(Client *client, float points, const char *comment, 
 			LogWrite(GUILD__DEBUG, 0, "Guilds", "Guild: %s", GetName());
 			LogWrite(GUILD__DEBUG, 0, "Guilds", "\tAwarded By: %s +%.1f pts to Player: %s", client->GetPlayer()->GetName(), points, gm->name);
 
-			LogWrite(MISC__TODO, 1, "TODO", "Comment that this is temporary?\n%s, %s, %i", __FILE__, __FUNCTION__, __LINE__);
 			SendGuildMember(gm); //tmp
 
 		}
@@ -1152,8 +1145,6 @@ bool Guild::AddPointsToGuildMember(Client *client, float points, const char *nam
 	AddPointHistory(gm, Timer::GetUnixTimeStamp(), client->GetPlayer()->GetName(), points, comment);
 
 	if (send_packet) {
-
-		LogWrite(MISC__TODO, 1, "TODO", "Comment that this is temporary?\n%s, %s, %i", __FILE__, __FUNCTION__, __LINE__);
 		SendGuildMember(gm); //tmp
 
 		SendGuildModification(points, &character_ids);
@@ -1166,9 +1157,6 @@ bool Guild::AddPointsToGuildMember(Client *client, float points, const char *nam
 }
 
 bool Guild::AddPointHistory(GuildMember *guild_member, int32 date, const char *modified_by, float points, const char *comment, bool new_point_history) {
-
-	LogWrite(MISC__TODO, 1, "TODO", "JA: decide to put logging here rather than in all AddPoints functions\n%s, %s, %i", __FILE__, __FUNCTION__, __LINE__);
-
 	PointHistory *ph, *ph_delete;
 	deque<PointHistory *> *ph_list;
 

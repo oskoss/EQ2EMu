@@ -241,10 +241,6 @@ void ClientPacketFunctions::SendUpdateSpellBook ( Client* client ){
 	client->GetPlayer()->UnlockAllSpells(true);
 }
 
-void ClientPacketFunctions::SendLoginCommandMessages ( Client* client ){
-	LogWrite(MISC__TODO, 1, "TODO", "Why is this function empty? Func: %s", __FUNCTION__);
-}
-
 void ClientPacketFunctions::SendServerControlFlags(Client* client, int8 param, int8 param_val, int8 value) {
 	PacketStruct* packet = configReader.getStruct("WS_ServerControlFlags", client->GetVersion());
 	if(packet) {

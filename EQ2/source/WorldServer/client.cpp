@@ -761,7 +761,6 @@ void Client::SendCharInfo() {
 	else {
 		player->SetResurrecting(false);
 	}
-	ClientPacketFunctions::SendLoginCommandMessages(this);
 
 	GetCurrentZone()->AddSpawn(player);
 	if(IsReloadingZone() && (zoning_x || zoning_y || zoning_z)) {
@@ -8269,12 +8268,7 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 							}
 							mail->time_sent = Timer::GetUnixTimeStamp();
 							mail->expire_time = mail->time_sent + 2592000;	//30 days in seconds
-							//int16 packettype = packet->getType_int16_ByName("packettype");
-							//int8 packetsubtype = packet->getType_int8_ByName("packetsubtype");
-							/*int32 postage_cost = packet->getType_int32_ByName("postage_cost");
-							int32 attachment_cost = packet->getType_int32_ByName("attachment_cost");
-							if (postage_cost > 0 || attachment_cost > 0)
-								PlaySoundA("coin_cha_ching");*/
+							
 							mail->save_needed = false;
 							database.SavePlayerMail(mail);
 							Client* to_client = zone_list.GetClientByCharID(player_to_id);
@@ -8283,6 +8277,10 @@ void Client::HandleSentMail(EQApplicationPacket* app) {
 								to_client->SimpleMessage(CHANNEL_NARRATIVE, "You have unread mail in your mailbox.");
 								string popup_text = "You have unread mail!";
 								to_client->SendPopupMessage(10, popup_text.c_str(), "", 3, 0xFF, 0xFF, 0xFF);
+							}
+							else {
+								// don't need the pointer the client doesn't exist currently
+								safe_delete(mail);
 							}
 							ResetSendMail(false, false);
 						}
@@ -8333,32 +8331,29 @@ bool Client::AddMailItem(Item* item)
 			mail_window.char_item_id = item->details.item_id;
 			mail_window.stack = item->details.count;
 			ret = true;
-		PacketStruct* packet = configReader.getStruct("WS_UpdatePlayerMail", GetVersion());
-				packet->setDataByName("coin_copper", mail_window.coin_copper);
-				packet->setDataByName("coin_silver", mail_window.coin_silver);
-				packet->setDataByName("coin_gold", mail_window.coin_gold);
-				packet->setDataByName("coin_plat", mail_window.coin_plat);
-					if(item)
-					{
-					packet->setDataByName("stack", mail_window.stack);
-					item->stack_count = mail_window.stack;
-					if (version < 860)
-						packet->setItemByName("item", item, player, 0, -1);
-					else if (version < 1193)
-						packet->setItemByName("item", item, player, 0, 0);
-					else
-						packet->setItemByName("item", item, player, 0, 2);
-					}
-					else
-					{
-						packet->setDataByName("end_tag2", GetItemPacketType(GetVersion()));
-						packet->setDataByName("end_tag3", 0xFF);
-					}
-				//packet->setDataByName("packettype", GetItemPacketType(version));
-				//packet->setDataByName("packetsubtype", 0xFF);
-				//packet->setDataByName("unknown2", 0);
-				//packet->PrintPacket();
-				QueuePacket(packet->serialize());
+			PacketStruct* packet = configReader.getStruct("WS_UpdatePlayerMail", GetVersion());
+			packet->setDataByName("coin_copper", mail_window.coin_copper);
+			packet->setDataByName("coin_silver", mail_window.coin_silver);
+			packet->setDataByName("coin_gold", mail_window.coin_gold);
+			packet->setDataByName("coin_plat", mail_window.coin_plat);
+			
+			if(item)
+			{
+				packet->setDataByName("stack", mail_window.stack);
+				item->stack_count = mail_window.stack;
+				if (version < 860)
+					packet->setItemByName("item", item, player, 0, -1);
+				else if (version < 1193)
+					packet->setItemByName("item", item, player, 0, 0);
+				else
+					packet->setItemByName("item", item, player, 0, 2);
+			}
+			else
+			{
+				packet->setDataByName("end_tag2", GetItemPacketType(GetVersion()));
+				packet->setDataByName("end_tag3", 0xFF);
+			}
+			QueuePacket(packet->serialize());
 		}
 		MMailWindowMutex.unlock();
 	}

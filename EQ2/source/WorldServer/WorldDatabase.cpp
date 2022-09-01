@@ -1758,14 +1758,10 @@ bool WorldDatabase::loadCharacter(const char* ch_name, int32 account_id, Client*
 		client->GetPlayer()->SetTradeskillClass(atoi(row[13]));
 		client->GetPlayer()->SetTSLevel(atoi(row[14]));
 
-		LogWrite(MISC__TODO, 1, "TODO", "Fix client->GetPlayer()->SetArtLevel(atoi(row[14]));\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-
 		client->GetPlayer()->features.wing_type = atoi(row[15]);
 		client->GetPlayer()->features.hair_type = atoi(row[16]);
 		client->GetPlayer()->features.chest_type = atoi(row[17]);
 		client->GetPlayer()->features.legs_type = atoi(row[18]);
-
-		LogWrite(MISC__TODO, 1, "TODO", "Fix SOGA appearances here\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 
 		client->GetPlayer()->features.wing_type = atoi(row[19]);
 		client->GetPlayer()->features.soga_hair_type = atoi(row[20]);

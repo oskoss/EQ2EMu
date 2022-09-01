@@ -246,8 +246,7 @@ bool PlayerGroupManager::RemoveGroupMember(int32 group_id, Entity* member) {
 
 	if (m_groups.count(group_id) > 0) {
 		PlayerGroup* group = m_groups[group_id];
-
-		LogWrite(MISC__TODO, 0, "TODO", "Update PlayerGroupManager::RemoveGroupMember() to support removing buffs from NPC group members");
+		
 		if (member->IsPlayer())
 			client = member->GetGroupMemberInfo()->client;
 

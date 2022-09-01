@@ -52,8 +52,6 @@ public:
 
 	static void SendUpdateSpellBook ( Client* client );
 
-	static void SendLoginCommandMessages ( Client* client );
-
 	static void SendSkillSlotMappings(Client* client);
 
 	static void SendRestartZoneMsg(Client* client);

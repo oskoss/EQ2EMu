@@ -1045,16 +1045,6 @@ void Entity::RemoveSpellEffect(LuaSpell* spell) {
 	MSpellEffects.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-bool Entity::HasActiveMaintainedSpell(Spell* spell, Spawn* target){
-	LogWrite(MISC__TODO, 1, "TODO", "This does nothing... yet...\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-	return false;
-}
-
-bool Entity::HasActiveSpellEffect(Spell* spell, Spawn* target){
-	LogWrite(MISC__TODO, 1, "TODO", "This does nothing... yet...\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-	return false;
-}
-
 MaintainedEffects* Entity::GetFreeMaintainedSpellSlot(){
 	MaintainedEffects* ret = 0;
 	InfoStruct* info = GetInfoStruct();
@@ -1190,12 +1180,14 @@ InfoStruct* Entity::GetInfoStruct(){
 }
 
 Skill* Entity::GetSkillByName(const char* name, bool check_update){
-	LogWrite(MISC__TODO, 1, "TODO", "This does nothing... yet...\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
+	// NPC::GetSkillByName in NPC.cpp exists for NPC's
+	// Player::GetSkillByName in Player.cpp exists for Player's
 	return 0;
 }
 
 Skill* Entity::GetSkillByID(int32 id, bool check_update){
-	LogWrite(MISC__TODO, 1, "TODO", "This does nothing... yet...\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
+	// NPC::GetSkillByID in NPC.cpp exists for NPC's
+	// Player::GetSkillByID in Player.cpp exists for Player's
 	return 0;
 }
 

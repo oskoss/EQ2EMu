@@ -452,8 +452,8 @@ struct InfoStruct{
 		override_primary_weapon_ = oldStruct->get_override_primary_weapon();
 		override_secondary_weapon_ = oldStruct->get_override_secondary_weapon();
 		override_ranged_weapon_ = oldStruct->get_override_ranged_weapon();
-	}
 
+	}
 	//mutable std::shared_mutex mutex_;
     std::string get_name() { std::lock_guard<std::mutex> lk(classMutex); return name_; }
 	int8	 get_class1() { std::lock_guard<std::mutex> lk(classMutex); return class1_; }
@@ -1245,8 +1245,6 @@ public:
 	virtual void AddSpellEffect(LuaSpell* spell, int32 override_expire_time = 0);
 	virtual void RemoveMaintainedSpell(LuaSpell* spell);
 	virtual void RemoveSpellEffect(LuaSpell* spell);
-	virtual bool HasActiveMaintainedSpell(Spell* spell, Spawn* target);
-	virtual bool HasActiveSpellEffect(Spell* spell, Spawn* target);
 	virtual void AddSkillBonus(int32 spell_id, int32 skill_id, float value);
 	void AddDetrimentalSpell(LuaSpell* spell, int32 override_expire_timestamp = 0);
 	DetrimentalEffects* GetDetrimentalEffect(int32 spell_id, Entity* caster);

@@ -244,13 +244,6 @@ int main(int argc, char** argv) {
 #endif
 	}
 
-
-	// Called as a function so we can use /reload spawns any time
-	/*LogWrite(SPAWN__INFO, 0, "Spawn", "Initializing Spawn Subsystem...");
-	t_now = Timer::GetUnixTimeStamp();
-	world.LoadSpawnInformation();
-	LogWrite(SPAWN__INFO, 0, "Spawn", "Initialize Spawn Subsystem complete (took %u seconds)", Timer::GetUnixTimeStamp() - t_now);*/
-
 	// JA temp logger
 	LogWrite(MISC__TODO, 0, "Reformat", "JA: This is as far as I got reformatting the console logs.");
 
@@ -259,10 +252,7 @@ int main(int argc, char** argv) {
 		LogWrite(ITEM__INFO, 0, "Items", "Loading Items...");
 		database.LoadItemList();
 		MasterItemList::ResetUniqueID(database.LoadNextUniqueItemID());
-	}
-
-	if (!threadedLoad) {
-		// JA: Load all Spell info
+		
 		LogWrite(SPELL__INFO, 0, "Spells", "Loading Spells...");
 		database.LoadSpells();
 
@@ -272,17 +262,21 @@ int main(int argc, char** argv) {
 		// Jabantiz: Load traits
 		LogWrite(WORLD__INFO, 0, "Traits", "Loading Traits...");
 		database.LoadTraits();
-	}
-
-	if (!threadedLoad) {
+		
 		// JA: Load all Quest info
 		LogWrite(QUEST__INFO, 0, "Quests", "Loading Quests...");
 		database.LoadQuests();
-	}
-
-	if (!threadedLoad) {
+		
 		LogWrite(COLLECTION__INFO, 0, "Collect", "Loading Collections...");
 		database.LoadCollections();
+		
+		LogWrite(MISC__TODO, 1, "TODO", "TODO loading achievements\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
+		//LogWrite(ACHIEVEMENT__INFO, 0, "Achievements", "Loading Achievements...");
+		//database.LoadAchievements();
+		//master_achievement_list.CreateMasterAchievementListPacket();
+		
+		LogWrite(MERCHANT__INFO, 0, "Merchants", "Loading Merchants...");
+		database.LoadMerchantInformation();
 	}
 
 	LogWrite(GUILD__INFO, 0, "Guilds", "Loading Guilds...");
@@ -294,12 +288,6 @@ int main(int argc, char** argv) {
 	database.LoadRecipes();
 	LogWrite(TRADESKILL__INFO, 0, "Tradeskills", "Loading Tradeskill Events...");
 	database.LoadTradeskillEvents();
-
-	if (!threadedLoad) {
-		LogWrite(ACHIEVEMENT__INFO, 0, "Achievements", "Loading Achievements...");
-		//database.LoadAchievements();
-		//master_achievement_list.CreateMasterAchievementListPacket();
-	}
 	
 	LogWrite(SPELL__INFO, 0, "AA", "Loading Alternate Advancements...");
 	database.LoadAltAdvancements();
@@ -312,11 +300,6 @@ int main(int argc, char** argv) {
 
 	LogWrite(CHAT__INFO, 0, "Chat", "Loading channels...");
 	database.LoadChannels();
-
-	if (!threadedLoad) {
-		LogWrite(MERCHANT__INFO, 0, "Merchants", "Loading Merchants...");
-		database.LoadMerchantInformation();
-	}
 
 	LogWrite(LUA__INFO, 0, "LUA", "Loading Spawn Scripts...");
 	database.LoadSpawnScriptData();

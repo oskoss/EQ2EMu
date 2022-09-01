@@ -2416,7 +2416,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 						 }
 		case COMMAND_SELECT_JUNCTION:{
-			LogWrite(MISC__TODO, 1, "TODO", "For access/travel selections (i.e. Mariner Bells, Player Death Window, etc.)\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
+			// transporters (bells birds) use OP_SelectZoneTeleporterDestinatio / ProcessTeleportLocation(app)
+			// this is only used for revive it seems
 			int32 choice = 0;
 			if(sep && sep->arg[0] && sep->IsNumber(0))
 				choice = atoul(sep->arg[0]);
@@ -2782,7 +2783,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 						   }
 		case COMMAND_SIT: {
-			LogWrite(MISC__TODO, 1, "TODO", " Send update packet to all clients\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 			if(client->GetPlayer()->GetHP() > 0){
 				client->QueuePacket(new EQ2Packet(OP_SitMsg, 0, 0));
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"You sit down.");
@@ -2791,7 +2791,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 						  }
 		case COMMAND_STAND: {
-			LogWrite(MISC__TODO, 1, "TODO", " Send update packet to all clients\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 			if(client->GetPlayer()->GetHP() > 0){
 				client->QueuePacket(new EQ2Packet(OP_StandMsg, 0, 0));
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"You stand up.");
@@ -3303,8 +3302,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 			if (!client->GetPlayer()->GetGroupMemberInfo() || !client->GetPlayer()->GetGroupMemberInfo()->leader)
 				return;
-
-			LogWrite(MISC__TODO, 0, "TODO", "Add a check to see if the client using the command (COMMAND_GROUP_KICK) is the group leader");
 
 			if (sep && sep->arg[0]) {
 				kicked_client = zone_list.GetClientByCharName(string(sep->arg[0]));
@@ -5732,9 +5729,6 @@ void Commands::Command_AFK(Client* client, Seperator* sep)
 
 	if (player->get_character_flag(CF_AFK))
 	{
-		LogWrite(MISC__TODO, 1, "TODO", "player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK); <-- need to find this");
-		/*player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_AFK); <-- need to find this */
-
 		if (sep && sep->argplus[0])
 			player->SetAwayMessage("I am away from the keyboard, " + string(sep->argplus[0]));
 		else
@@ -5752,8 +5746,6 @@ void Commands::Command_AFK(Client* client, Seperator* sep)
 
 		player->GetZone()->SimpleMessage(CHANNEL_COLOR_YELLOW, message.c_str(), player, 30);
 	}
-	/*else
-		player->SetActivityStatus(player->GetActivityStatus() - ACTIVITY_STATUS_AFK); <-- need to find this */
 }
 
 /* 
@@ -5811,8 +5803,7 @@ void Commands::Command_Claim(Client* client, Seperator* sep)
 {
 	if (sep && sep->arg[0] && sep->IsNumber(0)) 
 	{
-		LogWrite(MISC__TODO, 1, "TODO", "On Scatman's TODO list!\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "On Scatman's TODO :)");
+		LogWrite(MISC__TODO, 1, "TODO", "TODO: Command_Claim to be completed\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	}
 	else
 		client->ShowClaimWindow();
@@ -9392,8 +9383,7 @@ void Commands::Command_TradeAccept(Client* client, Seperator* sep)
 void Commands::Command_TradeReject(Client* client, Seperator* sep)
 {
 	PrintSep(sep, "COMMAND_REJECT_TRADE");
-	LogWrite(MISC__TODO, 1, "Command", "TODO-Command: Reject Player Trading");
-	client->Message(CHANNEL_COLOR_YELLOW, "You cannot trade with other players (Not Implemented)");
+	Command_TradeCancel(client, sep);
 }
 
 /* 

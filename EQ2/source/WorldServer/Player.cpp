@@ -70,8 +70,6 @@ Player::Player(){
 	pending_collection_reward = 0;
 	pos_packet_speed = 0;
 
-	LogWrite(MISC__TODO, 1, "TODO", "Add player commands here\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-
 	appearance.display_name = 1;
 	appearance.show_command_icon = 1;
 	appearance.player_flag = 1;
@@ -611,53 +609,19 @@ void PlayerInfo::SetAccountAge(int16 age){
 
 EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyValue) {
 	player->CalculateBonuses();
-/*	info_struct->heat = 15;
-	info_struct->heat_base = 13;
-	info_struct->divine = 14;
-	info_struct->divine_base = 11;
-	info_struct->cur_attack = 5;
-	info_struct->attack_base = 5;
-	info_struct->coin_copper = 1;
-	info_struct->coin_silver = 2;
-	info_struct->coin_gold = 3;
-	info_struct->coin_plat = 4;*/
 
 	int8 blah1 = 90;
 	int8 blah2 = 120;
-	/*for (int i = 0; i < 12; i++) {
-		info_struct->maintained_effects[i].icon = 8+i;
-		info_struct->maintained_effects[i].icon_backdrop = 315+i;
-		strcpy(info_struct->maintained_effects[i].name, "Testing Spell");
-		info_struct->maintained_effects[i].spell_id = 3000+i;
-		info_struct->maintained_effects[i].slot_pos = i;
-		info_struct->maintained_effects[i].expire_timestamp = Timer::GetCurrentTime2() + 72000;
-		if(i<2)
-			info_struct->maintained_effects[i].conc_used = 1;
-		info_struct->maintained_effects[i].total_time = 60+i;
-	}*/
+
 	PacketStruct* packet = configReader.getStruct("WS_CharacterSheet", version);
-	/*for (int i = 0; i < 1; i++) {
-		info_struct->spell_effects[i].icon = 303;
-		info_struct->spell_effects[i].icon_backdrop = 317;
-		info_struct->spell_effects[i].spell_id = 8308;
-		info_struct->spell_effects[i].expire_timestamp = Timer::GetCurrentTime2() + 72000;
-		if (i < 5)
-			packet->setSubstructDataByName("spell_effects", "cancellable", 1, i);
-	}*/
 	//0-69, locked screen movement
 	//30-69 normal movement
 	//10-30 normal movement
-
-	//for (int i = 5; i < 10; i++)
-		//packet->setDataByName("unknown19", 1+i, i);
-
-	//Sleep(5000);
 
 	if (packet) {
 		char name[40];
 		strncpy(name,info_struct->get_name().c_str(),40);
 		packet->setDataByName("character_name", name);
-		//	packet->setDataByName("unknown_1_1_MJ", 99);//unknown_1_1_MJ
 		packet->setDataByName("race", info_struct->get_race());
 		packet->setDataByName("gender", info_struct->get_gender());
 		packet->setDataByName("exiled", 0);  // need exiled data
@@ -670,7 +634,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("level", info_struct->get_level());
 		packet->setDataByName("effective_level", info_struct->get_effective_level() != 0 ? info_struct->get_effective_level() : info_struct->get_level());
 		packet->setDataByName("tradeskill_level", info_struct->get_tradeskill_level());
-		//		packet->setDataByName("unknown_1_2_MJ", 98);  //unknown_1_2_MJ
 		packet->setDataByName("account_age_base", info_struct->get_account_age_base());
 		//TODO: 2021 FIX THIS CASTING
 		for (int8 i = 0; i < 19; i++)
@@ -681,7 +644,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("deity", deity);
 		
 		packet->setDataByName("last_name", player->GetLastName());
-		//	packet->setDataByName("unknown_1_3_MJ", 97);//unknown_1_3_MJ
 		packet->setDataByName("current_hp", player->GetHP());
 		packet->setDataByName("max_hp", player->GetTotalHP());
 		packet->setDataByName("base_hp", player->GetTotalHPBase());
@@ -694,8 +656,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("hp_regen", player->GetInfoStruct()->get_hp_regen());
 		packet->setDataByName("power_regen", player->GetInfoStruct()->get_power_regen());
 
-		//	packet->setDataByName("unknown_1_4a_MJ", 96); //-1// was unknown11
-		//	packet->setDataByName("unknown_1_4b_MJ", 96); //-1
 		packet->setDataByName("stat_bonus_health", player->CalculateBonusMod());//bonus health and bonus power getting same value?
 		packet->setDataByName("stat_bonus_power", player->CalculateBonusMod());//bonus health and bonus power getting same value?
 		float bonus_health = floor((float)(info_struct->get_sta() * player->CalculateBonusMod()));
@@ -712,19 +672,14 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("avoidance_pct", (int16)info_struct->get_avoidance_display()*10.0f);//avoidance_pct 192 = 19.2% // confirmed DoV
 		packet->setDataByName("avoidance_base", (int16)info_struct->get_avoidance_base()*10.0f); // confirmed DoV
 		packet->setDataByName("avoidance", info_struct->get_cur_avoidance());
-		//		packet->setDataByName("unknown_1096_1_MJ", 90);//unknown_1096_1_MJ
 		packet->setDataByName("base_avoidance_pct", info_struct->get_base_avoidance_pct());// confirmed DoV
-		//		packet->setDataByName("unknown_1096_2_MJ", 89);//unknown_1096_2_MJ
 		float parry_pct = info_struct->get_parry(); // client works off of int16, but we use floats to track the actual x/100%
 		packet->setDataByName("parry",(int16)(parry_pct*10.0f));// confirmed DoV
-		//		packet->setDataByName("unknown_1096_3_MJ", 88);//unknown_1096_3_MJ
 
 		float block_pct = info_struct->get_block()*10.0f;
 		
 		packet->setDataByName("block", (int16)block_pct);// confirmed DoV
-		//		packet->setDataByName("unknown_1096_4_MJ", 87);//unknown_1096_4_MJ
 		packet->setDataByName("uncontested_block", info_struct->get_uncontested_block());// confirmed DoV
-		//		packet->setDataByName("unknown_1096_5_MJ", 86);//unknown_1096_5_MJ
 		packet->setDataByName("str", info_struct->get_str());// confirmed DoV
 		packet->setDataByName("sta", info_struct->get_sta());// confirmed DoV
 		packet->setDataByName("agi", info_struct->get_agi());// confirmed DoV
@@ -735,7 +690,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("agi_base", info_struct->get_agi_base());// confirmed DoV
 		packet->setDataByName("wis_base", info_struct->get_wis_base());// confirmed DoV
 		packet->setDataByName("int_base", info_struct->get_intel_base());// confirmed DoV
-		//		packet->setDataByName("unknown_1096_6_MJ", 86);//unknown_1096_6_MJ
 		if (version <= 996) {
 			packet->setDataByName("heat", info_struct->get_heat());
 			packet->setDataByName("cold", info_struct->get_cold());
@@ -756,24 +710,19 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			packet->setDataByName("elemental", info_struct->get_heat());// confirmed DoV
 			packet->setDataByName("noxious", info_struct->get_poison());// confirmed DoV
 			packet->setDataByName("arcane", info_struct->get_magic());// confirmed DoV
-			//		packet->setDataByName("unknown_1096_7_MJ", 85);//unknown_1096_7_MJ
 			packet->setDataByName("elemental_base", info_struct->get_elemental_base());// confirmed DoV
 			packet->setDataByName("noxious_base", info_struct->get_noxious_base());// confirmed DoV
 			packet->setDataByName("arcane_base", info_struct->get_arcane_base());// confirmed DoV
 		}
-		//	packet->setDataByName("unknown_1096_8_MJ", 205);//unknown_1096_8_MJ
 		packet->setDataByName("elemental_absorb_pve", 0); //210 = 21.0% confirmed DoV
 		packet->setDataByName("noxious_absorb_pve", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("arcane_absorb_pve", 0);//210 = 21.0% confirmed DoV
-		//		packet->setDataByName("unknown_1096_9_MJ", 240);//unknown_1096_9_MJ
 		packet->setDataByName("elemental_absorb_pvp", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("noxious_absorb_pvp", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("arcane_absorb_pvp", 0);//210 = 21.0% confirmed DoV
-			//	packet->setDataByName("unknown_1096_10_MJ", 280);//unknown_1096_10_MJ
 		packet->setDataByName("elemental_dmg_reduction", 0);// confirmed DoV
 		packet->setDataByName("noxious_dmg_reduction", 0);// confirmed DoV
 		packet->setDataByName("arcane_dmg_reduction", 0);// confirmed DoV
-		//		packet->setDataByName("unknown_1096_11_MJ", 320);//unknown_1096_11_MJ
 		packet->setDataByName("elemental_dmg_reduction_pct", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("noxious_dmg_reduction_pct", 0);//210 = 21.0% confirmed DoV
 		packet->setDataByName("arcane_dmg_reduction_pct", 0);//210 = 21.0% confirmed DoV
@@ -821,7 +770,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("adv_xp_to_aa_xp_max", 100);  // aa slider position // dov confirmed
 		packet->setDataByName("aa_blue_bar", 0);// dov confirmed
 		packet->setDataByName("bonus_achievement_xp", 0); // dov confirmed
-		//		packet->setDataByName("unknown_1096_12_MJ", 90);
+
 		packet->setDataByName("items_found", 62);// dov confirmed
 		packet->setDataByName("named_npcs_killed", 192);// dov confirmed
 		packet->setDataByName("quests_completed", 670);// dov confirmed
@@ -833,16 +782,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("coins_silver", info_struct->get_coin_silver());// dov confirmed
 		packet->setDataByName("coins_gold", info_struct->get_coin_gold());// dov confirmed
 		packet->setDataByName("coins_plat", info_struct->get_coin_plat());// dov confirmed
-		//packet->setDataByName("unknown_1096_15_MJ", 50);//unknown_1096_15_MJ
-		//////Spell Effects go here, but are below
-		//////Dettrimental effects go here, but are below
-		packet->setDataByName("trauma_count", 45);// added with spells leave here for testing//dov confirmed
-		packet->setDataByName("arcane_count", 255);// added with spells leave here for testing//dov confirmed
-		packet->setDataByName("noxious_count", 47);// added with spells leave here for testing//dov confirmed
-		packet->setDataByName("elemental_count", 255);// added with spells leave here for testing//dov confirmed
-		packet->setDataByName("curse_count", 49);// added with spells leave here for testing//dov confirmed
-	//	packet->setDataByName("unknown_1096_17_MJ", 30);//unknown_1096_17_MJ
-		//////Maintained effects go here, but are below
 		
 		Skill* skill = player->GetSkillByName("Swimming", false);
 		float breath_modifier = rule_manager.GetGlobalRule(R_Player, SwimmingSkillMinBreathLength)->GetFloat();
@@ -859,7 +798,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 				breath_modifier = diff_mod;
 		}
 		packet->setDataByName("breath", breath_modifier);
-		//packet->setDataByName("unknown_1096_18_MJ", 1000);//16880
+
 		packet->setDataByName("melee_pri_dmg_min", player->GetPrimaryWeaponMinDamage());// dov confirmed
 		packet->setDataByName("melee_pri_dmg_max", player->GetPrimaryWeaponMaxDamage());// dov confirmed
 		packet->setDataByName("melee_sec_dmg_min", player->GetSecondaryWeaponMinDamage());// dov confirmed
@@ -876,10 +815,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			packet->setDataByName("melee_sec_delay", (float)player->GetSecondaryWeaponDelay() * .001);// dov confirmed
 			packet->setDataByName("ranged_delay", (float)player->GetRangeWeaponDelay() * .001);// dov confirmed
 		}
-		//packet->setDataByName("unknown_1096_18_MJ", 99);//unknown_1096_19a_MJ
-		//packet->setDataByName("unknown_1096_18_MJ", 98);//unknown_1096_19b_MJ
-		//packet->setDataByName("unknown_1096_18_MJ", 97);//unknown_1096_19c_MJ
-		//packet->setDataByName("unknown_1096_18_MJ", 96);//unknown_1096_19d_MJ
+
 		packet->setDataByName("ability_mod_pve", info_struct->get_ability_modifier());// dov confirmed
 		packet->setDataByName("base_melee_crit", 85);//85 = 8500% dov confirmed
 		packet->setDataByName("base_spell_crit", 84);// dov confirmed
@@ -913,48 +849,31 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			if (player->get_character_flag(CF_ALLOW_GUILD_INVITES))
 				packet->setDataByName("flags_show_guild_invites", 1);
 		}
-		//unknown_1096_20_MJ
-		//unknown_1096_21_MJ
-		//unknown_1096_22_MJ
-		//unknown_1096_23_MJ
+
 		packet->setDataByName("haste", info_struct->get_haste());// dov confirmed
-		//unknown_1096_24_MJ
-		//unknown_1096_25_MJ
-		//unknown_1096_26_MJ
 		packet->setDataByName("drunk", info_struct->get_drunk());// dov confirmed
-		//unknown_1096_27_MJ
+
 		packet->setDataByName("hate_mod", info_struct->get_hate_mod());// dov confirmed
 		packet->setDataByName("adventure_effects_bonus", 55);// NEED an adventure_effects_bonus// dov confirmed
 		packet->setDataByName("tradeskill_effects_bonus", 56);// NEED an tradeskill_effects_bonus// dov confirmed
-		//unknown_1096_28_MJ
 		packet->setDataByName("dps", info_struct->get_dps());// dov confirmed
-		//unknown_1096_29_MJ
 		packet->setDataByName("melee_ae", info_struct->get_melee_ae());// dov confirmed
 		packet->setDataByName("multi_attack", info_struct->get_multi_attack());// dov confirmed
 		packet->setDataByName("spell_multi_attack", info_struct->get_spell_multi_attack());// dov confirmed
-		//unknown_1096_30_MJ
 		packet->setDataByName("block_chance", info_struct->get_block_chance());// dov confirmed
-		//unknown_1096_31_MJ
 		packet->setDataByName("crit_chance", info_struct->get_crit_chance());// dov confirmed
-		//unknown_1096_32_MJ
 		packet->setDataByName("crit_bonus", info_struct->get_crit_bonus());// dov confirmed
 
 		packet->setDataByName("potency", info_struct->get_potency());//info_struct->get_potency);// dov confirmed
 
-		//unknown_1096_33_MJ
 		packet->setDataByName("reuse_speed", info_struct->get_reuse_speed());// dov confirmed
 		packet->setDataByName("recovery_speed", info_struct->get_recovery_speed());// dov confirmed
 		packet->setDataByName("casting_speed", info_struct->get_casting_speed());// dov confirmed
 		packet->setDataByName("spell_reuse_speed", info_struct->get_spell_reuse_speed());// dov confirmed
-		//unknown_1096_34_MJ
 		packet->setDataByName("strikethrough", info_struct->get_strikethrough());//dov confirmed
-		//unknown_1096_35_MJ
 		packet->setDataByName("accuracy", info_struct->get_accuracy());//dov confirmed
-		//unknown_1096_36_MJ
 		packet->setDataByName("critical_mit", info_struct->get_critical_mitigation());//dov /confirmed
-		//unknown_1096_37_MJ
-		//toughness_resist_crit_pvp
-		//unknown_1096_38_MJ
+
 		((Entity*)player)->MStats.lock();
 		packet->setDataByName("durability_mod", player->stats[ITEM_STAT_DURABILITY_MOD]);// dov confirmed
 		packet->setDataByName("durability_add", player->stats[ITEM_STAT_DURABILITY_ADD]);// dov confirmed
@@ -964,10 +883,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("crit_success_mod", player->stats[ITEM_STAT_CRIT_SUCCESS_MOD]);// dov confirmed
 		((Entity*)player)->MStats.unlock();
 
-		//unknown_1096_39_MJ
-		/////GRoup Members
-		//unknown_1096_40_MJ
-		//unknown_1096_41_MJ
 		if (version <= 283 && info_struct->get_pet_id() == 0xFFFFFFFF)
 			packet->setDataByName("pet_id", 0);
 		else {
@@ -976,17 +891,17 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			strncpy(pet_name, info_struct->get_pet_name().c_str(), 32);
 			packet->setDataByName("pet_name", pet_name);
 		}
-		//unknown_1096_42_MJ
+
 		packet->setDataByName("pet_health_pct", info_struct->get_pet_health_pct());
 		packet->setDataByName("pet_power_pct", info_struct->get_pet_power_pct());
-		//unknown_1096_43_MJ
+
 		packet->setDataByName("pet_movement", info_struct->get_pet_movement());
 		packet->setDataByName("pet_behavior", info_struct->get_pet_behavior());
 		packet->setDataByName("rain", info_struct->get_rain());
 		packet->setDataByName("rain2", info_struct->get_wind()); //-102.24);
 		packet->setDataByName("status_points", info_struct->get_status_points());
 		packet->setDataByName("guild_status", 888888);
-		//unknown_1096_44_MJ
+
 		if (house_zone_id > 0){
 			string house_name = database.GetZoneName(house_zone_id);
 			if(house_name.length() > 0)
@@ -994,7 +909,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		}
 		else
 			packet->setDataByName("house_zone", "None");
-		//unknown_1096_45_MJ		
+
 		if (bind_zone_id > 0){
 			string bind_name = database.GetZoneName(bind_zone_id);
 			if(bind_name.length() > 0)
@@ -1036,8 +951,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 
 
 		info_struct->set_max_weight(200);
-		//packet->setDataByName("auto_attack", 1);
-		//492
+
 		if (version <= 546) {
 			packet->setDataByName("exp_yellow", info_struct->get_xp_yellow() / 10);
 			packet->setDataByName("exp_blue", info_struct->get_xp_blue()/10);
@@ -1092,269 +1006,21 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("unassigned_tradeskill_points", player->GetUnassignedTradeskillAA());
 		packet->setDataByName("total_tradeskill_prestige_points", player->GetTradeskillPrestigeAA());
 		packet->setDataByName("unassigned_tradeskill_prestige_points", player->GetUnassignedTradeskillPrestigeAA());
-		/*packet->setDataByName("unknown13", 201, 0);
-		packet->setDataByName("unknown13", 201, 1);
-		packet->setDataByName("unknown13", 234, 2);
-		packet->setDataByName("unknown13", 201, 3);
-		packet->setDataByName("unknown13", 214, 4);
-		packet->setDataByName("unknown13", 234, 5);
-		packet->setDataByName("unknown13", 234, 6);
-
-		packet->setDataByName("unknown14", 78);
-		*/
-
-		//packet->setDataByName("unknown23", 1, 146);
-
-		//packet->setDataByName("unknown24", 0xFF, 42);
-		//packet->setDataByName("unknown24", 0xFF, 46);
 
 		// unknown14c = percent aa exp to next level
 		packet->setDataByName("unknown14d", 100, 0);
 		packet->setDataByName("unknown20", 1084227584, 72);
-		//packet->setDataByName("unknown16", 0xFFFFFFFF, 4);
-
-
-		//packet->setDataByName("unknown15b", 9911);
-
 		packet->setDataByName("unknown15c", 200);
 
-		//packet->setDataByName("unknown15", 100, 10);
-
-		/*packet->setDataByName("unknown19", 1);
-		packet->setDataByName("unknown19", 3, 1);
-		packet->setDataByName("unknown19", 1074301064, 2);
-		packet->setDataByName("unknown19", 1, 3);
-		packet->setDataByName("unknown19", 3, 4);
-		packet->setDataByName("unknown19", 1074301064, 5);
-		packet->setDataByName("unknown19", 6, 6);
-		packet->setDataByName("unknown19", 14, 7);
-		packet->setDataByName("unknown19", 1083179008, 8);*/
 		player->SetGroupInformation(packet);
-		//packet->setDataByName("unknown20", 1, 107);
-		//packet->setDataByName("unknown20", 1, 108);
-		//packet->setDataByName("unknown20", 1, 109);
-		//packet->setDataByName("unknown20", 1, 110);
-		//packet->setDataByName("unknown20", 1, 111);
-		//packet->setDataByName("unknown20b", 255);
-		//packet->setDataByName("unknown20b", 255, 1);
-		//packet->setDataByName("unknown20b", 255, 2);
-		//packet->setDataByName("in_combat", 32768);	
-		//make name flash red
-		/*packet->setDataByName("unknown20", 8);
-		packet->setDataByName("unknown20", 38, 70);
-		packet->setDataByName("unknown20", 17, 77);
-		packet->setDataByName("unknown20", 1, 112); //melee stats and such
-		packet->setDataByName("unknown20", 1, 113);
-		packet->setDataByName("unknown20", 1, 114);
-		packet->setDataByName("unknown20", 1, 115);
-
-		packet->setDataByName("unknown20", 4294967295, 309);
-		packet->setDataByName("unknown22", 2, 4);
-		packet->setDataByName("unknown23", 2, 29);
-		*/
-		//packet->setDataByName("unknown20b", 1, i); // pet bar in here
-		//	for(int i=0;i<19;i++)
-		//		packet->setDataByName("unknown7", 257, i);
-			//packet->setDataByName("unknown21", info_struct->rain, 2);
-
-			/*packet->setDataByName("unknown22", 3, 4);
-			packet->setDataByName("unknown23", 3, 161);
-			packet->setDataByName("unknown20", 103);
-			packet->setDataByName("unknown20", 1280, 70);
-			packet->setDataByName("unknown20", 9, 71);
-			packet->setDataByName("unknown20", 5, 72);
-			packet->setDataByName("unknown20", 4294967271, 73);
-			packet->setDataByName("unknown20", 5, 75);
-			packet->setDataByName("unknown20", 1051, 77);
-			packet->setDataByName("unknown20", 3, 78);
-			packet->setDataByName("unknown20", 6, 104);
-			packet->setDataByName("unknown20", 1, 105);
-			packet->setDataByName("unknown20", 20, 106);
-			packet->setDataByName("unknown20", 3, 107);
-			packet->setDataByName("unknown20", 1, 108);
-			packet->setDataByName("unknown20", 1, 109);
-			packet->setDataByName("unknown20", 4278190080, 494);
-			packet->setDataByName("unknown20b", 255);
-			packet->setDataByName("unknown20b", 255, 1);
-			packet->setDataByName("unknown20b", 255, 2);
-			packet->setDataByName("unknown20", 50, 75);
-			*/
-
-
-
-
-
-
-
-
-			/*packet->setDataByName("unknown199a", 843);// 25);
-			//packet->setDataByName("unknown199b", 844);// 30);
-			//packet->setDataByName("unknown199c", 845);// 45);
-			//packet->setDataByName("unknown199d", 846);// 55);
-
-
-			packet->setDataByName("unknown37", 537);
-			packet->setDataByName("unknown38", 538);
-			packet->setDataByName("unknown39", 539);
-			packet->setDataByName("unknown40", 540);
-			packet->setDataByName("unknown41", 541);
-			packet->setDataByName("unknown42", 542);
-			packet->setDataByName("unknown43", 543);
-			packet->setDataByName("unknown44", 544);
-
-			packet->setDataByName("ability_mod_pvp", 542);
-			packet->setDataByName("unknown43", 543);
-			packet->setDataByName("unknown44", 544);
-
-
-			packet->setDataByName("unknown45", 645);
-			packet->setDataByName("unknown46", 646);
-			packet->setDataByName("unknown47", 647);
-			packet->setDataByName("unknown48", 648);
-			packet->setDataByName("unknown49", 649);
-			packet->setDataByName("unknown50", 650);
-			packet->setDataByName("unknown51", 651);
-			packet->setDataByName("unknown52", 652);
-			packet->setDataByName("unknown53", 653);
-			packet->setDataByName("unknown54", 654);
-			packet->setDataByName("unknown55", 655);
-			packet->setDataByName("unknown56", 656);
-			packet->setDataByName("unknown57", 657);
-			packet->setDataByName("unknown58", 658);
-			packet->setDataByName("unknown59", 659);
-			packet->setDataByName("unknown60", 660);
-
-			*/
-
-
 
 		packet->setDataByName("in_combat_movement_speed", 125);
 
 		packet->setDataByName("increase_max_power", 127);
 		packet->setDataByName("increase_max_power2", 128);
-		//129 does not exist
-	/*	packet->setDataByName("unknown130", 130);
-		packet->setDataByName("unknown132", 132);
-		packet->setDataByName("unknown133", 133);
-
-
-		packet->setDataByName("unknown137", 137);
-		packet->setDataByName("unknown138", 138);
-		packet->setDataByName("unknown139", 139);
-
-
-		packet->setDataByName("unknown141", 141);
-		packet->setDataByName("unknown142", 142);
-
-
-
-
-		packet->setDataByName("unknown144", 144);
-
-		packet->setDataByName("unknown147", 147);
-		packet->setDataByName("unknown148", 148);
-
-		packet->setDataByName("unknown170", 170);
-		packet->setDataByName("unknown171", 171);
-		packet->setDataByName("unknown172", 172);
-		packet->setDataByName("unknown173", 173);
-		packet->setDataByName("unknown174", 174);
-		packet->setDataByName("unknown175", 175);
-		packet->setDataByName("unknown176", 176);
-		packet->setDataByName("unknown177", 177);
-		packet->setDataByName("loot_coin", 178);
-		packet->setDataByName("mitigation_increase", 179);
-		packet->setDataByName("unknown180", 180);
-
-		packet->setDataByName("unknown182", 182);
-
-		packet->setDataByName("unknown184", 184);
-		packet->setDataByName("unknown185", 185);
-		packet->setDataByName("unknown186", 186);
-		packet->setDataByName("unknown187", 187);
-		packet->setDataByName("unknown188", 188);
-		packet->setDataByName("unknown189", 189);
-		packet->setDataByName("unknown190", 190);
-		packet->setDataByName("unknown191", 191);
-		packet->setDataByName("unknown192", 192);
-		packet->setDataByName("unknown193", 193);
-		packet->setDataByName("unknown194", 194);
-		packet->setDataByName("unknown195", 195);
-		packet->setDataByName("unknown196", 196);
-		packet->setDataByName("unknown197", 197);
-		packet->setDataByName("unknown198", 198);
-		packet->setDataByName("unknown199", 199);
-		packet->setDataByName("unknown200", 200);
-		packet->setDataByName("unknown201", 201);
-		packet->setDataByName("unknown202", 202);
-		packet->setDataByName("unknown203", 203);
-		packet->setDataByName("unknown204", 204);
-		packet->setDataByName("unknown205", 205);
-		packet->setDataByName("unknown206", 206);
-		packet->setDataByName("unknown207", 207);
-		packet->setDataByName("unknown208", 208);
-		packet->setDataByName("unknown209", 209);
-		packet->setDataByName("unknown210", 210);
-		packet->setDataByName("unknown211", 211);
-		packet->setDataByName("unknown212", 212);
-		packet->setDataByName("unknown213", 213);
-		packet->setDataByName("unknown214", 214);
-		packet->setDataByName("unknown215", 215);
-		packet->setDataByName("unknown216", 216);
-		packet->setDataByName("unknown217", 217);
-		packet->setDataByName("unknown218", 218);
-		packet->setDataByName("unknown219", 219);
-		packet->setDataByName("unknown220", 220);
-		packet->setDataByName("unknown221", 221);
-		packet->setDataByName("unknown222", 222);
-		packet->setDataByName("unknown223", 223);
-		packet->setDataByName("unknown224", 224);
-		packet->setDataByName("unknown225", 225);
-		packet->setDataByName("unknown226", 226);
-		packet->setDataByName("unknown227", 227);
-		packet->setDataByName("unknown228", 228);
-		packet->setDataByName("unknown229", 229);
-		packet->setDataByName("unknown230", 230);
-		packet->setDataByName("unknown231", 231);
-		packet->setDataByName("unknown232", 232);
-		packet->setDataByName("unknown233", 233);
-		packet->setDataByName("unknown234", 234);
-		packet->setDataByName("unknown235", 235);
-		packet->setDataByName("unknown236", 236);
-		packet->setDataByName("unknown237", 237);
-		packet->setDataByName("unknown238", 238);
-		packet->setDataByName("unknown239", 239);
-		packet->setDataByName("unknown240", 240);
-
-		// Tradeskill stats
-		packet->setDataByName("unknown383", 383);
-		packet->setDataByName("unknown384", 384);
-		packet->setDataByName("unknown385", 385);
-		packet->setDataByName("unknown386", 386);
-		packet->setDataByName("unknown387", 387);
-		packet->setDataByName("unknown388", 388);
-		packet->setDataByName("unknown389", 389);
-		packet->setDataByName("unknown390", 390);
-		packet->setDataByName("unknown391", 391);
-		packet->setDataByName("unknown392", 392);
-		packet->setDataByName("unknown393", 393);
-		packet->setDataByName("unknown394", 394);
-		packet->setDataByName("unknown395", 395);
-		packet->setDataByName("unknown396", 396);
-		packet->setDataByName("unknown397", 397);
-		packet->setDataByName("unknown398", 398);
-
-
-		*/
-
-
 
 		packet->setDataByName("vision", info_struct->get_vision());
 		packet->setDataByName("breathe_underwater", info_struct->get_breathe_underwater());
-
-
-
-
 
 		int32 expireTimestamp = 0;
 		Spawn* maintained_target = 0;
@@ -1382,8 +1048,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			else if (version < 942)//version 942 added 15 additional spell effect slots
 				break;
 			packet->setSubstructDataByName("spell_effects", "spell_id", info_struct->spell_effects[i].spell_id, i, 0);
-			/*if(info_struct->spell_effects[i].spell_id > 0 && info_struct->spell_effects[i].spell_id < 0xFFFFFFFF)
-				packet->setSubstructDataByName("spell_effects", "unknown2", 514, i, 0);*/
 			packet->setSubstructDataByName("spell_effects", "total_time", info_struct->spell_effects[i].total_time, i, 0);
 			expireTimestamp = info_struct->spell_effects[i].expire_timestamp;
 			if (expireTimestamp == 0xFFFFFFFF)
@@ -1476,95 +1140,16 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		//packet->setDataByName("spirit_progress", .67);
 
 		packet->setDataByName("combat_exp_enabled", 1);
-		/*for (int i = 0; i < 12; i++) {
-			packet->setSubstructDataByName("spell_effects", "spell_id", i + 1, i);
-			if (i % 2 == 0)
-				packet->setSubstructDataByName("spell_effects", "cancellable", 1, i);
-		}*/
-		int testa = 0x41;
-		int testb = 0x41;
-		//160-330
-		//0-250 (160-250) //top down view
-		//250-290 nothing
-		//290-330 //blocked view
-		//310-330 nothing
-		//1168: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 41 41 41  | .............AAA
-		//1184: 42 41 43 41 44 41 45 00 - 00 00 00 00 00 00 00 00 | BACADAE......... //blocked view
-		//1184: 00 41 41 41 42 41 43 00 - 00 00 00 00 00 00 00 00 | .AAABAC......... //blocked view
-		//1184: 00 41 41 41 41 00 00 00 - 00 00 00 00 00 00 00 00 | .AAAA........... //blocked view
-		//1184: 00 41 41 00 00 00 00 00 - 00 00 00 00 00 00 00 00 | .AA............. //blocked view
-		//1184: 00 41 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 | .AA............. //blocked view
-		//1184: 41 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 | .AA............. //blocked view 293
-		//1168: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 41 | ...............A //blocked view 292
-		//packet->setDataByName("screen_blur", 0); //1168: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 41 00 //blurred view
-		//packet->setDataByName("unknown18", testa, 295);
-		//packet->setDataByName("unknown18", testa, 296);
-		//packet->setDataByName("unknown18", testa, 297);
-		//300 pet junk
-		//492
-	/*for (int i = 300; i < 360; i++) {
-		packet->setDataByName("unknown19", testa, i);
-		testa++;
-		//packet->setDataByName("unknown19", 0xc3, i+1);
-	}*/
-	/*packet->setDataByName("pet_id", 5);
-	packet->setDataByName("pet_name", "Blah");
-	packet->setDataByName("pet_hp", .9);
-	packet->setDataByName("pet_power", .8);*/
-	/*packet->setDataByName("test7", 0x3f);
-	packet->setDataByName("test8", 0xc3);
-	packet->setDataByName("unknown17", 12);
-	packet->setDataByName("unknown17", 12, 1);
-	packet->setDataByName("unknown17", 12, 2);
-	packet->setDataByName("unknown17", 12, 3);*/
+		
 		string* data = packet->serializeString();
 		int32 size = data->length();
-		/*uchar blah[] = { 0x31,0x02,0x00,0x00,0xff,0x4f,0x77,0x6b,0x65,0x65,0x63,0x65,0x87,0x61
-	,0x67,0x68,0x1b,0x83,0x04,0x01,0x13,0x95,0x02,0x02,0x01,0x88,0x01,0x91,0x30,0x30
-	,0xa2,0x01,0x30,0x84,0x30,0x8a,0x38,0x38,0xf0,0x17,0x01,0x17,0x9f,0x01,0x17,0x01
-	,0x17,0x01,0x0a,0xd5,0x10,0x14,0x18,0x14,0xaa,0x14,0x10,0x14,0x95,0x18,0x14,0x14
-	,0x09,0xd1,0x08,0x08,0x06,0x82,0x06,0x1a,0xd1,0x28,0x28,0x1e,0x8a,0x1e,0x01,0x1f
-	,0x81,0x13,0x09,0x91,0x01,0x50,0x15,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff
-	,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f
-	,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff
-	,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff
-	,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f
-	,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff
-	,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff
-	,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f
-	,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff
-	,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff
-	,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x07,0x8f
-	,0xff,0xff,0xff,0xff,0x07,0x8f,0xff,0xff,0xff,0xff,0x47,0x8f,0xff,0xff,0xff,0xff
-	,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff
-	,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f
-	,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff
-	,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86
-	,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff
-	,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff
-	,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48
-	,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff
-	,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff
-	,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff
-	,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f
-	,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff
-	,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86
-	,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff
-	,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff
-	,0xff,0xff,0xff,0x86,0xff,0xff,0x48,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x48
-	,0x8f,0xff,0xff,0xff,0xff,0x86,0xff,0xff,0x0a,0x83,0xf0,0x41,0x7f,0x7f,0x7f,0x7f
-	,0x3a,0xff,0xff,0xff,0xff,0xff,0x4e,0x6f,0x20,0x87,0x50,0x65,0x74,0x2d,0x9f,0x3f
-	,0xc3,0x94,0xcb,0xc2,0x08,0x81,0x02 };*/
-	//size = sizeof(blah);
-	//packet->PrintPacket();
+
 		uchar* tmp = new uchar[size];
 		bool reverse = version > 283;
 		if (!changes) {
 			orig_packet = new uchar[size];
 			changes = new uchar[size];
 			memcpy(orig_packet, (uchar*)data->c_str(), size);
-
-			//DumpPacket(orig_packet, size);
 			size = Pack(tmp, orig_packet, size, size, version, reverse);
 		}
 		else {
@@ -1581,10 +1166,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 				else
 					memcpy(ptr2, (uchar*)&modifyValue, 1);
 			}
-			/*if (player->GetTempVariable("offset").length() > 0){
-				changes[atoul(player->GetTempVariable("offset").c_str())] = 0xF4;
-				changes[atoul(player->GetTempVariable("offset").c_str()) + 1] = 0x01;
-			}*/
 			Encode(changes, orig_packet, size);
 			if (modifyPos > 0) {
 				uchar* ptr2 = (uchar*)orig_packet;
@@ -1593,10 +1174,8 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 				int16 tmpsize = modifyPos + 128;
 				if (tmpsize > size)
 					tmpsize = size;
-				//DumpPacket(ptr2, tmpsize - modifyPos);
 			}
 			size = Pack(tmp, changes, size, size, version, reverse);
-			//DumpPacket(tmp, size);
 		}
 
 		if (version >= 546)
@@ -3245,12 +2824,10 @@ PlayerInfo::PlayerInfo(Player* in_player){
 	info_struct->set_race(player->GetRace());
 	info_struct->set_gender(player->GetGender());
 	info_struct->set_level(player->GetLevel());
-	info_struct->set_tradeskill_level(player->GetTSLevel()); // JA: added 2011.07.22 to address TODO below
+	info_struct->set_tradeskill_level(player->GetTSLevel());
 	info_struct->set_tradeskill_class1(classes.GetTSBaseClass(player->GetTradeskillClass()));
 	info_struct->set_tradeskill_class2(classes.GetSecondaryTSBaseClass(player->GetTradeskillClass()));
 	info_struct->set_tradeskill_class3(player->GetTradeskillClass());
-
-	LogWrite(MISC__TODO, 1, "TODO", "Fix info_struct.tradeskill_level = player->GetArtLevel();\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 
 	for(int i=0;i<45;i++){
 		if(i<30){
@@ -3553,22 +3130,6 @@ void Player::RemoveSpellEffect(LuaSpell* spell){
 		charsheet_changed = true;
 	}
 	GetSpellEffectMutex()->releasewritelock(__FUNCTION__, __LINE__);
-}
-
-bool Player::HasActiveMaintainedSpell(Spell* spell, Spawn* target){
-	GetMaintainedMutex()->readlock(__FUNCTION__, __LINE__);
-	for(int i=0;i<30;i++){
-		if (GetInfoStruct()->maintained_effects[i].spell_id == spell->GetSpellData()->id){
-			GetMaintainedMutex()->releasereadlock(__FUNCTION__, __LINE__);
-			return true;
-		}
-	}
-	GetMaintainedMutex()->releasereadlock(__FUNCTION__, __LINE__);
-	return false;
-}
-
-bool Player::HasActiveSpellEffect(Spell* spell, Spawn* target){
-	return false;
 }
 
 void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version)

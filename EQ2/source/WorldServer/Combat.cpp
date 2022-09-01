@@ -177,7 +177,6 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 			return false;
 		}
 	}
-	LogWrite(MISC__TODO, 3, "TODO", "Add more AttackAllowed calculations\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	return true;
 }
 
@@ -987,8 +986,6 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 			}
 		}
 	}
-
-	LogWrite(MISC__TODO, 3, "TODO", "Take players armor into account\nfile: %s, func: %s, line: %i)", __FILE__, __FUNCTION__, __LINE__);
 
 	bool useWards = false;
 

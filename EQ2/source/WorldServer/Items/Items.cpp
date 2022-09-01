@@ -1307,7 +1307,6 @@ bool Item::IsShield(){
 }
 
 bool Item::IsAdornment(){
-	LogWrite(MISC__TODO, 1, "TODO", "Item Adornments\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 	return generic_info.item_type == ITEM_TYPE_ADORNMENT && !CheckFlag2(ORNATE);
 }
 
@@ -2125,7 +2124,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		for (itr = tradeskill_class_levels.begin(); itr != tradeskill_class_levels.end(); itr++, i++) {
 			packet->setArrayDataByName("adventure_class", 255, i);
 			packet->setArrayDataByName("tradeskill_class", itr->first, i);
-			packet->setArrayDataByName("level", itr->second, i);
+			packet->setArrayDataByName("level", itr->second * 10, i);
 		}
 		packet->setSubstructDataByName("footer", "required_classes", classes);
 	}

@@ -484,8 +484,6 @@ public:
 	void	AddSpellEffect(LuaSpell* spell, int32 override_expire_time = 0);
 	void	RemoveMaintainedSpell(LuaSpell* spell);
 	void	RemoveSpellEffect(LuaSpell* spell);
-	bool	HasActiveMaintainedSpell(Spell* spell, Spawn* target);
-	bool	HasActiveSpellEffect(Spell* spell, Spawn* target);
 	void	AddQuickbarItem(int32 bar, int32 slot, int32 type, int16 icon, int16 icon_type, int32 id, int8 tier, int32 unique_id, const char* text, bool update = true);
 	void	RemoveQuickbarItem(int32 bar, int32 slot, bool update = true);
 	void	MoveQuickbarItem(int32 id, int32 new_slot);

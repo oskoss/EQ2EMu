@@ -4426,9 +4426,6 @@ int EQ2Emu_lua_Harvest(lua_State* state) {
 	if (player && node && player->IsPlayer() && node->IsGroundSpawn()) {
 		Client* client = player->GetZone()->GetClientBySpawn(player);
 		if (client) {
-
-			LogWrite(MISC__TODO, 1, "TODO", "Cancel harvest if skill insufficient; Func: %s, Line: %i", __FUNCTION__, __LINE__);
-
 			((GroundSpawn*)node)->ProcessHarvest(client);
 			if (((GroundSpawn*)node)->GetNumberHarvests() == 0) {
 				LuaSpell* spell = lua_interface->GetCurrentSpell(state);
