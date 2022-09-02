@@ -60,7 +60,7 @@ void WorldDatabase::LoadRecipes() {
 		Recipe* recipe = new Recipe();
 		recipe->SetID(res.GetInt32(i++));
 		recipe->SetLevel(res.GetInt32(i++));
-		recipe->SetTier(recipe->GetLevel() / 10);
+		recipe->SetTier(recipe->GetLevel() / 10 + 1);
 		recipe->SetIcon(res.GetInt32(i++));
 		recipe->SetSkill(res.GetInt32(i++));
 		recipe->SetTechnique(res.GetInt32(i++));
