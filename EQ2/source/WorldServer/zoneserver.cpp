@@ -3274,7 +3274,6 @@ void ZoneServer::RemoveClient(Client* client)
 		MClientList.releasewritelock(__FUNCTION__, __LINE__);
 
 		LogWrite(ZONE__INFO, 0, "Zone", "Scheduling client '%s' for removal.", client->GetPlayer()->GetName());
-		LogWrite(MISC__TODO, 1, "TODO", "Put Player Online Status updates in a timer eventually\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 		database.ToggleCharacterOnline(client, 0);
 		
 		client->GetPlayer()->DeleteSpellEffects(true);
@@ -3308,7 +3307,7 @@ void ZoneServer::ClientProcess()
 	{
 		MIncomingClients.readlock(__FUNCTION__, __LINE__);
 		bool shutdownDelayCheck = shutdownDelayTimer.Check();
-		if((!IsCityZone() && !AlwaysLoaded() && !shutdownTimer.Enabled()) || shutdownDelayCheck)
+		if((!AlwaysLoaded() && !shutdownTimer.Enabled()) || shutdownDelayCheck)
 		{
 			if(incoming_clients && !shutdownDelayTimer.Enabled()) {
 				LogWrite(ZONE__INFO, 0, "Zone", "Incoming clients (%u) expected for %s, delaying shutdown timer...", incoming_clients, GetZoneName());
@@ -4556,7 +4555,8 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 			return;
 
 		RemoveSpellTimersFromSpawn(dead, true, !dead->IsPlayer(), true, !isSpell);
-
+		((Entity*)dead)->IsCasting(false);
+		
 		if(dead->IsPlayer()) 
 		{
 			((Player*)dead)->UpdatePlayerStatistic(STAT_PLAYER_TOTAL_DEATHS, 1);
