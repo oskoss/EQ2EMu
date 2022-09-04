@@ -288,7 +288,7 @@ public:
 	/// <summary>Removes a spell from the queue for the player</summary>
 	/// <param name='spell'>Spell to remove from the queue</param>
 	/// <param name='caster'>Entity's queue to remove the spell from, if not a player function does nothing</param>
-	void RemoveSpellFromQueue(Spell* spell, Entity* caster);
+	void RemoveSpellFromQueue(Spell* spell, Entity* caster, bool send_update = true);
 
 	/// <summary>Clear the queue, or clear only hostile spells from the queue</summary>
 	/// <param name='caster'>Entity to clear the queue for, if not player function does nothing</param>

@@ -38,11 +38,11 @@
 #endif
 
 #if defined(LOGIN)
-#define CURRENT_VERSION	"0.9.4-aquarii"
+#define CURRENT_VERSION	"0.9.5-epsiloncma"
 #elif defined(WORLD)
-#define CURRENT_VERSION	"0.9.4-aquarii"
+#define CURRENT_VERSION	"0.9.5-epsiloncma"
 #else
-#define CURRENT_VERSION	"0.9.4-aquarii"
+#define CURRENT_VERSION	"0.9.5-epsiloncma"
 #endif
 
 #define COMPILE_DATE	__DATE__

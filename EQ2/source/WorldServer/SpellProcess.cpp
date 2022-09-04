@@ -831,6 +831,7 @@ bool SpellProcess::AddDissonance(LuaSpell* spell) {
 
 void SpellProcess::AddSpellToQueue(Spell* spell, Entity* caster){
 	if(caster && caster->IsPlayer() && spell){
+		LogWrite(SPELL__DEBUG, 1, "Spell", "%s AddSpellToQueue casting %s.", caster->GetName(), spell->GetName());
 		spell_que.Put(caster, spell);
 		((Player*)caster)->QueueSpell(spell);
 		Client* client = caster->GetZone()->GetClientBySpawn(caster);
@@ -839,12 +840,13 @@ void SpellProcess::AddSpellToQueue(Spell* spell, Entity* caster){
 	}
 }
 
-void SpellProcess::RemoveSpellFromQueue(Spell* spell, Entity* caster){
+void SpellProcess::RemoveSpellFromQueue(Spell* spell, Entity* caster, bool send_update){
 	if(caster && caster->IsPlayer() && spell){
+		LogWrite(SPELL__DEBUG, 1, "Spell", "%s RemoveSpellFromQueue casting %s.", caster->GetName(), spell->GetName());
 		spell_que.erase(caster);
 		((Player*)caster)->UnQueueSpell(spell);
 		Client* client = caster->GetZone()->GetClientBySpawn(caster);
-		if(client)
+		if(client && send_update)
 			SendSpellBookUpdate(client);
 	}
 }
@@ -857,6 +859,8 @@ void SpellProcess::RemoveSpellFromQueue(Entity* caster, bool hostile_only) {
 			if (hostile_only && spell->GetSpellData()->target_type != SPELL_TARGET_ENEMY)
 				remove = false;
 			if (remove) {
+				
+				LogWrite(SPELL__DEBUG, 1, "Spell", "%s RemoveSpellFromQueue::Secondary casting %s.", caster->GetName(), spell->GetName());
 				spell_que.erase(caster);
 				((Player*)caster)->UnQueueSpell(spell);
 				Client* client = caster->GetZone()->GetClientBySpawn(caster);
@@ -878,13 +882,16 @@ bool SpellProcess::CheckSpellQueue(Spell* spell, Entity* caster){
 	if(caster->IsPlayer()){
 		bool add = true;
 		bool remove = false;
+		Spell* prevSpell = 0;
 		if(spell_que.count(caster) > 0){
+			prevSpell = spell_que.Get(caster);
 			remove = true;
-			if(spell_que.Get(caster) == spell)
+			if(prevSpell == spell) {
 				add = false;
+			}
 		}
 		if(remove)
-			RemoveSpellFromQueue(spell, caster);
+			RemoveSpellFromQueue(prevSpell, caster, !add);
 		if(add)
 		{
 			AddSpellToQueue(spell, caster);		
