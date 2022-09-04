@@ -2166,7 +2166,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		packet->setSubstructDataByName("footer", "footer_unknown2", 0);// remove defualt
 	}
 	else{
-		packet->setSubstructDataByName("footer", "required_level", generic_info.tradeskill_default_level);		
+		packet->setSubstructDataByName("footer", "required_level", generic_info.tradeskill_default_level * 10);		
 		packet->setSubstructDataByName("footer", "footer_unknown2", 0);//remove default
 	}
 	if(slot_data.size() > 0){

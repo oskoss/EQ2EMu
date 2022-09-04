@@ -74,6 +74,7 @@ Recipe::Recipe(Recipe *in){
 	technique = in->GetTechnique();
 	knowledge = in->GetKnowledge();
 	classes = in->GetClasses();
+	device_sub_type = in-> GetDevice_Sub_Type();
 	unknown2 = in->GetUnknown2();
 	unknown3 = in->GetUnknown3();
 	unknown4 = in->GetUnknown4();
@@ -315,7 +316,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	else
 		packet->setSubstructDataByName("info_header", "show_popup", 1);
 	if(packet_type > 0)
-		packet->setSubstructDataByName("info_header", "packettype", packet_type*256 + 0xFE);
+		packet->setSubstructDataByName("info_header", "packettype", GetItemPacketType(packet->GetVersion()));
 	else
 		if(version == 1096)
 			packet->setSubstructDataByName("info_header", "packettype",0x35FE);

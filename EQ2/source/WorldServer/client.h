@@ -696,6 +696,7 @@ private:
 	Mutex MItemDetails;
 	Mutex MSpellDetails;
 	bool disable_save;
+	vector< string > devices;
 };
 
 class ClientList {

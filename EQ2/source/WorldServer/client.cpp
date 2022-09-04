@@ -9762,7 +9762,17 @@ void Client::SendRecipeList() {
 	map<int32, Recipe*>::iterator itr;
 	Recipe* recipe;
 	int16 i = 0;
+	int index = 0;
+	for (itr = recipes->begin(); itr != recipes->end(); itr++) {
+		recipe = itr->second;
+		auto res = std::find(devices.begin(), devices.end(), recipe->GetDevice());
 
+		if (res != devices.end())
+			index = res - devices.begin();
+		else
+			devices.push_back(recipe->GetDevice());
+	}
+	
 	packet->setArrayLengthByName("num_recipes", recipes->size());
 	for (itr = recipes->begin(); itr != recipes->end(); itr++) {
 		recipe = itr->second;
@@ -9771,10 +9781,18 @@ void Client::SendRecipeList() {
 		packet->setArrayDataByName("level", recipe->GetLevel(), i);
 		packet->setArrayDataByName("icon", recipe->GetIcon(), i);
 		packet->setArrayDataByName("classes", recipe->GetClasses(), i);
-		packet->setArrayDataByName("skill", recipe->GetSkill(), i);
+		//packet->setArrayDataByName("skill", recipe->GetSkill(), i);
 		packet->setArrayDataByName("technique", recipe->GetTechnique(), i);
 		packet->setArrayDataByName("knowledge", recipe->GetKnowledge(), i);
-		packet->setArrayDataByName("unknown2", recipe->GetUnknown2(), i);
+
+		
+		auto recipe_device = std::find(devices.begin(), devices.end(), recipe->GetDevice());
+		if (recipe_device != devices.end())
+			packet->setArrayDataByName("device_type", recipe_device - devices.begin(), i);
+		else
+		{//TODO error should never get here
+		}
+		packet->setArrayDataByName("device_sub_type", recipe->GetDevice_Sub_Type(), i);
 		packet->setArrayDataByName("recipe_name", recipe->GetName(), i);
 		packet->setArrayDataByName("recipe_book", recipe->GetBook(), i);
 		packet->setArrayDataByName("unknown3", recipe->GetUnknown3(), i);
@@ -9791,6 +9809,7 @@ void Client::SendRecipeList() {
 void Client::ShowRecipeBook() {
 	PacketStruct* packet = 0;
 	Spawn* target = 0;
+	int index = 0;
 	if (!(target = player->GetTarget())) {
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "You do not have a tradeskill device targeted");
 		return;
@@ -9805,15 +9824,17 @@ void Client::ShowRecipeBook() {
 
 	packet->setDataByName("device", target->GetName());
 	packet->setDataByName("unknown1", 1);
-
-	if (((Object*)target)->GetDeviceID() > 0) {
-		int32 deviceID = (int32)pow(2.0, (double)((Object*)target)->GetDeviceID());
+	auto res = std::find(devices.begin(), devices.end(), target->GetName());
+	if (res != devices.end()){
+		index = res - devices.begin();
+		int32 deviceID = 0;
+		deviceID  |= 1UL << index;
 		//LogWrite(TRADESKILL__ERROR, 0, "Tradeskills", "GetDeviceID() = %u, deviceID = %u", ((Object*)target)->GetDeviceID(), deviceID);
-		packet->setDataByName("unknown2", 8);
+		packet->setDataByName("unknown2", devices.size());
 		packet->setDataByName("unknown3", deviceID);
 	}
-
-	//packet->PrintPacket();
+	else 
+		packet->setDataByName("unknown2", devices.size());
 	QueuePacket(packet->serialize());
 	safe_delete(packet);
 }

@@ -16243,12 +16243,12 @@ to zero and treated like placeholders." />
   <Data ElementName="level" Type="int8" Size="1" />
   <Data ElementName="unknown1" Type="int8" size="1" />
   <Data ElementName="icon" Type="int16" Size="1" />
-  <Data ElementName="unknown1a" Type="int8" Size="2" />
-  <Data ElementName="classes" Type="int32" Size="1" />
-  <Data ElementName="skill" Type="int32" Size="1" />
+  <Data ElementName="unknown1a" Type="int8" Size="1" />
+  <Data ElementName="device_sub_type" Type="int8" Size="1" />
+  <Data ElementName="classes" Type="int64" Size="1" />
   <Data ElementName="technique" Type="int32" Size="1" />
   <Data ElementName="knowledge" Type="int32" Size="1" />
-  <Data ElementName="unknown2" Type="int32" Size="1" />
+  <Data ElementName="device_type" Type="int32" Size="1" />
   <Data ElementName="recipe_name" Type="EQ2_16Bit_String" />
   <Data ElementName="recipe_book" Type="EQ2_16Bit_String" />
   <Data ElementName="unknown3" Type="int8" Size="1" />

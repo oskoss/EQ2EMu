@@ -57,6 +57,7 @@ public:
 	void SetTechnique(int32 technique) {this->technique = technique;}
 	void SetKnowledge(int32 knowledge) {this->knowledge = knowledge;}
 	void SetClasses(int32 classes) {this->classes = classes;}
+	void SetDevice_Sub_Type(int8 device_sub_type) {this->device_sub_type = device_sub_type;}
 	void SetUnknown2(int32 unknown2) {this->unknown2 = unknown2;}
 	void SetUnknown3(int32 unknown3) {this->unknown3 = unknown3;}
 	void SetUnknown4(int32 unknown4) {this->unknown4 = unknown4;}
@@ -98,6 +99,7 @@ public:
 	*/
 	return item->generic_info.tradeskill_classes < 4 || (1 << class_id) & item->generic_info.tradeskill_classes;
 	}
+	int8 GetDevice_Sub_Type() {return device_sub_type;}
 	int32 GetUnknown2() {return unknown2;}
 	int32 GetUnknown3() {return unknown3;}
 	int32 GetUnknown4() {return unknown4;}
@@ -144,6 +146,7 @@ private:
 	int32 skill;
 	int32 technique;
 	int32 knowledge;
+	int8 device_sub_type;
 	int32 classes;
 	int32 unknown2;
 	int32 unknown3;
