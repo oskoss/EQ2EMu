@@ -6237,7 +6237,7 @@ void Client::DisplayQuestComplete(Quest* quest, bool tempReward, std::string cus
 	if (packet) {
 		packet->setDataByName("title", "Quest Reward!");
 		packet->setDataByName("name", quest->GetName());
-		if(customDescription.size() > 0)
+		if(tempReward)
 		{
 			packet->setDataByName("description", customDescription.c_str());
 		}
