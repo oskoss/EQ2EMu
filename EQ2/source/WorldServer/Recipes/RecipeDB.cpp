@@ -71,6 +71,7 @@ void WorldDatabase::LoadRecipes() {
 		//Convert the device string
 		string device = res.GetString(i++);
 		int32 deviceID = 0;
+		int8 deviceSubType = 0;
 		if (device == "chemistry_table") {
 			device = "Chemistry Table";
 			deviceID = 3;
@@ -97,11 +98,16 @@ void WorldDatabase::LoadRecipes() {
 		}
 		else if (device == "work_bench") {
 			device = "Work Bench";
-			deviceID = 5;
-		}
+			deviceID = 4;
+			}
+		else if (device == "crafting_intro_anvil") {
+			device = "Mender's Anvil";
+			deviceID = 0;
+			deviceSubType = 1;
+			}
 		recipe->SetDevice(device.c_str());
 		recipe->SetUnknown2(deviceID);
-
+		recipe->SetDevice_Sub_Type(deviceSubType);
 		recipe->SetClasses(res.GetInt64(i++));	
 		recipe->SetUnknown3(0);
 		recipe->SetUnknown4(0);
