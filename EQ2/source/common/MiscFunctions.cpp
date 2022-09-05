@@ -801,7 +801,25 @@ bool INIReadBool(FILE *f, const char *section, const char *property, bool *out) 
 	return true;
 
 }
-
+string GetDeviceName(string device) {
+	if (device == "chemistry_table") 
+		device = "Chemistry Table";
+	else if (device == "work_desk")
+		device = "Engraved Desk";
+	else if (device == "forge") 
+		device = "Forge";
+	else if (device == "stove and keg")
+		device = "Stove & Keg";
+	else if (device == "sewing_table") 
+		device = "Sewing Table & Mannequin";
+	else if (device == "woodworking_table") 
+		device = "Woodworking Table";
+	else if (device == "work_bench") 
+		device = "Work Bench";
+	else if (device == "crafting_intro_anvil")
+		device = "Mender's Anvil";
+	return device;
+}
 int16 GetItemPacketType(int32 version) {
 	int16 item_version;
 	if (version >= 64707)

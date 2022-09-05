@@ -72,40 +72,8 @@ void WorldDatabase::LoadRecipes() {
 		string device = res.GetString(i++);
 		int32 deviceID = 0;
 		int8 deviceSubType = 0;
-		if (device == "chemistry_table") {
-			device = "Chemistry Table";
-			deviceID = 3;
-		}
-		else if (device == "work_desk") {
-			device = "Engraved Desk";
-			deviceID = 4;
-		}
-		else if (device == "forge") {
-			device = "Forge";
-			deviceID = 2;
-		}
-		else if (device == "stove and keg") {
-			device = "Stove & Keg";
-			deviceID = 7;
-		}
-		else if (device == "sewing_table") {
-			device = "Sewing Table & Mannequin";
-			deviceID = 1;
-		}
-		else if (device == "woodworking_table") {
-			device = "Woodworking Table";
-			deviceID = 6;
-		}
-		else if (device == "work_bench") {
-			device = "Work Bench";
-			deviceID = 4;
-			}
-		else if (device == "crafting_intro_anvil") {
-			device = "Mender's Anvil";
-			deviceID = 0;
-			deviceSubType = 1;
-			}
-		recipe->SetDevice(device.c_str());
+		
+		recipe->SetDevice(GetDeviceName(device).c_str());
 		recipe->SetUnknown2(deviceID);
 		recipe->SetDevice_Sub_Type(deviceSubType);
 		recipe->SetClasses(res.GetInt64(i++));	

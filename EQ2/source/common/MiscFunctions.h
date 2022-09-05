@@ -76,6 +76,7 @@ int8 CheckOverLoadSize(int32 val);
 int32	CountWordsInString(const char* text);
 bool IsNumber(const char *num);
 void PrintSep(Seperator *sep, const char *name = 0);
+string GetDeviceName(string device);
 ///<summary>Gets the packet type for the given version</summary>
 ///<param name='version'>The client version</param>
 int16 GetItemPacketType(int32 version);

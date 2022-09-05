@@ -11263,6 +11263,9 @@ void Client::UpdateCharacterRewardData(QuestRewardData* data) {
 }
 
 void Client::AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i) {
+	
+	
+	int  index = 0;
 	if(recipe == nullptr)
 		return;
 	
@@ -11271,6 +11274,13 @@ void Client::AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i) {
 		delete recipe;
 		return;
 	}
+	auto res = std::find(devices.begin(), devices.end(), recipe->GetDevice());
+
+	if (res != devices.end())
+		index = res - devices.begin();
+	else
+		devices.push_back(recipe->GetDevice());
+
 
 	prl->AddRecipe(recipe);
 	database.SavePlayerRecipe(GetPlayer(), recipe->GetID());
@@ -11282,10 +11292,16 @@ void Client::AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i) {
 		packet->setArrayDataByName("level", recipe->GetLevel(), *i);
 		packet->setArrayDataByName("icon", recipe->GetIcon(), *i);
 		packet->setArrayDataByName("classes", recipe->GetClasses(), *i);
-		packet->setArrayDataByName("skill", recipe->GetSkill(), *i);
+		//packet->setArrayDataByName("skill", recipe->GetSkill(), *i);
 		packet->setArrayDataByName("technique", recipe->GetTechnique(), *i);
 		packet->setArrayDataByName("knowledge", recipe->GetKnowledge(), *i);
-		packet->setArrayDataByName("unknown2", recipe->GetUnknown2(), *i);
+		auto recipe_device = std::find(devices.begin(), devices.end(), recipe->GetDevice());
+		if (recipe_device != devices.end())
+			packet->setArrayDataByName("device_type", recipe_device - devices.begin(), *i);
+		else
+		{//TODO error should never get here
+		}
+		packet->setArrayDataByName("device_sub_type", recipe->GetDevice_Sub_Type(), *i);
 		packet->setArrayDataByName("recipe_name", recipe->GetName(), *i);
 		packet->setArrayDataByName("recipe_book", recipe->GetBook(), *i);
 		packet->setArrayDataByName("unknown3", recipe->GetUnknown3(), *i);
