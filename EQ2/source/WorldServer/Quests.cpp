@@ -1597,9 +1597,7 @@ void Quest::SetCompletedDescription(string desc){
 }
 
 const char* Quest::GetCompletedDescription(){
-	if(completed_description.size() > 0)
-		return completed_description.c_str();
-	return 0;
+	return completed_description.c_str();
 }
 
 void Quest::AddCompleteAction(int32 step, string action){
