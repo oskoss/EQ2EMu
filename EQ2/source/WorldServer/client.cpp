@@ -6242,7 +6242,7 @@ void Client::DisplayQuestComplete(Quest* quest, bool tempReward, std::string cus
 			packet->setDataByName("description", customDescription.c_str());
 		}
 		else
-			packet->setDataByName("description", quest->GetDescription());
+			packet->setDataByName("description", quest->GetCompletedDescription());
 		
 		packet->setDataByName("level", quest->GetLevel());
 		packet->setDataByName("encounter_level", quest->GetEncounterLevel());
