@@ -718,8 +718,8 @@ void Entity::ChangePrimaryWeapon(){
 	Item* item = equipment_list.GetItem(EQ2_PRIMARY_SLOT);
 	if(item && item->details.item_id > 0 && item->IsWeapon()){
 		GetInfoStruct()->set_primary_weapon_delay(item->weapon_info->delay * 100);
-		GetInfoStruct()->set_primary_weapon_damage_low(item->weapon_info->damage_low3);
-		GetInfoStruct()->set_primary_weapon_damage_high(item->weapon_info->damage_high3);
+		GetInfoStruct()->set_primary_weapon_damage_low(item->weapon_info->damage_low3 + str_offset_dmg);
+		GetInfoStruct()->set_primary_weapon_damage_high(item->weapon_info->damage_high3 + str_offset_dmg);
 		GetInfoStruct()->set_primary_weapon_type(item->GetWeaponType());
 		GetInfoStruct()->set_wield_type(item->weapon_info->wield_type);
 	}
