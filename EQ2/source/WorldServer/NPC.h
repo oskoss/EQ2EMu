@@ -19,6 +19,7 @@
 */
 #ifndef __EQ2_NPC__
 #define __EQ2_NPC__
+#include <atomic>
 #include "Entity.h"
 #include "MutexMap.h"
 
@@ -149,7 +150,7 @@ public:
 	sint64 GetShardCreatedTimestamp() { return m_ShardCreatedTimestamp; }
 	void SetShardCreatedTimestamp(sint64 timestamp) { m_ShardCreatedTimestamp = timestamp; }
 	
-	volatile bool m_call_runback;
+	std::atomic<bool> m_call_runback;
 private:
 	MovementLocation* runback;
 	int8	cast_percentage;

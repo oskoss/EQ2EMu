@@ -20,6 +20,8 @@
 #ifndef __EQ2_SPAWN__
 #define __EQ2_SPAWN__
 
+#include <atomic>
+
 #include "../common/types.h"
 #include "../common/EQPacket.h"
 #include "../common/EQ2_Common_Structs.h"
@@ -1107,7 +1109,7 @@ public:
 	bool	is_water_creature;
 	bool	is_flying_creature;
 
-	volatile bool following;
+	std::atomic<bool> following;
 	bool	IsPet() { return is_pet; }
 	void	SetPet(bool val) { is_pet = val; }
 	Mutex m_requiredQuests;
