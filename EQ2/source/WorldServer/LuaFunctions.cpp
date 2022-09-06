@@ -13024,3 +13024,32 @@ int EQ2Emu_lua_SetLootDropType(lua_State* state) {
 	lua_interface->SetBooleanValue(state, false);
 	return 1;
 }
+
+
+int EQ2Emu_lua_DamageEquippedItems(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int8 damage_amount = lua_interface->GetInt32Value(state, 2);
+	if(damage_amount > 100) {
+		damage_amount = 100;
+	}
+	
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA DamageEquippedItems command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (spawn->IsPlayer()) {
+		if (((Player*)spawn)->GetClient() && ((Player*)spawn)->DamageEquippedItems(damage_amount, ((Player*)spawn)->GetClient()))
+			lua_interface->SetBooleanValue(state, true);
+		else
+			lua_interface->SetBooleanValue(state, false);
+	}
+	else {
+		lua_interface->SetBooleanValue(state, false);
+	}
+	
+	return 1;
+}

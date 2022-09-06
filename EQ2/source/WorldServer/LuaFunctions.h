@@ -621,4 +621,6 @@ int EQ2Emu_lua_GetLootTier(lua_State* state);
 
 int EQ2Emu_lua_SetLootDropType(lua_State* state);
 int EQ2Emu_lua_GetLootDropType(lua_State* state);
+
+int EQ2Emu_lua_DamageEquippedItems(lua_State* state);
 #endif
