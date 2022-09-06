@@ -3221,8 +3221,10 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 		SetSpawnOrigZ(GetZ());
 		SetSpawnOrigHeading(GetHeading());
 	}
-	movement_locations->push_back(data);	
+	movement_locations->push_back(data);
+	MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);	
 	if(!IsPauseMovementTimerActive() && finished_adding_locations){
+		MMovementLocations->writelock(__FUNCTION__, __LINE__);
 		current_location = movement_locations->front();
 		SetSpeed(current_location->speed);
 		if(movement_locations->size() > 1){		
@@ -3231,8 +3233,8 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 		}
 		else
 			RunToLocation(current_location->x, current_location->y, current_location->z, 0, 0, 0);
+		MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);	
 	}
-	MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
 }
 
 bool Spawn::RemoveRunningLocation(){
