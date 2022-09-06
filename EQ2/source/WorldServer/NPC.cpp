@@ -149,6 +149,7 @@ void NPC::Initialize(){
 	m_ShardID = 0;
 	m_ShardCharID = 0;
 	m_ShardCreatedTimestamp = 0;
+	m_call_runback = false;
 }
 
 EQ2Packet* NPC::serialize(Player* player, int16 version){
@@ -268,7 +269,7 @@ bool NPC::IsPauseMovementTimerActive()
 	if(pause_timer.Check())
 	{
 		pause_timer.Disable();
-		Runback();
+		m_call_runback = true;
 	}
 	
 	return pause_timer.Enabled();

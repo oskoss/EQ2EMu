@@ -133,8 +133,9 @@ void Brain::Think() {
 			// If run back distance is greater then 0 then run back
 			if(!m_body->EngagedInCombat() && !m_body->IsPauseMovementTimerActive())
 			{
-				if (run_back_distance > 1) {
+				if (run_back_distance > 1 || (m_body->m_call_runback && !m_body->following)) {
 					m_body->Runback(run_back_distance);
+					m_body->m_call_runback = false;
 				}
 				else if (m_body->GetRunbackLocation())
 				{

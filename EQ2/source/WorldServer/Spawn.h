@@ -1107,7 +1107,7 @@ public:
 	bool	is_water_creature;
 	bool	is_flying_creature;
 
-	bool following;
+	volatile bool following;
 	bool	IsPet() { return is_pet; }
 	void	SetPet(bool val) { is_pet = val; }
 	Mutex m_requiredQuests;

@@ -2453,10 +2453,12 @@ map<string, int32> World::GetOldestReloadingSubsystem() {
 	int32 oldest = current_time;
 	string oldestname = "";
 	for (itr = reloading_subsystems.begin(); itr != reloading_subsystems.end(); itr++) {
-		if (itr->second < oldest)
+		if (itr->second < oldest) {
 			oldestname = itr->first;
+			result.clear();
+			result[oldestname] = oldest;
+		}
 	}
-	result[oldestname] = oldest;
 	MReloadingSubsystems.unlock();
 	return result;
 }

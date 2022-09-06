@@ -148,6 +148,8 @@ public:
 
 	sint64 GetShardCreatedTimestamp() { return m_ShardCreatedTimestamp; }
 	void SetShardCreatedTimestamp(sint64 timestamp) { m_ShardCreatedTimestamp = timestamp; }
+	
+	volatile bool m_call_runback;
 private:
 	MovementLocation* runback;
 	int8	cast_percentage;
