@@ -417,6 +417,13 @@ bool LuaInterface::CallQuestFunction(Quest* quest, const char* function, Spawn* 
 		if(state){
 			int8 arg_count = 3;
 			lua_getglobal(state, function);
+			
+			if (!lua_isfunction(state, lua_gettop(state))){
+				lua_pop(state, 1);
+				mutex->releasereadlock(__FUNCTION__);
+				return false;
+			}
+			
 			SetQuestValue(state, quest);
 			Spawn* spawn = player->GetZone()->GetSpawnByDatabaseID(quest->GetQuestGiver());
 			SetSpawnValue(state, spawn);
