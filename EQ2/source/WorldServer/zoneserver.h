@@ -799,6 +799,8 @@ private:
 	MutexMap<int32, PlayerProximity*>				player_proximities;								// 1st int32 = spawn id
 	MutexMap<int32, Player*>						players_tracking;
 	MutexMap<int32, int32>							quick_database_id_lookup;						// 1st int32 = database id, 2nd int32 = spawn id
+	MutexMap<int32, int32>							quick_location_id_lookup;						// 1st int32 = location id, 2nd int32 = spawn id
+	MutexMap<int32, int32>							quick_group_id_lookup;							// 1st int32 = group id, 2nd int32 = spawn id
 	MutexMap<int32, int32>							respawn_timers;
 	map<Spawn*, int32>								spawn_delete_list;
 	MutexMap<int32, int32>							spawn_expire_timers;							// 1st int32 = spawn id

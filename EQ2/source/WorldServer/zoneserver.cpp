@@ -3842,13 +3842,47 @@ void ZoneServer::AddWidgetTimer(Spawn* widget, float time) {
 Spawn*	ZoneServer::GetSpawnGroup(int32 id){
 	Spawn* ret = 0;
 	Spawn* spawn = 0;
-	map<int32, Spawn*>::iterator itr;
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
-	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-		spawn = itr->second;
-		if(spawn){
-			if(spawn->GetSpawnGroupID() == id){
-				ret = spawn;
+	
+	if(id < 1)
+		return 0;
+	
+	if(quick_group_id_lookup.count(id) > 0)
+		ret = GetSpawnByID(quick_group_id_lookup.Get(id));
+	else{
+		map<int32, Spawn*>::iterator itr;
+		MSpawnList.readlock(__FUNCTION__, __LINE__);
+		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+			spawn = itr->second;
+			if(spawn){
+				if(spawn->GetSpawnGroupID() == id){
+					ret = spawn;
+					quick_group_id_lookup.Put(id, spawn->GetID());
+					break;
+				}
+			}
+		}
+		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+	}
+	return ret;
+}
+
+Spawn* ZoneServer::GetSpawnByLocationID(int32 location_id) {
+	Spawn* ret = 0;
+	Spawn* current_spawn = 0;
+	
+	if(location_id < 1)
+		return 0;
+	
+	if(quick_location_id_lookup.count(location_id) > 0)
+		ret = GetSpawnByID(quick_location_id_lookup.Get(location_id));
+	else{
+		map<int32, Spawn*>::iterator itr;
+		MSpawnList.readlock(__FUNCTION__, __LINE__);
+		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
+			current_spawn = itr->second;
+			if (current_spawn && current_spawn->GetSpawnLocationID() == location_id) {
+				ret = current_spawn;
+				quick_group_id_lookup.Put(location_id, ret->GetID());
 				break;
 			}
 		}
@@ -3857,24 +3891,12 @@ Spawn*	ZoneServer::GetSpawnGroup(int32 id){
 	return ret;
 }
 
-Spawn* ZoneServer::GetSpawnByLocationID(int32 location_id) {
-	Spawn* ret = 0;
-	Spawn* current_spawn = 0;
-	map<int32, Spawn*>::iterator itr;
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
-	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-		current_spawn = itr->second;
-		if (current_spawn && current_spawn->GetSpawnLocationID() == location_id) {
-			ret = current_spawn;
-			break;
-		}
-	}
-	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
-	return ret;
-}
-
 Spawn*	ZoneServer::GetSpawnByDatabaseID(int32 id){
 	Spawn* ret = 0;
+	
+	if(id < 1)
+		return 0;
+	
 	if(quick_database_id_lookup.count(id) > 0)
 		ret = GetSpawnByID(quick_database_id_lookup.Get(id));
 	else{
@@ -6094,6 +6116,12 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_proce
 		if (!spawn->IsPlayer()) {
 			if(quick_database_id_lookup.count(spawn->GetDatabaseID()) > 0)
 				quick_database_id_lookup.erase(spawn->GetDatabaseID());
+			
+			if(spawn->GetSpawnLocationID() > 0 && quick_location_id_lookup.count(spawn->GetSpawnLocationID()) > 0 && quick_location_id_lookup.Get(spawn->GetSpawnLocationID()) == spawn->GetID())
+				quick_location_id_lookup.erase(spawn->GetSpawnLocationID());
+			
+			if(spawn->GetSpawnGroupID() > 0 && quick_group_id_lookup.count(spawn->GetSpawnGroupID()) > 0 && quick_group_id_lookup.Get(spawn->GetSpawnGroupID()) == spawn->GetID())
+				quick_group_id_lookup.erase(spawn->GetSpawnGroupID());
 		}
 
 		DeleteSpawnScriptTimers(spawn);

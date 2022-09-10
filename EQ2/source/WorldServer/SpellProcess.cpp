@@ -871,13 +871,6 @@ void SpellProcess::RemoveSpellFromQueue(Entity* caster, bool hostile_only) {
 	}
 }
 
-void SpellProcess::CheckSpellQueue(Entity* caster){
-	if(caster && caster->IsPlayer()){
-		if(spell_que.count(caster) > 0)
-			RemoveSpellFromQueue(spell_que.Get(caster), caster);	
-	}
-}
-
 bool SpellProcess::CheckSpellQueue(Spell* spell, Entity* caster){
 	if(caster->IsPlayer()){
 		bool add = true;
