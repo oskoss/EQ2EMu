@@ -504,6 +504,8 @@ public:
 	}
 	
 	void			SetUnderWorld(float under){ underworld = under; }
+	float			GetUnderWorld(){ return underworld; }
+	
 	inline int32	GetZoneID()		{ return zoneID; }
 	void			SetZoneID(int32 new_id){ zoneID = new_id; }
 	
@@ -622,7 +624,6 @@ public:
 	//inline int16		GetCPort()		{ return clientport; }			// never used?
 	//inline bool			IsBootingUp()	{ return BootingUp; }			// never used?
 	//int32	GetShutdownTimer() {return shutdownTimer.GetTimerTime();}	// never used
-	//float	GetUnderWorld(){ return underworld; }						// function never used but variable is
 
 	// Following were private
 

@@ -175,6 +175,8 @@ enum RuleType {
 	CheckAttackPlayer,
 	CheckAttackNPC,
 	HOTime,
+	UseMapUnderworldCoords,
+	MapUnderworldCoordOffset,
 
 	/* LOOT */
 	LootRadius,

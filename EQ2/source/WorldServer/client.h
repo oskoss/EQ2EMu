@@ -636,6 +636,7 @@ private:
 	float	zoning_h;
 	bool	firstlogin;
 	bool	new_client_login;
+	Timer	underworld_cooldown_timer;
 	Timer	pos_update;
 	Timer	quest_pos_timer;
 	Timer	lua_debug_timer;

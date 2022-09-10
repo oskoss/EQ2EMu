@@ -4802,11 +4802,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if (spawn->IsNPC()) {
 						details4 += "\nRandomize:		" + to_string(((NPC*)spawn)->GetRandomize()) + "\n";
 					}
-
-					const char* spawnScriptMsg = (spawn->GetSpawnScript() && strlen(spawn->GetSpawnScript())>0) ? spawn->GetSpawnScript() : "Not Set";
-
-						details4 += "\nSpawnScript:		" + std::string(spawnScriptMsg) + "\n";
 				}
+				const char* spawnScriptMsg = (spawn->GetSpawnScript() && strlen(spawn->GetSpawnScript())>0) ? spawn->GetSpawnScript() : "Not Set";
+				details4 += "\nSpawnScript:		" + std::string(spawnScriptMsg) + "\n";
 
 				string title = string(spawn->GetName()) + "(" + to_string(spawn->GetDatabaseID()) + ")";
 				client->SendShowBook(client->GetPlayer(), title, 0, 4, details, details2, details3, details4);
@@ -6103,7 +6101,9 @@ void Commands::Command_Grid(Client* client)
 			auto loc = glm::vec3(client->GetPlayer()->GetX(), client->GetPlayer()->GetZ(), client->GetPlayer()->GetY());
 			uint32 GridID = 0;
 			float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &GridID);
-			client->Message(CHANNEL_COLOR_YELLOW, "Grid result is %u, at EQ2 Y coordinate %f", GridID, new_z);
+			float minY = client->GetPlayer()->GetMap()->GetMinY();
+			float maxY = client->GetPlayer()->GetMap()->GetMaxY();
+			client->Message(CHANNEL_COLOR_YELLOW, "Grid result is %u, at EQ2 Y coordinate %f.  Min/Max Y %f/%f", GridID, new_z, minY, maxY);
 	}
 }
 

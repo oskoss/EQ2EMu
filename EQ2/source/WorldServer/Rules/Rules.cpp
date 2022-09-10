@@ -329,7 +329,9 @@ void RuleManager::Init()
 	RULE_INIT(R_Zone, ShutdownDelayTimer, "120000");
 	RULE_INIT(R_Zone, WeatherTimer, "60000");						// default: 1 minute
 	RULE_INIT(R_Zone, SpawnDeleteTimer, "30000");					// default: 30 seconds, how long a spawn pointer is held onto after being removed from the world before deleting it
-
+	RULE_INIT(R_Zone, UseMapUnderworldCoords, "1"); // use maps lowest Y coordinate to establish underworld markers
+	RULE_INIT(R_Zone, MapUnderworldCoordOffset, "-50.0"); // adds (or in the case of negative value subtracts) so that the underworld marker is lower when map is using its lowest Y coordinate
+	
 	RULE_INIT(R_Loot, LootRadius, "5.0");
 	RULE_INIT(R_Loot, AutoDisarmChest, "1");
 	RULE_INIT(R_Loot, ChestTriggerRadiusGroup, "10.0"); // radius at which chest will trigger against group members

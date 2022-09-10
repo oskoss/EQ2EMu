@@ -120,7 +120,7 @@ extern ChestTrapList chest_trap_list;
 
 using namespace std;
 
-Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000), delayTimer(500), transmuteID(0), temp_placement_timer(10), spawn_removal_timer(250) {
+Client::Client(EQStream* ieqs) : underworld_cooldown_timer(5000), pos_update(125), quest_pos_timer(2000), lua_debug_timer(30000), delayTimer(500), transmuteID(0), temp_placement_timer(10), spawn_removal_timer(250) {
 	eqs = ieqs;
 	ip = eqs->GetrIP();
 	port = ntohs(eqs->GetrPort());
@@ -214,6 +214,7 @@ Client::Client(EQStream* ieqs) : pos_update(125), quest_pos_timer(2000), lua_deb
 	spawn_removal_timer.Start();
 	disable_save = false;
 	SetZoningDestination(nullptr);
+	underworld_cooldown_timer.Disable();
 }
 
 Client::~Client() {
@@ -3189,6 +3190,29 @@ bool Client::Process(bool zone_process) {
 			GetPlayer()->GetRegionMap()->TicRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
 		
 		if(player_pos_changed && IsReadyForUpdates()) {
+			if(!underworld_cooldown_timer.Enabled() || (underworld_cooldown_timer.Enabled() && underworld_cooldown_timer.Check())) {
+				bool underworld = false;
+				if(rule_manager.GetGlobalRule(R_Zone, UseMapUnderworldCoords)->GetBool()) {
+					if(GetPlayer()->GetMap() && GetPlayer()->GetY() < (GetPlayer()->GetMap()->GetMinY() + rule_manager.GetGlobalRule(R_Zone, MapUnderworldCoordOffset)->GetFloat())) {		
+						underworld = true;
+					}
+				}
+				else if(GetPlayer()->GetMap() && GetPlayer()->GetY() < GetCurrentZone()->GetUnderWorld()) {		
+						underworld = true;
+				}
+				if(underworld) {
+						player->SetX(GetCurrentZone()->GetSafeX());
+						player->SetY(GetCurrentZone()->GetSafeY());
+						player->SetZ(GetCurrentZone()->GetSafeZ());
+						player->SetHeading(GetCurrentZone()->GetSafeHeading());
+						EQ2Packet* app = GetPlayer()->Move(player->GetX(), player->GetY(), player->GetZ(), GetVersion(), player->GetHeading());
+						if(app){
+							QueuePacket(app);
+						}
+						SimpleMessage(CHANNEL_COLOR_RED, "You have been teleported to a safe location in the zone, because you appeared to have fallen through the world.");
+					}
+				underworld_cooldown_timer.Start();
+			}
 			//GetPlayer()->CalculateLocation();
 			client_list.CheckPlayersInvisStatus(this);
 			GetCurrentZone()->SendPlayerPositionChanges(GetPlayer());

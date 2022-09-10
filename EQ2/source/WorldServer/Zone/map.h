@@ -75,10 +75,14 @@ public:
 	}
 	float GetMinX() { return m_MinX; }
 	float GetMaxX() { return m_MaxX; }
+	float GetMinY() { return m_MinY; }
+	float GetMaxY() { return m_MaxY; }
 	float GetMinZ() { return m_MinZ; }
 	float GetMaxZ() { return m_MaxZ; }
 
 	void SetFileName(std::string newfile) { m_FileName = string(newfile); }
+	
+	void MapMinMaxY(float y);
 private:
 	void RotateVertex(glm::vec3 &v, float rx, float ry, float rz);
 	void ScaleVertex(glm::vec3 &v, float sx, float sy, float sz);
@@ -92,8 +96,10 @@ private:
 	int32 m_CellSize;
 
 	float m_MinX;
+	float m_MinY;
 	float m_MinZ;
 	float m_MaxX;
+	float m_MaxY;
 	float m_MaxZ;
 
 	struct impl;

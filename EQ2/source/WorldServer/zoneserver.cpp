@@ -5435,7 +5435,12 @@ EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
 		safe_delete(slides);
 	}
 
-	packet->setDataByName("underworld", underworld);
+	if(rule_manager.GetGlobalRule(R_Zone, UseMapUnderworldCoords)->GetBool() && client->GetPlayer()->GetMap()) {
+		packet->setDataByName("underworld", client->GetPlayer()->GetMap()->GetMinY() + rule_manager.GetGlobalRule(R_Zone, MapUnderworldCoordOffset)->GetFloat());
+	}
+	else {
+		packet->setDataByName("underworld", underworld);
+	}
 	
 	// unknown3 can prevent screen shots from being taken if
 	//packet->setDataByName("unknown3", 2094661567, 1);			// Screenshots allowed with this value

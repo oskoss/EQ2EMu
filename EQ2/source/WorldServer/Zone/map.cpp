@@ -66,6 +66,8 @@ Map::Map(string zonename, string file) {
 	m_ZoneName = zonename;
 	m_ZoneFile = file;
 	imp = nullptr;
+	m_MinY = 9999999.0f;
+	m_MaxY = -9999999.0f;
 }
 
 Map::~Map() {
@@ -411,7 +413,11 @@ bool Map::LoadV2(FILE* f) {
 			glm::vec3 a(x1, z1, y1);
 			glm::vec3 b(x2, z2, y2);
 			glm::vec3 c(x3, z3, y3);
-
+			
+			MapMinMaxY(y1);
+			MapMinMaxY(y2);
+			MapMinMaxY(y3);
+			
 			size_t sz = verts.size();
 			verts.push_back(a);
 			indices.push_back((uint32)sz);
@@ -549,6 +555,10 @@ bool Map::LoadV2Deflated(FILE* f) {
 			glm::vec3 b(x2, z2, y2);
 			glm::vec3 c(x3, z3, y3);
 
+			MapMinMaxY(y1);
+			MapMinMaxY(y2);
+			MapMinMaxY(y3);
+			
 			size_t sz = verts.size();
 			verts.push_back(a);
 			indices.push_back((uint32)sz);
@@ -615,6 +625,13 @@ void Map::TranslateVertex(glm::vec3 &v, float tx, float ty, float tz) {
 	v.x = v.x + tx;
 	v.y = v.y + ty;
 	v.z = v.z + tz;
+}
+
+void Map::MapMinMaxY(float y) {
+	if(y < m_MinY)
+		m_MinY = y;
+	if(y > m_MaxY)
+		m_MaxY = y;
 }
 
 void MapRange::AddVersionRange(std::string zoneName) {
