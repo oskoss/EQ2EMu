@@ -3882,7 +3882,7 @@ Spawn* ZoneServer::GetSpawnByLocationID(int32 location_id) {
 			current_spawn = itr->second;
 			if (current_spawn && current_spawn->GetSpawnLocationID() == location_id) {
 				ret = current_spawn;
-				quick_group_id_lookup.Put(location_id, ret->GetID());
+				quick_location_id_lookup.Put(location_id, ret->GetID());
 				break;
 			}
 		}
