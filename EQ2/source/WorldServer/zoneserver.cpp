@@ -3886,8 +3886,8 @@ Spawn* ZoneServer::GetSpawnByLocationID(int32 location_id) {
 				break;
 			}
 		}
+		MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 	}
-	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
