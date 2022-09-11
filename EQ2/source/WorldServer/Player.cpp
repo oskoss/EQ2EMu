@@ -6718,7 +6718,7 @@ void Player::SetMentorStats(int32 effective_level, int32 target_char_id)
 	client->GetPlayer()->CalculateBonuses();
 	client->GetPlayer()->SetHP(GetTotalHP());
 	client->GetPlayer()->SetPower(GetTotalPower());
-	info->set_agi_base(effective_level * 2 + 15);
+	/*info->set_agi_base(effective_level * 2 + 15);
 	info->set_intel_base(effective_level * 2 + 15);
 	info->set_wis_base(effective_level * 2 + 15);
 	info->set_str_base(effective_level * 2 + 15);
@@ -6729,7 +6729,7 @@ void Player::SetMentorStats(int32 effective_level, int32 target_char_id)
 	info->set_mental_base((int16)(effective_level * 1.5 + 10));
 	info->set_magic_base((int16)(effective_level * 1.5 + 10));
 	info->set_divine_base((int16)(effective_level * 1.5 + 10));
-	info->set_poison_base((int16)(effective_level * 1.5 + 10));
+	info->set_poison_base((int16)(effective_level * 1.5 + 10));*/
 	GetClient()->ClearSentItemDetails();
 	if(GetClient())
 	{

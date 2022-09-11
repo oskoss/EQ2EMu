@@ -4607,7 +4607,7 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	GetPlayer()->CalculateBonuses();
 	GetPlayer()->SetHP(GetPlayer()->GetTotalHP());
 	GetPlayer()->SetPower(GetPlayer()->GetTotalPower());
-	InfoStruct* info = player->GetInfoStruct();
+	/*InfoStruct* info = player->GetInfoStruct();
 	info->set_agi_base(new_level * 2 + 15);
 	info->set_intel_base(new_level * 2 + 15);
 	info->set_wis_base(new_level * 2 + 15);
@@ -4620,7 +4620,7 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	info->set_magic_base((int16)(new_level * 1.5 + 10));
 	info->set_divine_base((int16)(new_level * 1.5 + 10));
 	info->set_poison_base((int16)(new_level * 1.5 + 10));
-	GetPlayer()->GetInfoStruct()->set_poison_base((int16)(new_level * 1.5 + 10));
+	GetPlayer()->GetInfoStruct()->set_poison_base((int16)(new_level * 1.5 + 10));*/
 	UpdateTimeStampFlag(LEVEL_UPDATE_FLAG);
 	GetPlayer()->SetCharSheetChanged(true);
 
