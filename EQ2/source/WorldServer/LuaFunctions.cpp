@@ -6617,7 +6617,7 @@ int	EQ2Emu_lua_UnequipSlot(lua_State* state) {
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	int8 slot = lua_interface->GetInt8Value(state, 2);
-	bool no_delete_item = (lua_interface->GetBooleanValue(state, 2) == false); // if not set then we default to deleting it, otherwise if set to true we don't delete
+	bool no_delete_item = (lua_interface->GetBooleanValue(state, 3) == false); // if not set then we default to deleting it, otherwise if set to true we don't delete
 
 	lua_interface->ResetFunctionStack(state);
 	if (!spawn) {
