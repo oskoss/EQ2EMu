@@ -6637,7 +6637,6 @@ int	EQ2Emu_lua_UnequipSlot(lua_State* state) {
 		Item* item = ((Player*)spawn)->GetEquipmentList()->GetItem(slot);
 		if(item) {
 			item->save_needed = true;
-			printf("Item deleting: %s\n", item->name.c_str());
 			if(no_delete_item) {
 				((Player*)spawn)->GetEquipmentList()->RemoveItem(slot, no_delete_item);
 			}
