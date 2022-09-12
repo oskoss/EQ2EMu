@@ -6872,11 +6872,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 						client->QueuePacket(outapp);
 				}
 
-				client->GetPlayer()->ChangePrimaryWeapon();
-				client->GetPlayer()->ChangeSecondaryWeapon();
-				client->GetPlayer()->ChangeRangedWeapon();
-				EQ2Packet* characterSheetPackets = client->GetPlayer()->GetPlayerInfo()->serialize(client->GetVersion());
-				client->QueuePacket(characterSheetPackets);
+				client->UnequipItem(index, bag_id, to_slot, appearance_equip);
 			}
 		}
 		else if(sep->arg[2][0] && strncasecmp("swap_equip", sep->arg[0], 10) == 0 && sep->IsNumber(1) && sep->IsNumber(2))

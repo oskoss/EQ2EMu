@@ -6628,8 +6628,28 @@ int	EQ2Emu_lua_UnequipSlot(lua_State* state) {
 		lua_interface->LogError("%s: LUA UnequipSlot command error: spawn is not an entity", lua_interface->GetScriptName(state));
 		return 0;
 	}
+	if(slot >= NUM_SLOTS) {
+		lua_interface->LogError("%s: LUA UnequipSlot command error: wrong slot id given %u, max %u", lua_interface->GetScriptName(state), slot, NUM_SLOTS);
+		return 0;
+	}
 	
-	((Entity*)spawn)->GetEquipmentList()->RemoveItem(slot, no_delete_item);
+	if(spawn->IsPlayer() && ((Player*)spawn)->GetClient()) {
+		Item* item = ((Player*)spawn)->GetEquipmentList()->GetItem(slot);
+		if(item) {
+			item->save_needed = true;
+			printf("Item deleting: %s\n", item->name.c_str());
+			if(no_delete_item) {
+				((Player*)spawn)->GetEquipmentList()->RemoveItem(slot, no_delete_item);
+			}
+			else{
+				Client* client = ((Player*)spawn)->GetClient();
+				client->UnequipItem(item->details.index);
+			}
+		}
+	}
+	else
+		((Entity*)spawn)->GetEquipmentList()->RemoveItem(slot, no_delete_item);
+	
 	((Entity*)spawn)->SetEquipment(nullptr, slot);
 	spawn->vis_changed = true;
 

@@ -6778,6 +6778,25 @@ bool Client::AddItemToBank(Item* item) {
 
 	return true;
 }
+
+void Client::UnequipItem(int16 index, sint32 bag_id, int8 to_slot, int8 appearance_equip) {
+	vector<EQ2Packet*> packets = GetPlayer()->UnequipItem(index, bag_id, to_slot, GetVersion(), appearance_equip);
+	EQ2Packet* outapp = 0;
+
+	for(int32 i=0;i<packets.size();i++)
+	{
+		outapp = packets[i];
+
+		if(outapp)
+			QueuePacket(outapp);
+	}
+
+	GetPlayer()->ChangePrimaryWeapon();
+	GetPlayer()->ChangeSecondaryWeapon();
+	GetPlayer()->ChangeRangedWeapon();
+	EQ2Packet* characterSheetPackets = GetPlayer()->GetPlayerInfo()->serialize(GetVersion());
+	QueuePacket(characterSheetPackets);
+}
 bool Client::RemoveItem(Item* item, int16 quantity, bool force_override_no_delete) {
 	EQ2Packet* outapp;
 	bool delete_item = false;

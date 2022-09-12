@@ -214,6 +214,7 @@ public:
 	bool	AddItem(Item* item, bool* item_deleted = 0, AddItemType type = AddItemType::NOT_SET);
 	bool	AddItemToBank(int32 item_id, int16 quantity = 0);
 	bool	AddItemToBank(Item* item);
+	void	UnequipItem(int16 index, sint32 bag_id = -999, int8 to_slot = 255, int8 appearance_equip = 0);
 	bool	RemoveItem(Item *item, int16 quantity, bool force_override_no_delete = false);
 	void	ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destinations, int32 transport_id = 0, bool is_spell = false);
 	void	ProcessTeleportLocation(EQApplicationPacket* app); 
