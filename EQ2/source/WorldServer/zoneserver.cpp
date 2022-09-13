@@ -3853,7 +3853,7 @@ Spawn*	ZoneServer::GetSpawnGroup(int32 id){
 	}
 	if(ret == NULL) {
 		if(lookup)
-			quick_group_id_lookup.clear();
+			quick_group_id_lookup.erase(id);
 		map<int32, Spawn*>::iterator itr;
 		MSpawnList.readlock(__FUNCTION__, __LINE__);
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
@@ -3885,7 +3885,7 @@ Spawn* ZoneServer::GetSpawnByLocationID(int32 location_id) {
 	}
 	if(ret == NULL) {
 		if(lookup)
-			quick_location_id_lookup.clear();
+			quick_location_id_lookup.erase(location_id);
 		map<int32, Spawn*>::iterator itr;
 		MSpawnList.readlock(__FUNCTION__, __LINE__);
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
@@ -3907,9 +3907,15 @@ Spawn*	ZoneServer::GetSpawnByDatabaseID(int32 id){
 	if(id < 1)
 		return 0;
 	
-	if(quick_database_id_lookup.count(id) > 0)
+	bool lookup = false;
+	
+	if(quick_database_id_lookup.count(id) > 0) {
 		ret = GetSpawnByID(quick_database_id_lookup.Get(id));
-	else{
+		lookup = true;
+	}
+	if(ret == NULL){
+		if(lookup)
+			quick_database_id_lookup.erase(id);
 		Spawn* spawn = 0;
 		map<int32, Spawn*>::iterator itr;
 		MSpawnList.readlock(__FUNCTION__, __LINE__);
