@@ -6638,6 +6638,7 @@ int	EQ2Emu_lua_UnequipSlot(lua_State* state) {
 		if(item) {
 			item->save_needed = true;
 			if(no_delete_item) {
+				database.DeleteItem(GetCharacterID(), item, 0);
 				((Player*)spawn)->GetEquipmentList()->RemoveItem(slot, no_delete_item);
 			}
 			else{
