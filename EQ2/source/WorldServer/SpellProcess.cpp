@@ -1298,6 +1298,9 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 						return;
 					}
 				}
+				else if(((Entity*)target)->GetInfoStruct()->get_friendly_target_npc()) {
+					// it's a bypass!
+				}
 				else if (target->IsBot() && (caster->IsPlayer() || caster->IsBot())) {
 					// Needed so bots or player can cast friendly spells on bots
 				}
@@ -2029,7 +2032,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 					// check if spell is friendly
 					if (data->friendly_spell) {
 						//if target is NPC (and not a bot) on friendly spell, check to see if target is friendly
-						if (target->IsNPC() && !target->IsBot()) {
+						if (target->IsNPC() && !((Entity*)target)->GetInfoStruct()->get_friendly_target_npc() && !target->IsBot()) {
 							if (!target->IsPet() || (target->IsPet() && ((NPC*)target)->GetOwner()->IsNPC())) {
 								if (secondary_target && secondary_target->IsPlayer()) {
 									target = secondary_target;
@@ -2079,7 +2082,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 			else if (caster->IsPlayer()) {
 				if (data->friendly_spell) {
 					if (target->IsNPC() && !target->IsBot()) {
-						if (!target->IsPet() || (target->IsPet() && ((NPC*)target)->GetOwner()->IsNPC())) {
+						if (!((Entity*)target)->GetInfoStruct()->get_friendly_target_npc() && (!target->IsPet() || (target->IsPet() && ((NPC*)target)->GetOwner()->IsNPC()))) {
 							target = caster;
 							luaspell->initial_target = caster->GetID();
 							luaspell->initial_target_char_id = (caster && caster->IsPlayer()) ? ((Player*)caster)->GetCharacterID() : 0;
@@ -2308,7 +2311,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						else
 							AddLuaSpellTarget(luaspell, caster->GetID(), false); // else return the caster
 					}
-					else if (target->IsPlayer() || target->IsBot()) // else it is not raid, group only or group spell
+					else if (target->IsPlayer() || target->IsBot() || (target->IsNPC() && ((Entity*)target)->GetInfoStruct()->get_friendly_target_npc())) // else it is not raid, group only or group spell
 						AddLuaSpellTarget(luaspell, target->GetID(), false); // return target for single spell
 					else if ((luaspell->targets.size() < 1) || (!target->IsPet() || (((Entity*)target)->GetOwner() && !((Entity*)target)->GetOwner()->IsPlayer()))) 
 						AddLuaSpellTarget(luaspell, caster->GetID(), false); // and if no target, cast on self

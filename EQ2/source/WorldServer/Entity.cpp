@@ -335,6 +335,8 @@ void Entity::MapInfoStruct()
 	get_int8_funcs["override_primary_weapon"] = l::bind(&InfoStruct::get_override_primary_weapon, &info_struct);
 	get_int8_funcs["override_secondary_weapon"] = l::bind(&InfoStruct::get_override_secondary_weapon, &info_struct);
 	get_int8_funcs["override_ranged_weapon"] = l::bind(&InfoStruct::get_override_ranged_weapon, &info_struct);
+	
+	get_int8_funcs["friendly_target_npc"] = l::bind(&InfoStruct::get_friendly_target_npc, &info_struct);
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -515,6 +517,8 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["override_primary_weapon"] = l::bind(&InfoStruct::set_override_primary_weapon, &info_struct, l::_1);
 	set_int8_funcs["override_secondary_weapon"] = l::bind(&InfoStruct::set_override_secondary_weapon, &info_struct, l::_1);
 	set_int8_funcs["override_ranged_weapon"] = l::bind(&InfoStruct::set_override_ranged_weapon, &info_struct, l::_1);
+	
+	set_int8_funcs["friendly_target_npc"] = l::bind(&InfoStruct::set_friendly_target_npc, &info_struct, l::_1);
 }
 
 bool Entity::HasMoved(bool include_heading){

@@ -270,6 +270,8 @@ struct InfoStruct{
 		override_primary_weapon_ = 0;
 		override_secondary_weapon_ = 0;
 		override_ranged_weapon_ = 0;
+		
+		friendly_target_npc_ = 0;
 	}
 
 
@@ -452,6 +454,7 @@ struct InfoStruct{
 		override_primary_weapon_ = oldStruct->get_override_primary_weapon();
 		override_secondary_weapon_ = oldStruct->get_override_secondary_weapon();
 		override_ranged_weapon_ = oldStruct->get_override_ranged_weapon();
+		friendly_target_npc_ = oldStruct->get_friendly_target_npc();
 
 	}
 	//mutable std::shared_mutex mutex_;
@@ -650,7 +653,10 @@ struct InfoStruct{
 	int8	get_override_primary_weapon() { std::lock_guard<std::mutex> lk(classMutex); return override_primary_weapon_; }
 	int8	get_override_secondary_weapon() { std::lock_guard<std::mutex> lk(classMutex); return override_secondary_weapon_; }
 	int8	get_override_ranged_weapon() { std::lock_guard<std::mutex> lk(classMutex); return override_ranged_weapon_; }
-
+	
+	int8	get_friendly_target_npc() { std::lock_guard<std::mutex> lk(classMutex); return friendly_target_npc_; }
+	
+	
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
 	void	set_deity(std::string value) { std::lock_guard<std::mutex> lk(classMutex); deity_ = value; }
@@ -932,7 +938,7 @@ struct InfoStruct{
 	void	set_override_primary_weapon(int8 value) { std::lock_guard<std::mutex> lk(classMutex); override_secondary_weapon_ = value; }
 	void	set_override_secondary_weapon(int8 value) { std::lock_guard<std::mutex> lk(classMutex); override_secondary_weapon_ = value; }
 	void	set_override_ranged_weapon(int8 value) { std::lock_guard<std::mutex> lk(classMutex); override_ranged_weapon_ = value; }
-	
+	void	set_friendly_target_npc(int8 value) { std::lock_guard<std::mutex> lk(classMutex); friendly_target_npc_ = value; }
 	void	ResetEffects(Spawn* spawn)
 	{
 		for(int i=0;i<45;i++){
@@ -1131,6 +1137,8 @@ private:
 	int8			override_primary_weapon_;
 	int8			override_secondary_weapon_;
 	int8			override_ranged_weapon_;
+	
+	int8			friendly_target_npc_;
 	
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;
