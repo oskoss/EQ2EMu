@@ -6100,10 +6100,11 @@ void Commands::Command_Grid(Client* client)
 	if (client->GetPlayer()->GetMap() != nullptr) {
 			auto loc = glm::vec3(client->GetPlayer()->GetX(), client->GetPlayer()->GetZ(), client->GetPlayer()->GetY());
 			uint32 GridID = 0;
-			float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &GridID);
+			uint32 WidgetID = 0;
+			float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &GridID, &WidgetID);
 			float minY = client->GetPlayer()->GetMap()->GetMinY();
 			float maxY = client->GetPlayer()->GetMap()->GetMaxY();
-			client->Message(CHANNEL_COLOR_YELLOW, "Grid result is %u, at EQ2 Y coordinate %f.  Min/Max Y %f/%f", GridID, new_z, minY, maxY);
+			client->Message(CHANNEL_COLOR_YELLOW, "Grid result is %u, at EQ2 Y coordinate %f.  Min/Max Y %f/%f.  Widget ID: %u", GridID, new_z, minY, maxY, WidgetID);
 	}
 }
 

@@ -3940,9 +3940,18 @@ void Spawn::FixZ(bool forceUpdate) {
 	if(GetMap() != nullptr) {
 		float new_z = GetMap()->FindBestZ(current_loc, nullptr, &GridID, &WidgetID);
 
-		if ((IsTransportSpawn() || !IsFlyingCreature()) && GridID != 0 && GridID != appearance.pos.grid_id)
+		if ((IsTransportSpawn() || !IsFlyingCreature()) && GridID != 0 && GridID != appearance.pos.grid_id) {
+			LogWrite(PLAYER__DEBUG, 0, "Player", "%s left grid %u and entered grid %u", appearance.name, appearance.pos.grid_id, GridID);
+			
+			const char* zone_script = world.GetZoneScript(GetZone()->GetZoneID());
+
+			if (zone_script && lua_interface)
+			{
+				lua_interface->RunZoneScript(zone_script, "enter_location", GetZone(), this, GridID);
+				lua_interface->RunZoneScript(zone_script, "leave_location", GetZone(), this, appearance.pos.grid_id);
+			}
 			SetPos(&(appearance.pos.grid_id), GridID);
-		
+		}
 		trigger_widget_id = WidgetID;
 	}
 
