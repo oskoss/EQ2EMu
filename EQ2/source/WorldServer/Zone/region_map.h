@@ -9,6 +9,9 @@
 
 class Client;
 class Spawn;
+class ZoneServer;
+class Region_Node;
+class ZBSP_Node;
 
 enum WaterRegionType : int {
 	RegionTypeUnsupported = -2,
@@ -50,6 +53,9 @@ public:
 	virtual void MapRegionsNearSpawn(Spawn* spawn, Client* client=0) const = 0;
 	virtual void UpdateRegionsNearSpawn(Spawn* spawn, Client* client=0) const = 0;
 	virtual void TicRegionsNearSpawn(Spawn* spawn, Client* client=0) const = 0;
+	
+	virtual void InsertRegionNode(ZoneServer* zone, int32 version, std::string regionName, std::string envName, uint32 gridID, uint32 triggerWidgetID, float dist = 0.0f) = 0;
+	virtual void RemoveRegionNode(std::string regionName) = 0;
 protected:
 	virtual bool Load(FILE *fp) { return false; }
 };

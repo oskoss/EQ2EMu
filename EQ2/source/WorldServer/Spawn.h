@@ -248,6 +248,7 @@ struct TimedGridData {
 	float y;
 	float z;
 	bool npc_save;
+	int32 widget_id;
 };
 
 class Spawn {
@@ -1108,7 +1109,8 @@ public:
 	bool	forceMapCheck;
 	bool	is_water_creature;
 	bool	is_flying_creature;
-
+	int32	trigger_widget_id;
+	
 	std::atomic<bool> following;
 	bool	IsPet() { return is_pet; }
 	void	SetPet(bool val) { is_pet = val; }
@@ -1283,6 +1285,9 @@ public:
 
 	void SetDeletedSpawn(bool val) { deleted_spawn = val; }
 	bool IsDeletedSpawn() { return deleted_spawn; }
+	
+	
+	int32 InsertRegionToSpawn(Region_Node* node, ZBSP_Node* bsp_root, WaterRegionType regionType, bool in_region = true);
 	
 	EquipmentItemList equipment_list;
 	EquipmentItemList appearance_equipment_list;

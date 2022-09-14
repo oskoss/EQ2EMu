@@ -36,8 +36,8 @@ public:
 	Map(string zonename, string filename);
 	~Map();
 
-	float FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID = 0);
-	float FindClosestZ(glm::vec3 &start, glm::vec3 *result);
+	float FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID = 0, uint32* WidgetID = 0);
+	float FindClosestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID = 0, uint32* WidgetID = 0);
 	bool LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *result);
 	bool LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, glm::vec3 *result);
 	bool CheckLoS(glm::vec3 myloc, glm::vec3 oloc);
@@ -83,12 +83,14 @@ public:
 	void SetFileName(std::string newfile) { m_FileName = string(newfile); }
 	
 	void MapMinMaxY(float y);
+	std::map<int32, glm::vec3> widget_map;
 private:
 	void RotateVertex(glm::vec3 &v, float rx, float ry, float rz);
 	void ScaleVertex(glm::vec3 &v, float sx, float sy, float sz);
 	void TranslateVertex(glm::vec3 &v, float tx, float ty, float tz);
 	bool LoadV2(FILE *f);
 	bool LoadV2Deflated(FILE *f);
+	bool LoadV3Deflated(std::ifstream* file, std::streambuf * const srcbuf);
 
 	string m_FileName;
 	string m_ZoneFile;

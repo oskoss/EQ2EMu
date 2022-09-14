@@ -3,17 +3,20 @@
 #include "../client.h"
 #include "../Spawn.h"
 #include "../LuaInterface.h"
+#include "../World.h"
 
 #undef snprintf
 #include <boost/filesystem.hpp>
 
 extern LuaInterface* lua_interface;
+extern World world;
 
 RegionMapV1::RegionMapV1() {
 	mVersion = 1;
 }
 
 RegionMapV1::~RegionMapV1() {
+    std::unique_lock lock(MRegions);
 	map<Region_Node*, ZBSP_Node*>::const_iterator itr;
 	int region_num = 0;
 	for (itr = Regions.begin(); itr != Regions.end();)
@@ -176,8 +179,10 @@ bool RegionMapV1::Load(FILE* fp, std::string inZoneNameLwr, int32 version) {
 		}
 		
 		tmpNode->vert_count = bsp_tree_size;
-
+		
+		MRegions.lock();
 		Regions.insert(make_pair(tmpNode, BSP_Root));
+		MRegions.unlock();
 	}
 
 	fclose(fp);
@@ -189,20 +194,29 @@ bool RegionMapV1::Load(FILE* fp, std::string inZoneNameLwr, int32 version) {
 
 void RegionMapV1::IdentifyRegionsInGrid(Client *client, const glm::vec3 &location) const
 {
+    std::shared_lock lock(MRegions);
 	map<Region_Node*, ZBSP_Node*>::const_iterator itr;
 	int region_num = 0;
 
 	int32 grid = 0;
+	int32 widget_id = 0;
+	float x =0.0f,y = 0.0f,z = 0.0f;
 	if (client->GetPlayer()->GetMap() != nullptr && client->GetPlayer()->GetMap()->IsMapLoaded())
 	{
 		auto loc = glm::vec3(location.x, location.z, location.y);
-		float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &grid);
+		float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &grid, &widget_id);
+		
+		std::map<int32, glm::vec3>::iterator itr = client->GetPlayer()->GetMap()->widget_map.find(widget_id);
+		if(itr != client->GetPlayer()->GetMap()->widget_map.end()) {
+			x = itr->second.x;
+			y = itr->second.y;
+			z = itr->second.z;
+		}
 	}
 	else
 		client->SimpleMessage(CHANNEL_COLOR_RED, "No map to establish grid id, using grid id 0 (attempt match all).");
 
-	client->Message(2, "Region check against location %f / %f / %f. Grid to try: %u, player grid is %u", location.x, location.y, location.z, grid, client->GetPlayer()->appearance.pos.grid_id);
-
+	client->Message(2, "Region check against location %f / %f / %f. Grid to try: %u, player grid is %u, widget id is %u.  Widget location is %f %f %f.", location.x, location.y, location.z, grid, client->GetPlayer()->appearance.pos.grid_id, widget_id, x, y, z);
 	for (itr = Regions.begin(); itr != Regions.end(); itr++)
 	{
 		Region_Node *node = itr->first;
@@ -215,7 +229,12 @@ void RegionMapV1::IdentifyRegionsInGrid(Client *client, const glm::vec3 &locatio
 			float z1 = node->z - location.z;
 			float dist = sqrt(x1 *x1 + y1 *y1 + z1 *z1);
 			glm::vec3 testLoc(location.x, location.y, location.z);
-			if (dist <= node->dist)
+			if(!BSP_Root) {
+				if(client)
+				client->Message(CHANNEL_COLOR_YELLOW, "[%s] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, Script: %s.  X: %f, Y: %f, Z: %f, Distance: %f, Widget ID Marker: %u", (widget_id == node->trigger_widget_id) ? "IN REGION" : "WIDGET MARKER", region_num, 
+				node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(), node->regionScriptName.c_str(), node->x, node->y, node->z, node->dist, node->trigger_widget_id);
+			}
+			else if (dist <= node->dist)
 			{
 				WaterRegionType regionType = RegionTypeUntagged;
 
@@ -249,6 +268,7 @@ void RegionMapV1::IdentifyRegionsInGrid(Client *client, const glm::vec3 &locatio
 
 void RegionMapV1::MapRegionsNearSpawn(Spawn *spawn, Client *client) const
 {
+    std::shared_lock lock(MRegions);
 	map<Region_Node*, ZBSP_Node*>::const_iterator itr;
 	int region_num = 0;
 
@@ -263,6 +283,18 @@ void RegionMapV1::MapRegionsNearSpawn(Spawn *spawn, Client *client) const
 		if (node->regionScriptName.size() < 1)	// only track ones that are used with LUA scripting
 			continue;
 
+		if(!BSP_Root) {
+			int32 currentGridID = spawn->appearance.pos.grid_id;
+			bool inRegion = false;
+			if(!(inRegion = spawn->InRegion(node, nullptr)) && currentGridID == node->grid_id && 
+			( node->trigger_widget_id == spawn->trigger_widget_id || (node->dist > 0.0f && spawn->GetDistance(node->x, node->y, node->z) < node->dist)) ) {
+				int32 returnValue = spawn->InsertRegionToSpawn(node, nullptr, RegionTypeUntagged);
+				if (client)
+					client->Message(CHANNEL_COLOR_YELLOW, "[ENTER REGION %i %u] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", RegionTypeUntagged, returnValue, region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+						node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+			}	
+			continue;
+		}
 		float x1 = node->x - testLoc.x;
 		float y1 = node->y - testLoc.y;
 		float z1 = node->z - testLoc.z;
@@ -281,17 +313,7 @@ void RegionMapV1::MapRegionsNearSpawn(Spawn *spawn, Client *client) const
 				if (!spawn->InRegion(node, BSP_Root))
 				{
 					spawn->DeleteRegion(node, BSP_Root);
-					std::map<Region_Node*, ZBSP_Node*> newMap;
-					newMap.insert(make_pair(node, BSP_Root));
-					Region_Status status;
-					status.inRegion = true;
-					status.regionType = regionType;
-					int32 returnValue = 0;
-					lua_interface->RunRegionScript(node->regionScriptName, "EnterRegion", spawn->GetZone(), spawn, regionType, &returnValue);
-					status.timerTic = returnValue;
-					status.lastTimerTic = returnValue ? Timer::GetCurrentTime2() : 0;
-					spawn->Regions.insert(make_pair(newMap, status));
-
+					int32 returnValue = spawn->InsertRegionToSpawn(node, BSP_Root, regionType);
 					if (client)
 						client->Message(CHANNEL_COLOR_YELLOW, "[ENTER REGION %i %u] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", regionType, returnValue, region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
 							node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
@@ -309,14 +331,7 @@ void RegionMapV1::MapRegionsNearSpawn(Spawn *spawn, Client *client) const
 				}
 				spawn->DeleteRegion(node, BSP_Root);
 
-				std::map<Region_Node*, ZBSP_Node*> newMap;
-				newMap.insert(make_pair(node, BSP_Root));
-				Region_Status status;
-				status.inRegion = false;
-				status.timerTic = 0;
-				status.lastTimerTic = 0;
-				status.regionType = RegionTypeNormal;
-				spawn->Regions.insert(make_pair(newMap, status));
+				spawn->InsertRegionToSpawn(node, BSP_Root, RegionTypeNormal, false);
 				if (client)
 					client->Message(CHANNEL_COLOR_RED, "[NEAR REGION] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
 						node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
@@ -341,11 +356,19 @@ void RegionMapV1::UpdateRegionsNearSpawn(Spawn *spawn, Client *client) const
 	map<Region_Node*, ZBSP_Node*> deleteNodes;
 	for (testitr = spawn->Regions.begin(); testitr != spawn->Regions.end(); testitr++)
 	{
-
 		map<Region_Node*, ZBSP_Node*>::const_iterator actualItr = testitr->first.begin();
 		Region_Node *node = actualItr->first;
 		ZBSP_Node *BSP_Root = actualItr->second;
 
+		std::map<Region_Node*, bool>::const_iterator dead_itr = dead_nodes.find(node);
+		if(dead_itr != dead_nodes.end()) {
+			deleteNodes.insert(make_pair(node, BSP_Root));
+			continue;
+		}
+		if(!BSP_Root) {
+			continue;
+		}
+		
 		float x1 = node->x - testLoc.x;
 		float y1 = node->y - testLoc.y;
 		float z1 = node->z - testLoc.z;
@@ -423,7 +446,39 @@ void RegionMapV1::TicRegionsNearSpawn(Spawn *spawn, Client *client) const
 		Region_Node *node = actualItr->first;
 		ZBSP_Node *BSP_Root = actualItr->second;
 
-		if (testitr->second.timerTic && testitr->second.inRegion && Timer::GetCurrentTime2() >= (testitr->second.lastTimerTic + testitr->second.timerTic))
+		std::map<Region_Node*, bool>::const_iterator dead_itr = dead_nodes.find(node);
+		if(dead_itr != dead_nodes.end()) {
+			continue;
+		}
+		
+		if(!BSP_Root) {
+			bool passDistCheck = false;
+			int32 currentGridID = spawn->appearance.pos.grid_id;
+			if(testitr->second.timerTic && currentGridID == node->grid_id && (node->trigger_widget_id == spawn->trigger_widget_id || (node->dist > 0.0f && spawn->GetDistance(node->x, node->y, node->z) <= node->dist && (passDistCheck = true)))
+				&& Timer::GetCurrentTime2() >= (testitr->second.lastTimerTic + testitr->second.timerTic)) {
+					testitr->second.lastTimerTic = Timer::GetCurrentTime2();
+					if (client)
+						client->Message(CHANNEL_COLOR_RED, "[TICK] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+							node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+
+					int32 returnValue = 0;
+					lua_interface->RunRegionScript(node->regionScriptName, "Tick", spawn->GetZone(), spawn, RegionTypeUntagged, &returnValue);
+
+					if (returnValue == 1)
+					{
+						testitr->second.lastTimerTic = 0;
+						testitr->second.timerTic = 0;
+					}
+			}
+			else if(currentGridID != node->grid_id || (node->trigger_widget_id != spawn->trigger_widget_id && !passDistCheck)) {
+					if (client)
+						client->Message(CHANNEL_COLOR_RED, "[LEAVE REGION] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
+							node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
+					lua_interface->RunRegionScript(node->regionScriptName, "LeaveRegion", spawn->GetZone(), spawn, RegionTypeUntagged);
+				spawn->DeleteRegion(node, nullptr);
+			}
+		}
+		else if (testitr->second.timerTic && testitr->second.inRegion && Timer::GetCurrentTime2() >= (testitr->second.lastTimerTic + testitr->second.timerTic))
 		{
 			testitr->second.lastTimerTic = Timer::GetCurrentTime2();
 			if (client)
@@ -453,6 +508,7 @@ void RegionMapV1::TicRegionsNearSpawn(Spawn *spawn, Client *client) const
 }
 
 WaterRegionType RegionMapV1::BSPReturnRegionType(int32 node_number, const glm::vec3& location, int32 gridid) const {
+    std::shared_lock lock(MRegions);
 	map<Region_Node*, ZBSP_Node*>::const_iterator itr;
 	int region_num = 0;
 	for (itr = Regions.begin(); itr != Regions.end(); itr++)
@@ -715,4 +771,73 @@ WaterRegionType RegionMapV1::EstablishDistanceAtAngle(const Region_Node* region_
 	}
 
 	return RegionTypeNormal;
+}
+
+void RegionMapV1::InsertRegionNode(ZoneServer* zone, int32 version, std::string regionName, std::string envName, uint32 gridID, uint32 triggerWidgetID, float dist)
+{
+		Region_Node* tmpNode = new Region_Node;
+		
+		tmpNode->x = 0.0f;
+		tmpNode->y = 0.0f;
+		tmpNode->z = 0.0f;
+		
+		if(!zone)
+			return;
+		
+		Map* current_map = world.GetMap(std::string(zone->GetZoneFile()), version);
+		if(current_map) {
+			std::map<int32, glm::vec3>::iterator itr = current_map->widget_map.find(triggerWidgetID);
+			if(itr != current_map->widget_map.end()) {
+				tmpNode->x = itr->second.x;
+				tmpNode->y = itr->second.y;
+				tmpNode->z = itr->second.z;
+			}
+		}
+		
+		tmpNode->dist = dist;
+		tmpNode->region_type = RegionTypeUntagged;
+		tmpNode->regionName = string(regionName);
+		tmpNode->regionEnvFileName = string(envName);
+		tmpNode->grid_id = gridID;
+		tmpNode->regionScriptName = string("");
+		tmpNode->trigger_widget_id = triggerWidgetID;
+		
+		tmpNode->regionScriptName = TestFile(regionName);
+		
+		if ( tmpNode->regionScriptName.size() < 1 )
+		{
+			tmpNode->regionScriptName = TestFile(envName);
+		}
+		if ( tmpNode->regionScriptName.size() < 1 )
+		{
+			tmpNode->regionScriptName = TestFile("default");
+		}
+		
+		tmpNode->vert_count = 0;
+
+		ZBSP_Node* BSP_Root = nullptr;
+		
+		MRegions.lock();
+		Regions.insert(make_pair(tmpNode, BSP_Root));
+		MRegions.unlock();
+}
+
+void RegionMapV1::RemoveRegionNode(std::string name) {
+	
+    std::unique_lock lock(MRegions);
+	map<Region_Node*, ZBSP_Node*>::const_iterator itr;
+	for (itr = Regions.begin(); itr != Regions.end();)
+	{
+		Region_Node *node = itr->first;
+		ZBSP_Node *BSP_Root = itr->second;
+		if(node->regionName.find(name) != node->regionName.npos) {
+			itr = Regions.erase(itr);
+			dead_nodes.insert(make_pair(node, true));
+			safe_delete(node);
+			safe_delete_array(BSP_Root);
+		}
+		else {
+			itr++;
+		}
+	}
 }

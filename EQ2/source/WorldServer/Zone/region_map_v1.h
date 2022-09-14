@@ -1,8 +1,11 @@
 #ifndef EQ2EMU_REGION_MAP_V1_H
 #define EQ2EMU_REGION_MAP_V1_H
 
-#include "region_map.h"
+#include <mutex>
+#include <shared_mutex>
 #include <map>
+
+#include "region_map.h"
 
 class Client;
 class Spawn;
@@ -30,6 +33,7 @@ typedef struct Region_Node {
 	int32 grid_id;
 	string regionScriptName;
 	int32 vert_count;
+	int32 trigger_widget_id;
 } Region_Node;
 #pragma pack()
 
@@ -57,7 +61,9 @@ public:
 	virtual void MapRegionsNearSpawn(Spawn* spawn, Client* client=0) const;
 	virtual void UpdateRegionsNearSpawn(Spawn* spawn, Client* client=0) const;
 	virtual void TicRegionsNearSpawn(Spawn* spawn, Client* client=0) const;
-
+	
+	virtual void InsertRegionNode(ZoneServer* zone, int32 version, std::string regionName, std::string envName, uint32 gridID, uint32 triggerWidgetID, float dist = 0.0f);
+	virtual void RemoveRegionNode(std::string regionName);
 protected:
 	virtual bool Load(FILE *fp, std::string inZoneLowerName, int32 regionVersion);
 
@@ -76,6 +82,9 @@ private:
 
 	int32 mVersion;
 	std::string mZoneNameLower;
+	
+	mutable std::shared_mutex MRegions;
+	std::map<Region_Node*, bool> dead_nodes;
 };
 
 #endif

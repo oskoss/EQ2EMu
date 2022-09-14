@@ -215,6 +215,7 @@ Client::Client(EQStream* ieqs) : underworld_cooldown_timer(5000), pos_update(125
 	disable_save = false;
 	SetZoningDestination(nullptr);
 	underworld_cooldown_timer.Disable();
+	player_pos_change_count = 0;
 }
 
 Client::~Client() {
@@ -3216,19 +3217,18 @@ bool Client::Process(bool zone_process) {
 			//GetPlayer()->CalculateLocation();
 			client_list.CheckPlayersInvisStatus(this);
 			GetCurrentZone()->SendPlayerPositionChanges(GetPlayer());
+			
 			player_pos_changed = false;
+			
 			GetCurrentZone()->CheckTransporters(this);
 			
 			if(GetPlayer()->GetRegionMap())
 			{
-				if((lastRegionRemapTime+1000) < Timer::GetCurrentTime2())
-				{
-					lastRegionRemapTime = Timer::GetCurrentTime2() + 1000;
-					GetPlayer()->GetRegionMap()->MapRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
-				}
-				else
-					GetPlayer()->GetRegionMap()->UpdateRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
+				GetPlayer()->GetRegionMap()->MapRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
 			}
+		}
+		else if (IsReadyForUpdates() && GetPlayer()->GetRegionMap()) {
+			GetPlayer()->GetRegionMap()->UpdateRegionsNearSpawn(this->GetPlayer(), regionDebugMessaging ? this : nullptr);
 		}
 	}
 	if (lua_interface && lua_debug && lua_debug_timer.Check())

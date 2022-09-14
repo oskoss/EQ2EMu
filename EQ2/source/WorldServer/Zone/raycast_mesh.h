@@ -36,8 +36,8 @@ typedef unsigned int RmUint32;
 class RaycastMesh
 {
 public:
-	virtual bool raycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance, RmUint32 *GridID) = 0;
-	virtual bool bruteForceRaycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance, RmUint32 *GridID) = 0;
+	virtual bool raycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance, RmUint32 *GridID, RmUint32 *WidgetID) = 0;
+	virtual bool bruteForceRaycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance, RmUint32 *GridID, RmUint32 *WidgetID) = 0;
 
 	virtual const RmReal * getBoundMin(void) const = 0; // return the minimum bounding box
 	virtual const RmReal * getBoundMax(void) const = 0; // return the maximum bounding box.
@@ -52,6 +52,7 @@ RaycastMesh * createRaycastMesh(RmUint32 vcount,		// The number of vertices in t
 								RmUint32 tcount,		// The number of triangles in the source triangle mesh
 								const RmUint32 *indices, // The triangle indices in the format of i1,i2,i3 ... i4,i5,i6, ...
 								const RmUint32 *grids,
+								const RmUint32 *widgets,
 								RmUint32 maxDepth=15,	// Maximum recursion depth for the triangle mesh.
 								RmUint32 minLeafSize=4,	// minimum triangles to treat as a 'leaf' node.
 								RmReal	minAxisSize=0.01f	// once a particular axis is less than this size, stop sub-dividing.

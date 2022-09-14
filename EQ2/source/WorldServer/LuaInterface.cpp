@@ -1485,6 +1485,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetLootDropType", EQ2Emu_lua_SetLootDropType);
 	
 	lua_register(state, "DamageEquippedItems", EQ2Emu_lua_DamageEquippedItems);
+	
+	lua_register(state, "CreateWidgetRegion", EQ2Emu_lua_CreateWidgetRegion);
+	lua_register(state, "RemoveRegion", EQ2Emu_lua_RemoveRegion);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

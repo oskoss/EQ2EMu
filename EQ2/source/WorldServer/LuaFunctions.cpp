@@ -13073,3 +13073,43 @@ int EQ2Emu_lua_DamageEquippedItems(lua_State* state) {
 	
 	return 1;
 }
+
+int EQ2Emu_lua_CreateWidgetRegion(lua_State* state) {
+	ZoneServer* zone = lua_interface->GetZone(state);
+	int32 version = lua_interface->GetInt32Value(state, 2);
+	
+	RegionMap* region_map = world.GetRegionMap(std::string(zone->GetZoneFile()), version);
+	if(region_map == nullptr) {
+		lua_interface->LogError("%s: LUA CreateWidgetRegion command error: region map is not valid for version %u", lua_interface->GetScriptName(state), version);
+		return 0;
+	}
+	string region_name = lua_interface->GetStringValue(state, 3);
+	string env_name = lua_interface->GetStringValue(state, 4);
+	int32 grid_id = lua_interface->GetInt32Value(state, 5);
+	int32 widget_id = lua_interface->GetInt32Value(state, 6);
+	float dist = lua_interface->GetFloatValue(state, 7);
+	region_map->InsertRegionNode(zone, version, region_name, env_name, grid_id, widget_id, dist);
+	
+	lua_interface->ResetFunctionStack(state);
+
+	lua_interface->SetBooleanValue(state, true);
+	return 1;
+}
+
+int EQ2Emu_lua_RemoveRegion(lua_State* state) {
+	ZoneServer* zone = lua_interface->GetZone(state);
+	int32 version = lua_interface->GetInt32Value(state, 2);
+	
+	RegionMap* region_map = world.GetRegionMap(std::string(zone->GetZoneFile()), version);
+	if(region_map == nullptr) {
+		lua_interface->LogError("%s: LUA RemoveRegion command error: region map is not valid for version %u", lua_interface->GetScriptName(state), version);
+		return 0;
+	}
+	string region_name = lua_interface->GetStringValue(state, 3);
+	region_map->RemoveRegionNode(region_name);
+	
+	lua_interface->ResetFunctionStack(state);
+
+	lua_interface->SetBooleanValue(state, true);
+	return 1;
+}

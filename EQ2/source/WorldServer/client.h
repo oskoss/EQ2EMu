@@ -20,8 +20,10 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "../common/EQStream.h"
 #include <list>
+#include <atomic>
+
+#include "../common/EQStream.h"
 #include "../common/timer.h"
 #include "Items/Items.h"
 #include "zoneserver.h"
@@ -643,7 +645,8 @@ private:
 	Timer	lua_debug_timer;
 	Timer	temp_placement_timer;
 	Timer	spawn_removal_timer;
-	bool	player_pos_changed;
+	std::atomic<bool> player_pos_changed;
+	std::atomic<int8> player_pos_change_count;
 	bool HandlePacket(EQApplicationPacket *app);
 	EQStream* eqs;
 	bool quickbar_changed;

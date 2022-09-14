@@ -78,7 +78,7 @@ Map::~Map() {
 	}
 }
 
-float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID)
+float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID, uint32* WidgetID)
 {
 	if (!IsMapLoaded())
 		return BEST_Z_INVALID;
@@ -95,7 +95,7 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID)
 	float hit_distance;
 	bool hit = false;
 
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID);
 	if(hit) {
 		return result->z;
 	}
@@ -103,7 +103,7 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID)
 	// Find nearest Z above us
 	
 	to.z = -BEST_Z_INVALID;
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID);
 	if (hit)
 	{
 		return result->z;
@@ -112,7 +112,7 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID)
 	return BEST_Z_INVALID;
 }
 
-float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result) {
+float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID, uint32* WidgetID) {
 	if (!IsMapLoaded())
 		return false;
 	// Unlike FindBestZ, this method finds the closest Z value above or below the specified point.
@@ -130,9 +130,8 @@ float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result) {
 	glm::vec3 to(start.x, start.y, BEST_Z_INVALID);
 	float hit_distance;
 	bool hit = false;
-	uint32 grid_id = 0;
 	// first check is below us
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)grid_id);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID);
 	if (hit) {
 		ClosestZ = result->z;
 		
@@ -140,7 +139,7 @@ float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result) {
 	
 	// Find nearest Z above us
 	to.z = -BEST_Z_INVALID;
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)grid_id);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID);
 	if (hit) {
 		if (std::abs(from.z - result->z) < std::abs(ClosestZ - from.z))
 			return result->z;
@@ -154,7 +153,7 @@ bool Map::LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::ve
 		return false;
 	if(!imp)
 		return false;
-	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)result, nullptr, nullptr, nullptr);
+	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)result, nullptr, nullptr, nullptr, nullptr);
 }
 
 bool Map::LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, glm::vec3 *result) {
@@ -251,7 +250,7 @@ bool Map::CheckLoS(glm::vec3 myloc, glm::vec3 oloc)
 	if(!imp)
 		return false;
 
-	return !imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, nullptr, nullptr, nullptr);
+	return !imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
 // returns true if a collision happens
@@ -261,7 +260,7 @@ bool Map::DoCollisionCheck(glm::vec3 myloc, glm::vec3 oloc, glm::vec3 &outnorm, 
 	if(!imp)
 		return false;
 
-	return imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, (RmReal *)&outnorm, (RmReal *)&distance, nullptr);
+	return imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, (RmReal *)&outnorm, (RmReal *)&distance, nullptr, nullptr);
 }
 
 Map *Map::LoadMapFile(std::string zonename, std::string file) {
@@ -370,6 +369,7 @@ bool Map::LoadV2(FILE* f) {
 	std::vector<glm::vec3> verts;
 	std::vector<uint32> indices;
 	std::vector<uint32> grids;
+	std::vector<uint32> widgets;
 
 	uint32 face_count = 0;
 	// Loop through the grids loading the face list
@@ -429,6 +429,7 @@ bool Map::LoadV2(FILE* f) {
 			indices.push_back((uint32)sz + 2);
 
 			grids.push_back((uint32)GridID);
+			widgets.push_back((uint32)0);
 		}
 	}
 	face_count = face_count / 3;
@@ -441,8 +442,168 @@ bool Map::LoadV2(FILE* f) {
 		imp = new impl;
 	}
 
-	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0], &grids[0]);
+	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0], &grids[0], &widgets[0]);
 
+	if (!imp->rm) {
+		delete imp;
+		imp = nullptr;
+		return false;
+	}
+
+	return true;
+}
+
+bool Map::LoadV3Deflated(std::ifstream* file, std::streambuf * const srcbuf) {
+	
+	std::vector<glm::vec3> verts;
+	std::vector<uint32> indices;
+	std::vector<uint32> grids;
+	std::vector<uint32> widgets;
+	
+	int8 strSize = 0;
+	char* buf = new char[1024];
+	
+	int32 mapVersion = 0;
+	srcbuf->sgetn(buf,sizeof(int32));
+	memcpy(&mapVersion,&buf[0],sizeof(int32));
+	LogWrite(MAP__DEBUG, 0, "Map", "MapVersion = %u", mapVersion);
+	
+	srcbuf->sgetn(buf,sizeof(int8));
+	memcpy(&strSize,&buf[0],sizeof(int8));
+	LogWrite(MAP__DEBUG, 0, "Map", "strSize = %u", strSize);
+
+	char name[256];
+	srcbuf->sgetn(&name[0],strSize);
+	name[strSize] = '\0';
+	LogWrite(MAP__DEBUG, 0, "Map", "name = %s", name);
+	string fileName(name);
+	std::size_t found = fileName.find(m_ZoneName);
+	// Make sure file contents are for the correct zone
+	if (found == std::string::npos) {
+		file->close();
+		safe_delete_array(buf);
+		LogWrite(MAP__ERROR, 0, "Map", "Map::LoadV3Deflated() map contents (%s) do not match its name (%s).", &name, m_ZoneFile.c_str());
+		return false;
+	}
+	// Read the min bounds
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MinX,&buf[0],sizeof(float));
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MinY,&buf[0],sizeof(float));
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MinZ,&buf[0],sizeof(float));
+
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MaxX,&buf[0],sizeof(float));
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MaxY,&buf[0],sizeof(float));
+	srcbuf->sgetn(buf,sizeof(float));
+	memcpy(&m_MaxZ,&buf[0],sizeof(float));
+
+	// Read the number of grids
+	int32 NumGrids;
+	srcbuf->sgetn(buf,sizeof(int32));
+	memcpy(&NumGrids,&buf[0],sizeof(int32));
+
+	uint32 face_count = 0;
+	// Loop through the grids loading the face list
+	for (int32 i = 0; i < NumGrids; i++) {
+		// Read the grid id
+		int32 GridID;
+		srcbuf->sgetn(buf,sizeof(int32));
+		memcpy(&GridID,&buf[0],sizeof(int32));
+
+		// Read the number of vertices
+		int32 vertex_map_count;
+		srcbuf->sgetn(buf,sizeof(int32));
+		memcpy(&vertex_map_count,&buf[0],sizeof(int32));
+		
+		for(int32 m = 0; m < vertex_map_count; m++) {
+			int32 WidgetID;
+			srcbuf->sgetn(buf,sizeof(int32));
+			memcpy(&WidgetID,&buf[0],sizeof(int32));
+			
+			float w_x1, w_y1, w_z1;
+
+			// read widget coords
+			srcbuf->sgetn(buf,sizeof(float)*3);
+			memcpy(&w_x1,&buf[0],sizeof(float));
+			memcpy(&w_y1,&buf[4],sizeof(float));
+			memcpy(&w_z1,&buf[8],sizeof(float));
+			
+			glm::vec3 a(w_x1, w_y1, w_z1);
+			widget_map.insert(make_pair(WidgetID, a));
+			
+			int32 NumFaces;
+			srcbuf->sgetn(buf,sizeof(int32));
+			memcpy(&NumFaces,&buf[0],sizeof(int32));
+			
+			face_count += NumFaces;	
+			
+			for (int32 y = 0; y < NumFaces; ) {
+						// Each vertex need an x,y,z coordinate and 
+			// we will be reading 3 to create the face
+						float x1, x2, x3;
+						float y1, y2, y3;
+						float z1, z2, z3;
+
+						// Read the first vertex
+						srcbuf->sgetn(buf,sizeof(float)*3);
+						memcpy(&x1,&buf[0],sizeof(float));
+						memcpy(&y1,&buf[4],sizeof(float));
+						memcpy(&z1,&buf[8],sizeof(float));
+						y++;
+
+						// Read the second vertex
+						srcbuf->sgetn(buf,sizeof(float)*3);
+						memcpy(&x2,&buf[0],sizeof(float));
+						memcpy(&y2,&buf[4],sizeof(float));
+						memcpy(&z2,&buf[8],sizeof(float));
+						y++;
+
+						// Read the third (final) vertex
+						srcbuf->sgetn(buf,sizeof(float)*3);
+						memcpy(&x3,&buf[0],sizeof(float));
+						memcpy(&y3,&buf[4],sizeof(float));
+						memcpy(&z3,&buf[8],sizeof(float));
+						y++;
+
+						glm::vec3 a(x1, z1, y1);
+						glm::vec3 b(x2, z2, y2);
+						glm::vec3 c(x3, z3, y3);
+
+						size_t sz = verts.size();
+						verts.push_back(a);
+						indices.push_back((uint32)sz);
+
+						verts.push_back(b);
+						indices.push_back((uint32)sz + 1);
+
+						verts.push_back(c);
+						indices.push_back((uint32)sz + 2);
+									
+						grids.push_back(GridID);
+						widgets.push_back(WidgetID);
+					}
+
+		}
+		// Loop through the vertices list reading
+		// 3 at a time to creat a triangle (face)
+	}
+	face_count = face_count / 3;
+
+	if (imp) {
+		imp->rm->release();
+		imp->rm = nullptr;
+	}
+	else {
+		imp = new impl;
+	}
+
+	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0], &grids[0], &widgets[0]);
+
+	file->close();
+	safe_delete_array(buf);
 	if (!imp->rm) {
 		delete imp;
 		imp = nullptr;
@@ -477,8 +638,13 @@ bool Map::LoadV2Deflated(FILE* f) {
 	srcbuf->sgetn(&name[0],strSize);
 	name[strSize] = '\0';
 	LogWrite(MAP__DEBUG, 0, "Map", "name = %s", name);
-
 	string fileName(name);
+	
+	if(fileName.find("EQ2EmuMapTool") != std::string::npos) {
+		return(LoadV3Deflated(&file, srcbuf));
+	}
+	
+	
 	std::size_t found = fileName.find(m_ZoneName);
 	// Make sure file contents are for the correct zone
 	if (found == std::string::npos) {
@@ -506,6 +672,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 	std::vector<glm::vec3> verts;
 	std::vector<uint32> indices;
 	std::vector<uint32> grids;
+	std::vector<uint32> widgets;
 
 	uint32 face_count = 0;
 	// Loop through the grids loading the face list
@@ -570,6 +737,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 			indices.push_back((uint32)sz + 2);
 
 			grids.push_back(GridID);
+			widgets.push_back((uint32)0);
 		}
 	}
 	face_count = face_count / 3;
@@ -582,7 +750,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 		imp = new impl;
 	}
 
-	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0], &grids[0]);
+	imp->rm = createRaycastMesh((RmUint32)verts.size(), (const RmReal*)&verts[0], face_count, &indices[0], &grids[0], &widgets[0]);
 
 	file.close();
 	safe_delete_array(buf);

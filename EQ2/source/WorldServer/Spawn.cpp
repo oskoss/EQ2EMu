@@ -39,6 +39,7 @@ extern RuleManager rule_manager;
 extern World world;
 extern ZoneList zone_list;
 extern MasterRaceTypeList race_types_list;
+extern LuaInterface* lua_interface;
 
 Spawn::Spawn(){ 
 	loot_coins = 0;
@@ -135,6 +136,7 @@ Spawn::Spawn(){
 	loot_drop_type = 0;
 	deleted_spawn = false;
 	is_collector = false;
+	trigger_widget_id = 0;
 }
 
 Spawn::~Spawn(){
@@ -2049,6 +2051,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 	int16 version = packet->GetVersion();
 
 	int32 new_grid_id = 0;
+	int32 new_widget_id = 0;
 	if(player->GetMap() != nullptr && player->GetMap()->IsMapLoaded())
 	{
 		m_GridMutex.writelock(__FUNCTION__, __LINE__);
@@ -2059,12 +2062,14 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 				itr->second.timestamp = Timer::GetCurrentTime2()+100;
 				itr->second.npc_save = false;
 				new_grid_id = itr->second.grid_id;
+				new_widget_id = itr->second.widget_id;
 			}
 			else {
 				auto loc = glm::vec3(GetX(), GetZ(), GetY());
-				float new_z = player->GetMap()->FindBestZ(loc, nullptr, &new_grid_id);
+				float new_z = player->GetMap()->FindBestZ(loc, nullptr, &new_grid_id, &new_widget_id);
 				TimedGridData data;
 				data.grid_id = new_grid_id;
+				data.widget_id = new_widget_id;
 				data.x = GetX();
 				data.y = GetY();
 				data.z = GetZ();
@@ -2073,8 +2078,10 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 				established_grid_id.insert(make_pair(packet->GetVersion(), data));
 			}
 		}
-		else
+		else {
 			new_grid_id = itr->second.grid_id;
+			new_widget_id = itr->second.widget_id;
+		}
 		m_GridMutex.releasewritelock(__FUNCTION__, __LINE__);
 	}
 	
@@ -3928,12 +3935,15 @@ void Spawn::FixZ(bool forceUpdate) {
 	glm::vec3 current_loc(GetX(), GetZ(), GetY());
 
 	uint32 GridID = 0;
+	uint32 WidgetID = 0;
 	float new_z = GetY();
 	if(GetMap() != nullptr) {
-		float new_z = GetMap()->FindBestZ(current_loc, nullptr, &GridID);
+		float new_z = GetMap()->FindBestZ(current_loc, nullptr, &GridID, &WidgetID);
 
 		if ((IsTransportSpawn() || !IsFlyingCreature()) && GridID != 0 && GridID != appearance.pos.grid_id)
 			SetPos(&(appearance.pos.grid_id), GridID);
+		
+		trigger_widget_id = WidgetID;
 	}
 
 	// no need to go any further for players, flying creatures or objects, just needed the grid id set
@@ -4434,4 +4444,19 @@ void Spawn::SetAppearancePosition(float x, float y, float z) {
 		((Player*)this)->SetSideSpeed(0);
 		((Player*)this)->pos_packet_speed = 0;
 	}
+}
+
+
+int32 Spawn::InsertRegionToSpawn(Region_Node* node, ZBSP_Node* bsp_root, WaterRegionType regionType, bool in_region) {
+	std::map<Region_Node*, ZBSP_Node*> newMap;
+	newMap.insert(make_pair(node, bsp_root));
+	Region_Status status;
+	status.inRegion = in_region;
+	status.regionType = regionType;
+	int32 returnValue = 0;
+	lua_interface->RunRegionScript(node->regionScriptName, "EnterRegion", GetZone(), this, RegionTypeUntagged, &returnValue);
+	status.timerTic = returnValue;
+	status.lastTimerTic = returnValue ? Timer::GetCurrentTime2() : 0;
+	Regions.insert(make_pair(newMap, status));	
+	return returnValue;
 }
