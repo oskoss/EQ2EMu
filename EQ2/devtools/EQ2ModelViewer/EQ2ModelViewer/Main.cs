@@ -37,6 +37,7 @@ namespace EQ2ModelViewer
         private bool AutoExportRegionOnLoad = false;
         private String AutoLoadFileName = "";
         private bool IsLoaded = false;
+        private bool WriteObjFile = true;
         public frmMain()
         {
             InitializeComponent();
@@ -893,7 +894,7 @@ namespace EQ2ModelViewer
                 return;
 
             //List<Vector3> MasterVertexList = new List<Vector3>();
-            Dictionary<UInt32, List<Vector3>> MasterVertexList = new Dictionary<UInt32, List<Vector3>>();
+            Dictionary<UInt32, List<ModelVertexMap>> MasterVertexList = new Dictionary<UInt32, List<ModelVertexMap>>();
             foreach (Model model in m_Models)
             {
                 if  (model.WidgetID == 1253219127)
@@ -904,7 +905,7 @@ namespace EQ2ModelViewer
                 UInt32 grid = model.GridID;
 
                 if (!MasterVertexList.ContainsKey(grid))
-                    MasterVertexList[grid] = new List<Vector3>();
+                    MasterVertexList[grid] = new List<ModelVertexMap>();
 
                 List<Vector3> convertedVertices = new List<Vector3>();
                 foreach(Vector3 vect in VertexList)
@@ -917,105 +918,138 @@ namespace EQ2ModelViewer
                     Vector3 result = Vector3.Add(Vector3.TransformNormal(vect, scaled), model.Position);
                     convertedVertices.Add(result);
                 }
-                MasterVertexList[grid].AddRange(convertedVertices);
+                ModelVertexMap mapping = new ModelVertexMap();
+                mapping.Verts.AddRange(convertedVertices);
+                mapping.WidgetID = model.WidgetID;
+                mapping.Position = model.Position;
+                MasterVertexList[grid].Add(mapping);
             }
 
             float minX = float.NaN;
+            float minY = float.NaN;
             float minZ = float.NaN;
             float maxX = float.NaN;
+            float maxY = float.NaN;
             float maxZ = float.NaN;
-            foreach (KeyValuePair<UInt32, List<Vector3>> entry in MasterVertexList)
+            foreach (KeyValuePair<UInt32, List<ModelVertexMap>> entry in MasterVertexList)
             {
-                foreach (Vector3 v in entry.Value)
+                foreach (ModelVertexMap mvm in entry.Value)
                 {
-                    if (float.IsNaN(minX))
+                    foreach (Vector3 v in mvm.Verts)
                     {
-                        minX = v.X;
-                        maxX = v.X;
-                        minZ = v.Z;
-                        maxZ = v.Z;
-                    }
-                    else
-                    {
-                        if (v.X < minX)
-                            minX = v.X;
-                        if (v.X > maxX)
-                            maxX = v.X;
-                        if (v.Z < minZ)
-                            minZ = v.Z;
-                        if (v.Z > maxZ)
-                            maxZ = v.Z;
-                    }
-                }
-            }
-
-
-            using (StreamWriter file = new StreamWriter(ZoneFile + AppendFileStr + ".obj"))
-            {
-                //   file.WriteLine(ZoneFile);
-                //  file.WriteLine("Min");
-                //   file.WriteLine(minX + " " + minZ);
-                //  file.WriteLine("Max");
-                //  file.WriteLine(maxX + " " + maxZ);
-
-                //  file.WriteLine("Grid count");
-                //  file.WriteLine(MasterVertexList.Count);
-                //  file.WriteLine();
-
-                List<string> indices = new List<string>();
-                int count = 0;
-                string buildStr = "";
-                int curcount = 0;
-                foreach (KeyValuePair<UInt32, List<Vector3>> entry in MasterVertexList)
-                {
-                    buildStr = "f ";
-                   // file.WriteLine("Grid");
-                   // file.WriteLine(entry.Key);
-
-                   // file.WriteLine("Face count");
-                   // file.WriteLine(entry.Value.Count);
-                    foreach (Vector3 v in entry.Value)
-                    {
-                        if (curcount > 2)
+                        if (float.IsNaN(minX))
                         {
-                            buildStr += count;
-                            indices.Add(buildStr);
-                            buildStr = "f ";
-                            curcount = 0;
+                            minX = v.X;
+                            maxX = v.X;
+                            minY = v.Y;
+                            maxY = v.Y;
+                            minZ = v.Z;
+                            maxZ = v.Z;
                         }
                         else
-                            buildStr += count + " ";
-
-                        file.WriteLine("v " + v.X.ToString() + " " + v.Y.ToString()
-                            + " " + v.Z.ToString());
-                        count++;
-                        curcount++;
+                        {
+                            if (v.X < minX)
+                                minX = v.X;
+                            if (v.X > maxX)
+                                maxX = v.X;
+                            if (v.Y < minY)
+                                minY = v.Y;
+                            if (v.Y > maxY)
+                                minY = v.Y;
+                            if (v.Z < minZ)
+                                minZ = v.Z;
+                            if (v.Z > maxZ)
+                                maxZ = v.Z;
+                        }
                     }
                 }
-                foreach (string str in indices)
-                {
-                    file.WriteLine(str);
-                }
-                file.Close();
             }
 
+            if (WriteObjFile)
+            {
+                using (StreamWriter file = new StreamWriter(ZoneFile + AppendFileStr + ".obj"))
+                {
+                    //   file.WriteLine(ZoneFile);
+                    //  file.WriteLine("Min");
+                    //   file.WriteLine(minX + " " + minZ);
+                    //  file.WriteLine("Max");
+                    //  file.WriteLine(maxX + " " + maxZ);
+
+                    //  file.WriteLine("Grid count");
+                    //  file.WriteLine(MasterVertexList.Count);
+                    //  file.WriteLine();
+
+                    List<string> indices = new List<string>();
+                    int count = 0;
+                    string buildStr = "";
+                    int curcount = 0;
+                    foreach (KeyValuePair<UInt32, List<ModelVertexMap>> entry in MasterVertexList)
+                    {
+                        buildStr = "f ";
+                        // file.WriteLine("Grid");
+                        // file.WriteLine(entry.Key);
+
+                        // file.WriteLine("Face count");
+                        // file.WriteLine(entry.Value.Count);
+                        foreach (ModelVertexMap mvm in entry.Value)
+                        {
+                            foreach (Vector3 v in mvm.Verts)
+                            {
+                                if (curcount > 2)
+                                {
+                                    buildStr += count;
+                                    indices.Add(buildStr);
+                                    buildStr = "f ";
+                                    curcount = 0;
+                                }
+                                else
+                                    buildStr += count + " ";
+
+                                file.WriteLine("v " + v.X.ToString() + " " + v.Y.ToString()
+                                    + " " + v.Z.ToString());
+                                count++;
+                                curcount++;
+                            }
+                        }
+                    }
+                    foreach (string str in indices)
+                    {
+                        file.WriteLine(str);
+                    }
+                    file.Close();
+                }
+            }
+            UInt32 mapVersion = 3;
+            String toolName = "EQ2EmuMapTool";
             using (BinaryWriter file = new BinaryWriter(File.Open(ZoneFile + AppendFileStr + ".EQ2Map", FileMode.Create)))
             {
+                file.Write(toolName);
+                file.Write(mapVersion);
                 file.Write(ZoneFile);
                 file.Write(minX);
+                file.Write(minY);
                 file.Write(minZ);
                 file.Write(maxX);
+                file.Write(maxY);
                 file.Write(maxZ);
                 file.Write(MasterVertexList.Count);
-                foreach (KeyValuePair<UInt32, List<Vector3>> entry in MasterVertexList)
+                foreach (KeyValuePair<UInt32, List<ModelVertexMap>> entry in MasterVertexList)
                 {
                     file.Write(entry.Key);
                     file.Write(entry.Value.Count);
-                    foreach (Vector3 v in entry.Value)
+                    foreach (ModelVertexMap mvm in entry.Value)
                     {
-                        file.Write(v.X);
-                        file.Write(v.Y);
-                        file.Write(v.Z);
+                        file.Write(mvm.WidgetID);
+                        file.Write(mvm.Position.X);
+                        file.Write(mvm.Position.Y);
+                        file.Write(mvm.Position.Z);
+                        file.Write(mvm.Verts.Count);
+                        foreach (Vector3 v in mvm.Verts)
+                        {
+                            file.Write(v.X);
+                            file.Write(v.Y);
+                            file.Write(v.Z);
+                        }
                     }
                 }
                 file.Close();
