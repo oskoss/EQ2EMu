@@ -144,7 +144,7 @@ SRC= ../common/Condition.o \
 	zoneserver.o
 
 
-CXXFLAGS=-std=c++14
+CXXFLAGS=-std=c++17
 CFLAGS=`mysql_config --cflags` -march=native -pipe -pthread
 LDFLAGS=`mysql_config --libs` -I$(LUADIR) -L$(LUADIR) -llua5-3-4 -rdynamic
 WFLAGS=-Wall -Wno-reorder
