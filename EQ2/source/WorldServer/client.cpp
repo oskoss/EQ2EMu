@@ -3194,7 +3194,7 @@ bool Client::Process(bool zone_process) {
 			if(!underworld_cooldown_timer.Enabled() || (underworld_cooldown_timer.Enabled() && underworld_cooldown_timer.Check())) {
 				bool underworld = false;
 				if(rule_manager.GetGlobalRule(R_Zone, UseMapUnderworldCoords)->GetBool()) {
-					if(GetPlayer()->GetMap() && GetPlayer()->GetY() < (GetPlayer()->GetMap()->GetMinY() + rule_manager.GetGlobalRule(R_Zone, MapUnderworldCoordOffset)->GetFloat())) {		
+					if(GetPlayer()->GetMap() && GetPlayer()->GetMap()->GetMinY() != 9999999.0f && GetPlayer()->GetY() < (GetPlayer()->GetMap()->GetMinY() + rule_manager.GetGlobalRule(R_Zone, MapUnderworldCoordOffset)->GetFloat())) {		
 						underworld = true;
 					}
 				}
