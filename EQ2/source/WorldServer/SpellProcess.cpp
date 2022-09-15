@@ -1795,7 +1795,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 			spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 			for (int8 i = 0; i < spell->targets.size(); i++) {
 				LogWrite(SPELL__ERROR, 0, "HO", "%u", spell->targets.at(i));
-				if (spell->targets.at(i) == ho->GetTarget()) {
+				if (spell->targets.at(i) == ho->GetTarget() || spell->spell->GetSpellData()->friendly_spell) {
 					match = true;
 					LogWrite(SPELL__ERROR, 0, "HO", "match found");
 					break;
@@ -1829,7 +1829,8 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 				ho = groupItr->second;
 				int32 group_id = client->GetPlayer()->GetGroupMemberInfo()->group_id;
 				spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
-				if (spell->targets.at(0) == ho->GetTarget() && ho->UpdateHeroicOP(spell->spell->GetSpellIconHeroicOp())) {
+				if ((spell->targets.at(0) == ho->GetTarget() || spell->spell->GetSpellData()->friendly_spell)
+					&& ho->UpdateHeroicOP(spell->spell->GetSpellIconHeroicOp())) {
 					spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 
 					world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
