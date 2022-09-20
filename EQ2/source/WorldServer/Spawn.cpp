@@ -4464,7 +4464,7 @@ int32 Spawn::InsertRegionToSpawn(Region_Node* node, ZBSP_Node* bsp_root, WaterRe
 	status.regionType = regionType;
 	int32 returnValue = 0;
 	if(in_region) {
-		lua_interface->RunRegionScript(node->regionScriptName, "EnterRegion", GetZone(), this, RegionTypeUntagged, &returnValue);
+		lua_interface->RunRegionScript(node->regionScriptName, "EnterRegion", GetZone(), this, regionType, &returnValue);
 	}
 	status.timerTic = returnValue;
 	status.lastTimerTic = returnValue ? Timer::GetCurrentTime2() : 0;
