@@ -4006,6 +4006,14 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					else
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Region Debug Disabled!");
 				}
+				else if (strcmp(sep->arg[0], "sight") == 0)
+				{
+					if(onOff && cmdTarget) {
+						client->SetPlayerPOVGhost(cmdTarget);
+					}
+					else
+						client->SetPlayerPOVGhost(nullptr);
+				}
 				else if (strcmp(sep->arg[0], "luadebug") == 0)
 				{
 					client->SetLuaDebugClient(onOff);

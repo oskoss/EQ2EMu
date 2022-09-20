@@ -1488,6 +1488,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	lua_register(state, "CreateWidgetRegion", EQ2Emu_lua_CreateWidgetRegion);
 	lua_register(state, "RemoveRegion", EQ2Emu_lua_RemoveRegion);
+	
+	lua_register(state, "SetPlayerPOVGhost", EQ2Emu_lua_SetPlayerPOVGhost);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

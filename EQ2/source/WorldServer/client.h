@@ -567,6 +567,9 @@ public:
 	
 	void	AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i);
 	
+	bool	SetPlayerPOVGhost(Spawn* spawn);
+	
+	int32	GetPlayerPOVGhostSpawnID() { return pov_ghost_spawn_id; }
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -702,6 +705,9 @@ private:
 	Mutex MSpellDetails;
 	bool disable_save;
 	vector< string > devices;
+	
+	std::atomic<int32> pov_ghost_spawn_id;
+	
 };
 
 class ClientList {

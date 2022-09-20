@@ -216,6 +216,7 @@ Client::Client(EQStream* ieqs) : underworld_cooldown_timer(5000), pos_update(125
 	SetZoningDestination(nullptr);
 	underworld_cooldown_timer.Disable();
 	player_pos_change_count = 0;
+	pov_ghost_spawn_id = 0;
 }
 
 Client::~Client() {
@@ -922,9 +923,23 @@ void Client::SendZoneSpawns() {
 }
 
 void Client::SendCharPOVGhost() {
+	bool use_ghost_pov = false;
 	PacketStruct* set_pov = configReader.getStruct("WS_SetPOVGhostCmd", GetVersion());
+	int32 ghost_id = 0;
 	if (set_pov) {
-		set_pov->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(player));
+		if(pov_ghost_spawn_id) {
+			Spawn* spawn = GetCurrentZone()->GetSpawnByID(pov_ghost_spawn_id);
+			ghost_id = player->GetIDWithPlayerSpawn(spawn);
+			if(spawn) {
+				use_ghost_pov = true;
+			}
+		}
+		if(use_ghost_pov) {
+		set_pov->setDataByName("spawn_id", ghost_id);
+		}
+		else {
+			set_pov->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(player));
+		}
 		EQ2Packet* app_pov = set_pov->serialize();
 		QueuePacket(app_pov);
 		safe_delete(set_pov);
@@ -11352,4 +11367,21 @@ void Client::AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i) {
 			(*i)++;
 		}
 	}
+}
+
+bool Client::SetPlayerPOVGhost(Spawn* spawn) {
+	if(!spawn) {
+		pov_ghost_spawn_id = 0;
+		SendCharPOVGhost();
+		return true;
+	}
+	
+	int32 ghost_id = player->GetIDWithPlayerSpawn(spawn);
+	if(ghost_id) {
+		pov_ghost_spawn_id = spawn->GetID();
+		SendCharPOVGhost();
+		return true;
+	}
+	
+	return false;
 }

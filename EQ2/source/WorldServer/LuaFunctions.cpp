@@ -13113,3 +13113,37 @@ int EQ2Emu_lua_RemoveRegion(lua_State* state) {
 	lua_interface->SetBooleanValue(state, true);
 	return 1;
 }
+
+
+int EQ2Emu_lua_SetPlayerPOVGhost(lua_State* state) {
+	Client* client = nullptr;
+	Spawn* player = lua_interface->GetSpawn(state);
+	if (!player) {
+		lua_interface->LogError("LUA SetPlayerPOVGhost command error: spawn is not valid");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("LUA SetPlayerPOVGhost command error: spawn is not a player");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	client = player->GetClient();
+
+	if (!client) {
+		lua_interface->LogError("LUA SetPlayerPOVGhost command error: could not find client");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	
+	Spawn* spawn = lua_interface->GetSpawn(state, 2);
+	
+	bool success_sight = client->SetPlayerPOVGhost(spawn);
+	
+	lua_interface->ResetFunctionStack(state);
+
+	lua_interface->SetBooleanValue(state, success_sight);
+	return 1;
+}

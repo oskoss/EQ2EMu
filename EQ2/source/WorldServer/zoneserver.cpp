@@ -1199,6 +1199,7 @@ void ZoneServer::CheckRemoveSpawnFromClient(Spawn* spawn) {
 				client->GetPlayer()->WasSentSpawn(spawn->GetID()) && 
 				!client->GetPlayer()->IsRemovingSpawn(spawn->GetID()) && 
 				client->GetPlayer()->WasSpawnRemoved(spawn) == false && 
+				(client->GetPlayerPOVGhostSpawnID() == 0 || client->GetPlayerPOVGhostSpawnID() != spawn->GetID()) &&
 				(spawn_range_map.Get(client)->Get(spawn->GetID()) > REMOVE_SPAWN_DISTANCE &&
 					!spawn->IsSign() && !spawn->IsObject() && !spawn->IsWidget() && !spawn->IsTransportSpawn())){
 				SendRemoveSpawn(client, spawn, packet);
@@ -3952,6 +3953,10 @@ bool ZoneServer::SendRemoveSpawn(Client* client, Spawn* spawn, PacketStruct* pac
 	if(!client || !spawn || (client && client->GetPlayer() == spawn))
 		return false;
 
+	if(client->GetPlayerPOVGhostSpawnID() == spawn->GetID()) {
+			client->SetPlayerPOVGhost(nullptr);
+	}
+	
 	spawn->RemoveSpawnFromPlayer(client->GetPlayer());
 //	LogWrite(ZONE__DEBUG, 7, "Zone", "%s: Processing SendRemoveSpawn for spawn index %u (%s)...cur_id: %i, wasremoved:: %i", client->GetPlayer()->GetName(), index, spawn->GetName(), cur_id, wasRemoved);
 /*	if(packet && index > 0 && !wasRemoved)
