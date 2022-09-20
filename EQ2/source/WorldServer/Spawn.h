@@ -1288,6 +1288,7 @@ public:
 	
 	
 	int32 InsertRegionToSpawn(Region_Node* node, ZBSP_Node* bsp_root, WaterRegionType regionType, bool in_region = true);
+	bool HasRegionTracked(Region_Node* node, ZBSP_Node* bsp_root, bool in_region);
 	
 	EquipmentItemList equipment_list;
 	EquipmentItemList appearance_equipment_list;

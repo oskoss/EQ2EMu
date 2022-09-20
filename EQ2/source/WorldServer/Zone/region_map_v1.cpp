@@ -295,6 +295,7 @@ void RegionMapV1::MapRegionsNearSpawn(Spawn *spawn, Client *client) const
 			}	
 			continue;
 		}
+		
 		float x1 = node->x - testLoc.x;
 		float y1 = node->y - testLoc.y;
 		float z1 = node->z - testLoc.z;
@@ -321,6 +322,9 @@ void RegionMapV1::MapRegionsNearSpawn(Spawn *spawn, Client *client) const
 			}
 			else
 			{
+				if(spawn->HasRegionTracked(node, BSP_Root, false)) {
+					continue;
+				} // UpdateRegionsNearSpawn will capture it for nodes that have BSP_Root's
 				if (spawn->InRegion(node, BSP_Root))
 				{
 					if (client)

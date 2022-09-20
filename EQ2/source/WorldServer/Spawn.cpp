@@ -4471,3 +4471,22 @@ int32 Spawn::InsertRegionToSpawn(Region_Node* node, ZBSP_Node* bsp_root, WaterRe
 	Regions.insert(make_pair(newMap, status));	
 	return returnValue;
 }
+
+
+bool Spawn::HasRegionTracked(Region_Node* node, ZBSP_Node* bsp_root, bool in_region) {
+	map<map<Region_Node*, ZBSP_Node*>, Region_Status>::iterator testitr;
+	for (testitr = Regions.begin(); testitr != Regions.end(); testitr++)
+	{
+		map<Region_Node*, ZBSP_Node*>::const_iterator actualItr = testitr->first.begin();
+		Region_Node *node = actualItr->first;
+		ZBSP_Node *BSP_Root = actualItr->second;
+		if(node == actualItr->first && BSP_Root == actualItr->second) {
+			if(testitr->second.inRegion == in_region)
+				return true;
+			else
+				break;
+		}
+	}
+	
+	return false;
+}
