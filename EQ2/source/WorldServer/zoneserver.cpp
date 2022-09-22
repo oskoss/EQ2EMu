@@ -1070,7 +1070,11 @@ void ZoneServer::CheckSpawnRange(Client* client, Spawn* spawn, bool initial_logi
 				spawn_range_map.Put(client, new MutexMap<int32, float >());
 			float curDist = spawn->GetDistance(client->GetPlayer());
 
-			if (!client->GetPlayer()->WasSentSpawn(spawn->GetID()) && curDist > SEND_SPAWN_DISTANCE)
+			int32 ghost_spawn_id = client->GetPlayerPOVGhostSpawnID();
+			Spawn* otherSpawn = GetSpawnByID(ghost_spawn_id);
+			
+			if (!client->GetPlayer()->WasSentSpawn(spawn->GetID()) 
+				&& (!otherSpawn || otherSpawn->GetDistance(spawn) > SEND_SPAWN_DISTANCE) && curDist > SEND_SPAWN_DISTANCE)
 			{
 				return;
 			}
@@ -1189,6 +1193,8 @@ void ZoneServer::CheckRemoveSpawnFromClient(Spawn* spawn) {
 	for (itr = clients.begin(); itr != clients.end(); itr++) {
 		client = *itr;
 		if(client){
+			int32 ghost_spawn_id = client->GetPlayerPOVGhostSpawnID();
+			Spawn* otherSpawn = GetSpawnByID(ghost_spawn_id);
 			if(!packet || packet_version != client->GetVersion()){
 				safe_delete(packet);
 				packet_version = client->GetVersion();
@@ -1199,7 +1205,7 @@ void ZoneServer::CheckRemoveSpawnFromClient(Spawn* spawn) {
 				client->GetPlayer()->WasSentSpawn(spawn->GetID()) && 
 				!client->GetPlayer()->IsRemovingSpawn(spawn->GetID()) && 
 				client->GetPlayer()->WasSpawnRemoved(spawn) == false && 
-				(client->GetPlayerPOVGhostSpawnID() == 0 || client->GetPlayerPOVGhostSpawnID() != spawn->GetID()) &&
+				(ghost_spawn_id == 0 || (ghost_spawn_id != spawn->GetID() && otherSpawn && otherSpawn->GetDistance(spawn) > REMOVE_SPAWN_DISTANCE)) &&
 				(spawn_range_map.Get(client)->Get(spawn->GetID()) > REMOVE_SPAWN_DISTANCE &&
 					!spawn->IsSign() && !spawn->IsObject() && !spawn->IsWidget() && !spawn->IsTransportSpawn())){
 				SendRemoveSpawn(client, spawn, packet);
