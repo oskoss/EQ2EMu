@@ -24,6 +24,8 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <mutex>
+#include <shared_mutex>
 #include "SpawnLists.h"
 #include "zoneserver.h"
 #include "NPC.h"
@@ -659,6 +661,13 @@ public:
 	bool FindVoiceOver(int8 type, int32 id, int16 index, VoiceOverStruct* struct_ = nullptr, bool* find_garbled = nullptr, VoiceOverStruct* garble_struct_ = nullptr);
 	void AddVoiceOver(int8 type, int32 id, int16 index, VoiceOverStruct* struct_);
 	void CopyVoiceOver(VoiceOverStruct* struct1, VoiceOverStruct* struct2);
+	
+	/* NPC Spells */
+	void AddNPCSpell(int32 list_id, int32 spell_id, int8 tier, bool spawn_cast, bool aggro_cast);
+	vector<NPCSpell*>* GetNPCSpells(int32 primary_list, int32 secondary_list);
+	
+	void PurgeNPCSpells();
+	
 	Mutex MVoiceOvers;
 	
 	static sint64 newValue;
@@ -673,6 +682,8 @@ private:
 	Mutex MSpawnScripts;
 	Mutex MZoneScripts;
 	//Mutex MGroups;
+	
+	mutable std::shared_mutex MNPCSpells;
 	
 	map<int32, MerchantInfo*> merchant_info;
 	map<int32, vector<MerchantItemInfo> > merchant_inventory_items;
@@ -726,5 +737,7 @@ private:
 	std::map<std::string, MapRange*> maps;
 	Mutex				MWorldMaps;
 	Mutex				MWorldRegionMaps;
+	
+	map<int32, map<int32, NPCSpell*> > npc_spell_list;
 };
 #endif

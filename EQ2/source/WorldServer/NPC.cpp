@@ -103,6 +103,7 @@ NPC::NPC(NPC* old_npc){
 		SetOmittedByDBFlag(old_npc->IsOmittedByDBFlag());
 		SetLootTier(old_npc->GetLootTier());
 		SetLootDropType(old_npc->GetLootDropType());
+		has_spells = old_npc->HasSpells();
 	}
 }
 
@@ -150,6 +151,8 @@ void NPC::Initialize(){
 	m_ShardCharID = 0;
 	m_ShardCreatedTimestamp = 0;
 	m_call_runback = false;
+	has_spells = false;
+	cast_on_aggro_completed = false;
 }
 
 EQ2Packet* NPC::serialize(Player* player, int16 version){
@@ -169,10 +172,44 @@ void NPC::SetSkills(map<string, Skill*>* in_skills){
 	skills = in_skills;
 }
 
-void NPC::SetSpells(vector<Spell*>* in_spells){
+void NPC::SetSpells(vector<NPCSpell*>* in_spells){
+	for(int i=0;i<CAST_TYPE::MAX_CAST_TYPES;i++) {
+		cast_on_spells[i].clear();
+	}
+	
+	if(spells) {
+		vector<NPCSpell*>::iterator itr;
+		for(itr = spells->begin(); itr != spells->end(); itr++){
+			safe_delete((*itr));
+		}
+	}
 	safe_delete(spells);
 
 	spells = in_spells;
+	
+	if(spells && spells->size() > 0) {
+		has_spells = true;
+		
+		vector<NPCSpell*>::iterator itr;
+		for(itr = spells->begin(); itr != spells->end();){
+			if((*itr)->cast_on_spawn) {
+				cast_on_spells[CAST_TYPE::CAST_ON_SPAWN].push_back((*itr));
+				itr = spells->erase(itr); // we don't keep on the master list
+				continue;
+			}
+			if((*itr)->cast_on_initial_aggro) {
+				cast_on_spells[CAST_TYPE::CAST_ON_AGGRO].push_back((*itr));
+				itr = spells->erase(itr); // we don't keep on the master list
+				continue;
+			}
+			
+			// didn't hit a continue case, iterate
+			itr++;
+		}
+	}
+	else {
+		has_spells = false;
+	}
 }
 
 void NPC::SetRunbackLocation(float x, float y, float z, int32 gridid, bool set_hp_runback){
@@ -781,7 +818,44 @@ int32 NPC::GetEquipmentListID(){
 	return equipment_list_id;
 }
 
-Spell* NPC::GetNextSpell(float distance){
+Spell* NPC::GetNextSpell(Spawn* target, float distance){
+	if(!cast_on_aggro_completed) {
+		Spell* ret = nullptr;
+		Spell* tmpSpell = nullptr;
+		vector<NPCSpell*>::iterator itr;
+		Spawn* tmpTarget = target;
+		for (itr = cast_on_spells[CAST_ON_AGGRO].begin(); itr != cast_on_spells[CAST_ON_AGGRO].end(); itr++) {
+			tmpSpell = master_spell_list.GetSpell((*itr)->spell_id, (*itr)->tier);
+			
+			if(!tmpSpell)
+				continue;
+			if (tmpSpell->GetSpellData()->friendly_spell > 0) {
+				tmpTarget = (Spawn*)this;
+			}
+			if (tmpSpell->GetSpellData()) {
+				SpellEffects* effect = ((Entity*)tmpTarget)->GetSpellEffect(tmpSpell->GetSpellID());
+				if (!effect) {
+					ret = tmpSpell;
+							
+					if (tmpSpell->GetSpellData()->friendly_spell > 0) {
+						tmpTarget = target;
+					}
+					break;
+				}
+			}
+			if (tmpSpell->GetSpellData()->friendly_spell > 0) {
+				tmpTarget = target;
+			}
+		}
+		
+		if(ret) {
+			return ret;
+		}
+		else {
+			cast_on_aggro_completed = true;
+		}
+	}
+	
 	int8 val = rand()%100;
 	if(ai_strategy == AI_STRATEGY_OFFENSIVE){
 		if(val >= 20)//80% chance to cast offensive spell if Offensive AI
@@ -802,9 +876,9 @@ Spell* NPC::GetNextSpell(float distance, int8 type){
 		if(distance < 0)
 			distance = 0;
 		Spell* tmpSpell = 0;
-		vector<Spell*>::iterator itr;
+		vector<NPCSpell*>::iterator itr;
 		for(itr = spells->begin(); itr != spells->end(); itr++){
-			tmpSpell = *itr;
+			tmpSpell = master_spell_list.GetSpell((*itr)->spell_id, (*itr)->tier);
 			if(!tmpSpell || (type == AI_STRATEGY_OFFENSIVE && tmpSpell->GetSpellData()->friendly_spell > 0))
 				continue;
 			if (tmpSpell->GetSpellData()->cast_type == SPELL_CAST_TYPE_TOGGLE)
@@ -823,15 +897,41 @@ Spell* NPC::GetNextSpell(float distance, int8 type){
 	return ret;
 }
 
-Spell* NPC::GetNextBuffSpell() {
+Spell* NPC::GetNextBuffSpell(Spawn* target) {
+	if(!target) {
+		target = (Spawn*)this;
+	}
+	
 	Spell* ret = 0;
+	
+	if(!target->IsEntity()) {
+		return ret;
+	}
+	
 	if (spells && GetZone()->GetSpellProcess()) {
 		Spell* tmpSpell = 0;
-		vector<Spell*>::iterator itr;
+		vector<NPCSpell*>::iterator itr;
+		for (itr = cast_on_spells[CAST_ON_SPAWN].begin(); itr != cast_on_spells[CAST_ON_SPAWN].end(); itr++) {
+			tmpSpell = master_spell_list.GetSpell((*itr)->spell_id, (*itr)->tier);
+			if (tmpSpell && tmpSpell->GetSpellData()) {
+				SpellEffects* effect = ((Entity*)target)->GetSpellEffect(tmpSpell->GetSpellID());
+				if (effect) {
+					if (effect->tier < tmpSpell->GetSpellTier()) {
+						ret = tmpSpell;
+						break;
+					}
+				}
+				else {
+					ret = tmpSpell;
+					break;
+				}
+			}
+		}
+		
 		for (itr = spells->begin(); itr != spells->end(); itr++) {
-			tmpSpell = *itr;
+			tmpSpell = master_spell_list.GetSpell((*itr)->spell_id, (*itr)->tier);
 			if (tmpSpell && tmpSpell->GetSpellData() && tmpSpell->GetSpellData()->cast_type == SPELL_CAST_TYPE_TOGGLE) {
-				SpellEffects* effect = GetSpellEffect(tmpSpell->GetSpellID());
+				SpellEffects* effect = ((Entity*)target)->GetSpellEffect(tmpSpell->GetSpellID());
 				if (effect) {
 					if (effect->tier < tmpSpell->GetSpellTier()) {
 						ret = tmpSpell;
@@ -944,6 +1044,6 @@ void NPC::SetZone(ZoneServer* in_zone, int32 version) {
 	if (in_zone){
 		GetZone()->SetNPCEquipment(this);
 		SetSkills(GetZone()->GetNPCSkills(primary_skill_list, secondary_skill_list));
-		SetSpells(GetZone()->GetNPCSpells(primary_spell_list, secondary_spell_list));
+		SetSpells(world.GetNPCSpells(primary_spell_list, secondary_spell_list));
 	}
 }

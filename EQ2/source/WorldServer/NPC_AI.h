@@ -76,6 +76,8 @@ public:
 
 	/* Combat related functions */
 	
+	bool BrainCastSpell(Spell* spell, Spawn* cast_on, bool calculate_run_loc = true);
+	
 	/// <summary></summary>
 	/// <param name=""></param>
 	/// <param name=""></param>

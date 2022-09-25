@@ -79,6 +79,7 @@ void Brain::Think() {
 			if (!m_body->EngagedInCombat()) {
 				m_body->ClearRunningLocations();
 				m_body->InCombat(true);
+				m_body->cast_on_aggro_completed = false;
 				m_body->GetZone()->CallSpawnScript(m_body, SPAWN_SCRIPT_AGGRO, target);
 			}
 
@@ -350,7 +351,7 @@ void Brain::MoveCloser(Spawn* target) {
 bool Brain::ProcessSpell(Entity* target, float distance) {
 	if(rand()%100 > m_body->GetCastPercentage() || m_body->IsStifled() || m_body->IsFeared())
 		return false;
-	Spell* spell = m_body->GetNextSpell(distance);
+	Spell* spell = m_body->GetNextSpell(target, distance);
 	if(spell){
 		Spawn* spell_target = 0;
 		if(spell->GetSpellData()->friendly_spell == 1){
@@ -369,7 +370,19 @@ bool Brain::ProcessSpell(Entity* target, float distance) {
 		}
 		else
 			spell_target = target;
-		m_body->GetZone()->ProcessSpell(spell, m_body, spell_target);
+		
+		BrainCastSpell(spell, spell_target, false);
+		return true;
+	}
+	return false;
+}
+
+bool Brain::BrainCastSpell(Spell* spell, Spawn* cast_on, bool calculate_run_loc) {
+	if (spell) {
+		if(calculate_run_loc) {
+			m_body->CalculateRunningLocation(true);
+		}
+		m_body->GetZone()->ProcessSpell(spell, m_body, cast_on);
 		m_spellRecovery = (int32)(Timer::GetCurrentTime2() + (spell->GetSpellData()->cast_time * 10) + (spell->GetSpellData()->recovery * 10) + 2000);
 		return true;
 	}
@@ -380,14 +393,32 @@ bool Brain::CheckBuffs() {
 	if (!m_body->GetZone()->GetSpellProcess() || m_body->EngagedInCombat() || m_body->IsCasting() || m_body->IsMezzedOrStunned() || !m_body->Alive() || m_body->IsStifled() || !HasRecovered())
 		return false;
 
-	Spell* spell = m_body->GetNextBuffSpell();
-	if (spell) {
-		m_body->CalculateRunningLocation(true);
-		m_body->GetZone()->ProcessSpell(spell, m_body, m_body);
-		m_spellRecovery = (int32)(Timer::GetCurrentTime2() + (spell->GetSpellData()->cast_time * 10) + (spell->GetSpellData()->recovery * 10) + 2000);
-		return true;
+	Spell* spell = m_body->GetNextBuffSpell(m_body);
+	
+	bool casted_on = false;
+	if(!(casted_on = BrainCastSpell(spell, m_body)) && m_body->IsNPC() && ((NPC*)m_body)->HasSpells()) {
+		Spawn* target = nullptr;
+	
+		vector<Spawn*>* group = m_body->GetSpawnGroup();
+		if(group && group->size() > 0){
+			vector<Spawn*>::iterator itr;
+			for(itr = group->begin(); itr != group->end(); itr++){
+				Spawn* spawn = (*itr);
+				if(spawn->IsEntity() && spawn != m_body) {
+					if(target) {
+						Spell* spell = m_body->GetNextBuffSpell(spawn);
+						SpellEffects* se = ((Entity*)spawn)->GetSpellEffect(spell->GetSpellData()->id);
+						if(!se && BrainCastSpell(spell, spawn)) {
+							casted_on = true;
+							break;
+						}
+					}
+				}
+			}
+		}
+		safe_delete(group);
 	}
-	return false;
+	return casted_on;
 }
 
 void Brain::ProcessMelee(Entity* target, float distance) {

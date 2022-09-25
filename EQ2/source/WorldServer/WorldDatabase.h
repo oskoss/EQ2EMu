@@ -254,7 +254,7 @@ public:
 	void	LoadNPCs(ZoneServer* zone);
 	void	LoadSpiritShards(ZoneServer* zone);
 	int32	LoadAppearances(ZoneServer* zone, Client* client = 0);
-	int32	LoadNPCSpells(ZoneServer* zone);
+	int32	LoadNPCSpells();
 	int32	LoadNPCSkills(ZoneServer* zone);
 	int32	LoadNPCEquipment(ZoneServer* zone);
 	void	LoadObjects(ZoneServer* zone);

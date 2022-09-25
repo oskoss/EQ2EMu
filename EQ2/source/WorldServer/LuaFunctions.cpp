@@ -4856,7 +4856,7 @@ int EQ2Emu_lua_SetSpellList(lua_State* state) {
 		NPC* npc = (NPC*)spawn;
 		npc->SetPrimarySpellList(primary_list);
 		npc->SetSecondarySpellList(secondary_list);
-		npc->SetSpells(npc->GetZone()->GetNPCSpells(npc->GetPrimarySpellList(), npc->GetSecondarySpellList()));
+		npc->SetSpells(world.GetNPCSpells(npc->GetPrimarySpellList(), npc->GetSecondarySpellList()));
 	}
 	return 0;
 }
@@ -13145,5 +13145,53 @@ int EQ2Emu_lua_SetPlayerPOVGhost(lua_State* state) {
 	lua_interface->ResetFunctionStack(state);
 
 	lua_interface->SetBooleanValue(state, success_sight);
+	return 1;
+}
+
+
+int EQ2Emu_lua_SetCastOnAggroComplete(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	bool result = false;
+	
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	bool cast_completed = (lua_interface->GetInt8Value(state, 2) == 1);
+	lua_interface->ResetFunctionStack(state);
+
+	if (!spawn)
+		lua_interface->LogError("%s: LUA SetCastOnAggroComplete error: Could not find spawn.", lua_interface->GetScriptName(state));
+	else if (!spawn->IsNPC())
+		lua_interface->LogError("%s: LUA SetCastOnAggroComplete error: spawn %s is not an NPC!.", lua_interface->GetScriptName(state), spawn->GetName());
+	else
+	{
+		((NPC*)spawn)->cast_on_aggro_completed = cast_completed;
+		result = true;
+	}
+
+	lua_interface->SetBooleanValue(state, result);
+
+	return 1;
+}
+
+int EQ2Emu_lua_IsCastOnAggroComplete(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	bool result = false;
+	
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
+
+	if (!spawn)
+		lua_interface->LogError("%s: LUA IsCastOnAggroComplete error: Could not find spawn.", lua_interface->GetScriptName(state));
+	else if (!spawn->IsNPC())
+		lua_interface->LogError("%s: LUA IsCastOnAggroComplete error: spawn %s is not an NPC!.", lua_interface->GetScriptName(state), spawn->GetName());
+	else
+	{
+		if(((NPC*)spawn)->cast_on_aggro_completed)
+			result = true;
+	}
+
+	lua_interface->SetBooleanValue(state, result);
+
 	return 1;
 }

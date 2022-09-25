@@ -324,6 +324,9 @@ int main(int argc, char** argv) {
 	LogWrite(WORLD__INFO, 0, "World", "Loading Chest Trap Data...");
 	database.LoadChestTraps();
 
+	LogWrite(WORLD__INFO, 0, "World", "Loading NPC Spells...");
+	database.LoadNPCSpells();
+	
 	if (threadedLoad) {
 		LogWrite(WORLD__INFO, 0, "World", "Waiting for load threads to finish.");
 		while (!world.items_loaded || !world.spells_loaded /*|| !world.achievments_loaded*/)

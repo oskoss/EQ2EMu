@@ -437,7 +437,7 @@ void ZoneServer::LoadSpellProcess(){
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		spawn = itr->second;
 		if(spawn && spawn->IsNPC())
-			((NPC*)spawn)->SetSpells(GetNPCSpells(((NPC*)spawn)->GetPrimarySpellList(), ((NPC*)spawn)->GetSecondarySpellList()));
+			((NPC*)spawn)->SetSpells(world.GetNPCSpells(((NPC*)spawn)->GetPrimarySpellList(), ((NPC*)spawn)->GetSecondarySpellList()));
 	}
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }
@@ -7361,40 +7361,6 @@ void ZoneServer::ClearEntityCommands() {
 		}
 		entity_command_list.clear();
 	}
-}
-
-void ZoneServer::AddNPCSpell(int32 list_id, int32 spell_id, int8 tier){
-	npc_spell_list[list_id][spell_id] = tier;
-}
-
-vector<Spell*>* ZoneServer::GetNPCSpells(int32 primary_list, int32 secondary_list){
-	vector<Spell*>* ret = 0;
-	if(npc_spell_list.count(primary_list) > 0){
-		ret = new vector<Spell*>();
-		map<int32, int8>::iterator itr;
-		Spell* tmpSpell = 0;
-		for(itr = npc_spell_list[primary_list].begin(); itr != npc_spell_list[primary_list].end(); itr++){
-			tmpSpell = master_spell_list.GetSpell(itr->first, itr->second);
-			if(tmpSpell)
-				ret->push_back(tmpSpell);
-		}
-	}
-	if(npc_spell_list.count(secondary_list) > 0){
-		if(!ret)
-			ret = new vector<Spell*>();
-		map<int32, int8>::iterator itr;
-		Spell* tmpSpell = 0;
-		for(itr = npc_spell_list[secondary_list].begin(); itr != npc_spell_list[secondary_list].end(); itr++){
-			tmpSpell = master_spell_list.GetSpell(itr->first, itr->second);
-			if(tmpSpell)
-				ret->push_back(tmpSpell);
-		}
-	}
-	if(ret && ret->size() == 0){
-		safe_delete(ret);
-		ret = 0;
-	}
-	return ret;
 }
 
 void ZoneServer::AddNPCSkill(int32 list_id, int32 skill_id, int16 value){

@@ -500,13 +500,13 @@ void WorldDatabase::LoadCommandList()
 	LoadSubCommandList();
 }
 
-int32 WorldDatabase::LoadNPCSpells(ZoneServer* zone){
+int32 WorldDatabase::LoadNPCSpells(){
 	Query query;
 	MYSQL_ROW row;
 	int32 count = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT spell_list_id, spell_id, spell_tier FROM spawn_npc_spells where spell_list_id > 0");
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT spell_list_id, spell_id, spell_tier, on_spawn_cast, on_aggro_cast FROM spawn_npc_spells where spell_list_id > 0");
 	while(result && (row = mysql_fetch_row(result))){
-		zone->AddNPCSpell(atoul(row[0]), atoul(row[1]), atoi(row[2]));
+		world.AddNPCSpell(atoul(row[0]), atoul(row[1]), atoi(row[2]), atoul(row[3]), atoul(row[4]));
 		count++;
 
 		LogWrite(NPC__DEBUG, 5, "NPC", "---Loading NPC Spell List: %u, spell id: %u, tier: %i", atoul(row[0]), atoul(row[1]), atoi(row[2]));
@@ -1092,7 +1092,6 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		LogWrite(NPC__DEBUG, 5, "NPC", "---Loading NPC: '%s' (%u)", npc->appearance.name, id);
 	}
 	LogWrite(NPC__INFO, 0, "NPC", "--Loaded %i NPC(s).", total);
-	LogWrite(NPC__INFO, 0, "NPC", "--Loaded %i NPC Spell(s).", LoadNPCSpells(zone));
 	LogWrite(NPC__INFO, 0, "NPC", "--Loaded %i NPC Skill(s).", LoadNPCSkills(zone));
 	LogWrite(NPC__INFO, 0, "NPC", "--Loaded %i NPC Equipment Piece(s).", LoadNPCEquipment(zone));
 	LogWrite(NPC__INFO, 0, "NPC", "--Loaded %i NPC Appearance(s).", LoadAppearances(zone));	

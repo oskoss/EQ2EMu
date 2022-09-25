@@ -1304,6 +1304,9 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				else if (target->IsBot() && (caster->IsPlayer() || caster->IsBot())) {
 					// Needed so bots or player can cast friendly spells on bots
 				}
+				else if (caster->IsNPC()) {
+					// npcs can cast on other npcs
+				}
 				else
 				{
 					zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_A_FRIEND);

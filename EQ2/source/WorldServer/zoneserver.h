@@ -960,7 +960,6 @@ private:
 
 	bool reloading;
 	map<int32, vector<EntityCommand*>* > entity_command_list;
-	map<int32, map<int32, int8> > npc_spell_list;
 	map<int32, map<int32, int16> > npc_skill_list;
 	map<int32, vector<int32> > npc_equipment_list;
 	map<int32, NPC*> npc_list;
@@ -1016,10 +1015,6 @@ public:
 		else
 			return 0;
 	}
-
-	/* NPC Spells */
-	void AddNPCSpell(int32 list_id, int32 spell_id, int8 tier);
-	vector<Spell*>* GetNPCSpells(int32 primary_list, int32 secondary_list);
 
 	/* NPC Skills */
 	void AddNPCSkill(int32 list_id, int32 skill_id, int16 value);

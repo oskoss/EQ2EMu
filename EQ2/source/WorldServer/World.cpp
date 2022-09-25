@@ -139,6 +139,8 @@ World::~World(){
 	map<std::string, MapRange*>::iterator itr4;
 	for (itr4 = maps.begin(); itr4 != maps.end(); itr4++)
 		safe_delete(itr4->second);
+	
+	PurgeNPCSpells();
 }
 
 void World::init(){
@@ -2764,4 +2766,72 @@ void World::CopyVoiceOver(VoiceOverStruct* struct1, VoiceOverStruct* struct2) {
 	struct1->key2 = struct2->key2;
 	struct1->is_garbled = struct2->is_garbled;
 	struct1->garble_link_id = struct2->garble_link_id;
+}
+
+void World::AddNPCSpell(int32 list_id, int32 spell_id, int8 tier, bool spawn_cast, bool aggro_cast){
+    std::unique_lock lock(MNPCSpells);
+	NPCSpell* npc_spell_struct = new NPCSpell;
+	npc_spell_struct->list_id = list_id;
+	npc_spell_struct->spell_id = spell_id;
+	npc_spell_struct->tier = tier;
+	npc_spell_struct->cast_on_spawn = spawn_cast;
+	npc_spell_struct->cast_on_initial_aggro = aggro_cast;
+	if(npc_spell_list.count(list_id) && npc_spell_list[list_id].count(spell_id)) {
+		map<int32, NPCSpell*>::iterator spell_itr = npc_spell_list[list_id].find(spell_id);
+		if(spell_itr != npc_spell_list[list_id].end()) {
+			safe_delete(spell_itr->second);
+			npc_spell_list[list_id].erase(spell_itr);
+		}
+	}
+	
+	npc_spell_list[list_id].insert(make_pair(spell_id, npc_spell_struct));
+}
+
+vector<NPCSpell*>* World::GetNPCSpells(int32 primary_list, int32 secondary_list){
+    std::shared_lock lock(MNPCSpells);
+	vector<NPCSpell*>* ret = 0;
+	if(npc_spell_list.count(primary_list) > 0){
+		ret = new vector<NPCSpell*>();
+		map<int32, NPCSpell*>::iterator itr;
+		Spell* tmpSpell = 0;
+		for(itr = npc_spell_list[primary_list].begin(); itr != npc_spell_list[primary_list].end(); itr++){
+			tmpSpell = master_spell_list.GetSpell(itr->first, itr->second->tier);
+			if(tmpSpell) {
+				NPCSpell* addedSpell = new NPCSpell(itr->second);
+				ret->push_back(addedSpell);
+			}
+		}
+	}
+	if(npc_spell_list.count(secondary_list) > 0){
+		if(!ret)
+			ret = new vector<NPCSpell*>();
+		map<int32, NPCSpell*>::iterator itr;
+		Spell* tmpSpell = 0;
+		for(itr = npc_spell_list[secondary_list].begin(); itr != npc_spell_list[secondary_list].end(); itr++){
+			tmpSpell = master_spell_list.GetSpell(itr->first, itr->second->tier);
+			if(tmpSpell) {
+				NPCSpell* addedSpell = new NPCSpell(itr->second);
+				ret->push_back(addedSpell);
+			}
+		}
+	}
+	if(ret && ret->size() == 0){
+		safe_delete(ret);
+		ret = 0;
+	}
+	return ret;
+}
+
+void World::PurgeNPCSpells() {
+    std::unique_lock lock(MNPCSpells);
+	map<int32, map<int32, NPCSpell*> >::iterator list_itr;
+	map<int32, NPCSpell*>::iterator spell_itr;
+	Spell* tmpSpell = 0;
+	for(list_itr = npc_spell_list.begin(); list_itr != npc_spell_list.end(); list_itr++) {
+		for(spell_itr = npc_spell_list[list_itr->first].begin(); spell_itr != npc_spell_list[list_itr->first].end(); spell_itr++){
+			safe_delete(spell_itr->second);
+		}
+	}
+	
+	npc_spell_list.clear();
 }

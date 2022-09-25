@@ -38,7 +38,7 @@ public:
 	void SetRecast(Spell* spell, int32 time);
 	bool ShouldMelee();
 
-	Spell* GetNextBuffSpell() { return GetBuffSpell(); }
+	Spell* GetNextBuffSpell(Spawn* target = 0) { return GetBuffSpell(); }
 	Spell* GetHealSpell();
 	Spell* GetRezSpell();
 

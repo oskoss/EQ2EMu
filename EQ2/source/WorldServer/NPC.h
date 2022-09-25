@@ -69,7 +69,33 @@
 #define PET_TYPE_COSMETIC	4
 #define PET_TYPE_DUMBFIRE	5
 
+enum CAST_TYPE {
+	CAST_ON_SPAWN=0,
+	CAST_ON_AGGRO=1,
+	MAX_CAST_TYPES=2
+};
 class Brain;
+
+class NPCSpell {
+public:
+	NPCSpell() {
+		
+	}
+	
+	NPCSpell(NPCSpell* inherit) {
+			list_id = inherit->list_id;
+			spell_id = inherit->spell_id;
+			tier = inherit->tier;
+			cast_on_spawn = inherit->cast_on_spawn;
+			cast_on_initial_aggro = inherit->cast_on_initial_aggro;
+	}
+	
+	int32 	list_id;
+	int32 	spell_id;
+	int8 	tier;
+	bool	cast_on_spawn;
+	bool	cast_on_initial_aggro;
+};
 
 class NPC : public Entity {
 public:
@@ -104,15 +130,15 @@ public:
 	int32	GetSecondarySkillList();
 	void	SetEquipmentListID(int32 id);
 	int32	GetEquipmentListID();
-	Spell*	GetNextSpell(float distance);
-	virtual Spell*	GetNextBuffSpell();
+	Spell*	GetNextSpell(Spawn* target, float distance);
+	virtual Spell*	GetNextBuffSpell(Spawn* target = 0);
 	void	SetAggroRadius(float radius, bool overrideBaseValue = false);
 	float	GetAggroRadius();
 	float	GetBaseAggroRadius() { return base_aggro_radius; }
 	void	SetCastPercentage(int8 percentage);
 	int8	GetCastPercentage();
 	void	SetSkills(map<string, Skill*>* in_skills);
-	void	SetSpells(vector<Spell*>* in_spells);
+	void	SetSpells(vector<NPCSpell*>* in_spells);
 	void	SetRunbackLocation(float x, float y, float z, int32 gridid, bool set_hp_runback = false);
 	MovementLocation* GetRunbackLocation();
 	float	GetRunbackDistance();
@@ -150,7 +176,10 @@ public:
 	sint64 GetShardCreatedTimestamp() { return m_ShardCreatedTimestamp; }
 	void SetShardCreatedTimestamp(sint64 timestamp) { m_ShardCreatedTimestamp = timestamp; }
 	
+	bool HasSpells() { return has_spells; }
+	
 	std::atomic<bool> m_call_runback;
+	std::atomic<bool> cast_on_aggro_completed;
 private:
 	MovementLocation* runback;
 	int8	cast_percentage;
@@ -158,7 +187,8 @@ private:
 	float	base_aggro_radius;
 	Spell*	GetNextSpell(float distance, int8 type);
 	map<string, Skill*>* skills;
-	vector<Spell*>* spells;
+	vector<NPCSpell*>* spells;
+	vector<NPCSpell*> cast_on_spells[CAST_TYPE::MAX_CAST_TYPES];
 	int32	primary_spell_list;
 	int32	secondary_spell_list;
 	int32	primary_skill_list;
@@ -179,6 +209,7 @@ private:
 	int32		m_ShardID;
 	int32		m_ShardCharID;
 	sint64		m_ShardCreatedTimestamp;
+	bool		has_spells;
 };
 #endif
 

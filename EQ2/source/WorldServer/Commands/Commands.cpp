@@ -1869,6 +1869,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload luasystem");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload spawnscripts");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload spells");
+		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload spells npc");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload quests");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload spawns");
 		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/reload groundspawns");
@@ -1907,15 +1908,25 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		break;
 	}
 	case COMMAND_RELOAD_SPELLS: {
-		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Spells...");
-		world.SetReloadingSubsystem("Spells");
-		zone_list.DeleteSpellProcess();
-		master_spell_list.Reload();
-		if (lua_interface)
-			lua_interface->ReloadSpells();
-		zone_list.LoadSpellProcess();
-		world.RemoveReloadingSubSystem("Spells");
-		client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");		
+		if (sep && sep->arg[0] && strcmp(sep->arg[0], "npc") == 0) {
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading NPC Spells Lists (Note: Must Reload Spawns/Repop to reset npc spells)...");
+			world.PurgeNPCSpells();
+			database.LoadNPCSpells();
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
+		}
+		else {
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Reloading Spells & NPC Spell Lists (Note: Must Reload Spawns/Repop to reset npc spells)...");
+			world.SetReloadingSubsystem("Spells");
+			zone_list.DeleteSpellProcess();
+			master_spell_list.Reload();
+			if (lua_interface)
+				lua_interface->ReloadSpells();
+			zone_list.LoadSpellProcess();
+			world.RemoveReloadingSubSystem("Spells");
+			world.PurgeNPCSpells();
+			database.LoadNPCSpells();
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Done!");
+		}		
 		break;
 	}
 	case COMMAND_RELOAD_GROUNDSPAWNS: {
