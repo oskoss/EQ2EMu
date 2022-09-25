@@ -6730,6 +6730,9 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 				return;
 			}
 			
+			if(to_slot == item->details.slot_id && (bag_id < 0 || bag_id == item->details.inv_slot_id)) {
+				return;
+			}
 			if(item->details.item_locked)
 			{
 				client->SimpleMessage(CHANNEL_COLOR_RED, "You cannot move the item in use.");
