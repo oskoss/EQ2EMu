@@ -1492,6 +1492,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetPlayerPOVGhost", EQ2Emu_lua_SetPlayerPOVGhost);
 	
 	lua_register(state, "SetCastOnAggroComplete", EQ2Emu_lua_SetCastOnAggroComplete);
+	lua_register(state, "IsCastOnAggroComplete", EQ2Emu_lua_IsCastOnAggroComplete);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
