@@ -10664,7 +10664,8 @@ bool Client::PopulateHouseSpawn(PacketStruct* place_object)
 		if (!spawnDBID)
 		{
 			GetCurrentZone()->house_object_database_lookup.Put(tmp->GetModelType(), tmp->GetDatabaseID());
-			GetCurrentZone()->AddObject(tmp->GetDatabaseID(), (Object*)tmp);
+			// we need to copy as to not delete the ZoneServer object_list entry this on house item pickup
+			GetCurrentZone()->AddObject(tmp->GetDatabaseID(), ((Object*)tmp)->Copy()); 
 		}
 
 		return true;

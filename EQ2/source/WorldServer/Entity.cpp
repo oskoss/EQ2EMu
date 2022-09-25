@@ -2226,7 +2226,6 @@ void Entity::CureDetrimentByType(int8 cure_count, int8 det_type, string cure_nam
 	int8 caster_class1 = 0;
 	int8 caster_class2 = 0;
 	int8 caster_class3 = 0;
-	int8 level_class = 0;
 	InfoStruct* info_struct = 0;
 	bool pass_level_check = false;
 
@@ -2236,16 +2235,12 @@ void Entity::CureDetrimentByType(int8 cure_count, int8 det_type, string cure_nam
 		if (det && det->det_type == det_type && !det->incurable){
 			levels = det->spell->spell->GetSpellLevels();
 			info_struct = det->caster->GetInfoStruct();
-			caster_class1 = info_struct->get_class1();
-			caster_class2 = info_struct->get_class2();
-			caster_class3 = info_struct->get_class3();
 			pass_level_check = false;
 			bool has_level_checks = false;
 			for (int32 x = 0; x < levels->size(); x++){
 				has_level_checks = true;
-				level_class = levels->at(x)->adventure_class;
-				if (!cure_level || ((caster_class1 == level_class || caster_class2 == level_class || caster_class3 == level_class)
-					&& cure_level >= (levels->at(x)->spell_level / 10))){
+				// class checks are worthless we can't guarantee the caster is that class
+				if (!cure_level ||  cure_level >= (levels->at(x)->spell_level / 10)){
 					pass_level_check = true;
 					break;
 				}
@@ -2283,7 +2278,6 @@ void Entity::CureDetrimentByControlEffect(int8 cure_count, int8 control_type, st
 	int8 caster_class1 = 0;
 	int8 caster_class2 = 0;
 	int8 caster_class3 = 0;
-	int8 level_class = 0;
 	InfoStruct* info_struct = 0;
 	bool pass_level_check = false;
 
@@ -2293,14 +2287,9 @@ void Entity::CureDetrimentByControlEffect(int8 cure_count, int8 control_type, st
 		if (det && det->control_effect == control_type && !det->incurable){
 			levels = det->spell->spell->GetSpellLevels();
 			info_struct = det->caster->GetInfoStruct();
-			caster_class1 = info_struct->get_class1();
-			caster_class2 = info_struct->get_class2();
-			caster_class3 = info_struct->get_class3();
 			pass_level_check = false;
 			for (int32 x = 0; x < levels->size(); x++){
-				level_class = levels->at(x)->adventure_class;
-				if (!cure_level || ((caster_class1 == level_class || caster_class2 == level_class || caster_class3 == level_class)
-					&& cure_level >= (levels->at(x)->spell_level / 10))){
+				if (!cure_level || cure_level >= (levels->at(x)->spell_level / 10)){
 					pass_level_check = true;
 					break;
 				}

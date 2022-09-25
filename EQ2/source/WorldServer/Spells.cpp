@@ -46,11 +46,11 @@ Spell::Spell(){
 	control_spell = false;
 	offense_spell = false;
 	copied_spell = false;
-	MSpellInfo.SetName("Spell::MSpellInfo");
 }
 
 Spell::Spell(Spell* host_spell)
 {
+	std::shared_lock lock(host_spell->MSpellInfo);
 	copied_spell = true;
 
 	spell = new SpellData;
@@ -155,7 +155,6 @@ Spell::Spell(Spell* host_spell)
 	control_spell = host_spell->IsControlSpell();
 	offense_spell = host_spell->IsOffenseSpell();
 
-	host_spell->LockSpellInfo();
 	std::vector<LevelArray*>::iterator itr;
 	for (itr = host_spell->levels.begin(); itr != host_spell->levels.end(); itr++)
 	{
@@ -175,9 +174,6 @@ Spell::Spell(Spell* host_spell)
 		LUAData* data = *luaitr;
 		AddSpellLuaData(data->type, data->int_value, data->int_value2, data->float_value, data->float_value2, data->bool_value, string(data->string_value), string(data->string_value2), string(data->string_helper));
 	}
-	host_spell->UnlockSpellInfo();
-
-	MSpellInfo.SetName("Spell::MSpellInfo");
 }
 
 Spell::Spell(SpellData* in_spell){
@@ -188,7 +184,6 @@ Spell::Spell(SpellData* in_spell){
 	control_spell = false;
 	offense_spell = false;
 	copied_spell = false;
-	MSpellInfo.SetName("Spell::MSpellInfo");
 }
 
 Spell::~Spell(){
@@ -208,6 +203,7 @@ Spell::~Spell(){
 }
 
 void Spell::AddSpellLuaData(int8 type, int int_value, int int_value2, float float_value, float float_value2, bool bool_value, string string_value, string string_value2, string helper){
+    std::unique_lock lock(MSpellInfo);
 	LUAData* data = new LUAData;
 	data->type = type;
 	data->int_value = int_value;
@@ -219,12 +215,11 @@ void Spell::AddSpellLuaData(int8 type, int int_value, int int_value2, float floa
 	data->string_value2 = string_value2;
 	data->string_helper = helper;
 
-	MSpellInfo.lock();
 	lua_data.push_back(data);
-	MSpellInfo.unlock();
 }
 
 void Spell::AddSpellLuaDataInt(int value, int value2, string helper) {
+	std::unique_lock lock(MSpellInfo);
 	LUAData *data = new LUAData;
 
 	data->type = 0;
@@ -235,12 +230,11 @@ void Spell::AddSpellLuaDataInt(int value, int value2, string helper) {
 	data->bool_value = false;
 	data->string_helper = helper;
 
-	MSpellInfo.lock();
 	lua_data.push_back(data);
-	MSpellInfo.unlock();
 }
 
 void Spell::AddSpellLuaDataFloat(float value, float value2, string helper) {
+	std::unique_lock lock(MSpellInfo);
 	LUAData *data = new LUAData;
 
 	data->type = 1;
@@ -251,12 +245,11 @@ void Spell::AddSpellLuaDataFloat(float value, float value2, string helper) {
 	data->bool_value = false;
 	data->string_helper = helper;
 
-	MSpellInfo.lock();
 	lua_data.push_back(data);
-	MSpellInfo.unlock();
 }
 
 void Spell::AddSpellLuaDataBool(bool value, string helper) {
+	std::unique_lock lock(MSpellInfo);
 	LUAData *data = new LUAData;
 
 	data->type = 2;
@@ -265,12 +258,11 @@ void Spell::AddSpellLuaDataBool(bool value, string helper) {
 	data->bool_value = value;
 	data->string_helper = helper;
 
-	MSpellInfo.lock();
 	lua_data.push_back(data);
-	MSpellInfo.unlock();
 }
 
 void Spell::AddSpellLuaDataString(string value, string value2,string helper) {
+	std::unique_lock lock(MSpellInfo);
 	LUAData *data = new LUAData;
 
 	data->type = 3;
@@ -283,9 +275,7 @@ void Spell::AddSpellLuaDataString(string value, string value2,string helper) {
 	data->string_value2 = value2;
 	data->string_helper = helper;
 
-	MSpellInfo.lock();
 	lua_data.push_back(data);
-	MSpellInfo.unlock();
 }
 
 int16 Spell::GetLevelRequired(Player* player){
@@ -1217,13 +1207,13 @@ EQ2Packet* Spell::SerializeSpell(Client* client, bool display, bool trait_displa
 }
 
 void Spell::AddSpellEffect(int8 percentage, int8 subbullet, string description){
+	std::unique_lock lock(MSpellInfo);
 	SpellDisplayEffect* effect = new SpellDisplayEffect;
 	effect->description = description;
 	effect->subbullet = subbullet;
 	effect->percentage = percentage;
-	MSpellInfo.lock();
+	
 	effects.push_back(effect);
-	MSpellInfo.unlock();
 }
 
 int16 Spell::GetHPRequired(Spawn* spawn){
@@ -1336,13 +1326,13 @@ const char* Spell::GetDescription(){
 }
 
 void Spell::AddSpellLevel(int8 adventure_class, int8 tradeskill_class, int16 level){
+	std::unique_lock lock(MSpellInfo);
 	LevelArray* lvl = new LevelArray;
 	lvl->adventure_class = adventure_class;
 	lvl->tradeskill_class = tradeskill_class;
 	lvl->spell_level = level;
-	MSpellInfo.lock();
+	
 	levels.push_back(lvl);
-	MSpellInfo.unlock();
 }
 
 int32 Spell::GetSpellID(){
@@ -2190,23 +2180,21 @@ void Spell::ModifyCastTime(Entity* caster){
 }
 
 vector <SpellDisplayEffect*>* Spell::GetSpellEffects(){
-	MSpellInfo.lock();
+	std::shared_lock lock(MSpellInfo);
 	vector <SpellDisplayEffect*>* ret = &effects;
-	MSpellInfo.unlock();
 	return ret;
 }
 
 vector <LevelArray*>* Spell::GetSpellLevels(){
-	MSpellInfo.lock();
+	std::shared_lock lock(MSpellInfo);
 	vector <LevelArray*>* ret = &levels;
-	MSpellInfo.unlock();
 	return ret;
 }
 
 bool Spell::ScribeAllowed(Player* player){
+	std::shared_lock lock(MSpellInfo);
 	bool ret = false;
 	if(player){
-		MSpellInfo.lock();
 		for(int32 i=0;!ret && i<levels.size();i++){
 			int16 mylevel = player->GetLevel();
 			int16 spelllevels = levels[i]->spell_level;
@@ -2216,7 +2204,6 @@ bool Spell::ScribeAllowed(Player* player){
 			if((player->GetAdventureClass() == levels[i]->adventure_class || player->GetTradeskillClass() == levels[i]->tradeskill_class) && player->GetLevel() >= levels[i]->spell_level/10)
 				ret = true;
 		}
-		MSpellInfo.unlock();
 	}
 	return ret;
 }

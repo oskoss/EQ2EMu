@@ -21,6 +21,8 @@
 #define __EQ2_SPELLS__
 #include <map>
 #include <vector>
+#include <mutex>
+#include <shared_mutex>
 #include "../common/types.h"
 #include "../common/EQPacket.h"
 #include "../common/MiscFunctions.h"
@@ -349,9 +351,8 @@ public:
 
 	vector<SpellDisplayEffect*> effects;
 	vector<LUAData*> lua_data;
-
-	void LockSpellInfo() { MSpellInfo.lock(); }
-	void UnlockSpellInfo() { MSpellInfo.unlock(); }
+	
+	mutable std::shared_mutex MSpellInfo;
 private:
 	bool stay_locked = false;
 	bool heal_spell;
@@ -365,7 +366,6 @@ private:
 	
 	//vector<SpellDisplayEffect*> effects;
 	vector <LevelArray*> levels;
-	Mutex MSpellInfo;
 };
 class MasterSpellList{
 public:
