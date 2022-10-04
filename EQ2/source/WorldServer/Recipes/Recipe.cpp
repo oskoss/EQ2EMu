@@ -153,7 +153,7 @@ int32 MasterRecipeList::Size() {
 }
 
 vector<Recipe*> MasterRecipeList::GetRecipes(const char* book_name) {
-	vector<Recipe*> ret;;
+	vector<Recipe*> ret;
 	map<int32, Recipe *>::iterator itr;
 
 	m_recipes.writelock(__FUNCTION__, __LINE__);
@@ -303,6 +303,8 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	Item* item = 0;
 	RecipeProducts* rp = 0;
 	vector<int32>::iterator itr;
+	vector<RecipeComp> comp_list;
+
 	int8 i = 0;
 	int32 firstID = 0;
 	int32 primary_comp_id = 0;
@@ -412,6 +414,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 			if (item) {
 				packet->setSubstructDataByName("recipe_info", "primary_qty_avail", item->details.count);
 				packet->setSubstructDataByName("recipe_info", "primary_comp", recipe->primary_build_comp_title);
+				break;
 					}
 		}
 		// store the id of the primary comp
@@ -436,11 +439,11 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	int8 total_build_components = 0;
 	if (recipe->components.count(1) > 0)
 		total_build_components++;
-	if (recipe->components.count(2))
+	if (recipe->components.count(2) > 0)
 		total_build_components++;
-	if (recipe->components.count(3))
+	if (recipe->components.count(3) > 0)
 		total_build_components++;
-	if (recipe->components.count(4))
+	if (recipe->components.count(4) > 0)
 		total_build_components++;
 
 	
@@ -486,7 +489,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 					item = client->GetPlayer()->item_list.GetItemFromID((*itr));
 					if (item) {
 						packet->setArrayDataByName("build_comp_qty_avail", item->details.count, index );
-
+						break;
 					}
 				}
 				else if (index == 2) {
@@ -500,7 +503,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 					item = client->GetPlayer()->item_list.GetItemFromID((*itr));
 					if (item) {
 						packet->setArrayDataByName("build_comp_qty_avail", item->details.count, index );
-
+						break;
 					}
 				}
 				else if (index == 3) {
@@ -514,7 +517,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 					item = client->GetPlayer()->item_list.GetItemFromID((*itr));
 					if (item) {
 						packet->setArrayDataByName("build_comp_qty_avail", item->details.count, index );
-
+						break;
 					}
 				}
 
@@ -663,6 +666,9 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	return app;
 }
 
-void Recipe::AddBuildComp(int32 itemID, int8 slot) {
-	components[slot].push_back(itemID);
+void Recipe::AddBuildComp(int32 itemID, int8 slot, bool preffered) {
+	if (preffered = 1)
+		components[slot].insert(components[slot].begin(), itemID);
+	else
+		components[slot].push_back(itemID);
 }

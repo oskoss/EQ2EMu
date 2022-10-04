@@ -1502,6 +1502,7 @@ void Item::SetItemType(int8 in_type){
 	}
 	else if(IsRecipeBook() && !recipebook_info){
 		recipebook_info = new RecipeBook_Info;
+		recipebook_info->recipe_id = 0;
 		recipebook_info->uses = 0;
 	}
 	else if(IsBook() && !book_info){
@@ -2422,7 +2423,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 						}
 					}
 					packet->setDataByName("uses", recipebook_info->uses);
-					if(player->GetRecipeBookList()->HasRecipeBook(details.item_id))
+					if(player->GetRecipeBookList()->HasRecipeBook(recipebook_info->recipe_id))
 						packet->setDataByName("scribed", 1);
 					else
 						packet->setDataByName("scribed", 0);

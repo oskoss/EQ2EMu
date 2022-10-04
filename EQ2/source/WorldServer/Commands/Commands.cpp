@@ -2275,8 +2275,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							LogWrite(COMMAND__ERROR, 0, "Command", "Unknown spell ID: %u and tier: %u", item->skill_info->spell_id, item->skill_info->spell_tier);
 					}
 					else if(item->generic_info.item_type == 7){
-						LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Scribing recipe book %s (%u) for player %s.", item->name.c_str(), item->details.item_id, player->GetName());
-						Recipe* recipe_book = new Recipe(master_recipebook_list.GetRecipeBooks(item->details.item_id));
+						LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Scribing recipe book %s (%u) for player %s.", item->name.c_str(), item->recipebook_info->recipe_id, player->GetName());
+						Recipe* recipe_book = new Recipe(master_recipebook_list.GetRecipeBooks(item->recipebook_info->recipe_id));//(item->details.item_id));
 						// if valid recipe book and the player doesn't have it
 						if (recipe_book && recipe_book->GetLevel() > client->GetPlayer()->GetTSLevel()) {
 							client->Message(CHANNEL_NARRATIVE, "Your tradeskill level is not high enough to scribe this book.");
@@ -2286,7 +2286,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							client->Message(CHANNEL_NARRATIVE, "Your tradeskill class cannot use this recipe.");
 							safe_delete(recipe_book);
 						}
-						else if (recipe_book && !(client->GetPlayer()->GetRecipeBookList()->HasRecipeBook(item->details.item_id))) {
+						else if (recipe_book && !(client->GetPlayer()->GetRecipeBookList()->HasRecipeBook(item->recipebook_info->recipe_id))){// (item->details.item_id))) {
 							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Valid recipe book that the player doesn't have");
 							// Add recipe book to the players list
 							client->GetPlayer()->GetRecipeBookList()->AddRecipeBook(recipe_book);

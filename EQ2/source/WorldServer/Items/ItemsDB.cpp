@@ -488,8 +488,11 @@ int32 WorldDatabase::LoadRecipeBookItems(int32 item_id)
 	Query query;
 	MYSQL_ROW row;
 	
-	std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, name FROM item_details_recipe_items%s", (item_id == 0) ? "" : select_query_addition.c_str());
+	//std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
+	//MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, name FROM item_details_recipe_items%s", (item_id == 0) ? "" : select_query_addition.c_str());
+	std::string select_query_addition = std::string(" and r.item_id = ") + std::to_string(item_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT  r.item_id, ri.recipe_id ,ri.`name`FROM item_details_recipe r LEFT JOIN item_details_recipe_items ri ON ri.recipe_id = r.recipe_id where ri.recipe_id is not null%s", (item_id == 0) ? "" : select_query_addition.c_str());
+	
 	int32 total = 0;
 	int32 id = 0;
 
@@ -503,9 +506,11 @@ int32 WorldDatabase::LoadRecipeBookItems(int32 item_id)
 			if(item)
 			{
 				LogWrite(ITEM__DEBUG, 5, "Items", "\tRecipe Book for item_id %u", id);
-				LogWrite(ITEM__DEBUG, 5, "Items", "\tType: %i, '%s'", ITEM_TYPE_RECIPE, row[1]);
+				LogWrite(ITEM__DEBUG, 5, "Items", "\tType: %i, '%s'", ITEM_TYPE_RECIPE, row[2]);
 				item->SetItemType(ITEM_TYPE_RECIPE);
-				item->recipebook_info->recipes.push_back(string(row[1]));
+				item->recipebook_info->recipe_id = (atoi(row[1]));
+				item->recipebook_info->recipes.push_back(string(row[2]));
+				//item->recipebook_info->recipe_id(row[1]);
 				total++;
 			}
 			else
@@ -1286,6 +1291,9 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 			if(master_item)
 			{
 				Item* item = new Item(master_item);
+				int32 xxx = 0;
+				if(master_item->recipebook_info)
+					item->recipebook_info->recipe_id = master_item->recipebook_info->recipe_id;
 				item->details.unique_id = strtoul(row[1], NULL, 0);
 				item->details.slot_id = atoi(row[2]);
 

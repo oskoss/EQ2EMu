@@ -869,6 +869,7 @@ public:
 	};
 	struct RecipeBook_Info{
 		vector<string>			recipes;
+		int32					recipe_id;
 		int8					uses;
 	};
 	struct ItemSet_Info{

@@ -41,8 +41,8 @@ void WorldDatabase::LoadRecipes() {
 		"r.stage0_id, r.stage1_id, r.stage2_id, r.stage3_id, r.stage4_id, r.stage0_qty, r.stage1_qty, r.stage2_qty, r.stage3_qty, r.stage4_qty,\n"
 		"r.stage0_byp_id, r.stage1_byp_id, r.stage2_byp_id, r.stage3_byp_id, r.stage4_byp_id, r.stage0_byp_qty, r.stage1_byp_qty, r.stage2_byp_qty, r.stage3_byp_qty, r.stage4_byp_qty\n"
 		"FROM `recipe` r\n"
-		"LEFT JOIN ((SELECT item_id, soe_recipe_crc FROM item_details_recipe_items GROUP BY soe_recipe_crc) as idri) ON idri.soe_recipe_crc = r.soe_id\n"
-		"LEFT JOIN items i ON idri.item_id = i.id\n"
+		"LEFT JOIN ((SELECT recipe_id, soe_recipe_crc FROM item_details_recipe_items GROUP BY soe_recipe_crc) as idri) ON idri.soe_recipe_crc = r.soe_id\n"
+		"LEFT JOIN items i ON idri.recipe_id = i.id\n"
 		"INNER JOIN items ipc ON r.stage4_id = ipc.id\n"
 		"INNER JOIN recipe_comp_list pcl ON r.primary_comp_list = pcl.id\n"
 		"INNER JOIN recipe_comp_list fcl ON r.fuel_comp_list = fcl.id\n"
@@ -243,10 +243,10 @@ void WorldDatabase::LoadRecipeComponents() {
 	bool status = database_new.Select(&res,
 		"SELECT r.id, pc.item_id AS primary_comp, fc.item_id AS fuel_comp, sc.item_id as secondary_comp, rsc.`index` + 1 AS slot\n"
 		"FROM recipe r\n"
-		"INNER JOIN (select comp_list, item_id FROM recipe_comp_list_item GROUP BY comp_list) as pc ON r.primary_comp_list = pc.comp_list\n"
-		"INNER JOIN (select comp_list, item_id FROM recipe_comp_list_item GROUP BY comp_list) as fc ON r.fuel_comp_list = fc.comp_list\n"
+		"INNER JOIN (select comp_list, item_id FROM recipe_comp_list_item ) as pc ON r.primary_comp_list = pc.comp_list\n"
+		"INNER JOIN (select comp_list, item_id FROM recipe_comp_list_item ) as fc ON r.fuel_comp_list = fc.comp_list\n"
 		"LEFT JOIN recipe_secondary_comp rsc ON rsc.recipe_id = r.id\n"
-		"LEFT JOIN (select comp_list, item_id FROM recipe_comp_list_item GROUP BY comp_list) as sc ON rsc.comp_list = sc.comp_list\n"
+		"LEFT JOIN (select comp_list, item_id FROM recipe_comp_list_item) as sc ON rsc.comp_list = sc.comp_list\n"
 		"WHERE r.bHaveAllProducts\n"
 		"ORDER BY r.id, rsc.`index` ASC");
 
@@ -265,7 +265,6 @@ void WorldDatabase::LoadRecipeComponents() {
 			if (!recipe) {
 				continue;
 			}
-
 			recipe->AddBuildComp(res.GetInt32(1), 0);
 			recipe->AddBuildComp(res.GetInt32(2), 5);
 		}

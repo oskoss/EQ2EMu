@@ -30,6 +30,12 @@
 class Item;
 using namespace std;
 
+struct 	RecipeComp
+
+{
+	int32	RecipeComp;
+	
+};
 struct RecipeProducts {
 	int32	product_id;
 	int32	byproduct_id;
@@ -122,7 +128,7 @@ public:
 	///<summary>Add a build component to this recipe</summary>
 	///<param name="itemID">Item id of the component</param>
 	///<param name="slot">Slot id for this component</param>
-	void AddBuildComp(int32 itemID, int8 slot);
+	void AddBuildComp(int32 itemID, int8 slot, bool preferred = 0);
 
 	// int8 = slot, vector = itemid
 	map<int8, vector<int32> > components;
