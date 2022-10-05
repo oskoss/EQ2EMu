@@ -491,7 +491,7 @@ int32 WorldDatabase::LoadRecipeBookItems(int32 item_id)
 	//std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
 	//MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, name FROM item_details_recipe_items%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	std::string select_query_addition = std::string(" and r.item_id = ") + std::to_string(item_id);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT  r.item_id, ri.recipe_id ,ri.`name`FROM item_details_recipe r LEFT JOIN item_details_recipe_items ri ON ri.recipe_id = r.recipe_id where ri.recipe_id is not null%s", (item_id == 0) ? "" : select_query_addition.c_str());
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT  r.item_id, ri.recipe_id ,ri.`name` FROM item_details_recipe r LEFT JOIN item_details_recipe_items ri ON ri.recipe_id = r.recipe_id where ri.recipe_id is not null%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	
 	int32 total = 0;
 	int32 id = 0;
