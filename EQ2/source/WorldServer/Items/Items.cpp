@@ -1045,6 +1045,7 @@ void Item::SetItem(Item* old_item){
 			// Recipe Book
 			recipebook_info = new RecipeBook_Info;
 			if (old_item->recipebook_info) {
+				recipebook_info->recipe_id = old_item->recipebook_info->recipe_id;
 				recipebook_info->uses = old_item->recipebook_info->uses;
 				for (int32 i = 0; i < old_item->recipebook_info->recipes.size(); i++)
 					recipebook_info->recipes.push_back(old_item->recipebook_info->recipes.at(i));

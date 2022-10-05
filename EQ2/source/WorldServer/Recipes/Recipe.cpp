@@ -667,7 +667,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 }
 
 void Recipe::AddBuildComp(int32 itemID, int8 slot, bool preffered) {
-	if (preffered = 1)
+	if (preffered)
 		components[slot].insert(components[slot].begin(), itemID);
 	else
 		components[slot].push_back(itemID);
