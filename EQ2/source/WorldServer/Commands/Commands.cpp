@@ -2275,80 +2275,92 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							LogWrite(COMMAND__ERROR, 0, "Command", "Unknown spell ID: %u and tier: %u", item->skill_info->spell_id, item->skill_info->spell_tier);
 					}
 					else if(item->generic_info.item_type == 7){
-						LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Scribing recipe book %s (%u) for player %s.", item->name.c_str(), item->recipebook_info->recipe_id, player->GetName());
-						Recipe* recipe_book = new Recipe(master_recipebook_list.GetRecipeBooks(item->recipebook_info->recipe_id));//(item->details.item_id));
-						// if valid recipe book and the player doesn't have it
-						if (recipe_book && recipe_book->GetLevel() > client->GetPlayer()->GetTSLevel()) {
-							client->Message(CHANNEL_NARRATIVE, "Your tradeskill level is not high enough to scribe this book.");
-							safe_delete(recipe_book);
-						}
-						else if(recipe_book && !recipe_book->CanUseRecipeByClass(item, client->GetPlayer()->GetTradeskillClass())) {
-							client->Message(CHANNEL_NARRATIVE, "Your tradeskill class cannot use this recipe.");
-							safe_delete(recipe_book);
-						}
-						else if (recipe_book && !(client->GetPlayer()->GetRecipeBookList()->HasRecipeBook(item->recipebook_info->recipe_id))){// (item->details.item_id))) {
-							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Valid recipe book that the player doesn't have");
-							// Add recipe book to the players list
-							client->GetPlayer()->GetRecipeBookList()->AddRecipeBook(recipe_book);
-
-							// Get a list of all recipes this book contains
-							vector<Recipe*> recipes = master_recipe_list.GetRecipes(recipe_book->GetBookName());
-							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "%i recipes found for %s book", recipes.size(), recipe_book->GetBookName());
-
-							if (recipes.empty() && item->recipebook_info) {
-								//Backup I guess if the recipe book is empty for whatever reason?
-								for (auto& itr : item->recipebook_info->recipes) {
-									Recipe* r = master_recipe_list.GetRecipeByName(itr.c_str());
-									if (r) {
-										recipes.push_back(r);
-									}
-								}
-							}
+							if(item->recipebook_info) {
+							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Scribing recipe book %s (%u) for player %s.", item->name.c_str(), item->recipebook_info->recipe_id, player->GetName());
+							Recipe* master_recipe = master_recipebook_list.GetRecipeBooks(item->recipebook_info->recipe_id);
 							
-							//Filter out duplicate recipes the player already has
-							for (auto itr = recipes.begin(); itr != recipes.end();) {
-								Recipe* recipe = *itr;
-								if (client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())) {
-									itr = recipes.erase(itr);
+							if(master_recipe) {
+								Recipe* recipe_book = new Recipe(master_recipe);//(item->details.item_id));
+								// if valid recipe book and the player doesn't have it
+								if (recipe_book && recipe_book->GetLevel() > client->GetPlayer()->GetTSLevel()) {
+									client->Message(CHANNEL_NARRATIVE, "Your tradeskill level is not high enough to scribe this book.");
+									safe_delete(recipe_book);
 								}
-								else itr++;
-							}
+								else if(recipe_book && !recipe_book->CanUseRecipeByClass(item, client->GetPlayer()->GetTradeskillClass())) {
+									client->Message(CHANNEL_NARRATIVE, "Your tradeskill class cannot use this recipe.");
+									safe_delete(recipe_book);
+								}
+								else if (recipe_book && !(client->GetPlayer()->GetRecipeBookList()->HasRecipeBook(item->recipebook_info->recipe_id))){// (item->details.item_id))) {
+									LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Valid recipe book that the player doesn't have");
+									// Add recipe book to the players list
+									client->GetPlayer()->GetRecipeBookList()->AddRecipeBook(recipe_book);
 
-							int16 i = 0;
-							// Create the packet to send to update the players recipe list
-							PacketStruct* packet = 0;
-							if (!recipes.empty() && client->GetRecipeListSent()) {
-								packet = configReader.getStruct("WS_RecipeList", client->GetVersion());
-								if (packet) {
-									packet->setArrayLengthByName("num_recipes", recipes.size());
+									// Get a list of all recipes this book contains
+									vector<Recipe*> recipes = master_recipe_list.GetRecipes(recipe_book->GetBookName());
+									LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "%i recipes found for %s book", recipes.size(), recipe_book->GetBookName());
+
+									if (recipes.empty() && item->recipebook_info) {
+										//Backup I guess if the recipe book is empty for whatever reason?
+										for (auto& itr : item->recipebook_info->recipes) {
+											Recipe* r = master_recipe_list.GetRecipeByName(itr.c_str());
+											if (r) {
+												recipes.push_back(r);
+											}
+										}
+									}
+									
+									//Filter out duplicate recipes the player already has
+									for (auto itr = recipes.begin(); itr != recipes.end();) {
+										Recipe* recipe = *itr;
+										if (client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())) {
+											itr = recipes.erase(itr);
+										}
+										else itr++;
+									}
+
+									int16 i = 0;
+									// Create the packet to send to update the players recipe list
+									PacketStruct* packet = 0;
+									if (!recipes.empty() && client->GetRecipeListSent()) {
+										packet = configReader.getStruct("WS_RecipeList", client->GetVersion());
+										if (packet) {
+											packet->setArrayLengthByName("num_recipes", recipes.size());
+										}
+									}
+
+									for (int32 r = 0; r < recipes.size(); r++) {
+										Recipe* recipe = recipes[r];
+										if (recipe) {
+											Recipe* player_recipe = new Recipe(recipe);
+											client->AddRecipeToPlayer(player_recipe, packet, &i);
+										}
+									}
+
+
+									LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Done adding recipes");
+									database.SavePlayerRecipeBook(client->GetPlayer(), recipe_book->GetBookID());
+									database.DeleteItem(client->GetCharacterID(), item, 0);
+									client->GetPlayer()->item_list.RemoveItem(item, true);
+									client->QueuePacket(client->GetPlayer()->SendInventoryUpdate(client->GetVersion()));
+									if (packet && client->GetRecipeListSent())
+										client->QueuePacket(packet->serialize());
+
+									safe_delete(packet);
+								}
+								else {
+									if (recipe_book)
+										client->Message(CHANNEL_NARRATIVE, "You have already learned all you can from this item.");
+									safe_delete(recipe_book);
 								}
 							}
-
-							for (int32 r = 0; r < recipes.size(); r++) {
-								Recipe* recipe = recipes[r];
-								if (recipe) {
-									Recipe* player_recipe = new Recipe(recipe);
-									client->AddRecipeToPlayer(player_recipe, packet, &i);
-								}
+							else {
+									client->Message(CHANNEL_NARRATIVE, "Recipe book is unavailable! Report to admin recipe id %u could not be retrieved.", item->recipebook_info ? item->recipebook_info->recipe_id : 0);
+									LogWrite(COMMAND__ERROR, 0, "Command", "Recipe Book %u could not be retrieved for item %s.", item->recipebook_info ? item->recipebook_info->recipe_id : 0, item->name.c_str());
 							}
-
-
-							LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Done adding recipes");
-							database.SavePlayerRecipeBook(client->GetPlayer(), recipe_book->GetBookID());
-							database.DeleteItem(client->GetCharacterID(), item, 0);
-							client->GetPlayer()->item_list.RemoveItem(item, true);
-							client->QueuePacket(client->GetPlayer()->SendInventoryUpdate(client->GetVersion()));
-							if (packet && client->GetRecipeListSent())
-								client->QueuePacket(packet->serialize());
-
-							safe_delete(packet);
 						}
 						else {
-							if (recipe_book)
-								client->Message(CHANNEL_NARRATIVE, "You have already learned all you can from this item.");
-							safe_delete(recipe_book);
+								LogWrite(COMMAND__ERROR, 0, "Command", "Recipe Book Info is not set for item %s.", item->name.c_str());
 						}
-						
 					}
 				}
 				else
