@@ -183,16 +183,48 @@ EQProtocolPacket* EQStream::ProcessEncryptedPacket(EQProtocolPacket *p){
 	return ret;
 }
 
+bool EQStream::ProcessEmbeddedPacket(uchar* pBuffer, int16 length) {
+	if(!pBuffer)
+		return false;
+
+	MCombineQueueLock.lock();
+	EQProtocolPacket* newpacket = ProcessEncryptedData(pBuffer, length, OP_Packet);
+	MCombineQueueLock.unlock();
+	if (newpacket) {
+		EQApplicationPacket* ap = newpacket->MakeApplicationPacket(2);
+		if (ap->version == 0)
+			ap->version = client_version;
+		InboundQueuePush(ap);
+#ifdef WRITE_PACKETS
+		WritePackets(ap->GetOpcodeName(), pBuffer, length, false);
+#endif
+		safe_delete(newpacket);
+		return true;
+	}
+	
+	return false;
+}
+
 bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 length){
-	if(p && p->size >= ((uint32)(offset+2))){		
+	if(!p)
+		return false;
+	
+#ifdef DEBUG_EMBEDDED_PACKETS
+	// printf works better with DumpPacket
+	printf( "Start Packet with offset %u, length %u, p->size %u\n", offset, length, p->size);
+#endif
+	
+	if(p->size >= ((uint32)(offset+2))){	
 		if(p->pBuffer[offset] == 0 && p->pBuffer[offset+1] == 0x19){
 			if(length == 0)
 				length = p->size-2-offset;
 			else
 				length-=2;
-#ifdef LE_DEBUG
-			printf( "Creating OP_AppCombined Packet!\n");
+#ifdef DEBUG_EMBEDDED_PACKETS
+			printf( "Creating OP_AppCombined Packet with offset %u, length %u, p->size %u\n", offset, length, p->size);
+			DumpPacket(p->pBuffer, p->size);
 #endif
+
 			EQProtocolPacket *subp=new EQProtocolPacket(OP_AppCombined, p->pBuffer+2+offset, length);
 			subp->copyInfo(p);
 			ProcessPacket(subp, p);
@@ -204,29 +236,46 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 				length = p->size - 1 - offset;
 			else
 				length--;
-#ifdef LE_DEBUG
-			LogWrite(PACKET__DEBUG, 0, "Packet", "Creating Opcode 0 Packet!");
+
+#ifdef DEBUG_EMBEDDED_PACKETS
+			printf( "Creating Opcode 0 Packet!");
 			DumpPacket(p->pBuffer + 1 + offset, length);
 #endif
-			EQProtocolPacket* newpacket = ProcessEncryptedData(p->pBuffer + 1 + offset, length, OP_Packet);
-			if (newpacket) {
-#ifdef LE_DEBUG
-				LogWrite(PACKET__DEBUG, 0, "Packet", "Result: ");
-				DumpPacket(newpacket);
-#endif
-				EQApplicationPacket* ap = newpacket->MakeApplicationPacket(2);
-				if (ap->version == 0)
-					ap->version = client_version;
-				InboundQueuePush(ap);
-#ifdef WRITE_PACKETS
-				WritePackets(ap->GetOpcodeName(), p->pBuffer + 1 + offset, length, false);
-#endif
-				safe_delete(newpacket);
-			}
-			else
-				LogWrite(PACKET__ERROR, 0, "Packet", "No Packet!");
-			return true;
+			uchar* buffer = (p->pBuffer + 1 + offset);
+			bool valid = ProcessEmbeddedPacket(buffer, length);
+			
+			if(valid)
+				return true;
 		}
+		else if(offset < p->size && ntohl(*(uint32 *)(p->pBuffer+offset)) != 0xffffffff) {
+
+#ifdef DEBUG_EMBEDDED_PACKETS
+			printf( "Unhandled Packet with offset %u, length %u, p->size %u\n", offset, length, p->size);
+			DumpPacket(p->pBuffer, p->size);
+#endif
+
+			if(length == 0)
+				length = p->size - offset;
+			
+			uchar* buffer = (p->pBuffer + offset);
+			bool valid = ProcessEmbeddedPacket(buffer, length);
+			
+			if(valid)
+				return true;
+		}
+		else if(p->pBuffer[offset] != 0xff && p->pBuffer[offset+1] == 0xff) {
+			uint8 new_length = 0;
+			
+			memcpy(&new_length, p->pBuffer, sizeof(int16));
+			if(new_length <= p->size) {
+				new_length -= 2;
+			EQProtocolPacket *subp=new EQProtocolPacket(p->pBuffer+offset+2, new_length, OP_Packet);
+			subp->copyInfo(p);
+			ProcessPacket(subp, p);
+			delete subp;
+			return true;
+			}
+		}		
 	}
 	return false;
 }
@@ -287,8 +336,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 					else if (ntohs(*reinterpret_cast<uint16_t*>(p->pBuffer + processed + offset)) > 0x1e) {
 						//Garbage packet?
 						crypto->RC4Decrypt(p->pBuffer + processed + offset, subpacket_length);
-						LogWrite(PACKET__ERROR, 0, "Packet", "Garbage packet?!:");
-						printf("!!!!!!!!!Garbage Packet!!!!!!!!!!!!! processed: %u, offset: %u, count: %i\n", processed, offset, count);
+						LogWrite(PACKET__ERROR, 0, "Packet", "!!!!!!!!!Garbage Packet!!!!!!!!!!!!! processed: %u, offset: %u, count: %i, oversized_buffer_present: %u, offset size: %u, offset length: %u\n", processed, offset, count, oversize_buffer ? 1 : 0, oversize_offset, oversize_length);
 						if(p->pBuffer[processed + offset] == 0xff)
 						{
 							uchar* newbuf = p->pBuffer;
@@ -302,7 +350,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						}
 						else
 						{
-							printf("!!!!!!!!!Garbage Packet Unknown DISCARD!!!!!!!!!!!!!\n");
+							LogWrite(PACKET__ERROR, 0, "Packet", "!!!!!!!!!Garbage Packet Unknown DISCARD!!!!!!!!!!!!!\n");
 							DumpPacket(p->pBuffer + processed + offset, subpacket_length);
 							break;
 						}
@@ -336,30 +384,8 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						DumpPacket(p->pBuffer+processed+offset, subpacket_length);
 #endif
 						if(!HandleEmbeddedPacket(p, processed + offset, subpacket_length)){
-#ifdef LE_DEBUG
-							printf( "OP_AppCombined Here:\n");
-#endif
-							MCombineQueueLock.lock();
-							newpacket = ProcessEncryptedData(p->pBuffer+processed + offset, subpacket_length, OP_AppCombined);
-							MCombineQueueLock.unlock();
-							if(newpacket){
-#ifdef LE_DEBUG
-								printf( "Opcode %i:\n", newpacket->opcode);
-								DumpPacket(newpacket);
-#endif
-								EQApplicationPacket* ap = newpacket->MakeApplicationPacket(2);
-#ifdef LE_DEBUG
-								printf( "OP_AppCombined Here2:\n");
-								DumpPacket(ap);
-#endif
-								if (ap->version == 0)
-									ap->version = client_version;
-#ifdef WRITE_PACKETS
-								WritePackets(ap->GetOpcodeName(), p->pBuffer + processed + offset, subpacket_length, false);
-#endif
-								InboundQueuePush(ap);
-								safe_delete(newpacket);
-							}						
+							uchar* buffer = (p->pBuffer + processed + offset);
+							ProcessEmbeddedPacket(buffer, subpacket_length);
 						}
 					}
 					processed+=subpacket_length+offset;
@@ -1641,8 +1667,6 @@ DumpPacket(buffer, length);
 			if (encoded)
 				EQProtocolPacket::ChatDecode(newbuffer,newlength-2,Key);
 		}
-		if (buffer[1]!=0x01 && buffer[1]!=0x02 && buffer[1]!=0x1d)
-			newlength-=2;
 
 #ifdef LE_DEBUG
 		printf("ResultProcessBuffer:\n");
@@ -1652,6 +1676,9 @@ DumpPacket(buffer, length);
 		//printf("Read packet: opcode %i newlength %u, newbuffer2len: %u, newbuffer3len: %u\n",opcode, newlength, newbuffer[2], newbuffer[3]);
 		if(opcode > 0 && opcode <= OP_OutOfSession)
 		{
+			if (buffer[1]!=0x01 && buffer[1]!=0x02 && buffer[1]!=0x1d)
+				newlength-=2;
+			
 			EQProtocolPacket p(newbuffer,newlength);
 			ProcessPacket(&p);
 		}
@@ -1665,10 +1692,13 @@ DumpPacket(buffer, length);
 			cout << "2Decrypted Packet: " << p2->opcode << endl;
 			DumpPacket(p2->pBuffer, p2->size);
 				
-			EQApplicationPacket* ap = p2->MakeApplicationPacket(2);
-			if (ap->version == 0)
-				ap->version = client_version;
-			InboundQueuePush(ap);
+				
+			// this can be partial packets and needs more consideration, it only seems to happen I have seen for character portraits -> server
+			// this is a TODO
+			//EQApplicationPacket* ap = p2->MakeApplicationPacket(2);
+			//if (ap->version == 0)
+			//	ap->version = client_version;
+			//InboundQueuePush(ap);
 
 			safe_delete(p2);
 		}
