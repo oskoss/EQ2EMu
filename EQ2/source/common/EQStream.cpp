@@ -311,8 +311,9 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						//printf("OP_Combined subpacket_length %u\n",subpacket_length);
 						offset = 3;
 					}
-					else
+					else {
 						offset = 1;
+					}
 					
 					//printf("OP_Combined processed %u p->size %u subpacket length %u count %i\n",processed, p->size, subpacket_length, count);
 					count++;
@@ -333,26 +334,35 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 #endif
 						delete subp;
 					}
-					else if (ntohs(*reinterpret_cast<uint16_t*>(p->pBuffer + processed + offset)) > 0x1e) {
+					else {
+						offset = 1; // 0xFF in this case means it is actually 255 bytes of encrypted data after a 00 09 packet
 						//Garbage packet?
-						crypto->RC4Decrypt(p->pBuffer + processed + offset, subpacket_length);
-						LogWrite(PACKET__ERROR, 0, "Packet", "!!!!!!!!!Garbage Packet!!!!!!!!!!!!! processed: %u, offset: %u, count: %i, oversized_buffer_present: %u, offset size: %u, offset length: %u\n", processed, offset, count, oversize_buffer ? 1 : 0, oversize_offset, oversize_length);
-						if(p->pBuffer[processed + offset] == 0xff)
-						{
-							uchar* newbuf = p->pBuffer;
-							newbuf += processed + offset + 1;
-
+						if(ntohs(*reinterpret_cast<uint16_t*>(p->pBuffer + processed + offset)) <= 0x1e) {
+							subpacket_length=(unsigned char)*(p->pBuffer+processed);
+							LogWrite(PACKET__ERROR, 0, "Packet", "!!!!!!!!!Garbage Packet Unknown Process as OP_Packet!!!!!!!!!!!!!\n");
 							DumpPacket(p->pBuffer + processed + offset, subpacket_length);
-							EQProtocolPacket *subp=new EQProtocolPacket(newbuf, subpacket_length, OP_Packet);
+							uchar* newbuf = p->pBuffer;
+							newbuf += processed + offset;
+							EQProtocolPacket *subp=new EQProtocolPacket(newbuf,subpacket_length);
 							subp->copyInfo(p);
 							ProcessPacket(subp, p);
 							delete subp;
 						}
-						else
-						{
-							LogWrite(PACKET__ERROR, 0, "Packet", "!!!!!!!!!Garbage Packet Unknown DISCARD!!!!!!!!!!!!!\n");
-							DumpPacket(p->pBuffer + processed + offset, subpacket_length);
-							break;
+						else {
+							crypto->RC4Decrypt(p->pBuffer + processed + offset, subpacket_length);
+							LogWrite(PACKET__ERROR, 0, "Packet", "!!!!!!!!!Garbage Packet!!!!!!!!!!!!! processed: %u, offset: %u, count: %i, subpacket_length: %u, offset_pos_1: %u, oversized_buffer_present: %u, offset size: %u, offset length: %u\n", 
+							processed, offset, count, subpacket_length, p->pBuffer[processed + offset], oversize_buffer ? 1 : 0, oversize_offset, oversize_length);
+							if(p->pBuffer[processed + offset] == 0xff)
+							{
+								uchar* newbuf = p->pBuffer;
+								newbuf += processed + offset + 1;
+
+								DumpPacket(p->pBuffer + processed + offset, subpacket_length);
+								EQProtocolPacket *subp=new EQProtocolPacket(newbuf, subpacket_length, OP_Packet);
+								subp->copyInfo(p);
+								ProcessPacket(subp, p);
+								delete subp;
+							}
 						}
 					}
 					processed+=subpacket_length+offset;
