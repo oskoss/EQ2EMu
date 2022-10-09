@@ -194,7 +194,7 @@ bool EQStream::ProcessEmbeddedPacket(uchar* pBuffer, int16 length) {
 	MCombineQueueLock.unlock();
 	
 	if (newpacket) {
-		DumpPacket(newpacket->pBuffer, newpacket->size);
+		//DumpPacket(newpacket->pBuffer, newpacket->size);
 	
 		EQApplicationPacket* ap = newpacket->MakeApplicationPacket(2);
 		if (ap->version == 0)
