@@ -54,7 +54,7 @@
 #include "Log.h"
 
 
-#define DEBUG_EMBEDDED_PACKETS 1
+//#define DEBUG_EMBEDDED_PACKETS 1
 uint16 EQStream::MaxWindowSize=2048;
 
 void EQStream::init(bool resetSession) {
@@ -194,7 +194,9 @@ bool EQStream::ProcessEmbeddedPacket(uchar* pBuffer, int16 length) {
 	MCombineQueueLock.unlock();
 	
 	if (newpacket) {
-		//DumpPacket(newpacket->pBuffer, newpacket->size);
+#ifdef DEBUG_EMBEDDED_PACKETS
+		DumpPacket(newpacket->pBuffer, newpacket->size);
+#endif
 	
 		EQApplicationPacket* ap = newpacket->MakeApplicationPacket(2);
 		if (ap->version == 0)
@@ -1710,10 +1712,14 @@ DumpPacket(buffer, length);
 				
 			// this can be partial packets and needs more consideration, it only seems to happen I have seen for character portraits -> server
 			// this is a TODO, keeping it in place since last encounter it is a partial portait packet but the opcode is provided
-			EQApplicationPacket* ap = p2->MakeApplicationPacket(2);
-			if (ap->version == 0)
-				ap->version = client_version;
-			InboundQueuePush(ap);
+			EQApplicationPacket *res = new EQApplicationPacket;
+			res->opcode = p2->opcode;
+			res->size = p2->size;
+			
+			res->pBuffer= new unsigned char[p2->size];
+			memcpy(res->pBuffer,p2->pBuffer,p2->size);
+			res->copyInfo(p2);
+			InboundQueuePush(res);
 
 			safe_delete(p2);
 		}
