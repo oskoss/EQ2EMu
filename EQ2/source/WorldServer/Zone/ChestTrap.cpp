@@ -1,7 +1,13 @@
 #include "ChestTrap.h"
 #include <vector>
-#include <algorithm>    // std::random_shuffle
 #include <string.h>
+
+//required for c++17 compat (random_shuffle removed, replaced with shuffle)
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#include <random>
+#else
+#include <algorithm>    // std::random_shuffle
+#endif
 
 int32 ChestTrapList::Size() {
 
@@ -252,9 +258,20 @@ void ChestTrapList::shuffleMap(ChestTrapList* list) {
 		tmp_chests.push_back(curTrap);
 	}
 
+#ifdef WIN32
+	//c++17/windows removed random_shuffle replaced with this ugly bullshit 9/22/22
+	//taken right from their example.
+	std::random_device rd;
+	std::mt19937 g(rd());
+	std::shuffle(tmp_chests.begin(), tmp_chests.end(),g);
+#else
+	//let linux continue on, with the function as is since it still works.
 	std::random_shuffle(tmp_chests.begin(), tmp_chests.end());
+#endif
 
 	chesttrap_list.clear();
+
+
 
 	int count = 0;
 

@@ -76,7 +76,9 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>DEBUG;WORLD;_DEBUG;_EQDEBUG;WIN32;_CONSOLE;EQ2;EQN_DEBUG;_CRT_SECURE_NO_DEPRECATE;GLM_ENABLE_EXPERIMENTAL;GLM_FORCE_CTOR_INIT;GLM_FORCE_RADIANS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUG;WORLD;_DEBUG;_EQDEBUG;WIN32;_CONSOLE;EQ2;EQN_DEBUG;_CRT_SECURE_NO_DEPRECATE;GLM_ENABLE_EXPERIMENTAL;GLM_FORCE_CTOR_INIT;GLM_FORCE_RADIANS;_HAS_STD_BYTE=0
+;
+%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -103,6 +105,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
