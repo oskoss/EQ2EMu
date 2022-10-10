@@ -54,7 +54,7 @@
 #include "Log.h"
 
 
-//#define DEBUG_EMBEDDED_PACKETS 1
+#define DEBUG_EMBEDDED_PACKETS 1
 uint16 EQStream::MaxWindowSize=2048;
 
 void EQStream::init(bool resetSession) {
@@ -185,16 +185,17 @@ EQProtocolPacket* EQStream::ProcessEncryptedPacket(EQProtocolPacket *p){
 	return ret;
 }
 
-bool EQStream::ProcessEmbeddedPacket(uchar* pBuffer, int16 length) {
+bool EQStream::ProcessEmbeddedPacket(uchar* pBuffer, int16 length,int8 opcode) {
 	if(!pBuffer)
 		return false;
 
 	MCombineQueueLock.lock();
-	EQProtocolPacket* newpacket = ProcessEncryptedData(pBuffer, length, OP_Packet);
+	EQProtocolPacket* newpacket = ProcessEncryptedData(pBuffer, length, opcode);
 	MCombineQueueLock.unlock();
 	
 	if (newpacket) {
 #ifdef DEBUG_EMBEDDED_PACKETS
+		printf("Opcode: %u\n", newpacket->opcode);
 		DumpPacket(newpacket->pBuffer, newpacket->size);
 #endif
 	
@@ -402,7 +403,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 #endif
 						if(!HandleEmbeddedPacket(p, processed + offset, subpacket_length)){
 							uchar* buffer = (p->pBuffer + processed + offset);
-							ProcessEmbeddedPacket(buffer, subpacket_length);
+							ProcessEmbeddedPacket(buffer, subpacket_length, OP_AppCombined);
 						}
 					}
 					processed+=subpacket_length+offset;
