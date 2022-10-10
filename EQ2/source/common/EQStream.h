@@ -310,7 +310,7 @@ class EQStream {
 		void Process(const unsigned char *data, const uint32 length);
 		void ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp=NULL);
 		
-		bool ProcessEmbeddedPacket(uchar* pBuffer, uint16 length);
+		bool ProcessEmbeddedPacket(uchar* pBuffer, uint16 length, int8 opcode = OP_Packet);
 		bool HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset = 2, int16 length = 0);
 
 		EQProtocolPacket * ProcessEncryptedPacket(EQProtocolPacket *p);
