@@ -54,7 +54,7 @@
 #include "Log.h"
 
 
-#define DEBUG_EMBEDDED_PACKETS 1
+//#define DEBUG_EMBEDDED_PACKETS 1
 uint16 EQStream::MaxWindowSize=2048;
 
 void EQStream::init(bool resetSession) {
