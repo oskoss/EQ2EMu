@@ -186,7 +186,7 @@ EQProtocolPacket* EQStream::ProcessEncryptedPacket(EQProtocolPacket *p){
 }
 
 bool EQStream::ProcessEmbeddedPacket(uchar* pBuffer, int16 length,int8 opcode) {
-	if(!pBuffer)
+	if(!pBuffer || !crypto->isEncrypted())
 		return false;
 
 	MCombineQueueLock.lock();
@@ -255,17 +255,25 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 			if(valid)
 				return true;
 		}
-		else if(offset < p->size && ntohl(*(uint32 *)(p->pBuffer+offset)) != 0xffffffff) {
-
+		else if(offset+4 < p->size && ntohl(*(uint32 *)(p->pBuffer+offset)) != 0xffffffff) {
 #ifdef DEBUG_EMBEDDED_PACKETS
-			printf( "Unhandled Packet with offset %u, length %u, p->size %u\n", offset, length, p->size);
+			uint16 seq = NextInSeq-1;
+			sint8 check = 0;
+			
+			if(offset == 2) {
+				seq=ntohs(*(uint16 *)(p->pBuffer));
+				check=CompareSequence(NextInSeq,seq);
+			}
+			printf( "Unhandled Packet with offset %u, length %u, p->size %u, check: %i, nextinseq: %u, seq: %u\n", offset, length, p->size, check, NextInSeq, seq);
 			DumpPacket(p->pBuffer, p->size);
 #endif
 
 			if(length == 0)
 				length = p->size - offset;
-			
+				
+				
 			uchar* buffer = (p->pBuffer + offset);
+			
 			bool valid = ProcessEmbeddedPacket(buffer, length);
 			
 			if(valid)
@@ -393,17 +401,16 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						offset = 3;
 					} else
 						offset = 1;
-					if(crypto->getRC4Key()==0 && p->size >= 70){
-						processRSAKey(p);
-					}
-					else if(crypto->isEncrypted()){
+					if(crypto->isEncrypted()){
 #ifdef LE_DEBUG
 						printf( "OP_AppCombined Packet %i (%u) (%u): \n", count, subpacket_length, processed);
 						DumpPacket(p->pBuffer+processed+offset, subpacket_length);
 #endif
 						if(!HandleEmbeddedPacket(p, processed + offset, subpacket_length)){
 							uchar* buffer = (p->pBuffer + processed + offset);
-							ProcessEmbeddedPacket(buffer, subpacket_length, OP_AppCombined);
+							if(!ProcessEmbeddedPacket(buffer, subpacket_length, OP_AppCombined)) {
+								LogWrite(PACKET__ERROR, 0, "Packet", "*** This is bad, ProcessEmbeddedPacket failed, report to Image!");
+							}
 						}
 					}
 					processed+=subpacket_length+offset;
@@ -445,14 +452,19 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						LogWrite(PACKET__DEBUG, 1, "Packet", "OP_Fragment: Removing older queued packet with sequence %i", seq);
 						delete qp;
 					}
-
+					
 					SetNextAckToSend(seq);
 					NextInSeq++;
+					
+					if(crypto->getRC4Key()==0 && p && p->size >= 69){
+						DumpPacket(p->pBuffer, p->size);
+						processRSAKey(p);
+						break;
+					}
+					
 					if(HandleEmbeddedPacket(p))
 						break;
-					if(crypto->getRC4Key()==0 && p && p->size >= 70){
-						processRSAKey(p);
-					}
+					
 					else if(crypto->isEncrypted() && p){
 						MCombineQueueLock.lock();
 						EQProtocolPacket* newpacket = ProcessEncryptedPacket(p);
@@ -691,6 +703,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 					//_log(NET__ERROR, _L "Received OP_SessionStatRequest that was of malformed size" __L);
 					break;
 				}
+				
 				ClientSessionStats* Stats = (ClientSessionStats*)p->pBuffer;
 				int16 request_id = Stats->RequestID;
 				AdjustRates(ntohl(Stats->average_delta));
@@ -725,7 +738,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 
 				cout << "Orig Packet: " << p->opcode << endl;
 				DumpPacket(p->pBuffer, p->size);
-				if(p && p->size >= 70){
+				if(p && p->size >= 69){
 					processRSAKey(p);
 				}
 				MCombineQueueLock.lock();
@@ -838,10 +851,13 @@ int16 EQStream::processRSAKey(EQProtocolPacket *p){
 	}
 	crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + offset + (limit-8), 8));
 	return (limit + offset +1) - offset2;*/
-	if(p->pBuffer[0] == 0)
+	if(p->size > 69 && p->pBuffer[0] == 0)
 		crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + 62, 8));
 	else
 		crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + 61, 8));
+	
+	p->size -= 8;
+	
 	return 0;
 }
 
