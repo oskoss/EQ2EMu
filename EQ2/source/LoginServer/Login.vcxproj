@@ -35,7 +35,8 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0400;WIN32;NDEBUG;_CONSOLE;LOGIN; EQ2; EQN_DEBUG;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0400;WIN32;NDEBUG;_CONSOLE;LOGIN; EQ2; EQN_DEBUG;_CRT_SECURE_NO_DEPRECATE;_HAS_STD_BYTE=0
+;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <FunctionLevelLinking>false</FunctionLevelLinking>
@@ -46,6 +47,7 @@
       <BrowseInformation />
       <BrowseInformationFile />
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;ws2_32.lib;zlib.lib;mysqlclient.lib;DebugUtils.lib;Detour.lib;DetourCrowd.lib;DetourTileCache.lib;Recast.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -60,6 +62,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\DatabaseNew.cpp" />
+    <ClCompile Include="..\common\DatabaseResult.cpp" />
     <ClCompile Include="..\common\Log.cpp" />
     <ClCompile Include="client.cpp" />
     <ClCompile Include="LoginAccount.cpp" />
@@ -93,6 +97,8 @@
     <ClCompile Include="..\common\xmlParser.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\DatabaseNew.h" />
+    <ClInclude Include="..\common\DatabaseResult.h" />
     <ClInclude Include="..\common\Log.h" />
     <ClInclude Include="..\common\LogTypes.h" />
     <ClInclude Include="client.h" />

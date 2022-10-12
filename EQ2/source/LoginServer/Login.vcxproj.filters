@@ -115,6 +115,12 @@
     <ClCompile Include="..\common\Log.cpp">
       <Filter>Common Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\DatabaseNew.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\DatabaseResult.cpp">
+      <Filter>Common Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="client.h">
@@ -259,6 +265,12 @@
       <Filter>Common Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\LogTypes.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\DatabaseNew.h">
+      <Filter>Common Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\DatabaseResult.h">
       <Filter>Common Header Files</Filter>
     </ClInclude>
   </ItemGroup>
