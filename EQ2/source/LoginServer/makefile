@@ -13,7 +13,7 @@ CC=g++
 LINKER=gcc
 DFLAGS=-DEQ2 -DLOGIN
 WFLAGS=-Wall -Wuninitialized -Wwrite-strings -Wcast-qual  -Wcomment -Wcast-align -Wno-deprecated
-COPTS=$(WFLAGS) -g -march=native -O -pthread -pipe -DFX -D_GNU_SOURCE -DINVERSEXY $(DFLAGS) -I/usr/include/mariadb -I/usr/mariadb/include
+COPTS=$(WFLAGS) -g -march=native -O -pthread -pipe -DFX -D_GNU_SOURCE -DINVERSEXY $(DFLAGS) -I/usr/include/mariadb -I/usr/mariadb/include -std=c++17
 LINKOPTS=-rdynamic -L. -lstdc++ -lm -lz -L/usr/lib/x86_64-linux-gnu -lmariadbclient -ldl
 all: $(APP)
 
