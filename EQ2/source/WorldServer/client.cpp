@@ -5643,10 +5643,10 @@ void Client::ProcessQuestUpdates() {
 				LogWrite(CCLIENT__ERROR, 0, "Client", "Quest ID %u missing for Player %s, deleting quest id from tmp_quest_rewards.", questID, GetPlayer()->GetName());
 				break;
 			}
+		}
 			
-			if(delete_first) {
-				RemoveQueuedQuestReward();
-			}
+		if(delete_first) {
+			RemoveQueuedQuestReward();
 		}
 	} else {
 		MQuestPendingUpdates.releasereadlock(__FUNCTION__, __LINE__);
