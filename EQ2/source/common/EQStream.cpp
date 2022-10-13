@@ -457,7 +457,9 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 					NextInSeq++;
 					
 					if(crypto->getRC4Key()==0 && p && p->size >= 69){
+					#ifdef DEBUG_EMBEDDED_PACKETS
 						DumpPacket(p->pBuffer, p->size);
+					#endif
 						processRSAKey(p);
 						break;
 					}

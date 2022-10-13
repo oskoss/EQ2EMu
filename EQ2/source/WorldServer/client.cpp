@@ -5613,7 +5613,8 @@ void Client::ProcessQuestUpdates() {
 		tmp_quest_rewards.insert(tmp_quest_rewards.begin(), quest_pending_reward.begin(), quest_pending_reward.begin()+1);
 		MQuestPendingUpdates.releasewritelock(__FUNCTION__, __LINE__);
 		
-		for (itr = tmp_quest_rewards.begin(); itr != tmp_quest_rewards.end(); itr++) {
+		bool delete_first = false;
+		for (itr = tmp_quest_rewards.begin(); itr != tmp_quest_rewards.end();) {
 			int32 questID = (*itr)->quest_id;
 			Quest* quest = 0;
 			if((*itr)->is_collection && GetPlayer()->GetPendingCollectionReward()) {
@@ -5622,6 +5623,7 @@ void Client::ProcessQuestUpdates() {
 				(*itr)->has_displayed = true;
 				
 				UpdateCharacterRewardData((*itr));
+				break;
 			}
 			else if(questID > 0 && (quest = GetPlayer()->GetAnyQuest(questID))) {
 				quest->SetQuestTemporaryState((*itr)->is_temporary, (*itr)->description);
@@ -5637,7 +5639,13 @@ void Client::ProcessQuestUpdates() {
 				// only able to display one reward at a time
 				break;
 			} else {
-				LogWrite(CCLIENT__ERROR, 0, "Client", "Quest ID %u missing for Player %s, skipping quest id from tmp_quest_rewards.", questID, GetPlayer()->GetName());
+				delete_first = true;
+				LogWrite(CCLIENT__ERROR, 0, "Client", "Quest ID %u missing for Player %s, deleting quest id from tmp_quest_rewards.", questID, GetPlayer()->GetName());
+				break;
+			}
+			
+			if(delete_first) {
+				RemoveQueuedQuestReward();
 			}
 		}
 	} else {
@@ -6039,12 +6047,12 @@ Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
 	int32 questID = 0;
 	Quest* quest = 0;
 	MPendingQuestAccept.lock();
-	for (itr = pending_quest_accept.begin(); itr != pending_quest_accept.end(); itr++) {
+	for (itr = pending_quest_accept.begin(); itr != pending_quest_accept.end();) {
 		questID = *itr;
 		quest = GetPlayer()->GetAnyQuest(questID);
 		if(!quest) {
 			LogWrite(CCLIENT__ERROR, 0, "Client", "Quest ID %u missing for Player %s, removing quest id from pending_quest_accept.", questID, GetPlayer()->GetName());
-			pending_quest_accept.erase(itr);
+			itr = pending_quest_accept.erase(itr);
 			continue;
 		}
 		if(quest->GetQuestTemporaryState())
@@ -6069,6 +6077,8 @@ Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
 			pending_quest_accept.erase(itr);
 			break;
 		}
+		
+		itr++;
 	}
 	MPendingQuestAccept.unlock();
 
@@ -6264,6 +6274,50 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 	}
 }
 
+void Client::PopulateQuestRewardItems(vector <Item*>* items, PacketStruct* packet, 
+										std::string num_rewards_str, std::string reward_id_str, std::string item_str) {
+	if(!items || !packet)
+		return;
+	
+	if (items) {
+		int32 total_item_count = 0;
+		for(int s=0;s<items->size();s++) {
+			Item* tmpItem = items->at(s);
+			if(tmpItem) {
+				if(tmpItem->details.count > 1) {
+					total_item_count += tmpItem->details.count;
+				}
+				else {
+					total_item_count += 1;
+				}
+			}
+		}
+		packet->setArrayLengthByName(num_rewards_str.c_str(), total_item_count);
+		int16 count = 0;
+		int16 pos = 0;
+		for (int32 i = 0; i < items->size();) {
+			packet->setArrayDataByName(reward_id_str.c_str(), items->at(i)->details.item_id, pos);
+			if (version < 860)
+				packet->setItemArrayDataByName(item_str.c_str(), items->at(i), player, pos, 0, -1);
+			else if (version < 1193)
+				packet->setItemArrayDataByName(item_str.c_str(), items->at(i), player, pos);
+			else
+				packet->setItemArrayDataByName(item_str.c_str(), items->at(i), player, pos, 0, 2);
+			
+			pos++;
+			
+			if(count >= items->at(i)->details.count-1) {
+				count = 0;
+			}
+			else if(items->at(i)->details.count > 1) {
+				count++;
+				continue;
+			}
+			
+			i++;
+		}
+	}
+}
 void Client::DisplayQuestComplete(Quest* quest, bool tempReward, std::string customDescription, bool was_displayed) {	
 	if (!quest)
 		return;
@@ -6313,51 +6367,16 @@ void Client::DisplayQuestComplete(Quest* quest, bool tempReward, std::string cus
 			packet->setDataByName("status_points", quest->GetStatusPoints());
 		}
 
-		vector<Item*>* items = quest->GetTmpRewardItems();
-
-		if(tempReward)
-		{
-			if (items) {
-				packet->setArrayLengthByName("num_rewards", items->size());
-				for (int32 i = 0; i < items->size(); i++) {
-					packet->setArrayDataByName("reward_id", items->at(i)->details.item_id, i);
-					if (version < 860)
-						packet->setItemArrayDataByName("item", items->at(i), player, i, 0, -1);
-					else if (version < 1193)
-						packet->setItemArrayDataByName("item", items->at(i), player, i);
-					else
-						packet->setItemArrayDataByName("item", items->at(i), player, i, 0, 2);
-				}
-			}
+		if(tempReward) {
+			PopulateQuestRewardItems(quest->GetTmpRewardItems(), packet);
 		}
 		else
 		{
 			vector<Item*>* items2 = quest->GetSelectableRewardItems();
-			vector<Item*>* items = quest->GetRewardItems();
-			if (items) {
-				packet->setArrayLengthByName("num_rewards", items->size());
-				for (int32 i = 0; i < items->size(); i++) {
-					packet->setArrayDataByName("reward_id", items->at(i)->details.item_id, i);
-					if (version < 860)
-						packet->setItemArrayDataByName("item", items->at(i), player, i, 0, -1);
-					else if (version < 1193)
-						packet->setItemArrayDataByName("item", items->at(i), player, i);
-					else
-						packet->setItemArrayDataByName("item", items->at(i), player, i, 0, 2);
-				}
-			}
-			if (items2 && items2->size() > 0) {
-				packet->setArrayLengthByName("num_select_rewards", items2->size());
-				for (int32 i = 0; i < items2->size(); i++) {
-					packet->setArrayDataByName("select_reward_id", items2->at(i)->details.item_id, i);
-					if (version < 860)
-						packet->setItemArrayDataByName("select_item", items2->at(i), player, i, 0, -1);
-					else if (version < 1193)
-						packet->setItemArrayDataByName("select_item", items2->at(i), player, i);
-					else
-						packet->setItemArrayDataByName("select_item", items2->at(i), player, i, 0, 2);
-				}
-			}
+			PopulateQuestRewardItems(quest->GetRewardItems(), packet);
+			PopulateQuestRewardItems(quest->GetSelectableRewardItems(), packet, std::string("num_select_rewards"), 
+										std::string("select_reward_id"), std::string("select_item"));
+			
 			map<int32, sint32>* reward_factions = quest->GetRewardFactions();
 			if (reward_factions && reward_factions->size() > 0) {
 				packet->setArrayLengthByName("num_factions", reward_factions->size());
@@ -11290,7 +11309,7 @@ void Client::SaveQuestRewardData(bool force_refresh) {
 				(*itr)->db_saved = true;
 				(*itr)->db_index = index;
 				if((*itr)->is_temporary) {
-					std::vector<int32> items;
+					std::vector<Item*> items;
 					Quest* quest = GetPlayer()->GetAnyQuest(questID);
 					if(quest) {
 						quest->GetTmpRewardItemsByID(&items);
@@ -11299,8 +11318,8 @@ void Client::SaveQuestRewardData(bool force_refresh) {
 								GetCharacterID(), questID);
 						}
 						for(int i=0;i<items.size();i++) {
-							query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "replace into character_quest_temporary_rewards (char_id, quest_id, item_id) values(%u, %u, %u)", 
-								GetCharacterID(), questID, items[i]);
+							query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "replace into character_quest_temporary_rewards (char_id, quest_id, item_id, count) values(%u, %u, %u, %u)", 
+								GetCharacterID(), questID, items[i]->details.item_id, items[i]->details.count);
 						}
 					}
 				}

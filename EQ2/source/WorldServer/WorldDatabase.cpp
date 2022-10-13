@@ -1892,7 +1892,7 @@ void WorldDatabase::LoadCharacterQuestRewards(Client* client) {
 void WorldDatabase::LoadCharacterQuestTemporaryRewards(Client* client, int32 quest_id) {
 		Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id FROM character_quest_temporary_rewards where char_id = %u and quest_id = %u", client->GetCharacterID(), quest_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, count FROM character_quest_temporary_rewards where char_id = %u and quest_id = %u", client->GetCharacterID(), quest_id);
 	int8 count = 0;
 	if(result)
 	{
@@ -1903,7 +1903,9 @@ void WorldDatabase::LoadCharacterQuestTemporaryRewards(Client* client, int32 que
 			if(quest) {
 				Item* item = master_item_list.GetItem(item_id);
 				if(item) {
-					quest->AddTmpRewardItem(new Item(item));
+					Item* tmpItem = new Item(item);
+					tmpItem->details.count = atoul(row[1]);
+					quest->AddTmpRewardItem(tmpItem);
 				}
 			}
 		}
@@ -7206,13 +7208,16 @@ void WorldDatabase::LoadCharacterLUAHistory(int32 char_id, Player* player) {
 
 void WorldDatabase::FindSpell(Client* client, char* findString)
 {
+	
+	char* find_escaped = getEscapeString(findString);
+	
 	DatabaseResult result;
 		if (!database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `tier` "
 			"FROM (spells s, spell_tiers st) "
 			"LEFT JOIN spell_ts_ability_index ts "
 			"ON s.`id` = ts.spell_id "
 			"WHERE s.id = st.spell_id and s.name like '%%%s%%' AND s.is_active = 1 "
-			"ORDER BY s.`id`, `tier` limit 50", findString))
+			"ORDER BY s.`id`, `tier` limit 50", find_escaped))
 		{
 			// error
 		}
@@ -7226,8 +7231,10 @@ void WorldDatabase::FindSpell(Client* client, char* findString)
 				int8 tier = result.GetInt8Str("tier");
 				client->Message(CHANNEL_COLOR_YELLOW, "%i (%i): %s", spell_id, tier, spell_name.c_str());
 			}
-			client->Message(CHANNEL_COLOR_YELLOW, "End Spell Results for %s", findString);
+			client->Message(CHANNEL_COLOR_YELLOW, "End Spell Results for %s", find_escaped);
 		}
+		
+	safe_delete_array(find_escaped);
 }
 
 void WorldDatabase::LoadChestTraps() {

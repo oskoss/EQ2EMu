@@ -886,32 +886,11 @@ EQ2Packet* Quest::OfferQuest(int16 version, Player* player){
 		if(reward_comment.length() > 0)
 			packet->setDataByName("text", reward_comment.c_str());
 		if(reward_items.size() > 0){
-			packet->setArrayLengthByName("num_rewards", reward_items.size());
-			Item* item = 0;
-			for(int32 i=0;i<reward_items.size();i++){
-				item = reward_items[i];
-				packet->setArrayDataByName("reward_id", item->details.item_id, i);
-				if(version < 860)
-					packet->setItemArrayDataByName("item", item, player, i, 0, -1);
-				else if (version < 1193)
-					packet->setItemArrayDataByName("item", item, player, i);
-				else
-					packet->setItemArrayDataByName("item", item, player, i, 0, 2);
-			}
+			player->GetClient()->PopulateQuestRewardItems(&reward_items, packet);
 		}
 		if(selectable_reward_items.size() > 0){
-			packet->setArrayLengthByName("num_select_rewards", selectable_reward_items.size());
-			Item* item = 0;
-			for(int32 i=0;i<selectable_reward_items.size();i++){
-				item = selectable_reward_items[i];
-				packet->setArrayDataByName("select_reward_id", item->details.item_id, i);
-				if(version < 860)
-					packet->setItemArrayDataByName("select_item", item, player, i, 0, -1);
-				else if (version < 1193)
-					packet->setItemArrayDataByName("select_item", item, player, i);
-				else
-					packet->setItemArrayDataByName("select_item", item, player, i, 0, 2);
-			}
+			player->GetClient()->PopulateQuestRewardItems(&selectable_reward_items, packet, std::string("num_select_rewards"), 
+										std::string("select_reward_id"), std::string("select_item"));
 		}
 		map<int32, sint32>* reward_factions = GetRewardFactions();
 		if (reward_factions && reward_factions->size() > 0) {
@@ -1462,23 +1441,50 @@ void Quest::AddPrereqItem(Item* item){
 	prereq_items.push_back(item);
 }
 
+void Quest::AddRewardItemVec(vector<Item*>* items, Item* item, bool combine_items) {
+	if(!items || !item)
+		return;
+	
+	bool stacked = false;
+
+	if(combine_items) {
+		for(int32 i=0;i<items->size();i++) {
+			Item* cur_item = (Item*)items->at(i);
+			if(cur_item->stack_count > 1) {
+				if(cur_item->details.item_id == item->details.item_id && cur_item->details.count+1 < cur_item->stack_count) {
+					if(!cur_item->details.count) // sometimes the count is 0, so we want it to be 2 now
+						cur_item->details.count = 2;
+					else
+						cur_item->details.count += 1;
+					stacked = true;
+					break;
+				}
+			}
+		}
+	}
+	
+	if(!stacked) {
+		items->push_back(item);
+	}
+}
+
 void Quest::AddSelectableRewardItem(Item* item){
-	selectable_reward_items.push_back(item);
+	AddRewardItemVec(&selectable_reward_items, item, false);
 }
 
 void Quest::AddRewardItem(Item* item){
-	reward_items.push_back(item);
+	AddRewardItemVec(&reward_items, item);
 }
 
 void Quest::AddTmpRewardItem(Item* item){
-	tmp_reward_items.push_back(item);
+	AddRewardItemVec(&tmp_reward_items, item);
 }
 
-void Quest::GetTmpRewardItemsByID(std::vector<int32>* items) {
+void Quest::GetTmpRewardItemsByID(std::vector<Item*>* items) {
 	if(!items)
 		return;
 	for(int32 i=0;i<tmp_reward_items.size();i++)
-		items->push_back(tmp_reward_items[i]->details.item_id);
+		items->push_back(tmp_reward_items[i]);
 }
 
 void Quest::AddRewardCoins(int32 copper, int32 silver, int32 gold, int32 plat){

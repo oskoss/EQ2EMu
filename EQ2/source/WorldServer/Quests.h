@@ -140,7 +140,8 @@ public:
 
 	void				AddRewardItem(Item* item);
 	void				AddTmpRewardItem(Item* item);
-	void				GetTmpRewardItemsByID(std::vector<int32>* items);
+	void				GetTmpRewardItemsByID(std::vector<Item*>* items);
+	void				AddRewardItemVec(vector<Item*>* items, Item* item, bool combine_items = true);
 	void				AddSelectableRewardItem(Item* item);
 	void				AddRewardCoins(int32 copper, int32 silver, int32 gold, int32 plat);
 	void                AddRewardCoinsMax(int64 coins);

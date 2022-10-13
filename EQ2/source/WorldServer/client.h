@@ -296,6 +296,7 @@ public:
 	void	SendQuestUpdateStep(Quest* quest, int32 step, bool display_quest_helper = true);
 	void	SendQuestUpdateStepImmediately(Quest* quest, int32 step, bool display_quest_helper = true);
 	void	DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* rewards=0, vector<Item*>* selectable_rewards=0, map<int32, sint32>* factions=0, const char* header="Quest Reward!", int32 status_points=0, const char* text=0, bool was_displayed = false);
+	void	PopulateQuestRewardItems(vector <Item*>* items, PacketStruct* packet, std::string num_rewards_str = "num_rewards", std::string reward_id_str = "reward_id" , std::string item_str = "item");
 	void	DisplayQuestComplete(Quest* quest, bool tempReward = false, std::string customDescription = string(""), bool was_displayed = false);
 	void	DisplayRandomizeFeatures(int32 features);
 	void	AcceptQuestReward(Quest* quest, int32 item_id);
