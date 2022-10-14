@@ -402,7 +402,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 					} else
 						offset = 1;
 					
-					if(crypto->getRC4Key()==0 && p && subpacket_length >= 8){
+					if(crypto->getRC4Key()==0 && p && subpacket_length > 8+offset){
 					#ifdef DEBUG_EMBEDDED_PACKETS
 						DumpPacket(p->pBuffer, p->size);
 					#endif
