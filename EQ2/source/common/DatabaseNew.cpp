@@ -157,14 +157,14 @@ bool DatabaseNew::Query(const char *query, ...) {
 		free(buf);
 	}
 
-	if (mysql_real_query(&mysql, buf, (unsigned long)num_chars) != 0) {
+	if (mysql_real_query(&mysql, buf, num_chars) != 0) {
 
 		if (mysql_errno(&mysql) == CR_SERVER_LOST || mysql_errno(&mysql) == CR_SERVER_GONE_ERROR) {
 			LogWrite(DATABASE__ERROR, 0, "Database", "Lost connection, attempting to recover and retry query...");
 			Connect();
 
 			// retry attempt of previous query (1 try and we give up)
-			if (mysql_real_query(&mysql, buf, (unsigned long)num_chars) != 0) {
+			if (mysql_real_query(&mysql, buf, num_chars) != 0) {
 				ret = false;
 			}
 		}
