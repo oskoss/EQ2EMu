@@ -54,7 +54,7 @@
 #include "Log.h"
 
 
-//#define DEBUG_EMBEDDED_PACKETS 1
+#define DEBUG_EMBEDDED_PACKETS 1
 uint16 EQStream::MaxWindowSize=2048;
 
 void EQStream::init(bool resetSession) {
@@ -389,7 +389,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 				processed=0;
 				EQProtocolPacket* newpacket = 0;
 				int8 offset = 0;
-#ifdef LE_DEBUG
+#ifdef DEBUG_EMBEDDED_PACKETS
 				printf( "OP_AppCombined: \n");
 				DumpPacket(p);
 #endif
@@ -401,8 +401,17 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 						offset = 3;
 					} else
 						offset = 1;
-					if(crypto->isEncrypted()){
-#ifdef LE_DEBUG
+					
+					if(crypto->getRC4Key()==0 && p && subpacket_length >= 8){
+					#ifdef DEBUG_EMBEDDED_PACKETS
+						DumpPacket(p->pBuffer, p->size);
+					#endif
+						p->pBuffer += offset;
+						processRSAKey(p, subpacket_length);
+						p->pBuffer -= offset;
+					}
+					else if(crypto->isEncrypted()){
+#ifdef DEBUG_EMBEDDED_PACKETS
 						printf( "OP_AppCombined Packet %i (%u) (%u): \n", count, subpacket_length, processed);
 						DumpPacket(p->pBuffer+processed+offset, subpacket_length);
 #endif
@@ -456,17 +465,14 @@ void EQStream::ProcessPacket(EQProtocolPacket *p, EQProtocolPacket* lastp)
 					SetNextAckToSend(seq);
 					NextInSeq++;
 					
+					if(HandleEmbeddedPacket(p))
+						break;
 					if(crypto->getRC4Key()==0 && p && p->size >= 69){
 					#ifdef DEBUG_EMBEDDED_PACKETS
 						DumpPacket(p->pBuffer, p->size);
 					#endif
 						processRSAKey(p);
-						break;
 					}
-					
-					if(HandleEmbeddedPacket(p))
-						break;
-					
 					else if(crypto->isEncrypted() && p){
 						MCombineQueueLock.lock();
 						EQProtocolPacket* newpacket = ProcessEncryptedPacket(p);
@@ -840,7 +846,7 @@ int8 EQStream::EQ2_Compress(EQ2Packet* app, int8 offset){
 	return offset - 1;
 }
 
-int16 EQStream::processRSAKey(EQProtocolPacket *p){
+int16 EQStream::processRSAKey(EQProtocolPacket *p, uint16 subpacket_length){
 	/*int16 limit = 0;
 	int8 offset = 13;
 	int8 offset2 = 0;
@@ -853,12 +859,10 @@ int16 EQStream::processRSAKey(EQProtocolPacket *p){
 	}
 	crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + offset + (limit-8), 8));
 	return (limit + offset +1) - offset2;*/
-	if(p->size > 69 && p->pBuffer[0] == 0)
-		crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + 62, 8));
+	if(subpacket_length)
+		crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + subpacket_length - 8, 8));
 	else
-		crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + 61, 8));
-	
-	p->size -= 8;
+		crypto->setRC4Key(Crypto::RSADecrypt(p->pBuffer + p->size - 8, 8));
 	
 	return 0;
 }

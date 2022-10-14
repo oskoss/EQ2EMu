@@ -334,7 +334,7 @@ class EQStream {
 		void OutboundQueueClear();
 		bool HasOutgoingData();
 		void SendKeyRequest();
-		int16 processRSAKey(EQProtocolPacket *p);
+		int16 processRSAKey(EQProtocolPacket *p, uint16 subpacket_length = 0);
 		void RemoveData() { InboundQueueClear(); OutboundQueueClear(); if (CombinedAppPacket) delete CombinedAppPacket; }
 
 		//
