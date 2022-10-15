@@ -2940,7 +2940,10 @@ bool SpellProcess::AddLuaSpellTarget(LuaSpell* lua_spell, int32 id, bool lock_sp
 	if(lock_spell_targets)
 		lua_spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 	
-	if(std::find(lua_spell->removed_targets.begin(), lua_spell->removed_targets.end(), id) == lua_spell->removed_targets.end()) {
+	if(std::find(lua_spell->targets.begin(), lua_spell->targets.end(), id) != lua_spell->targets.end()) {
+		ret = true;
+	}
+	else if(std::find(lua_spell->removed_targets.begin(), lua_spell->removed_targets.end(), id) == lua_spell->removed_targets.end()) {
 		lua_spell->targets.push_back(id);
 		ret = true;
 	}
