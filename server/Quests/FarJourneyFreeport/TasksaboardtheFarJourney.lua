@@ -88,7 +88,9 @@ end
 function Step9Init(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 8, "I have killed the rats.")
 	UpdateQuestTaskGroupDescription(Quest, 8, "I killed the rats that Captain Varlos requested.")
-
+    if GetLevel(Player) <2 then
+        SetPlayerLevel(Player,2)
+    end
 	AddQuestStepChat(Quest, 9, "I should speak to Captain Varlos.", 1, "Inform Captain Varlos that you have exterminated the vermin.", 11, CaptainVarlos)
 	AddQuestStepCompleteAction(Quest, 9, "Step9Complete")
 end
@@ -153,8 +155,10 @@ function CurrentStep(Quest, QuestGiver, Player)
 			delrat = GetRandomSpawnByID(Player, 270009)
 			Despawn(delrat)
 		end
-		if HasItem(Player, 88140) == false then
+		if HasItem(Player, 88140) == false and GetClass(Player)>0 then
 			GiveQuestItem(Quest, Player, "", 88140)
+		elseif 	HasItem(Player, 1070013) == false then
+			GiveQuestItem(Quest, Player, "", 1070013)
 		end
 		if HasItemEquipped(Player, 88140) == false then
 			ShowWindow(Player, "Inventory.Inventory", 0)
@@ -289,6 +293,8 @@ function Accepted(Quest, QuestGiver, Player)
 	
 	local Waulon = GetSpawn(QuestGiver, 270002)
 	FaceTarget(QuestGiver, Waulon)	
+--	local Ingred = GetSpawn(QuestGiver, 270001)
+--  WalkToGeredo(Ingred, Spawn)
 end
 
 function Declined(Quest, QuestGiver, Player)

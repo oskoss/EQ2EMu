@@ -170,7 +170,9 @@ function hailed(NPC, Spawn)
 	
 	Dialog.AddDialog("Hello again. Should you find your business here at the outpost concluded, I'd encourage you to travel west and seek out Wanderlust Fair. Many an odd character reside there, many more could use the help of someone like you. The Queen smiles upon you, young one. Good day.")
 	
+	
 	Dialog.Start()
+	
 end
 
 --------------------------------------------------------------------------------------

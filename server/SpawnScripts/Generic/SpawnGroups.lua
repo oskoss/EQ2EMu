@@ -3,6 +3,5 @@
 	Script Purpose  : 
 	Script Author   :
 	Script Date     : 
-	Script Notes    :
+	Script Notes    : DO NOT EDIT THIS LUA UNLESS YOU INTEND TO TEST ALL SpawnGroups SPAWNS.
 --]]
-

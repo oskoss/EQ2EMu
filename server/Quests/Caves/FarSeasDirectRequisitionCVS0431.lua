@@ -15,14 +15,14 @@ local A_CAVE_SERPENT_ID = 1970008
 local ALCHEMIST_GARION_DUNAM_ID = 2330027
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "Collect cave serpent dorsal fins.", 10, 100, "I must hunt down the creatures in the Caves to fill the requisition.", 11, A_CAVE_SERPENT_ID)
+	AddQuestStepKill(Quest, 1, "Collect cave serpent dorsal fins.", 10, 100, "I must hunt down the creatures in the Caves to fill the requisition.", 11, A_CAVE_SERPENT_ID,8260074,8260003)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
 end
 
 function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have found a cave serpent dorsal fin.")
 	UpdateQuestTaskGroupDescription(Quest, 1, "I have hunted down all the resources to fill the requisition.")
-	
+    UpdateQuestZone(Quest, "Nettleville")	
 
 	AddQuestStepChat(Quest, 2, "I must talk to Garion Dunam.", 1, "I must go to Nettleville to seek out Alchemist Garion Dunam.", 11, ALCHEMIST_GARION_DUNAM_ID)
 	AddQuestStepCompleteAction(Quest, 2, "QuestComplete")

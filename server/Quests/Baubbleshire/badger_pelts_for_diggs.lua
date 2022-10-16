@@ -9,19 +9,21 @@
 	Preceded by: None
 	Followed by: None
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "I need ten badger pelts.", 10, 80, "I must collect ten badger pelts in the Forest Ruins or Oakmyst Forest.", 93, 1960011, 1960017, 1950035, 1950039)
+	AddQuestStepKill(Quest, 1, "I need ten badger pelts.", 10, 100, "I must collect ten badger pelts in the Forest Ruins or Oakmyst Forest.", 93, 1960011, 1960017, 1950035, 1950039)
 	AddQuestStepCompleteAction(Quest, 1, "step1_complete_killedBadgers")
 end
 
 function Accepted(Quest, QuestGiver, Player)
 	FaceTarget(QuestGiver, Player)
-	conversation = CreateConversation()
-
-	AddConversationOption(conversation, "Ok.")
-	StartConversation(conversation, QuestGiver, Player, "Try to make them high quality pelts!")
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Then prepare for a hunting trip in the Forest Ruins.  I'll pay you handsomely for a bundle of badger pelts.  I may even toss in a bit of Diggs' finest armor.")
+	Dialog.AddVoiceover("voiceover/english/merchant_diggin_diggs/qey_village06/merchantdiggindiggs002.mp3", 2590912109, 2110560767)
+	Dialog.AddOption("I will return with the bundle of badger pelts. ", "Dialog8")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

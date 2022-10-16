@@ -4,9 +4,10 @@
 	Script Author	: John Adams
 	Script Date	: 2008.09.23
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
-	Script Updated: 2022.08.01 Dorbin
-	Script Update Notes: Included callout, waypoints, Action animations.
+	Script Update Notes: Included callout, waypoints, Action animations. 2022.08.01 Dorbin
+	Script Update Notes: New Dialog Format 2022.18.08 Dorbin
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 -- Quest ID's
 local FIGHT_THE_FORGOTTEN_GUARDIANS =  334 -- was 59
@@ -40,28 +41,25 @@ function Action(NPC)
 end   
 
 
-	function InRange(NPC, Spawn)
-	  
-	    	if math.random(1, 100) <= 70 then
-	    local randomCall = MakeRandomInt(1, 2)
-	     if randomCall == 1 then
+function InRange(NPC, Spawn)
+    if GetFactionAmount(Spawn,11)>0 then	  
+	    if math.random(1, 100) <= 80 and not HasQuest(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) and not HasCompletedQuest(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) and GetLevel(Spawn) >= 5 then
+ 	        FaceTarget(NPC, Spawn)
             if not HasCompletedQuest(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) then
-          	FaceTarget(NPC, Spawn)
-               PlayFlavor(NPC, "voiceover/english/marshal_surefoot/qey_village06/100_marshal_shortfoot_callout_21d33319.mp3", "Forgotten guardians are no match for a Leatherfoot, Ha! Greetings adventurer. I can tell you're a fearless warrior!", "salute", 3286953341, 3627183103, Spawn)
-	elseif randomCall == 2 then	  
-	         	FaceTarget(NPC, Spawn)
+            PlayFlavor(NPC, "voiceover/english/marshal_surefoot/qey_village06/100_marshal_shortfoot_callout_21d33319.mp3", "Forgotten guardians are no match for a Leatherfoot, Ha! Greetings adventurer. I can tell you're a fearless warrior!", "salute", 3286953341, 3627183103, Spawn)
+	        else
 		   	PlayFlavor(NPC, "", "", "salute", 0, 0, Spawn)
-
+            end
         end
     end
-end
 end
 
 
 
 function waypoints(NPC)
-	MovementLoopAddLocation(NPC, 879.49, -17.11, -511.61, 2, math.random(1))
+	MovementLoopAddLocation(NPC, 879.49, -17.11, -511.61, 2, 1,"Heading")
 	MovementLoopAddLocation(NPC, 879.49, -17.11, -511.61, 2, math.random(10, 15),"Action")
+	MovementLoopAddLocation(NPC, 879.49, -17.11, -511.61, 2, 0)
 	MovementLoopAddLocation(NPC, 878.04, -16.77, -515.6, 2, 0)
 	MovementLoopAddLocation(NPC, 880.47, -16.46, -518.44, 2, 0)
 	MovementLoopAddLocation(NPC, 885.54, -16.3, -516.52, 2, 0)
@@ -76,7 +74,7 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 889.61, -19.18, -463.69, 2, 0)
 	MovementLoopAddLocation(NPC, 892.35, -19.01, -459.51, 2, 0)
 	MovementLoopAddLocation(NPC, 891.78, -18.75, -457.06, 2, 0)
-	MovementLoopAddLocation(NPC, 888.81, -18.36, -454.83, 2, math.random(1))
+	MovementLoopAddLocation(NPC, 888.81, -18.36, -454.83, 2, 1)
 	MovementLoopAddLocation(NPC, 888.81, -18.36, -454.83, 2, math.random(10, 20),"Action")
 	MovementLoopAddLocation(NPC, 886.47, -18.48, -453.4, 2, 0)
 	MovementLoopAddLocation(NPC, 887.14, -18.74, -455.05, 2, 0)
@@ -97,39 +95,54 @@ end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-    PlayFlavor(NPC, "voiceover/english/marshal_surefoot/qey_village06/marshalsurefoot000.mp3", "", "salute", 3898086374, 2053590783, Spawn)
-
-	Begin(NPC, Spawn, conversation)
+    if GetFactionAmount(Spawn,11)<0 then	  
+    PlayFlavor(NPC, "", "", "shakefist", 0, 0, Spawn)
+    else    
+	Begin(NPC, Spawn)
+    end
 end
 
-function Begin(NPC, Spawn, conversation)
-	if not HasQuest(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) and not HasCompletedQuest(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) and GetLevel(Spawn) >= 5 then
-		AddConversationOption(conversation, "Do deputies get paid well?", "PaidWell")
-	elseif HasQuest(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) and GetQuestStep(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) == 2 then
-		AddConversationOption(conversation, "It was amazing! I defeated five forgotten guardians.", "KilledGuardians")
-	end
-	
-	AddConversationOption(conversation, "Sorry to hear that. I must be going.")
-	StartConversation(conversation, NPC, Spawn, "Stand stout! You'd make a fine deputy. Unfortunately, we can't handle new recruits. Please move along adventurer.")
+function Heading(NPC)
+    SetHeading(NPC,166)
+end
 
+function Begin(NPC, Spawn)
+    FaceTarget(NPC, Spawn)
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("Stand stout! You'd make a fine deputy.")
+	Dialog.AddVoiceover("voiceover/english/marshal_surefoot/qey_village06/marshalsurefoot000.mp3", 3898086374, 2053590783)
+    PlayFlavor(NPC, "", "", "salute", 0, 0, Spawn)
+	if GetLevel(Spawn) <= 4 then
+	Dialog.AddOption("Perhaps I'll be better off getting more experience first.")
+    end
+	if not HasQuest(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) and not HasCompletedQuest(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) and GetLevel(Spawn) >= 5 then
+	Dialog.AddOption("Do deputies get paid well?", "PaidWell")
+    end
+	if HasQuest(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) and GetQuestStep(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS) == 2 then
+	Dialog.AddOption("It was amazing! I defeated five forgotten guardians.", "KilledGuardians")
+    end
+	Dialog.AddOption("Sorry to hear that. I must be going.")
+	Dialog.Start()
 end
 
 function PaidWell(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-	PlayFlavor(NPC, "voiceover/english/marshal_surefoot/qey_village06/marshalsurefoot001.mp3", "", "agree", 1754420815, 722332586, Spawn)	
-	AddConversationOption(conversation, "I can face the titans of the forest.", "CanFaceTitans")
-	AddConversationOption(conversation, "I'm not facing any titans today.")
-	StartConversation(conversation, NPC, Spawn, "Aha! A mercenary! I can use your mettle for testing the strengths of the enemy. Can you overcome the titants of the forest? What do ya say, soldier?")
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("Aha!  A mercenary!  I can use your mettle for testing the strengths of the enemy.  Can you overcome the titans of the forest?  What do ya say, soldier?")
+	Dialog.AddVoiceover("voiceover/english/marshal_surefoot/qey_village06/marshalsurefoot001.mp3", 1754420815, 722332586)
+	PlayFlavor(NPC, "", "", "agree", 0, 0, Spawn)	
+	Dialog.AddOption("I can face the titans of the forest.", "CanFaceTitans")
+	Dialog.AddOption("I am not facing any titans today.")
+	Dialog.Start()
 end
 
 function CanFaceTitans(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-	PlayFlavor(NPC, "voiceover/english/marshal_surefoot/qey_village06/marshalsurefoot002.mp3", "", "", 2844840663, 963541700, Spawn)	
-	AddConversationOption(conversation, "I will face the titans.", "OfferQuest1")
-	StartConversation(conversation, NPC, Spawn, "Then stand firm and venture to the Forest Ruins. The foes act as Forgotten Guardians. They prey upon the people ... stand tall soldier! Crush a few and return with a tale of victory!")
+    FaceTarget(NPC, Spawn)
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("Then stand firm and venture to the Forest Ruins.  The foes act as Forgotten Guardians.  They prey upon the people ... stand tall, soldier!  Crush a few and return with a tale of victory!")
+	Dialog.AddVoiceover("voiceover/english/marshal_surefoot/qey_village06/marshalsurefoot002.mp3", 2844840663, 963541700)
+	Dialog.AddOption("I will face the titans. ", "OfferQuest1")
+	Dialog.Start()
 end
 
 function OfferQuest1(NPC, Spawn)
@@ -140,8 +153,10 @@ end
 function KilledGuardians(NPC, Spawn)
 	SetStepComplete(Spawn, FIGHT_THE_FORGOTTEN_GUARDIANS, 2)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-	PlayFlavor(NPC, "voiceover/english/marshal_surefoot/qey_village06/marshalsurefoot003.mp3", "", "salute", 137631615, 420589820, Spawn)	
-	AddConversationOption(conversation, "Farewell Marshal Surefoot.")
-	StartConversation(conversation, NPC, Spawn, "What bravery! You laughed in the face of death! You are a true protector of the forest realms. I shall seek you out when I recruit my force of Leatherfoot deputies. You are relieved for now.")
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("What bravery!  You laughed in the face of death! You are a true protector of the forest realms.  I shall seek you out when I recruit my force of Leatherfoot deputies.  You are relieved for now.")
+	Dialog.AddVoiceover("voiceover/english/marshal_surefoot/qey_village06/marshalsurefoot003.mp3", 137631615, 420589820)
+	PlayFlavor(NPC, "", "", "smile", 0, 0, Spawn)	
+	Dialog.AddOption("Farewell Marshal Surefoot.")
+	Dialog.Start()
 end

@@ -10,14 +10,24 @@ local UNFORTUNATE_MISTAKES = 303
 
 function init_zone_script(zone)
 	SetLocationProximityFunction(zone, 582.66, -26.54, 375.95, 10, "UnfortunateMistakesTrigger", "Leave")
+--	SetLocationProximityFunction(zone, 640.16, -24.67, 383.95, 30, "MarketRow","LeaveLocation")
 end
 
 function player_entry(zone, player)
+SendPopUpMessage(player, "Nettleville Hovel", 230, 230, 230)   
 end
 
 function enter_location(zone, spawn, grid)
+--	if grid == 342305820 then
+--		SendPopUpMessage(Player, "Nettleville Market Row", 255, 255, 0)
+--	end
+--	SetLocationProximityFunction(zone, 640.16, -24.67, 383.95, 30, "MarketRow","LeaveLocation")
 end
 
+function MarketRow(Zone,Player)
+      SendPopUpMessage(Player, "Nettleville Market Row", 255, 255, 0)
+    end
+    
 function leave_location(zone, spawn, grid)
 end
 

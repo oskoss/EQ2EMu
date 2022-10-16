@@ -8,14 +8,14 @@
 
 function spawn(NPC)
       local Level = GetLevel(NPC)
-    local level1 = 6
-    local level2 = 7
+    local level1 = 7
+    local level2 = 8
     local difficulty1 = 6
-    local hp1 = 150
-    local power1 = 150
+    local hp1 = 200
+    local power1 = 90
     local difficulty2 = 6
-    local hp2 = 215
-    local power2 = 215
+    local hp2 = 240
+    local power2 = 100
     if Level == level1 then
     SpawnSet(NPC, "difficulty", difficulty1)
     SpawnSet(NPC, "hp", hp1)

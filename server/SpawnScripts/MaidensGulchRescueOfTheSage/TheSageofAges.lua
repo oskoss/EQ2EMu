@@ -1,5 +1,5 @@
 --[[
-    Script Name    : SpawnScripts/Maiden's Gulch: Rescue of the Sage/TheSageofAges.lua
+    Script Name    : SpawnScripts/MaidensGulchRescueOfTheSage/TheSageofAges.lua
     Script Author  : Dorbin
     Script Date    : 2022.06.01 06:06:17
     Script Purpose : 

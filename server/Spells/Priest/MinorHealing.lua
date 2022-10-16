@@ -1,3 +1,5 @@
+
+
 --[[
     Script Name    : Spells/Priest/MinorHealing.lua
     Script Author  : neatz09
@@ -9,7 +11,9 @@
 -- Info from spell_display_effects (remove from script when done)
 -- Heals target for 36 - 45
 
-function cast(Caster, Target, MinVal, MaxVal)
-SpellHeal("Heal", MinVal, MaxVal)
+function cast(Caster, Target, MinHeal, MaxHeal)
+    SpellHeal("Heal", MinHeal, MaxHeal)
 end
 
+function remove()
+end

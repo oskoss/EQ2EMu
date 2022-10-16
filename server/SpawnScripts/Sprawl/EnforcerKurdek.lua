@@ -2,12 +2,13 @@
 	Script Name	: SpawnScripts/Sprawl/EnforcerKurdek.lua
 	Script Purpose	: Enforcer Kurdek <Dreadnaught>
 	Script Author	: Scatman
-	Script Date	: 2008.09.29
+	Script Date	: 2008.09.29 (updated by torsten 1.8.2022)
 	Script Notes	: 
 --]]
 
-local QUEST_FROM_BIGBEND_KROOTA = 169
-local QUEST_FROM_SCALEYARD_CLANCHEIFMALACHI = 203
+local MoreBarshing  = 5636 --from Big Bend
+local TrollAdventures = 5643 --from Big Bend
+local GoVisitTheSprawl = 350 --from Scale Yard
 local QUEST_1 = 455
 local QUEST_2 = 540
 local QUEST_3 = 541
@@ -52,11 +53,14 @@ function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 	
-	if HasQuest(Spawn, QUEST_FROM_BIGBEND_KROOTA) then
-		SetStepComplete(Spawn, QUEST_FROM_BIGBEND_KROOTA, 1)
+	if HasQuest(Spawn, MoreBarshing) then
+		SetStepComplete(Spawn, MoreBarshing, 1)
 	end
-	if HasQuest(Spawn, QUEST_FROM_SCALEYARD_CLANCHEIFMALACHI) then
-		SetStepComplete(Spawn, QUEST_FROM_SCALEYARD_CLANCHEIFMALACHI, 1)
+	if HasQuest(Spawn, TrollAdventures) then
+		SetStepComplete(Spawn, TrollAdventures, 1)
+	end
+	if GetQuestStep(Spawn, GoVisitTheSprawl) == 1 then
+		SetStepComplete(Spawn, GoVisitTheSprawl, 1)
 	end
 
 	if HasCompletedQuest(Spawn, QUEST_1) then
@@ -511,7 +515,7 @@ function WelcomeBack(NPC, Spawn, conversation)
 	conversation = CreateConversation()
 
 	PlayFlavor(NPC, "voiceover/english/tutorial_revamp/enforcer_kurdek/fprt_adv03_sprawl/quests/enforcer_kurdek042.mp3", "", "", 3199383126, 2868778481, Spawn)
-	AddConversationOption(conversation, "DDo you have anything else for me?", "dlg_32_2")
+	AddConversationOption(conversation, "Do you have anything else for me?", "dlg_32_2")
 	AddConversationOption(conversation, "I'm through talking to you.")
 	StartConversation(conversation, NPC, Spawn, "Welcome back, adventurer. You've done some nice work around here.")
 end

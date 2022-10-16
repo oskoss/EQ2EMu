@@ -125,12 +125,16 @@ function Garbled(NPC, Spawn, Faction)
 					PlayFlavor(NPC, "voiceover/english/erudite/ft/erudite/erudite_eco_garble_garbled_gm_f25c00f6.mp3", "Senseless is what you are. Staring at me this way.", "", 2181028941, 3368136634, Spawn,4)
 	               	end			    
 				elseif gender == FEMALE then
-					local choice = math.random(1, 1)  
+					local choice = math.random(1, 4)  
 	                if choice == 1 then				
 					PlayFlavor(NPC, "voiceover/english/erudite_base_1/ft/erudite/erudite_base_1_1_garbled_gf_20ee9ec8.mp3", "Power of the tongue is mighter than any of your weapons.", "", 1414494311, 909104232, Spawn,4)
 				    elseif choice ==2 then
 					PlayFlavor(NPC, "voiceover/english/erudite_base_1/ft/erudite/erudite_base_1_1_garbled_gf_8c788b45.mp3","Small minded fool. Read more books!", "nod", 159075636, 2590624879, Spawn,4)
-					end				    
+				    elseif choice ==3 then
+            		PlayFlavor(NPC, "voiceover/english/erudite_base_1/ft/erudite/erudite_base_1_1_garbled_gf_d16cf4e4.mp3", "wow you translated this go do quests or something", "", 3211556166, 1993968789, Spawn, 4)
+				    elseif choice ==4 then
+            		PlayFlavor(NPC, "voiceover/english/erudite_base_1/ft/erudite/erudite_base_1_1_garbled_gf_d16cf4e4.mp3", "the eternal question sleep or make more dialogue", "", 3211556166, 1993968789, Spawn, 4)
+										end				    
 				end
 			elseif race == FROGLOK then
 				if gender == MALE then
@@ -210,11 +214,15 @@ function Garbled(NPC, Spawn, Faction)
 		            PlayFlavor(NPC, "voiceover/english/halfling_crazed/ft/halfling/halfling_crazed_1_garbled_gm_54e55451.mp3", "Never trust a halfling without a taste for jumjum.", "", 2087702128, 2642872371, Spawn, 8)
     	            end				    
 				elseif gender == FEMALE then
-                local choice = math.random(1,2)
+                local choice = math.random(1,4)
                     if choice == 1 then
                     PlayFlavor(NPC, "voiceover/english/halfling_base_1/ft/halfling/halfling_base_1_1_garbled_gf_54e55451.mp3", "Do you have a pie in your pocket or are you just happy to see me?", "", 1486303618, 2371451914, Spawn, 8)
     	            elseif choice == 2 then
 		            PlayFlavor(NPC, "voiceover/english/halfling_base_1/ft/halfling/halfling_base_1_1_garbled_gf_823f1021.mp3", "Never trust a halfling without a taste for jumjum.", "", 3051197299, 2401133915, Spawn, 8)
+    	            elseif choice == 3 then
+            		PlayFlavor(NPC, "voiceover/english/halfling_base_1/ft/halfling/halfling_base_1_1_garbled_gf_43769f72.mp3", "garbled text not to be translated", "", 893109963, 3250825089, Spawn, 8)
+    	            elseif choice == 4 then
+            		PlayFlavor(NPC, "voiceover/english/halfling_base_1/ft/halfling/halfling_base_1_1_garbled_gf_7b0d27d5.mp3", "garbled text not to be translated", "", 2116174363, 1770552623, Spawn, 8)
     	            end
 				end
 			elseif race == HIGH_ELF then
@@ -272,7 +280,18 @@ function Garbled(NPC, Spawn, Faction)
 	            
 	            end					    
 				elseif gender == FEMALE then
-				end
+                local choice = math.random(1,4)
+                    if choice == 1 then
+            		PlayFlavor(NPC, "voiceover/english/optional3/kerran/ft/kerran/kerran_eco_garble_garbled_gf_87e38c0a.mp3", "Milk is overrated.", "", 266835931, 3653451247, Spawn, 13)
+    	            elseif choice == 2 then
+            		PlayFlavor(NPC, "voiceover/english/optional3/kerran/ft/kerran/kerran_eco_garble_garbled_gf_2686291e.mp3", "Can you recommend a good dentist?", "", 4079212472, 1785391422, Spawn, 13)
+                    elseif choice == 3 then
+            		PlayFlavor(NPC, "voiceover/english/optional3/kerran/ft/kerran/kerran_eco_garble_garbled_gf_9d6a5ad3.mp3", "Kerrans are the best and don't you forget it!", "", 224323381, 733575634, Spawn, 13)
+                    elseif choice == 4 then
+            		PlayFlavor(NPC, "voiceover/english/optional3/kerran/ft/kerran/kerran_eco_garble_garbled_gf_c5df7b09.mp3", "Blarrdeh blooh parrthymm", "happy", 337817290, 3934534932, Spawn, 13)
+	   				end
+   		    end
+   		    
 			elseif race == OGRE then
 				if gender == MALE then
                 local choice = math.random(1,4)
@@ -331,20 +350,36 @@ function Garbled(NPC, Spawn, Faction)
 	                        
 	            end				    
 				elseif gender == FEMALE then
-				end
+            	local choice = MakeRandomInt(1,3)
+            	if choice == 1 then
+            		PlayFlavor(NPC, "voiceover/english/optional3/troll_base_1/ft/troll/troll_base_1_1_garbled_gf_ea3de794.mp3", "Gahh rahhhm  jerrrtz    kep", "", 3982411427, 3420515042, Spawn, 15)
+                	elseif choice == 2 then
+            		PlayFlavor(NPC, "voiceover/english/optional3/troll_base_1/ft/troll/troll_base_1_1_garbled_gf_91739814.mp3", "Neberzzz  nok  uuuuuhhhhhhnet", "", 50333898, 3933945041, Spawn, 15)
+                	elseif choice == 3 then
+            		PlayFlavor(NPC, "voiceover/english/optional3/troll_base_1/ft/troll/troll_base_1_1_garbled_gf_c8a301a6.mp3", "Annnzzzzarrrr     oooohaaannnnah     whaaannn", "", 2756199569, 2426773959, Spawn, 15)
+					end
+                end					
 			elseif race == WOOD_ELF then
 				if gender == MALE then
-                local choice = math.random(1,1)	         
+                local choice = math.random(1,3)	         
 	                if choice == 1 then
-		            PlayFlavor(NPC, "voiceover/english/woodelf_forrest_wardens/ft/woodelf/woodelf_forrest_wardens_1_garbled_gm_8a0bc5f8.mp3", "You need to stop and smell the flowers sometime. Even from the treetops.", "", 1811305493, 2624435147, Spawn, 16)
-	                end					    
-				elseif gender == FEMALE then
-                local choice = math.random(1,1)	         
-	                if choice == 1 then
-	                 PlayFlavor(NPC, "voiceover/english/woodelf_forrest_wardens/ft/woodelf/woodelf_forrest_wardens_1_garbled_gm_87567d71.mp3", "Even from the treetops. You need to stop and smell the flowers sometime. ", "", 2241066225, 3802156744, Spawn, 16)
-   
-    	            end	
-				end
+            		PlayFlavor(NPC, "voiceover/english/woodelf_forrest_wardens/ft/woodelf/woodelf_forrest_wardens_1_garbled_gm_f197012c.mp3", "Molokeeenakah  watroo    olozamm", "", 2097905045, 1612835219, Spawn, 16)
+                	elseif choice == 2 then
+            		PlayFlavor(NPC, "voiceover/english/woodelf_forrest_wardens/ft/woodelf/woodelf_forrest_wardens_1_garbled_gm_8a0bc5f8.mp3", "Kaamahaneah    queeeola      chi   sa", "", 1811305493, 2624435147, Spawn, 16)
+                	elseif choice == 3 then
+            		PlayFlavor(NPC, "voiceover/english/woodelf_forrest_wardens/ft/woodelf/woodelf_forrest_wardens_1_garbled_gm_1b979d55.mp3", "Aleeda merende wovesta", "", 2513619643, 1543099294, Spawn, 16)
+                  end					    
+				elseif gender == FEMALE then--PULLED FROM Willow Wood.  It is accurate.
+            	local choice = MakeRandomInt(1,3) 
+                	if choice == 1 then
+            		PlayFlavor(NPC, "voiceover/english/highelf_base_1/ft/highelf/highelf_base_1_1_garbled_gf_fde7b8f7.mp3", "Kaamahaneah    queeeola      chi   sa", "", 595061935, 2035542297, Spawn, 16)
+                	elseif choice == 2 then
+            		PlayFlavor(NPC, "voiceover/english/highelf_base_1/ft/highelf/highelf_base_1_1_garbled_gf_755db2c3.mp3", "Aleeda merende wovesta", "", 1930935604, 3692814157, Spawn, 16)
+                	elseif choice == 3 then
+            		PlayFlavor(NPC, "voiceover/english/highelf_base_1/ft/highelf/highelf_base_1_1_garbled_gf_d396c4fc.mp3", "Molokeeenakah  watroo    olozamm", "", 1717100103, 894236173, Spawn, 16)
+                	end
+    	       end	
+				
 			elseif race == FAE then
 				if gender == MALE then
 				elseif gender == FEMALE then

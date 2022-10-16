@@ -26,8 +26,8 @@ function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-		PlayFlavor(NPC, "voiceover/english/banker_robert_newbury/qey_harbor/bankerrobertnewbury.mp3", "", "", 1059198737, 1183516549, Spawn)
-    if GetQuestStep(Spawn,Tally)==2 then     
+	PlayFlavor(NPC, "voiceover/english/banker_robert_newbury/qey_harbor/bankerrobertnewbury.mp3", "", "", 1059198737, 1183516549, Spawn)
+    if GetQuestStep(Spawn,Tally)==1 then     
     AddConversationOption(conversation, "I'm here delivering Graystone's bank tally.", "DeliveryDone")
     end		
 		
@@ -35,7 +35,7 @@ function hailed(NPC, Spawn)
 	StartConversation(conversation, NPC, Spawn, "I'll take care of your coin and goods if they need safekeeping.")
 end
 
- function DeliveryStart(NPC, Spawn)
+ function DeliveryDone(NPC, Spawn)
   conversation = CreateConversation()
   PlayFlavor(NPC, "voiceover/english/banker_robert_newbury/qey_harbor/bankerrobertnewbury000.mp3","","ponder",3741382425,2971176435,Spawn)
   AddConversationOption(conversation, "Alright. I'll take the letter to her.", "QuestBegin1")

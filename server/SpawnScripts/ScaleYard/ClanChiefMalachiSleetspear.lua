@@ -2,8 +2,8 @@
 	Script Name	: SpawnScripts/ScaleYard/ClanChiefMalachiSleetspear.lua
 	Script Purpose	: Clan Chief Malachi Sleetspear <Barbarian Mentor>
 	Script Author	: John Adams
-	Script Date	: 2008.10.01
-	Script Notes	: Auto-Generated Conversation from PacketParser Data
+	Script Date	: 2008.10.01 (updated by torsten 1.8.2022 including questline)
+	Script Notes	: 
 --]]
 
 -- Race ID's
@@ -79,9 +79,9 @@ function hailed(NPC, Spawn)
 		if GetRace(Spawn) == BARBARIAN then
 			PlayFlavor(NPC, "voiceover/english/gu38/tutorial_revamp/clan_chief_malachi_sleetspear/fprt_hood06/malachi002.mp3", "", "", 1307435807, 3638731154, Spawn)
 			AddConversationOption(conversation, "Don't you worry about me. I can handle myself just fine.", "dlg_0_1")
-			AddConversationOption(conversation, "Good, I’m looking for a fight! Point me in the direction of trouble. I’ll put a proper end to things!", "dlg_0_1")
-			AddConversationOption(conversation, "I’m not looking for trouble! I’m just looking to stay safe. What should I do?", "dlg_0_2")
-			AddConversationOption(conversation, "Bah! Anyone who messes with me has another thing coming! I’ll speak with you later.")
+			AddConversationOption(conversation, "Good, Iâ€™m looking for a fight! Point me in the direction of trouble. Iâ€™ll put a proper end to things!", "dlg_0_1")
+			AddConversationOption(conversation, "Iâ€™m not looking for trouble! Iâ€™m just looking to stay safe. What should I do?", "dlg_0_2")
+			AddConversationOption(conversation, "Bah! Anyone who messes with me has another thing coming! Iâ€™ll speak with you later.")
 			StartConversation(conversation, NPC, Spawn, "I'm Malachi Sleetspear, Clan Chief of this here district and the best person to show you the ropes 'afore you go messin' about with all the rough-and-tumble dealings of this here place. This 'aint no elven tree village ya know. This here be the Scale Yard. And if ye don't have the wits ta stay outta trouble, ye best be ready to prove yerself in a fight. Rallos knows you can find plenty of them around here! Ha ha ha!!")
 		else
 			Say(NPC, "You're not a barbarian!", Spawn)
@@ -110,13 +110,13 @@ end
 	if convo==8 then
 		PlayFlavor(NPC, "voiceover/english/gu38/tutorial_revamp/clan_chief_malachi_sleetspear/fprt_hood06/malachi001.mp3", "", "", 2130881285, 612408503, Spawn)
 		AddConversationOption(conversation, "I'm " .. GetName(Spawn) .. ". Who are you? ", "dlg_8_1")
-		StartConversation(conversation, NPC, Spawn, "Hello there stranger. I've not seen yer face round here ‘afore. Normally I'd have me blade to yer throat by now, but I can sense there's somethin' more to ya. Tell me now, who might ya be?")
+		StartConversation(conversation, NPC, Spawn, "Hello there stranger. I've not seen yer face round here â€˜afore. Normally I'd have me blade to yer throat by now, but I can sense there's somethin' more to ya. Tell me now, who might ya be?")
 	end
 
 	if convo==9 then
 		PlayFlavor(NPC, "voiceover/english/gu38/tutorial_revamp/clan_chief_malachi_sleetspear/fprt_hood06/malachi059.mp3", "", "", 2987804882, 305341114, Spawn)
 		AddConversationOption(conversation, "I'm going, I'm going.", "dlg_9_1")
-		StartConversation(conversation, NPC, Spawn, "Bzzz. Bzzzzzt!! I still hear those wasps! Thought you told me you’d be able to handle this problem? Off you go now.")
+		StartConversation(conversation, NPC, Spawn, "Bzzz. Bzzzzzt!! I still hear those wasps! Thought you told me youâ€™d be able to handle this problem? Off you go now.")
 	end
 
 	if convo==10 then
@@ -130,7 +130,7 @@ end
 		AddConversationOption(conversation, "Okay.", "dlg_11_1")
 		AddConversationOption(conversation, "If it'll help me survive, then yes!")
 		AddConversationOption(conversation, "Not now old man. I can fend for myself!")
-		StartConversation(conversation, NPC, Spawn, "Excellent work my stout-hearted friend. You’ve proved yerself most resourceful. Now are you ready for the next bit of advice I have for ya?")
+		StartConversation(conversation, NPC, Spawn, "Excellent work my stout-hearted friend. Youâ€™ve proved yerself most resourceful. Now are you ready for the next bit of advice I have for ya?")
 	end
 
 	if convo==22 then
@@ -165,7 +165,7 @@ function dlg_0_1(NPC, Spawn)
 
 	PlayFlavor(NPC, "voiceover/english/gu38/tutorial_revamp/clan_chief_malachi_sleetspear/fprt_hood06/malachi003.mp3", "", "", 386498531, 2790621041, Spawn)
 	AddConversationOption(conversation, "Sure.", "dlg_1_0")
-	StartConversation(conversation, NPC, Spawn, "Haha! That’s what they always say. Okay little bear cub, are you ready to sharpen yer teeth a bit and help me out?")
+	StartConversation(conversation, NPC, Spawn, "Haha! Thatâ€™s what they always say. Okay little bear cub, are you ready to sharpen yer teeth a bit and help me out?")
 end
 
 function dlg_0_2(NPC, Spawn)
@@ -174,7 +174,7 @@ function dlg_0_2(NPC, Spawn)
 
 	PlayFlavor(NPC, "voiceover/english/gu38/tutorial_revamp/clan_chief_malachi_sleetspear/fprt_hood06/malachi004.mp3", "", "", 1306482968, 2055098317, Spawn)
 	AddConversationOption(conversation, "Sure.", "dlg_1_0")
-	StartConversation(conversation, NPC, Spawn, "Well, of course you aren’t. Unfortunately, not everyone shares that opinion. I tell you what. I got an idea that’ll keep the locals from messin’ with ya. Interested?")
+	StartConversation(conversation, NPC, Spawn, "Well, of course you arenâ€™t. Unfortunately, not everyone shares that opinion. I tell you what. I got an idea thatâ€™ll keep the locals from messinâ€™ with ya. Interested?")
 end
 
 
@@ -184,7 +184,7 @@ function dlg_0_3(NPC, Spawn)
 
 	PlayFlavor(NPC, "voiceover/english/gu38/tutorial_revamp/clan_chief_malachi_sleetspear/fprt_hood06/malachi005.mp3", "", "", 3278414449, 2499212800, Spawn)
 	AddConversationOption(conversation, "Go on.", "dlg_1_0")
-	StartConversation(conversation, NPC, Spawn, "That’s the spirit! Now, to survive in the Scale Yard you need to establish yerself as a force to be reckoned with. Let ‘em know yer no softie. Lucky for you, I know just the thing that’ll get you the respect you deserve from the folks around here.")
+	StartConversation(conversation, NPC, Spawn, "Thatâ€™s the spirit! Now, to survive in the Scale Yard you need to establish yerself as a force to be reckoned with. Let â€˜em know yer no softie. Lucky for you, I know just the thing thatâ€™ll get you the respect you deserve from the folks around here.")
 end
 
 --START OF QUEST 1-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -195,7 +195,7 @@ function dlg_1_0(NPC, Spawn)
 
 	PlayFlavor(NPC, "voiceover/english/gu38/tutorial_revamp/clan_chief_malachi_sleetspear/fprt_hood06/malachi006.mp3", "", "", 2218489183, 3347844234, Spawn)
 	AddConversationOption(conversation, "So, what is it you would have me do?", "OfferQuest1")
-	StartConversation(conversation, NPC, Spawn, "Aye, back by the Freeport Reserve a slew of poisonous hood wasps seem to have made a hive of some sorts. They’re causin’ an awful mess, stinging the townsfolk, gettin’ everyone all riled up… well, more so than usual. ")
+	StartConversation(conversation, NPC, Spawn, "Aye, back by the Freeport Reserve a slew of poisonous hood wasps seem to have made a hive of some sorts. Theyâ€™re causinâ€™ an awful mess, stinging the townsfolk, gettinâ€™ everyone all riled upâ€¦ well, more so than usual. ")
 end
 
 function OfferQuest1(NPC, Spawn)
@@ -216,7 +216,7 @@ function WaspsDead(NPC, Spawn)
 	else
 		PlayFlavor(NPC, "voiceover/english/gu38/tutorial_revamp/clan_chief_malachi_sleetspear/fprt_hood06/malachi059.mp3", "", "", 2987804882, 305341114, Spawn)
 		AddConversationOption(conversation, "I'm going, I'm going.")
-		StartConversation(conversation, NPC, Spawn, "Bzzz. Bzzzzzt!! I still hear those wasps! Thought you told me you’d be able to handle this problem? Off you go now.")
+		StartConversation(conversation, NPC, Spawn, "Bzzz. Bzzzzzt!! I still hear those wasps! Thought you told me youâ€™d be able to handle this problem? Off you go now.")
 	end
 end
 
@@ -229,9 +229,9 @@ function dlg_2_0(NPC, Spawn)
 	SetStepComplete(Spawn, QUEST_1, 3)
 	PlayFlavor(NPC, "voiceover/english/gu38/tutorial_revamp/clan_chief_malachi_sleetspear/fprt_hood06/malachi009.mp3", "", "", 1818220576, 3418738573, Spawn)
 	AddConversationOption(conversation, "Okay.", "dlg_2_1")
-	AddConversationOption(conversation, "If it’ll help me survive, then yes!", "dlg_2_1")
+	AddConversationOption(conversation, "If itâ€™ll help me survive, then yes!", "dlg_2_1")
 	AddConversationOption(conversation, "Not now old man. I can fend for myself!")
-	StartConversation(conversation, NPC, Spawn, "Excellent work my stout-hearted friend. You’ve proved yerself most resourceful. Now are you ready for the next bit of advice I have for ya?")
+	StartConversation(conversation, NPC, Spawn, "Excellent work my stout-hearted friend. Youâ€™ve proved yerself most resourceful. Now are you ready for the next bit of advice I have for ya?")
 end
 
 function dlg_2_1(NPC, Spawn)

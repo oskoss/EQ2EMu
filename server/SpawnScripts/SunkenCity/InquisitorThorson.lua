@@ -6,14 +6,15 @@
 	Script Notes	: 
 --]]
 
+local MeettheInquisitor = 5671
 local HALFELF_MENTOR_QUEST_5 = 189
-local QUEST_1 = 266
-local QUEST_2 = 267
-local QUEST_3 = 268
-local QUEST_4 = 269
-local QUEST_3_FROM_CURFIELD = 272
-local QUEST_5 = 273
-local QUEST_6 = 274
+local QUEST_1 = 376
+local QUEST_2 = 377
+local QUEST_3 = 378
+local QUEST_4 = 379
+local QUEST_3_FROM_CURFIELD = 382
+local QUEST_5 = 383
+local QUEST_6 = 384
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange")
@@ -49,6 +50,10 @@ function hailed(NPC, Spawn)
 	if HasQuest(Spawn, HALFELF_MENTOR_QUEST_5) then
 		AddConversationOption(conversation, "My name is " .. GetName(Spawn) .. ". Delcairn Sebastian sent in Beggar's Court sent me here to speak with you.", "Delcairn")
 	end
+	if GetQuestStep(Spawn, MeettheInquisitor) == 1 then
+        SetStepComplete(Spawn, MeettheInquisitor, 1)
+        Delcairn(NPC, Spawn)
+    end
 	
 	if HasCompletedQuest(Spawn, QUEST_1) then
 		if HasCompletedQuest(Spawn, QUEST_2) then

@@ -16,14 +16,27 @@ end
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
+    if GetQuestStep(Spawn,5586)==1 then
+	AddConversationOption(conversation, "I have a letter for you.  Shanda says its from the boss, but I don't know who that is.", "Delivered")
+    end
+    AddConversationOption(conversation, "I have questions about houses.", "Housing")
+	AddConversationOption(conversation, "Nothing right now.")
+	StartConversation(conversation, NPC, Spawn, "So, your bank is overflowing, is it?  Sure, I'd be happy to take any excess coin off your hands.")
+	PlayFlavor(NPC, "", "", "hello", 3113863761, 2642679335, Spawn)
+end
 
-	PlayFlavor(NPC, "innkeeper_uglar_splinterthumb/qey_village01/innkeeper001.mp3", "", "", 3113863761, 2642679335, Spawn)
+
+function Housing(NPC, Spawn)
+
+    if GetQuestStep(Spawn,5586)==1 then
+	AddConversationOption(conversation, "I've got a letter for you from Shanda.  She wanted to make sure you got it right away.", "Delivered")
+    end
 	AddConversationOption(conversation, "How can I place an item in my house?", "dlg_26_1")
 	AddConversationOption(conversation, "What kind of housing is available to me?", "dlg_26_7")
 	AddConversationOption(conversation, "What is the marketboard for?", "dlg_26_2")
 	AddConversationOption(conversation, "What is my house for?", "dlg_26_4")
 	AddConversationOption(conversation, "Nothing right now.")
-	StartConversation(conversation, NPC, Spawn, "Hello there " .. GetName(Spawn) .. ", what can I help you with?")
+	StartConversation(conversation, NPC, Spawn, "What would you like to know?")
 end
 
 function dlg_26_1(NPC, Spawn)
@@ -82,4 +95,22 @@ function dlg_26_7(NPC, Spawn)
 	AddConversationOption(conversation, "What is my house for?", "dlg_26_4")
 	AddConversationOption(conversation, "That's enough for now, thanks.")
 	StartConversation(conversation, NPC, Spawn, "Many different kinds of housing are available in the city of Qeynos.  As a show of appreciation, Antonia Bayle has awarded you a one bedroom house for free at this time.")
+end
+
+function Delivered(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	conversation = CreateConversation()
+	AddConversationOption(conversation, "Here's the letter, maybe I will have a look at your selection.")
+	AddConversationOption(conversation, "Are you... the boss?","Boss")
+    SetStepComplete(Spawn,5586,1)
+	StartConversation(conversation, NPC, Spawn, "Maybe someday you will find out who the boss is, but that day isn't today.  Please hand over the letter and spend some of your coin on my wares.")
+end
+
+function Boss(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	conversation = CreateConversation()
+
+	AddConversationOption(conversation, "Thanks, I guess.")
+    QuestStepIsComplete(Spawn,5586,1)
+	StartConversation(conversation, NPC, Spawn, "Boss? Me?  Heavens no!  I try to keep my hands clean as it is of these sort of dealings.  You just delivered a letter 'from' the boss.  You best keep your nose clean if you know what's good for you.")
 end

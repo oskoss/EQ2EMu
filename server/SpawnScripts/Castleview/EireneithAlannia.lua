@@ -38,14 +38,12 @@ function hailed(NPC, Spawn)
         else      
     GenericHail(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-    if not HasQuest(Spawn, Deer) and not HasCompletedQuest(Spawn, Deer) then
         conversation = CreateConversation()   
-        if GetLevel(Spawn)>=10 then
+      if not HasQuest(Spawn, Deer) and not HasCompletedQuest(Spawn, Deer) then
+      if GetLevel(Spawn)>=10 then
         AddConversationOption(conversation, "I happen to have some spare time.", "ICan")
         end
-        if GetQuestStep(Spawn, Deer)==2 then
-	    AddConversationOption(conversation, "I did what you requested.", "DoneDeer")
-	    end
+
 	    AddConversationOption(conversation, "I don't have time, sorry.")
 	    StartConversation(conversation, NPC, Spawn, "So much evil ... I don't know which way to turn first. Perhaps you can help me?")
 	     PlayFlavor(NPC, "", "", "ponder", 0,0 , Spawn)
@@ -53,7 +51,9 @@ function hailed(NPC, Spawn)
 	    conversation = CreateConversation()  
 	    
 
-	    
+        if GetQuestStep(Spawn, Deer)==2 then
+	    AddConversationOption(conversation, "I did what you requested.", "DoneDeer")
+	    end	    
 	    AddConversationOption(conversation, "I'm still dealing with them.")
 	    StartConversation(conversation, NPC, Spawn, "Have you been able to reduce the deer population in Antonica like we discussed?")
 	    
@@ -91,11 +91,8 @@ end
 function DoneDeer (NPC, Spawn)
 	FaceTarget(NPC, Spawn)
     conversation = CreateConversation()
-    AddConversationOption(conversation, "I am glad to have played my part.", "QuestDone")
+    AddConversationOption(conversation, "I am glad to have played my part.")
     StartConversation(conversation, NPC, Spawn, "Splendid! You did a good job.  Thank you for your help!")
  	PlayFlavor(NPC, "", "", "thank", 0,0 , Spawn)
-end
-
-function QuestDone(NPC, Spawn)
     SetStepComplete(Spawn, Deer, 2)
-   end
+end

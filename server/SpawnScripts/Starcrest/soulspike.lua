@@ -24,12 +24,18 @@ function casted_on(NPC, Spawn, Message)
 		while HasItem(Spawn, NULLIFICATION_STONE, 1) do
 			RemoveItem(Spawn, NULLIFICATION_STONE)
 		end
-		
+        PlaySound(NPC, "sounds/widgets/triggered_environmental/enviro_glassbreak_med001.wav",  GetX(NPC), GetY(NPC), GetZ(NPC), Spawn)		
+    PlayAnimation(NPC, 2565)
+    AddTimer(NPC,1600,"Update",Spawn)
+        end
+end
+
+ function Update(NPC, Spawn, Message)
 		SetStepComplete(Spawn, CONFRONTATION, 2)
-		
 		local velderoth = GetSpawn(Spawn, 2340062)
 		if velderoth ~= nil then
-			PlayFlavor(velderoth, "voiceover/english/tutorial_revamp/velderoth_malraen/qey_village02/qst_velderoth_howcould_ea37cf7d.mp3", "NO!!! How could you do such a thing?", "", 4138921089, 741301826, Spawn)
+        FaceTarget(velderoth,Spawn)
+		PlayFlavor(velderoth, "voiceover/english/tutorial_revamp/velderoth_malraen/qey_village02/qst_velderoth_howcould_ea37cf7d.mp3", "NO!!! How could you do such a thing?", "scream", 4138921089, 741301826, Spawn, 4)
 		end
 		
 		local stand = GetSpawn(Spawn, 2340126)
@@ -39,4 +45,3 @@ function casted_on(NPC, Spawn, Message)
 		
 		Despawn(NPC)
 	end
-end

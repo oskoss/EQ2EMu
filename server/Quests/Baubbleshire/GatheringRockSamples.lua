@@ -10,44 +10,53 @@
 	Preceded by		:	None
 	Followed by		:	None
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 local GEOLOGIST_QUARDIFLE_ID = 2380036
 
 function Init(Quest)
-	AddQuestStepLocation(Quest, 1, "Find a mine in the Caves to obtain a windspirit crystal sample.", 20, "I need to visit three mines in the Caves to gather crystal samples.", 1159, 58.11, 2.93, -119.94)
+	AddQuestStepZoneLoc(Quest, 1, "Find a mine in the Caves to obtain a windspirit crystal sample.", 20, "I need to visit three mines in the Caves to gather crystal samples.", 1159, 58.11, 2.93, -119.94,826)
+	AddQuestStepZoneLoc(Quest, 2, "Find a mine in the Caves to obtain an elddar spark crystal sample.", 20, "I need to visit three mines in the Caves to gather crystal samples.", 1168, 66.73, 12.41, -70.69,826)
+	AddQuestStepZoneLoc(Quest, 3, "Find a mine in the Caves to obtain a prexus tear crystal sample.", 20, "I need to visit three mines in the Caves to gather crystal samples.", 1177, -49.35, 16.59, -133.75,826)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
+	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
+	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
+    UpdateQuestZone(Quest,"Caves")
 end
 
 function Accepted(Quest, QuestGiver, Player)
 	FaceTarget(QuestGiver, Player)
-	conversation = CreateConversation()
-	UpdateQuestZone(Quest, "The Caves")
-	PlayFlavor(QuestGiver, "voiceover/english/geologist_quardifle/qey_village06/geologistquardifle003.mp3", "", "", 3141164092, 1027825871, Player)
-	AddConversationOption(conversation, "Alright. I'll see what I can find!")
-	StartConversation(conversation, QuestGiver, Player, "Great! You'll find that these caves are largely unexplored. Seek out intricate areas of these caves and bring me back some unique rock samples and I'll be happy!")
-end
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Great! You'll find some unexplored caves in this area. To get there, ring one of the dock bells. Once you arrive, seek out intricate areas of the caves. Bring me back some unique rock samples and I'll be happy!")
+	Dialog.AddVoiceover("voiceover/english/geologist_quardifle/qey_village06/geologistquardifle003.mp3", 3141164092, 1027825871)
+    PlayFlavor(QuestGiver, "", "", "smile", 0, 0, Player)
+--	Dialog.AddLanguage(6)
+	Dialog.AddOption("Alright, I'll see what I can find!")
+	Dialog.Start()
+	end
 
 function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I found a windpsirit sample.")
-
-	AddQuestStepLocation(Quest, 2, "Find a mine in the Caves to obtain an elddar spark crystal sample.", 20, "I need to visit three mines in the Caves to gather crystal samples.", 1168, 66.73, 12.41, -70.69)
-	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
+    QuestCheck(Quest, QuestGiver, Player)
 end
 
 function Step2Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 2, "I found an elddar spark crystal formation.")
-
-	AddQuestStepLocation(Quest, 3, "Find a mine in the Caves to obtain a prexus tear crystal sample.", 20, "I need to visit three mines in the Caves to gather crystal samples.", 1177, -49.35, 16.59, -133.75)
-	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
+    QuestCheck(Quest, QuestGiver, Player)
 end
 
 function Step3Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 3, "I found a prexus tear sample.")
+    QuestCheck(Quest, QuestGiver, Player)
+end
+
+function QuestCheck(Quest, QuestGiver, Player)
+if QuestStepIsComplete(Player,504,1) ==true and QuestStepIsComplete(Player,504,2) ==true and QuestStepIsComplete(Player,504,3) ==true then
 	UpdateQuestTaskGroupDescription(Quest, 1, "I gathered the three samples from the different parts of the caves.")
-    
     UpdateQuestZone(Quest, "Baubbleshire")
 	AddQuestStepChat(Quest, 4, "I need to speak with Geologist Quardifle.", 1, "I need to give the samples I gathered to Geologist Quardifle.", 11, GEOLOGIST_QUARDIFLE_ID)
 	AddQuestStepCompleteAction(Quest, 4, "QuestComplete")
+end
 end
 
 function QuestComplete(Quest, QuestGiver, Player)

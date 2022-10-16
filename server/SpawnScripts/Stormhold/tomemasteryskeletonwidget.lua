@@ -6,40 +6,45 @@
                    : 
 --]]
 
-function spawn(NPC)
+local LnLQuest = 5396
+local Book = 12863
 
-end
-
 function spawn(NPC)
+Check(NPC,Spawn)
 SetPlayerProximityFunction(NPC, 10, "InRange", Spawn)
 end
 
-function InRange(NPC, Spawn)
- if HasQuest(Spawn, 5396) or HasCompletedQuest(Spawn, 5396) or HasItem(Spawn, 21316) then
-      SetAccessToEntityCommand(Spawn,NPC,"", 0)
-    SpawnSet(NPC, "show_command_icon", 0)
-    SpawnSet(NPC, "display_hand_icon", 0)
-end
+function respawn(NPC)
+	spawn(NPC)
 end
 
-function check(NPC, Spawn)
-     if not HasQuest(Spawn, 5396) and not HasCompletedQuest(Spawn,  5396) and not HasItem(Spawn, 21316) then
+function InRange(NPC, Spawn)
+if HasItem(Spawn,Book,1) or HasCompletedQuest(Spawn,LnLQuest) then
+    SetAccessToEntityCommand(Spawn,NPC,"Pick up book", 0)
+    SpawnSet(NPC, "show_command_icon", 0)
+    SpawnSet(NPC, "display_hand_icon", 0)
+else
+    SetAccessToEntityCommand(Spawn,NPC,"Pick up book", 1)
     SpawnSet(NPC, "show_command_icon", 1)
     SpawnSet(NPC, "display_hand_icon", 1)
+    end
+end
+
+function Check(NPC,Spawn)
+if HasItem(Spawn,Book,1) or HasCompletedQuest(Spawn,LnLQuest) then
+    SpawnSet(NPC, "show_command_icon", 0)
+    SpawnSet(NPC, "display_hand_icon", 0)    
+    SetAccessToEntityCommand(Spawn,NPC,"Pick up book", 0)
+else
     SetAccessToEntityCommand(Spawn,NPC,"Pick up book", 1)
+    SpawnSet(NPC, "show_command_icon", 1)
+    SpawnSet(NPC, "display_hand_icon", 1)
     end
 end
 
 function casted_on(NPC, Spawn, SpellName)
   if SpellName == 'Pick up book' then
-      AddLootItem(NPC,21316)
-    SetAccessToEntityCommand(Spawn,NPC,"examine coffin", 0)
-     SpawnSet(NPC, "show_command_icon", 0)
-    SpawnSet(NPC, "display_hand_icon", 0)
-    AddTimer(NPC, 10000, "check", 1, Spawn)      
+    SummonItem(Spawn,Book,1)
+    AddTimer(NPC, 100, "Check", 1, Spawn)
     end
-end
-
-function respawn(NPC)
-	spawn(NPC)
 end

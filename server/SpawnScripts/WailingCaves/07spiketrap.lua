@@ -7,8 +7,8 @@
 --]]
 
 function spawn(NPC)
-	AddTransportSpawn(NPC)
-	AddTimer(NPC, 5000, "UseLift")
+   AddTransportSpawn(NPC)
+   AddTimer(NPC, 5000, "UseLift")
 end
 
 function respawn(NPC)
@@ -17,5 +17,5 @@ end
 
 function UseLift(NPC)
 	UseWidget(NPC)
-	--AddTimer(NPC, 5000, "UseLift")
+	AddTimer(NPC, 5000, "UseLift")
 end

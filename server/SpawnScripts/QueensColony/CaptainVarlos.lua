@@ -135,7 +135,8 @@ end
 
 function LeaveIsland(NPC, Spawn)
     Race = GetRace(Spawn)
-
+    
+    
     -- Human / Kerra
     if Race == 9 or Race == 11 then
         AddSpellBookEntry(Spawn, 8057, 1)	
@@ -161,7 +162,7 @@ function LeaveIsland(NPC, Spawn)
         Zone(ZoneRef,Spawn)
 
     -- Half Elf / Wood Elf
-    elseif Race == 6 or Race == 15 then
+    elseif Race == 6 or Race == 15 or Race == 17 then
         AddSpellBookEntry(Spawn, 8057, 1)
         ZoneRef = GetZone("Willowwood")
         Zone(ZoneRef,Spawn)

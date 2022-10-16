@@ -1,38 +1,71 @@
 --[[
 	Script Name	: SpawnScripts/Caves/analabastergolem.lua
 	Script Purpose	: an alabaster golem 
-	Script Author	: Scatman
-	Script Date	: 2009.11.19
+	Script Author	: LordPazuzu
+	Script Date	: 10/2/2022
 	Script Notes	: 
 --]]
+dofile("SpawnScripts/Generic/MonsterCallouts/BaseGolem1.lua")
 
-local MIN_TIME = 3000
-local MAX_TIME = 10000
+
 
 function spawn(NPC)
-	local sli = GetSpawnLocationID(NPC)
-	if sli == 388305 or sli == 388308 or sli == 147864 or sli == 159970 or sli == 159971 or sli == 159972 or sli == 147866 or sli == 147867 then
-		AddTimer(NPC, math.random(MIN_TIME, MAX_TIME), "MakeAttack")
-	end
+    local Level = GetLevel(NPC)
+    local level1 = 7
+    local level2 = 8
+    local difficulty1 = 6
+    local hp1 = 200
+    local power1 = 90
+    local difficulty2 = 6
+    local hp2 = 240
+    local power2 = 100
+    if Level == level1 then
+    SpawnSet(NPC, "difficulty", difficulty1)
+    SpawnSet(NPC, "hp", hp1)
+    SpawnSet(NPC, "power", power1)
+    elseif Level == level2
+        then
+    SpawnSet(NPC, "difficulty", difficulty2)
+    SpawnSet(NPC, "hp", hp2)
+    SpawnSet(NPC, "power", power2)
+    end
+    AddTimer(NPC,math.random(2500,6000),"AttackRocks")
+
 end
 
 function respawn(NPC)
 	spawn(NPC)
 end
 
-function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
+
+
+function AttackRocks(NPC)
+    if not IsInCombat(NPC) then
+    PlayAnimation(NPC,10783)
+    end
+    AddTimer(NPC, math.random(7000,8500), "AttackRocks")
+end     
+     --[[
+    local rockattack = math.random (1, 4)
+
+            if rockattack == 1 then
+                    AddTimer(NPC, 100, "stop_attack")  
+            else
+                    AddTimer(NPC, 100, "Rocks") 	
+            end ]]--
+
+
+--[[function Rocks(NPC)
+    if not IsInCombat(NPC) then
+    SpawnSet(NPC, "visual_state", "10783")	-- Start attacking
+    end
+    AddTimer(NPC, 3500, "stop_attack")	        -- for 2 seconds, then stop
 end
 
-function MakeAttack(NPC)
-	PlayFlavor(NPC, "", "", "attack", 0, 0)
-	AddTimer(NPC, math.random(MIN_TIME, MAX_TIME), "MakeAttack")
-end
 
---[[
-PlayFlavor(NPC, "voiceover/english/optional3/golem_base_1/ft/golem/golem_base_1_1_garbled_7c1e7a03.mp3", "Oerbet aertres nuavalen sulana", "", 294229851, 323943279)
-PlayFlavor(NPC, "voiceover/english/optional3/golem_base_1/ft/golem/golem_base_1_1_garbled_48632408.mp3", "Boona vas kontrella", "", 2577927628, 312715019)
-PlayFlavor(NPC, "voiceover/english/optional3/golem_base_1/ft/golem/golem_base_1_1_garbled_e0fead4d.mp3", "Pintoota kolata eldina mastarina", "", 2947217871, 3677590207)
-PlayFlavor(NPC, "voiceover/english/optional3/golem_base_1/ft/golem/golem_base_1_1_garbled_ba1c8454.mp3", "Ervmenta oolaves kor'tenza", "", 422166849, 245170409)
-PlayFlavor(NPC, "voiceover/english/optional5/golem_base_2/ft/golem/golem_base_2_1_garbled_7c1e7a03.mp3", "Oerbet aertres nuavalen sulana", "", 2422828991, 2611697218)
---]]
+function stop_attack(NPC)
+    SpawnSet(NPC, "visual_state", "0") 	        -- Stop attacking
+    AddTimer(NPC, 8000, "AttackRocks")
+end]]--
+
+

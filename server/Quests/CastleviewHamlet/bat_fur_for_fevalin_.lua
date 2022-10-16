@@ -14,9 +14,9 @@
 
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "I need to obtain the albino fur of the cave bats.", 5, 70, "I need to gather the rare albino fur of the bats from the Caves near the Baubbleshire.", 126, 1970014,1970023)
+	AddQuestStepKill(Quest, 1, "I need to obtain the albino fur of the cave bats.", 5, 80, "I need to gather the rare albino fur of the bats from the Caves near the Baubbleshire.", 126, 1970014,1970023,8260073, 8260016,8260018,8260073,	8260080)
 	AddQuestStepCompleteAction(Quest, 1, "Bats1")
-	UpdateQuestZone(Quest,"The Caves")
+	UpdateQuestZone(Quest,"Caves")
 end
 
 function Accepted(Quest, QuestGiver, Player)
@@ -46,9 +46,9 @@ function BatsReturn1(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 2, "I returned to Fevalin")
 	UpdateQuestTaskGroupDescription(Quest, 2, "I've delivered the albino pelts to Fevalin.")
 
-	AddQuestStepKill(Quest, 3, "I need to obtain MORE albino fur of the cave bats.", 5, 80, "I need to gather MORE rare albino fur of the bats from the Caves near the Baubbleshire.", 126, 1970014,1970023)
+	AddQuestStepKill(Quest, 3, "I need to obtain MORE albino fur of the cave bats.", 5, 100, "I need to gather MORE rare albino fur of the bats from the Caves near the Baubbleshire.", 126, 1970014,1970023,8260073, 8260016,8260018,8260073,8260080)
 	AddQuestStepCompleteAction(Quest, 3, "Bats2")
-	UpdateQuestZone(Quest,"The Caves")
+	UpdateQuestZone(Quest,"Caves")
 end
 
 function Bats2(Quest, QuestGiver, Player)
@@ -57,7 +57,7 @@ function Bats2(Quest, QuestGiver, Player)
 	UpdateQuestTaskGroupDescription(Quest, 3, "I've gathered additional rare albino fur of some cave bats for Merchant Fevalin.")
 
 	AddQuestStepChat(Quest, 4, "I need to return to Fevalin, again.", 1, "I need to delivery the additional rare albino fur of the bats to Fevalin.", 126, 2360039)
-	AddQuestStepCompleteAction(Quest, 4, "QuestComplete")
+	AddQuestStepCompleteAction(Quest, 4, "QuestCompelte")
 	UpdateQuestZone(Quest,"Castleview Hamlet")
 end
 
@@ -72,14 +72,11 @@ end
 function Reload(Quest, QuestGiver, Player, Step)
 	if Step == 1 then
 		Bats1(Quest, QuestGiver, Player)
-	end
-		if Step == 2 then
+	elseif Step == 2 then
 		BatsReturn1(Quest, QuestGiver, Player)
-	end
-		if Step == 3 then
+	elseif Step == 3 then
 		Bats2(Quest, QuestGiver, Player)
-	end
-		if Step == 4 then
-		QuestComplete(Quest, QuestGiver, Player)
+	elseif Step == 4 then
+		QuestCompelte(Quest, QuestGiver, Player)
 	end
 end

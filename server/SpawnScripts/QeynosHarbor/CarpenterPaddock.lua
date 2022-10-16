@@ -9,30 +9,32 @@ local bow = 5529
 local beetles = 5532
 
 function spawn(NPC)
-	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
-    AddTimer(NPC, 5000, "EmoteLoop")    
+	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")   
     ProvidesQuest(NPC, beetles)
+    waypoints(NPC)
 end
 
 function respawn(NPC)
 	spawn(NPC)
 end
 
+
+
 function InRange(NPC,Spawn)
 if GetFactionAmount(Spawn, 11) <0 then
     PlayFlavor(NPC, "", "", "shakefist", 0, 0, Spawn)
 else
     if not HasCompletedQuest (Spawn, beetles) then 
-	    if math.random(1, 100) <= 80 then
+	if math.random(1, 100) <= 80 then
 	local choice = math.random(1,3)
 	if choice == 1 then
-		PlayFlavor(NPC, "voiceover/english/carpenter_paddock/qey_harbor/100_qst_carpenter_paddock_callout1_67878a5c.mp3", "We're running low on wood, but I don't want to mention it to Overseer Scarbourough until he calms down.", "", 2460409827, 3332556210, Spawn)
+	PlayFlavor(NPC, "voiceover/english/carpenter_paddock/qey_harbor/100_qst_carpenter_paddock_callout1_67878a5c.mp3", "We're running low on wood, but I don't want to mention it to Overseer Scarbourough until he calms down.", "", 2460409827, 3332556210, Spawn)
 	elseif choice == 2 then
-        FaceTarget(NPC,Spawn)
-		PlayFlavor(NPC, "voiceover/english/carpenter_paddock/qey_harbor/100_qst_carpenter_paddock_multhail1_f2e09d24.mp3", "I'm very busy! Sorry, I've no time to talk!", "", 2269345214, 1588506015, Spawn)
+    FaceTarget(NPC,Spawn)
+	PlayFlavor(NPC, "voiceover/english/carpenter_paddock/qey_harbor/100_qst_carpenter_paddock_multhail1_f2e09d24.mp3", "I'm very busy! Sorry, I've no time to talk!", "", 2269345214, 1588506015, Spawn)
 	elseif choice == 3 then
-		PlayFlavor(NPC, "voiceover/english/carpenter_paddock/qey_harbor/100_qst_carpenter_paddock_multhail2_e3288657.mp3", "I'm very busy! I must get more wood! ", "", 2812949705, 1915264340, Spawn)
-        end    
+	PlayFlavor(NPC, "voiceover/english/carpenter_paddock/qey_harbor/100_qst_carpenter_paddock_multhail2_e3288657.mp3", "I'm very busy! I must get more wood! ", "", 2812949705, 1915264340, Spawn)
+    end    
 else
  	PlayFlavor(NPC, "", "", "hello", 0, 0, Spawn)
     FaceTarget(NPC,Spawn)
@@ -40,6 +42,8 @@ else
     end
     end
 end
+
+
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
@@ -62,6 +66,7 @@ function hailed(NPC, Spawn)
     end
     end
 
+
   function Bryson(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
     PlayFlavor(NPC, "voiceover/english/carpenter_paddock/qey_harbor/carpenterpaddock001.mp3", "", "agree", 367423194, 2653047684, Spawn)	
@@ -69,6 +74,7 @@ function hailed(NPC, Spawn)
 	AddConversationOption(conversation, "I will. Thanks.", "FinishQuest1")
 	StartConversation(conversation, NPC, Spawn, "Ah yes.  I remember now.  Bryson wanted me to carve him a super durable recurve bow.  Give me a moment.  Here it is!  This fine bow shall serve him well.  Make sure Bryson gets this in a timely manner.")
 end  
+
 
 function FinishQuest1(NPC, Spawn)
  	FaceTarget(NPC, Spawn)
@@ -91,7 +97,7 @@ function StartQuest(NPC, Spawn)
     OfferQuest(NPC,  Spawn,beetles)
     end
     
-  function Delivered(NPC, Spawn)
+  function Beetledone(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
     PlayFlavor(NPC, "voiceover/english/carpenter_paddock/qey_harbor/carpenterpaddock003.mp3", "", "thanks", 988291901, 694482922, Spawn)	
     local conversation = CreateConversation()
@@ -104,20 +110,40 @@ function FinishQuest(NPC, Spawn)
     SetStepComplete(Spawn,beetles, 2)
     end       
 
-function EmoteLoop(NPC)
+function Emotes(NPC)
     local emoteChoice = MakeRandomInt(1,3)
 
     if emoteChoice == 1 then
 -- ponder
         PlayAnimation(NPC, 12030)
-        AddTimer(NPC, MakeRandomInt(15000,18000), "EmoteLoop")	
     elseif emoteChoice == 2 then
 -- sniff
         PlayAnimation(NPC, 12329)
-        AddTimer(NPC, MakeRandomInt(6000,9000), "EmoteLoop")	
     else
 -- tapfoot
         PlayAnimation(NPC, 13056)
-        AddTimer(NPC, MakeRandomInt(15000,18000), "EmoteLoop")	
     end
 end
+
+
+function waypoints(NPC)
+	MovementLoopAddLocation(NPC, 937.68, -25.27, 98.76, 2, 0)
+	MovementLoopAddLocation(NPC, 937.68, -25.27, 98.76, 2, 14,"Emotes")
+	MovementLoopAddLocation(NPC, 940.06, -25.27, 103.64, 2, 1)
+	MovementLoopAddLocation(NPC, 940.06, -25.27, 103.64, 2, 14,"Emotes")
+	MovementLoopAddLocation(NPC, 947.46, -25.27, 103.79, 2, 1)
+	MovementLoopAddLocation(NPC, 947.46, -25.27, 103.79, 2, 14,"Emotes")
+	MovementLoopAddLocation(NPC, 953.35, -25.27, 102.16, 2, 0)
+	MovementLoopAddLocation(NPC, 961.61, -25.27, 106.84, 2, 1)
+	MovementLoopAddLocation(NPC, 961.61, -25.27, 106.84, 2, 14,"Emotes")
+	MovementLoopAddLocation(NPC, 957.28, -25.27, 107.64, 2, 1)
+	MovementLoopAddLocation(NPC, 957.28, -25.27, 107.64, 2, 14,"Emotes")
+	MovementLoopAddLocation(NPC, 958.11, -25.27, 103.57, 2, 0)
+	MovementLoopAddLocation(NPC, 947.08, -25.27, 99.1, 2, 1)
+	MovementLoopAddLocation(NPC, 947.08, -25.27, 99.1, 2, 14,"Emotes")
+	MovementLoopAddLocation(NPC, 940.16, -25.27, 97.93, 2, 0)
+	MovementLoopAddLocation(NPC, 933.77, -25.27, 106.09, 2, 1)
+	MovementLoopAddLocation(NPC, 933.77, -25.27, 106.09, 2, 14,"Emotes")
+end
+
+

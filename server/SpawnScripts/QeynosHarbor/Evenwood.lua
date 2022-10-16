@@ -5,24 +5,16 @@
 	Script Date	: 2020.04.12
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
+dofile("SpawnScripts/Generic/GenericGuardVoiceOvers.lua")
 
 function spawn(NPC)
-	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
-end
-
-function respawn(NPC)
-	spawn(NPC)
+	SetPlayerProximityFunction(NPC, 9, "InRange", "LeaveRange")
 end
 
 function InRange(NPC, Spawn)
-end
-
-function LeaveRange(NPC, Spawn)
-end
-
-function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-
+    if GetFactionAmount(Spawn,11) >0 then
+	if math.random(1,100)<25 then
+	   	FaceTarget(NPC, Spawn)
 	local choice = math.random(1,3)
 
 	if choice == 1 then
@@ -31,8 +23,13 @@ function hailed(NPC, Spawn)
 		PlayFlavor(NPC, "voiceover/english/highelf_eco_good_1/ft/service/guard/highelf_guard_service_good_1_hail_gm_c865a827.mp3", "Duty above all else, citizen, except honor!", "scold", 739074204, 2925833259, Spawn)
 	elseif choice == 3 then
 		PlayFlavor(NPC, "voiceover/english/highelf_eco_good_1/ft/service/guard/highelf_guard_service_good_1_hail_gm_ebfceda5.mp3", "Greetings, citizen. I am on guard duty.  Should you get into trouble, seek me out.", "attention", 3027655540, 4120709915, Spawn)
-	else
-	end
+	    end
+end
+end
+end
 
+function hailed(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+ 	GenericGuardHail(NPC, Spawn)
 end
 

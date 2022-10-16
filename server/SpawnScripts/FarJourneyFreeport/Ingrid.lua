@@ -14,11 +14,17 @@ local ShardOfLuclin = 12565
 
 function spawn(NPC)
     SetTempVariable(NPC, "TempAnimationVar", "FirstRun")
-    AddTimer(NPC, 30000, "WalkToGeredo")
+    SetTempVariable(NPC, "Staring", "Checking")
+--  AddTimer(NPC, 30000, "WalkToGeredo")
+    SetPlayerProximityFunction(NPC, 12, "InRange", "LeaveRange")
+
 end
 
 function hailed(NPC, Spawn)
     step = GetQuestStep(Spawn, 524)
+    if not HasQuest(Spawn,524) and not HasCompletedQuest(Spawn, 524) then --Avoids stopping Ingred while she is moving around
+    else    
+    FaceTarget(NPC, Spawn)
     if step == 4 then
         SendStateCommand(NPC, 0)
         Dialog.New(NPC, Spawn)
@@ -46,21 +52,25 @@ function hailed(NPC, Spawn)
         local rand = math.random(0, 2)
 
         if rand == 0 then
-            PlayFlavor(NPC, "voiceover/english/ingrid/boat_06p_tutorial02_fvo_009.mp3",
-                "I hate rats, every time we dock they get on board and eat our supplies.", "grumble", 3636322414,
-                1973183674, Spawn)
+            PlayFlavor(NPC, "voiceover/english/ingrid/boat_06p_tutorial02_fvo_009.mp3","I hate rats, every time we dock they get on board and eat our supplies.", "grumble", 3636322414,1973183674, Spawn)
         elseif rand == 1 then
-            PlayFlavor(NPC, "voiceover/english/ingrid/boat_06p_tutorial02_fvo_008.mp3", "Don't you just love the sea?",
-                "sniff", 541733813, 1294072887, Spawn)
+            PlayFlavor(NPC, "voiceover/english/ingrid/boat_06p_tutorial02_fvo_008.mp3", "Don't you just love the sea?","sniff", 541733813, 1294072887, Spawn)
         else
-            PlayFlavor(NPC, "voiceover/english/ingrid/boat_06p_tutorial02_fvo_007.mp3", "Yo ho ho and a bottle of rum!",
-                "smile", 964088856, 3568852318, Spawn)
+            PlayFlavor(NPC, "voiceover/english/ingrid/boat_06p_tutorial02_fvo_007.mp3", "Yo ho ho and a bottle of rum!","smile", 964088856, 3568852318, Spawn)
         end
     end
 end
+end
 
-function WalkToGeredo(NPC, Spawn)
-	playerhasquest = HasQuest(Spawn, 524)
+function InRange(NPC,Player)
+if GetTempVariable(NPC,"Starting","Checking") then
+    SetTempVariable(NPC, "Staring", "Done")
+    AddTimer(NPC, 30000, "WalkToGeredo",1,Player)
+    end
+end
+
+function WalkToGeredo(NPC, Player)
+	playerhasquest = HasQuest(Player, 524)
 	if playerhasquest == true then
 	MoveToLocation(NPC, 2.35, -2.07, -3.34, 5, nil, false)
 	else
@@ -297,6 +307,7 @@ function vim_who(NPC, Spawn)
     Dialog.Start()
     vim = GetRandomSpawnByID(NPC, 270007)
     FaceTarget(NPC, vim)
+    PlayFlavor(NPC,"","","point",0,0,Player)
     AddTimer(NPC, 3000, "turn_towards_player", 1, Spawn)
 end
 

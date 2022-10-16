@@ -3,17 +3,15 @@
     Script Author  : neatz09
     Script Date    : 2019.04.08 12:04:04
     Script Purpose : 
-                   : 
+    Updated by     : Devn00b 6/18/2022
 --]]
-
 -- Teleports you to your recall point.
 function precast(Caster, Target)
     if GetBoundZoneID(Caster) == 0 then
-        SendMessage(Caster, "You are a failure", "red")
         return false
     end
 
-    if(IsGateAllowed(Caster))
+    if(GetCanGate(Caster) == 1)
     then
         return true   
     else
@@ -24,6 +22,7 @@ function precast(Caster, Target)
  return true
 end
 
+
 function cast(Caster, Target)
-    Gate(Caster)
+    Gate(Caster)    
 end

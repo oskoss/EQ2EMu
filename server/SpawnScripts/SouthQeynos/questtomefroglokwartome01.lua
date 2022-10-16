@@ -24,7 +24,11 @@ if HasItem(Spawn,FrogBook,1) or HasCompletedQuest(Spawn,FrogQuest) then
       SetAccessToEntityCommand(Spawn,NPC,"Search Books", 0)
     SpawnSet(NPC, "show_command_icon", 0)
     SpawnSet(NPC, "display_hand_icon", 0)
-end
+else
+    SetAccessToEntityCommand(Spawn,NPC,"Search Books", 1)
+    SpawnSet(NPC, "show_command_icon", 1)
+    SpawnSet(NPC, "display_hand_icon", 1)
+    end
 end
 
 function Check(NPC,Spawn)
@@ -32,7 +36,11 @@ if HasItem(Spawn,FrogBook,1) or HasCompletedQuest(Spawn,FrogQuest) then
     SpawnSet(NPC, "show_command_icon", 0)
     SpawnSet(NPC, "display_hand_icon", 0)    
     SetAccessToEntityCommand(Spawn,NPC,"Search Books", 0)
-end
+else
+    SetAccessToEntityCommand(Spawn,NPC,"Search Books", 1)
+    SpawnSet(NPC, "show_command_icon", 1)
+    SpawnSet(NPC, "display_hand_icon", 1)
+    end
 end
 
 function casted_on(NPC, Spawn, SpellName)
