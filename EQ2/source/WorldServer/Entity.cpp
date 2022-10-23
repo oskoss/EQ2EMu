@@ -2316,7 +2316,7 @@ void Entity::CureDetrimentByControlEffect(int8 cure_count, int8 control_type, st
 }
 
 void Entity::RemoveDetrimentalSpell(LuaSpell* spell) {
-	if(!spell || spell->spell->GetSpellData()->det_type == 0)
+	if(!spell || (spell->spell && spell->spell->GetSpellData() && spell->spell->GetSpellData()->det_type == 0))
 		return;
 	MDetriments.writelock(__FUNCTION__, __LINE__);
 	vector<DetrimentalEffects>* det_list = &detrimental_spell_effects;
