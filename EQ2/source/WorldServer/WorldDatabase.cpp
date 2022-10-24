@@ -7119,9 +7119,12 @@ void WorldDatabase::SaveCharacterPicture(int32 characterID, int8 type, uchar* pi
 		ss_hex << setfill('0') << setw(2) << (int32)picture[i];
 
 	ss_query << "INSERT INTO `character_pictures` (`char_id`, `pic_type`, `picture`) VALUES (" << characterID << ", " << (int32)type << ", '" << ss_hex.str() << "') ON DUPLICATE KEY UPDATE `picture` = '" << ss_hex.str() << "'";
+		
+  	Query query;
+	query.RunQuery2(ss_query.str(), Q_REPLACE);
 	
-	if (!database_new.Query(ss_query.str().c_str()))
-		LogWrite(DATABASE__ERROR, 0, "DBNew", "MySQL Error %u: %s", database_new.GetError(), database_new.GetErrorMsg());
+	if (query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
+			LogWrite(DATABASE__ERROR, 0, "DBNew", "MySQL Error: in SaveCharacterPicture! Error Message: ", query.GetError());
 }
 
 void WorldDatabase::LoadZoneFlightPaths(ZoneServer* zone) {

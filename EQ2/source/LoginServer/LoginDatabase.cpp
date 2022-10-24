@@ -137,6 +137,7 @@ int32 LoginDatabase::GetLoginCharacterIDFromWorldCharID(int32 server_id, int32 c
 
 void LoginDatabase::SetServerEquipmentAppearances(int32 server_id, map<int32, LoginEquipmentUpdate> equip_updates)
 {
+ 
 	if(equip_updates.size() > 0)
 	{
 
@@ -172,10 +173,12 @@ void LoginDatabase::SetServerEquipmentAppearances(int32 server_id, map<int32, Lo
 
 			count++;
 		}
-
-		if( !dbLogin.Query(ss.str().c_str()) )
-			LogWrite(LOGIN__ERROR, 0, "Login", "Error saving login_equipment data");
-
+      
+   		Query query;
+		query.RunQuery2(ss.str(), Q_REPLACE);
+      
+		if (query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
+			LogWrite(LOGIN__ERROR, 0, "Login", "Error saving login_equipment data Error: ", query.GetError());
 	}
 }
 
