@@ -2888,6 +2888,7 @@ bool PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 				if(item->details.slot_id > bag->details.num_slots){
 					LogWrite(ITEM__ERROR, 0, "Item", "Error Adding Item: Invalid slot for item unique id: %u (%s - %i), InvSlotID: %u, slotid: %u, numslots: %u", item->details.unique_id, item->name.c_str(), 
 					item->details.item_id, item->details.inv_slot_id, item->details.slot_id, bag->details.num_slots);
+					lua_interface->SetLuaUserDataStale(item);
 					safe_delete(item);
 					return false;
 				}
@@ -3235,6 +3236,8 @@ void PlayerItemList::RemoveItem(Item* item, bool delete_item){
 		map<int32, Item*>::iterator itr = indexed_items.find(item->details.index);
 		if(itr != indexed_items.end() && item == indexed_items[item->details.index])
 			indexed_items[item->details.index] = 0;
+		
+		lua_interface->SetLuaUserDataStale(item);
 		safe_delete(item);
 	}
 	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
@@ -3257,6 +3260,8 @@ void PlayerItemList::DestroyItem(int16 index){
 	if(item && items.count(item->details.inv_slot_id) > 0 && items[item->details.inv_slot_id][item->details.appearance_type].count(item->details.slot_id) > 0)
 		items[item->details.inv_slot_id][item->details.appearance_type].erase(item->details.slot_id);
 	indexed_items[index] = 0;
+	
+	lua_interface->SetLuaUserDataStale(item);
 	safe_delete(item);
 	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 }

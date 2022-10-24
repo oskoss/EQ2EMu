@@ -2885,6 +2885,8 @@ void SpellProcess::DeleteSpell(LuaSpell* spell)
 		lua_interface->RemoveCustomSpell(spell->spell->GetSpellID());
 		safe_delete(spell->spell);
 	}
+	
+	lua_interface->SetLuaUserDataStale(spell);
 	safe_delete(spell);
 }
 

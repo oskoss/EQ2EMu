@@ -2736,6 +2736,7 @@ void WorldDatabase::LoadCharacterQuests(Client* client){
 					// so get a fresh quest object to add as an active quest
 					if (given_timestamp > completed_timestamp)
 					{
+						lua_interface->SetLuaUserDataStale(quest);
 						safe_delete(quest);
 						quest = master_quest_list.GetQuest(atoul(row[0]));
 					}

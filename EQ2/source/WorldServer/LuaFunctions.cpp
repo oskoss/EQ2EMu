@@ -896,6 +896,7 @@ int EQ2Emu_lua_RemoveLootItem(lua_State* state) {
 	if (spawn && spawn->IsEntity()) {
 		int32 item_id = lua_interface->GetInt32Value(state, 2);
 		Item* item = spawn->LootItem(item_id);
+		lua_interface->SetLuaUserDataStale(item);
 		safe_delete(item);
 	}
 	lua_interface->ResetFunctionStack(state);
@@ -975,6 +976,7 @@ int EQ2Emu_lua_CreateConversation(lua_State* state) {
 		return 0;
 
 	vector<ConversationOption>* conversation = lua_interface->GetConversation(state);
+	lua_interface->SetLuaUserDataStale(conversation);
 	safe_delete(conversation);
 	lua_interface->ResetFunctionStack(state);
 
@@ -1075,8 +1077,8 @@ int EQ2Emu_lua_StartDialogConversation(lua_State* state) {
 			}
 		}
 	}
+	lua_interface->SetLuaUserDataStale(conversation);
 	safe_delete(conversation);
-	lua_interface->SetConversationValue(state, NULL);
 	return 0;
 }
 
@@ -1104,8 +1106,8 @@ int EQ2Emu_lua_StartConversation(lua_State* state) {
 			client->DisplayConversation(source, 1, conversation, text.c_str(), mp3.c_str(), key1, key2, language, can_close);
 		else
 			client->DisplayConversation(source, 1, conversation, text.c_str(), nullptr, 0, 0, language, can_close);
+		lua_interface->SetLuaUserDataStale(conversation);
 		safe_delete(conversation);
-		lua_interface->SetConversationValue(state, NULL);
 	}
 	else
 		LogWrite(LUA__ERROR, 0, "LUA", "Spawn %s Error in StartConversation, potentially AddConversationOption not yet called or the StartConversation arguments are incorrect, text: %s, conversationSize: %i.", source ? source->GetName() : "UNKNOWN", text.size() ? text.c_str() : "", conversation ? conversation->size() : -1);
@@ -5091,6 +5093,7 @@ int EQ2Emu_lua_SendOptionWindow(lua_State* state) {
 			i++;
 		}
 		client->QueuePacket(packet->serialize());
+		lua_interface->SetLuaUserDataStale(option_window);
 		safe_delete(option_window);
 		safe_delete(packet);
 	}

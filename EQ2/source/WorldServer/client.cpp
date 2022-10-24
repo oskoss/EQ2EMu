@@ -204,7 +204,6 @@ Client::Client(EQStream* ieqs) : underworld_cooldown_timer(5000), pos_update(125
 	client_reloading_zone = false;
 	last_saved_timestamp = 0;
 	MQueueStateCmds.SetName("Client::MQueueStateCmds");
-	MConversation.SetName("Client::MConversation");
 	save_spell_state_timer.Disable();
 	save_spell_state_time_bucket = 0;
 	player_loading_complete = false;
@@ -1319,32 +1318,12 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_DialogSelectMsg", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_DialogSelect", GetVersion());
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			int32 conversation_id = packet->getType_int32_ByName("conversation_id");
-			int32 response_index = packet->getType_int32_ByName("response");
-			if (GetCurrentZone()) {
-				MConversation.readlock();
-				int32 spawn_id = conversation_spawns[conversation_id];
-				Spawn* spawn = nullptr;
-				if(spawn_id) {
-					spawn = GetCurrentZone()->GetSpawnByID(spawn_id);
-				}
-				
-				Item* item = conversation_items[conversation_id];
-				MConversation.releasereadlock();
-				if (conversation_map.count(conversation_id) > 0 && conversation_map[conversation_id].count(response_index) > 0) {
-					if (spawn)
-						GetCurrentZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_CONVERSATION, player, conversation_map[conversation_id][response_index].c_str());
-					else if (item && lua_interface && item->GetItemScript())
-						lua_interface->RunItemScript(item->GetItemScript(), conversation_map[conversation_id][response_index].c_str(), item, player);
-					else
-						CloseDialog(conversation_id);
-				}
-				else
-					CloseDialog(conversation_id);
+				packet->LoadPacketData(app->pBuffer, app->size);
+				int32 conversation_id = packet->getType_int32_ByName("conversation_id");
+				int32 response_index = packet->getType_int32_ByName("response");
+				HandleDialogSelectMsg(conversation_id, response_index);
 			}
 			safe_delete(packet);
-		}
 		break;
 	}
 	case OP_CancelMoveObjectModeMsg: {
@@ -6511,6 +6490,7 @@ void Client::GiveQuestReward(Quest* quest, bool has_displayed) {
 }
 
 void Client::DisplayConversation(int32 conversation_id, int32 spawn_id, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2, int8 language, int8 can_close) {
+	std::unique_lock lock(MConversation);
 	PacketStruct* packet = configReader.getStruct("WS_DialogOpen", GetVersion());
 	if (packet) {
 		packet->setDataByName("conversation_id", conversation_id);
@@ -6547,9 +6527,9 @@ void Client::DisplayConversation(Item* item, vector<ConversationOption>* convers
 		next_conversation_id++;
 		conversation_id = next_conversation_id;
 	}
-	MConversation.writelock();
+	MConversation.lock();
 	conversation_items[conversation_id] = item;
-	MConversation.releasewritelock();
+	MConversation.unlock();
 	if (type == 4)
 		DisplayConversation(conversation_id, player->GetIDWithPlayerSpawn(player), conversations, text, mp3, key1, key2, language, can_close);
 	else
@@ -6566,9 +6546,9 @@ void Client::DisplayConversation(Spawn* src, int8 type, vector<ConversationOptio
 		next_conversation_id++;
 		conversation_id = next_conversation_id;
 	}
-	MConversation.writelock();
+	MConversation.lock();
 	conversation_spawns[conversation_id] = src->GetID();
-	MConversation.releasewritelock();
+	MConversation.unlock();
 
 	/* Spawns can start two different types of conversations.
 	 * Type 1: The chat type with bubbles.
@@ -6583,6 +6563,7 @@ void Client::DisplayConversation(Spawn* src, int8 type, vector<ConversationOptio
 }
 
 void Client::CloseDialog(int32 conversation_id) {
+	std::unique_lock lock(MConversation);
 	PacketStruct* packet = configReader.getStruct("WS_ServerDialogClose", GetVersion());
 	if (packet) {
 		packet->setDataByName("conversation_id", conversation_id);
@@ -6590,7 +6571,6 @@ void Client::CloseDialog(int32 conversation_id) {
 		safe_delete(packet);
 	}
 
-	MConversation.writelock();
 	std::map<int32, Item*>::iterator itr;
 	while((itr = conversation_items.find(conversation_id)) != conversation_items.end())
 	{
@@ -6603,13 +6583,11 @@ void Client::CloseDialog(int32 conversation_id) {
 	{
 		conversation_spawns.erase(itr2);
 	}
-	MConversation.releasewritelock();
-
 }
 
 int32 Client::GetConversationID(Spawn* spawn, Item* item) {
+	std::shared_lock lock(MConversation);
 	int32 conversation_id = 0;
-	MConversation.readlock();
 	if (spawn) {
 		map<int32, int32>::iterator itr;
 		for (itr = conversation_spawns.begin(); itr != conversation_spawns.end(); itr++) {
@@ -6628,7 +6606,6 @@ int32 Client::GetConversationID(Spawn* spawn, Item* item) {
 			}
 		}
 	}
-	MConversation.releasereadlock();
 
 	return conversation_id;
 }
@@ -6756,6 +6733,7 @@ bool Client::AddItem(Item* item, bool* item_deleted, AddItemType type) {
 			lua_interface->RunItemScript(item->GetItemScript(), "obtained", item, player);
 	}
 	else {
+		lua_interface->SetLuaUserDataStale(item);
 		// likely lore conflict
 		safe_delete(item);
 
@@ -6805,6 +6783,7 @@ bool Client::AddItemToBank(Item* item) {
 			lua_interface->RunItemScript(item->GetItemScript(), "obtained", item, player);
 	}
 	else {
+		lua_interface->SetLuaUserDataStale(item);
 		// likely lore conflict
 		safe_delete(item);
 		return false;
@@ -6857,6 +6836,7 @@ bool Client::RemoveItem(Item* item, int16 quantity, bool force_override_no_delet
 		if (delete_item)
 		{
 			PurgeItem(item);
+			lua_interface->SetLuaUserDataStale(item);
 			safe_delete(item);
 		}
 		return true;
@@ -7106,8 +7086,10 @@ void Client::BuyBack(int32 item_id, int16 quantity) {
 			else
 				SimpleMessage(CHANNEL_COLOR_RED, "You cannot afford this item.");
 
-			if(!itemAdded && !itemDeleted)
+			if(!itemAdded && !itemDeleted) {
+				lua_interface->SetLuaUserDataStale(item);
 				safe_delete(item);
+			}
 		}
 	}
 
@@ -7166,6 +7148,7 @@ void Client::BuyItem(int32 item_id, int16 quantity) {
 			item->details.count = quantity;
 			if (!player->item_list.HasFreeSlot() && !player->item_list.CanStack(item)) {
 				SimpleMessage(CHANNEL_COLOR_RED, "You do not have any slots available for this item.");
+				lua_interface->SetLuaUserDataStale(item);
 				safe_delete(item);
 			}
 			else {
@@ -11062,7 +11045,7 @@ void Client::ProcessStateCommands()
 
 void Client::PurgeItem(Item* item)
 {
-	MConversation.writelock();
+	std::unique_lock lock(MConversation);
 	map<int32, Item*>::iterator itr;
 	for(itr = conversation_items.begin(); itr != conversation_items.end(); itr++)
 	{
@@ -11072,7 +11055,6 @@ void Client::PurgeItem(Item* item)
 			break;
 		}
 	}
-	MConversation.releasewritelock();
 }
 
 void Client::ConsumeFoodDrink(Item* item, int32 slot)
@@ -11404,4 +11386,35 @@ bool Client::SetPlayerPOVGhost(Spawn* spawn) {
 	}
 	
 	return false;
+}
+
+void Client::HandleDialogSelectMsg(int32 conversation_id, int32 response_index) {
+	std::string conversation = "";
+	MConversation.lock_shared();
+	if (conversation_map.count(conversation_id) > 0 && conversation_map[conversation_id].count(response_index) > 0) {
+		conversation = std::string(conversation_map[conversation_id][response_index].c_str());
+	}
+	
+	int32 spawn_id = conversation_spawns[conversation_id];
+	
+	Item* item = conversation_items[conversation_id];
+	MConversation.unlock_shared();
+	
+	if (GetCurrentZone()) {
+		Spawn* spawn = nullptr;
+		if(spawn_id) {
+			spawn = GetCurrentZone()->GetSpawnByID(spawn_id);
+		}
+		
+		if (conversation_map.count(conversation_id) > 0 && conversation_map[conversation_id].count(response_index) > 0) {
+			if (spawn)
+				GetCurrentZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_CONVERSATION, player, conversation.c_str());
+			else if (item && lua_interface && item->GetItemScript())
+				lua_interface->RunItemScript(item->GetItemScript(), conversation.c_str(), item, player);
+			else
+				CloseDialog(conversation_id);
+		}
+		else
+			CloseDialog(conversation_id);
+	}				
 }

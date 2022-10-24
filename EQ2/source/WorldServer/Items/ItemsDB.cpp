@@ -28,9 +28,11 @@
 #include "Items.h"
 #include "../World.h"
 #include "../Rules/Rules.h"
+#include "../LuaInterface.h"
 
 extern World world;
 extern RuleManager rule_manager;
+extern LuaInterface* lua_interface;
 
 // handle new database class til all functions are converted
 void WorldDatabase::LoadDataFromRow(DatabaseResult* result, Item* item) 
@@ -1310,6 +1312,7 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 					if(timeInSeconds >= rule_manager.GetGlobalRule(R_Player, TemporaryItemLogoutTime)->GetFloat()) {
 						DeleteItem(char_id, item, 0);
 						LogWrite(ITEM__INFO, 0, "Items", "\tCharacter ID %u had a temporary item %s which was removed due to time limit.", char_id, item->name.c_str());
+						lua_interface->SetLuaUserDataStale(item);
 						safe_delete(item);
 						continue;
 					}

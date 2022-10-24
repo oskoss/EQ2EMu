@@ -20,6 +20,9 @@
 #ifndef LUA_INTERFACE_H
 #define LUA_INTERFACE_H
 
+#include <mutex>
+#include <shared_mutex>
+
 #include "Spawn.h"
 #include "Spells.h"
 #include "../common/Mutex.h"
@@ -281,7 +284,7 @@ public:
 	void			UpdateDebugClients(Client* client);
 	void			ProcessErrorMessage(const char* message);
 	map<Client*, int32> GetDebugClients(){ return debug_clients; }
-	void			AddUserDataPtr(LUAUserData* data);
+	void			AddUserDataPtr(LUAUserData* data, void* data_ptr = 0);
 	void			DeleteUserDataPtrs(bool all);
 	void			DeletePendingSpells(bool all);
 	void			DeletePendingSpell(LuaSpell* spell);
@@ -304,6 +307,9 @@ public:
 	LuaSpell*		FindCustomSpell(int32 id);
 
 	int32			GetFreeCustomSpellID();
+	
+	void			SetLuaUserDataStale(void* ptr);
+	
 private:
 	bool			shutting_down;
 	bool			lua_system_reloading;
@@ -311,6 +317,7 @@ private:
 	Timer*			user_data_timer;
 	Timer*			spell_delete_timer;
 	map<LUAUserData*, int32> user_data;
+	map<void*, LUAUserData*> user_data_ptr;
 	map<Client*, int32>	debug_clients;
 	map<lua_State*, LuaSpell*> current_spells;
 	vector<string>*	GetDirectoryListing(const char* directory);
@@ -346,10 +353,11 @@ private:
 	Mutex			MItemScripts;
 	Mutex			MZoneScripts;
 	Mutex			MQuests;
-	Mutex			MLUAUserData;
 	Mutex			MLUAMain;
 	Mutex			MSpellDelete;
 	Mutex			MCustomSpell;
 	Mutex			MRegionScripts;
+	
+	mutable std::shared_mutex	MLUAUserData;
 };
 #endif

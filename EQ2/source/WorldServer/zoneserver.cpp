@@ -1298,6 +1298,8 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 				
 				MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 			
+				lua_interface->SetLuaUserDataStale(spawn);
+				
 				safe_delete(spawn);
 			}
 			else

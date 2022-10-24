@@ -46,7 +46,6 @@ LuaInterface::LuaInterface() {
 	MSpawnScripts.SetName("LuaInterface::MSpawnScripts");
 	MZoneScripts.SetName("LuaInterface::MZoneScripts");
 	MQuests.SetName("LuaInterface::MQuests");
-	MLUAUserData.SetName("LuaInterface::MLUAUserData");
 	MLUAMain.SetName("LuaInterface::MLUAMain");
 	MItemScripts.SetName("LuaInterface::MItemScripts");
 	MSpellDelete.SetName("LuaInterface::MSpellDelete");
@@ -463,10 +462,12 @@ Quest* LuaInterface::LoadQuest(int32 id, const char* name, const char* type, con
 		if(lua_pcall(state, 1, 0, 0) != 0){
 			LogError("Error processing Quest \"%s\" (%u): %s", name ? name : "unknown", id, lua_tostring(state, -1));
 			lua_pop(state, 1);
+			SetLuaUserDataStale(quest);
 			safe_delete(quest);
 			return 0;
 		}
 		if(!quest->GetName()){
+			SetLuaUserDataStale(quest);
 			safe_delete(quest);	
 			return 0;
 		}
@@ -812,7 +813,7 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 		lua_getglobal(spell->state, "remove");
 		LUASpawnWrapper* spawn_wrapper = new LUASpawnWrapper();
 		spawn_wrapper->spawn = spell->caster;
-		AddUserDataPtr(spawn_wrapper);
+		AddUserDataPtr(spawn_wrapper, spawn_wrapper->spawn);
 		lua_pushlightuserdata(spell->state, spawn_wrapper);
 		if(spell->caster && (spell->initial_target || spell->caster->GetTarget())){
 			spawn_wrapper = new LUASpawnWrapper();
@@ -820,7 +821,7 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 				spawn_wrapper->spawn = spell->caster->GetTarget();
 			else
 				spawn_wrapper->spawn = spell->caster->GetZone()->GetSpawnByID(spell->initial_target);
-			AddUserDataPtr(spawn_wrapper);
+			AddUserDataPtr(spawn_wrapper, spawn_wrapper->spawn);
 			lua_pushlightuserdata(spell->state, spawn_wrapper);
 		}
 		else
@@ -1514,10 +1515,12 @@ void LuaInterface::ResetFunctionStack(lua_State* state) {
 	lua_settop(state, 0);
 }
 
-void LuaInterface::AddUserDataPtr(LUAUserData* data) {
-	MLUAUserData.lock();
+void LuaInterface::AddUserDataPtr(LUAUserData* data, void* data_ptr) {
+	std::unique_lock lock(MLUAUserData);
+	if(data_ptr) {
+		user_data_ptr[data_ptr] = data;
+	}
 	user_data[data] = Timer::GetCurrentTime2() + 300000; //allow a function to use this pointer for 5 minutes
-	MLUAUserData.unlock();
 }
 
 void LuaInterface::DeletePendingSpells(bool all) {
@@ -1558,6 +1561,7 @@ void LuaInterface::DeletePendingSpells(bool all) {
 				safe_delete(spell->spell);
 			}
 
+			SetLuaUserDataStale(spell);
 			safe_delete(spell);
 		}
 	}
@@ -1575,7 +1579,7 @@ void LuaInterface::DeletePendingSpell(LuaSpell* spell) {
 }
 
 void LuaInterface::DeleteUserDataPtrs(bool all) {
-	MLUAUserData.lock();
+	std::unique_lock lock(MLUAUserData);
 	if(user_data.size() > 0){
 		map<LUAUserData*, int32>::iterator itr;
 		int32 time = Timer::GetCurrentTime2();
@@ -1588,14 +1592,49 @@ void LuaInterface::DeleteUserDataPtrs(bool all) {
 		LUAUserData* data = 0;
 		for(del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++){
 			data = *del_itr;
+			
+			void* target = 0;
+			if(data->IsConversationOption()) {
+				target = data->conversation_options;
+			}
+			else if(data->IsSpawnList()) {
+				target = data->spawn_list;
+			}
+			else if(data->IsOptionWindow()) {
+				target = data->option_window_option;
+			}
+			else if(data->IsSpawn()) {
+				target = data->spawn;
+			}
+			else if(data->IsQuest()) {
+				target = data->quest;
+			}
+			else if(data->IsZone()) {
+				target = data->zone;
+			}
+			else if(data->IsItem()) {
+				target = data->item;
+			}
+			else if(data->IsSkill()) {
+				target = data->skill;
+			}
+			else if(data->IsSpell()) {
+				target = data->spell;
+			}
+			if(target) {
+				std::map<void*, LUAUserData*>::iterator itr = user_data_ptr.find(target);
+				if(itr != user_data_ptr.end()) {
+					user_data_ptr.erase(itr);
+				}
+			}
 			user_data.erase(data);
 			safe_delete(data);
 		}
 	}
-	MLUAUserData.unlock();
 }
 
 Spawn* LuaInterface::GetSpawn(lua_State* state, int8 arg_num) {
+	std::shared_lock lock(MLUAUserData);
 	Spawn* ret = 0;
 	if (lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
@@ -1615,6 +1654,7 @@ Spawn* LuaInterface::GetSpawn(lua_State* state, int8 arg_num) {
 }
 
 vector<ConversationOption>*	LuaInterface::GetConversation(lua_State* state, int8 arg_num) {
+	std::shared_lock lock(MLUAUserData);
 	vector<ConversationOption>* ret = 0;
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
@@ -1634,6 +1674,7 @@ vector<ConversationOption>*	LuaInterface::GetConversation(lua_State* state, int8
 }
 
 vector<Spawn*>* LuaInterface::GetSpawnList(lua_State* state, int8 arg_num) {
+	std::shared_lock lock(MLUAUserData);
 	vector<Spawn*>* ret = 0;
 	if (lua_islightuserdata(state, arg_num)) {
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
@@ -1653,6 +1694,7 @@ vector<Spawn*>* LuaInterface::GetSpawnList(lua_State* state, int8 arg_num) {
 }
 
 vector<OptionWindowOption>*	LuaInterface::GetOptionWindow(lua_State* state, int8 arg_num) {
+	std::shared_lock lock(MLUAUserData);
 	vector<OptionWindowOption>* ret = 0;
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
@@ -1672,6 +1714,7 @@ vector<OptionWindowOption>*	LuaInterface::GetOptionWindow(lua_State* state, int8
 }
 
 Quest* LuaInterface::GetQuest(lua_State* state, int8 arg_num) {
+	std::shared_lock lock(MLUAUserData);
 	Quest* ret = 0;
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
@@ -1691,6 +1734,7 @@ Quest* LuaInterface::GetQuest(lua_State* state, int8 arg_num) {
 }
 
 Item* LuaInterface::GetItem(lua_State* state, int8 arg_num) {
+	std::shared_lock lock(MLUAUserData);
 	Item* ret = 0;
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
@@ -1710,6 +1754,7 @@ Item* LuaInterface::GetItem(lua_State* state, int8 arg_num) {
 }
 
 Skill* LuaInterface::GetSkill(lua_State* state, int8 arg_num) {
+	std::shared_lock lock(MLUAUserData);
 	Skill* ret = 0;
 	if (lua_islightuserdata(state, arg_num)) {
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
@@ -1729,6 +1774,7 @@ Skill* LuaInterface::GetSkill(lua_State* state, int8 arg_num) {
 }
 
 LuaSpell* LuaInterface::GetSpell(lua_State* state, int8 arg_num) {
+	std::shared_lock lock(MLUAUserData);
 	LuaSpell* ret = 0;
 	if (lua_islightuserdata(state, arg_num)) {
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
@@ -1748,6 +1794,7 @@ LuaSpell* LuaInterface::GetSpell(lua_State* state, int8 arg_num) {
 }
 
 ZoneServer* LuaInterface::GetZone(lua_State* state, int8 arg_num) {
+	std::shared_lock lock(MLUAUserData);
 	ZoneServer* ret = 0;
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
@@ -1867,63 +1914,63 @@ void LuaInterface::SetSInt64Value(lua_State* state, sint64 value) {
 void LuaInterface::SetSpawnValue(lua_State* state, Spawn* spawn) {
 	LUASpawnWrapper* spawn_wrapper = new LUASpawnWrapper();
 	spawn_wrapper->spawn = spawn;
-	AddUserDataPtr(spawn_wrapper);
+	AddUserDataPtr(spawn_wrapper, spawn);
 	lua_pushlightuserdata(state, spawn_wrapper);
 }
 
 void LuaInterface::SetSpawnListValue(lua_State* state, vector<Spawn*>* spawnList) {
 	LUASpawnListWrapper* spawnList_wrapper = new LUASpawnListWrapper();
 	spawnList_wrapper->spawn_list = spawnList;
-	AddUserDataPtr(spawnList_wrapper);
+	AddUserDataPtr(spawnList_wrapper, spawnList);
 	lua_pushlightuserdata(state, spawnList_wrapper);
 }
 
 void LuaInterface::SetConversationValue(lua_State* state, vector<ConversationOption>* conversation) {
 	LUAConversationOptionWrapper* conv_wrapper = new LUAConversationOptionWrapper();
 	conv_wrapper->conversation_options = conversation;
-	AddUserDataPtr(conv_wrapper);
+	AddUserDataPtr(conv_wrapper, conversation);
 	lua_pushlightuserdata(state, conv_wrapper);
 }
 
 void LuaInterface::SetOptionWindowValue(lua_State* state, vector<OptionWindowOption>* optionWindow) {
 	LUAOptionWindowWrapper* option_wrapper = new LUAOptionWindowWrapper();
 	option_wrapper->option_window_option = optionWindow;
-	AddUserDataPtr(option_wrapper);
+	AddUserDataPtr(option_wrapper, optionWindow);
 	lua_pushlightuserdata(state, option_wrapper);
 }
 
 void LuaInterface::SetItemValue(lua_State* state, Item* item) {
 	LUAItemWrapper* item_wrapper = new LUAItemWrapper();
 	item_wrapper->item = item;
-	AddUserDataPtr(item_wrapper);
+	AddUserDataPtr(item_wrapper, item);
 	lua_pushlightuserdata(state, item_wrapper);
 }
 
 void LuaInterface::SetSkillValue(lua_State* state, Skill* skill) {
 	LUASkillWrapper* skill_wrapper = new LUASkillWrapper();
 	skill_wrapper->skill = skill;
-	AddUserDataPtr(skill_wrapper);
+	AddUserDataPtr(skill_wrapper, skill);
 	lua_pushlightuserdata(state, skill_wrapper);
 }
 
 void LuaInterface::SetQuestValue(lua_State* state, Quest* quest) {
 	LUAQuestWrapper* quest_wrapper = new LUAQuestWrapper();
 	quest_wrapper->quest = quest;
-	AddUserDataPtr(quest_wrapper);
+	AddUserDataPtr(quest_wrapper, quest);
 	lua_pushlightuserdata(state, quest_wrapper);
 }
 
 void LuaInterface::SetZoneValue(lua_State* state, ZoneServer* zone) {
 	LUAZoneWrapper* zone_wrapper = new LUAZoneWrapper();
 	zone_wrapper->zone = zone;
-	AddUserDataPtr(zone_wrapper);
+	AddUserDataPtr(zone_wrapper, zone);
 	lua_pushlightuserdata(state, zone_wrapper);
 }
 
 void LuaInterface::SetSpellValue(lua_State* state, LuaSpell* spell) {
 	LUASpellWrapper* spell_wrapper = new LUASpellWrapper();
 	spell_wrapper->spell = spell;
-	AddUserDataPtr(spell_wrapper);
+	AddUserDataPtr(spell_wrapper, spell);
 	lua_pushlightuserdata(state, spell_wrapper);
 }
 
@@ -2536,6 +2583,15 @@ int32 LuaInterface::GetFreeCustomSpellID()
 	}
 	MCustomSpell.releasewritelock();
 	return id;
+}
+
+
+void LuaInterface::SetLuaUserDataStale(void* ptr) {
+	std::unique_lock lock(MLUAUserData);
+	std::map<void*, LUAUserData*>::iterator itr = user_data_ptr.find(ptr);
+	if(itr != user_data_ptr.end()) {
+		itr->second->correctly_initialized = false;
+	}
 }
 
 LUAUserData::LUAUserData(){

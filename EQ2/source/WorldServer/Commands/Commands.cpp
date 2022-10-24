@@ -2983,6 +2983,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			Spawn* spawn = cmdTarget;
 			if(spawn && spawn->IsEntity() && sep && sep->arg[0] && sep->IsNumber(0)){
 				Item* item = spawn->LootItem(atoul(sep->arg[0]));
+				lua_interface->SetLuaUserDataStale(item);
 				safe_delete(item);
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully removed item.");
 			}
@@ -3099,6 +3100,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					client->RemovePendingQuest(quest);
 					if(lua_interface)
 						lua_interface->CallQuestFunction(quest, "Declined", client->GetPlayer());
+					lua_interface->SetLuaUserDataStale(quest);
 					safe_delete(quest);
 					client->GetCurrentZone()->SendQuestUpdates(client);
 				}

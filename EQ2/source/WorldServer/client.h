@@ -22,6 +22,8 @@
 
 #include <list>
 #include <atomic>
+#include <mutex>
+#include <shared_mutex>
 
 #include "../common/EQStream.h"
 #include "../common/timer.h"
@@ -571,6 +573,8 @@ public:
 	bool	SetPlayerPOVGhost(Spawn* spawn);
 	
 	int32	GetPlayerPOVGhostSpawnID() { return pov_ghost_spawn_id; }
+	
+	void	HandleDialogSelectMsg(int32 conversation_id, int32 response_index);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -601,7 +605,7 @@ private:
 	int32	next_conversation_id;
 	map<int32, int32> conversation_spawns;
 	map<int32, Item*> conversation_items;
-	Mutex MConversation;
+	mutable std::shared_mutex MConversation;
 	map<int32, map<int8, string> > conversation_map;
 	int32	current_quest_id;
 	Spawn*	banker;
