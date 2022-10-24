@@ -137,15 +137,7 @@ int32 LoginDatabase::GetLoginCharacterIDFromWorldCharID(int32 server_id, int32 c
 
 void LoginDatabase::SetServerEquipmentAppearances(int32 server_id, map<int32, LoginEquipmentUpdate> equip_updates)
 {
-#ifdef WIN32
-	//devn00b: temp fix for crashing on windows.
-	//Exception thrown: read access violation.
-	//mysql->** methods** was nullptr.occurred
-	//0x0000000002981a20 "replace into login_equipment (login_characters_id, equip_type, red, green, blue, highlight_red, highlight_green, highlight_blue, slot) values (9003, 4043, 255, 255, 255, 255, 255, 255, 0)"
-
-	return;
-#endif
-  
+ 
 	if(equip_updates.size() > 0)
 	{
 
@@ -181,10 +173,12 @@ void LoginDatabase::SetServerEquipmentAppearances(int32 server_id, map<int32, Lo
 
 			count++;
 		}
-
-		if( !dbLogin.Query(ss.str().c_str()) )
-			LogWrite(LOGIN__ERROR, 0, "Login", "Error saving login_equipment data");
-
+      
+   		Query query;
+		query.RunQuery2(ss.str(), Q_REPLACE);
+      
+		if (query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
+			LogWrite(LOGIN__ERROR, 0, "Login", "Error saving login_equipment data Error: ", query.GetError());
 	}
 }
 
