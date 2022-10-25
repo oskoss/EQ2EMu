@@ -985,6 +985,7 @@ public:
 	bool IsNormal();
 	bool IsWeapon();
 	bool IsArmor();
+	bool IsDualWieldAble(Client* client, Item* item, int8 slot = -1);
 	bool IsRanged();
 	bool IsBag();
 	bool IsFood();

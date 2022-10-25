@@ -1670,10 +1670,18 @@ EQ2Packet* Player::SwapEquippedItems(int8 slot1, int8 slot2, int16 version, int1
 	}
 	return 0;
 }
-bool Player::CanEquipItem(Item* item) {
+bool Player::CanEquipItem(Item* item, int8 slot) {
 	if (item) {
 		Client* client = GetZone()->GetClientBySpawn(this);
 		if (client) {
+			if (item->IsWeapon() && slot == 1) {
+				bool dwable = item->IsDualWieldAble(client, item, slot);
+
+				if (dwable == 0) {
+					return false;
+				}
+			}
+
 			if (item->CheckFlag(EVIL_ONLY) && GetAlignment() != ALIGNMENT_EVIL) {
 					client->Message(0, "%s requires an evil race.", item->name.c_str());
 			}
@@ -1728,7 +1736,7 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 			return packets;
 		}
 		int8 slot = equipList->GetFreeSlot(item, slot_id);
-		bool canEquip = CanEquipItem(item);
+		bool canEquip = CanEquipItem(item,slot);
 		int32 conflictSlot = 0;
 		
 		if(canEquip && !appearance_type && item->CheckFlag2(APPEARANCE_ONLY))

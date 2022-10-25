@@ -496,7 +496,7 @@ public:
 	PlayerSkillList* GetSkills();
 	bool DamageEquippedItems(int8 amount = 10, Client* client = 0);
 	vector<EQ2Packet*>	EquipItem(int16 index, int16 version, int8 appearance_type, int8 slot_id = 255);
-	bool CanEquipItem(Item* item);
+	bool CanEquipItem(Item* item, int8 slot);
 	void SetEquippedItemAppearances();
 	vector<EQ2Packet*>	UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version, int8 appearance_type = 0, bool send_item_updates = true);
 	int8 ConvertSlotToClient(int8 slot, int16 version);
