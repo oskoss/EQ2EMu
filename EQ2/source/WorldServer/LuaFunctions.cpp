@@ -490,18 +490,41 @@ int EQ2Emu_lua_GetSpawn(lua_State* state) {
 int EQ2Emu_lua_GetSpawnFromList(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	vector<Spawn*>* spawnList = lua_interface->GetSpawnList(state);
-	int32 position = lua_interface->GetInt32Value(state, 2);
+	
+	vector<Spawn*> spawns;
+	int32 position = 0;
+	
+	if(lua_istable(state, 1)) {
+        size_t len = lua_rawlen(state, 1);
+        for(int i=1;i <= len; i++)
+        {
+            // get the entry to stack
+			lua_rawgeti(state, 1, i);
+			int Top = lua_gettop(state);
+			
+			if(lua_islightuserdata(state,Top)) {
+				LUAUserData* data = (LUAUserData*)lua_touserdata(state, Top);
+				if(data->IsSpawn()) {
+					spawns.push_back(data->spawn);
+				}
+			}
+            // remove entry from stack
+            lua_pop(state,1);
+        }
+	}
+	
+	position = lua_interface->GetInt32Value(state, 2);
+		
 	lua_interface->ResetFunctionStack(state);
-	if (spawnList) {
-		if (spawnList->size() > position) {
-			lua_interface->SetSpawnValue(state, spawnList->at(position));
-			return 1;
-		}
-		else {
-			return 0;
-		}
-		return spawnList->size();
+	
+	Spawn* spawn = 0;
+	if(position < spawns.size()) {
+		spawn = spawns.at(position);
+	}
+	
+	if(spawn) {
+		lua_interface->SetSpawnValue(state, spawn);
+		return 1;
 	}
 	return 0;
 }
@@ -509,48 +532,32 @@ int EQ2Emu_lua_GetSpawnFromList(lua_State* state) {
 int EQ2Emu_lua_GetSpawnListSize(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	vector<Spawn*>* spawnList = lua_interface->GetSpawnList(state);
-	lua_interface->ResetFunctionStack(state);
-	if (spawnList) {
-		return spawnList->size();
+	
+	vector<Spawn*> spawns;
+	
+	if(lua_istable(state, 1)) {
+        size_t len = lua_rawlen(state, 1);
+        for(int i=1;i <= len; i++)
+        {
+            // get the entry to stack
+			lua_rawgeti(state, 1, i);
+			int Top = lua_gettop(state);
+			
+			if(lua_islightuserdata(state,Top)) {
+				LUAUserData* data = (LUAUserData*)lua_touserdata(state, Top);
+				if(data->IsSpawn()) {
+					spawns.push_back(data->spawn);
+				}
+			}
+            // remove entry from stack
+            lua_pop(state,1);
+        }
 	}
-	return 0;
-}
-
-int EQ2Emu_lua_CreateSpawnList(lua_State* state) {
-	if (!lua_interface)
-		return 0;
-	vector<Spawn*>* spawnList = new vector<Spawn*>();
-	lua_interface->SetSpawnListValue(state, spawnList);
+	
+	lua_interface->ResetFunctionStack(state);
+	
+	lua_interface->SetInt32Value(state, spawns.size());
 	return 1;
-}
-
-int EQ2Emu_lua_AddSpawnToSpawnList(lua_State* state) {
-	if (!lua_interface)
-		return 0;
-	vector<Spawn*>* spawnList = lua_interface->GetSpawnList(state);
-	Spawn* spawn = lua_interface->GetSpawn(state, 2);
-	lua_interface->ResetFunctionStack(state);
-	if (spawnList) {
-		auto it = std::find(spawnList->begin(), spawnList->end(), spawn);
-		if (it == spawnList->end())
-			spawnList->push_back(spawn);
-	}
-	return 0;
-}
-
-int EQ2Emu_lua_RemoveSpawnFromSpawnList(lua_State* state) {
-	if (!lua_interface)
-		return 0;
-	vector<Spawn*>* spawnList = lua_interface->GetSpawnList(state);
-	Spawn* spawn = lua_interface->GetSpawn(state, 2);
-	lua_interface->ResetFunctionStack(state);
-	if (spawnList) {
-		auto it = std::find(spawnList->begin(), spawnList->end(), spawn);
-		if(it != spawnList->end())
-			spawnList->erase(it);
-	}
-	return 0;
 }
 
 int EQ2Emu_lua_GetSpawnListBySpawnID(lua_State* state) {
@@ -562,14 +569,22 @@ int EQ2Emu_lua_GetSpawnListBySpawnID(lua_State* state) {
 	if (spawn) {
 		vector<Spawn*> spawns = spawn->GetZone()->GetSpawnsByID(spawn_id);
 		if (spawns.size() > 0) {
-			vector<Spawn*>* spawnList = new vector<Spawn*>();
-			vector<Spawn*>::iterator itr;
-			for (itr = spawns.begin(); itr != spawns.end(); itr++) {
-				spawnList->push_back(*itr);
+			lua_createtable(state, spawns.size(), 0);
+			int newTable = lua_gettop(state);
+			for (int32 i = 0; i < spawns.size(); i++) {
+				lua_interface->SetSpawnValue(state, spawns.at(i));
+				lua_rawseti(state, newTable, i + 1);
 			}
-			lua_interface->SetSpawnListValue(state, spawnList);
+			
+			printf("Spawns available %u\n", spawns.size());
 			return 1;
 		}
+		else {
+			printf("Spawns available 0\n");
+		}
+	}
+	else {
+		printf("NO SPAWN!!!\n");
 	}
 	return 0;
 }
@@ -583,12 +598,12 @@ int EQ2Emu_lua_GetSpawnListByRailID(lua_State* state) {
 	if (spawn) {
 		vector<Spawn*> spawns = spawn->GetZone()->GetSpawnsByRailID(rail_id);
 		if (spawns.size() > 0) {
-			vector<Spawn*>* spawnList = new vector<Spawn*>();
-			vector<Spawn*>::iterator itr;
-			for (itr = spawns.begin(); itr != spawns.end(); itr++) {
-				spawnList->push_back(*itr);
+			lua_createtable(state, spawns.size(), 0);
+			int newTable = lua_gettop(state);
+			for (int32 i = 0; i < spawns.size(); i++) {
+				lua_interface->SetSpawnValue(state, spawns.at(i));
+				lua_rawseti(state, newTable, i + 1);
 			}
-			lua_interface->SetSpawnListValue(state, spawnList);
 			return 1;
 		}
 	}

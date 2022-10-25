@@ -5820,7 +5820,6 @@ void Client::SetPlayerQuest(Quest* quest, map<int32, int32>* progress) {
 	}
 	map<int32, int32>::iterator itr;
 	QuestStep* step = 0;
-	player->SetZone(GetCurrentZone(), GetVersion());
 	for (itr = progress->begin(); itr != progress->end(); itr++) {
 		step = quest->GetQuestStep(itr->first);
 		if (step && itr->second > 0) {

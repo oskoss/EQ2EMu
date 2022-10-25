@@ -949,9 +949,6 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "AddSpawnToGroup", EQ2Emu_lua_AddSpawnToGroup);
 	lua_register(state, "GetSpawnLocationID", EQ2Emu_lua_GetSpawnLocationID);
 	lua_register(state, "GetSpawnLocationPlacementID", EQ2Emu_lua_GetSpawnLocationPlacementID);
-	lua_register(state, "CreateSpawnList", EQ2Emu_lua_CreateSpawnList);
-	lua_register(state, "AddSpawnToSpawnList", EQ2Emu_lua_AddSpawnToSpawnList);
-	lua_register(state, "RemoveSpawnFromSpawnList", EQ2Emu_lua_RemoveSpawnFromSpawnList);
 	lua_register(state, "GetSpawnListBySpawnID", EQ2Emu_lua_GetSpawnListBySpawnID);
 	lua_register(state, "GetSpawnListByRailID", EQ2Emu_lua_GetSpawnListByRailID);
 	lua_register(state, "GetPassengerSpawnList", EQ2Emu_lua_GetPassengerSpawnList);
@@ -1597,9 +1594,6 @@ void LuaInterface::DeleteUserDataPtrs(bool all) {
 			if(data->IsConversationOption()) {
 				target = data->conversation_options;
 			}
-			else if(data->IsSpawnList()) {
-				target = data->spawn_list;
-			}
 			else if(data->IsOptionWindow()) {
 				target = data->option_window_option;
 			}
@@ -1669,26 +1663,6 @@ vector<ConversationOption>*	LuaInterface::GetConversation(lua_State* state, int8
 		}
 		else
 			ret = data->conversation_options;
-	}
-	return ret;
-}
-
-vector<Spawn*>* LuaInterface::GetSpawnList(lua_State* state, int8 arg_num) {
-	std::shared_lock lock(MLUAUserData);
-	vector<Spawn*>* ret = 0;
-	if (lua_islightuserdata(state, arg_num)) {
-		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
-		if (!data || !data->IsCorrectlyInitialized()) {
-			LogError("%s: GetSpawnList error while processing %s", GetScriptName(state), lua_tostring(state, -1));
-		}
-		else if (!data->IsSpawnList()) {
-			lua_Debug ar;
-			lua_getstack(state, 1, &ar);
-			lua_getinfo(state, "Sln", &ar);
-			LogError("%s: Invalid data type used for GetSpawnList in %s (line %d)", GetScriptName(state), ar.source, ar.currentline);
-		}
-		else
-			ret = data->spawn_list;
 	}
 	return ret;
 }
@@ -1916,13 +1890,6 @@ void LuaInterface::SetSpawnValue(lua_State* state, Spawn* spawn) {
 	spawn_wrapper->spawn = spawn;
 	AddUserDataPtr(spawn_wrapper, spawn);
 	lua_pushlightuserdata(state, spawn_wrapper);
-}
-
-void LuaInterface::SetSpawnListValue(lua_State* state, vector<Spawn*>* spawnList) {
-	LUASpawnListWrapper* spawnList_wrapper = new LUASpawnListWrapper();
-	spawnList_wrapper->spawn_list = spawnList;
-	AddUserDataPtr(spawnList_wrapper, spawnList);
-	lua_pushlightuserdata(state, spawnList_wrapper);
 }
 
 void LuaInterface::SetConversationValue(lua_State* state, vector<ConversationOption>* conversation) {
@@ -2603,7 +2570,6 @@ LUAUserData::LUAUserData(){
 	skill = 0;
 	option_window_option = 0;
 	item = 0;
-	spawn_list = 0;
 }
 
 bool LUAUserData::IsCorrectlyInitialized(){
@@ -2611,10 +2577,6 @@ bool LUAUserData::IsCorrectlyInitialized(){
 }
 
 bool LUAUserData::IsConversationOption(){
-	return false;
-}
-
-bool LUAUserData::IsSpawnList() {
 	return false;
 }
 
@@ -2651,14 +2613,6 @@ LUAConversationOptionWrapper::LUAConversationOptionWrapper(){
 }
 
 bool LUAConversationOptionWrapper::IsConversationOption(){
-	return true;
-}
-
-LUASpawnListWrapper::LUASpawnListWrapper() {
-	correctly_initialized = true;
-}
-
-bool LUASpawnListWrapper::IsSpawnList() {
 	return true;
 }
 
