@@ -40,6 +40,7 @@ extern MasterRecipeList master_recipe_list;
 extern ConfigReader configReader;
 extern LuaInterface* lua_interface;
 extern RuleManager rule_manager;
+extern Classes classes;
 
 MasterItemList::MasterItemList(){
 	AddMappedItemStat(ITEM_STAT_ADORNING, std::string("adorning"));
@@ -1269,6 +1270,53 @@ bool Item::IsNormal(){
 
 bool Item::IsWeapon(){ 
 	return generic_info.item_type == ITEM_TYPE_WEAPON; 
+}
+
+bool Item::IsDualWieldAble(Client* client, Item* item, int8 slot) {
+
+	if (!item || !client || slot < 0) {
+		LogWrite(ITEM__DEBUG, 0, "Items", "Error in IsDualWieldAble. No Item, Client, or slot Passed");
+		return 0;
+	}
+
+	Player* player = client->GetPlayer();
+	int8 base_class = classes.GetBaseClass(player->GetAdventureClass());
+
+	//map out classes that can dw vs those that cant (did it this way so its easier to expand should we need to add classes later
+	int8 can_dw;
+	switch ((int)base_class) {
+	case 1:
+		can_dw = 1;
+		break;
+	case 5:
+		can_dw = 1;
+		break;
+	case 31:
+		can_dw = 1;
+		break;
+	case 35:
+		can_dw = 1;
+		break;
+	case 41:
+		can_dw = 1;
+		break;
+
+	default :
+		can_dw = 0;
+	}
+
+	//if mage, item is dw, and they are trying to put offhand. Not sure this will ever happen but figured I should cover it.
+	if (base_class == 21 && item->weapon_info->wield_type == ITEM_WIELD_TYPE_DUAL && slot == 1) {
+		return 0;
+	}
+
+	//if the item is main hand (single) and they are trying to put in in offhand.
+	//exceptions are classes 1, 5, 31, 35, 42 (fighter/brawler/rogue/bard/beastlord)
+	if (item->weapon_info->wield_type == ITEM_WIELD_TYPE_SINGLE && slot == 1 && can_dw != 1) {
+		return 0;
+	}
+//assume its safe if the above 2 if's arent hit.
+return 1;
 }
 
 bool Item::IsArmor(){ 
