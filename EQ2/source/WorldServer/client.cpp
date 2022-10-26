@@ -158,7 +158,7 @@ Client::Client(EQStream* ieqs) : underworld_cooldown_timer(5000), pos_update(125
 	if (world.GetServerStatisticValue(STAT_SERVER_MOST_CONNECTIONS) < numclients)
 		world.UpdateServerStatistic(STAT_SERVER_MOST_CONNECTIONS, numclients, true);
 	remove_from_list = false;
-	new_client_login = false;
+	new_client_login = NewLoginState::LOGIN_NONE;
 	UpdateWindowTitle(0);
 	num_active_failures = 0;
 	player = new Player();
@@ -3100,11 +3100,24 @@ bool Client::Process(bool zone_process) {
 		return true;
 	}
 
-	if (new_client_login) {
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "SendLoginInfo to new client...");
-		SendLoginInfo();
-		new_client_login = false;
+	switch(new_client_login) {
+		case NewLoginState::LOGIN_ALLOWED: {
+			LogWrite(CCLIENT__DEBUG, 0, "Client", "SendLoginInfo to new client...");
+			SendLoginInfo();
+			new_client_login = NewLoginState::LOGIN_NONE;
+			break;
+		}
+		case NewLoginState::LOGIN_DELAYED: {
+			LogWrite(CCLIENT__INFO, 0, "Client", "Wait for zone %s to load for new client %s...", GetCurrentZone()->GetZoneName(), GetPlayer()->GetName());
+			if(!GetCurrentZone()->IsLoading()) {
+				new_client_login = NewLoginState::LOGIN_ALLOWED;
+			}
+			
+			return true;
+			break;	
+		}
 	}
+	
 	bool ret = true;
 	sockaddr_in to;
 
@@ -10305,7 +10318,12 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 				GetCurrentZone()->AddClient(this); //add to zones client list
 				zone_list.AddClientToMap(player->GetName(), this);
 				// this initiates additional DB loading and client offloading within the Zone the player resides, need the client already added in zone and to the map above.
-				new_client_login = true;
+				if(GetCurrentZone()->IsLoading()) {
+					new_client_login = NewLoginState::LOGIN_DELAYED;
+				}
+				else {
+					new_client_login = NewLoginState::LOGIN_ALLOWED;
+				}
 
 				const char* zone_script = world.GetZoneScript(GetCurrentZone()->GetZoneID());
 				if (zone_script && lua_interface)

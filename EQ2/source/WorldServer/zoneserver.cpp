@@ -1430,16 +1430,31 @@ bool ZoneServer::Process()
 			RemoveLocationGrids();
 			database.LoadLocationGrids(this);
 
-			LoadingData = false;
 
-			spawn_range.Trigger();
-			spawn_check_add.Trigger();
+			MMasterZoneLock->unlock();
+			
+			while(true) {
+				ProcessPendingSpawns();
+				Sleep(20);
+				MPendingSpawnListAdd.readlock(__FUNCTION__, __LINE__);
+				int32 count = pending_spawn_list_add.size();
+				MPendingSpawnListAdd.releasereadlock(__FUNCTION__, __LINE__);
+				if(count < 1)
+					break;
+			}
+	
+			MMasterZoneLock->lock();
+			
+			LoadingData = false;
 
 			const char* zone_script = world.GetZoneScript(this->GetZoneID());
 			if (lua_interface && zone_script) {
 				RemoveLocationProximities();
 				lua_interface->RunZoneScript(zone_script, "init_zone_script", this);
 			}
+
+			spawn_range.Trigger();
+			spawn_check_add.Trigger();
 		}
 
 		if(shutdownTimer.Enabled() && shutdownTimer.Check() && connected_clients.size(true) == 0) {
@@ -1671,26 +1686,7 @@ bool ZoneServer::SpawnProcess(){
 
 		// Check to see if there are spawns waiting to be added to the spawn list, if so add them all
 		if (pending_spawn_list_add.size() > 0) {
-			MSpawnList.writelock(__FUNCTION__, __LINE__);
-			MPendingSpawnListAdd.writelock(__FUNCTION__, __LINE__);
-			list<Spawn*>::iterator itr2;
-			for (itr2 = pending_spawn_list_add.begin(); itr2 != pending_spawn_list_add.end(); itr2++) {
-				Spawn* spawn = *itr2;
-				if (spawn)
-					spawn_list[spawn->GetID()] = spawn;
-				
-				if(spawn->IsCollector()) {
-					subspawn_list[SUBSPAWN_TYPES::COLLECTOR].insert(make_pair(spawn->GetID(),spawn));
-				}
-				if(spawn->GetPickupItemID()) {
-					subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].insert(make_pair(spawn->GetPickupItemID(),spawn));
-					housing_spawn_map.insert(make_pair(spawn->GetID(), spawn->GetPickupItemID()));
-				}
-			}
-
-			pending_spawn_list_add.clear();
-			MPendingSpawnListAdd.releasewritelock(__FUNCTION__, __LINE__);
-			MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
+			ProcessPendingSpawns();
 		}
 
 		MSpawnList.readlock(__FUNCTION__, __LINE__);
@@ -8415,4 +8411,27 @@ bool ZoneServer::HouseItemSpawnExists(int32 item_id) {
 	}
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 	return exists;
+}
+
+void ZoneServer::ProcessPendingSpawns() {
+	MSpawnList.writelock(__FUNCTION__, __LINE__);
+	MPendingSpawnListAdd.writelock(__FUNCTION__, __LINE__);
+	list<Spawn*>::iterator itr2;
+	for (itr2 = pending_spawn_list_add.begin(); itr2 != pending_spawn_list_add.end(); itr2++) {
+		Spawn* spawn = *itr2;
+		if (spawn)
+			spawn_list[spawn->GetID()] = spawn;
+		
+		if(spawn->IsCollector()) {
+			subspawn_list[SUBSPAWN_TYPES::COLLECTOR].insert(make_pair(spawn->GetID(),spawn));
+		}
+		if(spawn->GetPickupItemID()) {
+			subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].insert(make_pair(spawn->GetPickupItemID(),spawn));
+			housing_spawn_map.insert(make_pair(spawn->GetID(), spawn->GetPickupItemID()));
+		}
+	}
+
+	pending_spawn_list_add.clear();
+	MPendingSpawnListAdd.releasewritelock(__FUNCTION__, __LINE__);
+	MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 }

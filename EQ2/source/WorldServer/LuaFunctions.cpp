@@ -575,16 +575,8 @@ int EQ2Emu_lua_GetSpawnListBySpawnID(lua_State* state) {
 				lua_interface->SetSpawnValue(state, spawns.at(i));
 				lua_rawseti(state, newTable, i + 1);
 			}
-			
-			printf("Spawns available %u\n", spawns.size());
 			return 1;
 		}
-		else {
-			printf("Spawns available 0\n");
-		}
-	}
-	else {
-		printf("NO SPAWN!!!\n");
 	}
 	return 0;
 }

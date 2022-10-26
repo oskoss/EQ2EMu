@@ -699,7 +699,8 @@ public:
 	Client*	RemoveZoneServerFromClient(ZoneServer* zone);
 	
 	void	SendSubSpawnUpdates(SUBSPAWN_TYPES subtype);
-	bool	HouseItemSpawnExists(int32 item_id);	
+	bool	HouseItemSpawnExists(int32 item_id);
+	void	ProcessPendingSpawns();
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
