@@ -30,6 +30,9 @@ Bot::Bot() : NPC() {
 	info->set_wis_base(20);
 	info->set_intel_base(20);
 	info->set_agi_base(20);
+	
+	camping = false;
+	immediate_camp = false;
 }
 
 Bot::~Bot() {
@@ -629,31 +632,8 @@ bool Bot::ShouldMelee() {
 
 void Bot::Camp(bool immediate) {
 	// Copy from COMMAND_GROUP_LEAVE
-	GroupMemberInfo* gmi = GetGroupMemberInfo();
-	if (gmi) {
-		int32 group_id = gmi->group_id;
-		world.GetGroupManager()->RemoveGroupMember(group_id, this);
-		if (!world.GetGroupManager()->IsGroupIDValid(group_id)) {
-			// leader->Message(CHANNEL_COLOR_GROUP, "%s has left the group.", client->GetPlayer()->GetName());
-		}
-		else {
-			world.GetGroupManager()->GroupMessage(group_id, "%s has left the group.", GetName());
-		}
-	}
-
-	if(!immediate)
-	{
-		GetZone()->PlayAnimation(this, 538);
-		SetVisualState(540);
-		GetZone()->Despawn(this, 5000);
-	}
-
-	if (!GetOwner())
-		return;
-
-	Client* client = GetZone()->GetClientBySpawn(GetOwner());
-	if (client)
-		client->GetPlayer()->SpawnedBots.erase(BotIndex);
+	camping = true;
+	immediate_camp = immediate;
 }
 
 void Bot::ChangeLevel(int16 old_level, int16 new_level) {
@@ -722,4 +702,35 @@ void Bot::ChangeLevel(int16 old_level, int16 new_level) {
 	GetPlayer()->GetSkills()->SetSkillCapsByType(6, 5 * new_level);
 	GetPlayer()->GetSkills()->SetSkillCapsByType(13, 5 * new_level);
 	*/
+}
+
+void Bot::Begin_Camp() {
+	GroupMemberInfo* gmi = GetGroupMemberInfo();
+	if (gmi) {
+		int32 group_id = gmi->group_id;
+		world.GetGroupManager()->RemoveGroupMember(group_id, this);
+		if (!world.GetGroupManager()->IsGroupIDValid(group_id)) {
+			// leader->Message(CHANNEL_COLOR_GROUP, "%s has left the group.", client->GetPlayer()->GetName());
+		}
+		else {
+			world.GetGroupManager()->GroupMessage(group_id, "%s has left the group.", GetName());
+		}
+	}
+
+	if(!immediate_camp)
+	{
+		GetZone()->PlayAnimation(this, 538);
+		SetVisualState(540);
+		GetZone()->Despawn(this, 5000);
+	}
+
+	if (!GetOwner())
+		return;
+
+	Client* client = GetZone()->GetClientBySpawn(GetOwner());
+	if (client)
+		client->GetPlayer()->SpawnedBots.erase(BotIndex);
+	
+	camping = false;
+	immediate_camp = true;
 }

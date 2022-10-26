@@ -47,6 +47,9 @@ public:
 	void Camp(bool immediate=false);
 	void ChangeLevel(int16 old_level, int16 new_level);
 
+	bool IsCamping() { return camping; }
+	bool IsImmediateCamp() { return immediate_camp; }
+	void Begin_Camp();
 private:
 	bool CanEquipItem(Item* item);
 	bool IsSpellReady(Spell* spell);
@@ -86,4 +89,7 @@ private:
 
 	// First int32 = spell id (change to timer id later), second int32 is time the spell is available to cast again
 	map<int32, int32> recast_times;
+	std::atomic<bool> camping;
+	std::atomic<bool> immediate_camp;
+	
 };

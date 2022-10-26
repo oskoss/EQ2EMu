@@ -197,7 +197,6 @@ void PlayerGroup::MakeLeader(Entity* new_leader) {
 PlayerGroupManager::PlayerGroupManager() {
 	m_nextGroupID = 1;
 
-	MGroups.SetName("PlayerGroupManager::m_groups");
 	MPendingInvites.SetName("PlayerGroupManager::m_pendingInvites");
 }
 
@@ -206,25 +205,22 @@ PlayerGroupManager::~PlayerGroupManager() {
 	m_pendingInvites.clear();
 	MPendingInvites.releasewritelock(__FUNCTION__, __LINE__);
 
-	MGroups.writelock(__FUNCTION__, __LINE__);
+    std::unique_lock lock(MGroups);
 	map<int32, PlayerGroup*>::iterator itr;
 	for (itr = m_groups.begin(); itr != m_groups.end(); itr++)
 		safe_delete(itr->second);
 
 	m_groups.clear();
-	MGroups.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 bool PlayerGroupManager::AddGroupMember(int32 group_id, Entity* member) {
+    std::unique_lock lock(MGroups);
 	bool ret = false;
-	MGroups.writelock(__FUNCTION__, __LINE__);
 
 	if (m_groups.count(group_id) > 0) {
 		PlayerGroup* group = m_groups[group_id];
 		ret = group->AddMember(member);
 	}
-
-	MGroups.releasewritelock(__FUNCTION__, __LINE__);
 
 	return ret;
 }
@@ -242,7 +238,8 @@ bool PlayerGroupManager::RemoveGroupMember(int32 group_id, Entity* member) {
 			tmpPlayer->EnableResetMentorship();
 		}
 	}
-	MGroups.writelock(__FUNCTION__, __LINE__);
+		
+	GroupLock(__FUNCTION__, __LINE__);
 
 	if (m_groups.count(group_id) > 0) {
 		PlayerGroup* group = m_groups[group_id];
@@ -256,8 +253,8 @@ bool PlayerGroupManager::RemoveGroupMember(int32 group_id, Entity* member) {
 		if (group->Size() == 1)
 			remove = true;
 	}
-
-	MGroups.releasewritelock(__FUNCTION__, __LINE__);
+		
+	ReleaseGroupLock(__FUNCTION__, __LINE__);
 
 	if (client)
 		RemoveGroupBuffs(group_id, client);
@@ -270,7 +267,7 @@ bool PlayerGroupManager::RemoveGroupMember(int32 group_id, Entity* member) {
 }
 
 void PlayerGroupManager::NewGroup(Entity* leader) {
-	MGroups.writelock(__FUNCTION__, __LINE__);
+	std::unique_lock lock(MGroups);
 
 	// Highly doubt this will ever be needed but putting it in any way, basically bump the id and ensure
 	// no active group is currently using this id, if we hit the max for an int32 then reset the id to 1
@@ -292,12 +289,10 @@ void PlayerGroupManager::NewGroup(Entity* leader) {
 	new_group->AddMember(leader);
 
 	leader->GetGroupMemberInfo()->leader = true;
-
-	MGroups.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 void PlayerGroupManager::RemoveGroup(int32 group_id) {
-	MGroups.writelock(__FUNCTION__, __LINE__);
+	std::unique_lock lock(MGroups);
 
 	// Check to see if the id is in the list
 	if (m_groups.count(group_id) > 0) {
@@ -308,8 +303,6 @@ void PlayerGroupManager::RemoveGroup(int32 group_id) {
 		// Delete the group
 		safe_delete(group);
 	}
-
-	MGroups.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 int8 PlayerGroupManager::Invite(Player* leader, Entity* member) {
@@ -318,7 +311,7 @@ int8 PlayerGroupManager::Invite(Player* leader, Entity* member) {
 	// Lock the pending invite list so we can work with it
 	MPendingInvites.writelock(__FUNCTION__, __LINE__);
 
-	if (!member)
+	if (!member || (member->IsBot() && ((Bot*)member)->IsImmediateCamp()))
 		ret = 6; // failure, not a valid target
 	else if (member->IsNPC() && (!member->IsBot() /*|| !member->IsMec()*/))
 		ret = 6;
@@ -332,9 +325,9 @@ int8 PlayerGroupManager::Invite(Player* leader, Entity* member) {
 	// Check to see if the player that invited is already in a group
 	else if (leader->GetGroupMemberInfo()) {
 		// Read lock the group list so we can get the size of the inviters group
-		MGroups.readlock(__FUNCTION__, __LINE__);
+		GroupLock(__FUNCTION__, __LINE__);
 		int32 group_size = m_groups[leader->GetGroupMemberInfo()->group_id]->Size();
-		MGroups.releasereadlock(__FUNCTION__, __LINE__);
+		ReleaseGroupLock(__FUNCTION__, __LINE__);
 
 		// Check to see if the group is full
 		if (m_groups[leader->GetGroupMemberInfo()->group_id]->Size() >= 6)
@@ -415,21 +408,18 @@ void PlayerGroupManager::DeclineInvite(Entity* member) {
 }
 
 bool PlayerGroupManager::IsGroupIDValid(int32 group_id) {
+	std::shared_lock lock(MGroups);
 	bool ret = false;
-	MGroups.readlock(__FUNCTION__, __LINE__);
 	ret = m_groups.count(group_id) > 0;
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
 void PlayerGroupManager::SendGroupUpdate(int32 group_id, Client* exclude) {
-	MGroups.writelock(__FUNCTION__, __LINE__);
+	std::unique_lock lock(MGroups);
 
 	if (m_groups.count(group_id) > 0) {
 		m_groups[group_id]->SendGroupUpdate(exclude);
 	}
-
-	MGroups.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 PlayerGroup* PlayerGroupManager::GetGroup(int32 group_id) {
@@ -458,7 +448,7 @@ void PlayerGroupManager::RemoveGroupBuffs(int32 group_id, Client* client) {
 	Entity* charmed_pet = 0;
 	PlayerGroup* group = 0;
 
-	MGroups.readlock(__FUNCTION__, __LINE__);
+	MGroups.lock_shared();
 	if (m_groups.count(group_id) > 0)
 		group = m_groups[group_id];
 
@@ -515,24 +505,22 @@ void PlayerGroupManager::RemoveGroupBuffs(int32 group_id, Client* client) {
 		if (packet)
 			client->QueuePacket(packet);
 	}
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
+	MGroups.unlock_shared();
 }
 
 int32 PlayerGroupManager::GetGroupSize(int32 group_id) {
+	std::shared_lock lock(MGroups);
 	int32 ret = 0;
-	MGroups.readlock(__FUNCTION__, __LINE__);
 
 	if (m_groups.count(group_id) > 0)
 		ret = m_groups[group_id]->Size();
-
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
 
 	return ret;
 }
 
 void PlayerGroupManager::SendGroupQuests(int32 group_id, Client* client) {
+	std::shared_lock lock(MGroups);
 	GroupMemberInfo* info = 0;
-	MGroups.readlock(__FUNCTION__, __LINE__);
 	if (m_groups.count(group_id) > 0) {
 		m_groups[group_id]->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 		deque<GroupMemberInfo*>* members = m_groups[group_id]->GetMembers();
@@ -547,13 +535,12 @@ void PlayerGroupManager::SendGroupQuests(int32 group_id, Client* client) {
 		}
 		m_groups[group_id]->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 bool PlayerGroupManager::HasGroupCompletedQuest(int32 group_id, int32 quest_id) {
+	std::shared_lock lock(MGroups);
 	bool questComplete = true;
 	GroupMemberInfo* info = 0;
-	MGroups.readlock(__FUNCTION__, __LINE__);
 	if (m_groups.count(group_id) > 0) {
 		m_groups[group_id]->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 		deque<GroupMemberInfo*>* members = m_groups[group_id]->GetMembers();
@@ -571,17 +558,14 @@ bool PlayerGroupManager::HasGroupCompletedQuest(int32 group_id, int32 quest_id) 
 		}
 		m_groups[group_id]->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
 	return questComplete;
 }
 
 void PlayerGroupManager::SimpleGroupMessage(int32 group_id, const char* message) {
-	MGroups.readlock(__FUNCTION__, __LINE__);
+	std::shared_lock lock(MGroups);
 
 	if (m_groups.count(group_id) > 0)
 		m_groups[group_id]->SimpleGroupMessage(message);
-
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 void PlayerGroupManager::GroupMessage(int32 group_id, const char* message, ...) {
@@ -595,21 +579,17 @@ void PlayerGroupManager::GroupMessage(int32 group_id, const char* message, ...) 
 }
 
 void PlayerGroupManager::GroupChatMessage(int32 group_id, Spawn* from, int32 language, const char* message) {
-	MGroups.readlock(__FUNCTION__, __LINE__);
+	std::shared_lock lock(MGroups);
 
 	if (m_groups.count(group_id) > 0)
 		m_groups[group_id]->GroupChatMessage(from, language, message);
-
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 void PlayerGroupManager::MakeLeader(int32 group_id, Entity* new_leader) {
-	MGroups.writelock(__FUNCTION__, __LINE__);
+	std::unique_lock lock(MGroups);
 
 	if (m_groups.count(group_id) > 0)
 		m_groups[group_id]->MakeLeader(new_leader);
-
-	MGroups.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 void PlayerGroupManager::UpdateGroupBuffs() {
@@ -811,10 +791,9 @@ void PlayerGroupManager::UpdateGroupBuffs() {
 }
 
 bool PlayerGroupManager::IsInGroup(int32 group_id, Entity* member) {
+	std::shared_lock lock(MGroups);
 	bool ret = false;
-
-	MGroups.readlock(__FUNCTION__, __LINE__);
-
+	
 	if (m_groups.count(group_id) > 0) {
 		m_groups[group_id]->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 		deque<GroupMemberInfo*>* members = m_groups[group_id]->GetMembers();
@@ -827,15 +806,13 @@ bool PlayerGroupManager::IsInGroup(int32 group_id, Entity* member) {
 		m_groups[group_id]->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
 
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
-
 	return ret;
 }
 
 Entity* PlayerGroupManager::IsPlayerInGroup(int32 group_id, int32 character_id) {
+	std::shared_lock lock(MGroups);
+	
 	Entity* ret = nullptr;
-
-	MGroups.readlock(__FUNCTION__, __LINE__);
 
 	if (m_groups.count(group_id) > 0) {
 		m_groups[group_id]->MGroupMembers.readlock(__FUNCTION__, __LINE__);
@@ -848,9 +825,7 @@ Entity* PlayerGroupManager::IsPlayerInGroup(int32 group_id, int32 character_id) 
 		}
 		m_groups[group_id]->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 	}
-
-	MGroups.releasereadlock(__FUNCTION__, __LINE__);
-
+	
 	return ret;
 }
 

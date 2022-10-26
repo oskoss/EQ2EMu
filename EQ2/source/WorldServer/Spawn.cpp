@@ -2795,6 +2795,9 @@ void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate, bool ma
 void Spawn::ProcessMovement(bool isSpawnListLocked){
 	CheckProximities();
 	
+	if(IsBot() && ((Bot*)this)->IsCamping()) {
+		((Bot*)this)->Begin_Camp();
+	} 
 	if(IsPlayer()){
 		//Check if player is riding a boat, if so update pos (boat's current location + XYZ offsets)
 		Player* player = ((Player*)this);

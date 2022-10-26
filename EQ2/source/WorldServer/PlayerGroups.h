@@ -23,6 +23,8 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <deque>
 #include <map>
+#include <mutex>
+#include <shared_mutex>
 
 #include "../common/types.h"
 #include "Entity.h"
@@ -152,12 +154,14 @@ public:
 	/// <summary>Read locks the group list, no changes to the list should be made when using this</summary>
 	/// <param name='function'>Name of the function called from, used for better debugging in the event of a deadlock</param>
 	/// <param name='line'>Line number that this was called from, used for better debugging in the event of a deadlock</param>
-	void GroupLock(const char* function = 0, int32 line = 0U) { MGroups.readlock(function, line); }
+	void GroupHardLock(const char* function = 0, int32 line = 0U) { MGroups.lock(); }
+	void GroupLock(const char* function = 0, int32 line = 0U) { MGroups.lock_shared(); }
 
 	/// <summary>Releases the readlock acquired from GroupLock()</summary>
 	/// <param name='function'>Name of the function called from, used for better debugging in the event of a deadlock</param>
 	/// <param name='line'>Line number that this was called from, used for better debugging in the event of a deadlock</param>
-	void ReleaseGroupLock(const char* function = 0, int32 line = 0U) { MGroups.releasereadlock(function, line); }
+	void ReleaseGroupHardLock(const char* function = 0, int32 line = 0U) { MGroups.unlock(); }
+	void ReleaseGroupLock(const char* function = 0, int32 line = 0U) { MGroups.unlock_shared(); }
 
 	void ClearPendingInvite(Entity* member);
 
@@ -186,7 +190,7 @@ private:
 	map<int32, PlayerGroup*>			m_groups;				// int32 is the group id, PlayerGroup* is a pointer to the actual group
 	map<string, string>					m_pendingInvites;		// First string is the person invited to the group, second string is the leader of the group
 
-	Mutex								MGroups;				// Mutex for the group map (m_groups)
+	mutable std::shared_mutex			MGroups;				// Mutex for the group map (m_groups)
 	Mutex								MPendingInvites;		// Mutex for the pending invites map (m_pendingInvites)
 };
 

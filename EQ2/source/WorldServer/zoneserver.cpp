@@ -4543,11 +4543,8 @@ void ZoneServer::Despawn(Spawn* spawn, int32 timer){
 	if (spawn && movementMgr != nullptr) {
 		movementMgr->RemoveMob((Entity*)spawn);
 	}
-
 	if(!spawn || spawn->IsPlayer())
 		return;
-
-	RemoveSpawnSupportFunctions(spawn, true);
 	if(spawn->IsEntity())
 		((Entity*)spawn)->InCombat(false);
 	if(timer == 0)
