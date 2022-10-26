@@ -8088,7 +8088,7 @@ vector<Item*>* Client::GetRepairableItems() {
 	if (equipped_items && equipped_items->size() > 0) {
 		for (int32 i = 0; i < equipped_items->size(); i++) {
 			Item* item = equipped_items->at(i);
-			if (item && !item->CheckFlag(NO_REPAIR) && item->generic_info.condition < 100)
+			if (item && !item->CheckFlag2(NO_REPAIR) && item->generic_info.condition < 100)
 				repairable_items->push_back(item);
 		}
 	}
@@ -8096,7 +8096,7 @@ vector<Item*>* Client::GetRepairableItems() {
 		map<int32, Item*>::iterator itr;
 		for (itr = items->begin(); itr != items->end(); itr++) {
 			Item* item = itr->second;
-			if (item && !item->CheckFlag(NO_REPAIR) && item->generic_info.condition < 100)
+			if (item && !item->CheckFlag2(NO_REPAIR) && item->generic_info.condition < 100)
 				repairable_items->push_back(item);
 		}
 	}
