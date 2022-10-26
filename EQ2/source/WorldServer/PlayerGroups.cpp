@@ -214,7 +214,7 @@ PlayerGroupManager::~PlayerGroupManager() {
 }
 
 bool PlayerGroupManager::AddGroupMember(int32 group_id, Entity* member) {
-    std::unique_lock lock(MGroups);
+    std::shared_lock lock(MGroups);
 	bool ret = false;
 
 	if (m_groups.count(group_id) > 0) {
@@ -415,7 +415,7 @@ bool PlayerGroupManager::IsGroupIDValid(int32 group_id) {
 }
 
 void PlayerGroupManager::SendGroupUpdate(int32 group_id, Client* exclude) {
-	std::unique_lock lock(MGroups);
+	std::shared_lock lock(MGroups);
 
 	if (m_groups.count(group_id) > 0) {
 		m_groups[group_id]->SendGroupUpdate(exclude);
@@ -586,7 +586,7 @@ void PlayerGroupManager::GroupChatMessage(int32 group_id, Spawn* from, int32 lan
 }
 
 void PlayerGroupManager::MakeLeader(int32 group_id, Entity* new_leader) {
-	std::unique_lock lock(MGroups);
+	std::shared_lock lock(MGroups);
 
 	if (m_groups.count(group_id) > 0)
 		m_groups[group_id]->MakeLeader(new_leader);
