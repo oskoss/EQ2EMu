@@ -390,7 +390,7 @@ public:
 	void	SendRecipeList();
 	void	SendTitleUpdate();
 	void	SendUpdateTitles(sint32 prefix, sint32 suffix);
-	void	SendLanguagesUpdate(int32 id);
+	void	SendLanguagesUpdate(int32 id, bool setlang = 1);
 	void	SendAchievementsList();
 	void	SendAchievementUpdate(bool first_login = false);
 

@@ -10102,7 +10102,7 @@ int EQ2Emu_lua_AddLanguage(lua_State* state) {
 	if (language)
 	{
 		((Player*)player)->AddLanguage(language->GetID(), language->GetName(), true);
-		((Player*)player)->GetClient()->SendLanguagesUpdate(language->GetID());
+		((Player*)player)->GetClient()->SendLanguagesUpdate(language->GetID(), 0);
 	}
 
 	return 0;

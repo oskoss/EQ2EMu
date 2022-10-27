@@ -9964,12 +9964,16 @@ void Client::SendUpdateTitles(sint32 prefix, sint32 suffix) {
 	current_zone->SendUpdateTitles(this, suffix_title, prefix_title);
 }
 
-void Client::SendLanguagesUpdate(int32 id) {
+void Client::SendLanguagesUpdate(int32 id, bool setlang) {
 	list<Language*>* languages = player->GetPlayerLanguages()->GetAllLanguages();
 	list<Language*>::iterator itr;
 	Language* language;
 	int32 i = 0;
-	GetPlayer()->SetCurrentLanguage(id);
+
+	if(setlang==1){
+	        GetPlayer()->SetCurrentLanguage(id);
+	}
+
 	PacketStruct* packet = configReader.getStruct("WS_Languages", GetVersion());
 	if (packet) {
 		packet->setArrayLengthByName("num_languages", languages->size());
