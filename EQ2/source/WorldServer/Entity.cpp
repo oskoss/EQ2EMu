@@ -2124,25 +2124,36 @@ float Entity::CalculateCastingSpeedMod() {
 
 float Entity::GetSpeed() {
 	float ret = speed > GetBaseSpeed() ? speed : GetBaseSpeed();
-
-	if (EngagedInCombat() && GetMaxSpeed() > 0.0f)
-		ret = GetMaxSpeed();
-
 	MStats.lock();
-	if ((IsStealthed() || IsInvis()) && stats.count(ITEM_STAT_STEALTHINVISSPEEDMOD))
+	
+	if ((IsStealthed() || IsInvis()) && stats.count(ITEM_STAT_STEALTHINVISSPEEDMOD)) {
 		ret += stats[ITEM_STAT_STEALTHINVISSPEEDMOD];
-	else if (EngagedInCombat() && stats.count(ITEM_STAT_OFFENSIVESPEED))
-		ret += stats[ITEM_STAT_OFFENSIVESPEED];
-	else if (stats.count(ITEM_STAT_SPEED) && stats.count(ITEM_STAT_MOUNTSPEED))
-		ret += max(stats[ITEM_STAT_SPEED], stats[ITEM_STAT_MOUNTSPEED]);
-	else if (stats.count(ITEM_STAT_SPEED))
-		ret += stats[ITEM_STAT_SPEED];
-	else if (stats.count(ITEM_STAT_MOUNTSPEED))
-		ret += stats[ITEM_STAT_MOUNTSPEED];
+	}
+	
+	if (!EngagedInCombat()) {
+		if (stats.count(ITEM_STAT_SPEED) && stats.count(ITEM_STAT_MOUNTSPEED)) {
+			ret += max(stats[ITEM_STAT_SPEED], stats[ITEM_STAT_MOUNTSPEED]);
+		}
+		else if (stats.count(ITEM_STAT_SPEED)) {
+			ret += stats[ITEM_STAT_SPEED];
+		}
+		else if (stats.count(ITEM_STAT_MOUNTSPEED)) {
+			ret += stats[ITEM_STAT_MOUNTSPEED];
+		}
+	}
+
+	if (EngagedInCombat()) {
+		
+		if (GetMaxSpeed() > 0.0f)
+			ret = GetMaxSpeed();
+		
+		if (stats.count(ITEM_STAT_OFFENSIVESPEED)) {
+			ret += stats[ITEM_STAT_OFFENSIVESPEED];
+		}
+	}
+
 	MStats.unlock();
-	
 	ret *= speed_multiplier;
-	
 	return ret;
 }
 
