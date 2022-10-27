@@ -7117,7 +7117,8 @@ void Commands::Command_SetLanguage(Client* client, Seperator* sep)
 			else
 			{
 				Language* language = master_languages_list.GetLanguage(id);
-				client->Message(CHANNEL_NARRATIVE, "You do not know how to speak %s", language->GetName());
+              	if(language)
+             	client->Message(CHANNEL_NARRATIVE, "You do not know how to speak %s", language->GetName());
 			}
 		}
 	}
