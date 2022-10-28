@@ -5265,12 +5265,12 @@ int EQ2Emu_lua_SummonPet(lua_State* state) {
 	pet->SetHeading(spawn->GetHeading());
 	spawn->GetZone()->AddSpawn(pet);
 
-	/*
+	
 	const char* spawn_script = world.GetSpawnScript(pet_id);
 	if(spawn_script && lua_interface->GetSpawnScript(spawn_script) != 0){
 		spawn->SetSpawnScript(string(spawn_script));
-		zone->CallSpawnScript(spawn, SPAWN_SCRIPT_SPAWN);
-	}*/
+		spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_SPAWN);
+	}
 
 	// Get a random pet name
 	string random_pet_name;
@@ -7868,13 +7868,12 @@ int EQ2Emu_lua_SummonDumbFirePet(lua_State* state) {
 	pet->SetLocation(spawn->GetLocation());
 	pet->SetHeading(spawn->GetHeading());
 	spawn->GetZone()->AddSpawn(pet);
-
-	/*
+	
 	const char* spawn_script = world.GetSpawnScript(pet_id);
 	if(spawn_script && lua_interface->GetSpawnScript(spawn_script) != 0){
 		spawn->SetSpawnScript(string(spawn_script));
-		zone->CallSpawnScript(spawn, SPAWN_SCRIPT_SPAWN);
-	}*/
+		spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_SPAWN);
+	}
 
 	// Get a random pet name
 	string random_pet_name;

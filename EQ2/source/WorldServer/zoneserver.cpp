@@ -2852,7 +2852,7 @@ bool ZoneServer::CallSpawnScript(Spawn* npc, int8 type, Spawn* spawn, const char
 	const char* script = npc->GetSpawnScript();
 	if ( script == nullptr || strlen(script) < 1 )
 	{
-		if (npc->GetZone() != nullptr)
+		if (!npc->IsPet() && npc->GetZone() != nullptr)
 		{
 			string tmpScript;
 			tmpScript.append("SpawnScripts/");
