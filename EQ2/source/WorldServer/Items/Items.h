@@ -1133,6 +1133,8 @@ public:
 
 	int32	CheckSlotConflict(Item* tmp, bool check_lore_only = false, bool lock_mutex = true, int16* lore_stack_count = 0);
 	
+	int32   GetItemCountInBag(Item* bag);
+
 	Mutex MPlayerItems;
 private:
 	void AddItemToPacket(PacketStruct* packet, Player* player, Item* item, int16 i, bool overflow = false);

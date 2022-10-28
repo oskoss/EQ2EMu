@@ -6968,6 +6968,15 @@ void Client::SellItem(int32 item_id, int16 quantity, int32 unique_id) {
 				SimpleMessage(CHANNEL_COLOR_RED, "This item has no value.");
 				return;
 			}
+			else if (item->IsBag())
+			{
+				int32 bagitemcount = player->GetPlayerItemList()->GetItemCountInBag(item);
+				if (bagitemcount > 0) {
+					SimpleMessage(CHANNEL_COLOR_RED, "You cannot sell a bag with items inside it.");
+					return;
+				}
+			}
+
 			int32 sell_price = (int32)(master_item->sell_price * multiplier);
 			if (sell_price > item->sell_price)
 				sell_price = item->sell_price;

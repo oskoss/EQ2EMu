@@ -3754,7 +3754,16 @@ vector<Item*>* PlayerItemList::GetItemsFromBagID(sint32 bag_id){
 	}
 	return ret;
 }
-
+int32 PlayerItemList::GetItemCountInBag(Item* bag){
+	MPlayerItems.readlock(__FUNCTION__, __LINE__);
+	if(bag && bag->IsBag() && items.count(bag->details.bag_id) > 0){
+		int32 bagitems = items.count(bag->details.bag_id);
+		MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+		return bagitems;
+	}
+	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+	return 0;
+}
 vector<Item*>* PlayerItemList::GetItemsInBag(Item* bag){
 	vector<Item*>* ret_items = new vector<Item*>;
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
