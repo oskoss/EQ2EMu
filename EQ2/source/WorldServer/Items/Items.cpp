@@ -3722,13 +3722,14 @@ bool PlayerItemList::HasItem(int32 id, bool include_bank){
 }
 
 bool PlayerItemList::SharedBankAddAllowed(Item* item){
-	if(!item || item->CheckFlag(NO_TRADE))
+	if(!item || item->CheckFlag(NO_TRADE) && item->CheckFlag2(HEIRLOOM) == 0)
 		return false;
+
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
 	if(item->IsBag() && items.count(item->details.bag_id) > 0){
 		map<int16, Item*>::iterator itr;
 		for(itr = items[item->details.bag_id][BASE_EQUIPMENT].begin(); itr != items[item->details.bag_id][BASE_EQUIPMENT].end(); itr++){
-			if(itr->second->CheckFlag(NO_TRADE)){
+			if(itr->second->CheckFlag(NO_TRADE) && itr->second->CheckFlag2(HEIRLOOM) == 0){
 				MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 				return false;
 			}
