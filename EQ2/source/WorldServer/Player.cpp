@@ -441,9 +441,15 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 		packet->setDataByName("coins_plat", info_struct->get_coin_plat());
 		packet->setDataByName("weight", info_struct->get_weight());
 		packet->setDataByName("max_weight", info_struct->get_max_weight());
-		char pet_name[32];
-		strncpy(pet_name, info_struct->get_pet_name().c_str(), 32);
-		packet->setDataByName("pet_name", pet_name);
+		
+		if(info_struct->get_pet_id() != 0xFFFFFFFF) {
+			char pet_name[32];
+			strncpy(pet_name, info_struct->get_pet_name().c_str(), 32);
+			packet->setDataByName("pet_name", pet_name);
+		}
+		else {
+			packet->setDataByName("pet_name", "No Pet");
+		}
 		packet->setDataByName("status_points", info_struct->get_status_points());
 		if(bind_zone_id > 0){
 			string bind_name = database.GetZoneName(bind_zone_id);
@@ -1220,10 +1226,16 @@ EQ2Packet* PlayerInfo::serializePet(int16 version) {
 
 			packet->setDataByName("spawn_id", info_struct->get_pet_id());
 			packet->setDataByName("spawn_id2", info_struct->get_pet_id());
-			char pet_name[32];
-			strncpy(pet_name, info_struct->get_pet_name().c_str(), 32);
-			packet->setDataByName("name", pet_name);
-			packet->setDataByName("no_pet", pet_name);
+			
+			if(info_struct->get_pet_id() != 0xFFFFFFFF) {
+				char pet_name[32];
+				strncpy(pet_name, info_struct->get_pet_name().c_str(), 32);
+				packet->setDataByName("name", pet_name);
+			}
+			else {
+				packet->setDataByName("name", "No Pet");
+				packet->setDataByName("no_pet", "No Pet");
+			}
 
 			if (version >= 57000) {
 				packet->setDataByName("current_power3", pet->GetPower());
@@ -5851,7 +5863,6 @@ void Player::RemoveAllPassives()
 
 void Player::ResetPetInfo() {
 	GetInfoStruct()->set_pet_id(0xFFFFFFFF);
-	GetInfoStruct()->set_pet_name(std::string("No Pet"));
 	GetInfoStruct()->set_pet_movement(0);
 	GetInfoStruct()->set_pet_behavior(0);
 	GetInfoStruct()->set_pet_health_pct(0.0f);

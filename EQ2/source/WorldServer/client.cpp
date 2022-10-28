@@ -39,6 +39,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "Chat/Chat.h"
 #include "SpellProcess.h"
 #include "Zone/ChestTrap.h"
+#include "../../common/GlobalHeaders.h"
 
 //#include "Quests.h"
 
@@ -2039,9 +2040,8 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 
 			string name = packet->getType_EQ2_16BitString_ByName("pet_name").data;
-			if (strlen(name.c_str()) != 0) {
+			if (strlen(name.c_str()) != 0 && SetPetName(name.c_str())) {
 				target->SetName(name.c_str());
-				player->GetInfoStruct()->set_pet_name(name);
 				GetCurrentZone()->SendUpdateTitles(target);
 				change = true;
 			}
@@ -11447,4 +11447,32 @@ void Client::HandleDialogSelectMsg(int32 conversation_id, int32 response_index) 
 		else
 			CloseDialog(conversation_id);
 	}				
+}
+
+
+bool Client::SetPetName(const char* petName) {
+	int8 result = database.CheckNameFilter(petName,4,31);
+	if (result == BADNAMELENGTH_REPLY) {
+		SimpleMessage(CHANNEL_COLOR_YELLOW, "Name length is invalid, must be greater then 3 characters and less then 16.");
+		return false;
+	}
+	else if (result == NAMEINVALID_REPLY) {
+		SimpleMessage(CHANNEL_COLOR_YELLOW, "Name is invalid, can only contain letters.");
+		return false;
+	}
+	else if (result == NAMETAKEN_REPLY) {
+		SimpleMessage(CHANNEL_COLOR_YELLOW, "Name is already taken, please choose another.");
+		return false;
+	}
+	else if (result == NAMEFILTER_REPLY) {
+		SimpleMessage(CHANNEL_COLOR_YELLOW, "Name failed the filter check.");
+		return false;
+	}
+	else if (result == UNKNOWNERROR_REPLY) {
+		SimpleMessage(CHANNEL_COLOR_YELLOW, "Unknown error while checking the name.");
+		return false;
+	}
+
+	GetPlayer()->GetInfoStruct()->set_pet_name(petName);
+	return true;
 }

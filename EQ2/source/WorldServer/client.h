@@ -575,6 +575,7 @@ public:
 	int32	GetPlayerPOVGhostSpawnID() { return pov_ghost_spawn_id; }
 	
 	void	HandleDialogSelectMsg(int32 conversation_id, int32 response_index);
+	bool	SetPetName(const char* name);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

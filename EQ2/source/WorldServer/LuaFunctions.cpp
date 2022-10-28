@@ -5272,18 +5272,24 @@ int EQ2Emu_lua_SummonPet(lua_State* state) {
 		spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_SPAWN);
 	}
 
-	// Get a random pet name
-	string random_pet_name;
-	int16 rand_index = MakeRandomInt(0, spawn->GetZone()->pet_names.size() - 1);
-	random_pet_name = spawn->GetZone()->pet_names.at(rand_index);
-	LogWrite(PET__DEBUG, 0, "Pets", "Randomize Pet Name: '%s' (rand: %i)", random_pet_name.c_str(), rand_index);
+
+	std::string petName = std::string("");
+	if(spawn->IsEntity()) {
+		petName = ((Entity*)spawn)->GetInfoStruct()->get_pet_name();
+	}
+	
+	if(petName.size() < 1) {
+		int16 rand_index = MakeRandomInt(0, spawn->GetZone()->pet_names.size() - 1);
+		petName = spawn->GetZone()->pet_names.at(rand_index);
+		LogWrite(PET__DEBUG, 0, "Pets", "Randomize Pet Name: '%s' (rand: %i)", petName.c_str(), rand_index);
+	}
 
 	// If player set various values for the char sheet (pet window)
 	if (spawn->IsPlayer()) {
 		Player* player = (Player*)spawn;
 		
 		player->GetInfoStruct()->set_pet_id(player->GetIDWithPlayerSpawn(pet));
-		player->GetInfoStruct()->set_pet_name(random_pet_name);
+		player->GetInfoStruct()->set_pet_name(petName);
 		player->GetInfoStruct()->set_pet_movement(2);
 		player->GetInfoStruct()->set_pet_behavior(3);
 		player->GetInfoStruct()->set_pet_health_pct(1.0f);
@@ -5293,7 +5299,7 @@ int EQ2Emu_lua_SummonPet(lua_State* state) {
 	}
 
 	// Set the pets name
-	pet->SetName(random_pet_name.c_str());
+	pet->SetName(petName.c_str());
 	// Set the level of the pet to the owners level or max level(if set) if owners level is greater
 	if (max_level > 0)
 		pet->SetLevel(spawn->GetLevel() >= max_level ? max_level : spawn->GetLevel());
@@ -7875,14 +7881,20 @@ int EQ2Emu_lua_SummonDumbFirePet(lua_State* state) {
 		spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_SPAWN);
 	}
 
-	// Get a random pet name
-	string random_pet_name;
-	int16 rand_index = MakeRandomInt(0, spawn->GetZone()->pet_names.size() - 1);
-	random_pet_name = spawn->GetZone()->pet_names.at(rand_index);
-	LogWrite(PET__DEBUG, 0, "Pets", "Randomize Pet Name: '%s' (rand: %i)", random_pet_name.c_str(), rand_index);
-
+	std::string petName = std::string("");
+	if(spawn->IsEntity()) {
+		petName = ((Entity*)spawn)->GetInfoStruct()->get_pet_name();
+	}
+	
+	if(petName.size() < 1) {
+		int16 rand_index = MakeRandomInt(0, spawn->GetZone()->pet_names.size() - 1);
+		petName = spawn->GetZone()->pet_names.at(rand_index);
+		LogWrite(PET__DEBUG, 0, "Pets", "Randomize Pet Name: '%s' (rand: %i)", petName.c_str(), rand_index);
+	}
+	
 	// Set the pets name
-	pet->SetName(random_pet_name.c_str());
+	pet->SetName(petName.c_str());
+		
 	// Set the level of the pet to the owners level
 	pet->SetLevel(spawn->GetLevel());
 	// Set the faction of the pet to the same faction as the owner

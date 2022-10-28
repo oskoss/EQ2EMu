@@ -24,6 +24,10 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include <iomanip>
 #include <ios>
 #include <assert.h>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string.hpp>
+
+
 #include "WorldDatabase.h"
 #include "../common/debug.h"
 #include "../common/packet_dump.h"
@@ -48,6 +52,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "../common/version.h"
 #include "SpellProcess.h"
 #include "races.h"
+
 
 extern Classes classes;
 extern Commands commands;
@@ -1648,7 +1653,6 @@ bool WorldDatabase::LoadCharacterStats(int32 id, int32 account_id, Client* clien
 			info->set_coin_silver(result.GetInt32Str("coin_silver"));
 			info->set_coin_gold(result.GetInt32Str("coin_gold"));
 			info->set_coin_plat(result.GetInt32Str("coin_plat"));
-			info->set_pet_name(result.GetStringStr("pet_name") ? std::string(result.GetStringStr("pet_name")) : std::string(""));
 			const char* bio = result.GetStringStr("biography");
 			if(bio && strlen(bio) > 0)
 				info->set_biography(std::string(bio));
@@ -1710,6 +1714,13 @@ bool WorldDatabase::LoadCharacterStats(int32 id, int32 account_id, Client* clien
 			client->GetPlayer()->SetTotalDissonanceBase(client->GetPlayer()->GetTotalDissonance());
 			
 			client->GetPlayer()->SetCurrentLanguage(result.GetInt32Str("current_language"));
+			
+			std::string petName = result.GetStringStr("pet_name");
+			boost::algorithm::to_lower(petName);
+			
+			if(petName != "no pet") { // some reason we default to "no pet", the code handles an empty string as setting a random pet name when its summoned
+				client->GetPlayer()->GetInfoStruct()->set_pet_name(result.GetStringStr("pet_name"));
+			}
 		}
 
 		return true;
@@ -2453,9 +2464,9 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 	return char_id;
 }
 
-int8 WorldDatabase::CheckNameFilter(const char* name) {
+int8 WorldDatabase::CheckNameFilter(const char* name, int8 min_length, int8 max_length) {
 	// the minimum 4 is enforced by the client too
-	if(!name || strlen(name) < 4 || strlen(name) > 15) // Even 20 char length is long...
+	if(!name || strlen(name) < min_length || strlen(name) > max_length) // Even 20 char length is long...
 		return BADNAMELENGTH_REPLY;
 	uchar* checkname = (uchar*)name;
 	for (int32 i = 0; i < strlen(name); i++)
@@ -4125,13 +4136,13 @@ void WorldDatabase::Save(Client* client){
 	if(client->GetCurrentZone())
 		zone_id = client->GetCurrentZone()->GetZoneID();
 	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update characters set current_zone_id=%u, x=%f, y=%f, z=%f, heading=%f, level=%i,instance_id=%i,last_saved=%i, `class`=%i, `tradeskill_level`=%i, `tradeskill_class`=%i, `group_id`=%u, deity = %u, alignment = %u where id = %u", zone_id, player->GetX(), player->GetY(), player->GetZ(), player->GetHeading(), player->GetLevel(), instance_id, client->GetLastSavedTimeStamp(), client->GetPlayer()->GetAdventureClass(), client->GetPlayer()->GetTSLevel(), client->GetPlayer()->GetTradeskillClass(), client->GetPlayer()->GetGroupMemberInfo() ? client->GetPlayer()->GetGroupMemberInfo()->group_id : client->GetRejoinGroupID(), client->GetPlayer()->GetDeity(), client->GetPlayer()->GetInfoStruct()->get_alignment(), client->GetCharacterID());
-	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %f, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, status_points = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s', assigned_aa = %i, unassigned_aa = %i, tradeskill_aa = %i, unassigned_tradeskill_aa = %i, prestige_aa = %i, unassigned_prestige_aa = %i, tradeskill_prestige_aa = %i, unassigned_tradeskill_prestige_aa = %i where char_id = %u",
+	query.AddQueryAsync(client->GetCharacterID(), this, Q_UPDATE, "update character_details set hp=%u, power=%u, str=%i, sta=%i, agi=%i, wis=%i, intel=%i, heat=%i, cold=%i, magic=%i, mental=%i, divine=%i, disease=%i, poison=%i, coin_copper=%u, coin_silver=%u, coin_gold=%u, coin_plat=%u, max_hp = %u, max_power=%u, xp = %u, xp_needed = %u, xp_debt = %f, xp_vitality = %f, tradeskill_xp = %u, tradeskill_xp_needed = %u, tradeskill_xp_vitality = %f, bank_copper = %u, bank_silver = %u, bank_gold = %u, bank_plat = %u, status_points = %u, bind_zone_id=%u, bind_x = %f, bind_y = %f, bind_z = %f, bind_heading = %f, house_zone_id=%u, combat_voice = %i, emote_voice = %i, biography='%s', flags=%u, flags2=%u, last_name='%s', assigned_aa = %i, unassigned_aa = %i, tradeskill_aa = %i, unassigned_tradeskill_aa = %i, prestige_aa = %i, unassigned_prestige_aa = %i, tradeskill_prestige_aa = %i, unassigned_tradeskill_prestige_aa = %i, pet_name = '%s' where char_id = %u",
 		player->GetHP(), player->GetPower(), player->GetStrBase(), player->GetStaBase(), player->GetAgiBase(), player->GetWisBase(), player->GetIntBase(), player->GetHeatResistanceBase(), player->GetColdResistanceBase(), player->GetMagicResistanceBase(),
 		player->GetMentalResistanceBase(), player->GetDivineResistanceBase(), player->GetDiseaseResistanceBase(), player->GetPoisonResistanceBase(), player->GetCoinsCopper(), player->GetCoinsSilver(), player->GetCoinsGold(), player->GetCoinsPlat(), player->GetTotalHPBase(), player->GetTotalPowerBase(), player->GetXP(), player->GetNeededXP(), player->GetXPDebt(), player->GetXPVitality(), player->GetTSXP(), player->GetNeededTSXP(), player->GetTSXPVitality(), player->GetBankCoinsCopper(),
 		player->GetBankCoinsSilver(), player->GetBankCoinsGold(), player->GetBankCoinsPlat(), player->GetStatusPoints(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneID(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneX(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneY(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneZ(), client->GetPlayer()->GetPlayerInfo()->GetBindZoneHeading(), client->GetPlayer()->GetPlayerInfo()->GetHouseZoneID(), 
 		client->GetPlayer()->GetCombatVoice(), client->GetPlayer()->GetEmoteVoice(), getSafeEscapeString(client->GetPlayer()->GetBiography().c_str()).c_str(), player->GetFlags(), player->GetFlags2(), client->GetPlayer()->GetLastName(), 
 		client->GetPlayer()->GetAssignedAA(), client->GetPlayer()->GetUnassignedAA(), client->GetPlayer()->GetTradeskillAA(), client->GetPlayer()->GetUnassignedTradeskillAA(), client->GetPlayer()->GetPrestigeAA(), 
-		client->GetPlayer()->GetUnassignedPretigeAA(), client->GetPlayer()->GetTradeskillPrestigeAA(), client->GetPlayer()->GetUnassignedTradeskillPrestigeAA(), client->GetCharacterID());
+		client->GetPlayer()->GetUnassignedPretigeAA(), client->GetPlayer()->GetTradeskillPrestigeAA(), client->GetPlayer()->GetUnassignedTradeskillPrestigeAA(), client->GetPlayer()->GetInfoStruct()->get_pet_name().c_str(), client->GetCharacterID());
 	map<string, int8>::iterator itr;
 	map<string, int8>* friends = player->GetFriends();
 	if(friends && friends->size() > 0){

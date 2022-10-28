@@ -357,7 +357,7 @@ public:
 
 	int32	GetMaxHotBarID();
 
-	int8	CheckNameFilter(const char* name);
+	int8	CheckNameFilter(const char* name, int8 min_length = 4, int8 max_length = 15);
 	static int32 NextUniqueHotbarID(){ 
 		next_id++;
 		return next_id; 

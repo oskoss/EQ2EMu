@@ -8138,9 +8138,13 @@ void Commands::Command_Pet(Client* client, Seperator* sep)
 */ 
 void Commands::Command_PetName(Client* client, Seperator* sep)
 {
-	PrintSep(sep, "COMMAND_PETNAME");
-	LogWrite(MISC__TODO, 1, "Command", "TODO-Command: Pet Name Command");
-	client->Message(CHANNEL_COLOR_YELLOW, "Pets are not yet implemented.");
+	if (sep && sep->arg[0]) {
+		const char* pet_name = sep->argplus[0];
+		client->SetPetName(pet_name);
+	}
+	else {
+			client->GetPlayer()->GetInfoStruct()->set_pet_name("");
+	}	
 }
 
 /* 
