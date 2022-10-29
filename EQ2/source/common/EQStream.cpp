@@ -283,7 +283,7 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 			uint8 new_length = 0;
 			
 			memcpy(&new_length, p->pBuffer+offset, sizeof(int8));
-			if(new_length <= p->size) {
+			if((new_length+offset+2) == p->size) {
 				new_length -= 2;
 			EQProtocolPacket *subp=new EQProtocolPacket(p->pBuffer+offset+2, new_length, OP_Packet);
 			subp->copyInfo(p);
