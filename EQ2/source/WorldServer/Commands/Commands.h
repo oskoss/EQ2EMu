@@ -603,7 +603,6 @@ private:
 #define COMMAND_RACE				2
 #define COMMAND_LEVEL				3
 #define COMMAND_CLASS				4
-#define COMMAND_GENDER				5
 #define COMMAND_NAME				6
 #define	COMMAND_SAY					7
 #define	COMMAND_TELL				8

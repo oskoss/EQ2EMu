@@ -2829,18 +2829,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /class {class_id}");
 			break;
 						   }
-		case COMMAND_GENDER:{
-			if(sep && sep->arg[ndx][0]){
-				client->GetPlayer()->GetInfoStruct()->set_gender(atoi(sep->arg[ndx]));
-				client->GetPlayer()->SetCharSheetChanged(true);
-				client->UpdateTimeStampFlag ( GENDER_UPDATE_FLAG );
-			}else{
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /gender {new_gender_id}");
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"  Male: 1");
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"  Female: 2");
-			}
-			break;
-							}
 		case COMMAND_FLYMODE:{
 			if(sep && sep->arg[0] && sep->IsNumber(0)){
 				PrintSep(sep, "COMMAND_FLYMODE");
@@ -7626,6 +7614,12 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				player->GetInfoStruct()->set_tradeskill_class2(classes.GetSecondaryTSBaseClass(player->GetTradeskillClass()));
 				player->GetInfoStruct()->set_tradeskill_class3(player->GetTradeskillClass());
 				player->SetCharSheetChanged(true);
+			}
+			else if (strcmp(sep->arg[1], "gender") == 0) {
+				int8 gender = atoi(sep->arg[2]);
+				client->GetPlayer()->GetInfoStruct()->set_gender(gender);
+				client->GetPlayer()->SetCharSheetChanged(true);
+				client->UpdateTimeStampFlag ( GENDER_UPDATE_FLAG );
 			}
 		}
 	}

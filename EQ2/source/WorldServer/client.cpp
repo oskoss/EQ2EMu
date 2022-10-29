@@ -11453,7 +11453,7 @@ void Client::HandleDialogSelectMsg(int32 conversation_id, int32 response_index) 
 bool Client::SetPetName(const char* petName) {
 	int8 result = database.CheckNameFilter(petName,4,31);
 	if (result == BADNAMELENGTH_REPLY) {
-		SimpleMessage(CHANNEL_COLOR_YELLOW, "Name length is invalid, must be greater then 3 characters and less then 16.");
+		SimpleMessage(CHANNEL_COLOR_YELLOW, "Name length is invalid, must be greater then 3 characters and less then 31.");
 		return false;
 	}
 	else if (result == NAMEINVALID_REPLY) {
