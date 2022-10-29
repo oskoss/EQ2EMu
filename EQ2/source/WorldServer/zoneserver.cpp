@@ -948,7 +948,7 @@ bool ZoneServer::CheckEnemyList(NPC* npc) {
 				for (spawn_itr = spawns->begin(); spawn_itr != spawns->end(); spawn_itr++) {
 					Spawn* spawn = GetSpawnByID(*spawn_itr);
 					if (spawn) {
-						if ((distance = spawn->GetDistance(npc)) <= npc->GetAggroRadius())
+						if ((distance = spawn->GetDistance(npc)) <= npc->GetAggroRadius() && npc->CheckLoS(spawn))
 							attack_spawns[distance] = spawn;
 					}
 				}
@@ -971,7 +971,7 @@ bool ZoneServer::CheckEnemyList(NPC* npc) {
 				for (spawn_itr = spawns->begin(); spawn_itr != spawns->end(); spawn_itr++) {
 					Spawn* spawn = GetSpawnByID(*spawn_itr);
 					if (spawn) {
-						if ((distance = spawn->GetDistance(npc)) <= npc->GetAggroRadius())
+						if ((distance = spawn->GetDistance(npc)) <= npc->GetAggroRadius() && npc->CheckLoS(spawn))
 							reverse_attack_spawns[distance] = spawn;
 					}
 				}
