@@ -4679,6 +4679,7 @@ void WorldDatabase::LoadSpells()
 
 			/* General Spell info */
 			data->id						= spell_id;
+			data->inherited_spell_id		= spell_id;
 			data->soe_spell_crc				= result.GetInt32Str("soe_spell_crc");
 			data->tier						= result.GetInt8Str("tier");
 			data->ts_loc_index				= result.GetInt8Str("index");

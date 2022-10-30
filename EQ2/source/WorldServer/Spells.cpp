@@ -48,7 +48,7 @@ Spell::Spell(){
 	copied_spell = false;
 }
 
-Spell::Spell(Spell* host_spell)
+Spell::Spell(Spell* host_spell, bool unique_spell)
 {
 	std::shared_lock lock(host_spell->MSpellInfo);
 	copied_spell = true;
@@ -57,14 +57,21 @@ Spell::Spell(Spell* host_spell)
 
 	if (host_spell->GetSpellData())
 	{
-		// try inheriting an existing custom spell id, otherwise obtain the new highest number on the spell list
-		int32 tmpid = lua_interface->GetFreeCustomSpellID();
-		if (tmpid)
-			spell->id = tmpid;
-		else
-		{
-			spell->id = master_spell_list.GetNewMaxSpellID();
+		if(!unique_spell) {
+			spell->id = host_spell->GetSpellData()->id;
 		}
+		else {
+			// try inheriting an existing custom spell id, otherwise obtain the new highest number on the spell list
+			int32 tmpid = lua_interface->GetFreeCustomSpellID();
+			if (tmpid)
+				spell->id = tmpid;
+			else
+			{
+				spell->id = master_spell_list.GetNewMaxSpellID();
+			}
+		}
+		
+		spell->inherited_spell_id = host_spell->GetSpellData()->inherited_spell_id;
 
 		spell->affect_only_group_members = host_spell->GetSpellData()->affect_only_group_members;
 		spell->call_frequency = host_spell->GetSpellData()->call_frequency;
