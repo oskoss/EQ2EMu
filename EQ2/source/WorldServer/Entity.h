@@ -647,8 +647,8 @@ struct InfoStruct{
 	int8	get_attack_type() { std::lock_guard<std::mutex> lk(classMutex); return attack_type_; }
 
 	int16	get_primary_weapon_delay() { std::lock_guard<std::mutex> lk(classMutex); return primary_weapon_delay_; }
-	int16	get_secondary_weapon_delay() { std::lock_guard<std::mutex> lk(classMutex); return primary_weapon_delay_; }
-	int16	get_ranged_weapon_delay() { std::lock_guard<std::mutex> lk(classMutex); return primary_weapon_delay_; }
+	int16	get_secondary_weapon_delay() { std::lock_guard<std::mutex> lk(classMutex); return secondary_weapon_delay_; }
+	int16	get_ranged_weapon_delay() { std::lock_guard<std::mutex> lk(classMutex); return ranged_weapon_delay_; }
 	
 	int8	get_override_primary_weapon() { std::lock_guard<std::mutex> lk(classMutex); return override_primary_weapon_; }
 	int8	get_override_secondary_weapon() { std::lock_guard<std::mutex> lk(classMutex); return override_secondary_weapon_; }
