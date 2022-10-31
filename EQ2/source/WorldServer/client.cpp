@@ -2113,8 +2113,6 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			HouseZone* hz = world.GetHouseZone(packet->getType_int64_ByName("house_id"));
 			if (hz) {
 				bool got_bank_money = BankHasCoin(hz->cost_coin + hz->upkeep_coin);
-				std::string coinmsg = GetCoinMessage(hz->cost_coin + hz->upkeep_coin);
-
 				int8 disable_alignment_req = rule_manager.GetGlobalRule(R_Player, DisableHouseAlignmentRequirement)->GetInt8();
 				std::vector<PlayerHouse*> houses = world.GetAllPlayerHouses(GetCharacterID());
 				if (houses.size() > 24)
@@ -2280,7 +2278,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					if(!coinReq && statusReq && player->GetInfoStruct()->subtract_status_points(statusReq))
 						statusReq = 0;
 				}
-				
+				bool got_bank_money = BankHasCoin(hz->upkeep_coin);
 				if (!coinReq && !statusReq) // TODO: Need option to take from bank if player does not have enough coin on them
 				{
 					database.AddHistory(ph, GetPlayer()->GetName(), "Paid Upkeep", Timer::GetUnixTimeStamp(), hz->upkeep_coin, 0, 0);
@@ -2291,6 +2289,27 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					ph->upkeep_due = upkeep_due;
 					database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
 					//ClientPacketFunctions::SendHousingList(this);
+					ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+					PlaySound("coin_cha_ching");
+				}
+				else if (!statusReq && got_bank_money == 1) {
+					bool bankwithdrawl = BankWithdrawalNoBanker(hz->upkeep_coin);
+
+					//this should NEVER happen since we check with got_bank_money, however adding it here should something go nutty.
+					if (bankwithdrawl == 0) {
+						PlaySound("buy_failed");
+						SimpleMessage(CHANNEL_COLOR_RED, "There was an error in bankwithdrawl function.");
+						safe_delete(packet);
+						break;
+					}
+
+					database.AddHistory(ph, GetPlayer()->GetName(), "Paid Upkeep", Timer::GetUnixTimeStamp(), hz->upkeep_coin, 0, 0);
+
+					if (escrowChange)
+						database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins, ph->escrow_status);
+
+					ph->upkeep_due = upkeep_due;
+					database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
 					ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
 					PlaySound("coin_cha_ching");
 				}
