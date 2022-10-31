@@ -211,6 +211,8 @@ public:
 	void	HandlePlayerRevive(int32 point_id);
 	void	Bank(Spawn* banker, bool cancel = false);
 	void	BankWithdrawal(int64 amount);
+	bool    BankWithdrawalNoBanker(int64 amount);
+	bool    BankHasCoin(int64 amount);
 	void	BankDeposit(int64 amount);
 	Spawn*	GetBanker();
 	void	SetBanker(Spawn* in_banker);

@@ -2106,12 +2106,15 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_BuyPlayerHouseMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_BuyPlayerHouseMsg", opcode, opcode);
-		
+		int64 bank_money = GetPlayer()->GetBankCoinsPlat();
 		PacketStruct* packet = configReader.getStruct("WS_BuyHouse", GetVersion());
 		if (packet) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 			HouseZone* hz = world.GetHouseZone(packet->getType_int64_ByName("house_id"));
 			if (hz) {
+				bool got_bank_money = BankHasCoin(hz->cost_coin + hz->upkeep_coin);
+				std::string coinmsg = GetCoinMessage(hz->cost_coin + hz->upkeep_coin);
+
 				int8 disable_alignment_req = rule_manager.GetGlobalRule(R_Player, DisableHouseAlignmentRequirement)->GetInt8();
 				std::vector<PlayerHouse*> houses = world.GetAllPlayerHouses(GetCharacterID());
 				if (houses.size() > 24)
@@ -2134,10 +2137,8 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				}
 				int32 status_req = hz->upkeep_status + hz->cost_status;
 				int32 available_status = player->GetInfoStruct()->get_status_points();
-				if (status_req <= available_status && 
-				((!hz->upkeep_coin && !hz->cost_coin) || 
-				( (hz->upkeep_coin || hz->cost_coin) && player->RemoveCoins(hz->cost_coin+hz->upkeep_coin)))
-				) // TODO: Need option to take from bank if player does not have enough coin on them
+				if (status_req <= available_status && ((!hz->upkeep_coin && !hz->cost_coin) || ((hz->upkeep_coin || hz->cost_coin) && player->RemoveCoins(hz->cost_coin+hz->upkeep_coin)))) 
+
 				{
 					player->GetInfoStruct()->subtract_status_points(status_req);
 					ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id);
@@ -2148,6 +2149,26 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
 					ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
 					PlaySound("coin_cha_ching");
+				}
+				else if (status_req <= available_status && got_bank_money == 1) {
+						player->GetInfoStruct()->subtract_status_points(status_req);
+						bool bankwithdrawl = BankWithdrawalNoBanker(hz->cost_coin + hz->upkeep_coin);
+						
+						//this should NEVER happen since we check with got_bank_money, however adding it here should something go nutty.
+						if (bankwithdrawl == 0) {
+							PlaySound("buy_failed");
+							SimpleMessage(CHANNEL_COLOR_RED, "There was an error in bankwithdrawl function.");
+							safe_delete(packet);
+							break;
+						}
+
+						ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id);
+						int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
+						int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
+						world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
+						PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
+						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+						PlaySound("coin_cha_ching");
 				}
 				else
 				{
@@ -5310,6 +5331,135 @@ void Client::Bank(Spawn* banker, bool cancel) {
 		}
 	}
 
+}
+
+bool Client::BankHasCoin(int64 amount){
+	int32 tmp = 0;
+		
+	if(amount <= 0)
+		return 0;
+
+	//plat
+	if (amount >= 1000000) {
+		tmp = amount / 1000000;
+		int32 bank_coins_plat = GetPlayer()->GetBankCoinsPlat();
+	
+		if(bank_coins_plat >= tmp)
+			return 1;
+	}
+	//gold
+	if (amount >= 10000) {		
+		tmp = amount / 10000;
+		int32 bank_coins_gold = GetPlayer()->GetBankCoinsGold();
+		
+		if(bank_coins_gold >= tmp)
+			return 1;
+	}
+	//silver
+	if (amount >= 100) {
+		tmp = amount / 100;
+		int32 bank_coins_silver = GetPlayer()->GetBankCoinsSilver();
+
+		if(bank_coins_silver >= tmp)
+			return 1;
+	}
+	//copper
+	if (amount > 0) {
+		int32 bank_coins_copper = GetPlayer()->GetBankCoinsCopper();
+		
+		if(bank_coins_copper >= amount)
+			return 1;
+	}
+
+return 0;
+}
+
+bool Client::BankWithdrawalNoBanker(int64 amount) {
+	bool cheater = false;
+	if (amount > 0) {
+		string withdrawal = "";
+		char withdrawal_data[512] = { 0 };
+		int32 tmp = 0;
+		if (amount >= 1000000) {
+			tmp = amount / 1000000;
+			int32 bank_coins_plat = GetPlayer()->GetBankCoinsPlat();
+			if (tmp > bank_coins_plat)
+				cheater = true;
+			else {
+				GetPlayer()->GetInfoStruct()->set_bank_coin_plat(bank_coins_plat - tmp);
+				GetPlayer()->GetInfoStruct()->add_coin_plat(tmp);
+				amount -= (int64)tmp * 1000000;
+				sprintf(withdrawal_data, "%u Platinum ", tmp);
+				withdrawal.append(withdrawal_data);
+				memset(withdrawal_data, 0, sizeof(withdrawal_data));
+			}
+		}
+		if (!cheater && amount >= 10000) {
+			tmp = amount / 10000;
+			if (tmp > GetPlayer()->GetBankCoinsGold())
+				cheater = true;
+			else {
+				int32 bank_coins_gold = GetPlayer()->GetInfoStruct()->get_bank_coin_gold();
+				bank_coins_gold -= tmp;
+				if ((GetPlayer()->GetInfoStruct()->get_coin_gold() + tmp) > 100) {
+					GetPlayer()->GetInfoStruct()->set_coin_gold((GetPlayer()->GetInfoStruct()->get_coin_gold() + tmp) - 100);
+					GetPlayer()->GetInfoStruct()->add_coin_plat(1);
+				}
+				else
+					GetPlayer()->GetInfoStruct()->add_coin_gold(tmp);
+				amount -= tmp * 10000;
+				sprintf(withdrawal_data, "%u Gold ", tmp);
+				withdrawal.append(withdrawal_data);
+				memset(withdrawal_data, 0, sizeof(withdrawal_data));
+			}
+		}
+		if (!cheater && amount >= 100) {
+			tmp = amount / 100;
+				int32 bank_coins_silver = GetPlayer()->GetBankCoinsSilver();
+			if (tmp > bank_coins_silver)
+				cheater = true;
+			else {
+				GetPlayer()->GetInfoStruct()->set_bank_coin_silver(bank_coins_silver - tmp);
+				if ((GetPlayer()->GetInfoStruct()->get_coin_silver() + tmp) > 100) {
+					GetPlayer()->GetInfoStruct()->set_coin_silver((GetPlayer()->GetInfoStruct()->get_coin_silver() + tmp) - 100);
+					GetPlayer()->GetInfoStruct()->add_coin_gold(1);
+				}
+				else
+					GetPlayer()->GetInfoStruct()->add_coin_silver(tmp);
+				amount -= tmp * 100;
+				sprintf(withdrawal_data, "%u Silver ", tmp);
+				withdrawal.append(withdrawal_data);
+				memset(withdrawal_data, 0, sizeof(withdrawal_data));
+			}
+		}
+		if (!cheater) {
+			if (amount > 0) {
+				sprintf(withdrawal_data, "%u Copper ", (int32)amount);
+				withdrawal.append(withdrawal_data);
+				int32 bank_coin_copper = GetPlayer()->GetInfoStruct()->get_bank_coin_copper();
+
+				GetPlayer()->GetInfoStruct()->set_bank_coin_copper(bank_coin_copper - amount);
+				if ((GetPlayer()->GetInfoStruct()->get_coin_copper() + amount) > 100) {
+					GetPlayer()->GetInfoStruct()->set_coin_copper((GetPlayer()->GetInfoStruct()->get_coin_copper() + amount) - 100);
+					GetPlayer()->GetInfoStruct()->add_coin_silver(1);
+				}
+				else
+					GetPlayer()->GetInfoStruct()->add_coin_copper(amount);
+			}
+			if (withdrawal.length() > 0) {
+				withdrawal.append("withdrawn ");
+				sprintf(withdrawal_data, "(%u Plat %u Gold %u Silver %u Copper in the bank now.)", GetPlayer()->GetInfoStruct()->get_bank_coin_plat(),
+					GetPlayer()->GetInfoStruct()->get_bank_coin_gold(), GetPlayer()->GetInfoStruct()->get_bank_coin_silver(), GetPlayer()->GetInfoStruct()->get_bank_coin_copper());
+				withdrawal.append(withdrawal_data);
+				SimpleMessage(CHANNEL_NARRATIVE, withdrawal.c_str());
+				return 1;
+			}
+		}
+		else
+			Message(CHANNEL_COLOR_RED, "Stop trying to cheat!");
+			return 0;
+	}
+	return 0;
 }
 
 void Client::BankWithdrawal(int64 amount) {
