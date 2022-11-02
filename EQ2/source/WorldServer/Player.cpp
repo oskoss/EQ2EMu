@@ -1857,9 +1857,13 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 			if (item->generic_info.condition == 0) {
 				Client* client = GetZone()->GetClientBySpawn(this);
 				if (client) {
-
-					LogWrite(MISC__TODO, 1, "TODO", "Send popup text in red 'Some of your equipment is broken!'\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
-
+					string popup_text = "Your ";
+					string popup_item = item->CreateItemLink(client->GetVersion(), true).c_str();
+					string popup_textcont = " is worn out and will not be effective until repaired.";
+					popup_text.append(popup_item);
+					popup_text.append(popup_textcont);
+					//devn00b: decided to use "crimson" for the color. (220,20,60 rgb)
+					client->SendPopupMessage(10, popup_text.c_str(), "", 5, 0xDC, 0x14, 0x3C);
 					client->Message(CHANNEL_COLOR_RED, "Your %s is worn out and will not be effective until repaired.", item->CreateItemLink(client->GetVersion(), true).c_str());
 				}
 			}
