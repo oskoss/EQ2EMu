@@ -2112,7 +2112,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 			HouseZone* hz = world.GetHouseZone(packet->getType_int64_ByName("house_id"));
 			if (hz) {
-				bool got_bank_money = BankHasCoin(hz->cost_coin + hz->upkeep_coin);
+				bool got_bank_money = BankHasCoin(hz->cost_coin);
 				int8 disable_alignment_req = rule_manager.GetGlobalRule(R_Player, DisableHouseAlignmentRequirement)->GetInt8();
 				std::vector<PlayerHouse*> houses = world.GetAllPlayerHouses(GetCharacterID());
 				if (houses.size() > 24)
@@ -2133,9 +2133,9 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					safe_delete(packet);
 					break;
 				}
-				int32 status_req = hz->upkeep_status + hz->cost_status;
+				int32 status_req = hz->cost_status;
 				int32 available_status = player->GetInfoStruct()->get_status_points();
-				if (status_req <= available_status && ((!hz->upkeep_coin && !hz->cost_coin) || ((hz->upkeep_coin || hz->cost_coin) && player->RemoveCoins(hz->cost_coin+hz->upkeep_coin)))) 
+				if (status_req <= available_status && (!hz->cost_coin || (hz->cost_coin && player->RemoveCoins(hz->cost_coin)))) 
 
 				{
 					player->GetInfoStruct()->subtract_status_points(status_req);
@@ -2150,7 +2150,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				}
 				else if (status_req <= available_status && got_bank_money == 1) {
 						player->GetInfoStruct()->subtract_status_points(status_req);
-						bool bankwithdrawl = BankWithdrawalNoBanker(hz->cost_coin + hz->upkeep_coin);
+						bool bankwithdrawl = BankWithdrawalNoBanker(hz->cost_coin);
 						
 						//this should NEVER happen since we check with got_bank_money, however adding it here should something go nutty.
 						if (bankwithdrawl == 0) {
