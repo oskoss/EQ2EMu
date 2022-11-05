@@ -20,6 +20,9 @@
 #ifndef ZONESERVER_H
 #define ZONESERVER_H
 
+#include <mutex>
+#include <shared_mutex>
+
 #include "../common/linked_list.h"
 #include "../common/timer.h"
 #include "../common/queue.h"
@@ -151,6 +154,12 @@ struct LocationGrid {
 	bool					discovery;
 	MutexList<Location*>	locations;
 	MutexMap<Player*, bool>	players;
+};
+
+struct GridMap {
+	int32					grid_id;
+	std::map<int32, Spawn*> spawns;
+	mutable std::shared_mutex MSpawns;
 };
 
 struct TrackedSpawn {
@@ -701,6 +710,10 @@ public:
 	void	SendSubSpawnUpdates(SUBSPAWN_TYPES subtype);
 	bool	HouseItemSpawnExists(int32 item_id);
 	void	ProcessPendingSpawns();
+	void 	AddSpawnToGrid(Spawn* spawn, int32 grid_id);
+	void	RemoveSpawnFromGrid(Spawn* spawn, int32 grid_id);
+	int32	GetSpawnCountInGrid(int32 grid_id);
+	std::vector<Spawn*>	GetSpawnsInGrid(int32 grid_id);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
@@ -816,7 +829,11 @@ private:
 	Mutex MWidgetTimers;
 	map<int32, int32>								widget_timers;									// 1st int32 = spawn id
 
+	std::map<int32, GridMap*> grid_maps;
+	
 	/* Mutexs */
+	mutable std::shared_mutex MGridMaps;
+	
 	Mutex	m_enemy_faction_list;
 	Mutex	m_npc_faction_list;
 	Mutex	m_reverse_enemy_faction_list;

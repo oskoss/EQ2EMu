@@ -506,9 +506,7 @@ public:
 	void SetAttackable(int8 new_val, bool setUpdateFlags = true){
 		SetInfo(&appearance.attackable, new_val, setUpdateFlags);
 	}
-	void SetLocation(int32 id, bool setUpdateFlags = true){
-		SetPos(&appearance.pos.grid_id, id, setUpdateFlags);
-	}
+	void SetLocation(int32 id, bool setUpdateFlags = true);
 	void SetRace(int8 race, bool setUpdateFlags = true){
 		SetInfo(&appearance.race, race, setUpdateFlags);
 	}

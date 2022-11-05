@@ -10313,7 +10313,7 @@ int EQ2Emu_lua_SetGridID(lua_State* state) {
 		return 0;
 	}
 
-	spawn->SetPos(&(spawn->appearance.pos.grid_id), grid);
+	spawn->SetLocation(grid);
 	return 0;
 }
 

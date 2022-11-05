@@ -309,7 +309,7 @@ public:
 	void Command_EntityCommand(Client* client, Seperator* sep, int handler);
 	void Command_Follow(Client* client, Seperator* sep);
 	void Command_StopFollow(Client* client, Seperator* sep);
-	void Command_Grid(Client* client);
+	void Command_Grid(Client* client, Seperator* sep);
 	void Command_Guild(Client* client, Seperator* sep);
 	void Command_CreateGuild(Client* client);
 	void Command_SetGuildOfficerNote(Client* client, Seperator* sep);

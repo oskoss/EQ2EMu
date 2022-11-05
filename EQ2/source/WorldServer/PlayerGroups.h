@@ -84,7 +84,7 @@ public:
 
 	void SimpleGroupMessage(const char* message);
 	void GroupChatMessage(Spawn* from, int32 language, const char* message);
-	void MakeLeader(Entity* new_leader);
+	bool MakeLeader(Entity* new_leader);
 
 	void RemoveClientReference(Client* remove);
 	void UpdateGroupMemberInfo(Entity* ent, bool groupMembersLocked=false);
@@ -175,7 +175,7 @@ public:
 	void SimpleGroupMessage(int32 group_id, const char* message);
 	void GroupMessage(int32 group_id, const char* message, ...);
 	void GroupChatMessage(int32 group_id, Spawn* from, int32 language, const char* message);
-	void MakeLeader(int32 group_id, Entity* new_leader);
+	bool MakeLeader(int32 group_id, Entity* new_leader);
 	void UpdateGroupBuffs();
 
 	bool IsInGroup(int32 group_id, Entity* member);

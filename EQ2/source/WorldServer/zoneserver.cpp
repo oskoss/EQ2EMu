@@ -220,6 +220,16 @@ ZoneServer::~ZoneServer() {
 	// moved to the bottom as we want spawns deleted first, this used to be above Spawn deletion which is a big no no
 	safe_delete(spellProcess);
 
+
+    MGridMaps.lock();
+	std::map<int32, GridMap*>::iterator grids;
+	for(grids = grid_maps.begin(); grids != grid_maps.end(); grids++) {
+		GridMap* gm = grids->second;
+		safe_delete(gm);
+	}
+	grid_maps.clear();
+    MGridMaps.unlock();
+	
 	LogWrite(ZONE__INFO, 0, "Zone", "Completed zone shutdown of '%s'", zone_name);
 	--numzones;
 	UpdateWindowTitle(0);
@@ -3191,6 +3201,7 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 
 	AddSpawnProximities(spawn);
 
+	AddSpawnToGrid(spawn, spawn->GetLocation());
 	spawn->SetAddedToWorldTimestamp(Timer::GetCurrentTime2());
 }
 
@@ -4124,36 +4135,40 @@ void ZoneServer::CheckSpawnScriptTimers(){
 }
 
 void ZoneServer::KillSpawnByDistance(Spawn* spawn, float max_distance, bool include_players, bool send_packet){
+	if(!spawn)
+		return;
+	
 	Spawn* test_spawn = 0;
-	map<int32, Spawn*>::iterator itr;
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
-	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-		test_spawn = itr->second;
+	std::vector<Spawn*> ret_list = GetSpawnsInGrid(spawn->GetLocation());
+	std::vector<Spawn*>::iterator itr;
+	for (itr = ret_list.begin(); itr != ret_list.end(); itr++) {
+		test_spawn = *itr;
 		if(test_spawn && test_spawn->IsEntity() && test_spawn != spawn && (!test_spawn->IsPlayer() || include_players)){
 			if(test_spawn->GetDistance(spawn) < max_distance)
 				KillSpawn(true, test_spawn, spawn, send_packet);
 		}
 	}
-	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 void ZoneServer::SpawnSetByDistance(Spawn* spawn, float max_distance, string field, string value){
+	if(!spawn)
+		return;
+	
 	Spawn* test_spawn = 0;
 	int32 type = commands.GetSpawnSetType(field);
 	if(type == 0xFFFFFFFF)
 		return;
 
-	map<int32, Spawn*>::iterator itr;
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
-	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-		test_spawn = itr->second;
+	std::vector<Spawn*> ret_list = GetSpawnsInGrid(spawn->GetLocation());
+	std::vector<Spawn*>::iterator itr;
+	for (itr = ret_list.begin(); itr != ret_list.end(); itr++) {
+		test_spawn = *itr;
 		if(test_spawn && test_spawn != spawn && !test_spawn->IsPlayer()){
 			if(test_spawn->GetDistance(spawn) < max_distance){
 				commands.SetSpawnCommand(0, test_spawn, type, value.c_str());
 			}
 		}
 	}
-	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 void ZoneServer::AddSpawnScriptTimer(SpawnScriptTimer* timer){
@@ -5086,10 +5101,22 @@ void ZoneServer::SendCastSpellPacket(LuaSpell* spell, Entity* caster){
 			continue;
 		packet = configReader.getStruct("WS_HearCastSpell", client->GetVersion());
 		if(packet){
-			packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(caster));
+			int32 caster_id = client->GetPlayer()->GetIDWithPlayerSpawn(caster);
+			
+			if(!caster_id)
+				continue;
+			
+			packet->setDataByName("spawn_id", caster_id);
 			packet->setArrayLengthByName("num_targets", spell->targets.size());
-			for (int32 i = 0; i < spell->targets.size(); i++)
-				packet->setArrayDataByName("target", client->GetPlayer()->GetIDWithPlayerSpawn(spell->caster->GetZone()->GetSpawnByID(spell->targets[i])), i);
+			for (int32 i = 0; i < spell->targets.size(); i++) {
+				int32 target_id = client->GetPlayer()->GetIDWithPlayerSpawn(spell->caster->GetZone()->GetSpawnByID(spell->targets[i]));
+				if(target_id) {
+					packet->setArrayDataByName("target", target_id, i);
+				}
+				else {
+					packet->setArrayDataByName("target", 0xFFFFFFFF, i);
+				}
+			}
 			packet->setDataByName("spell_visual", spell->spell->GetSpellData()->spell_visual); //result
 			packet->setDataByName("cast_time", spell->spell->GetSpellData()->cast_time*.01); //delay
 			packet->setDataByName("spell_id", spell->spell->GetSpellID());
@@ -5115,17 +5142,24 @@ void ZoneServer::SendCastSpellPacket(int32 spell_visual, Spawn* target, Spawn* c
 				continue;
 			PacketStruct* packet = configReader.getStruct("WS_HearCastSpell", client->GetVersion());
 			if (packet) {
+				
+				int32 target_id = client->GetPlayer()->GetIDWithPlayerSpawn(target);
+				if(!target_id) // client is not aware of spawn
+					continue;
+				
 				if (!caster) {
 					packet->setDataByName("spawn_id", 0xFFFFFFFF);
-					packet->setDataByName("invoker_id", 0xFFFFFFFF);
 				}
 				else {
 					int32 caster_id = client->GetPlayer()->GetIDWithPlayerSpawn(caster);
+					
+					if(!caster_id) // client is not aware of spawn
+						continue;
+					
 					packet->setDataByName("spawn_id", caster_id);
-					packet->setDataByName("invoker_id", caster_id);
 				}
 				packet->setArrayLengthByName("num_targets", 1);
-				packet->setArrayDataByName("target", client->GetPlayer()->GetIDWithPlayerSpawn(target));
+				packet->setArrayDataByName("target", target_id);
 				packet->setDataByName("spell_visual", spell_visual);
 				packet->setDataByName("cast_time", 0);
 				packet->setDataByName("spell_id", 0);
@@ -5156,9 +5190,15 @@ void ZoneServer::SendCastEntityCommandPacket(EntityCommand* entity_command, int3
 				continue;
 			PacketStruct* packet = configReader.getStruct("WS_HearCastSpell", client->GetVersion());
 			if (packet) {
-				packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(spawn));
+				int32 caster_id = client->GetPlayer()->GetIDWithPlayerSpawn(spawn);
+				int32 target_id = client->GetPlayer()->GetIDWithPlayerSpawn(target);
+				
+				if(!caster_id || !target_id)
+					continue;
+				
+				packet->setDataByName("spawn_id", caster_id);
 				packet->setArrayLengthByName("num_targets", 1);
-				packet->setArrayDataByName("target", client->GetPlayer()->GetIDWithPlayerSpawn(target));
+				packet->setArrayDataByName("target", target_id);
 				packet->setDataByName("num_targets", 1);
 				packet->setDataByName("spell_visual", entity_command->spell_visual); //result
 				packet->setDataByName("cast_time", entity_command->cast_time * 0.01); //delay
@@ -6114,6 +6154,8 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_proce
 	if(!spawn)
 		return;	
 	
+	RemoveSpawnFromGrid(spawn, spawn->GetLocation());
+	
 	if(spawn->IsPlayer() && spawn->GetZone())
 		spawn->GetZone()->RemovePlayerPassenger(((Player*)spawn)->GetCharacterID());
 	if(spawn->IsEntity())
@@ -6957,14 +6999,13 @@ void ZoneServer::RemovePlayerPassenger(int32 char_id) {
 vector<Spawn*> ZoneServer::GetAttackableSpawnsByDistance(Spawn* caster, float distance) {
 	vector<Spawn*> ret;
 	Spawn* spawn = 0;
-	map<int32, Spawn*>::iterator itr;
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
-	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
-		spawn = itr->second;
+	std::vector<Spawn*> ret_list = GetSpawnsInGrid(caster->GetLocation());
+	std::vector<Spawn*>::iterator itr;
+	for (itr = ret_list.begin(); itr != ret_list.end(); itr++) {
+		spawn = *itr;
 		if (spawn && spawn->IsNPC() && spawn->appearance.attackable > 0 && spawn != caster && spawn->Alive() && spawn->GetDistance(caster, true) <= distance) 
 			ret.push_back(spawn);
 	}
-	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
 
@@ -8431,4 +8472,66 @@ void ZoneServer::ProcessPendingSpawns() {
 	pending_spawn_list_add.clear();
 	MPendingSpawnListAdd.releasewritelock(__FUNCTION__, __LINE__);
 	MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
+}
+
+void ZoneServer::AddSpawnToGrid(Spawn* spawn, int32 grid_id) {
+    MGridMaps.lock_shared();
+	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
+	if(grids != grid_maps.end()) {
+		grids->second->MSpawns.lock();
+		grids->second->spawns.insert(make_pair(spawn->GetID(), spawn));
+		grids->second->MSpawns.unlock();
+	}
+	else {
+		MGridMaps.unlock_shared();
+		GridMap* gm = new GridMap;
+		gm->grid_id = grid_id;
+		gm->spawns.insert(make_pair(spawn->GetID(), spawn));
+		MGridMaps.lock();
+		grid_maps.insert(make_pair(grid_id, gm));
+		MGridMaps.unlock();
+		return;
+	}
+	
+	MGridMaps.unlock_shared();
+}
+
+void ZoneServer::RemoveSpawnFromGrid(Spawn* spawn, int32 grid_id) {
+    std::shared_lock lock(MGridMaps);
+	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
+	if(grids != grid_maps.end() && grids->second->spawns.count(spawn->GetID()) > 0) {
+		grids->second->MSpawns.lock();
+		grids->second->spawns.erase(spawn->GetID());
+		grids->second->MSpawns.unlock();
+	}
+}
+
+int32 ZoneServer::GetSpawnCountInGrid(int32 grid_id) {
+	int32 count = 0;
+    std::shared_lock lock(MGridMaps);
+	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
+	if(grids != grid_maps.end()) {
+		grids->second->MSpawns.lock_shared();
+		count = grids->second->spawns.size();
+		grids->second->MSpawns.unlock_shared();
+	}
+	
+	return count;
+}
+
+std::vector<Spawn*> ZoneServer::GetSpawnsInGrid(int32 grid_id) {
+	std::vector<Spawn*> ret;
+	int32 count = 0;
+    std::shared_lock lock(MGridMaps);
+	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
+	if(grids != grid_maps.end()) {
+		grids->second->MSpawns.lock_shared();
+		typedef map <int32, Spawn*> SpawnMapType;
+		for( SpawnMapType::iterator it = grids->second->spawns.begin(); it != grids->second->spawns.end(); ++it ) {
+			ret.push_back( it->second );
+		}
+		grids->second->MSpawns.unlock_shared();
+	}
+	
+	return ret;
 }

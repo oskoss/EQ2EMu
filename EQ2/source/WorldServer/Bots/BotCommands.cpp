@@ -198,7 +198,11 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 								continue;
 							
 							if (member->IsBot() && ((Bot*)member)->GetOwner() == player) {
-								member->appearance.pos.grid_id = player->appearance.pos.grid_id;
+								if(member->GetZone() && member->appearance.pos.grid_id != player->appearance.pos.grid_id) {
+									member->GetZone()->RemoveSpawnFromGrid(member, member->appearance.pos.grid_id);
+									member->appearance.pos.grid_id = player->appearance.pos.grid_id;
+									member->GetZone()->AddSpawnToGrid(member, member->appearance.pos.grid_id);
+								}
 								member->SetX(player->GetX());
 								member->SetY(player->GetY());
 								member->SetZ(player->GetZ());

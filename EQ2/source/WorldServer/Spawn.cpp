@@ -3383,7 +3383,7 @@ bool Spawn::CalculateChange(){
 		}
 
 		if ((!IsFlyingCreature() || IsTransportSpawn()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
-			SetPos(&(appearance.pos.grid_id), newGrid);
+			SetLocation(newGrid);
 	}
 	return remove_needed;
 }
@@ -3948,12 +3948,18 @@ void Spawn::FixZ(bool forceUpdate) {
 			
 			const char* zone_script = world.GetZoneScript(GetZone()->GetZoneID());
 
-			if (zone_script && lua_interface)
-			{
-				lua_interface->RunZoneScript(zone_script, "enter_location", GetZone(), this, GridID);
-				lua_interface->RunZoneScript(zone_script, "leave_location", GetZone(), this, appearance.pos.grid_id);
+			if (zone_script && lua_interface) {
+				lua_interface->RunZoneScript(zone_script, "leave_location", GetZone(), this, GetLocation());
 			}
-			SetPos(&(appearance.pos.grid_id), GridID);
+			
+				GetZone()->RemoveSpawnFromGrid(this, GetLocation());
+				GetZone()->AddSpawnToGrid(this, GridID);
+				
+			if (zone_script && lua_interface) {
+				lua_interface->RunZoneScript(zone_script, "enter_location", GetZone(), this, GridID);
+			}
+			
+			SetPos(&appearance.pos.grid_id, GridID);
 		}
 		trigger_widget_id = WidgetID;
 	}
@@ -4492,4 +4498,14 @@ bool Spawn::HasRegionTracked(Region_Node* node, ZBSP_Node* bsp_root, bool in_reg
 	}
 	
 	return false;
+}
+
+
+void Spawn::SetLocation(int32 id, bool setUpdateFlags)
+{
+	if(GetZone()) {
+		GetZone()->RemoveSpawnFromGrid(this, appearance.pos.grid_id);
+		GetZone()->AddSpawnToGrid(this, id);
+	}
+	SetPos(&appearance.pos.grid_id, id, setUpdateFlags);
 }

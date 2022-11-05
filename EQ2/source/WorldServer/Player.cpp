@@ -3415,12 +3415,17 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 		LogWrite(PLAYER__DEBUG, 0, "Player", "%s left grid %u and entered grid %u", appearance.name, appearance.pos.grid_id, grid_id);
 		const char* zone_script = world.GetZoneScript(GetZone()->GetZoneID());
 
-		if (zone_script && lua_interface)
-		{
-			lua_interface->RunZoneScript(zone_script, "enter_location", GetZone(), this, grid_id);
-			lua_interface->RunZoneScript(zone_script, "leave_location", GetZone(), this, appearance.pos.grid_id);
+		if (zone_script && lua_interface) {
+			lua_interface->RunZoneScript(zone_script, "leave_location", GetZone(), this, GetLocation());
 		}
-
+		
+			GetZone()->RemoveSpawnFromGrid(this, GetLocation());
+			GetZone()->AddSpawnToGrid(this, grid_id);
+			
+		if (zone_script && lua_interface) {
+			lua_interface->RunZoneScript(zone_script, "enter_location", GetZone(), this, grid_id);
+		}
+		
 		appearance.pos.grid_id = grid_id;
 	}
 	if (activity == UPDATE_ACTIVITY_IN_WATER_ABOVE || activity == UPDATE_ACTIVITY_IN_WATER_BELOW) {

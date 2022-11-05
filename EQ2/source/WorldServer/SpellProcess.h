@@ -19,6 +19,9 @@
 */
 #ifndef __EQ2_SPELL_PROCESS__
 #define __EQ2_SPELL_PROCESS__
+#include <mutex>
+#include <shared_mutex>
+
 #include "client.h"
 #include "Spells.h"
 #include "zoneserver.h"
@@ -393,7 +396,7 @@ public:
 	void DeleteActiveSpell(LuaSpell* spell);
 	static bool AddLuaSpellTarget(LuaSpell* lua_spell, int32 id, bool lock_spell_targets = true);
 private:
-	Mutex MSpellProcess;
+	mutable std::shared_mutex MSpellProcess;
 	MutexMap<Entity*,Spell*> spell_que;
 	MutexList<LuaSpell*> active_spells;
 	MutexList<CastTimer*> cast_timers;

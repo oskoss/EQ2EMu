@@ -174,7 +174,7 @@ void PlayerGroup::GroupChatMessage(Spawn* from, int32 language, const char* mess
 	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-void PlayerGroup::MakeLeader(Entity* new_leader) {
+bool PlayerGroup::MakeLeader(Entity* new_leader) {
 	deque<GroupMemberInfo*>::iterator itr;
 	MGroupMembers.readlock(__FUNCTION__, __LINE__);
 	for (itr = m_members.begin(); itr != m_members.end(); itr++) {
@@ -188,6 +188,8 @@ void PlayerGroup::MakeLeader(Entity* new_leader) {
 
 	new_leader->GetGroupMemberInfo()->leader = true;
 	SendGroupUpdate();
+	
+	return true;
 }
 
 
@@ -377,6 +379,8 @@ int8 PlayerGroupManager::AcceptInvite(Entity* member) {
 
 			// Remove from invite list and add to the group
 			m_pendingInvites.erase(member->GetName());
+			
+			GroupMessage(client_leader->GetPlayer()->GetGroupMemberInfo()->group_id, "%s has joined the group.", member->GetName());
 			AddGroupMember(client_leader->GetPlayer()->GetGroupMemberInfo()->group_id, member);
 			ret = 0; // success
 		}
@@ -585,11 +589,13 @@ void PlayerGroupManager::GroupChatMessage(int32 group_id, Spawn* from, int32 lan
 		m_groups[group_id]->GroupChatMessage(from, language, message);
 }
 
-void PlayerGroupManager::MakeLeader(int32 group_id, Entity* new_leader) {
+bool PlayerGroupManager::MakeLeader(int32 group_id, Entity* new_leader) {
 	std::shared_lock lock(MGroups);
 
 	if (m_groups.count(group_id) > 0)
-		m_groups[group_id]->MakeLeader(new_leader);
+		return m_groups[group_id]->MakeLeader(new_leader);
+	
+	return false;
 }
 
 void PlayerGroupManager::UpdateGroupBuffs() {

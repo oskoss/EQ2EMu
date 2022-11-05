@@ -3350,16 +3350,21 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 			if (sep && sep->arg[0] && strlen(sep->arg[0]) > 1) {
 				Client* new_leader = zone_list.GetClientByCharName(sep->arg[0]);
-				if (new_leader) {
+				if (new_leader && new_leader->GetPlayer()->GetGroupMemberInfo() && new_leader->GetPlayer()->GetGroupMemberInfo()->group_id == client->GetPlayer()->GetGroupMemberInfo()->group_id) {
 					if (client->GetPlayer()->IsGroupMember(new_leader->GetPlayer())) {
-						world.GetGroupManager()->MakeLeader(client->GetPlayer()->GetGroupMemberInfo()->group_id, new_leader->GetPlayer());
+						if(world.GetGroupManager()->MakeLeader(client->GetPlayer()->GetGroupMemberInfo()->group_id, new_leader->GetPlayer())) {
+							world.GetGroupManager()->GroupMessage(client->GetPlayer()->GetGroupMemberInfo()->group_id, "%s is now leader of the group.", new_leader->GetPlayer()->GetName());
+						}
 					}
 				}
 				else
 					client->SimpleMessage(CHANNEL_COMMANDS, "Unable to find the given player.");
 			}
-			else if (cmdTarget && cmdTarget->IsPlayer())
-				world.GetGroupManager()->MakeLeader(client->GetPlayer()->GetGroupMemberInfo()->group_id, (Entity*)cmdTarget);
+			else if (cmdTarget && cmdTarget->IsPlayer() && ((Player*)cmdTarget)->GetGroupMemberInfo() && ((Player*)cmdTarget)->GetGroupMemberInfo()->group_id == client->GetPlayer()->GetGroupMemberInfo()->group_id) {
+				if(client->GetPlayer()->IsGroupMember((Player*)cmdTarget) && world.GetGroupManager()->MakeLeader(client->GetPlayer()->GetGroupMemberInfo()->group_id, (Entity*)cmdTarget)) {
+					world.GetGroupManager()->GroupMessage(client->GetPlayer()->GetGroupMemberInfo()->group_id, "%s is now leader of the group.", cmdTarget->GetName());
+				}
+			}
 			else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to change group leader.");
 
@@ -5491,7 +5496,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_LOCATION_DELETE	: { Command_LocationDelete(client, sep); break; }
 		case COMMAND_LOCATION_LIST		: { Command_LocationList(client, sep); break; }
 		case COMMAND_LOCATION_REMOVE	: { Command_LocationRemove(client, sep); break; }
-		case COMMAND_GRID				: { Command_Grid(client); break; }
+		case COMMAND_GRID				: { Command_Grid(client, sep); break; }
 		case COMMAND_TRY_ON				: { Command_TryOn(client, sep); break; }
 		case COMMAND_RANDOMIZE			: { Command_Randomize(client, sep); break; }
 		case COMMAND_AFK				: { Command_AFK(client, sep); break; }
@@ -6114,18 +6119,32 @@ void Commands::Command_StopFollow(Client* client, Seperator* sep)
 	Dev		: Scatman
 	Example	: /grid
 */ 
-void Commands::Command_Grid(Client* client)
+void Commands::Command_Grid(Client* client, Seperator* sep)
 {
-	client->Message(CHANNEL_COLOR_YELLOW, "Your Grid ID is %u", client->GetPlayer()->appearance.pos.grid_id);
-
 	if (client->GetPlayer()->GetMap() != nullptr) {
+		if(sep && sep->arg[0][0] && strncasecmp("spawns", sep->arg[0], 6) == 0) {
+			int32 grid = client->GetPlayer()->GetLocation();
+				
+			if(sep->IsNumber(1))
+				grid = atoul(sep->arg[1]);
+			std::vector<Spawn*> spawns = client->GetPlayer()->GetZone()->GetSpawnsInGrid(grid);
+			client->Message(CHANNEL_COLOR_RED, "Grid ID %u has %u spawns.", grid, spawns.size());
+			for(int i=0;i<spawns.size();i++) {
+				Spawn* spawn = spawns.at(i);
+				client->Message(CHANNEL_COLOR_YELLOW, "Spawn %s (%u), Loc X/Y/Z: %f/%f/%f.", spawn->GetName(), spawn->GetID(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
+			}
+		}
+		else {
+			client->Message(CHANNEL_COLOR_YELLOW, "Your Grid ID is %u", client->GetPlayer()->appearance.pos.grid_id);
 			auto loc = glm::vec3(client->GetPlayer()->GetX(), client->GetPlayer()->GetZ(), client->GetPlayer()->GetY());
 			uint32 GridID = 0;
 			uint32 WidgetID = 0;
 			float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &GridID, &WidgetID);
 			float minY = client->GetPlayer()->GetMap()->GetMinY();
 			float maxY = client->GetPlayer()->GetMap()->GetMaxY();
-			client->Message(CHANNEL_COLOR_YELLOW, "Grid result is %u, at EQ2 Y coordinate %f.  Min/Max Y %f/%f.  Widget ID: %u", GridID, new_z, minY, maxY, WidgetID);
+			int32 grid_spawn_count = client->GetPlayer()->GetZone()->GetSpawnCountInGrid(GridID);
+			client->Message(CHANNEL_COLOR_YELLOW, "Grid result is %u, at EQ2 Y coordinate %f.  Spawns on grid: %u.  Min/Max Y %f/%f.  Widget ID: %u", GridID, new_z, grid_spawn_count, minY, maxY, WidgetID);
+		}
 	}
 }
 

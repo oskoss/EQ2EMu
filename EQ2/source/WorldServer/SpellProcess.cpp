@@ -33,7 +33,6 @@ extern RuleManager rule_manager;
 
 SpellProcess::SpellProcess(){
 	last_checked_time = 0;
-	MSpellProcess.SetName("SpellProcess::MSpellProcess");
 	MRemoveTargetList.SetName("SpellProcess::MRemoveTargetList");
 	MSoloHO.SetName("SpellProcess::m_soloHO");
 	MGroupHO.SetName("SpellProcess:m_groupHO");
@@ -45,7 +44,7 @@ SpellProcess::~SpellProcess(){
 }
 
 void SpellProcess::RemoveAllSpells(){
-	MSpellProcess.lock();	
+    std::unique_lock lock(MSpellProcess);	
 	ClearSpellScriptTimerList();
 
 	MutexList<LuaSpell*>::iterator active_spells_itr = active_spells.begin();
@@ -105,15 +104,13 @@ void SpellProcess::RemoveAllSpells(){
 	MSpellCancelList.writelock(__FUNCTION__, __LINE__);
 	SpellCancelList.clear();
 	MSpellCancelList.releasewritelock(__FUNCTION__, __LINE__);
-
-	MSpellProcess.unlock();
 }
 
 void SpellProcess::Process(){
 	if(last_checked_time > Timer::GetCurrentTime2())
 		return;
 	last_checked_time = Timer::GetCurrentTime2() + 50;
-	MSpellProcess.lock();
+	MSpellProcess.lock_shared();
 	CheckSpellScriptTimers();
 	if(active_spells.size(true) > 0){		
 		LuaSpell* spell = 0;
@@ -279,7 +276,7 @@ void SpellProcess::Process(){
 	}
 	MGroupHO.releasewritelock(__FUNCTION__, __LINE__);
 
-	MSpellProcess.unlock();
+	MSpellProcess.unlock_shared();
 }
 bool SpellProcess::IsReady(Spell* spell, Entity* caster){
 	if(caster->IsCasting()) {
@@ -1946,7 +1943,7 @@ void SpellProcess::Interrupted(Entity* caster, Spawn* interruptor, int16 error_c
 
 void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, bool delete_recast, bool call_expire_function, bool lock_spell_process){
 	if(lock_spell_process)
-		MSpellProcess.lock();
+		MSpellProcess.lock_shared();
 
 	int32 i = 0;
 	if(cast_timers.size() > 0){		
@@ -2012,7 +2009,7 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 	}
 	
 	if(lock_spell_process)
-		MSpellProcess.unlock();
+		MSpellProcess.unlock_shared();
 }
 
 void SpellProcess::GetSpellTargets(LuaSpell* luaspell) 
