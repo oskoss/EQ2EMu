@@ -2272,7 +2272,7 @@ void Entity::CureDetrimentByType(int8 cure_count, int8 det_type, string cure_nam
 		
 		LogWrite(PLAYER__ERROR, 0, "Debug", "Remove spell %s", remove_list.at(i)->spell->GetName());
 		GetZone()->SendDispellPacket(caster, this, cure_name, (string)remove_list.at(i)->spell->GetName(), DISPELL_TYPE_CURE);
-		GetZone()->GetSpellProcess()->DeleteCasterSpell(spell, "cured", false, true, this);
+		GetZone()->GetSpellProcess()->DeleteCasterSpell(spell, "cured", false, this);
 	}
 	remove_list.clear();
 }

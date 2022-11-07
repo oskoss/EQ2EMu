@@ -49,7 +49,7 @@ void SpellProcess::RemoveAllSpells(){
 
 	MutexList<LuaSpell*>::iterator active_spells_itr = active_spells.begin();
 	while(active_spells_itr.Next()){
-		DeleteCasterSpell(active_spells_itr->value, "", true);
+		DeleteCasterSpell(active_spells_itr->value, "");
 	}
 
 	active_spells_itr = active_spells.begin();
@@ -368,9 +368,8 @@ bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell, string reason)
 	return ret;
 }
 
-bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, bool lock_spell_process, Spawn* remove_target){
-	if(lock_spell_process)
-		MSpellProcess.lock();
+bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, Spawn* remove_target){
+    std::shared_lock lock(MSpellProcess);	
 
 	bool ret = false;
 	Spawn* target = 0;
@@ -394,9 +393,6 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 				}
 			}
 			spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
-			if(lock_spell_process) {
-				MSpellProcess.unlock();
-			}
 			return target_valid;
 		}
 		spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
@@ -490,10 +486,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 		}
 		if(lua_interface)
 			lua_interface->RemoveSpell(spell, true, SpellScriptTimersHasSpell(spell), reason, removing_all_spells);
-	}	
-	
-	if(lock_spell_process)
-		MSpellProcess.unlock();
+	}
 	
 	return ret;
 }

@@ -5866,7 +5866,7 @@ void Commands::Command_CancelMaintained(Client* client, Seperator* sep)
 		MaintainedEffects mEffects = client->GetPlayer()->GetInfoStruct()->maintained_effects[spell_index];
 		client->GetPlayer()->MMaintainedSpells.releasereadlock(__FUNCTION__, __LINE__);
 		
-		if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell, "canceled", false, true))
+		if (!client->GetPlayer()->GetZone()->GetSpellProcess()->DeleteCasterSpell(mEffects.spell, "canceled", false))
 			client->Message(CHANNEL_COLOR_RED, "The maintained spell could not be cancelled.");
 	}
 }
@@ -11767,7 +11767,7 @@ void Commands::Command_CancelEffect(Client* client, Seperator* sep)
 		MaintainedEffects* meffect = effect->caster->GetMaintainedSpell(spell_id);
 		
 		if (!meffect || !meffect->spell || !meffect->spell->caster || 
-		!meffect->spell->caster->GetZone()->GetSpellProcess()->DeleteCasterSpell(meffect->spell, "canceled", false, true, client->GetPlayer()))
+		!meffect->spell->caster->GetZone()->GetSpellProcess()->DeleteCasterSpell(meffect->spell, "canceled", false, client->GetPlayer()))
 			client->Message(CHANNEL_COLOR_RED, "The spell effect could not be cancelled.");
 	}
 }
