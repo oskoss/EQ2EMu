@@ -50,6 +50,7 @@ namespace EQ2ModelViewer
         private SentenceType m_Sentence9;
         private SentenceType m_Sentence10;
         private SentenceType m_Sentence11;
+        private SentenceType m_Sentence12;
 
         public bool Initialize(Device device, DeviceContext context, int screenWidth, int screenHeight, Matrix baseViewMatrix)
         {
@@ -97,6 +98,9 @@ namespace EQ2ModelViewer
 
             InitializeSentence(ref m_Sentence11, 32, device);
             UpdateSentence(ref m_Sentence11, "", 0, 0, 1.0f, 1.0f, 0.0f, context);
+
+            InitializeSentence(ref m_Sentence12, 32, device);
+            UpdateSentence(ref m_Sentence12, "", 0, 0, 1.0f, 1.0f, 0.0f, context);
             return true;
         }
 
@@ -140,6 +144,7 @@ namespace EQ2ModelViewer
             RenderSentence(context, m_Sentence9, world, ortho);
             RenderSentence(context, m_Sentence10, world, ortho);
             RenderSentence(context, m_Sentence11, world, ortho);
+            RenderSentence(context, m_Sentence12, world, ortho);
 
             return true;
         }
@@ -278,7 +283,8 @@ namespace EQ2ModelViewer
                     && UpdateSentence(ref m_Sentence7, "Yaw: " + model.Rotation.X.ToString(), 20, 160, 1.0f, 0.0f, 0.0f, context)
                     && UpdateSentence(ref m_Sentence8, "Pitch: " + model.Rotation.Y.ToString(), 20, 180, 1.0f, 0.0f, 0.0f, context)
                     && UpdateSentence(ref m_Sentence9, "Roll: " + model.Rotation.Z.ToString(), 20, 200, 1.0f, 0.0f, 0.0f, context)
-                    && UpdateSentence(ref m_Sentence11, "Grid: " + model.GridID.ToString(), 20, 220, 1.0f, 0.0f, 0.0f, context);
+                    && UpdateSentence(ref m_Sentence11, "Grid: " + model.GridID.ToString(), 20, 220, 1.0f, 0.0f, 0.0f, context)
+                    && UpdateSentence(ref m_Sentence12, "NodeFlags: " + model.nodeFlags.ToString(), 20, 240, 1.0f, 0.0f, 0.0f, context);
             }
             else {
                 ret = UpdateSentence(ref m_Sentence2, "", 20, 60, 1.0f, 0.0f, 0.0f, context)
@@ -289,7 +295,8 @@ namespace EQ2ModelViewer
                     && UpdateSentence(ref m_Sentence7, "", 20, 160, 1.0f, 0.0f, 0.0f, context)
                     && UpdateSentence(ref m_Sentence8, "", 20, 180, 1.0f, 0.0f, 0.0f, context)
                     && UpdateSentence(ref m_Sentence9, "", 20, 200, 1.0f, 0.0f, 0.0f, context)
-                    && UpdateSentence(ref m_Sentence11, "", 20, 220, 1.0f, 0.0f, 0.0f, context);
+                    && UpdateSentence(ref m_Sentence11, "", 20, 220, 1.0f, 0.0f, 0.0f, context)
+                    && UpdateSentence(ref m_Sentence12, "", 20, 240, 1.0f, 0.0f, 0.0f, context);
             }
 
             return ret;

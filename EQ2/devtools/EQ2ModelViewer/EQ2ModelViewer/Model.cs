@@ -27,6 +27,7 @@ namespace EQ2ModelViewer
         public UInt32 WidgetID = 0;
         public UInt32 GridID = 0;
         public String modelName = "";
+        public UInt32 nodeFlags = 0;
         List<MeshClass> m_meshes = new List<MeshClass>();
         LightShaderClass lightShader = new LightShaderClass();
 

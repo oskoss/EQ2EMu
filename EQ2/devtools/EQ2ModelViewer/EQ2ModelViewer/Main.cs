@@ -37,7 +37,7 @@ namespace EQ2ModelViewer
         private bool AutoExportRegionOnLoad = false;
         private String AutoLoadFileName = "";
         private bool IsLoaded = false;
-        private bool WriteObjFile = true;
+        private bool WriteObjFile = false;
         public frmMain()
         {
             InitializeComponent();
@@ -99,7 +99,7 @@ namespace EQ2ModelViewer
             text.Initialize(Graphics.Device, Graphics.Context, pGraphics.ClientSize.Width, pGraphics.ClientSize.Height, baseViewMatrix);
 
             BitmapClass bmp = new BitmapClass();
-            bmp.Initialize(Graphics.Device, pGraphics.ClientSize.Width, pGraphics.ClientSize.Height, "Background.bmp", 145, 220, baseViewMatrix);
+            bmp.Initialize(Graphics.Device, pGraphics.ClientSize.Width, pGraphics.ClientSize.Height, "Background.bmp", 145, 260, baseViewMatrix);
             
             string[] args = Environment.GetCommandLineArgs();
             if (args.Length > 1)
@@ -550,6 +550,7 @@ namespace EQ2ModelViewer
                 model.Scale = scale;
                 model.WidgetID = widgetID;
                 model.GridID = GridID;
+                model.nodeFlags = ((VeNode)item).nodeFlags;
                 m_Models.Add(model);
             }
             else

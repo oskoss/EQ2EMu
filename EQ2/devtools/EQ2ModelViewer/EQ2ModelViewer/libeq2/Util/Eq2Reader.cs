@@ -102,13 +102,19 @@ namespace Everquest2.Util
                 //    filename != null ? "\n in file " + filename : "");
 
                 // Find deserializing constructor
-                constructor = classType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, 
-                                                       null, 
-                                                       new Type[] { typeof(Eq2Reader), typeof(StreamingContext) }, 
-                                                       null);
-                Debug.Assert(constructor != null, "Deserializing constructor not found on class " + classType.Name);
+                try
+                {
+                    constructor = classType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                                                           null,
+                                                           new Type[] { typeof(Eq2Reader), typeof(StreamingContext) },
+                                                           null);
+                    Debug.Assert(constructor != null, "Deserializing constructor not found on class " + classType.Name);
 
-                classCache[className] = constructor;
+                    classCache[className] = constructor;
+                }catch(Exception ex)
+                {
+                    return null;
+                }
             }
 
             // Create streaming context
