@@ -157,6 +157,7 @@ enum RuleType {
 	StartingZoneLanguages,
 	StartingZoneRuleFlag,
 	EnforceRacialAlignment,
+	MemoryCacheZoneMaps,
 
 	/* ZONE */
 	MinZoneLevelOverrideStatus,

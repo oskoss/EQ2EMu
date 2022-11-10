@@ -539,9 +539,15 @@ void ZoneList::Add(ZoneServer* zone) {
 	MZoneList.releasewritelock(__FUNCTION__, __LINE__);
 }
 void ZoneList::Remove(ZoneServer* zone) {
+	const char* zoneName = zone->GetZoneName();
 	MZoneList.writelock(__FUNCTION__, __LINE__);
 	zlist.remove(zone);
 	MZoneList.releasewritelock(__FUNCTION__, __LINE__);
+	
+	ZoneServer* alternativeZone = Get(zoneName, false, false);
+	if(!alternativeZone && !rule_manager.GetGlobalRule(R_World, MemoryCacheZoneMaps)->GetBool()) {
+		world.RemoveMaps(std::string(zoneName));
+	}
 }
 ZoneServer* ZoneList::Get(const char* zone_name, bool loadZone, bool skip_existing_zones) {
 	list<ZoneServer*>::iterator zone_iter;
@@ -2595,6 +2601,26 @@ void World::LoadMaps(std::string zoneFile)
 		maps.insert(make_pair(zoneToLower, newRange));
 	}
 	MWorldMaps.releasewritelock();
+}
+
+void World::RemoveMaps(std::string zoneFile)
+{
+	string zoneToLower(zoneFile);
+	boost::algorithm::to_lower(zoneToLower);
+
+	MWorldMaps.writelock();
+	std::map<std::string, MapRange*>::iterator itr;
+	itr = maps.find(zoneToLower);
+	if (itr != maps.end())
+	{
+		MapRange* range = itr->second;
+		maps.erase(itr);
+		MWorldMaps.releasewritelock();
+		safe_delete(range);
+	}
+	else {
+		MWorldMaps.releasewritelock();
+	}
 }
 
 Map* World::GetMap(std::string zoneFile, int32 client_version)

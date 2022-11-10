@@ -794,7 +794,7 @@ private:
 	void DismissAllPets();																						// never used outside zone server
 	
 	/* Mutex Lists */
-	MutexList<int32> changed_spawns;										// int32 = spawn id
+	std::map<int32, bool> changed_spawns;										// int32 = spawn id
 	vector<Client*> clients;
 	MutexList<Client*> connected_clients;									// probably remove this list so we are not maintaining 2 client lists
 	MutexList<int32> damaged_spawns;										// int32 = spawn id
@@ -833,6 +833,7 @@ private:
 	
 	/* Mutexs */
 	mutable std::shared_mutex MGridMaps;
+	mutable std::shared_mutex MChangedSpawns;
 	
 	Mutex	m_enemy_faction_list;
 	Mutex	m_npc_faction_list;

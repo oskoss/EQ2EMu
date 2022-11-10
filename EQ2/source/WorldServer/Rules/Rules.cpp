@@ -304,6 +304,7 @@ void RuleManager::Init()
 																	// 4 - send to 'new' starting zones, won't support old clients
 																	// 5+ - send to new and old starting zones as needed
 	RULE_INIT(R_World, EnforceRacialAlignment, "1");
+	RULE_INIT(R_World, MemoryCacheZoneMaps, "0");					// 0 disables caching the zone maps in memory, too many individual/unique zones entered may cause a lot of memory build up
 	//INSERT INTO `ruleset_details`(`id`, `ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (NULL, '1', 'R_World', '', '', '')
 
 	/* ZONE */

@@ -6142,8 +6142,10 @@ void Commands::Command_Grid(Client* client, Seperator* sep)
 			float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &GridID, &WidgetID);
 			float minY = client->GetPlayer()->GetMap()->GetMinY();
 			float maxY = client->GetPlayer()->GetMap()->GetMaxY();
+			float minZ = client->GetPlayer()->GetMap()->GetMinZ();
+			float maxZ = client->GetPlayer()->GetMap()->GetMaxZ();
 			int32 grid_spawn_count = client->GetPlayer()->GetZone()->GetSpawnCountInGrid(GridID);
-			client->Message(CHANNEL_COLOR_YELLOW, "Grid result is %u, at EQ2 Y coordinate %f.  Spawns on grid: %u.  Min/Max Y %f/%f.  Widget ID: %u", GridID, new_z, grid_spawn_count, minY, maxY, WidgetID);
+			client->Message(CHANNEL_COLOR_YELLOW, "Grid result is %u, at EQ2 Y coordinate %f.  Spawns on grid: %u.  Min/Max Y %f/%f Z %f/%f.  Widget ID: %u", GridID, new_z, grid_spawn_count, minY, maxY, minZ, maxZ, WidgetID);
 		}
 	}
 }

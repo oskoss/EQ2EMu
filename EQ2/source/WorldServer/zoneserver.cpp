@@ -175,6 +175,7 @@ ZoneServer::ZoneServer(const char* name, bool incoming_client) {
 	lifetime_client_count = 0;
 }
 
+typedef map <int32, bool> ChangedSpawnMapType;
 ZoneServer::~ZoneServer() {
 	zoneShuttingDown = true;  //ensure other threads shut down too
 	//allow other threads to properly shut down
@@ -186,7 +187,11 @@ ZoneServer::~ZoneServer() {
 			LogWrite(ZONE__DEBUG, 7, "Zone", "Zone shutdown waiting on initial spawn thread");
 		Sleep(10);
 	}
-	changed_spawns.clear(true);
+	
+	MChangedSpawns.lock();
+	changed_spawns.clear();
+	MChangedSpawns.unlock();
+	
 	transport_spawns.clear();
 	safe_delete(tradeskillMgr);
 	MMasterZoneLock->lock();
@@ -1919,13 +1924,31 @@ Spawn* ZoneServer::FindSpawn(Player* searcher, const char* name){
 void ZoneServer::AddChangedSpawn(Spawn* spawn) {
 	if (!spawn || (spawn->IsPlayer() && !spawn->info_changed && !spawn->vis_changed) || (spawn->IsPlayer() && ((Player*)spawn)->IsFullyLoggedIn() == false))
 		return;
-	if (changed_spawns.count(spawn->GetID()) == 0)
-		changed_spawns.Add(spawn->GetID());
+	
+    MChangedSpawns.lock_shared();
+	ChangedSpawnMapType::iterator it = changed_spawns.find(spawn->GetID());
+	if (it != changed_spawns.end()) {
+		it->second = true;
+		MChangedSpawns.unlock_shared();
+	}
+	else {
+		MChangedSpawns.unlock_shared();
+		MChangedSpawns.lock();
+		changed_spawns.insert(make_pair(spawn->GetID(),true));
+		MChangedSpawns.unlock();
+	}
 }
 
 void ZoneServer::RemoveChangedSpawn(Spawn* spawn){
-	if (spawn)
-		changed_spawns.Remove(spawn->GetID());
+	if(!spawn)
+		return;
+	
+    MChangedSpawns.lock();
+	ChangedSpawnMapType::iterator it = changed_spawns.find(spawn->GetID());
+	if (it != changed_spawns.end()) {
+		it->second = false;
+	}
+	MChangedSpawns.unlock();
 }
 
 void ZoneServer::AddDrowningVictim(Player* player){
@@ -1980,25 +2003,28 @@ void ZoneServer::ProcessDrowning(){
 }
 
 void ZoneServer::SendSpawnChanges(){
+    std::shared_lock lock(MChangedSpawns);
 	if (changed_spawns.size() < 1)
 		return;
 
 	set<Spawn*> spawns_to_send;
 	Spawn* spawn = 0;
 
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
-	MutexList<int32>::iterator spawn_iter = changed_spawns.begin();
 	int count = 0;
-	while(spawn_iter.Next()){		
-		spawn = GetSpawnByID(spawn_iter->value);
+	
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
+	
+	for( ChangedSpawnMapType::iterator it = changed_spawns.begin(); it != changed_spawns.end(); ++it ) {
+		if(!it->second)
+			continue;
+		
+		spawn = GetSpawnByID(it->first);
 		if(spawn){
 			spawns_to_send.insert(spawn);
 			count++;
 		}
-		if (!spawn)
-			changed_spawns.Remove(spawn_iter->value);
 	}
-
+	
 	vector<Client*>::iterator client_itr;
 	Client* client = 0;
 	

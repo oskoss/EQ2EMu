@@ -649,6 +649,7 @@ public:
 	RegionMap* GetRegionMap(std::string zoneFile, int32 client_version);
 	
 	void LoadMaps(std::string zoneFile);
+	void RemoveMaps(std::string zoneFile);
 	Map* GetMap(std::string zoneFile, int32 client_version);
 	
 	void SendTimeUpdate();
