@@ -5794,7 +5794,7 @@ MutexMap<int32, LoginEquipmentUpdate>* WorldDatabase::GetEquipmentUpdates()
 	LogWrite(INIT__LOGIN_DEBUG, 0, "Login", "Looking for Login Appearance Updates...");
 	
 	// TODO: Someday store the equipment colors in character_items, for custom colorization of gear (?)
-	if( database_new.Select(&result, "SELECT ci.id, ci.char_id, ia.equip_type, ia.red, green, ia.blue, ia.highlight_red, ia.highlight_green, ia.highlight_blue, ci.slot FROM characters c JOIN character_items ci ON c.id = ci.char_id JOIN item_appearances ia ON ci.item_id = ia.item_id WHERE c.deleted = 0 AND ci.type = 'EQUIPPED' AND ( ci.slot <= 8 OR ci.slot = 19 ) AND ci.login_checksum <> CRC32(CRC32(`ci`.`type`) + CRC32(ci.slot) + CRC32(ci.item_id)) ORDER BY ci.char_id, ci.slot") )
+	if( database_new.Select(&result, "SELECT ci.id, ci.char_id, ia.equip_type, ia.red, ia.green, ia.blue, ia.highlight_red, ia.highlight_green, ia.highlight_blue, ci.slot FROM characters c JOIN character_items ci ON c.id = ci.char_id JOIN item_appearances ia ON ci.item_id = ia.item_id WHERE c.deleted = 0 AND ci.type = 'EQUIPPED' AND ( ci.slot <= 8 OR ci.slot = 19 ) AND ci.login_checksum <> CRC32(CRC32(`ci`.`type`) + CRC32(ci.slot) + CRC32(ci.item_id)) ORDER BY ci.char_id, ci.slot") )
 	{
 		while( result.Next() )
 		{
