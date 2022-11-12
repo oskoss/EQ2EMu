@@ -10,20 +10,21 @@
 	Followed by: Judgement of the Dryads (judgement_of_the_dryads.lua)
 --]]
 
+require "SpawnScripts/Generic/DialogModule"
 
 function Init(Quest)
-	AddQuestStep(Quest, 1, "Search the alchemy shelves.", 1, 100, "I must search for the alchemist shop in Nettleville to attain the magical plant nutrient.", 182)
+	AddQuestStep(Quest, 1, "Search the alchemy shelves.", 1, 100, "I must search alchemist shops in Qeynos to attain the magical plant nutrient.", 182)
 	AddQuestStepCompleteAction(Quest, 1, "Step1_Complete_FoundNutrients")
-	UpdateQuestZone(Quest, "Nettleville")
+	UpdateQuestZone(Quest, "Multiple Zones")
 end
 
 function Accepted(Quest, QuestGiver, Player)
 	FaceTarget(QuestGiver, Player)
-	conversation = CreateConversation()
-	
-	PlayFlavor(QuestGiver, "voiceover/english/scholar_neola/qey_adv01_oakmyst/scholarneola002.mp3", "", "", 4033827219, 3906200141, Player)
-	AddConversationOption(conversation, "I will go and find this arcane nutrient.")
-	StartConversation(conversation, QuestGiver, Player, "I cannot leave this woodland, but you can. Within the villages of Qeynos an alchemist has created a powerful nutrient that will aid the sapling. Retrieve this prized item and feed it to the growing tree. ")
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("I cannot leave this woodland, but you can. Within the villages of Qeynos an alchemist has created a powerful nutrient that will aid the sapling. Retrieve this prized item and feed it to the growing tree. ")
+	Dialog.AddVoiceover("voiceover/english/scholar_neola/qey_adv01_oakmyst/scholarneola002.mp3", 4033827219, 3906200141)
+	Dialog.AddOption("I will go and find this arcane nutrient.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)
@@ -34,7 +35,7 @@ function Step1_Complete_FoundNutrients(Quest, QuestGiver, Player)
 	UpdateQuestTaskGroupDescription(Quest, 1, "I found Smitelin's Excel-o-gro in Nettleville.")
 	UpdateQuestZone(Quest, "Oakmyst Forest")
 
-	AddQuestStepChat(Quest, 2, "Find the treant sapling.", 1, "I must sprinkle Smitelin's Excel-o-gro into the treant sapling of Oakmyst Forest.", 0, 1950052) 
+	AddQuestStepChat(Quest, 2, "Find the treant sapling.", 1, "I must sprinkle Smitelin's Excel-o-gro into the treant sapling of Oakmyst Forest.", 0, 1950052,8300007) 
 	AddQuestStepCompleteAction(Quest, 2, "Step2_Complete_SpokeToSapling")
 end
 
@@ -42,7 +43,7 @@ function Step2_Complete_SpokeToSapling(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 2, "I poured the nutrient on the treant sapling.")
 	UpdateQuestTaskGroupDescription(Quest, 2, "I sprinkled the magical nutrient, Smitelin's Excel-o-gro onto the treant sapling.")
 
-	AddQuestStepChat(Quest, 3, "Speak to Scholar Neola.", 1, "I should inform Scholar Neola that I saved the treant sapling.", 0, 1950051) 
+	AddQuestStepChat(Quest, 3, "Speak to Scholar Neola.", 1, "I should inform Scholar Neola that I saved the treant sapling.", 0, 1950051,8300030) 
 	AddQuestStepCompleteAction(Quest, 3, "QuestComplete")
 end
 

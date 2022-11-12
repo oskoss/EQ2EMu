@@ -11,8 +11,8 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "Recover the satchel.", 1, 25, " I need to recover the Outlander's satchel and the items that were in it. The Blackfurl deckhands were the ones that stole the Outlanders gear, I'll start with them.", 399, 1960060 )
-	AddQuestStepKill(Quest, 2, "Recover the journal.", 1, 25, " I need to recover the Outlander's satchel and the items that were in it. The Blackfurl deckhands were the ones that stole the Outlanders gear, I'll start with them.", 195, 1960060 ) -- need correct icon
+	AddQuestStepKill(Quest, 1, "Recover the satchel.", 1, 15, " I need to recover the Outlander's satchel and the items that were in it. The Blackfurl deckhands were the ones that stole the Outlanders gear, I'll start with them.", 399, 1960060,8270058, 8270059, 8270060)
+	AddQuestStepKill(Quest, 2, "Recover the journal.", 1, 30, " I need to recover the Outlander's satchel and the items that were in it. The Blackfurl deckhands were the ones that stole the Outlanders gear, I'll start with them.", 195, 1960060 ) -- need correct icon
 	AddQuestStepKill(Quest, 3, "Recover the ring.", 1, 20, " I need to recover the Outlander's satchel and the items that were in it. The Blackfurl deckhands were the ones that stole the Outlanders gear, I'll start with them.", 596, 1960060 ) -- need correct icon
 	AddQuestStepKill(Quest, 4, "Recover the sealed letter.", 1, 25, " I need to recover the Outlander's satchel and the items that were in it. The Blackfurl deckhands were the ones that stole the Outlanders gear, I'll start with them.", 1223, 1960060) -- need correct icon
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
@@ -48,9 +48,9 @@ end
 
 function CheckProgress(Quest, QuestGiver, Player)
  if QuestStepIsComplete(Player, 5483, 1) and QuestStepIsComplete(Player, 5483, 2)  and QuestStepIsComplete(Player, 5483, 3) and QuestStepIsComplete(Player, 5483, 4) then
-	UpdateQuestTaskGroupDescription(Quest,1, "I've recovered all of the Outlander's gear.")
+	UpdateQuestTaskGroupDescription(Quest,2, "I've recovered all of the Outlander's gear.")
 	
-	AddQuestStepChat(Quest, 5, "I should return to Outlander Vaughn.", 1, "I need to return to Outlander Vaughn and give him back his items.", 399, 1960053)
+	AddQuestStepChat(Quest, 5, "I should return to Outlander Vaughn.", 1, "I need to return to Outlander Vaughn and give him back his items.", 399, 1960053,8270029)
     AddQuestStepCompleteAction(Quest, 5, "QuestComplete")
 end
    end
@@ -70,7 +70,7 @@ end
 function QuestComplete(Quest, QuestGiver, Player)
 	-- The following UpdateQuestStepDescription and UpdateTaskGroupDescription are not needed, parser adds them for completion in case stuff needs to be moved around
 	UpdateQuestStepDescription(Quest, 5, "I've returned the items to the Outlander.")
-	UpdateQuestTaskGroupDescription(Quest, 1, "The Outlander was grateful to get his gear back.")
+	UpdateQuestTaskGroupDescription(Quest, 2, "The Outlander was grateful to get his gear back.")
 
 	UpdateQuestDescription(Quest, "I eventually found all of Outlander Vaughn's items. He was grateful and asked if I would help him with something else.")
 	GiveQuestReward(Quest, Player)

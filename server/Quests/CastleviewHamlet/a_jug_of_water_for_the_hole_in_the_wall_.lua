@@ -9,16 +9,23 @@
         Preceded by: None
         Followed by: 
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 function Init(Quest)
-	AddQuestStepLocation(Quest, 1, "I need to get near the Oakmyst falls.", 3, "I must go into Oakmyst Forest and find the waterfall. There I will fill the jug.", 310, 993.6, 0.9, -203.21)
+	AddQuestStepZoneLoc(Quest, 1, "I need to get near the Oakmyst falls.", 3, "I must go into Oakmyst Forest and find the waterfall. There I will fill the jug.", 310, 993.6, 0.9, -203.21,830)
 	AddQuestStepCompleteAction(Quest, 1, "FoundWater")
 	UpdateQuestZone(Quest, "Oakmyst Forest")
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
-end
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("That wouldst be most kind.  Take this jug and then venture into Oakmyst Forest.  This is where thou willst find a waterfall.  Enter the waterfall and fill thine jug with this fall water before it toucheth the pond water.")
+	Dialog.AddVoiceover("voiceover/english/bartender_bulurg/qey_village04/bartenderbulurg002.mp3",2371403827,3750341640)
+ 	PlayFlavor(QuestGiver, "", "", "thanks", 0,0 , Player)
+   Dialog.AddOption("I shall return with your jug of fall water.")
+   Dialog.Start()
+  end
 
 function Declined(Quest, QuestGiver, Player)
 	-- Add dialog here for when the quest is declined

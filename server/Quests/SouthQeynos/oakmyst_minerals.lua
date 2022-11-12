@@ -10,16 +10,17 @@
         Followed by: 
 --]]
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "I need to hunt Oakmyst royal defenders in Oakmyst Forest.", 3, 60, "I need to go to the Oakmyst Forest and slay some Oakmyst royal defenders to try to find some type of mineral.", 187, 1950047)
+	AddQuestStepKill(Quest, 1, "I need to hunt Oakmyst royal defenders in Oakmyst Forest.", 3, 75, "I need to go to the Oakmyst Forest and slay some Oakmyst royal defenders to try to find some type of mineral.", 187, 8300017)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
     UpdateQuestZone(Quest,"Oakmyst Forest")
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	FaceTarget(QuestGiver, Player)
-	conversation = CreateConversation()
-	AddConversationOption(conversation, "All right.")
-	StartConversation(conversation, QuestGiver, Player, "Good! Bring them back here as soon as you have them.")
+	FaceTarget(QuestGiver, Spawn)
+    PlayFlavor(QuestGiver, "voiceover/english/blacksmith_hegrenn/qey_south/blacksmithhegrenn002.mp3", "", "ponder", 986701836, 3811375684, Player)
+    local conversation = CreateConversation()
+	AddConversationOption(conversation, "Several pieces got it.")
+	StartConversation(conversation, QuestGiver, Player, "Ahh, work.  You don't say.  I heard a bit of gossip over at the tavern.  There's a rare stone mineral.  The Oakmyst royal defenders out in the forest have it, and I need several pieces.  Will you commit to this daring task, adventurer?  Remember, I need several pieces!")
 end
 
 function Declined(Quest, QuestGiver, Player)

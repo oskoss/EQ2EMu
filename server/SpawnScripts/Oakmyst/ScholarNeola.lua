@@ -5,6 +5,7 @@
 	Script Date	: 2009.05.08
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 local QUEST_1 = 228
 
@@ -19,26 +20,30 @@ end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "voiceover/english/scholar_neola/qey_adv01_oakmyst/scholarneola000.mp3", "", "", 684527020, 3141115058, Spawn)
+    if HasCompletedQuest(Spawn,QUEST_1)then
+    SavedSapling(NPC, Spawn)
+    else
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("Why do you tread upon the fertile ground? Doing so taints the lustrous blades that our young sapling needs to grow.")
+	Dialog.AddVoiceover("voiceover/english/scholar_neola/qey_adv01_oakmyst/scholarneola000.mp3", 684527020, 3141115058)
 	if not HasCompletedQuest(Spawn, QUEST_1) and not HasQuest(Spawn, QUEST_1)  then
-		AddConversationOption(conversation, "What is wrong with the sapling?", "dlg_3_1")
+	Dialog.AddOption("What is wrong with the sapling? ", "Dialog3")
 	elseif HasQuest(Spawn, QUEST_1) and GetQuestStep(Spawn, QUEST_1) == 3 then
-		AddConversationOption(conversation, "I saved the sapling.", "SavedSapling")
-	end
-	AddConversationOption(conversation, "I will trod where I please. Goodbye! ")
-	StartConversation(conversation, NPC, Spawn, "Why do you tread upon the fertile ground? Doing so taints the lustrous blades that our young sapling needs to grow.")
+	Dialog.AddOption("I saved the sapling.", "SavedSapling")
+    end
+	Dialog.AddOption("I will trod where I please. Goodbye! ")
+	Dialog.Start()
+end
 end
 
-function dlg_3_1(NPC, Spawn)
+function Dialog3(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	PlayFlavor(NPC, "voiceover/english/scholar_neola/qey_adv01_oakmyst/scholarneola001.mp3", "", "", 4101705727, 2237841081, Spawn)
-	AddConversationOption(conversation, "Is there anything I can do to help the sapling? ", "OfferQuest1")
-	AddConversationOption(conversation, "Your sapling is not my problem. Farewell.")
-	StartConversation(conversation, NPC, Spawn, "The young sapling is still weak. It feeds upon the mana of this thicket but needs greater nutrients to prosper in this woodland.")
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("The young sapling is still weak. It feeds upon the mana of this thicket but needs greater nutrients to prosper in this woodland.")
+	Dialog.AddVoiceover("voiceover/english/scholar_neola/qey_adv01_oakmyst/scholarneola001.mp3", 4101705727, 2237841081)
+	Dialog.AddOption("Is there anything I can do to help the sapling? ", "OfferQuest1")
+	Dialog.AddOption("Your sapling is not my problem. Farewell. ")
+	Dialog.Start()
 end
 
 function OfferQuest1(NPC, Spawn)
@@ -47,11 +52,11 @@ function OfferQuest1(NPC, Spawn)
 end
 
 function SavedSapling(NPC, Spawn)
-	SetStepComplete(Spawn, QUEST_1, 3)
-	
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-
-	AddConversationOption(conversation, "I will speak to the judge.")
-	StartConversation(conversation, NPC, Spawn, "The sapling has a young battle ahead to become a timber lord. Your help brings it closer to this goal. Now you must seek out the Judge. She awaits those who aid this forest.")
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("The sapling has a young battle ahead to become a timber lord. Your help brings it closer to this goal. Now you must seek out the Judge. She awaits those who aid this forest.")
+	Dialog.AddVoiceover("voiceover/english/scholar_neola/qey_adv01_oakmyst/scholarneola003.mp3", 1414143988, 1696039201)
+	Dialog.AddOption("I will speak to the judge.")
+	Dialog.Start()
+	SetStepComplete(Spawn, QUEST_1, 3)
 end

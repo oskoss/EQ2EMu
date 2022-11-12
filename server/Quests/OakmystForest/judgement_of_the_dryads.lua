@@ -9,20 +9,21 @@
 	Preceded by: Feed the Sapling (feed_the_sapling.lua)
 	Followed by: Destroy the Corruption (destroy_the_corruption.lua)
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "Slay five Sunshimmer Sprites.", 5, 100, "I must hunt down and slay five Sunshimmer Sprites in Oakmyst Forest.", 611, 1950034, 1950036, 1950054, 1950031)
+	AddQuestStepKill(Quest, 1, "Slay five Sunshimmer Sprites.", 5, 100, "I must hunt down and slay five Sunshimmer Sprites in Oakmyst Forest.", 611, 1950034, 1950036, 1950054, 1950031,8300052,8300053,8300006,8300012)
 	AddQuestStepCompleteAction(Quest, 1, "Step1_Complete_KillSprites")
 end
 
 function Accepted(Quest, QuestGiver, Player)
 	FaceTarget(QuestGiver, Player)
-	conversation = CreateConversation()
-	
-	PlayFlavor(QuestGiver, "voiceover/english/judge_eunomia/qey_adv01_oakmyst/judgeeunomia002.mp3", "", "", 2678200574, 3115032598, Player)
-	AddConversationOption(conversation, "I shall do my best to lower their numbers.")
-	StartConversation(conversation, QuestGiver, Player, "They're corrupted fayfolke--bright with beauty but twisted and corrupted to the core. They're called the sunshimmer sprites.  You must destroy them.")
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("They're corrupted fayfolke--bright with beauty but twisted and corrupted to the core. They're called the sunshimmer sprites.  You must destroy them.")
+	Dialog.AddVoiceover("voiceover/english/judge_eunomia/qey_adv01_oakmyst/judgeeunomia002.mp3", 2678200574, 3115032598)
+	Dialog.AddOption("I shall do my best to lower their numbers.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)
@@ -32,7 +33,7 @@ function Step1_Complete_KillSprites(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have slain five Sunshimmer Sprites.")
 	UpdateQuestTaskGroupDescription(Quest, 1, "I have slain five Sunshimmer Sprites in Oakmyst Forest.")
 
-	AddQuestStepChat(Quest, 2, "Speak to Judge Eunomia.", 1, "I must speak to Judge Eunomia in Oakmyst Forest.", 0, 1950049) 
+	AddQuestStepChat(Quest, 2, "Speak to Judge Eunomia.", 1, "I must speak to Judge Eunomia in Oakmyst Forest.", 0, 1950049,8300009) 
 	AddQuestStepCompleteAction(Quest, 2, "QuestComplete")
 end
 
