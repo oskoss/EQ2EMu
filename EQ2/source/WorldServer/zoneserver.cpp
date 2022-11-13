@@ -6895,7 +6895,7 @@ void ZoneServer::HidePrivateSpawn(Spawn* spawn) {
 	while (itr->Next()) {
 		client = itr->value;
 		player = client->GetPlayer();
-		if (player->WasSentSpawn(spawn->GetID())) {
+		if (player->WasSentSpawn(spawn->GetID()) || client->GetPlayer()->IsSendingSpawn(spawn->GetID())) {
 			if (!packet || packet_version != client->GetVersion()) {
 				safe_delete(packet);
 				packet_version = client->GetVersion();
