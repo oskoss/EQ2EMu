@@ -44,7 +44,6 @@ SpellProcess::~SpellProcess(){
 }
 
 void SpellProcess::RemoveAllSpells(){
-    std::unique_lock lock(MSpellProcess);	
 	ClearSpellScriptTimerList();
 
 	MutexList<LuaSpell*>::iterator active_spells_itr = active_spells.begin();
@@ -52,6 +51,8 @@ void SpellProcess::RemoveAllSpells(){
 		DeleteCasterSpell(active_spells_itr->value, "");
 	}
 
+	MSpellProcess.lock();
+	
 	active_spells_itr = active_spells.begin();
 	while(active_spells_itr.Next()){
 		active_spells.Remove(active_spells_itr->value, true);
@@ -104,6 +105,8 @@ void SpellProcess::RemoveAllSpells(){
 	MSpellCancelList.writelock(__FUNCTION__, __LINE__);
 	SpellCancelList.clear();
 	MSpellCancelList.releasewritelock(__FUNCTION__, __LINE__);
+	
+	MSpellProcess.unlock();
 }
 
 void SpellProcess::Process(){
