@@ -11,7 +11,7 @@
 --]]
 
 function Init(Quest)
-    AddQuestStepChat(Quest, 1, " I must go to Innkeeper Valean.", 1, "I must find Innkeeper Valean in Castleview Hamlet.", 53227, 2360024)
+    AddQuestStepChat(Quest, 1, " I need to deliver this book to Innkeeper Valean.", 1, " I must deliver this tattered book to Innkeeper Valean in the Caslteview Hamlet inn.", 53227, 2360024)
     AddQuestStepCompleteAction(Quest, 1, "Delivery")
     	UpdateQuestZone(Quest, "Castleview Hamlet")
 end

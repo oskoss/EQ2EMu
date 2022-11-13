@@ -104,7 +104,7 @@ function GenericEcologyHail(NPC, Spawn, faction)
 	
 	if TimeCheck == false then                                              -- checks timer
      TimeCheck = true                                                        -- turns on timer to stop player spamming
-	AddTimer(NPC,2000,"ResetTimer")                                         -- starts reset clock
+	AddTimer(NPC,2500,"ResetTimer")                                         -- starts reset clock
 	if race >= 0 and race <= 18 and gender >= 1 and gender <= 2 then        -- verifies NPC race/gender fits expected
 
 		if race == BARBARIAN then                                           -- begins NPC race check
@@ -667,7 +667,7 @@ function GenericEcologyHail(NPC, Spawn, faction)
 	            	    elseif choice == 11 then
 	            	    PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_hail_gf_892152e8.mp3", "Me and my friends have all agreed to be non-conformists.", "agree", 2451936333, 2413299209, Spawn)
 	                    elseif choice == 12 then
-	            	    PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_aoi_gf_f8dd15ce.mp3", " Got any coin?", "beg", 3660925534, 3735346681, Spawn)
+	            	    PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_aoi_gf_f8dd15ce.mp3", "So ... You got any coin?", "beg", 3660925534, 3735346681, Spawn)
 		                end
 	               end
 				end
@@ -741,7 +741,7 @@ function GenericEcologyHail(NPC, Spawn, faction)
 			        if Qfaction <0 then
                     FactionChecking(NPC, Spawn, faction)
 				    else			    
-            	local choice = math.random(1,13)
+            	    local choice = MakeRandomInt(1,13)
 
                 	if choice == 1 then
 	            	PlayFlavor(NPC, "voiceover/english/highelf_eco_good_1/ft/highelf/highelf_eco_good_1_hail_gm_eb4f8f5d.mp3", "I hope you have been sent by someone of importance. I'm quite busy.", "yawn", 111891212, 1507953677, Spawn)
@@ -2710,6 +2710,7 @@ function GenericRaceCheckHail(NPC, Spawn, faction)
                                 	PlayFlavor(NPC, "voiceover/english/optional2/halfling_eco_race_good/ft/eco/good/halfling_eco_race_good_gnome_gf_8e6f2cee.mp3", "What're you working on now, hmm?  Hope this one works out!", "", 1396523759, 1857436654, Spawn)
                                     end                                    
                             elseif spawnRace == HALFLING then
+                                local level = GetLevel(Spawn)
                                 if level >=50 then	                            
 	                              check = MakeRandomInt(1,4) 
                                    else	                            
@@ -2778,7 +2779,9 @@ function GenericRaceCheckHail(NPC, Spawn, faction)
 					        PlayFlavor(NPC, "voiceover/english/highelf_eco_race_good/ft/eco/good/highelf_eco_race_good_dwarf_gf_35729e65.mp3", "No, I won't go out for a dwarven ale with you.  Elven wine tastes better anyway.", "no", 266246440, 1778311218, Spawn)
                             elseif spawnRace == ERUDITE then
 					        PlayFlavor(NPC, "voiceover/english/highelf_eco_race_good/ft/eco/good/highelf_eco_race_good_erudite_gf_cfbdf659.mp3", "That ensom' is quite becoming to you.  Almost as good as my own.", "agree", 1652655342, 62284543, Spawn)
-                            elseif spawnRace == GNOME then
+                            elseif spawnRace == FROGLOK then
+					        PlayFlavor(NPC, "voiceover/english/highelf_eco_race_good/ft/eco/good/highelf_eco_race_good_froglok_gf_d4e1c221.mp3", "Your sense of justice is highly valuable in these degenerated days.", "hello", 1880520908, 1662106306, Spawn)
+                           elseif spawnRace == GNOME then
 					        PlayFlavor(NPC, "voiceover/english/highelf_eco_race_good/ft/eco/good/highelf_eco_race_good_gnome_gf_6a2b567f.mp3", "Your little gears and gizmos are amusing, but I have no interest in them.", "no", 667401607, 3295814491, Spawn)
                             elseif spawnRace == HALF_ELF then
                             PlayFlavor(NPC, "voiceover/english/highelf_eco_race_good/ft/eco/good/highelf_eco_race_good_halfelf_gf_1635ab67.mp3", "Hmm.  By the look in your eyes you had potentional, but one of your parents made a poor choice in life.", "nod", 3335501764, 2059212963, Spawn)
@@ -4198,7 +4201,7 @@ if race >= 0 and race <= 18 and gender >= 1 and gender <= 2 then        -- verif
 	            	    elseif choice == 11 then
 	            	    PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_hail_gf_892152e8.mp3", "Me and my friends have all agreed to be non-conformists.", "agree", 2451936333, 2413299209)
 	                    elseif choice == 12 then
-	            	    PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_aoi_gf_f8dd15ce.mp3", " Got any coin?", "beg", 3660925534, 3735346681)
+	            	    PlayFlavor(NPC, "voiceover/english/halfelf_eco_good_1/ft/halfelf/halfelf_eco_good_1_aoi_gf_f8dd15ce.mp3", "So ... You got any coin?", "beg", 3660925534, 3735346681)
 		                end
 	               end
 				end
@@ -4288,7 +4291,7 @@ if race >= 0 and race <= 18 and gender >= 1 and gender <= 2 then        -- verif
 		
 		elseif race == HIGH_ELF then
 			if gender == MALE then
-			        if Qfaction <0 then
+			    if Qfaction <0 then
 			    	    if FactionCalloutTimeCheck == false then 
 			            FactionCalloutTimeCheck = true
 			            FaceTarget(NPC,Spawn)
@@ -4298,9 +4301,9 @@ if race >= 0 and race <= 18 and gender >= 1 and gender <= 2 then        -- verif
 				    else
 				    if CalloutTimeCheck == false then
                         if math.random(1, 100) <= 20 then
-			            FaceTarget(NPC,Spawn)
                         CalloutTimeCheck = true
-			            AddTimer(NPC,30000,"ResetCalloutTimer")   				        
+			            FaceTarget(NPC,Spawn)
+			            AddTimer(NPC,30000,"ResetCalloutTimer")  				        
             	local choice = math.random(1,13)
 
                 	if choice == 1 then
@@ -6700,6 +6703,7 @@ function GenericRaceCheckCallout(NPC, Spawn, faction)
 					                PlayFlavor(NPC, "voiceover/english/halfling_eco_race_good/ft/eco/good/halfling_eco_race_good_gnome_gm_94bf9271.mp3", "Have you considered making an ale-tanker that never empties?  That's a worthy project!", "smile", 1657569571, 2283552256)
                                     end                                    
                             elseif spawnRace == HALFLING then
+                                local level =GetLevel(Spawn)
                                 if level >=50 then	                            
 	                             check = MakeRandomInt(1,4) 
                                 else	                            
@@ -6785,6 +6789,8 @@ function GenericRaceCheckCallout(NPC, Spawn, faction)
 					        PlayFlavor(NPC, "voiceover/english/highelf_eco_race_good/ft/eco/good/highelf_eco_race_good_dwarf_gf_35729e65.mp3", "No, I won't go out for a dwarven ale with you.  Elven wine tastes better anyway.", "no", 266246440, 1778311218)
                             elseif spawnRace == ERUDITE then
 					        PlayFlavor(NPC, "voiceover/english/highelf_eco_race_good/ft/eco/good/highelf_eco_race_good_erudite_gf_cfbdf659.mp3", "That ensom' is quite becoming to you.  Almost as good as my own.", "agree", 1652655342, 62284543)
+                            elseif spawnRace == FROGLOK then
+					        PlayFlavor(NPC, "voiceover/english/highelf_eco_race_good/ft/eco/good/highelf_eco_race_good_froglok_gf_d4e1c221.mp3", "Your sense of justice is highly valuable in these degenerated days.", "hello", 1880520908, 1662106306, Spawn)
                             elseif spawnRace == GNOME then
 					        PlayFlavor(NPC, "voiceover/english/highelf_eco_race_good/ft/eco/good/highelf_eco_race_good_gnome_gf_6a2b567f.mp3", "Your little gears and gizmos are amusing, but I have no interest in them.", "no", 667401607, 3295814491)
                             elseif spawnRace == HALF_ELF then
