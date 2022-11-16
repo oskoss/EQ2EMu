@@ -2770,7 +2770,7 @@ void Spawn::MoveToLocation(Spawn* spawn, float distance, bool immediate, bool ma
 
 	if (!IsPlayer() && distance > 0.0f)
 	{
-		if ((IsFlyingCreature() || IsWaterCreature()) && CheckLoS(spawn))
+		if ((IsFlyingCreature() || IsWaterCreature() || InWater()) && CheckLoS(spawn))
 		{
 			if (immediate)
 				ClearRunningLocations();
@@ -3430,7 +3430,7 @@ void Spawn::CalculateRunningLocation(bool stop){
 	{
 		if (GetDistance(GetTarget()) > rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat())
 		{
-			if ((IsFlyingCreature() || IsWaterCreature()) && CheckLoS(GetTarget()))
+			if ((IsFlyingCreature() || IsWaterCreature() || InWater()) && CheckLoS(GetTarget()))
 				AddRunningLocation(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), GetSpeed(), 0, false);
 			else
 				GetZone()->movementMgr->NavigateTo((Entity*)this, GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
