@@ -3428,7 +3428,8 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 		
 		appearance.pos.grid_id = grid_id;
 	}
-	if (activity == UPDATE_ACTIVITY_IN_WATER_ABOVE || activity == UPDATE_ACTIVITY_IN_WATER_BELOW) {
+	if (activity == UPDATE_ACTIVITY_IN_WATER_ABOVE || activity == UPDATE_ACTIVITY_IN_WATER_BELOW ||
+		activity == UPDATE_ACTIVITY_MOVE_WATER_BELOW_AOM || activity == UPDATE_ACTIVITY_MOVE_WATER_ABOVE_AOM) {
 		if (MakeRandomFloat(0, 100) < 25 && InWater())
 			GetSkillByName("Swimming", true);
 	}
