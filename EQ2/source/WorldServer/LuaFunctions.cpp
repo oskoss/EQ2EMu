@@ -2016,7 +2016,7 @@ int EQ2Emu_lua_SetMaxHP(lua_State* state) {
 	if (spawn && spawn->IsEntity() && value > 0)
 		((Entity*)spawn)->AddSpellBonus(0, ITEM_STAT_HEALTH, value - spawn->GetTotalHP());
 
-	if (spawn->IsPlayer())
+	if (spawn && spawn->IsPlayer())
 		((Player*)spawn)->SetCharSheetChanged(true);
 
 	return 0;
