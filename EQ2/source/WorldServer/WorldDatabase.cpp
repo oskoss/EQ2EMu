@@ -8072,3 +8072,166 @@ void WorldDatabase::UpdateStartingLanguage(int32 char_id, uint8 race_id, int32 s
 		}
 	}
 }
+
+
+//devn00b: load the items the server has into a character_ db for easy access. Should be done on char create.
+void WorldDatabase::LoadClaimItems(int32 char_id)
+{
+	int16 total = 0;
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, item_id, max_claim, one_per_char, veteran_reward_time from claim_items");
+
+	if (result)
+	{
+		if (mysql_num_rows(result) > 0)
+		{
+
+			while (result && (row = mysql_fetch_row(result)))
+			{
+				MYSQL_RES* res = query.RunQuery2(Q_INSERT, "insert into character_claim_items (char_id, item_id, max_claim, curr_claim, one_per_char, veteran_reward_time) values  (%i, %i, %i, %i, %i)", char_id, atoul(row[1]), atoul(row[2]), atoul(row[2]), atoul(row[3]), atoi64(row[4]));
+				total++;
+			}
+		}
+	}
+	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u Claim Item(s)", total);
+}
+
+int16 WorldDatabase::CountCharClaimItems(int32 char_id) {
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT count(*) from character_claim_items where char_id=%i", char_id);
+
+	if (result && mysql_num_rows(result) > 0) {
+		MYSQL_ROW row;
+		row = mysql_fetch_row(result);
+		return atoi(row[0]); // Return count
+	}
+
+	return 0;
+}
+
+vector<ClaimItems> WorldDatabase::LoadCharacterClaimItems(int32 char_id) {
+	vector<ClaimItems> claim;
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, max_claim, curr_claim, one_per_char, last_claim, veteran_reward_time from character_claim_items where char_id=%u", char_id);
+	int16 i = 0;
+
+	if (result)
+	{
+		if (mysql_num_rows(result) > 0)
+		{
+
+			while (result && (row = mysql_fetch_row(result)))
+			{
+				ClaimItems c;
+				int8 max_claim = atoi(row[1]);
+				int8 curr_claim = atoi(row[2]);
+
+				//if one per char is set set max/cur to 1.
+				if (atoi(row[3]) == 1) {
+					int8 max_claim = 1;
+					int8 curr_claim = 1;
+				}
+
+				c.item_id = atoi(row[0]);
+				c.max_claim = max_claim;
+				c.curr_claim = curr_claim;
+				c.one_per_char = atoi(row[3]);
+				c.vet_reward_time = atoi(row[5]);
+				claim.push_back(c);
+				i++;
+			}
+			return claim;
+		}
+	}
+	return claim;
+}
+
+bool WorldDatabase::ClaimItem(int32 char_id, int32 item_id, Client* client) {
+
+	if (!client || !item_id || !char_id) {
+		return 0;
+	}
+
+	Query query;
+	MYSQL_ROW row;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, max_claim, curr_claim, one_per_char, last_claim, veteran_reward_time from character_claim_items where char_id=%u and item_id=%u", char_id, item_id);
+
+	if (result)
+	{
+		if (mysql_num_rows(result) > 0)
+		{
+			while (result && (row = mysql_fetch_row(result)))
+			{
+				Item* item = master_item_list.GetItem(item_id);
+				Player* player = client->GetPlayer();
+				InfoStruct* info = player->GetInfoStruct();
+
+				int32 item_id = atoi(row[0]);
+				int8 max_claim = atoi(row[1]);
+				int8 curr_claim = atoi(row[2]);
+				int32 vet_reward_req = atoi(row[5]);
+
+				//no claims left.
+				if (curr_claim == 0) {
+					client->Message(CHANNEL_COLOR_RED, "You have nothing to claim.");
+					return 0;
+				}
+
+
+				//On live, characters must wait 6 seconds between claims. So..Lots of stuff here.
+				uint32 last_claim = info->get_last_claim_time(); //load our last claim
+				time_t now = time(0); //get the current epoc time
+				uint32 curr_time = now; // current time.
+				uint32 total_time = curr_time - last_claim; //Time since last claim (Current time - last claim)
+
+				if (total_time < 6) {
+					uint32 ttw = 6 - total_time;
+					char tmp[64] = { 0 };
+					sprintf(tmp, "You must wait %u more seconds.", ttw);
+					client->Message(CHANNEL_COLOR_RED, tmp);
+					return 0;
+				}
+
+				//remove 1 from claim
+				int8 tmp = curr_claim - 1;
+				Query query2;
+				query2.RunQuery2(Q_UPDATE, "UPDATE `character_claim_items` SET `curr_claim`=%u , `last_claim`=%u WHERE char_id=%i and item_id=%i", tmp, curr_time, char_id, item_id);
+				//give the item to the player, and update last claim time.
+				client->AddItem(item_id);
+				info->set_last_claim_time(curr_time);
+
+				char tmpx[256] = { 0 };
+				client->Message(CHANNEL_COLOR_YELLOW, "You have consumed the item."); //message from live.
+				sprintf(tmpx, "You have claimed your %s! Please look for the item in your inventory. ", item->name.c_str()); //live uses different messages for diff things. Will figure this out later.
+				client->Message(CHANNEL_COLOR_YELLOW, tmpx);
+				//reload the window to show new count.
+				client->ShowClaimWindow();
+				return 0;
+			}
+		}
+	}
+	return 0;
+}
+
+int32	WorldDatabase::GetAccountAge(int32 account_id) {
+	int32 acct_age = 0;
+	int32 acct_created = 0;
+	time_t now = time(0); //get the current epoc time
+	uint32 curr_time = now; // current time.
+
+	Query query;
+	//order by created date and grab the oldest one.
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT UNIX_TIMESTAMP(created_date) FROM characters WHERE account_id=%i ORDER BY created_date LIMIT 1", account_id);
+	if (result && mysql_num_rows(result) > 0) {
+		MYSQL_ROW row = mysql_fetch_row(result);
+		acct_created = atoi(row[0]);
+	}
+	if (!curr_time || !acct_created)
+		return 0;
+
+	acct_age = curr_time - acct_created;
+	return acct_age;
+}

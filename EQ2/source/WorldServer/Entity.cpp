@@ -228,7 +228,7 @@ void Entity::MapInfoStruct()
 	get_int8_funcs["tradeskill_class1"] = l::bind(&InfoStruct::get_tradeskill_class1, &info_struct);
 	get_int8_funcs["tradeskill_class2"] = l::bind(&InfoStruct::get_tradeskill_class2, &info_struct);
 	get_int8_funcs["tradeskill_class3"] = l::bind(&InfoStruct::get_tradeskill_class3, &info_struct);
-	get_int16_funcs["account_age_base"] = l::bind(&InfoStruct::get_account_age_base, &info_struct);
+	get_int32_funcs["account_age_base"] = l::bind(&InfoStruct::get_account_age_base, &info_struct);
 	//	int8			account_age_bonus_[19];
 	get_int16_funcs["absorb"] = l::bind(&InfoStruct::get_absorb, &info_struct);
 	get_int32_funcs["xp"] = l::bind(&InfoStruct::get_xp, &info_struct);
@@ -337,6 +337,7 @@ void Entity::MapInfoStruct()
 	get_int8_funcs["override_ranged_weapon"] = l::bind(&InfoStruct::get_override_ranged_weapon, &info_struct);
 	
 	get_int8_funcs["friendly_target_npc"] = l::bind(&InfoStruct::get_friendly_target_npc, &info_struct);
+	get_int32_funcs["last_claim_time"] = l::bind(&InfoStruct::get_last_claim_time, &info_struct);
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -410,7 +411,7 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["tradeskill_class1"] = l::bind(&InfoStruct::set_tradeskill_class1, &info_struct, l::_1);
 	set_int8_funcs["tradeskill_class2"] = l::bind(&InfoStruct::set_tradeskill_class2, &info_struct, l::_1);
 	set_int8_funcs["tradeskill_class3"] = l::bind(&InfoStruct::set_tradeskill_class3, &info_struct, l::_1);
-	set_int16_funcs["account_age_base"] = l::bind(&InfoStruct::set_account_age_base, &info_struct, l::_1);
+	set_int32_funcs["account_age_base"] = l::bind(&InfoStruct::set_account_age_base, &info_struct, l::_1);
 	//	int8			account_age_bonus_[19];
 	set_int16_funcs["absorb"] = l::bind(&InfoStruct::set_absorb, &info_struct, l::_1);
 	set_int32_funcs["xp"] = l::bind(&InfoStruct::set_xp, &info_struct, l::_1);
@@ -519,6 +520,8 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["override_ranged_weapon"] = l::bind(&InfoStruct::set_override_ranged_weapon, &info_struct, l::_1);
 	
 	set_int8_funcs["friendly_target_npc"] = l::bind(&InfoStruct::set_friendly_target_npc, &info_struct, l::_1);
+	set_int32_funcs["last_claim_time"] = l::bind(&InfoStruct::set_last_claim_time, &info_struct, l::_1);
+
 }
 
 bool Entity::HasMoved(bool include_heading){

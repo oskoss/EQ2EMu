@@ -125,6 +125,15 @@ struct StartingItem{
 	int16	count;
 };
 
+struct ClaimItems {
+	int32 char_id;
+	int32 item_id;
+	int8  max_claim;
+	int8  curr_claim;
+	int8  one_per_char;
+	int32 vet_reward_time;
+};
+
 class Bot;
 
 class WorldDatabase : public Database {
@@ -530,6 +539,13 @@ public:
 	/* Heroic OP */
 	void				LoadHOStarters();
 	void				LoadHOWheel();
+
+	/* Claim Items */
+	void				LoadClaimItems(int32 char_id);
+	int16				CountCharClaimItems(int32 char_id);
+	vector<ClaimItems>  LoadCharacterClaimItems(int32 char_id);
+	bool				ClaimItem(int32 char_id, int32 item_id, Client* client);
+	int32				GetAccountAge(int32 account_id);
 
 	/* Race Types */
 	void				LoadRaceTypes();

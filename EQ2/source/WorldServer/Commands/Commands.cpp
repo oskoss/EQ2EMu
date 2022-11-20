@@ -5832,19 +5832,29 @@ void Commands::Command_Appearance(Client* client, Seperator* sep, int handler)
 
 /* 
 	Function: Command_Claim()
-	Purpose	: 
-	Params	: 
-	Dev		: 
-	Example	: 
+	Purpose	: Summon veteran rewards
+	Params	: nothing = show claim window, any number claims that item.
+	Dev		: devn00b
+	Example	: /claim 0 (claims the 1st item added to the list claim[0])
 */ 
 void Commands::Command_Claim(Client* client, Seperator* sep)
 {
-	if (sep && sep->arg[0] && sep->IsNumber(0)) 
+	//if we were passed a claim id
+	if (sep && sep->argplus[0] && sep->IsNumber(0)) 
 	{
-		LogWrite(MISC__TODO, 1, "TODO", "TODO: Command_Claim to be completed\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
+		int32 char_id = client->GetCharacterID();
+		int8 my_claim_id = atoi(sep->argplus[0]);
+		vector<ClaimItems> claim = database.LoadCharacterClaimItems(char_id);
+		Item* item = master_item_list.GetItem(claim[my_claim_id].item_id);
+		database.ClaimItem(char_id, item->details.item_id, client);
+		return;
 	}
-	else
+	else {
+		//if no arg just send the window.
 		client->ShowClaimWindow();
+		return;
+	}
+	return;
 }
 
 /* 

@@ -272,6 +272,7 @@ struct InfoStruct{
 		override_ranged_weapon_ = 0;
 		
 		friendly_target_npc_ = 0;
+		last_claim_time_ = 0;
 	}
 
 
@@ -455,6 +456,7 @@ struct InfoStruct{
 		override_secondary_weapon_ = oldStruct->get_override_secondary_weapon();
 		override_ranged_weapon_ = oldStruct->get_override_ranged_weapon();
 		friendly_target_npc_ = oldStruct->get_friendly_target_npc();
+		last_claim_time_ = oldStruct->get_last_claim_time();
 
 	}
 	//mutable std::shared_mutex mutex_;
@@ -541,7 +543,7 @@ struct InfoStruct{
 	int8	 get_tradeskill_class2() { std::lock_guard<std::mutex> lk(classMutex); return tradeskill_class2_; }
 	int8	 get_tradeskill_class3() { std::lock_guard<std::mutex> lk(classMutex); return tradeskill_class3_; }
 
-	int16	 get_account_age_base() { std::lock_guard<std::mutex> lk(classMutex); return account_age_base_; }
+	int32	 get_account_age_base() { std::lock_guard<std::mutex> lk(classMutex); return account_age_base_; }
 
 	int8	 get_account_age_bonus(int8 field) { std::lock_guard<std::mutex> lk(classMutex); return account_age_bonus_[field]; }
 	int16	 get_absorb() { std::lock_guard<std::mutex> lk(classMutex); return absorb_; }
@@ -655,6 +657,7 @@ struct InfoStruct{
 	int8	get_override_ranged_weapon() { std::lock_guard<std::mutex> lk(classMutex); return override_ranged_weapon_; }
 	
 	int8	get_friendly_target_npc() { std::lock_guard<std::mutex> lk(classMutex); return friendly_target_npc_; }
+	int32	get_last_claim_time() { std::lock_guard<std::mutex> lk(classMutex); return last_claim_time_; }
 	
 	
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
@@ -748,7 +751,7 @@ struct InfoStruct{
 	void	set_tradeskill_class2(int8 value) { std::lock_guard<std::mutex> lk(classMutex); tradeskill_class2_ = value; }
 	void	set_tradeskill_class3(int8 value) { std::lock_guard<std::mutex> lk(classMutex); tradeskill_class3_ = value; }
 
-	void	set_account_age_base(int16 value) { std::lock_guard<std::mutex> lk(classMutex); account_age_base_ = value; }
+	void	set_account_age_base(int32 value) { std::lock_guard<std::mutex> lk(classMutex); account_age_base_ = value; }
 
 	void	set_xp_vitality(float value) { std::lock_guard<std::mutex> lk(classMutex); xp_vitality_ = value; }
 
@@ -939,6 +942,8 @@ struct InfoStruct{
 	void	set_override_secondary_weapon(int8 value) { std::lock_guard<std::mutex> lk(classMutex); override_secondary_weapon_ = value; }
 	void	set_override_ranged_weapon(int8 value) { std::lock_guard<std::mutex> lk(classMutex); override_ranged_weapon_ = value; }
 	void	set_friendly_target_npc(int8 value) { std::lock_guard<std::mutex> lk(classMutex); friendly_target_npc_ = value; }
+	void	set_last_claim_time(int32 value) { std::lock_guard<std::mutex> lk(classMutex); last_claim_time_ = value; }
+
 	void	ResetEffects(Spawn* spawn)
 	{
 		for(int i=0;i<45;i++){
@@ -1032,7 +1037,7 @@ private:
 	int8			tradeskill_class1_;
 	int8			tradeskill_class2_;
 	int8			tradeskill_class3_;
-	int16			account_age_base_;
+	int32			account_age_base_;
 	int8			account_age_bonus_[19];
 	int16			absorb_;
 	int32			xp_;
@@ -1139,6 +1144,7 @@ private:
 	int8			override_ranged_weapon_;
 	
 	int8			friendly_target_npc_;
+	int32			last_claim_time_;
 	
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;

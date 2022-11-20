@@ -9503,35 +9503,62 @@ void Client::SetPendingGuildInvite(Guild* guild, Player* invited_by) {
 void Client::ShowClaimWindow() {
 	PacketStruct* packet = configReader.getStruct("WS_PromoFlagsDetails", GetVersion());
 	if (packet) {
-		map<int32, Item*>* items = &master_item_list.items;
-		map<int32, Item*>::iterator itr;
-		int32 i = 0;
-		if (items->size() > 10)
-			packet->setArrayLengthByName("num_claim_items", 10);
-		else
-			packet->setArrayLengthByName("num_claim_items", items->size());
-		for (itr = items->begin(); itr != items->end(); itr++) {
-			if (i == 10)
-				break;
-			Item* item = itr->second;
+
+		int16 loaded = database.CountCharClaimItems(GetCharacterID());
+		vector<ClaimItems> claim = database.LoadCharacterClaimItems(GetCharacterID());
+		int32 account_age = database.GetAccountAge(GetAccountID());
+
+		//not sure if there is a message or not, but adding this and a return, so if we have nothing do nothing rather than display an empty window.
+		if (loaded == 0 || claim.empty()) {
+			Message(CHANNEL_COLOR_RED, "You have nothing to claim.");
+			return;
+		}
+
+		packet->setArrayLengthByName("num_claim_items", loaded);
+
+		int j = 0; //use this to track skipped vet items.
+		for (int i = 0; i < claim.size(); i++)
+		{
+			if (j == claim.size()) {
+				Message(CHANNEL_COLOR_RED, "You have nothing to claim.");
+				return;
+			}
+
+			Item* item = master_item_list.GetItem(claim[i].item_id);
+			int16 claimed = 0;
+
+			if (claim[i].curr_claim < claim[i].max_claim) {
+				claimed = claim[i].max_claim - claim[i].curr_claim;
+			}
+			else {
+				claimed = 0;
+			}
+
+			//dont display vet rewards until they reach the age required
+			if (account_age < claim[i].vet_reward_time) {
+				j++;
+				continue;
+			}
+
 			packet->setArrayDataByName("id", i, i);
 			packet->setArrayDataByName("not_yet_claimed", 1, i);
-			packet->setArrayDataByName("num_remaining", 5, i);
-			packet->setArrayDataByName("one_per_character", 1, i);
-			packet->setArrayDataByName("claimed_on_this_char", 0, i);
+			packet->setArrayDataByName("num_remaining", claim[i].curr_claim, i);
+			packet->setArrayDataByName("one_per_character", claim[i].one_per_char, i);
+			packet->setArrayDataByName("claimed_on_this_char", claimed, i);
+			//packet->setArrayDataByName("unknown2", 1, 2); // 1:already claimed tab 2: broken commenting out until implemented.
 			packet->setArrayDataByName("item_name", item->name.c_str(), i);
-			packet->setArrayDataByName("text", "If you ever see this text, let Scatman know, thanks! :)", i);
-			packet->setArrayDataByName("category", "Scott's Shit", i);
+			packet->setArrayDataByName("text", "If you ever see this text, let a developer know!", i); //I've not seen this!
+			//packet->setArrayDataByName("category", "Scott's Shit", i); //devn00b: not using so commenting out, leaving in case we ever do implement categories.
 			packet->setArrayDataByName("icon", item->details.icon, i);
 			packet->setArrayDataByName("item_id", item->details.item_id, i);
-			i++;
+			j++;
 		}
-		packet->setDataByName("unknown3", 1);
-		QueuePacket(packet->serialize());
-		safe_delete(packet);
 	}
-
+	packet->setDataByName("unknown3", 1);
+	QueuePacket(packet->serialize());
+	safe_delete(packet);
 }
+
 
 void Client::ShowGuildSearchWindow() {
 	PacketStruct* packet = configReader.getStruct("WS_GuildRecruiting", GetVersion());
