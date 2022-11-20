@@ -667,8 +667,23 @@ void SpellProcess::SendFinishedCast(LuaSpell* spell, Client* client){
 			TakeSavagery(spell);
 			AddDissonance(spell);
 			AddConcentration(spell);
-			if (client && spell->spell && !spell->spell->GetSpellData()->friendly_spell)
-				client->GetPlayer()->InCombat(true);
+			if (client && spell->spell && !spell->spell->GetSpellData()->friendly_spell) {
+				if(!client->GetPlayer()->EngagedInCombat()) {
+					client->GetPlayer()->InCombat(true, false);
+					client->GetPlayer()->SetRangeAttack(false);
+				}
+				else if(client->GetPlayer()->EngagedInCombat() && 
+						client->GetPlayer()->GetRangeAttack() && spell->spell->GetSpellData()->type == SPELL_BOOK_TYPE_COMBAT_ART) {
+					Spawn* target = client->GetPlayer()->GetZone()->GetSpawnByID(spell->initial_target);
+					if(target) {
+						float distance = client->GetPlayer()->GetDistance(target);
+						if(distance <= rule_manager.GetGlobalRule(R_Combat, MaxCombatRange)->GetFloat()) {
+							client->GetPlayer()->InCombat(true, false);
+							client->GetPlayer()->SetRangeAttack(false);
+						}
+					}
+				}
+			}
 			if(client && spell->caster)
 				client->CheckPlayerQuestsSpellUpdate(spell->spell);
 		}

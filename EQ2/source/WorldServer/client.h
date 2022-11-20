@@ -578,6 +578,8 @@ public:
 	
 	void	HandleDialogSelectMsg(int32 conversation_id, int32 response_index);
 	bool	SetPetName(const char* name);
+	
+	bool	CheckConsumptionAllowed(int16 slot, bool send_message = true);
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);

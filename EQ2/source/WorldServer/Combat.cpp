@@ -458,8 +458,15 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 		{
 			if (victim->IsNPC())
 				((NPC*)victim)->AddHate(this, 5);
-			else
+			else {
+				Client* client = 0;
+				if(IsPlayer())
+					client = GetZone()->GetClientBySpawn(this);
+				if(client) {
+					client->GetPlayer()->InCombat(true, client->GetPlayer()->GetRangeAttack());
+				}
 				InCombat(true);
+			}
 		}
 	}
 

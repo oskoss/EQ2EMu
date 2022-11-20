@@ -223,8 +223,8 @@ struct InfoStruct{
 		alignment_ = 0;
 		pet_id_ = 0;
 		pet_name_ = std::string("");
-		pet_health_pct_ = 0;
-		pet_power_pct_ = 0;
+		pet_health_pct_ = 0.0f;
+		pet_power_pct_ = 0.0f;
 		pet_movement_ = 0;
 		pet_behavior_ = 0;
 		vision_ = 0;

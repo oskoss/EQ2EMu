@@ -3128,6 +3128,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 
 			break;
 		}
+		case COMMAND_GROUP: {
+			if(sep && sep->arg[0])
+				printf("Group: %s\n",sep->argplus[0]);
+			break;
+		}
 		case COMMAND_GROUPSAY:{
 			GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
 			if(sep && sep->arg[0] && gmi)
@@ -4061,6 +4066,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_ATTACK:
 		case COMMAND_AUTO_ATTACK:{
 			int8 type = 1;
+			bool update = false;
 			Player* player = client->GetPlayer();
 			if(!player)
 				break;
@@ -4075,6 +4081,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if(incombat)
 					client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
 					player->StopCombat(type);
+					update = true;
 			}
 			else {
 				if(type == 2){
@@ -4082,24 +4089,31 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if(incombat && player->GetRangeAttack()){
 						player->StopCombat(type);
 						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
+						update = true;
 					}
 					else{
 						player->SetRangeAttack(true);
 						player->InCombat(true, true);
 						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You start fighting.");
+						update = true;
 					}
 				}
 				else {
 					player->InCombat(false, true);
 					player->SetRangeAttack(false);
 					player->InCombat(true);
-					if(!incombat)
+					if(!incombat) {
 						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You start fighting.");
+						update = true;
+					}
 				}
 				/*else
 					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You cannot attack that!");*/
 			}
-			player->SetCharSheetChanged(true);
+			
+			if(update) {
+				player->SetCharSheetChanged(true);
+			}
 			break;
 								}
 		case COMMAND_DEPOP:{
@@ -9124,11 +9138,9 @@ void Commands::Command_Toggle_AutoConsume(Client* client, Seperator* sep)
 			}
 		}
 
-
-		if(slot == 22 && player->GetSpellEffectBySpellType(SPELL_TYPE_FOOD))
+		if(!client->CheckConsumptionAllowed(slot, false))
 			return;
-		else if (player->GetSpellEffectBySpellType(SPELL_TYPE_DRINK))
-			return;
+		
 		Item* item = player->GetEquipmentList()->GetItem(slot);
 		if(item)
 			client->ConsumeFoodDrink(item, slot);
@@ -11181,17 +11193,10 @@ void Commands::Command_ConsumeFood(Client* client, Seperator* sep) {
 		Player* player = client->GetPlayer();
 		int8 slot = atoi(sep->arg[0]);
 		Item* item = player->GetEquipmentList()->GetItem(slot);
-		if(slot == 22 && player->GetSpellEffectBySpellType(SPELL_TYPE_FOOD))
-		{
-			client->Message(CHANNEL_NARRATIVE, "If you ate anymore you would explode!");
-			return;
+
+		if(client->CheckConsumptionAllowed(slot)) {
+			client->ConsumeFoodDrink(item, slot);
 		}
-		else if (player->GetSpellEffectBySpellType(SPELL_TYPE_DRINK))
-		{
-			client->Message(CHANNEL_NARRATIVE, "If you drank anymore you would explode!");
-			return;
-		}
-		client->ConsumeFoodDrink(item, slot);
 	}
 }
 

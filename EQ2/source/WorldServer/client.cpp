@@ -11649,3 +11649,33 @@ bool Client::SetPetName(const char* petName) {
 	GetPlayer()->GetInfoStruct()->set_pet_name(petName);
 	return true;
 }
+
+bool Client::CheckConsumptionAllowed(int16 slot, bool send_message) {
+	switch(slot) {
+		case EQ2_FOOD_SLOT: {
+			if(GetPlayer()->GetSpellEffectBySpellType(SPELL_TYPE_FOOD)) {
+				if(send_message) {
+					Message(CHANNEL_NARRATIVE, "If you ate anymore you would explode!");
+				}
+				return false;
+			}
+			break;
+		}
+		case EQ2_DRINK_SLOT: {
+			if (GetPlayer()->GetSpellEffectBySpellType(SPELL_TYPE_DRINK))
+			{
+				if(send_message) {
+					Message(CHANNEL_NARRATIVE, "If you drank anymore you would explode!");
+				}
+				return false;
+			}
+			break;
+		}
+		default: {
+			return false;
+			break;
+		}
+	}
+	
+	return true;
+}
