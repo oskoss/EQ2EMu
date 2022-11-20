@@ -6570,19 +6570,19 @@ int EQ2Emu_lua_HasItemEquipped(lua_State* state) {
 int	EQ2Emu_lua_GetEquippedItemBySlot(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	Spawn* player = lua_interface->GetSpawn(state);
+	Spawn* spawn = lua_interface->GetSpawn(state);
 	int8 slot = lua_interface->GetInt8Value(state, 2);
 
 	lua_interface->ResetFunctionStack(state);
-	if (!player) {
+	if (!spawn) {
 		lua_interface->LogError("%s: LUA GetEquippedItemBySlot command error: spawn is not valid", lua_interface->GetScriptName(state));
 		return 0;
 	}
-	if (!player->IsPlayer()) {
-		lua_interface->LogError("%s: LUA GetEquippedItemBySlot command error: spawn is not player", lua_interface->GetScriptName(state));
+	if (!spawn->IsEntity()) {
+		lua_interface->LogError("%s: LUA GetEquippedItemBySlot command error: spawn is not an entity", lua_interface->GetScriptName(state));
 		return 0;
 	}
-	Item* item = ((Player*)player)->GetEquipmentList()->GetItem(slot);
+	Item* item = ((Entity*)spawn)->GetEquipmentList()->GetItem(slot);
 	if (!item) {
 		lua_interface->LogError("%s: LUA GetEquippedItemBySlot command error: item was not found in slot", lua_interface->GetScriptName(state));
 		return 0;
