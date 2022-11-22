@@ -609,15 +609,12 @@ EQ2Packet* PlayerInfo::serialize3(PacketStruct* packet, int16 version){
 	return 0;
 }
 
-void PlayerInfo::SetAccountAge(int16 age){
+void PlayerInfo::SetAccountAge(int32 age){
 	info_struct->set_account_age_base(age);
 }
 
 EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyValue) {
 	player->CalculateBonuses();
-
-	int8 blah1 = 90;
-	int8 blah2 = 120;
 
 	PacketStruct* packet = configReader.getStruct("WS_CharacterSheet", version);
 	//0-69, locked screen movement
@@ -641,6 +638,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("effective_level", info_struct->get_effective_level() != 0 ? info_struct->get_effective_level() : info_struct->get_level());
 		packet->setDataByName("tradeskill_level", info_struct->get_tradeskill_level());
 		packet->setDataByName("account_age_base", info_struct->get_account_age_base());
+
 		//TODO: 2021 FIX THIS CASTING
 		for (int8 i = 0; i < 19; i++)
 			packet->setDataByName("account_age_bonus", 0);

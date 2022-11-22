@@ -370,7 +370,7 @@ public:
 	void SetBindY(float y);
 	void SetBindZ(float z);
 	void SetBindHeading(float heading);
-	void SetAccountAge(int16 days);
+	void SetAccountAge(int32 days);
 	int32 GetHouseZoneID();
 	int32 GetBindZoneID();
 	float GetBindZoneX();
