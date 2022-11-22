@@ -2406,7 +2406,8 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 	UpdateStartingTitles(char_id, class_id, race_id, gender_id);
 	InsertCharacterStats(char_id, class_id, race_id);
 	UpdateStartingLanguage(char_id, race_id, create->getType_int8_ByName("starting_zone"));
-
+	//insert claim items.
+	LoadClaimItems(char_id);
 
 	AddNewPlayerToServerGuild(loginID, char_id);
 
@@ -8089,7 +8090,12 @@ void WorldDatabase::LoadClaimItems(int32 char_id)
 
 			while (result && (row = mysql_fetch_row(result)))
 			{
-				MYSQL_RES* res = query.RunQuery2(Q_INSERT, "insert into character_claim_items (char_id, item_id, max_claim, curr_claim, one_per_char, veteran_reward_time) values  (%i, %i, %i, %i, %i)", char_id, atoul(row[1]), atoul(row[2]), atoul(row[2]), atoul(row[3]), atoi64(row[4]));
+				int32 item_id			= atoul(row[1]);
+				int16 max_claim			= atoul(row[2]);
+				int16 curr_claim		= max_claim;
+				int8  one_per_char		= atoul(row[3]);
+				int64 vet_reward_time	= atoi64(row[4]);
+				MYSQL_RES* res = query.RunQuery2(Q_INSERT, "insert into character_claim_items (char_id, item_id, max_claim, curr_claim, one_per_char, veteran_reward_time) values  (%i, %i, %i, %i, %i, %I64i)", char_id, item_id, max_claim, curr_claim, one_per_char, vet_reward_time);
 				total++;
 			}
 		}
