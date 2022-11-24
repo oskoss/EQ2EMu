@@ -630,6 +630,7 @@ LoginAccount* LoginDatabase::LoadAccount(const char* name, const char* password,
 	Query query;
 	query.escaped_name = getEscapeString(name);
 	query.escaped_pass = getEscapeString(password);
+	time_t now = time(0); //get the current epoc time
 	MYSQL_ROW row;
 	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id from account where name='%s' and passwd=sha2('%s',512)", query.escaped_name, query.escaped_pass);
 	if(result){
@@ -646,7 +647,7 @@ LoginAccount* LoginDatabase::LoadAccount(const char* name, const char* password,
 		else if (attemptAccountCreation && !database.GetAccountIDByName(name))
 		{
 			Query newquery;
-			newquery.RunQuery2(Q_INSERT, "insert into account set name='%s',passwd=sha2('%s',512)", query.escaped_name, query.escaped_pass);
+			newquery.RunQuery2(Q_INSERT, "insert into account set name='%s',passwd=sha2('%s',512), created_date=%i", query.escaped_name, query.escaped_pass, now);
 			// re-run the query for select only not account creation
 			return LoadAccount(name, password, false);
 		}
