@@ -9544,8 +9544,7 @@ void Client::ShowClaimWindow() {
 			packet->setArrayDataByName("not_yet_claimed", 1, i);
 			packet->setArrayDataByName("num_remaining", claim[i].curr_claim, i);
 			packet->setArrayDataByName("one_per_character", claim[i].one_per_char, i);
-			packet->setArrayDataByName("claimed_on_this_char", claimed, i);
-			//packet->setArrayDataByName("unknown2", 1, 2); // 1:already claimed tab 2: broken commenting out until implemented.
+			packet->setArrayDataByName("claimed_on_this_char", 0, i);
 			packet->setArrayDataByName("item_name", item->name.c_str(), i);
 			packet->setArrayDataByName("text", "If you ever see this text, let a developer know!", i); //I've not seen this!
 			//packet->setArrayDataByName("category", "Scott's Shit", i); //devn00b: not using so commenting out, leaving in case we ever do implement categories.

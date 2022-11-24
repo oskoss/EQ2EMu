@@ -544,7 +544,7 @@ public:
 	void				LoadClaimItems(int32 char_id);
 	int16				CountCharClaimItems(int32 char_id);
 	vector<ClaimItems>  LoadCharacterClaimItems(int32 char_id);
-	bool				ClaimItem(int32 char_id, int32 item_id, Client* client);
+	void				ClaimItem(int32 char_id, int32 item_id, Client* client);
 	int32				GetAccountAge(int32 account_id);
 
 	/* Race Types */
