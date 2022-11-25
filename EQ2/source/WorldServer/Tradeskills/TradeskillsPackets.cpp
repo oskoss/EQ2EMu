@@ -64,61 +64,123 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 		return;
 	}
 	vector<int32>::iterator itr;
+	vector<Item*> itemss;
 	int8 i = 0;
+	int8 k = 0;
 	int32 firstID = 0;
+	int32 IDcount = 0;
 	int32 primary_comp_id = 0;
+	Item* first_item = 0;
 	Item* item = 0;
+	Item* item_player = 0;
+	Spawn* target = 0;
+	if (!(target = client->GetPlayer()->GetTarget())) {
+
+		client->Message(CHANNEL_COLOR_YELLOW, "You must be at a  %s in order to crafte this recipe", recipe->GetDevice());
+		return;
+	}
 
 	// Recipe and crafting table info
 	packet->setDataByName("crafting_station", recipe->GetDevice());
 	packet->setDataByName("recipe_name", recipe->GetName());
 	packet->setDataByName("tier", recipe->GetTier());
-
+	// Mass Production
+	int32 mpq = 1; 
+	int32 mp = 5;
+	vector<int> v{ 1,2,4,6,11,21 };
+	// mpq will eventually be retrieved from achievement for mass production
+	mpq = v[mp];
+	
+	packet->setArrayLengthByName("num_mass_production_choices",mpq);
+	packet->setArrayDataByName("mass_qty", 1, 0);
+	for (int x = 1; x < mpq; x++) {
+		packet->setArrayDataByName("mass_qty", x * 5, x);
+	}
 	// Product info
 	item = master_item_list.GetItem(recipe->GetProductID());
 	packet->setDataByName("product_name", item->name.c_str());
 	packet->setDataByName("icon", item->details.icon);
 	packet->setDataByName("product_qty", recipe->GetProductQuantity());
 	packet->setDataByName("primary_title", recipe->GetPrimaryBuildComponentTitle());
-	packet->setDataByName("primary_qty", 1);
-
+	packet->setDataByName("primary_qty_needed", recipe->GetPrimaryComponentQuantity());
+	packet->setDataByName("unknown6", 11);
+	packet->setDataByName("unknown3", 18);
 	// Reset item to 0
-	item = 0;
-
+	item, item_player = 0;
+	
 	// Check to see if we have a primary component (slot = 0)
 	if (recipe->components.count(0) > 0) {
 		vector<int32> rc = recipe->components[0];
-		packet->setArrayLengthByName("num_primary_choices", rc.size());
+			vector <pair<int32, int16>> selected_items;
 		for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
 			if (firstID == 0)
 				firstID = *itr;
 
 			item = master_item_list.GetItem(*itr);
-			if(!item)
+			if (!item)
 			{
 				LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error creating packet to client missing item %u", *itr);
 				client->Message(CHANNEL_COLOR_RED, "Error producing create recipe packet!  Recipe is trying to find item %u, but it is missing!", *itr);
 				safe_delete(packet);
 				return;
 			}
-			packet->setArrayDataByName("primary_component", item->name.c_str(), i);
-			packet->setArrayDataByName("primary_item_id", (*itr), i);
-			packet->setArrayDataByName("primary_icon", item->details.icon, i);
-			item = 0;
-			item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-			if (item)
-				packet->setArrayDataByName("primary_total_quantity", item->details.count, i);
+			item_player = 0;
+			item_player = client->GetPlayer()->item_list.GetItemFromID((*itr));
+
+			itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
+			packet->setArrayLengthByName("num_primary_choices", itemss.size());
+			if (itemss.size() > 0) {
+				
+				int16 needed_qty = recipe->GetPrimaryComponentQuantity();
+				int16 have_qty = 0;
+				if (firstID == 0)
+					firstID = *itr;
+				for (int8 i = 0; i < itemss.size(); i++) {
+					IDcount++;
+					if (have_qty < needed_qty) {
+
+						int16 stack_count = itemss[i]->details.count;
+						int16 min_qty = min(stack_count, int16(needed_qty - have_qty));
+						selected_items.push_back(make_pair(int32(itemss[i]->details.unique_id), min_qty));
+						have_qty += min_qty;
+					}
+					packet->setArrayDataByName("primary_component", itemss[i]->name.c_str(), i);
+					packet->setArrayDataByName("primary_item_id", itemss[i]->details.unique_id, i);
+					packet->setArrayDataByName("primary_icon", itemss[i]->details.icon, i);
+					packet->setArrayDataByName("primary_total_quantity", itemss[i]->details.count, i);
+					//packet->setArrayDataByName("primary_supply_depot", itemss[i]->details.count, i);  // future need
+					//packet->setArrayDataByName("primary_unknown3a",);      // future need
+				}
+				packet->setDataByName("primary_id", itemss[0]->details.unique_id);
+				packet->setDataByName("primary_default_selected_id", itemss[0]->details.unique_id);
+				for (int8 i = 0; i < selected_items.size(); i++) {
+
+
+
+
+
+				}
+				int16 qty = 0;
+				if (item) {
+					qty = (int8)item->details.count;
+					if (qty > 0 && firstID == primary_comp_id)
+						qty -= 1;
+				}
+			}
+			else
+				packet->setDataByName("primary_id",*itr);
 		}
 		// store the id of the primary comp
 		primary_comp_id = firstID;
+		
 		// Set the default item id to the first component id
-		packet->setDataByName("primary_item_selected", 1);
-		packet->setDataByName("primary_default_selected_id", firstID);
-		item = 0;
-		item = client->GetPlayer()->item_list.GetItemFromID(firstID);
-		if (item)
-			packet->setDataByName("primary_selected_item_qty", min((int8)1, (int8)item->details.count));
+		packet->setArrayLengthByName("num_primary_items_selected", selected_items.size());
+		for (int8 i = 0; i < selected_items.size(); i++) {
+			packet->setArrayDataByName("primary_selected_item_qty", selected_items[i].second,i  );
+			packet->setArrayDataByName("primary_selected_item_id", selected_items[i].first,i);
 
+		}
+				
 		// Reset the variables we will reuse
 		i = 0;
 		firstID = 0;
@@ -131,7 +193,7 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 
 	// Check to see if we have build components (slot = 1 - 4)
 	int8 total_build_components = 0;
-	if (recipe->components.count(1) > 0)
+	if (recipe->components.count(1) > 0) 
 		total_build_components++;
 	if (recipe->components.count(2))
 		total_build_components++;
@@ -139,107 +201,187 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 		total_build_components++;
 	if (recipe->components.count(4))
 		total_build_components++;
-
+	//--------------------------------------------------------------Start Build Components-------------------------------------------------------------
 	if (total_build_components > 0) {
 		packet->setArrayLengthByName("num_build_components", total_build_components);
+		LogWrite(TRADESKILL__ERROR, 0, "Recipes", "num_build_components ", total_build_components);
 		for (int8 index = 0; index < 4; index++) {
-
 			if (recipe->components.count(index + 1) == 0)
 				continue;
-
 			packet->setArrayDataByName("build_slot", index, index);
-
 			vector<int32> rc = recipe->components[index + 1];
-
-			packet->setSubArrayLengthByName("num_build_choices", rc.size(), index);
-			for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
-				if (firstID == 0)
-					firstID = *itr;
-
-				item = master_item_list.GetItem(*itr);
-			
-				packet->setSubArrayDataByName("build_component", item->name.c_str(), index, i);
-				packet->setSubArrayDataByName("build_item_id", (*itr), index, i);
-				packet->setSubArrayDataByName("build_icon", item->details.icon, index, i);
-
-				item = 0;
-				item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-				if (item)
-					packet->setSubArrayDataByName("build_total_quantity", item->details.count, index, i);
+			int32 total_component_items = 0;
+			int8 hasComp = 0;
+			vector <pair<int32, int16>> selected_items;
+			for (itr = rc.begin(); itr != rc.end(); itr++) {
+				itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
+				if (itemss.size() > 0)
+					total_component_items += itemss.size();
 			}
+			packet->setSubArrayLengthByName("num_build_choices", total_component_items, index);// get # build choces first
+			hasComp = 0;
+			char msgbuf[200] = "";
+			for (itr = rc.begin(); itr != rc.end(); itr++) {// iterates through each recipe component to find the stacks in inventory
+				item = master_item_list.GetItem(*itr);
+				itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
+				sprintf(msgbuf, "k=%d hascomp=%d \n", k, hasComp);
+				OutputDebugString(msgbuf);
+				if (itemss.size() > 0) { 
+					int16 needed_qty = 0;
+					int16 have_qty = 0;
+					if (index == 0) {
+						needed_qty = recipe->GetBuild1ComponentQuantity();
+						have_qty = 0;
+					}
+					else if (index == 1) {
+						needed_qty = recipe->GetBuild2ComponentQuantity();
+						have_qty = 0;
+					}
+					else if (index == 2) {
+						needed_qty = recipe->GetBuild3ComponentQuantity();
+						have_qty = 0;
+					}
+					else if (index == 3) {
+						needed_qty = recipe->GetBuild4ComponentQuantity();
+						have_qty = 0;
+					}
+					if (firstID == 0)
+						firstID = *itr;
+					if (hasComp == 0) {
+						hasComp = 100 + k;
+					}
+					for (int8 j = 0; j < itemss.size(); j++, k++) { // go through each stack of a compnent
+						if (have_qty < needed_qty) {
 
-			// Set the default item id to the first component id
-			packet->setArrayDataByName("build_item_selected", 1, index);
-			packet->setArrayDataByName("build_selected_item_id", firstID, index);
-			item = 0;
-			item = client->GetPlayer()->item_list.GetItemFromID(firstID);
-			int8 qty = 0;
+							int16 stack_count = itemss[j]->details.count;
+							int16 min_qty = min(stack_count, int16(needed_qty - have_qty));
+							selected_items.push_back(make_pair(int32(itemss[j]->details.unique_id), min_qty));
+							have_qty += min_qty;
+						}
+						item = master_item_list.GetItem(itemss[j]->details.item_id);
+						packet->setSubArrayDataByName("build_component", itemss[j]->name.c_str(), index, k);
+						packet->setSubArrayDataByName("build_item_id", itemss[j]->details.unique_id, index, k);
+						packet->setSubArrayDataByName("build_icon", itemss[j]->details.icon, index, k);
+						packet->setSubArrayDataByName("build_total_quantity", itemss[j]->details.count, index, k);
+						//packet->setSubArrayDataByName("build_supply_depot",);  // future need
+						//packet->setSubArrayDataByName("build_unknown3",);      // future need
+
+					}
+				}
+			}
+			packet->setArrayLengthByName("num_build_items_selected", selected_items.size());
+			for (int8 i = 0; i < selected_items.size(); i++) {
+				packet->setArrayDataByName("build_selected_item_qty", selected_items[i].second, i);
+				packet->setArrayDataByName("build_selected_id", selected_items[i].first, i);
+
+			}
+			int16 qty = 0;
 			if (item) {
-				qty = (int8)item->details.count;
+				qty = (int16)item->details.count;
 				if (qty > 0 && firstID == primary_comp_id)
 					qty -= 1;
 			}
-
 			if (index == 0) {
 				packet->setArrayDataByName("build_title", recipe->GetBuild1ComponentTitle(), index);
-				packet->setArrayDataByName("build_qty", recipe->GetBuild1ComponentQuantity(), index);
+				packet->setArrayDataByName("build_qty_needed", recipe->GetBuild1ComponentQuantity(), index);
 				if (item)
-					packet->setArrayDataByName("build_selected_item_qty", min(qty, recipe->GetBuild1ComponentQuantity()), index);
+					packet->setArrayDataByName("build_selected_item_qty_have", min(qty, recipe->GetBuild1ComponentQuantity()), index);
 			}
 			else if (index == 1) {
 				packet->setArrayDataByName("build_title", recipe->GetBuild2ComponentTitle(), index);
-				packet->setArrayDataByName("build_qty", recipe->GetBuild2ComponentQuantity(), index);
+				packet->setArrayDataByName("build_qty_needed", recipe->GetBuild2ComponentQuantity(), index);
 				if (item)
-					packet->setArrayDataByName("build_selected_item_qty", min(qty, recipe->GetBuild2ComponentQuantity()), index);
+					packet->setArrayDataByName("build_selected_item_qty_have", min(qty, recipe->GetBuild2ComponentQuantity()), index);
 			}
 			else if (index == 2) {
 				packet->setArrayDataByName("build_title", recipe->GetBuild3ComponentTitle(), index);
-				packet->setArrayDataByName("build_qty", recipe->GetBuild3ComponentQuantity(), index);
+				packet->setArrayDataByName("build_qty_needed", recipe->GetBuild3ComponentQuantity(), index);
 				if (item)
-					packet->setArrayDataByName("build_selected_item_qty", min(qty, recipe->GetBuild3ComponentQuantity()), index);
+					packet->setArrayDataByName("build_selected_item_qty_have", min(qty, recipe->GetBuild3ComponentQuantity()), index);
 			}
 			else {
 				packet->setArrayDataByName("build_title", recipe->GetBuild4ComponentTitle(), index);
-				packet->setArrayDataByName("build_qty", recipe->GetBuild4ComponentQuantity(), index);
+				packet->setArrayDataByName("build_qty_needed", recipe->GetBuild4ComponentQuantity(), index);
 				if (item)
-					packet->setArrayDataByName("build_selected_item_qty", min(qty, recipe->GetBuild4ComponentQuantity()), index);
+					packet->setArrayDataByName("build_selected_item_qty_have", min(qty, recipe->GetBuild4ComponentQuantity()), index);
 			}
 
 			// Reset the variables we will reuse
 			i = 0;
 			firstID = 0;
 			item = 0;
-		}
+			k = 0;
+			}
+		
+		
+		int32 xxx = 0;
 	}
+
 
 	// Check to see if we have a fuel component (slot = 5)
 	if (recipe->components.count(5) > 0) {
 		vector<int32> rc = recipe->components[5];
-		packet->setArrayLengthByName("num_fuel_choices", rc.size());
+		vector <pair<int32, int16>> selected_items;
 		for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
 			if (firstID == 0)
 				firstID = *itr;
-
 			item = master_item_list.GetItem(*itr);
+			if (!item)
+			{
+				LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error creating packet to client missing item %u", *itr);
+				client->Message(CHANNEL_COLOR_RED, "Error producing create recipe packet!  Recipe is trying to find item %u, but it is missing!", *itr);
+				safe_delete(packet);
+				return;
+			}
+			item_player = 0;
+			item_player = client->GetPlayer()->item_list.GetItemFromID((*itr));
 
-			packet->setArrayDataByName("fuel_component", item->name.c_str(), i);
-			packet->setArrayDataByName("fuel_item_id", (*itr), i);
-			packet->setArrayDataByName("fuel_icon", item->details.icon, i);
-			item = 0;
-			item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-			if (item)
-				packet->setArrayDataByName("fuel_total_quantity", item->details.count, i);
+			itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
+			packet->setArrayLengthByName("num_fuel_choices", itemss.size());
+			if (itemss.size() > 0) {
+				int16 needed_qty = recipe->GetFuelComponentQuantity();
+				int16 have_qty = 0;
+				if (firstID == 0)
+					firstID = *itr;
+				for (int8 i = 0; i < itemss.size(); i++) {
+					IDcount++;
+					if (have_qty < needed_qty) {
+
+						int16 stack_count = itemss[i]->details.count;
+						int16 min_qty = min(stack_count, int16(needed_qty - have_qty));
+						selected_items.push_back(make_pair(int32(itemss[i]->details.unique_id), min_qty));
+						have_qty += min_qty;
+					}
+					packet->setArrayDataByName("fuel_component", itemss[i]->name.c_str(), i);
+					packet->setArrayDataByName("fuel_item_id", itemss[i]->details.unique_id, i);
+					packet->setArrayDataByName("fuel_icon", itemss[i]->details.icon, i);
+					packet->setArrayDataByName("fuel_total_quantity", itemss[i]->details.count, i);
+					//packet->setArrayDataByName("fuel_supply_depot", itemss[i]->details.count, i);  // future need
+					//packet->setArrayDataByName("primary_unknown3a",);      // future need
+				}
+				packet->setDataByName("fuel_selected_item_id", itemss[0]->details.unique_id);
+				int16 qty = 0;
+				if (item) {
+					qty = (int8)item->details.count;
+					if (qty > 0 && firstID == primary_comp_id)
+						qty -= 1;
+				}
+			}
+			else
+				packet->setDataByName("primary_vvv", *itr);
 		}
+		// store the id of the primary comp
+		primary_comp_id = firstID;
 
 		// Set the default item id to the first component id
-		packet->setDataByName("fuel_selected_item_id", firstID);
-		packet->setDataByName("fuel_item_selected", 1);
-		item = 0;
-		item = client->GetPlayer()->item_list.GetItemFromID(firstID);
-		if (item)
-			packet->setDataByName("fuel_selected_item_qty", min(recipe->GetFuelComponentQuantity(), (int8)item->details.count));
-		packet->setDataByName("fuel_title",recipe->GetFuelComponentTitle());
-		packet->setDataByName("fuel_qty",recipe->GetFuelComponentQuantity());
+		packet->setArrayLengthByName("num_fuel_items_selected", selected_items.size());
+		for (int8 i = 0; i < selected_items.size(); i++) {
+			packet->setArrayDataByName("fuel_selected_item_qty", selected_items[i].second, i);
+			packet->setArrayDataByName("fuel_selected_item_id", selected_items[i].first, i);
+		}
+		packet->setDataByName("fuel_title", recipe->GetFuelComponentTitle());
+		packet->setDataByName("fuel_qty_needed", recipe->GetFuelComponentQuantity());
+
 
 		// Reset the variables we will reuse
 		i = 0;
@@ -251,10 +393,9 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 		return;
 	}
 
-	packet->setDataByName("unknown1", recipeID);
-	packet->setDataByName("unknown8", 1); // Possible array for amount you can craft
-	packet->setDataByName("unknown8", 1, 1); // amounts you can craft
-	//packet->PrintPacket();
+	packet->setDataByName("recipe_id", recipeID);
+	
+	packet->PrintPacket();
 	// Send the packet
 	client->QueuePacket(packet->serialize());
 	safe_delete(packet);

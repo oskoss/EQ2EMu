@@ -28,6 +28,7 @@
 extern ConfigReader configReader;
 extern MasterItemList master_item_list;
 
+
 Recipe::Recipe() {
 	id = 0;
 	book_id = 0;
@@ -304,7 +305,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	RecipeProducts* rp = 0;
 	vector<int32>::iterator itr;
 	vector<RecipeComp> comp_list;
-
+	
 	int8 i = 0;
 	int32 firstID = 0;
 	int32 primary_comp_id = 0;
@@ -341,43 +342,69 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	packet->setSubstructDataByName("recipe_info", "unknown3", 1);
 	packet->setSubstructDataByName("recipe_info", "adventure_id", 0xFF);
 	packet->setSubstructDataByName("recipe_info", "tradeskill_id", client ? client->GetPlayer()->GetTradeskillClass() : 0);
-	packet->setSubstructDataByName("recipe_info", "unknown4", 100);
+	packet->setSubstructDataByName("recipe_info", "unknown4a", 100);
 	packet->setSubstructDataByName("recipe_info", "unknown4aa", 1);
-	packet->setSubstructDataByName("recipe_info", "unknown5a", 20);
+	packet->setSubstructDataByName("recipe_info", "unknown5a", 20);//level *10
 	packet->setSubstructDataByName("recipe_info", "product_classes", recipe->GetClasses());
-	packet->setSubstructDataByName("recipe_info", "show_previous", 15);
-	packet->setSubstructDataByName("recipe_info", "previous1_icon", 186);
-	packet->setSubstructDataByName("recipe_info", "previous1_name", "previous1_name");
-	packet->setSubstructDataByName("recipe_info", "previous1_qty", 1);
-	packet->setSubstructDataByName("recipe_info", "previous1_item_id", 4142);
-	packet->setSubstructDataByName("recipe_info", "previous1_item_crc", -853046774);
-	packet->setSubstructDataByName("recipe_info", "previous2_icon", 186);
-	packet->setSubstructDataByName("recipe_info", "previous2_name", "previous2_name");
-	packet->setSubstructDataByName("recipe_info", "previous2_qty", 1);
-	packet->setSubstructDataByName("recipe_info", "previous2_item_id", 4142);
-	packet->setSubstructDataByName("recipe_info", "previous2_item_crc", -853046774);
-	packet->setSubstructDataByName("recipe_info", "previous3_icon", 186);
-	packet->setSubstructDataByName("recipe_info", "previous3_name", "previous3_name");
-	packet->setSubstructDataByName("recipe_info", "previous3_qty", 1);
-	packet->setSubstructDataByName("recipe_info", "previous3_item_id", 4142);
-	packet->setSubstructDataByName("recipe_info", "previous3_item_crc", -853046774);
-	packet->setSubstructDataByName("recipe_info", "firstbar_icon", 186);
-	packet->setSubstructDataByName("recipe_info", "firstbar_name", "firstbar_name");
-	packet->setSubstructDataByName("recipe_info", "firstbar_qty", 1);
-	packet->setSubstructDataByName("recipe_info", "firstbar_item_id", 4142);
-	packet->setSubstructDataByName("recipe_info", "firstbar_item_crc", -853046774);
-	packet->setSubstructDataByName("recipe_info", "secondbar_icon", 186);
-	packet->setSubstructDataByName("recipe_info", "secondbar_name", "secondbar_name");
-	packet->setSubstructDataByName("recipe_info", "secondbar_qty", 1);
-	packet->setSubstructDataByName("recipe_info", "secondbar_item_id", 4142);
-	packet->setSubstructDataByName("recipe_info", "secondbar_item_crc", -853046774);
-	packet->setSubstructDataByName("recipe_info", "thirdbar_icon", 198);
-	packet->setSubstructDataByName("recipe_info", "thirdbar_name", "thirdbar_name");
-	packet->setSubstructDataByName("recipe_info", "thirdbar_qty", 1);
-	packet->setSubstructDataByName("recipe_info", "thirdbar_item_id", 12098);
+	packet->setSubstructDataByName("recipe_info", "show_previous", client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->highestStage);//     recipe->highestStage);
 
-	packet->setSubstructDataByName("recipe_info", "thirdbar_item_crc", -2065846136);
-	item = master_item_list.GetItemByName(recipe->GetName());
+
+	rp = recipe->products[1];
+	if (rp->product_id > 0) {
+		item = 0;
+		item = master_item_list.GetItem(rp->product_id);
+		if (item) {
+			packet->setSubstructDataByName("recipe_info", "previous1_icon", item->details.icon);
+			packet->setSubstructDataByName("recipe_info", "previous1_name", "previous1_name");
+			packet->setSubstructDataByName("recipe_info", "previous1_qty", recipe->products[1]->product_qty);
+			packet->setSubstructDataByName("recipe_info", "previous1_item_id", recipe->products[1]->product_id);
+			packet->setSubstructDataByName("recipe_info", "previous1_item_crc", -853046774);
+			packet->setSubstructDataByName("recipe_info", "firstbar_icon", item->details.icon);
+			packet->setSubstructDataByName("recipe_info", "firstbar_name", "firstbar_name");
+			packet->setSubstructDataByName("recipe_info", "firstbar_qty", recipe->products[1]->product_qty);
+			packet->setSubstructDataByName("recipe_info", "firstbar_item_id", recipe->products[2]->product_id);
+			packet->setSubstructDataByName("recipe_info", "firstbar_item_crc", -853046774);
+		}
+	}
+	rp = recipe->products[2];
+	if (rp->product_id > 0) {
+		item = 0;
+		item = master_item_list.GetItem(rp->product_id);
+		if (item) {
+			packet->setSubstructDataByName("recipe_info", "previous2_icon", item->details.icon);
+			packet->setSubstructDataByName("recipe_info", "previous2_name", "previous2_name");
+			packet->setSubstructDataByName("recipe_info", "previous2_qty", recipe->products[2]->product_qty);
+			packet->setSubstructDataByName("recipe_info", "previous2_item_id", recipe->products[2]->product_id);
+			packet->setSubstructDataByName("recipe_info", "previous2_item_crc", -853046774);
+			packet->setSubstructDataByName("recipe_info", "secondbar_icon", item->details.icon);
+			packet->setSubstructDataByName("recipe_info", "secondbar_name", "secondbar_name");
+			packet->setSubstructDataByName("recipe_info", "secondbar_qty", recipe->products[2]->product_qty);
+			packet->setSubstructDataByName("recipe_info", "secondbar_item_id", recipe->products[2]->product_id);
+			packet->setSubstructDataByName("recipe_info", "secondbar_item_crc", -853046774);
+		}
+	}
+	rp = recipe->products[3];
+	if (rp->product_id > 0) {
+		item = 0;
+		item = master_item_list.GetItem(rp->product_id);
+		if (item) {
+			packet->setSubstructDataByName("recipe_info", "previous3_icon", item->details.icon);
+			packet->setSubstructDataByName("recipe_info", "previous3_name", "previous3_name");
+			packet->setSubstructDataByName("recipe_info", "previous3_qty", recipe->products[3]->product_qty);
+			packet->setSubstructDataByName("recipe_info", "previous3_item_id", recipe->products[3]->product_id);
+			packet->setSubstructDataByName("recipe_info", "previous3_item_crc", -853046774);
+			packet->setSubstructDataByName("recipe_info", "thirdbar_icon", item->details.icon);
+			packet->setSubstructDataByName("recipe_info", "thirdbar_name", "thirdbar_name");
+			packet->setSubstructDataByName("recipe_info", "thirdbar_qty", recipe->products[3]->product_qty);
+			packet->setSubstructDataByName("recipe_info", "thirdbar_item_id", recipe->products[3]->product_id);
+			packet->setSubstructDataByName("recipe_info", "thirdbar_item_crc", -2065846136);
+		}
+	}
+	
+	
+	
+	
+	item = master_item_list.GetItemByName(recipe->GetName());// TODO: MJ we should be getting item by item number in case of multiple items with same name
 	if(item) {
 		packet->setSubstructDataByName("recipe_info", "product_icon", item->details.icon); //item->details.icon);
 		packet->setSubstructDataByName("recipe_info", "product_name", item->name.c_str()); //item->name);
@@ -385,6 +412,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 		packet->setSubstructDataByName("recipe_info", "product_item_id", item->details.item_id); //item->details.item_id);
 		packet->setSubstructDataByName("recipe_info", "product_item_crc", 0); //item->details.item_crc);
 	}
+
 	rp = recipe->products[0];
 	if (rp->byproduct_id > 0) {
 		item = 0;
@@ -393,47 +421,45 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 			packet->setSubstructDataByName("recipe_info", "byproduct_icon", item->details.icon);//11
 			packet->setSubstructDataByName("recipe_info", "byproduct_id", item->details.item_id);
 		}
+
 	}
-	
-	
-	//string xxx = recipe->
-	//item = master_item_list.GetItemByName   (recipe->GetBuild1ComponentTitle());
-	// Reset item to 0
+	rp = recipe->products[1];
+	if (rp->product_id > 0) {
+		item = 0;
+		item = master_item_list.GetItem(rp->product_id);
+		if (item) {
+			packet->setSubstructDataByName("recipe_info", "byproduct_icon", item->details.icon);//11
+			packet->setSubstructDataByName("recipe_info", "byproduct_id", item->details.item_id);
+		}
+
+	}
+		
 	item = 0;
 
 	// Check to see if we have a primary component (slot = 0)
+	vector<Item*> itemss;
 	if (recipe->components.count(0) > 0) {
+		
 		vector<int32> rc = recipe->components[0];
 		for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
-			if (firstID == 0)
-				firstID = *itr;
-
 			item = master_item_list.GetItem(*itr);
+			packet->setSubstructDataByName("recipe_info", "primary_comp", recipe->primary_build_comp_title);
+			packet->setSubstructDataByName("recipe_info", "primary_qty", recipe->GetPrimaryComponentQuantity());
 			item = 0;
 			item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-			if (item) {
-				packet->setSubstructDataByName("recipe_info", "primary_qty_avail", item->details.count);
-				packet->setSubstructDataByName("recipe_info", "primary_comp", recipe->primary_build_comp_title);
+			itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
+			if (itemss.size() > 0) {
+				int16 needed_qty = recipe->GetPrimaryComponentQuantity();
+				int16 have_qty = 0;
+				for (int8 i = 0; i < itemss.size(); i++) {
+					have_qty += itemss[i]->details.count;
+				}
+				packet->setSubstructDataByName("recipe_info", "primary_qty_avail", have_qty);
 				break;
-					}
+			}
 		}
-		// store the id of the primary comp
-		primary_comp_id = firstID;
-		// Set the default item id to the first component id
-		item = 0;
-		item = client->GetPlayer()->item_list.GetItemFromID(firstID);
-		if (item) {
-			
-		}
-		// Reset the variables we will reuse
-		i = 0;
-		firstID = 0;
-		item = 0;
 	}
-	else {
-		LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Recipe has no primary component");
-		
-	}
+	
 	
 
 	int8 total_build_components = 0;
@@ -450,205 +476,64 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	if (total_build_components > 0) {
 		packet->setSubstructArrayLengthByName("recipe_info", "num_comps", total_build_components);
 		for (int8 index = 0; index < 4; index++) {
-
 			if (recipe->components.count(index + 1) == 0)
 				continue;
 
-			//packet->setArrayDataByName("build_slot", index, index);
-
 			vector<int32> rc = recipe->components[index + 1];
-
-			//packet->setSubArrayLengthByName("num_build_choices", rc.size(), index);
+			int16 have_qty = 0;
+			string comp_title;
+			int8 comp_qty;
 			for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
-				if (firstID == 0)
-					firstID = *itr;
-				string comp_title;
-				int8 comp_qty;
+
+				
 				if (index == 0) {
 					comp_title = recipe->build1_comp_title;
-					comp_qty = recipe->build_comp_qty;
-					item = master_item_list.GetItem(*itr);
-					packet->setArrayDataByName("build_comp", comp_title.c_str(), index );
-					packet->setArrayDataByName("build_comp_qty", comp_qty, index );
-					item = master_item_list.GetItem(*itr);
-					item = 0;
-					item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-					if (item) {
-						packet->setArrayDataByName("build_comp_qty_avail", item->details.count, index );
-
-					}
+					comp_qty = recipe->build1_comp_qty;
 				}
 				else if (index == 1) {
 					comp_title = recipe->build2_comp_title;
 					comp_qty = recipe->build2_comp_qty;
-					item = master_item_list.GetItem(*itr);
-					packet->setArrayDataByName("build_comp", comp_title.c_str(), index );
-					packet->setArrayDataByName("build_comp_qty", comp_qty, index );
-					item = master_item_list.GetItem(*itr);
-					item = 0;
-					item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-					if (item) {
-						packet->setArrayDataByName("build_comp_qty_avail", item->details.count, index );
-						break;
-					}
 				}
 				else if (index == 2) {
 					comp_title = recipe->build3_comp_title;
 					comp_qty = recipe->build3_comp_qty;
-					item = master_item_list.GetItem(*itr);
-					packet->setArrayDataByName("build_comp", comp_title.c_str(), index );
-					packet->setArrayDataByName("build_comp_qty", comp_qty, index );
-					item = master_item_list.GetItem(*itr);
-					item = 0;
-					item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-					if (item) {
-						packet->setArrayDataByName("build_comp_qty_avail", item->details.count, index );
-						break;
-					}
 				}
 				else if (index == 3) {
 					comp_title = recipe->build4_comp_title;
 					comp_qty = recipe->build4_comp_qty;
-					item = master_item_list.GetItem(*itr);
-					packet->setArrayDataByName("build_comp", comp_title.c_str(), index );
-					packet->setArrayDataByName("build_comp_qty", comp_qty, index );
-					item = master_item_list.GetItem(*itr);
-					item = 0;
-					item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-					if (item) {
-						packet->setArrayDataByName("build_comp_qty_avail", item->details.count, index );
-						break;
-					}
 				}
-
-				
-					//item = master_item_list.GetItem(*itr);
-					//packet->setArrayDataByName("build_comp", comp_title.c_str(), index -1);
-					//packet->setArrayDataByName("build_comp_qty", comp_qty, index - 1);
-					//item = master_item_list.GetItem(*itr);
-					//item = 0;
-					//item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-					//if (item) {
-					//	packet->setArrayDataByName("build_comp_qty_avail", item->details.count, index - 1);
-					
-					//}
-									   					 			
-
-					item = 0;
-					item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-					if (item) {
-						//packet->setSubArrayDataByName("build_total_quantity", item->details.count, index, i);
-					}
+				item = master_item_list.GetItem(*itr);
+				itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
+				for (int8 j = 0; j < itemss.size(); j++) {
+					have_qty += itemss[j]->details.count;
 				}
-
-				// Set the default item id to the first component id
-				//packet->setArrayDataByName("build_item_selected", 1, index);
-				//packet->setArrayDataByName("build_selected_item_id", firstID, index);
-				item = 0;
-				item = client->GetPlayer()->item_list.GetItemFromID(firstID);
-				int8 qty = 0;
-				if (item) {
-					qty = (int8)item->details.count;
-					if (qty > 0 && firstID == primary_comp_id)
-						qty -= 1;
-				}
-
-				if (index == 0) {
-					//	packet->setArrayDataByName("build_title", recipe->GetBuild1ComponentTitle(), index);
-						//packet->setArrayDataByName("build_qty", recipe->GetBuild1ComponentQuantity(), index);
-					if (item) {
-						//	packet->setArrayDataByName("build_selected_item_qty", min(qty, recipe->GetBuild1ComponentQuantity()), index);
-					}
-				}
-				else if (index == 1) {
-					//	packet->setArrayDataByName("build_title", recipe->GetBuild2ComponentTitle(), index);
-					//	packet->setArrayDataByName("build_qty", recipe->GetBuild2ComponentQuantity(), index);
-					if (item) {
-						//	packet->setArrayDataByName("build_selected_item_qty", min(qty, recipe->GetBuild2ComponentQuantity()), index);
-					}
-				}
-				else if (index == 2) {
-					//	packet->setArrayDataByName("build_title", recipe->GetBuild3ComponentTitle(), index);
-					//	packet->setArrayDataByName("build_qty", recipe->GetBuild3ComponentQuantity(), index);
-					if (item) {
-						//	packet->setArrayDataByName("build_selected_item_qty", min(qty, recipe->GetBuild3ComponentQuantity()), index);
-					}
-				}
-				else {
-					//	packet->setArrayDataByName("build_title", recipe->GetBuild4ComponentTitle(), index);
-					//	packet->setArrayDataByName("build_qty", recipe->GetBuild4ComponentQuantity(), index);
-					if (item) {
-						//packet->setArrayDataByName("build_selected_item_qty", min(qty, recipe->GetBuild4ComponentQuantity()), index);
-					}
-				}
-
-				// Reset the variables we will reuse
-				i = 0;
-				firstID = 0;
-				item = 0;
 			}
+				packet->setArrayDataByName("build_comp", comp_title.c_str(), index);
+				packet->setArrayDataByName("build_comp_qty", comp_qty, index);
+				packet->setArrayDataByName("build_comp_qty_avail", have_qty, index);
+		}
 		
 	}
-
-
-
-
-	//packet->setArrayDataByName("build_comp", "build_comp1", 0);
-	//packet->setArrayDataByName("build_comp_qty", 1, 0);
-	//packet->setArrayDataByName("build_comp_qty_avail", 24, 0);
-
-	//packet->setArrayDataByName("build_comp", "build_comp2", 1);
-	//packet->setArrayDataByName("build_comp_qty", 1, 1);
-	//packet->setArrayDataByName("build_comp_qty_avail", 16, 1);
-
-	//packet->setArrayDataByName("build_comp", "build_comp3", 2);
-	//packet->setArrayDataByName("build_comp_qty", 1, 2);
-	//packet->setArrayDataByName("build_comp_qty_avail", 15, 2);
-
 	// Check to see if we have a fuel component (slot = 5)
 	if (recipe->components.count(5) > 0) {
 		vector<int32> rc = recipe->components[5];
-		//packet->setArrayLengthByName("num_fuel_choices", rc.size());
 		for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
-			if (firstID == 0)
-				firstID = *itr;
-
 			item = master_item_list.GetItem(*itr);
-			//packet->setSubstructDataByName("recipe_info", "fuel_comp_qty_avail", item->details.count);
+			packet->setSubstructDataByName("recipe_info", "fuel_comp", recipe->fuel_comp_title);
+			packet->setSubstructDataByName("recipe_info", "fuel_comp_qty", recipe->fuel_comp_qty);
 			item = 0;
 			item = client->GetPlayer()->item_list.GetItemFromID((*itr));
-			if (item) {
-				packet->setSubstructDataByName("recipe_info", "fuel_comp_qty_avail", item->details.count);
+			itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
+			if (itemss.size() > 0) {
+				int16 have_qty = 0;
+				for (int8 i = 0; i < itemss.size(); i++) {
+					have_qty += itemss[i]->details.count;
 				}
+				packet->setSubstructDataByName("recipe_info", "fuel_comp_qty_avail", have_qty);
+				break;
 			}
-
-		// Set the default item id to the first component id
-		//packet->setDataByName("fuel_selected_item_id", firstID);
-		//packet->setDataByName("fuel_item_selected", 1);
-		item = 0;
-		item = client->GetPlayer()->item_list.GetItemFromID(firstID);
-		if (item) {
-			//	packet->setDataByName("fuel_selected_item_qty", min(recipe->GetFuelComponentQuantity(), (int8)item->details.count));
 		}
-			//packet->setDataByName("fuel_title", recipe->GetFuelComponentTitle());
-		//packet->setDataByName("fuel_qty", recipe->GetFuelComponentQuantity());
-
-		// Reset the variables we will reuse
-		i = 0;
-		firstID = 0;
-		item = 0;
 	}
-	else {
-		LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Recipe has no fuel component");
-		
-	}
-
-
-
-
-	packet->setSubstructDataByName("recipe_info", "fuel_comp", recipe->fuel_comp_title);
-	packet->setSubstructDataByName("recipe_info", "fuel_comp_qty", recipe->fuel_comp_qty);
-	//packet->setSubstructDataByName("recipe_info", "fuel_comp_qty_avail", 10);
 	packet->setSubstructDataByName("recipe_info", "build_comp_qty_avail_flag", 1);
 	packet->setSubstructDataByName("recipe_info", "unknown6", 4, 0);
 	packet->setSubstructDataByName("recipe_info", "min_product", 1);
@@ -656,7 +541,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	packet->setSubstructDataByName("recipe_info", "available_flag", 4);
 	packet->setSubstructDataByName("recipe_info", "not_commissionable", 1);
 	packet->setSubstructDataByName("recipe_info", "recipe_name", recipe->GetName());
-	packet->setSubstructDataByName("recipe_info", "recipe_description", "The art of sculpting metal into a candelabra.");
+	packet->setSubstructDataByName("recipe_info", "recipe_description", recipe->GetDescription());
 	//packet->PrintPacket();
 	EQ2Packet* data = packet->serialize();
 	EQ2Packet* app = new EQ2Packet(OP_ClientCmdMsg, data->pBuffer, data->size);

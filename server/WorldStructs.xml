@@ -6405,19 +6405,19 @@ to zero and treated like placeholders." />
 <Data ElementName="unique_id" Type="int32" />
 <Data ElementName="unknown5" Type="int16" />
 </Struct>
-<Struct Name="WS_ExamineInfoRequest" ClientVersion="1" >
+<Struct Name="WS_ExamineInfoRequestMsg" ClientVersion="1" OpcodeName="OP_ExamineInfoRequestMsg">
 <Data ElementName="type" Type="int8" Size="1" />
 <Data ElementName="id" Type="int32" />
 <Data ElementName="display" Type="int8" />
 </Struct>
-<Struct Name="WS_ExamineInfoRequest" ClientVersion="546" >
+<Struct Name="WS_ExamineInfoRequestMsg" ClientVersion="546" OpcodeName="OP_ExamineInfoRequestMsg">
 <Data ElementName="type" Type="int8" Size="1" />
 <Data ElementName="unique_id" Type="int32" />
 <Data ElementName="id" Type="int32" />
 <Data ElementName="unknown5" Type="int8" />
 <Data ElementName="display" Type="int8" />
 </Struct>
-<Struct Name="WS_ExamineInfoRequest" ClientVersion="860" >
+<Struct Name="WS_ExamineInfoRequestMsg" ClientVersion="860" OpcodeName="OP_ExamineInfoRequestMsg">
 <Data ElementName="type" Type="int8" Size="1" />
 <Data ElementName="unknown_id" Type="int32" />
 <Data ElementName="unknown" Type="int32" />
@@ -6425,7 +6425,7 @@ to zero and treated like placeholders." />
 <Data ElementName="id" Type="int32" />
 <Data ElementName="unknown5" Type="int16" />
 </Struct>
-<Struct Name="WS_ExamineInfoRequest" ClientVersion="1188" >
+<Struct Name="WS_ExamineInfoRequestMsg" ClientVersion="1188" OpcodeName="OP_ExamineInfoRequestMsg">
 <Data ElementName="type" Type="int8" Size="1" />
 <Data ElementName="unknown_id" Type="int32" />
 <Data ElementName="unknown2" Type="int32" />
@@ -6434,7 +6434,7 @@ to zero and treated like placeholders." />
 <Data ElementName="id" Type="int32" />
 <Data ElementName="unknown6" Type="int16" />
 </Struct>
-<Struct Name="WS_ExamineInfoRequest" ClientVersion="60114" >
+<Struct Name="WS_ExamineInfoRequestMsg" ClientVersion="60114" OpcodeName="OP_ExamineInfoRequestMsg">
 <Data ElementName="type" Type="int8" Size="1" />
 <Data ElementName="unknown_id" Type="int32" />
 <Data ElementName="unknown2" Type="int32" />
@@ -6443,7 +6443,7 @@ to zero and treated like placeholders." />
 <Data ElementName="id" Type="int32" />
 <Data ElementName="unknown6" Type="int16" />
 </Struct>
-<Struct Name="WS_ExamineInfoRequest" ClientVersion="63119" >
+<Struct Name="WS_ExamineInfoRequestMsg" ClientVersion="63119" OpcodeName="OP_ExamineInfoRequestMsg">
 <Data ElementName="type" Type="int8" Size="1" />
 <Data ElementName="id" Type="int32" />
 <Data ElementName="unique_id" Type="int32" />
@@ -16026,7 +16026,7 @@ to zero and treated like placeholders." />
 </Struct>
 <Struct Name="WS_CreateFromRecipe" ClientVersion="57048" OpcodeName="OP_ShowCreateFromRecipeUIMsg">
 <Data ElementName="crafting_station" Type="EQ2_16Bit_String" />
-<Data ElementName="unknown1" Type="int32" Size="1" />
+<Data ElementName="recipe_id" Type="int32" Size="1" />
 <Data ElementName="recipe_name" Type="EQ2_16Bit_String" />
 <Data ElementName="tier" Type="int8" Size="1" />
 <Data ElementName="unknown3" Type="int32" Size="1" />
@@ -16036,29 +16036,35 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown5" Type="int16" Size="1" />
 <Data ElementName="unknown6" Type="int8" Size="1" />
 <Data ElementName="unknown7" Type="int16" Size="1" />
-<Data ElementName="unknown8" Type="int8" Size="3" />
+<Data ElementName="num_mass_production_choices" Type="int8" Size="1" />
+<Data ElementName="mass_array" Type="Array" ArraySizeVariable="num_mass_production_choices">
+	<Data ElementName="mass_qty" Type="int16" Size="1" />
+</Data>
 <Data ElementName="primary_title" Type="EQ2_16Bit_String" />
 <Data ElementName="unknown9" Type="int8" Size="1" />
 <Data ElementName="primary_id" Type="int32" Size="1" />
 <Data ElementName="unknown10" Type="int8" Size="6" />
-<Data ElementName="primary_qty" Type="int16" Size="1" />
+<Data ElementName="primary_qty_needed" Type="int16" Size="1" />
 <Data ElementName="num_primary_choices" Type="int8" />
 <Data ElementName="primary_array" Type="Array" ArraySizeVariable="num_primary_choices">
   <Data ElementName="primary_component" Type="EQ2_16Bit_String" />
   <Data ElementName="primary_item_id" Type="int32" Size="1" />
   <Data ElementName="primary_icon" Type="int16" Size="1" />
   <Data ElementName="primary_total_quantity" Type="int16" Size="1" />
-  <Data ElementName="primary_supply_depot" Type="int8" Size="1" />
-  <Data ElementName="primary_unknown3" Type="int8" Size="4" />
+  <Data ElementName="primary_unknown3" Type="int8" Size="2" />
+	<Data ElementName="primary_supply_depot" Type="int8" Size="1" />
+  <Data ElementName="primary_unknown3a" Type="int8" Size="2" />
 </Data>
-<Data ElementName="primary_item_selected" Type="int8" />
-<Data ElementName="primary_default_selected_id" Type="int32" Size="1" />
-<Data ElementName="primary_selected_item_qty" Type="int16" Size="1" />
+<Data ElementName="num_primary_items_selected" Type="int8" />
+<Data ElementName="primary_items_selected_array" Type="Array" ArraySizeVariable="num_primary_items_selected">
+	<Data ElementName="primary_selected_item_id" Type="int32" Size="1" />
+	<Data ElementName="primary_selected_item_qty" Type="int16" Size="1" />
+</Data>	
 <Data ElementName="num_build_components" Type="int8" />
 <Data ElementName="build_array" Type="Array" ArraySizeVariable="num_build_components">
   <Data ElementName="build_slot" Type="int32" />
   <Data ElementName="build_title" Type="EQ2_16Bit_String" />
-  <Data ElementName="build_qty" Type="int16" />
+  <Data ElementName="build_qty_needed" Type="int16" />
   <Data ElementName="build_unknown1" Type="int32" Size="1" />
   <Data ElementName="num_build_choices" Type="int8" Size="1" />
   <Data ElementName="build_components_array" Type="Array" ArraySizeVariable="num_build_choices">
@@ -16066,29 +16072,35 @@ to zero and treated like placeholders." />
     <Data ElementName="build_item_id" Type="int32" Size="1" />
     <Data ElementName="build_icon" Type="int16" Size="1" />
     <Data ElementName="build_total_quantity" Type="int16" Size="1" />
-    <Data ElementName="build_supply_depot" Type="int8" Size="1" />
-    <Data ElementName="build_unknown6" Type="int8" Size="3" />
+		<Data ElementName="build_unknown6" Type="int8" Size="2" />
+		<Data ElementName="build_supply_depot" Type="int8" Size="1" />
+    <Data ElementName="build_unknown6a" Type="int8" Size="1" />
   </Data>
-  <Data ElementName="build_item_selected" Type="int8" Size="1" />
-  <Data ElementName="build_selected_item_id" Type="int32" Size="1" />
-  <Data ElementName="build_selected_item_qty" Type="int8" Size="1" />
-  <Data ElementName="unknown" Type="int8" Size="1" />
+  <Data ElementName="num_build_items_selected" Type="int8" />
+	<Data ElementName="build_items_selected_array" Type="Array" ArraySizeVariable="num_build_items_selected">
+		<Data ElementName="build_selected_item_id" Type="int32" Size="1" />
+		<Data ElementName="build_selected_item_qty" Type="int8" Size="1" />
+		<Data ElementName="unknown" Type="int8" Size="1" />
+	</Data>
 </Data>
 
 <Data ElementName="fuel_title" Type="EQ2_16Bit_String" />
-<Data ElementName="fuel_qty" Type="int16" />
+<Data ElementName="fuel_qty_needed" Type="int16" />
 <Data ElementName="num_fuel_choices" Type="int8" Size="1" />
 <Data ElementName="fuel_component_array" Type="Array" ArraySizeVariable="num_fuel_choices">
   <Data ElementName="fuel_component" Type="EQ2_16Bit_String" />
   <Data ElementName="fuel_item_id" Type="int32" Size="1" />
   <Data ElementName="fuel_icon" Type="int16" />
   <Data ElementName="fuel_total_quantity" Type="int16" Size="1" />
+  <Data ElementName="fuel_unknown4" Type="int8" Size="2" />
   <Data ElementName="fuel_supply_depot" Type="int8" Size="1" />
-  <Data ElementName="fuel_unknown4" Type="int8" Size="3" />
+  <Data ElementName="fuel_unknown4a" Type="int8" Size="1" />
 </Data>
-<Data ElementName="fuel_item_selected" Type="int8" Size="1" />
-<Data ElementName="fuel_selected_item_id" Type="int32" Size="1" />
-<Data ElementName="fuel_selected_item_qty" Type="int16" Size="1" />
+<Data ElementName="num_fuel_items_selected" Type="int8" />
+<Data ElementName="fuel_items_selected_array" Type="Array" ArraySizeVariable="num_fuel_items_selected">
+	<Data ElementName="fuel_selected_item_id" Type="int32" Size="1" />
+	<Data ElementName="fuel_selected_item_qty" Type="int16" Size="1" />
+</Data>
 </Struct>
 <Struct Name="WS_CreateFromRecipe" ClientVersion="63119" OpcodeName="OP_ShowCreateFromRecipeUIMsg">
 <Data ElementName="crafting_station" Type="EQ2_16Bit_String" />
@@ -16202,19 +16214,26 @@ to zero and treated like placeholders." />
 <Data ElementName="fuel_qty" Type="int16" Size="1" />
 </Struct>
 <Struct Name="WS_BeginItemCreation" ClientVersion="1199" OpcodeName="OP_BeginItemCreationMsg">
-<Data ElementName="unknown1" Type="int8" Size="11" />
-<Data ElementName="primary_component_id" Type="int32" Size="1" />
-<Data ElementName="primary_component_qty" Type="int16" Size="1" />
+<Data ElementName="unknown1" Type="int8" Size="10" />
+<Data ElementName="num_primary_selected_items" Type="int8" Size="1" />
+<Data ElementName="primary_selected_items_array" Type="Array" ArraySizeVariable="num_primary_selected_items">
+  <Data ElementName="primary_selected_item_id" Type="int32" Size="1" />
+  <Data ElementName="primary_selected_item_qty" Type="int16" Size="1" />
+</Data>
 <Data ElementName="num_build_components" Type="int8" Size="1" />
 <Data ElementName="component_array" Type="Array" ArraySizeVariable="num_build_components">
-  <Data ElementName="component_num" Type="int32" Size="1" />
-  <Data ElementName="component_unknown" Type="int8" Size="1" />
-  <Data ElementName="component_id" Type="int32" Size="1" />
-  <Data ElementName="component_qty" Type="int16" Size="1" />
-</Data>
-<Data ElementName="unknown2" Type="int8" Size="1" />
-<Data ElementName="fuel_id" Type="int32" Size="1" />
-<Data ElementName="fuel_qty" Type="int16" Size="1" />
+	<Data ElementName="unknown" Type="int32" Size="1" />
+		<Data ElementName="num_selected_items" Type="int8" Size="1" />
+		<Data ElementName="selected_item_array" Type="Array" ArraySizeVariable="num_selected_items">
+			<Data ElementName="selected_id" Type="int32" Size="1" />
+			<Data ElementName="selected_qty" Type="int16" Size="1" />
+		</Data>	
+	</Data>
+<Data ElementName="num_fuel_items" Type="int8" Size="1" />
+<Data ElementName="fuel_item_array" Type="Array" ArraySizeVariable="num_fuel_items">
+	<Data ElementName="fuel_id" Type="int32" Size="1" />
+	<Data ElementName="fuel_qty" Type="int16" Size="1" />
+	</Data>
 </Struct>
 <Struct Name="WS_RecipeList" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_RecipeList">
 <Data ElementName="unknown" Type="int8" Size="1" />
@@ -16504,7 +16523,7 @@ to zero and treated like placeholders." />
 <Data ElementName="bag_name" Type="EQ2_8Bit_String" Size="1" />
 </Struct>
 <Struct Name="WS_SupplyDepot" ClientVersion="1096" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_SupplyDepot">
- <Data ElementName="unknown1" Type="int8" Size="4" />
+ <Data ElementName="depot_id" Type="int32" Size="1" />
  <Data ElementName="depot_name" Type="EQ2_16Bit_String" />
  <Data ElementName="num_items" Type="int16" Size="1" />
  <Data ElementName="max_items" Type="int16" Size="1" />
@@ -18348,17 +18367,6 @@ to zero and treated like placeholders." />
   <Data ElementName="unknown2" Type="int32" />
   <Data ElementName="unknown3" Type="int8" />
   <Data ElementName="unknown4" Type="int8" />
-</Struct>
-<Struct Name="WS_ExamineInfoRequestMsg" ClientVersion="50000" OpcodeName="OP_ExamineInfoRequestMsg">
-  <Data ElementName="unknown" Type="int32" />
-  <Data ElementName="unknown1" Type="int32" />
-  <Data ElementName="unknown2" Type="int32" />
-  <Data ElementName="unknown3" Type="int32" />
-  <Data ElementName="unknown4" Type="int32" />
-  <Data ElementName="item_crc" Type="int32" />
-  <Data ElementName="unknown5" Type="int32" />
-  <Data ElementName="item_id" Type="int32" />
-  <Data ElementName="unknown6" Type="int16" />
 </Struct>
 <Struct Name="WS_PredictionUpdateMsg" ClientVersion="1" OpcodeName="OP_PredictionUpdateMsg">
 </Struct>

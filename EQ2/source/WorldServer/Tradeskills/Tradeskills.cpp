@@ -233,7 +233,7 @@ void TradeskillMgr::Process() {
 	m_tradeskills.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-void TradeskillMgr::BeginCrafting(Client* client, vector<int32> components) {
+void TradeskillMgr::BeginCrafting(Client* client, vector<pair<int32,int8>> components) {
 	Recipe* recipe = master_recipe_list.GetRecipe(client->GetPlayer()->GetCurrentRecipe());
 
 	if (!recipe) {
@@ -243,13 +243,13 @@ void TradeskillMgr::BeginCrafting(Client* client, vector<int32> components) {
 	}
 
 	// TODO: use the vecotr to lock inventory slots
-	vector<int32>::iterator itr;
+	vector<pair<int32, int8>>::iterator itr;
 	bool missingItem = false;
 	int32 itemid = 0;
 	vector<Item*> tmpItems;
 	for (itr = components.begin(); itr != components.end(); itr++) {
-		itemid = *itr;
-		Item* item = client->GetPlayer()->item_list.GetItemFromID(itemid);
+		itemid = itr->first;
+		Item* item = client->GetPlayer()->item_list.GetItemFromUniqueID(itemid);
 
 		if(!item)
 		{
@@ -317,7 +317,7 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	int32 dur = tradeskill->currentDurability;
 	int32 progress = tradeskill->currentProgress;
 	Recipe* recipe = tradeskill->recipe;
-	vector<int32>::iterator itr;
+	vector<pair<int32, int8>>::iterator itr;
 	Item* item = 0;
 	int32 item_id = 0;
 	int8 i = 0;
@@ -336,23 +336,12 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	bool updateInvReq = false;
 	// cycle through the list of used items and remove them
 	for (itr = tradeskill->usedComponents.begin(); itr != tradeskill->usedComponents.end(); itr++, i++) {
-		// get the quantity to remove, first item in the vectore is always the primary, last is always the fuel
-		if (i == 0)
-			qty = 1;
-		else if (i == 1 && i != tradeskill->usedComponents.size() - 1)
-			qty = recipe->GetBuild1ComponentQuantity();
-		else if (i == 2 && i != tradeskill->usedComponents.size() - 1)
-			qty = recipe->GetBuild2ComponentQuantity();
-		else if (i == 3 && i != tradeskill->usedComponents.size() - 1)
-			qty = recipe->GetBuild3ComponentQuantity();
-		else if (i == 4 && i != tradeskill->usedComponents.size() - 1)
-			qty = recipe->GetBuild4ComponentQuantity();
-		else if (i == 5 || i == tradeskill->usedComponents.size() - 1)
-			qty = recipe->GetFuelComponentQuantity();
-
+		
+		
 		// Get the item in the players inventory and remove or reduce the quantity
-		int32 itmid = *itr;
-		item = client->GetPlayer()->item_list.GetItemFromID(itmid);
+		int32 itmid = itr->first;
+		qty = itr->second;
+		item = client->GetPlayer()->item_list.GetItemFromUniqueID(itmid);
 		if (item && item->details.count <= qty)
 		{
 			item->details.item_locked = false;
@@ -381,10 +370,13 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	item = 0;
 	qty = recipe->GetFuelComponentQuantity();	
 	item_id = recipe->components[5][0];
+	int8 HS = playerRecipe->GetHighestStage();
 	if (progress >= 400 && progress < 600) {
-		if (playerRecipe->GetHighestStage() < 1) {
-			playerRecipe->SetHighestStage(1);
-			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), 1);
+		if (HS & (1 << (1 - 1))) {
+		}
+		else {
+			playerRecipe->SetHighestStage(HS + 1 );
+			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), playerRecipe->GetHighestStage());
 		}
 		if (recipe->products.count(1) > 0) {
 			item_id = recipe->products[1]->product_id;
@@ -392,9 +384,11 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 		}
 	}
 	else if ((dur < 200 && progress >= 600) || (dur >= 200 && progress >= 600 && progress < 800)) {
-		if (playerRecipe->GetHighestStage() < 2) {
-			playerRecipe->SetHighestStage(2);
-			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), 2);
+		if (HS & (1 << (2 - 1))) {
+		}
+		else {
+			playerRecipe->SetHighestStage(HS + 2);
+			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), playerRecipe->GetHighestStage());
 		}
 		if (recipe->products.count(2) > 0) {
 			item_id = recipe->products[2]->product_id;
@@ -402,9 +396,11 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 		}
 	}
 	else if ((dur >= 200 && dur < 800 && progress >= 800) || (dur >= 800 && progress >= 800 && progress < 1000)) {
-		if (playerRecipe->GetHighestStage() < 3) {
-			playerRecipe->SetHighestStage(3);
-			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), 3);
+		if (HS & (1 << (3 - 1))) {
+		}
+		else {
+			playerRecipe->SetHighestStage(HS + 4);
+			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), playerRecipe->GetHighestStage());
 		}
 		if (recipe->products.count(3) > 0) {
 			item_id = recipe->products[3]->product_id;
@@ -412,9 +408,11 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 		}
 	}
 	else if (dur >= 800 && progress >= 1000) {
-		if (playerRecipe->GetHighestStage() < 4) {
-			playerRecipe->SetHighestStage(4);
-			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), 4);
+		if (HS & (1 << (4 - 1))) {
+		}
+		else {
+			playerRecipe->SetHighestStage(HS + 8);
+			database.UpdatePlayerRecipe(client->GetPlayer(), recipe->GetID(), playerRecipe->GetHighestStage());
 		}
 		if (recipe->products.count(4) > 0) {
 			item_id = recipe->products[4]->product_id;

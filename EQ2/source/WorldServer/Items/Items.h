@@ -1042,6 +1042,7 @@ public:
 
 	Item* GetItem(int32 id);
 	Item* GetItemByName(const char *name);
+	Item* GetAllItemsByClassification(const char* name);
 	ItemStatsValues* CalculateItemBonuses(int32 item_id, Entity* entity = 0);
 	ItemStatsValues* CalculateItemBonuses(Item* desc, Entity* entity = 0, ItemStatsValues* values = 0);
 	vector<Item*>* GetItems(string name, int64 itype, int64 ltype, int64 btype, int64 minprice, int64 maxprice, int8 minskill, int8 maxskill, string seller, string adornment, int8 mintier, int8 maxtier, int16 minlevel, int16 maxlevel, sint8 itemclass);
@@ -1092,7 +1093,7 @@ public:
 	bool  HasFreeBagSlot();
 	void DestroyItem(int16 index);
 	Item* CanStack(Item* item, bool include_bank = false);
-	
+	vector<Item*> GetAllItemsFromID(int32 item, bool include_bank = false, bool lock = false);
 	void RemoveItem(Item* item, bool delete_item = false);
 	bool AddItem(Item* item);
 

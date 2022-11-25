@@ -29,13 +29,14 @@
 
 extern MasterRecipeList master_recipe_list;
 extern MasterRecipeBookList master_recipebook_list;
+extern MasterItemList master_item_list;
 
 void WorldDatabase::LoadRecipes() {
 	DatabaseResult res;
 
 	bool status = database_new.Select(&res, 
-		"SELECT r.`id`,r.`level`,r.`icon`,r.`skill_level`,r.`technique`,r.`knowledge`,r.`name`,i.`name` as `book`,r.`bench`,ipc.`adventure_classes`, "
-		"r.`stage4_id`, r.`name`, r.`stage4_qty`, pcl.`name` as primary_comp_title, fcl.name as `fuel_comp_title`, r.fuel_comp_qty, "
+		"SELECT r.`id`,r.`level`,r.`icon`,r.`skill_level`,r.`technique`,r.`knowledge`,r.`name`,r.`description`,i.`name` as `book`,r.`bench`,ipc.`adventure_classes`, "
+		"r.`stage4_id`, r.`name`, r.`stage4_qty`, pcl.`name` as primary_comp_title,r.primary_comp_qty, fcl.name as `fuel_comp_title`, r.fuel_comp_qty, "
 		"bc.`name` AS build_comp_title, bc.qty AS build_comp_qty, bc2.`name` AS build2_comp_title, bc2.qty AS build2_comp_qty, "
 		"bc3.`name` AS build3_comp_title, bc3.qty AS build3_comp_qty, bc4.`name` AS build4_comp_title, bc4.qty AS build4_comp_qty,\n"
 		"r.stage0_id, r.stage1_id, r.stage2_id, r.stage3_id, r.stage4_id, r.stage0_qty, r.stage1_qty, r.stage2_qty, r.stage3_qty, r.stage4_qty,\n"
@@ -66,6 +67,7 @@ void WorldDatabase::LoadRecipes() {
 		recipe->SetTechnique(res.GetInt32(i++));
 		recipe->SetKnowledge(res.GetInt32(i++));
 		recipe->SetName(res.GetString(i++));
+		recipe->SetDescription(res.GetString(i++));
 		recipe->SetBook(res.GetString(i++));
 
 		//Convert the device string
@@ -86,17 +88,18 @@ void WorldDatabase::LoadRecipes() {
 		recipe->SetProductName(res.GetString(i++));
 		recipe->SetProductQuantity(res.GetInt8(i++));
 		recipe->SetPrimaryComponentTitle(res.GetString(i++));
+		recipe->SetPrimaryComponentQuantity(res.GetInt16(i++));
 		recipe->SetFuelComponentTitle(res.GetString(i++));
-		recipe->SetFuelComponentQuantity(res.GetInt8(i++));
+		recipe->SetFuelComponentQuantity(res.GetInt16(i++));
 
-		recipe->SetBuildComponentTitle(res.GetString(i++));
-		recipe->SetBuild1ComponentQuantity(res.GetInt8(i++));
+		recipe->SetBuild1ComponentTitle(res.GetString(i++));
+		recipe->SetBuild1ComponentQuantity(res.GetInt16(i++));
 		recipe->SetBuild2ComponentTitle(res.GetString(i++));
-		recipe->SetBuild2ComponentQuantity(res.GetInt8(i++));
+		recipe->SetBuild2ComponentQuantity(res.GetInt16(i++));
 		recipe->SetBuild3ComponentTitle(res.GetString(i++));
-		recipe->SetBuild3ComponentQuantity(res.GetInt8(i++));
+		recipe->SetBuild3ComponentQuantity(res.GetInt16(i++));
 		recipe->SetBuild4ComponentTitle(res.GetString(i++));
-		recipe->SetBuild4ComponentQuantity(res.GetInt8(i++));
+		recipe->SetBuild4ComponentQuantity(res.GetInt16(i++));
 
 		LogWrite(TRADESKILL__DEBUG, 7, "Recipes", "Loading recipe: %s (%u)", recipe->GetName(), recipe->GetID());
 

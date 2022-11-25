@@ -1682,27 +1682,49 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		if (packet) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 			int32 item = 0;
-			vector<int32> items;
-			char tmp_item_id[20];
-			item = packet->getType_int32_ByName("primary_component_id");
-			if (item > 0)
-				items.push_back(item);
-			item = 0;
-			int8 build_components = packet->getType_int8_ByName("num_build_components");
-			for (int8 i = 0; i < build_components; i++) {
-				memset(tmp_item_id, 0, 20);
-				sprintf(tmp_item_id, "component_id_%i", i);
+			int8 qty = 0;
+			vector<pair<int32, int8>> items;
+			char tmp_item_id[30];
+			int8 num_primary_selected_items = packet->getType_int8_ByName("num_primary_selected_items");
+			for (int8 i = 0; i < num_primary_selected_items; i++) {
+				memset(tmp_item_id, 0, 30);
+				sprintf(tmp_item_id, "primary_selected_item_id_%i", i);
 				item = packet->getType_int32_ByName(tmp_item_id);
+				sprintf(tmp_item_id, "primary_selected_item_qty_%i", i);
+				qty = packet->getType_int8_ByName(tmp_item_id);
 				if (item > 0)
-					items.push_back(item);
-
+					items.push_back(make_pair(item,qty));
 				item = 0;
 			}
+			int8 build_components = packet->getType_int8_ByName("num_build_components");
+			for (int8 i = 0; i < build_components; i++) {
+				memset(tmp_item_id, 0, 30);
+				sprintf(tmp_item_id, "num_selected_items_%i", i);
+				int8 num_selected_items = packet->getType_int8_ByName(tmp_item_id);
+				for (int8 j = 0; j < num_selected_items; j++) {
+					memset(tmp_item_id, 0, 30);
+					sprintf(tmp_item_id, "selected_id%i_%i", i,j);
+					item = packet->getType_int32_ByName(tmp_item_id);
+					sprintf(tmp_item_id, "selected_qty%i_%i", i, j);
+					qty = packet->getType_int8_ByName(tmp_item_id);
+					if (item > 0)
+						items.push_back(make_pair(item, qty));
 
-			item = packet->getType_int32_ByName("fuel_id");
-			if (item > 0)
-				items.push_back(item);
-
+					item = 0;
+				}
+			}
+			int8 num_fuel_items = packet->getType_int8_ByName("num_fuel_items");
+			for (int8 i = 0; i < num_fuel_items; i++) {
+				memset(tmp_item_id, 0, 30);
+				sprintf(tmp_item_id, "selected_id_%i", i);
+				item = packet->getType_int32_ByName(tmp_item_id);
+				sprintf(tmp_item_id, "selected_qty_%i", i);
+				qty = packet->getType_int8_ByName(tmp_item_id);
+				if (item > 0)
+					items.push_back(make_pair(item, qty));
+				item = 0;
+			}
+			
 			GetCurrentZone()->GetTradeskillMgr()->BeginCrafting(this, items);
 
 			safe_delete(packet);
@@ -2848,7 +2870,8 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 	if (type == 3) {
 		Spell* spell = 0;
 		bool trait_display;
-		request = configReader.getStruct("WS_ExamineInfoRequest", GetVersion());
+		
+		request = configReader.getStruct("WS_ExamineInfoRequestMsg", GetVersion());
 		if (!request) {
 			return;
 		}
@@ -3039,7 +3062,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		}
 	}
 	else if (type == 5) { // recipe info
-		request = configReader.getStruct("WS_ExamineInfoRequest", GetVersion());
+	request = configReader.getStruct("WS_ExamineInfoRequestMsg", GetVersion());
 		if (!request)
 			return;
 		request->LoadPacketData(app->pBuffer, app->size);
@@ -3056,7 +3079,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		Spell* spell = 0;
 		//Spell* spell2 = 0;
 		//AltAdvanceData* data = 0;
-		request = configReader.getStruct("WS_ExamineInfoRequest", GetVersion());
+		request = configReader.getStruct("WS_ExamineInfoRequestMsg", GetVersion());
 		if (!request)
 			return;
 		request->LoadPacketData(app->pBuffer, app->size);

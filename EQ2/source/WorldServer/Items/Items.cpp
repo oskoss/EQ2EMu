@@ -3180,7 +3180,34 @@ bool PlayerItemList::GetFirstFreeSlot(sint32* bag_id, sint16* slot) {
 	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 	return ret;
 }
-
+vector<Item*> PlayerItemList::GetAllItemsFromID(int32 id, bool include_bank, bool lock) {
+	//first check for an exact count match
+	map<sint32, map<int8, map<int16, Item*>> >::iterator itr;
+	map<int16, Item*>::iterator slot_itr;
+	vector<Item*> ret ;
+	if (lock)
+		MPlayerItems.readlock(__FUNCTION__, __LINE__);
+	for (itr = items.begin(); itr != items.end(); itr++) {
+		if (include_bank || (!include_bank && itr->first >= 0)) {
+			for (int8 i = 0; i < MAX_EQUIPMENT; i++)
+			{
+				for (slot_itr = itr->second[i].begin(); slot_itr != itr->second[i].end(); slot_itr++) {
+					if (slot_itr->second && slot_itr->second->details.item_id == id) {
+						if (lock)
+							MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+						int32 yyy = 0;
+						ret.push_back(slot_itr->second);
+						
+						//return slot_itr->second;
+					}
+				}
+				
+			}
+			
+		}
+	}
+	return ret;
+}
 Item* PlayerItemList::CanStack(Item* item, bool include_bank){
 	if(!item || item->stack_count < 2)
 		return 0;

@@ -53,6 +53,7 @@ public:
 	void SetID(int32 id) {this->id = id;}
 	void SetBookID(int32 book_id) {this->book_id = book_id;}
 	void SetName(const char *name) {strncpy(this->name, name, sizeof(this->name));}
+	void SetDescription(const char* description) { strncpy(this->description, description, sizeof(this->description)); }
 	void SetBookName(const char *book_name) {strncpy(this->book_name, book_name, sizeof(this->book_name));}
 	void SetBook(const char *book) {strncpy(this->book, book, sizeof(this->book));}
 	void SetDevice(const char *device) {strncpy(this->device, device, sizeof(this->device));}
@@ -64,27 +65,30 @@ public:
 	void SetKnowledge(int32 knowledge) {this->knowledge = knowledge;}
 	void SetClasses(int32 classes) {this->classes = classes;}
 	void SetDevice_Sub_Type(int8 device_sub_type) {this->device_sub_type = device_sub_type;}
+	void SetUnknown1(int8 unknown1) {this->unknown1 = unknown1;}
 	void SetUnknown2(int32 unknown2) {this->unknown2 = unknown2;}
 	void SetUnknown3(int32 unknown3) {this->unknown3 = unknown3;}
 	void SetUnknown4(int32 unknown4) {this->unknown4 = unknown4;}
 	void SetProductID(int32 itemID) { product_item_id = itemID; }
 	void SetProductQuantity(int8 qty) { product_qty = qty; }
 	void SetProductName(const char* productName) { strncpy(product_name, productName, sizeof(product_name)); }
-	void SetBuildComponentTitle(const char* title) { strncpy(build1_comp_title, title, sizeof(build1_comp_title)); }
+	void SetBuild1ComponentTitle(const char* title) { strncpy(build1_comp_title, title, sizeof(build1_comp_title)); }
 	void SetBuild2ComponentTitle(const char* title) { strncpy(build2_comp_title, title, sizeof(build2_comp_title)); }
 	void SetBuild3ComponentTitle(const char* title) { strncpy(build3_comp_title, title, sizeof(build3_comp_title)); }
 	void SetBuild4ComponentTitle(const char* title) { strncpy(build4_comp_title, title, sizeof(build4_comp_title)); }
 	void SetFuelComponentTitle(const char* title) { strncpy(fuel_comp_title, title, sizeof(fuel_comp_title)); }
 	void SetPrimaryComponentTitle(const char* title) { strncpy(primary_build_comp_title, title, sizeof(primary_build_comp_title)); }
-	void SetBuild1ComponentQuantity(int8 qty) { build_comp_qty = qty; }
+	void SetBuild1ComponentQuantity(int8 qty) { build1_comp_qty = qty; }
 	void SetBuild2ComponentQuantity(int8 qty) { build2_comp_qty = qty; }
 	void SetBuild3ComponentQuantity(int8 qty) { build3_comp_qty = qty; }
 	void SetBuild4ComponentQuantity(int8 qty) { build4_comp_qty = qty; }
 	void SetFuelComponentQuantity(int8 qty) { fuel_comp_qty = qty; }
+	void SetPrimaryComponentQuantity(int8 qty) { primary_comp_qty = qty; }
 
 	int32 GetID() {return id;}
 	int32 GetBookID() {return book_id;}
 	const char * GetName() {return name;}
+	const char* GetDescription() { return description; }
 	const char * GetBookName() {return book_name;}
 	const char * GetBook() {return book;}
 	const char * GetDevice() {return device;}
@@ -106,6 +110,7 @@ public:
 	return item->generic_info.tradeskill_classes < 4 || (1 << class_id) & item->generic_info.tradeskill_classes;
 	}
 	int8 GetDevice_Sub_Type() {return device_sub_type;}
+	int8 GetUnknown1() {return unknown1;}
 	int32 GetUnknown2() {return unknown2;}
 	int32 GetUnknown3() {return unknown3;}
 	int32 GetUnknown4() {return unknown4;}
@@ -119,17 +124,18 @@ public:
 	const char* GetBuild3ComponentTitle() { return build3_comp_title; }
 	const char* GetBuild4ComponentTitle() { return build4_comp_title; }
 	const char* GetFuelComponentTitle() { return fuel_comp_title; }
-	int8 GetBuild1ComponentQuantity() { return build_comp_qty; }
-	int8 GetBuild2ComponentQuantity() { return build2_comp_qty; }
-	int8 GetBuild3ComponentQuantity() { return build3_comp_qty; }
-	int8 GetBuild4ComponentQuantity() { return build4_comp_qty; }
-	int8 GetFuelComponentQuantity() { return fuel_comp_qty; }
+	int16 GetBuild1ComponentQuantity() { return build1_comp_qty; }
+	int16 GetBuild2ComponentQuantity() { return build2_comp_qty; }
+	int16 GetBuild3ComponentQuantity() { return build3_comp_qty; }
+	int16 GetBuild4ComponentQuantity() { return build4_comp_qty; }
+	int16 GetFuelComponentQuantity() { return fuel_comp_qty; }
+	int16 GetPrimaryComponentQuantity() { return primary_comp_qty; }
 
 	///<summary>Add a build component to this recipe</summary>
 	///<param name="itemID">Item id of the component</param>
 	///<param name="slot">Slot id for this component</param>
 	void AddBuildComp(int32 itemID, int8 slot, bool preferred = 0);
-
+	
 	// int8 = slot, vector = itemid
 	map<int8, vector<int32> > components;
 
@@ -143,6 +149,7 @@ private:
 	int32 id;
 	int32 book_id;
 	char name[256];
+	char description[256];
 	char book_name[256];
 	char book[256];
 	char device[30];
@@ -154,6 +161,7 @@ private:
 	int32 knowledge;
 	int8 device_sub_type;
 	int32 classes;
+	int8  unknown1;
 	int32 unknown2;
 	int32 unknown3;
 	int32 unknown4;
@@ -167,11 +175,12 @@ private:
 	char	build3_comp_title[256];
 	char	build4_comp_title[256];
 	char	fuel_comp_title[256];
-	int8	build_comp_qty;
-	int8	build2_comp_qty;
-	int8	build3_comp_qty;
-	int8	build4_comp_qty;
-	int8	fuel_comp_qty;
+	int16	build1_comp_qty;
+	int16	build2_comp_qty;
+	int16	build3_comp_qty;
+	int16	build4_comp_qty;
+	int16	fuel_comp_qty;
+	int16	primary_comp_qty;
 	int8	highestStage;
 	
 };
