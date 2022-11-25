@@ -225,7 +225,7 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 				item = master_item_list.GetItem(*itr);
 				itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
 				sprintf(msgbuf, "k=%d hascomp=%d \n", k, hasComp);
-				OutputDebugString(msgbuf);
+				//OutputDebugString(msgbuf);
 				if (itemss.size() > 0) { 
 					int16 needed_qty = 0;
 					int16 have_qty = 0;
