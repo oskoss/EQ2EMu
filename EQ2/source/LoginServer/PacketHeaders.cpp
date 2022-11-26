@@ -6,9 +6,11 @@
 */
 #include "PacketHeaders.h"
 #include "../common/MiscFunctions.h"
+#include "LoginDatabase.h"
 #include "LWorld.h"
 
 extern LWorldList	world_list;
+extern LoginDatabase database;
 
 void LS_DeleteCharacterRequest::loadData(EQApplicationPacket* packet){
 	InitializeLoadData(packet->pBuffer, packet->size);
@@ -27,7 +29,7 @@ EQ2Packet* LS_CharSelectList::serialize(int16 version){
 		account_info.account_id = account_id;
 		account_info.unknown1 = 0xFFFFFFFF;
 		account_info.unknown2 = 0;
-		account_info.maxchars = 10;
+		account_info.maxchars = 7; //live has a max of 7 on gold accounts base.	
 		account_info.unknown4 = 0;
 		AddData(account_info);
 	}
@@ -36,12 +38,12 @@ EQ2Packet* LS_CharSelectList::serialize(int16 version){
 		account_info.account_id = account_id;
 		account_info.unknown1 = 0xFFFFFFFF;
 		account_info.unknown2 = 0;
-		account_info.maxchars = 30; //devn00b:Corrected unknown and increased maxchars from 10 to 30.
+		account_info.maxchars = database.GetMaxCharsSetting(); 
 		account_info.unknown4 = 0;
 		for (int i = 0; i < 3; i++)
 			account_info.unknown5[i] = 0xFFFFFFFF;
 		account_info.unknown5[3] = 0;
-		account_info.vet_adv_bonus = 1;
+		account_info.vet_adv_bonus = database.GetAccountBonus(account_id);
 		account_info.vet_trade_bonus = 0;
 		AddData(account_info);
 	}	

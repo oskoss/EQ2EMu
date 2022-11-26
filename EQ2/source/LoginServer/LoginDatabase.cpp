@@ -1001,3 +1001,39 @@ void LoginDatabase::UpdateAccountIPAddress(int32 account_id, int32 address){
 	Query query;
 	query.RunQuery2(Q_UPDATE, "update account set ip_address='%s' where id=%lu", inet_ntoa(in), account_id);
 }
+
+//devn00b: There is no rulesystem for login, so im going to use login_config for future things like this.
+//devn00b: Returns the number of characters a player may create per account. This should be set by server owners -> login,
+//devn00b: However, better semi-working for now than not working at all.
+//devn00b: TODO: EQ2World sends max char per acct.
+int8 LoginDatabase::GetMaxCharsSetting() {
+	//live defaults to 7 for GOLD members.
+	int8 max_chars = 7;
+	Query query;
+	MYSQL_ROW row;
+	
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "select config_value from login_config where config_name='max_characters_per_account'");
+	if (result && mysql_num_rows(result) == 1) {
+		row = mysql_fetch_row(result);
+		if (row[0])
+			max_chars = atoi(row[0]);
+	}
+	//if nothing else return the default.
+	return max_chars;
+}
+
+//TODO: EQ2World sends the servers max level for each server so we can do this correctly.
+int16 LoginDatabase::GetAccountBonus(int32 acct_id) {
+	int32 bonus = 0;
+	Query query;
+	MYSQL_ROW row;
+	
+	//pull all characters greater than the max level setting in the login_config table.
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT COUNT(id) FROM login_characters WHERE LEVEL >= (SELECT config_value FROM login_config WHERE config_name='max_level_for_vet_reward') AND account_id=%i", acct_id);
+	if (result && mysql_num_rows(result) == 1) {
+		row = mysql_fetch_row(result);
+		if(row[0])
+			bonus = atoi(row[0]);
+	}
+	return bonus;
+}

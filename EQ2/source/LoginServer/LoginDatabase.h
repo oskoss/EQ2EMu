@@ -84,6 +84,8 @@ public:
 	void SetServerEquipmentAppearances(int32 server_id, map<int32, LoginEquipmentUpdate> equip_updates); // JohnAdams: login appearances
 	int32 GetLoginCharacterIDFromWorldCharID(int32 server_id, int32 char_id); // JohnAdams: login appearances
 	void RemoveDeletedCharacterData();
+	int8 GetMaxCharsSetting();
+	int16 GetAccountBonus(int32 acct_id);
 	DatabaseNew	dbLogin;
 };
 #endif
