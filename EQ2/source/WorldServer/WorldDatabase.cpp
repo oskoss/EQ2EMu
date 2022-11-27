@@ -4926,6 +4926,8 @@ bool WorldDatabase::DeleteCharacter(int32 account_id, int32 character_id){
 	//delete quest rewards
 	query2.RunQuery2(Q_DELETE, "DELETE FROM character_quest_rewards WHERE char_id=%u", character_id);
 	query2.RunQuery2(Q_DELETE, "DELETE FROM character_quest_temporary_rewards WHERE char_id=%u", character_id);
+	//delete character claims
+	query2.RunQuery2(Q_DELETE, "DELETE FROM character_claim_items where char_id=%u", character_id);
 
 	if(!query.GetAffectedRows())
 	{
@@ -8078,6 +8080,11 @@ void WorldDatabase::UpdateStartingLanguage(int32 char_id, uint8 race_id, int32 s
 //devn00b: load the items the server has into a character_ db for easy access. Should be done on char create.
 void WorldDatabase::LoadClaimItems(int32 char_id)
 {
+	if (!char_id) {
+		LogWrite(WORLD__DEBUG, 3, "World", "-- There was an error in LoadClaimItems (missing char_id)");
+		return;
+	}
+
 	int16 total = 0;
 	Query query;
 	MYSQL_ROW row;
@@ -8087,7 +8094,6 @@ void WorldDatabase::LoadClaimItems(int32 char_id)
 	{
 		if (mysql_num_rows(result) > 0)
 		{
-
 			while (result && (row = mysql_fetch_row(result)))
 			{
 				int32 item_id			= atoul(row[1]);
@@ -8102,7 +8108,7 @@ void WorldDatabase::LoadClaimItems(int32 char_id)
 					curr_claim	= 1;
 				}
 
-				MYSQL_RES* res = query.RunQuery2(Q_INSERT, "insert into character_claim_items (char_id, item_id, max_claim, curr_claim, one_per_char, veteran_reward_time, account_id) values  (%i, %i, %i, %i, %i, %I64i, %i)", char_id, item_id, max_claim, curr_claim, one_per_char, vet_reward_time, acct_id);
+				MYSQL_RES* res = query.RunQuery2(Q_INSERT, "insert ignore into character_claim_items (char_id, item_id, max_claim, curr_claim, one_per_char, veteran_reward_time, account_id) values  (%i, %i, %i, %i, %i, %I64i, %i)", char_id, item_id, max_claim, curr_claim, one_per_char, vet_reward_time, acct_id);
 				total++;
 			}
 		}
