@@ -27,7 +27,7 @@
     <IncludePath>$(SolutionDir)..\source\depends\mariadb-10.1.19\include;$(SolutionDir)..\source\depends\zlib\include;$(SolutionDir)..\source\depends\recastnavigation\Detour\Include;$(SolutionDir)..\source\depends\boost_1_72_0\;$(SolutionDir)..\source\depends\glm\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(SolutionDir)..\source\depends\recastnavigation\RecastDemo\Build\vs2019\lib\Debug;$(SolutionDir)..\source\depends\mariadb-10.1.19\lib\64-debug;$(SolutionDir)..\source\depends\zlib\lib;$(SolutionDir)..\source\depends\boost_1_72_0\lib64-msvc-14.2;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>E:\EQ2EMu\my_server\</OutDir>
+    <OutDir>$(SolutionDir)loginserver\</OutDir>
     <IntDir>.\$(ProjectName)__Debug64\</IntDir>
     <TargetName>$(ProjectName)__Debug64</TargetName>
   </PropertyGroup>
