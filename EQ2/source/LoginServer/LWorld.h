@@ -58,13 +58,14 @@ public:
 	void	Message(const char* to, const char* message, ...);
 
 	bool	SetupWorld(char* in_worldname, char* in_worldaddress, char* in_account, char* in_password, char* in_version);
-	void	UpdateStatus(sint32 in_status, sint32 in_players, sint32 in_zones) {
+	void	UpdateStatus(sint32 in_status, sint32 in_players, sint32 in_zones, int8 in_level) {
 		// we don't want the server list to update unless something has changed
-		if(status != in_status || num_players != in_players || num_zones != in_zones)
+		if(status != in_status || num_players != in_players || num_zones != in_zones || world_max_level != in_level)
 		{
 		status = in_status;
 		num_players = in_players;
 		num_zones = in_zones;
+		world_max_level = in_level;
 		UpdateWorldList();
 		}
 	}
@@ -106,6 +107,8 @@ public:
 
 	void	SendDeleteCharacter( int32 char_id, int32 account_id );
 	bool	IsDevelServer(){ return devel_server; }
+	
+	inline int8		GetMaxWorldLevel() { return world_max_level; }
 
 	bool	IsInit;
 protected:
@@ -141,6 +144,8 @@ private:
 	sint32  num_zones;
 	int32	RemoteID;
 	int32	LinkWorldID;
+	int8	world_max_level;
+
 };
 
 class LWorldList

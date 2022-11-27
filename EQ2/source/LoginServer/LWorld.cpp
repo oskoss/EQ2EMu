@@ -459,7 +459,7 @@ bool LWorld::Process() {
 				ret = false;
 				break;
 			}
-			UpdateStatus(lss->status, lss->num_players, lss->num_zones);
+			UpdateStatus(lss->status, lss->num_players, lss->num_zones, lss->world_max_level);
 			break;
 								}
 		case ServerOP_SystemwideMessage: {
@@ -742,7 +742,8 @@ bool LWorld::SetupWorld(char* in_worldname, char* in_worldaddress, char* in_acco
 		IsInit = false;
 		return false;
 	}
-
+	
+	database.UpdateWorldVersion(GetAccountID(), in_version);
 	pStatsTimer = new Timer ( 60000 );
 	pStatsTimer->Start ( 60000 );
 

@@ -39,12 +39,13 @@ EQ2Packet* LS_CharSelectList::serialize(int16 version){
 		account_info.unknown1 = 0xFFFFFFFF;
 		account_info.unknown2 = 0;
 		account_info.maxchars = database.GetMaxCharsSetting(); 
+		account_info.vet_adv_bonus = database.GetAccountBonus(account_id);
+		account_info.vet_trade_bonus = 0;
 		account_info.unknown4 = 0;
 		for (int i = 0; i < 3; i++)
 			account_info.unknown5[i] = 0xFFFFFFFF;
 		account_info.unknown5[3] = 0;
-		account_info.vet_adv_bonus = database.GetAccountBonus(account_id);
-		account_info.vet_trade_bonus = 0;
+
 		AddData(account_info);
 	}	
 	return new EQ2Packet(OP_AllCharactersDescReplyMsg, getData(), getDataSize());

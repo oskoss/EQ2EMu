@@ -945,13 +945,15 @@ void LoginDatabase::RemoveOldWorldServerStats(){
 	query.RunQuery2(Q_DELETE, "delete from login_worldstats where (UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(last_update)) > 86400");
 }
 
-void LoginDatabase::UpdateWorldServerStats( LWorld* world, sint32 status )
+
+void LoginDatabase::UpdateWorldServerStats(LWorld* world, sint32 status)
 {
-	if( !world || world->GetAccountID() == 0 )
-		return;
 	Query query;
-	query.RunQuery2(Q_INSERT, "insert into login_worldstats (world_id, world_status, current_players, current_zones, last_update) values(%lu, %i, %i, %i, NOW()) ON DUPLICATE KEY UPDATE current_players=%i,current_zones=%i,world_status=%i,last_update=NOW()",
-		world->GetAccountID(), status, world->GetPlayerNum(), world->GetZoneNum(), world->GetPlayerNum(), world->GetZoneNum(), status);
+	query.RunQuery2(Q_INSERT, "insert into login_worldstats (world_id, world_status, current_players, current_zones, last_update, world_max_level) values(%u, %i, %i, %i, NOW(), %i) ON DUPLICATE KEY UPDATE current_players=%i,current_zones=%i,world_max_level=%i,world_status=%i,last_update=NOW()",
+		world->GetAccountID(), status, world->GetPlayerNum(), world->GetZoneNum(), world->GetMaxWorldLevel(), world->GetPlayerNum(), world->GetZoneNum(), world->GetMaxWorldLevel(), status);
+
+	string update_stats = string("update login_worldservers set lastseen=%u where id=%i");
+	query.RunQuery2(Q_UPDATE, update_stats.c_str(), Timer::GetUnixTimeStamp(), world->GetAccountID());
 }
 
 bool LoginDatabase::ResetWorldServerStatsConnectedTime(LWorld* world){
@@ -1022,18 +1024,55 @@ int8 LoginDatabase::GetMaxCharsSetting() {
 	return max_chars;
 }
 
-//TODO: EQ2World sends the servers max level for each server so we can do this correctly.
 int16 LoginDatabase::GetAccountBonus(int32 acct_id) {
 	int32 bonus = 0;
+	int16 world_id = 0;
 	Query query;
 	MYSQL_ROW row;
+	Query query2;
+	MYSQL_ROW row2;
+
+	//get the world ID for the character. TODO: Support multi server characters.
+	MYSQL_RES* result2 = query2.RunQuery2(Q_SELECT, "select server_id from login_characters where account_id=%i", acct_id);
+
+	if (result2 && mysql_num_rows(result2) >= 1) {
+		row2 = mysql_fetch_row(result2);
+		if (row2[0])
+			world_id = atoi(row2[0]);
+	}
 	
-	//pull all characters greater than the max level setting in the login_config table.
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT COUNT(id) FROM login_characters WHERE LEVEL >= (SELECT config_value FROM login_config WHERE config_name='max_level_for_vet_reward') AND account_id=%i", acct_id);
+	//pull all characters greater than the max level from the server
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT COUNT(id) FROM login_characters WHERE LEVEL >= (select world_max_level from login_worldstats where world_id=%i) AND account_id=%i", world_id, acct_id);
+
 	if (result && mysql_num_rows(result) == 1) {
 		row = mysql_fetch_row(result);
 		if(row[0])
 			bonus = atoi(row[0]);
 	}
 	return bonus;
+}
+
+void LoginDatabase::UpdateWorldVersion(int32 world_id, char* version) {
+	Query query;
+	query.RunQuery2(Q_UPDATE, "update login_worldservers set login_version='%s' where id=%u", version, world_id);
+}
+
+void LoginDatabase::UpdateAccountClientDataVersion(int32 account_id, int16 version)
+{
+	Query query;
+	query.RunQuery2(Q_UPDATE, "UPDATE account SET last_client_version='%i' WHERE id = %u", version, account_id);
+}
+
+//devn00b todo: finish this.
+void LoginDatabase::SaveCharacterPicture(int32 account_id, int32 character_id, int32 server_id, int16 picture_size, uchar* picture) {
+	stringstream ss_hex;
+	stringstream ss_query;
+	ss_hex.flags(ios::hex);
+	for (int32 i = 0; i < picture_size; i++)
+		ss_hex << setfill('0') << setw(2) << (int32)picture[i];
+
+	ss_query << "INSERT INTO `ls_character_picture` (`server_id`, `account_id`, `character_id`, `picture`) VALUES (" << server_id << ", " << account_id << ", " << character_id << ", '" << ss_hex.str() << "') ON DUPLICATE KEY UPDATE `picture` = '" << ss_hex.str() << "'";
+
+	if (!dbLogin.Query(ss_query.str().c_str()))
+		LogWrite(DATABASE__ERROR, 0, "DBNew", "MySQL Error %u: %s", dbLogin.GetError(), dbLogin.GetErrorMsg());
 }

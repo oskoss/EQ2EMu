@@ -204,6 +204,7 @@ bool Client::Process() {
 						if(acct){
 							SetAccountName(username.data.c_str());
 							database.UpdateAccountIPAddress(acct->getLoginAccountID(), getConnection()->GetrIP());
+							database.UpdateAccountClientDataVersion(acct->getLoginAccountID(), version);
 							LogWrite(LOGIN__INFO, 0, "Login", "%s successfully logged in.", (char*)username.data.c_str());
 						}
 						else

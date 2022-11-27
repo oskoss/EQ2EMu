@@ -86,6 +86,10 @@ public:
 	void RemoveDeletedCharacterData();
 	int8 GetMaxCharsSetting();
 	int16 GetAccountBonus(int32 acct_id);
+	void UpdateWorldVersion(int32 world_id, char* version);
+	void UpdateAccountClientDataVersion(int32 account_id, int16 version);
+	void SaveCharacterPicture(int32 account_id, int32 character_id, int32 server_id, int16 picture_size, uchar* picture);
+
 	DatabaseNew	dbLogin;
 };
 #endif
