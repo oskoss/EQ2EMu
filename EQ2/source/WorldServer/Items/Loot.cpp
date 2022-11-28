@@ -56,12 +56,8 @@ NPC* Entity::DropChest() {
 	chest->SetBrain(new BlankBrain(chest));
 	// Set the x, y, z, heading, location (grid id) to that of the dead spawn
 	chest->SetZone(GetZone());
-	chest->SetX(GetX());
-	chest->SetZ(GetZ()); // need to set X/Z BEFORE setting Y
-	chest->SetY(GetY());
 	// heading needs to be GetHeading() - 180 so the chest faces the proper way
 	chest->SetHeading(GetHeading() - 180);
-	chest->SetLocation(GetLocation());
 	// Set the primary command to loot and the secondary to disarm
 	chest->AddPrimaryEntityCommand("loot", rule_manager.GetGlobalRule(R_Loot, LootRadius)->GetFloat(), "loot", "", 0, 0);
 	chest->AddSecondaryEntityCommand("Disarm", rule_manager.GetGlobalRule(R_Loot, LootRadius)->GetFloat(), "Disarm", "", 0, 0);
@@ -103,11 +99,19 @@ NPC* Entity::DropChest() {
 		chest->SetModelType(4034);
 		chest->SetName("Small Chest");
 	}
-	else
+	else {
 		safe_delete(chest);	
+		chest = nullptr;
+	}
 
-	if (chest)
+	if (chest) {
+		chest->SetID(Spawn::NextID());
 		chest->SetShowHandIcon(1);
+		chest->SetLocation(GetLocation());
+		chest->SetX(GetX());
+		chest->SetZ(GetZ());
+		chest->appearance.pos.Y = GetY(); // don't use SetY, do this last after loc/x/z set
+	}
 
 	return chest;
 }

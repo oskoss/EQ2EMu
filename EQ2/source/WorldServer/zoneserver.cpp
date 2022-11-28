@@ -1276,7 +1276,7 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 					continue;
 				
 				spawn = itr->first;
-				if (spawn && movementMgr != nullptr) {
+				if(movementMgr != nullptr) {
 					movementMgr->RemoveMob((Entity*)spawn);
 				}
 
@@ -4169,7 +4169,8 @@ void ZoneServer::KillSpawnByDistance(Spawn* spawn, float max_distance, bool incl
 	std::vector<Spawn*>::iterator itr;
 	for (itr = ret_list.begin(); itr != ret_list.end(); itr++) {
 		test_spawn = *itr;
-		if(test_spawn && test_spawn->IsEntity() && test_spawn != spawn && (!test_spawn->IsPlayer() || include_players)){
+		if(test_spawn && test_spawn->Alive() && test_spawn->GetID() > 0 && test_spawn->GetID() != spawn->GetID() && test_spawn->IsEntity() &&
+		  (!test_spawn->IsPlayer() || include_players)){
 			if(test_spawn->GetDistance(spawn) < max_distance)
 				KillSpawn(true, test_spawn, spawn, send_packet);
 		}
@@ -4189,7 +4190,7 @@ void ZoneServer::SpawnSetByDistance(Spawn* spawn, float max_distance, string fie
 	std::vector<Spawn*>::iterator itr;
 	for (itr = ret_list.begin(); itr != ret_list.end(); itr++) {
 		test_spawn = *itr;
-		if(test_spawn && test_spawn != spawn && !test_spawn->IsPlayer()){
+		if(test_spawn && test_spawn->GetID() > 0 && test_spawn->GetID() != spawn->GetID() && !test_spawn->IsPlayer()){
 			if(test_spawn->GetDistance(spawn) < max_distance){
 				commands.SetSpawnCommand(0, test_spawn, type, value.c_str());
 			}
@@ -4292,6 +4293,8 @@ void ZoneServer::RemoveSpawn(Spawn* spawn, bool delete_spawn, bool respawn, bool
 			respawn_timers.Put(spawnLocationID, Timer::GetCurrentTime2() + spawnRespawnTime * 1000);
 		}
 	}
+	
+	RemoveSpawnFromGrid(spawn, spawn->GetLocation());
 
 	// Do we really need the mutex locks and check to dead_spawns as we remove it from dead spawns at the start of this function
 	if (lock && !respawn)
@@ -6180,8 +6183,6 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_proce
 	if(!spawn)
 		return;	
 	
-	RemoveSpawnFromGrid(spawn, spawn->GetLocation());
-	
 	if(spawn->IsPlayer() && spawn->GetZone())
 		spawn->GetZone()->RemovePlayerPassenger(((Player*)spawn)->GetCharacterID());
 	if(spawn->IsEntity())
@@ -7029,7 +7030,8 @@ vector<Spawn*> ZoneServer::GetAttackableSpawnsByDistance(Spawn* caster, float di
 	std::vector<Spawn*>::iterator itr;
 	for (itr = ret_list.begin(); itr != ret_list.end(); itr++) {
 		spawn = *itr;
-		if (spawn && spawn->IsNPC() && spawn->appearance.attackable > 0 && spawn != caster && spawn->Alive() && spawn->GetDistance(caster, true) <= distance) 
+		if (spawn && spawn->IsNPC() && spawn->appearance.attackable > 0 && spawn->GetID() > 0 && spawn->GetID() != caster->GetID() &&
+			spawn->Alive() && spawn->GetDistance(caster, true) <= distance) 
 			ret.push_back(spawn);
 	}
 	return ret;
@@ -8501,6 +8503,9 @@ void ZoneServer::ProcessPendingSpawns() {
 }
 
 void ZoneServer::AddSpawnToGrid(Spawn* spawn, int32 grid_id) {
+	if(spawn->GetID() == 0)
+		return;
+	
     MGridMaps.lock_shared();
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
 	if(grids != grid_maps.end()) {
@@ -8525,9 +8530,11 @@ void ZoneServer::AddSpawnToGrid(Spawn* spawn, int32 grid_id) {
 void ZoneServer::RemoveSpawnFromGrid(Spawn* spawn, int32 grid_id) {
     std::shared_lock lock(MGridMaps);
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
-	if(grids != grid_maps.end() && grids->second->spawns.count(spawn->GetID()) > 0) {
+	if(grids != grid_maps.end()) {
 		grids->second->MSpawns.lock();
-		grids->second->spawns.erase(spawn->GetID());
+		if(grids->second->spawns.count(spawn->GetID()) > 0) {
+			grids->second->spawns.erase(spawn->GetID());
+		}
 		grids->second->MSpawns.unlock();
 	}
 }
@@ -8551,12 +8558,12 @@ std::vector<Spawn*> ZoneServer::GetSpawnsInGrid(int32 grid_id) {
     std::shared_lock lock(MGridMaps);
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
 	if(grids != grid_maps.end()) {
-		grids->second->MSpawns.lock_shared();
+		grids->second->MSpawns.lock();
 		typedef map <int32, Spawn*> SpawnMapType;
 		for( SpawnMapType::iterator it = grids->second->spawns.begin(); it != grids->second->spawns.end(); ++it ) {
 			ret.push_back( it->second );
 		}
-		grids->second->MSpawns.unlock_shared();
+		grids->second->MSpawns.unlock();
 	}
 	
 	return ret;
