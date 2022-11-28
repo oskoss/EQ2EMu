@@ -8558,12 +8558,12 @@ std::vector<Spawn*> ZoneServer::GetSpawnsInGrid(int32 grid_id) {
     std::shared_lock lock(MGridMaps);
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
 	if(grids != grid_maps.end()) {
-		grids->second->MSpawns.lock();
+		grids->second->MSpawns.lock_shared();
 		typedef map <int32, Spawn*> SpawnMapType;
 		for( SpawnMapType::iterator it = grids->second->spawns.begin(); it != grids->second->spawns.end(); ++it ) {
 			ret.push_back( it->second );
 		}
-		grids->second->MSpawns.unlock();
+		grids->second->MSpawns.unlock_shared();
 	}
 	
 	return ret;
