@@ -328,7 +328,7 @@ bool Client::Process() {
 						server_id = request->getType_int32_ByName("server_id");	
 					}
 					LWorld* world = world_list.FindByID(server_id);
-					string name = database.GetCharacterName(char_id,server_id);
+					string name = database.GetCharacterName(char_id,server_id,GetAccountID());
 					if(world && name.length() > 0){
 						pending_play_char_id = char_id;
 						ServerPacket* outpack = new ServerPacket(ServerOP_UsertoWorldReq, sizeof(UsertoWorldRequest_Struct));
@@ -628,7 +628,7 @@ void Client::WorldResponse(int32 worldid, int8 response, char* ip_address, int32
 	}
 	if(response != 1){
 		if(response == PLAY_ERROR_CHAR_NOT_LOADED){
-			string pending_play_char_name = database.GetCharacterName(pending_play_char_id, worldid);
+			string pending_play_char_name = database.GetCharacterName(pending_play_char_id, worldid, GetAccountID());
 			if(database.VerifyDelete(GetAccountID(), pending_play_char_id, pending_play_char_name.c_str())){
 				GetLoginAccount()->removeCharacter((char*)pending_play_char_name.c_str());
 			}

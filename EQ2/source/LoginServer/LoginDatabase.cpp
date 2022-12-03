@@ -535,10 +535,10 @@ bool LoginDatabase::DeleteCharacter(int32 account_id, int32 character_id, int32 
 	return true;
 }
 
-string LoginDatabase::GetCharacterName(int32 char_id, int32 server_id){
+string LoginDatabase::GetCharacterName(int32 char_id, int32 server_id, int32 account_id){
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT name from login_characters where char_id=%lu and server_id=%lu and deleted = 0", char_id,server_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT name from login_characters where char_id=%lu and server_id=%lu and account_id=%lu and deleted = 0 limit 1", char_id, server_id, account_id);
 
 	if(result && mysql_num_rows(result) == 1){
 		row = mysql_fetch_row(result);

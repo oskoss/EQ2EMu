@@ -48,7 +48,7 @@ public:
 	int32 GetServer(int32 accountID, int32 charID, string name);
 	void LoadCharacters(LoginAccount* acct, int16 version);
 	void CheckCharacterTimeStamps(LoginAccount* acct);
-	string GetCharacterName(int32 char_id , int32 server_id);
+	string GetCharacterName(int32 char_id , int32 server_id, int32 account_id);
 	void SaveCharacterColors(int32 char_id, char* type, EQ2_Color color);
 	void SaveCharacterFloats(int32 char_id, char* type, float float1, float float2, float float3);
 	int16 GetAppearanceID(string name);
