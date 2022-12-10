@@ -656,7 +656,8 @@ void Client::HandlePlayerRevive(int32 point_id)
 		{
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "Sending player to revive zone ID '%u', using current zone's safe coords.", revive_point->zone_id);
 			location_name = revive_point->location_name.c_str();
-			player->ClearEverything();
+			//player->ClearEverything();
+          	Save();
 			Zone(zone_name.c_str(), false);
 		}
 	}
