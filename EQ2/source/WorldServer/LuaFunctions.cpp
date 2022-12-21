@@ -8829,7 +8829,7 @@ int EQ2Emu_lua_SetVision(lua_State* state) {
 		return 0;
 
 	Spawn* spawn = lua_interface->GetSpawn(state);
-	int8 vision = lua_interface->GetInt8Value(state, 2);
+	int32 vision = lua_interface->GetInt32Value(state, 2);
 	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 	lua_interface->ResetFunctionStack(state);
 

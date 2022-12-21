@@ -606,7 +606,7 @@ struct InfoStruct{
 	float	get_pet_power_pct() { std::lock_guard<std::mutex> lk(classMutex); return pet_power_pct_; }
 	int8	get_pet_movement() { std::lock_guard<std::mutex> lk(classMutex); return pet_movement_; }
 	int8	get_pet_behavior() { std::lock_guard<std::mutex> lk(classMutex); return pet_behavior_; }
-	int8	get_vision() { std::lock_guard<std::mutex> lk(classMutex); return vision_; }
+	int32	get_vision() { std::lock_guard<std::mutex> lk(classMutex); return vision_; }
 	int8	get_breathe_underwater() { std::lock_guard<std::mutex> lk(classMutex); return breathe_underwater_; }
 	std::string get_biography() { std::lock_guard<std::mutex> lk(classMutex); return biography_; }
 	float	get_drunk() { std::lock_guard<std::mutex> lk(classMutex); return drunk_; }
@@ -891,7 +891,7 @@ struct InfoStruct{
 	void	set_weight(int32 value) { std::lock_guard<std::mutex> lk(classMutex); weight_ = value; }
 	void	set_max_weight(int32 value) { std::lock_guard<std::mutex> lk(classMutex); max_weight_ = value; }
 
-	void	set_vision(int8 value) { std::lock_guard<std::mutex> lk(classMutex); vision_ = value; }
+	void	set_vision(int32 value) { std::lock_guard<std::mutex> lk(classMutex); vision_ = value; }
 	void	set_breathe_underwater(int8 value) { std::lock_guard<std::mutex> lk(classMutex); breathe_underwater_ = value; }
 	void	set_drunk(float value) { std::lock_guard<std::mutex> lk(classMutex); drunk_ = value; }
 
@@ -1098,7 +1098,7 @@ private:
 	int8			pet_movement_;
 	int8			pet_behavior_;
 
-	int8          	vision_;
+	int32          	vision_;
 	int8			breathe_underwater_;
 	std::string		biography_;
 	float			drunk_;
