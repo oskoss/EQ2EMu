@@ -1023,7 +1023,7 @@ public:
 	bool StopSaveSpellEffects() { return stop_save_spell_effects; }
 
 	void MentorTarget();
-	void SetMentorStats(int32 effective_level, int32 target_char_id = 0);
+	void SetMentorStats(int32 effective_level, int32 target_char_id = 0, bool update_stats = true);
 
 	bool ResetMentorship() { 
 		bool mentorship_status = reset_mentorship;

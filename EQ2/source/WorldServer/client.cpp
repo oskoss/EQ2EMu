@@ -894,13 +894,13 @@ void Client::SendCharInfo() {
 		Entity* ent = world.GetGroupManager()->IsPlayerInGroup(rejoin_group_id, GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id);
 		if(ent && ent->IsPlayer())
 		{
-			GetPlayer()->SetMentorStats(ent->GetLevel(), ent->GetID());
+			GetPlayer()->SetMentorStats(ent->GetLevel(), ent->GetID(), false);
 			groupMentor = true;
 		}
 	}
 
 	if(!groupMentor)
-		GetPlayer()->SetMentorStats(GetPlayer()->GetLevel(), 0);
+		GetPlayer()->SetMentorStats(GetPlayer()->GetLevel(), 0, false);
 
 	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_MAINTAINEDEFFECTS);
 	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_SPELLEFFECTS);

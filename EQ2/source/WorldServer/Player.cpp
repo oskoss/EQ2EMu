@@ -6733,7 +6733,7 @@ void Player::MentorTarget()
 	}
 }
 
-void Player::SetMentorStats(int32 effective_level, int32 target_char_id)
+void Player::SetMentorStats(int32 effective_level, int32 target_char_id, bool update_stats)
 {
 	RemoveSpells();
 	if(client->GetPlayer()->GetGroupMemberInfo())
@@ -6743,8 +6743,10 @@ void Player::SetMentorStats(int32 effective_level, int32 target_char_id)
 	client->GetPlayer()->SetTotalHPBase(effective_level * effective_level * 2 + 40);
 	client->GetPlayer()->SetTotalPowerBase((sint32)(effective_level * effective_level * 2.1 + 45));
 	client->GetPlayer()->CalculateBonuses();
-	client->GetPlayer()->SetHP(GetTotalHP());
-	client->GetPlayer()->SetPower(GetTotalPower());
+	if(update_stats) {
+		client->GetPlayer()->SetHP(GetTotalHP());
+		client->GetPlayer()->SetPower(GetTotalPower());
+	}
 	/*info->set_agi_base(effective_level * 2 + 15);
 	info->set_intel_base(effective_level * 2 + 15);
 	info->set_wis_base(effective_level * 2 + 15);

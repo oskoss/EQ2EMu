@@ -1619,6 +1619,13 @@ bool WorldDatabase::LoadCharacterStats(int32 id, int32 account_id, Client* clien
 		{
 			InfoStruct* info = client->GetPlayer()->GetInfoStruct();
 
+			// must have totals up top before we set the current 'hp' / 'power'
+			client->GetPlayer()->SetTotalHP(result.GetSInt32Str("max_hp"));
+			client->GetPlayer()->SetTotalPower(result.GetSInt32Str("max_power"));
+			
+			client->GetPlayer()->SetTotalHPBase(client->GetPlayer()->GetTotalHP());
+			client->GetPlayer()->SetTotalPowerBase(client->GetPlayer()->GetTotalPower());
+			
 			client->GetPlayer()->SetHP(result.GetSInt32Str("hp"));
 			client->GetPlayer()->SetPower(result.GetSInt32Str("power"));
 			info->set_max_concentration(result.GetInt8Str("max_concentration"));
@@ -1663,8 +1670,6 @@ bool WorldDatabase::LoadCharacterStats(int32 id, int32 account_id, Client* clien
 			client->GetPlayer()->GetPlayerInfo()->SetBindZ(result.GetFloatStr("bind_z"));
 			client->GetPlayer()->GetPlayerInfo()->SetBindHeading(result.GetFloatStr("bind_heading"));
 			client->GetPlayer()->GetPlayerInfo()->SetHouseZone(result.GetInt32Str("house_zone_id"));
-			client->GetPlayer()->SetTotalHP(result.GetSInt32Str("max_hp"));
-			client->GetPlayer()->SetTotalPower(result.GetSInt32Str("max_power"));
 			client->GetPlayer()->SetAssignedAA(result.GetInt16Str("assigned_aa"));
 			client->GetPlayer()->SetUnassignedAA(result.GetInt16Str("unassigned_aa"));
 			client->GetPlayer()->SetTradeskillAA(result.GetInt16Str("tradeskill_aa"));
@@ -1689,8 +1694,6 @@ bool WorldDatabase::LoadCharacterStats(int32 id, int32 account_id, Client* clien
 				client->GetPlayer()->SetNeededTSXP();
 
 			info->set_tradeskill_xp_vitality(result.GetFloatStr("tradeskill_xp_vitality"));
-			client->GetPlayer()->SetTotalHPBase(client->GetPlayer()->GetTotalHP());
-			client->GetPlayer()->SetTotalPowerBase(client->GetPlayer()->GetTotalPower());
 			info->set_bank_coin_copper(result.GetInt32Str("bank_copper"));
 			info->set_bank_coin_silver(result.GetInt32Str("bank_silver"));
 			info->set_bank_coin_gold(result.GetInt32Str("bank_gold"));
