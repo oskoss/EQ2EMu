@@ -204,6 +204,8 @@ void Brain::AddHate(Entity* entity, sint32 hate) {
 	// do not aggro when running back, despite taking damage
 	if (m_body->IsNPC() && ((NPC*)m_body)->m_runningBack)
 		return;
+	else if (m_body->IsPet() && m_body->IsEntity() && ((Entity*)m_body)->GetOwner() == entity)
+		return;
 
 	if(m_body->IsImmune(IMMUNITY_TYPE_TAUNT))
 	{
