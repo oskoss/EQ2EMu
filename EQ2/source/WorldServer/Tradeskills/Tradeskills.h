@@ -54,7 +54,7 @@ struct Tradeskill
 	int32			currentProgress;
 	int32			currentDurability;
 	int32			nextUpdateTime;
-	vector<pair<int32, int8>>	usedComponents;
+	vector<pair<int32, int16>>	usedComponents;
 	TradeskillEvent* CurrentEvent;
 	bool			eventChecked;
 	bool			eventCountered;
@@ -72,7 +72,7 @@ public:
 	/// <summary>Starts the actual crafting process</summary>
 	/// <param name='client'>Client that is crafting</param>
 	/// <param name='components'>List of items the player is using to craft</param>
-	void BeginCrafting(Client* client, vector<pair<int32, int8>> components);
+	void BeginCrafting(Client* client, vector<pair<int32, int16>> components);
 
 	/// <summary>Stops the crafting process</summary>
 	/// <param name='client'>Client that stopped crafting</param>

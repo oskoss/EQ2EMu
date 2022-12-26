@@ -233,7 +233,7 @@ void TradeskillMgr::Process() {
 	m_tradeskills.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-void TradeskillMgr::BeginCrafting(Client* client, vector<pair<int32,int8>> components) {
+void TradeskillMgr::BeginCrafting(Client* client, vector<pair<int32,int16>> components) {
 	Recipe* recipe = master_recipe_list.GetRecipe(client->GetPlayer()->GetCurrentRecipe());
 
 	if (!recipe) {
@@ -243,7 +243,7 @@ void TradeskillMgr::BeginCrafting(Client* client, vector<pair<int32,int8>> compo
 	}
 
 	// TODO: use the vecotr to lock inventory slots
-	vector<pair<int32, int8>>::iterator itr;
+	vector<pair<int32, int16>>::iterator itr;
 	bool missingItem = false;
 	int32 itemid = 0;
 	vector<Item*> tmpItems;
@@ -317,7 +317,7 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	int32 dur = tradeskill->currentDurability;
 	int32 progress = tradeskill->currentProgress;
 	Recipe* recipe = tradeskill->recipe;
-	vector<pair<int32, int8>>::iterator itr;
+	vector<pair<int32, int16>>::iterator itr;
 	Item* item = 0;
 	int32 item_id = 0;
 	int8 i = 0;
@@ -370,8 +370,17 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	item = 0;
 	qty = recipe->GetFuelComponentQuantity();	
 	item_id = recipe->components[5][0];
+	float tsx = 0;
 	int8 HS = playerRecipe->GetHighestStage();
-	if (progress >= 400 && progress < 600) {
+	client->Message(CHANNEL_COLOR_RED, "%s: StopCrafting Error finding item %u to remove quantity for recipe id %u!", client->GetPlayer()->GetName(), dur);
+	if (progress < 400) { //stage 0
+		if (recipe->products.count(0) > 0) {
+			item_id = recipe->products[0]->product_id;
+			qty = recipe->products[0]->product_qty;
+		}
+		tsx = 1;
+	}
+	else if (progress >= 400 && progress < 600) { //stage 1
 		if (HS & (1 << (1 - 1))) {
 		}
 		else {
@@ -382,8 +391,10 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 			item_id = recipe->products[1]->product_id;
 			qty = recipe->products[1]->product_qty;
 		}
+		tsx = .45;
 	}
-	else if ((dur < 200 && progress >= 600) || (dur >= 200 && progress >= 600 && progress < 800)) {
+	else if (progress >= 600 && progress < 800) { //stage 2
+	//else if ((dur < 200 && progress >= 600) || (dur >= 200 && progress >= 600 && progress < 800)) { //stage 2
 		if (HS & (1 << (2 - 1))) {
 		}
 		else {
@@ -394,8 +405,10 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 			item_id = recipe->products[2]->product_id;
 			qty = recipe->products[2]->product_qty;
 		}
+		tsx = .30;
 	}
-	else if ((dur >= 200 && dur < 800 && progress >= 800) || (dur >= 800 && progress >= 800 && progress < 1000)) {
+	//else if ((dur >= 200 && dur < 800 && progress >= 800) || (dur >= 800 && progress >= 800 && progress < 1000)) { // stage 3
+	else if (progress >= 800 && progress < 1000) { // stage 3
 		if (HS & (1 << (3 - 1))) {
 		}
 		else {
@@ -406,8 +419,10 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 			item_id = recipe->products[3]->product_id;
 			qty = recipe->products[3]->product_qty;
 		}
+		tsx = .15;
 	}
-	else if (dur >= 800 && progress >= 1000) {
+	//else if (dur >= 800 && progress >= 1000) {  // stage 4
+	else if (progress >= 1000) {  // stage 4
 		if (HS & (1 << (4 - 1))) {
 		}
 		else {
@@ -438,6 +453,7 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	}
 
 	float xp = client->GetPlayer()->CalculateTSXP(recipe->GetLevel());
+	xp = xp - (xp * tsx);
 	if (xp > 0) {
 		int16 level = client->GetPlayer()->GetTSLevel();
 		if (client->GetPlayer()->AddTSXP((int32)xp)) {
