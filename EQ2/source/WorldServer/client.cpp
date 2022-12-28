@@ -1684,7 +1684,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			packet->LoadPacketData(app->pBuffer, app->size);
 			int32 item = 0;
 			int8 qty = 0;
-			vector<pair<int32, int8>> items;
+			vector<pair<int32, int16>> items;
 			char tmp_item_id[30];
 			int8 num_primary_selected_items = packet->getType_int8_ByName("num_primary_selected_items");
 			for (int8 i = 0; i < num_primary_selected_items; i++) {
@@ -1692,7 +1692,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				sprintf(tmp_item_id, "primary_selected_item_id_%i", i);
 				item = packet->getType_int32_ByName(tmp_item_id);
 				sprintf(tmp_item_id, "primary_selected_item_qty_%i", i);
-				qty = packet->getType_int8_ByName(tmp_item_id);
+				qty = packet->getType_int16_ByName(tmp_item_id);
 				if (item > 0)
 					items.push_back(make_pair(item,qty));
 				item = 0;
@@ -1707,7 +1707,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					sprintf(tmp_item_id, "selected_id%i_%i", i,j);
 					item = packet->getType_int32_ByName(tmp_item_id);
 					sprintf(tmp_item_id, "selected_qty%i_%i", i, j);
-					qty = packet->getType_int8_ByName(tmp_item_id);
+					qty = packet->getType_int16_ByName(tmp_item_id);
 					if (item > 0)
 						items.push_back(make_pair(item, qty));
 
@@ -1717,10 +1717,10 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			int8 num_fuel_items = packet->getType_int8_ByName("num_fuel_items");
 			for (int8 i = 0; i < num_fuel_items; i++) {
 				memset(tmp_item_id, 0, 30);
-				sprintf(tmp_item_id, "selected_id_%i", i);
+				sprintf(tmp_item_id, "fuel_id_%i", i);
 				item = packet->getType_int32_ByName(tmp_item_id);
-				sprintf(tmp_item_id, "selected_qty_%i", i);
-				qty = packet->getType_int8_ByName(tmp_item_id);
+				sprintf(tmp_item_id, "fuel_qty_%i", i);
+				qty = packet->getType_int16_ByName(tmp_item_id);
 				if (item > 0)
 					items.push_back(make_pair(item, qty));
 				item = 0;
@@ -10066,6 +10066,7 @@ void Client::SendRecipeList() {
 	map<int32, Recipe*>::iterator itr;
 	Recipe* recipe;
 	int16 i = 0;
+	int8 level = player->GetTSLevel();
 	int index = 0;
 	for (itr = recipes->begin(); itr != recipes->end(); itr++) {
 		recipe = itr->second;
@@ -10080,12 +10081,28 @@ void Client::SendRecipeList() {
 	packet->setArrayLengthByName("num_recipes", recipes->size());
 	for (itr = recipes->begin(); itr != recipes->end(); itr++) {
 		recipe = itr->second;
-		packet->setArrayDataByName("id", recipe->GetID(), i);
-		packet->setArrayDataByName("tier", recipe->GetTier(), i);
+		int32 myid = recipe->GetID();
+		int8 rlevel = recipe->GetLevel();
+		int8 even = level - level * .05 + .5;
+		int8 easymin = level - level * .25 + .5;
+		int8 veasymin = level - level * .35 + .5;
+		if (rlevel > level )
+			packet->setArrayDataByName("tier", 4, i);
+		else if ((rlevel <= level) & (rlevel >= even))
+			packet->setArrayDataByName("tier", 3, i);
+		else if ((rlevel <= even) & (rlevel >= easymin))
+			packet->setArrayDataByName("tier", 2, i);
+		else if ((rlevel <= easymin) & (rlevel >= veasymin))
+			packet->setArrayDataByName("tier", 1, i);
+		else if ((rlevel <= veasymin) & (rlevel >= 0))
+			packet->setArrayDataByName("tier", 0, i);
+		if (rlevel == 2)
+			int xxx = 1;
+		packet->setArrayDataByName("recipe_id", myid, i);
 		packet->setArrayDataByName("level", recipe->GetLevel(), i);
+		packet->setArrayDataByName("unknown1", recipe->GetLevel(), i);
 		packet->setArrayDataByName("icon", recipe->GetIcon(), i);
 		packet->setArrayDataByName("classes", recipe->GetClasses(), i);
-		//packet->setArrayDataByName("skill", recipe->GetSkill(), i);
 		packet->setArrayDataByName("technique", recipe->GetTechnique(), i);
 		packet->setArrayDataByName("knowledge", recipe->GetKnowledge(), i);
 
