@@ -11391,24 +11391,6 @@ void Client::TriggerSpellSave()
 		save_spell_state_time_bucket = 0;
 		save_spell_state_timer.Start(interval, true);
 	}
-	else
-	{
-		int32 elapsed_time = save_spell_state_timer.GetElapsedTime();
-		save_spell_state_time_bucket += elapsed_time;
-
-		int32 save_wait_cap = rule_manager.GetGlobalRule(R_Spells, PlayerSpellSaveStateCap)->GetInt32();
-		
-		// default to not have some bogus value in the rule
-		if(save_wait_cap < interval)
-			save_wait_cap = interval+1;
-		
-		if(save_spell_state_time_bucket >= save_wait_cap)
-		{
-			// save immediately and disable timer
-			GetPlayer()->SaveSpellEffects();
-			save_spell_state_timer.Disable();
-		}
-	}
 	MSaveSpellStateMutex.unlock();
 }
 
