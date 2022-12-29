@@ -8503,7 +8503,7 @@ void ZoneServer::ProcessPendingSpawns() {
 }
 
 void ZoneServer::AddSpawnToGrid(Spawn* spawn, int32 grid_id) {
-	if(spawn->GetID() == 0)
+	if(spawn->GetID() == 0 || spawn->IsDeletedSpawn())
 		return;
 	
     MGridMaps.lock_shared();
