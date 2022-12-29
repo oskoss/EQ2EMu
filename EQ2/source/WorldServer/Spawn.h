@@ -1398,7 +1398,7 @@ private:
 	int32 loot_tier;
 	int32 loot_drop_type;
 
-	bool deleted_spawn;
+	std::atomic<bool> deleted_spawn;
 	Mutex m_GridMutex;
 	bool is_collector;
 };
