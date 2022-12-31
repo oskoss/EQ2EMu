@@ -346,8 +346,15 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	packet->setSubstructDataByName("recipe_info", "unknown4aa", 1);
 	packet->setSubstructDataByName("recipe_info", "unknown5a", 20);//level *10
 	packet->setSubstructDataByName("recipe_info", "product_classes", recipe->GetClasses());
-	packet->setSubstructDataByName("recipe_info", "show_previous", client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->highestStage);//     recipe->highestStage);
+	int32 HS = 0;
+	if (client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID()) == NULL)
+		HS = 0;
+	else 
+		HS = client->GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())->highestStage;
 
+	 
+	packet->setSubstructDataByName("recipe_info", "show_previous", HS);//     recipe->highestStage);
+	
 
 	rp = recipe->products[1];
 	if (rp->product_id > 0) {
@@ -439,7 +446,7 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	// Check to see if we have a primary component (slot = 0)
 	vector<Item*> itemss;
 	if (recipe->components.count(0) > 0) {
-		
+		int16 have_qty = 0;
 		vector<int32> rc = recipe->components[0];
 		for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
 			item = master_item_list.GetItem(*itr);
@@ -450,14 +457,13 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 			itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
 			if (itemss.size() > 0) {
 				int16 needed_qty = recipe->GetPrimaryComponentQuantity();
-				int16 have_qty = 0;
 				for (int8 i = 0; i < itemss.size(); i++) {
 					have_qty += itemss[i]->details.count;
 				}
-				packet->setSubstructDataByName("recipe_info", "primary_qty_avail", have_qty);
 				break;
 			}
 		}
+		packet->setSubstructDataByName("recipe_info", "primary_qty_avail", have_qty);
 	}
 	
 	

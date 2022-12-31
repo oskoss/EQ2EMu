@@ -493,25 +493,25 @@ int32 WorldDatabase::LoadRecipeBookItems(int32 item_id)
 	//std::string select_query_addition = std::string(" where item_id = ") + std::to_string(item_id);
 	//MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT item_id, name FROM item_details_recipe_items%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	std::string select_query_addition = std::string(" and r.item_id = ") + std::to_string(item_id);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT  r.item_id, ri.recipe_id ,ri.`name` FROM item_details_recipe r LEFT JOIN item_details_recipe_items ri ON ri.recipe_id = r.recipe_id where ri.recipe_id is not null%s", (item_id == 0) ? "" : select_query_addition.c_str());
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT  r.item_id, ri.recipe_id ,ri.`name`,ri.soe_recipe_crc FROM item_details_recipe r LEFT JOIN item_details_recipe_items ri ON ri.recipe_id = r.recipe_id where ri.recipe_id is not null%s", (item_id == 0) ? "" : select_query_addition.c_str());
 	
 	int32 total = 0;
 	int32 id = 0;
-
+	uint32 soe_id = 0;
 	if (result)
 	{
 		while(result && (row = mysql_fetch_row(result)))
 		{
 			id = strtoul(row[0], NULL, 0);
 			Item* item = master_item_list.GetItem(id);
-
+			soe_id = strtoul(row[3], NULL, 0);
 			if(item)
 			{
 				LogWrite(ITEM__DEBUG, 5, "Items", "\tRecipe Book for item_id %u", id);
 				LogWrite(ITEM__DEBUG, 5, "Items", "\tType: %i, '%s'", ITEM_TYPE_RECIPE, row[2]);
 				item->SetItemType(ITEM_TYPE_RECIPE);
 				item->recipebook_info->recipe_id = (atoi(row[1]));
-				item->recipebook_info->recipes.push_back(string(row[2]));
+				item->recipebook_info->recipes.push_back(soe_id);
 				//item->recipebook_info->recipe_id(row[1]);
 				total++;
 			}

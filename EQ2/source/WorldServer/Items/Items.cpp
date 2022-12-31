@@ -2463,10 +2463,10 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				// Recipe Books
 				if(recipebook_info){
 					packet->setArrayLengthByName("num_recipes", recipebook_info->recipes.size());
-					for(int32 i = 0; i < recipebook_info->recipes.size(); i++){
-						packet->setArrayDataByName("recipe_name", recipebook_info->recipes.at(i).c_str(), i);
-						Recipe* recipe = master_recipe_list.GetRecipeByName(recipebook_info->recipes.at(i).c_str());
+					for (int32 i = 0; i < recipebook_info->recipes.size(); i++) {
+						Recipe* recipe = master_recipe_list.GetRecipe(recipebook_info->recipes.at(i));
 						if (recipe) {
+							packet->setArrayDataByName("recipe_name", recipe->GetName(), i);
 							packet->setArrayDataByName("recipe_id", recipe->GetID(), i);
 							packet->setArrayDataByName("recipe_icon", recipe->GetIcon(), i);
 						}

@@ -35,7 +35,7 @@ void WorldDatabase::LoadRecipes() {
 	DatabaseResult res;
 
 	bool status = database_new.Select(&res, 
-		"SELECT r.`id`,r.`level`,r.`icon`,r.`skill_level`,r.`technique`,r.`knowledge`,r.`name`,r.`description`,i.`name` as `book`,r.`bench`,ipc.`adventure_classes`, "
+		"SELECT r.`id`,r.`soe_id`,r.`level`,r.`icon`,r.`skill_level`,r.`technique`,r.`knowledge`,r.`name`,r.`description`,i.`name` as `book`,r.`bench`,ipc.`adventure_classes`, "
 		"r.`stage4_id`, r.`name`, r.`stage4_qty`, pcl.`name` as primary_comp_title,r.primary_comp_qty, fcl.name as `fuel_comp_title`, r.fuel_comp_qty, "
 		"bc.`name` AS build_comp_title, bc.qty AS build_comp_qty, bc2.`name` AS build2_comp_title, bc2.qty AS build2_comp_qty, "
 		"bc3.`name` AS build3_comp_title, bc3.qty AS build3_comp_qty, bc4.`name` AS build4_comp_title, bc4.qty AS build4_comp_qty,\n"
@@ -60,6 +60,7 @@ void WorldDatabase::LoadRecipes() {
 		int32 i = 0;
 		Recipe* recipe = new Recipe();
 		recipe->SetID(res.GetInt32(i++));
+		recipe->SetSoeID(res.GetInt32(i++));
 		recipe->SetLevel(res.GetInt32(i++));
 		recipe->SetTier(recipe->GetLevel() / 10 + 1);
 		recipe->SetIcon(res.GetInt32(i++));
@@ -268,11 +269,15 @@ void WorldDatabase::LoadRecipeComponents() {
 			if (!recipe) {
 				continue;
 			}
-			recipe->AddBuildComp(res.GetInt32(1), 0);
-			recipe->AddBuildComp(res.GetInt32(2), 5);
+		
 		}
 		if (recipe && !res.IsNull(3)) {
-			recipe->AddBuildComp(res.GetInt32(3), res.GetInt8(4));
+			if (find(recipe->components[0].begin(), recipe->components[0].end(), res.GetInt32(1)) == recipe->components[0].end())
+				recipe->AddBuildComp(res.GetInt32(1), 0);
+			if (find(recipe->components[5].begin(), recipe->components[5].end(), res.GetInt32(2)) == recipe->components[5].end())
+				recipe->AddBuildComp(res.GetInt32(2), 5);
+			if (find(recipe->components[res.GetInt8(4)].begin(), recipe->components[res.GetInt8(4)].end(), res.GetInt32(3)) == recipe->components[res.GetInt8(4)].end())
+				recipe->AddBuildComp(res.GetInt32(3), res.GetInt8(4));
 		}
 		//else
 			//LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Error loading `recipe_build_comps`, Recipe ID: %u", id);

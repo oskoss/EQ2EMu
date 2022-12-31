@@ -112,6 +112,17 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 	if (recipe->components.count(0) > 0) {
 		vector<int32> rc = recipe->components[0];
 			vector <pair<int32, int16>> selected_items;
+
+			int32 total_primary_items = 0;
+		for (itr = rc.begin(); itr != rc.end(); itr++) {
+			itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
+			if (itemss.size() > 0)
+				total_primary_items += itemss.size();
+		}
+		packet->setArrayLengthByName("num_primary_choices", total_primary_items);
+
+
+		int16 have_qty = 0;
 		for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
 			if (firstID == 0)
 				firstID = *itr;
@@ -128,14 +139,12 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 			item_player = client->GetPlayer()->item_list.GetItemFromID((*itr));
 
 			itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
-			packet->setArrayLengthByName("num_primary_choices", itemss.size());
 			if (itemss.size() > 0) {
 				
 				int16 needed_qty = recipe->GetPrimaryComponentQuantity();
-				int16 have_qty = 0;
 				if (firstID == 0)
 					firstID = *itr;
-				for (int8 i = 0; i < itemss.size(); i++) {
+				for (int8 i = 0; i < itemss.size(); i++, k++) {
 					IDcount++;
 					if (have_qty < needed_qty) {
 
@@ -144,11 +153,11 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 						selected_items.push_back(make_pair(int32(itemss[i]->details.unique_id), min_qty));
 						have_qty += min_qty;
 					}
-					packet->setArrayDataByName("primary_component", itemss[i]->name.c_str(), i);
-					packet->setArrayDataByName("primary_item_id", itemss[i]->details.unique_id, i);
-					packet->setArrayDataByName("primary_icon", itemss[i]->details.icon, i);
-					packet->setArrayDataByName("primary_total_quantity", itemss[i]->details.count, i);
-					//packet->setArrayDataByName("primary_supply_depot", itemss[i]->details.count, i);  // future need
+					packet->setArrayDataByName("primary_component", itemss[i]->name.c_str(), k);
+					packet->setArrayDataByName("primary_item_id", itemss[i]->details.unique_id, k);
+					packet->setArrayDataByName("primary_icon", itemss[i]->details.icon, k);
+					packet->setArrayDataByName("primary_total_quantity", itemss[i]->details.count, k);
+					//packet->setArrayDataByName("primary_supply_depot", itemss[i]->details.count, k);  // future need
 					//packet->setArrayDataByName("primary_unknown3a",);      // future need
 				}
 				packet->setDataByName("primary_id", itemss[0]->details.unique_id);
@@ -185,6 +194,7 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 		i = 0;
 		firstID = 0;
 		item = 0;
+		k = 0;
 	}
 	else {
 		LogWrite(TRADESKILL__ERROR, 0, "Recipes", "Recipe has no primary component");
@@ -224,8 +234,6 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 			for (itr = rc.begin(); itr != rc.end(); itr++) {// iterates through each recipe component to find the stacks in inventory
 				item = master_item_list.GetItem(*itr);
 				itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
-				sprintf(msgbuf, "k=%d hascomp=%d \n", k, hasComp);
-				//OutputDebugString(msgbuf);
 				if (itemss.size() > 0) { 
 					int16 needed_qty = 0;
 					int16 have_qty = 0;
