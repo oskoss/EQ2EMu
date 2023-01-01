@@ -479,7 +479,7 @@ void ClientPacketFunctions::SendItemCreationUI(Client* client, Recipe* recipe) {
 		// get the product for this stage, if none found default to fuel
 		if (recipe->products.count(i) > 0)
 			rp = recipe->products[i];
-		if (!rp) {
+		if (!rp || (rp->product_id == 0)) {
 			rp = new RecipeProducts;
 			rp->product_id = recipe->components[5].front();
 			rp->product_qty = recipe->GetFuelComponentQuantity();

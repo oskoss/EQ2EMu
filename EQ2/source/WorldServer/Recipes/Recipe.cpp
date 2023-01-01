@@ -460,7 +460,6 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 				for (int8 i = 0; i < itemss.size(); i++) {
 					have_qty += itemss[i]->details.count;
 				}
-				break;
 			}
 		}
 		packet->setSubstructDataByName("recipe_info", "primary_qty_avail", have_qty);
