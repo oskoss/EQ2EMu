@@ -6151,12 +6151,13 @@ void Commands::Command_Grid(Client* client, Seperator* sep)
 				
 			if(sep->IsNumber(1))
 				grid = atoul(sep->arg[1]);
-			std::vector<Spawn*> spawns = client->GetPlayer()->GetZone()->GetSpawnsInGrid(grid);
-			client->Message(CHANNEL_COLOR_RED, "Grid ID %u has %u spawns.", grid, spawns.size());
-			for(int i=0;i<spawns.size();i++) {
-				Spawn* spawn = spawns.at(i);
+			std::vector<Spawn*>* spawns = client->GetPlayer()->GetZone()->GetSpawnsInGrid(grid);
+			client->Message(CHANNEL_COLOR_RED, "Grid ID %u has %u spawns.", grid, spawns->size());
+			for(int i=0;i<spawns->size();i++) {
+				Spawn* spawn = spawns->at(i);
 				client->Message(CHANNEL_COLOR_YELLOW, "Spawn %s (%u), Loc X/Y/Z: %f/%f/%f.", spawn->GetName(), spawn->GetID(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
 			}
+			safe_delete(spawns);
 		}
 		else {
 			client->Message(CHANNEL_COLOR_YELLOW, "Your Grid ID is %u", client->GetPlayer()->appearance.pos.grid_id);

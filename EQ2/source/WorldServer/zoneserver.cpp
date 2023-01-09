@@ -4165,9 +4165,9 @@ void ZoneServer::KillSpawnByDistance(Spawn* spawn, float max_distance, bool incl
 		return;
 	
 	Spawn* test_spawn = 0;
-	std::vector<Spawn*> ret_list = GetSpawnsInGrid(spawn->GetLocation());
+	std::vector<Spawn*>* ret_list = GetSpawnsInGrid(spawn->GetLocation());
 	std::vector<Spawn*>::iterator itr;
-	for (itr = ret_list.begin(); itr != ret_list.end(); itr++) {
+	for (itr = ret_list->begin(); itr != ret_list->end(); itr++) {
 		test_spawn = *itr;
 		if(test_spawn && test_spawn->Alive() && test_spawn->GetID() > 0 && test_spawn->GetID() != spawn->GetID() && test_spawn->IsEntity() &&
 		  (!test_spawn->IsPlayer() || include_players)){
@@ -4175,6 +4175,7 @@ void ZoneServer::KillSpawnByDistance(Spawn* spawn, float max_distance, bool incl
 				KillSpawn(true, test_spawn, spawn, send_packet);
 		}
 	}
+	safe_delete(ret_list);
 }
 
 void ZoneServer::SpawnSetByDistance(Spawn* spawn, float max_distance, string field, string value){
@@ -4186,9 +4187,9 @@ void ZoneServer::SpawnSetByDistance(Spawn* spawn, float max_distance, string fie
 	if(type == 0xFFFFFFFF)
 		return;
 
-	std::vector<Spawn*> ret_list = GetSpawnsInGrid(spawn->GetLocation());
+	std::vector<Spawn*>* ret_list = GetSpawnsInGrid(spawn->GetLocation());
 	std::vector<Spawn*>::iterator itr;
-	for (itr = ret_list.begin(); itr != ret_list.end(); itr++) {
+	for (itr = ret_list->begin(); itr != ret_list->end(); itr++) {
 		test_spawn = *itr;
 		if(test_spawn && test_spawn->GetID() > 0 && test_spawn->GetID() != spawn->GetID() && !test_spawn->IsPlayer()){
 			if(test_spawn->GetDistance(spawn) < max_distance){
@@ -4196,6 +4197,7 @@ void ZoneServer::SpawnSetByDistance(Spawn* spawn, float max_distance, string fie
 			}
 		}
 	}
+	safe_delete(ret_list);
 }
 
 void ZoneServer::AddSpawnScriptTimer(SpawnScriptTimer* timer){
@@ -7026,14 +7028,17 @@ void ZoneServer::RemovePlayerPassenger(int32 char_id) {
 vector<Spawn*> ZoneServer::GetAttackableSpawnsByDistance(Spawn* caster, float distance) {
 	vector<Spawn*> ret;
 	Spawn* spawn = 0;
-	std::vector<Spawn*> ret_list = GetSpawnsInGrid(caster->GetLocation());
+	std::vector<Spawn*>* ret_list = GetSpawnsInGrid(caster->GetLocation());
 	std::vector<Spawn*>::iterator itr;
-	for (itr = ret_list.begin(); itr != ret_list.end(); itr++) {
+	for (itr = ret_list->begin(); itr != ret_list->end(); itr++) {
 		spawn = *itr;
 		if (spawn && spawn->IsNPC() && spawn->appearance.attackable > 0 && spawn->GetID() > 0 && spawn->GetID() != caster->GetID() &&
 			spawn->Alive() && spawn->GetDistance(caster, true) <= distance) 
 			ret.push_back(spawn);
 	}
+	
+	safe_delete(ret_list);
+	
 	return ret;
 }
 
@@ -8552,8 +8557,8 @@ int32 ZoneServer::GetSpawnCountInGrid(int32 grid_id) {
 	return count;
 }
 
-std::vector<Spawn*> ZoneServer::GetSpawnsInGrid(int32 grid_id) {
-	std::vector<Spawn*> ret;
+std::vector<Spawn*>* ZoneServer::GetSpawnsInGrid(int32 grid_id) {
+	std::vector<Spawn*>* ret = new std::vector<Spawn*>();
 	int32 count = 0;
     std::shared_lock lock(MGridMaps);
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
@@ -8561,7 +8566,7 @@ std::vector<Spawn*> ZoneServer::GetSpawnsInGrid(int32 grid_id) {
 		grids->second->MSpawns.lock();
 		typedef map <int32, Spawn*> SpawnMapType;
 		for( SpawnMapType::iterator it = grids->second->spawns.begin(); it != grids->second->spawns.end(); ++it ) {
-			ret.push_back( it->second );
+			ret->push_back( it->second );
 		}
 		grids->second->MSpawns.unlock();
 	}
