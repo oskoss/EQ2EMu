@@ -11408,7 +11408,6 @@ void Client::TriggerSpellSave()
 		save_spell_state_time_bucket = 0;
 		save_spell_state_timer.Start(interval, true);
 	}
-	
 	else
 	{
 		int32 elapsed_time = save_spell_state_timer.GetElapsedTime();

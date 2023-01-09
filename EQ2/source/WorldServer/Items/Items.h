@@ -868,7 +868,7 @@ public:
 		int8                    fence_commission;
 	};
 	struct RecipeBook_Info{
-		vector<string>			recipes;
+		vector<uint32>			recipes;
 		int32					recipe_id;
 		int8					uses;
 	};

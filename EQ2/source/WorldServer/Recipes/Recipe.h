@@ -51,6 +51,7 @@ public:
 
 	EQ2Packet *SerializeRecipe(Client *client, Recipe *recipe, bool display, int8 packet_type = 0, int8 sub_packet_type = 0, const char *struct_name = 0);
 	void SetID(int32 id) {this->id = id;}
+	void SetSoeID(int32 soe_id) { this->soe_id = soe_id; }
 	void SetBookID(int32 book_id) {this->book_id = book_id;}
 	void SetName(const char *name) {strncpy(this->name, name, sizeof(this->name));}
 	void SetDescription(const char* description) { strncpy(this->description, description, sizeof(this->description)); }
@@ -86,6 +87,7 @@ public:
 	void SetPrimaryComponentQuantity(int8 qty) { primary_comp_qty = qty; }
 
 	int32 GetID() {return id;}
+	int32 GetSoeID() { return soe_id; }
 	int32 GetBookID() {return book_id;}
 	const char * GetName() {return name;}
 	const char* GetDescription() { return description; }
@@ -147,6 +149,7 @@ public:
 
 private:
 	int32 id;
+	int32 soe_id;
 	int32 book_id;
 	char name[256];
 	char description[256];

@@ -372,7 +372,6 @@ void TradeskillMgr::StopCrafting(Client* client, bool lock) {
 	item_id = recipe->components[5][0];
 	float tsx = 0;
 	int8 HS = playerRecipe->GetHighestStage();
-	client->Message(CHANNEL_COLOR_RED, "%s: StopCrafting Error finding item %u to remove quantity for recipe id %u!", client->GetPlayer()->GetName(), dur);
 	if (progress < 400) { //stage 0
 		if (recipe->products.count(0) > 0) {
 			item_id = recipe->products[0]->product_id;

@@ -2302,7 +2302,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 									if (recipes.empty() && item->recipebook_info) {
 										//Backup I guess if the recipe book is empty for whatever reason?
 										for (auto& itr : item->recipebook_info->recipes) {
-											Recipe* r = master_recipe_list.GetRecipeByName(itr.c_str());
+											Recipe* r = master_recipe_list.GetRecipe(itr);   //GetRecipeByName(itr.c_str());
 											if (r) {
 												recipes.push_back(r);
 											}
