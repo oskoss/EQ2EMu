@@ -7025,19 +7025,24 @@ void ZoneServer::RemovePlayerPassenger(int32 char_id) {
 	MTransportSpawns.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-vector<Spawn*> ZoneServer::GetAttackableSpawnsByDistance(Spawn* caster, float distance) {
-	vector<Spawn*> ret;
+vector<int32> ZoneServer::GetAttackableSpawnsByDistance(Spawn* caster, float distance) {
+	vector<int32> ret;
 	Spawn* spawn = 0;
-	std::vector<Spawn*>* ret_list = GetSpawnsInGrid(caster->GetLocation());
-	std::vector<Spawn*>::iterator itr;
-	for (itr = ret_list->begin(); itr != ret_list->end(); itr++) {
-		spawn = *itr;
-		if (spawn && spawn->IsNPC() && spawn->appearance.attackable > 0 && spawn->GetID() > 0 && spawn->GetID() != caster->GetID() &&
-			spawn->Alive() && spawn->GetDistance(caster, true) <= distance) 
-			ret.push_back(spawn);
-	}
 	
-	safe_delete(ret_list);
+    std::shared_lock lock(MGridMaps);
+	std::map<int32, GridMap*>::iterator grids = grid_maps.find(caster->GetLocation());
+	if(grids != grid_maps.end()) {
+		grids->second->MSpawns.lock();
+		typedef map <int32, Spawn*> SpawnMapType;
+		for( SpawnMapType::iterator it = grids->second->spawns.begin(); it != grids->second->spawns.end(); ++it ) {
+			Spawn* spawn = it->second;
+			if (spawn && spawn->IsNPC() && spawn->appearance.attackable > 0 && spawn->GetID() > 0 && spawn->GetID() != caster->GetID() &&
+				spawn->Alive() && spawn->GetDistance(caster, true) <= distance) {
+				ret.push_back(spawn->GetID());
+			}
+		}
+		grids->second->MSpawns.unlock();
+	}
 	
 	return ret;
 }

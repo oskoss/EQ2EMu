@@ -441,7 +441,7 @@ public:
 	Client*	GetClientByCharID(int32 charid);
 
 	/// <summary>Gets spawns for a true AoE spell</summary>
-	vector<Spawn*> GetAttackableSpawnsByDistance(Spawn* spawn, float distance);
+	vector<int32> GetAttackableSpawnsByDistance(Spawn* spawn, float distance);
 
 	void StartZoneSpawnsForLevelThread(Client* client);
 
