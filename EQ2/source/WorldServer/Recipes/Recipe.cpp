@@ -411,7 +411,8 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	
 	
 	
-	item = master_item_list.GetItemByName(recipe->GetName());// TODO: MJ we should be getting item by item number in case of multiple items with same name
+	//item = master_item_list.GetItemByName(recipe->GetName());// TODO: MJ we should be getting item by item number in case of multiple items with same name
+	item = master_item_list.GetItem(recipe->GetProductID());
 	if(item) {
 		packet->setSubstructDataByName("recipe_info", "product_icon", item->details.icon); //item->details.icon);
 		packet->setSubstructDataByName("recipe_info", "product_name", item->name.c_str()); //item->name);
