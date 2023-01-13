@@ -7032,7 +7032,7 @@ vector<int32> ZoneServer::GetAttackableSpawnsByDistance(Spawn* caster, float dis
     std::shared_lock lock(MGridMaps);
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(caster->GetLocation());
 	if(grids != grid_maps.end()) {
-		grids->second->MSpawns.lock();
+		grids->second->MSpawns.lock_shared();
 		typedef map <int32, Spawn*> SpawnMapType;
 		for( SpawnMapType::iterator it = grids->second->spawns.begin(); it != grids->second->spawns.end(); ++it ) {
 			Spawn* spawn = it->second;
@@ -7041,7 +7041,7 @@ vector<int32> ZoneServer::GetAttackableSpawnsByDistance(Spawn* caster, float dis
 				ret.push_back(spawn->GetID());
 			}
 		}
-		grids->second->MSpawns.unlock();
+		grids->second->MSpawns.unlock_shared();
 	}
 	
 	return ret;
@@ -8516,7 +8516,7 @@ void ZoneServer::AddSpawnToGrid(Spawn* spawn, int32 grid_id) {
 	if(spawn->GetID() == 0 || spawn->IsDeletedSpawn())
 		return;
 	
-    MGridMaps.lock_shared();
+    MGridMaps.lock();
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
 	if(grids != grid_maps.end()) {
 		grids->second->MSpawns.lock();
@@ -8524,21 +8524,17 @@ void ZoneServer::AddSpawnToGrid(Spawn* spawn, int32 grid_id) {
 		grids->second->MSpawns.unlock();
 	}
 	else {
-		MGridMaps.unlock_shared();
 		GridMap* gm = new GridMap;
 		gm->grid_id = grid_id;
 		gm->spawns.insert(make_pair(spawn->GetID(), spawn));
-		MGridMaps.lock();
 		grid_maps.insert(make_pair(grid_id, gm));
-		MGridMaps.unlock();
-		return;
 	}
 	
-	MGridMaps.unlock_shared();
+	MGridMaps.unlock();
 }
 
 void ZoneServer::RemoveSpawnFromGrid(Spawn* spawn, int32 grid_id) {
-    std::shared_lock lock(MGridMaps);
+    std::unique_lock lock(MGridMaps);
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
 	if(grids != grid_maps.end()) {
 		grids->second->MSpawns.lock();
@@ -8568,12 +8564,12 @@ std::vector<Spawn*>* ZoneServer::GetSpawnsInGrid(int32 grid_id) {
     std::shared_lock lock(MGridMaps);
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
 	if(grids != grid_maps.end()) {
-		grids->second->MSpawns.lock();
+		grids->second->MSpawns.lock_shared();
 		typedef map <int32, Spawn*> SpawnMapType;
 		for( SpawnMapType::iterator it = grids->second->spawns.begin(); it != grids->second->spawns.end(); ++it ) {
 			ret->push_back( it->second );
 		}
-		grids->second->MSpawns.unlock();
+		grids->second->MSpawns.unlock_shared();
 	}
 	
 	return ret;
