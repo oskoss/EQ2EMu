@@ -441,7 +441,7 @@ public:
 	Client*	GetClientByCharID(int32 charid);
 
 	/// <summary>Gets spawns for a true AoE spell</summary>
-	vector<Spawn*> GetAttackableSpawnsByDistance(Spawn* spawn, float distance);
+	vector<int32> GetAttackableSpawnsByDistance(Spawn* spawn, float distance);
 
 	void StartZoneSpawnsForLevelThread(Client* client);
 
@@ -713,7 +713,7 @@ public:
 	void 	AddSpawnToGrid(Spawn* spawn, int32 grid_id);
 	void	RemoveSpawnFromGrid(Spawn* spawn, int32 grid_id);
 	int32	GetSpawnCountInGrid(int32 grid_id);
-	std::vector<Spawn*>	GetSpawnsInGrid(int32 grid_id);
+	std::vector<Spawn*>* GetSpawnsInGrid(int32 grid_id);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;

@@ -2522,10 +2522,9 @@ void SpellProcess::GetSpellTargetsTrueAOE(LuaSpell* luaspell) {
 			}
 		}
 		int32 ignore_target = 0;
-		vector<Spawn*> spawns = luaspell->caster->GetZone()->GetAttackableSpawnsByDistance(luaspell->caster, luaspell->spell->GetSpellData()->radius);
+		vector<int32> spawns = luaspell->caster->GetZone()->GetAttackableSpawnsByDistance(luaspell->caster, luaspell->spell->GetSpellData()->radius);
 		luaspell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 		for (int8 i = 0; i < spawns.size(); i++) {
-			Spawn* spawn = spawns.at(i);
 			if (i == 0){
 				if (luaspell->initial_target && luaspell->caster->GetID() != luaspell->initial_target){
 					//this is the "Direct" target and aoe can't be avoided
@@ -2535,13 +2534,15 @@ void SpellProcess::GetSpellTargetsTrueAOE(LuaSpell* luaspell) {
 				if (luaspell->targets.size() >= luaspell->spell->GetSpellData()->max_aoe_targets)
 					break;
 			}
+			
+			int32 target_id = spawns.at(i);
+			Spawn* spawn = luaspell->caster->GetZone()->GetSpawnByID(target_id);
+			if(!spawn) {
+				LogWrite(SPELL__ERROR, 0, "Spell", "Error: Spell target is NULL!  SpellProcess::ProcessSpell for Spell '%s' target id %u", (luaspell->spell != nullptr) ? luaspell->spell->GetName() : "Unknown", target_id);
+			}
 			//If we have already added this spawn, check the next spawn in the list
 			if (spawn && spawn->GetID() == ignore_target){
-				i++;
-				if (i < spawns.size())
-					spawn = spawns.at(i);
-				else
-					break;
+				continue;
 			}
 			if (spawn){
 				//If this spawn is immune to aoe, continue
