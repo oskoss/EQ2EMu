@@ -518,7 +518,7 @@ void ZoneServer::DeleteData(bool boot_clients){
 			}
 			else{
 				RemoveSpawnSupportFunctions(spawn, true);
-				RemoveSpawnFromGrid(spawn, GetLocation());
+				RemoveSpawnFromGrid(spawn, spawn->GetLocation());
 				AddPendingDelete(spawn);
 			}
 		}
@@ -810,7 +810,7 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 					tmp_player_list.Add(spawn);
 				else {
 				RemoveSpawnSupportFunctions(spawn, true);
-				RemoveSpawnFromGrid(spawn, GetLocation());
+				RemoveSpawnFromGrid(spawn, spawn->GetLocation());
 					AddPendingDelete(spawn);
 				}
 			}
