@@ -1246,6 +1246,7 @@ bool ZoneServer::CombatProcess(Spawn* spawn) {
 
 void ZoneServer::AddPendingDelete(Spawn* spawn) {
 	MSpawnDeleteList.writelock(__FUNCTION__, __LINE__);
+	spawn->SetDeletedSpawn(true);
 	if (spawn_delete_list.count(spawn) == 0)
 		spawn_delete_list.insert(make_pair(spawn, Timer::GetCurrentTime2() + spawn_delete_timer)); //give other threads up to 30 seconds to stop using this spawn reference
 	MSpawnDeleteList.releasewritelock(__FUNCTION__, __LINE__);
