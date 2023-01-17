@@ -8519,7 +8519,7 @@ void ZoneServer::AddSpawnToGrid(Spawn* spawn, int32 grid_id) {
 	if(spawn->GetID() == 0 || spawn->IsDeletedSpawn())
 		return;
 	
-    MGridMaps.lock();
+    MGridMaps.lock_shared();
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
 	if(grids != grid_maps.end()) {
 		grids->second->MSpawns.lock();
@@ -8527,17 +8527,21 @@ void ZoneServer::AddSpawnToGrid(Spawn* spawn, int32 grid_id) {
 		grids->second->MSpawns.unlock();
 	}
 	else {
+		MGridMaps.unlock_shared();
+		MGridMaps.lock();
 		GridMap* gm = new GridMap;
 		gm->grid_id = grid_id;
 		gm->spawns.insert(make_pair(spawn->GetID(), spawn));
 		grid_maps.insert(make_pair(grid_id, gm));
+		MGridMaps.unlock();
+		return;
 	}
 	
-	MGridMaps.unlock();
+	MGridMaps.unlock_shared();
 }
 
 void ZoneServer::RemoveSpawnFromGrid(Spawn* spawn, int32 grid_id) {
-    std::unique_lock lock(MGridMaps);
+    std::shared_lock lock(MGridMaps);
 	std::map<int32, GridMap*>::iterator grids = grid_maps.find(grid_id);
 	if(grids != grid_maps.end()) {
 		grids->second->MSpawns.lock();
