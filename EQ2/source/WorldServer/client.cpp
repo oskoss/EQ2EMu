@@ -10625,43 +10625,42 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 		if (index == 0 || !GetPlayer()->WasSentSpawn(spawn->GetID()))
 			continue;
 
+		int16 tmp_info_size = 0;
+		int16 tmp_pos_size = 0;
+		int16 tmp_vis_size = 0;
 		if (spawn->vis_changed)
 		{
-			auto vis_change = spawn->spawn_vis_changes_ex(GetPlayer(), GetVersion());
+			auto vis_change = spawn->spawn_vis_changes_ex(GetPlayer(), GetVersion(), &tmp_vis_size);
 			if (vis_change) {
 				SpawnData data;
 				data.spawn = spawn;
 				data.data = vis_change;
-				data.size = spawn->vis_packet_size;
+				data.size = tmp_vis_size;
 				map<int32, SpawnData> tmp_vis_changes;
 				tmp_vis_changes[index] = data;
 
 				map<int32, SpawnData> tmp_info_changes;
 				map<int32, SpawnData> tmp_pos_changes;
-				int32 tmp_info_size = 0;
-				int32 tmp_pos_size = 0;
 				if (spawn->info_changed) {
-					auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());
+					auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion(), &tmp_info_size);
 
 					if (info_change) {
 						SpawnData data;
 						data.spawn = spawn;
 						data.data = info_change;
-						data.size = spawn->info_packet_size;
-						tmp_info_size = data.size;
+						data.size = tmp_info_size;
 						tmp_info_changes[index] = data;
 					}
 				}
 
 				if (spawn->position_changed) {
-					auto pos_change = spawn->spawn_pos_changes_ex(GetPlayer(), GetVersion());
+					auto pos_change = spawn->spawn_pos_changes_ex(GetPlayer(), GetVersion(), &tmp_pos_size);
 
 					if (pos_change) {
 						SpawnData data;
 						data.spawn = spawn;
 						data.data = pos_change;
-						data.size = spawn->pos_packet_size;
-						tmp_pos_size = data.size;
+						data.size = tmp_pos_size;
 						tmp_pos_changes[index] = data;
 					}
 				}
@@ -10684,14 +10683,14 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 		}
 
 		if (spawn->info_changed) {
-			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion());
+			auto info_change = spawn->spawn_info_changes_ex(GetPlayer(), GetVersion(), &tmp_info_size);
 
 			if (info_change) {
 				SpawnData data;
 				data.spawn = spawn;
 				data.data = info_change;
-				data.size = spawn->info_packet_size;
-				info_size += spawn->info_packet_size;
+				data.size = tmp_info_size;
+				info_size += tmp_info_size;
 
 				info_changes[index] = data;
 			}
@@ -10699,14 +10698,14 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 		}
 
 		if (spawn->position_changed) {
-			auto pos_change = spawn->spawn_pos_changes_ex(GetPlayer(), GetVersion());
+			auto pos_change = spawn->spawn_pos_changes_ex(GetPlayer(), GetVersion(), &tmp_pos_size);
 
 			if (pos_change) {
 				SpawnData data;
 				data.spawn = spawn;
 				data.data = pos_change;
-				data.size = spawn->pos_packet_size;
-				pos_size += spawn->pos_packet_size;
+				data.size = tmp_pos_size;
+				pos_size += tmp_pos_size;
 
 				pos_changes[index] = data;
 			}
@@ -10714,14 +10713,14 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 		}
 
 		if (spawn->vis_changed) {
-			auto vis_change = spawn->spawn_vis_changes_ex(GetPlayer(), GetVersion());
+			auto vis_change = spawn->spawn_vis_changes_ex(GetPlayer(), GetVersion(), &tmp_vis_size);
 
 			if (vis_change) {
 				SpawnData data;
 				data.spawn = spawn;
 				data.data = vis_change;
-				data.size = spawn->vis_packet_size;
-				vis_size += spawn->vis_packet_size;
+				data.size = tmp_vis_size;
+				vis_size += tmp_vis_size;
 
 				vis_changes[index] = data;
 			}

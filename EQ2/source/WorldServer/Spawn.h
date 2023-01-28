@@ -806,13 +806,13 @@ public:
 	EQ2Packet* spawn_serialize(Player* player, int16 version, int16 offset = 0, int32 value = 0, int16 offset2 = 0, int16 offset3 = 0, int16 offset4 = 0, int32 value2 = 0);
 	EQ2Packet* spawn_update_packet(Player* player, int16 version, bool override_changes = false, bool override_vis_changes = false);
 	EQ2Packet* player_position_update_packet(Player* player, int16 version);
-	uchar* spawn_info_changes(Player* spawn, int16 version);
-	uchar* spawn_pos_changes(Player* spawn, int16 version);
-	uchar* spawn_vis_changes(Player* spawn, int16 version);
+	uchar* spawn_info_changes(Player* spawn, int16 version, int16* info_packet_size);
+	uchar* spawn_pos_changes(Player* spawn, int16 version, int16* pos_packet_size);
+	uchar* spawn_vis_changes(Player* spawn, int16 version, int16* vis_packet_size);
 
-	uchar* spawn_info_changes_ex(Player* spawn, int16 version);
-	uchar* spawn_pos_changes_ex(Player* spawn, int16 version);
-	uchar* spawn_vis_changes_ex(Player* spawn, int16 version);
+	uchar* spawn_info_changes_ex(Player* spawn, int16 version, int16* info_packet_size);
+	uchar* spawn_pos_changes_ex(Player* spawn, int16 version, int16* pos_packet_size);
+	uchar* spawn_vis_changes_ex(Player* spawn, int16 version, int16* vis_packet_size);
 
 	virtual bool EngagedInCombat(){ return false; }
 	virtual bool IsObject(){ return false; }
@@ -1174,10 +1174,6 @@ public:
 			MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
 		}
 	}
-
-	int16 pos_packet_size;
-	int16 info_packet_size;
-	int16 vis_packet_size;
 
 	enum SpawnProximityType {
 		SPAWNPROXIMITY_DATABASE_ID = 0,
