@@ -1873,18 +1873,18 @@ void ZoneServer::SendSpawnChanges(Spawn* spawn, Client* client, bool override_ch
 }
 
 void ZoneServer::SendSpawnChanges(Spawn* spawn){
+	MClientList.readlock(__FUNCTION__, __LINE__);
 	MSpawnList.readlock();
 	if(spawn && spawn->changed){
 		if(!spawn->IsPlayer() || (spawn->IsPlayer() && (spawn->info_changed || spawn->vis_changed))){
 			vector<Client*>::iterator itr;
 			Client* client = 0;
 
-			MClientList.readlock(__FUNCTION__, __LINE__);
+			// MClientList locked at a higher level
 			for (itr = clients.begin(); itr != clients.end(); itr++) {
 				client = *itr;
 				SendSpawnChanges(spawn, client);
 			}
-			MClientList.releasereadlock(__FUNCTION__, __LINE__);
 		}
 		spawn->changed = false;
 		spawn->info_changed = false;
@@ -1893,6 +1893,7 @@ void ZoneServer::SendSpawnChanges(Spawn* spawn){
 		spawn->vis_changed = false;
 	}
 	MSpawnList.releasereadlock();
+	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 Spawn* ZoneServer::FindSpawn(Player* searcher, const char* name){
@@ -3249,7 +3250,7 @@ void ZoneServer::RemoveClient(Client* client)
 	Guild *guild;
 
 	if(client)
-	{
+	{			
 		if (client->GetPlayer()) 
 			client_list.RemovePlayerFromInvisHistory(client->GetPlayer()->GetID());
 
@@ -3311,8 +3312,10 @@ void ZoneServer::RemoveClient(Client* client)
 				((Bot*)spawn)->Camp();
 		}
 
-		LogWrite(ZONE__DEBUG, 0, "Zone", "Calling clients.Remove(client)...");
 		MClientList.writelock(__FUNCTION__, __LINE__);
+		LogWrite(ZONE__DEBUG, 0, "Zone", "Calling clients.Remove(client)...");
+		UpdateClientSpawnMap(client->GetPlayer(), 0); // address spawn map being prematurely cleared when client list is active
+		
 		std::vector<Client*>::iterator itr2 = find(clients.begin(), clients.end(), client);
 		if (itr2 != clients.end())
 			clients.erase(itr2);
@@ -3412,7 +3415,7 @@ void ZoneServer::ClientProcess()
 					}
 
 				}
-				UpdateClientSpawnMap(client->GetPlayer(), 0);
+				
 				client->Disconnect();
 				RemoveClient(client);
 			}
@@ -3431,7 +3434,7 @@ void ZoneServer::ClientProcess()
 							world.GetGroupManager()->GroupMessage(client->GetPlayer()->GetGroupMemberInfo()->group_id, "%s has gone Linkdead.", client->GetPlayer()->GetName());
 					}
 				}
-				UpdateClientSpawnMap(client->GetPlayer(), 0);
+				
 				client->Disconnect();
 				RemoveClient(client);
 			}
