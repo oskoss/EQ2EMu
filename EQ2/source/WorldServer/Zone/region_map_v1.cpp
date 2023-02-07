@@ -350,6 +350,7 @@ void RegionMapV1::MapRegionsNearSpawn(Spawn *spawn, Client *client) const
 
 void RegionMapV1::UpdateRegionsNearSpawn(Spawn *spawn, Client *client) const
 {
+    std::shared_lock lock(MRegions);
 	map<map<Region_Node*, ZBSP_Node*>, Region_Status>::iterator testitr;
 	int region_num = 0;
 
@@ -480,6 +481,7 @@ void RegionMapV1::TicRegionsNearSpawn(Spawn *spawn, Client *client) const
 							node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
 					lua_interface->RunRegionScript(node->regionScriptName, "LeaveRegion", spawn->GetZone(), spawn, RegionTypeUntagged);
 				spawn->DeleteRegion(node, nullptr);
+				break;
 			}
 		}
 		else if (testitr->second.timerTic && testitr->second.inRegion && Timer::GetCurrentTime2() >= (testitr->second.lastTimerTic + testitr->second.timerTic))
