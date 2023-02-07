@@ -440,19 +440,27 @@ void RegionMapV1::UpdateRegionsNearSpawn(Spawn *spawn, Client *client) const
 
 void RegionMapV1::TicRegionsNearSpawn(Spawn *spawn, Client *client) const
 {
+    std::shared_lock lock(MRegions);
 	map<map<Region_Node*, ZBSP_Node*>, Region_Status>::iterator testitr;
 	int region_num = 0;
 
 	spawn->RegionMutex.writelock();
 
-	for (testitr = spawn->Regions.begin(); testitr != spawn->Regions.end(); testitr++)
+	for (testitr = spawn->Regions.begin(); testitr != spawn->Regions.end();)
 	{
 		map<Region_Node*, ZBSP_Node*>::const_iterator actualItr = testitr->first.begin();
+		
+		if(actualItr == testitr->first.end()) {
+			testitr++;
+			continue;
+		}
+		
 		Region_Node *node = actualItr->first;
 		ZBSP_Node *BSP_Root = actualItr->second;
 
 		std::map<Region_Node*, bool>::const_iterator dead_itr = dead_nodes.find(node);
 		if(dead_itr != dead_nodes.end()) {
+			testitr++;
 			continue;
 		}
 		
@@ -480,8 +488,17 @@ void RegionMapV1::TicRegionsNearSpawn(Spawn *spawn, Client *client) const
 						client->Message(CHANNEL_COLOR_RED, "[LEAVE REGION] Region %i, GridID: %u, RegionName: %s, RegionEnvFileName: %s, distance: %f, X/Y/Z: %f / %f / %f.  Script: %s", region_num, node->grid_id, node->regionName.c_str(), node->regionEnvFileName.c_str(),
 							node->dist, node->x, node->y, node->z, node->regionScriptName.c_str());
 					lua_interface->RunRegionScript(node->regionScriptName, "LeaveRegion", spawn->GetZone(), spawn, RegionTypeUntagged);
+				map<map<Region_Node*, ZBSP_Node*>, Region_Status>::iterator endItr = testitr;
+				endItr++;
 				spawn->DeleteRegion(node, nullptr);
-				break;
+				if(endItr == spawn->Regions.end()) {
+					break;
+				}
+				else {
+					testitr++;
+					continue;
+				}
+				
 			}
 		}
 		else if (testitr->second.timerTic && testitr->second.inRegion && Timer::GetCurrentTime2() >= (testitr->second.lastTimerTic + testitr->second.timerTic))
@@ -508,6 +525,7 @@ void RegionMapV1::TicRegionsNearSpawn(Spawn *spawn, Client *client) const
 		}
 
 		region_num++;
+		testitr++;
 	}
 
 	spawn->RegionMutex.releasewritelock();
