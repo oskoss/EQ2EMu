@@ -713,7 +713,7 @@ public:
 	void 	AddSpawnToGrid(Spawn* spawn, int32 grid_id);
 	void	RemoveSpawnFromGrid(Spawn* spawn, int32 grid_id);
 	int32	GetSpawnCountInGrid(int32 grid_id);
-	std::vector<Spawn*>* GetSpawnsInGrid(int32 grid_id);
+	void	SendClientSpawnListInGrid(Client* client, int32 grid_id);
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
