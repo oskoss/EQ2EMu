@@ -154,38 +154,6 @@ struct LocationTransportDestination{
 	int32	faction_value;
 };
 
-//ideally we wouldn't need to store this information as we could get it from the Client object, 
-//however since the client object disconnects from the server when zoning we can't count on it being available
-
-/*struct PlayerGroup;
-struct GroupOptions{
-	int8	loot_method;
-	int8	loot_items_rarity;
-	int8	auto_split;
-	int8	default_yell;
-	int8	group_autolock;
-	int8	solo_autolock;
-};
-struct GroupMemberInfo{
-	string	name;
-	string	zone;
-	sint32	hp_current;
-	sint32	hp_max;
-	sint32	power_current;
-	sint32	power_max;
-	int16	level_current;
-	int16	level_max;
-	int8	race_id;
-	int8	class_id;
-	Client*	client;
-	PlayerGroup* group;
-};
-
-struct PlayerGroup{
-	deque<GroupMemberInfo*> members;
-	GroupOptions options;
-};*/
-
 struct LottoPlayer {
 	int32 end_time;
 	int8 num_matches;

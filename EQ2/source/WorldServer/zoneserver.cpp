@@ -1294,6 +1294,8 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 				spawn_delete_list.erase(erase_itr);
 				
 				MSpawnList.writelock(__FUNCTION__, __LINE__);
+				lua_interface->SetLuaUserDataStale(spawn);
+				
 				std::map<int32, Spawn*>::iterator sitr = spawn_list.find(spawn->GetID());
 				if(sitr != spawn_list.end()) {
 					spawn_list.erase(sitr);
@@ -1313,10 +1315,7 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 					}
 					housing_spawn_map.erase(spawn->GetID());
 				}
-				
 				MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
-			
-				lua_interface->SetLuaUserDataStale(spawn);
 				
 				safe_delete(spawn);
 			}

@@ -487,7 +487,8 @@ void PlayerSkillList::AddSkillBonus(int32 spell_id, int32 skill_id, float value)
 		}
 		else
 			sb = skill_bonus_list.Get(spell_id);
-		if (sb->skills[skill_id] == 0) {
+		
+		if (sb->skills[skill_id] == nullptr) {
 			SkillBonusValue* sbv = new SkillBonusValue;
 			sbv->skill_id = skill_id;
 			sbv->value = value;

@@ -25,11 +25,22 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include <mutex>
 #include <shared_mutex>
+#include "Spells.h"
 
 #include "../common/types.h"
 #include "Entity.h"
 
 using namespace std;
+
+// GroupOptions isn't used yet
+struct GroupOptions{
+	int8	loot_method;
+	int8	loot_items_rarity;
+	int8	auto_split;
+	int8	default_yell;
+	int8	group_autolock;
+	int8	solo_autolock;
+};
 
 /// <summary>All the generic info for the group window, plus a client pointer for players</summary>
 struct GroupMemberInfo {

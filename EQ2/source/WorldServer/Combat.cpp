@@ -707,6 +707,11 @@ int8 Entity::DetermineHit(Spawn* victim, int8 type, int8 damage_type, float ToHi
 				skillAddedByWeapon += item_stat_weapon_skill;
 			}
 			MStats.unlock();
+			
+			float max_bonus_skill = GetRuleSkillMaxBonus();
+			if(skillAddedByWeapon > max_bonus_skill) {
+				skillAddedByWeapon = max_bonus_skill;
+			}
 		}
 	}
 	
@@ -1250,13 +1255,10 @@ bool Entity::CheckInterruptSpell(Entity* attacker) {
 	int8 percent = rule_manager.GetGlobalRule(R_Spells, NoInterruptBaseChance)->GetInt32();
 	Skill* skill = GetSkillByName("Focus", true);
 
-	float focusSkillPts = 0.0f;
-	MStats.lock();
-	focusSkillPts = stats[ITEM_STAT_FOCUS];
-	MStats.unlock();
+	float focus_skill_with_bonus = CalculateSkillWithBonus("Focus", ITEM_STAT_FOCUS, true);
 
-	if(skill)
-		percent += ((skill->current_val + 1 + focusSkillPts)/6);
+	percent += ((1 + focus_skill_with_bonus)/6);
+	
 	if(MakeRandomInt(1, 100) > percent) {
 		LogWrite(COMBAT__DEBUG, 0, "Combat", "'%s' interrupted spell for '%s': %i%%", attacker->GetName(), GetName(), percent);
 		GetZone()->Interrupted(this, attacker, SPELL_ERROR_INTERRUPTED);

@@ -105,6 +105,7 @@ enum RuleType {
 	MaxMitigationAllowedPVP,
 	StrengthNPC,
 	StrengthOther,
+	MaxSkillBonusByLevel,
 
 	/* SPAWN */
 	SpeedMultiplier,

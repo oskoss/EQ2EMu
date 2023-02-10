@@ -1273,6 +1273,8 @@ public:
 
 	bool IsEntity(){ return true; }
 	float CalculateSkillStatChance(char* skill, int16 item_stat, float max_cap = 0.0f, float modifier = 0.0f, bool add_to_skill = false);
+	float CalculateSkillWithBonus(char* skillName, int16 item_stat, bool chance_skill_increase);
+	float GetRuleSkillMaxBonus();
 	void CalculateBonuses();
 	void SetRegenValues(int16 effective_level);
 	float CalculateBonusMod();

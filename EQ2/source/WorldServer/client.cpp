@@ -1599,12 +1599,9 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			break;
 			}*/
 			float safe_height = 13.0f;
-			Skill* skill = GetPlayer()->GetSkillByName("Safe Fall", true);
-			GetPlayer()->MStats.lock();
-			float deflectionStat = GetPlayer()->stats[ITEM_STAT_SAFE_FALL];
-			GetPlayer()->MStats.unlock();
-			if (skill)
-				safe_height += (skill->current_val + 1 + deflectionStat) / 5;
+			float safe_skill_with_bonus = GetPlayer()->CalculateSkillWithBonus("Safe Fall", ITEM_STAT_SAFE_FALL, true);
+			if (safe_skill_with_bonus > 0.0f)
+				safe_height += (1 + safe_skill_with_bonus) / 5;
 
 			if (height > safe_height) {
 				int16 damage = (int16)ceil((height - safe_height) * 125);
@@ -11674,8 +11671,14 @@ void Client::HandleDialogSelectMsg(int32 conversation_id, int32 response_index) 
 		}
 		
 		if (conversation_map.count(conversation_id) > 0 && conversation_map[conversation_id].count(response_index) > 0) {
-			if (spawn)
-				GetCurrentZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_CONVERSATION, player, conversation.c_str());
+			if (spawn) {
+				if(conversation == "CloseItemConversation") {
+					LogWrite(LUA__ERROR, 0, "LUA", "CloseItemConversation is an invalid function call for this conversation with spawn id %u", spawn_id);
+				}
+				else {
+					GetCurrentZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_CONVERSATION, player, conversation.c_str());
+				}
+			}
 			else if (item && lua_interface && item->GetItemScript())
 				lua_interface->RunItemScript(item->GetItemScript(), conversation.c_str(), item, player);
 			else

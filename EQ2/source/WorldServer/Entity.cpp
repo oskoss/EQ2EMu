@@ -1209,12 +1209,16 @@ void Entity::SetMaxSpeed(float val){
 float Entity::CalculateSkillStatChance(char* skillName, int16 item_stat, float max_cap, float modifier, bool add_to_skill)
 {
 	float skillAndItemsChance = 0.0f;
-
+	float maxBonusCap = (float)GetLevel()*rule_manager.GetGlobalRule(R_Combat, MaxSkillBonusByLevel)->GetFloat();
 	Skill* skill = GetSkillByName(skillName, false);
 	if(skill){
 		MStats.lock();
 		float item_chance_or_skill = stats[item_stat];
 		MStats.unlock();
+		if(item_chance_or_skill > maxBonusCap) {
+			item_chance_or_skill = maxBonusCap;
+		}
+		
 		if(add_to_skill)
 		{
 			skillAndItemsChance = (((float)skill->current_val+item_chance_or_skill)/10.0f); // do we know 25 is accurate?  10 gives more 'skill' space, most cap at 70% with items
@@ -1223,6 +1227,9 @@ float Entity::CalculateSkillStatChance(char* skillName, int16 item_stat, float m
 		{
 			skillAndItemsChance = ((float)skill->current_val/10.0f); // do we know 25 is accurate?  10 gives more 'skill' space, most cap at 70% with items
 
+			if(modifier > maxBonusCap) {
+				modifier = maxBonusCap;
+			}
 			// take chance percentage and add the item stats % (+1 = 1% or .01f)
 			skillAndItemsChance += (skillAndItemsChance*((item_chance_or_skill + modifier)/100.0f));
 		}
@@ -1232,6 +1239,32 @@ float Entity::CalculateSkillStatChance(char* skillName, int16 item_stat, float m
 		skillAndItemsChance = max_cap;
 
 	return skillAndItemsChance;
+}
+
+float Entity::CalculateSkillWithBonus(char* skillName, int16 item_stat, bool chance_skill_increase)
+{
+	float skillAndItemsChance = 0.0f;
+	float maxBonusCap = GetRuleSkillMaxBonus();
+	
+	Skill* skill = GetSkillByName(skillName, chance_skill_increase);
+	if(skill){
+		float item_chance_or_skill = 0.0f;
+		if(item_stat != 0xFFFF) {
+			MStats.lock();
+			item_chance_or_skill = stats[item_stat];
+			MStats.unlock();
+		}
+		if(item_chance_or_skill > maxBonusCap)  { // would we be using their effective mentored level or actual level?
+			item_chance_or_skill = maxBonusCap;
+		}
+		skillAndItemsChance = skill->current_val+item_chance_or_skill;
+	}
+
+	return skillAndItemsChance;
+}
+
+float Entity::GetRuleSkillMaxBonus() {
+	return (float)GetLevel()*rule_manager.GetGlobalRule(R_Combat, MaxSkillBonusByLevel)->GetFloat();
 }
 
 void Entity::CalculateBonuses(){
