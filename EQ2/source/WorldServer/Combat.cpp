@@ -1253,7 +1253,6 @@ bool Entity::CheckInterruptSpell(Entity* attacker) {
 	//originally base of 30 percent chance to continue casting if attacked
 	//modified to 50% and added global rule, 30% was too small at starting levels
 	int8 percent = rule_manager.GetGlobalRule(R_Spells, NoInterruptBaseChance)->GetInt32();
-	Skill* skill = GetSkillByName("Focus", true);
 
 	float focus_skill_with_bonus = CalculateSkillWithBonus("Focus", ITEM_STAT_FOCUS, true);
 
