@@ -104,6 +104,7 @@ NPC::NPC(NPC* old_npc){
 		SetLootTier(old_npc->GetLootTier());
 		SetLootDropType(old_npc->GetLootDropType());
 		has_spells = old_npc->HasSpells();
+		SetScaredByStrongPlayers(old_npc->IsScaredByStrongPlayers());
 	}
 }
 

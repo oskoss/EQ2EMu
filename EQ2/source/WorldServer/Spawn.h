@@ -165,6 +165,9 @@
 #define ENCOUNTER_STATE_OVERMATCHED			4
 #define ENCOUNTER_STATE_NO_REWARD			5
 
+#define VISUAL_STATE_COLLECTION_TURN_IN		6674
+#define VISUAL_STATE_IDLE_AFRAID			17953
+
 using namespace std;
 class Spell;
 class ZoneServer;
@@ -1084,10 +1087,12 @@ public:
 	void	FaceTarget(Spawn* target, bool disable_action_state = true);
 	void	SetInvulnerable(bool val);
 	bool	GetInvulnerable();
-	bool				changed;
-	bool				position_changed;
-	bool				info_changed;
-	bool				vis_changed;
+	void	SetScaredByStrongPlayers(bool val) { scared_by_strong_players = val; }
+	bool	IsScaredByStrongPlayers() { return scared_by_strong_players; }
+	std::atomic<bool>	changed;
+	std::atomic<bool>	position_changed;
+	std::atomic<bool> 	info_changed;
+	std::atomic<bool>	vis_changed;
 	int16				size;
 	int32				faction_id;
 	int8				oversized_packet; //0xff
@@ -1397,6 +1402,7 @@ private:
 	std::atomic<bool> deleted_spawn;
 	Mutex m_GridMutex;
 	bool is_collector;
+	bool scared_by_strong_players;
 };
 
 #endif

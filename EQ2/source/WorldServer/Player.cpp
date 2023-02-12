@@ -6940,3 +6940,39 @@ void Player::GetSpellBookSlotSort(int32 pattern, int32* i, int8* page_book_count
 		}
 	}
 }
+
+
+bool Player::IsSpawnInRangeList(int32 spawn_id) {
+    std::shared_lock lock(spawn_aggro_range_mutex);
+	map<int32, bool>::iterator spawn_itr = player_aggro_range_spawns.find(spawn_id);
+	if(spawn_itr != player_aggro_range_spawns.end()) {
+		return spawn_itr->second;
+	}
+	return false;
+}
+
+void Player::SetSpawnInRangeList(int32 spawn_id, bool in_range) {
+    std::unique_lock lock(spawn_aggro_range_mutex);
+	player_aggro_range_spawns[spawn_id] = in_range;
+}
+
+void Player::ProcessSpawnRangeUpdates() {
+    std::unique_lock lock(spawn_aggro_range_mutex);
+	if(GetClient()->GetCurrentZone() == nullptr) {
+		return;
+	}
+	
+	map<int32, bool>::iterator spawn_itr;
+	for(spawn_itr = player_aggro_range_spawns.begin(); spawn_itr != player_aggro_range_spawns.end();) {
+		if(spawn_itr->second) {
+			Spawn* spawn = GetClient()->GetCurrentZone()->GetSpawnByID(spawn_itr->first);
+			if(spawn && spawn->IsNPC() && (GetDistance(spawn)) > ((NPC*)spawn)->GetAggroRadius()) {
+				GetClient()->GetCurrentZone()->SendSpawnChanges((NPC*)spawn, GetClient(), true, true);
+				spawn_itr->second = false;
+				spawn_itr = player_aggro_range_spawns.erase(spawn_itr);
+				continue;
+			}
+		}
+		spawn_itr++;
+	}
+}

@@ -201,6 +201,7 @@ Commands::Commands(){
 	spawn_set_values["race_type"] = SPAWN_SET_RACE_TYPE;
 	spawn_set_values["loot_tier"] = SPAWN_SET_LOOT_TIER;
 	spawn_set_values["loot_drop_type"] = SPAWN_SET_LOOT_DROP_TYPE;
+	spawn_set_values["scared_strong_players"] = SPAWN_SET_SCARED_STRONG_PLAYERS;
 
 	zone_set_values["expansion_id"] = ZONE_SET_VALUE_EXPANSION_ID;
 	zone_set_values["name"] = ZONE_SET_VALUE_NAME;
@@ -895,6 +896,14 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 					sprintf(tmp, "%u", target->GetLootDropType());
 					int32 new_value = atoul(value);
 					target->SetLootDropType(new_value);
+				}
+				break;
+			}
+			case SPAWN_SET_SCARED_STRONG_PLAYERS:{
+				if(target->IsNPC()){
+					sprintf(tmp, "%u", target->IsScaredByStrongPlayers());
+					int32 new_value = atoul(value);
+					target->SetScaredByStrongPlayers(new_value);
 				}
 				break;
 			}
@@ -1596,6 +1605,22 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				{
 					char query[256];
 					snprintf(query, 256, "update spawn set loot_drop_type=%u where id=%u", atoul(value), target->GetDatabaseID());
+					if (database.RunQuery(query, strnlen(query, 256)))
+					{
+						if(client)
+							client->Message(CHANNEL_COLOR_RED, "Ran query:%s", query);
+					}
+				}
+				break;
+			}
+			case SPAWN_SET_SCARED_STRONG_PLAYERS:{
+				int32 new_value = atoul(value);
+				target->SetScaredByStrongPlayers(new_value);
+				
+				if (target->GetDatabaseID() > 0)
+				{
+					char query[256];
+					snprintf(query, 256, "update spawn_npcs set scared_by_strong_players=%u where id=%u", atoul(value), target->GetDatabaseID());
 					if (database.RunQuery(query, strnlen(query, 256)))
 					{
 						if(client)
@@ -4959,6 +4984,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								case SPAWN_SET_RACE_TYPE:
 								case SPAWN_SET_LOOT_TIER:
 								case SPAWN_SET_LOOT_DROP_TYPE:
+								case SPAWN_SET_SCARED_STRONG_PLAYERS:
 								{
 									// not applicable already ran db command
 									break;

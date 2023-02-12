@@ -973,6 +973,7 @@ public:
 	Mutex vis_mutex;
 	Mutex index_mutex;
 	Mutex spawn_mutex;
+	mutable std::shared_mutex spawn_aggro_range_mutex;
 
 	void SetTempMount(int32 id) { tmp_mount_model = id; }
 	int32 GetTempMount() { return tmp_mount_model; }
@@ -1052,6 +1053,10 @@ public:
 	void	SetActiveReward(bool val) { active_reward = val; }
 	bool	IsActiveReward() { return active_reward; }
 	
+	
+	bool	IsSpawnInRangeList(int32 spawn_id);
+	void	SetSpawnInRangeList(int32 spawn_id, bool in_range);
+	void	ProcessSpawnRangeUpdates();
 	Mutex MPlayerQuests;
 	float   pos_packet_speed;
 private:
@@ -1179,6 +1184,7 @@ private:
 
 	map<int32, Spawn*>	player_spawn_id_map;
 	map<Spawn*, int32>	player_spawn_reverse_id_map;
+	map<int32, bool>	player_aggro_range_spawns;
 
 	bool all_spells_locked;
 	Timer lift_cooldown;

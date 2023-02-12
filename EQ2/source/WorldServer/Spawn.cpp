@@ -137,6 +137,7 @@ Spawn::Spawn(){
 	deleted_spawn = false;
 	is_collector = false;
 	trigger_widget_id = 0;
+	scared_by_strong_players = false;
 }
 
 Spawn::~Spawn(){
@@ -2354,14 +2355,6 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	packet->setDataByName("difficulty", appearance.encounter_level); //6);
 	packet->setDataByName("unknown6", 1);
 	packet->setDataByName("heroic_flag", appearance.heroic_flag);
-	if (IsNPC() && !IsPet())
-	{
-		if(((Entity*)this)->GetInfoStruct()->get_interaction_flag())
-			packet->setDataByName("interaction_flag", ((Entity*)this)->GetInfoStruct()->get_interaction_flag()); //this makes NPCs head turn to look at you (12)
-		else
-			packet->setDataByName("interaction_flag", 12); //turn head since no other value is set
-	}
-
 	packet->setDataByName("class", appearance.adventure_class);
 
 	int16 model_type = appearance.model_type;
@@ -2393,12 +2386,28 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	else
 		packet->setDataByName("action_state", appearance.action_state);
 	
+	bool scaredOfPlayer = false;
+	
 	if(IsCollector() && spawn->GetCollectionList()->HasCollectionsToHandIn())
-		packet->setDataByName("visual_state", 6674);
+		packet->setDataByName("visual_state", VISUAL_STATE_COLLECTION_TURN_IN);
+	else if(!IsRunning() && IsNPC() && IsScaredByStrongPlayers() && spawn->GetArrowColor(GetLevel()) == ARROW_COLOR_GRAY &&
+	(GetDistance(spawn)) <= ((NPC*)this)->GetAggroRadius() && CheckLoS(spawn)) {
+		packet->setDataByName("visual_state", VISUAL_STATE_IDLE_AFRAID);
+		scaredOfPlayer = true;
+	}
 	else if (GetTempVisualState() >= 0)
 		packet->setDataByName("visual_state", GetTempVisualState());
 	else
 		packet->setDataByName("visual_state", appearance.visual_state);
+	
+	if (IsNPC() && !IsPet() && !scaredOfPlayer)
+	{
+		if(((Entity*)this)->GetInfoStruct()->get_interaction_flag())
+			packet->setDataByName("interaction_flag", ((Entity*)this)->GetInfoStruct()->get_interaction_flag()); //this makes NPCs head turn to look at you (12)
+		else
+			packet->setDataByName("interaction_flag", 12); //turn head since no other value is set
+	}
+	
 	packet->setDataByName("emote_state", appearance.emote_state);
 	packet->setDataByName("mood_state", appearance.mood_state);
 	packet->setDataByName("gender", appearance.gender);

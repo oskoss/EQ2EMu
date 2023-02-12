@@ -926,9 +926,17 @@ bool ZoneServer::CheckNPCAttacks(NPC* npc, Spawn* victim, Client* client){
 		return true;
 
 	if (client) {
+		int8 arrow = 0;
 		if (client->IsReadyForUpdates() && npc->CanSeeInvis(client->GetPlayer()) && client->GetPlayer()->GetFactions()->ShouldAttack(npc->GetFactionID()) && npc->AttackAllowed((Entity*)victim, false)) {
-			if (!npc->EngagedInCombat() && client->GetPlayer()->GetArrowColor(npc->GetLevel()) != ARROW_COLOR_GRAY) {
-				AggroVictim(npc, victim, client);
+			if (!npc->EngagedInCombat()) {
+				if(client->GetPlayer()->GetArrowColor(npc->GetLevel()) != ARROW_COLOR_GRAY) {
+					AggroVictim(npc, victim, client);
+				}
+				else if(npc->IsScaredByStrongPlayers() &&
+						!client->GetPlayer()->IsSpawnInRangeList(npc->GetID())) {
+					SendSpawnChanges(npc, client, true, true);
+					client->GetPlayer()->SetSpawnInRangeList(npc->GetID(), true);
+				}
 			}
 		}
 	}

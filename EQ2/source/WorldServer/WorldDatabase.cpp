@@ -932,7 +932,7 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 	NPC* npc = 0;
 	int32 id = 0;
 	int32 total = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, npc.water_type, npc.flying_type, s.loot_tier, s.loot_drop_type\n"
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT,"SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.expansion_flag, s.holiday_flag, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, npc.water_type, npc.flying_type, s.loot_tier, s.loot_drop_type, npc.scared_by_strong_players\n"
 													"FROM spawn s\n"
 													"INNER JOIN spawn_npcs npc\n"
 													"ON s.id = npc.spawn_id\n"
@@ -1091,6 +1091,8 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->SetLootTier(atoul(row[83]));
 		
 		npc->SetLootDropType(atoul(row[84]));
+		
+		npc->SetScaredByStrongPlayers(atoul(row[85]));
 		
 		zone->AddNPC(id, npc);
 		total++;
@@ -6695,7 +6697,7 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 	int32 id = 0;
 	DatabaseResult result;
 										
-	database_new.Select(&result, "SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type\n"
+	database_new.Select(&result, "SELECT npc.spawn_id, s.name, npc.min_level, npc.max_level, npc.enc_level, s.race, s.model_type, npc.class_, npc.gender, s.command_primary, s.command_secondary, s.show_name, npc.min_group_size, npc.max_group_size, npc.hair_type_id, npc.facial_hair_type_id, npc.wing_type_id, npc.chest_type_id, npc.legs_type_id, npc.soga_hair_type_id, npc.soga_facial_hair_type_id, s.attackable, s.show_level, s.targetable, s.show_command_icon, s.display_hand_icon, s.hp, s.power, s.size, s.collision_radius, npc.action_state, s.visual_state, npc.mood_state, npc.initial_state, npc.activity_status, s.faction_id, s.sub_title, s.merchant_id, s.merchant_type, s.size_offset, npc.attack_type, npc.ai_strategy+0, npc.spell_list_id, npc.secondary_spell_list_id, npc.skill_list_id, npc.secondary_skill_list_id, npc.equipment_list_id, npc.str, npc.sta, npc.wis, npc.intel, npc.agi, npc.heat, npc.cold, npc.magic, npc.mental, npc.divine, npc.disease, npc.poison, npc.aggro_radius, npc.cast_percentage, npc.randomize, npc.soga_model_type, npc.heroic_flag, npc.alignment, npc.elemental, npc.arcane, npc.noxious, s.savagery, s.dissonance, npc.hide_hood, npc.emote_state, s.prefix, s.suffix, s.last_name, s.disable_sounds, s.merchant_min_level, s.merchant_max_level, s.aaxp_rewards, s.loot_tier, s.loot_drop_type, npc.scared_by_strong_players\n"
 								 "FROM spawn s\n"
 								 "INNER JOIN spawn_npcs npc\n"
 								 "ON npc.spawn_id = s.id\n"
@@ -6830,6 +6832,8 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		npc->SetLootTier(result.GetInt32(79));
 
 		npc->SetLootDropType(result.GetInt32(80));
+		
+		npc->SetScaredByStrongPlayers(result.GetInt32(81));
 		
 		zone->AddNPC(id, npc);
 
