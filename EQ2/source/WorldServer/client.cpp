@@ -3216,6 +3216,7 @@ bool Client::Process(bool zone_process) {
 	}
 
 	if(spawn_removal_timer.Check() && GetPlayer()) {
+		GetPlayer()->ProcessSpawnRangeUpdates();
 		GetPlayer()->CheckSpawnStateQueue();
 	}
 
