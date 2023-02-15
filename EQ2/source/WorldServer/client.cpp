@@ -10583,6 +10583,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 			else {
 				LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);
 				ClientPacketFunctions::SendLoginDenied(this);
+				Disconnect();
 				return false;
 			}
 		}
