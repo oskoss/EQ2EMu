@@ -10523,12 +10523,13 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 		delayTimer.Disable();
 
 		firstlogin = zar->isFirstLogin();
+		ready_for_updates = false;
 		LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
 		if (database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)) {
 			GetPlayer()->CalculateOfflineDebtRecovery(GetLastSavedTimeStamp());
 			GetPlayer()->vis_changed = false;
 			GetPlayer()->info_changed = false;
-
+			
 			bool pvp_allowed = rule_manager.GetGlobalRule(R_PVP, AllowPVP)->GetBool();
 			if (pvp_allowed)
 				this->GetPlayer()->SetAttackable(1);
@@ -10560,6 +10561,8 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 			if (!GetCurrentZone()) {
 				LogWrite(ZONE__ERROR, 0, "Zone", "Error loading zone for character: %s", player->GetName());
 				ClientPacketFunctions::SendLoginDenied(this);
+				Disconnect();
+				return false;
 			}
 			else if (EQOpcodeManager.count(GetOpcodeVersion(version)) > 0 && getConnection()) {
 				getConnection()->SetClientVersion(version);
@@ -10582,6 +10585,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 			}
 			else {
 				LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);
+				version = 0;
 				ClientPacketFunctions::SendLoginDenied(this);
 				Disconnect();
 				return false;
@@ -10590,6 +10594,8 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 		else {
 			LogWrite(WORLD__ERROR, 0, "World", "Could not load character '%s' with account id of: %u", zar->GetCharacterName(), zar->GetAccountID());
 			ClientPacketFunctions::SendLoginDenied(this);
+			Disconnect();
+			return false;
 		}
 		zone_auth.RemoveAuth(zar);
 	}
@@ -10597,6 +10603,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 	{
 		LogWrite(WORLD__ERROR, 0, "World", "Invalid ZoneAuthRequest, disconnecting client.");
 		Disconnect();
+		return false;
 	}
 
 	return true;
