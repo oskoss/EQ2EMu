@@ -1621,7 +1621,12 @@ bool Entity::CheckSpellBonusRemoval(LuaSpell* spell, int16 type){
 void Entity::AddSpellBonus(LuaSpell* spell, int16 type, float value, int64 class_req, vector<int16> race_req, vector<int16> faction_req){
 	CheckSpellBonusRemoval(spell, type); 
 	BonusValues* bonus = new BonusValues;
-	bonus->spell_id = spell->spell->GetSpellID();
+	if(spell && spell->spell) {
+		bonus->spell_id = spell->spell->GetSpellID();
+	}
+	else {
+		bonus->spell_id = 0;
+	}
 	bonus->luaspell = spell;
 	bonus->type = type;
 	bonus->value = value;

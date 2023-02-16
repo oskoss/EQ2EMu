@@ -2011,10 +2011,11 @@ int EQ2Emu_lua_SetMaxHP(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	float value = lua_interface->GetFloatValue(state, 2);
 	lua_interface->ResetFunctionStack(state);
 	if (spawn && spawn->IsEntity() && value > 0)
-		((Entity*)spawn)->AddSpellBonus(0, ITEM_STAT_HEALTH, value - spawn->GetTotalHP());
+		((Entity*)spawn)->AddSpellBonus(luaspell, ITEM_STAT_HEALTH, value - spawn->GetTotalHP());
 
 	if (spawn && spawn->IsPlayer())
 		((Player*)spawn)->SetCharSheetChanged(true);
@@ -2050,10 +2051,11 @@ int EQ2Emu_lua_SetMaxPower(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	sint32 value = lua_interface->GetSInt32Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
 	if (spawn && spawn->IsEntity() && value > 0)
-		((Entity*)spawn)->AddSpellBonus(0, ITEM_STAT_POWER, value - spawn->GetTotalPower());
+		((Entity*)spawn)->AddSpellBonus(luaspell, ITEM_STAT_POWER, value - spawn->GetTotalPower());
 	return 0;
 }
 int EQ2Emu_lua_SetMaxPowerBase(lua_State* state) {
@@ -3010,9 +3012,10 @@ int EQ2Emu_lua_SetInt(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	sint32 value = lua_interface->GetSInt32Value(state, 2);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->AddSpellBonus(0, ITEM_STAT_INT, value);
+		((Entity*)spawn)->AddSpellBonus(luaspell, ITEM_STAT_INT, value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -3022,10 +3025,11 @@ int EQ2Emu_lua_SetInt(lua_State* state) {
 int EQ2Emu_lua_SetWis(lua_State* state) {
 	if (!lua_interface)
 		return 0;
+	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	float value = lua_interface->GetFloatValue(state, 2);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->AddSpellBonus(0, ITEM_STAT_WIS, value);
+		((Entity*)spawn)->AddSpellBonus(luaspell, ITEM_STAT_WIS, value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -3036,8 +3040,9 @@ int EQ2Emu_lua_SetSta(lua_State* state) {
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	float value = lua_interface->GetFloatValue(state, 2);
+	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->AddSpellBonus(0, ITEM_STAT_STA, value);
+		((Entity*)spawn)->AddSpellBonus(luaspell, ITEM_STAT_STA, value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -3047,9 +3052,10 @@ int EQ2Emu_lua_SetStr(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	float value = lua_interface->GetFloatValue(state, 2);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->AddSpellBonus(0, ITEM_STAT_STR, value);
+		((Entity*)spawn)->AddSpellBonus(luaspell, ITEM_STAT_STR, value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
@@ -3059,9 +3065,10 @@ int EQ2Emu_lua_SetAgi(lua_State* state) {
 	if (!lua_interface)
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
+	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	float value = lua_interface->GetFloatValue(state, 2);
 	if (spawn && spawn->IsEntity()) {
-		((Entity*)spawn)->AddSpellBonus(0, ITEM_STAT_AGI, value);
+		((Entity*)spawn)->AddSpellBonus(luaspell, ITEM_STAT_AGI, value);
 		if (spawn->IsPlayer())
 			((Player*)spawn)->SetCharSheetChanged(true);
 	}
