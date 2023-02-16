@@ -638,8 +638,8 @@ private:
 	Timer*	connect;
 	Timer*	camp_timer;
 	bool	connected;
-	bool	ready_for_spawns;
-	bool	ready_for_updates;
+	std::atomic<bool> ready_for_spawns;
+	std::atomic<bool> ready_for_updates;
 	bool	seencharsel;
 	bool	connected_to_zone;
 	bool	client_zoning;
