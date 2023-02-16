@@ -4347,7 +4347,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 				packet->setArrayDataByName("name", quest->GetName(), i);
 				packet->setArrayDataByName("quest_type", quest->GetType(), i);
 				packet->setArrayDataByName("quest_zone", quest->GetZone(), i);
-				int8 display_status = QUEST_DISPLAY_STATUS_NORMAL;
+				int8 display_status = 0;
 				if(itr->second->GetCompleted())
 					packet->setArrayDataByName("completed", 1, i);
 				if(itr->second->GetTurnedIn()){
@@ -4396,6 +4396,9 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 
 					if (quest->IsHidden() && !quest->GetTurnedIn())
 						display_status = QUEST_DISPLAY_STATUS_HIDDEN;
+					else if(quest->CanShareQuestCriteria(GetClient(),false)) {
+						display_status += QUEST_DISPLAY_STATUS_CAN_SHARE;
+					}
 				}
 				else
 					packet->setArrayDataByName("visible", quest->GetVisible(), i);
@@ -4443,7 +4446,7 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 		packet->setArrayDataByName("quest_type", quest->GetType());
 		packet->setArrayDataByName("quest_zone", quest->GetZone());
 
-		int8 display_status = QUEST_DISPLAY_STATUS_NORMAL;
+		int8 display_status = 0;
 		if(quest->GetCompleted())
 			packet->setArrayDataByName("completed", 1);
 		if(quest->GetTurnedIn()) {
@@ -4489,12 +4492,15 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 
 			if (quest->IsHidden() && !quest->GetTurnedIn())
 				display_status = QUEST_DISPLAY_STATUS_HIDDEN;
+			else if(quest->CanShareQuestCriteria(GetClient(),false)) {
+			display_status += QUEST_DISPLAY_STATUS_CAN_SHARE;
+		}
 		}
 		else
 			packet->setArrayDataByName("visible", quest->GetVisible());
 		if (quest->IsRepeatable())
 			packet->setArrayDataByName("repeatable", 1);
-
+				
 		packet->setArrayDataByName("display_status", display_status);
 		if (updated) {
 			packet->setArrayDataByName("quest_updated", 1);

@@ -315,6 +315,8 @@ Quest::Quest(int32 in_id){
 	tmp_reward_coins = 0;
 	completed_description = string("");
 	quest_temporary_description = string("");
+	quest_shareable_flag = 0;
+	can_delete_quest = false;
 }
 
 Quest::Quest(Quest* old_quest){
@@ -389,6 +391,8 @@ Quest::Quest(Quest* old_quest){
 	tmp_reward_status = 0;
 	tmp_reward_coins = 0;
 	quest_temporary_description = string("");
+	quest_shareable_flag = old_quest->GetQuestShareableFlag();
+	can_delete_quest = old_quest->CanDeleteQuest();
 }
 
 Quest::~Quest(){
@@ -978,12 +982,12 @@ EQ2Packet* Quest::QuestJournalReply(int16 version, int32 player_crc, Player* pla
 		packet->setDataByName("unknown8b", 255);
 
 		if (version >= 1096) {
-			packet->setDataByName("deletable", 1);
-			packet->setDataByName("shareable", 1);
+			packet->setDataByName("deletable", (int8)CanDeleteQuest());
+			packet->setDataByName("shareable", (int8)CanShareQuestCriteria(player->GetClient(),false));
 		}
 		else {
-			packet->setDataByName("unknown3", 1, 5);
-			packet->setDataByName("unknown3", 1, 6);
+			packet->setDataByName("unknown3", 1, 5); // this supposed to be CanDeleteQuest?
+			packet->setDataByName("unknown3", 1, 6); // this supposed to be CanShareQuestCriteria?
 		}
 
 		int8 map_data_count = 0;
@@ -1805,4 +1809,40 @@ void Quest::SetQuestTemporaryState(bool tempState, std::string customDescription
 
 	quest_state_temporary = tempState;
 	quest_temporary_description = customDescription;
+}
+
+bool Quest::CanShareQuestCriteria(Client* quest_sharer, bool display_client_msg) {
+	Quest* clientQuest = quest_sharer->GetPlayer()->GetQuest(GetQuestID()); // gets active quest if available
+	if(((GetQuestShareableFlag() & QUEST_SHAREABLE_COMPLETED) == 0) && quest_sharer->GetPlayer()->GetCompletedQuest(GetQuestID())) {
+		if(display_client_msg)
+			quest_sharer->SimpleMessage(CHANNEL_COLOR_RED, "You cannot share this quest after it is already completed.");
+		return false;
+	}
+	else if((GetQuestShareableFlag() == QUEST_SHAREABLE_COMPLETED) && !quest_sharer->GetPlayer()->GetCompletedQuest(GetQuestID())) {
+		if(display_client_msg)
+			quest_sharer->SimpleMessage(CHANNEL_COLOR_RED, "You cannot share this quest until it is completed.");
+		return false;
+	}
+	else if(((GetQuestShareableFlag() & QUEST_SHAREABLE_DURING) == 0) && clientQuest && clientQuest->GetQuestStep() > 1) {
+		if(display_client_msg)
+			quest_sharer->SimpleMessage(CHANNEL_COLOR_RED, "You cannot share this quest after already completing a step.");
+		return false;
+	}
+	else if(((GetQuestShareableFlag() & QUEST_SHAREABLE_ACTIVE) == 0) && clientQuest) {
+		if(display_client_msg)
+			quest_sharer->SimpleMessage(CHANNEL_COLOR_RED, "You cannot share this quest while it is active.");
+		return false;
+	}
+	else if(!GetQuestShareableFlag()) {
+		if(display_client_msg)
+			quest_sharer->SimpleMessage(CHANNEL_COLOR_RED, "You cannot share this quest.");
+		return false;
+	}
+	else if(((GetQuestShareableFlag() & QUEST_SHAREABLE_COMPLETED) == 0) && clientQuest == nullptr) {
+		if(display_client_msg)
+			quest_sharer->SimpleMessage(CHANNEL_COLOR_RED, "You do not have this quest.");
+		return false;
+	}
+	
+	return true;
 }

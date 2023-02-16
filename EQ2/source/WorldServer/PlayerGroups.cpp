@@ -193,6 +193,34 @@ bool PlayerGroup::MakeLeader(Entity* new_leader) {
 }
 
 
+bool PlayerGroup::ShareQuestWithGroup(Client* quest_sharer, Quest* quest) {
+	if(!quest || !quest_sharer)
+		return false;
+	
+	bool canShare = quest->CanShareQuestCriteria(quest_sharer);
+	
+	if(!canShare) {
+		return false;
+	}
+	
+	deque<GroupMemberInfo*>::iterator itr;
+	MGroupMembers.readlock(__FUNCTION__, __LINE__);
+	for(itr = m_members.begin(); itr != m_members.end(); itr++) {
+		GroupMemberInfo* info = *itr;
+		if(info && info->client && info->client->GetCurrentZone()) {
+			if( quest_sharer != info->client && info->client->GetPlayer()->GetCompletedQuest(quest->GetQuestID()) == 0 && 
+				info->client->GetPlayer()->GetQuest(quest->GetQuestID()) == 0 ) {
+				info->client->AddPendingQuest(new Quest(quest));
+				info->client->Message(CHANNEL_COLOR_YELLOW, "%s has shared the quest %s with you.", quest_sharer->GetPlayer()->GetName(), quest->GetName());
+			}
+		}
+	}
+	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return true;
+}
+
+
 
 /******************************************************** PlayerGroupManager ********************************************************/
 

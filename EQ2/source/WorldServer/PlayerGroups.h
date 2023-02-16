@@ -96,7 +96,9 @@ public:
 	void SimpleGroupMessage(const char* message);
 	void GroupChatMessage(Spawn* from, int32 language, const char* message);
 	bool MakeLeader(Entity* new_leader);
-
+	
+	bool ShareQuestWithGroup(Client* quest_sharer, Quest* quest);
+	
 	void RemoveClientReference(Client* remove);
 	void UpdateGroupMemberInfo(Entity* ent, bool groupMembersLocked=false);
 	Entity* GetGroupMemberByPosition(Entity* seeker, int32 mapped_position);

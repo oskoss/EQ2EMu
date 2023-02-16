@@ -514,6 +514,7 @@ public:
 	Quest* SetStepComplete(int32 quest_id, int32 step);
 	Quest* AddStepProgress(int32 quest_id, int32 step, int32 progress);
 	int32  GetStepProgress(int32 quest_id, int32 step_id);
+	Quest* GetQuestByPositionID(int32 list_position_id);
 	bool AddItem(Item* item, AddItemType type = AddItemType::NOT_SET);
 	bool AddItemToBank(Item* item);
 	int16 GetSpellSlotMappingCount();

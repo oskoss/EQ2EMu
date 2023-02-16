@@ -10521,6 +10521,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 		delayTimer.Disable();
 
 		firstlogin = zar->isFirstLogin();
+		SetReadyForSpawns(false);
 		ready_for_updates = false;
 		LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
 		if (database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)) {

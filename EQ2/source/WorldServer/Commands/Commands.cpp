@@ -3127,11 +3127,12 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(quest_id > 0){
 				if(lua_interface && client->GetPlayer()->player_quests.count(quest_id) > 0) {
 					Quest* quest = client->GetPlayer()->player_quests[quest_id];
-					if (quest)
+					if (quest && quest->CanDeleteQuest()) {
 						lua_interface->CallQuestFunction(quest, "Deleted", client->GetPlayer());
+						client->RemovePlayerQuest(quest_id);
+						client->GetCurrentZone()->SendQuestUpdates(client);
+					}
 				}
-				client->RemovePlayerQuest(quest_id);
-				client->GetCurrentZone()->SendQuestUpdates(client);
 			}
 			break;
 								  }
@@ -4752,7 +4753,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->Message(CHANNEL_COLOR_YELLOW, "Faction ID: %u, Merchant ID: %u, Transporter ID: %u", spawn->GetFactionID(), spawn->GetMerchantID(), spawn->GetTransporterID());
 				client->Message(CHANNEL_COLOR_YELLOW, "Grid ID: %u", spawn->GetLocation());
 				client->Message(CHANNEL_COLOR_YELLOW, "Race: %i, Class: %i, Gender: %i", spawn->GetRace(), spawn->GetAdventureClass(), spawn->GetGender());
-				client->Message(CHANNEL_COLOR_YELLOW, "Level: %i, HP: %u, Power: %u", spawn->GetLevel(), spawn->GetHP(), spawn->GetPower());
+				client->Message(CHANNEL_COLOR_YELLOW, "Level: %i, HP: %u / %u, Power: %u", spawn->GetLevel(), spawn->GetHP(), spawn->GetTotalHP(), spawn->GetPower());
 				client->Message(CHANNEL_COLOR_YELLOW, "Respawn Time: %u (sec), X: %f, Y: %f, Z: %f Heading: %f", spawn->GetRespawnTime(), spawn->GetX(), spawn->GetY(), spawn->GetZ(), spawn->GetHeading());
 				client->Message(CHANNEL_COLOR_YELLOW, "Collision Radius: %i, Size: %i, Difficulty: %i, Heroic: %i", spawn->GetCollisionRadius(), spawn->GetSize(), spawn->GetEncounterLevel(), spawn->GetHeroic());
 				client->Message(CHANNEL_COLOR_YELLOW, "Targetable: %i, Show Name: %i, Attackable: %i, Show Level: %i", spawn->GetTargetable(), spawn->GetShowName(), spawn->GetAttackable(), spawn->GetShowLevel());
@@ -4790,7 +4791,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				details += "Class:		" + to_string(spawn->GetAdventureClass()) + "\n";
 				details += "Gender:		" + to_string(spawn->GetGender()) + "\n";
 				details += "Level:		" + to_string(spawn->GetLevel()) + "\n";
-				details += "HP:		" + to_string(spawn->GetHP()) + "\n";
+				details += "HP:		" + to_string(spawn->GetHP()) + " / " + to_string(spawn->GetTotalHP()) + "\n";
 				details += "Power:		" + to_string(spawn->GetPower()) + "\n";
 				details += "Difficulty:		" + to_string(spawn->GetEncounterLevel()) + "\n";
 				details += "Heroic:		" + to_string(spawn->GetHeroic()) + "\n";
@@ -5712,6 +5713,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		}
 		case COMMAND_CANCEL_EFFECT: { Command_CancelEffect(client, sep); break; }
 		case COMMAND_CUREPLAYER: { Command_CurePlayer(client, sep); break; }
+		case COMMAND_SHARE_QUEST: { Command_ShareQuest(client, sep); break; }
 		default: 
 		{
 			LogWrite(COMMAND__WARNING, 0, "Command", "Unhandled command: %s", command->command.data.c_str());
@@ -11931,6 +11933,39 @@ void Commands::Command_CurePlayer(Client* client, Seperator* sep)
 				}
 			}
 			safe_delete(potential_items);
+		}
+	}
+}
+
+
+/* 
+	Function: Command_ShareQuest()
+	Purpose	: Share quest with the group
+	Example	: /share_quest [quest_id]
+*/ 
+void Commands::Command_ShareQuest(Client* client, Seperator* sep)
+{
+	Entity* target = nullptr;
+	bool use_spells = true;
+	bool use_potions = true;
+	if (sep && sep->arg[0] && sep->IsNumber(0)) {
+		int32 quest_id = atoul(sep->arg[0]);
+		
+		Quest* playerQuest = client->GetPlayer()->GetQuest(quest_id);
+		if(playerQuest) {
+		Quest* quest = master_quest_list.GetQuest(playerQuest->GetQuestID(), false);
+			if(quest) {
+				GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
+				if (gmi && gmi->group_id) {
+					PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+					if (group) {
+						group->ShareQuestWithGroup(client, quest);
+					}
+				}
+			}
+		}
+		else {
+			client->SimpleMessage(CHANNEL_COLOR_RED, "Cannot find quest.");
 		}
 	}
 }

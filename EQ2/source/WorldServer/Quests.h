@@ -39,13 +39,16 @@
 #define QUEST_DISPLAY_STATUS_YELLOW			2
 #define QUEST_DISPLAY_STATUS_COMPLETED		4
 #define QUEST_DISPLAY_STATUS_REPEATABLE		8
-#define QUEST_DISPLAY_STATUS_UNKNOWN1		16
+#define QUEST_DISPLAY_STATUS_CAN_SHARE		16
 #define QUEST_DISPLAY_STATUS_COMPLETE_FLAG	32
 #define	QUEST_DISPLAY_STATUS_UNKNOWN2		64
 #define QUEST_DISPLAY_STATUS_CHECK			128
 
-// Almost all quests have these values, but they don't see to effect anything
-#define QUEST_DISPLAY_STATUS_NORMAL			QUEST_DISPLAY_STATUS_UNKNOWN1 + QUEST_DISPLAY_STATUS_UNKNOWN2
+
+#define QUEST_SHAREABLE_NONE				0
+#define QUEST_SHAREABLE_ACTIVE				1
+#define QUEST_SHAREABLE_DURING				2
+#define QUEST_SHAREABLE_COMPLETED			4
 
 struct QuestFactionPrereq{
 	int32	faction_id;
@@ -317,6 +320,14 @@ public:
 	void				SetQuestTemporaryState(bool tempState, std::string customDescription = string(""));
 	bool				GetQuestTemporaryState() { return quest_state_temporary; }
 	std::string			GetQuestTemporaryDescription() { return quest_temporary_description; }
+	
+	void				SetQuestShareableFlag(int32 flag) { quest_shareable_flag = flag; }
+	void				SetCanDeleteQuest(bool newval) { can_delete_quest = newval; }
+	
+	int32				GetQuestShareableFlag() { return quest_shareable_flag; }
+	bool				CanDeleteQuest() { return can_delete_quest; }
+	
+	bool				CanShareQuestCriteria(Client* quest_sharer, bool display_client_msg = true);
 protected:
 	bool				needs_save;
 	Mutex				MQuestSteps;
@@ -397,6 +408,8 @@ protected:
 
 	bool				quest_state_temporary;
 	std::string			quest_temporary_description;
+	int32				quest_shareable_flag;
+	bool				can_delete_quest;
 };
 
 class MasterQuestList{

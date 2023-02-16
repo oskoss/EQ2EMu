@@ -447,6 +447,7 @@ public:
 	
 	void Command_CancelEffect(Client* client, Seperator* sep);
 	void Command_CurePlayer(Client* client, Seperator* sep);
+	void Command_ShareQuest(Client* client, Seperator* sep);
 
 	// AA Commands
 	void Get_AA_Xml(Client* client, Seperator* sep);
@@ -933,6 +934,7 @@ private:
 #define COMMAND_CUREPLAYER			531
 
 #define COMMAND_RELOAD_VOICEOVERS		532
+#define COMMAND_SHARE_QUEST				533
 
 
 #define GET_AA_XML						750
