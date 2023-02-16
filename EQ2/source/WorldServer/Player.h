@@ -619,8 +619,6 @@ public:
 	int32	GetSpawnDeleteTime(int32 id);
 	void	ClearRemovalTimers();
 	void	ClearEverything();
-	bool	IsFullyLoggedIn();
-	void	SetFullyLoggedIn(bool val);
 	bool	IsResurrecting();
 	void	SetResurrecting(bool val);
 	int8	GetArrowColor(int8 spawn_level);
@@ -1092,7 +1090,6 @@ private:
 	Spawn*              combat_target;
 	int32				char_id;
 	bool				quickbar_updated;
-	bool				fully_logged_in;
 	bool				resurrecting;
 	PlayerInfo*			info;
 	vector<SpellBookEntry*> spells;

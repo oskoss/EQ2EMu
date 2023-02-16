@@ -55,7 +55,6 @@ Player::Player(){
 	spawn_index = 1;
 	info = 0;
 	movement_packet = 0;
-	fully_logged_in = false;
 	last_movement_activity = 0;
 	//speed = 0;
 	packet_num = 0;
@@ -2986,13 +2985,6 @@ void Player::ClearEverything(){
 	pos_mutex.writelock(__FUNCTION__, __LINE__);
 	spawn_pos_packet_list.clear();
 	pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
-}
-
-bool Player::IsFullyLoggedIn() {
-	return fully_logged_in;
-}
-void Player::SetFullyLoggedIn(bool val) {
-	fully_logged_in = val;
 }
 bool Player::IsResurrecting(){
 	return resurrecting;

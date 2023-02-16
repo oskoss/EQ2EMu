@@ -1933,7 +1933,7 @@ Spawn* ZoneServer::FindSpawn(Player* searcher, const char* name){
 }
 
 void ZoneServer::AddChangedSpawn(Spawn* spawn) {
-	if (!spawn || (spawn->IsPlayer() && !spawn->info_changed && !spawn->vis_changed) || (spawn->IsPlayer() && ((Player*)spawn)->IsFullyLoggedIn() == false))
+	if (!spawn || (spawn->IsPlayer() && !spawn->info_changed && !spawn->vis_changed) || (spawn->IsPlayer() && ((Player*)spawn)->GetClient() && ((Player*)spawn)->GetClient()->IsReadyForUpdates() == false))
 		return;
 	
     MChangedSpawns.lock_shared();

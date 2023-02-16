@@ -5763,7 +5763,7 @@ void Client::AddPendingQuestUpdate(int32 quest_id, int32 step_id, int32 progress
 }
 
 void Client::ProcessQuestUpdates() {
-	if(!GetPlayer()->IsFullyLoggedIn())
+	if(!IsReadyForUpdates())
 		return;
 
 	if (quest_pending_updates.size() > 0) {
@@ -9177,8 +9177,6 @@ void Client::SearchStore(int32 page) {
 }
 
 void Client::SetReadyForUpdates() {
-	GetPlayer()->SetFullyLoggedIn(true);
-
 	if (!ready_for_updates)
 		database.loadCharacterProperties(this);
 
