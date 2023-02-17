@@ -11945,9 +11945,6 @@ void Commands::Command_CurePlayer(Client* client, Seperator* sep)
 */ 
 void Commands::Command_ShareQuest(Client* client, Seperator* sep)
 {
-	Entity* target = nullptr;
-	bool use_spells = true;
-	bool use_potions = true;
 	if (sep && sep->arg[0] && sep->IsNumber(0)) {
 		int32 quest_id = atoul(sep->arg[0]);
 		

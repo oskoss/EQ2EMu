@@ -4666,7 +4666,7 @@ void WorldDatabase::LoadSpells()
 	int32 total = 0;
 	map<int32, vector<LevelArray*> >* level_data = LoadSpellClasses();
 
-	if( !database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `description`, `type`, `class_skill`, `min_class_skill_req`, `mastery_skill`, `tier`, `is_aa`,`hp_req`, `power_req`,`power_by_level`, `cast_time`, `recast`, `radius`, `max_aoe_targets`, `req_concentration`, `range`, `duration1`, `duration2`, `resistibility`, `hp_upkeep`, `power_upkeep`, `duration_until_cancel`, `target_type`, `recovery`, `power_req_percent`, `hp_req_percent`, `icon`, `icon_heroic_op`, `icon_backdrop`, `success_message`, `fade_message`, `fade_message_others`, `cast_type`, `lua_script`, `call_frequency`, `interruptable`, `spell_visual`, `effect_message`, `min_range`, `can_effect_raid`, `affect_only_group_members`, `hit_bonus`, `display_spell_tier`, `friendly_spell`, `group_spell`, `spell_book_type`, spell_type+0, s.is_active, savagery_req, savagery_req_percent, savagery_upkeep, dissonance_req, dissonance_req_percent, dissonance_upkeep, linked_timer_id, det_type, incurable, control_effect_type, cast_while_moving, casting_flags, persist_through_death, not_maintained, savage_bar, savage_bar_slot, soe_spell_crc, 0xffffffff-CRC32(s.`name`) as 'spell_name_crc', type_group_spell_id, can_fizzle "
+	if( !database_new.Select(&result, "SELECT s.`id`, ts.spell_id, ts.index, `name`, `description`, `type`, `class_skill`, `min_class_skill_req`, `mastery_skill`, `tier`, `is_aa`,`hp_req`, `power_req`,`power_by_level`, `cast_time`, `recast`, `radius`, `max_aoe_targets`, `req_concentration`, `range`, `duration1`, `duration2`, `resistibility`, `hp_upkeep`, `power_upkeep`, `duration_until_cancel`, `target_type`, `recovery`, `power_req_percent`, `hp_req_percent`, `icon`, `icon_heroic_op`, `icon_backdrop`, `success_message`, `fade_message`, `fade_message_others`, `cast_type`, `lua_script`, `call_frequency`, `interruptable`, `spell_visual`, `effect_message`, `min_range`, `can_effect_raid`, `affect_only_group_members`, `hit_bonus`, `display_spell_tier`, `friendly_spell`, `group_spell`, `spell_book_type`, spell_type+0, s.is_active, savagery_req, savagery_req_percent, savagery_upkeep, dissonance_req, dissonance_req_percent, dissonance_upkeep, linked_timer_id, det_type, incurable, control_effect_type, cast_while_moving, casting_flags, persist_through_death, not_maintained, savage_bar, savage_bar_slot, soe_spell_crc, 0xffffffff-CRC32(s.`name`) as 'spell_name_crc', type_group_spell_id, can_fizzle, given_by "
 									"FROM (spells s, spell_tiers st) "
 									"LEFT JOIN spell_ts_ability_index ts "
 									"ON s.`id` = ts.spell_id "
@@ -4768,6 +4768,52 @@ void WorldDatabase::LoadSpells()
 			data->type_group_spell_id		= result.GetSInt32Str("type_group_spell_id");
 			data->can_fizzle				= ( result.GetInt8Str("can_fizzle") == 1);
 
+			string given_by					= result.GetStringStr("given_by");
+			data->given_by.data				= given_by.c_str();
+			data->given_by.size				= data->given_by.data.length();
+			
+			std::string givenType(given_by);
+			boost::algorithm::to_lower(givenType);
+			if(givenType == "unset" || givenType.length() < 1) {
+				data->given_by_type == GivenByType::GivenBy_Unset;
+			}
+			else if(givenType == "tradeskillclass") {
+				data->given_by_type == GivenByType::GivenBy_TradeskillClass;
+			}
+			else if(givenType == "spellscroll") {
+				data->given_by_type == GivenByType::GivenBy_SpellScroll;
+			}
+			else if(givenType == "alternateadvancement") {
+				data->given_by_type == GivenByType::GivenBy_AltAdvancement;
+			}
+			else if(givenType == "race") {
+				data->given_by_type == GivenByType::GivenBy_Race;
+			}
+			else if(givenType == "racialinnate") {
+				data->given_by_type == GivenByType::GivenBy_RacialInnate;
+			}
+			else if(givenType == "racialtradition") {
+				data->given_by_type == GivenByType::GivenBy_RacialTradition;
+			}
+			else if(givenType == "class") {
+				data->given_by_type == GivenByType::GivenBy_Class;
+			}
+			else if(givenType == "charactertrait") {
+				data->given_by_type == GivenByType::GivenBy_CharacterTrait;
+			}
+			else if(givenType == "focusabilities") {
+				data->given_by_type == GivenByType::GivenBy_FocusAbility;
+			}
+			else if(givenType == "classtraining") {
+				data->given_by_type == GivenByType::GivenBy_ClassTraining;
+			}
+			else if(givenType == "warderspell") {
+				data->given_by_type == GivenByType::GivenBy_WarderSpell;
+			}
+			else {
+				data->given_by_type == GivenByType::GivenBy_Unset;	
+			}
+			
 			/* Cast Messaging */
 			string message					= result.GetStringStr("success_message");
 			if( message.length() > 0 )

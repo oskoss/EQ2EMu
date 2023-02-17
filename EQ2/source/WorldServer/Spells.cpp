@@ -2360,7 +2360,7 @@ vector<Spell*>* MasterSpellList::GetSpellListByAdventureClass(int8 class_id, int
 	for(iter = spell_list.begin();iter != spell_list.end(); iter++){
 		for(iter2 = iter->second.begin();iter2 != iter->second.end(); iter2++){
 			spell = iter2->second;
-			if(iter2->first <= max_tier && spell){
+			if(iter2->first <= max_tier && spell && spell->GetSpellData()->given_by_type != GivenByType::GivenBy_SpellScroll){
 				levels = spell->GetSpellLevels();
 				for(level_itr = levels->begin(); level_itr != levels->end(); level_itr++){
 					level = *level_itr;
@@ -2388,7 +2388,7 @@ vector<Spell*>* MasterSpellList::GetSpellListByTradeskillClass(int8 class_id, in
 	for(iter = spell_list.begin();iter != spell_list.end(); iter++){
 		for(iter2 = iter->second.begin();iter2 != iter->second.end(); iter2++){
 			spell = iter2->second;
-			if(iter2->first <= max_tier && spell){
+			if(iter2->first <= max_tier && spell && spell->GetSpellData()->given_by_type != GivenByType::GivenBy_SpellScroll){
 				levels = spell->GetSpellLevels();
 				for(level_itr = levels->begin(); level_itr != levels->end(); level_itr++){
 					level = *level_itr;

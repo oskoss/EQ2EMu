@@ -223,6 +223,22 @@ struct SpellDisplayEffect{
 	int8	subbullet;
 	string	description;
 };
+
+enum GivenByType {
+	GivenBy_Unset = 0,
+	GivenBy_TradeskillClass = 1,
+	GivenBy_SpellScroll = 2,
+	GivenBy_AltAdvancement = 3,
+	GivenBy_Race = 4,
+	GivenBy_RacialInnate = 5,
+	GivenBy_RacialTradition = 6,
+	GivenBy_Class = 7,
+	GivenBy_CharacterTrait = 8,
+	GivenBy_FocusAbility = 9,
+	GivenBy_ClassTraining = 10,
+	GivenBy_WarderSpell = 11
+};
+
 struct SpellData{
 	int32	spell_book_type;
 	int32	id;
@@ -297,7 +313,10 @@ struct SpellData{
 	int32	spell_name_crc;
 	sint32	type_group_spell_id;
 	bool	can_fizzle;
+	EQ2_8BitString given_by;
+	GivenByType given_by_type;
 };
+
 class Spell{
 public:
 	~Spell();
