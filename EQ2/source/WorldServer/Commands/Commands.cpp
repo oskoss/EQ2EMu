@@ -4753,7 +4753,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->Message(CHANNEL_COLOR_YELLOW, "Faction ID: %u, Merchant ID: %u, Transporter ID: %u", spawn->GetFactionID(), spawn->GetMerchantID(), spawn->GetTransporterID());
 				client->Message(CHANNEL_COLOR_YELLOW, "Grid ID: %u", spawn->GetLocation());
 				client->Message(CHANNEL_COLOR_YELLOW, "Race: %i, Class: %i, Gender: %i", spawn->GetRace(), spawn->GetAdventureClass(), spawn->GetGender());
-				client->Message(CHANNEL_COLOR_YELLOW, "Level: %i, HP: %u / %u, Power: %u", spawn->GetLevel(), spawn->GetHP(), spawn->GetTotalHP(), spawn->GetPower());
+				client->Message(CHANNEL_COLOR_YELLOW, "Level: %i, HP: %u / %u, Power: %u / %u", spawn->GetLevel(), spawn->GetHP(), spawn->GetTotalHP(), spawn->GetPower(), spawn->GetTotalPower());
 				client->Message(CHANNEL_COLOR_YELLOW, "Respawn Time: %u (sec), X: %f, Y: %f, Z: %f Heading: %f", spawn->GetRespawnTime(), spawn->GetX(), spawn->GetY(), spawn->GetZ(), spawn->GetHeading());
 				client->Message(CHANNEL_COLOR_YELLOW, "Collision Radius: %i, Size: %i, Difficulty: %i, Heroic: %i", spawn->GetCollisionRadius(), spawn->GetSize(), spawn->GetEncounterLevel(), spawn->GetHeroic());
 				client->Message(CHANNEL_COLOR_YELLOW, "Targetable: %i, Show Name: %i, Attackable: %i, Show Level: %i", spawn->GetTargetable(), spawn->GetShowName(), spawn->GetAttackable(), spawn->GetShowLevel());
@@ -4792,7 +4792,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				details += "Gender:		" + to_string(spawn->GetGender()) + "\n";
 				details += "Level:		" + to_string(spawn->GetLevel()) + "\n";
 				details += "HP:		" + to_string(spawn->GetHP()) + " / " + to_string(spawn->GetTotalHP()) + "\n";
-				details += "Power:		" + to_string(spawn->GetPower()) + "\n";
+				details += "Power:		" + to_string(spawn->GetPower()) + + " / " + to_string(spawn->GetTotalPower()) + "\n";
 				details += "Difficulty:		" + to_string(spawn->GetEncounterLevel()) + "\n";
 				details += "Heroic:		" + to_string(spawn->GetHeroic()) + "\n";
 				details += "Group ID:		" + to_string(spawn->GetSpawnGroupID()) + "\n";
