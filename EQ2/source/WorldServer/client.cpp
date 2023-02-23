@@ -585,7 +585,7 @@ void Client::HandlePlayerRevive(int32 point_id)
 	origZ = player->GetZ();
 	origHeading = player->GetHeading();
 	ZoneServer* originalZone = GetCurrentZone();
-	int32 origGridID = GetPlayer()->appearance.pos.grid_id;
+	int32 origGridID = GetPlayer()->GetLocation();
 
 	float x, y, z, heading;
 	RevivePoint* revive_point = 0;

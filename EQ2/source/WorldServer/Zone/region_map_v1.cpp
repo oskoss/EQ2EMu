@@ -216,7 +216,7 @@ void RegionMapV1::IdentifyRegionsInGrid(Client *client, const glm::vec3 &locatio
 	else
 		client->SimpleMessage(CHANNEL_COLOR_RED, "No map to establish grid id, using grid id 0 (attempt match all).");
 
-	client->Message(2, "Region check against location %f / %f / %f. Grid to try: %u, player grid is %u, widget id is %u.  Widget location is %f %f %f.", location.x, location.y, location.z, grid, client->GetPlayer()->appearance.pos.grid_id, widget_id, x, y, z);
+	client->Message(2, "Region check against location %f / %f / %f. Grid to try: %u, player grid is %u, widget id is %u.  Widget location is %f %f %f.", location.x, location.y, location.z, grid, client->GetPlayer()->GetLocation(), widget_id, x, y, z);
 	for (itr = Regions.begin(); itr != Regions.end(); itr++)
 	{
 		Region_Node *node = itr->first;
@@ -284,7 +284,7 @@ void RegionMapV1::MapRegionsNearSpawn(Spawn *spawn, Client *client) const
 			continue;
 
 		if(!BSP_Root) {
-			int32 currentGridID = spawn->appearance.pos.grid_id;
+			int32 currentGridID = spawn->GetLocation();
 			bool inRegion = false;
 			if(!(inRegion = spawn->InRegion(node, nullptr)) && currentGridID == node->grid_id && 
 			( node->trigger_widget_id == spawn->trigger_widget_id || (node->dist > 0.0f && spawn->GetDistance(node->x, node->y, node->z) < node->dist)) ) {
@@ -466,7 +466,7 @@ void RegionMapV1::TicRegionsNearSpawn(Spawn *spawn, Client *client) const
 		
 		if(!BSP_Root) {
 			bool passDistCheck = false;
-			int32 currentGridID = spawn->appearance.pos.grid_id;
+			int32 currentGridID = spawn->GetLocation();
 			if(testitr->second.timerTic && currentGridID == node->grid_id && (node->trigger_widget_id == spawn->trigger_widget_id || (node->dist > 0.0f && spawn->GetDistance(node->x, node->y, node->z) <= node->dist && (passDistCheck = true)))
 				&& Timer::GetCurrentTime2() >= (testitr->second.lastTimerTic + testitr->second.timerTic)) {
 					testitr->second.lastTimerTic = Timer::GetCurrentTime2();

@@ -3347,8 +3347,6 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 				boat_x -= boat->GetX();
 				boat_y -= boat->GetY();
 				boat_z -= boat->GetZ();
-
-				//appearance.pos.grid_id = grid_id;
 			}
 		}
 
@@ -3356,7 +3354,7 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 		SetBoatY(boat_y);
 		SetBoatZ(boat_z);
 		pos_packet_speed = speed;
-		grid_id = appearance.pos.grid_id;
+		grid_id = GetLocation();
 	}
 	else if (GetBoatSpawn() > 0 && !lift_cooldown.Enabled())
 	{
@@ -3400,23 +3398,20 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 		}
 	}
 
-	if (appearance.pos.grid_id != grid_id)
+	if (GetLocation() != grid_id)
 	{
-		LogWrite(PLAYER__DEBUG, 0, "Player", "%s left grid %u and entered grid %u", appearance.name, appearance.pos.grid_id, grid_id);
+		LogWrite(PLAYER__DEBUG, 0, "Player", "%s left grid %u and entered grid %u", appearance.name, GetLocation(), grid_id);
 		const char* zone_script = world.GetZoneScript(GetZone()->GetZoneID());
 
 		if (zone_script && lua_interface) {
 			lua_interface->RunZoneScript(zone_script, "leave_location", GetZone(), this, GetLocation());
 		}
 		
-			GetZone()->RemoveSpawnFromGrid(this, GetLocation());
-			GetZone()->AddSpawnToGrid(this, grid_id);
-			
+		SetLocation(grid_id);
+		
 		if (zone_script && lua_interface) {
 			lua_interface->RunZoneScript(zone_script, "enter_location", GetZone(), this, grid_id);
 		}
-		
-		appearance.pos.grid_id = grid_id;
 	}
 	if (activity == UPDATE_ACTIVITY_IN_WATER_ABOVE || activity == UPDATE_ACTIVITY_IN_WATER_BELOW ||
 		activity == UPDATE_ACTIVITY_MOVE_WATER_BELOW_AOM || activity == UPDATE_ACTIVITY_MOVE_WATER_ABOVE_AOM) {
@@ -6536,7 +6531,7 @@ NPC* Player::InstantiateSpiritShard(float origX, float origY, float origZ, float
 		npc->SetSpawnOrigY(origY);
 		npc->SetSpawnOrigZ(origZ);
 		npc->SetSpawnOrigHeading(origHeading);
-		npc->appearance.pos.grid_id = origGridID;
+		npc->SetLocation(origGridID);
 		const char* script = rule_manager.GetGlobalRule(R_Combat, SpiritShardSpawnScript)->GetString();
 
 		int32 dbid = database.CreateSpiritShard(newName.c_str(), GetLevel(), GetRace(), GetGender(), GetAdventureClass(), GetModelType(), GetSogaModelType(), 

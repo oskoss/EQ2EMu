@@ -257,8 +257,10 @@ void Spawn::InitializeHeaderPacketData(Player* player, PacketStruct* header, int
 void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 	int16 version = vis_packet->GetVersion();
 
-	if (IsPlayer())
+//why?
+	/*if (IsPlayer()) {
 		appearance.pos.grid_id = 0xFFFFFFFF;
+	}*/
 
 	int8 tag_icon = 0;
 
@@ -2078,7 +2080,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 		m_GridMutex.releasewritelock(__FUNCTION__, __LINE__);
 	}
 	
-	packet->setDataByName("pos_grid_id", new_grid_id != 0 ? new_grid_id : appearance.pos.grid_id);
+	packet->setDataByName("pos_grid_id", new_grid_id != 0 ? new_grid_id : GetLocation());
 	bool include_heading = true;
 	if (IsWidget() && ((Widget*)this)->GetIncludeHeading() == false)
 		include_heading = false;
@@ -3354,7 +3356,7 @@ bool Spawn::CalculateChange(){
 				SetY(ny + tar_vy, false);
 		}
 	
-		int32 newGrid = appearance.pos.grid_id;
+		int32 newGrid = GetLocation();
 		if (GetMap() != nullptr) {
 			m_GridMutex.writelock(__FUNCTION__, __LINE__);
 			std::map<int32,TimedGridData>::iterator itr = established_grid_id.begin();
@@ -3383,7 +3385,7 @@ bool Spawn::CalculateChange(){
 			m_GridMutex.releasewritelock(__FUNCTION__, __LINE__);
 		}
 
-		if ((!IsFlyingCreature() || IsTransportSpawn()) && newGrid != 0 && newGrid != appearance.pos.grid_id)
+		if ((!IsFlyingCreature() || IsTransportSpawn()) && newGrid != 0 && newGrid != GetLocation())
 			SetLocation(newGrid);
 	}
 	return remove_needed;
@@ -3944,8 +3946,8 @@ void Spawn::FixZ(bool forceUpdate) {
 	if(GetMap() != nullptr) {
 		float new_z = GetMap()->FindBestZ(current_loc, nullptr, &GridID, &WidgetID);
 
-		if ((IsTransportSpawn() || !IsFlyingCreature()) && GridID != 0 && GridID != appearance.pos.grid_id) {
-			LogWrite(PLAYER__DEBUG, 0, "Player", "%s left grid %u and entered grid %u", appearance.name, appearance.pos.grid_id, GridID);
+		if ((IsTransportSpawn() || !IsFlyingCreature()) && GridID != 0 && GridID != GetLocation()) {
+			LogWrite(PLAYER__DEBUG, 0, "Player", "%s left grid %u and entered grid %u", appearance.name, GetLocation(), GridID);
 			
 			const char* zone_script = world.GetZoneScript(GetZone()->GetZoneID());
 
@@ -3953,14 +3955,11 @@ void Spawn::FixZ(bool forceUpdate) {
 				lua_interface->RunZoneScript(zone_script, "leave_location", GetZone(), this, GetLocation());
 			}
 			
-				GetZone()->RemoveSpawnFromGrid(this, GetLocation());
-				GetZone()->AddSpawnToGrid(this, GridID);
+			SetLocation(GridID);
 				
 			if (zone_script && lua_interface) {
 				lua_interface->RunZoneScript(zone_script, "enter_location", GetZone(), this, GridID);
 			}
-			
-			SetPos(&appearance.pos.grid_id, GridID);
 		}
 		trigger_widget_id = WidgetID;
 	}
@@ -3974,7 +3973,7 @@ void Spawn::FixZ(bool forceUpdate) {
 	{
 		glm::vec3 targPos(GetX(), GetY(), GetZ());
 		
-		if(region_map->InWater(targPos, appearance.pos.grid_id))
+		if(region_map->InWater(targPos, GetLocation()))
 			return;
 	}
 	
@@ -4217,7 +4216,7 @@ bool Spawn::InWater()
 			if ( IsGroundSpawn() )
 				targPos.y -= .5f;
 					
-			if(region_map->InWater(targPos, appearance.pos.grid_id))
+			if(region_map->InWater(targPos, GetLocation()))
 				inWater = true;
 		}
 
@@ -4234,7 +4233,7 @@ bool Spawn::InLava()
 			if ( IsGroundSpawn() )
 				targPos.y -= .5f;
 					
-			if(region_map->InLava(targPos, appearance.pos.grid_id))
+			if(region_map->InLava(targPos, GetLocation()))
 				inLava = true;
 		}
 
@@ -4505,8 +4504,11 @@ bool Spawn::HasRegionTracked(Region_Node* node, ZBSP_Node* bsp_root, bool in_reg
 void Spawn::SetLocation(int32 id, bool setUpdateFlags)
 {
 	if(GetZone()) {
-		GetZone()->RemoveSpawnFromGrid(this, appearance.pos.grid_id);
+		GetZone()->RemoveSpawnFromGrid(this, GetLocation());
+		SetPos(&appearance.pos.grid_id, id, setUpdateFlags);
 		GetZone()->AddSpawnToGrid(this, id);
 	}
-	SetPos(&appearance.pos.grid_id, id, setUpdateFlags);
+	else {
+		SetPos(&appearance.pos.grid_id, id, setUpdateFlags);
+	}
 }

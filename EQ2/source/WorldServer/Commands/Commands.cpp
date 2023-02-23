@@ -3919,8 +3919,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					spawn->appearance.targetable = 1;
 					spawn->appearance.activity_status = ACTIVITY_STATUS_SOLID;
 					spawn->appearance.race = item && item->generic_info.appearance_id ? item->generic_info.appearance_id : 1472;
-					spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
 					spawn->SetModelType(item && item->generic_info.appearance_id ? item->generic_info.appearance_id : 1472);
+					spawn->SetLocation(client->GetPlayer()->GetLocation());
 					spawn->SetZone(client->GetCurrentZone());
 					client->SetTempPlacementSpawn(spawn);
 					client->SetPlacementUniqueItemID(uniqueid);
@@ -4584,14 +4584,14 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				((Sign*)spawn)->SetWidgetX(client->GetPlayer()->GetX());
 				((Sign*)spawn)->SetWidgetY(client->GetPlayer()->GetY());
 				((Sign*)spawn)->SetWidgetZ(client->GetPlayer()->GetZ());
-				spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				spawn->SetLocation(client->GetPlayer()->GetLocation());
 				spawn->appearance.model_type = atoul(sep->arg[1]);
 			}
 			else
 			{
 				spawn->appearance.targetable = 1;
 				spawn->appearance.race = 255;
-				spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				spawn->SetLocation(client->GetPlayer()->GetLocation());
 				spawn->SetModelType(atoi(sep->arg[1]));
 				spawn->SetAdventureClass(atoi(sep->arg[2]));
 				spawn->SetLevel(atoi(sep->arg[3]));
@@ -5198,9 +5198,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			spawn->SetSpawnOrigZ(spawn->GetZ());
 			spawn->SetSpawnOrigHeading(spawn->GetHeading());
 			if(sep && sep->arg[5][0])
-				spawn->appearance.pos.grid_id = atol(sep->arg[5]);
+				spawn->SetLocation(atoul(sep->arg[5]));
 			else
-				spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				spawn->SetLocation(client->GetPlayer()->GetLocation());
 
 			if(spawn->IsNPC() && spawn->GetTotalHP() == 0){
 				spawn->SetTotalHP(spawn->GetLevel() * 15);
@@ -6183,7 +6183,7 @@ void Commands::Command_Grid(Client* client, Seperator* sep)
 			client->GetCurrentZone()->SendClientSpawnListInGrid(client, grid);
 		}
 		else {
-			client->Message(CHANNEL_COLOR_YELLOW, "Your Grid ID is %u", client->GetPlayer()->appearance.pos.grid_id);
+			client->Message(CHANNEL_COLOR_YELLOW, "Your Grid ID is %u", client->GetPlayer()->GetLocation());
 			auto loc = glm::vec3(client->GetPlayer()->GetX(), client->GetPlayer()->GetZ(), client->GetPlayer()->GetY());
 			uint32 GridID = 0;
 			uint32 WidgetID = 0;
@@ -7321,7 +7321,7 @@ void Commands::Command_LocationCreate(Client* client, Seperator* sep)
 		if (sep->arg[1] && sep->IsNumber(1) && atoi(sep->arg[1]) > 0)
 			include_y = true;
 
-		int32 location_id = database.CreateLocation(client->GetPlayer()->GetZone()->GetZoneID(), client->GetPlayer()->appearance.pos.grid_id, name, include_y);
+		int32 location_id = database.CreateLocation(client->GetPlayer()->GetZone()->GetZoneID(), client->GetPlayer()->GetLocation(), name, include_y);
 
 		if (location_id > 0)
 			client->Message(CHANNEL_COLOR_YELLOW, "Location '%s' was successfully created with location id %u", name, location_id);
@@ -9891,7 +9891,7 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				spawn->SetSpawnOrigY(spawn->GetY());
 				spawn->SetSpawnOrigZ(spawn->GetZ());
 				spawn->SetSpawnOrigHeading(spawn->GetHeading());
-				spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				spawn->SetLocation(client->GetPlayer()->GetLocation());
 				spawn->appearance.targetable = 1;
 				if (spawn->IsNPC() && spawn->GetTotalHP() == 0) {
 					spawn->SetTotalHP(spawn->GetLevel() * 15);
@@ -9926,7 +9926,7 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				spawn->SetSpawnOrigY(spawn->GetY());
 				spawn->SetSpawnOrigZ(spawn->GetZ());
 				spawn->SetSpawnOrigHeading(spawn->GetHeading());
-				spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				spawn->SetLocation(client->GetPlayer()->GetLocation());
 				spawn->appearance.targetable = 1;
 				if (spawn->IsNPC() && spawn->GetTotalHP() == 0) {
 					spawn->SetTotalHP(spawn->GetLevel() * 15);
@@ -10614,7 +10614,7 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				float x = atof(sep->arg[2]);
 				float y = atof(sep->arg[3]);
 				float z = atof(sep->arg[4]);
-				new_spawn->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+				new_spawn->SetLocation(client->GetPlayer()->GetLocation());
 				new_spawn->SetWidgetX(x);
 				new_spawn->SetWidgetY(y);
 				new_spawn->SetWidgetZ(z);

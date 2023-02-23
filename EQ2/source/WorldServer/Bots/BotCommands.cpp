@@ -198,10 +198,8 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 								continue;
 							
 							if (member->IsBot() && ((Bot*)member)->GetOwner() == player) {
-								if(member->GetZone() && member->appearance.pos.grid_id != player->appearance.pos.grid_id) {
-									member->GetZone()->RemoveSpawnFromGrid(member, member->appearance.pos.grid_id);
-									member->appearance.pos.grid_id = player->appearance.pos.grid_id;
-									member->GetZone()->AddSpawnToGrid(member, member->appearance.pos.grid_id);
+								if(member->GetZone() && member->GetLocation() != player->GetLocation()) {
+									member->SetLocation(player->GetLocation());
 								}
 								member->SetX(player->GetX());
 								member->SetY(player->GetY());
@@ -223,7 +221,7 @@ void Commands::Command_Bot(Client* client, Seperator* sep) {
 					Bot* bot = (Bot*)client->GetPlayer()->GetTarget();
 					Player* player = client->GetPlayer();
 					if (bot && bot->GetOwner() == player) {
-						bot->appearance.pos.grid_id = player->appearance.pos.grid_id;
+						bot->SetLocation(player->GetLocation());
 						bot->SetX(player->GetX());
 						bot->SetY(player->GetY());
 						bot->SetZ(player->GetZ());
@@ -430,7 +428,7 @@ void Commands::Command_Bot_Create(Client* client, Seperator* sep) {
 			bot->SetSpawnOrigY(bot->GetY());
 			bot->SetSpawnOrigZ(bot->GetZ());
 			bot->SetSpawnOrigHeading(bot->GetHeading());
-			bot->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+			bot->SetLocation(client->GetPlayer()->GetLocation());
 			bot->SetInitialState(16512);
 			bot->SetModelType(id_list->at(0));
 			bot->SetAdventureClass(advClass);
@@ -537,7 +535,7 @@ void Commands::Command_Bot_Spawn(Client* client, Seperator* sep) {
 			bot->SetSpawnOrigY(bot->GetY());
 			bot->SetSpawnOrigZ(bot->GetZ());
 			bot->SetSpawnOrigHeading(bot->GetHeading());
-			bot->appearance.pos.grid_id = client->GetPlayer()->appearance.pos.grid_id;
+			bot->SetLocation(client->GetPlayer()->GetLocation());
 			bot->SetInitialState(16512);
 			bot->SetLevel(client->GetPlayer()->GetLevel());
 			bot->SetEncounterLevel(6);

@@ -2663,7 +2663,7 @@ void ZoneServer::DeterminePosition(SpawnLocation* spawnlocation, Spawn* spawn){
 	spawn->SetSpawnOrigHeading(spawn->GetHeading());
 	spawn->SetSpawnOrigPitch(spawnlocation->pitch);
 	spawn->SetSpawnOrigRoll(spawnlocation->roll);
-	spawn->appearance.pos.grid_id = spawnlocation->grid_id;
+	spawn->SetLocation(spawnlocation->grid_id);
 	spawn->SetSpawnLocationPlacementID(spawnlocation->placement_id);
 }
 
@@ -6069,7 +6069,7 @@ void ZoneServer::CheckLocationGrids() {
 			float x = player->GetX();
 			float y = player->GetY();
 			float z = player->GetZ();
-			int32 grid_id = player->appearance.pos.grid_id;
+			int32 grid_id = player->GetLocation();
 			MutexList<LocationGrid*>::iterator location_grid_itr = location_grids.begin();
 			while (location_grid_itr.Next()) {
 				LocationGrid* grid = location_grid_itr.value;

@@ -290,7 +290,7 @@ void GroundSpawn::ProcessHarvest(Client* client) {
 						continue;
 
 					// if the grid_id on the item matches player grid, or is 0, keep the item
-					if (!entry->grid_id || (entry->grid_id == client->GetPlayer()->appearance.pos.grid_id)) {
+					if (!entry->grid_id || (entry->grid_id == client->GetPlayer()->GetLocation())) {
 						// build modified entries table
 						if ((entry->is_rare == 1 && harvest_type == 5) || (entry->is_rare == 1 && harvest_type == 6)) {
 							// if the matching item is rare, or harvest10 push to mod rares

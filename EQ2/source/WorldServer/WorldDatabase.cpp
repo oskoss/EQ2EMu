@@ -1185,7 +1185,7 @@ void WorldDatabase::LoadSpiritShards(ZoneServer* zone){
 		shard->SetSpawnOrigY(shard->GetY());
 		shard->SetSpawnOrigZ(shard->GetZ());
 		shard->SetSpawnOrigHeading(shard->GetHeading());
-		shard->appearance.pos.grid_id = atoul(row[32]);
+		shard->SetLocation(atoul(row[32]));
 		shard->SetShardID(atoul(row[33]));
 		shard->SetShardCharID(atoul(row[34]));
 
@@ -3339,7 +3339,7 @@ void WorldDatabase::LoadSpawns(ZoneServer* zone)
 bool WorldDatabase::UpdateSpawnLocationSpawns(Spawn* spawn) {
 	Query query;
 	query.RunQuery2(Q_UPDATE, "update spawn_location_placement set x=%f, y=%f, z=%f, heading=%f, x_offset=%f, y_offset=%f, z_offset=%f, respawn=%u, expire_timer=%u, expire_offset=%u, grid_id=%u, pitch=%f, roll=%f where id = %u",
-		spawn->GetX(), spawn->GetY(), spawn->GetZ(), spawn->GetHeading(), spawn->GetXOffset(), spawn->GetYOffset(), spawn->GetZOffset(), spawn->GetRespawnTime(), spawn->GetExpireTime(), spawn->GetExpireOffsetTime(), spawn->appearance.pos.grid_id, spawn->GetPitch(), spawn->GetRoll(), spawn->GetSpawnLocationPlacementID());
+		spawn->GetX(), spawn->GetY(), spawn->GetZ(), spawn->GetHeading(), spawn->GetXOffset(), spawn->GetYOffset(), spawn->GetZOffset(), spawn->GetRespawnTime(), spawn->GetExpireTime(), spawn->GetExpireOffsetTime(), spawn->GetLocation(), spawn->GetPitch(), spawn->GetRoll(), spawn->GetSpawnLocationPlacementID());
 	if (query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF) {
 		LogWrite(WORLD__ERROR, 0, "World", "Error in UpdateSpawnLocationSpawns query '%s': %s", query.GetQuery(), query.GetError());
 		return false;
@@ -3613,7 +3613,7 @@ bool WorldDatabase::SaveSpawnEntry(Spawn* spawn, const char* spawn_location_name
 		return false;
 	}
 	if(save_zonespawn){
-		query2.RunQuery2(Q_INSERT, "insert into spawn_location_placement (zone_id, instance_id, spawn_location_id, x, y, z, x_offset, y_offset, z_offset, heading, grid_id) values(%u, %u, %u, %f, %f, %f, %f, %f, %f, %f, %u)", spawn->GetZone()->GetZoneID(), spawn->GetZone()->GetInstanceID(), spawn->GetSpawnLocationID(), spawn->GetX(), spawn->GetY(), spawn->GetZ(),x_offset, y_offset, z_offset, spawn->GetHeading(), spawn->appearance.pos.grid_id);
+		query2.RunQuery2(Q_INSERT, "insert into spawn_location_placement (zone_id, instance_id, spawn_location_id, x, y, z, x_offset, y_offset, z_offset, heading, grid_id) values(%u, %u, %u, %f, %f, %f, %f, %f, %f, %f, %u)", spawn->GetZone()->GetZoneID(), spawn->GetZone()->GetInstanceID(), spawn->GetSpawnLocationID(), spawn->GetX(), spawn->GetY(), spawn->GetZ(),x_offset, y_offset, z_offset, spawn->GetHeading(), spawn->GetLocation());
 		if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF){
 			LogWrite(SPAWN__ERROR, 0, "Spawn", "Error in SaveSpawnEntry query '%s': %s", query2.GetQuery(), query2.GetError());
 			return false;
