@@ -1726,25 +1726,7 @@ DumpPacket(buffer, length);
 		{
 			cout << "2Orig Packet: " << opcode << endl;
 			DumpPacket(newbuffer, newlength);
-			MCombineQueueLock.lock();
-			EQProtocolPacket* p2 = ProcessEncryptedData(newbuffer, newlength, OP_Packet);
-			MCombineQueueLock.unlock();
-			cout << "2Decrypted Packet: " << p2->opcode << endl;
-			DumpPacket(p2->pBuffer, p2->size);
-				
-				
-			// this can be partial packets and needs more consideration, it only seems to happen I have seen for character portraits -> server
-			// this is a TODO, keeping it in place since last encounter it is a partial portait packet but the opcode is provided
-			EQApplicationPacket *res = new EQApplicationPacket;
-			res->opcode = p2->opcode;
-			res->size = p2->size;
-			
-			res->pBuffer= new unsigned char[p2->size];
-			memcpy(res->pBuffer,p2->pBuffer,p2->size);
-			res->copyInfo(p2);
-			InboundQueuePush(res);
-
-			safe_delete(p2);
+			ProcessEmbeddedPacket(newbuffer, newlength, OP_Fragment);
 		}
 		ProcessQueue();
 	} else {

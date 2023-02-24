@@ -283,14 +283,22 @@ void EQStreamFactory::CheckTimeout(bool remove_all)
 			case CLOSED:
 				stateString = "Closed";
 				break;
+			case WAIT_CLOSE:
+				stateString = "Wait-Close";
+				break;
 			default:
 				stateString = "Unknown";
 				break;
 			}
-			LogWrite(WORLD__DEBUG, 0, "World", "Timeout up!, state=%s", stateString);
+			LogWrite(WORLD__DEBUG, 0, "World", "Timeout up!, state=%s (%u)", stateString, state);
 			if (state==ESTABLISHED) {
 				s->Close();
-			} else if (state == CLOSING) {
+			}
+			else if (state == WAIT_CLOSE) {
+				s->SetState(CLOSING);
+				state = CLOSING;
+			}
+			else if (state == CLOSING) {
 				//if we time out in the closing state, just give up
 				s->SetState(CLOSED);
 				state = CLOSED;
