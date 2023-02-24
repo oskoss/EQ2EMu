@@ -5155,8 +5155,10 @@ void ZoneServer::SendCastSpellPacket(LuaSpell* spell, Entity* caster){
 		if(packet){
 			int32 caster_id = client->GetPlayer()->GetIDWithPlayerSpawn(caster);
 			
-			if(!caster_id)
+			if(!caster_id) {
+				safe_delete(packet);
 				continue;
+			}
 			
 			packet->setDataByName("spawn_id", caster_id);
 			packet->setArrayLengthByName("num_targets", spell->targets.size());
@@ -5196,8 +5198,10 @@ void ZoneServer::SendCastSpellPacket(int32 spell_visual, Spawn* target, Spawn* c
 			if (packet) {
 				
 				int32 target_id = client->GetPlayer()->GetIDWithPlayerSpawn(target);
-				if(!target_id) // client is not aware of spawn
+				if(!target_id) { // client is not aware of spawn
+					safe_delete(packet);
 					continue;
+				}
 				
 				if (!caster) {
 					packet->setDataByName("spawn_id", 0xFFFFFFFF);
@@ -5205,9 +5209,10 @@ void ZoneServer::SendCastSpellPacket(int32 spell_visual, Spawn* target, Spawn* c
 				else {
 					int32 caster_id = client->GetPlayer()->GetIDWithPlayerSpawn(caster);
 					
-					if(!caster_id) // client is not aware of spawn
+					if(!caster_id) { // client is not aware of spawn
+						safe_delete(packet);
 						continue;
-					
+					}
 					packet->setDataByName("spawn_id", caster_id);
 				}
 				packet->setArrayLengthByName("num_targets", 1);
