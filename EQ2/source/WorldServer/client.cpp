@@ -148,6 +148,7 @@ Client::Client(EQStream* ieqs) : underworld_cooldown_timer(5000), pos_update(125
 	connected_to_zone = false;
 	connected = false;
 	camp_timer = 0;
+	linkdead_timer = 0;
 	client_zoning = false;
 	zoning_id = 0;
 	zoning_x = 0;
@@ -234,6 +235,7 @@ Client::~Client() {
 
 	//safe_delete(autobootup_timeout);
 
+	safe_delete(linkdead_timer);
 	vector<QueuedQuest*>::iterator itr;
 	QueuedQuest* queued_quest = 0;
 	for (itr = quest_queue.begin(); itr != quest_queue.end(); itr++) {
@@ -268,11 +270,7 @@ void Client::RemoveClientFromZone() {
 		player->GetZone()->GetSpellProcess()->RemoveSpellTimersFromSpawn(player, true, false, true, true);
 
 	if (current_zone && player) {
-		if (player->GetGroupMemberInfo())
-		{
-			if ((player->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0)
-				world.GetGroupManager()->RemoveGroupMember(player->GetGroupMemberInfo()->group_id, player);
-			else
+		if (player->GetGroupMemberInfo()) {
 				TempRemoveGroup();
 		}
 		world.GetGroupManager()->ClearPendingInvite(player);
@@ -1195,7 +1193,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 						response->getType_int8_ByName("camp_desktop"),
 						response->getType_int8_ByName("camp_char_select"),
 						(response->getType_EQ2_16BitString_ByName("char_name").data.length() > 0) ? response->getType_EQ2_16BitString_ByName("char_name").data.c_str() : "");
-
+					
 					// JA: trying to recognize /camp vs LD (see ZoneServer::ClientProcess())
 					if ((player->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0)
 						player->SetActivityStatus(player->GetActivityStatus() + ACTIVITY_STATUS_CAMPING);
@@ -3154,6 +3152,28 @@ void Client::HandleQuickbarUpdateRequest(EQApplicationPacket* app) {
 }
 
 bool Client::Process(bool zone_process) {
+	
+	bool ret = true;
+	// EQS can become null if player is linkdead, we want to always be able to process the camp/linkdead timers when active
+	if ((camp_timer && camp_timer->Check()) || (linkdead_timer && linkdead_timer->Check())) {
+		ResetSendMail();
+		if(getConnection())
+			getConnection()->SendDisconnect(false);
+		safe_delete(camp_timer);
+		if(linkdead_timer) {
+			LogWrite(CCLIENT__DEBUG, 0, "Client", "Player %s triggered linkdead timer, disconnecting", GetPlayer()->GetName());
+			// we remove the linkdead status and force a camp out immediately
+			if((GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0) {
+				GetPlayer()->SetActivityStatus(GetPlayer()->GetActivityStatus() - ACTIVITY_STATUS_LINKDEAD);
+			}
+			if ((GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0) {
+				GetPlayer()->SetActivityStatus(GetPlayer()->GetActivityStatus() + ACTIVITY_STATUS_CAMPING);
+			}
+		}
+		safe_delete(linkdead_timer);
+		ret = false;
+	}
+	
 	if (!eqs) {
 		return false;
 	}
@@ -3178,8 +3198,6 @@ bool Client::Process(bool zone_process) {
 			break;	
 		}
 	}
-	
-	bool ret = true;
 	sockaddr_in to;
 
 	memset((char*)&to, 0, sizeof(to));
@@ -3372,14 +3390,6 @@ bool Client::Process(bool zone_process) {
 
 	if (player->ControlFlagsChanged())
 		player->SendControlFlagUpdates(this);
-
-	if (camp_timer && camp_timer->Check()) {
-		ResetSendMail();
-		if(getConnection())
-			getConnection()->SendDisconnect(false);
-		safe_delete(camp_timer);
-		ret = false;
-	}
 
 	if (!eqs || (eqs && !eqs->CheckActive()))
 		ret = false;
@@ -11753,4 +11763,26 @@ bool Client::CheckConsumptionAllowed(int16 slot, bool send_message) {
 	}
 	
 	return true;
+}
+
+void Client::StartLinkdeadTimer() {
+	if(!linkdead_timer) {
+		int32 LD_Timer = rule_manager.GetGlobalRule(R_World, LinkDeadTimer)->GetInt32();
+		LogWrite(CCLIENT__DEBUG, 0, "Client", "Starting linkdead timer for %s (timer %u seconds)", GetPlayer()->GetName(), (LD_Timer/1000));
+		linkdead_timer = new Timer(LD_Timer);
+		linkdead_timer->Enable();
+		
+		if(GetPlayer()->GetGroupMemberInfo()) {
+			LogWrite(CCLIENT__DEBUG, 0, "Client", "Telling player %s group they are disconnecting", GetPlayer()->GetName());
+			world.GetGroupManager()->GroupMessage(GetPlayer()->GetGroupMemberInfo()->group_id, "%s has gone Linkdead.", GetPlayer()->GetName());
+		}
+	}
+}
+
+bool Client::IsLinkdeadTimerEnabled() {
+	if(linkdead_timer) {
+		return linkdead_timer->Enabled();
+	}
+	
+	return false;
 }

@@ -580,6 +580,9 @@ public:
 	bool	SetPetName(const char* name);
 	
 	bool	CheckConsumptionAllowed(int16 slot, bool send_message = true);
+	
+	void	StartLinkdeadTimer();
+	bool	IsLinkdeadTimerEnabled();
 private:
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
@@ -637,6 +640,7 @@ private:
 	Timer*	CLE_keepalive_timer;
 	Timer*	connect;
 	Timer*	camp_timer;
+	Timer*	linkdead_timer;
 	bool	connected;
 	std::atomic<bool> ready_for_spawns;
 	std::atomic<bool> ready_for_updates;

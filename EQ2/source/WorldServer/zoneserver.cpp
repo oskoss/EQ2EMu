@@ -3408,23 +3408,31 @@ void ZoneServer::ClientProcess()
 				}
 				if(!zoneShuttingDown && !client->IsZoning())
 				{
-					LogWrite(ZONE__DEBUG, 0, "Zone", "Client is disconnecting in %s (camping = %s)", __FUNCTION__, (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0 ? "false" : "true");
-
-					if( (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0 )
+					// avoid spam of messages while we await linkdead to complete
+					if(!client->IsLinkdeadTimerEnabled()) {
+						LogWrite(ZONE__DEBUG, 0, "Zone", "Client is disconnecting in %s (camping = %s)", __FUNCTION__, (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0 ? "false" : "true");
+					}
+					
+					if((client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0) {
+						client->StartLinkdeadTimer();
+					}
+					else if( (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0 )
 					{
 						 //only set LD flag if we're disconnecting but not camping/quitting
 						client->GetPlayer()->SetActivityStatus(client->GetPlayer()->GetActivityStatus() + ACTIVITY_STATUS_LINKDEAD);
-						if(client->GetPlayer()->GetGroupMemberInfo())
-						{
-							LogWrite(ZONE__DEBUG, 0, "Zone", "Telling client's group they are disconnecting");
-							world.GetGroupManager()->GroupMessage(client->GetPlayer()->GetGroupMemberInfo()->group_id, "%s has gone Linkdead.", client->GetPlayer()->GetName());
-						}
+						client->StartLinkdeadTimer();
 					}
-
+					else {
+						// camp timer completed, remove client
+						RemoveClient(client);
+						client->Disconnect();
+					}
 				}
-				
-				RemoveClient(client);
-				client->Disconnect();
+				else {
+					// force boot all players or clients zoning
+					RemoveClient(client);
+					client->Disconnect();
+				}
 			}
 #ifndef NO_CATCH
 		}
@@ -3437,6 +3445,7 @@ void ZoneServer::ClientProcess()
 					if( (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0 )
 					{
 						client->GetPlayer()->SetActivityStatus(client->GetPlayer()->GetActivityStatus() + ACTIVITY_STATUS_LINKDEAD);
+						client->StartLinkdeadTimer();
 						if(client->GetPlayer()->GetGroupMemberInfo())
 							world.GetGroupManager()->GroupMessage(client->GetPlayer()->GetGroupMemberInfo()->group_id, "%s has gone Linkdead.", client->GetPlayer()->GetName());
 					}
