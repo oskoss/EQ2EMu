@@ -3333,10 +3333,6 @@ void ZoneServer::RemoveClient(Client* client)
 		
 		client->GetPlayer()->DeleteSpellEffects(true);
 		
-		if(client->getConnection()) {
-			client->getConnection()->ResetSessionAttempts();
-			client->getConnection()->SetState(EQStreamState::WAIT_CLOSE);
-		}
 		RemoveSpawn(client->GetPlayer(), false, true, true, true, true);
 		connected_clients.Remove(client, true, DisconnectClientTimer); // changed from a hardcoded 30000 (30 sec) to the DisconnectClientTimer rule
 	}
