@@ -3398,10 +3398,6 @@ void ZoneServer::ClientProcess()
 #endif
 			if(zoneShuttingDown || !client->Process(true))
 			{
-				if(client->getConnection() && client->getConnection()->HasSessionAttempts()) {
-					printf("Client has an attempt to reconnect..\n");
-					continue;
-				}
 				if(!zoneShuttingDown && !client->IsZoning())
 				{
 					// avoid spam of messages while we await linkdead to complete
