@@ -2054,7 +2054,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 	}
 		case COMMAND_USEABILITY:{
 			if (sep && sep->arg[0][0] && sep->IsNumber(0)) {
-				if (client->GetPlayer()->GetHP() == 0) {
+				if (!client->GetPlayer()->Alive()) {
 					client->SimpleMessage(CHANNEL_COLOR_RED, "You cannot do that right now.");
 				}
 				else {
@@ -2469,7 +2469,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			int32 choice = 0;
 			if(sep && sep->arg[0] && sep->IsNumber(0))
 				choice = atoul(sep->arg[0]);
-			if(client->GetPlayer()->GetHP() == 0){ //dead and this is a revive request
+			if(!client->GetPlayer()->Alive()){ //dead and this is a revive request
 				client->HandlePlayerRevive(choice);
 			}
 			break;
@@ -4099,7 +4099,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			bool incombat = player->EngagedInCombat();
 			if(sep && sep->arg[0] && sep->IsNumber(0))
 				type = atoi(sep->arg[0]);
-			if(client->GetPlayer()->GetHP() == 0){
+			if(!client->GetPlayer()->Alive()){
 				client->SimpleMessage(CHANNEL_COLOR_RED,"You cannot do that right now.");
 				break;
 			}
@@ -6757,7 +6757,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 	{
 		LogWrite(COMMAND__INFO, 0, "Command", "command: %s", sep->argplus[0]);
 
-		if(client->GetPlayer()->GetHP() == 0)
+		if(!client->GetPlayer()->Alive())
 			client->SimpleMessage(CHANNEL_COLOR_RED,"You cannot do that right now.");
 		else if(sep->arg[1][0] && strncasecmp("destroy", sep->arg[0], 6) == 0 && sep->IsNumber(1))
 		{

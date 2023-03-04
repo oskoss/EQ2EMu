@@ -923,7 +923,7 @@ Skill* Entity::GetSkillByWeaponType(int8 type, int8 damage_type, bool update) {
 }
 
 bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod, bool is_tick, bool no_calcs, bool ignore_attacker, LuaSpell* spell) {
-	if(!victim || victim->GetHP() == 0)
+	if(!victim || !victim->Alive() || victim->GetHP() == 0)
 		return false;
 
 	int8 hit_result = 0;

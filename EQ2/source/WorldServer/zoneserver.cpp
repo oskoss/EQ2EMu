@@ -1994,7 +1994,7 @@ void ZoneServer::ProcessDrowning(){
 				drowning_victims.Get(client) = Timer::GetCurrentTime2() + 2000;
 				damage = player->GetTotalHP()/20 + player->GetInfoStruct()->get_hp_regen();
 				player->TakeDamage(damage);
-				if(player->GetHP() == 0)
+				if(!player->Alive())
 					dead_list.push_back(client);
 				player->SetCharSheetChanged(true);
 				SendCharSheetChanges(client);

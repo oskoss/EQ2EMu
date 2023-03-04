@@ -77,6 +77,7 @@ MasterItemList::MasterItemList(){
 	AddMappedItemStat(ITEM_STAT_TRANSMUTING, std::string("transmuting"));
 	AddMappedItemStat(ITEM_STAT_TRAPPING, std::string("trapping"));
 	AddMappedItemStat(ITEM_STAT_WEAPON_SKILLS, std::string("weapon skills"));
+	AddMappedItemStat(ITEM_STAT_POWER_COST_REDUCTION, std::string("power cost reduction"));
 }
 
 void MasterItemList::AddMappedItemStat(int32 id, std::string lower_case_name)

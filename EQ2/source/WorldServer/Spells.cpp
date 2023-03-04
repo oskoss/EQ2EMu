@@ -1280,6 +1280,17 @@ int16 Spell::GetPowerRequired(Spawn* spawn){
 				}
 			}
 		}
+		
+		float power_reduction = ((Entity*)spawn)->GetStat(ITEM_STAT_POWER_COST_REDUCTION);
+		if(power_reduction > 0.0f) {
+				int16 power_to_reduce = (int16)(float)(power_req * (power_reduction/100.0f));
+				if(power_to_reduce > power_req) {
+					power_req = 0;
+				}
+				else {
+					power_req = power_req - power_to_reduce;
+				}
+		}
 	}
 	return power_req;
 }

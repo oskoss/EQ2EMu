@@ -717,7 +717,9 @@ public:
 	int16 GetQuestsRequiredOverride() {return req_quests_override;}
 	bool GetQuestsRequiredContinuedAccess() {return req_quests_continued_access;}
 
-	bool Alive(){ return GetHP() > 0; }
+	bool Alive(){ return is_alive; }
+	void SetAlive(bool val) { is_alive = val; }
+	
 	int16 GetLevel(){
 		return appearance.level;
 	}
@@ -1403,6 +1405,7 @@ private:
 	Mutex m_GridMutex;
 	bool is_collector;
 	bool scared_by_strong_players;
+	std::atomic<bool> is_alive;
 };
 
 #endif

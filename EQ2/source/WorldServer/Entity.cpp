@@ -908,7 +908,7 @@ void Entity::InCombat(bool val){
 }
 
 void Entity::DoRegenUpdate(){
-	if(GetHP() == 0)//dead
+	if(!Alive() || GetHP() == 0)//dead
 		return;
 	sint32 hp = GetHP();
 	sint32 power = GetPower();
@@ -1633,7 +1633,7 @@ void Entity::AddSpellBonus(LuaSpell* spell, int16 type, float value, int64 class
 	bonus->class_req = class_req;
 	bonus->race_req = race_req;
 	bonus->faction_req = faction_req;
-	bonus->tier = spell ? spell->spell->GetSpellTier() : 0;
+	bonus->tier = (spell && spell->spell) ? spell->spell->GetSpellTier() : 0;
 	bonus_list.Add(bonus);
 
 	if(IsNPC())

@@ -689,19 +689,17 @@ bool IsNumber(const char *num) {
 }
 
 void PrintSep(Seperator *sep, const char *name) {
-#ifdef _DEBUG
 	int32 i = 0;
 
-	LogWrite(MISC__WARNING, 0, "Misc", "Printing sep %s", name ? name : "No Name");
+	LogWrite(MISC__DEBUG, 0, "Misc", "Printing sep %s", name ? name : "No Name");
 	if (!sep)
-		LogWrite(MISC__WARNING, 0, "Misc", "\tSep is null");
+		LogWrite(MISC__DEBUG, 0, "Misc", "\tSep is null");
 	else {
 		while (sep->arg[i] && strlen(sep->arg[i]) > 0) {
-			LogWrite(MISC__WARNING, 0, "Misc", "\t%i => %s", i, sep->arg[i]);
+			LogWrite(MISC__DEBUG, 0, "Misc", "\t%i => %s", i, sep->arg[i]);
 			i++;
 		}
 	}
-#endif
 }
 
 #define INI_IGNORE(c) (c == '\n' || c == '\r' || c == '#')

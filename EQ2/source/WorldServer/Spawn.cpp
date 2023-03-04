@@ -138,6 +138,7 @@ Spawn::Spawn(){
 	is_collector = false;
 	trigger_widget_id = 0;
 	scared_by_strong_players = false;
+	is_alive = true;
 }
 
 Spawn::~Spawn(){
@@ -1386,6 +1387,17 @@ void Spawn::SetHP(sint32 new_val, bool setUpdateFlags){
 	if(new_val == 0){
 		ClearRunningLocations();
 		CalculateRunningLocation(true);
+		
+		if(IsEntity()) {
+			is_alive = false;
+		}
+	}
+	if(IsNPC() && new_val > 0 && !is_alive) {
+		is_alive = true;
+	}
+	else if(IsPlayer() && new_val > 0 && !is_alive) {
+		LogWrite(SPAWN__ERROR, 0, "Spawn", "Cannot change player HP > 0 while dead (%s)!  Player must revive.", GetName());
+		return;
 	}
 	if(new_val > basic_info.max_hp)
 		SetInfo(&basic_info.max_hp, new_val, setUpdateFlags);

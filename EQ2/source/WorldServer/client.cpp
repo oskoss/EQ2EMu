@@ -593,6 +593,11 @@ void Client::HandlePlayerRevive(int32 point_id)
 	string zone_desc;
 	const char* location_name = "Unknown";
 
+	player->SetAlive(true);
+	player->SetResurrecting(true);
+	player->SetHP(player->GetTotalHP());
+	player->SetPower(player->GetTotalPower());
+	
 	//revive at zone safe coords
 	if (!revive_point)
 	{
@@ -616,14 +621,10 @@ void Client::HandlePlayerRevive(int32 point_id)
 		location_name = revive_point->location_name.c_str();
 		Zone(GetCurrentZone()->GetZoneName(), false);
 	}
-
-	player->SetResurrecting(true);
 	player->SetX(x);
 	player->SetY(y);
 	player->SetZ(z);
 	player->SetHeading(heading);
-	player->SetHP(player->GetTotalHP());
-	player->SetPower(player->GetTotalPower());
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Attempt Revive @ %s, %.2f, %.2f, %.2f, %.2f, HP: %i, Pow: %i, %s",
 		zone_desc.c_str(),

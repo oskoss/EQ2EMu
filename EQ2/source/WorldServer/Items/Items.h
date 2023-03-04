@@ -410,6 +410,7 @@ extern MasterItemList master_item_list;
 #define ITEM_STAT_TRANSMUTING  			130
 #define ITEM_STAT_TRAPPING  			131
 #define ITEM_STAT_WEAPON_SKILLS			132
+#define ITEM_STAT_POWER_COST_REDUCTION	133
 
 #define ITEM_STAT_VS_PHYSICAL			200
 #define ITEM_STAT_VS_HEAT				201 //elemental
