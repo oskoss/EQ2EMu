@@ -1188,7 +1188,8 @@ void WorldDatabase::LoadSpiritShards(ZoneServer* zone){
 		shard->SetLocation(atoul(row[32]));
 		shard->SetShardID(atoul(row[33]));
 		shard->SetShardCharID(atoul(row[34]));
-
+		shard->SetAlive(false);
+		
 		const char* script = rule_manager.GetGlobalRule(R_Combat, SpiritShardSpawnScript)->GetString();
 
 		if(script)

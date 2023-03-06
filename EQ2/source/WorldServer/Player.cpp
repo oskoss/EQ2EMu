@@ -6532,6 +6532,7 @@ NPC* Player::InstantiateSpiritShard(float origX, float origY, float origZ, float
 		npc->SetSpawnOrigZ(origZ);
 		npc->SetSpawnOrigHeading(origHeading);
 		npc->SetLocation(origGridID);
+		npc->SetAlive(false);
 		const char* script = rule_manager.GetGlobalRule(R_Combat, SpiritShardSpawnScript)->GetString();
 
 		int32 dbid = database.CreateSpiritShard(newName.c_str(), GetLevel(), GetRace(), GetGender(), GetAdventureClass(), GetModelType(), GetSogaModelType(), 

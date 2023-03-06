@@ -4921,6 +4921,12 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 			client->TargetSpawn(attacker);
 	}
 
+	if(damage_type == DAMAGE_PACKET_DAMAGE_TYPE_FOCUS) {
+		type1 = DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE;
+		damage_type = 0;
+		type2 = DAMAGE_PACKET_RESULT_FOCUS;
+	}
+		
 	vector<Client*>::iterator client_itr;
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
@@ -4969,7 +4975,7 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 			MClientList.releasereadlock(__FUNCTION__, __LINE__);
 			return;
 		}
-
+		
 		if (packet) {
 			if (client->GetVersion() > 546) {
 				packet->setSubstructDataByName("header", "packet_type", type1);

@@ -893,6 +893,10 @@ float Entity::GetDamageTypeResistPercentage(int8 damage_type) {
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "DamageType: Poison (%i), Amt: %.2f", damage_type, ret);
 		break;
 										   }
+	case DAMAGE_PACKET_DAMAGE_TYPE_FOCUS: {
+	   ret = 0.0f;
+		break;
+										  }
 	}
 
 	return ret;
@@ -917,6 +921,8 @@ Skill* Entity::GetSkillByWeaponType(int8 type, int8 damage_type, bool update) {
 	case DAMAGE_PACKET_DAMAGE_TYPE_DISEASE:
 	case DAMAGE_PACKET_DAMAGE_TYPE_POISON:
 		return GetSkillByName("Disruption", update);
+	case DAMAGE_PACKET_DAMAGE_TYPE_FOCUS:
+		return GetSkillByName("Focus", update);
 	}
 
 	return 0;
@@ -945,8 +951,10 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 		//damage = (rand()%((int)(high_damage-low_damage) + low_damage)) + (rand()%((int)(high_damage-low_damage) + low_damage)); 
 
 		//DPS mod is only applied to auto attacks
-		if (type == DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE || type == DAMAGE_PACKET_TYPE_RANGE_DAMAGE ) {
-			damage *= (info_struct.get_dps_multiplier());
+		if (type == DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE || type == DAMAGE_PACKET_TYPE_RANGE_DAMAGE) {
+			if(info_struct.get_dps_multiplier() != 0.0f) {
+				damage *= (info_struct.get_dps_multiplier());
+			}
 		}
 		//Potency and ability mod is only applied to spells/CAs
 		else { 
@@ -1122,6 +1130,9 @@ float Entity::CalculateMitigation(int8 type, int8 damage_type, int16 effective_l
 			break;
 			case DAMAGE_PACKET_DAMAGE_TYPE_CRUSH:
 				mit_to_use += GetInfoStruct()->get_mitigation_skill3(); // crush
+			break;
+			case DAMAGE_PACKET_DAMAGE_TYPE_FOCUS:
+				return 0.0f; // focus cannot be mitigated, just break out of this now
 			break;
 			default:
 			// do nothing
@@ -1725,6 +1736,10 @@ sint32 Entity::CalculateDamageAmount(Spawn* target, sint32 damage, int8 base_typ
 }
 
 sint32 Entity::CalculateDamageAmount(Spawn* target, sint32 damage, int8 base_type, int8 damage_type, int8 target_type) {
+	if(damage_type == DAMAGE_PACKET_RESULT_FOCUS) {
+		return damage; // cannot avoid focus damage
+	}
+	
 	// only spells may add spell damage item stat
 	if(damage_type >= DAMAGE_PACKET_DAMAGE_TYPE_HEAT && damage_type <= DAMAGE_PACKET_DAMAGE_TYPE_POISON)
 	{
