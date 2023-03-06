@@ -1736,7 +1736,7 @@ sint32 Entity::CalculateDamageAmount(Spawn* target, sint32 damage, int8 base_typ
 }
 
 sint32 Entity::CalculateDamageAmount(Spawn* target, sint32 damage, int8 base_type, int8 damage_type, int8 target_type) {
-	if(damage_type == DAMAGE_PACKET_RESULT_FOCUS) {
+	if(damage_type == DAMAGE_PACKET_DAMAGE_TYPE_FOCUS) {
 		return damage; // cannot avoid focus damage
 	}
 	
