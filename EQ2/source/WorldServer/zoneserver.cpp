@@ -4922,7 +4922,6 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 	}
 
 	if(damage_type == DAMAGE_PACKET_DAMAGE_TYPE_FOCUS) {
-		type1 = DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE;
 		damage_type = 0;
 		type2 = DAMAGE_PACKET_RESULT_FOCUS;
 	}

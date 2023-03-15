@@ -411,7 +411,7 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 			if ( m_houseID && client->GetCurrentZone()->GetInstanceType() != Instance_Type::PERSONAL_HOUSE_INSTANCE )
 				ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
 
-			ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, 0);
+			ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetPlayer()->GetID());
 			client->GetCurrentZone()->SendHouseItems(client);
 		}
 		else {

@@ -93,10 +93,16 @@ void ClientPacketFunctions::SendHousingList(Client* client) {
 
 		// this seems to be some kind of timestamp, if we keep updating then in conjunction with upkeep_due
 		// in SendBaseHouseWindow/WS_PlayerHouseBaseScreen being a >0 number we can access 'enter house'
+		
+		int32 upkeep_due = 0;
+
+		if (((sint64)ph->upkeep_due - (sint64)Timer::GetUnixTimeStamp()) > 0)
+			upkeep_due = ph->upkeep_due - Timer::GetUnixTimeStamp();
+		
 		if ( client->GetVersion() >= 63119 )
-			packet->setArrayDataByName("unknown2a", 1, i);
+			packet->setArrayDataByName("unknown2a", 0xFFFFFFFF, i);
 		else
-			packet->setArrayDataByName("unknown2", 1, i);
+			packet->setArrayDataByName("unknown2", 0xFFFFFFFF, i);
 	}
 	client->QueuePacket(packet->serialize());
 	safe_delete(packet);
@@ -118,7 +124,26 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 	if (spawnID)
 		SendHousingList(client);
 
-	PacketStruct* packet = configReader.getStruct("WS_PlayerHouseBaseScreen", client->GetVersion());
+	int32 upkeep_due = 0;
+
+	if (((sint64)ph->upkeep_due - (sint64)Timer::GetUnixTimeStamp()) > 0)
+		upkeep_due = ph->upkeep_due - Timer::GetUnixTimeStamp();
+		
+	// need this to enable the "enter house" button
+	PacketStruct* packet = configReader.getStruct("WS_UpdateHouseAccessDataMsg", client->GetVersion());
+	if(client->GetCurrentZone()->GetInstanceType() != PERSONAL_HOUSE_INSTANCE
+			&& client->GetCurrentZone()->GetInstanceType() != GUILD_HOUSE_INSTANCE) {
+		if (packet) {
+			packet->setDataByName("house_id", 0xFFFFFFFFFFFFFFFF);
+			packet->setDataByName("success",  (upkeep_due > 0) ? 0xFFFFFFFF : 0);
+			packet->setDataByName("unknown2", 0xFFFFFFFF);
+			packet->setDataByName("unknown3", 0xFFFFFFFF);
+		}
+		client->QueuePacket(packet->serialize());
+	}
+	safe_delete(packet);
+		
+	packet = configReader.getStruct("WS_PlayerHouseBaseScreen", client->GetVersion());
 	if (packet) {
 		packet->setDataByName("house_id", ph->unique_id);
 		packet->setDataByName("spawn_id", spawnID);
@@ -127,10 +152,6 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 		packet->setDataByName("zone_name", hz->name.c_str());
 		packet->setDataByName("upkeep_cost_coins", hz->upkeep_coin);
 		packet->setDataByName("upkeep_cost_status", hz->upkeep_status);
-		int32 upkeep_due = 0;
-
-		if (((sint64)ph->upkeep_due - (sint64)Timer::GetUnixTimeStamp()) > 0)
-			upkeep_due = ph->upkeep_due - Timer::GetUnixTimeStamp();
 
 		packet->setDataByName("upkeep_due", upkeep_due);
 
@@ -184,6 +205,7 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 		}
 
 		client->QueuePacket(packet->serialize());
+		safe_delete(packet);
 	}
 
 	safe_delete(packet);

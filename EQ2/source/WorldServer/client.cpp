@@ -752,6 +752,9 @@ void Client::SendCharInfo() {
 	//sending bad spawn packet?
 
 	//SendAchievementsList();
+	//if (version > 546)
+		//ClientPacketFunctions::SendHousingList(this);
+	
 	ClientPacketFunctions::SendCharacterSheet(this);
 	ClientPacketFunctions::SendTraitList(this);// moved from below
 	ClientPacketFunctions::SendAbilities(this);
@@ -880,9 +883,6 @@ void Client::SendCharInfo() {
 				SetHasOwnerOrEditAccess(true);
 		}
 	}
-
-	if (version > 546)
-		ClientPacketFunctions::SendHousingList(this);
 	
 	bool groupMentor = false;
 	GetPlayer()->group_id = rejoin_group_id;

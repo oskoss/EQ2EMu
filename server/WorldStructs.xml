@@ -18531,7 +18531,7 @@ to zero and treated like placeholders." />
  </Data> 
 </Struct>
 <Struct Name="WS_UpdateHouseAccessDataMsg" ClientVersion="1" OpcodeName="OP_UpdateHouseAccessDataMsg">
-  <Data ElementName="unknown" Type="int8" Size="4" />
+  <Data ElementName="success" Type="int32"/>
   <Data ElementName="house_id" Type="int64" />
   <Data ElementName="unknown2" Type="int32" />
   <Data ElementName="unknown3" Type="int32" />
