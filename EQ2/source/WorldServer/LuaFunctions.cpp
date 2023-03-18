@@ -4771,15 +4771,74 @@ int EQ2Emu_lua_AddSpellBookEntry(lua_State* state) {
 		}
 	}
 	return 0;
-
-
-
-
-
-
-
-
 }
+
+int EQ2Emu_lua_DeleteSpellBook(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	int8 type_selection = lua_interface->GetInt8Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	if (player && player->IsPlayer()) {
+		Client* client = player->GetClient();
+		if (client) {
+			((Player*)player)->DeleteSpellBook(type_selection);
+			EQ2Packet* outapp = ((Player*)player)->GetSpellBookUpdatePacket(client->GetVersion());
+			if (outapp)
+				client->QueuePacket(outapp);
+		}
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_SendNewAdventureSpells(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
+	if (player && player->IsPlayer()) {
+		Client* client = player->GetClient();
+		if (client) {
+			client->SendNewAdventureSpells();
+		}
+	}
+	return 0;
+}
+
+
+int EQ2Emu_lua_SendNewTradeskillSpells(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	lua_interface->ResetFunctionStack(state);
+	if (player && player->IsPlayer()) {
+		Client* client = player->GetClient();
+		if (client) {
+			client->SendNewTradeskillSpells();
+		}
+	}
+	return 0;
+}
+
+int EQ2Emu_lua_RemoveSpellBookEntry(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	int32 spellid = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	if (player && player->IsPlayer()) {
+		SpellBookEntry* sbe = ((Player*)player)->GetSpellBookSpell(spellid);
+		Client* client = player->GetClient();
+		if (sbe && client) {
+			((Player*)player)->RemoveSpellBookEntry(spellid);
+			EQ2Packet* outapp = ((Player*)player)->GetSpellBookUpdatePacket(client->GetVersion());
+			if (outapp)
+				client->QueuePacket(outapp);
+		}
+	}
+	return 0;
+}
+
 
 int EQ2Emu_lua_HasFreeSlot(lua_State* state) {
 	if (!lua_interface)
@@ -6256,6 +6315,7 @@ int EQ2Emu_lua_AddWard(lua_State* state) {
 			spell->had_triggers = true;
 			spell->cancel_after_all_triggers = false;
 			ward->MaxHitCount = maxHitCount;
+			ward->RoundTriggered = false;
 
 			if (wardType == WARD_TYPE_MAGICAL)
 				ward->DamageType = damageTypes;

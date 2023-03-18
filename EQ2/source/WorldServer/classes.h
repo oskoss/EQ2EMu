@@ -96,6 +96,7 @@ using namespace std;
 	//52 - jeweler
 	//53 - sage
 	//54 - alch
+#define MAX_CLASSES		58
 
 class Classes {
 public:

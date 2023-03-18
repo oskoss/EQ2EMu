@@ -2025,6 +2025,9 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 	while (m_wardList.size() > 0 && damage > 0) {
 		// Get the ward with the lowest base damage
 		for (itr = m_wardList.begin(); itr != m_wardList.end(); itr++) {
+			if(itr->second->RoundTriggered)
+				continue;
+			
 			if (!ward || itr->second->BaseDamage < ward->BaseDamage) {
 				if ((itr->second->AbsorbAllDamage || itr->second->DamageLeft > 0) &&
 					(itr->second->WardType == WARD_TYPE_ALL ||
@@ -2130,7 +2133,8 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 
 		bool shouldRemoveSpell = false;
 		ward->HitCount++; // increment hit count
-
+		ward->RoundTriggered = true;
+		
 		if (ward->MaxHitCount && spell->num_triggers)
 		{
 			spell->num_triggers--;
@@ -2148,6 +2152,10 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 
 		// Reset ward pointer
 		ward = 0;
+	}
+	
+	for (itr = m_wardList.begin(); itr != m_wardList.end(); itr++) {
+		itr->second->RoundTriggered = false;
 	}
 
 	return damage;

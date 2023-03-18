@@ -1104,6 +1104,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "ToggleTracking", EQ2Emu_lua_ToggleTracking);
 	lua_register(state, "AddPrimaryEntityCommand", EQ2Emu_lua_AddPrimaryEntityCommand);
 	lua_register(state, "AddSpellBookEntry", EQ2Emu_lua_AddSpellBookEntry);
+	lua_register(state, "DeleteSpellBook", EQ2Emu_lua_DeleteSpellBook);
+	lua_register(state, "RemoveSpellBookEntry", EQ2Emu_lua_RemoveSpellBookEntry);
+	lua_register(state, "SendNewAdventureSpells", EQ2Emu_lua_SendNewAdventureSpells);
+	lua_register(state, "SendNewTradeskillSpells", EQ2Emu_lua_SendNewTradeskillSpells);
 	lua_register(state, "HasSpell", EQ2Emu_lua_HasSpell);
 	lua_register(state, "Interrupt", EQ2Emu_lua_Interrupt);
 	lua_register(state, "Stealth", EQ2Emu_lua_Stealth);

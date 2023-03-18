@@ -11860,7 +11860,7 @@ void Commands::Command_CurePlayer(Client* client, Seperator* sep)
 						entry = client->GetPlayer()->GetSpellBookSpell(rule_manager.GetGlobalRule(R_Spells, CureSpellID)->GetInt32()); // cure
 					}
 					
-					if(entry) {
+					if(entry && entry->spell_id) {
 						Spell* spell = master_spell_list.GetSpell(entry->spell_id, entry->tier);
 						target->GetZone()->ProcessSpell(spell, (Entity*)client->GetPlayer(), target, true, false);
 						successful_spell = true;

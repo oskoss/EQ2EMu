@@ -4673,10 +4673,7 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	if (!player->get_character_flag(CF_ENABLE_CHANGE_LASTNAME) && new_level >= rule_manager.GetGlobalRule(R_Player, MinLastNameLevel)->GetInt8())
 		player->set_character_flag(CF_ENABLE_CHANGE_LASTNAME);
 
-	SendNewSpells(player->GetAdventureClass());
-	SendNewSpells(classes.GetBaseClass(player->GetAdventureClass()));
-	SendNewSpells(classes.GetSecondaryBaseClass(player->GetAdventureClass()));
-
+	SendNewAdventureSpells();
 
 	GetPlayer()->ChangePrimaryWeapon();
 	GetPlayer()->ChangeSecondaryWeapon();
@@ -4835,10 +4832,10 @@ void Client::ChangeTSLevel(int16 old_level, int16 new_level) {
 		QueuePacket(level_update->serialize());
 		safe_delete(level_update);
 	}
-	// Need to make tradeskill versions of the following
-	//SendNewSpells(player->GetAdventureClass());
-	//SendNewSpells(classes.GetBaseClass(player->GetAdventureClass()));
-	//SendNewSpells(classes.GetSecondaryBaseClass(player->GetAdventureClass()));
+	
+	// provide new spells upon levelling
+	SendNewTradeskillSpells();
+	
 	PacketStruct* command_packet = configReader.getStruct("WS_CannedEmote", GetVersion());
 	if (command_packet) {
 		command_packet->setDataByName("spawn_id", GetPlayer()->GetIDWithPlayerSpawn(GetPlayer()));
@@ -9094,26 +9091,38 @@ void Client::ProcessTeleportLocation(EQApplicationPacket* app) {
 void Client::SendNewSpells(int8 class_id) {
 	if (class_id > 0) {
 		vector<Spell*>* spells = master_spell_list.GetSpellListByAdventureClass(class_id, player->GetLevel(), 1);
-		vector<Spell*>::iterator itr;
-		Spell* spell = 0;
-		bool send_updates = false;
-		for (itr = spells->begin(); itr != spells->end(); itr++) {
-			spell = *itr;
-			if (spell && !player->HasSpell(spell->GetSpellID(), spell->GetSpellTier(), true) && spell->GetSpellData()->lua_script.length() > 0) {
-				send_updates = true;
-				SendSpellUpdate(spell);
-				player->AddSpellBookEntry(spell->GetSpellID(), spell->GetSpellTier(), player->GetFreeSpellBookSlot(spell->GetSpellData()->spell_book_type), spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
-				player->UnlockSpell(spell);
-			}
-		}
-		if (send_updates) {
-			EQ2Packet* outapp = player->GetSpellBookUpdatePacket(GetVersion());
-			if (outapp)
-				QueuePacket(outapp);
-		}
+		AddSendNewSpells(spells);
 		safe_delete(spells);
 	}
 
+}
+
+void Client::SendNewTSSpells(int8 class_id) {
+	if (class_id > 0) {
+		vector<Spell*>* spells = master_spell_list.GetSpellListByTradeskillClass(class_id, player->GetLevel(), 1);
+		AddSendNewSpells(spells);
+		safe_delete(spells);
+	}
+}
+
+void Client::AddSendNewSpells(vector<Spell*>* spells) {
+	Spell* spell = 0;
+	bool send_updates = false;
+	vector<Spell*>::iterator itr;
+	for (itr = spells->begin(); itr != spells->end(); itr++) {
+		spell = *itr;
+		if (spell && !player->HasSpell(spell->GetSpellID(), spell->GetSpellTier(), true) && spell->GetSpellData()->lua_script.length() > 0) {
+			send_updates = true;
+			SendSpellUpdate(spell);
+			player->AddSpellBookEntry(spell->GetSpellID(), spell->GetSpellTier(), player->GetFreeSpellBookSlot(spell->GetSpellData()->spell_book_type), spell->GetSpellData()->spell_book_type, spell->GetSpellData()->linked_timer, true);
+			player->UnlockSpell(spell);
+		}
+	}
+	if (send_updates) {
+		EQ2Packet* outapp = player->GetSpellBookUpdatePacket(GetVersion());
+		if (outapp)
+			QueuePacket(outapp);
+	}
 }
 
 void Client::SetItemSearch(vector<Item*>* items) {
@@ -11786,4 +11795,24 @@ bool Client::IsLinkdeadTimerEnabled() {
 	}
 	
 	return false;
+}
+
+void Client::SendNewAdventureSpells() {
+	SendNewSpells(player->GetAdventureClass());
+	int8 base_class = classes.GetBaseClass(player->GetAdventureClass());
+	int secondary_class = classes.GetSecondaryBaseClass(player->GetAdventureClass());
+	if(base_class != player->GetAdventureClass()) {
+		SendNewSpells(base_class);
+	}
+	if(secondary_class != player->GetAdventureClass() && secondary_class != base_class) {
+		SendNewSpells(secondary_class);
+	}
+}
+
+void Client::SendNewTradeskillSpells() {
+	SendNewTSSpells(player->GetTradeskillClass());
+	int8 secondary_class = classes.GetSecondaryTSBaseClass(player->GetTradeskillClass());
+	if(secondary_class != player->GetTradeskillClass()) { 
+		SendNewTSSpells(secondary_class);
+	}
 }

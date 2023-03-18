@@ -2247,11 +2247,28 @@ void MasterSpellList::DestroySpells(){
 		}
 	}
 	spell_list.clear();
+	for(int i=0;i<MAX_CLASSES;i++) {
+		class_spell_list[i].clear();
+	}
 	MMasterSpellList.unlock();
 }
 void MasterSpellList::AddSpell(int32 id, int8 tier, Spell* spell){
 	MMasterSpellList.lock();
 	spell_list[id][tier] = spell;
+	
+	vector<LevelArray*>* levels = spell->GetSpellLevels();
+	LevelArray* level = 0;
+	vector<LevelArray*>::iterator level_itr;
+	for(level_itr = levels->begin(); level_itr != levels->end(); level_itr++){
+		level = *level_itr;
+		if(level->adventure_class && level->adventure_class < MAX_CLASSES){
+			class_spell_list[level->adventure_class][id][tier] = spell;
+		}
+		if(level->tradeskill_class && level->tradeskill_class < MAX_CLASSES) {
+			class_spell_list[level->tradeskill_class][id][tier] = spell;
+		}
+	}
+	
 	spell_name_map[spell->GetName()] = spell;
 	spell_soecrc_map[spell->GetSpellData()->soe_spell_crc] = spell;
 
@@ -2360,6 +2377,10 @@ EQ2Packet* MasterSpellList::GetSpecialSpellPacket(int32 id, int8 tier, Client* c
 
 vector<Spell*>* MasterSpellList::GetSpellListByAdventureClass(int8 class_id, int16 max_level, int8 max_tier){
 	vector<Spell*>* ret = new vector<Spell*>;
+	if(class_id >= MAX_CLASSES) {
+		return ret;
+	}
+	
 	Spell* spell = 0;
 	vector<LevelArray*>* levels = 0;
 	LevelArray* level = 0;
@@ -2368,10 +2389,11 @@ vector<Spell*>* MasterSpellList::GetSpellListByAdventureClass(int8 class_id, int
 	map<int32, map<int32, Spell*> >::iterator iter;
 	map<int32, Spell*>::iterator iter2;
 	max_level *= 10; //convert to client level format, which is 10 times higher
-	for(iter = spell_list.begin();iter != spell_list.end(); iter++){
+	for(iter = class_spell_list[class_id].begin();iter != class_spell_list[class_id].end(); iter++){
 		for(iter2 = iter->second.begin();iter2 != iter->second.end(); iter2++){
 			spell = iter2->second;
-			if(iter2->first <= max_tier && spell && spell->GetSpellData()->given_by_type != GivenByType::GivenBy_SpellScroll){
+			if(iter2->first <= max_tier && spell && spell->GetSpellData()->given_by_type != GivenByType::GivenBy_SpellScroll && 
+				spell->GetSpellData()->given_by_type != GivenByType::GivenBy_TradeskillClass){
 				levels = spell->GetSpellLevels();
 				for(level_itr = levels->begin(); level_itr != levels->end(); level_itr++){
 					level = *level_itr;
@@ -2389,6 +2411,10 @@ vector<Spell*>* MasterSpellList::GetSpellListByAdventureClass(int8 class_id, int
 
 vector<Spell*>* MasterSpellList::GetSpellListByTradeskillClass(int8 class_id, int16 max_level, int8 max_tier){
 	vector<Spell*>* ret = new vector<Spell*>;
+	if(class_id >= MAX_CLASSES) {
+		return ret;
+	}
+	
 	Spell* spell = 0;
 	vector<LevelArray*>* levels = 0;
 	LevelArray* level = 0;
@@ -2396,10 +2422,10 @@ vector<Spell*>* MasterSpellList::GetSpellListByTradeskillClass(int8 class_id, in
 	MMasterSpellList.lock();
 	map<int32, map<int32, Spell*> >::iterator iter;
 	map<int32, Spell*>::iterator iter2;
-	for(iter = spell_list.begin();iter != spell_list.end(); iter++){
+	for(iter = class_spell_list[class_id].begin();iter != class_spell_list[class_id].end(); iter++){
 		for(iter2 = iter->second.begin();iter2 != iter->second.end(); iter2++){
 			spell = iter2->second;
-			if(iter2->first <= max_tier && spell && spell->GetSpellData()->given_by_type != GivenByType::GivenBy_SpellScroll){
+			if(iter2->first <= max_tier && spell && spell->GetSpellData()->given_by_type == GivenByType::GivenBy_TradeskillClass){
 				levels = spell->GetSpellLevels();
 				for(level_itr = levels->begin(); level_itr != levels->end(); level_itr++){
 					level = *level_itr;

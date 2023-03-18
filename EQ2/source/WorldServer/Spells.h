@@ -27,6 +27,7 @@
 #include "../common/EQPacket.h"
 #include "../common/MiscFunctions.h"
 #include "client.h"
+#include "classes.h"
 #include "../common/Mutex.h"
 #include "AltAdvancement/AltAdvancement.h"
 
@@ -394,6 +395,7 @@ public:
 	void DestroySpells();
 	map<string, Spell*> spell_name_map;
 	map<int32, map<int32, Spell* > > spell_list;
+	map<int32, map<int32, Spell* > > class_spell_list[MAX_CLASSES];
 	map<int32, Spell*> spell_soecrc_map;
 	Spell* GetSpell(int32 id, int8 tier);
 	vector<Spell*>* GetSpellListByAdventureClass(int8 class_id, int16 max_level, int8 max_tier);

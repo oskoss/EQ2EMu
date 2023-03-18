@@ -2137,6 +2137,40 @@ void Player::AddSpellBookEntry(int32 spell_id, int8 tier, sint32 slot, int32 typ
 		AddPassiveSpell(spell_id, tier);
 }
 
+void Player::DeleteSpellBook(int8 type_selection){
+	MSpellsBook.lock();
+	vector<SpellBookEntry*>::iterator itr;
+	SpellBookEntry* spell = 0;
+	for(itr = spells.begin(); itr != spells.end();){
+		spell = *itr;
+		if((type_selection & DELETE_TRADESKILLS) == 0 && spell->type == SPELL_BOOK_TYPE_TRADESKILL) {
+			itr++;
+			continue;
+		}
+		else if((type_selection & DELETE_SPELLS) == 0 && spell->type == SPELL_BOOK_TYPE_SPELL) {
+			itr++;
+			continue;
+		}
+		else if((type_selection & DELETE_COMBAT_ART) == 0 && spell->type == SPELL_BOOK_TYPE_COMBAT_ART) {
+			itr++;
+			continue;
+		}
+		else if((type_selection & DELETE_ABILITY) == 0 && spell->type == SPELL_BOOK_TYPE_ABILITY) {
+			itr++;
+			continue;
+		}
+		else if((type_selection & DELETE_NOT_SHOWN) == 0 && spell->type == SPELL_BOOK_TYPE_NOT_SHOWN) {
+			itr++;
+			continue;
+		}
+		database.DeleteCharacterSpell(GetCharacterID(), spell->spell_id);
+		if (spell->type == SPELL_BOOK_TYPE_NOT_SHOWN)
+			RemovePassive(spell->spell_id, spell->tier, true);
+		itr = spells.erase(itr);
+	}
+	MSpellsBook.unlock();
+}
+
 void Player::RemoveSpellBookEntry(int32 spell_id, bool remove_passives_from_list){
 	MSpellsBook.lock();
 	vector<SpellBookEntry*>::iterator itr;
@@ -2758,7 +2792,6 @@ EQ2Packet* Player::GetSpellBookUpdatePacket(int16 version) {
 		int32 total_bytes = packet2->GetTotalPacketSize();
 		safe_delete(packet2);
 		packet->setArrayLengthByName("spell_count", count);
-		
 		if (count > 0) {
 			if (count > spell_count) {
 				uchar* tmp = 0;

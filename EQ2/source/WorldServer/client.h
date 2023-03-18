@@ -360,7 +360,8 @@ public:
 	void	SendChatRelationship(int8 type, const char* name);
 	void	SendFriendList();
 	void	SendIgnoreList();
-	void	SendNewSpells(int8 class_id);
+	void	SendNewAdventureSpells();
+	void	SendNewTradeskillSpells();
 	string	GetCoinMessage(int32 total_coins);
 	void	SetItemSearch(vector<Item*>* items);
 	vector<Item*>* GetSearchItems();
@@ -589,6 +590,11 @@ private:
 	void	GiveQuestReward(Quest* quest, bool has_displayed = false);
 	void	SetStepComplete(int32 quest_id, int32 step);
 	void	AddStepProgress(int32 quest_id, int32 step, int32 progress);
+	
+	void	SendNewSpells(int8 class_id);
+	void	SendNewTSSpells(int8 class_id);
+	void	AddSendNewSpells(vector<Spell*>* spells);
+	
 	map<int32, map<int32, int32> > quest_pending_updates;
 	vector<QueuedQuest*> quest_queue;
 	vector<QuestRewardData*> quest_pending_reward;

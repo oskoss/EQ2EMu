@@ -844,6 +844,15 @@ public:
 			pending_item_rewards.clear();
 		}
 	}
+	
+	enum DELETE_BOOK_TYPE {
+		DELETE_TRADESKILLS = 1,
+		DELETE_SPELLS = 2,
+		DELETE_COMBAT_ART = 4,
+		DELETE_ABILITY = 8,
+		DELETE_NOT_SHOWN = 16
+	};
+	void DeleteSpellBook(int8 type_selection = 0);
 	void RemoveSpellBookEntry(int32 spell_id, bool remove_passives_from_list = true);
 	void ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 maxlvl_only, int32 book_type);
 	void GetSpellBookSlotSort(int32 pattern, int32* i, int8* page_book_count, int32* last_start_point);

@@ -1168,6 +1168,8 @@ struct WardInfo {
 	int32		MaxHitCount;
 
 	bool		AbsorbAllDamage; // damage is always absorbed, usually spells based on hits, when we pass damage in AddWard as 0 this will be set to true
+	
+	bool		RoundTriggered;
 };
 
 #define WARD_TYPE_ALL 0
