@@ -2137,7 +2137,7 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 			ClientPacketFunctions::SendMaintainedExamineUpdate(spell->caster->GetZone()->GetClientBySpawn(spell->caster), spell->slot_pos, spell->num_triggers, 0);
 		}
 		
-		if (ward->HitCount >= ward->MaxHitCount) // there isn't a max hit requirement with the hit count, so just go based on hit count
+		if (ward->MaxHitCount && ward->HitCount >= ward->MaxHitCount) // there isn't a max hit requirement with the hit count, so just go based on hit count
 			shouldRemoveSpell = true;
 
 		if (shouldRemoveSpell && !hasSpellBeenRemoved)
