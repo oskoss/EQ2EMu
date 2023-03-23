@@ -396,16 +396,29 @@ Quest::Quest(Quest* old_quest){
 }
 
 Quest::~Quest(){
+	
+	MQuestSteps.lock();
 	for(int32 i=0;i<quest_steps.size();i++)
 		safe_delete(quest_steps[i]);
+	quest_steps.clear();
+	MQuestSteps.unlock();
+	
 	for(int32 i=0;i<prereq_items.size();i++)
 		safe_delete(prereq_items[i]);
+	prereq_items.clear();
+	
 	for(int32 i=0;i<reward_items.size();i++)
 		safe_delete(reward_items[i]);
+	reward_items.clear();
+	
 	for(int32 i=0;i<tmp_reward_items.size();i++)
 		safe_delete(tmp_reward_items[i]);
+	tmp_reward_items.clear();
+	
 	for(int32 i=0;i<selectable_reward_items.size();i++)
 		safe_delete(selectable_reward_items[i]);
+	selectable_reward_items.clear();
+	
 	quest_step_map.clear();
 	task_group_order.clear();
 	task_group.clear();

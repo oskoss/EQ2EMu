@@ -136,9 +136,12 @@ Player::~Player(){
 	for (itr = player_spawn_quests_required.begin(); itr != player_spawn_quests_required.end(); itr++){
 		safe_delete(itr->second);
 	}
+	player_spawn_quests_required.clear();
+	
 	for (itr = player_spawn_history_required.begin(); itr != player_spawn_history_required.end(); itr++){
 		safe_delete(itr->second);
 	}
+	player_spawn_history_required.clear();
 
 	map<int8, map<int8, vector<HistoryData*> > >::iterator itr1;
 	map<int8, vector<HistoryData*> >::iterator itr2;
@@ -153,6 +156,7 @@ Player::~Player(){
 			}
 		}
 	}
+	m_characterHistory.clear();
 
 	mLUAHistory.writelock();
 	map<int32, LUAHistory*>::iterator itr4;
