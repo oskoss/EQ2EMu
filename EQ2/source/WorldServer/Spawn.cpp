@@ -1448,13 +1448,13 @@ void Spawn::SetTotalHP(sint32 new_val){
 
 	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer()) {
 		Player* player = (Player*)((NPC*)this)->GetOwner();
-		if (player->GetPet() && player->GetCharmedPet()) {
+		if (basic_info.max_hp && player->GetPet() && player->GetCharmedPet()) {
 			if (this == player->GetPet()) {
 				player->GetInfoStruct()->set_pet_health_pct((float)basic_info.cur_hp / (float)basic_info.max_hp);
 				player->SetCharSheetChanged(true);
 			}
 		}
-		else {
+		else if(basic_info.max_hp) {
 			player->GetInfoStruct()->set_pet_health_pct((float)basic_info.cur_hp / (float)basic_info.max_hp);
 			player->SetCharSheetChanged(true);
 		}
