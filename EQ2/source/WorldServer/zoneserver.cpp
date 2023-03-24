@@ -1841,7 +1841,7 @@ void ZoneServer::SaveClients(){
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (itr = clients.begin(); itr != clients.end(); itr++) {
 		client = *itr;
-		if(client->IsConnected()){
+		if(client->IsConnected() && client->IsReadyForUpdates()){
 			SaveClient(client);	
 		}
 	}
