@@ -175,6 +175,7 @@ PlayerRecipeList::~PlayerRecipeList(){
 }
 
 bool PlayerRecipeList::AddRecipe(Recipe *recipe){
+    std::unique_lock lock(player_recipe_mutex);
 	assert(recipe);
 
 	if(recipes.count(recipe->GetID()) == 0){
@@ -185,17 +186,29 @@ bool PlayerRecipeList::AddRecipe(Recipe *recipe){
 }
 
 Recipe * PlayerRecipeList::GetRecipe(int32 recipe_id){
+    std::shared_lock lock(player_recipe_mutex);
 	if (recipes.count(recipe_id) > 0)
 		return recipes[recipe_id];
 	return 0;
 }
 
 void PlayerRecipeList::ClearRecipes(){
+    std::unique_lock lock(player_recipe_mutex);
 	map<int32, Recipe *>::iterator itr;
 
 	for (itr = recipes.begin(); itr != recipes.end(); itr++)
 		safe_delete(itr->second);
 	recipes.clear();
+}
+
+bool PlayerRecipeList::RemoveRecipe(int32 recipe_id) {
+    std::unique_lock lock(player_recipe_mutex);
+	bool ret = false;
+	if (recipes.count(recipe_id) > 0) {
+		recipes.erase(recipe_id);
+		ret = true;
+	}
+	return ret;
 }
 
 MasterRecipeBookList::MasterRecipeBookList(){

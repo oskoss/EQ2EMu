@@ -6625,8 +6625,7 @@ void Player::SaveSpellEffects()
 			if(caster_char_id == 0)
 				continue;
 			
-			Query effectSave;
-			effectSave.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, 
+			savedEffects.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, 
 			"insert into character_spell_effects (name, caster_char_id, target_char_id, target_type, db_effect_type, spell_id, effect_slot, slot_pos, icon, icon_backdrop, conc_used, tier, total_time, expire_timestamp, lua_file, custom_spell, charid, damage_remaining, effect_bitmask, num_triggers, had_triggers, cancel_after_triggers, crit, last_spellattack_hit, interrupted, resisted, custom_function) values ('%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %u, '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s')", 
 			database.getSafeEscapeString(info->spell_effects[i].spell->spell->GetName()).c_str(), caster_char_id,
 			target_char_id,  0 /*no target_type for spell_effects*/, DB_TYPE_SPELLEFFECTS /* db_effect_type for spell_effects */, info->spell_effects[i].spell->spell->IsCopiedSpell() ? info->spell_effects[i].spell->spell->GetSpellData()->inherited_spell_id : info->spell_effects[i].spell_id, i, info->spell_effects[i].spell->slot_pos, 
@@ -6654,8 +6653,7 @@ void Player::SaveSpellEffects()
 			int32 timestamp = 0xFFFFFFFF;
 			if(!info->maintained_effects[i].spell->spell->GetSpellData()->duration_until_cancel)
 				timestamp = info->maintained_effects[i].expire_timestamp - Timer::GetCurrentTime2();
-			Query effectSave;
-			effectSave.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, 
+			savedEffects.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, 
 			"insert into character_spell_effects (name, caster_char_id, target_char_id, target_type, db_effect_type, spell_id, effect_slot, slot_pos, icon, icon_backdrop, conc_used, tier, total_time, expire_timestamp, lua_file, custom_spell, charid, damage_remaining, effect_bitmask, num_triggers, had_triggers, cancel_after_triggers, crit, last_spellattack_hit, interrupted, resisted, custom_function) values ('%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %u, '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s')", 
 			database.getSafeEscapeString(info->maintained_effects[i].name).c_str(), caster_char_id, target_char_id,  info->maintained_effects[i].target_type, DB_TYPE_MAINTAINEDEFFECTS /* db_effect_type for maintained_effects */, info->maintained_effects[i].spell->spell->IsCopiedSpell() ? info->maintained_effects[i].spell->spell->GetSpellData()->inherited_spell_id : info->maintained_effects[i].spell_id, i, info->maintained_effects[i].slot_pos, 
 			info->maintained_effects[i].icon, info->maintained_effects[i].icon_backdrop, info->maintained_effects[i].conc_used, info->maintained_effects[i].tier, 
@@ -6720,10 +6718,8 @@ void Player::SaveSpellEffects()
 				firstTarget = false;
 			}
 			info->maintained_effects[i].spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
-			if(!firstTarget)
-			{
-				Query targetSave;
-				targetSave.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, insertTargets.c_str());
+			if(!firstTarget) {
+				savedEffects.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, insertTargets.c_str());
 			}
 		}
 	}

@@ -13410,9 +13410,11 @@ int EQ2Emu_lua_DamageEquippedItems(lua_State* state) {
 	
 	if (!spawn) {
 		lua_interface->LogError("%s: LUA DamageEquippedItems command error: spawn is not valid", lua_interface->GetScriptName(state));
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 
+	lua_interface->ResetFunctionStack(state);
 	if (spawn->IsPlayer()) {
 		if (((Player*)spawn)->GetClient() && ((Player*)spawn)->DamageEquippedItems(damage_amount, ((Player*)spawn)->GetClient()))
 			lua_interface->SetBooleanValue(state, true);
@@ -13433,6 +13435,7 @@ int EQ2Emu_lua_CreateWidgetRegion(lua_State* state) {
 	RegionMap* region_map = world.GetRegionMap(std::string(zone->GetZoneFile()), version);
 	if(region_map == nullptr) {
 		lua_interface->LogError("%s: LUA CreateWidgetRegion command error: region map is not valid for version %u", lua_interface->GetScriptName(state), version);
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	string region_name = lua_interface->GetStringValue(state, 3);
@@ -13455,6 +13458,7 @@ int EQ2Emu_lua_RemoveRegion(lua_State* state) {
 	RegionMap* region_map = world.GetRegionMap(std::string(zone->GetZoneFile()), version);
 	if(region_map == nullptr) {
 		lua_interface->LogError("%s: LUA RemoveRegion command error: region map is not valid for version %u", lua_interface->GetScriptName(state), version);
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	string region_name = lua_interface->GetStringValue(state, 3);
@@ -13473,12 +13477,14 @@ int EQ2Emu_lua_SetPlayerPOVGhost(lua_State* state) {
 	if (!player) {
 		lua_interface->LogError("LUA SetPlayerPOVGhost command error: spawn is not valid");
 		lua_interface->SetBooleanValue(state, false);
+		lua_interface->ResetFunctionStack(state);
 		return 1;
 	}
 
 	if (!player->IsPlayer()) {
 		lua_interface->LogError("LUA SetPlayerPOVGhost command error: spawn is not a player");
 		lua_interface->SetBooleanValue(state, false);
+		lua_interface->ResetFunctionStack(state);
 		return 1;
 	}
 
@@ -13487,6 +13493,7 @@ int EQ2Emu_lua_SetPlayerPOVGhost(lua_State* state) {
 	if (!client) {
 		lua_interface->LogError("LUA SetPlayerPOVGhost command error: could not find client");
 		lua_interface->SetBooleanValue(state, false);
+		lua_interface->ResetFunctionStack(state);
 		return 1;
 	}
 	
@@ -13547,3 +13554,66 @@ int EQ2Emu_lua_IsCastOnAggroComplete(lua_State* state) {
 
 	return 1;
 }
+
+int EQ2Emu_lua_AddRecipeBookToPlayer(lua_State* state) {
+	Client* client = nullptr;
+	Spawn* player = lua_interface->GetSpawn(state);
+	int32 recipe_book_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	if (!player) {
+		lua_interface->LogError("LUA AddRecipeBookToPlayer command error: spawn is not valid");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("LUA AddRecipeBookToPlayer command error: spawn is not a player");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	client = player->GetClient();
+
+	if (!client) {
+		lua_interface->LogError("LUA AddRecipeBookToPlayer command error: could not find client");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	
+	bool result = client->AddRecipeBookToPlayer(recipe_book_id);
+
+	lua_interface->SetBooleanValue(state, result);
+	return 1;
+}
+
+int EQ2Emu_lua_RemoveRecipeFromPlayer(lua_State* state) {
+	Client* client = nullptr;
+	Spawn* player = lua_interface->GetSpawn(state);
+	int32 recipe_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	if (!player) {
+		lua_interface->LogError("LUA RemoveRecipeFromPlayer command error: spawn is not valid");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("LUA RemoveRecipeFromPlayer command error: spawn is not a player");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	client = player->GetClient();
+
+	if (!client) {
+		lua_interface->LogError("LUA RemoveRecipeFromPlayer command error: could not find client");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	
+	bool result = client->RemoveRecipeFromPlayer(recipe_id);
+
+	lua_interface->SetBooleanValue(state, result);
+	return 1;
+}
+

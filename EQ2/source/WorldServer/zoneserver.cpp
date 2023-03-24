@@ -3331,6 +3331,8 @@ void ZoneServer::RemoveClient(Client* client)
 		LogWrite(ZONE__INFO, 0, "Zone", "Scheduling client '%s' for removal.", client->GetPlayer()->GetName());
 		database.ToggleCharacterOnline(client, 0);
 		
+		client->SaveSpells();
+		
 		client->GetPlayer()->DeleteSpellEffects(true);
 		
 		RemoveSpawn(client->GetPlayer(), false, true, true, true, true);

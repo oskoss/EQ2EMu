@@ -2680,6 +2680,7 @@ void WorldDatabase::SaveCharacterQuestProgress(Client* client, Quest* quest){
 	vector<QuestStep*>* steps = quest->GetQuestSteps();
 	vector<QuestStep*>::iterator itr;
 	QuestStep* step = 0;
+	quest->MQuestSteps.readlock(__FUNCTION__, __LINE__);
 	if(steps){
 		for(itr = steps->begin(); itr != steps->end(); itr++){
 			step = *itr;
@@ -2687,6 +2688,8 @@ void WorldDatabase::SaveCharacterQuestProgress(Client* client, Quest* quest){
 				query.RunQuery2(Q_REPLACE, "replace into character_quest_progress (char_id, quest_id, step_id, progress) values(%u, %u, %u, %i)", client->GetCharacterID(), quest->GetQuestID(), step->GetStepID(), step->GetQuestCurrentQuantity());
 		}
 	}
+	quest->MQuestSteps.releasereadlock(__FUNCTION__, __LINE__);
+	
 	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
 		LogWrite(WORLD__ERROR, 0, "World", "Error in SaveCharacterQuestProgress query '%s': %s", query.GetQuery(), query.GetError());
 }

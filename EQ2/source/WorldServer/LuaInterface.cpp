@@ -1495,6 +1495,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	lua_register(state, "SetCastOnAggroComplete", EQ2Emu_lua_SetCastOnAggroComplete);
 	lua_register(state, "IsCastOnAggroComplete", EQ2Emu_lua_IsCastOnAggroComplete);
+	
+	lua_register(state, "AddRecipeBookToPlayer", EQ2Emu_lua_AddRecipeBookToPlayer);
+	lua_register(state, "RemoveRecipeFromPlayer", EQ2Emu_lua_RemoveRecipeFromPlayer);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

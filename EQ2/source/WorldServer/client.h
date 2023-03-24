@@ -571,7 +571,6 @@ public:
 	void	UpdateCharacterRewardData(QuestRewardData* data);
 	void	SetQuestUpdateState(bool val) { quest_updates = val; }
 	
-	void	AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i);
 	
 	bool	SetPlayerPOVGhost(Spawn* spawn);
 	
@@ -584,7 +583,13 @@ public:
 	
 	void	StartLinkdeadTimer();
 	bool	IsLinkdeadTimerEnabled();
+	
+	bool	AddRecipeBookToPlayer(int32 recipe_id, Item* item = nullptr);
+	bool	RemoveRecipeFromPlayer(int32 recipe_id);
+	
+	void	SaveSpells();
 private:
+	void	AddRecipeToPlayerPack(Recipe* recipe, PacketStruct* packet, int16* i);
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
 	void	GiveQuestReward(Quest* quest, bool has_displayed = false);
@@ -685,7 +690,7 @@ private:
 	IncomingPaperdollImage incoming_paperdoll;
 	int32 transmuteID;
 
-	bool m_recipeListSent;
+	std::atomic<bool> m_recipeListSent;
 	bool initial_spawns_sent;
 	bool should_load_spells;
 

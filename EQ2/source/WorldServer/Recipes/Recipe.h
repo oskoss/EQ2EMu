@@ -237,12 +237,14 @@ public:
 	bool AddRecipe(Recipe *recipe);
 	Recipe * GetRecipe(int32 recipe_id);
 	void ClearRecipes();
+	bool RemoveRecipe(int32 recipe_id);
 	int32 Size();
 
 	map<int32, Recipe *> * GetRecipes() {return &recipes;}
 
 private:
 	map<int32, Recipe *> recipes;
+	mutable std::shared_mutex player_recipe_mutex;
 };
 
 class PlayerRecipeBookList {

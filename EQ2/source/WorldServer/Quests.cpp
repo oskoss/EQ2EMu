@@ -401,6 +401,7 @@ Quest::~Quest(){
 	for(int32 i=0;i<quest_steps.size();i++)
 		safe_delete(quest_steps[i]);
 	quest_steps.clear();
+	quest_step_map.clear();
 	MQuestSteps.unlock();
 	
 	for(int32 i=0;i<prereq_items.size();i++)
@@ -418,8 +419,7 @@ Quest::~Quest(){
 	for(int32 i=0;i<selectable_reward_items.size();i++)
 		safe_delete(selectable_reward_items[i]);
 	selectable_reward_items.clear();
-	
-	quest_step_map.clear();
+
 	task_group_order.clear();
 	task_group.clear();
 	complete_actions.clear();

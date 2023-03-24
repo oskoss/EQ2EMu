@@ -16309,7 +16309,7 @@ to zero and treated like placeholders." />
 	</Data>
 </Struct>
 <Struct Name="WS_RecipeList" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_RecipeList">
-<Data ElementName="unknown" Type="int8" Size="1" />
+<Data ElementName="command_type" Type="int8" Size="1" />
 <Data ElementName="num_recipes" Type="int16" Size="1" />
 <Data ElementName="recipe_array" Type="Array" ArraySizeVariable="num_recipes">
   <Data ElementName="id" Type="int32" Size="1" />
@@ -16327,7 +16327,7 @@ to zero and treated like placeholders." />
 </Data>
 </Struct>
 <Struct Name="WS_RecipeList" ClientVersion="60085" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_RecipeList">
-<Data ElementName="unknown" Type="int8" Size="1" />
+<Data ElementName="command_type" Type="int8" Size="1" />
 <Data ElementName="num_recipes" Type="int16" Size="1" />
 <Data ElementName="recipe_array" Type="Array" ArraySizeVariable="num_recipes">
   <Data ElementName="recipe_id" Type="int32" Size="1" />

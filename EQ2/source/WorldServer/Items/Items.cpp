@@ -3706,13 +3706,19 @@ bool PlayerItemList::AddOverflowItem(Item* item) {
 }
 
 Item* PlayerItemList::GetOverflowItem() {
+	if(overflowItems.empty()) {
+		return nullptr;
+	}
+	
 	return overflowItems.at(0);
 }
 
 void PlayerItemList::RemoveOverflowItem(Item* item) {
 	MPlayerItems.writelock(__FUNCTION__, __LINE__);
 	vector<Item*>::iterator itr = std::find(overflowItems.begin(), overflowItems.end(), item);
-	overflowItems.erase(itr);
+	if(itr != overflowItems.end()) {
+		overflowItems.erase(itr);
+	}
 	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 }
 

@@ -328,9 +328,9 @@ public:
 	bool				CanDeleteQuest() { return can_delete_quest; }
 	
 	bool				CanShareQuestCriteria(Client* quest_sharer, bool display_client_msg = true);
+	Mutex				MQuestSteps;
 protected:
 	bool				needs_save;
-	Mutex				MQuestSteps;
 	Mutex				MCompletedActions;
 	Mutex               MProgressActions;
 	Mutex				MFailedActions;

@@ -118,6 +118,7 @@ extern Chat chat;
 extern MasterAAList master_aa_list;
 extern MasterAAList master_tree_nodes;
 extern ChestTrapList chest_trap_list;
+extern MasterRecipeBookList master_recipebook_list;
 
 using namespace std;
 
@@ -4293,10 +4294,8 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords, bool is_spell) {
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Removing player from fighting...", __FUNCTION__);
 	//GetCurrentZone()->GetCombat()->RemoveHate(player);
-	MSaveSpellStateMutex.lock();
-	player->SaveSpellEffects();
-	player->SetSaveSpellEffects(true);
-	MSaveSpellStateMutex.unlock();
+	SaveSpells();
+	
 	ResetSendMail();
 	// Remove players pet from zone if there is one
 	((Entity*)player)->DismissAllPets();
@@ -10070,11 +10069,11 @@ void Client::AcceptCollectionRewards(Collection* collection, int32 selectable_it
 }
 
 void Client::SendRecipeList() {
-	PacketStruct* packet = 0;
-	if (GetRecipeListSent()) {
+	if(GetRecipeListSent()) {
 		return;
 	}
-
+	
+	PacketStruct* packet = 0;
 	if (!(packet = configReader.getStruct("WS_RecipeList", version))) {
 		return;
 	}
@@ -10093,7 +10092,8 @@ void Client::SendRecipeList() {
 		else
 			devices.push_back(recipe->GetDevice());
 	}
-	
+
+	packet->setDataByName("command_type", 0);
 	packet->setArrayLengthByName("num_recipes", recipes->size());
 	for (itr = recipes->begin(); itr != recipes->end(); itr++) {
 		recipe = itr->second;
@@ -10139,7 +10139,6 @@ void Client::SendRecipeList() {
 	//DumpPacket(packet->serialize());
 	QueuePacket(packet->serialize());
 	safe_delete(packet);
-
 	SetRecipeListSent(true);
 }
 
@@ -11614,7 +11613,7 @@ void Client::UpdateCharacterRewardData(QuestRewardData* data) {
 	}
 }
 
-void Client::AddRecipeToPlayer(Recipe* recipe, PacketStruct* packet, int16* i) {
+void Client::AddRecipeToPlayerPack(Recipe* recipe, PacketStruct* packet, int16* i) {
 	
 	
 	int  index = 0;
@@ -11815,4 +11814,161 @@ void Client::SendNewTradeskillSpells() {
 	if(secondary_class != player->GetTradeskillClass()) { 
 		SendNewTSSpells(secondary_class);
 	}
+}
+
+bool Client::AddRecipeBookToPlayer(int32 recipe_book_id, Item* item) {
+	Recipe* master_recipe = master_recipebook_list.GetRecipeBooks(recipe_book_id);
+	
+	if(master_recipe) {
+		Recipe* recipe_book = new Recipe(master_recipe);
+		// if valid recipe book and the player doesn't have it
+		if (recipe_book && recipe_book->GetLevel() > GetPlayer()->GetTSLevel()) {
+			if(item) {
+				Message(CHANNEL_NARRATIVE, "Your tradeskill level is not high enough to scribe this book.");
+			}
+			safe_delete(recipe_book);
+		}
+		else if(recipe_book && item && !recipe_book->CanUseRecipeByClass(item, GetPlayer()->GetTradeskillClass())) {
+			if(item) {
+				Message(CHANNEL_NARRATIVE, "Your tradeskill class cannot use this recipe.");
+			}
+			safe_delete(recipe_book);
+		}
+		else if (recipe_book && (!item || !(GetPlayer()->GetRecipeBookList()->HasRecipeBook(recipe_book_id)))){
+			LogWrite(PLAYER__ERROR, 0, "Recipe", "Valid recipe book that the player doesn't have");
+			// Add recipe book to the players list
+			if(!GetPlayer()->GetRecipeBookList()->HasRecipeBook(recipe_book_id)) {
+				GetPlayer()->GetRecipeBookList()->AddRecipeBook(recipe_book);
+			}
+
+			// Get a list of all recipes this book contains
+			vector<Recipe*> recipes = master_recipe_list.GetRecipes(recipe_book->GetBookName());
+			LogWrite(PLAYER__ERROR, 0, "Recipe", "%i recipes found for %s book", recipes.size(), recipe_book->GetBookName());
+
+			if (recipes.empty() && item && item->recipebook_info) {
+				//Backup I guess if the recipe book is empty for whatever reason?
+				for (auto& itr : item->recipebook_info->recipes) {
+					Recipe* r = master_recipe_list.GetRecipe(itr);   //GetRecipeByName(itr.c_str());
+					if (r) {
+						recipes.push_back(r);
+					}
+				}
+			}
+			
+			//Filter out duplicate recipes the player already has
+			for (auto itr = recipes.begin(); itr != recipes.end();) {
+				Recipe* recipe = *itr;
+				if (GetPlayer()->GetRecipeList()->GetRecipe(recipe->GetID())) {
+					itr = recipes.erase(itr);
+				}
+				else itr++;
+			}
+
+			int16 i = 0;
+			// Create the packet to send to update the players recipe list
+			PacketStruct* packet = 0;
+			if (!recipes.empty() && GetRecipeListSent()) {
+				packet = configReader.getStruct("WS_RecipeList", GetVersion());
+				if (packet) {
+					packet->setArrayLengthByName("num_recipes", recipes.size());
+				}
+			}
+
+			for (int32 r = 0; r < recipes.size(); r++) {
+				Recipe* recipe = recipes[r];
+				if (recipe) {
+					Recipe* player_recipe = new Recipe(recipe);
+					AddRecipeToPlayerPack(player_recipe, packet, &i);
+				}
+			}
+
+			LogWrite(TRADESKILL__DEBUG, 0, "Recipe", "Done adding recipes");
+			database.SavePlayerRecipeBook(GetPlayer(), recipe_book->GetBookID());
+			if(item) {
+				database.DeleteItem(GetCharacterID(), item, 0);
+				GetPlayer()->item_list.RemoveItem(item, true);
+			}
+			QueuePacket(GetPlayer()->SendInventoryUpdate(GetVersion()));
+
+			SetRecipeListSent(false);
+			SendRecipeList();
+			safe_delete(packet);
+			return true;
+		}
+		else {
+			if (recipe_book && item) {
+				Message(CHANNEL_NARRATIVE, "You have already learned all you can from this item.");
+			}
+			safe_delete(recipe_book);
+		}
+	}
+	else {
+			LogWrite(PLAYER__ERROR, 0, "Player", "%u recipe book id does not exist.  Cannot AddRecipeToPlayer.", recipe_book_id);
+	}
+	return false;
+}
+
+
+bool Client::RemoveRecipeFromPlayer(int32 recipe_id) {
+	PlayerRecipeList* prl = GetPlayer()->GetRecipeList();
+	
+	PacketStruct* packet = configReader.getStruct("WS_RecipeList", version);
+	Recipe* recipe = prl->GetRecipe(recipe_id);
+	int8 level = player->GetTSLevel();
+	if(packet && recipe) {
+		packet->setDataByName("command_type", 1);
+		packet->setArrayLengthByName("num_recipes", 1);
+		int32 myid = recipe->GetID();
+		int8 rlevel = recipe->GetLevel();
+		int8 even = level - level * .05 + .5;
+		int8 easymin = level - level * .25 + .5;
+		int8 veasymin = level - level * .35 + .5;
+		if (rlevel > level )
+			packet->setArrayDataByName("tier", 4, 0);
+		else if ((rlevel <= level) & (rlevel >= even))
+			packet->setArrayDataByName("tier", 3, 0);
+		else if ((rlevel <= even) & (rlevel >= easymin))
+			packet->setArrayDataByName("tier", 2, 0);
+		else if ((rlevel <= easymin) & (rlevel >= veasymin))
+			packet->setArrayDataByName("tier", 1, 0);
+		else if ((rlevel <= veasymin) & (rlevel >= 0))
+			packet->setArrayDataByName("tier", 0, 0);
+		if (rlevel == 2)
+			int xxx = 1;
+		packet->setArrayDataByName("recipe_id", myid, 0);
+		packet->setArrayDataByName("level", recipe->GetLevel(), 0);
+		packet->setArrayDataByName("unknown1", recipe->GetLevel(), 0);
+		packet->setArrayDataByName("icon", recipe->GetIcon(), 0);
+		packet->setArrayDataByName("classes", recipe->GetClasses(), 0);
+		packet->setArrayDataByName("technique", recipe->GetTechnique(), 0);
+		packet->setArrayDataByName("knowledge", recipe->GetKnowledge(), 0);
+
+		
+		auto recipe_device = std::find(devices.begin(), devices.end(), recipe->GetDevice());
+		if (recipe_device != devices.end())
+			packet->setArrayDataByName("device_type", recipe_device - devices.begin(), 0);
+		else
+		{//TODO error should never get here
+		}
+		packet->setArrayDataByName("device_sub_type", recipe->GetDevice_Sub_Type(), 0);
+		packet->setArrayDataByName("recipe_name", recipe->GetName(), 0);
+		packet->setArrayDataByName("recipe_book", recipe->GetBook(), 0);
+		packet->setArrayDataByName("unknown3", recipe->GetUnknown3(), 0);
+	QueuePacket(packet->serialize());
+	}
+	safe_delete(packet);
+	
+	bool res = prl->RemoveRecipe(recipe_id);
+	if(res) {
+		Query query;
+		query.AddQueryAsync(GetCharacterID(), &database, Q_DELETE, "DELETE FROM character_recipes where char_id=%u and recipe_id=%u", GetCharacterID(), recipe_id);
+	}
+	return res;
+}
+
+void Client::SaveSpells() {
+	MSaveSpellStateMutex.lock();
+	player->SaveSpellEffects();
+	player->SetSaveSpellEffects(true);
+	MSaveSpellStateMutex.unlock();	
 }
