@@ -4906,12 +4906,6 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 	if (dead->IsNPC())
 		((NPC*)dead)->Brain()->ClearHate();
 
-	// ResetPetInfo() is called in DismissPet(), might not need to be here
-
-	// Players pet is killed, clear the pet info from char sheet
-	/*if (dead->IsNPC() && ((NPC*)dead)->IsPet() && ((NPC*)dead)->GetOwner()->IsPlayer())
-		((Player*)((NPC*)dead)->GetOwner())->ResetPetInfo();*/
-
 	safe_delete(encounter);
 }
 

@@ -131,7 +131,7 @@ void Brain::Think() {
 				m_body->InCombat(false);
 
 				// Do not set a players pet to full health once they stop combat
-				if (!m_body->IsPet() || (m_body->IsPet() && !m_body->GetOwner()->IsPlayer()))
+				if (!m_body->IsPet() || (m_body->IsPet() && m_body->GetOwner() && !m_body->GetOwner()->IsPlayer()))
 					m_body->SetHP(m_body->GetTotalHP());
 			}
 
@@ -463,7 +463,7 @@ bool Brain::HasRecovered() {
 void Brain::AddToEncounter(Entity* entity) {
 
 	// If player pet then set the entity to the pets owner
-	if (entity->IsPet() && ((NPC*)entity)->GetOwner()->IsPlayer())
+	if (entity->IsPet() && ((NPC*)entity)->GetOwner() && ((NPC*)entity)->GetOwner()->IsPlayer())
 		entity = ((NPC*)entity)->GetOwner();
 
 	// If player or bot then get the group
@@ -611,7 +611,7 @@ void CombatPetBrain::Think() {
 	LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "Pet AI code called for %s", GetBody()->GetName());
 
 	// If owner is a player and player has stay set then return out
-	if (GetBody()->GetOwner()->IsPlayer() && ((Player*)GetBody()->GetOwner())->GetInfoStruct()->get_pet_movement() == 1)
+	if (GetBody()->GetOwner() && GetBody()->GetOwner()->IsPlayer() && ((Player*)GetBody()->GetOwner())->GetInfoStruct()->get_pet_movement() == 1)
 		return;
 
 	// Set target to owner

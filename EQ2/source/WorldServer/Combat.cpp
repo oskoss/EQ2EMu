@@ -1170,7 +1170,7 @@ void Entity::AddHate(Entity* attacker, sint32 hate) {
 		return;
 
 	// If a players pet and protect self is off
-	if (IsPet() && ((NPC*)this)->GetOwner()->IsPlayer() && ((((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->get_pet_behavior() & 2) == 0))
+	if (IsPet() && ((NPC*)this)->GetOwner() && ((NPC*)this)->GetOwner()->IsPlayer() && ((((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->get_pet_behavior() & 2) == 0))
 		return;
 
 	hate = attacker->CalculateHateAmount(this, hate);
@@ -1304,7 +1304,7 @@ void Entity::KillSpawn(Spawn* dead, int8 type, int8 damage_type, int16 kill_blow
 	/* just for sake of not knowing if we are in a read lock, write lock, or no lock
 	**  say spawnlist is locked (DismissPet arg 3 true), which means RemoveSpawn will remove the id from the spawn_list outside of the potential lock
 	*/
-	if (dead->IsPet())
+	if (dead->IsPet() && ((NPC*)dead)->GetOwner())
 		((NPC*)dead)->GetOwner()->DismissPet((NPC*)dead, true, true);
 	else if (dead->IsEntity()) {
 		// remove all pets for this entity
@@ -1414,10 +1414,10 @@ void Player::ProcessCombat() {
 	combat_target = 0;
 
 	if (Target->HasTarget()) {
-		if (Target->IsPlayer() || (Target->IsNPC() && Target->IsPet() && ((NPC*)Target)->GetOwner()->IsPlayer())){
+		if (Target->IsPlayer() || (Target->IsNPC() && Target->IsPet() && ((NPC*)Target)->GetOwner() && ((NPC*)Target)->GetOwner()->IsPlayer())){
 			Spawn* secondary_target = Target->GetTarget();
 			if (secondary_target->IsNPC() && secondary_target->appearance.attackable) {
-				if (!secondary_target->IsPet() || (secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner()->IsNPC())) {
+				if (!secondary_target->IsPet() || (secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner() && ((NPC*)secondary_target)->GetOwner()->IsNPC())) {
 					combat_target = secondary_target;
 				}
 			}

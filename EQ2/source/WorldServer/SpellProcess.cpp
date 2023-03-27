@@ -1298,7 +1298,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 				if (target->IsPet())
 				{
-					if (((NPC*)target)->GetOwner()->IsNPC())
+					if (((NPC*)target)->GetOwner() && ((NPC*)target)->GetOwner()->IsNPC())
 					{
 						zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_A_FRIEND);
 						lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
@@ -2045,14 +2045,14 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 					if (data->friendly_spell) {
 						//if target is NPC (and not a bot) on friendly spell, check to see if target is friendly
 						if (target->IsNPC() && !((Entity*)target)->GetInfoStruct()->get_friendly_target_npc() && !target->IsBot()) {
-							if (!target->IsPet() || (target->IsPet() && ((NPC*)target)->GetOwner()->IsNPC())) {
+							if (!target->IsPet() || (target->IsPet() && ((NPC*)target)->GetOwner() && ((NPC*)target)->GetOwner()->IsNPC())) {
 								if (secondary_target && secondary_target->IsPlayer()) {
 									target = secondary_target;
 									luaspell->initial_target = target->GetID();
 									luaspell->initial_target_char_id = (target && target->IsPlayer()) ? ((Player*)target)->GetCharacterID() : 0;
 									AddLuaSpellTarget(luaspell, target->GetID());
 								}
-								else if (secondary_target && secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner()->IsPlayer())
+								else if (secondary_target && secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner() && ((NPC*)secondary_target)->GetOwner()->IsPlayer())
 									implied = true;
 							}
 							else if (target->IsPet() && ((Entity*)target)->GetOwner()->IsPlayer())
@@ -2064,9 +2064,9 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						}
 					}   // if spell is not friendly
 					else {   // check if there is an implied target for this non-friendly spell
-						if (target->IsPlayer() || (target->IsPet() && ((NPC*)target)->GetOwner()->IsPlayer())) {
+						if (target->IsPlayer() || (target->IsPet() && ((NPC*)target)->GetOwner() && ((NPC*)target)->GetOwner()->IsPlayer())) {
 							if (secondary_target && secondary_target->IsNPC()) {
-								if (!secondary_target->IsPet() || (secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner()->IsNPC())) {
+								if (!secondary_target->IsPet() || (secondary_target->IsPet() && ((NPC*)secondary_target)->GetOwner() && ((NPC*)secondary_target)->GetOwner()->IsNPC())) {
 									implied = true;
 								}
 							}
@@ -2094,7 +2094,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 			else if (caster->IsPlayer()) {
 				if (data->friendly_spell) {
 					if (target->IsNPC() && !target->IsBot()) {
-						if (!((Entity*)target)->GetInfoStruct()->get_friendly_target_npc() && (!target->IsPet() || (target->IsPet() && ((NPC*)target)->GetOwner()->IsNPC()))) {
+						if (!((Entity*)target)->GetInfoStruct()->get_friendly_target_npc() && (!target->IsPet() || (target->IsPet() && ((NPC*)target)->GetOwner() && ((NPC*)target)->GetOwner()->IsNPC()))) {
 							target = caster;
 							luaspell->initial_target = caster->GetID();
 							luaspell->initial_target_char_id = (caster && caster->IsPlayer()) ? ((Player*)caster)->GetCharacterID() : 0;
