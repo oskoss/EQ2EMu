@@ -3322,6 +3322,8 @@ void ZoneServer::RemoveClient(Client* client)
 
 		client->SaveSpells();
 		
+		client->GetPlayer()->DeleteSpellEffects(true);
+		
 		if(dismissPets) {
 				((Entity*)client->GetPlayer())->DismissAllPets();
 		}
@@ -3337,8 +3339,6 @@ void ZoneServer::RemoveClient(Client* client)
 
 		LogWrite(ZONE__INFO, 0, "Zone", "Scheduling client '%s' for removal.", client->GetPlayer()->GetName());
 		database.ToggleCharacterOnline(client, 0);
-		
-		client->GetPlayer()->DeleteSpellEffects(true);
 		
 		RemoveSpawn(client->GetPlayer(), false, true, true, true, true);
 		connected_clients.Remove(client, true, DisconnectClientTimer); // changed from a hardcoded 30000 (30 sec) to the DisconnectClientTimer rule
