@@ -53,7 +53,13 @@ Brain::~Brain() {
 }
 
 void Brain::Think() {
-
+	if (m_body->IsPet() && m_body->GetOwner() && m_body->GetOwner()->IsPlayer()) {
+		Player* player = (Player*)m_body->GetOwner();
+		if(player->GetInfoStruct()->get_pet_id() == 0) {
+			player->GetInfoStruct()->set_pet_id(player->GetIDWithPlayerSpawn(m_body));
+			player->SetCharSheetChanged(true);
+		}
+	}
 	// Get the entity this NPC hates the most,
 	// GetMostHated() will handle dead spawns so no need to check the health in this function
 	Entity* target = GetMostHated();

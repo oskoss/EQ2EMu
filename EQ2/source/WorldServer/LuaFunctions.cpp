@@ -5329,15 +5329,6 @@ int EQ2Emu_lua_SummonPet(lua_State* state) {
 	pet->SetZ(spawn->GetZ());
 	pet->SetLocation(spawn->GetLocation());
 	pet->SetHeading(spawn->GetHeading());
-	spawn->GetZone()->AddSpawn(pet);
-
-	
-	const char* spawn_script = world.GetSpawnScript(pet_id);
-	if(spawn_script && lua_interface->GetSpawnScript(spawn_script) != 0){
-		spawn->SetSpawnScript(string(spawn_script));
-		spawn->GetZone()->CallSpawnScript(spawn, SPAWN_SCRIPT_SPAWN);
-	}
-
 
 	std::string petName = std::string("");
 	if(spawn->IsEntity()) {
@@ -5402,6 +5393,21 @@ int EQ2Emu_lua_SummonPet(lua_State* state) {
 	}
 	// Add the "Pet Options" entity command to the pet
 	pet->AddSecondaryEntityCommand("Pet Options", 10.0f, "petoptions", "", 0, 0);
+	
+	const char* spawn_script = world.GetSpawnScript(pet_id);
+	bool runScript = false;
+	if(spawn_script && lua_interface->GetSpawnScript(spawn_script) != 0){
+		runScript = true;
+		pet->SetSpawnScript(string(spawn_script));
+		spawn->GetZone()->CallSpawnScript(pet, SPAWN_SCRIPT_PRESPAWN);
+	}
+	
+	spawn->GetZone()->AddSpawn(pet);
+	
+	if(runScript){
+		spawn->GetZone()->CallSpawnScript(pet, SPAWN_SCRIPT_SPAWN);
+	}
+	
 	// Set the pet as the return value for this function
 	lua_interface->SetSpawnValue(state, pet);
 	return 1;

@@ -3652,6 +3652,9 @@ bool Entity::SetInfoStructFloat(std::string field, float value)
 Entity*	Entity::GetOwner() {
 	Entity* ent = nullptr;
 
+	if(!GetZone()) {
+		return ent;
+	}
 	Spawn* spawn = GetZone()->GetSpawnByID(owner);
 	if ( spawn && spawn->IsEntity() )
 		ent = (Entity*)spawn;

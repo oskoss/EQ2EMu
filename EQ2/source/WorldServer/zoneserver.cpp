@@ -3256,6 +3256,7 @@ void ZoneServer::RemoveClient(Client* client)
 {
 	Guild *guild;
 
+	bool dismissPets = false;
 	if(client)
 	{			
 		if (client->GetPlayer()) 
@@ -3304,7 +3305,7 @@ void ZoneServer::RemoveClient(Client* client)
 				LogWrite(ZONE__DEBUG, 0, "Zone", "Removing client '%s' (%u) due to Camp/Quit...", client->GetPlayer()->GetName(), client->GetPlayer()->GetCharacterID());
 			}
 				
-				((Entity*)client->GetPlayer())->DismissAllPets();
+				dismissPets = true;
 			//}
 		}
 		else
@@ -3319,6 +3320,12 @@ void ZoneServer::RemoveClient(Client* client)
 				((Bot*)spawn)->Camp();
 		}
 
+		client->SaveSpells();
+		
+		if(dismissPets) {
+				((Entity*)client->GetPlayer())->DismissAllPets();
+		}
+		
 		MClientList.writelock(__FUNCTION__, __LINE__);
 		LogWrite(ZONE__DEBUG, 0, "Zone", "Calling clients.Remove(client)...");
 		UpdateClientSpawnMap(client->GetPlayer(), 0); // address spawn map being prematurely cleared when client list is active
@@ -3330,8 +3337,6 @@ void ZoneServer::RemoveClient(Client* client)
 
 		LogWrite(ZONE__INFO, 0, "Zone", "Scheduling client '%s' for removal.", client->GetPlayer()->GetName());
 		database.ToggleCharacterOnline(client, 0);
-		
-		client->SaveSpells();
 		
 		client->GetPlayer()->DeleteSpellEffects(true);
 		

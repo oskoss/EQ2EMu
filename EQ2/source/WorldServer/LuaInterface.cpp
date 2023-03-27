@@ -598,7 +598,7 @@ std::string LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, boo
 			Spawn* new_target = spell->caster->GetZone()->GetSpawnByID(spell->initial_target);
 			SetSpawnValue(spell->state, new_target);
 		}
-				else if(spell->caster && spell->caster->GetTarget())
+		else if(spell->caster && spell->caster->GetTarget())
 			SetSpawnValue(spell->state, spell->caster->GetTarget());
 		else
 			SetSpawnValue(spell->state, 0);

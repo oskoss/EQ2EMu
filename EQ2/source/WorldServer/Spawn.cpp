@@ -457,10 +457,6 @@ void Spawn::InitializeFooterPacketData(Player* player, PacketStruct* footer) {
 
 EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, int32 value, int16 offset2, int16 offset3, int16 offset4, int32 value2) {
 	// If spawn is NPC AND is pet && owner is a player && owner is the player passed to this function && player's char sheet pet id is 0
-	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer() && player == ((NPC*)this)->GetOwner() && player->GetInfoStruct()->get_pet_id() == 0) {
-		((Player*)((NPC*)this)->GetOwner())->GetInfoStruct()->set_pet_id(player->spawn_id);
-		player->SetCharSheetChanged(true);
-	}
 	m_Update.writelock(__FUNCTION__, __LINE__);
 
 	int16 index = 0;
@@ -1416,7 +1412,7 @@ void Spawn::SetHP(sint32 new_val, bool setUpdateFlags){
 	if ( IsPlayer() && new_val == 0 ) // fixes on death not showing hp update for players
 		((Player*)this)->SetCharSheetChanged(true);
 
-	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer()) {
+	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner() && ((NPC*)this)->GetOwner()->IsPlayer()) {
 		Player* player = (Player*)((NPC*)this)->GetOwner();
 		if (player->GetPet() && player->GetCharmedPet()) {
 			if (this == player->GetPet()) {
@@ -1446,7 +1442,7 @@ void Spawn::SetTotalHP(sint32 new_val){
 			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
 	}
 
-	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer()) {
+	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner() != nullptr && ((NPC*)this)->GetOwner()->IsPlayer()) {
 		Player* player = (Player*)((NPC*)this)->GetOwner();
 		if (basic_info.max_hp && player->GetPet() && player->GetCharmedPet()) {
 			if (this == player->GetPet()) {
@@ -1505,7 +1501,7 @@ void Spawn::SetPower(sint32 power, bool setUpdateFlags){
 			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
 	}
 
-	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer()) {
+	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner() != nullptr && ((NPC*)this)->GetOwner()->IsPlayer()) {
 		Player* player = (Player*)((NPC*)this)->GetOwner();
 		if (player->GetPet() && player->GetCharmedPet()) {
 			if (this == player->GetPet()) {
@@ -1536,7 +1532,7 @@ void Spawn::SetTotalPower(sint32 new_val)
 			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
 	}
 
-	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner()->IsPlayer()) {
+	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner() != nullptr && ((NPC*)this)->GetOwner()->IsPlayer()) {
 		Player* player = (Player*)((NPC*)this)->GetOwner();
 		if (player->GetPet() && player->GetCharmedPet()) {
 			if (this == player->GetPet()) {
