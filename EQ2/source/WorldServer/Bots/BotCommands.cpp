@@ -549,7 +549,7 @@ void Commands::Command_Bot_Spawn(Client* client, Seperator* sep) {
 				bot->SetPower(25 * bot->GetLevel() + 1);
 			}
 			bot->SetOwner(client->GetPlayer());
-			bot->ChangePrimaryWeapon();
+			bot->UpdateWeapons();
 			bot->CalculateBonuses();
 			bot->GetNewSpells();
 			client->GetCurrentZone()->AddSpawn(bot);

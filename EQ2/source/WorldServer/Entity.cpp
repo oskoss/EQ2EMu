@@ -790,6 +790,12 @@ void Entity::ChangeRangedWeapon(){
 	}
 }
 
+void Entity::UpdateWeapons() {
+	ChangePrimaryWeapon();
+	ChangeSecondaryWeapon();
+	ChangeRangedWeapon();
+}
+
 int32 Entity::GetStrengthDamage() {
 	int32 str_offset = 1;
 	if(IsNPC()) {

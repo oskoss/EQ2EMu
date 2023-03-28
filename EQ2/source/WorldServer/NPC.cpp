@@ -95,8 +95,7 @@ NPC::NPC(NPC* old_npc){
 		CalculateBonuses();	
 		SetHP(GetTotalHP());
 		SetPower(GetTotalPower());
-		ChangePrimaryWeapon();
-		ChangeSecondaryWeapon();
+		UpdateWeapons();
 		SetSoundsDisabled(old_npc->IsSoundsDisabled());
 		SetFlyingCreature();
 		SetWaterCreature();

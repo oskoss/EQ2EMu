@@ -665,11 +665,8 @@ void Bot::ChangeLevel(int16 old_level, int16 new_level) {
 	//SendNewSpells(classes.GetBaseClass(player->GetAdventureClass()));
 	//SendNewSpells(classes.GetSecondaryBaseClass(player->GetAdventureClass()));
 
-
-	ChangePrimaryWeapon();
-	ChangeSecondaryWeapon();
-	ChangeRangedWeapon();
 	GetInfoStruct()->set_level(new_level);
+	UpdateWeapons();
 	// GetPlayer()->SetLevel(new_level);
 
 	LogWrite(MISC__TODO, 1, "TODO", "Get new HP/POWER/stat based on default values from DB\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);

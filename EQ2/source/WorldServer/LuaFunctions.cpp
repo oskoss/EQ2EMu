@@ -5364,6 +5364,9 @@ int EQ2Emu_lua_SummonPet(lua_State* state) {
 		pet->SetLevel(spawn->GetLevel());
 	// Set the max level this pet can reach
 	((NPC*)pet)->SetMaxPetLevel(max_level);
+	
+	((NPC*)pet)->UpdateWeapons();
+	
 	// Set the faction of the pet to the same faction as the owner
 	pet->SetFactionID(spawn->GetFactionID());
 	// Set the spawn as a pet

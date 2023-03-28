@@ -1376,6 +1376,7 @@ public:
 	void	ChangePrimaryWeapon();
 	void	ChangeSecondaryWeapon();
 	void	ChangeRangedWeapon();
+	void	UpdateWeapons();
 	int32	GetStrengthDamage();
 	virtual Skill*	GetSkillByName(const char* name, bool check_update = false);
 	virtual Skill*	GetSkillByID(int32 id, bool check_update = false);

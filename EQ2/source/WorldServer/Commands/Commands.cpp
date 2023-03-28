@@ -6818,9 +6818,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 						client->QueuePacket(outapp);
 				}
 
-				client->GetPlayer()->ChangePrimaryWeapon();
-				client->GetPlayer()->ChangeSecondaryWeapon();
-				client->GetPlayer()->ChangeRangedWeapon();
+				client->GetPlayer()->UpdateWeapons();
 				EQ2Packet* characterSheetPackets = client->GetPlayer()->GetPlayerInfo()->serialize(client->GetVersion());
 				client->QueuePacket(characterSheetPackets);
 			}
