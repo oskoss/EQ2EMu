@@ -643,7 +643,7 @@ public:
 	}
 	int32 GetIDWithPlayerSpawn(Spawn* spawn){
 		int32 id = 0;
-
+	
 		index_mutex.readlock(__FUNCTION__, __LINE__);
 		if (player_spawn_reverse_id_map.count(spawn) > 0)
 			id = player_spawn_reverse_id_map[spawn];

@@ -3924,6 +3924,9 @@ bool Client::Summon(const char* search_name) {
 				target->SetSpawnOrigHeading(target->GetHeading());
 			}
 			target->SetLocation(GetPlayer()->GetLocation());
+			if(target->IsNPC()) {
+					((NPC*)target)->HaltMovement();
+			}
 		}
 		else if (target)
 			Message(CHANNEL_COLOR_RED, "Error: You cannot summon yourself!");

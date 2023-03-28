@@ -10784,24 +10784,39 @@ void Commands::Command_LeaveChannel(Client *client, Seperator *sep) {
 void Commands::Command_WeaponStats(Client* client)
 {
 	Player* player = client->GetPlayer();
-
+	Spawn* target = player->GetTarget();
+	
 	Item* primary = player->GetEquipmentList()->GetItem(EQ2_PRIMARY_SLOT);
 	Item* secondary = player->GetEquipmentList()->GetItem(EQ2_SECONDARY_SLOT);
 	Item* ranged = player->GetEquipmentList()->GetItem(EQ2_RANGE_SLOT);
+	const char* charName = player->GetName();
+	if(target && target->IsEntity()) {
+		primary = ((Entity*)target)->GetEquipmentList()->GetItem(EQ2_PRIMARY_SLOT);
+		secondary = ((Entity*)target)->GetEquipmentList()->GetItem(EQ2_SECONDARY_SLOT);
+		ranged = ((Entity*)target)->GetEquipmentList()->GetItem(EQ2_RANGE_SLOT);
+		charName = target->GetName();
+	}
+	else {
+		target = nullptr;
+	}
+	client->Message(0, "WeaponStats for %s", charName);
 	client->SimpleMessage(0, "Primary:");
 	if (primary) {
 		client->Message(0, "Name: %s", primary->name.c_str());
 		client->Message(0, "Base Damage: %u - %u", primary->weapon_info->damage_low3, primary->weapon_info->damage_high3);
-		client->Message(0, "Actual Damage: %u - %u", player->GetPrimaryWeaponMinDamage(), player->GetPrimaryWeaponMaxDamage());
-		client->Message(0, "Actual Delay: %u", player->GetPrimaryWeaponDelay());
+		client->Message(0, "Actual Damage: %u - %u", target ? ((Entity*)target)->GetPrimaryWeaponMinDamage() : player->GetPrimaryWeaponMinDamage(),
+													target ? ((Entity*)target)->GetPrimaryWeaponMaxDamage() : player->GetPrimaryWeaponMaxDamage());
+		client->Message(0, "Actual Delay: %u", target ? ((Entity*)target)->GetPrimaryWeaponDelay() : player->GetPrimaryWeaponDelay());
 		client->Message(0, "Proc Percent: %d%%", 0);
 		client->Message(0, "Procs Per Minute: %d", 0);
 	}
 	else {
 		client->SimpleMessage(0, "Name: fist");
-		client->Message(0, "Base Damage: %u - %u", player->GetPrimaryWeaponMinDamage(), player->GetPrimaryWeaponMaxDamage());
-		client->Message(0, "Actual Damage: %u - %u", player->GetPrimaryWeaponMinDamage(), player->GetPrimaryWeaponMaxDamage());
-		client->Message(0, "Actual Delay: %d", player->GetPrimaryWeaponDelay() * 0.1);
+		client->Message(0, "Base Damage: %u - %u", target ? ((Entity*)target)->GetPrimaryWeaponMinDamage() : player->GetPrimaryWeaponMinDamage(),
+												   target ? ((Entity*)target)->GetPrimaryWeaponMaxDamage() : player->GetPrimaryWeaponMaxDamage());
+		client->Message(0, "Actual Damage: %u - %u", target ? ((Entity*)target)->GetPrimaryWeaponMinDamage() : player->GetPrimaryWeaponMinDamage(), 
+													 target ? ((Entity*)target)->GetPrimaryWeaponMaxDamage() : player->GetPrimaryWeaponMaxDamage());
+		client->Message(0, "Actual Delay: %d", target ? ((Entity*)target)->GetPrimaryWeaponDelay() : player->GetPrimaryWeaponDelay() * 0.1);
 		client->Message(0, "Proc Percent: %d%%", 0);
 		client->Message(0, "Procs Per Minute: %d", 0);
 	}
@@ -10811,8 +10826,9 @@ void Commands::Command_WeaponStats(Client* client)
 		client->SimpleMessage(0, "Secondary:");
 		client->Message(0, "Name: %s", secondary->name.c_str());
 		client->Message(0, "Base Damage: %u - %u", secondary->weapon_info->damage_low3, secondary->weapon_info->damage_high3);
-		client->Message(0, "Actual Damage: %u - %u", player->GetSecondaryWeaponMinDamage(), player->GetSecondaryWeaponMaxDamage());
-		client->Message(0, "Actual Delay: %d", player->GetSecondaryWeaponDelay() * 0.1);
+		client->Message(0, "Actual Damage: %u - %u", target ? ((Entity*)target)->GetSecondaryWeaponMinDamage() : player->GetSecondaryWeaponMinDamage(), 
+													 target ? ((Entity*)target)->GetSecondaryWeaponMaxDamage() : player->GetSecondaryWeaponMaxDamage());
+		client->Message(0, "Actual Delay: %d", target ? ((Entity*)target)->GetSecondaryWeaponDelay() : player->GetSecondaryWeaponDelay() * 0.1);
 		client->Message(0, "Proc Percent: %d%%", 0);
 		client->Message(0, "Procs Per Minute: %d", 0);
 		client->SimpleMessage(0, " ");
@@ -10822,8 +10838,9 @@ void Commands::Command_WeaponStats(Client* client)
 	if (ranged) {
 		client->Message(0, "Name: %s", ranged->name.c_str());
 		client->Message(0, "Base Damage: %u - %u", ranged->ranged_info->weapon_info.damage_low3, ranged->ranged_info->weapon_info.damage_high3);
-		client->Message(0, "Actual Damage: %u - %u", player->GetRangedWeaponMinDamage(), player->GetRangedWeaponMaxDamage());
-		client->Message(0, "Actual Delay: %d", player->GetRangeWeaponDelay() * 0.1);
+		client->Message(0, "Actual Damage: %u - %u", target ? ((Entity*)target)->GetRangedWeaponMinDamage() : player->GetRangedWeaponMinDamage(), 
+													 target ? ((Entity*)target)->GetRangedWeaponMaxDamage() : player->GetRangedWeaponMaxDamage());
+		client->Message(0, "Actual Delay: %d",  target ? ((Entity*)target)->GetRangeWeaponDelay() : player->GetRangeWeaponDelay() * 0.1);
 		client->Message(0, "Proc Percent: %d%%", 0);
 		client->Message(0, "Procs Per Minute: %d", 0);
 	}

@@ -5509,27 +5509,36 @@ void Player::DeleteMail(int32 mail_id, bool from_database) {
 }
 
 ZoneServer* Player::GetGroupMemberInZone(int32 zone_id) {
-	//if ( GetGroup() == NULL )
-		return NULL;
+	ZoneServer* ret = nullptr;
 
-	/*GroupMemberInfo* info = 0;
-	for(int32 i=0;i<GetGroup()->members.size(); i++){
-		info = GetGroup()->members[i];
-		if(info == group_member_info)
-			continue;
+	GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
+	// If the player has a group and destination zone id
+	if (gmi && zone_id) {
+		deque<GroupMemberInfo*>::iterator itr;
 
-		// if the client exists, they are attached to a player,
-		// the player is currently in an instance, which has the same zone id (for that instance type)
-		if ( info->client != NULL && info->client->GetPlayer() != NULL && 
-			info->client->GetPlayer()->GetZone()->GetInstanceID() > 0 && 
-			info->client->GetPlayer()->GetZone()->GetZoneID() == zone_id )
+		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+		if (group)
 		{
-			return info->client->GetPlayer()->GetZone();
+			group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+			deque<GroupMemberInfo*>* members = group->GetMembers();
+			// Loop through the group members
+			for (itr = members->begin(); itr != members->end(); itr++) {
+				// If a group member matches a target
+				if ((*itr)->member && (*itr)->member != this && (*itr)->member->GetZone() && (*itr)->member->GetZone()->GetInstanceID() > 0 && 
+					(*itr)->member->GetZone()->GetZoneID() == zone_id) {
+					// toggle the flag and break the loop
+					ret = (*itr)->member->GetZone();
+					break;
+				}
+			}
+			group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 		}
+		
+		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 	}
-
-	// no member is in an instance with this zone id
-	return NULL;*/
+	return ret;
 }
 
 
