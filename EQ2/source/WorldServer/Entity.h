@@ -705,11 +705,11 @@ struct InfoStruct{
 	void	set_wis(float value) { std::lock_guard<std::mutex> lk(classMutex); wis_ = value; }
 	void	set_intel(float value) { std::lock_guard<std::mutex> lk(classMutex); intel_ = value; }
 
-	void	add_str(float value) { std::lock_guard<std::mutex> lk(classMutex); str_ += value; }
-	void	add_sta(float value) { std::lock_guard<std::mutex> lk(classMutex); sta_ += value; }
-	void	add_agi(float value) { std::lock_guard<std::mutex> lk(classMutex); agi_ += value; }
-	void	add_wis(float value) { std::lock_guard<std::mutex> lk(classMutex); wis_ += value; }
-	void	add_intel(float value) { std::lock_guard<std::mutex> lk(classMutex); intel_ += value; }
+	void	add_str(float value) { std::lock_guard<std::mutex> lk(classMutex); if(str_ + value < 0.0f) str_ = 0.0f; else str_ += value; }
+	void	add_sta(float value) { std::lock_guard<std::mutex> lk(classMutex); if(sta_ + value < 0.0f) sta_ = 0.0f; else sta_ += value; }
+	void	add_agi(float value) { std::lock_guard<std::mutex> lk(classMutex); if(agi_ + value < 0.0f) agi_ = 0.0f; else agi_ += value; }
+	void	add_wis(float value) { std::lock_guard<std::mutex> lk(classMutex); if(wis_ + value < 0.0f) wis_ = 0.0f; else wis_ += value; }
+	void	add_intel(float value) { std::lock_guard<std::mutex> lk(classMutex); if(intel_ + value < 0.0f) intel_ = 0.0f; else intel_ += value; }
 
 	void	set_str_base(float value) { std::lock_guard<std::mutex> lk(classMutex); str_base_ = value; }
 	void	set_sta_base(float value) { std::lock_guard<std::mutex> lk(classMutex); sta_base_ = value; }
@@ -725,13 +725,13 @@ struct InfoStruct{
 	void	set_disease(int16 value) { std::lock_guard<std::mutex> lk(classMutex); disease_ = value; }
 	void	set_poison(int16 value) { std::lock_guard<std::mutex> lk(classMutex); poison_ = value; }
 
-	void	add_heat(int16 value) { std::lock_guard<std::mutex> lk(classMutex); heat_ += value; }
-	void	add_cold(int16 value) { std::lock_guard<std::mutex> lk(classMutex); cold_ += value; }
-	void	add_magic(int16 value) { std::lock_guard<std::mutex> lk(classMutex); magic_ += value; }
-	void	add_mental(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mental_ += value; }
-	void	add_divine(int16 value) { std::lock_guard<std::mutex> lk(classMutex); divine_ += value; }
-	void	add_disease(int16 value) { std::lock_guard<std::mutex> lk(classMutex); disease_ += value; }
-	void	add_poison(int16 value) { std::lock_guard<std::mutex> lk(classMutex); poison_ += value; }
+	void	add_heat(sint16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)heat_ + value < 0) heat_ = 0; else heat_ += value; }
+	void	add_cold(sint16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)cold_ + value < 0) cold_ = 0; else cold_ += value; }
+	void	add_magic(sint16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)magic_ + value < 0) magic_ = 0; else magic_ += value; }
+	void	add_mental(sint16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)mental_ + value < 0) mental_ = 0; else mental_ += value; }
+	void	add_divine(sint16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)divine_ + value < 0) divine_ = 0; else divine_ += value; }
+	void	add_disease(sint16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)disease_ + value < 0) disease_ = 0; else disease_ += value; }
+	void	add_poison(sint16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)poison_ + value < 0) poison_ = 0; else poison_ += value; }
 
 	void	set_disease_base(int16 value) { std::lock_guard<std::mutex> lk(classMutex); disease_base_ = value; }
 	void	set_cold_base(int16 value) { std::lock_guard<std::mutex> lk(classMutex); cold_base_ = value; }
@@ -786,23 +786,23 @@ struct InfoStruct{
 	void	set_coin_silver(int32 value) { std::lock_guard<std::mutex> lk(classMutex); coin_silver_ = value; }
 	void	set_coin_copper(int32 value) { std::lock_guard<std::mutex> lk(classMutex); coin_copper_ = value; }
 
-	void	add_coin_plat(int32 value) { std::lock_guard<std::mutex> lk(classMutex); coin_plat_ += value; }
-	void	add_coin_gold(int32 value) { std::lock_guard<std::mutex> lk(classMutex); coin_gold_ += value; }
-	void	add_coin_silver(int32 value) { std::lock_guard<std::mutex> lk(classMutex); coin_silver_ += value; }
-	void	add_coin_copper(int32 value) { std::lock_guard<std::mutex> lk(classMutex); coin_copper_ += value; }
+	void	add_coin_plat(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint64)coin_plat_ + value < 0) coin_plat_ = 0; else coin_plat_ += value; }
+	void	add_coin_gold(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint64)coin_gold_ + value < 0) coin_gold_ = 0; else coin_gold_ += value; }
+	void	add_coin_silver(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint64)coin_silver_ + value < 0) coin_silver_ = 0; else coin_silver_ += value; }
+	void	add_coin_copper(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint64)coin_copper_ + value < 0) coin_copper_ = 0; else coin_copper_ += value; }
 
 	void	set_bank_coin_plat(int32 value) { std::lock_guard<std::mutex> lk(classMutex); bank_coin_plat_ = value; }
 	void	set_bank_coin_gold(int32 value) { std::lock_guard<std::mutex> lk(classMutex); bank_coin_gold_ = value; }
 	void	set_bank_coin_silver(int32 value) { std::lock_guard<std::mutex> lk(classMutex); bank_coin_silver_ = value; }
 	void	set_bank_coin_copper(int32 value) { std::lock_guard<std::mutex> lk(classMutex); bank_coin_copper_ = value; }
 
-	void	add_bank_coin_plat(int32 value) { std::lock_guard<std::mutex> lk(classMutex); bank_coin_plat_ += value; }
-	void	add_bank_coin_gold(int32 value) { std::lock_guard<std::mutex> lk(classMutex); bank_coin_gold_ += value; }
-	void	add_bank_coin_silver(int32 value) { std::lock_guard<std::mutex> lk(classMutex); bank_coin_silver_ += value; }
-	void	add_bank_coin_copper(int32 value) { std::lock_guard<std::mutex> lk(classMutex); bank_coin_copper_ += value; }
+	void	add_bank_coin_plat(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint64)bank_coin_plat_ + value < 0) bank_coin_plat_ = 0; else bank_coin_plat_ += value; }
+	void	add_bank_coin_gold(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint64)bank_coin_gold_ + value < 0) bank_coin_gold_ = 0; else bank_coin_gold_ += value; }
+	void	add_bank_coin_silver(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint64)bank_coin_silver_ + value < 0) bank_coin_silver_ = 0; else bank_coin_silver_ += value; }
+	void	add_bank_coin_copper(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint64)bank_coin_copper_ + value < 0) bank_coin_copper_ = 0; else bank_coin_copper_ += value; }
 
 	void	set_status_points(int32 value) { std::lock_guard<std::mutex> lk(classMutex); status_points_ = value; }
-	void	add_status_points(int32 value) { std::lock_guard<std::mutex> lk(classMutex); status_points_ += value; }
+	void	add_status_points(int32 value) { std::lock_guard<std::mutex> lk(classMutex);  if((sint64)status_points_ + value < 0) status_points_ = 0; else status_points_ += value; }
 	bool	subtract_status_points(int32 value) { std::lock_guard<std::mutex> lk(classMutex); if(value > status_points_) return false; status_points_ -= value; return true; }
 	
 	void	set_mitigation_skill1(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill1_ = value; }
@@ -812,17 +812,17 @@ struct InfoStruct{
 	void	set_mitigation_pve(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_pve_ = value; }
 	void	set_mitigation_pvp(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_pvp_ = value; }
 
-	void	add_mitigation_skill1(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill1_ += value; }
-	void	add_mitigation_skill2(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill2_ += value; }
-	void	add_mitigation_skill3(int16 value) { std::lock_guard<std::mutex> lk(classMutex); mitigation_skill3_ += value; }
+	void	add_mitigation_skill1(int16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)mitigation_skill1_ + value < 0) mitigation_skill1_ = 0; else mitigation_skill1_ += value; }
+	void	add_mitigation_skill2(int16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)mitigation_skill2_ + value < 0) mitigation_skill2_ = 0; else mitigation_skill2_ += value; }
+	void	add_mitigation_skill3(int16 value) { std::lock_guard<std::mutex> lk(classMutex); if((sint32)mitigation_skill3_ + value < 0) mitigation_skill3_ = 0; else mitigation_skill3_ += value; }
 
 	void	set_ability_modifier(float value) { std::lock_guard<std::mutex> lk(classMutex); ability_modifier_ = value; }
 
-	void	add_ability_modifier(float value) { std::lock_guard<std::mutex> lk(classMutex); ability_modifier_ += value; }
+	void	add_ability_modifier(float value) { std::lock_guard<std::mutex> lk(classMutex); if(ability_modifier_ + value < 0.0f) ability_modifier_ = 0.0f; else ability_modifier_ += value; }
 
 	void	set_critical_mitigation(float value) { std::lock_guard<std::mutex> lk(classMutex); critical_mitigation_ = value; }
 
-	void	add_critical_mitigation(float value) { std::lock_guard<std::mutex> lk(classMutex); critical_mitigation_ += value; }
+	void	add_critical_mitigation(float value) { std::lock_guard<std::mutex> lk(classMutex); if(critical_mitigation_ + value < 0.0f) critical_mitigation_ = 0.0f; else critical_mitigation_ += value; }
 
 	void	set_block_chance(float value) { std::lock_guard<std::mutex> lk(classMutex); block_chance_ = value; }
 	void	set_uncontested_parry(float value) { std::lock_guard<std::mutex> lk(classMutex); uncontested_parry_ = value; }
@@ -851,32 +851,32 @@ struct InfoStruct{
 	void	set_rain(float value) { std::lock_guard<std::mutex> lk(classMutex); rain_ = value; }
 	void	set_wind(float value) { std::lock_guard<std::mutex> lk(classMutex); wind_ = value; }
 
-	void	add_block_chance(float value) { std::lock_guard<std::mutex> lk(classMutex); block_chance_ += value; }
-	void	add_uncontested_parry(float value) { std::lock_guard<std::mutex> lk(classMutex); uncontested_parry_ += value; }
-	void	add_uncontested_block(float value) { std::lock_guard<std::mutex> lk(classMutex); uncontested_block_ += value; }
-	void	add_uncontested_dodge(float value) { std::lock_guard<std::mutex> lk(classMutex); uncontested_dodge_ += value; }
-	void	add_uncontested_riposte(float value) { std::lock_guard<std::mutex> lk(classMutex); uncontested_riposte_ += value; }
-	void	add_crit_chance(float value) { std::lock_guard<std::mutex> lk(classMutex); crit_chance_ += value; }
-	void	add_crit_bonus(float value) { std::lock_guard<std::mutex> lk(classMutex); crit_bonus_ += value; }
-	void	add_potency(float value) { std::lock_guard<std::mutex> lk(classMutex); potency_ += value; }
-	void	add_hate_mod(float value) { std::lock_guard<std::mutex> lk(classMutex); hate_mod_ += value; }
-	void	add_reuse_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); reuse_speed_ += value; }
-	void	add_casting_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); casting_speed_ += value; }
-	void	add_recovery_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); recovery_speed_ += value; }
-	void	add_spell_reuse_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); spell_reuse_speed_ += value; }
-	void	add_spell_multi_attack(float value) { std::lock_guard<std::mutex> lk(classMutex); spell_multi_attack_ += value; }
-	void	add_dps(float value) { std::lock_guard<std::mutex> lk(classMutex); dps_ += value; }
-	void	add_dps_multiplier(float value) { std::lock_guard<std::mutex> lk(classMutex); dps_multiplier_ += value; }
-	void	add_attackspeed(float value) { std::lock_guard<std::mutex> lk(classMutex); attackspeed_ += value; }
-	void	add_haste(float value) { std::lock_guard<std::mutex> lk(classMutex); haste_ += value; }
-	void	add_multi_attack(float value) { std::lock_guard<std::mutex> lk(classMutex); multi_attack_ += value; }
-	void	add_flurry(float value) { std::lock_guard<std::mutex> lk(classMutex); flurry_ += value; }
-	void	add_melee_ae(float value) { std::lock_guard<std::mutex> lk(classMutex); melee_ae_ += value; }
-	void	add_strikethrough(float value) { std::lock_guard<std::mutex> lk(classMutex); strikethrough_ += value; }
-	void	add_accuracy(float value) { std::lock_guard<std::mutex> lk(classMutex); accuracy_ += value; }
-	void	add_offensivespeed(float value) { std::lock_guard<std::mutex> lk(classMutex); offensivespeed_ += value; }
-	void	add_rain(float value) { std::lock_guard<std::mutex> lk(classMutex); rain_ += value; }
-	void	add_wind(float value) { std::lock_guard<std::mutex> lk(classMutex); wind_ += value; }
+	void	add_block_chance(float value) { std::lock_guard<std::mutex> lk(classMutex); if(block_chance_ + value < 0.0f) block_chance_ = 0.0f; else block_chance_ += value; }
+	void	add_uncontested_parry(float value) { std::lock_guard<std::mutex> lk(classMutex); if(uncontested_parry_ + value < 0.0f) uncontested_parry_ = 0.0f; else uncontested_parry_ += value; }
+	void	add_uncontested_block(float value) { std::lock_guard<std::mutex> lk(classMutex); if(uncontested_block_ + value < 0.0f) uncontested_block_ = 0.0f; else uncontested_block_ += value; }
+	void	add_uncontested_dodge(float value) { std::lock_guard<std::mutex> lk(classMutex); if(uncontested_dodge_ + value < 0.0f) uncontested_dodge_ = 0.0f; else uncontested_dodge_ += value; }
+	void	add_uncontested_riposte(float value) { std::lock_guard<std::mutex> lk(classMutex); if(uncontested_riposte_ + value < 0.0f) uncontested_riposte_ = 0.0f; else uncontested_riposte_ += value; }
+	void	add_crit_chance(float value) { std::lock_guard<std::mutex> lk(classMutex); if(crit_chance_ + value < 0.0f) crit_chance_ = 0.0f; else crit_chance_ += value; }
+	void	add_crit_bonus(float value) { std::lock_guard<std::mutex> lk(classMutex); if(crit_bonus_ + value < 0.0f) crit_bonus_ = 0.0f; else crit_bonus_ += value; }
+	void	add_potency(float value) { std::lock_guard<std::mutex> lk(classMutex); if(potency_ + value < 0.0f) potency_ = 0.0f; else potency_ += value; }
+	void	add_hate_mod(float value) { std::lock_guard<std::mutex> lk(classMutex); if(hate_mod_ + value < 0.0f) hate_mod_ = 0.0f; else hate_mod_ += value; }
+	void	add_reuse_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(reuse_speed_ + value < 0.0f) reuse_speed_ = 0.0f; else reuse_speed_ += value; }
+	void	add_casting_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(casting_speed_ + value < 0.0f) casting_speed_ = 0.0f; else casting_speed_ += value; }
+	void	add_recovery_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(recovery_speed_ + value < 0.0f) recovery_speed_ = 0.0f; else recovery_speed_ += value; }
+	void	add_spell_reuse_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(spell_reuse_speed_ + value < 0.0f) spell_reuse_speed_ = 0.0f; else spell_reuse_speed_ += value; }
+	void	add_spell_multi_attack(float value) { std::lock_guard<std::mutex> lk(classMutex); if(spell_multi_attack_ + value < 0.0f) spell_multi_attack_ = 0.0f; else spell_multi_attack_ += value; }
+	void	add_dps(float value) { std::lock_guard<std::mutex> lk(classMutex); if(dps_ + value < 0.0f) dps_ = 0.0f; else dps_ += value; }
+	void	add_dps_multiplier(float value) { std::lock_guard<std::mutex> lk(classMutex); if(dps_multiplier_ + value < 0.0f) dps_multiplier_ = 0.0f; else dps_multiplier_ += value; }
+	void	add_attackspeed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(attackspeed_ + value < 0.0f) attackspeed_ = 0.0f; else attackspeed_ += value; }
+	void	add_haste(float value) { std::lock_guard<std::mutex> lk(classMutex); if(haste_ + value < 0.0f) haste_ = 0.0f; else haste_ += value; }
+	void	add_multi_attack(float value) { std::lock_guard<std::mutex> lk(classMutex); if(multi_attack_ + value < 0.0f) multi_attack_ = 0.0f; else multi_attack_ += value; }
+	void	add_flurry(float value) { std::lock_guard<std::mutex> lk(classMutex); if(flurry_ + value < 0.0f) flurry_ = 0.0f; else flurry_ += value; }
+	void	add_melee_ae(float value) { std::lock_guard<std::mutex> lk(classMutex); if(melee_ae_ + value < 0.0f) melee_ae_ = 0.0f; else melee_ae_ += value; }
+	void	add_strikethrough(float value) { std::lock_guard<std::mutex> lk(classMutex); if(strikethrough_ + value < 0.0f) strikethrough_ = 0.0f; else strikethrough_ += value; }
+	void	add_accuracy(float value) { std::lock_guard<std::mutex> lk(classMutex); if(accuracy_ + value < 0.0f) accuracy_ = 0.0f; else accuracy_ += value; }
+	void	add_offensivespeed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(offensivespeed_ + value < 0.0f) offensivespeed_ = 0.0f; else offensivespeed_ += value; }
+	void	add_rain(float value) { std::lock_guard<std::mutex> lk(classMutex); if(rain_ + value < 0.0f) rain_ = 0.0f; else rain_ += value; }
+	void	add_wind(float value) { std::lock_guard<std::mutex> lk(classMutex); if(wind_ + value < 0.0f) wind_ = 0.0f; else wind_ += value; }
 
 	void	set_alignment(int8 value) { std::lock_guard<std::mutex> lk(classMutex); alignment_ = value; }
 
