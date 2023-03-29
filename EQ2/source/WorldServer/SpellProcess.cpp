@@ -1731,7 +1731,9 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 				target = spell->caster;
 			}
 			if (!target) {
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Zone has not finished loading process yet.  Try again later.");
+				if(client) {
+					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Zone has not finished loading process yet.  Try again later.");
+				}
 				continue;
 			}
 			if (i == 0 && !spell->spell->GetSpellData()->not_maintained) {
