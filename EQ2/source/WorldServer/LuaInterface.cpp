@@ -842,6 +842,9 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 	if(spell->caster) {
 		for (int8 i = 0; i < spell->targets.size(); i++) {
+			if(!spell->caster->GetZone())
+				continue;
+			
 			Spawn* target = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
 			if (!target || !target->IsEntity())
 				continue;
@@ -875,7 +878,9 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 	}
 	if (spell->caster)
 	{
-		spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(spell);
+		if(spell->caster->GetZone()) {
+			spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(spell);
+		}
 		spell->caster->RemoveProc(0, spell);
 		spell->caster->RemoveMaintainedSpell(spell);
 

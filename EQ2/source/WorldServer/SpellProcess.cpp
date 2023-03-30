@@ -436,55 +436,57 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 			spell->caster->RemoveMaintainedSpell(spell);
 			CheckRemoveTargetFromSpell(spell, removing_all_spells, removing_all_spells);
 			ZoneServer* zone = spell->caster->GetZone();
-			spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
-			for (int32 i = 0; i < spell->targets.size(); i++) {
-				target = zone->GetSpawnByID(spell->targets.at(i));
-				if(target && target->IsEntity()){
-					spell->removed_targets.push_back(target->GetID());
-					((Entity*)target)->RemoveProc(0, spell);
-					((Entity*)target)->RemoveSpellEffect(spell);
-					((Entity*)target)->RemoveSpellBonus(spell);
-					if(spell->spell->GetSpellData()->det_type > 0 && (spell->spell->GetSpellDuration() > 0 || spell->spell->GetSpellData()->duration_until_cancel))
-						((Entity*)target)->RemoveDetrimentalSpell(spell);
-				}
-				else{
-					spell->caster->RemoveSpellEffect(spell);
-					spell->caster->RemoveSpellBonus(spell);
-					if(spell->spell->GetSpellData()->det_type > 0 && (spell->spell->GetSpellDuration() > 0 || spell->spell->GetSpellData()->duration_until_cancel))
-						spell->caster->RemoveDetrimentalSpell(spell);
-				}
-				if(target && target->IsPlayer() && spell->spell->GetSpellData()->fade_message.length() > 0){
-					Client* client = target->GetZone()->GetClientBySpawn(target);
-					if(client){
-						bool send_to_sender = true;
-						string fade_message = spell->spell->GetSpellData()->fade_message;
-						if(fade_message.find("%t") != string::npos)
-							fade_message.replace(fade_message.find("%t"), 2, target->GetName());						
-						client->Message(CHANNEL_SPELLS_OTHER, fade_message.c_str());
+			if(zone) {
+				spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+				for (int32 i = 0; i < spell->targets.size(); i++) {
+					target = zone->GetSpawnByID(spell->targets.at(i));
+					if(target && target->IsEntity()){
+						spell->removed_targets.push_back(target->GetID());
+						((Entity*)target)->RemoveProc(0, spell);
+						((Entity*)target)->RemoveSpellEffect(spell);
+						((Entity*)target)->RemoveSpellBonus(spell);
+						if(spell->spell->GetSpellData()->det_type > 0 && (spell->spell->GetSpellDuration() > 0 || spell->spell->GetSpellData()->duration_until_cancel))
+							((Entity*)target)->RemoveDetrimentalSpell(spell);
+					}
+					else{
+						spell->caster->RemoveSpellEffect(spell);
+						spell->caster->RemoveSpellBonus(spell);
+						if(spell->spell->GetSpellData()->det_type > 0 && (spell->spell->GetSpellDuration() > 0 || spell->spell->GetSpellData()->duration_until_cancel))
+							spell->caster->RemoveDetrimentalSpell(spell);
+					}
+					if(target && target->IsPlayer() && spell->spell->GetSpellData()->fade_message.length() > 0){
+						Client* client = target->GetZone()->GetClientBySpawn(target);
+						if(client){
+							bool send_to_sender = true;
+							string fade_message = spell->spell->GetSpellData()->fade_message;
+							if(fade_message.find("%t") != string::npos)
+								fade_message.replace(fade_message.find("%t"), 2, target->GetName());						
+							client->Message(CHANNEL_SPELLS_OTHER, fade_message.c_str());
+						}
+					}
+					if (target && target->IsPlayer() && spell->spell->GetSpellData()->fade_message.length() > 0) {
+						Client* client = target->GetZone()->GetClientBySpawn(target);
+						if (client) {
+							bool send_to_sender = true;
+							string fade_message_others = spell->spell->GetSpellData()->fade_message_others;
+							if (fade_message_others.find("%t") != string::npos)
+								fade_message_others.replace(fade_message_others.find("%t"), 2, target->GetName());
+							if (fade_message_others.find("%c") != string::npos)
+								fade_message_others.replace(fade_message_others.find("%c"), 2, spell->caster->GetName());
+							if (fade_message_others.find("%T") != string::npos) {
+								fade_message_others.replace(fade_message_others.find("%T"), 2, target->GetName());
+								send_to_sender = false;
+							}
+							if (fade_message_others.find("%C") != string::npos) {
+								fade_message_others.replace(fade_message_others.find("%C"), 2, spell->caster->GetName());
+								send_to_sender = false;
+							}
+							spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, fade_message_others.c_str(), target, 50, send_to_sender);
+						}
 					}
 				}
-				if (target && target->IsPlayer() && spell->spell->GetSpellData()->fade_message.length() > 0) {
-					Client* client = target->GetZone()->GetClientBySpawn(target);
-					if (client) {
-						bool send_to_sender = true;
-						string fade_message_others = spell->spell->GetSpellData()->fade_message_others;
-						if (fade_message_others.find("%t") != string::npos)
-							fade_message_others.replace(fade_message_others.find("%t"), 2, target->GetName());
-						if (fade_message_others.find("%c") != string::npos)
-							fade_message_others.replace(fade_message_others.find("%c"), 2, spell->caster->GetName());
-						if (fade_message_others.find("%T") != string::npos) {
-							fade_message_others.replace(fade_message_others.find("%T"), 2, target->GetName());
-							send_to_sender = false;
-						}
-						if (fade_message_others.find("%C") != string::npos) {
-							fade_message_others.replace(fade_message_others.find("%C"), 2, spell->caster->GetName());
-							send_to_sender = false;
-						}
-						spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, fade_message_others.c_str(), target, 50, send_to_sender);
-					}
-				}
+				spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 			}
-			spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 			ret = true;
 		}
 		if(lua_interface)
