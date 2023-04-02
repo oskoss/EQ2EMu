@@ -184,6 +184,7 @@ void RuleManager::Init()
 	/* CLIENT */
 	RULE_INIT(R_Client, ShowWelcomeScreen, "0");
 	RULE_INIT(R_Client, GroupSpellsTimer, "1000");
+	RULE_INIT(R_Client, QuestQueueTimer, "50"); // in milliseconds
 
 	/* FACTION */
 	RULE_INIT(R_Faction, AllowFactionBasedCombat, "1");

@@ -1253,14 +1253,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			break;
 		int32 quest_id = 0;
 		memcpy(&quest_id, app->pBuffer, sizeof(int32));
-		Quest* quest = GetActiveQuest(quest_id);
-		if (quest)
-			QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player));
-		else {
-			quest = player->GetCompletedQuest(quest_id);
-			if (quest)
-				QueuePacket(quest->QuestJournalReply(GetVersion(), GetNameCRC(), player, 0, 1, true));
-		}
+		GetPlayer()->SendQuest(quest_id);
 		break;
 	}
 	case OP_QuestJournalSetVisibleMsg: {
@@ -3248,7 +3241,11 @@ bool Client::Process(bool zone_process) {
 		LogWrite(CCLIENT__DEBUG, 1, "Client", "%s, ProcessQuestUpdates", __FUNCTION__, __LINE__);
 		ProcessQuestUpdates();
 	}
-	if (last_update_time > 0 && last_update_time < (Timer::GetCurrentTime2() - 300)) {
+	int32 queue_timer_delay = rule_manager.GetGlobalRule(R_Client, QuestQueueTimer)->GetInt32();
+	if(queue_timer_delay < 10) {
+		queue_timer_delay = 10;
+	}
+	if (last_update_time > 0 && last_update_time < (Timer::GetCurrentTime2() - queue_timer_delay)) {
 		LogWrite(CCLIENT__DEBUG, 1, "Client", "%s, CheckQuestQueue", __FUNCTION__, __LINE__);
 		CheckQuestQueue();
 	}
@@ -5810,7 +5807,6 @@ void Client::ProcessQuestUpdates() {
 		bool delete_first = false;
 		for (itr = tmp_quest_rewards.begin(); itr != tmp_quest_rewards.end();) {
 			int32 questID = (*itr)->quest_id;
-			Quest* quest = 0;
 			if((*itr)->is_collection && GetPlayer()->GetPendingCollectionReward()) {
 				DisplayCollectionComplete(GetPlayer()->GetPendingCollectionReward());
 				GetPlayer()->SetActiveReward(true);
@@ -5819,16 +5815,8 @@ void Client::ProcessQuestUpdates() {
 				UpdateCharacterRewardData((*itr));
 				break;
 			}
-			else if(questID > 0 && (quest = GetPlayer()->GetAnyQuest(questID))) {
-				quest->SetQuestTemporaryState((*itr)->is_temporary, (*itr)->description);
-				if((*itr)->is_temporary) {
-					quest->SetStatusTmpReward((*itr)->tmp_status);
-					quest->SetCoinTmpReward((*itr)->tmp_coin);
-				}
-				GiveQuestReward(quest, (*itr)->has_displayed);
-				GetPlayer()->SetActiveReward(true);
+			else if(questID > 0 && GetPlayer()->UpdateQuestReward(questID, (*itr))) {
 				(*itr)->has_displayed = true;
-				
 				UpdateCharacterRewardData((*itr));
 				// only able to display one reward at a time
 				break;
@@ -5861,20 +5849,11 @@ void Client::CheckQuestQueue() {
 	MQuestQueue.writelock();
 	last_update_time = 0;
 	vector<QueuedQuest*>::iterator itr;
-	QueuedQuest* queued_quest = 0;
 	for (itr = quest_queue.begin(); itr != quest_queue.end(); itr++) {
-		queued_quest = *itr;
-		
-		Quest* quest = GetPlayer()->GetAnyQuest(queued_quest->quest_id);
-		if(quest) {
-			SendQuestUpdateStepImmediately(quest, queued_quest->step, queued_quest->display_quest_helper);
-			if(quest->GetTurnedIn()) //update the journal so the old quest isn't the one displayed in the client's quest helper
-				SendQuestJournal();
+		if(!GetPlayer()->SendQuestStepUpdate((*itr)->quest_id, (*itr)->step, (*itr)->display_quest_helper)) {
+			LogWrite(CCLIENT__ERROR, 0, "Client", "Queued Quest ID %u missing for Player %s, cannot send quest step update.", (*itr)->quest_id, GetPlayer()->GetName());
 		}
-		else {
-			LogWrite(CCLIENT__ERROR, 0, "Client", "Queued Quest ID %u missing for Player %s, cannot send quest step update.", queued_quest->quest_id, GetPlayer()->GetName());
-		}
-		safe_delete(queued_quest);
+		safe_delete((*itr));
 	}
 	quest_queue.clear();
 	MQuestQueue.releasewritelock();
@@ -5974,59 +5953,56 @@ void Client::CheckPlayerQuestsSpellUpdate(Spell* spell) {
 
 void Client::AddPendingQuest(Quest* quest, bool forced) {
 	if (version <= 283 || forced) { //this client doesn't ask if you want the quest, so auto accept
+		MPendingQuestAccept.lock();
 		player->pending_quests[quest->GetQuestID()] = quest;
+		MPendingQuestAccept.unlock();
 		AcceptQuest(quest->GetQuestID());
 	}
 	else {
+		MPendingQuestAccept.lock();
 		player->pending_quests[quest->GetQuestID()] = quest;
+		MPendingQuestAccept.unlock();
 		EQ2Packet* outapp = quest->OfferQuest(GetVersion(), player);
 		//DumpPacket(outapp);
 		QueuePacket(outapp);
 	}
 }
 
-Quest* Client::GetActiveQuest(int32 quest_id) {
-	Quest* quest = 0;
-	GetPlayer()->MPlayerQuests.readlock(__FUNCTION__, __LINE__);
-	if (player->player_quests.count(quest_id) > 0) {
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "Found %u active quests for char_id: %u", player->player_quests.count(quest_id), player->GetCharacterID());
-		quest = player->player_quests[quest_id];
-	}
-	GetPlayer()->MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
-	
-	return quest;
-}
-
-void Client::AcceptQuest(int32 id) {
-	Quest* quest = GetPendingQuest(id);
-	if (quest) {
-		RemovePendingQuest(quest);
+void Client::AcceptQuest(int32 quest_id) {
+	MPendingQuestAccept.lock();
+	if (player->pending_quests.count(quest_id) > 0) {
+		Quest* quest = player->pending_quests[quest_id];	
+		player->pending_quests.erase(quest->GetQuestID());
 		AddPlayerQuest(quest);
 		GetCurrentZone()->SendQuestUpdates(this);
 
-		// If character has already completed this quest once update the given date in the database
-		if (GetPlayer()->GetCompletedPlayerQuests()->count(id) > 0) {
-			Quest* quest2 = GetPlayer()->GetCompletedQuest(id);
-			if (quest2)
-				quest->SetCompleteCount(quest2->GetCompleteCount());
-			database.SaveCharRepeatableQuest(this, id, quest->GetCompleteCount());
+		GetPlayer()->UpdateQuestCompleteCount(quest_id);
+	}
+	MPendingQuestAccept.unlock();
+}
+
+void Client::RemovePendingQuest(int32 quest_id) {
+	bool send_updates = false;
+	MPendingQuestAccept.lock();
+	
+	if (player->pending_quests.count(quest_id) > 0) {
+		Quest* quest = player->pending_quests[quest_id];	
+		player->pending_quests.erase(quest_id);
+		
+		if(lua_interface) {
+			lua_interface->CallQuestFunction(quest, "Declined", GetPlayer());
+			lua_interface->SetLuaUserDataStale(quest);
 		}
+		
+		safe_delete(quest);
+		
+		send_updates = true;
 	}
-}
+	MPendingQuestAccept.unlock();
 
-Quest* Client::GetPendingQuest(int32 id) {
-	if (player->pending_quests.count(id) > 0) {
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "Found %u pending quests for char_id: %u", player->pending_quests.count(id), player->GetCharacterID());
-
-		return player->pending_quests[id];
+	if(send_updates) {
+		GetCurrentZone()->SendQuestUpdates(this);
 	}
-
-	return 0;
-}
-
-void Client::RemovePendingQuest(Quest* quest) {
-	player->pending_quests.erase(quest->GetQuestID());
-
 }
 
 void Client::SetPlayerQuest(Quest* quest, map<int32, int32>* progress) {
@@ -6236,37 +6212,22 @@ void Client::ReloadQuests() {
 Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
 	bool found_quest = false;
 	vector<int32>::iterator itr;
-	vector<Item*>* items = 0;
 	int32 questID = 0;
-	Quest* quest = 0;
+	Quest* quest = nullptr;
 	MPendingQuestAccept.lock();
 	for (itr = pending_quest_accept.begin(); itr != pending_quest_accept.end();) {
 		questID = *itr;
-		quest = GetPlayer()->GetAnyQuest(questID);
-		if(!quest) {
+		
+		bool quest_exists = false;
+		quest = GetPlayer()->PendingQuestAcceptance(questID, item_id, &quest_exists);
+		
+		if(!quest_exists) {
 			LogWrite(CCLIENT__ERROR, 0, "Client", "Quest ID %u missing for Player %s, removing quest id from pending_quest_accept.", questID, GetPlayer()->GetName());
 			itr = pending_quest_accept.erase(itr);
+			quest = nullptr;
 			continue;
 		}
-		if(quest->GetQuestTemporaryState())
-			items = quest->GetTmpRewardItems();
-		else
-			items = quest->GetRewardItems();
-		if (item_id == 0) {
-			found_quest = true;
-		}
-		else {
-			items = quest->GetSelectableRewardItems();
-			if (items && items->size() > 0) {
-				for (int32 i = 0; i < items->size(); i++) {
-					if (items->at(i)->details.item_id == item_id) {
-						found_quest = true;
-						break;
-					}
-				}
-			}
-		}
-		if (found_quest) {
+		else if (quest) {
 			pending_quest_accept.erase(itr);
 			break;
 		}
@@ -6275,9 +6236,7 @@ Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
 	}
 	MPendingQuestAccept.unlock();
 
-	if (found_quest)
-		return quest;
-	return 0;
+	return quest;
 }
 
 void Client::AcceptQuestReward(Quest* quest, int32 item_id) {
@@ -8976,7 +8935,7 @@ void Client::ProcessTeleport(Spawn* spawn, vector<TransportDestination*>* destin
 				if (destination->max_level > 0 && GetPlayer()->GetLevel() > destination->max_level)
 					continue;
 				// Check quest complete
-				if (destination->req_quest_complete > 0 && GetPlayer()->GetCompletedQuest(destination->req_quest_complete) == 0)
+				if (destination->req_quest_complete > 0 && GetPlayer()->HasQuestBeenCompleted(destination->req_quest_complete) == 0)
 					continue;
 				// Check req quest and step
 				if (destination->req_quest > 0 && destination->req_quest_step > 0 && GetPlayer()->GetQuestStep(destination->req_quest) != destination->req_quest_step)
@@ -11581,17 +11540,14 @@ void Client::SaveQuestRewardData(bool force_refresh) {
 				(*itr)->db_index = index;
 				if((*itr)->is_temporary) {
 					std::vector<Item*> items;
-					Quest* quest = GetPlayer()->GetAnyQuest(questID);
-					if(quest) {
-						quest->GetTmpRewardItemsByID(&items);
-						if(!force_refresh && items.size() > 0) {
-							query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "delete from character_quest_temporary_rewards where char_id = %u and quest_id = %u", 
-								GetCharacterID(), questID);
-						}
-						for(int i=0;i<items.size();i++) {
-							query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "replace into character_quest_temporary_rewards (char_id, quest_id, item_id, count) values(%u, %u, %u, %u)", 
-								GetCharacterID(), questID, items[i]->details.item_id, items[i]->details.count);
-						}
+					GetPlayer()->GetQuestTemporaryRewards(questID, &items);
+					if(!force_refresh && items.size() > 0) {
+						query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "delete from character_quest_temporary_rewards where char_id = %u and quest_id = %u", 
+							GetCharacterID(), questID);
+					}
+					for(int i=0;i<items.size();i++) {
+						query.AddQueryAsync(GetCharacterID(), &database, Q_REPLACE, "replace into character_quest_temporary_rewards (char_id, quest_id, item_id, count) values(%u, %u, %u, %u)", 
+							GetCharacterID(), questID, items[i]->details.item_id, items[i]->details.count);
 					}
 				}
 			}

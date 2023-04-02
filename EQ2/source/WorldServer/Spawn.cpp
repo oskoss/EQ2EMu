@@ -3556,7 +3556,7 @@ bool Spawn::MeetsSpawnAccessRequirements(Player* player){
 							break;
 						}
 					}
-					else if (player->GetCompletedQuest(itr->first)) {
+					else if (player->HasQuestBeenCompleted(itr->first)) {
 						ret = true;
 						break;
 					}

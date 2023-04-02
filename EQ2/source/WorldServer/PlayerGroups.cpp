@@ -208,8 +208,7 @@ bool PlayerGroup::ShareQuestWithGroup(Client* quest_sharer, Quest* quest) {
 	for(itr = m_members.begin(); itr != m_members.end(); itr++) {
 		GroupMemberInfo* info = *itr;
 		if(info && info->client && info->client->GetCurrentZone()) {
-			if( quest_sharer != info->client && info->client->GetPlayer()->GetCompletedQuest(quest->GetQuestID()) == 0 && 
-				info->client->GetPlayer()->GetQuest(quest->GetQuestID()) == 0 ) {
+			if( quest_sharer != info->client && info->client->GetPlayer()->HasAnyQuest(quest->GetQuestID()) == 0 ) {
 				info->client->AddPendingQuest(new Quest(quest));
 				info->client->Message(CHANNEL_COLOR_YELLOW, "%s has shared the quest %s with you.", quest_sharer->GetPlayer()->GetName(), quest->GetName());
 			}
@@ -580,7 +579,7 @@ bool PlayerGroupManager::HasGroupCompletedQuest(int32 group_id, int32 quest_id) 
 		for (itr = members->begin(); itr != members->end(); itr++) {
 			info = *itr;
 			if (info->client) {
-				bool isComplete = info->client->GetPlayer()->GetCompletedQuest(quest_id);
+				bool isComplete = info->client->GetPlayer()->HasQuestBeenCompleted(quest_id);
 				if(!isComplete)
 				{
 					questComplete = isComplete;

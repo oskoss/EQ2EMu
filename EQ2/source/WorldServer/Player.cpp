@@ -4325,10 +4325,10 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 	if(packet){
 		int16 total_quests_num = 0;
 		int16 total_completed_quests = 0;
+		MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 		map<int32, Quest*> total_quests = player_quests;
 		if(all_quests && completed_quests.size() > 0)
 			total_quests.insert(completed_quests.begin(), completed_quests.end());
-		MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 		if(total_quests.size() > 0){
 			map<string, int16> quest_types;
 			map<int32, Quest*>::iterator itr;
@@ -4428,6 +4428,9 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 
 					if (quest->IsHidden() && !quest->GetTurnedIn())
 						display_status = QUEST_DISPLAY_STATUS_HIDDEN;
+					else if(!quest->IsHidden()) {
+						display_status += QUEST_DISPLAY_STATUS_SHOW;
+					}
 					else if(quest->CanShareQuestCriteria(GetClient(),false)) {
 						display_status += QUEST_DISPLAY_STATUS_CAN_SHARE;
 					}
@@ -4733,6 +4736,47 @@ Quest* Player::GetCompletedQuest(int32 quest_id){
 	return 0;
 }
 
+bool Player::HasQuestBeenCompleted(int32 quest_id){
+	bool ret = false;
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	if(completed_quests.count(quest_id) > 0)
+		ret = true;
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return ret;
+}
+
+bool Player::HasActiveQuest(int32 quest_id){
+	bool ret = false;
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	if(player_quests.count(quest_id) > 0)
+		ret = true;
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return ret;
+}
+
+bool Player::HasAnyQuest(int32 quest_id){
+	bool ret = false;
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	if(player_quests.count(quest_id) > 0)
+		ret = true;
+	if(completed_quests.count(quest_id) > 0)
+		ret = true;
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return ret;
+}
+
+int32 Player::GetQuestCompletedCount(int32 quest_id) {
+	int32 count = 0;
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	Quest* quest = GetCompletedQuest(quest_id);
+	count = quest->GetCompleteCount();
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+	return count;
+}
+
 Quest* Player::GetQuest(int32 quest_id){
 	if(player_quests.count(quest_id) > 0)
 		return player_quests[quest_id];
@@ -4740,12 +4784,19 @@ Quest* Player::GetQuest(int32 quest_id){
 }
 
 void Player::AddCompletedQuest(Quest* quest){
+	Quest* existing = GetCompletedQuest(quest->GetQuestID());
+	MPlayerQuests.writelock(__FUNCTION__, __LINE__);
 	completed_quests[quest->GetQuestID()] = quest;
+	if(existing && existing != quest) {
+		safe_delete(existing);
+	}
+	
 	quest->SetSaveNeeded(true);
 	quest->SetTurnedIn(true);
 	if(quest->GetCompletedDescription())
 		quest->SetDescription(string(quest->GetCompletedDescription()));
 	quest->SetUpdateRequired(true);
+	MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 bool Player::CheckQuestRemoveFlag(Spawn* spawn){
@@ -4831,7 +4882,7 @@ bool Player::CanReceiveQuest(int32 quest_id, int8* ret){
 	if (!quest)
 		passed = false;
 	//check if quest is already completed, and not repeatable
-	else if (GetCompletedQuest(quest_id) && !quest->IsRepeatable())
+	else if (HasQuestBeenCompleted(quest_id) && !quest->IsRepeatable())
 		passed = false;
 	//check if the player already has this quest
 	else if (player_quests.count(quest_id) > 0)
@@ -4853,6 +4904,7 @@ bool Player::CanReceiveQuest(int32 quest_id, int8* ret){
 
 
 	// Check quest pre req
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	vector<int32>* prereq_quests = quest->GetPrereqQuests();
 	if(passed && prereq_quests && prereq_quests->size() > 0){
 		for(int32 x=0;x<prereq_quests->size();x++){
@@ -4862,6 +4914,7 @@ bool Player::CanReceiveQuest(int32 quest_id, int8* ret){
 			}
 		}
 	}
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 
 	//Check Prereq Classes
 	vector<int8>* prereq_classes = quest->GetPrereqClasses();
@@ -4947,6 +5000,196 @@ bool Player::CanReceiveQuest(int32 quest_id, int8* ret){
 	}
 
 	return passed;
+}
+
+bool Player::UpdateQuestReward(int32 quest_id, QuestRewardData* qrd) {
+	if(!GetClient())
+		return false;
+	
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	Quest* quest = GetAnyQuest(quest_id);
+	
+	if(!quest) {
+		MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+		return false;
+	}
+	
+	quest->SetQuestTemporaryState(qrd->is_temporary, qrd->description);
+	if(qrd->is_temporary) {
+		quest->SetStatusTmpReward(qrd->tmp_status);
+		quest->SetCoinTmpReward(qrd->tmp_coin);
+	}
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+	
+	GetClient()->GiveQuestReward(quest, qrd->has_displayed);
+	SetActiveReward(true);
+	
+	return true;
+}
+
+
+Quest* Player::PendingQuestAcceptance(int32 quest_id, int32 item_id, bool* quest_exists) {
+	vector<Item*>* items = 0;
+	bool ret = false;
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	Quest* quest = GetAnyQuest(quest_id);
+	if(!quest) {
+		if(quest_exists) {
+			*quest_exists = false;
+		}
+		MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+		return nullptr;
+	}
+	
+	if(quest_exists) {
+		*quest_exists = true;
+	}
+	if(quest->GetQuestTemporaryState())
+		items = quest->GetTmpRewardItems();
+	else
+		items = quest->GetRewardItems();
+	if (item_id == 0) {
+		ret = true;
+	}
+	else {
+		items = quest->GetSelectableRewardItems();
+		if (items && items->size() > 0) {
+			for (int32 i = 0; i < items->size(); i++) {
+				if (items->at(i)->details.item_id == item_id) {
+					ret = true;
+					break;
+				}
+			}
+		}
+	}
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+
+	return quest;
+}
+
+
+bool Player::AcceptQuestReward(int32 item_id, int32 selectable_item_id) {
+	if(!GetClient()) {
+		return false;
+	}
+	
+	Collection *collection = 0;
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	Quest* quest = client->GetPendingQuestAcceptance(item_id);
+	if(quest){
+		GetClient()->AcceptQuestReward(quest, item_id);
+		MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+		return true;
+	}
+	bool collectedItems = false;
+	if (client->GetPlayer()->HasPendingItemRewards()) {
+		vector<Item*> items = client->GetPlayer()->GetPendingItemRewards();
+		if (items.size() > 0) {
+			collectedItems = true;
+			for (int i = 0; i < items.size(); i++) {
+				client->GetPlayer()->AddItem(new Item(items[i]));
+			}
+			client->GetPlayer()->ClearPendingItemRewards();
+			client->GetPlayer()->SetActiveReward(false);
+		}
+		map<int32, Item*> selectable_item = client->GetPlayer()->GetPendingSelectableItemReward(item_id);
+		if (selectable_item.size() > 0) {
+			collectedItems = true;
+			map<int32, Item*>::iterator itr;
+			for (itr = selectable_item.begin(); itr != selectable_item.end(); itr++) {
+				client->GetPlayer()->AddItem(new Item(itr->second));
+				client->GetPlayer()->ClearPendingSelectableItemRewards(itr->first);
+			}
+			client->GetPlayer()->SetActiveReward(false);
+		}
+	}
+	else if (collection = GetPendingCollectionReward())
+	{
+		client->AcceptCollectionRewards(collection, (selectable_item_id > 0) ? selectable_item_id : item_id);
+		collectedItems = true;
+	}
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return collectedItems;
+}
+
+
+bool Player::SendQuestStepUpdate(int32 quest_id, int32 quest_step_id, bool display_quest_helper) {	
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	Quest* quest = GetAnyQuest(quest_id);
+	if(!quest) {
+		MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+		return false;
+	}
+	QuestStep* quest_step = quest->GetQuestStep(quest_step_id);
+	if (quest_step) {
+		if(GetClient()) {
+			GetClient()->QueuePacket(quest->QuestJournalReply(GetClient()->GetVersion(), GetClient()->GetNameCRC(), this, quest_step, 1, false, false, display_quest_helper));
+		}
+		quest_step->WasUpdated(false);
+	}
+	if(quest->GetTurnedIn() && GetClient()) //update the journal so the old quest isn't the one displayed in the client's quest helper
+		GetClient()->SendQuestJournal();
+		
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+void Player::SendQuest(int32 quest_id) {
+	if(!GetClient()) {
+		return;
+	}
+
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	Quest* quest = GetQuest(quest_id);
+	if (quest)
+		GetClient()->QueuePacket(quest->QuestJournalReply(GetClient()->GetVersion(), GetClient()->GetNameCRC(), this));
+	else {
+		quest = GetCompletedQuest(quest_id);
+		
+		if (quest)
+			GetClient()->QueuePacket(quest->QuestJournalReply(GetClient()->GetVersion(), GetClient()->GetNameCRC(), this, 0, 1, true));
+	}
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+
+void Player::UpdateQuestCompleteCount(int32 quest_id) {
+	if(!GetClient()) {
+		return;
+	}
+	
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	// If character has already completed this quest once update the given date in the database
+	Quest* quest = GetQuest(id);
+	Quest* quest2 = GetCompletedQuest(id);
+	if (quest && quest2) {
+		quest->SetCompleteCount(quest2->GetCompleteCount());
+		database.SaveCharRepeatableQuest(GetClient(), id, quest->GetCompleteCount());
+	}
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+void Player::GetQuestTemporaryRewards(int32 quest_id, std::vector<Item*>* items) {
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	Quest* quest = GetAnyQuest(quest_id);
+	if(quest) {
+		quest->GetTmpRewardItemsByID(items);
+	}
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+void Player::AddQuestTemporaryReward(int32 quest_id, int32 item_id, int16 item_count) {
+	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+	Quest* quest = GetAnyQuest(quest_id);
+	if(quest) {
+		Item* item = master_item_list.GetItem(item_id);
+		if(item) {
+			Item* tmpItem = new Item(item);
+			tmpItem->details.count = item_count;
+			quest->AddTmpRewardItem(tmpItem);
+		}
+	}
+	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 bool Player::ShouldSendSpawn(Spawn* spawn){

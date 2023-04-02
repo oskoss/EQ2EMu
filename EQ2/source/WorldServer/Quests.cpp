@@ -1826,12 +1826,12 @@ void Quest::SetQuestTemporaryState(bool tempState, std::string customDescription
 
 bool Quest::CanShareQuestCriteria(Client* quest_sharer, bool display_client_msg) {
 	Quest* clientQuest = quest_sharer->GetPlayer()->GetQuest(GetQuestID()); // gets active quest if available
-	if(((GetQuestShareableFlag() & QUEST_SHAREABLE_COMPLETED) == 0) && quest_sharer->GetPlayer()->GetCompletedQuest(GetQuestID())) {
+	if(((GetQuestShareableFlag() & QUEST_SHAREABLE_COMPLETED) == 0) && quest_sharer->GetPlayer()->HasQuestBeenCompleted(GetQuestID())) {
 		if(display_client_msg)
 			quest_sharer->SimpleMessage(CHANNEL_COLOR_RED, "You cannot share this quest after it is already completed.");
 		return false;
 	}
-	else if((GetQuestShareableFlag() == QUEST_SHAREABLE_COMPLETED) && !quest_sharer->GetPlayer()->GetCompletedQuest(GetQuestID())) {
+	else if((GetQuestShareableFlag() == QUEST_SHAREABLE_COMPLETED) && !quest_sharer->GetPlayer()->HasQuestBeenCompleted(GetQuestID())) {
 		if(display_client_msg)
 			quest_sharer->SimpleMessage(CHANNEL_COLOR_RED, "You cannot share this quest until it is completed.");
 		return false;

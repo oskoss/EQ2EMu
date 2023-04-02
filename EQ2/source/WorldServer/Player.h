@@ -243,6 +243,18 @@ struct SpawnQueueState {
 	int16 index_id;
 };
 
+struct QuestRewardData {
+	int32 quest_id;
+	bool is_temporary;
+	std::string description;
+	bool is_collection;
+	bool has_displayed;
+	int64 tmp_coin;
+	int32 tmp_status;
+	bool db_saved;
+	int32 db_index;
+};
+
 class PlayerLoginAppearance {
 public:
 	PlayerLoginAppearance() { appearanceList = new map<int8, LoginAppearances>; }
@@ -694,6 +706,16 @@ public:
 	vector<Quest*>* CheckQuestsFailures();
 	bool CheckQuestRemoveFlag(Spawn* spawn);
 	int8 CheckQuestFlag(Spawn* spawn);
+	bool UpdateQuestReward(int32 quest_id, QuestRewardData* qrd);
+	Quest* PendingQuestAcceptance(int32 quest_id, int32 item_id, bool* quest_exists);
+	bool AcceptQuestReward(int32 item_id, int32 selectable_item_id);
+	
+	bool SendQuestStepUpdate(int32 quest_id, int32 quest_step_id, bool display_quest_helper);
+	void SendQuest(int32 quest_id);
+	void UpdateQuestCompleteCount(int32 quest_id);
+	void GetQuestTemporaryRewards(int32 quest_id, std::vector<Item*>* items);
+	void AddQuestTemporaryReward(int32 quest_id, int32 item_id, int16 item_count);
+	
 	bool CheckQuestRequired(Spawn* spawn);
 	void AddQuestRequiredSpawn(Spawn* spawn, int32 quest_id);
 	void AddHistoryRequiredSpawn(Spawn* spawn, int32 event_id);
@@ -704,9 +726,11 @@ public:
 	map<int32, vector<int32>*>   player_spawn_history_required;
 	Mutex				m_playerSpawnQuestsRequired;
 	Mutex				m_playerSpawnHistoryRequired;
-	Quest*  GetAnyQuest(int32 quest_id);
-	Quest*	GetCompletedQuest(int32 quest_id);
+	bool	HasQuestBeenCompleted(int32 quest_id);
+	int32	GetQuestCompletedCount(int32 quest_id);
 	void	AddCompletedQuest(Quest* quest);
+	bool	HasActiveQuest(int32 quest_id);
+	bool	HasAnyQuest(int32 quest_id);
 	map<int32, Quest*>	pending_quests;
 	map<int32, Quest*>	player_quests;
 	map<int32, Quest*>*	GetPlayerQuests();
@@ -1201,6 +1225,9 @@ private:
 	int32 current_language_id;
 	
 	bool active_reward;
+	
+	Quest*  GetAnyQuest(int32 quest_id);
+	Quest*	GetCompletedQuest(int32 quest_id);
 };
 #pragma pack()
 #endif

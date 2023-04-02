@@ -1916,15 +1916,8 @@ void WorldDatabase::LoadCharacterQuestTemporaryRewards(Client* client, int32 que
 		while(result && (row = mysql_fetch_row(result)))
 		{
 			int32 item_id = atoul(row[0]);
-			Quest* quest = client->GetPlayer()->GetAnyQuest(quest_id);
-			if(quest) {
-				Item* item = master_item_list.GetItem(item_id);
-				if(item) {
-					Item* tmpItem = new Item(item);
-					tmpItem->details.count = atoul(row[1]);
-					quest->AddTmpRewardItem(tmpItem);
-				}
-			}
+			int16 item_count = atoul(row[1]);
+			client->GetPlayer()->AddQuestTemporaryReward(quest_id, item_id, item_count);
 		}
 	}
 }

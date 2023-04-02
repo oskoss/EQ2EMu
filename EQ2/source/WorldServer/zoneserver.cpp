@@ -2581,7 +2581,7 @@ void ZoneServer::AddLoot(NPC* npc, Spawn* killer){
 									{
 										player = (Player*)killer;
 										// player has already completed the quest
-										if(player->GetCompletedQuest(drop->no_drop_quest_completed_id) && !player->GetGroupMemberInfo())
+										if(player->HasQuestBeenCompleted(drop->no_drop_quest_completed_id) && !player->GetGroupMemberInfo())
 										{
 											LogWrite(PLAYER__DEBUG, 0, "Player", "%s: Player has completed quest %u, skipping loot item %u", npc->GetName(), drop->no_drop_quest_completed_id, drop->item_id);
 											continue;

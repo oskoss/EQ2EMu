@@ -151,6 +151,7 @@ enum RuleType {
 	EditorIncludeID,
 	EditorOfficialServer,
 	GroupSpellsTimer,
+	QuestQueueTimer,
 	SavePaperdollImage,
 	SaveHeadshotImage,
 	SendPaperdollImagesToLogin,

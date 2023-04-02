@@ -2107,7 +2107,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							lua_interface->RunItemScript(item->GetItemScript(), "examined", item, client->GetPlayer());
 						else if(item->generic_info.offers_quest_id > 0){ //leave the current functionality in place if it doesnt have an item script
 							Quest* quest = master_quest_list.GetQuest(item->generic_info.offers_quest_id, false);
-							if(quest && client->GetPlayer()->GetCompletedQuest(item->generic_info.offers_quest_id) == 0 && client->GetPlayer()->GetQuest(item->generic_info.offers_quest_id) == 0)
+							if(quest && client->GetPlayer()->HasQuestBeenCompleted(item->generic_info.offers_quest_id) == 0 && client->GetPlayer()->HasActiveQuest(item->generic_info.offers_quest_id) == 0)
 								client->AddPendingQuest(new Quest(quest)); // copy quest since we pulled the master quest to see if it existed or not
 						}
 					}
@@ -3033,15 +3033,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[0] && sep->IsNumber(0))
 				quest_id = atoul(sep->arg[0]);
 			if(quest_id > 0){
-				Quest* quest = client->GetPendingQuest(quest_id);
-				if(quest){
-					client->RemovePendingQuest(quest);
-					if(lua_interface)
-						lua_interface->CallQuestFunction(quest, "Declined", client->GetPlayer());
-					lua_interface->SetLuaUserDataStale(quest);
-					safe_delete(quest);
-					client->GetCurrentZone()->SendQuestUpdates(client);
-				}
+				client->RemovePendingQuest(quest_id);
 			}
 			break;
 								   }
@@ -4180,7 +4172,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			int32 unknown = 0;
 			int32 selectable_item_id = 0;
 			//Quest *quest = 0;
-			Collection *collection = 0;
 			/* no idea what the first argument is for (faction maybe?)
 			   if the reward has a selectable item reward, it's sent as the second argument
 			   if neither of these are included in the reward, there is no sep
@@ -4198,38 +4189,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			int32 item_id = 0;
 			if(sep && sep->arg[0][0] && sep->IsNumber(0))
 				item_id = atoul(sep->arg[0]);
-			Quest* quest = client->GetPendingQuestAcceptance(item_id);
-			if(quest){
-				client->AcceptQuestReward(quest, item_id);
-				break;
-			}
-			bool collectedItems = false;
-			if (client->GetPlayer()->HasPendingItemRewards()) {
-				vector<Item*> items = client->GetPlayer()->GetPendingItemRewards();
-				if (items.size() > 0) {
-					collectedItems = true;
-					for (int i = 0; i < items.size(); i++) {
-						client->GetPlayer()->AddItem(new Item(items[i]));
-					}
-					client->GetPlayer()->ClearPendingItemRewards();
-					client->GetPlayer()->SetActiveReward(false);
-				}
-				map<int32, Item*> selectable_item = client->GetPlayer()->GetPendingSelectableItemReward(item_id);
-				if (selectable_item.size() > 0) {
-					collectedItems = true;
-					map<int32, Item*>::iterator itr;
-					for (itr = selectable_item.begin(); itr != selectable_item.end(); itr++) {
-						client->GetPlayer()->AddItem(new Item(itr->second));
-						client->GetPlayer()->ClearPendingSelectableItemRewards(itr->first);
-					}
-					client->GetPlayer()->SetActiveReward(false);
-				}
-			}
-			else if (collection = player->GetPendingCollectionReward())
-			{
-				client->AcceptCollectionRewards(collection, (selectable_item_id > 0) ? selectable_item_id : item_id);
-				collectedItems = true;
-			}
+
+			bool collectedItems = client->GetPlayer()->AcceptQuestReward(item_id, selectable_item_id);
 			
 			if (collectedItems) {
 				EQ2Packet* outapp = client->GetPlayer()->SendInventoryUpdate(client->GetVersion());
@@ -11837,9 +11798,9 @@ void Commands::Command_ShareQuest(Client* client, Seperator* sep)
 	if (sep && sep->arg[0] && sep->IsNumber(0)) {
 		int32 quest_id = atoul(sep->arg[0]);
 		
-		Quest* playerQuest = client->GetPlayer()->GetQuest(quest_id);
-		if(playerQuest) {
-		Quest* quest = master_quest_list.GetQuest(playerQuest->GetQuestID(), false);
+		bool hasQuest = client->GetPlayer()->HasAnyQuest(quest_id);
+		if(hasQuest) {
+		Quest* quest = master_quest_list.GetQuest(quest_id, false);
 			if(quest) {
 				GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
 				if (gmi && gmi->group_id) {

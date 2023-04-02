@@ -146,17 +146,6 @@ struct WaypointInfo {
 	int8 type;
 };
 
-struct QuestRewardData {
-	int32 quest_id;
-	bool is_temporary;
-	std::string description;
-	bool is_collection;
-	bool has_displayed;
-	int64 tmp_coin;
-	int32 tmp_status;
-	bool db_saved;
-	int32 db_index;
-};
 
 class Client {
 public:
@@ -288,9 +277,8 @@ public:
 	void	CheckPlayerQuestsSpellUpdate(Spell* spell);
 	void	CheckPlayerQuestsLocationUpdate();
 	void	AddPendingQuest(Quest* quest, bool forced = false);
-	void	AcceptQuest(int32 id);
-	Quest*	GetPendingQuest(int32 id);
-	void	RemovePendingQuest(Quest* quest);
+	void	AcceptQuest(int32 quest_id);
+	void	RemovePendingQuest(int32 quest_id);
 	void	SetPlayerQuest(Quest* quest, map<int32, int32>* progress);
 	void	AddPlayerQuest(Quest* quest, bool call_accepted = true, bool send_packets = true);
 	void	RemovePlayerQuest(int32 id, bool send_update = true, bool delete_quest = true);
@@ -305,7 +293,6 @@ public:
 	void	DisplayRandomizeFeatures(int32 features);
 	void	AcceptQuestReward(Quest* quest, int32 item_id);
 	Quest*	GetPendingQuestAcceptance(int32 item_id);
-	Quest*	GetActiveQuest(int32 quest_id);
 	void	DisplayConversation(int32 conversation_id, int32 spawn_id, vector<ConversationOption>* conversations, const char* text, const char* mp3, int32 key1, int32 key2, int8 language = 0, int8 can_close = 1);
 	void	DisplayConversation(Item* item, vector<ConversationOption>* conversations, const char* text, int8 type, const char* mp3 = 0, int32 key1 = 0, int32 key2 = 0, int8 language = 0, int8 can_close = 1);
 	void	DisplayConversation(Spawn* src, int8 type, vector<ConversationOption>* conversations, const char* text, const char* mp3 = 0, int32 key1 = 0, int32 key2 = 0, int8 language = 0, int8 can_close = 1);
@@ -588,11 +575,12 @@ public:
 	bool	RemoveRecipeFromPlayer(int32 recipe_id);
 	
 	void	SaveSpells();
+	
+	void	GiveQuestReward(Quest* quest, bool has_displayed = false);
 private:
 	void	AddRecipeToPlayerPack(Recipe* recipe, PacketStruct* packet, int16* i);
 	void    SavePlayerImages();
 	void	SkillChanged(Skill* skill, int16 previous_value, int16 new_value);
-	void	GiveQuestReward(Quest* quest, bool has_displayed = false);
 	void	SetStepComplete(int32 quest_id, int32 step);
 	void	AddStepProgress(int32 quest_id, int32 step, int32 progress);
 	

@@ -1362,6 +1362,7 @@ int EQ2Emu_lua_SpellHeal(lua_State* state) {
 
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	if(!luaspell || luaspell->resisted) {
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	Spawn* caster = luaspell->caster;
@@ -1410,6 +1411,7 @@ int EQ2Emu_lua_SpellHealPct(lua_State* state) {
 
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	if(!luaspell || luaspell->resisted) {
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	Spawn* caster = luaspell->caster;
@@ -1723,7 +1725,8 @@ int EQ2Emu_lua_AddHate(lua_State* state) {
 	bool send_packet = lua_interface->GetInt8Value(state, 4) == 1 ? true : false;
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	
-	if(!luaspell || luaspell->resisted) {
+	if(luaspell && luaspell->resisted) {
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	
@@ -1847,6 +1850,7 @@ int EQ2Emu_lua_SpellDamage(lua_State* state) {
 	Spawn* target = lua_interface->GetSpawn(state);
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	if(!luaspell || luaspell->resisted) {
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	Spawn* caster = luaspell->caster;
@@ -2282,6 +2286,7 @@ int EQ2Emu_lua_AddSpellBonus(lua_State* state) {
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	
 	if(!luaspell || luaspell->resisted) {
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 
@@ -2375,6 +2380,7 @@ int EQ2Emu_lua_AddSpawnSpellBonus(lua_State* state) {
 	}
 	
 	if(luaspell->resisted) {
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 
@@ -2476,6 +2482,7 @@ int EQ2Emu_lua_AddSkillBonus(lua_State* state) {
 		int32 spell_id = 0;
 		if (luaspell && luaspell->spell && luaspell->caster) {
 			if(luaspell->resisted) {
+				lua_interface->ResetFunctionStack(state);
 				return 0;
 			}
 			spell_id = luaspell->spell->GetSpellID();
@@ -2537,6 +2544,7 @@ int EQ2Emu_lua_RemoveSkillBonus(lua_State* state) {
 		int32 spell_id = 0;
 		if (luaspell && luaspell->spell) {
 			if(luaspell->resisted) {
+				lua_interface->ResetFunctionStack(state);
 				return 0;
 			}
 			spell_id = luaspell->spell->GetSpellID();
@@ -2591,6 +2599,7 @@ int EQ2Emu_lua_AddControlEffect(lua_State* state) {
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	
 	if(luaspell && luaspell->resisted) {
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	
@@ -3635,7 +3644,7 @@ int EQ2Emu_lua_HasCompletedQuest(lua_State* state) {
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
 	if (player && player->IsPlayer() && quest_id > 0) {
-		lua_interface->SetBooleanValue(state, (((Player*)player)->GetCompletedQuest(quest_id) != 0));
+		lua_interface->SetBooleanValue(state, (((Player*)player)->HasQuestBeenCompleted(quest_id) != 0));
 		return 1;
 	}
 	return 0;
@@ -3659,10 +3668,25 @@ int EQ2Emu_lua_OfferQuest(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state, 2);
 	int32 quest_id = lua_interface->GetInt32Value(state, 3);
 	bool forced = lua_interface->GetBooleanValue(state, 4);
+	bool override_receive_quest_check = lua_interface->GetBooleanValue(state, 5);
 	lua_interface->ResetFunctionStack(state);
 
 	/* NPC is allowed to be null */
 	if (player && player->IsPlayer() && quest_id > 0) {
+		if(!((Player*)player)->CanReceiveQuest(quest_id)) {
+				if(override_receive_quest_check || player->GetClient() && player->GetClient()->GetAdminStatus() >= 200) {
+					if(override_receive_quest_check) {
+						lua_interface->LogError("%s: LUA OfferQuest player %s should not be able to receive quest %u, override as OfferQuest has override_receive_quest_check = true.", lua_interface->GetScriptName(state), player->GetName(), quest_id);
+					}
+					else {
+						lua_interface->LogError("%s: LUA OfferQuest player %s should not be able to receive quest %u, override as player is admin (status >= 200).", lua_interface->GetScriptName(state), player->GetName(), quest_id);
+					}
+				}
+				else {
+					lua_interface->LogError("%s: LUA OfferQuest player %s cannot receive the quest %u, failed CanReceiveQuest.", lua_interface->GetScriptName(state), player->GetName(), quest_id);
+					return 0;
+				}
+		}
 		Quest* master_quest = master_quest_list.GetQuest(quest_id, false);
 		if (master_quest) {
 			Client* client = ((Player*)player)->GetClient();
@@ -10082,13 +10106,7 @@ int EQ2Emu_lua_GetQuestCompleteCount(lua_State* state) {
 		return 0;
 	}
 
-	Quest* quest = ((Player*)player)->GetCompletedQuest(quest_id);
-	if (!quest) {
-		lua_interface->SetInt32Value(state, 0);
-		return 1;
-	}
-
-	lua_interface->SetInt32Value(state, quest->GetCompleteCount());
+	lua_interface->SetInt32Value(state, ((Player*)player)->GetQuestCompletedCount(quest_id));
 	return 1;
 }
 
