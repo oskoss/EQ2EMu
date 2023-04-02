@@ -4881,7 +4881,7 @@ int EQ2Emu_lua_Attack(lua_State* state) {
 		Spawn* npc = lua_interface->GetSpawn(state);
 		Spawn* player = lua_interface->GetSpawn(state, 2);
 		lua_interface->ResetFunctionStack(state);
-		if (npc && player && npc->IsNPC() && player->IsPlayer())
+		if (npc && player && npc->IsNPC() && player->IsEntity())
 			((NPC*)npc)->AddHate((Entity*)player, 100);
 	}
 	return 0;
