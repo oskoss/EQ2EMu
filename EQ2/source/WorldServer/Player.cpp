@@ -4431,7 +4431,8 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 					else if(!quest->IsHidden()) {
 						display_status += QUEST_DISPLAY_STATUS_SHOW;
 					}
-					else if(quest->CanShareQuestCriteria(GetClient(),false)) {
+					
+					if(quest->CanShareQuestCriteria(GetClient(),false)) {
 						display_status += QUEST_DISPLAY_STATUS_CAN_SHARE;
 					}
 				}
