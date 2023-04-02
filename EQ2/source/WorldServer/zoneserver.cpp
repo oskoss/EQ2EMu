@@ -3986,7 +3986,7 @@ Spawn*	ZoneServer::GetSpawnByDatabaseID(int32 id){
 			spawn = itr->second;
 			if(spawn){
 				if(spawn->GetDatabaseID() == id){
-					quick_database_id_lookup.Put(id, spawn->GetDatabaseID());
+					quick_database_id_lookup.Put(id, spawn->GetID());
 					ret = spawn;
 					break;
 				}
