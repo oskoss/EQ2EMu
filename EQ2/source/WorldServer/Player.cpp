@@ -5122,6 +5122,7 @@ bool Player::SendQuestStepUpdate(int32 quest_id, int32 quest_step_id, bool displ
 		MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 		return false;
 	}
+	
 	QuestStep* quest_step = quest->GetQuestStep(quest_step_id);
 	if (quest_step) {
 		if(GetClient()) {
@@ -5129,10 +5130,12 @@ bool Player::SendQuestStepUpdate(int32 quest_id, int32 quest_step_id, bool displ
 		}
 		quest_step->WasUpdated(false);
 	}
-	if(quest->GetTurnedIn() && GetClient()) //update the journal so the old quest isn't the one displayed in the client's quest helper
-		GetClient()->SendQuestJournal();
-		
+	bool turnedIn = quest->GetTurnedIn();
+	
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
+	
+	if(turnedIn && GetClient()) //update the journal so the old quest isn't the one displayed in the client's quest helper
+		GetClient()->SendQuestJournal();
 }
 
 void Player::SendQuest(int32 quest_id) {
