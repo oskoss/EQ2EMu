@@ -5136,6 +5136,8 @@ bool Player::SendQuestStepUpdate(int32 quest_id, int32 quest_step_id, bool displ
 	
 	if(turnedIn && GetClient()) //update the journal so the old quest isn't the one displayed in the client's quest helper
 		GetClient()->SendQuestJournal();
+
+	return true;
 }
 
 void Player::SendQuest(int32 quest_id) {
