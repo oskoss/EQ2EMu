@@ -11538,7 +11538,7 @@ void Client::SaveQuestRewardData(bool force_refresh) {
 					GetCharacterID(), index, questID, (*itr)->is_temporary, (*itr)->is_collection, (*itr)->has_displayed, (*itr)->tmp_coin, (*itr)->tmp_status, database.getSafeEscapeString((*itr)->description.c_str()).c_str());
 				(*itr)->db_saved = true;
 				(*itr)->db_index = index;
-				if((*itr)->is_temporary) {
+				if(questID && (*itr)->is_temporary) {
 					std::vector<Item*> items;
 					GetPlayer()->GetQuestTemporaryRewards(questID, &items);
 					if(!force_refresh && items.size() > 0) {
