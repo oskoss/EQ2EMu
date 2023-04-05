@@ -4480,7 +4480,7 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 		packet->setArrayDataByName("quest_type", quest->GetType());
 		packet->setArrayDataByName("quest_zone", quest->GetZone());
 
-		int8 display_status = 0;
+		int8 display_status = QUEST_DISPLAY_STATUS_SHOW;
 		if(quest->GetCompleted())
 			packet->setArrayDataByName("completed", 1);
 		if(quest->GetTurnedIn()) {
