@@ -4379,7 +4379,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 				packet->setArrayDataByName("name", quest->GetName(), i);
 				packet->setArrayDataByName("quest_type", quest->GetType(), i);
 				packet->setArrayDataByName("quest_zone", quest->GetZone(), i);
-				int8 display_status = 0;
+				int8 display_status = QUEST_DISPLAY_STATUS_SHOW;
 				if(itr->second->GetCompleted())
 					packet->setArrayDataByName("completed", 1, i);
 				if(itr->second->GetTurnedIn()){
@@ -4426,10 +4426,8 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 					else
 						display_status += QUEST_DISPLAY_STATUS_NO_CHECK;
 
-					if (quest->IsHidden() && !quest->GetTurnedIn())
-						display_status = QUEST_DISPLAY_STATUS_HIDDEN;
-					else if(!quest->IsHidden()) {
-						display_status += QUEST_DISPLAY_STATUS_SHOW;
+					if (quest->IsHidden() && !quest->GetTurnedIn()) {
+						display_status += QUEST_DISPLAY_STATUS_HIDDEN;
 					}
 					
 					if(quest->CanShareQuestCriteria(GetClient(),false)) {
