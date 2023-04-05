@@ -3668,25 +3668,10 @@ int EQ2Emu_lua_OfferQuest(lua_State* state) {
 	Spawn* player = lua_interface->GetSpawn(state, 2);
 	int32 quest_id = lua_interface->GetInt32Value(state, 3);
 	bool forced = lua_interface->GetBooleanValue(state, 4);
-	bool override_receive_quest_check = lua_interface->GetBooleanValue(state, 5);
 	lua_interface->ResetFunctionStack(state);
 
 	/* NPC is allowed to be null */
 	if (player && player->IsPlayer() && quest_id > 0) {
-		if(!((Player*)player)->CanReceiveQuest(quest_id)) {
-				if(override_receive_quest_check || player->GetClient() && player->GetClient()->GetAdminStatus() >= 200) {
-					if(override_receive_quest_check) {
-						lua_interface->LogError("%s: LUA OfferQuest player %s should not be able to receive quest %u, override as OfferQuest has override_receive_quest_check = true.", lua_interface->GetScriptName(state), player->GetName(), quest_id);
-					}
-					else {
-						lua_interface->LogError("%s: LUA OfferQuest player %s should not be able to receive quest %u, override as player is admin (status >= 200).", lua_interface->GetScriptName(state), player->GetName(), quest_id);
-					}
-				}
-				else {
-					lua_interface->LogError("%s: LUA OfferQuest player %s cannot receive the quest %u, failed CanReceiveQuest.", lua_interface->GetScriptName(state), player->GetName(), quest_id);
-					return 0;
-				}
-		}
 		Quest* master_quest = master_quest_list.GetQuest(quest_id, false);
 		if (master_quest) {
 			Client* client = ((Player*)player)->GetClient();
