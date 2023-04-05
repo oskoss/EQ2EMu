@@ -4428,6 +4428,7 @@ PacketStruct* Player::GetQuestJournalPacket(bool all_quests, int16 version, int3
 
 					if (quest->IsHidden() && !quest->GetTurnedIn()) {
 						display_status += QUEST_DISPLAY_STATUS_HIDDEN;
+						display_status -= QUEST_DISPLAY_STATUS_SHOW;
 					}
 					
 					if(quest->CanShareQuestCriteria(GetClient(),false)) {
@@ -4524,11 +4525,14 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 			else
 				display_status += QUEST_DISPLAY_STATUS_NO_CHECK;
 
-			if (quest->IsHidden() && !quest->GetTurnedIn())
-				display_status = QUEST_DISPLAY_STATUS_HIDDEN;
-			else if(quest->CanShareQuestCriteria(GetClient(),false)) {
-			display_status += QUEST_DISPLAY_STATUS_CAN_SHARE;
-		}
+			if (quest->IsHidden() && !quest->GetTurnedIn()) {
+				display_status += QUEST_DISPLAY_STATUS_HIDDEN;
+				display_status -= QUEST_DISPLAY_STATUS_SHOW;
+			}
+			
+			if(quest->CanShareQuestCriteria(GetClient(),false)) {
+				display_status += QUEST_DISPLAY_STATUS_CAN_SHARE;
+			}
 		}
 		else
 			packet->setArrayDataByName("visible", quest->GetVisible());
