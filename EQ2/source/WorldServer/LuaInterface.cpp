@@ -819,8 +819,9 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 			spawn_wrapper = new LUASpawnWrapper();
 			if(!spell->initial_target)
 				spawn_wrapper->spawn = spell->caster->GetTarget();
-			else
+			else if(spell->caster->GetZone()) {
 				spawn_wrapper->spawn = spell->caster->GetZone()->GetSpawnByID(spell->initial_target);
+			}
 			AddUserDataPtr(spawn_wrapper, spawn_wrapper->spawn);
 			lua_pushlightuserdata(spell->state, spawn_wrapper);
 		}
