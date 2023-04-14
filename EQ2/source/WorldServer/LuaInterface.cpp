@@ -572,7 +572,7 @@ std::string LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, boo
 		SetSpellValue(spell->state, spell);
 
 	Spawn* temp_spawn = 0;
-	if (timer && timer->caster && spell->caster)
+	if (timer && timer->caster && spell->caster && spell->caster->GetZone())
 		temp_spawn = spell->caster->GetZone()->GetSpawnByID(timer->caster);
 
 	if (temp_spawn)
@@ -582,7 +582,7 @@ std::string LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, boo
 
 	temp_spawn = 0;
 
-	if (timer && timer->target && spell->caster)
+	if (timer && timer->target && spell->caster && spell->caster->GetZone())
 		temp_spawn = spell->caster->GetZone()->GetSpawnByID(timer->target);
 
 	if (temp_spawn)
@@ -821,6 +821,9 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 				spawn_wrapper->spawn = spell->caster->GetTarget();
 			else if(spell->caster->GetZone()) {
 				spawn_wrapper->spawn = spell->caster->GetZone()->GetSpawnByID(spell->initial_target);
+			}
+			else {
+				spawn_wrapper->spawn = nullptr; // we need it set to something or else the ptr could be loose
 			}
 			AddUserDataPtr(spawn_wrapper, spawn_wrapper->spawn);
 			lua_pushlightuserdata(spell->state, spawn_wrapper);
@@ -1549,10 +1552,10 @@ void LuaInterface::DeletePendingSpells(bool all) {
 			spell = *del_itr;
 			
 			
-			if (spell->caster) {
+			if (spell->caster && spell->caster->GetZone()) {
 				spell->caster->GetZone()->GetSpellProcess()->DeleteActiveSpell(spell);
 			}
-			else if(spell->targets.size() > 0) {
+			else if(spell->targets.size() > 0 && spell->caster && spell->caster->GetZone()) {
 				spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 				for (int8 i = 0; i < spell->targets.size(); i++) {
 					Spawn* target = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));

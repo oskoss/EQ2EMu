@@ -6400,7 +6400,7 @@ int EQ2Emu_lua_GetWardAmountLeft(lua_State* state) {
 		return 0;
 	}
 
-	if (spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
+	if (spell->caster && spell->caster->GetZone() && spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
 		Entity* target = (Entity*)spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0));
 		WardInfo* ward = target->GetWard(spell->spell->GetSpellID());
 		if (ward) {
@@ -6426,7 +6426,7 @@ int EQ2Emu_lua_GetWardValue(lua_State* state) {
 
 	lua_interface->ResetFunctionStack(state);
 	
-	if (spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
+	if (spell->caster && spell->caster->GetZone() && spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
 
 		Entity* target = (Entity*)spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0));
 		WardInfo* ward = target->GetWard(spell->spell->GetSpellID());
@@ -8393,7 +8393,7 @@ int EQ2Emu_lua_AddProc(lua_State* state) {
 		return 0;
 	}
 	
-	if (spell && use_all_spelltargets) {
+	if (spell && spell->caster && spell->caster->GetZone() && use_all_spelltargets) {
 		Spawn* target;
 		spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 		for (int8 i = 0; i < spell->targets.size(); i++) {
@@ -8441,7 +8441,7 @@ int EQ2Emu_lua_RemoveProc(lua_State* state) {
 		return 0;
 	}
 
-	if (spell) {
+	if (spell && spell->caster && spell->caster->GetZone()) {
 		Spawn* target;
 		spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 		for (int8 i = 0; i < spell->targets.size(); i++) {
@@ -8762,7 +8762,7 @@ int EQ2Emu_lua_AddSpellTimer(lua_State* state) {
 		return 0;
 	}
 
-	if (!spell) {
+	if (!spell || (!spell->caster || !spell->caster->GetZone())) {
 		lua_interface->LogError("%s: LUA AddSpellTimer command error: spell not found, AddSpellTimer must be used in a spell script", lua_interface->GetScriptName(state));
 		return 0;
 	}
@@ -9545,6 +9545,12 @@ int EQ2Emu_lua_RemoveTriggerFromSpell(lua_State* state) {
 		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
+	
+	if (!spell->caster || !spell->caster->GetZone()) {
+		lua_interface->LogError("%s: LUA RemoveTriggerFromSpell command error: caster / caster zone must be set!", lua_interface->GetScriptName(state));
+		lua_interface->ResetFunctionStack(state);
+		return 0;
+	}
 
 	int16 remove_count = lua_interface->GetInt16Value(state);
 
@@ -9631,7 +9637,7 @@ int EQ2Emu_lua_AddImmunitySpell(lua_State* state) {
 		Entity* entity = ((Entity*)spawn);
 		entity->AddImmunity(spell, type);
 	}
-	else {
+	else if(spell->caster && spell->caster->GetZone()) {
 		spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			spawn = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
@@ -9668,7 +9674,7 @@ int EQ2Emu_lua_RemoveImmunitySpell(lua_State* state) {
 		Entity* entity = ((Entity*)spawn);
 		entity->RemoveImmunity(spell, type);
 	}
-	else {
+	else if(spell->caster && spell->caster->GetZone()) {
 		spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			spawn = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
@@ -9715,7 +9721,7 @@ int EQ2Emu_lua_SetSpellSnareValue(lua_State* state) {
 
 		((Entity*)spawn)->SetSnareValue(spell, val);
 	}
-	else {
+	else if(spell->caster && spell->caster->GetZone()) {
 		spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 		for (int8 i = 0; i < spell->targets.size(); i++) {
 			spawn = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
@@ -10912,13 +10918,13 @@ int EQ2Emu_lua_Evac(lua_State* state) {
 
 		LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 		
-		if(!spell) {
+		if(!spell || !spell->caster || !spell->caster->GetZone()) {
 			lua_interface->ResetFunctionStack(state);
 			return 0;
 		}
 		
 		ZoneServer* zone = spell->caster->GetZone();
-
+		
 		float x = spell->caster->GetZone()->GetSafeX();
 		float y = spell->caster->GetZone()->GetSafeY();
 		float z = spell->caster->GetZone()->GetSafeZ();
