@@ -4478,7 +4478,7 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 		packet->setArrayLengthByName("num_quests", 1);
 		packet->setArrayLengthByName("num_quest_zones", 1);
 		packet->setArrayDataByName("quest_zones_zone", quest->GetType());
-		packet->setArrayDataByName("quest_zones_zone_id", 1);
+		packet->setArrayDataByName("quest_zones_zone_id", 0);
 		
 		if(!quest->GetDeleted() && !quest->GetCompleted())
 			packet->setArrayDataByName("active", 1);
