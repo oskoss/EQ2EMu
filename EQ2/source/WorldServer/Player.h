@@ -634,7 +634,6 @@ public:
 	void	ClearEverything();
 	bool	IsResurrecting();
 	void	SetResurrecting(bool val);
-	int8	GetArrowColor(int8 spawn_level);
 	int8    GetTSArrowColor(int8 level);
 	Spawn*	GetSpawnByIndex(int16 index);
 	int16	GetIndexForSpawn(Spawn* spawn);

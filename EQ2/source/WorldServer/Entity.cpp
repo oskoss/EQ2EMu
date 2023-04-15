@@ -338,6 +338,8 @@ void Entity::MapInfoStruct()
 	
 	get_int8_funcs["friendly_target_npc"] = l::bind(&InfoStruct::get_friendly_target_npc, &info_struct);
 	get_int32_funcs["last_claim_time"] = l::bind(&InfoStruct::get_last_claim_time, &info_struct);
+	
+	get_int8_funcs["engaged_encounter"] = l::bind(&InfoStruct::get_engaged_encounter, &info_struct);
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -521,6 +523,8 @@ void Entity::MapInfoStruct()
 	
 	set_int8_funcs["friendly_target_npc"] = l::bind(&InfoStruct::set_friendly_target_npc, &info_struct, l::_1);
 	set_int32_funcs["last_claim_time"] = l::bind(&InfoStruct::set_last_claim_time, &info_struct, l::_1);
+	
+	set_int8_funcs["engaged_encounter"] = l::bind(&InfoStruct::set_engaged_encounter, &info_struct, l::_1);
 
 }
 
@@ -908,9 +912,17 @@ void Entity::InCombat(bool val){
 		changeCombatState = true;
 
 	in_combat = val;
+	
+	bool update_regen = false;
+	if(GetInfoStruct()->get_engaged_encounter()) {
+		if(!IsAggroed() || !IsEngagedInEncounter()) {
+			GetInfoStruct()->set_engaged_encounter(0);
+			update_regen = true;
+		}
+	}
 
-	if(changeCombatState)
-		SetRegenValues(GetInfoStruct()->get_effective_level());
+	if(changeCombatState || update_regen)
+		SetRegenValues((GetInfoStruct()->get_effective_level() > 0) ? GetInfoStruct()->get_effective_level() : GetLevel());
 }
 
 void Entity::DoRegenUpdate(){
@@ -1513,13 +1525,16 @@ void Entity::CalculateBonuses(){
 void Entity::SetRegenValues(int16 effective_level)
 {
 	bool classicRegen = rule_manager.GetGlobalRule(R_Spawn, ClassicRegen)->GetBool();
+	bool override_ = (IsPlayer() && !GetInfoStruct()->get_engaged_encounter());
+	
 	if(!GetInfoStruct()->get_hp_regen_override())
 	{
 		sint16 regen_hp_rate = 0;
 		sint16 temp = 0;
 
 		MStats.lock();
-		if(!IsAggroed())
+		
+		if(!IsAggroed() || override_)
 		{
 			if(classicRegen)
 			{
@@ -1551,7 +1566,7 @@ void Entity::SetRegenValues(int16 effective_level)
 		sint16 temp = 0;
 
 		MStats.lock();
-		if(!IsAggroed())
+		if(!IsAggroed() || override_)
 		{
 			if(classicRegen)
 			{				
@@ -2141,7 +2156,7 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 		ward->HitCount++; // increment hit count
 		ward->RoundTriggered = true;
 		
-		if (ward->MaxHitCount && spell->num_triggers)
+		if (ward->MaxHitCount && spell->num_triggers && spell->caster->GetZone())
 		{
 			spell->num_triggers--;
 			ClientPacketFunctions::SendMaintainedExamineUpdate(spell->caster->GetZone()->GetClientBySpawn(spell->caster), spell->slot_pos, spell->num_triggers, 0);
@@ -2185,7 +2200,7 @@ float Entity::GetSpeed() {
 		ret += stats[ITEM_STAT_STEALTHINVISSPEEDMOD];
 	}
 	
-	if (!EngagedInCombat()) {
+	if (!GetInfoStruct()->get_engaged_encounter()) {
 		if (stats.count(ITEM_STAT_SPEED) && stats.count(ITEM_STAT_MOUNTSPEED)) {
 			ret += max(stats[ITEM_STAT_SPEED], stats[ITEM_STAT_MOUNTSPEED]);
 		}
@@ -2196,8 +2211,7 @@ float Entity::GetSpeed() {
 			ret += stats[ITEM_STAT_MOUNTSPEED];
 		}
 	}
-
-	if (EngagedInCombat()) {
+	else if (GetInfoStruct()->get_engaged_encounter()) {
 		
 		if (GetMaxSpeed() > 0.0f)
 			ret = GetMaxSpeed();
@@ -2215,7 +2229,7 @@ float Entity::GetSpeed() {
 float Entity::GetAirSpeed() {
 	float ret = speed;
 
-	if (!EngagedInCombat())
+	if (!GetInfoStruct()->get_engaged_encounter())
 		ret += stats[ITEM_STAT_MOUNTAIRSPEED];
 
 	ret *= speed_multiplier;
@@ -3666,4 +3680,51 @@ Entity*	Entity::GetOwner() {
 		ent = (Entity*)spawn;
 
 	return ent;
+}
+
+bool Entity::IsEngagedInEncounter(Spawn** res) {
+	if(res) {
+		*res = nullptr;
+	}
+	bool ret = false;
+	set<int32>::iterator itr;
+	MHatedBy.lock();
+	if(IsPlayer()) {
+		for (itr = HatedBy.begin(); itr != HatedBy.end(); itr++) {
+			Spawn* spawn = GetZone()->GetSpawnByID(*itr);
+			if (spawn && spawn->IsNPC() && ((NPC*)spawn)->Brain() && (spawn->GetLockedNoLoot() == ENCOUNTER_STATE_LOCKED || spawn->GetLockedNoLoot() == ENCOUNTER_STATE_OVERMATCHED)) {
+				if((ret = ((NPC*)spawn)->Brain()->IsPlayerInEncounter(((Player*)this)->GetCharacterID()))) {
+					if(res)
+						*res = spawn;
+					break;
+				}
+			}
+		}
+	}
+	else {
+		for (itr = HatedBy.begin(); itr != HatedBy.end(); itr++) {
+			Spawn* spawn = GetZone()->GetSpawnByID(*itr);
+			if (spawn && spawn->IsNPC() && ((NPC*)spawn)->Brain() && (spawn->GetLockedNoLoot() == ENCOUNTER_STATE_LOCKED || spawn->GetLockedNoLoot() == ENCOUNTER_STATE_OVERMATCHED)) {
+				if((ret = ((NPC*)spawn)->Brain()->IsEntityInEncounter(GetID()))) {
+					if(res)
+						*res = spawn;
+					break;
+				}
+			}
+		}
+
+	}
+	MHatedBy.unlock();
+	
+	return ret;
+}
+
+bool Entity::IsEngagedBySpawnID(int32 id) {
+	bool ret = false;
+	Spawn* spawn = GetZone()->GetSpawnByID(id);
+	if (spawn && spawn->IsNPC() && ((NPC*)spawn)->Brain()) {
+		ret = ((NPC*)spawn)->Brain()->IsEntityInEncounter(GetID());
+	}
+	
+	return ret;
 }

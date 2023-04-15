@@ -3038,7 +3038,7 @@ void Player::AddMaintainedSpell(LuaSpell* luaspell){
 	int32 target_type = 0;
 	Spawn* spawn = 0;
 
-	if(effect){
+	if(effect && luaspell->caster && luaspell->caster->GetZone()){
 		GetMaintainedMutex()->writelock(__FUNCTION__, __LINE__);
 		strcpy(effect->name, spell->GetSpellData()->name.data.c_str());
 		effect->target = luaspell->initial_target;
@@ -3693,9 +3693,17 @@ void Player::InCombat(bool val, bool range) {
 		AddIconValue(64);
 	else
 		RemoveIconValue(64);
-
-	if(changeCombatState)
-		SetRegenValues(GetInfoStruct()->get_effective_level());
+	
+	bool update_regen = false;
+	if(GetInfoStruct()->get_engaged_encounter()) {
+		if(!IsAggroed() || !IsEngagedInEncounter()) {
+			GetInfoStruct()->set_engaged_encounter(0);
+			update_regen = true;
+		}
+	}
+	
+	if(changeCombatState || update_regen)
+		SetRegenValues((GetInfoStruct()->get_effective_level() > 0) ? GetInfoStruct()->get_effective_level() : GetLevel());
 
 	charsheet_changed = true;
 	info_changed = true;
@@ -4467,11 +4475,10 @@ PacketStruct* Player::GetQuestJournalPacket(Quest* quest, int16 version, int32 c
 
 	PacketStruct* packet = configReader.getStruct("WS_QuestJournalUpdate", version);
 	if (packet) {
-
 		packet->setArrayLengthByName("num_quests", 1);
 		packet->setArrayLengthByName("num_quest_zones", 1);
 		packet->setArrayDataByName("quest_zones_zone", quest->GetType());
-		packet->setArrayDataByName("quest_zones_zone_id", 0);
+		packet->setArrayDataByName("quest_zones_zone_id", 1);
 		
 		if(!quest->GetDeleted() && !quest->GetCompleted())
 			packet->setArrayDataByName("active", 1);
@@ -5207,30 +5214,6 @@ bool Player::ShouldSendSpawn(Spawn* spawn){
 		return true;
 	
 	return false;
-}
-
-int8 Player::GetArrowColor(int8 spawn_level){
-	int8 color = 0;
-	sint16 diff = spawn_level - GetLevel();
-	if(GetLevel() < 10)
-		diff *= 3;
-	else if(GetLevel() <= 20)
-		diff *= 2;
-	if(diff >= 9)
-		color = ARROW_COLOR_RED;
-	else if(diff >= 5)
-		color = ARROW_COLOR_ORANGE;
-	else if(diff >= 1)
-		color = ARROW_COLOR_YELLOW;
-	else if(diff == 0)
-		color = ARROW_COLOR_WHITE;	
-	else if(diff <= -11)
-		color = ARROW_COLOR_GRAY;
-	else if(diff <= -6)
-		color = ARROW_COLOR_GREEN;
-	else //if(diff < 0)
-		color = ARROW_COLOR_BLUE;
-	return color;
 }
 
 int8 Player::GetTSArrowColor(int8 level){
@@ -7022,7 +7005,9 @@ void Player::MentorTarget()
 
 void Player::SetMentorStats(int32 effective_level, int32 target_char_id, bool update_stats)
 {
-	RemoveSpells();
+	if(update_stats) {
+		RemoveSpells();
+	}
 	if(client->GetPlayer()->GetGroupMemberInfo())
 		client->GetPlayer()->GetGroupMemberInfo()->mentor_target_char_id = target_char_id;
 	InfoStruct* info = GetInfoStruct();

@@ -139,6 +139,7 @@ Spawn::Spawn(){
 	trigger_widget_id = 0;
 	scared_by_strong_players = false;
 	is_alive = true;
+	SetLockedNoLoot(ENCOUNTER_STATE_AVAILABLE);
 }
 
 Spawn::~Spawn(){
@@ -322,11 +323,21 @@ void Spawn::InitializeVisPacketData(Player* player, PacketStruct* vis_packet) {
 					}
 				}
 			}
-			vis_packet->setDataByName("arrow_color", arrow_color);
-			if (appearance.attackable == 0)
+			if(IsNPC() && (((Entity*)this)->GetLockedNoLoot() == ENCOUNTER_STATE_BROKEN || 
+					(((Entity*)this)->GetLockedNoLoot() == ENCOUNTER_STATE_OVERMATCHED) || 
+					((Entity*)this)->GetLockedNoLoot() == ENCOUNTER_STATE_LOCKED && !((NPC*)this)->Brain()->IsEntityInEncounter(player->GetID()))) {
+				vis_packet->setDataByName("arrow_color", ARROW_COLOR_GRAY);
+			}
+			else {
+				vis_packet->setDataByName("arrow_color", arrow_color);
+			}
+			if (appearance.attackable == 0 || IsPlayer() || IsBot() || (IsEntity() && ((Entity*)this)->GetOwner() &&
+				(((Entity*)this)->GetOwner()->IsPlayer() || ((Entity*)this)->GetOwner()->IsBot()))) {
 				vis_packet->setDataByName("locked_no_loot", 1);
-			else
+				}
+			else {
 				vis_packet->setDataByName("locked_no_loot", appearance.locked_no_loot);
+			}
 			if (player->GetArrowColor(GetLevel()) == ARROW_COLOR_GRAY)
 				if (npc_con == -4)
 					npc_con = -3;
@@ -2315,7 +2326,6 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		spawnHiddenFromClient = true;
 
 	if (!spawnHiddenFromClient && (appearance.targetable == 1 || appearance.show_level == 1 || appearance.display_name == 1)) {
-		appearance.locked_no_loot = 1; //for now
 		if (!IsObject() && !IsGroundSpawn() && !IsWidget() && !IsSign()) {
 			int8 percent = 0;
 			if (GetHP() > 0)
@@ -3643,6 +3653,83 @@ Spawn* Spawn::IsSpawnGroupMembersAlive(Spawn* ignore_spawn, bool npc_only) {
 	return ret;
 }
 
+void Spawn::UpdateEncounterState(int8 new_state) {
+	if (MSpawnGroup && HasSpawnGroup()) {
+		MSpawnGroup->readlock(__FUNCTION__, __LINE__);
+		vector<Spawn*>::iterator itr;
+		for (itr = spawn_group_list->begin(); itr != spawn_group_list->end(); itr++) {
+			if ((*itr)->Alive() && (*itr)->IsNPC()) {
+				NPC* npc = (NPC*)(*itr);
+				(*itr)->SetLockedNoLoot(new_state);
+				if(new_state == ENCOUNTER_STATE_BROKEN && npc->Brain()) {
+					npc->Brain()->ClearEncounter();
+				}
+			}
+		}
+		MSpawnGroup->releasereadlock(__FUNCTION__, __LINE__);
+	}
+}
+
+void Spawn::CheckEncounterState(Entity* victim) {
+	if(!IsEntity() || !victim->IsNPC())
+		return;
+	
+	Entity* ent = ((Entity*)this);
+	if(victim->GetLockedNoLoot() == ENCOUNTER_STATE_AVAILABLE) {
+		if(!ent->GetInfoStruct()->get_engaged_encounter()) {
+			ent->GetInfoStruct()->set_engaged_encounter(1);
+		}
+	
+		Entity* attacker = nullptr;
+		if(ent->GetOwner())
+			attacker = ent->GetOwner();
+		else
+			attacker = ent;
+		
+		if(!attacker->GetInfoStruct()->get_engaged_encounter()) {
+			attacker->GetInfoStruct()->set_engaged_encounter(1);
+		}
+		
+		int8 skip_loot_gray_mob_flag = rule_manager.GetGlobalRule(R_Loot, SkipLootGrayMob)->GetInt8();
+		
+		int8 difficulty = attacker->GetArrowColor(victim->GetLevel());
+		
+		int8 new_enc_state = ENCOUNTER_STATE_AVAILABLE;
+		if(skip_loot_gray_mob_flag && difficulty == ARROW_COLOR_GRAY) {
+			if(!attacker->IsPlayer() && !attacker->IsBot()) {
+				new_enc_state = ENCOUNTER_STATE_BROKEN;
+			}
+			else {
+				new_enc_state = ENCOUNTER_STATE_OVERMATCHED;
+			}
+		}
+		else {
+			if(attacker->IsPlayer() || attacker->IsBot()) {
+				new_enc_state = ENCOUNTER_STATE_LOCKED;
+			}
+			else {
+				new_enc_state = ENCOUNTER_STATE_BROKEN;
+			}
+		}
+		
+		victim->SetLockedNoLoot(new_enc_state);
+		victim->UpdateEncounterState(new_enc_state);
+	}
+}
+
+void Spawn::AddTargetToEncounter(Entity* entity) {
+	if (MSpawnGroup && HasSpawnGroup()) {
+		MSpawnGroup->readlock(__FUNCTION__, __LINE__);
+		vector<Spawn*>::iterator itr;
+		for (itr = spawn_group_list->begin(); itr != spawn_group_list->end(); itr++) {
+			if ((*itr) != this && (*itr)->Alive() && (*itr)->IsNPC()) {
+				((NPC*)(*itr))->Brain()->AddToEncounter(entity);
+			}
+		}
+		MSpawnGroup->releasereadlock(__FUNCTION__, __LINE__);
+	}
+}
+
 void Spawn::AddSpawnToGroup(Spawn* spawn){
 	if(!spawn)
 		return;
@@ -4519,4 +4606,28 @@ void Spawn::SetLocation(int32 id, bool setUpdateFlags)
 	else {
 		SetPos(&appearance.pos.grid_id, id, setUpdateFlags);
 	}
+}
+
+int8 Spawn::GetArrowColor(int8 spawn_level){
+	int8 color = 0;
+	sint16 diff = spawn_level - GetLevel();
+	if(GetLevel() < 10)
+		diff *= 3;
+	else if(GetLevel() <= 20)
+		diff *= 2;
+	if(diff >= 9)
+		color = ARROW_COLOR_RED;
+	else if(diff >= 5)
+		color = ARROW_COLOR_ORANGE;
+	else if(diff >= 1)
+		color = ARROW_COLOR_YELLOW;
+	else if(diff == 0)
+		color = ARROW_COLOR_WHITE;	
+	else if(diff <= -11)
+		color = ARROW_COLOR_GRAY;
+	else if(diff <= -6)
+		color = ARROW_COLOR_GREEN;
+	else //if(diff < 0)
+		color = ARROW_COLOR_BLUE;
+	return color;
 }

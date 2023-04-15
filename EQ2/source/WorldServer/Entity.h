@@ -273,6 +273,8 @@ struct InfoStruct{
 		
 		friendly_target_npc_ = 0;
 		last_claim_time_ = 0;
+		
+		engaged_encounter_ = 0;
 	}
 
 
@@ -457,6 +459,8 @@ struct InfoStruct{
 		override_ranged_weapon_ = oldStruct->get_override_ranged_weapon();
 		friendly_target_npc_ = oldStruct->get_friendly_target_npc();
 		last_claim_time_ = oldStruct->get_last_claim_time();
+		
+		engaged_encounter_ = oldStruct->get_engaged_encounter();
 
 	}
 	//mutable std::shared_mutex mutex_;
@@ -659,6 +663,7 @@ struct InfoStruct{
 	int8	get_friendly_target_npc() { std::lock_guard<std::mutex> lk(classMutex); return friendly_target_npc_; }
 	int32	get_last_claim_time() { std::lock_guard<std::mutex> lk(classMutex); return last_claim_time_; }
 	
+	int8	get_engaged_encounter() { std::lock_guard<std::mutex> lk(classMutex); return engaged_encounter_; }
 	
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
@@ -943,6 +948,8 @@ struct InfoStruct{
 	void	set_override_ranged_weapon(int8 value) { std::lock_guard<std::mutex> lk(classMutex); override_ranged_weapon_ = value; }
 	void	set_friendly_target_npc(int8 value) { std::lock_guard<std::mutex> lk(classMutex); friendly_target_npc_ = value; }
 	void	set_last_claim_time(int32 value) { std::lock_guard<std::mutex> lk(classMutex); last_claim_time_ = value; }
+	
+	void	set_engaged_encounter(int8 value) { std::lock_guard<std::mutex> lk(classMutex); engaged_encounter_ = value; }
 
 	void	ResetEffects(Spawn* spawn)
 	{
@@ -1145,6 +1152,8 @@ private:
 	
 	int8			friendly_target_npc_;
 	int32			last_claim_time_;
+	
+	int8			engaged_encounter_;
 	
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;
@@ -1847,6 +1856,9 @@ public:
 		MStats.unlock();
 		return item_chance_or_skill;
 	}
+	
+	bool IsEngagedInEncounter(Spawn** res = nullptr);
+	bool IsEngagedBySpawnID(int32 id);
 		
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		MEquipment;

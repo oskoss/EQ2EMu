@@ -448,6 +448,7 @@ public:
 	void Command_CancelEffect(Client* client, Seperator* sep);
 	void Command_CurePlayer(Client* client, Seperator* sep);
 	void Command_ShareQuest(Client* client, Seperator* sep);
+	void Command_Yell(Client* client, Seperator* sep);
 
 	// AA Commands
 	void Get_AA_Xml(Client* client, Seperator* sep);

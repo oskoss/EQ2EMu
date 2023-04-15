@@ -416,7 +416,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 					if(curConcentration >= actual_concentration)
 					{
 						spell->caster->GetInfoStruct()->set_cur_concentration(curConcentration - actual_concentration);
-						if (spell->caster->IsPlayer())
+						if (spell->caster->IsPlayer()&& spell->caster->GetZone())
 							spell->caster->GetZone()->TriggerCharSheetTimer();
 					}
 				}
@@ -481,7 +481,9 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 								fade_message_others.replace(fade_message_others.find("%C"), 2, spell->caster->GetName());
 								send_to_sender = false;
 							}
-							spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, fade_message_others.c_str(), target, 50, send_to_sender);
+							if(spell->caster->GetZone()) {
+								spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, fade_message_others.c_str(), target, 50, send_to_sender);
+							}
 						}
 					}
 				}
@@ -507,14 +509,16 @@ bool SpellProcess::ProcessSpell(LuaSpell* spell, bool first_cast, const char* fu
 		{
 			for(int t=0;t<spell->targets.size();t++)
 			{
-				Spawn* altSpawn = spell->caster->GetZone()->GetSpawnByID(spell->targets[t]);
-				if(altSpawn)
-				{
-					std::string functionCall = ApplyLuaFunction(spell, first_cast, function, timer, altSpawn);
-					if(functionCall.length() < 1)
-						ret = false;
-					else
-						ret = lua_interface->CallSpellProcess(spell, 2 + spell->spell->GetLUAData()->size(), functionCall);
+				if(spell->caster->GetZone()) {
+					Spawn* altSpawn = spell->caster->GetZone()->GetSpawnByID(spell->targets[t]);
+					if(altSpawn)
+					{
+						std::string functionCall = ApplyLuaFunction(spell, first_cast, function, timer, altSpawn);
+						if(functionCall.length() < 1)
+							ret = false;
+						else
+							ret = lua_interface->CallSpellProcess(spell, 2 + spell->spell->GetLUAData()->size(), functionCall);
+					}
 				}
 			}
 			return true;
@@ -732,7 +736,7 @@ bool SpellProcess::TakePower(LuaSpell* spell, int32 custom_power_req){
 		
 		if(spell->caster->GetPower() >= req){
 			spell->caster->SetPower(spell->caster->GetPower() - req);
-			if(spell->caster->IsPlayer())
+			if(spell->caster->IsPlayer() && spell->caster->GetZone())
 				spell->caster->GetZone()->TriggerCharSheetTimer();
 			return true;
 		}
@@ -759,7 +763,7 @@ bool SpellProcess::TakeHP(LuaSpell* spell, int32 custom_hp_req) {
      		req = spell->spell->GetHPRequired(spell->caster); 
      if(spell->caster->GetHP() >= req){ 
         spell->caster->SetHP(spell->caster->GetHP() - req);
-		if(spell->caster->IsPlayer())
+		if(spell->caster->IsPlayer() && spell->caster->GetZone())
 			spell->caster->GetZone()->TriggerCharSheetTimer(); 
         return true; 
      } 
@@ -784,7 +788,7 @@ bool SpellProcess::AddConcentration(LuaSpell* spell) {
 		int8 current_avail = 5 - curConcentration;
 		if (current_avail >= req) {
 			spell->caster->GetInfoStruct()->set_cur_concentration(curConcentration + req);
-			if (spell->caster->IsPlayer())
+			if (spell->caster->IsPlayer() && spell->caster->GetZone())
 				spell->caster->GetZone()->TriggerCharSheetTimer();
 			LogWrite(SPELL__DEBUG, 0, "Spell", "Concentration is now %u on %s", spell->caster->GetInfoStruct()->get_cur_concentration(), spell->caster->GetName());
 			return true;
@@ -808,7 +812,7 @@ bool SpellProcess::TakeSavagery(LuaSpell* spell) {
      req = spell->spell->GetSavageryRequired(spell->caster); 
      if(spell->caster->GetSavagery() >= req){ 
         spell->caster->SetSavagery(spell->caster->GetSavagery() - req);
-		if(spell->caster->IsPlayer())
+		if(spell->caster->IsPlayer() && spell->caster->GetZone())
 			spell->caster->GetZone()->TriggerCharSheetTimer(); 
         return true; 
      } 
@@ -831,7 +835,7 @@ bool SpellProcess::AddDissonance(LuaSpell* spell) {
      req = spell->spell->GetDissonanceRequired(spell->caster); 
      if(spell->caster->GetDissonance() >= req){ 
         spell->caster->SetDissonance(spell->caster->GetDissonance() - req);
-		if(spell->caster->IsPlayer())
+		if(spell->caster->IsPlayer() && spell->caster->GetZone())
 			spell->caster->GetZone()->TriggerCharSheetTimer(); 
         return true; 
      } 
@@ -1277,7 +1281,18 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		{
 			LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target Enemy (%s) and Max AE Targets = 0.", spell->GetName(), target->GetName());
 
-			if (spell->GetSpellData()->friendly_spell && target->IsPlayer() )
+		
+			if(spell->GetSpellData()->friendly_spell && (caster->IsPlayer() || caster->IsBot()) && (target->IsPlayer() || target->IsBot()) && 
+			   ((Entity*)target)->GetInfoStruct()->get_engaged_encounter() && 
+				((!((Entity*)caster)->GetGroupMemberInfo() || !((Entity*)target)->GetGroupMemberInfo()) || 
+				(((Entity*)caster)->GetGroupMemberInfo()->group_id != ((Entity*)target)->GetGroupMemberInfo()->group_id))) {
+				LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target (%s) is engaged in combat and cannot be assisted.", spell->GetName(), target->GetName());
+				zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_A_FRIEND);
+				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
+				DeleteSpell(lua_spell);
+				return;
+			}
+			else if (spell->GetSpellData()->friendly_spell && target->IsPlayer() )
 			{
 				LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Is Friendly, Target is Player (%s).", spell->GetName(), target->GetName());
 
@@ -1368,18 +1383,15 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 					DeleteSpell(lua_spell);
 					return;
 				}
-
-				if ((target->IsPlayer() || target->IsBot()) && (caster->IsPlayer() || caster->IsBot())) 
+				
+				bool attackAllowed = (Entity*)caster->AttackAllowed((Entity*)target, 0);
+				if (!attackAllowed)
 				{
-					bool attackAllowed = (Entity*)caster->AttackAllowed((Entity*)target, 0);
-					if (!attackAllowed)
-					{
-						LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target (%s) is player and not attackable.", spell->GetName(), target->GetName());
-						zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_AN_ENEMY);
-						lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
-						DeleteSpell(lua_spell);
-						return;
-					}
+					LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target (%s) is player and not attackable.", spell->GetName(), target->GetName());
+					zone->SendSpellFailedPacket(client, SPELL_ERROR_NOT_AN_ENEMY);
+					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
+					DeleteSpell(lua_spell);
+					return;
 				}
 
 				if (target->IsPet() && ((NPC*)target)->GetOwner() && ((NPC*)target)->GetOwner() == caster) {

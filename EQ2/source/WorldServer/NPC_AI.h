@@ -71,6 +71,8 @@ public:
 	/// <returns>Percentage of hate as a sint8</returns>
 	sint8 GetHatePercentage(Entity* entity);
 
+	void SendHateList(Client* client);
+	
 	///<summary>Gets a list of all the entities in the hate list</summary>
 	vector<Entity*>* GetHateList();
 
@@ -105,13 +107,17 @@ public:
 	int8 GetEncounterSize();
 	/// <summary>Clears the encounter list</summary>
 	void ClearEncounter();
+	
+	void SendEncounterList(Client* client);
+	
 	/// <summary>Gets a copy of the encounter list</summary>
 	/// <returns>A copy of the encounter list as a vector<Entity*>*</returns>
 	vector<int32>* GetEncounter();
 	/// <summary>Checks to see if a player is in the encounter</summary>
 	/// <returns>True if the encounter list contains a player</returns>
 	bool PlayerInEncounter() { return m_playerInEncounter; }
-
+	bool IsPlayerInEncounter(int32 char_id);
+	bool IsEntityInEncounter(int32 id);
 	/* Helper functions*/
 
 	/// <summary>Gets the NPC this brain controls</summary>

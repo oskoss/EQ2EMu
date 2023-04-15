@@ -28,6 +28,7 @@
 #include "Appearances.h"
 #include "SpellProcess.h"
 #include "Skills.h"
+#include "Rules/Rules.h"
 
 extern MasterSpellList master_spell_list;
 extern ConfigReader configReader;
@@ -36,6 +37,7 @@ extern World world;
 extern Races races;
 extern Appearance master_appearance_list;
 extern MasterSkillList master_skill_list;
+extern RuleManager rule_manager;
 
 NPC::NPC(){	
 	Initialize();
@@ -334,10 +336,13 @@ void NPC::InCombat(bool val){
 		}
 	}
 
+	int8 ruleAutoLockEncounter = rule_manager.GetGlobalRule(R_World, AutoLockEncounter)->GetInt8();
 	in_combat = val;
 	if(val){
 		LogWrite(NPC__DEBUG, 3, "NPC", "'%s' engaged in combat with '%s'", this->GetName(), ( GetTarget() ) ? GetTarget()->GetName() : "Unknown" );
-		SetLockedNoLoot(ENCOUNTER_STATE_LOCKED);
+		if(ruleAutoLockEncounter) {
+			SetLockedNoLoot(ENCOUNTER_STATE_LOCKED);
+		}
 		AddIconValue(64);
 		// In combat so lets set the NPC's speed to its max speed
 		if (GetMaxSpeed() > 0)

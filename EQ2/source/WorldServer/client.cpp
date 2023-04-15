@@ -900,8 +900,25 @@ void Client::SendCharInfo() {
 	if(!groupMentor)
 		GetPlayer()->SetMentorStats(GetPlayer()->GetLevel(), 0, false);
 
-	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_MAINTAINEDEFFECTS);
-	database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_SPELLEFFECTS);
+	if(!GetPlayer()->IsReturningFromLD()) {
+		database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_MAINTAINEDEFFECTS);
+		database.LoadCharacterSpellEffects(GetCharacterID(), this, DB_TYPE_SPELLEFFECTS);
+	}
+	else {
+		Spawn* pet_spawn = nullptr;
+		if(GetPlayer()->GetPet())
+			pet_spawn = GetPlayer()->GetPet();
+		else if(GetPlayer()->GetCharmedPet())
+			pet_spawn = GetPlayer()->GetCharmedPet();
+		else if(GetPlayer()->GetCosmeticPet())
+			pet_spawn = GetPlayer()->GetCosmeticPet();
+		else if(GetPlayer()->GetDeityPet())
+			pet_spawn = GetPlayer()->GetDeityPet();
+		
+		if(pet_spawn) {
+			GetPlayer()->GetInfoStruct()->set_pet_id(GetPlayer()->GetIDWithPlayerSpawn(pet_spawn));
+		}
+	}
 
 	GetPlayer()->SetSaveSpellEffects(false);
 	GetPlayer()->SetCharSheetChanged(true);
@@ -4452,7 +4469,7 @@ void Client::DetermineCharacterUpdates() {
 }
 
 void Client::Save() {
-	if (GetCharacterID() == 0)
+	if (GetCharacterID() == 0 || IsSaveDisabled())
 		return;
 
 	if (current_zone) {
@@ -10500,7 +10517,8 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 		SetReadyForSpawns(false);
 		ready_for_updates = false;
 		LogWrite(ZONE__INFO, 0, "ZoneAuth", "Access Key: %u, Character Name: %s, Account ID: %u, Client Data Version: %u", zar->GetAccessKey(), zar->GetCharacterName(), zar->GetAccountID(), version);
-		if (database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)) {
+		Client* client = zone_list.GetClientByCharName(zar->GetCharacterName());
+		if (client || database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)) {
 			GetPlayer()->CalculateOfflineDebtRecovery(GetLastSavedTimeStamp());
 			GetPlayer()->vis_changed = false;
 			GetPlayer()->info_changed = false;
@@ -10509,10 +10527,11 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 			if (pvp_allowed)
 				this->GetPlayer()->SetAttackable(1);
 			MDeletePlayer.writelock(__FUNCTION__, __LINE__);
-			Client* client = zone_list.GetClientByCharName(player->GetName());
 			if (client) {
 				if (client->getConnection())
 					client->getConnection()->SendDisconnect(true);
+				
+				bool restore_ld_success = false;
 				if (client->GetCurrentZone() && !client->IsZoning()) {
 					//swap players, allowing the client to resume his LD'd player (ONLY if same version of the client)
 					if (client->GetVersion() == version) {
@@ -10522,14 +10541,29 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 						SetPlayer(client->GetPlayer());
 						GetPlayer()->SetClient(this);
 						GetPlayer()->SetReturningFromLD(true);
+										
+						SetCharacterID(client->GetCharacterID());
+						SetAccountID(client->GetAccountID());
+						SetAdminStatus(client->GetAdminStatus());
 						SetCurrentZone(GetPlayer()->GetZone());
 						GetPlayer()->GetZone()->UpdateClientSpawnMap(GetPlayer(), this);
 						client->SetPlayer(current_player);
 						GetPlayer()->GetZone()->UpdateClientSpawnMap(current_player, client);
 						GetPlayer()->ResetSavedSpawns();
+						restore_ld_success = true;
+						
+						char tmpldname[128];
+						snprintf(tmpldname, 128, "%s Linkdead",GetPlayer()->GetName());
+						client->GetPlayer()->SetName(tmpldname, false);
 					}
 					ZoneServer* tmpZone = client->GetCurrentZone();
 					tmpZone->RemoveClientImmediately(client);
+				}
+				if(!restore_ld_success && !database.loadCharacter(zar->GetCharacterName(), zar->GetAccountID(), this)) {
+					LogWrite(ZONE__ERROR, 0, "Zone", "Error reloading LD character and loading DB character: %s", player->GetName());
+					ClientPacketFunctions::SendLoginDenied(this);
+					Disconnect();
+					return false;
 				}
 			}
 			MDeletePlayer.releasewritelock(__FUNCTION__, __LINE__);

@@ -2005,84 +2005,84 @@ to zero and treated like placeholders." />
 <Data ElementName="bind_zone" Type="char" Size="61" /> <!-- 4837 -->
 </Struct>
 <Struct Name="WS_CharacterSheet" ClientVersion="60114" OpcodeName="OP_UpdateCharacterSheetMsg">
-<Data ElementName="character_name" Type="char" Size="40" />
-<Data ElementName="unknown_1_1_MJ" Type="int16" Size="1" />
-<Data ElementName="race" Type="int8" Size="1" />
-<Data ElementName="gender" Type="int8" Size="1" />
-<Data ElementName="exiled" Type="int8" Size="1" />
-<Data ElementName="class1" Type="int32" Size="1" />
-<Data ElementName="class2" Type="int32" Size="1" />
-<Data ElementName="class3" Type="int32" Size="1" />
-<Data ElementName="tradeskill_class1" Type="int32" Size="1" />
-<Data ElementName="tradeskill_class2" Type="int32" Size="1" />
-<Data ElementName="tradeskill_class3" Type="int32" Size="1" />
-<Data ElementName="level" Type="int16" Size="1" />
-<Data ElementName="effective_level" Type="int16" Size="1" />
-<Data ElementName="tradeskill_level" Type="int16" Size="1" />
-<Data ElementName="unknown_1_2_MJ" Type="int32" Size="1" />
-<Data ElementName="account_age_base" Type="int16" Size="1" />
-<Data ElementName="account_age_bonus" Type="int16" Size="1" />
-<Data ElementName="deity" Type="char" Size="32" />
-<Data ElementName="last_name" Type="char" Size="20" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
-<Data ElementName="character_name2" Type="char" Size="40" />
-<Data ElementName="character_name2_unknown" Type="int16" Size="1" />
-<Data ElementName="character_name3" Type="char" Size="40" />
-<Data ElementName="character_name3_unknown" Type="int16" Size="1" />    
-<Data ElementName="current_hp" Type="sint64" Size="1" />
-<Data ElementName="max_hp" Type="int64" Size="1" />
-<Data ElementName="base_hp" Type="int32" Size="1" />
-<Data ElementName="base_hp2" Type="int32" Size="1" />
-<Data ElementName="current_power" Type="sint32" Size="1" />
-<Data ElementName="max_power" Type="sint32" Size="1" />
-<Data ElementName="base_power" Type="int32" Size="1" />
-<Data ElementName="conc_used" Type="int8" Size="1" />
-<Data ElementName="conc_max" Type="int8" Size="1" />
-<Data ElementName="savagery" Type="sint32" Size="1" />
-<Data ElementName="max_savagery" Type="sint32" Size="1" />
-<Data ElementName="unknown4b" Type="int32" Size="1" />
-<Data ElementName="savagery_level" Type="int32" Size="1" />
-<Data ElementName="max_savagery_level" Type="int32" Size="1" />
-<Data ElementName="unknown4c" Type="int8" Size="4" />
-<Data ElementName="dissonance" Type="sint32" Size="1" /> <!-- index 283 -->
-<Data ElementName="max_dissonance" Type="sint32" Size="1" />
-<Data ElementName="unknown5c" Type="int8" Size="4" />
-<Data ElementName="hp_regen" Type="int32" Size="1" />
-<Data ElementName="power_regen" Type="int32" Size="1" />
-<Data ElementName="unknown6" Type="int32" Size="2" />
-<Data ElementName="unknown7" Type="float" Size="2" />
-<Data ElementName="stat_bonus_health" Type="float" Size="1" />
-<Data ElementName="stat_bonus_power" Type="float" Size="1" />
-<Data ElementName="bonus_health" Type="int32" Size="1" />
-<Data ElementName="unknown8" Type="int32" Size="1" />
-<Data ElementName="bonus_power" Type="int32" Size="1" />
-<Data ElementName="stat_bonus_damage" Type="float" Size="1" />
-<Data ElementName="mitigation_pct_pve" Type="int16" Size="1" />
-<Data ElementName="mitigation_pct_pvp" Type="int16" Size="1" />
-<Data ElementName="toughness" Type="int16" Size="1" />
-<Data ElementName="toughness_resist_dmg_pvp" Type="float" Size="1" />
-<Data ElementName="lethality" Type="int16" Size="1" />
-<Data ElementName="lethality_pct" Type="float" Size="1" />
-<Data ElementName="avoidance_pct" Type="int16" Size="1" />
-<Data ElementName="avoidance_reduction" Type="int16" Size="1" />
-<Data ElementName="avoidance" Type="int16" Size="1" />
-<Data ElementName="unknown10" Type="int16" Size="1" />
-<Data ElementName="avoidance_base" Type="int16" Size="1" />
-<Data ElementName="unknown10a" Type="int16" Size="1" />
-<Data ElementName="parry" Type="int16" Size="1" />
-<Data ElementName="unknown11" Type="int16" Size="1" />
-<Data ElementName="block" Type="int16" Size="1" />
-<Data ElementName="unknown12" Type="int16" Size="1" />
-<Data ElementName="uncontested_block" Type="int16" Size="1" />
-<Data ElementName="unknown13" Type="int16" Size="1" />
-<Data ElementName="uncontested_riposte" Type="int16" Size="1" />
-<Data ElementName="uncontested_dodge" Type="int16" Size="1" />
-<Data ElementName="uncontested_parry" Type="int16" Size="1" />
-<Data ElementName="str" Type="int32" Size="1" />
-<Data ElementName="sta" Type="int32" Size="1" />
-<Data ElementName="agi" Type="int32" Size="1" />
-<Data ElementName="wis" Type="int32" Size="1" />
-<Data ElementName="int" Type="int32" Size="1" />
+<Data ElementName="character_name" Type="char" Size="40" /> <!-- 40 -->
+<Data ElementName="unknown_1_1_MJ" Type="int16" Size="1" /> <!-- 41 -->
+<Data ElementName="race" Type="int8" Size="1" /> <!-- 42 -->
+<Data ElementName="gender" Type="int8" Size="1" /> <!-- 43 -->
+<Data ElementName="exiled" Type="int8" Size="1" /> <!-- 44 -->
+<Data ElementName="class1" Type="int32" Size="1" /> <!-- 48 -->
+<Data ElementName="class2" Type="int32" Size="1" /> <!-- 52 -->
+<Data ElementName="class3" Type="int32" Size="1" /> <!-- 56 -->
+<Data ElementName="tradeskill_class1" Type="int32" Size="1" /> <!-- 60 -->
+<Data ElementName="tradeskill_class2" Type="int32" Size="1" /> <!-- 64 -->
+<Data ElementName="tradeskill_class3" Type="int32" Size="1" /> <!-- 68 -->
+<Data ElementName="level" Type="int16" Size="1" /> <!-- 70 -->
+<Data ElementName="effective_level" Type="int16" Size="1" /> <!-- 72 -->
+<Data ElementName="tradeskill_level" Type="int16" Size="1" /> <!-- 74 -->
+<Data ElementName="unknown_1_2_MJ" Type="int32" Size="1" /> <!-- 78 -->
+<Data ElementName="account_age_base" Type="int16" Size="1" /> <!-- 80 -->
+<Data ElementName="account_age_bonus" Type="int16" Size="1" /> <!-- 82 -->
+<Data ElementName="deity" Type="char" Size="32" /> <!-- 114 -->
+<Data ElementName="last_name" Type="char" Size="20" /> <!-- 124 -->
+<Data ElementName="unknown3" Type="int8" Size="1" /> <!-- 125 -->
+<Data ElementName="character_name2" Type="char" Size="40" /> <!-- 165 -->
+<Data ElementName="character_name2_unknown" Type="int16" Size="1" /> <!-- 167 -->
+<Data ElementName="character_name3" Type="char" Size="40" /> <!-- 207 -->
+<Data ElementName="character_name3_unknown" Type="int16" Size="1" />  <!-- 209 -->   
+<Data ElementName="current_hp" Type="sint64" Size="1" /> <!-- 217 -->
+<Data ElementName="max_hp" Type="int64" Size="1" /> <!-- 225 -->
+<Data ElementName="base_hp" Type="int32" Size="1" /> <!-- 229 -->
+<Data ElementName="base_hp2" Type="int32" Size="1" /> <!-- 233 -->
+<Data ElementName="current_power" Type="sint32" Size="1" /> <!-- 227 -->
+<Data ElementName="max_power" Type="sint32" Size="1" /> <!-- 231 -->
+<Data ElementName="base_power" Type="int32" Size="1" /> <!-- 235 -->
+<Data ElementName="conc_used" Type="int8" Size="1" /> <!-- 236 -->
+<Data ElementName="conc_max" Type="int8" Size="1" /> <!-- 237 -->
+<Data ElementName="savagery" Type="sint32" Size="1" /> <!-- 241 -->
+<Data ElementName="max_savagery" Type="sint32" Size="1" /> <!-- 245 -->
+<Data ElementName="unknown4b" Type="int32" Size="1" /> <!-- 249 -->
+<Data ElementName="savagery_level" Type="int32" Size="1" /> <!-- 253 -->
+<Data ElementName="max_savagery_level" Type="int32" Size="1" /> <!-- 257 -->
+<Data ElementName="unknown4c" Type="int8" Size="4" /> <!-- 261 -->
+<Data ElementName="dissonance" Type="sint32" Size="1" />  <!-- 265 -->
+<Data ElementName="max_dissonance" Type="sint32" Size="1" /> <!-- 269 -->
+<Data ElementName="unknown5c" Type="int8" Size="4" /> <!-- 273 -->
+<Data ElementName="hp_regen" Type="int32" Size="1" /> <!-- 277 -->
+<Data ElementName="power_regen" Type="int32" Size="1" /> <!-- 281 -->
+<Data ElementName="unknown6" Type="int32" Size="2" /> <!-- 289 -->
+<Data ElementName="unknown7" Type="float" Size="2" /> <!-- 297 -->
+<Data ElementName="stat_bonus_health" Type="float" Size="1" /> <!-- 301 -->
+<Data ElementName="stat_bonus_power" Type="float" Size="1" /> <!-- 305 -->
+<Data ElementName="bonus_health" Type="int32" Size="1" /> <!-- 309 -->
+<Data ElementName="unknown8" Type="int32" Size="1" /> <!-- 313 -->
+<Data ElementName="bonus_power" Type="int32" Size="1" /> <!-- 317 -->
+<Data ElementName="stat_bonus_damage" Type="float" Size="1" /> <!-- 321 -->
+<Data ElementName="mitigation_pct_pve" Type="int16" Size="1" /> <!-- 323 -->
+<Data ElementName="mitigation_pct_pvp" Type="int16" Size="1" /> <!-- 325 -->
+<Data ElementName="toughness" Type="int16" Size="1" /> <!-- 327 -->
+<Data ElementName="toughness_resist_dmg_pvp" Type="float" Size="1" /> <!-- 331 -->
+<Data ElementName="lethality" Type="int16" Size="1" /> <!-- 333 -->
+<Data ElementName="lethality_pct" Type="float" Size="1" /> <!-- 337 -->
+<Data ElementName="avoidance_pct" Type="int16" Size="1" /> <!-- 339 -->
+<Data ElementName="avoidance_reduction" Type="int16" Size="1" /> <!-- 341 -->
+<Data ElementName="avoidance" Type="int16" Size="1" /> <!-- 343 -->
+<Data ElementName="unknown10" Type="int16" Size="1" /> <!-- 345 -->
+<Data ElementName="avoidance_base" Type="int16" Size="1" /> <!-- 347 -->
+<Data ElementName="unknown10a" Type="int16" Size="1" /> <!-- 349 -->
+<Data ElementName="parry" Type="int16" Size="1" /> <!-- 351 -->
+<Data ElementName="unknown11" Type="int16" Size="1" /> <!-- 353 -->
+<Data ElementName="block" Type="int16" Size="1" /> <!-- 355 -->
+<Data ElementName="unknown12" Type="int16" Size="1" /> <!-- 357 -->
+<Data ElementName="uncontested_block" Type="int16" Size="1" /> <!-- 359 -->
+<Data ElementName="unknown13" Type="int16" Size="1" /> <!-- 361 -->
+<Data ElementName="uncontested_riposte" Type="int16" Size="1" /> <!-- 363 -->
+<Data ElementName="uncontested_dodge" Type="int16" Size="1" /> <!-- 365 -->
+<Data ElementName="uncontested_parry" Type="int16" Size="1" /> <!-- 367 -->
+<Data ElementName="str" Type="int32" Size="1" /> <!-- 369 -->
+<Data ElementName="sta" Type="int32" Size="1" /> <!-- 371 -->
+<Data ElementName="agi" Type="int32" Size="1" /> <!-- 373 -->
+<Data ElementName="wis" Type="int32" Size="1" /> <!-- 375 -->
+<Data ElementName="int" Type="int32" Size="1" /> <!-- 377 -->
 <Data ElementName="str_base" Type="int32" Size="1" />
 <Data ElementName="sta_base" Type="int32" Size="1" />
 <Data ElementName="agi_base" Type="int32" Size="1" />
@@ -19121,5 +19121,14 @@ to zero and treated like placeholders." />
 <Data ElementName="item_array" Type="Array" ArraySizeVariable="item_array_size">
 	<Data ElementName="item_id" Type="int32"/>
 </Data>
+</Struct>
+<Struct Name="WS_EncounterBroken" ClientVersion="1" OpcodeName="OP_EncounterBrokenMsg">
+   <Data ElementName="message" Type="EQ2_16Bit_String" />
+   <Data ElementName="unknown1" Type="int32"/>
+   <Data ElementName="unknown2" Type="int8"/>
+   <Data ElementName="unknown3" Type="int8"/>
+   <Data ElementName="unknown4" Type="int8"/>
+   <Data ElementName="unknown5" Type="int8"/>
+   <Data ElementName="unknown6" Type="int8"/>
 </Struct>
 </EQ2Emulator>

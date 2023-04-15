@@ -2725,6 +2725,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				dead= cmdTarget;
 				if(dead && dead->IsPlayer() == false){
 					dead->SetHP(0);
+					if(dead->IsNPC()) {
+						client->GetPlayer()->CheckEncounterState((Entity*)dead);
+						((NPC*)dead)->AddHate(client->GetPlayer(), 1);
+					}
 					if(sep && sep->arg[0] && sep->IsNumber(0) && atoi(sep->arg[0]) == 1)
 						client->GetCurrentZone()->RemoveSpawn(dead, true, true, true, true, true);
 					else
@@ -4607,6 +4611,17 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->Message(CHANNEL_COLOR_YELLOW, "%s is %s.", isFlanking ? "YOU are flanking" : "YOU are NOT flanking", cmdTarget->GetName());
 						break;
 					}
+					else if (ToLower(string(sep->arg[0])) == "aggro")
+					{
+						if(cmdTarget->IsNPC() && ((NPC*)cmdTarget)->Brain()) {
+							((NPC*)cmdTarget)->Brain()->SendEncounterList(client);
+							((NPC*)cmdTarget)->Brain()->SendHateList(client);
+						}
+						else {
+							client->SimpleMessage(CHANNEL_COLOR_RED, "/spawn details aggro is for NPCs only!");
+						}
+						break;
+					}
 				}
 				if (sep->IsNumber(0))
 				{
@@ -5600,6 +5615,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_CANCEL_EFFECT: { Command_CancelEffect(client, sep); break; }
 		case COMMAND_CUREPLAYER: { Command_CurePlayer(client, sep); break; }
 		case COMMAND_SHARE_QUEST: { Command_ShareQuest(client, sep); break; }
+		case COMMAND_YELL: { Command_Yell(client, sep); break; }
 		default: 
 		{
 			LogWrite(COMMAND__WARNING, 0, "Command", "Unhandled command: %s", command->command.data.c_str());
@@ -11657,7 +11673,7 @@ void Commands::Command_CancelEffect(Client* client, Seperator* sep)
 		
 		MaintainedEffects* meffect = effect->caster->GetMaintainedSpell(spell_id);
 		
-		if (!meffect || !meffect->spell || !meffect->spell->caster || 
+		if (!meffect || !meffect->spell || !meffect->spell->caster || !meffect->spell->caster->GetZone() ||
 		!meffect->spell->caster->GetZone()->GetSpellProcess()->DeleteCasterSpell(meffect->spell, "canceled", false, client->GetPlayer()))
 			client->Message(CHANNEL_COLOR_RED, "The spell effect could not be cancelled.");
 	}
@@ -11813,6 +11829,66 @@ void Commands::Command_ShareQuest(Client* client, Seperator* sep)
 		}
 		else {
 			client->SimpleMessage(CHANNEL_COLOR_RED, "Cannot find quest.");
+		}
+	}
+}
+
+
+
+/* 
+	Function: Command_Yell()
+	Purpose	: Yell to break an encounter
+	Example	: /yell
+	* Uses self target, encounter target or no target
+*/ 
+void Commands::Command_Yell(Client* client, Seperator* sep) {
+	Entity* player = (Entity*)client->GetPlayer();
+	Spawn* res = nullptr;
+	Spawn* prev = nullptr;
+	bool cycleAll = false;
+	if(player->GetTarget() == player) {
+		cycleAll = true; // self target breaks all encounters
+	}
+	else if(player->GetTarget()) {
+		res = player->GetTarget(); // selected target other than self only dis-engages that encounter
+	}
+	
+	if(res && !client->GetPlayer()->IsEngagedBySpawnID(res->GetID()))
+		return;
+	
+	bool alreadyYelled = false;
+	do {
+	if(!res && player->IsEngagedInEncounter(&res)) { // no target is set, dis-engage top of hated by list
+
+	}
+	if(!res || prev == res) {
+		return;
+	}
+
+	if(res->IsNPC() && ((NPC*)res)->Brain()) {
+		if(!alreadyYelled) {
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You yell for help!");
+			string yellMsg = std::string(client->GetPlayer()->GetName()) + " yelled for help!";
+			client->GetPlayer()->GetZone()->SimpleMessage(CHANNEL_COLOR_RED, yellMsg.c_str(), client->GetPlayer(), 35.0f, false);
+			client->GetPlayer()->GetZone()->SendYellPacket(client->GetPlayer());
+		}
+		alreadyYelled = true;
+		
+		NPC* npc = (NPC*)res;
+		npc->Brain()->ClearEncounter();
+		npc->SetLockedNoLoot(ENCOUNTER_STATE_BROKEN);
+		npc->UpdateEncounterState(ENCOUNTER_STATE_BROKEN);
+	}
+	prev = res;
+	res = nullptr;
+	}while(cycleAll);
+	
+	if(!player->IsEngagedInEncounter()) {		
+		if(player->GetInfoStruct()->get_engaged_encounter()) {
+			player->GetInfoStruct()->set_engaged_encounter(0);
+			player->SetRegenValues((player->GetInfoStruct()->get_effective_level() > 0) ? player->GetInfoStruct()->get_effective_level() : player->GetLevel());
+			client->GetPlayer()->SetCharSheetChanged(true);
+			player->info_changed = true;
 		}
 	}
 }

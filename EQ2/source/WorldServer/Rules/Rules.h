@@ -106,6 +106,7 @@ enum RuleType {
 	StrengthNPC,
 	StrengthOther,
 	MaxSkillBonusByLevel,
+	LockedEncounterNoAttack,
 
 	/* SPAWN */
 	SpeedMultiplier,
@@ -160,6 +161,7 @@ enum RuleType {
 	StartingZoneRuleFlag,
 	EnforceRacialAlignment,
 	MemoryCacheZoneMaps,
+	AutoLockEncounter,
 
 	/* ZONE */
 	MinZoneLevelOverrideStatus,

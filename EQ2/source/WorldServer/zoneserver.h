@@ -468,6 +468,7 @@ public:
 	void			PlayFlavorID(Spawn* spawn, int8 type, int32 id, int16 index, int8 language);
 	void			PlayVoice(Spawn* spawn, const char* mp3, int32 key1, int32 key2);
 	void			SendThreatPacket(Spawn* caster, Spawn* target, int32 threat_amt, const char* spell_name);
+	void			SendYellPacket(Spawn* yeller, float max_distance=50.0f);
 	void			KillSpawnByDistance(Spawn* spawn, float max_distance, bool include_players = false, bool send_packet = false);
 	void			SpawnSetByDistance(Spawn* spawn, float max_distance, string field, string value);
 	void			AddSpawnScriptTimer(SpawnScriptTimer* timer);

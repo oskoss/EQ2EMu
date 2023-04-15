@@ -235,7 +235,18 @@ void Brain::AddHate(Entity* entity, sint32 hate) {
 	entity->MHatedBy.unlock();
 
 	// Unlock the list
+	bool ownerExistsAddHate = false;
+	
+	if(entity->IsPet() && entity->GetOwner()) {
+		map<int32, sint32>::iterator itr = m_hatelist.find(entity->GetOwner()->GetID());
+		if(itr == m_hatelist.end()) {
+			ownerExistsAddHate = true;
+		}
+	}
 	MHateList.releasewritelock(__FUNCTION__, __LINE__);
+	if(ownerExistsAddHate) {
+		AddHate(entity->GetOwner(), 0);
+	}
 }
 
 void Brain::ClearHate() {
@@ -324,6 +335,29 @@ sint8 Brain::GetHatePercentage(Entity* entity) {
 	MHateList.releasereadlock(__FUNCTION__, __LINE__);
 
 	return (sint8)(percentage * 100);
+}
+
+void Brain::SendHateList(Client* client) {
+	MHateList.readlock(__FUNCTION__, __LINE__);
+
+	client->Message(CHANNEL_COLOR_YELLOW, "%s's HateList", m_body->GetName());
+	client->Message(CHANNEL_COLOR_YELLOW, "-------------------");
+	map<int32, sint32>::iterator itr;
+	if (m_hatelist.size() > 0) {
+		// Loop through the list looking for the entity that this NPC hates the most
+		for(itr = m_hatelist.begin(); itr != m_hatelist.end(); itr++) {
+			Entity* ent = (Entity*)GetBody()->GetZone()->GetSpawnByID(itr->first);
+			// Compare the hate value for the current iteration to our stored highest value
+			if(ent) {
+				client->Message(CHANNEL_COLOR_YELLOW, "%s : %i", ent->GetName(), itr->second);
+			}
+			else {
+				client->Message(CHANNEL_COLOR_YELLOW, "%u (cannot identity spawn id->entity) : %i", itr->first, itr->second);
+			}
+		}
+	}
+	client->Message(CHANNEL_COLOR_YELLOW, "-------------------");
+	MHateList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 vector<Entity*>* Brain::GetHateList() {
@@ -461,10 +495,14 @@ bool Brain::HasRecovered() {
 }
 
 void Brain::AddToEncounter(Entity* entity) {
-
 	// If player pet then set the entity to the pets owner
-	if (entity->IsPet() && ((NPC*)entity)->GetOwner() && ((NPC*)entity)->GetOwner()->IsPlayer())
-		entity = ((NPC*)entity)->GetOwner();
+	if (entity->IsPet() && entity->GetOwner() && !entity->IsBot()) {
+		m_encounter.push_back(entity->GetID());
+		entity = entity->GetOwner();
+	}
+	else if(entity->HasPet() && entity->GetPet()) {
+		m_encounter.push_back(entity->GetPet()->GetID());
+	}
 
 	// If player or bot then get the group
 	int32 group_id = 0;
@@ -487,10 +525,12 @@ void Brain::AddToEncounter(Entity* entity) {
 			group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 			deque<GroupMemberInfo*>* members = group->GetMembers();
 			for (itr = members->begin(); itr != members->end(); itr++) {
-				if ((*itr)->client)
+				if ((*itr)->member)
 				{
-					m_encounter.push_back((*itr)->client->GetPlayer()->GetID());
-					m_encounter_playerlist.insert(make_pair((*itr)->client->GetPlayer()->GetCharacterID(), (*itr)->client->GetPlayer()->GetID()));
+					m_encounter.push_back((*itr)->member->GetID());
+					if((*itr)->client) {
+						m_encounter_playerlist.insert(make_pair((*itr)->client->GetPlayer()->GetCharacterID(), (*itr)->client->GetPlayer()->GetID()));
+					}
 				}
 			}
 			group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
@@ -577,6 +617,32 @@ vector<int32>* Brain::GetEncounter() {
 	return ret;
 }
 
+bool Brain::IsPlayerInEncounter(int32 char_id) {
+	bool ret = false;
+	MEncounter.readlock(__FUNCTION__, __LINE__);
+	std::map<int32,int32>::iterator itr = m_encounter_playerlist.find(char_id);
+	if(itr != m_encounter_playerlist.end()) {
+		ret = true;
+	}
+	MEncounter.releasereadlock(__FUNCTION__, __LINE__);
+	return ret;
+}
+
+bool Brain::IsEntityInEncounter(int32 id) {
+	bool ret = false;
+	MEncounter.readlock(__FUNCTION__, __LINE__);
+	vector<int32>::iterator itr;
+	for (itr = m_encounter.begin(); itr != m_encounter.end(); itr++) {
+		if ((*itr) == id) {
+			// found the entity in the encounter list, set return value to true and break the loop
+			ret = true;
+			break;
+		}
+	}
+	MEncounter.releasereadlock(__FUNCTION__, __LINE__);
+	return ret;
+}
+
 void Brain::ClearEncounter() {
 	MEncounter.writelock(__FUNCTION__, __LINE__);
 	m_encounter.clear();
@@ -585,6 +651,27 @@ void Brain::ClearEncounter() {
 	MEncounter.releasewritelock(__FUNCTION__, __LINE__);
 }
 
+void Brain::SendEncounterList(Client* client) {
+	client->Message(CHANNEL_COLOR_YELLOW, "%s's EncounterList", m_body->GetName());
+	client->Message(CHANNEL_COLOR_YELLOW, "-------------------");
+	vector<int32>::iterator itr;
+
+	// Check the encounter list to see if the given entity is in it, if so return true.
+	MEncounter.readlock(__FUNCTION__, __LINE__);
+
+	for (itr = m_encounter.begin(); itr != m_encounter.end(); itr++) {
+		Entity* ent = (Entity*)GetBody()->GetZone()->GetSpawnByID((*itr));
+			// Compare the hate value for the current iteration to our stored highest value
+			if(ent) {
+				client->Message(CHANNEL_COLOR_YELLOW, "%s", ent->GetName());
+			}
+			else {
+				client->Message(CHANNEL_COLOR_YELLOW, "%u (cannot identity spawn id->entity)", (*itr));
+			}
+	}
+	client->Message(CHANNEL_COLOR_YELLOW, "-------------------");
+	MEncounter.releasereadlock(__FUNCTION__, __LINE__);	
+}
 
 /* Example of how to extend the default AI */
 

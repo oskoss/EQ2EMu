@@ -248,6 +248,7 @@ void RuleManager::Init()
 	RULE_INIT(R_Combat, StrengthNPC, "10"); // divider for strength NPC only str/x = additional dmg to low/high dmg
 	RULE_INIT(R_Combat, StrengthOther, "25"); // divider for strength other than NPC str/x = additional dmg to low/high dmg
 	RULE_INIT(R_Combat, MaxSkillBonusByLevel, "1.5"); // Level * 1.5 = max bonus skill allowed
+	RULE_INIT(R_Combat, LockedEncounterNoAttack, "1"); // when set to 1, players/group members not part of the encounter cannot attack until /yell
 
 	/* SPAWN */
 	RULE_INIT(R_Spawn, SpeedMultiplier, "300"); // note: this value was 1280 until 6/1/2009, then was 600 til Sep 2009, when it became 300...?
@@ -307,6 +308,8 @@ void RuleManager::Init()
 																	// 5+ - send to new and old starting zones as needed
 	RULE_INIT(R_World, EnforceRacialAlignment, "1");
 	RULE_INIT(R_World, MemoryCacheZoneMaps, "0");					// 0 disables caching the zone maps in memory, too many individual/unique zones entered may cause a lot of memory build up
+	RULE_INIT(R_World, AutoLockEncounter, "0");						// When set to 0 we require player to attack to lock the encounter, otherwise if 1 then npc can auto lock encounter
+	
 	//INSERT INTO `ruleset_details`(`id`, `ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (NULL, '1', 'R_World', '', '', '')
 
 	/* ZONE */

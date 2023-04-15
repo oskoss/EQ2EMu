@@ -121,6 +121,17 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 		LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: players are not allowed to attack bots");
 		return false;
 	}
+	
+	if(rule_manager.GetGlobalRule(R_Combat, LockedEncounterNoAttack)->GetBool()) {
+		if(target->IsNPC() && (target->GetLockedNoLoot() == ENCOUNTER_STATE_LOCKED || target->GetLockedNoLoot() == ENCOUNTER_STATE_OVERMATCHED) && 
+			!attacker->IsEngagedBySpawnID(target->GetID())) {
+			return false;
+		}
+		else if(IsNPC() && (GetLockedNoLoot() == ENCOUNTER_STATE_LOCKED || GetLockedNoLoot() == ENCOUNTER_STATE_OVERMATCHED) && 
+			!target->IsEngagedBySpawnID(GetID())) {
+			return false;
+		}
+	}
 
 	if (attacker->IsPlayer() && target->IsPlayer())
 	{
@@ -177,6 +188,12 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 			return false;
 		}
 	}
+	
+	if((target->IsPrivateSpawn() && !target->AllowedAccess(this)) || (IsPrivateSpawn() && AllowedAccess(target))) {
+			LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Access to spawn disallowed.");
+		return false;
+	}
+	
 	return true;
 }
 
@@ -199,9 +216,13 @@ void Entity::MeleeAttack(Spawn* victim, float distance, bool primary, bool multi
 	}
 	if (IsStealthed() || IsInvis())
 		CancelAllStealth();
-		
-
+	
 	int8 hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE, damage_type, 0, false);
+	
+	if(victim->IsEntity()) {
+		CheckEncounterState((Entity*)victim);
+	}
+	
 	if(hit_result == DAMAGE_PACKET_RESULT_SUCCESSFUL){		
 		/*if(GetAdventureClass() == MONK){
 			max_damage*=3;
@@ -251,8 +272,7 @@ void Entity::MeleeAttack(Spawn* victim, float distance, bool primary, bool multi
 	//Apply attack speed mods
 	if(!multi_attack)
 		SetAttackDelay(primary);
-
-
+	
 	if(victim->IsNPC() && victim->EngagedInCombat() == false) {
 		((NPC*)victim)->AddHate(this, 50);
 	}
@@ -383,7 +403,11 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 		hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, 0, false);
 	else
 		hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, 0, true, luaspell);
-		
+	
+	if(victim->IsEntity()) {
+		CheckEncounterState((Entity*)victim);
+	}
+	
 	if(hit_result == DAMAGE_PACKET_RESULT_SUCCESSFUL) {
 		luaspell->last_spellattack_hit = true;
 		//If this spell is a tick and has already crit, force the tick to crit
@@ -547,7 +571,7 @@ bool Entity::ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32
 
 // this is used exclusively by LUA, heal_type is forced lower case via boost::lower(heal_type); in the LUA Functions used by this
 bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string heal_type, int32 low_heal, int32 high_heal, int8 crit_mod, bool no_calcs, string custom_spell_name){
-	 if(!target || !luaspell || !luaspell->spell)
+	 if(!target || !luaspell || !luaspell->spell || (target->IsPrivateSpawn() && !target->AllowedAccess(this)))
 		return false;
 
 	 if (!target->Alive())
@@ -664,6 +688,7 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 		for (itr = ((Entity*)target)->HatedBy.begin(); itr != ((Entity*)target)->HatedBy.end(); itr++) {
 			Spawn* spawn = GetZone()->GetSpawnByID(*itr);
 			if (spawn && spawn->IsEntity() && target != this) {
+				CheckEncounterState((Entity*)spawn);
 				((Entity*)spawn)->AddHate(this, hate_amt);
 			}
 		}
@@ -1175,12 +1200,15 @@ void Entity::AddHate(Entity* attacker, sint32 hate) {
 
 	hate = attacker->CalculateHateAmount(this, hate);
 	
-	if (IsNPC()) {
+	if (IsNPC() && ((NPC*)this)->Brain()) {
 		LogWrite(COMBAT__DEBUG, 3, "Combat", "Add NPC_AI Hate: Victim '%s', Attacker '%s', Hate: %i", GetName(), attacker->GetName(), hate);
 		((NPC*)this)->Brain()->AddHate(attacker, hate);
+		int8 loot_state = ((NPC*)this)->GetLockedNoLoot();
 		// if encounter size is 0 then add the attacker to the encounter
-		if (((NPC*)this)->Brain()->GetEncounterSize() == 0)
+		if ((loot_state != ENCOUNTER_STATE_AVAILABLE && loot_state != ENCOUNTER_STATE_BROKEN && ((NPC*)this)->Brain()->GetEncounterSize() == 0)) {
 			((NPC*)this)->Brain()->AddToEncounter(attacker);
+			AddTargetToEncounter(attacker);
+		}
 	}
 
 	if (attacker->GetThreatTransfer() && hate > 0) {
@@ -1297,10 +1325,6 @@ void Entity::KillSpawn(Spawn* dead, int8 type, int8 damage_type, int16 kill_blow
 	if (IsPlayer() && dead->IsEntity())
 		GetZone()->GetSpellProcess()->KillHOBySpawnID(dead->GetID());
 
-	//if (dead->IsEntity())								same code called in zone server
-		//((Entity*)dead)->InCombat(false);
-	
-
 	/* just for sake of not knowing if we are in a read lock, write lock, or no lock
 	**  say spawnlist is locked (DismissPet arg 3 true), which means RemoveSpawn will remove the id from the spawn_list outside of the potential lock
 	*/
@@ -1310,10 +1334,6 @@ void Entity::KillSpawn(Spawn* dead, int8 type, int8 damage_type, int16 kill_blow
 		// remove all pets for this entity
 		((Entity*)dead)->DismissAllPets(false, true);
 	}
-
-	// If not in combat and no one in the encounter list add this killer to the list
-	if(dead->EngagedInCombat() == false && dead->IsNPC() && ((NPC*)dead)->Brain()->GetEncounterSize() == 0)
-		((NPC*)dead)->Brain()->AddToEncounter(this);
 
 	if (IsCasting())
 		GetZone()->Interrupted(this, dead, SPELL_ERROR_NOT_ALIVE);

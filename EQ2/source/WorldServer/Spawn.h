@@ -1007,6 +1007,10 @@ public:
 	bool	HasSpawnGroup();
 	bool	IsInSpawnGroup(Spawn* spawn);
 	Spawn*	IsSpawnGroupMembersAlive(Spawn* ignore_spawn=nullptr, bool npc_only = true);
+	void	UpdateEncounterState(int8 new_state);
+	void	CheckEncounterState(Entity* victim);
+	void	AddTargetToEncounter(Entity* entity);
+	
 	void	SendSpawnChanges(bool val){ send_spawn_changes = val; }
 	void	SetSpawnGroupID(int32 id);
 	int32	GetSpawnGroupID();
@@ -1294,6 +1298,8 @@ public:
 	
 	int32 InsertRegionToSpawn(Region_Node* node, ZBSP_Node* bsp_root, WaterRegionType regionType, bool in_region = true);
 	bool HasRegionTracked(Region_Node* node, ZBSP_Node* bsp_root, bool in_region);
+	
+	int8 GetArrowColor(int8 spawn_level);
 	
 	EquipmentItemList equipment_list;
 	EquipmentItemList appearance_equipment_list;

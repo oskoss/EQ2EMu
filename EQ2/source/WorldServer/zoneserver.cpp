@@ -894,6 +894,9 @@ void ZoneServer::RepopSpawns(Client* client, Spawn* in_spawn){
 bool ZoneServer::AggroVictim(NPC* npc, Spawn* victim, Client* client)
 {
 	bool isEntity = victim->IsEntity();
+	if(isEntity && !npc->AttackAllowed((Entity*)victim))
+		return false;
+	
 	if (npc->HasSpawnGroup()) {
 		vector<Spawn*>* groupVec = npc->GetSpawnGroup();
 		for (int32 i = 0; i < groupVec->size(); i++) {
@@ -973,7 +976,7 @@ bool ZoneServer::CheckEnemyList(NPC* npc) {
 				for (spawn_itr = spawns->begin(); spawn_itr != spawns->end(); spawn_itr++) {
 					Spawn* spawn = GetSpawnByID(*spawn_itr);
 					if (spawn) {
-						if ((distance = spawn->GetDistance(npc)) <= npc->GetAggroRadius() && npc->CheckLoS(spawn))
+						if ((!npc->IsPrivateSpawn() || npc->AllowedAccess(spawn)) && (distance = spawn->GetDistance(npc)) <= npc->GetAggroRadius() && npc->CheckLoS(spawn))
 							attack_spawns[distance] = spawn;
 					}
 				}
@@ -996,7 +999,7 @@ bool ZoneServer::CheckEnemyList(NPC* npc) {
 				for (spawn_itr = spawns->begin(); spawn_itr != spawns->end(); spawn_itr++) {
 					Spawn* spawn = GetSpawnByID(*spawn_itr);
 					if (spawn) {
-						if ((distance = spawn->GetDistance(npc)) <= npc->GetAggroRadius() && npc->CheckLoS(spawn))
+						if ((!npc->IsPrivateSpawn() || npc->AllowedAccess(spawn)) && (distance = spawn->GetDistance(npc)) <= npc->GetAggroRadius() && npc->CheckLoS(spawn))
 							reverse_attack_spawns[distance] = spawn;
 					}
 				}
@@ -1106,7 +1109,8 @@ void ZoneServer::CheckSpawnRange(Client* client, Spawn* spawn, bool initial_logi
 
 			spawn_range_map.Get(client)->Put(spawn->GetID(), curDist);
 
-			if(!initial_login && client && spawn->IsNPC() && curDist <= ((NPC*)spawn)->GetAggroRadius() && !client->GetPlayer()->GetInvulnerable())
+			if(!initial_login && client && spawn->IsNPC() && (!spawn->IsPrivateSpawn() || spawn->AllowedAccess(client->GetPlayer())) 
+					&& curDist <= ((NPC*)spawn)->GetAggroRadius() && !client->GetPlayer()->GetInvulnerable())
 				CheckNPCAttacks((NPC*)spawn, client->GetPlayer(), client);
 		} 
 
@@ -3272,9 +3276,6 @@ void ZoneServer::RemoveClient(Client* client)
 
 			chat.LeaveAllChannels(client);
 		}
-		
-		int32 LD_Timer = rule_manager.GetGlobalRule(R_World, LinkDeadTimer)->GetInt32();
-		int32 DisconnectClientTimer = rule_manager.GetGlobalRule(R_World, RemoveDisconnectedClientsTimer)->GetInt32();
 
 		if(!zoneShuttingDown && !client->IsZoning())
 		{
@@ -3298,7 +3299,6 @@ void ZoneServer::RemoveClient(Client* client)
 			if( (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0)
 			{
 				LogWrite(ZONE__DEBUG, 0, "Zone", "Removing client '%s' (%u) due to LD/Exit...", client->GetPlayer()->GetName(), client->GetPlayer()->GetCharacterID());
-				//connected_clients.Remove(client, true, LD_Timer + DisconnectClientTimer);
 			}
 			else
 			{
@@ -3341,6 +3341,8 @@ void ZoneServer::RemoveClient(Client* client)
 		database.ToggleCharacterOnline(client, 0);
 		
 		RemoveSpawn(client->GetPlayer(), false, true, true, true, true);
+		
+		int32 DisconnectClientTimer = rule_manager.GetGlobalRule(R_World, RemoveDisconnectedClientsTimer)->GetInt32();
 		connected_clients.Remove(client, true, DisconnectClientTimer); // changed from a hardcoded 30000 (30 sec) to the DisconnectClientTimer rule
 	}
 }
@@ -3350,6 +3352,15 @@ void ZoneServer::RemoveClientImmediately(Client* client) {
 
 	if(client) 
 	{
+		if(client->GetPlayer()) {
+			if((client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0) {
+				client->GetPlayer()->SetActivityStatus(client->GetPlayer()->GetActivityStatus() - ACTIVITY_STATUS_LINKDEAD);
+			}
+			if ((client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0) {
+				client->GetPlayer()->SetActivityStatus(client->GetPlayer()->GetActivityStatus() + ACTIVITY_STATUS_CAMPING);
+			}
+			client->Disconnect();
+		}
 		MClientList.writelock(__FUNCTION__, __LINE__);
 		std::vector<Client*>::iterator itr = find(clients.begin(), clients.end(), client);
 		if (itr != clients.end())
@@ -3439,19 +3450,23 @@ void ZoneServer::ClientProcess()
 		{
 			LogWrite(ZONE__ERROR, 0, "Zone", "Exception caught when in ZoneServer::ClientProcess() for zone '%s'!\n%s, %i", GetZoneName(), __FUNCTION__, __LINE__);
 			try{
+				bool isLinkdead = false;
 				if(!client->IsZoning())
 				{
 					if( (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0 )
 					{
 						client->GetPlayer()->SetActivityStatus(client->GetPlayer()->GetActivityStatus() + ACTIVITY_STATUS_LINKDEAD);
 						client->StartLinkdeadTimer();
+						isLinkdead = true;
 						if(client->GetPlayer()->GetGroupMemberInfo())
 							world.GetGroupManager()->GroupMessage(client->GetPlayer()->GetGroupMemberInfo()->group_id, "%s has gone Linkdead.", client->GetPlayer()->GetName());
 					}
 				}
 				
-				RemoveClient(client);
-				client->Disconnect();
+				if(!isLinkdead) {
+					RemoveClient(client);
+					client->Disconnect();
+				}
 			}
 			catch(...){
 				LogWrite(ZONE__ERROR, 0, "Zone", "Exception caught when in ZoneServer::ClientProcess(), second try\n%s, %i", __FUNCTION__, __LINE__);
@@ -4644,13 +4659,22 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 	Client* client = 0;
 	vector<int32>* encounter = 0;
 	bool killer_in_encounter = false;
-
+	int8 loot_state = dead->GetLockedNoLoot();
+		
 	if(dead->IsEntity())
 	{
 		// add any special quest related loot (no_drop_quest_completed)
-		if(dead->IsNPC() && killer && killer != dead)
-			AddLoot((NPC*)dead, killer);
-		
+		if(dead->IsNPC() && ((NPC*)dead)->Brain()) {
+			if(!((NPC*)dead)->Brain()->PlayerInEncounter() || (loot_state != ENCOUNTER_STATE_LOCKED && loot_state != ENCOUNTER_STATE_OVERMATCHED)) {
+				LogWrite(LOOT__DEBUG, 0, "Loot", "NPC %s bypassed loot drop due to no player in encounter, or encounter state not locked.", ((NPC*)dead)->GetName());
+			}
+			else {
+				Entity* hated = ((NPC*)dead)->Brain()->GetMostHated();
+				if(hated) {
+					AddLoot((NPC*)dead, hated);
+				}
+			}
+		}
 		((Entity*)dead)->InCombat(false);
 		dead->SetInitialState(16512, false); // This will make aerial npc's fall after death
 		dead->SetHP(0);
@@ -4700,30 +4724,30 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 	dead->SetActionState(0);
 	dead->SetTempActionState(0);
 
-		// Needs npc to have access to the encounter list for who is allowed to loot
-		NPC* chest = 0;
-		
-		if (dead->IsNPC() && !((NPC*)dead)->Brain()->PlayerInEncounter()) {
-			dead->SetLootCoins(0);
-			dead->ClearLoot();
-		}
+	// Needs npc to have access to the encounter list for who is allowed to loot
+	NPC* chest = 0;
+	
+	if (dead->IsNPC() && !((NPC*)dead)->Brain()->PlayerInEncounter()) {
+		dead->SetLootCoins(0);
+		dead->ClearLoot();
+	}
 
-		Spawn* groupMemberAlive = nullptr;
-		// If dead has loot attempt to drop a chest
-		if (dead->HasLoot()) {
-			if(!(groupMemberAlive = dead->IsSpawnGroupMembersAlive(dead))) {
-				chest = ((Entity*)dead)->DropChest();
-			}
-			else {
-				switch(dead->GetLootDropType()) {
-					case 0: 
-						// default drop all chest type as a group
-						dead->TransferLoot(groupMemberAlive);
-					break;
-					case 1:
-						// this is a primary mob it drops its own loot
-						chest = ((Entity*)dead)->DropChest();
-					break;
+	Spawn* groupMemberAlive = nullptr;
+	// If dead has loot attempt to drop a chest
+	if (dead->HasLoot()) {
+		if(!(groupMemberAlive = dead->IsSpawnGroupMembersAlive(dead))) {
+			chest = ((Entity*)dead)->DropChest();
+		}
+		else {
+			switch(dead->GetLootDropType()) {
+				case 0: 
+					// default drop all chest type as a group
+					dead->TransferLoot(groupMemberAlive);
+				break;
+				case 1:
+					// this is a primary mob it drops its own loot
+					chest = ((Entity*)dead)->DropChest();
+				break;
 			}
 		}
 	}
@@ -4754,7 +4778,9 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 				// valid client?
 				if (client) {
 					// Check for quest kill updates
-					client->CheckPlayerQuestsKillUpdate(dead);
+					if(!dead->IsNPC() || loot_state != ENCOUNTER_STATE_BROKEN) {
+						client->CheckPlayerQuestsKillUpdate(dead);
+					}
 					// If the dead mob is not a player and if it had a faction with an ID greater or equal to 10 the send faction changes
 					if (!dead->IsPlayer() && dead->GetFactionID() > 10)
 						ProcessFaction(dead, client);
@@ -5095,6 +5121,44 @@ void ZoneServer::SendThreatPacket(Spawn* caster, Spawn* target, int32 threat_amt
 		}
 		safe_delete(packet);
 	}
+	MClientList.releasereadlock(__FUNCTION__, __LINE__);
+}
+
+
+void ZoneServer::SendYellPacket(Spawn* yeller, float max_distance) {
+	Client* client = 0;
+
+					
+	string yellMsg = std::string(yeller->GetName()) + " yelled for help!";
+	vector<Client*>::iterator client_itr;
+	PacketStruct* packet = nullptr;
+	MClientList.readlock(__FUNCTION__, __LINE__);
+	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
+		client = *client_itr;
+		if(!client || !client->GetPlayer() || client->GetPlayer()->WasSentSpawn(yeller->GetID()) == false)
+			continue;
+		if(client->GetPlayer()->GetDistance(yeller) > max_distance)
+			continue;
+		
+		if(packet && packet->GetVersion() == client->GetVersion()) {
+			client->QueuePacket(packet->serialize());
+		}
+		else {
+			safe_delete(packet);
+			packet = configReader.getStruct("WS_EncounterBroken", client->GetVersion());
+			if (packet) {
+				packet->setDataByName("message", yellMsg.c_str());
+				/* none of the other data seems necessary, keeping for reference for future disassembly
+				packet2->setDataByName("unknown2", 0x40);
+				packet2->setDataByName("unknown3", 0x40);
+				packet2->setDataByName("unknown4", 0xFF);
+				packet2->setDataByName("unknown5", 0xFF);
+				packet2->setDataByName("unknown6", 0xFF);*/
+				client->QueuePacket(packet->serialize());
+			}
+		}
+	}
+	safe_delete(packet);
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }
 

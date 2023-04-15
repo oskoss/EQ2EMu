@@ -1737,6 +1737,7 @@ int EQ2Emu_lua_AddHate(lua_State* state) {
 			for (int32 i = 0; i < luaspell->targets.size(); i++) {
 				Spawn* spawn = zone->GetSpawnByID(luaspell->targets.at(i));
 				if (spawn && spawn->IsNPC() && spawn->Alive() && spawn->GetZone()) {
+					entity->CheckEncounterState((Entity*)spawn);
 					((NPC*)spawn)->AddHate((Entity*)entity, amount);
 					if (send_packet)
 						entity->GetZone()->SendThreatPacket(entity, npc, amount, luaspell->spell->GetName());
@@ -1744,8 +1745,10 @@ int EQ2Emu_lua_AddHate(lua_State* state) {
 			}
 			luaspell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 		}
-		else if (npc && npc->IsNPC() && npc->GetZone())
+		else if (npc && npc->IsNPC() && npc->GetZone()) {
+			entity->CheckEncounterState((Entity*)npc);
 			((NPC*)npc)->AddHate((Entity*)entity, amount);
+		}
 	}
 	lua_interface->ResetFunctionStack(state);
 	return 0;
