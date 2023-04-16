@@ -2727,6 +2727,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					dead->SetHP(0);
 					if(dead->IsNPC()) {
 						client->GetPlayer()->CheckEncounterState((Entity*)dead);
+						((NPC*)dead)->Brain()->AddToEncounter(client->GetPlayer());
+						((NPC*)dead)->AddTargetToEncounter(client->GetPlayer());
 						((NPC*)dead)->AddHate(client->GetPlayer(), 1);
 					}
 					if(sep && sep->arg[0] && sep->IsNumber(0) && atoi(sep->arg[0]) == 1)
@@ -4620,6 +4622,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						else {
 							client->SimpleMessage(CHANNEL_COLOR_RED, "/spawn details aggro is for NPCs only!");
 						}
+						break;
+					}
+					else if (ToLower(string(sep->arg[0])) == "angle")
+					{
+						float spawnAngle = client->GetPlayer()->GetFaceTarget(cmdTarget->GetX(), cmdTarget->GetZ());
+						
+						client->Message(CHANNEL_COLOR_YELLOW, "Angle %f between player %s and target %s", spawnAngle, client->GetPlayer()->GetTarget() ? client->GetPlayer()->GetTarget()->GetName() : client->GetPlayer()->GetName(), client->GetPlayer()->GetName());
 						break;
 					}
 				}
