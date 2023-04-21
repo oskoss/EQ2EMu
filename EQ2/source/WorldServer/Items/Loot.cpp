@@ -111,7 +111,11 @@ NPC* Entity::DropChest() {
 		chest->SetLocation(GetLocation());
 		chest->SetX(GetX());
 		chest->SetZ(GetZ());
-		chest->appearance.pos.Y = GetY(); // don't use SetY, do this last after loc/x/z set
+		((Entity*)chest)->GetInfoStruct()->set_flying_type(false);
+		chest->is_flying_creature = false;
+		auto loc = glm::vec3(GetX(), GetZ(), GetY());
+		float new_z = GetMap()->FindBestZ(loc, nullptr);
+		chest->appearance.pos.Y = new_z; // don't use SetY here can cause a loop
 	}
 
 	return chest;
