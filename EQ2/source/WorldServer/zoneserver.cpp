@@ -3216,7 +3216,6 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 	MPendingSpawnListAdd.releasewritelock(__FUNCTION__, __LINE__);
 	
 	spawn_range.Trigger();
-	spawn_check_add.Trigger();
 
 	if (GetInstanceType() == PERSONAL_HOUSE_INSTANCE && spawn->IsObject())
 	{
@@ -8587,11 +8586,12 @@ bool ZoneServer::HouseItemSpawnExists(int32 item_id) {
 }
 
 void ZoneServer::ProcessPendingSpawns() {
-	MSpawnList.writelock(__FUNCTION__, __LINE__);
 	MPendingSpawnListAdd.writelock(__FUNCTION__, __LINE__);
 	list<Spawn*>::iterator itr2;
 	for (itr2 = pending_spawn_list_add.begin(); itr2 != pending_spawn_list_add.end(); itr2++) {
 		Spawn* spawn = *itr2;
+		
+		MSpawnList.writelock(__FUNCTION__, __LINE__);
 		if (spawn)
 			spawn_list[spawn->GetID()] = spawn;
 		
@@ -8602,11 +8602,14 @@ void ZoneServer::ProcessPendingSpawns() {
 			subspawn_list[SUBSPAWN_TYPES::HOUSE_ITEM_SPAWN].insert(make_pair(spawn->GetPickupItemID(),spawn));
 			housing_spawn_map.insert(make_pair(spawn->GetID(), spawn->GetPickupItemID()));
 		}
+		MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
+		
+		CheckSpawnRange(spawn);
 	}
 
 	pending_spawn_list_add.clear();
 	MPendingSpawnListAdd.releasewritelock(__FUNCTION__, __LINE__);
-	MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
+	spawn_check_add.Trigger();
 }
 
 void ZoneServer::AddSpawnToGrid(Spawn* spawn, int32 grid_id) {
