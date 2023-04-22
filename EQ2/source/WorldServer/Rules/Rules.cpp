@@ -239,6 +239,7 @@ void RuleManager::Init()
 	RULE_INIT(R_Combat, SpiritShardSpawnScript, "SpawnScripts/Generic/SpiritShard.lua");
 	RULE_INIT(R_Combat, ShardDebtRecoveryPercent, "25.00"); // recovered percentage of debt upon obtainig shard, 25/100 means 25%.  If there is .5 DeathExperienceDebt, .5*25% = .125,  .5 - .125 = .375
 	RULE_INIT(R_Combat, ShardRecoveryByRadius, "1"); // allow shards to auto pick up by radius, not requiring to click/right click the shard
+	RULE_INIT(R_Combat, ShardLifetime, "86400"); // default: 86400 seconds (one day)
 	RULE_INIT(R_Combat, EffectiveMitigationCapLevel, "80"); // level multiplier for max effective cap, level * 80 (default)
 	RULE_INIT(R_Combat, CalculatedMitigationCapLevel, "100"); // The cap to calculate your mitigation from is [level*100].
 	RULE_INIT(R_Combat, MitigationLevelEffectivenessMax, "1.5"); // ratio victim level / attacker level for max effectiveness, when victim is higher level cap can reach 1.5

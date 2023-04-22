@@ -97,6 +97,7 @@ enum RuleType {
 	SpiritShardSpawnScript,
 	ShardDebtRecoveryPercent,
 	ShardRecoveryByRadius,
+	ShardLifetime,
 	EffectiveMitigationCapLevel,
 	CalculatedMitigationCapLevel,
 	MitigationLevelEffectivenessMax,
