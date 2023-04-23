@@ -36,12 +36,12 @@ public:
 	Map(string zonename, string filename);
 	~Map();
 
-	float FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID = 0, uint32* WidgetID = 0);
-	float FindClosestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID = 0, uint32* WidgetID = 0);
-	bool LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *result);
-	bool LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, glm::vec3 *result);
-	bool CheckLoS(glm::vec3 myloc, glm::vec3 oloc);
-	bool DoCollisionCheck(glm::vec3 myloc, glm::vec3 oloc, glm::vec3 &outnorm, float &distance);
+	float FindBestZ(glm::vec3 &start, glm::vec3 *result, std::map<int32, bool>* ignored_widgets, uint32 *GridID = 0, uint32* WidgetID = 0);
+	float FindClosestZ(glm::vec3 &start, glm::vec3 *result, std::map<int32, bool>* ignored_widgets, uint32 *GridID = 0, uint32* WidgetID = 0);
+	bool LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, std::map<int32, bool>* ignored_widgets, glm::vec3 *result);
+	bool LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, std::map<int32, bool>* ignored_widgets, glm::vec3 *result);
+	bool CheckLoS(glm::vec3 myloc, glm::vec3 oloc, std::map<int32, bool>* ignored_widgets);
+	bool DoCollisionCheck(glm::vec3 myloc, glm::vec3 oloc, std::map<int32, bool>* ignored_widgets, glm::vec3 &outnorm, float &distance);
 
 	bool Load(const std::string& filename);
 

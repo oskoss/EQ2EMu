@@ -42,6 +42,7 @@
 #include <deque>
 #include <memory> // needed for LS to compile properly on linux
 #include <mutex>
+#include <algorithm>
 
 #define DAMAGE_PACKET_TYPE_SIPHON_SPELL		0x41
 #define DAMAGE_PACKET_TYPE_SIPHON_SPELL2	0x49
@@ -676,7 +677,9 @@ public:
 	sint32 GetHP();
 	sint32 GetTotalHPBase();
 	sint32 GetTotalPowerBase();
-
+	float GetHPRatio() { return GetHP() == 0 || GetTotalHP() == 0 ? 0 : ((float) GetHP() / GetTotalHP() * 100); }
+	int GetIntHPRatio() { return GetTotalHP() == 0 ? 0 : static_cast<int>(GetHPRatio()); }
+	
 	sint32 GetTotalSavagery();
 	sint32 GetSavagery();
 	sint32 GetTotalDissonance();
@@ -1170,6 +1173,7 @@ public:
 	void SetSpawnAnimLeeway(int16 value) { m_spawnAnimLeeway = value; }
 
 	float FindDestGroundZ(glm::vec3 dest, float z_offset);
+	float FindBestZ(glm::vec3 loc, glm::vec3* result=nullptr, int32* new_grid_id=nullptr, int32* new_widget_id=nullptr);
 	float GetFixedZ(const glm::vec3& destination, int32 z_find_offset = 1);
 	void FixZ(bool forceUpdate=false);
 	bool CheckLoS(Spawn* target);
@@ -1301,8 +1305,14 @@ public:
 	
 	int8 GetArrowColor(int8 spawn_level);
 	
+	void AddIgnoredWidget(int32 id);
+	
+	mutable std::shared_mutex MIgnoredWidgets;
+	std::map<int32, bool> ignored_widgets;
+	
 	EquipmentItemList equipment_list;
 	EquipmentItemList appearance_equipment_list;
+	
 protected:
 
 	bool	has_quests_required;

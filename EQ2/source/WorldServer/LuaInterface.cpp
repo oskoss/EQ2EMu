@@ -1507,6 +1507,10 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	
 	lua_register(state, "AddRecipeBookToPlayer", EQ2Emu_lua_AddRecipeBookToPlayer);
 	lua_register(state, "RemoveRecipeFromPlayer", EQ2Emu_lua_RemoveRecipeFromPlayer);
+	
+	lua_register(state, "ReplaceWidgetFromClient", EQ2Emu_lua_ReplaceWidgetFromClient);
+	lua_register(state, "RemoveWidgetFromSpawnMap", EQ2Emu_lua_RemoveWidgetFromSpawnMap);
+	lua_register(state, "RemoveWidgetFromZoneMap", EQ2Emu_lua_RemoveWidgetFromZoneMap);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

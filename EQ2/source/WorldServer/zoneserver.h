@@ -715,6 +715,9 @@ public:
 	void	RemoveSpawnFromGrid(Spawn* spawn, int32 grid_id);
 	int32	GetSpawnCountInGrid(int32 grid_id);
 	void	SendClientSpawnListInGrid(Client* client, int32 grid_id);
+	
+	void AddIgnoredWidget(int32 id);	
+	
 private:
 #ifndef WIN32
 	pthread_t ZoneThread;
@@ -1011,6 +1014,9 @@ private:
 	std::map<int32, int32> lua_queued_state_commands;
 	std::map<int32, std::map<std::string, float>> lua_spawn_update_command;
 	std::mutex MLuaQueueStateCmd;
+	
+	mutable std::shared_mutex MIgnoredWidgets;
+	std::map<int32, bool> ignored_widgets;
 public:
 	Spawn*				GetSpawn(int32 id);
 

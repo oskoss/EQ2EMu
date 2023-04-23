@@ -40,8 +40,6 @@
 namespace RAYCAST_MESH
 {
 
-typedef std::vector< RmUint32 > TriVector;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
 *	A method to compute a ray-AABB intersection.
@@ -661,7 +659,8 @@ public:
 							RmUint32 *raycastTriangles,
 							RmUint32 raycastFrame,
 							const TriVector &leafTriangles,
-							RmUint32 &nearestTriIndex)
+							RmUint32 &nearestTriIndex,
+							RmMap* ignored_widgets)
 		{
 			RmReal sect[3];
 			RmReal nd = nearestDistance;
@@ -697,6 +696,10 @@ public:
 							}
 							if ( t < nearestDistance || accept )
 							{
+								if(ignored_widgets && ignored_widgets->find(widgets[tri]) != ignored_widgets->end()) {
+									continue;
+								}
+								
 								nearestDistance = t;
 								if ( hitLocation )
 								{
@@ -718,6 +721,7 @@ public:
 								if(WidgetID) {
 									*WidgetID = widgets[tri];
 								}
+								
 								nearestTriIndex = tri;
 								hit = true;
 							}
@@ -729,11 +733,11 @@ public:
 			{
 				if ( mLeft )
 				{
-					mLeft->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,GridID,WidgetID,vertices,indices,grids,widgets,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
+					mLeft->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,GridID,WidgetID,vertices,indices,grids,widgets,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex,ignored_widgets);
 				}
 				if ( mRight )
 				{
-					mRight->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,GridID,WidgetID,vertices,indices,grids,widgets,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
+					mRight->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,GridID,WidgetID,vertices,indices,grids,widgets,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex,ignored_widgets);
 				}
 			}
 		}
@@ -795,7 +799,7 @@ public:
 		::free(mWidgets);
 	}
 
-	virtual bool raycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance,RmUint32 *GridID,RmUint32 *WidgetID)
+	virtual bool raycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance,RmUint32 *GridID,RmUint32 *WidgetID, RmMap* ignored_widgets)
 	{
 		bool ret = false;
 
@@ -811,7 +815,7 @@ public:
 		dir[2]*=recipDistance;
 		mRaycastFrame++;
 		RmUint32 nearestTriIndex=TRI_EOF;
-		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,GridID,WidgetID,mVertices,mIndices,mGrids,mWidgets,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex);
+		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,GridID,WidgetID,mVertices,mIndices,mGrids,mWidgets,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex,ignored_widgets);
 		return ret;
 	}
 
@@ -860,7 +864,7 @@ public:
 		faceNormal[2] = src[2];
 	}
 
-	virtual bool bruteForceRaycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance,RmUint32 *GridID,RmUint32 *WidgetID)
+	virtual bool bruteForceRaycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance,RmUint32 *GridID,RmUint32 *WidgetID, RmMap* ignored_widgets)
 	{
 		bool ret = false;
 
@@ -895,6 +899,10 @@ public:
 			{
 				if ( t < nearestDistance )
 				{
+					if(ignored_widgets && ignored_widgets->find(mWidgets[tri]) != ignored_widgets->end()) {
+						continue;
+					}
+					
 					nearestDistance = t;
 					if ( hitLocation )
 					{
@@ -919,6 +927,7 @@ public:
 					if(WidgetID) {
 						*WidgetID = mWidgets[tri];
 					}
+								
 					ret = true;
 				}
 			}

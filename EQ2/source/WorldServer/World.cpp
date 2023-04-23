@@ -2794,7 +2794,7 @@ void World::CopyVoiceOver(VoiceOverStruct* struct1, VoiceOverStruct* struct2) {
 	struct1->garble_link_id = struct2->garble_link_id;
 }
 
-void World::AddNPCSpell(int32 list_id, int32 spell_id, int8 tier, bool spawn_cast, bool aggro_cast){
+void World::AddNPCSpell(int32 list_id, int32 spell_id, int8 tier, bool spawn_cast, bool aggro_cast, sint8 req_hp_ratio){
     std::unique_lock lock(MNPCSpells);
 	NPCSpell* npc_spell_struct = new NPCSpell;
 	npc_spell_struct->list_id = list_id;
@@ -2802,6 +2802,7 @@ void World::AddNPCSpell(int32 list_id, int32 spell_id, int8 tier, bool spawn_cas
 	npc_spell_struct->tier = tier;
 	npc_spell_struct->cast_on_spawn = spawn_cast;
 	npc_spell_struct->cast_on_initial_aggro = aggro_cast;
+	npc_spell_struct->required_hp_ratio = req_hp_ratio;
 	if(npc_spell_list.count(list_id) && npc_spell_list[list_id].count(spell_id)) {
 		map<int32, NPCSpell*>::iterator spell_itr = npc_spell_list[list_id].find(spell_id);
 		if(spell_itr != npc_spell_list[list_id].end()) {

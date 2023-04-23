@@ -32,12 +32,17 @@
 
 typedef float RmReal;
 typedef unsigned int RmUint32;
+#include <map>
+#include <vector>
+using namespace std;
+typedef std::vector< RmUint32 > TriVector;
+typedef std::map< unsigned int , bool> RmMap;
 
 class RaycastMesh
 {
 public:
-	virtual bool raycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance, RmUint32 *GridID, RmUint32 *WidgetID) = 0;
-	virtual bool bruteForceRaycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance, RmUint32 *GridID, RmUint32 *WidgetID) = 0;
+	virtual bool raycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance, RmUint32 *GridID, RmUint32 *WidgetID, RmMap* ignored_widgets) = 0;
+	virtual bool bruteForceRaycast(const RmReal *from,const RmReal *to,RmReal *hitLocation,RmReal *hitNormal,RmReal *hitDistance, RmUint32 *GridID, RmUint32 *WidgetID, RmMap* ignored_widgets) = 0;
 
 	virtual const RmReal * getBoundMin(void) const = 0; // return the minimum bounding box
 	virtual const RmReal * getBoundMax(void) const = 0; // return the maximum bounding box.

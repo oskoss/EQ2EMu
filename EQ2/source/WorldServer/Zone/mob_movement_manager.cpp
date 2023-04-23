@@ -484,7 +484,7 @@ void AdjustRoute(std::list<IPathfinder::IPathNode> &nodes, Entity *who)
 
 	for (auto &node : nodes) {
 		//if (!zone->watermap->InLiquid(node.pos)) {
-			auto best_z = who->GetMap()->FindBestZ(node.pos, nullptr);
+			auto best_z = who->FindBestZ(node.pos, nullptr);
 			if (best_z != BEST_Z_INVALID) {
 				node.pos.z = best_z + offset;
 			}
@@ -1020,7 +1020,7 @@ void MobMovementManager::UpdatePathUnderwater(Entity *who, float x, float y, flo
 
 	auto &ent  = (*eiter);
 	if (/*zone->watermap->InLiquid(who->GetPosition()) && zone->watermap->InLiquid(glm::vec3(x, y, z)) &&*/
-		who->GetMap()->CheckLoS(glm::vec3(who->GetX(),who->GetZ(),who->GetY()), glm::vec3(x, y, z))) {
+		who->CheckLoS(glm::vec3(who->GetX(),who->GetZ(),who->GetY()), glm::vec3(x, z, y))) {
 		PushSwimTo(ent.second, x, y, z, movement_mode);
 		PushStopMoving(ent.second);
 		MobListMutex.releasereadlock();

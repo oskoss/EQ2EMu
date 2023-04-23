@@ -13638,3 +13638,98 @@ int EQ2Emu_lua_RemoveRecipeFromPlayer(lua_State* state) {
 	return 1;
 }
 
+int EQ2Emu_lua_ReplaceWidgetFromClient(lua_State* state) {
+	Client* client = nullptr;
+	Spawn* player = lua_interface->GetSpawn(state);
+	int32 widget_id = lua_interface->GetInt32Value(state, 2);
+	bool delete_widget = (lua_interface->GetInt8Value(state, 3) == 1);
+	
+	// rest are all optional fields
+	float x = lua_interface->GetFloatValue(state, 4);
+	float y = lua_interface->GetFloatValue(state, 5);
+	float z = lua_interface->GetFloatValue(state, 6);
+	int32 grid_id = lua_interface->GetInt32Value(state, 7);
+	
+	lua_interface->ResetFunctionStack(state);
+	if (!player) {
+		lua_interface->LogError("LUA ReplaceWidgetFromClient command error: spawn is not valid");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("LUA ReplaceWidgetFromClient command error: spawn is not a player");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	if(!player->GetZone()) {
+		lua_interface->LogError("LUA ReplaceWidgetFromClient command error: player is not in a zone");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	
+	client = player->GetClient();
+
+	if (!client) {
+		lua_interface->LogError("LUA ReplaceWidgetFromClient command error: could not find client");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	if(!client->IsReadyForUpdates()) {
+		lua_interface->LogError("LUA ReplaceWidgetFromClient command failed: client has not signaled sys_client_avatar_ready");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	
+	client->SendReplaceWidget(widget_id, delete_widget, x, y, z, grid_id);
+	
+	lua_interface->SetBooleanValue(state, true);
+	return 1;
+}
+
+int EQ2Emu_lua_RemoveWidgetFromSpawnMap(lua_State* state) {
+	Client* client = nullptr;
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 widget_id = lua_interface->GetInt32Value(state, 2);
+	
+	lua_interface->ResetFunctionStack(state);
+	if (!spawn) {
+		lua_interface->LogError("LUA RemoveWidgetFromSpawnMap command error: spawn is not valid");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+
+	if(!spawn->GetZone()) {
+		lua_interface->LogError("LUA ReplaceWidgetFromClient command error: player is not in a zone");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	
+	spawn->AddIgnoredWidget(widget_id);
+	
+	lua_interface->SetBooleanValue(state, true);
+	return 1;
+}
+
+int EQ2Emu_lua_RemoveWidgetFromZoneMap(lua_State* state) {
+	ZoneServer* zone = lua_interface->GetZone(state);
+	int32 widget_id = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	
+	if(!zone) {
+		lua_interface->LogError("LUA RemoveWidgetFromZoneMap command error: zone is not valid");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	
+	if(!zone->IsLoading()) {
+		lua_interface->LogError("LUA RemoveWidgetFromZoneMap command error: can only be called during zone loading, in preinit_zone_script ZoneScript function");
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	
+	zone->AddIgnoredWidget(widget_id);
+	lua_interface->SetBooleanValue(state, true);
+	return 1;
+}

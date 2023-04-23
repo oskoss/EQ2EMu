@@ -509,12 +509,17 @@ int32 WorldDatabase::LoadNPCSpells(){
 	Query query;
 	MYSQL_ROW row;
 	int32 count = 0;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT spell_list_id, spell_id, spell_tier, on_spawn_cast, on_aggro_cast FROM spawn_npc_spells where spell_list_id > 0");
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT spell_list_id, spell_id, spell_tier, on_spawn_cast, on_aggro_cast, required_hp_ratio FROM spawn_npc_spells where spell_list_id > 0");
 	while(result && (row = mysql_fetch_row(result))){
-		world.AddNPCSpell(atoul(row[0]), atoul(row[1]), atoi(row[2]), atoul(row[3]), atoul(row[4]));
-		count++;
+		if(!row[0] || !row[1] || !row[2] || !row[3] || !row[4] || !row[5]) {
+			LogWrite(NPC__ERROR, 0, "NPC", "---Loading NPC Spell List: %u, found NULL values in entry, SKIP!", row[0] ? atoul(row[0]) : 0);
+		}
+		else {
+			world.AddNPCSpell(atoul(row[0]), atoul(row[1]), atoi(row[2]), atoul(row[3]), atoul(row[4]), atoi(row[5]));
+			count++;
 
-		LogWrite(NPC__DEBUG, 5, "NPC", "---Loading NPC Spell List: %u, spell id: %u, tier: %i", atoul(row[0]), atoul(row[1]), atoi(row[2]));
+			LogWrite(NPC__DEBUG, 5, "NPC", "---Loading NPC Spell List: %u, spell id: %u, tier: %i", atoul(row[0]), atoul(row[1]), atoi(row[2]));
+		}
 
 	}
 	return count;
@@ -7387,7 +7392,7 @@ void WorldDatabase::GetHouseSpawnInstanceData(ZoneServer* zone, Spawn* spawn)
 		{
 			auto loc = glm::vec3(spawn->GetX(),spawn->GetZ(),spawn->GetY());
 			uint32 GridID = 0;
-			float new_z = spawn->GetMap()->FindBestZ(loc, nullptr, &GridID);
+			float new_z = spawn->FindBestZ(loc, nullptr, &GridID);
 			spawn->SetPos(&(spawn->appearance.pos.grid_id), GridID);
 		}
 	}

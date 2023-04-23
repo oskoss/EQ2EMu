@@ -632,7 +632,7 @@ public:
 	void CopyVoiceOver(VoiceOverStruct* struct1, VoiceOverStruct* struct2);
 	
 	/* NPC Spells */
-	void AddNPCSpell(int32 list_id, int32 spell_id, int8 tier, bool spawn_cast, bool aggro_cast);
+	void AddNPCSpell(int32 list_id, int32 spell_id, int8 tier, bool spawn_cast, bool aggro_cast, sint8 req_hp_ratio);
 	vector<NPCSpell*>* GetNPCSpells(int32 primary_list, int32 secondary_list);
 	
 	void PurgeNPCSpells();

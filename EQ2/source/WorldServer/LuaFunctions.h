@@ -637,4 +637,8 @@ int EQ2Emu_lua_IsCastOnAggroComplete(lua_State* state);
 
 int EQ2Emu_lua_AddRecipeBookToPlayer(lua_State* state);
 int EQ2Emu_lua_RemoveRecipeFromPlayer(lua_State* state);
+
+int EQ2Emu_lua_ReplaceWidgetFromClient(lua_State* state);
+int EQ2Emu_lua_RemoveWidgetFromSpawnMap(lua_State* state);
+int EQ2Emu_lua_RemoveWidgetFromZoneMap(lua_State* state);
 #endif

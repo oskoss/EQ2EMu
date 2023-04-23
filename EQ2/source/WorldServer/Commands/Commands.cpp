@@ -4701,7 +4701,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				details += "Class:		" + to_string(spawn->GetAdventureClass()) + "\n";
 				details += "Gender:		" + to_string(spawn->GetGender()) + "\n";
 				details += "Level:		" + to_string(spawn->GetLevel()) + "\n";
-				details += "HP:		" + to_string(spawn->GetHP()) + " / " + to_string(spawn->GetTotalHP()) + "\n";
+				details += "HP:		" + to_string(spawn->GetHP()) + " / " + to_string(spawn->GetTotalHP()) + "(" + to_string(spawn->GetIntHPRatio()) + "%)\n";
 				details += "Power:		" + to_string(spawn->GetPower()) + + " / " + to_string(spawn->GetTotalPower()) + "\n";
 				details += "Difficulty:		" + to_string(spawn->GetEncounterLevel()) + "\n";
 				details += "Heroic:		" + to_string(spawn->GetHeroic()) + "\n";
@@ -6098,7 +6098,7 @@ void Commands::Command_Grid(Client* client, Seperator* sep)
 			auto loc = glm::vec3(client->GetPlayer()->GetX(), client->GetPlayer()->GetZ(), client->GetPlayer()->GetY());
 			uint32 GridID = 0;
 			uint32 WidgetID = 0;
-			float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &GridID, &WidgetID);
+			float new_z = client->GetPlayer()->FindBestZ(loc, nullptr, &GridID, &WidgetID);
 			float minY = client->GetPlayer()->GetMap()->GetMinY();
 			float maxY = client->GetPlayer()->GetMap()->GetMaxY();
 			float minZ = client->GetPlayer()->GetMap()->GetMinZ();

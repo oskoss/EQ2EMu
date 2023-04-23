@@ -2080,7 +2080,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 			}
 			else {
 				auto loc = glm::vec3(GetX(), GetZ(), GetY());
-				float new_z = player->GetMap()->FindBestZ(loc, nullptr, &new_grid_id, &new_widget_id);
+				float new_z = player->FindBestZ(loc, nullptr, &new_grid_id, &new_widget_id);
 				TimedGridData data;
 				data.grid_id = new_grid_id;
 				data.widget_id = new_widget_id;
@@ -3387,7 +3387,7 @@ bool Spawn::CalculateChange(){
 				}
 				else {
 					auto loc = glm::vec3(GetX(), GetZ(), GetY());
-					float new_z = GetMap()->FindBestZ(loc, nullptr, &newGrid);
+					float new_z = FindBestZ(loc, nullptr, &newGrid);
 					TimedGridData data;
 					data.grid_id = newGrid;
 					data.x = GetX();
@@ -3976,9 +3976,19 @@ float Spawn::FindDestGroundZ(glm::vec3 dest, float z_offset)
 	if (GetZone() != nullptr && GetMap() != nullptr)
 	{
 		dest.z += z_offset;
-		best_z = GetMap()->FindBestZ(dest, nullptr);
+		best_z = FindBestZ(dest, nullptr);
 	}
 	return best_z;
+}
+
+float Spawn::FindBestZ(glm::vec3 loc, glm::vec3* result, int32* new_grid_id, int32* new_widget_id) {
+	std::shared_lock lock(MIgnoredWidgets);
+	
+	if(!GetMap())
+		return BEST_Z_INVALID;
+	
+	float new_z = GetMap()->FindBestZ(loc, nullptr, &ignored_widgets, new_grid_id, new_widget_id);
+	return new_z;
 }
 
 float Spawn::GetFixedZ(const glm::vec3& destination, int32 z_find_offset) {
@@ -4039,7 +4049,7 @@ void Spawn::FixZ(bool forceUpdate) {
 	uint32 WidgetID = 0;
 	float new_z = GetY();
 	if(GetMap() != nullptr) {
-		float new_z = GetMap()->FindBestZ(current_loc, nullptr, &GridID, &WidgetID);
+		float new_z = FindBestZ(current_loc, nullptr, &GridID, &WidgetID);
 
 		if ((IsTransportSpawn() || !IsFlyingCreature()) && GridID != 0 && GridID != GetLocation()) {
 			LogWrite(PLAYER__DEBUG, 0, "Player", "%s left grid %u and entered grid %u", appearance.name, GetLocation(), GridID);
@@ -4095,13 +4105,17 @@ bool Spawn::CheckLoS(Spawn* target)
 
 bool Spawn::CheckLoS(glm::vec3 myloc, glm::vec3 oloc)
 {
+	bool res = false;
 	ZoneServer* zone = GetZone();
 	if (zone == NULL || GetMap() == NULL || !GetMap()->IsMapLoaded())
 		return true;
-	else
-		return GetMap()->CheckLoS(myloc, oloc);
+	else {
+		MIgnoredWidgets.lock_shared();
+		res = GetMap()->CheckLoS(myloc, oloc, &ignored_widgets);
+		MIgnoredWidgets.unlock_shared();
+	}
 
-	return false;
+	return res;
 }
 
 void Spawn::CalculateNewFearpoint()
@@ -4630,4 +4644,11 @@ int8 Spawn::GetArrowColor(int8 spawn_level){
 	else //if(diff < 0)
 		color = ARROW_COLOR_BLUE;
 	return color;
+}
+
+void Spawn::AddIgnoredWidget(int32 id) {
+	std::unique_lock lock(MIgnoredWidgets);
+	if(ignored_widgets.find(id) == ignored_widgets.end()) {
+		ignored_widgets.insert(make_pair(id,true));
+	}
 }

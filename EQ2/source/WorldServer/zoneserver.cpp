@@ -180,10 +180,22 @@ ZoneServer::~ZoneServer() {
 	zoneShuttingDown = true;  //ensure other threads shut down too
 	//allow other threads to properly shut down
 	LogWrite(ZONE__INFO, 0, "Zone", "Initiating zone shutdown of '%s'", zone_name);
+	int32 disp_count = 0;
+	int32 next_disp_count = 100;
 	while (spawnthread_active || initial_spawn_threads_active > 0){
-		if (spawnthread_active)
+		bool disp = false;
+		if ( disp_count == 0 ) {
+			disp = true;
+		}
+		else if(disp_count >= next_disp_count) {
+			disp_count = 0;
+			disp = true;
+		}
+		
+		disp_count++;
+		if (spawnthread_active && disp)
 			LogWrite(ZONE__DEBUG, 7, "Zone", "Zone shutdown waiting on spawn thread");
-		if (initial_spawn_threads_active > 0)
+		if (initial_spawn_threads_active > 0 && disp)
 			LogWrite(ZONE__DEBUG, 7, "Zone", "Zone shutdown waiting on initial spawn thread");
 		Sleep(10);
 	}
@@ -3204,6 +3216,12 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 	if(!spawn->IsPlayer()) // we already set it on loadCharacter
 		spawn->SetZone(this);
 
+	MIgnoredWidgets.lock_shared();
+	std::map<int32, bool>::iterator itr;
+	for(itr = ignored_widgets.begin(); itr != ignored_widgets.end(); itr++) {
+		spawn->AddIgnoredWidget(itr->first);
+	}
+	MIgnoredWidgets.unlock_shared();
 	spawn->position_changed = false;
 	spawn->info_changed = false;
 	spawn->vis_changed = false;
@@ -8676,5 +8694,12 @@ void ZoneServer::SendClientSpawnListInGrid(Client* client, int32 grid_id){
 			client->Message(CHANNEL_COLOR_YELLOW, "Spawn %s (%u), Loc X/Y/Z: %f/%f/%f.", spawn->GetName(), spawn->GetID(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
 		}
 		grids->second->MSpawns.unlock_shared();
+	}
+}
+
+void ZoneServer::AddIgnoredWidget(int32 id) {
+	std::unique_lock lock(MIgnoredWidgets);
+	if(ignored_widgets.find(id) == ignored_widgets.end()) {
+		ignored_widgets.insert(make_pair(id,true));
 	}
 }

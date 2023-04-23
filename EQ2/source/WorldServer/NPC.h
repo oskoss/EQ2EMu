@@ -88,6 +88,7 @@ public:
 			tier = inherit->tier;
 			cast_on_spawn = inherit->cast_on_spawn;
 			cast_on_initial_aggro = inherit->cast_on_initial_aggro;
+			required_hp_ratio = inherit->required_hp_ratio;
 	}
 	
 	int32 	list_id;
@@ -95,6 +96,7 @@ public:
 	int8 	tier;
 	bool	cast_on_spawn;
 	bool	cast_on_initial_aggro;
+	sint8	required_hp_ratio;
 };
 
 class NPC : public Entity {

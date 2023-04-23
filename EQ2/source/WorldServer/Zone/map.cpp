@@ -78,7 +78,7 @@ Map::~Map() {
 	}
 }
 
-float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID, uint32* WidgetID)
+float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, std::map<int32, bool>* ignored_widgets, uint32* GridID, uint32* WidgetID)
 {
 	if (!IsMapLoaded())
 		return BEST_Z_INVALID;
@@ -95,7 +95,7 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID, uint32
 	float hit_distance;
 	bool hit = false;
 
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID, (RmMap*)ignored_widgets);
 	if(hit) {
 		return result->z;
 	}
@@ -103,7 +103,7 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID, uint32
 	// Find nearest Z above us
 	
 	to.z = -BEST_Z_INVALID;
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID, (RmMap*)ignored_widgets);
 	if (hit)
 	{
 		return result->z;
@@ -112,7 +112,7 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result, uint32* GridID, uint32
 	return BEST_Z_INVALID;
 }
 
-float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID, uint32* WidgetID) {
+float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result, std::map<int32, bool>* ignored_widgets, uint32 *GridID, uint32* WidgetID) {
 	if (!IsMapLoaded())
 		return false;
 	// Unlike FindBestZ, this method finds the closest Z value above or below the specified point.
@@ -131,7 +131,7 @@ float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID, uin
 	float hit_distance;
 	bool hit = false;
 	// first check is below us
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID, (RmMap*)ignored_widgets);
 	if (hit) {
 		ClosestZ = result->z;
 		
@@ -139,7 +139,7 @@ float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID, uin
 	
 	// Find nearest Z above us
 	to.z = -BEST_Z_INVALID;
-	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID);
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance, (RmUint32*)GridID, (RmUint32*)WidgetID, (RmMap*)ignored_widgets);
 	if (hit) {
 		if (std::abs(from.z - result->z) < std::abs(ClosestZ - from.z))
 			return result->z;
@@ -148,15 +148,15 @@ float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result, uint32 *GridID, uin
 	return ClosestZ;
 }
 
-bool Map::LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *result) {
+bool Map::LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, std::map<int32, bool>* ignored_widgets, glm::vec3 *result) {
 	if (!IsMapLoaded())
 		return false;
 	if(!imp)
 		return false;
-	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)result, nullptr, nullptr, nullptr, nullptr);
+	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)result, nullptr, nullptr, nullptr, nullptr, (RmMap*)ignored_widgets);
 }
 
-bool Map::LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, glm::vec3 *result) {
+bool Map::LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, std::map<int32, bool>* ignored_widgets, glm::vec3 *result) {
 	if (!IsMapLoaded())
 		return false;
 	if (!imp)
@@ -204,7 +204,7 @@ bool Map::LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_
 		me.z = cur.z;
 		glm::vec3 hit;
 
-		float best_z = FindBestZ(me, &hit);
+		float best_z = FindBestZ(me, &hit, ignored_widgets);
 		float diff = best_z - z;
 		diff = diff < 0 ? -diff : diff;
 
@@ -214,7 +214,7 @@ bool Map::LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_
 			return true;
 
 		//look at current location
-		if(LineIntersectsZone(start, end, step_mag, result))
+		if(LineIntersectsZone(start, end, step_mag, ignored_widgets, result))
 		{
 			return true;
 		}
@@ -243,24 +243,24 @@ bool Map::LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_
 	return false;
 }
 
-bool Map::CheckLoS(glm::vec3 myloc, glm::vec3 oloc)
+bool Map::CheckLoS(glm::vec3 myloc, glm::vec3 oloc, std::map<int32, bool>* ignored_widgets)
 {
 	if (!IsMapLoaded())
 		return false;
 	if(!imp)
 		return false;
 
-	return !imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, nullptr, nullptr, nullptr, nullptr);
+	return !imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, nullptr, nullptr, nullptr, nullptr, (RmMap*)ignored_widgets);
 }
 
 // returns true if a collision happens
-bool Map::DoCollisionCheck(glm::vec3 myloc, glm::vec3 oloc, glm::vec3 &outnorm, float &distance) {
+bool Map::DoCollisionCheck(glm::vec3 myloc, glm::vec3 oloc, std::map<int32, bool>* ignored_widgets, glm::vec3 &outnorm, float &distance) {
 	if (!IsMapLoaded())
 		return false;
 	if(!imp)
 		return false;
 
-	return imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, (RmReal *)&outnorm, (RmReal *)&distance, nullptr, nullptr);
+	return imp->rm->raycast((const RmReal*)&myloc, (const RmReal*)&oloc, nullptr, (RmReal *)&outnorm, (RmReal *)&distance, nullptr, nullptr, (RmMap*)ignored_widgets);
 }
 
 Map *Map::LoadMapFile(std::string zonename, std::string file) {

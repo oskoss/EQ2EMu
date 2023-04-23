@@ -577,6 +577,9 @@ public:
 	void	SaveSpells();
 	
 	void	GiveQuestReward(Quest* quest, bool has_displayed = false);
+	
+	void	SendReplaceWidget(int32 widget_id, bool delete_widget, float x=0.0f, float y=0.0f, float z=0.0f, int32 grid_id=0);
+	void	ProcessZoneIgnoreWidgets();
 private:
 	void	AddRecipeToPlayerPack(Recipe* recipe, PacketStruct* packet, int16* i);
 	void    SavePlayerImages();
@@ -722,7 +725,7 @@ private:
 	vector< string > devices;
 	
 	std::atomic<int32> pov_ghost_spawn_id;
-	
+	Timer delay_msg_timer;
 };
 
 class ClientList {

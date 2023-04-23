@@ -883,6 +883,12 @@ Spell* NPC::GetNextSpell(float distance, int8 type){
 		Spell* tmpSpell = 0;
 		vector<NPCSpell*>::iterator itr;
 		for(itr = spells->begin(); itr != spells->end(); itr++){
+			// if positive, then say the hp ratio must be GREATER than OR EQUAL TO
+			if((*itr)->required_hp_ratio > 0 && (*itr)->required_hp_ratio < 101 && GetIntHPRatio() >= (*itr)->required_hp_ratio)
+				continue;
+			// if negative, then say the hp ratio must be LESS than OR EQUAL TO
+			if((*itr)->required_hp_ratio < 0 && (*itr)->required_hp_ratio > -101 && (-(*itr)->required_hp_ratio) >= GetIntHPRatio())
+				continue;
 			tmpSpell = master_spell_list.GetSpell((*itr)->spell_id, (*itr)->tier);
 			if(!tmpSpell || (type == AI_STRATEGY_OFFENSIVE && tmpSpell->GetSpellData()->friendly_spell > 0))
 				continue;
@@ -934,6 +940,12 @@ Spell* NPC::GetNextBuffSpell(Spawn* target) {
 		}
 		
 		for (itr = spells->begin(); itr != spells->end(); itr++) {
+			// if positive, then say the hp ratio must be GREATER than OR EQUAL TO
+			if((*itr)->required_hp_ratio > 0 && (*itr)->required_hp_ratio < 101 && GetIntHPRatio() >= (*itr)->required_hp_ratio)
+				continue;
+			// if negative, then say the hp ratio must be LESS than OR EQUAL TO
+			if((*itr)->required_hp_ratio < 0 && (*itr)->required_hp_ratio > -101 && (-(*itr)->required_hp_ratio) >= GetIntHPRatio())
+				continue;
 			tmpSpell = master_spell_list.GetSpell((*itr)->spell_id, (*itr)->tier);
 			if (tmpSpell && tmpSpell->GetSpellData() && tmpSpell->GetSpellData()->cast_type == SPELL_CAST_TYPE_TOGGLE) {
 				SpellEffects* effect = ((Entity*)target)->GetSpellEffect(tmpSpell->GetSpellID());

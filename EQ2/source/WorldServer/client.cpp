@@ -1766,6 +1766,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					GetPlayer()->vis_changed = true;
 					player_pos_changed = true;
 					GetPlayer()->AddChangedZoneSpawn();
+					ProcessZoneIgnoreWidgets();
 				}
 				else {
 					LogWrite(CCLIENT__WARNING, 0, "Client", "Player %s reported SysClient/SignalMsg state %s.", GetPlayer()->GetName(), str.data.c_str());
@@ -3199,7 +3200,10 @@ bool Client::Process(bool zone_process) {
 			break;
 		}
 		case NewLoginState::LOGIN_DELAYED: {
-			LogWrite(CCLIENT__INFO, 0, "Client", "Wait for zone %s to load for new client %s...", GetCurrentZone()->GetZoneName(), GetPlayer()->GetName());
+			if(!delay_msg_timer.Enabled() || delay_msg_timer.Check()) {
+				LogWrite(CCLIENT__INFO, 0, "Client", "Wait for zone %s to load for new client %s...", GetCurrentZone()->GetZoneName(), GetPlayer()->GetName());
+				delay_msg_timer.Start(1000, true);
+			}
 			if(!GetCurrentZone()->IsLoading()) {
 				new_client_login = NewLoginState::LOGIN_ALLOWED;
 			}
@@ -3208,6 +3212,9 @@ bool Client::Process(bool zone_process) {
 			break;	
 		}
 	}
+	
+	delay_msg_timer.Disable();
+	
 	sockaddr_in to;
 
 	memset((char*)&to, 0, sizeof(to));
@@ -9340,7 +9347,7 @@ bool Client::ShowPathToTarget(float x, float y, float z, float y_offset) {
 			if (z < GetPlayer()->GetMap()->GetMinZ() || z > GetPlayer()->GetMap()->GetMaxZ())
 				return false;
 			auto loc = glm::vec3(x, z, y);
-			float new_z = GetPlayer()->GetMap()->FindBestZ(loc, nullptr);
+			float new_z = GetPlayer()->FindBestZ(loc, nullptr);
 			if (new_z != BEST_Z_INVALID) //this is actually y
 				y = new_z;
 		}
@@ -11959,4 +11966,33 @@ void Client::SaveSpells() {
 	player->SaveSpellEffects();
 	player->SetSaveSpellEffects(true);
 	MSaveSpellStateMutex.unlock();	
+}
+
+void Client::SendReplaceWidget(int32 widget_id, bool delete_widget, float x, float y, float z, int32 grid_id) {
+	Widget* new_spawn = new Widget();
+	new_spawn->SetWidgetID(widget_id);
+	new_spawn->SetLocation(grid_id);
+	new_spawn->SetWidgetX(x);
+	new_spawn->SetWidgetY(y);
+	new_spawn->SetWidgetZ(z);
+	new_spawn->SetX(x);
+	new_spawn->SetY(y);
+	new_spawn->SetZ(z);
+
+	EQ2Packet* ret = new_spawn->serialize(GetPlayer(), GetVersion());
+	QueuePacket(ret);
+	
+	// we have to delete spawn* references anyway, we don't keep this widget live in the spawn list
+	GetPlayer()->RemoveSpawn(new_spawn, delete_widget);
+	
+	safe_delete(new_spawn);
+}
+
+void Client::ProcessZoneIgnoreWidgets() {
+	GetPlayer()->MIgnoredWidgets.lock_shared();
+	std::map<int32, bool>::iterator itr;
+	for(itr = GetPlayer()->ignored_widgets.begin(); itr != GetPlayer()->ignored_widgets.end(); itr++) {
+		SendReplaceWidget(itr->first, true);
+	}
+	GetPlayer()->MIgnoredWidgets.unlock_shared();
 }

@@ -204,7 +204,8 @@ void RegionMapV1::IdentifyRegionsInGrid(Client *client, const glm::vec3 &locatio
 	if (client->GetPlayer()->GetMap() != nullptr && client->GetPlayer()->GetMap()->IsMapLoaded())
 	{
 		auto loc = glm::vec3(location.x, location.z, location.y);
-		float new_z = client->GetPlayer()->GetMap()->FindBestZ(loc, nullptr, &grid, &widget_id);
+		
+		float new_z = client->GetPlayer()->FindBestZ(loc, nullptr, &grid, &widget_id);
 		
 		std::map<int32, glm::vec3>::iterator itr = client->GetPlayer()->GetMap()->widget_map.find(widget_id);
 		if(itr != client->GetPlayer()->GetMap()->widget_map.end()) {
