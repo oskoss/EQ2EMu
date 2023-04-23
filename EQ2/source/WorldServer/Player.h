@@ -638,7 +638,7 @@ public:
 	Spawn*	GetSpawnByIndex(int16 index);
 	int16	GetIndexForSpawn(Spawn* spawn);
 	bool	WasSpawnRemoved(Spawn* spawn);
-	void	RemoveSpawn(Spawn* spawn);
+	void	RemoveSpawn(Spawn* spawn, bool delete_spawn = true);
 	bool	ShouldSendSpawn(Spawn* spawn);
 	Client* client = 0;
 	void SetLevel(int16 level, bool setUpdateFlags = true);

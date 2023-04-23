@@ -4193,11 +4193,11 @@ bool Player::WasSpawnRemoved(Spawn* spawn){
 	return wasRemoved;
 }
 
-void Player::RemoveSpawn(Spawn* spawn)
+void Player::RemoveSpawn(Spawn* spawn, bool delete_spawn)
 {
 	LogWrite(PLAYER__DEBUG, 3, "Player", "Remove Spawn '%s' (%u)", spawn->GetName(), spawn->GetID());
 
-	SetSpawnSentState(spawn, SpawnState::SPAWN_STATE_REMOVING);
+	SetSpawnSentState(spawn, delete_spawn ? SpawnState::SPAWN_STATE_REMOVING : SpawnState::SPAWN_STATE_REMOVING_SLEEP);
 	
 	info_mutex.writelock(__FUNCTION__, __LINE__);
 	vis_mutex.writelock(__FUNCTION__, __LINE__);
@@ -4782,7 +4782,9 @@ int32 Player::GetQuestCompletedCount(int32 quest_id) {
 	int32 count = 0;
 	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	Quest* quest = GetCompletedQuest(quest_id);
-	count = quest->GetCompleteCount();
+	if(quest) {
+		count = quest->GetCompleteCount();
+	}
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	return count;
 }
