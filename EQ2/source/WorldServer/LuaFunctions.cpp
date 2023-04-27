@@ -6370,7 +6370,7 @@ int EQ2Emu_lua_AddToWard(lua_State* state) {
 	}
 	ZoneServer* zone = spell->caster->GetZone();
 	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
-	if (zone->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
+	if (spell->targets.size() > 0 && zone->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
 		Entity* target = (Entity*)zone->GetSpawnByID(spell->targets.at(0));
 		ward = target->GetWard(spell->spell->GetSpellID());
 		if (target && ward) {
@@ -6403,14 +6403,17 @@ int EQ2Emu_lua_GetWardAmountLeft(lua_State* state) {
 		return 0;
 	}
 
-	if (spell->caster && spell->caster->GetZone() && spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
+	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+	if (spell->caster && spell->caster->GetZone() && spell->targets.size() > 0 && spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
 		Entity* target = (Entity*)spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0));
 		WardInfo* ward = target->GetWard(spell->spell->GetSpellID());
 		if (ward) {
 			lua_interface->SetInt32Value(state, ward->DamageLeft);
+			spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 			return 1;
 		}
 	}
+	spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 	return 0;
 }
 
@@ -6429,7 +6432,8 @@ int EQ2Emu_lua_GetWardValue(lua_State* state) {
 
 	lua_interface->ResetFunctionStack(state);
 	
-	if (spell->caster && spell->caster->GetZone() && spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
+	spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+	if (spell->caster && spell->caster->GetZone() && spell->targets.size() > 0 && spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0))->IsEntity()) {
 
 		Entity* target = (Entity*)spell->caster->GetZone()->GetSpawnByID(spell->targets.at(0));
 		WardInfo* ward = target->GetWard(spell->spell->GetSpellID());
@@ -6458,9 +6462,12 @@ int EQ2Emu_lua_GetWardValue(lua_State* state) {
 				lua_interface->SetInt32Value(state, ward->MaxHitCount);
 			else
 				lua_interface->LogError("%s: LUA GetWardValue command argument type '%s' did not match any options", lua_interface->GetScriptName(state), type);
+			
+			spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 			return 1;
 		}
 	}
+	spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 	return 0;
 }
 

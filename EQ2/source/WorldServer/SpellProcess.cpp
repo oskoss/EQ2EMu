@@ -1856,7 +1856,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 				ho = groupItr->second;
 				int32 group_id = client->GetPlayer()->GetGroupMemberInfo()->group_id;
 				spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
-				if ((spell->targets.at(0) == ho->GetTarget() || spell->spell->GetSpellData()->friendly_spell)
+				if (((spell->targets.size() > 0 && spell->targets.at(0) == ho->GetTarget()) || spell->spell->GetSpellData()->friendly_spell)
 					&& ho->UpdateHeroicOP(spell->spell->GetSpellIconHeroicOp())) {
 					spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 
