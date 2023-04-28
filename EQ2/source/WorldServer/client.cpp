@@ -4201,7 +4201,7 @@ bool Client::GotoSpawn(const char* search_name, bool forceTarget) {
 		if (search_client && search_client->GetCurrentZone() != GetCurrentZone())
 			Zone(search_client->GetCurrentZone()->GetZoneName(), false);
 		else if (target) {
-			EQ2Packet* app = GetPlayer()->Move(target->GetX(), target->GetY(), target->GetZ(), GetVersion());
+			EQ2Packet* app = GetPlayer()->Move(target->GetX(), target->GetY(), target->GetZ(), GetVersion(), target->GetHeading());
 			if (app)
 				QueuePacket(app);
 		}
@@ -11677,9 +11677,11 @@ bool Client::SetPlayerPOVGhost(Spawn* spawn) {
 
 void Client::HandleDialogSelectMsg(int32 conversation_id, int32 response_index) {
 	std::string conversation = "";
+	bool conv_established = false;
 	MConversation.lock_shared();
 	if (conversation_map.count(conversation_id) > 0 && conversation_map[conversation_id].count(response_index) > 0) {
 		conversation = std::string(conversation_map[conversation_id][response_index].c_str());
+		conv_established = true;
 	}
 	
 	int32 spawn_id = conversation_spawns[conversation_id];
@@ -11693,7 +11695,7 @@ void Client::HandleDialogSelectMsg(int32 conversation_id, int32 response_index) 
 			spawn = GetCurrentZone()->GetSpawnByID(spawn_id);
 		}
 		
-		if (conversation_map.count(conversation_id) > 0 && conversation_map[conversation_id].count(response_index) > 0) {
+		if (conv_established) {
 			if (spawn) {
 				if(conversation == "CloseItemConversation") {
 					LogWrite(LUA__ERROR, 0, "LUA", "CloseItemConversation is an invalid function call for this conversation with spawn id %u", spawn_id);
