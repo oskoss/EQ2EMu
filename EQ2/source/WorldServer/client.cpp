@@ -4201,7 +4201,7 @@ bool Client::GotoSpawn(const char* search_name, bool forceTarget) {
 		if (search_client && search_client->GetCurrentZone() != GetCurrentZone())
 			Zone(search_client->GetCurrentZone()->GetZoneName(), false);
 		else if (target) {
-			EQ2Packet* app = GetPlayer()->Move(target->GetX(), target->GetY(), target->GetZ(), GetVersion(), target->GetHeading());
+			EQ2Packet* app = GetPlayer()->Move(target->GetX(), target->GetY(), target->GetZ(), GetVersion(), (target->GetHeading() + 180.0f));
 			if (app)
 				QueuePacket(app);
 		}
