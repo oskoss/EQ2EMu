@@ -226,7 +226,9 @@ public:
 	void	SetCurrentZone(int32 id);
 	void	SetCurrentZone(ZoneServer* zone) { 
 		current_zone = zone;
-		player->SetZone(zone, GetVersion());
+		if(player) {
+			player->SetZone(zone, GetVersion());
+		}
 	}
 	void	SetZoningDestination(ZoneServer* zone) {
 		zoning_destination = zone;
