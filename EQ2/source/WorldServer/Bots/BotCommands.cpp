@@ -477,7 +477,10 @@ void Commands::Command_Bot_Customize(Client* client, Seperator* sep) {
 	Bot* bot = 0;
 	if (client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsBot())
 		bot = (Bot*)client->GetPlayer()->GetTarget();
-
+	
+	
+	client->Message(CHANNEL_COLOR_RED, "This command is disabled and requires new implementation.");
+/* this links to OP_SubmitCharCust
 	if (bot && bot->GetOwner() == client->GetPlayer()) {
 		PacketStruct* packet = configReader.getStruct("WS_OpenCharCust", client->GetVersion());
 		if (packet) {
@@ -501,7 +504,7 @@ void Commands::Command_Bot_Customize(Client* client, Seperator* sep) {
 			packet->setDataByName("race_id", 255);
 			client->QueuePacket(packet->serialize());
 		}
-	}
+	}*/
 }
 
 void Commands::Command_Bot_Spawn(Client* client, Seperator* sep) {

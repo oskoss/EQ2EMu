@@ -2551,7 +2551,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	{
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SubmitCharCust", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_SubmitCharCust", version);
-		if (packet && packet->LoadPacketData(app->pBuffer, app->size)) {
+		/*if (packet && packet->LoadPacketData(app->pBuffer, app->size)) {
 			int8 type = packet->getType_int8_ByName("type");
 			if (type == 0) {
 				if (player->custNPC) {
@@ -2577,7 +2577,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			player->changed = true;
 			player->info_changed = true;
 			current_zone->SendSpawnChanges(player, this);
-		}
+		}*/
 
 		break;
 	}
