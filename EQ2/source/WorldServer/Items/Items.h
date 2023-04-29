@@ -261,6 +261,7 @@ extern MasterItemList master_item_list;
 #define ITEM_MENU_TYPE2_TEST15		 16384//14
 #define ITEM_MENU_TYPE2_TEST16			32768//15
 
+#define ITEM_TAG_COMMON					2
 #define ITEM_TAG_UNCOMMON				3 //tier tags
 #define ITEM_TAG_TREASURED				4
 #define ITEM_TAG_LEGENDARY				7
