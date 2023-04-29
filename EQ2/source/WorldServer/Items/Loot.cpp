@@ -70,7 +70,7 @@ NPC* Entity::DropChest() {
 	int8 highest_tier = 0;
 	vector<Item*>::iterator itr;	
 	for (itr = ((Spawn*)this)->GetLootItems()->begin(); itr != ((Spawn*)this)->GetLootItems()->end(); ) {
-		if ((*itr)->details.tier >= ITEM_TAG_UNCOMMON && !(*itr)->IsBodyDrop()) {
+		if ((*itr)->details.tier >= ITEM_TAG_COMMON && !(*itr)->IsBodyDrop()) {
 			if ((*itr)->details.tier > highest_tier)
 				highest_tier = (*itr)->details.tier;
 
@@ -96,7 +96,7 @@ NPC* Entity::DropChest() {
 		chest->SetModelType(5864);
 		chest->SetName("Treasure Chest");
 	}
-	else if (highest_tier >= ITEM_TAG_UNCOMMON) {
+	else if (highest_tier >= ITEM_TAG_COMMON) {
 		chest->SetModelType(4034);
 		chest->SetName("Small Chest");
 	}
