@@ -2724,13 +2724,13 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			}else{
 				dead= cmdTarget;
 				if(dead && dead->IsPlayer() == false){
-					dead->SetHP(0);
-					if(dead->IsNPC()) {
+					if(dead->IsNPC() && ((NPC*)dead)->Brain()) {
 						client->GetPlayer()->CheckEncounterState((Entity*)dead);
 						((NPC*)dead)->Brain()->AddToEncounter(client->GetPlayer());
 						((NPC*)dead)->AddTargetToEncounter(client->GetPlayer());
-						((NPC*)dead)->AddHate(client->GetPlayer(), 1);
+						((NPC*)dead)->Brain()->AddHate(client->GetPlayer(), 1);
 					}
+					dead->SetHP(0);
 					if(sep && sep->arg[0] && sep->IsNumber(0) && atoi(sep->arg[0]) == 1)
 						client->GetCurrentZone()->RemoveSpawn(dead, true, true, true, true, true);
 					else
