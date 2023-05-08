@@ -105,6 +105,7 @@ void Brain::Think() {
 					else
 						client->Message(CHANNEL_NARRATIVE, "%s is no longer worth any experience or treasure.", m_body->GetName());
 				}
+				
 				// Clear the hate list for this NPC
 				ClearHate();
 				// Clear the encounter list
@@ -141,6 +142,9 @@ void Brain::Think() {
 			if(!m_body->EngagedInCombat() && !m_body->IsPauseMovementTimerActive())
 			{
 				if (run_back_distance > 1 || (m_body->m_call_runback && !m_body->following)) {
+					m_body->SetLockedNoLoot(ENCOUNTER_STATE_BROKEN);
+					m_body->UpdateEncounterState(ENCOUNTER_STATE_BROKEN);
+					m_body->GetZone()->AddChangedSpawn(m_body);
 					m_body->Runback(run_back_distance);
 					m_body->m_call_runback = false;
 				}
@@ -156,6 +160,7 @@ void Brain::Think() {
 							m_body->SetY(m_body->GetRunbackLocation()->y,false);
 							m_body->CalculateRunningLocation(true);
 							m_body->GetRunbackLocation()->stage = 1;
+							
 							m_body->GetZone()->AddChangedSpawn(m_body);
 							break;
 						case 6: // artificially 1500ms per 250ms Think() call
@@ -170,6 +175,11 @@ void Brain::Think() {
 								m_body->SetHP(m_body->GetTotalHP());
 
 							m_body->ClearRunback();
+							
+							if(m_body->GetLockedNoLoot() != ENCOUNTER_STATE_AVAILABLE && m_body->Alive()) {
+								m_body->SetLockedNoLoot(ENCOUNTER_STATE_AVAILABLE);
+								m_body->UpdateEncounterState(ENCOUNTER_STATE_AVAILABLE);
+							}
 
 							m_body->GetZone()->AddChangedSpawn(m_body);
 						break;
