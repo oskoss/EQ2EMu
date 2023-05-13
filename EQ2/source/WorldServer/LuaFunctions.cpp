@@ -11926,6 +11926,13 @@ int EQ2Emu_lua_GetSpell(lua_State* state) {
 			spell_tier = 1;
 
 		Spell* spell = master_spell_list.GetSpell(spell_id, spell_tier);
+		
+		if(!spell) {
+			lua_interface->LogError("%s: GetSpell: Failed, spell id %u spell tier %u does not exist.", lua_interface->GetScriptName(state), spell_id, spell_tier);
+			lua_interface->ResetFunctionStack(state);
+			return 0;
+		}
+		
 		LuaSpell* lua_spell = 0;
 		if(custom_lua_script.size() > 0)
 		{
@@ -11944,6 +11951,8 @@ int EQ2Emu_lua_GetSpell(lua_State* state) {
 		if (!lua_spell && lua_interface)
 			lua_spell = lua_interface->GetSpell(custom_lua_script.c_str());
 
+		lua_interface->ResetFunctionStack(state);
+		
 		if (!lua_spell)
 		{
 			LogWrite(LUA__ERROR, 0, "LUA", "GetSpell(%u, %u, '%s') spell could not be loaded.", spell_id, spell_tier, custom_lua_script.c_str());
@@ -11965,6 +11974,7 @@ int EQ2Emu_lua_GetSpellData(lua_State* state) {
 		return 0;
 	LuaSpell* spell = lua_interface->GetSpell(state);
 	string field = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 
 	if (!spell) {
 		lua_interface->LogError("%s: Spell not given in GetSpellData!", lua_interface->GetScriptName(state));
@@ -11987,6 +11997,7 @@ int EQ2Emu_lua_SetSpellData(lua_State* state) {
 		return 0;
 	LuaSpell* spell = lua_interface->GetSpell(state);
 	string field = lua_interface->GetStringValue(state, 2);
+	lua_interface->ResetFunctionStack(state);
 	int8 fieldArg = 3; // field value after the initial set
 
 	if (!spell) {
@@ -12067,6 +12078,8 @@ int EQ2Emu_lua_SetSpellDataIndex(lua_State* state) {
 	default:
 		setVal = false;
 	}
+	
+	lua_interface->ResetFunctionStack(state);
 
 	return setVal;
 }
@@ -12078,6 +12091,7 @@ int EQ2Emu_lua_GetSpellDataIndex(lua_State* state) {
 	LuaSpell* spell = lua_interface->GetSpell(state);
 	int8 idx = lua_interface->GetInt32Value(state, 2);
 	bool secondfield = lua_interface->GetBooleanValue(state, 3);
+	lua_interface->ResetFunctionStack(state);
 
 	if (!spell) {
 		lua_interface->LogError("%s: Spell not given in GetSpellDataIndex!", lua_interface->GetScriptName(state));
@@ -12148,16 +12162,19 @@ int EQ2Emu_lua_SetSpellDisplayEffect(lua_State* state) {
 
 	if (!spell) {
 		lua_interface->LogError("%s: Spell not given in SetSpellDisplayEffect!", lua_interface->GetScriptName(state));
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	if (!spell->spell || !spell->spell->GetSpellData()) {
 		lua_interface->LogError("%s: Inner Spell or SpellData not given in SetSpellDisplayEffect!", lua_interface->GetScriptName(state));
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 
 	if (spell->spell->effects.size() <= idx)
 	{
 		lua_interface->LogError("%s: lua_data size %i <= %i (idx passed) SetSpellDisplayEffect!", lua_interface->GetScriptName(state), spell->spell->lua_data.size(), idx);
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 
@@ -12170,10 +12187,13 @@ int EQ2Emu_lua_SetSpellDisplayEffect(lua_State* state) {
 		effect->subbullet = lua_interface->GetInt8Value(state, 4);
 	else if (field == "percentage")
 		effect->percentage = lua_interface->GetInt8Value(state, 4);
-	else // no match
+	else { // no match
+		lua_interface->ResetFunctionStack(state);
 		return 0;
+	}
 
-
+	lua_interface->ResetFunctionStack(state);
+	
 	return 1;
 }
 
@@ -12184,6 +12204,8 @@ int EQ2Emu_lua_GetSpellDisplayEffect(lua_State* state) {
 	int8 idx = lua_interface->GetInt32Value(state, 2);
 	string field = lua_interface->GetStringValue(state, 3);
 
+	lua_interface->ResetFunctionStack(state);
+	
 	boost::to_lower(field);
 
 	if (!spell) {
@@ -12222,6 +12244,7 @@ int EQ2Emu_lua_CastCustomSpell(lua_State* state) {
 	LuaSpell* spell = lua_interface->GetSpell(state);
 	Spawn* caster = lua_interface->GetSpawn(state, 2);
 	Spawn* target = lua_interface->GetSpawn(state, 3);
+	lua_interface->ResetFunctionStack(state);
 
 	if (!target) {
 		lua_interface->LogError("%s: LUA CastCustomSpell command error: target is not a valid spawn", lua_interface->GetScriptName(state));
