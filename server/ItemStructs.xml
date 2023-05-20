@@ -1035,6 +1035,21 @@
 <Data ElementName="item_id" Type="sint32" Size="1" />
 <Data ElementName="name" Type="char" Size="81" />
 </Struct>
+<Struct Name="Substruct_Item" ClientVersion="546" >
+<Data ElementName="unique_id" Type="int32" Size="1" />
+<Data ElementName="bag_id" Type="int32" Size="1" />
+<Data ElementName="inv_slot_id" Type="int32" Size="1" />
+<Data ElementName="menu_type" Type="int32" Size="1" />
+<Data ElementName="slot_id" Type="int8" Size="1" />
+<Data ElementName="index" Type="int16" Size="1" />
+<Data ElementName="icon" Type="int16" Size="1" />
+<Data ElementName="count" Type="int8" Size="1" />
+<Data ElementName="level" Type="int8" Size="1" />
+<Data ElementName="tier" Type="int8" Size="1" />
+<Data ElementName="num_slots" Type="int8" Size="1" />
+<Data ElementName="item_id" Type="sint32" Size="1" />
+<Data ElementName="name" Type="char" Size="81" />
+</Struct>
 <Struct Name="Substruct_Item" ClientVersion="547" >
 <Data ElementName="unique_id" Type="int32" Size="1" />
 <Data ElementName="bag_id" Type="int32" Size="1" />
@@ -4453,6 +4468,21 @@
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemHouseContainer" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="allowed_types" Type="int32" Size="1" />
+<Data ElementName="unknown12" Type="int32" Size="1" />
+<Data ElementName="num_slots" Type="int16" Size="1" />
+<Data ElementName="unknown13" Type="int8" Size="1" />
+<Data ElementName="broker_commission" Type="int16" Size="1" />
+<Data ElementName="fence_commission" Type="int16" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemHouse" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="status_rent_reduction" Type="sint32" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemHouseContainer" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="allowed_types" Type="int32" Size="1" />
 <Data ElementName="unknown12" Type="int32" Size="1" />

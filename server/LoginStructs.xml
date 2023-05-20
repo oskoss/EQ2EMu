@@ -300,7 +300,7 @@ to zero and treated like placeholders." />
 <Data ElementName="hair_color2" Type="sint8" Size="3" />
 <Data ElementName="hair_color3" Type="sint8" Size="3" />
 <Data ElementName="unknown11" Type="int8" Size="10" />
-<Data ElementName="soga_race_type" Type="int16" Size="1" />57
+<Data ElementName="soga_race_type" Type="int16" Size="1" />
 <Data ElementName="soga_skin_color" Type="EQ2_Color" />
 <Data ElementName="soga_eye_color" Type="EQ2_Color" />
 <Data ElementName="Unknown12" Type="int8" Size="3" />
@@ -828,10 +828,8 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown3" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="reset_appearance" Type="int8" Size="1" />
 <Data ElementName="do_not_force_soga" Type="int8" Size="1" />
-<Data ElementName="unknown4" Type="int8" Size="1" />
-<Data ElementName="unknown5" Type="int16" Size="1" />
-<Data ElementName="unknown6" Type="int8" Size="5" />
-<Data ElementName="unknown7" Type="int32" Size="1" />
+<Data ElementName="unknown5" Type="int64" Size="1" />
+<Data ElementName="unknown7" Type="int32" Size="1" /> <!-- 80 -->
 <Data ElementName="unknown7a" Type="int16" Size="1" />
 <Data ElementName="race_unknown" Type="int8" Size="1" />
 <Data ElementName="unknown8" Type="int8" Size="3" />
@@ -854,10 +852,10 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown_array2" Type="Array" ArraySizeVariable ="unknown_array2_size" >
   <Data ElementName="array2_unknown" Type="int32" Size="1" />
 </Data>
-<Data ElementName="unknown11" Type="int32" Size="1" />
-<Data ElementName="sub_level" Type="int32" Size="1" />
-<Data ElementName="race_flag" Type="int32" Size="1" />
-<Data ElementName="class_flag" Type="int32" Size="1" />
+<Data ElementName="unknown11" Type="int32" Size="1" /> <!-- 128 -->
+<Data ElementName="sub_level" Type="int32" Size="1" /> <!-- 132 -->
+<Data ElementName="race_flag" Type="int32" Size="1" /> <!-- 136 -->
+<Data ElementName="class_flag" Type="int32" Size="1" /> <!-- 140 -->
 <Data ElementName="password" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="username" Type="EQ2_16bit_String" Size="1" />
 <Data ElementName="service" Type="EQ2_16bit_String" Size="1" />

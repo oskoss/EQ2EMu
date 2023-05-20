@@ -207,6 +207,7 @@ struct RevivePoint{
 	float	y;
 	float	z;
 	float	heading;
+	bool	always_included;
 };
 
 struct SpawnScriptTimer {
@@ -331,7 +332,7 @@ public:
 	void	SendSpawnVisualState(Spawn* spawn, int16 type);
 	void	SendSpellFailedPacket(Client* client, int16 error);
 	void	SendInterruptPacket(Spawn* interrupted, LuaSpell* spell, bool fizzle=false);
-	void	HandleEmote(Client* originator, string name);
+	void	HandleEmote(Spawn* originator, string name);
 	Client*	GetClientBySpawn(Spawn* spawn);
 	Spawn*	GetSpawnByDatabaseID(int32 id);
 	Spawn*	GetSpawnByID(int32 id, bool spawnListLocked=false);

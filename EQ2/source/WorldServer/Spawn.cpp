@@ -2369,7 +2369,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	if (GetMerchantID() > 0)
 		packet->setDataByName("merchant", 1);
 		
-	packet->setDataByName("effective_level", spawn->IsEntity() && ((Entity*)spawn)->GetInfoStruct()->get_effective_level() != 0 ? (int8)((Entity*)spawn)->GetInfoStruct()->get_effective_level() : (int8)GetLevel());
+	packet->setDataByName("effective_level", IsEntity() && ((Entity*)this)->GetInfoStruct()->get_effective_level() != 0 ? (int8)((Entity*)this)->GetInfoStruct()->get_effective_level() : (int8)GetLevel());
 	packet->setDataByName("level", (int8)GetLevel());
 	packet->setDataByName("unknown4", (int8)GetLevel());
 	packet->setDataByName("difficulty", appearance.encounter_level); //6);
@@ -2690,6 +2690,9 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 				packet->setDataByName("camping", 1);
 			if ((appearance.activity_status & ACTIVITY_STATUS_LFG) > 0)
 				packet->setDataByName("lfg", 1);
+			if (EngagedInCombat()) {
+				packet->setDataByName("auto_attack", 1);
+			}
 		}
 		if ((appearance.activity_status & ACTIVITY_STATUS_SOLID) > 0)
 			packet->setDataByName("solid_object", 1);
@@ -2712,7 +2715,8 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	//	packet->setDataByName("follow_target", 0xFFFFFFFF);
 	//}
 	
-	if (GetTarget() && GetTarget()->GetTargetable())
+	// i think this is used in DoF as a way to make a client say they are in combat with this target and cannot camp, it forces you to stand up if self spawn sends this data
+	if ((version > 546 || spawn != this) && GetTarget() && GetTarget()->GetTargetable())
 		packet->setDataByName("target_id", ((spawn->GetIDWithPlayerSpawn(GetTarget()) * -1) - 1));
 	else
 		packet->setDataByName("target_id", 0xFFFFFFFF);

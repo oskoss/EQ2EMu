@@ -2244,6 +2244,58 @@ sint16 World::GetItemStatKAValue(sint16 subtype) {
 	return (ka_itemstat_conversion[subtype] - 600);
 }
 
+int8 World::TranslateSlotSubTypeToClient(Client* client, int8 stat_type, sint16 sub_type) {
+	int8 new_subtype = (int8)sub_type;
+	switch(stat_type) {
+		case 2: {
+			if(client->GetVersion() <= 546) {
+				if(sub_type == (ITEM_STAT_VS_POISON-200)) // poison
+					new_subtype = 9;
+				if(sub_type == (ITEM_STAT_VS_DISEASE-200)) // disease
+					new_subtype = 8;
+				else if(sub_type == (ITEM_STAT_VS_COLD-200)) // cold
+					new_subtype = 4;
+				else if(sub_type == (ITEM_STAT_VS_HEAT-200) || sub_type == (ITEM_STAT_VS_MAGIC-200))
+					new_subtype += 2;
+				else if(sub_type == (ITEM_STAT_VS_MENTAL-200) || sub_type == (ITEM_STAT_VS_DIVINE-200))
+					new_subtype -= 2;
+			}
+			else if(client->GetVersion() >= 60085) { // AoM era since its the client we support
+				if(sub_type == (ITEM_STAT_VS_MENTAL-200) || sub_type == (ITEM_STAT_VS_DIVINE-200) || sub_type == (ITEM_STAT_VS_COLD-200)) {
+					new_subtype = 255; // omit client cannot properly display
+				}
+			}
+			break;
+		}
+		case 6:
+		case 7: {
+			if(stat_type == 7){
+				new_subtype = sub_type;
+			}
+			else if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331){  //KA
+				new_subtype = world.GetItemStatKAValue(sub_type);
+			}
+			else if(client->GetVersion() >= 60085 ) {
+				new_subtype = world.GetItemStatAOMValue(sub_type);
+			}
+			else if (client->GetVersion() >= 57107){ //TOV
+				new_subtype = world.GetItemStatTOVValue(sub_type);
+			}
+			else if (client->GetVersion() >= 1193){ //COE
+				new_subtype = world.GetItemStatCOEValue(sub_type);
+				//tmp_subtype = stat->stat_subtype;
+			}
+			else if (client->GetVersion() >= 1096){ //DOV
+				new_subtype = world.GetItemStatDOVValue(sub_type); //comment out for testing
+				//tmp_subtype = stat->stat_subtype;  //comment for normal use
+			}
+			break;
+		}
+	}
+	
+	return new_subtype;
+}
+
 bool World::CheckTempBugCRC(char* msg)
 {
 	MBugReport.writelock();
@@ -2292,16 +2344,14 @@ void World::SyncCharacterAbilities(Client* client)
 	int8 secondaryClass = classes.GetSecondaryBaseClass(client->GetPlayer()->GetAdventureClass());
 	int8 actualClass = client->GetPlayer()->GetAdventureClass();
 	int8 baseRace = client->GetPlayer()->GetRace();
-
-	bool reloadSpells = false;
-
+	
 	multimap<int8, multimap<int8, StartingSkill>*>::iterator skill_itr = starting_skills.begin();
 	multimap<int8, multimap<int8, StartingSpell>*>::iterator spell_itr = starting_spells.begin();
-	bool isComplete = false;
+	bool isProcessing = false;
 	int8 wait_iterations = 0; // wait 5 iterations and give up if db takes too long
 	do
 	{
-		bool isProcessing = false;
+		isProcessing = false;
 		if (skill_itr != starting_skills.end())
 		{
 			isProcessing = true;
@@ -2358,32 +2408,16 @@ void World::SyncCharacterAbilities(Client* client)
 								client->GetCharacterID(), child_itr->second.spell_id, child_itr->second.tier, child_itr->second.knowledge_slot);
 
 							// reload spells, we don't know the spellbook or timer info
-							reloadSpells = true;
+							client->GetPlayer()->GetInfoStruct()->set_reload_player_spells(1);
 						}
 					}
 				}
 			}
 			spell_itr++;
 		}
-
-		// poor mans async kill just in case, we don't want a client stuck here, they can get the spells on next zone
-		if (!isProcessing)
-		{
-			bool isDBActive = database.IsActiveQuery(client->GetCharacterID());
-			if (isDBActive && wait_iterations < 5)
-			{
-				wait_iterations++;
-			}
-			else
-				isComplete = true;
-		}
-
-	} while (!isComplete);
+	} while (isProcessing);
 
 	MStartingLists.releasereadlock();
-
-	if (reloadSpells)
-		database.LoadCharacterSpells(client->GetCharacterID(), client->GetPlayer());
 }
 
 void World::LoadStartingLists()

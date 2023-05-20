@@ -349,22 +349,6 @@ void Client::SendLoginInfo() {
 
 	if(!GetPlayer()->IsReturningFromLD())
 	{
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Skills for player '%s'...", player->GetName());
-		count = database.LoadCharacterSkills(GetCharacterID(), player);
-
-		LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Spells for player '%s'...", player->GetName());
-		count = database.LoadCharacterSpells(GetCharacterID(), player);
-	}
-	else
-	{
-		LogWrite(CCLIENT__INFO, 0, "Client", "Player is returning from linkdead status (Player does not need reload) thus skipping database loading for '%s'...", player->GetName());
-	}
-	
-	// get the latest character starting skills / spells, may have been updated after character creation
-	world.SyncCharacterAbilities(this);
-
-	if(!GetPlayer()->IsReturningFromLD())
-	{
 		count = database.LoadCharacterTitles(GetCharacterID(), player);
 		if (count == 0) {
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "No character titles found!");
@@ -513,8 +497,6 @@ void Client::SendPlayerDeathWindow()
 				if (point->id == 0xFFFFFFFF)//tmp location
 					safe_delete(point);
 			}
-			// done with the revive points so lets free up the pointer
-			safe_delete(results);
 #if EQDEBUG >= 3
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "WS_DeathWindow Packet:");
 			packet->PrintPacket();
@@ -523,6 +505,8 @@ void Client::SendPlayerDeathWindow()
 			QueuePacket(outapp);
 			safe_delete(packet);
 		}
+		// done with the revive points so lets free up the pointer
+		safe_delete(results);
 	}
 
 }
@@ -762,8 +746,7 @@ void Client::SendCharInfo() {
 
 	ClientPacketFunctions::SendSkillBook(this);
 	if (!IsReloadingZone() && !player->IsResurrecting()) {
-		if(GetVersion() > 546) //we will send this later on for 546 and below
-			ClientPacketFunctions::SendUpdateSpellBook(this);
+		ClientPacketFunctions::SendUpdateSpellBook(this);
 	}
 	else {
 		player->SetResurrecting(false);
@@ -1470,7 +1453,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		break;
 	}
 	case OP_DoneLoadingUIResourcesMsg: {
-		ClientPacketFunctions::SendUpdateSpellBook(this);
+		//ClientPacketFunctions::SendUpdateSpellBook(this);
 		EQ2Packet* app = new EQ2Packet(OP_DoneLoadingUIResourcesMsg, 0, 0);
 		QueuePacket(app);
 		if(!player_loading_complete)
@@ -2919,11 +2902,16 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 			lua_interface->FindCustomSpellUnlock();
 		}
 		
-		if (spell && !CountSentSpell(id, tier)) {
+		if (spell && !CountSentSpell(spell->GetSpellID(), spell->GetSpellTier())) {
 			if (!spell->IsCopiedSpell())
 				SetSentSpell(spell->GetSpellID(), spell->GetSpellTier());
 
 			EQ2Packet* app = spell->SerializeSpell(this, display, trait_display);
+			//DumpPacket(app);
+			QueuePacket(app);
+		}
+		else if(spell && GetVersion() <=546 && CountSentSpell(spell->GetSpellID(), spell->GetSpellTier())) {
+			EQ2Packet* app = spell->SerializeSpell(this, display, trait_display, GetVersion() <= 546 ? true : false);
 			//DumpPacket(app);
 			QueuePacket(app);
 		}
@@ -3194,10 +3182,51 @@ bool Client::Process(bool zone_process) {
 	}
 
 	switch(new_client_login) {
-		case NewLoginState::LOGIN_ALLOWED: {
+		case NewLoginState::LOGIN_SEND: {
 			LogWrite(CCLIENT__DEBUG, 0, "Client", "SendLoginInfo to new client...");
 			SendLoginInfo();
+			
 			new_client_login = NewLoginState::LOGIN_NONE;
+			break;
+		}
+		case NewLoginState::LOGIN_INITIAL_LOAD: {
+			bool isDBActive = database.IsActiveQuery(GetCharacterID());
+			
+			// wait for starting skills/spells to load and reload from DB.
+			if(!isDBActive) {
+				if (GetPlayer()->GetInfoStruct()->get_reload_player_spells()) {
+					database.LoadCharacterSpells(GetCharacterID(), GetPlayer());
+					GetPlayer()->GetInfoStruct()->set_reload_player_spells(0);
+				}
+				new_client_login = NewLoginState::LOGIN_SEND;
+			}
+			break;
+		}
+		case NewLoginState::LOGIN_ALLOWED: {
+			int32 count = 0;
+
+			if(!GetPlayer()->IsReturningFromLD())
+			{
+				LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Skills for player '%s'...", player->GetName());
+				count = database.LoadCharacterSkills(GetCharacterID(), player);
+
+				LogWrite(CCLIENT__DEBUG, 0, "Client", "Loading Character Spells for player '%s'...", player->GetName());
+				count = database.LoadCharacterSpells(GetCharacterID(), player);
+			}
+			else
+			{
+				LogWrite(CCLIENT__INFO, 0, "Client", "Player is returning from linkdead status (Player does not need reload) thus skipping database loading for '%s'...", player->GetName());
+			}
+			
+			// get the latest character starting skills / spells, may have been updated after character creation
+			if(GetPlayer()->GetInfoStruct()->get_first_world_login()) {
+				world.SyncCharacterAbilities(this);
+				Query query;
+				query.AddQueryAsync(GetCharacterID(), &database, Q_UPDATE, "UPDATE characters set first_world_login = 0 where id=%u", GetCharacterID());
+				GetPlayer()->GetInfoStruct()->set_first_world_login(0);
+			}
+			
+			new_client_login = NewLoginState::LOGIN_INITIAL_LOAD;
 			break;
 		}
 		case NewLoginState::LOGIN_DELAYED: {
@@ -5997,11 +6026,13 @@ void Client::AcceptQuest(int32 quest_id) {
 	MPendingQuestAccept.lock();
 	if (player->pending_quests.count(quest_id) > 0) {
 		Quest* quest = player->pending_quests[quest_id];	
-		player->pending_quests.erase(quest->GetQuestID());
-		AddPlayerQuest(quest);
-		GetCurrentZone()->SendQuestUpdates(this);
+		if(quest) {
+			player->pending_quests.erase(quest->GetQuestID());
+			AddPlayerQuest(quest);
+			GetCurrentZone()->SendQuestUpdates(this);
 
-		GetPlayer()->UpdateQuestCompleteCount(quest_id);
+			GetPlayer()->UpdateQuestCompleteCount(quest_id);
+		}
 	}
 	MPendingQuestAccept.unlock();
 }
@@ -6398,16 +6429,37 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 		}
 		if(text)
 			packet2->setSubstructDataByName("reward_data", "text", text);
-		if(rewards){
-			packet2->setSubstructArrayLengthByName("reward_data", "num_rewards", rewards->size());
-			for (int i = 0; i < rewards->size(); i++) {
-				Item* item = rewards->at(i);
+		
+		
+		std::vector<Item*> items;
+		quest->GetTmpRewardItemsByID(&items);
+		if(rewards || items.size() > 0){
+			int32 item_count = items.size();
+			item_count += rewards ? rewards->size() : 0;
+			packet2->setSubstructArrayLengthByName("reward_data", "num_rewards", item_count);
+			int i = 0;
+			if(rewards) {
+				for (i = 0; i < rewards->size(); i++) {
+					Item* item = rewards->at(i);
+					if (item) {
+						packet2->setArrayDataByName("reward_id", item->details.item_id, i);
+						packet2->setItemArrayDataByName("item", item, player, i, 0, -1);
+					}
+					if(!quest) //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+						player->AddPendingItemReward(item); //item reference will be deleted after the player accepts it
+				}
+			}
+			
+			for (int j = 0; j < items.size(); j++) {
+				Item* item = items.at(j);
 				if (item) {
 					packet2->setArrayDataByName("reward_id", item->details.item_id, i);
 					packet2->setItemArrayDataByName("item", item, player, i, 0, -1);
 				}
 				if(!quest) //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
 					player->AddPendingItemReward(item); //item reference will be deleted after the player accepts it
+				
+				i++;
 			}
 		}
 		if (selectable_rewards) {
@@ -7711,7 +7763,9 @@ void Client::SendBuyMerchantList(bool sell) {
 					else
 						tmp_level = item->generic_info.tradeskill_default_level;
 					packet->setArrayDataByName("level", tmp_level, i);
-					packet->setArrayDataByName("tier", item->details.tier, i);
+					if(rule_manager.GetGlobalRule(R_World, DisplayItemTiers)->GetBool()) {
+						packet->setArrayDataByName("tier", item->details.tier, i);
+					}
 					packet->setArrayDataByName("item_id2", item->details.item_id, i);
 					item_difficulty = player->GetArrowColor(tmp_level);
 					if (item_difficulty != ARROW_COLOR_WHITE && item_difficulty != ARROW_COLOR_RED && item_difficulty != ARROW_COLOR_GRAY)
@@ -7898,7 +7952,10 @@ void Client::SendSellMerchantList(bool sell) {
 					else
 						tmp_level = item->generic_info.tradeskill_default_level;
 					packet->setArrayDataByName("level", item->details.recommended_level, i);
-					packet->setArrayDataByName("tier", item->details.tier, i);
+					
+					if(rule_manager.GetGlobalRule(R_World, DisplayItemTiers)->GetBool()) {
+						packet->setArrayDataByName("tier", item->details.tier, i);
+					}
 					packet->setArrayDataByName("item_id2", item->details.item_id, i);
 					item_difficulty = player->GetArrowColor(tmp_level);
 					if (item_difficulty != ARROW_COLOR_WHITE && item_difficulty != ARROW_COLOR_RED && item_difficulty != ARROW_COLOR_GRAY)
@@ -7975,7 +8032,9 @@ void Client::SendBuyBackList(bool sell) {
 					else
 						tmp_level = master_item->generic_info.tradeskill_default_level;
 					packet->setArrayDataByName("level", tmp_level, i);
-					packet->setArrayDataByName("tier", master_item->details.tier, i);
+					if(rule_manager.GetGlobalRule(R_World, DisplayItemTiers)->GetBool()) {
+						packet->setArrayDataByName("tier", master_item->details.tier, i);
+					}
 					packet->setArrayDataByName("item_id2", master_item->details.item_id, i);
 					item_difficulty = player->GetArrowColor(tmp_level);
 					if (item_difficulty != ARROW_COLOR_WHITE && item_difficulty != ARROW_COLOR_RED && item_difficulty != ARROW_COLOR_GRAY)
@@ -8031,18 +8090,23 @@ void Client::SendRepairList() {
 			vector<Item*>::iterator itr;
 			for (itr = repairable_items->begin(); itr != repairable_items->end(); itr++, i++) {
 				item = *itr;
+				
 				packet->setArrayDataByName("item_name", item->name.c_str(), i);
 				packet->setArrayDataByName("price", item->CalculateRepairCost(), i);
 				packet->setArrayDataByName("item_id", item->details.item_id, i);
 				packet->setArrayDataByName("stack_size", item->details.count, i);
 				packet->setArrayDataByName("icon", item->details.icon, i);
+				
 				/*if (item->generic_info.adventure_default_level > 0)
 					tmp_level = item->generic_info.adventure_default_level;
 				else
 					tmp_level = item->generic_info.tradeskill_default_level;
 				packet->setArrayDataByName("level", tmp_level, i);*/
 				packet->setArrayDataByName("level", item->generic_info.adventure_default_level, i);
-				packet->setArrayDataByName("tier", item->details.tier, i);
+				
+				if(rule_manager.GetGlobalRule(R_World, DisplayItemTiers)->GetBool()) {
+					packet->setArrayDataByName("tier", item->details.tier, i);
+				}
 				packet->setArrayDataByName("item_id2", item->details.item_id, i);
 				item_difficulty = player->GetArrowColor(item->generic_info.adventure_default_level);
 				if (item_difficulty != ARROW_COLOR_WHITE && item_difficulty != ARROW_COLOR_RED && item_difficulty != ARROW_COLOR_GRAY)
@@ -8060,13 +8124,22 @@ void Client::SendRepairList() {
 					packet->setArrayDataByName("description", item->description.c_str(), i);
 			}
 			if (GetVersion() <= 546) {
-				packet->setDataByName("type", 16);
+				packet->setDataByName("type", 0);
 			}
 			else {
 				packet->setDataByName("type", 96);
 			}
 			EQ2Packet* outapp = packet->serialize();
+			
+			//DumpPacket(outapp);
 			QueuePacket(outapp);
+			
+			if (GetVersion() <= 546) {
+				packet->setDataByName("type", 16);
+				EQ2Packet* outapp2 = packet->serialize();
+				QueuePacket(outapp2);
+			}
+			
 			safe_delete(packet);
 		}
 		safe_delete(repairable_items);
@@ -8112,7 +8185,10 @@ void Client::ShowLottoWindow() {
 			packet->setArrayDataByName("stack_size", item->details.count);
 			packet->setArrayDataByName("icon", item->details.icon);
 			packet->setArrayDataByName("level", item->generic_info.adventure_default_level);
-			packet->setArrayDataByName("tier", item->details.tier);
+			
+			if(rule_manager.GetGlobalRule(R_World, DisplayItemTiers)->GetBool()) {
+				packet->setArrayDataByName("tier", item->details.tier);
+			}
 			packet->setArrayDataByName("item_id2", item->details.item_id);
 			int8 item_difficulty = player->GetArrowColor(item->generic_info.adventure_default_level);
 			if (item_difficulty != ARROW_COLOR_WHITE && item_difficulty != ARROW_COLOR_RED && item_difficulty != ARROW_COLOR_GRAY)
@@ -9134,7 +9210,6 @@ void Client::SearchStore(int32 page) {
 			if (search_items->size() > 0) {
 				packet->setArrayLengthByName("num_sellers", 1);
 				packet->setArrayDataByName("seller_seller_id", 1);
-				packet->setArrayDataByName("seller_name", "EQ2EmuDevs");
 				packet->setDataByName("per_page", 8);
 				packet->setDataByName("num_pages", search_items->size() / 8 + 1);
 				packet->setDataByName("page", page);
@@ -9143,10 +9218,17 @@ void Client::SearchStore(int32 page) {
 				for (int32 i = 0; i < limit; i++, x++) {
 					if (x >= search_items->size())
 						break;
+					
 					item = search_items->at(x);
+					std::string teststr("test ");
+					teststr.append(std::to_string(i));
+					packet->setArrayDataByName("string_one", teststr.c_str(), i);
+					packet->setArrayDataByName("string_two", "testtwo", i);
+					packet->setArrayDataByName("seller_name", "EQ2EMuDev", i);
 					packet->setArrayDataByName("item_id", item->details.item_id, i);
 					packet->setArrayDataByName("item_id2", item->details.item_id, i);
 					packet->setArrayDataByName("icon", item->details.icon, i);
+					packet->setArrayDataByName("unknown15", 1, i, World::newValue);
 					//packet->setArrayDataByName("unknown2b", i, i);
 					packet->setArrayDataByName("item_seller_id", 1, i);
 					if (item->stack_count == 0)
@@ -9154,6 +9236,8 @@ void Client::SearchStore(int32 page) {
 					else
 						packet->setArrayDataByName("quantity", item->stack_count, i);
 					packet->setArrayDataByName("stack_size", item->stack_count, i);
+					
+					packet->setArrayDataByName("sell_price", item->sell_price, i);
 
 
 					std::string tmpStr("");
@@ -9167,10 +9251,9 @@ void Client::SearchStore(int32 page) {
 					//QueuePacket(item->serialize(GetVersion(), false, GetPlayer()));
 				}
 			}
-			/*EQ2Packet* outapp = packet->serialize();
+			EQ2Packet* outapp = packet->serialize();
 			DumpPacket(outapp);
-			QueuePacket(outapp);*/
-			QueuePacket(packet->serialize());
+			QueuePacket(outapp);
 			safe_delete(packet);
 		}
 	}
@@ -9422,7 +9505,7 @@ void Client::InspectPlayer(Player* player_to_inspect) {
 		}
 	}
 	
-	if (player_to_inspect) {
+	if (player_to_inspect && player_to_inspect->GetClient()) {
 		PacketStruct* packet = configReader.getStruct("WS_InspectPlayer", GetVersion());
 		if (packet) {
 			packet->setDataByName("unknown", 0);
@@ -9491,22 +9574,34 @@ void Client::InspectPlayer(Player* player_to_inspect) {
 			string biography = player_to_inspect->GetBiography();
 			for (size_t i = 0; i < biography.length(); i++)
 				packet->setArrayDataByName("biography_char", biography[i], i);
-
-			for(int32 s=0;s<NUM_SLOTS;s++) {
-				int32 slot = s*2;
-				
-				char item_slot_name[64], item_slot_name_appearance[64];
-				_snprintf(item_slot_name,64,"slot_%u",slot);
-				int32 slot_appearance = (s*2)+1;
-				_snprintf(item_slot_name_appearance,64,"slot_%u",slot_appearance);
-				Item* pw = player_to_inspect->GetEquipmentList()->GetItem(s);
-				packet->setItemByName(item_slot_name, pw, this->GetPlayer(), 0, 13);
-				if(s <= EQ2_FEET_SLOT || s == EQ2_RANGE_SLOT || s == EQ2_CLOAK_SLOT) {
-					pw = player_to_inspect->GetAppearanceEquipmentList()->GetItem(s);
-					packet->setItemByName(item_slot_name_appearance, pw, this->GetPlayer(), 0, 13);	
+			
+			if(GetVersion() <= 546) {
+				for(int32 s=0;s<22;s++) {
+					int32 slot = s;
+					
+					char item_slot_name[64], item_slot_name_appearance[64];
+					_snprintf(item_slot_name,64,"slot_%u",slot);
+					Item* pw = player_to_inspect->GetEquipmentList()->GetItem(GetPlayer()->ConvertSlotFromClient(s, GetVersion()));
+					packet->setItemByName(item_slot_name, pw, this->GetPlayer(), 0, 5, true, true);
 				}
-				else {
-					packet->setItemByName(item_slot_name_appearance, nullptr, this->GetPlayer(), 0, 13);	
+			}
+			else {
+				for(int32 s=0;s<NUM_SLOTS;s++) {
+					int32 slot = s*2;
+					
+					char item_slot_name[64], item_slot_name_appearance[64];
+					_snprintf(item_slot_name,64,"slot_%u",slot);
+					int32 slot_appearance = (s*2)+1;
+					_snprintf(item_slot_name_appearance,64,"slot_%u",slot_appearance);
+					Item* pw = player_to_inspect->GetEquipmentList()->GetItem(GetPlayer()->ConvertSlotFromClient(s, player_to_inspect->GetClient()->GetVersion()));
+					packet->setItemByName(item_slot_name, pw, this->GetPlayer(), 0, 13, false, true);
+					if(s <= EQ2_FEET_SLOT || s == EQ2_RANGE_SLOT || s == EQ2_CLOAK_SLOT) {
+						pw = player_to_inspect->GetAppearanceEquipmentList()->GetItem(s);
+						packet->setItemByName(item_slot_name_appearance, pw, this->GetPlayer(), 0, 13, false, true);	
+					}
+					else {
+						packet->setItemByName(item_slot_name_appearance, nullptr, this->GetPlayer(), 0, 13, false, true);	
+					}
 				}
 			}
 			QueuePacket(packet->serialize());
@@ -9890,14 +9985,55 @@ void Client::DisplayCollectionComplete(Collection* collection) {
 	int32 i;
 
 	assert(collection);
-
-	if (!(packet = configReader.getStruct("WS_QuestComplete", version))) {
-		return;
-	}
-
+	
 	reward_items = collection->GetRewardItems();
 	selectable_reward_items = collection->GetSelectableRewardItems();
 
+	if (GetVersion() <= 546) {
+			int32 source_id = collection->GetID();
+			PacketStruct* packet2 = configReader.getStruct("WS_QuestRewardPackMsg", GetVersion());
+			if (packet2) {
+				packet2->setSubstructDataByName("reward_data", "unknown1", 255);
+				packet2->setSubstructDataByName("reward_data", "reward", "Quest Reward!");
+				packet2->setSubstructDataByName("reward_data", "max_coin", collection->GetRewardCoin());
+				packet2->setSubstructDataByName("reward_data", "exp_bonus", collection->GetRewardXP());
+				
+				if(reward_items){
+					int32 item_count = reward_items->size();
+					packet2->setSubstructArrayLengthByName("reward_data", "num_rewards", item_count);
+					i = 0;
+					if(reward_items) {
+						for (i = 0; i < reward_items->size(); i++) {
+							Item* item = reward_items->at(i)->item;
+							if (item) {
+								packet2->setArrayDataByName("reward_id", item->details.item_id, i);
+								packet2->setItemArrayDataByName("item", item, player, i, 0, -1);
+							}
+						}
+					}
+				}
+				if (selectable_reward_items) {
+					packet2->setSubstructArrayLengthByName("reward_data", "num_select_rewards", selectable_reward_items->size());
+					for (i = 0; i < selectable_reward_items->size(); i++) {
+						Item* item = selectable_reward_items->at(i)->item;
+						if (item) {
+							packet2->setArrayDataByName("select_reward_id", item->details.item_id, i);
+							packet2->setItemArrayDataByName("select_item", item, player, i, 0, -1);
+						}
+					}
+				}
+			}
+
+		EQ2Packet* app = packet2->serialize();
+		QueuePacket(app);
+		safe_delete(packet2);
+		return;
+	}
+	
+	if (!(packet = configReader.getStruct("WS_QuestComplete", version))) {
+		return;
+	}
+	
 	packet->setDataByName("title", "Quest Reward!");
 	packet->setDataByName("name", collection->GetName());
 	packet->setDataByName("description", collection->GetCategory());

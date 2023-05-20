@@ -521,7 +521,7 @@ void ZoneServer::DeleteData(bool boot_clients){
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		spawn = itr->second;
 		if(spawn){
-			if(!boot_clients && spawn->IsPlayer())
+			if(!boot_clients && (spawn->IsPlayer() || spawn->IsBot()))
 				tmp_player_list.push_back(spawn);
 			else if(spawn->IsPlayer()){
 				Client* client = GetClientBySpawn(spawn);
@@ -674,7 +674,6 @@ vector<RevivePoint*>* ZoneServer::GetRevivePoints(Client* client)
 			test_point = *revive_iter;
 			if(test_point)
 			{
-				LogWrite(ZONE__DEBUG, 0, "Zone", "Test Point Found!");
 				test_closest = client->GetPlayer()->GetDistance(test_point->x, test_point->y, test_point->z);
 
 				// should this be changed to list all revive points within max distance or just the closest
@@ -683,10 +682,18 @@ vector<RevivePoint*>* ZoneServer::GetRevivePoints(Client* client)
 					LogWrite(ZONE__DEBUG, 0, "Zone", "test_closest: %.2f, closest: %.2f", test_closest, closest);
 					closest = test_closest;
 					closest_point = test_point;
-					if(closest <= MAX_REVIVEPOINT_DISTANCE)
-						points->push_back(closest_point);
+				}
+				if(test_point->always_included ) {
+					points->push_back(test_point);
+					if(closest_point == test_point) {
+						closest_point = nullptr;
+						closest = 100000;
+					}
 				}
 			}
+		}
+		if(closest_point) {
+			points->push_back(closest_point);
 		}
 	}
 
@@ -708,6 +715,7 @@ vector<RevivePoint*>* ZoneServer::GetRevivePoints(Client* client)
 		closest_point->x = GetSafeX();
 		closest_point->y = GetSafeY();
 		closest_point->z = GetSafeZ();
+		closest_point->always_included = true;
 		points->push_back(closest_point);
 	}
 	return points;
@@ -778,15 +786,9 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 		MSpawnList.readlock(__FUNCTION__, __LINE__);
 		for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 			spawn = itr->second;
-			if(spawn && !spawn->IsPlayer()){
+			if(spawn && !spawn->IsPlayer() && !spawn->IsBot()){
 				bool dispatched = false;
-				spawn->SetDeletedSpawn(true);
-				if(spawn->IsBot())
-				{
-					((Bot*)spawn)->Camp(true);
-					dispatched = true;
-				}
-				else if(spawn->IsPet())
+				if(spawn->IsPet())
 				{
 					Entity* owner = ((Entity*)spawn)->GetOwner();
 					if(owner)
@@ -795,6 +797,8 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 						dispatched = true;
 					}
 				}
+				
+				spawn->SetDeletedSpawn(true);
 				
 				if(!dispatched)
 					SendRemoveSpawn(client, spawn, packet);
@@ -818,7 +822,7 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 			if (spawn) {
 				if(spawn->GetRespawnTime() > 0 && spawn->GetSpawnLocationID() > 0)
 					respawn_timers.Put(spawn->GetSpawnLocationID(), Timer::GetCurrentTime2() + spawn->GetRespawnTime()*1000);
-				if(spawn->IsPlayer())
+				if(spawn->IsPlayer() || spawn->IsBot())
 					tmp_player_list.Add(spawn);
 				else {
 				RemoveSpawnSupportFunctions(spawn, true);
@@ -3741,8 +3745,14 @@ void ZoneServer::PlayFlavor(Client* client, Spawn* spawn, const char* mp3, const
 		packet->setMediumStringByName("name", spawn->GetName());
 		if(text)
 			packet->setMediumStringByName("text", text);
-		if(emote)
-			packet->setMediumStringByName("emote", emote);
+		if(emote) {
+			if(client->GetVersion() > 546) {
+				packet->setMediumStringByName("emote", emote);
+			}
+			else {
+				HandleEmote(spawn, std::string(emote));
+			}
+		}
 		if (language != 0)
 			packet->setDataByName("language", language);
 
@@ -5188,6 +5198,9 @@ void ZoneServer::SendSpellFailedPacket(Client* client, int16 error){
 		/*		Temp solution, need to modify the error code before this function and while we still have access to the spell/combat art		*/
 		error = master_spell_list.GetSpellErrorValue(client->GetVersion(), error);
 
+		if(client->GetVersion() <= 546 && error) {
+			error += 1;
+		}
 		packet->setDataByName("error_code", error);
 		//packet->PrintPacket();
 		client->QueuePacket(packet->serialize());
@@ -5239,6 +5252,7 @@ void ZoneServer::SendCastSpellPacket(LuaSpell* spell, Entity* caster){
 		client = *client_itr;
 		if(!client)
 			continue;
+		
 		packet = configReader.getStruct("WS_HearCastSpell", client->GetVersion());
 		if(packet){
 			int32 caster_id = client->GetPlayer()->GetIDWithPlayerSpawn(caster);
@@ -5260,7 +5274,7 @@ void ZoneServer::SendCastSpellPacket(LuaSpell* spell, Entity* caster){
 				}
 			}
 			packet->setDataByName("spell_visual", spell->spell->GetSpellData()->spell_visual); //result
-			packet->setDataByName("cast_time", spell->spell->GetSpellData()->cast_time*.01); //delay
+			packet->setDataByName("cast_time", spell->spell->GetSpellData()->cast_time*.01f); //delay
 			packet->setDataByName("spell_id", spell->spell->GetSpellID());
 			packet->setDataByName("spell_level", 1);
 			packet->setDataByName("spell_tier", spell->spell->GetSpellData()->tier);
@@ -6346,16 +6360,20 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_proce
 		movement_spawns.erase(spawn->GetID());
 }
 
-void ZoneServer::HandleEmote(Client* originator, string name) {
+void ZoneServer::HandleEmote(Spawn* originator, string name) {
 	if (!originator) {
 		LogWrite(ZONE__ERROR, 0, "Zone", "HandleEmote called with an invalid client");
 		return;
 	}
 
+	Client* orig_client = (originator->IsPlayer() && ((Player*)originator)->GetClient()) ? ((Player*)originator)->GetClient() : nullptr;
 	Client* client = 0;
-	Emote* origEmote = visual_states.FindEmote(name, originator->GetVersion());
+	int32 cur_client_version = orig_client ? orig_client->GetVersion() : 546;
+	Emote* origEmote = visual_states.FindEmote(name, cur_client_version);
 	if(!origEmote){
-		originator->Message(CHANNEL_COLOR_YELLOW, "Unable to find emote '%s'.  If this should be a valid emote be sure to submit a /bug report.", name.c_str());
+		if(orig_client) {
+			orig_client->Message(CHANNEL_COLOR_YELLOW, "Unable to find emote '%s'.  If this should be a valid emote be sure to submit a /bug report.", name.c_str());
+		}
 		return;
 	}
 	Emote* emote = origEmote;
@@ -6364,16 +6382,15 @@ void ZoneServer::HandleEmote(Client* originator, string name) {
 	char* emoteResponse = 0;
 	vector<Client*>::iterator client_itr;
 	
-	int32 cur_client_version = originator->GetVersion();
 	map<int32, Emote*> emote_version_range;
 	MClientList.readlock(__FUNCTION__, __LINE__);
 	for (client_itr = clients.begin(); client_itr != clients.end(); client_itr++) {
 		client = *client_itr;
-		if(!client || (client && client->GetPlayer()->IsIgnored(originator->GetPlayer()->GetName())))
+		if(!client || (client && originator->IsPlayer() && client->GetPlayer()->IsIgnored(originator->GetName())))
 			continue;
 
 		// establish appropriate emote for the version used by the client
-		if (client->GetVersion() != originator->GetVersion())
+		if (client->GetVersion() != cur_client_version)
 		{
 			map<int32, Emote*>::iterator rangeitr = emote_version_range.find(client->GetVersion());
 			if (rangeitr == emote_version_range.end())
@@ -6393,45 +6410,49 @@ void ZoneServer::HandleEmote(Client* originator, string name) {
 
 		packet = configReader.getStruct("WS_CannedEmote", client->GetVersion());
 		if(packet){
-			packet->setDataByName("spawn_id" , client->GetPlayer()->GetIDWithPlayerSpawn(originator->GetPlayer()));
+			packet->setDataByName("spawn_id" , client->GetPlayer()->GetIDWithPlayerSpawn(originator));
 			if(!emoteResponse){
 				string message;
-				if(originator->GetPlayer()->GetTarget() && originator->GetPlayer()->GetTarget()->GetID() != originator->GetPlayer()->GetID()){
+				if(originator->GetTarget() && originator->GetTarget()->GetID() != originator->GetID()){
 					message = emote->GetTargetedMessageString();
 					if(message.find("%t") < 0xFFFFFFFF)
-						message.replace(message.find("%t"), 2, originator->GetPlayer()->GetTarget()->GetName());
+						message.replace(message.find("%t"), 2, originator->GetTarget()->GetName());
 				}
 				if(message.length() == 0)
 					message = emote->GetMessageString();
 				if(message.find("%g1") < 0xFFFFFFFF){
-					if(originator->GetPlayer()->GetGender() == 1)
+					if(originator->GetGender() == 1)
 						message.replace(message.find("%g1"), 3, "his");
 					else
 						message.replace(message.find("%g1"), 3, "her");
 				}
 				if(message.find("%g2") < 0xFFFFFFFF){
-					if(originator->GetPlayer()->GetGender() == 1)
+					if(originator->GetGender() == 1)
 						message.replace(message.find("%g2"), 3, "him");
 					else
 						message.replace(message.find("%g2"), 3, "her");
 				}
 				if(message.find("%g3") < 0xFFFFFFFF){
-					if(originator->GetPlayer()->GetGender() == 1)
+					if(originator->GetGender() == 1)
 						message.replace(message.find("%g3"), 3, "he");
 					else
 						message.replace(message.find("%g3"), 3, "she");
 				}
 				if(message.length() > 0){
-					emoteResponse = new char[message.length() + strlen(originator->GetPlayer()->GetName()) + 10];
-					sprintf(emoteResponse,"%s %s", originator->GetPlayer()->GetName(), message.c_str());
+					emoteResponse = new char[message.length() + strlen(originator->GetName()) + 10];
+					sprintf(emoteResponse,"%s %s", originator->GetName(), message.c_str());
 				}
 				else{
-					originator->Message(CHANNEL_COLOR_YELLOW, "%s is not properly configured, be sure to submit a /bug report.", name.c_str());
+					if(orig_client) {
+						orig_client->Message(CHANNEL_COLOR_YELLOW, "%s is not properly configured, be sure to submit a /bug report.", name.c_str());
+					}
 					safe_delete(packet);
 					break;
 				}
 			}
-			packet->setMediumStringByName("emote_msg", emoteResponse);
+			if(originator->IsPlayer()) {
+				packet->setMediumStringByName("emote_msg", emoteResponse);
+			}
 			packet->setDataByName("anim_type", emote->GetVisualState());
 			client->QueuePacket(packet->serialize());
 			safe_delete(packet);

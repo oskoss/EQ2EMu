@@ -6662,10 +6662,10 @@ to zero and treated like placeholders." />
 <Data ElementName="target_array" Type="Array" ArraySizeVariable="num_targets">
      <Data ElementName="target" Type="int32" />
 </Data>
-<Data ElementName="invoker_id" Type="int32" />
-<Data ElementName="spell_visual" Type="int32" />
+<Data ElementName="spell_id" Type="int32" />
+<Data ElementName="spell_visual" Type="int16" />
 <Data ElementName="cast_time" Type="float" />
-<Data ElementName="spell_level" Type="int16" />
+<Data ElementName="spell_level" Type="int8" />
 <Data ElementName="spell_tier" Type="int8" />
 </Struct>
 <Struct Name="WS_HearCastSpell" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearSpellCastCmd">
@@ -7040,11 +7040,8 @@ to zero and treated like placeholders." />
 	<Data ElementName="race" Type="int8" Size="1" />
 	<Data ElementName="flags" Type="int8" Size="1" />
 	<Data ElementName="unknown5" Type="int32" Size="1" />
-	<Data ElementName="zone" Type="char" Size="77" />
-	<Data ElementName="guild" Type="char" Size="40" />
-	<Data ElementName="unknown7" Type="int8" />
-	<Data ElementName="unknown8" Type="int8" />
-	<Data ElementName="unknown9" Type="int8" />
+	<Data ElementName="zone" Type="char" Size="80" />
+	<Data ElementName="unknown6" Type="int8" Size="28" />
 </Data>
 <Data ElementName="unknown10" Type="int8" />
 </Struct>
@@ -8791,6 +8788,7 @@ to zero and treated like placeholders." />
 	<Data ElementName="item_array" Type="Array" ArraySizeVariable="num_items">
 		<Data ElementName="item_icon" Type="int16" Size="1" />
 		<Data ElementName="item_name" Type="EQ2_16Bit_String" Size="1" />
+		<Data ElementName="item_flag" Type="int8" Size="1" />
 	</Data>
 </Data>
 <Data ElementName="new_collection_flag" Type="int8" Size="1" />
@@ -9351,7 +9349,6 @@ to zero and treated like placeholders." />
 	<Data ElementName="status2" Type="int32" Size="1" />	
 </Data>
 <Data ElementName="type" Type="int8" /> <!-- 0==buy, 1==sell, 16==repair, 128==goblin game -->
-<Data ElementName="unknown" Type="int8" Size="2" />
 </Struct>
 <Struct Name="WS_UpdateMerchant" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateMerchantCmd">
 <Data ElementName="spawn_id" Type="int32" />
@@ -9777,6 +9774,25 @@ to zero and treated like placeholders." />
 <Data ElementName="per_page" Type="int32" Size="1" />
 <Data ElementName="page" Type="int32" Size="1" />
 </Struct>
+<Struct Name="WS_BrokerItems" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqConsignmentItemsCmd" >    
+<Data ElementName="num_items" Type="int32" Size="1"/>
+<Data ElementName="item_array" Type="Array" ArraySizeVariable="num_items">
+    <Data ElementName="unknown" Type="int32" Size="1" />
+    <Data ElementName="unknowny" Type="int16" Size="1" />
+    <Data ElementName="item_id" Type="int64" Size="1" />
+    <Data ElementName="quantity" Type="int32" Size="1" />
+    <Data ElementName="unknown15x" Type="int8" Size="4" />
+    <Data ElementName="item_name" Type="EQ2_16Bit_String" Size="1" />
+    <Data ElementName="string_one" Type="EQ2_16Bit_String" Size="1" />
+    <Data ElementName="unknown15y" Type="int8" Size="28" />
+    <Data ElementName="sell_price" Type="int64" Size="1" />
+    <Data ElementName="unknown15spacex" Type="int8" Size="28" />
+    <Data ElementName="seller_name" Type="EQ2_16Bit_String" Size="1" />
+    <Data ElementName="icon" Type="int16" Size="1" />
+    <Data ElementName="unknown" Type="int8" Size="10" />
+</Data>
+</Struct>
+
 <Struct Name="WS_BrokerItems" ClientVersion="972" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqConsignmentItemsCmd" >
 <Data ElementName="unknown" Type="int8" />
 <Data ElementName="num_items" Type="int32" />
@@ -15295,6 +15311,96 @@ to zero and treated like placeholders." />
 </Data>
 <Data ElementName="primary" Type="EQ2_Item" Size="1" />
 <Data ElementName="secondary" Type="EQ2_Item" Size="1" />
+</Struct>
+<Struct Name="WS_InspectPlayer" ClientVersion="546" OpcodeName="OP_InspectPlayerMsg">
+<Data ElementName="unknown" Type="int8" />
+<Data ElementName="name" Type="EQ2_8Bit_String" />
+<Data ElementName="race" Type="int8" />
+<Data ElementName="gender" Type="int8" />
+<Data ElementName="adventure_level" Type="int8" />
+<Data ElementName="adventure_level_effective" Type="int8" />
+<Data ElementName="adventure_class" Type="int8" />
+<Data ElementName="tradeskill_level" Type="int8" />
+<Data ElementName="tradeskill_class" Type="int8" />
+<Data ElementName="health" Type="sint32" />
+<Data ElementName="health_max" Type="sint32" />
+<Data ElementName="health_base" Type="sint32" />
+<Data ElementName="power" Type="sint32" />
+<Data ElementName="power_max" Type="sint32" />
+<Data ElementName="power_base" Type="sint32" />
+<Data ElementName="unknown1" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="avoidancex" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="mitigation" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="unknown2" Type="int16"/>
+<Data ElementName="mitigation_percentage" Type="int8" />
+<Data ElementName="unknown3" Type="int8" />
+<Data ElementName="strength" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="strength_base" Type="int8" />
+<Data ElementName="stamina" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="stamina_base" Type="int8" />
+<Data ElementName="agility" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="agility_base" Type="int8" />
+<Data ElementName="wisdom" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="wisdom_base" Type="int8" />
+<Data ElementName="intelligence" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="intelligence_base" Type="int8" />
+<Data ElementName="unknown4" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="unknown5" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="unknown6" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="unknown7" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="unknown8" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="unknown9" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="unknown10" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="unknown11" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="unknown12" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="heat_resist" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="heat_resist_base" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="heat_resist_percentage" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="cold_resist" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="cold_resist_base" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="cold_resist_percentage" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="magic_resist" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="magic_resist_base" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="magic_resist_percentage" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="mental_resist" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="mental_resist_base" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="mental_resist_percentage" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="divine_resist" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="divine_resist_base" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="divine_resist_percentage" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="disease_resist" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="disease_resist_base" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="disease_resist_percentage" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="poison_resist" Type="sint16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="poison_resist_base" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="poison_resist_percentage" Type="int16" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="num_chars" Type="int16" Size="1" />
+<Data ElementName="biography_array" Type="Array" ArraySizeVariable="num_chars">
+	<Data ElementName="biography_char" Type="char" />
+</Data>
+<Data ElementName="slot_0" Type="EQ2_Item" />
+<Data ElementName="slot_1" Type="EQ2_Item" />
+<Data ElementName="slot_2" Type="EQ2_Item" />
+<Data ElementName="slot_3" Type="EQ2_Item" />
+<Data ElementName="slot_4" Type="EQ2_Item" />
+<Data ElementName="slot_5" Type="EQ2_Item" />
+<Data ElementName="slot_6" Type="EQ2_Item" />
+<Data ElementName="slot_7" Type="EQ2_Item" />
+<Data ElementName="slot_8" Type="EQ2_Item" />
+<Data ElementName="slot_9" Type="EQ2_Item" />
+<Data ElementName="slot_10" Type="EQ2_Item" />
+<Data ElementName="slot_11" Type="EQ2_Item" />
+<Data ElementName="slot_12" Type="EQ2_Item" />
+<Data ElementName="slot_13" Type="EQ2_Item" />
+<Data ElementName="slot_14" Type="EQ2_Item" />
+<Data ElementName="slot_15" Type="EQ2_Item" />
+<Data ElementName="slot_16" Type="EQ2_Item" />
+<Data ElementName="slot_17" Type="EQ2_Item" />
+<Data ElementName="slot_18" Type="EQ2_Item" />
+<Data ElementName="slot_19" Type="EQ2_Item" />
+<Data ElementName="slot_20" Type="EQ2_Item" />
+<Data ElementName="slot_21" Type="EQ2_Item" />
+<Data ElementName="slot_22" Type="EQ2_Item" />
 </Struct>
 <Struct Name="WS_InspectPlayer" ClientVersion="1096" OpcodeName="OP_InspectPlayerMsg">
 <Data ElementName="unknown" Type="int8" />

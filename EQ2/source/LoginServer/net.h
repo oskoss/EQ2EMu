@@ -39,6 +39,32 @@ public:
 		numclients = 0;
 		numservers = 0;
 		allowAccountCreation = true;
+		
+		// full support = 0x7CFF
+		// 1 << 12 (-4096) = missing echoes of faydwer, disables Fae and Arasai (black portraits) and kelethin as starting city
+		// 1 << 13 (-8192) = disables sarnak (black portraits) and gorowyn as starting city
+		expansionFlag = 0x7CFF; // 0x4CF5 
+		
+		/* dword_1ECBA18 operand for race flag packs (sublevel 0,1,2?) -- (sublevel -1) controls starting zones omission 0xEE vs 0xCF (CF misses halas)
+		1 = city of qeynos
+		2 = city of freeport
+		4 = city of kelethin
+		8 = city of neriak
+		16 = gorowyn
+		32 = new halas
+		64 = queens colony
+		128 = outpost overlord
+		*/
+		citiesFlag = 0xFF;
+		
+		// sub_level 0xFFFFFFFF = blacks out all portraits for class alignments, considered non membership
+		// sub_level > 0 = class alignments still required, but portraits are viewable and race selectable
+		// sub_level = 2 membership, you can 'create characters on time locked servers' vs standard
+		// sub_level = 0 forces popup on close to web browser
+		defaultSubscriptionLevel = 0xFFFFFFFF;
+		
+		// disable extra races FAE(16) ARASAI (17) SARNAK (18) -- with 4096/8192 flags, no visibility of portraits
+		enabledRaces = 0xFFFF; // 0xCFFF
 	}
 	void UpdateWindowTitle(char* iNewTitle = 0);
 	bool Init();
@@ -59,7 +85,11 @@ public:
 	char*	GetUplinkPassword()	{ return uplinkpassword; }
 
 	bool	IsAllowingAccountCreation() { return allowAccountCreation; }
-
+	int32	GetExpansionFlag() { return expansionFlag; }
+	int8	GetCitiesFlag() { return citiesFlag; }
+	int32	GetDefaultSubscriptionLevel() { return defaultSubscriptionLevel; }
+	int32	GetEnabledRaces() { return enabledRaces; }
+	
 	void	WelcomeHeader();
 protected:
 	friend class LWorld;
@@ -73,4 +103,8 @@ private:
 	char	uplinkpassword[300];
 	eServerMode	LoginMode;
 	bool	allowAccountCreation;
+	int32	expansionFlag;
+	int8	citiesFlag;
+	int32	defaultSubscriptionLevel;
+	int32	enabledRaces;
 };

@@ -340,6 +340,8 @@ void Entity::MapInfoStruct()
 	get_int32_funcs["last_claim_time"] = l::bind(&InfoStruct::get_last_claim_time, &info_struct);
 	
 	get_int8_funcs["engaged_encounter"] = l::bind(&InfoStruct::get_engaged_encounter, &info_struct);
+	
+	get_int8_funcs["first_world_login"] = l::bind(&InfoStruct::get_first_world_login, &info_struct);
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -525,6 +527,8 @@ void Entity::MapInfoStruct()
 	set_int32_funcs["last_claim_time"] = l::bind(&InfoStruct::set_last_claim_time, &info_struct, l::_1);
 	
 	set_int8_funcs["engaged_encounter"] = l::bind(&InfoStruct::set_engaged_encounter, &info_struct, l::_1);
+	
+	set_int8_funcs["first_world_login"] = l::bind(&InfoStruct::set_first_world_login, &info_struct, l::_1);
 
 }
 

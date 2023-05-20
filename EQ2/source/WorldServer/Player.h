@@ -511,8 +511,8 @@ public:
 	bool CanEquipItem(Item* item, int8 slot);
 	void SetEquippedItemAppearances();
 	vector<EQ2Packet*>	UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version, int8 appearance_type = 0, bool send_item_updates = true);
-	int8 ConvertSlotToClient(int8 slot, int16 version);
-	int8 ConvertSlotFromClient(int8 slot, int16 version);
+	int16 ConvertSlotToClient(int8 slot, int16 version);
+	int16 ConvertSlotFromClient(int8 slot, int16 version);
 	EQ2Packet* SwapEquippedItems(int8 slot1, int8 slot2, int16 version, int16 equiptype);
 	EQ2Packet*	RemoveInventoryItem(int8 bag_slot, int8 slot);
 	EQ2Packet*	SendInventoryUpdate(int16 version);

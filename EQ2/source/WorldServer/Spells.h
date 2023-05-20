@@ -324,7 +324,7 @@ public:
 	Spell();
 	Spell(SpellData* in_spell);
 	Spell(Spell* host_spell, bool unique_spell = true);
-	EQ2Packet* SerializeSpell(Client* client, bool display, bool trait_display = false, int8 packet_type = 0, int8 sub_packet_type = 0, const char* struct_name = 0);
+	EQ2Packet* SerializeSpell(Client* client, bool display, bool trait_display = false, int8 packet_type = 0, int8 sub_packet_type = 0, const char* struct_name = 0, bool send_partial_packet = false);
 	EQ2Packet* SerializeSpecialSpell(Client* client, bool display, int8 packet_type = 0, int8 sub_packet_type = 0);
 	EQ2Packet* SerializeAASpell(Client* client,int8 tier, AltAdvanceData* data, bool display, bool trait_display = false, int8 packet_type = 0, int8 sub_packet_type = 0, const char* struct_name = 0);
 	void AddSpellLevel(int8 adventure_class, int8 tradeskill_class, int16 level);

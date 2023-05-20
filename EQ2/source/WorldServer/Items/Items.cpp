@@ -1800,8 +1800,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	}
 	if(show_name)
 		packet->setSubstructSubstructDataByName("header", "info_header", "show_name", show_name);
-	if (packet_type == 20)
-		cout << "";
+	
 	if(packet_type == 0)
 		packet->setSubstructSubstructDataByName("header", "info_header", "packettype", GetItemPacketType(packet->GetVersion()));
 	else
@@ -1839,7 +1838,10 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	else
 		packet->setSubstructDataByName("header_info", "unique_id", details.unique_id);
 	packet->setSubstructDataByName("header_info", "icon", details.icon);
-	packet->setSubstructDataByName("header_info", "tier", details.tier);
+	
+	if(rule_manager.GetGlobalRule(R_World, DisplayItemTiers)->GetBool()) {
+		packet->setSubstructDataByName("header_info", "tier", details.tier);
+	}
  	packet->setSubstructDataByName("header_info", "flags", generic_info.item_flags);
 	packet->setSubstructDataByName("header_info", "flags2", generic_info.item_flags2);
 	if(item_stats.size() > 0){
@@ -1858,37 +1860,11 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			if (stat->stat_type == 9){
 				bluemod += 1;
 			}
-			if (stat->stat_type == 6 || stat->stat_type == 7){		//Convert stats to proper client
-				//if (client->GetVersion() >= 63137){  //TEST
-				//	tmp_subtype =stat->stat_subtype;
-				//}
-				if(stat->stat_type == 7){
-					tmp_subtype = stat->stat_subtype;
-				}
-				else if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331){  //KA
-					tmp_subtype = world.GetItemStatKAValue(stat->stat_subtype);
-				}
-				else if(client->GetVersion() >= 60085 ) {
-					tmp_subtype = world.GetItemStatAOMValue(stat->stat_subtype);
-				}
-				else if (client->GetVersion() >= 57107){ //TOV
-					tmp_subtype = world.GetItemStatTOVValue(stat->stat_subtype);
-				}
-				else if (client->GetVersion() >= 1193){ //COE
-					tmp_subtype = world.GetItemStatCOEValue(stat->stat_subtype);
-					//tmp_subtype = stat->stat_subtype;
-				}
-				else if (client->GetVersion() >= 1096){ //DOV
-					tmp_subtype = world.GetItemStatDOVValue(stat->stat_subtype);
-					//tmp_subtype = stat->stat_subtype;  //comment for normal use
-				}
-			}
-			else
-				tmp_subtype = stat->stat_subtype;
+			
+			tmp_subtype = world.TranslateSlotSubTypeToClient(client, stat->stat_type, stat->stat_subtype);
+			
 			if (tmp_subtype == 255 ){
-				
 				dropstat += 1;
-				
 			}
 
 		}
@@ -1896,33 +1872,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		dropstat = 0;
 		for (int32 i = 0; i < item_stats.size(); i++) {
 			ItemStat* stat = item_stats[i];
-			
-			
-			
-			if (stat->stat_type == 6 || stat->stat_type == 7){		//Convert stats to proper client
-				if(stat->stat_type == 7){
-					tmp_subtype = stat->stat_subtype;
-				}
-				else if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331){  //KA
-					tmp_subtype = world.GetItemStatKAValue(stat->stat_subtype);
-				}
-				else if(client->GetVersion() >= 60085 ) {
-					tmp_subtype = world.GetItemStatAOMValue(stat->stat_subtype);
-				}
-				else if (client->GetVersion() >= 57107){ //TOV
-					tmp_subtype = world.GetItemStatTOVValue(stat->stat_subtype);
-				}
-				else if (client->GetVersion() >= 1193){ //COE
-					tmp_subtype = world.GetItemStatCOEValue(stat->stat_subtype);
-					//tmp_subtype = stat->stat_subtype;
-				}
-				else if (client->GetVersion() >= 1096){ //DOV
-					tmp_subtype = world.GetItemStatDOVValue(stat->stat_subtype); //comment out for testing
-					//tmp_subtype = stat->stat_subtype;  //comment for normal use
-				}
-			}
-			else
-				tmp_subtype = stat->stat_subtype;
+			tmp_subtype = world.TranslateSlotSubTypeToClient(client, stat->stat_type, stat->stat_subtype);
 			if (tmp_subtype == 255 ){
 				
 				dropstat += 1;
@@ -3669,7 +3619,7 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 		item->details.index = i;
 	}
 	packet->setSubstructArrayDataByName("items", "icon", item->details.icon, 0, i);
-	packet->setSubstructArrayDataByName("items", "slot_id", item->details.slot_id, 0, i);
+	packet->setSubstructArrayDataByName("items", "slot_id", player->ConvertSlotToClient(item->details.slot_id, client->GetVersion()), 0, i);
 	if (client->GetVersion() <= 1208) {
 		packet->setSubstructArrayDataByName("items", "count", (std::min)(item->details.count, (int16)255), 0, i);
 	}
@@ -3678,7 +3628,12 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 	//packet->setSubstructArrayDataByName("items", "unknown4", 5, 0, i);
 	// need item level
 	packet->setSubstructArrayDataByName("items", "item_level", item->details.recommended_level , 0, i);
-	packet->setSubstructArrayDataByName("items", "tier", item->details.tier, 0, i);
+	
+	
+	if(rule_manager.GetGlobalRule(R_World, DisplayItemTiers)->GetBool()) {
+		packet->setSubstructArrayDataByName("items", "tier", item->details.tier, 0, i);
+	}
+	
 	packet->setSubstructArrayDataByName("items", "num_slots", item->details.num_slots, 0, i);
 	// need empty slots
 	packet->setSubstructArrayDataByName("items", "item_id", item->details.item_id, 0, i);
@@ -4138,8 +4093,6 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 		packet_size = packet2->GetTotalPacketSize();
 		safe_delete(packet2);
 		int8 num_slots = NUM_SLOTS;
-		if (version <= 564)
-			num_slots = 22;
 		packet->setArrayLengthByName("item_count", num_slots);
 		if(!orig_packet){
 			xor_packet = new uchar[packet_size* num_slots];
@@ -4154,8 +4107,11 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 		int32 levelsLowered = (effective_level > 0 && effective_level < player->GetLevel()) ? player->GetLevel() - effective_level : 0;
 
 		for(int16 i=0;i<NUM_SLOTS;i++){
+			// override the item slot we currently check as the client has different ordering, we need to match it
+			int16 itemIdx = player->ConvertSlotFromClient(i, version);
+			
 			menu_data = 3;
-			item = items[i];
+			item = items[itemIdx];
 			if(item && item->details.item_id > 0){
 				if(item->slot_data.size() > 0)
 					menu_data -= ITEM_MENU_TYPE_GENERIC;
@@ -4218,10 +4174,13 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 					menu_data += ITEM_MENU_TYPE_MENTORED;
 				packet->setSubstructArrayDataByName("items", "menu_type", menu_data, 0, i);
 				packet->setSubstructArrayDataByName("items", "icon", item->details.icon, 0, i);
-				packet->setSubstructArrayDataByName("items", "slot_id", item->details.slot_id, 0, i);
+				packet->setSubstructArrayDataByName("items", "slot_id", player->ConvertSlotToClient(item->details.slot_id, version), 0, i);
 				packet->setSubstructArrayDataByName("items", "count", item->details.count, 0, i);
 				// item level needed here
-				packet->setSubstructArrayDataByName("items", "tier", item->details.tier, 0, i);
+				
+				if(rule_manager.GetGlobalRule(R_World, DisplayItemTiers)->GetBool()) {
+					packet->setSubstructArrayDataByName("items", "tier", item->details.tier, 0, i);
+				}
 				packet->setSubstructArrayDataByName("items", "num_slots", item->details.num_slots, 0, i);
 				//empty slots needed here
 				packet->setSubstructArrayDataByName("items", "item_id", item->details.item_id, 0, i);

@@ -480,8 +480,8 @@ void Commands::Command_Bot_Customize(Client* client, Seperator* sep) {
 	
 	
 	client->Message(CHANNEL_COLOR_RED, "This command is disabled and requires new implementation.");
-/* this links to OP_SubmitCharCust
-	if (bot && bot->GetOwner() == client->GetPlayer()) {
+
+	/*if (bot && bot->GetOwner() == client->GetPlayer()) {
 		PacketStruct* packet = configReader.getStruct("WS_OpenCharCust", client->GetVersion());
 		if (packet) {
 

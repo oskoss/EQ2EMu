@@ -660,7 +660,7 @@ private:
 	float	zoning_h;
 	bool	firstlogin;
 	
-	enum 	NewLoginState { LOGIN_NONE, LOGIN_DELAYED, LOGIN_ALLOWED };
+	enum 	NewLoginState { LOGIN_NONE, LOGIN_DELAYED, LOGIN_ALLOWED, LOGIN_INITIAL_LOAD, LOGIN_SEND };
 	NewLoginState	new_client_login; // 1 = delayed state, 2 = let client in
 	Timer	underworld_cooldown_timer;
 	Timer	pos_update;

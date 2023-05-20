@@ -565,43 +565,75 @@ void Client::SendLoginDenied(){
 	EQ2Packet* app = new EQ2Packet(OP_LoginReplyMsg, 0, sizeof(LS_LoginResponse));
 	LS_LoginResponse* ls_response = (LS_LoginResponse*)app->pBuffer;
 	ls_response->reply_code = 1;
+	// reply_codes for AoM:
+	/* 1 = Login rejected: Invalid username or password. Please try again.
+	   2 = Login rejected: Server thinks your account is currently playing; you may have to wait "
+              "a few minutes for it to clear, then try again
+	   6 = Login rejected: The client's version does not match the server's. Please re-run the patcher.
+	   7 = Login rejected: You have no scheduled playtimes.
+	   8 = Your account does not have the features required to play on this server.
+	   11 = The client's build does not match the server's. Please re-run the patcher.
+	   12 = You must update your password in order to log in.  Pressing OK will op"
+              "en your web browser to the SOE password management page
+		Other Value > 1 = Login rejected for an unknown reason.
+	 */
 	ls_response->unknown03 = 0xFFFFFFFF;
 	ls_response->unknown04 = 0xFFFFFFFF;
 	QueuePacket(app);
 	StartDisconnectTimer();
 }
 
-void Client::SendLoginAccepted() {
+void Client::SendLoginAccepted(int32 account_id, int8 login_response) {
 	PacketStruct* packet = configReader.getStruct("LS_LoginReplyMsg", GetVersion());
 	int i = 0;
 	if (packet)
 	{
-		packet->setDataByName("account_id", 1);
-		//packet->setDataByName("login_response", 0);
-		//packet->setDataByName("reset_appearance", 0);
+		packet->setDataByName("account_id", account_id);
+		
+		packet->setDataByName("login_response", login_response);
+		
 		packet->setDataByName("do_not_force_soga", 1);
-		//packet->setDataByName("race_unknown", 0x3F);
-		//packet->setDataByName("unknown11", 2); // can be 7
-		packet->setDataByName("sub_level", 2);
+		
+		// sub_level 0xFFFFFFFF = blacks out all portraits for class alignments, considered non membership
+		// sub_level > 0 = class alignments still required, but portraits are viewable and race selectable
+		// sub_level = 2 membership, you can 'create characters on time locked servers' vs standard
+		// sub_level = 0 forces popup on close to web browser
+		packet->setDataByName("sub_level", net.GetDefaultSubscriptionLevel());
 		packet->setDataByName("race_flag", 0x1FFFFF);
 		packet->setDataByName("class_flag", 0x7FFFFFE);
 		packet->setMediumStringByName("username", GetAccountName());
 		packet->setMediumStringByName("password", GetAccountName());
 
-		packet->setDataByName("unknown5", 0x7C);
-		packet->setDataByName("unknown7", 0xFF6FFFBF);
+		// unknown5
+		// full support = 0x7CFF
+		// 1 << 12 (-4096) = missing echoes of faydwer, disables Fae and Arasai (black portraits) and kelethin as starting city
+		// 1 << 13 (-8192) = disables sarnak (black portraits) and gorowyn as starting city
+		packet->setDataByName("unknown5", net.GetExpansionFlag());
+		packet->setDataByName("unknown6", 0xFF);
+		packet->setDataByName("unknown6", 0xFF, 1);
+		packet->setDataByName("unknown6", 0xFF, 2);
+		
+		// controls class access / playable characters
+		packet->setDataByName("unknown10", 0xFF);
 
-		// Image 2020 Notes
-		// Login Server only supports AoM at current time, but we will need to keep in mind the structure for 60100 or later calls for additional custom fields
-		// >=60100
-		packet->setDataByName("unknown11", 0x0E);
+	//	packet->setDataByName("unknown7a", 0x0101);
+	//	packet->setDataByName("race_unknown", 0x01);
+		packet->setDataByName("unknown7", net.GetEnabledRaces()); // 0x01-0xFF disable extra races FAE(16) ARASAI (17) SARNAK (18) -- with 4096/8192 flags, no visibility of portraits
+		packet->setDataByName("unknown7a", 0xEE);
+		packet->setDataByName("unknown8", net.GetCitiesFlag(), 1); // dword_1ECBA18 operand for race flag packs (sublevel 0,1,2?) -- (sublevel -1) controls starting zones omission 0xEE vs 0xCF (CF misses halas)
 
-		packet->setDataByName("unknown7a", 0xFFFF);
-		packet->setDataByName("unknown8", 0xFF, 1);
+		/*
+		1 = city of qeynos
+		2 = city of freeport
+		4 = city of kelethin
+		8 = city of neriak
+		16 = gorowyn
+		32 = new halas
+		64 = queens colony
+		128 = outpost overlord
+		*/
 
 		EQ2Packet* outapp = packet->serialize();
-		printf("Out struct:\n");
-		DumpPacket(outapp->pBuffer, outapp->size);
 		QueuePacket(outapp);
 		safe_delete(packet);
 	}
@@ -612,6 +644,7 @@ void Client::SendWorldList(){
 	EQ2Packet* dupe = pack->Copy();
 	DumpPacket(dupe->pBuffer,dupe->size);
 	QueuePacket(dupe);
+	SendLoginAccepted(0, 10); // triggers a different code path in the client to set certain flags
 	return;
 }
 

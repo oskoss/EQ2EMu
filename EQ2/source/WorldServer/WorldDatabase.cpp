@@ -1748,7 +1748,7 @@ bool WorldDatabase::loadCharacter(const char* ch_name, int32 account_id, Client*
 	MYSQL_ROW row, row4;
 	int32 id = 0;
 	query.escaped_name = getEscapeString(ch_name);
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, current_zone_id, x, y, z, heading, admin_status, race, model_type, class, deity, level, gender, tradeskill_class, tradeskill_level, wing_type, hair_type, chest_type, legs_type, soga_wing_type, soga_hair_type, soga_chest_type, soga_legs_type, 0xFFFFFFFF - crc32(name), facial_hair_type, soga_facial_hair_type, instance_id, group_id, last_saved, DATEDIFF(curdate(), created_date) as accage, alignment FROM characters where name='%s' and account_id=%i AND deleted = 0", query.escaped_name, account_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, current_zone_id, x, y, z, heading, admin_status, race, model_type, class, deity, level, gender, tradeskill_class, tradeskill_level, wing_type, hair_type, chest_type, legs_type, soga_wing_type, soga_hair_type, soga_chest_type, soga_legs_type, 0xFFFFFFFF - crc32(name), facial_hair_type, soga_facial_hair_type, instance_id, group_id, last_saved, DATEDIFF(curdate(), created_date) as accage, alignment, first_world_login FROM characters where name='%s' and account_id=%i AND deleted = 0", query.escaped_name, account_id);
 	// no character found
 	if ( result == NULL ) {
 		LogWrite(PLAYER__ERROR, 0, "Player", "Error loading character for '%s'", ch_name);
@@ -1821,6 +1821,8 @@ SOGA chars looked ok in LoginServer screen tho... odd.
 			client->GetPlayer()->GetPlayerInfo()->SetAccountAge(atoi(row[29]));
 
 		client->GetPlayer()->GetInfoStruct()->set_alignment(atoi(row[30]));
+		
+		client->GetPlayer()->GetInfoStruct()->set_first_world_login(atoi(row[31]));
 
 		LoadCharacterFriendsIgnoreList(client->GetPlayer());
 		MYSQL_RES* result4 = query4.RunQuery2(Q_SELECT, "SELECT `guild_id` FROM `guild_members` WHERE `char_id`=%u", id);
@@ -2367,7 +2369,7 @@ int32 WorldDatabase::SaveCharacter(PacketStruct* create, int32 loginID){
 		auto_admin_status = 0;
 	}
 
-	string create_char = string("Insert into characters (account_id, server_id, name, race, class, gender, deity, body_size, body_age, soga_wing_type, soga_chest_type, soga_legs_type, soga_hair_type, soga_model_type, legs_type, chest_type, wing_type, hair_type, model_type, facial_hair_type, soga_facial_hair_type, created_date, last_saved, admin_status) values(%i, %i, '%s', %i, %i, %i, %i, %f, %f, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, now(), unix_timestamp(), %i)");
+	string create_char = string("Insert into characters (account_id, server_id, name, race, class, gender, deity, body_size, body_age, soga_wing_type, soga_chest_type, soga_legs_type, soga_hair_type, soga_model_type, legs_type, chest_type, wing_type, hair_type, model_type, facial_hair_type, soga_facial_hair_type, created_date, last_saved, admin_status, first_world_login) values(%i, %i, '%s', %i, %i, %i, %i, %f, %f, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, now(), unix_timestamp(), %i, 1)");
 
 	query.RunQuery2(Q_INSERT, create_char.c_str(), 
 						loginID, 
@@ -3406,7 +3408,7 @@ void WorldDatabase::LoadRevivePoints(vector<RevivePoint*>* revive_points, int32 
 		return;
 	}
 	Query query;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT respawn_zone_id, location_name, safe_x, safe_y, safe_z, heading FROM revive_points where zone_id=%u ORDER BY id asc", zone_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT respawn_zone_id, location_name, safe_x, safe_y, safe_z, heading, always_included FROM revive_points where zone_id=%u ORDER BY id asc", zone_id);
 	if(revive_points && result && mysql_num_rows(result) > 0){
 		MYSQL_ROW row;
 		int32 id = 0;
@@ -3420,6 +3422,7 @@ void WorldDatabase::LoadRevivePoints(vector<RevivePoint*>* revive_points, int32 
 			point->y = atof(row[3]);
 			point->z = atof(row[4]);
 			point->heading = atof(row[5]);
+			point->always_included = atoul(row[6]);
 			revive_points->push_back(point);
 			id++;
 		}

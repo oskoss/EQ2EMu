@@ -163,6 +163,7 @@ enum RuleType {
 	EnforceRacialAlignment,
 	MemoryCacheZoneMaps,
 	AutoLockEncounter,
+	DisplayItemTiers,
 
 	/* ZONE */
 	MinZoneLevelOverrideStatus,

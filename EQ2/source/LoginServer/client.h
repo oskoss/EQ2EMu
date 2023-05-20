@@ -25,7 +25,7 @@ public:
     ~Client();
 	void	SendLoginDenied();
 	void	SendLoginDeniedBadVersion();
-	void	SendLoginAccepted();
+	void	SendLoginAccepted(int32 account_id = 1, int8 login_response = 0);
 	void	SendWorldList();
 	void	SendCharList();
 	int16	AddWorldToList2(uchar* buffer, char* name, int32 id, int16* flags);

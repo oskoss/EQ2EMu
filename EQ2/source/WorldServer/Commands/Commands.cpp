@@ -2115,7 +2115,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Index: %u", item_index);
 				}
 				else if(strcmp(sep->arg[0], "equipment") == 0){
-					int32 item_index = atol(sep->arg[1]);
+					int32 item_index = client->GetPlayer()->ConvertSlotFromClient(atol(sep->arg[1]), client->GetVersion());
 					Item* item = client->GetPlayer()->GetEquipmentList()->GetItem(item_index);
 					if(item){
 						EQ2Packet* app = item->serialize(client->GetVersion(), true, client->GetPlayer());
@@ -2127,7 +2127,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Index: %u", item_index);
 				}
 				else if(strcmp(sep->arg[0], "appearance") == 0){
-					int32 item_index = atol(sep->arg[1]);
+					int32 item_index = client->GetPlayer()->ConvertSlotFromClient(atol(sep->arg[1]), client->GetVersion());
 					Item* item = client->GetPlayer()->GetAppearanceEquipmentList()->GetItem(item_index);
 					if(item){
 						EQ2Packet* app = item->serialize(client->GetVersion(), true, client->GetPlayer());
@@ -4631,6 +4631,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->Message(CHANNEL_COLOR_YELLOW, "Angle %f between player %s and target %s", spawnAngle, client->GetPlayer()->GetTarget() ? client->GetPlayer()->GetTarget()->GetName() : client->GetPlayer()->GetName(), client->GetPlayer()->GetName());
 						break;
 					}
+					else if (ToLower(string(sep->arg[0])) == "knockback")
+					{
+						cmdTarget->SpawnKnockback(client->GetPlayer(), cmdTarget->GetX(), cmdTarget->GetY(), cmdTarget->GetZ());
+						break;
+					}
 				}
 				if (sep->IsNumber(0))
 				{
@@ -5176,7 +5181,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				break;
 			}
 		case COMMAND_CANNEDEMOTE:{
-				client->GetCurrentZone()->HandleEmote(client, command_parms->data);
+				client->GetCurrentZone()->HandleEmote(client->GetPlayer(), command_parms->data);
 				break;
 		}
 		case COMMAND_BROADCAST: {
@@ -6702,7 +6707,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 		else if(sep->arg[4][0] && strncasecmp("move", sep->arg[0], 4) == 0 && sep->IsNumber(1) && sep->IsNumber(2) && sep->IsNumber(3) && sep->IsNumber(4))
 		{
 			int16 from_index = atoi(sep->arg[1]);
-			sint16 to_slot = atoi(sep->arg[2]);
+			sint16 to_slot = player->ConvertSlotFromClient(atoi(sep->arg[2]), client->GetVersion());
 			sint32 bag_id = atol(sep->arg[3]);
 			int8 charges = atoi(sep->arg[4]);
 			Item* item = client->GetPlayer()->item_list.GetItemFromIndex(from_index);
@@ -6788,7 +6793,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 				int8 appearance_equip = 0;
 				
 				if(sep->arg[2][0] && sep->IsNumber(2))
-					slot_id = atoi(sep->arg[2]);
+					slot_id = player->ConvertSlotFromClient(atoi(sep->arg[2]), client->GetVersion());
 				if(sep->arg[3][0] && sep->IsNumber(3))
 					unk3 = atoul(sep->arg[3]);
 				if(sep->arg[4][0] && sep->IsNumber(4))
@@ -6844,7 +6849,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 				client->SimpleMessage(CHANNEL_COLOR_RED, "You may not unequip items while in combat.");
 			else
 			{
-				int16 index = atoi(sep->arg[1]);
+				int16 index = player->ConvertSlotFromClient(atoi(sep->arg[1]), client->GetVersion());
 				sint32 bag_id = -999;
 				int8 to_slot = 255;
 
@@ -6854,7 +6859,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 						bag_id = atol(sep->arg[2]);
 
 					if(sep->IsNumber(3))
-						to_slot = atoi(sep->arg[3]);
+						to_slot = player->ConvertSlotFromClient(atoi(sep->arg[3]), client->GetVersion());
 				}
 
 				sint8 unk4 = 0;
@@ -6884,8 +6889,8 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 				client->SimpleMessage(CHANNEL_COLOR_RED, "You may not swap items while in combat.");
 			}
 			else {
-				int16 index1 = atoi(sep->arg[1]);
-				int16 index2 = atoi(sep->arg[2]);
+				int16 index1 = client->GetPlayer()->ConvertSlotFromClient(atoi(sep->arg[1]), client->GetVersion());
+				int16 index2 = client->GetPlayer()->ConvertSlotFromClient(atoi(sep->arg[2]), client->GetVersion());
 				int8 type = 0;
 				if(sep->IsNumber(3))
 					type = atoul(sep->arg[3]); // type 0 is combat, 3 = appearance
@@ -6903,7 +6908,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 		}
 		else if (sep->arg[2][0] && strncasecmp("pop", sep->arg[0], 3) == 0 && sep->IsNumber(1) && sep->IsNumber(2)) 
 		{
-			sint16 to_slot = atoi(sep->arg[1]);
+			sint16 to_slot = player->ConvertSlotFromClient(atoi(sep->arg[1]), client->GetVersion());
 			sint32 bag_id = atoi(sep->arg[2]);
 			Item* item = client->GetPlayer()->item_list.GetOverflowItem();
 			if (item) {
@@ -10201,16 +10206,17 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 			if (packet2) {
 				packet2->setSubstructDataByName("reward_data", "unknown1", 255);
 				packet2->setSubstructDataByName("reward_data", "reward", "Quest Reward!");
-				packet2->setSubstructDataByName("reward_data", "coin", 150);
-				packet2->setSubstructDataByName("reward_data", "status_points", 5);
-				packet2->setSubstructDataByName("reward_data", "exp_bonus", 10);
-				packet2->setSubstructArrayLengthByName("reward_data", "num_rewards", 4);
-				Item* item = new Item(master_item_list.GetItem(36212));
+				packet2->setSubstructDataByName("reward_data", "max_coin", 0);
+				packet2->setSubstructDataByName("reward_data", "text", "Some custom text to mess things up?");
+				//packet2->setSubstructDataByName("reward_data", "status_points", 5);
+				//packet2->setSubstructDataByName("reward_data", "exp_bonus", 10);
+				packet2->setSubstructArrayLengthByName("reward_data", "num_rewards", 1);
+				Item* item = new Item(master_item_list.GetItem(9357));
 				packet2->setArrayDataByName("reward_id", item->details.item_id);
-				item->stack_count = 20;
+				//item->stack_count = 20;
 				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 0, 0, -1);
 				safe_delete(item);
-				item = new Item(master_item_list.GetItem(36685));
+				/*item = new Item(master_item_list.GetItem(36685));
 				item->stack_count = 20;
 				packet2->setArrayDataByName("reward_id", item->details.item_id);
 				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 1, 0, -1);
@@ -10220,7 +10226,7 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 2, 0, -1);
 				item = master_item_list.GetItem(75057);
 				packet2->setArrayDataByName("reward_id", item->details.item_id);
-				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 3, 0, -1);
+				packet2->setItemArrayDataByName("item", item, client->GetPlayer(), 3, 0, -1);*/
 				EQ2Packet* app = packet2->serialize();
 				if (sep->IsSet(2)) {
 					int16 offset = atoi(sep->arg[1]);
@@ -10543,6 +10549,28 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 		}
 		else if (atoi(sep->arg[0]) == 28 && sep->IsNumber(1)) {
 			World::newValue = strtoull(sep->arg[1], NULL, 0);
+		}
+		else if (atoi(sep->arg[0]) == 29 && sep->IsNumber(1)) {
+			PacketStruct* packet = configReader.getStruct("WS_HearCastSpell", client->GetVersion());
+			if (packet) {
+				int32 caster_id = client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer());
+				int32 target_id = client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer());
+				
+				packet->setDataByName("spawn_id", caster_id);
+				packet->setArrayLengthByName("num_targets", 1);
+				packet->setArrayDataByName("target", target_id);
+				packet->setDataByName("num_targets", 1);
+				packet->setDataByName("spell_visual", strtoull(sep->arg[1], NULL, 0)); //result
+				packet->setDataByName("cast_time", sep->IsNumber(2) ? strtof(sep->arg[2], NULL)*.01f : 2500); //delay
+				packet->setDataByName("spell_id", 1);
+				packet->setDataByName("spell_level", 1);
+				packet->setDataByName("spell_tier", 1);
+				EQ2Packet* outapp = packet->serialize();
+				
+				DumpPacket(outapp);
+				client->QueuePacket(outapp);
+				safe_delete(packet);
+			}
 		}
 	}
 	else {
@@ -10977,6 +11005,9 @@ void Commands::Command_Wind(Client* client, Seperator* sep) {
 
 void Commands::Command_SendMerchantWindow(Client* client, Seperator* sep, bool sell) {
 	Spawn* spawn = client->GetPlayer()->GetTarget();
+	if(client->GetVersion() <= 546) {
+		sell = false; // doesn't support in the same way as AoM just open the normal buy/sell window
+	}
 	if(spawn) {
 		client->SetMerchantTransaction(spawn);
 		if (spawn->GetMerchantID() > 0 && spawn->IsClientInMerchantLevelRange(client)){
@@ -11101,6 +11132,12 @@ void Commands::Command_ConsumeFood(Client* client, Seperator* sep) {
 	{
 		Player* player = client->GetPlayer();
 		int8 slot = atoi(sep->arg[0]);
+		if (client->GetVersion() <= 283) {
+			slot += 4;
+		}
+		else if (client->GetVersion() <= 546) {
+			slot += 2;
+		}
 		Item* item = player->GetEquipmentList()->GetItem(slot);
 
 		if(client->CheckConsumptionAllowed(slot)) {

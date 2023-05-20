@@ -275,6 +275,9 @@ struct InfoStruct{
 		last_claim_time_ = 0;
 		
 		engaged_encounter_ = 0;
+		
+		first_world_login_ = 0;
+		reload_player_spells_ = 0;
 	}
 
 
@@ -461,6 +464,9 @@ struct InfoStruct{
 		last_claim_time_ = oldStruct->get_last_claim_time();
 		
 		engaged_encounter_ = oldStruct->get_engaged_encounter();
+		
+		first_world_login_ = oldStruct->get_first_world_login();
+		reload_player_spells_ = oldStruct->get_reload_player_spells();
 
 	}
 	//mutable std::shared_mutex mutex_;
@@ -664,6 +670,10 @@ struct InfoStruct{
 	int32	get_last_claim_time() { std::lock_guard<std::mutex> lk(classMutex); return last_claim_time_; }
 	
 	int8	get_engaged_encounter() { std::lock_guard<std::mutex> lk(classMutex); return engaged_encounter_; }
+	
+	int8	get_first_world_login() { std::lock_guard<std::mutex> lk(classMutex); return first_world_login_; }
+	
+	int8	get_reload_player_spells() { std::lock_guard<std::mutex> lk(classMutex); return reload_player_spells_; }
 	
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
@@ -950,6 +960,10 @@ struct InfoStruct{
 	void	set_last_claim_time(int32 value) { std::lock_guard<std::mutex> lk(classMutex); last_claim_time_ = value; }
 	
 	void	set_engaged_encounter(int8 value) { std::lock_guard<std::mutex> lk(classMutex); engaged_encounter_ = value; }
+	
+	void	set_first_world_login(int8 value) { std::lock_guard<std::mutex> lk(classMutex); first_world_login_ = value; }
+	
+	void	set_reload_player_spells(int8 value) { std::lock_guard<std::mutex> lk(classMutex); reload_player_spells_ = value; }
 
 	void	ResetEffects(Spawn* spawn)
 	{
@@ -1154,6 +1168,9 @@ private:
 	int32			last_claim_time_;
 	
 	int8			engaged_encounter_;
+	
+	int8			first_world_login_;
+	int8			reload_player_spells_;
 	
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;

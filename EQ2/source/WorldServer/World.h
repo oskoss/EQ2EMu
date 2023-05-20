@@ -573,6 +573,7 @@ public:
 	sint16 GetItemStatCOEValue(sint16 subtype);
 	sint16 GetItemStatKAValue(sint16 subtype);
 	sint16 GetItemStatTESTValue(sint16 subtype);
+	int8 TranslateSlotSubTypeToClient(Client* client, int8 stat_type, sint16 sub_type);
 
 	vector<string> biography;
 

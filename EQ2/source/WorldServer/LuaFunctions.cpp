@@ -8291,7 +8291,7 @@ int EQ2Emu_lua_RemoveSkill(lua_State* state) {
 		if (player_spawn && player_spawn->IsPlayer()) {
 			Player* player = (Player*)player_spawn;
 			if (player->skill_list.HasSkill(skill_id)) {
-				player->RemovePlayerSkill(skill_id);
+				player->RemovePlayerSkill(skill_id, true);
 				if (!more_to_remove) {
 					Client* client = player->GetClient();
 					if (client) {

@@ -248,6 +248,26 @@ bool NetConnection::ReadLoginConfig() {
 					allowAccountCreation = atoi(buf);
 				}
 			}
+			if (!strncasecmp(type, "expansionflag", 13)) {
+				if (Seperator::IsNumber(buf)) {
+					expansionFlag = atoul(buf);
+				}
+			}
+			if (!strncasecmp(type, "citiesflag", 10)) {
+				if (Seperator::IsNumber(buf)) {
+					citiesFlag = atoul(buf);
+				}
+			}
+			if (!strncasecmp(type, "defaultsubscriptionlevel", 24)) {
+				if (Seperator::IsNumber(buf)) {
+					defaultSubscriptionLevel = atoul(buf);
+				}
+			}
+			if (!strncasecmp(type, "enabledraces", 12)) {
+				if (Seperator::IsNumber(buf)) {
+					enabledRaces = atoul(buf);
+				}
+			}
 		}
 	}
 

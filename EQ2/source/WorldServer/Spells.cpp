@@ -1128,7 +1128,7 @@ EQ2Packet* Spell::SerializeAASpell(Client* client, int8 tier, AltAdvanceData* da
 	*/
 }
 
-EQ2Packet* Spell::SerializeSpell(Client* client, bool display, bool trait_display, int8 packet_type, int8 sub_packet_type, const char* struct_name) {
+EQ2Packet* Spell::SerializeSpell(Client* client, bool display, bool trait_display, int8 packet_type, int8 sub_packet_type, const char* struct_name, bool send_partial_packet) {
 	int16 version = 1;
 	if (client)
 		version = client->GetVersion();
@@ -1137,7 +1137,7 @@ EQ2Packet* Spell::SerializeSpell(Client* client, bool display, bool trait_displa
 	if (version <= 546) {
 		if (packet_type == 1)
 			struct_name = "WS_ExamineEffectInfo";
-		else if (!display && version<=283)
+		else if (!display && (version<=283 || send_partial_packet))
 			struct_name = "WS_ExaminePartialSpellInfo";
 		else
 			struct_name = "WS_ExamineSpellInfo";

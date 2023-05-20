@@ -441,9 +441,9 @@ public:
 		}
 	}
 #ifdef WORLD	
-	void setItem(DataStruct* ds, Item* item, Player* player, int32 index, sint8 offset = 0, bool loot_item = false);
-	void setItemByName(const char* name, Item* item, Player* player, int32 index = 0, sint8 offset = 0, bool loot_item = false);
-	void setItemArrayDataByName(const char* name, Item* item, Player* player, int32 index1 = 0, int32 index2 = 0, sint8 offset = 0, bool loot_item = false);
+	void setItem(DataStruct* ds, Item* item, Player* player, int32 index, sint8 offset = 0, bool loot_item = false, bool make_empty_item_packet = false);
+	void setItemByName(const char* name, Item* item, Player* player, int32 index = 0, sint8 offset = 0, bool loot_item = false, bool make_empty_item_packet = false);
+	void setItemArrayDataByName(const char* name, Item* item, Player* player, int32 index1 = 0, int32 index2 = 0, sint8 offset = 0, bool loot_item = false, bool make_empty_item_packet = false);
 #endif
 	void setEquipmentByName(const char* name, EQ2_EquipmentItem data, int32 index = 0) {
 		setEquipmentByName(findStruct(name, index), data, index);

@@ -230,15 +230,21 @@ void Player::DestroyQuests(){
 	MPlayerQuests.writelock(__FUNCTION__, __LINE__);
 	map<int32, Quest*>::iterator itr;
 	for(itr = completed_quests.begin(); itr != completed_quests.end(); itr++){
-		safe_delete(itr->second);
+		if(itr->second) {
+			safe_delete(itr->second);
+		}
 	}
 	completed_quests.clear();
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
-		safe_delete(itr->second);
+		if(itr->second) {
+			safe_delete(itr->second);
+		}
 	}
 	player_quests.clear();
 	for(itr = pending_quests.begin(); itr != pending_quests.end(); itr++){
-		safe_delete(itr->second);
+		if(itr->second) {
+			safe_delete(itr->second);
+		}
 	}
 	pending_quests.clear();
 	MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
@@ -1336,7 +1342,7 @@ bool Player::DamageEquippedItems(int8 amount, Client* client) {
 	return ret;
 }
 
-int8 Player::ConvertSlotToClient(int8 slot, int16 version) {
+int16 Player::ConvertSlotToClient(int8 slot, int16 version) {
 	if (version <= 283) {
 		if (slot == EQ2_FOOD_SLOT)
 			slot = EQ2_ORIG_FOOD_SLOT;
@@ -1356,7 +1362,7 @@ int8 Player::ConvertSlotToClient(int8 slot, int16 version) {
 	return slot;
 }
 
-int8 Player::ConvertSlotFromClient(int8 slot, int16 version) {
+int16 Player::ConvertSlotFromClient(int8 slot, int16 version) {
 	if (version <= 283) {
 		if (slot == EQ2_ORIG_FOOD_SLOT)
 			slot = EQ2_FOOD_SLOT;
@@ -1447,7 +1453,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 			to_item = item_list.items[bag_id][BASE_EQUIPMENT][slot];
 
 		bool canEquipToSlot = false;
-		if (to_item && equipList->CanItemBeEquippedInSlot(to_item, ConvertSlotFromClient(item->details.slot_id, version))) {
+		if (to_item && equipList->CanItemBeEquippedInSlot(to_item, item->details.slot_id)) {
 			canEquipToSlot = true;
 		}
 		item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
@@ -1702,7 +1708,7 @@ bool Player::CanEquipItem(Item* item, int8 slot) {
 					client->Message(0, "%s requires a good race.", item->name.c_str());
 			}
 			else if (item->IsArmor() || item->IsWeapon() || item->IsFood() || item->IsRanged() || item->IsShield() || item->IsBauble() || item->IsAmmo() || item->IsThrown()) {
-				if ((item->generic_info.skill_req1 == 0 || item->generic_info.skill_req1 == 0xFFFFFFFF || skill_list.HasSkill(item->generic_info.skill_req1)) && (item->generic_info.skill_req2 == 0 || item->generic_info.skill_req2 == 0xFFFFFFFF || skill_list.HasSkill(item->generic_info.skill_req2))) {
+				if (((item->generic_info.skill_req1 == 0 || item->generic_info.skill_req1 == 0xFFFFFFFF || skill_list.HasSkill(item->generic_info.skill_req1)) && (item->generic_info.skill_req2 == 0 || item->generic_info.skill_req2 == 0xFFFFFFFF || skill_list.HasSkill(item->generic_info.skill_req2)))) {
 					int16 override_level = item->GetOverrideLevel(GetAdventureClass(), GetTradeskillClass());
 					if (override_level > 0 && override_level <= GetLevel())
 						return true;
@@ -1738,7 +1744,6 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 	}
 	Item* item = item_list.indexed_items[index];
 	int8 orig_slot_id = slot_id;
-	slot_id = ConvertSlotFromClient(slot_id, version);
 	if (item) {
 		if(orig_slot_id == 255 && item->CheckFlag2(APPEARANCE_ONLY)) {
 			appearance_type = 1;
@@ -1847,7 +1852,7 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 				lua_interface->RunItemScript(item->GetItemScript(), "equipped", item, this);
 
 			item_list.RemoveItem(item);
-			equipList->SetItem(ConvertSlotToClient(slot, version), item);
+			equipList->SetItem(slot, item);
 			item->save_needed = true;
 			packets.push_back(item->serialize(version, false));
 			SetEquipment(item);
@@ -4876,7 +4881,8 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 	map<int32, Quest*>::iterator itr;
 	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	for(itr = player_quests.begin(); itr != player_quests.end(); itr++){
-		if(itr->second->CheckQuestChatUpdate(spawn->GetDatabaseID(), false))
+		// must make sure the quest ptr is alive or nullptr
+		if(itr->second && itr->second->CheckQuestChatUpdate(spawn->GetDatabaseID(), false))
 			ret = 2;
 	}
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
