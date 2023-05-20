@@ -4631,11 +4631,6 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->Message(CHANNEL_COLOR_YELLOW, "Angle %f between player %s and target %s", spawnAngle, client->GetPlayer()->GetTarget() ? client->GetPlayer()->GetTarget()->GetName() : client->GetPlayer()->GetName(), client->GetPlayer()->GetName());
 						break;
 					}
-					else if (ToLower(string(sep->arg[0])) == "knockback")
-					{
-						cmdTarget->SpawnKnockback(client->GetPlayer(), cmdTarget->GetX(), cmdTarget->GetY(), cmdTarget->GetZ());
-						break;
-					}
 				}
 				if (sep->IsNumber(0))
 				{
