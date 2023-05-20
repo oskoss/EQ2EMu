@@ -8266,8 +8266,8 @@ void ZoneServer::ProcessSpawnConditional(int8 condition) {
 void ZoneServer::AddSpawnProximities(Spawn* newSpawn) {
 	Spawn* spawn = 0;
 	map<int32, Spawn*>::iterator itr;
-	MSpawnList.readlock(__FUNCTION__, __LINE__);
 	MPendingSpawnListAdd.readlock(__FUNCTION__, __LINE__);
+	MSpawnList.readlock(__FUNCTION__, __LINE__);
 	for (itr = spawn_list.begin(); itr != spawn_list.end(); itr++) {
 		spawn = itr->second;
 		if (spawn && spawn != newSpawn) {
@@ -8298,8 +8298,8 @@ void ZoneServer::AddSpawnProximities(Spawn* newSpawn) {
 				newSpawn->AddSpawnToProximity(spawn->GetSpawnLocationID(), Spawn::SpawnProximityType::SPAWNPROXIMITY_LOCATION_ID);
 		}
 	}
-	MPendingSpawnListAdd.releasereadlock(__FUNCTION__, __LINE__);
 	MSpawnList.releasereadlock(__FUNCTION__, __LINE__);
+	MPendingSpawnListAdd.releasereadlock(__FUNCTION__, __LINE__);
 }
 
 // we only call this inside a write lock
