@@ -179,6 +179,7 @@ bool RegularOpcodeManager::LoadOpcodes(map<string, uint16>* eq, std::string* mis
 	
 	//dont need to set eq_to_emu cause every element should get a value
 	memset(eq_to_emu, 0, sizeof(EmuOpcode)*MAX_EQ_OPCODE);
+	memset(emu_to_eq, 0xCD, sizeof(uint16)*_maxEmuOpcode);
 	
 	bool ret = LoadOpcodesMap(eq, &s, missingOpcodes);
 	MOpcodes.unlock();
@@ -198,6 +199,7 @@ bool RegularOpcodeManager::LoadOpcodes(const char *filename) {
 	
 	//dont need to set eq_to_emu cause every element should get a value
 	memset(eq_to_emu, 0, sizeof(EmuOpcode)*MAX_EQ_OPCODE);
+	memset(emu_to_eq, 0xCD, sizeof(uint16)*_maxEmuOpcode);
 	
 	bool ret = LoadOpcodesFile(filename, &s);
 	MOpcodes.unlock();
