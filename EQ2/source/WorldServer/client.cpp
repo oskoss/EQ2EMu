@@ -3109,11 +3109,13 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (!spell->IsCopiedSpell())
 			SetSentSpell(spell->GetSpellID(), spell->GetSpellTier());
 		//	EQ2Packet* app = spell->SerializeAASpell(this,tier, data, false, GetItemPacketType(GetVersion()), 0x04);
-		EQ2Packet* app = master_spell_list.GetAASpellPacket(id, tier, this, false, 0x4F);//0x45 change version to match client
-		/////////////////////////////////////////GetAASpellPacket(int32 id, int8 tier, Client* client, bool display, int8 packet_type) {
-		//DumpPacket(app);
 		LogWrite(WORLD__INFO, 0, "WORLD", "Examine Info Request-> Spell ID: %u", spell->GetSpellID());
-		QueuePacket(app);
+		if(GetVersion() > 546) {
+			EQ2Packet* app = master_spell_list.GetAASpellPacket(id, tier, this, false, 0x4F);//0x45 change version to match client
+			/////////////////////////////////////////GetAASpellPacket(int32 id, int8 tier, Client* client, bool display, int8 packet_type) {
+			//DumpPacket(app);
+			QueuePacket(app);
+		}
 		//}
 	}
 	else {
@@ -6552,7 +6554,7 @@ void Client::DisplayQuestComplete(Quest* quest, bool tempReward, std::string cus
 		return;
 	
 	if (GetVersion() <= 546) {
-		DisplayQuestRewards(quest, 0, quest->GetRewardItems(), quest->GetSelectableRewardItems(), quest->GetRewardFactions(), "Quest Complete!", quest->GetStatusPoints(), customDescription.c_str(), was_displayed);
+		DisplayQuestRewards(quest, 0, quest->GetRewardItems(), quest->GetSelectableRewardItems(), quest->GetRewardFactions(), "Quest Complete!", quest->GetStatusPoints(), tempReward ? customDescription.c_str() : quest->GetCompletedDescription(), was_displayed);
 		return;
 	}
 	PacketStruct* packet = configReader.getStruct("WS_QuestComplete", GetVersion());
