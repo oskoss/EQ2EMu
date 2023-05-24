@@ -42,6 +42,10 @@ NPC* Entity::DropChest() {
 	// Check to see if treasure chests are disabled in the rules
 	if (rule_manager.GetGlobalRule(R_World, TreasureChestDisabled)->GetBool())
 		return 0;
+	
+	if(GetChestDropTime()) {
+		return 0; // this is a chest!  It doesn't drop itself!
+	}
 
 	NPC* chest = 0;
 
@@ -52,6 +56,8 @@ NPC* Entity::DropChest() {
 	chest->SetTargetable(1);
 	chest->SetLevel(GetLevel());
 	chest->SetChestDropTime();
+	chest->SetTotalHP(100);
+	chest->SetHP(100);
 	chest->SetAlive(false);
 	// Set the brain to a blank brain so it does nothing
 	chest->SetBrain(new BlankBrain(chest));
