@@ -4764,15 +4764,21 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 
 	player_skills->SetSkillCapsByType(SKILL_TYPE_ARMOR, new_skill_cap);
 	player_skills->SetSkillCapsByType(SKILL_TYPE_SHIELD, new_skill_cap);
-	//SKILL_TYPE_ARMOR/SKILL_TYPE_SHIELD always has the same current / max values
-	player_skills->SetSkillValuesByType(SKILL_TYPE_ARMOR, new_skill_cap, false);
-	player_skills->SetSkillValuesByType(SKILL_TYPE_SHIELD, new_skill_cap, false);
-
+	
+	if(rule_manager.GetGlobalRule(R_Player, AutoSkillUpBaseSkills)->GetBool()) {
+		//SKILL_TYPE_ARMOR/SKILL_TYPE_SHIELD always has the same current / max values
+		player_skills->SetSkillValuesByType(SKILL_TYPE_ARMOR, new_skill_cap, false);
+		player_skills->SetSkillValuesByType(SKILL_TYPE_SHIELD, new_skill_cap, false);
+	}
+	
 	player_skills->SetSkillCapsByType(SKILL_TYPE_CLASS, new_skill_cap);
 	player_skills->SetSkillCapsByType(SKILL_TYPE_WEAPON, new_skill_cap);
-	//SKILL_TYPE_CLASS/SKILL_TYPE_WEAPON always has the same current/max values
-	player_skills->SetSkillValuesByType(SKILL_TYPE_CLASS, new_skill_cap, false);
-	player_skills->SetSkillValuesByType(SKILL_TYPE_WEAPON, new_skill_cap, false);
+	
+	if(rule_manager.GetGlobalRule(R_Player, AutoSkillUpBaseSkills)->GetBool()) {
+		//SKILL_TYPE_CLASS/SKILL_TYPE_WEAPON always has the same current/max values
+		player_skills->SetSkillValuesByType(SKILL_TYPE_CLASS, new_skill_cap, false);
+		player_skills->SetSkillValuesByType(SKILL_TYPE_WEAPON, new_skill_cap, false);
+	}
 	
 	player_skills->SetSkillCapsByType(SKILL_TYPE_COMBAT, new_skill_cap);
 	player_skills->SetSkillCapsByType(SKILL_TYPE_GENERAL, new_skill_cap);

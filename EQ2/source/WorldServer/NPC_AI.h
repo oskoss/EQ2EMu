@@ -117,7 +117,9 @@ public:
 	/// <returns>True if the encounter list contains a player</returns>
 	bool PlayerInEncounter() { return m_playerInEncounter; }
 	bool IsPlayerInEncounter(int32 char_id);
-	bool IsEntityInEncounter(int32 id);
+	bool IsEntityInEncounter(int32 id, bool skip_read_lock = false);
+	int32 CountPlayerBotInEncounter();
+	bool AddToEncounter(int32 id);
 	/* Helper functions*/
 
 	/// <summary>Gets the NPC this brain controls</summary>

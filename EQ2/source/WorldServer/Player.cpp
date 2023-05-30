@@ -459,6 +459,13 @@ PacketStruct* PlayerInfo::serialize2(int16 version){
 		else {
 			packet->setDataByName("pet_name", "No Pet");
 		}
+		
+		packet->setDataByName("pet_health_pct", info_struct->get_pet_health_pct());
+		packet->setDataByName("pet_power_pct", info_struct->get_pet_power_pct());
+		
+		packet->setDataByName("pet_movement", info_struct->get_pet_movement());
+		packet->setDataByName("pet_behavior", info_struct->get_pet_behavior());
+		
 		packet->setDataByName("status_points", info_struct->get_status_points());
 		if(bind_zone_id > 0){
 			string bind_name = database.GetZoneName(bind_zone_id);
@@ -2434,6 +2441,8 @@ void Player::RemovePlayerSkill(int32 skill_id, bool save) {
 	Skill* skill = skill_list.GetSkill(skill_id);
 	if (skill)
 		RemoveSkillFromDB(skill, save);
+	
+	safe_delete(skill);
 }
 
 void Player::RemoveSkillFromDB(Skill* skill, bool save) {

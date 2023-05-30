@@ -97,7 +97,6 @@ public:
 	EQ2_16BitString name;
 	EQ2_16BitString description;
 	bool			save_needed;
-
 	int			CheckDisarmSkill(int16 targetLevel, int8 chest_difficulty=0);
 };
 

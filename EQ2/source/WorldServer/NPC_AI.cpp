@@ -507,11 +507,19 @@ bool Brain::HasRecovered() {
 void Brain::AddToEncounter(Entity* entity) {
 	// If player pet then set the entity to the pets owner
 	if (entity->IsPet() && entity->GetOwner() && !entity->IsBot()) {
-		m_encounter.push_back(entity->GetID());
+		MEncounter.writelock(__FUNCTION__, __LINE__);
+		bool success = AddToEncounter(entity->GetID());
+		MEncounter.releasewritelock(__FUNCTION__, __LINE__);
+		if(!success)
+			return;
 		entity = entity->GetOwner();
 	}
 	else if(entity->HasPet() && entity->GetPet()) {
-		m_encounter.push_back(entity->GetPet()->GetID());
+		MEncounter.writelock(__FUNCTION__, __LINE__);
+		bool success = AddToEncounter(entity->GetPet()->GetID());
+		MEncounter.releasewritelock(__FUNCTION__, __LINE__);
+		if(!success)
+			return;
 	}
 
 	// If player or bot then get the group
@@ -537,8 +545,8 @@ void Brain::AddToEncounter(Entity* entity) {
 			for (itr = members->begin(); itr != members->end(); itr++) {
 				if ((*itr)->member)
 				{
-					m_encounter.push_back((*itr)->member->GetID());
-					if((*itr)->client) {
+					bool success = AddToEncounter((*itr)->member->GetID());
+					if((*itr)->client && success) {
 						m_encounter_playerlist.insert(make_pair((*itr)->client->GetPlayer()->GetCharacterID(), (*itr)->client->GetPlayer()->GetID()));
 					}
 				}
@@ -549,8 +557,8 @@ void Brain::AddToEncounter(Entity* entity) {
 		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
 	}
 	else {
-		m_encounter.push_back(entity->GetID());
-		if (entity->IsPlayer())
+		bool success = AddToEncounter(entity->GetID());
+		if (success && entity->IsPlayer())
 		{
 			Player* plyr = (Player*)entity;
 			m_encounter_playerlist.insert(make_pair(plyr->GetCharacterID(), entity->GetID()));
@@ -638,9 +646,11 @@ bool Brain::IsPlayerInEncounter(int32 char_id) {
 	return ret;
 }
 
-bool Brain::IsEntityInEncounter(int32 id) {
+bool Brain::IsEntityInEncounter(int32 id, bool skip_read_lock) {
 	bool ret = false;
-	MEncounter.readlock(__FUNCTION__, __LINE__);
+	if(!skip_read_lock) {
+		MEncounter.readlock(__FUNCTION__, __LINE__);
+	}
 	vector<int32>::iterator itr;
 	for (itr = m_encounter.begin(); itr != m_encounter.end(); itr++) {
 		if ((*itr) == id) {
@@ -649,8 +659,32 @@ bool Brain::IsEntityInEncounter(int32 id) {
 			break;
 		}
 	}
-	MEncounter.releasereadlock(__FUNCTION__, __LINE__);
+	if(!skip_read_lock) {
+		MEncounter.releasereadlock(__FUNCTION__, __LINE__);
+	}
 	return ret;
+}
+
+int32 Brain::CountPlayerBotInEncounter() {
+	int32 count = 0;
+	vector<int32>::iterator itr;
+	MEncounter.readlock(__FUNCTION__, __LINE__);	
+	for (itr = m_encounter.begin(); itr != m_encounter.end(); itr++) {
+		Entity* ent = (Entity*)GetBody()->GetZone()->GetSpawnByID((*itr));
+		if (ent && (ent->IsPlayer() || ent->IsBot())) {
+			count++;
+		}
+	}
+	MEncounter.releasereadlock(__FUNCTION__, __LINE__);	
+	return count;
+}
+
+bool Brain::AddToEncounter(int32 id) {
+	if(!IsEntityInEncounter(id, true)) {
+		m_encounter.push_back(id);
+		return true;
+	}
+	return false;
 }
 
 void Brain::ClearEncounter() {

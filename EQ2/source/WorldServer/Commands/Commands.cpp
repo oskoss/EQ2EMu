@@ -10567,6 +10567,16 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				safe_delete(packet);
 			}
 		}
+		else if (atoi(sep->arg[0]) == 30) {
+			PacketStruct* packet = configReader.getStruct("WS_UpdateSkillBook", client->GetVersion());
+			if (packet) {
+				packet->setDataByName("unknown", World::newValue);
+				EQ2Packet* outapp = packet->serialize();
+				DumpPacket(outapp);
+				client->QueuePacket(outapp);
+				safe_delete(packet);
+			}
+		}
 	}
 	else {
 			PacketStruct* packet2 = configReader.getStruct("WS_ExamineSpellInfo", client->GetVersion());

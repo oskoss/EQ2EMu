@@ -19,9 +19,11 @@
 */
 #include "Skills.h"
 #include "Spawn.h"
+#include "LuaInterface.h"
 #include "../common/Log.h"
 
 extern ConfigReader configReader;
+extern LuaInterface* lua_interface;
 
 MasterSkillList::MasterSkillList(){
 }
@@ -143,12 +145,22 @@ PlayerSkillList::~PlayerSkillList(){
 }
 
 void PlayerSkillList::AddSkill(Skill* new_skill){
+	Skill* tmpSkill = nullptr;
+	if(skills.count(new_skill->skill_id)) {
+		tmpSkill = skills[new_skill->skill_id];
+	}
 	skills[new_skill->skill_id] = new_skill;
+	if(tmpSkill) {
+		lua_interface->SetLuaUserDataStale(tmpSkill);
+		safe_delete(tmpSkill);
+	}
 }
 
 void PlayerSkillList::RemoveSkill(Skill* skill) {
-	if (skill)
+	if (skill) {
+		lua_interface->SetLuaUserDataStale(skill);
 		skills.erase(skill->skill_id);
+	}
 }
 
 map<int32, Skill*>* PlayerSkillList::GetAllSkills(){
@@ -327,7 +339,6 @@ int16 PlayerSkillList::CalculateSkillMaxValue(int32 skill_id, int16 max_val) {
 EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 	PacketStruct* packet = configReader.getStruct("WS_UpdateSkillBook", version);
 	if(packet){
-		if(packet_count < skills.size()){
 			int16 size = 0;
 			if (version > 546) {
 				size = 21 * skills.size() + 8;
@@ -338,24 +349,26 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 			else if (version <= 546) {
 				size = 21 * skills.size() + 7;
 			}
-			if(!orig_packet){				
-				xor_packet = new uchar[size];
-				orig_packet = new uchar[size];
-				memset(xor_packet, 0, size);
-				memset(orig_packet, 0, size);
-				orig_packet_size = size;
-			}
-			else{
-				uchar* tmp = new uchar[size];
+			
+			if (skills.size() > packet_count) {
+			uchar* tmp = 0;
+			if (orig_packet) {
+				tmp = new uchar[size];
 				memset(tmp, 0, size);
 				memcpy(tmp, orig_packet, orig_packet_size);
 				safe_delete_array(orig_packet);
-				orig_packet = tmp;
 				safe_delete_array(xor_packet);
-				xor_packet = new uchar[size];
+				orig_packet = tmp;
 			}
-			packet_count = skills.size();
+			else {
+				orig_packet = new uchar[size];
+				memset(orig_packet, 0, size);
+			}
+			xor_packet = new uchar[size];
+			memset(xor_packet, 0, size);
 		}
+		packet_count = skills.size();
+		orig_packet_size = size;
 		packet->setArrayLengthByName("skill_count", skills.size());
 		map<int32, Skill*>::iterator itr;
 		Skill* skill = 0;
@@ -363,7 +376,6 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 		for(itr = skills.begin(); itr != skills.end(); itr++){
 			skill = itr->second;
 			if(skill){
-
 				int16 skill_max_with_bonuses = CalculateSkillMaxValue(skill->skill_id, skill->max_val);
 				int16 skill_with_bonuses = int(CalculateSkillValue(skill->skill_id, skill->current_val));
 				packet->setArrayDataByName("skill_id", skill->skill_id, i);
@@ -394,9 +406,8 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 				
 				packet->setArrayDataByName("current_val", current_val, i);
 				packet->setArrayDataByName("base_val", current_val, i);
-				
-				i++;
 			}
+			i++;
 		}
 		int8 offset = 1;
 		if (version <= 283)

@@ -2251,7 +2251,7 @@ int8 World::TranslateSlotSubTypeToClient(Client* client, int8 stat_type, sint16 
 			if(client->GetVersion() <= 546) {
 				if(sub_type == (ITEM_STAT_VS_POISON-200)) // poison
 					new_subtype = 9;
-				if(sub_type == (ITEM_STAT_VS_DISEASE-200)) // disease
+				else if(sub_type == (ITEM_STAT_VS_DISEASE-200)) // disease
 					new_subtype = 8;
 				else if(sub_type == (ITEM_STAT_VS_COLD-200)) // cold
 					new_subtype = 4;

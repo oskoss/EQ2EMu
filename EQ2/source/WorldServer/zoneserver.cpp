@@ -4685,6 +4685,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 	PacketStruct* packet = 0;
 	Client* client = 0;
 	vector<int32>* encounter = 0;
+	int32 encounter_player_bot_count = 1;
 	bool killer_in_encounter = false;
 	int8 loot_state = dead->GetLockedNoLoot();
 		
@@ -4744,6 +4745,9 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 		}
 		else if (dead->IsNPC()) {
 			encounter = ((NPC*)dead)->Brain()->GetEncounter();
+			encounter_player_bot_count = ((NPC*)dead)->Brain()->CountPlayerBotInEncounter();
+			if(encounter_player_bot_count < 1)
+				encounter_player_bot_count = 1;
 		}
 
 	}
@@ -4816,7 +4820,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 					if (spawn != dead && ((Player*)spawn)->GetArrowColor(dead->GetLevel()) >= ARROW_COLOR_GREEN) {
 						//SendCalculatedXP((Player*)spawn, dead);
 
-						float xp = ((Player*)spawn)->CalculateXP(dead) / size;
+						float xp = ((Player*)spawn)->CalculateXP(dead) / encounter_player_bot_count;
 						if (xp > 0) {
 							((Player*)spawn)->AddXP((int32)xp);
 						}

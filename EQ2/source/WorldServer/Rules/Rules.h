@@ -78,6 +78,7 @@ enum RuleType {
 	SwimmingSkillMaxSpeed,
 	SwimmingSkillMinBreathLength,
 	SwimmingSkillMaxBreathLength,
+	AutoSkillUpBaseSkills,
 
 	/* PVP */
 	AllowPVP,

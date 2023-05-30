@@ -2578,7 +2578,8 @@ void PacketStruct::setItem(DataStruct* ds, Item* item, Player* player, int32 ind
 	PacketStruct* packet = item->PrepareItem(client_version, false, loot_item);
 	if (packet) {
 		int16 item_version = GetItemPacketType(packet->GetVersion());
-		item->serialize(packet, true, player, item_version);
+		// newer clients can handle the item structure without the loot_item flag set to true, older clients like DoF need a smaller subpacket of item
+		item->serialize(packet, true, player, item_version, 0, (packet->GetVersion() <= 546) ? loot_item : false);
 
 		string* generic_string_data = packet->serializeString();
 		int32 size = generic_string_data->length(); // had to set to 81

@@ -217,9 +217,9 @@ void RuleManager::Init()
 	RULE_INIT(R_Player, HeirloomItemShareExpiration, "172800.0"); // 2 days ('48 hours') in seconds
 	RULE_INIT(R_Player, SwimmingSkillMinSpeed, "20"); 
 	RULE_INIT(R_Player, SwimmingSkillMaxSpeed, "200");
-	
 	RULE_INIT(R_Player, SwimmingSkillMinBreathLength, "30");
 	RULE_INIT(R_Player, SwimmingSkillMaxBreathLength, "1000");
+	RULE_INIT(R_Player, AutoSkillUpBaseSkills, "0"); // when set to 1 we auto skill to max value on levelling up for armor,shield,class,weapon skills
 	
 	/* PVP */
 	RULE_INIT(R_PVP, AllowPVP, "0");

@@ -1873,18 +1873,8 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		for (int32 i = 0; i < item_stats.size(); i++) {
 			ItemStat* stat = item_stats[i];
 			tmp_subtype = world.TranslateSlotSubTypeToClient(client, stat->stat_type, stat->stat_subtype);
-			if (tmp_subtype == 255 ){
-				
-				dropstat += 1;
-				//packet->setSubstructArrayLengthByName("header_info", "stat_count", item_stats.size()-dropstat);
-			}
-			else {
-				packet->setArrayDataByName("stat_type", stat->stat_type, i-dropstat);
-				packet->setArrayDataByName("stat_subtype", tmp_subtype, i-dropstat);
-			}
-			if (stat->stat_name.length() > 0)
-				packet->setArrayDataByName("stat_name", stat->stat_name.c_str(), i-dropstat);
-			/* SF client */
+			int16 stat_type = stat->stat_type;
+			
 			float statValue = stat->value;
 			if(player)
 			{
@@ -1895,7 +1885,20 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 					float tmpValue = (float)statValue;
 					statValue = (sint32)(float)(tmpValue / (1.0f + ((float)diff * rule_manager.GetGlobalRule(R_Player, MentorItemDecayRate)->GetFloat())));
 				}
+			}	
+			
+			if (tmp_subtype == 255 ){
+				
+				dropstat += 1;
+				//packet->setSubstructArrayLengthByName("header_info", "stat_count", item_stats.size()-dropstat);
 			}
+			else {
+				packet->setArrayDataByName("stat_type", stat_type, i-dropstat);
+				packet->setArrayDataByName("stat_subtype", tmp_subtype, i-dropstat);
+			}
+			if (stat->stat_name.length() > 0)
+				packet->setArrayDataByName("stat_name", stat->stat_name.c_str(), i-dropstat);
+			/* SF client */
 
 			if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331) {
 				if (stat->stat_type == 6){
@@ -2361,7 +2364,6 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 						else {							
 							spell->SetPacketInformation(packet);
 						}
-
 						//packet->setDataByName("unknown26", 0);
 					}
 				}
@@ -2554,6 +2556,10 @@ PacketStruct* Item::PrepareItem(int16 version, bool merchant_item, bool loot_ite
 	PacketStruct* packet = 0;
 	if(loot_item && version > 546)
 		packet = configReader.getStruct("WS_LootItemGeneric", version);
+	else if(loot_item && version <= 546) {
+		packet = configReader.getStruct("WS_ItemGeneric", version);
+		packet->AddFlag("loot");
+	}
 	else{
 		int8 tmpType = generic_info.item_type;
 		if (version <= 283 && generic_info.item_type > ITEM_TYPE_RECIPE)

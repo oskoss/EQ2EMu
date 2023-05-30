@@ -863,8 +863,10 @@ struct InfoStruct{
 	void	set_strikethrough(float value) { std::lock_guard<std::mutex> lk(classMutex); strikethrough_ = value; }
 	void	set_accuracy(float value) { std::lock_guard<std::mutex> lk(classMutex); accuracy_ = value; }
 	void	set_offensivespeed(float value) { std::lock_guard<std::mutex> lk(classMutex); offensivespeed_ = value; }
-	void	set_rain(float value) { std::lock_guard<std::mutex> lk(classMutex); rain_ = value; }
-	void	set_wind(float value) { std::lock_guard<std::mutex> lk(classMutex); wind_ = value; }
+	
+	// crash client if float values above 1.0 are sent
+	void	set_rain(float value) { std::lock_guard<std::mutex> lk(classMutex); if(value > 1.0f) value = 1.0f; else if(value < 0.0f) value = 0.0f; rain_ = value; }
+	void	set_wind(float value) { std::lock_guard<std::mutex> lk(classMutex); if(value > 1.0f) value = 1.0f; else if(value < 0.0f) value = 0.0f; wind_ = value; }
 
 	void	add_block_chance(float value) { std::lock_guard<std::mutex> lk(classMutex); if(block_chance_ + value < 0.0f) block_chance_ = 0.0f; else block_chance_ += value; }
 	void	add_uncontested_parry(float value) { std::lock_guard<std::mutex> lk(classMutex); if(uncontested_parry_ + value < 0.0f) uncontested_parry_ = 0.0f; else uncontested_parry_ += value; }

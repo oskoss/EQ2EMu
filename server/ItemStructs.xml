@@ -1319,6 +1319,10 @@
 <Data ElementName="name" Type="EQ2_8Bit_String" Size="1" />
 <Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
 </Struct>
+<Struct Name="Substruct_SkillItemFooter" ClientVersion="546" >
+<Data ElementName="name" Type="EQ2_8Bit_String" Size="1" />
+<Data ElementName="description" Type="EQ2_16Bit_String" Size="1" />
+</Struct>
 <Struct Name="Substruct_ItemFooter" ClientVersion="547" >
 <Data ElementName="num_effects" Type="int8" IfVariableNotSet="header_info_header_unknown_0_0,header_unknown_0" />
 <Data ElementName="effect_array" Type="Array" ArraySizeVariable="num_effects">
@@ -4455,6 +4459,12 @@
 <Data ElementName="max_aoe_targets" Type="int32" Size="1" />
 <Data ElementName="display_until_cancelled" Type="int8" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemSkill" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="spell_info" Substruct="WS_SpellInfo" Size="1" />
+<Data ElementName="scribed" Type="int8" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_SkillItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemSkill" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />

@@ -1993,9 +1993,12 @@ to zero and treated like placeholders." />
 <Data ElementName="leader_index" Type="int32" Size="1" /> <!-- 4697 -->
 <Data ElementName="pet_id" Type="int32" Size="1" /> <!-- 4701 -->
 <Data ElementName="pet_name" Type="char" Size="32" /> <!-- 4705 -->
-<Data ElementName="pet_hp" Type="float" Size="1" /> <!-- 4737 -->
-<Data ElementName="pet_power" Type="float" Size="1" /><!-- 4741 -->
-<Data ElementName="unknown6" Type="int8" Size="12" /><!-- 4745 -->
+<Data ElementName="unknown6" Type="int8" Size="9" /><!-- 4745 -->
+<Data ElementName="pet_health_pct" Type="float" Size="1" /> <!-- 4737 -->
+<Data ElementName="pet_power_pct" Type="float" Size="1" /><!-- 4741 -->
+<Data ElementName="unknown185" Type="int8" Size="1" />
+<Data ElementName="pet_movement" Type="int8" Size="1" />
+<Data ElementName="pet_behavior" Type="int8" Size="1" />
 <Data ElementName="rain" Type="float" Size="1" /><!-- 4757 -->
 <Data ElementName="rain2" Type="float" Size="1" /><!-- 4761 -->
 <Data ElementName="status_points" Type="int32" Size="1" /> <!-- 4765 -->
@@ -6666,7 +6669,6 @@ to zero and treated like placeholders." />
 <Data ElementName="spell_visual" Type="int16" />
 <Data ElementName="cast_time" Type="float" />
 <Data ElementName="spell_level" Type="int8" />
-<Data ElementName="spell_tier" Type="int8" />
 </Struct>
 <Struct Name="WS_HearCastSpell" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearSpellCastCmd">
 <Data ElementName="spawn_id" Type="int32" />
@@ -7157,7 +7159,7 @@ to zero and treated like placeholders." />
 	<Data ElementName="display" Type="int8" />
 	<Data ElementName="loot_type" Type="int32" /> <!-- 0=selected member, 1=regular, 2=lotto -->
 	<Data ElementName="lotto_timeout" Type="int32" />
-	<Data ElementName="spawn_id" Type="int32" Size="5" />
+	<Data ElementName="spawn_id" Type="int32"/>
 </Struct>
 <Struct Name="WS_UpdateLoot" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateLootCmd" >
 <Data ElementName="loot_count" Type="int16" />
