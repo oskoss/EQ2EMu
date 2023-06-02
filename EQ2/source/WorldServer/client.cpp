@@ -6107,6 +6107,8 @@ void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets)
 		GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 	
 	quest->SetPlayer(player);
+	quest->SetSaveNeeded(true);
+	
 	current_quest_id = quest->GetQuestID();
 	if (send_packets && quest->GetQuestGiver() > 0)
 		GetCurrentZone()->SendSpawnChangesByDBID(quest->GetQuestGiver(), this, false, true);
