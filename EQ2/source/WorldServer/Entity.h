@@ -278,6 +278,8 @@ struct InfoStruct{
 		
 		first_world_login_ = 0;
 		reload_player_spells_ = 0;
+		
+		action_state_ = std::string("");
 	}
 
 
@@ -467,6 +469,8 @@ struct InfoStruct{
 		
 		first_world_login_ = oldStruct->get_first_world_login();
 		reload_player_spells_ = oldStruct->get_reload_player_spells();
+		
+		action_state_ = oldStruct->get_action_state();
 
 	}
 	//mutable std::shared_mutex mutex_;
@@ -675,6 +679,8 @@ struct InfoStruct{
 	
 	int8	get_reload_player_spells() { std::lock_guard<std::mutex> lk(classMutex); return reload_player_spells_; }
 	
+	std::string get_action_state() { std::lock_guard<std::mutex> lk(classMutex); return action_state_; }
+	
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
 	void	set_deity(std::string value) { std::lock_guard<std::mutex> lk(classMutex); deity_ = value; }
@@ -779,7 +785,7 @@ struct InfoStruct{
 	void	set_xp(int32 value) { std::lock_guard<std::mutex> lk(classMutex); xp_ = value; }
 	void	set_xp_needed(int32 value) { std::lock_guard<std::mutex> lk(classMutex); xp_needed_ = value; }
 
-	void	set_xp_debt(float value) { std::lock_guard<std::mutex> lk(classMutex); xp_debt_ = value; }
+	void	set_xp_debt(float value) { std::lock_guard<std::mutex> lk(classMutex); if(std::isnan(value)) value = 0.0f; xp_debt_ = value; }
 
 	void	set_xp_yellow(int16 value) { std::lock_guard<std::mutex> lk(classMutex); xp_yellow_ = value; }
 	void	set_xp_blue(int16 value) { std::lock_guard<std::mutex> lk(classMutex); xp_blue_ = value; }
@@ -967,6 +973,8 @@ struct InfoStruct{
 	
 	void	set_reload_player_spells(int8 value) { std::lock_guard<std::mutex> lk(classMutex); reload_player_spells_ = value; }
 
+	void	set_action_state(std::string value) { std::lock_guard<std::mutex> lk(classMutex); action_state_ = value; }
+	
 	void	ResetEffects(Spawn* spawn)
 	{
 		for(int i=0;i<45;i++){
@@ -1173,6 +1181,8 @@ private:
 	
 	int8			first_world_login_;
 	int8			reload_player_spells_;
+	
+	std::string		action_state_;
 	
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;

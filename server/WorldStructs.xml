@@ -9351,6 +9351,7 @@ to zero and treated like placeholders." />
 	<Data ElementName="status2" Type="int32" Size="1" />	
 </Data>
 <Data ElementName="type" Type="int8" /> <!-- 0==buy, 1==sell, 16==repair, 128==goblin game -->
+<Data ElementName="unknown" Type="int8" Size="2" />
 </Struct>
 <Struct Name="WS_UpdateMerchant" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateMerchantCmd">
 <Data ElementName="spawn_id" Type="int32" />

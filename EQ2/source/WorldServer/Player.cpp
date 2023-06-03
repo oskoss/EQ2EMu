@@ -259,9 +259,14 @@ PlayerInfo* Player::GetPlayerInfo(){
 void PlayerInfo::CalculateXPPercentages(){
 	int32 xp_needed = info_struct->get_xp_needed();
 	if(xp_needed > 0){
-		float percentage = ((double)info_struct->get_xp() / xp_needed) * 1000;
-		info_struct->set_xp_yellow((int16)percentage);
-		info_struct->set_xp_blue((int16)(percentage-info_struct->get_xp_yellow())*1000);
+		double div_percent = ((double)info_struct->get_xp() / xp_needed) * 100.0;
+		int16 percentage = (int16)(div_percent) * 10;
+		double whole, fractional = 0.0;
+		fractional = std::modf(div_percent, &whole);
+		info_struct->set_xp_yellow(percentage);
+		info_struct->set_xp_blue((int16)(fractional * 1000));
+		
+		// vitality bars probably need a revisit
 		info_struct->set_xp_blue_vitality_bar(0);
 		info_struct->set_xp_yellow_vitality_bar(0);
 		if(player->GetXPVitality() > 0){
@@ -759,7 +764,9 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		}
 		else
 		{
-			packet->setDataByName("exp_debt", (int16)(info_struct->get_xp_debt()/10.0f));//95= 9500% //confirmed DoV
+			double currentPctOfLevel = (double)info_struct->get_xp() / (double)info_struct->get_xp_needed();
+			double neededPctAdvanceOutOfDebt = (currentPctOfLevel + ((double)info_struct->get_xp_debt() / 100.0)) * 1000.0;
+			packet->setDataByName("exp_debt", (int16)(neededPctAdvanceOutOfDebt));//95= 9500% //confirmed DoV
 		}
 		
 		packet->setDataByName("current_trade_xp", info_struct->get_ts_xp());// confirmed DoV
@@ -2441,8 +2448,6 @@ void Player::RemovePlayerSkill(int32 skill_id, bool save) {
 	Skill* skill = skill_list.GetSkill(skill_id);
 	if (skill)
 		RemoveSkillFromDB(skill, save);
-	
-	safe_delete(skill);
 }
 
 void Player::RemoveSkillFromDB(Skill* skill, bool save) {
@@ -3970,7 +3975,7 @@ void Player::CalculateOfflineDebtRecovery(int32 unix_timestamp)
 	if(unix_timestamp < 1 || xpDebt == 0.0f)
 		return;
 
-	uint32 diff = (Timer::GetCurrentTime2() - unix_timestamp)/1000;
+	uint32 diff = (Timer::GetUnixTimeStamp() - unix_timestamp)/1000;
 	
 	float recoveryDebtPercentage = rule_manager.GetGlobalRule(R_Combat, ExperienceDebtRecoveryPercent)->GetFloat()/100.0f;
 	int32 recoveryPeriodSeconds = rule_manager.GetGlobalRule(R_Combat, ExperienceDebtRecoveryPeriod)->GetInt32();

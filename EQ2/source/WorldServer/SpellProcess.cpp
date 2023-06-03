@@ -1282,8 +1282,8 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target Enemy (%s) and Max AE Targets = 0.", spell->GetName(), target->GetName());
 
 		
-			if(spell->GetSpellData()->friendly_spell && (caster->IsPlayer() || caster->IsBot()) && (target->IsPlayer() || target->IsBot()) && 
-			   ((Entity*)target)->GetInfoStruct()->get_engaged_encounter() && 
+			if((spell->GetSpellData()->friendly_spell && caster != target && (caster->IsPlayer() || caster->IsBot()) && (target->IsPlayer() || target->IsBot()) && 
+			   ((Entity*)target)->GetInfoStruct()->get_engaged_encounter()) && 
 				((!((Entity*)caster)->GetGroupMemberInfo() || !((Entity*)target)->GetGroupMemberInfo()) || 
 				(((Entity*)caster)->GetGroupMemberInfo()->group_id != ((Entity*)target)->GetGroupMemberInfo()->group_id))) {
 				LogWrite(SPELL__DEBUG, 1, "Spell", "%s: Target (%s) is engaged in combat and cannot be assisted.", spell->GetName(), target->GetName());

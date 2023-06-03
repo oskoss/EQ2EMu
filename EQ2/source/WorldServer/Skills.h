@@ -21,6 +21,9 @@
 #define __EQ2_SKILLS_H__
 
 #include <map>
+#include <mutex>
+#include <shared_mutex>
+
 #include "../common/ConfigReader.h"
 #include "../common/types.h"
 #include "MutexMap.h"
@@ -97,6 +100,7 @@ public:
 	EQ2_16BitString name;
 	EQ2_16BitString description;
 	bool			save_needed;
+	bool			active_skill;
 	int			CheckDisarmSkill(int16 targetLevel, int8 chest_difficulty=0);
 };
 
@@ -161,6 +165,7 @@ public:
 	void ResetPackets();
 private:
 	volatile bool has_updates;
+	mutable std::shared_mutex MPlayerSkills;
 	Mutex MSkillUpdates;
 	int16 packet_count;
 	uchar* orig_packet;

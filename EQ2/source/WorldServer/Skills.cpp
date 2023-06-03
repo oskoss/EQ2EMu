@@ -47,6 +47,7 @@ Skill::Skill(){
 	skill_type = 0;
 	display = 0;
 	save_needed = false;
+	active_skill = true;
 }
 
 Skill::Skill(Skill* skill){
@@ -60,6 +61,7 @@ Skill::Skill(Skill* skill){
 	name = skill->name;
 	description = skill->description;
 	save_needed = false;
+	active_skill = true;
 }
 
 map<int32, Skill*>* MasterSkillList::GetAllSkills(){
@@ -145,6 +147,7 @@ PlayerSkillList::~PlayerSkillList(){
 }
 
 void PlayerSkillList::AddSkill(Skill* new_skill){
+	std::unique_lock lock(MPlayerSkills);
 	Skill* tmpSkill = nullptr;
 	if(skills.count(new_skill->skill_id)) {
 		tmpSkill = skills[new_skill->skill_id];
@@ -154,12 +157,15 @@ void PlayerSkillList::AddSkill(Skill* new_skill){
 		lua_interface->SetLuaUserDataStale(tmpSkill);
 		safe_delete(tmpSkill);
 	}
+	name_skill_map.clear();
 }
 
 void PlayerSkillList::RemoveSkill(Skill* skill) {
+	std::unique_lock lock(MPlayerSkills);
 	if (skill) {
 		lua_interface->SetLuaUserDataStale(skill);
-		skills.erase(skill->skill_id);
+		skill->active_skill = false;
+		name_skill_map.clear();
 	}
 }
 
@@ -199,11 +205,13 @@ void PlayerSkillList::IncreaseAllSkillCaps(int16 value){
 }
 
 bool PlayerSkillList::HasSkill(int32 skill_id){
-	return (skills.count(skill_id) > 0);
+	std::shared_lock lock(MPlayerSkills);
+	return (skills.count(skill_id) > 0 && skills[skill_id]->active_skill);
 }
 
 Skill* PlayerSkillList::GetSkill(int32 skill_id){
-	if(skills.count(skill_id) > 0)
+	std::shared_lock lock(MPlayerSkills);
+	if(skills.count(skill_id) > 0 && skills[skill_id]->active_skill)
 		return skills[skill_id];
 	else
 		return 0;
@@ -337,20 +345,27 @@ int16 PlayerSkillList::CalculateSkillMaxValue(int32 skill_id, int16 max_val) {
 }
 
 EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
+	std::shared_lock lock(MPlayerSkills);
 	PacketStruct* packet = configReader.getStruct("WS_UpdateSkillBook", version);
 	if(packet){
+			int16 skill_count = 0;
+			map<int32, Skill*>::iterator itr;
+			for (itr = skills.begin(); itr != skills.end(); itr++) {
+				if (itr->second && itr->second->active_skill)
+					skill_count++;
+			}
 			int16 size = 0;
 			if (version > 546) {
-				size = 21 * skills.size() + 8;
+				size = 21 * skill_count + 8;
 			}
 			else if (version <= 283) {
-				size = 12 * skills.size() + 6;
+				size = 12 * skill_count + 6;
 			}
 			else if (version <= 546) {
-				size = 21 * skills.size() + 7;
+				size = 21 * skill_count + 7;
 			}
 			
-			if (skills.size() > packet_count) {
+			if (skill_count > packet_count) {
 			uchar* tmp = 0;
 			if (orig_packet) {
 				tmp = new uchar[size];
@@ -367,15 +382,14 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 			xor_packet = new uchar[size];
 			memset(xor_packet, 0, size);
 		}
-		packet_count = skills.size();
+		packet_count = skill_count;
 		orig_packet_size = size;
-		packet->setArrayLengthByName("skill_count", skills.size());
-		map<int32, Skill*>::iterator itr;
+		packet->setArrayLengthByName("skill_count", skill_count);
 		Skill* skill = 0;
 		int32 i=0;
 		for(itr = skills.begin(); itr != skills.end(); itr++){
 			skill = itr->second;
-			if(skill){
+			if(skill && skill->active_skill){
 				int16 skill_max_with_bonuses = CalculateSkillMaxValue(skill->skill_id, skill->max_val);
 				int16 skill_with_bonuses = int(CalculateSkillValue(skill->skill_id, skill->current_val));
 				packet->setArrayDataByName("skill_id", skill->skill_id, i);
@@ -406,8 +420,8 @@ EQ2Packet* PlayerSkillList::GetSkillPacket(int16 version){
 				
 				packet->setArrayDataByName("current_val", current_val, i);
 				packet->setArrayDataByName("base_val", current_val, i);
+				i++;
 			}
-			i++;
 		}
 		int8 offset = 1;
 		if (version <= 283)
@@ -437,6 +451,7 @@ bool PlayerSkillList::CheckSkillIncrease(Skill* skill){
 }
 
 Skill* PlayerSkillList::GetSkillByName(const char* name){
+	std::shared_lock lock(MPlayerSkills);
 	if(name_skill_map.size() == 0){
 		map<int32, Skill*>::iterator itr;
 		Skill* skill = 0;
@@ -452,6 +467,7 @@ Skill* PlayerSkillList::GetSkillByName(const char* name){
 }
 
 vector<Skill*>* PlayerSkillList::GetSaveNeededSkills(){
+	std::shared_lock lock(MPlayerSkills);
 	vector<Skill*>* ret = new vector<Skill*>;
 	map<int32, Skill*>::iterator itr;
 	for(itr = skills.begin(); itr != skills.end(); itr++){

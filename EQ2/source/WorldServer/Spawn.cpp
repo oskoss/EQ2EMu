@@ -33,6 +33,7 @@
 #include "Bots/Bot.h"
 #include "Zone/raycast_mesh.h"
 #include "RaceTypes/RaceTypes.h"
+#include "VisualStates.h"
 
 extern ConfigReader configReader;
 extern RuleManager rule_manager;
@@ -40,6 +41,7 @@ extern World world;
 extern ZoneList zone_list;
 extern MasterRaceTypeList race_types_list;
 extern LuaInterface* lua_interface;
+extern VisualStates visual_states;
 
 Spawn::Spawn(){ 
 	loot_coins = 0;
@@ -2403,8 +2405,19 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 
 	if (GetTempActionState() >= 0)
 		packet->setDataByName("action_state", GetTempActionState());
-	else
-		packet->setDataByName("action_state", appearance.action_state);
+	else {
+		Client* client = spawn->GetClient();
+		int16 action_state = appearance.action_state;
+		if(IsEntity() && client) {
+			std::string actionState = ((Entity*)this)->GetInfoStruct()->get_action_state();
+			if(actionState.size() > 0) {
+				Emote* emote = visual_states.FindEmote(actionState, client->GetVersion());
+				if(emote != NULL)
+					action_state = emote->GetVisualState();
+			}
+		}
+		packet->setDataByName("action_state", action_state);
+	}
 	
 	bool scaredOfPlayer = false;
 	

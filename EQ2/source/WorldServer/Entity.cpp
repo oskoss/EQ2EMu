@@ -342,6 +342,10 @@ void Entity::MapInfoStruct()
 	get_int8_funcs["engaged_encounter"] = l::bind(&InfoStruct::get_engaged_encounter, &info_struct);
 	
 	get_int8_funcs["first_world_login"] = l::bind(&InfoStruct::get_first_world_login, &info_struct);
+	
+	get_int8_funcs["reload_player_spells"] = l::bind(&InfoStruct::get_reload_player_spells, &info_struct);
+	
+	get_string_funcs["action_state"] = l::bind(&InfoStruct::get_action_state, &info_struct);
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -529,6 +533,10 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["engaged_encounter"] = l::bind(&InfoStruct::set_engaged_encounter, &info_struct, l::_1);
 	
 	set_int8_funcs["first_world_login"] = l::bind(&InfoStruct::set_first_world_login, &info_struct, l::_1);
+	
+	set_int8_funcs["reload_player_spells"] = l::bind(&InfoStruct::set_reload_player_spells, &info_struct, l::_1);
+	
+	set_string_funcs["action_state"] = l::bind(&InfoStruct::set_action_state, &info_struct, l::_1);
 
 }
 
