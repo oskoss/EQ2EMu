@@ -1713,7 +1713,7 @@ Quest* LuaInterface::GetQuest(lua_State* state, int8 arg_num) {
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if(!data || !data->IsCorrectlyInitialized()){
-			LogError("%s: GetQuest error while processing %s", GetScriptName(state), lua_tostring(state, 0));
+			LogError("%s: GetQuest error while processing %s", GetScriptName(state), lua_tostring(state, -1));
 		}
 		else if(!data->IsQuest()){
 			lua_Debug ar;
@@ -1733,7 +1733,7 @@ Item* LuaInterface::GetItem(lua_State* state, int8 arg_num) {
 	if(lua_islightuserdata(state, arg_num)){
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if(!data || !data->IsCorrectlyInitialized()){
-			LogError("%s: GetItem error while processing %s", GetScriptName(state), lua_tostring(state, 0));
+			LogError("%s: GetItem error while processing %s", GetScriptName(state), lua_tostring(state, -1));
 		}
 		else if(!data->IsItem()){
 			lua_Debug ar;
@@ -1753,7 +1753,7 @@ Skill* LuaInterface::GetSkill(lua_State* state, int8 arg_num) {
 	if (lua_islightuserdata(state, arg_num)) {
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if (!data || !data->IsCorrectlyInitialized()) {
-			LogError("%s: GetSkill error while processing %s", GetScriptName(state), lua_tostring(state, 0));
+			LogError("%s: GetSkill error while processing %s", GetScriptName(state), lua_tostring(state, -1));
 		}
 		else if (!data->IsSkill()) {
 			lua_Debug ar;
@@ -1773,7 +1773,7 @@ LuaSpell* LuaInterface::GetSpell(lua_State* state, int8 arg_num) {
 	if (lua_islightuserdata(state, arg_num)) {
 		LUAUserData* data = (LUAUserData*)lua_touserdata(state, arg_num);
 		if (!data || !data->IsCorrectlyInitialized()) {
-			LogError("%s: GetSpell error while processing %s", GetScriptName(state), lua_tostring(state, 0));
+			LogError("%s: GetSpell error while processing %s", GetScriptName(state), lua_tostring(state, -1));
 		}
 		else if (!data->IsSpell()) {
 			lua_Debug ar;
