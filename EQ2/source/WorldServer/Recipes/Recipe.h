@@ -194,7 +194,8 @@ public:
 	virtual ~MasterRecipeList();
 
 	bool AddRecipe(Recipe *recipe);
-	Recipe * GetRecipe(int32 recipe_id);
+	Recipe* GetRecipe(int32 recipe_id);
+	Recipe* GetRecipeByCRC(int32 recipe_crc);
 	void ClearRecipes();
 	int32 Size();
 	EQ2Packet* GetRecipePacket(int32 recipe_id, Client *client = 0, bool display = false, int8 packet_type = 0);
@@ -212,6 +213,7 @@ public:
 private:
 	Mutex m_recipes;
 	map<int32, Recipe *> recipes;
+	map<int32, Recipe *> recipes_crc;
 };
 
 class MasterRecipeBookList {

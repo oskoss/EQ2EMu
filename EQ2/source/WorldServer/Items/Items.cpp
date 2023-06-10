@@ -2417,7 +2417,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				if(recipebook_info){
 					packet->setArrayLengthByName("num_recipes", recipebook_info->recipes.size());
 					for (int32 i = 0; i < recipebook_info->recipes.size(); i++) {
-						Recipe* recipe = master_recipe_list.GetRecipe(recipebook_info->recipes.at(i));
+						Recipe* recipe = master_recipe_list.GetRecipeByCRC(recipebook_info->recipes.at(i));
 						if (recipe) {
 							packet->setArrayDataByName("recipe_name", recipe->GetName(), i);
 							packet->setArrayDataByName("recipe_id", recipe->GetID(), i);
@@ -2544,7 +2544,6 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	packet->setSubstructDataByName("footer", "description", description.c_str());
 
 	LogWrite(ITEM__PACKET, 0, "Items", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
-	//packet->PrintPacket();
 
 #if EQDEBUG >= 9
 	packet->PrintPacket();

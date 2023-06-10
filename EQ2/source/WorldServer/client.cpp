@@ -11992,7 +11992,7 @@ bool Client::AddRecipeBookToPlayer(int32 recipe_book_id, Item* item) {
 			if (recipes.empty() && item && item->recipebook_info) {
 				//Backup I guess if the recipe book is empty for whatever reason?
 				for (auto& itr : item->recipebook_info->recipes) {
-					Recipe* r = master_recipe_list.GetRecipe(itr);   //GetRecipeByName(itr.c_str());
+					Recipe* r = master_recipe_list.GetRecipeByCRC(itr);   //GetRecipeByName(itr.c_str());
 					if (r) {
 						recipes.push_back(r);
 					}

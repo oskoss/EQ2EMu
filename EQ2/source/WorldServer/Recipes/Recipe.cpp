@@ -99,6 +99,7 @@ bool MasterRecipeList::AddRecipe(Recipe *recipe) {
 	m_recipes.writelock(__FUNCTION__, __LINE__);
 	if (recipes.count(id) == 0) {
 		recipes[id] = recipe;
+		recipes_crc[recipe->GetSoeID()] = recipe;
 		ret = true;
 	}
 	m_recipes.releasewritelock(__FUNCTION__, __LINE__);
@@ -106,12 +107,23 @@ bool MasterRecipeList::AddRecipe(Recipe *recipe) {
 	return ret;
 }
 
-Recipe * MasterRecipeList::GetRecipe(int32 recipe_id) {
+Recipe* MasterRecipeList::GetRecipe(int32 recipe_id) {
 	Recipe *ret = 0;
 
 	m_recipes.readlock(__FUNCTION__, __LINE__);
 	if (recipes.count(recipe_id) > 0)
 		ret = recipes[recipe_id];
+	m_recipes.releasereadlock(__FUNCTION__, __LINE__);
+
+	return ret;
+}
+
+Recipe* MasterRecipeList::GetRecipeByCRC(int32 recipe_crc) {
+	Recipe *ret = 0;
+
+	m_recipes.readlock(__FUNCTION__, __LINE__);
+	if (recipes_crc.count(recipe_crc) > 0)
+		ret = recipes_crc[recipe_crc];
 	m_recipes.releasereadlock(__FUNCTION__, __LINE__);
 
 	return ret;
@@ -140,6 +152,7 @@ void MasterRecipeList::ClearRecipes() {
 	for (itr = recipes.begin(); itr != recipes.end(); itr++)
 		safe_delete(itr->second);
 	recipes.clear();
+	recipes_crc.clear();
 	m_recipes.releasewritelock(__FUNCTION__, __LINE__);
 }
 
