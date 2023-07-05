@@ -48,7 +48,7 @@ void SpellProcess::RemoveAllSpells(){
 
 	MutexList<LuaSpell*>::iterator active_spells_itr = active_spells.begin();
 	while(active_spells_itr.Next()){
-		DeleteCasterSpell(active_spells_itr->value, "");
+		DeleteCasterSpell(active_spells_itr->value, "", true);
 	}
 
 	MSpellProcess.lock();
@@ -790,7 +790,7 @@ bool SpellProcess::AddConcentration(LuaSpell* spell) {
 			spell->caster->GetInfoStruct()->set_cur_concentration(curConcentration + req);
 			if (spell->caster->IsPlayer() && spell->caster->GetZone())
 				spell->caster->GetZone()->TriggerCharSheetTimer();
-			LogWrite(SPELL__DEBUG, 0, "Spell", "Concentration is now %u on %s", spell->caster->GetInfoStruct()->get_cur_concentration(), spell->caster->GetName());
+			LogWrite(SPELL__DEBUG, 0, "Spell", "Concentration is now %u on %s (Spell %s)", spell->caster->GetInfoStruct()->get_cur_concentration(), spell->caster->GetName(), spell->spell->GetName());
 			return true;
 		}
 	}
