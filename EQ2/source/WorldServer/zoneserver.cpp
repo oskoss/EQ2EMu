@@ -6446,16 +6446,9 @@ void ZoneServer::HandleEmote(Spawn* originator, string name) {
 					emoteResponse = new char[message.length() + strlen(originator->GetName()) + 10];
 					sprintf(emoteResponse,"%s %s", originator->GetName(), message.c_str());
 				}
-				else{
-					if(orig_client) {
-						orig_client->Message(CHANNEL_COLOR_YELLOW, "%s is not properly configured, be sure to submit a /bug report.", name.c_str());
-					}
-					safe_delete(packet);
-					break;
-				}
 			}
 			if(originator->IsPlayer()) {
-				packet->setMediumStringByName("emote_msg", emoteResponse);
+				packet->setMediumStringByName("emote_msg", emoteResponse ? emoteResponse : "");
 			}
 			packet->setDataByName("anim_type", emote->GetVisualState());
 			client->QueuePacket(packet->serialize());
