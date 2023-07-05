@@ -491,7 +491,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 			}
 			ret = true;
 		}
-		if(lua_interface)
+		if(lua_interface && !zone_shutting_down)
 			lua_interface->RemoveSpell(spell, true, SpellScriptTimersHasSpell(spell), reason, removing_all_spells);
 	}
 	
