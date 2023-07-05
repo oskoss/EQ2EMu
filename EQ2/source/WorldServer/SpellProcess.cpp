@@ -48,7 +48,7 @@ void SpellProcess::RemoveAllSpells(){
 
 	MutexList<LuaSpell*>::iterator active_spells_itr = active_spells.begin();
 	while(active_spells_itr.Next()){
-		DeleteCasterSpell(active_spells_itr->value, "", true);
+		DeleteCasterSpell(active_spells_itr->value, "", true, 0, true);
 	}
 
 	MSpellProcess.lock();
@@ -371,7 +371,7 @@ bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell, string reason)
 	return ret;
 }
 
-bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, Spawn* remove_target){
+bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, Spawn* remove_target, bool zone_shutting_down){
     std::shared_lock lock(MSpellProcess);	
 
 	bool ret = false;
@@ -402,7 +402,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 		
 		if (active_spells.count(spell) > 0)
 			active_spells.Remove(spell);
-		if (spell->caster) {
+		if (!zone_shutting_down && spell->caster) { // spell->caster ptr cannot be trusted during zone shutdown
 			if(spell->caster->GetThreatTransfer() && spell->caster->GetThreatTransfer()->Spell == spell) {
 				spell->caster->SetThreatTransfer(nullptr);
 			}

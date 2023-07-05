@@ -265,7 +265,7 @@ public:
 
 	/// <summary>Remove the given spell from the ZpellProcess</summary>
 	/// <param name='spell'>LuaSpell to remove</param>
-	bool DeleteCasterSpell(LuaSpell* spell, string reason="", bool removing_all_spells = false, Spawn* remove_target = nullptr);
+	bool DeleteCasterSpell(LuaSpell* spell, string reason="", bool removing_all_spells = false, Spawn* remove_target = nullptr, bool zone_shutting_down = false);
 
 	/// <summary>Interrupt the spell</summary>
 	/// <param name='interrupt'>InterruptStruct that contains all the info</param>
