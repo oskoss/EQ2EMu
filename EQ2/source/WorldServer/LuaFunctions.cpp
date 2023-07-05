@@ -2454,17 +2454,25 @@ int EQ2Emu_lua_RemoveSpellBonus(lua_State* state) {
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	if (luaspell && luaspell->spell) {
 		ZoneServer* zone = luaspell->caster->GetZone();
-		Spawn* target = 0;
-		luaspell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
-		for (int32 i = 0; i < luaspell->targets.size(); i++) {
-			target = zone->GetSpawnByID(luaspell->targets[i]);
-			if (target && target->IsEntity()) {
-				((Entity*)target)->RemoveSpellBonus(luaspell);
-				if (target->IsPlayer())
-					((Player*)target)->SetCharSheetChanged(true);
-			}
+		if(!zone) {
+			zone = spawn->GetZone(); // workaround to try to establish a zone to find the targets and remove the spells
 		}
-		luaspell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+		Spawn* target = 0;
+		if(zone) {
+			luaspell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+			for (int32 i = 0; i < luaspell->targets.size(); i++) {
+				target = zone->GetSpawnByID(luaspell->targets[i]);
+				if (target && target->IsEntity()) {
+					((Entity*)target)->RemoveSpellBonus(luaspell);
+					if (target->IsPlayer())
+						((Player*)target)->SetCharSheetChanged(true);
+				}
+			}
+			luaspell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+		}
+		else {
+			LogWrite(LUA__ERROR, 0, "LUA", "Error removing spell bonus buff %s called by %s, zone is not available.", luaspell->spell ? luaspell->spell->GetName() : "NotSet", spawn->GetName());
+		}
 	}
 	else if (spawn && spawn->IsEntity()) {
 		((Entity*)spawn)->RemoveSpellBonus(luaspell);
