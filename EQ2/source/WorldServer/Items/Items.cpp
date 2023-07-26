@@ -4302,7 +4302,7 @@ bool EquipmentItemList::CheckEquipSlot(Item* tmp, int8 slot){
 	return false;
 }
 
-int8 EquipmentItemList::GetFreeSlot(Item* tmp, int8 slot_id){
+int8 EquipmentItemList::GetFreeSlot(Item* tmp, int8 slot_id, int16 version){
 	int8 slot = 0;
 	MEquipmentItems.lock();
 	for(int8 i=0;tmp && i<tmp->slot_data.size();i++){
@@ -4321,6 +4321,9 @@ int8 EquipmentItemList::GetFreeSlot(Item* tmp, int8 slot_id){
 			}
 			else if ( slot == EQ2_LRING_SLOT || slot == EQ2_EARS_SLOT_1 || slot == EQ2_LWRIST_SLOT || slot == EQ2_CHARM_SLOT_1)
 			{
+				if(version <= 546 && slot == EQ2_EARS_SLOT_1)
+					continue;
+			
 				Item* rslot = GetItem(slot+1);
 				if(!rslot)
 				{

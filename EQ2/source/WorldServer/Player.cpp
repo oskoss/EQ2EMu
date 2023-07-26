@@ -1704,6 +1704,9 @@ EQ2Packet* Player::SwapEquippedItems(int8 slot1, int8 slot2, int16 version, int1
 	return 0;
 }
 bool Player::CanEquipItem(Item* item, int8 slot) {
+	if(client && client->GetVersion() <= 546 && slot == EQ2_EARS_SLOT_2)
+		return false;
+	
 	if (item) {
 		Client* client = GetZone()->GetClientBySpawn(this);
 		if (client) {
@@ -1767,7 +1770,8 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
 			return packets;
 		}
-		int8 slot = equipList->GetFreeSlot(item, slot_id);
+		int8 slot = equipList->GetFreeSlot(item, slot_id, version);
+		
 		bool canEquip = CanEquipItem(item,slot);
 		int32 conflictSlot = 0;
 		
@@ -4618,13 +4622,15 @@ int32 Player::GetStepProgress(int32 quest_id, int32 step_id) {
 
 void Player::RemoveQuest(int32 id, bool delete_quest){
 	MPlayerQuests.writelock(__FUNCTION__, __LINE__);
-	if(delete_quest){
-		safe_delete(player_quests[id]);
-	}
 	map<int32, Quest*>::iterator itr = player_quests.find(id);
 	if(itr != player_quests.end()) {
 		player_quests.erase(itr);
 	}
+	
+	if(delete_quest){
+		safe_delete(player_quests[id]);
+	}
+	
 	MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
 	SendQuestRequiredSpawns(id);
 }

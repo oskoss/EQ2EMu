@@ -1168,7 +1168,7 @@ public:
 	bool	AddItem(int8 slot, Item* item);
 	bool	CheckEquipSlot(Item* tmp, int8 slot);
 	bool	CanItemBeEquippedInSlot(Item* tmp, int8 slot);
-	int8	GetFreeSlot(Item* tmp, int8 slot_id = 255);
+	int8	GetFreeSlot(Item* tmp, int8 slot_id = 255, int16 version = 0);
 	int32	CheckSlotConflict(Item* tmp, bool check_lore_only = false, int16* lore_stack_count = 0);
 	
 	int8	GetSlotByItem(Item* item);
