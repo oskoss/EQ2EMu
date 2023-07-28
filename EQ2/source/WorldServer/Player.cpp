@@ -2267,7 +2267,10 @@ void Player::ResortSpellBook(int32 sort_by, int32 order, int32 pattern, int32 ma
 		{
 			Spell* actual_spell = 0;
 			actual_spell = master_spell_list.GetSpell(spell->spell_id, spell->tier);
-
+			if(!actual_spell) {
+				// we have a spell that doesn't exist here!
+				continue;
+			}
 			std::regex re("^(.*?)(\\s(I{1,}[VX]{0,}|V{1,}[IVX]{0,})|X{1,}[IVX]{0,})$");
 			std::string output = std::regex_replace(string(actual_spell->GetName()), re, "$1", std::regex_constants::format_no_copy);
 
