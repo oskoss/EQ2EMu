@@ -1998,16 +1998,21 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 			if (spell->spell->GetSpellData()->persist_through_death)
 				continue;
 
+			bool foundMatch = false;
+			
 			spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 			for (i = 0; i < spell->targets.size(); i++){
 				if (spawn->GetID() == spell->targets.at(i)){
-					if (spawn->IsEntity())
-						((Entity*)spawn)->RemoveSpellEffect(spell);
-					RemoveTargetFromSpell(spell, spawn, remove_all);
+					foundMatch = true;
 					break;
 				}
 			}
 			spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+			if(foundMatch) {
+				if (spawn->IsEntity())
+					((Entity*)spawn)->RemoveSpellEffect(spell);
+				RemoveTargetFromSpell(spell, spawn, remove_all);
+			}
 		}
 		if(recast_timers.size() > 0 && delete_recast){			
 			RecastTimer* recast_timer = 0;
