@@ -1037,6 +1037,9 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 	if(damage <= 0){
 		hit_result = DAMAGE_PACKET_RESULT_NO_DAMAGE;
 		damage = 0;
+		
+		if(victim->IsNPC() && victim->GetHP() > 0)
+			((Entity*)victim)->AddHate(this, damage);
 	}
 	else{
 		hit_result = DAMAGE_PACKET_RESULT_SUCCESSFUL;
