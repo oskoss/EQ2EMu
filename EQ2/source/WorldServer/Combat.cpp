@@ -1054,6 +1054,9 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 			}
 		}
 		
+		if(victim->IsNPC() && victim->GetHP() > 0)
+			((Entity*)victim)->AddHate(this, damage);
+		
 		if(damage) {
 			int32 prevDmg = damage;
 			damage = victim->CheckWards(this, damage, damage_type);
@@ -1088,8 +1091,6 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 			}
 		}
 	}
-	if(victim->IsNPC() && victim->GetHP() > 0)
-		((Entity*)victim)->AddHate(this, damage);
 
 	Entity* attacker = nullptr;
 	if(!ignore_attacker)
