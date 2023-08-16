@@ -2194,6 +2194,30 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					else
 						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Recipe ID: %u", recipe_id);
 				}
+				else if (strcmp(sep->arg[0], "recipe_product") == 0) {
+					sint32 recipe_id = atol(sep->arg[1]);
+									
+					PlayerRecipeList* prl = client->GetPlayer()->GetRecipeList();
+					Recipe* recipe = nullptr;
+					if ((recipe = prl->GetRecipe(recipe_id)) && recipe->GetProductID()) {
+						RecipeProducts* rp = recipe->products[1];
+						if (recipe->GetProductID() > 0) {
+							Item* item = master_item_list.GetItem(recipe->GetProductID());
+							if(item){
+								EQ2Packet* app = item->serialize(client->GetVersion(), true, client->GetPlayer());
+								client->QueuePacket(app);
+							}
+							else
+								LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Item ID: %u", recipe->GetProductID());
+						}
+						else {
+								LogWrite(COMMAND__ERROR, 0, "Command", "recipe_product recipe->GetProductID() has value 0 for recipe id %u.", recipe_id);
+						}
+					}
+					else {
+							LogWrite(COMMAND__ERROR, 0, "Command", "recipe_product with recipe id %u not found (recipe missing or no product in stage 1 assigned).", recipe_id);
+					}
+				}
 				else if (strcmp(sep->arg[0], "maintained") ==0) {
 					int32 slot = atol(sep->arg[1]);
 					int32 spell_id = atol(sep->arg[2]);
@@ -3048,13 +3072,18 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[0] && sep->IsNumber(0))
 				quest_id = atoul(sep->arg[0]);
 			if(quest_id > 0){
+				client->GetPlayer()->MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 				if(lua_interface && client->GetPlayer()->player_quests.count(quest_id) > 0) {
 					Quest* quest = client->GetPlayer()->player_quests[quest_id];
+					client->GetPlayer()->MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 					if (quest && quest->CanDeleteQuest()) {
 						lua_interface->CallQuestFunction(quest, "Deleted", client->GetPlayer());
 						client->RemovePlayerQuest(quest_id);
 						client->GetCurrentZone()->SendQuestUpdates(client);
 					}
+				}
+				else {
+					client->GetPlayer()->MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 				}
 			}
 			break;
@@ -3625,16 +3654,23 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 		}
 		case COMMAND_KNOWLEDGEWINDOWSORT: {
-			if (client->GetVersion() <= 546)
-				break;
 
-			if (sep && sep->GetArgNumber() == 4)
+			if (sep && (client->GetVersion() <= 546 && sep->GetArgNumber() == 3) || sep->GetArgNumber() == 4)
 			{
 				int32 book = atoul(sep->arg[0]); // 0 - spells, 1 - combat, 2 - abilities, 3 - tradeskill
+				
+				// cannot sort the ability book in this client it is greyed out
+				if (client->GetVersion() <= 546 && book == SPELL_BOOK_TYPE_ABILITY)
+					break;
+			
 				int32 sort_by = atoul(sep->arg[1]); // 0 - alpha, 1 - level, 2 - category
 				int32 order = atoul(sep->arg[2]); // 0 - ascending, 1 - descending
 				int32 pattern = atoul(sep->arg[3]); // 0 - zigzag, 1 - down, 2 - across
-				int32 maxlvlonly = atoul(sep->arg[4]); // 0 - zigzag, 1 - down, 2 - across
+				int32 maxlvlonly = 0;
+				
+				if(client->GetVersion() > 546 && sep->arg[4][0]) {
+					maxlvlonly = atoul(sep->arg[4]); // checkbox for newer clients
+				}
 				client->GetPlayer()->ResortSpellBook(sort_by, order, pattern, maxlvlonly, book);
 				ClientPacketFunctions::SendSkillSlotMappings(client);
 			}
@@ -5844,7 +5880,6 @@ void Commands::Command_CancelMaintained(Client* client, Seperator* sep)
 void Commands::Command_Create(Client* client, Seperator* sep)
 {
 	PrintSep(sep, "COMMAND_CREATE");
-	client->SendRecipeList();
 	client->ShowRecipeBook();
 }
 
@@ -7687,7 +7722,9 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 				for (itr = quests->begin(); itr != quests->end(); itr++)
 				{
 					Quest* quest = itr->second;
-					client->Message(CHANNEL_COLOR_YELLOW, "%u) %s", itr->first, quest->GetName());
+					if(quest) {
+						client->Message(CHANNEL_COLOR_YELLOW, "%u) %s", itr->first, quest->GetName());
+					}
 				}
 			}
 
@@ -7706,7 +7743,9 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 				for (itr = quests->begin(); itr != quests->end(); itr++)
 				{
 					Quest* quest = itr->second;
-					client->Message(CHANNEL_COLOR_YELLOW, "%u) %s", itr->first, quest->GetName());
+					if(quest) {
+						client->Message(CHANNEL_COLOR_YELLOW, "%u) %s", itr->first, quest->GetName());
+					}
 				}
 			}
 
@@ -10576,6 +10615,9 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				client->QueuePacket(outapp);
 				safe_delete(packet);
 			}
+		}
+		else if (atoi(sep->arg[0]) == 31) {
+			client->SendRecipeList();
 		}
 	}
 	else {

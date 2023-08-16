@@ -27,10 +27,12 @@
 #include "../../common/Log.h"
 #include "../Spells.h"
 #include "../../common/MiscFunctions.h"
+#include "../World.h"
 
 extern ConfigReader configReader;
 extern MasterRecipeList master_recipe_list;
 extern MasterSpellList master_spell_list;
+extern World world;
 
 void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID) {
 
@@ -214,7 +216,7 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 	//--------------------------------------------------------------Start Build Components-------------------------------------------------------------
 	if (total_build_components > 0) {
 		packet->setArrayLengthByName("num_build_components", total_build_components);
-		LogWrite(TRADESKILL__ERROR, 0, "Recipes", "num_build_components ", total_build_components);
+		LogWrite(TRADESKILL__INFO, 0, "Recipes", "num_build_components %u", total_build_components);
 		for (int8 index = 0; index < 4; index++) {
 			if (recipe->components.count(index + 1) == 0)
 				continue;
@@ -344,9 +346,15 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 			item_player = 0;
 			item_player = client->GetPlayer()->item_list.GetItemFromID((*itr));
 
+			if(client->GetVersion() <= 546) {
+				packet->setDataByName("fuel_qty", item->details.count);
+				packet->setDataByName("fuel_icon", item->details.icon);
+			}
+			
 			itemss = client->GetPlayer()->item_list.GetAllItemsFromID((*itr));
 			packet->setArrayLengthByName("num_fuel_choices", itemss.size());
 			if (itemss.size() > 0) {
+				
 				int16 needed_qty = recipe->GetFuelComponentQuantity();
 				int16 have_qty = 0;
 				if (firstID == 0)
@@ -403,9 +411,11 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 
 	packet->setDataByName("recipe_id", recipeID);
 	
-	packet->PrintPacket();
+	//packet->PrintPacket();
+	EQ2Packet* outapp = packet->serialize();
+	//DumpPacket(outapp);
 	// Send the packet
-	client->QueuePacket(packet->serialize());
+	client->QueuePacket(outapp);
 	safe_delete(packet);
 }
 
@@ -567,6 +577,7 @@ void ClientPacketFunctions::SendItemCreationUI(Client* client, Recipe* recipe) {
 	}
 
 
+	//packet->PrintPacket();
 	EQ2Packet* outapp = packet->serialize();
 	//DumpPacket(outapp);
 	client->QueuePacket(outapp);

@@ -173,7 +173,6 @@ Client::Client(EQStream* ieqs) : underworld_cooldown_timer(5000), pos_update(125
 	lua_debug_timer.Disable();
 	transport_spawn = 0;
 	MBuyBack.SetName("Client::MBuyBack");
-	MPendingQuestAccept.SetName("Client::MPendingQuestAccept");
 	MDeletePlayer.SetName("Client::MDeletePlayer");
 	MQuestPendingUpdates.SetName("Client::MQuestPendingUpdates");
 	search_items = 0;
@@ -219,6 +218,10 @@ Client::Client(EQStream* ieqs) : underworld_cooldown_timer(5000), pos_update(125
 	underworld_cooldown_timer.Disable();
 	player_pos_change_count = 0;
 	pov_ghost_spawn_id = 0;
+	recipe_orig_packet = nullptr;
+	recipe_xor_packet = nullptr;
+	recipe_packet_count = 0;
+	recipe_orig_packet_size = 0;
 }
 
 Client::~Client() {
@@ -1631,6 +1634,32 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		uchar blah25[] = { 0x01 };
 		EQ2Packet* app25 = new EQ2Packet(OP_ClearDataMsg, blah25, sizeof(blah25));
 		QueuePacket(app25);
+		break;
+	}
+	case OP_RequestRecipeDetailsMsg: {
+		PacketStruct* packet = configReader.getStruct("WS_RequestRecipeDetail", GetVersion());
+		if (packet) {
+			DumpPacket(app->pBuffer, app->size);
+			packet->LoadPacketData(app->pBuffer, app->size);
+			packet->PrintPacket();
+			int32 recipe_id = 0;
+			char recipe_prop_name[30];
+			int32 num_recipes = packet->getType_int32_ByName("num_recipes");
+			// WS_RecipeDetails
+			vector<int32> recipes;
+			for (int32 i = 0; i < num_recipes; i++) {
+				memset(recipe_prop_name, 0, 30);
+				snprintf(recipe_prop_name, 30, "recipe_id_%i", i);
+				recipe_id = packet->getType_int32_ByName(recipe_prop_name);
+				if(recipe_id > 0) {
+					recipes.push_back(recipe_id);
+				}
+			}
+			
+			safe_delete(packet);
+
+			SendRecipeDetails(&recipes);
+		}
 		break;
 	}
 	case OP_ShowCreateFromRecipeUIMsg: {
@@ -3062,7 +3091,17 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (!request)
 			return;
 		request->LoadPacketData(app->pBuffer, app->size);
-		int32 id = request->getType_int32_ByName("unknown_id");
+		
+		int32 id = 0;
+		if(GetVersion() < 546) {
+			id = request->getType_int32_ByName("id");
+		}
+		if(GetVersion() == 546) {
+			id = request->getType_int32_ByName("unique_id");
+		}
+		else {
+			id = request->getType_int32_ByName("unknown_id");
+		}
 		Recipe* recipe = master_recipe_list.GetRecipe(id);
 		if (recipe) {
 			EQ2Packet* app = recipe->SerializeRecipe(this, recipe, false, GetItemPacketType(GetVersion()), 0x02);
@@ -5746,9 +5785,8 @@ void Client::BankDeposit(int64 amount) {
 
 void Client::AddPendingQuestAcceptReward(Quest* quest)
 {
-	MPendingQuestAccept.lock();
+	std::unique_lock lock(MPendingQuestAccept);
 	pending_quest_accept.push_back(quest->GetQuestID());
-	MPendingQuestAccept.unlock();
 }
 
 void Client::AddPendingQuestReward(Quest* quest, bool update, bool is_temporary, std::string description) {
@@ -6031,27 +6069,34 @@ void Client::AddPendingQuest(Quest* quest, bool forced) {
 }
 
 void Client::AcceptQuest(int32 quest_id) {
-	MPendingQuestAccept.lock();
+	MPendingQuestAccept.lock_shared();
 	if (player->pending_quests.count(quest_id) > 0) {
-		Quest* quest = player->pending_quests[quest_id];	
+		Quest* quest = player->pending_quests[quest_id];
 		if(quest) {
+			MPendingQuestAccept.unlock_shared();
+			MPendingQuestAccept.lock();
 			player->pending_quests.erase(quest->GetQuestID());
+			MPendingQuestAccept.unlock();
 			AddPlayerQuest(quest);
 			GetCurrentZone()->SendQuestUpdates(this);
 
 			GetPlayer()->UpdateQuestCompleteCount(quest_id);
+			return; // already unlocked mutex
 		}
 	}
-	MPendingQuestAccept.unlock();
+	MPendingQuestAccept.unlock_shared();
 }
 
 void Client::RemovePendingQuest(int32 quest_id) {
 	bool send_updates = false;
-	MPendingQuestAccept.lock();
+	MPendingQuestAccept.lock_shared();
 	
 	if (player->pending_quests.count(quest_id) > 0) {
-		Quest* quest = player->pending_quests[quest_id];	
+		Quest* quest = player->pending_quests[quest_id];
+		MPendingQuestAccept.unlock_shared();
+		MPendingQuestAccept.lock();
 		player->pending_quests.erase(quest_id);
+		MPendingQuestAccept.unlock();
 		
 		if(lua_interface) {
 			lua_interface->CallQuestFunction(quest, "Declined", GetPlayer());
@@ -6062,7 +6107,9 @@ void Client::RemovePendingQuest(int32 quest_id) {
 		
 		send_updates = true;
 	}
-	MPendingQuestAccept.unlock();
+	else {
+		MPendingQuestAccept.unlock_shared();
+	}
 
 	if(send_updates) {
 		GetCurrentZone()->SendQuestUpdates(this);
@@ -6276,11 +6323,11 @@ void Client::ReloadQuests() {
 }
 
 Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
+	std::unique_lock lock(MPendingQuestAccept);
 	bool found_quest = false;
 	vector<int32>::iterator itr;
 	int32 questID = 0;
 	Quest* quest = nullptr;
-	MPendingQuestAccept.lock();
 	for (itr = pending_quest_accept.begin(); itr != pending_quest_accept.end();) {
 		questID = *itr;
 		
@@ -6300,7 +6347,6 @@ Quest* Client::GetPendingQuestAcceptance(int32 item_id) {
 		
 		itr++;
 	}
-	MPendingQuestAccept.unlock();
 
 	return quest;
 }
@@ -9275,6 +9321,10 @@ void Client::SetReadyForUpdates() {
 		database.loadCharacterProperties(this);
 
 	ready_for_updates = true;
+	
+	if(GetVersion() <= 546) {
+		SendRecipeList();
+	}
 }
 
 void Client::SetReadyForSpawns(bool val) {
@@ -10202,13 +10252,35 @@ void Client::SendRecipeList() {
 	}
 	
 	PacketStruct* packet = 0;
-	if (!(packet = configReader.getStruct("WS_RecipeList", version))) {
-		return;
-	}
 	map<int32, Recipe*>* recipes = player->GetRecipeList()->GetRecipes();
 	map<int32, Recipe*>::iterator itr;
-	Recipe* recipe;
 	int16 i = 0;
+	Recipe* recipe;
+	
+	if(version <= 546) {
+		PacketStruct* packet = 0;
+		if (!(packet = configReader.getStruct("WS_UpdateRecipeBook", GetVersion()))) {
+			return;
+		}
+		packet->setArrayLengthByName("recipe_count", recipes->size());
+		for (itr = recipes->begin(); itr != recipes->end(); itr++) {
+			recipe = itr->second;
+			int32 recipe_id = recipe->GetID();
+			packet->setArrayDataByName("recipe_id", recipe_id, i);
+			packet->setArrayDataByName("recipe_data_crc", GetRecipeCRC(recipe), i);
+			packet->setArrayDataByName("unknown", 0x7005BE3, i); //0x7005BE3
+			i++;
+		}
+		packet->PrintPacket();
+		EQ2Packet* ret = packet->serializeCountPacket(GetVersion(), 0, nullptr, nullptr);
+		QueuePacket(ret);
+		safe_delete(packet);
+		SetRecipeListSent(true);
+		return;
+	}
+	else if (!(packet = configReader.getStruct("WS_RecipeList", version))) {
+		return;
+	}
 	int8 level = player->GetTSLevel();
 	int index = 0;
 	for (itr = recipes->begin(); itr != recipes->end(); itr++) {
@@ -10223,6 +10295,7 @@ void Client::SendRecipeList() {
 
 	packet->setDataByName("command_type", 0);
 	packet->setArrayLengthByName("num_recipes", recipes->size());
+	int stringsize = 0;
 	for (itr = recipes->begin(); itr != recipes->end(); itr++) {
 		recipe = itr->second;
 		int32 myid = recipe->GetID();
@@ -10264,8 +10337,8 @@ void Client::SendRecipeList() {
 		i++;
 	}
 	//packet->PrintPacket();
-	//DumpPacket(packet->serialize());
-	QueuePacket(packet->serialize());
+	EQ2Packet* pack = packet->serialize();
+	QueuePacket(pack);
 	safe_delete(packet);
 	SetRecipeListSent(true);
 }
@@ -11979,17 +12052,15 @@ bool Client::AddRecipeBookToPlayer(int32 recipe_book_id, Item* item) {
 			safe_delete(recipe_book);
 		}
 		else if (recipe_book && (!item || !(GetPlayer()->GetRecipeBookList()->HasRecipeBook(recipe_book_id)))){
-			LogWrite(PLAYER__ERROR, 0, "Recipe", "Valid recipe book that the player doesn't have");
+			LogWrite(PLAYER__DEBUG, 0, "Recipe", "Valid recipe book that the player doesn't have");
 			// Add recipe book to the players list
 			if(!GetPlayer()->GetRecipeBookList()->HasRecipeBook(recipe_book_id)) {
 				GetPlayer()->GetRecipeBookList()->AddRecipeBook(recipe_book);
 			}
 
+			std::vector<Recipe*> recipes;
 			// Get a list of all recipes this book contains
-			vector<Recipe*> recipes = master_recipe_list.GetRecipes(recipe_book->GetBookName());
-			LogWrite(PLAYER__ERROR, 0, "Recipe", "%i recipes found for %s book", recipes.size(), recipe_book->GetBookName());
-
-			if (recipes.empty() && item && item->recipebook_info) {
+			if (item && item->recipebook_info) {
 				//Backup I guess if the recipe book is empty for whatever reason?
 				for (auto& itr : item->recipebook_info->recipes) {
 					Recipe* r = master_recipe_list.GetRecipeByCRC(itr);   //GetRecipeByName(itr.c_str());
@@ -11997,6 +12068,10 @@ bool Client::AddRecipeBookToPlayer(int32 recipe_book_id, Item* item) {
 						recipes.push_back(r);
 					}
 				}
+				LogWrite(PLAYER__DEBUG, 0, "Recipe", "%i recipes found for %s book", recipes.size(), recipe_book->GetBookName());
+			}
+			else {
+				LogWrite(PLAYER__ERROR, 0, "Recipe", "no recipes found for %s book", recipe_book->GetBookName());
 			}
 			
 			//Filter out duplicate recipes the player already has
@@ -12144,4 +12219,105 @@ void Client::ProcessZoneIgnoreWidgets() {
 		SendReplaceWidget(itr->first, true);
 	}
 	GetPlayer()->MIgnoredWidgets.unlock_shared();
+}
+
+void Client::PopulateRecipeData(Recipe* recipe, PacketStruct* packet, int i) {
+	if(!recipe || !packet)
+		return;
+	
+		int8 level = player->GetTSLevel();
+		int32 myid = recipe->GetID();
+		int8 rlevel = recipe->GetLevel();
+		int8 even = level - level * .05 + .5;
+		int8 easymin = level - level * .25 + .5;
+		int8 veasymin = level - level * .35 + .5;
+		if (rlevel > level )
+			packet->setArrayDataByName("tier", 4, i);
+		else if ((rlevel <= level) & (rlevel >= even))
+			packet->setArrayDataByName("tier", 3, i);
+		else if ((rlevel <= even) & (rlevel >= easymin))
+			packet->setArrayDataByName("tier", 2, i);
+		else if ((rlevel <= easymin) & (rlevel >= veasymin))
+			packet->setArrayDataByName("tier", 1, i);
+		else if ((rlevel <= veasymin) & (rlevel >= 0))
+			packet->setArrayDataByName("tier", 0, i);
+		if (rlevel == 2)
+			int xxx = 1;
+		packet->setArrayDataByName("recipe_id", myid, i);
+		packet->setArrayDataByName("level", recipe->GetLevel(), i);
+		packet->setArrayDataByName("icon", recipe->GetIcon(), i);
+		packet->setArrayDataByName("classes", recipe->GetClasses(), i);
+		packet->setArrayDataByName("technique", recipe->GetTechnique(), i);
+		packet->setArrayDataByName("knowledge", recipe->GetKnowledge(), i);
+		packet->setArrayDataByName("device", recipe->GetDevice(), i);
+		packet->setArrayDataByName("device_sub_type", recipe->GetDevice_Sub_Type(), i);
+		packet->setArrayDataByName("recipe_name", recipe->GetName(), i);
+		packet->setArrayDataByName("recipe_book", recipe->GetBook(), i);
+		packet->setArrayDataByName("unknown3", recipe->GetUnknown3(), i);
+		
+		packet->setArrayDataByName("book_volume", 0x01, i);
+		packet->setArrayDataByName("device_id", 0x01, i);
+}
+
+int32 Client::GetRecipeCRC(Recipe* recipe) {
+	
+	PacketStruct* packet = 0;
+	if (!(packet = configReader.getStruct("WS_RecipeDetailList", GetVersion()))) {
+		return 0;
+	}
+	packet->setArrayLengthByName("num_recipes", 1);
+	
+	PopulateRecipeData(recipe, packet);
+	
+	string* generic_string_data = packet->serializeString();
+	int32 size = generic_string_data->length();
+	
+	if(size < 5)
+		return 0;
+	
+	uchar* out_data = new uchar[size+1];
+	uchar* out_ptr = out_data;
+	memcpy(out_ptr, (uchar*)generic_string_data->c_str()+4, generic_string_data->length()-4);
+	uint32 out_crc = GenerateCRCRecipe(0, (void*)out_ptr, size-4);
+	safe_delete(packet);
+	safe_delete_array(out_data);
+	
+	return out_crc;
+}
+
+void Client::SendRecipeDetails(vector<int32>* recipes) {
+	if(!recipes || recipes->size() == 0)
+		return;
+	
+	PacketStruct* packet = 0;
+	if (!(packet = configReader.getStruct("WS_RecipeDetailList", GetVersion()))) {
+		return;
+	}
+	int32 recipe_size = player->GetRecipeList()->Size();
+	packet->setArrayLengthByName("num_recipes", recipe_size > 100 ? 100 : recipe_size);
+	int16 i = 0;
+	int32 count = 0;
+	vector<int32>::iterator recipe_itr;
+	for(recipe_itr = recipes->begin(); recipe_itr != recipes->end(); recipe_itr++) {
+		Recipe* recipe = player->GetRecipeList()->GetRecipe(*recipe_itr);
+		if(!recipe) {
+			continue;
+		}
+		else if(i > 99) {
+			QueuePacket(packet->serialize());
+			safe_delete(packet);
+			packet = configReader.getStruct("WS_RecipeDetailList", GetVersion());
+			recipe_size -= i;
+			packet->setArrayLengthByName("num_recipes", recipe_size > 100 ? 100 : recipe_size);
+			i = 0;
+		}
+		count++;
+		PopulateRecipeData(recipe, packet, i);
+		i++;
+	}
+	
+	//packet->PrintPacket();
+	
+	QueuePacket(packet->serialize());
+	safe_delete(packet);
 }

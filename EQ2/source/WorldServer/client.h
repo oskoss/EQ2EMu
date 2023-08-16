@@ -380,6 +380,9 @@ public:
 	void	HandInCollections();
 	void	AcceptCollectionRewards(Collection *collection, int32 selectable_item_id = 0);
 	void	SendRecipeList();
+	void	PopulateRecipeData(Recipe* recipe, PacketStruct* packet, int i=0);
+	int32	GetRecipeCRC(Recipe* recipe);
+	void	SendRecipeDetails(vector<int32>* recipes);
 	void	SendTitleUpdate();
 	void	SendUpdateTitles(sint32 prefix, sint32 suffix);
 	void	SendLanguagesUpdate(int32 id, bool setlang = 1);
@@ -608,7 +611,7 @@ private:
 	deque<BuyBackItem*> buy_back_items;
 	Spawn*	merchant_transaction;
 	Spawn*	mail_transaction;
-	Mutex	MPendingQuestAccept;
+	mutable std::shared_mutex MPendingQuestAccept;
 	vector<int32> pending_quest_accept;	
 	bool	lua_debug;
 	bool	should_target;
@@ -728,6 +731,11 @@ private:
 	
 	std::atomic<int32> pov_ghost_spawn_id;
 	Timer delay_msg_timer;
+	
+	uchar* recipe_orig_packet;
+	uchar* recipe_xor_packet;
+	int	recipe_packet_count;
+	int recipe_orig_packet_size;
 };
 
 class ClientList {

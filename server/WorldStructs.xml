@@ -5747,6 +5747,33 @@ to zero and treated like placeholders." />
 <Data ElementName="recipe_name" Type="EQ2_8Bit_String" />
 <Data ElementName="recipe_description" Type="EQ2_16Bit_String" />
 </Struct>
+<Struct Name="WS_RecipeInfo" ClientVersion="546" >
+<Data ElementName="id" Type="int32" Size="1" />
+<Data ElementName="unknown" Type="int8" Size="1" />
+<Data ElementName="level" Type="int8" />
+<Data ElementName="technique" Type="int32" Size="1" />
+<Data ElementName="knowledge" Type="int32" Size="1" />
+<Data ElementName="skill_level" Type="int8" Size="1" />
+<Data ElementName="device" Type="EQ2_8Bit_String" />
+<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="adventure_id" Type="int8" />
+<Data ElementName="tradeskill_id" Type="int8" />
+<Data ElementName="unknownz" Type="int8" size="13"/>
+<Data ElementName="product_icon" Type="int16" />
+<Data ElementName="product_name" Type="EQ2_8Bit_String" />
+<Data ElementName="unknowny" Type="int8" size="26"/>
+<Data ElementName="primary_count" Type="int8" />
+<Data ElementName="primary_comp" Type="EQ2_8Bit_String" />
+<Data ElementName="num_comps" Type="int8" />
+<Data ElementName="comp_array" Type="Array" ArraySizeVariable="num_comps">
+  <Data ElementName="build_comp" Type="EQ2_8Bit_String" />
+  <Data ElementName="build_comp_qty" Type="int8" />
+</Data>
+<Data ElementName="fuel_comp" Type="EQ2_8Bit_String" />
+<Data ElementName="fuel_comp_qty" Type="int8" />
+<Data ElementName="recipe_name" Type="EQ2_8Bit_String" />
+<Data ElementName="recipe_description" Type="EQ2_16Bit_String" />
+</Struct>
 <Struct Name="WS_RecipeInfo" ClientVersion="908" >
 <Data ElementName="id" Type="int32" Size="1" />
 <Data ElementName="unknown" Type="int8" Size="1" />
@@ -6322,6 +6349,10 @@ to zero and treated like placeholders." />
 <Data ElementName="spell_info" Substruct="WS_AchievementSpellInfo" Size="1" />
 </Struct>
 <Struct Name="WS_ExamineRecipeInfo" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
+<Data ElementName="recipe_info" Substruct="WS_RecipeInfo" Size="1" />
+</Struct>
+<Struct Name="WS_ExamineRecipeInfo" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="info_header" Substruct="WS_ExamineInfoHeader" Size="1" />
 <Data ElementName="recipe_info" Substruct="WS_RecipeInfo" Size="1" />
 </Struct>
@@ -15904,6 +15935,38 @@ to zero and treated like placeholders." />
 <Data ElementName="packetsubtype" Type="int8" />
 <Data ElementName="skill_id" Type="int32" Size="6"/>
 </Struct>
+<Struct Name="WS_ShowItemCreation" ClientVersion="546" OpcodeName="OP_ShowItemCreationProcessUIMsg">
+<!-- starting durability maybe?-->
+<Data ElementName="max_possible_durability" Type="int32" Size="1" />
+<Data ElementName="max_possible_progress" Type="int32" Size="1" />
+<Data ElementName="unknown2" Type="int32" Size="2" />
+<Data ElementName="progress_levels_known" Type="int8" Size="1" />
+<Data ElementName="num_process" Type="int8" Size="1" />
+<Data ElementName="process_array" Type="Array" ArraySizeVariable="num_process">
+  <Data ElementName="progress_needed" Type="int32" Size="1" />
+  <Data ElementName="unknown3" Type="int8" Size="1" IfVariableNotSet="progress_needed"/>
+  <Data ElementName="item_name" Type="EQ2_16Bit_String" />
+  <Data ElementName="item_icon" Type="int16" />
+  <Data ElementName="item" Type="EQ2_Item" />
+  <Data ElementName="item_byproduct_name" Type="EQ2_16Bit_String" />
+  <Data ElementName="item_byproduct_icon" Type="int16" />
+  <!-- Another EQ2_Item? Does subtype set to FF prevent the rest of the packet?-->
+  <!-- If not an EQ2_item this unknown *might* be quantity-->
+  <Data ElementName="item_byproduct_unknown" Type="int8" />
+  <Data ElementName="packettype" Type="int16" />
+  <Data ElementName="packetsubtype" Type="int8" />
+</Data>
+<Data ElementName="product_progress_needed" Type="int32" Size="1" />
+<Data ElementName="product_item_name" Type="EQ2_16Bit_String" />
+<Data ElementName="product_item_icon" Type="int16" />
+<Data ElementName="product_item" Type="EQ2_Item" />
+<Data ElementName="product_byproduct_name" Type="EQ2_16Bit_String" />
+<Data ElementName="product_byproduct_icon" Type="int16" />
+<Data ElementName="product_byproduct_unknown" Type="int8" />
+<Data ElementName="packettype" Type="int16" />
+<Data ElementName="packetsubtype" Type="int8" />
+<Data ElementName="skill_id" Type="int32" Size="6"/>
+</Struct>
 <Struct Name="WS_ShowItemCreation" ClientVersion="60085" OpcodeName="OP_ShowItemCreationProcessUIMsg">
 <!-- starting durability maybe?-->
 <Data ElementName="max_possible_durability" Type="int32" Size="1" />
@@ -16016,6 +16079,63 @@ to zero and treated like placeholders." />
 <Data ElementName="fuel_unknown5" Type="int8" Size="1" />
 <Data ElementName="fuel_unknown6" Type="int32" Size="1" />
 <Data ElementName="unknown8" Type="int8" Size="1" />
+</Struct>
+<Struct Name="WS_CreateFromRecipe" ClientVersion="546" OpcodeName="OP_ShowCreateFromRecipeUIMsg">
+<Data ElementName="crafting_station" Type="EQ2_16Bit_String" />
+<Data ElementName="unknown1" Type="int32" Size="1" />
+<Data ElementName="recipe_name" Type="EQ2_16Bit_String" />
+<Data ElementName="tier" Type="int8" Size="1" />
+<Data ElementName="unknown3" Type="int32" Size="1" />
+<Data ElementName="product_name" Type="EQ2_16Bit_String" />
+<Data ElementName="icon" Type="int16" />
+<Data ElementName="product_qty" Type="int8" Size="1" />
+<Data ElementName="unknown5" Type="int16" Size="1" />
+<Data ElementName="unknown6" Type="int8" Size="1" />
+<Data ElementName="unknown7" Type="int16" Size="1" />
+<Data ElementName="primary_title" Type="EQ2_16Bit_String" />
+<Data ElementName="num_primary_choices" Type="int8" />
+<Data ElementName="primary_array" Type="Array" ArraySizeVariable="num_primary_choices">
+  <Data ElementName="primary_component" Type="EQ2_16Bit_String" />
+  <Data ElementName="primary_item_id" Type="int32" Size="1" />
+  <Data ElementName="primary_icon" Type="int16" Size="1" />
+  <Data ElementName="primary_total_quantity" Type="int8" Size="1" />
+</Data>
+<Data ElementName="primary_default_selected_id" Type="int32" Size="1" />
+<Data ElementName="primary_unknown5" Type="int32" Size="1" />
+<Data ElementName="num_build_components" Type="int8" />
+<Data ElementName="build_array" Type="Array" ArraySizeVariable="num_build_components">
+  <Data ElementName="build_slot" Type="int32" />
+  <Data ElementName="build_title" Type="EQ2_16Bit_String" />
+  <Data ElementName="build_qty_needed" Type="int8" />
+  <Data ElementName="build_unknown1" Type="int32" Size="1" />
+  <Data ElementName="num_build_choices" Type="int8" Size="1" />
+  <Data ElementName="build_components_array" Type="Array" ArraySizeVariable="num_build_choices">
+    <Data ElementName="build_component" Type="EQ2_16Bit_String" />
+    <Data ElementName="build_item_id" Type="int32" Size="1" />
+    <Data ElementName="build_icon" Type="int16" Size="1" />
+    <Data ElementName="build_total_quantity" Type="int8" Size="1" />
+  </Data>
+  <Data ElementName="num_build_items_selected" Type="int8" />
+	<Data ElementName="build_items_selected_array" Type="Array" ArraySizeVariable="num_build_items_selected">
+		<Data ElementName="build_selected_item_id" Type="int32" Size="1" />
+		<Data ElementName="build_selected_item_qty" Type="int8" Size="1" />
+	</Data>
+</Data>
+<Data ElementName="fuel_title" Type="EQ2_16Bit_String" />
+<Data ElementName="fuel_qty_needed" Type="int8" />
+<Data ElementName="num_fuel_choices" Type="int8" Size="1" />
+<Data ElementName="fuel_component_array" Type="Array" ArraySizeVariable="num_fuel_choices">
+  <Data ElementName="fuel_component" Type="EQ2_16Bit_String" />
+  <Data ElementName="fuel_item_id" Type="int32" Size="1" />
+  <Data ElementName="fuel_icon" Type="int16" />
+  <Data ElementName="fuel_total_quantity" Type="int8" Size="1" />
+  <Data ElementName="fuel_unknown4" Type="int8" Size="2" />
+</Data>
+<Data ElementName="num_fuel_items_selected" Type="int8" />
+<Data ElementName="fuel_items_selected_array" Type="Array" ArraySizeVariable="num_fuel_items_selected">
+	<Data ElementName="fuel_selected_item_id" Type="int32" Size="1" />
+	<Data ElementName="fuel_selected_item_qty" Type="int8" Size="1" />
+</Data>
 </Struct>
 <Struct Name="WS_CreateFromRecipe" ClientVersion="1096" OpcodeName="OP_ShowCreateFromRecipeUIMsg">
 <Data ElementName="crafting_station" Type="EQ2_16Bit_String" />
@@ -16435,6 +16555,32 @@ to zero and treated like placeholders." />
   <Data ElementName="unknown3" Type="int8" Size="1" />
 </Data>
 </Struct>
+<Struct Name="WS_RecipeDetailList" ClientVersion="546" OpcodeName="OP_RecipeDetailsMsg">
+<Data ElementName="num_recipes" Type="int32" Size="1" />
+<Data ElementName="recipe_array" Type="array" ArraySizeVariable="num_recipes">
+  <Data ElementName="recipe_id" Type="int32" Size="1" />
+  <Data ElementName="icon" Type="int16" Size="1" />
+  <Data ElementName="recipe_name" Type="char" Size="200" />
+  <Data ElementName="recipe_desc" Type="char" Size="256" />
+  <Data ElementName="book_volume" Type="int32" Size="1" /> <!-- volume # of book -->
+  <Data ElementName="unknownx" Type="int32" Size="1" /> <!-- result item? -->
+  <Data ElementName="technique" Type="int32" Size="1" />
+  <Data ElementName="knowledge" Type="int32" Size="1" />
+  <Data ElementName="level" Type="int32" Size="1" />
+  <Data ElementName="recipe_book" Type="char" Size="200" />
+  <Data ElementName="device" Type="char" Size="40" />
+  <Data ElementName="device_id" Type="int32" Size="1" />
+</Data>
+</Struct>
+<!--<Struct Name="WS_RecipeList" ClientVersion="546" OpcodeName="OP_UpdateRecipeBookMsg">
+<Data ElementName="recipe_count" Type="int16" />
+<Data ElementName="packed_size" Type="int32" />
+<Data ElementName="recipe_array" Type="Array" ArrayVariableSize="recipe_count">
+  <Data ElementName="recipe_id" Type="int32" Size="1" />
+  <Data ElementName="unknown" Type="int32" Size="2" />
+</Data>
+<Data ElementName="unknown1" Type="int32" Size="1" />
+</Struct>-->
 <Struct Name="WS_RecipeList" ClientVersion="60085" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_RecipeList">
 <Data ElementName="command_type" Type="int8" Size="1" />
 <Data ElementName="num_recipes" Type="int16" Size="1" />
@@ -16456,6 +16602,15 @@ to zero and treated like placeholders." />
 </Data>
 </Struct>
 <Struct Name="WS_ShowRecipeBook" ClientVersion="1" OpcodeName="OP_ShowRecipeBookMsg">
+<Data ElementName="device" Type="char" Size="42" />
+<Data ElementName="unknown1" Type="int8" Size="1" />
+<Data ElementName="unknown2" Type="int32" />
+  <Data ElementName="unknown3" Type="int32" IfVariableSet="unknown2" />
+</Struct>
+<Struct Name="WS_ShowRecipeBook" ClientVersion="546" OpcodeName="OP_ShowRecipeBookMsg">
+<Data ElementName="device" Type="char" Size="42" />
+</Struct>
+<Struct Name="WS_ShowRecipeBook" ClientVersion="547" OpcodeName="OP_ShowRecipeBookMsg">
 <Data ElementName="device" Type="char" Size="42" />
 <Data ElementName="unknown1" Type="int8" Size="1" />
 <Data ElementName="unknown2" Type="int32" />
@@ -16488,11 +16643,26 @@ to zero and treated like placeholders." />
 </Data>
 <Data ElementName="unknown1" Type="int32" Size="1" />
 </Struct>
+<Struct Name="WS_UpdateRecipeBook" ClientVersion="546" OpcodeName="OP_UpdateRecipeBookMsg">
+<Data ElementName="recipe_count" Type="int16" /> 
+<Data ElementName="packed_size" Type="int32" /> 
+<Data ElementName="skill_array" Type="Array" ArraySizeVariable="recipe_count"> 
+  <Data ElementName="recipe_id" Type="int32" Size="1" />
+  <Data ElementName="recipe_data_crc" Type="int32" Size="1" />
+  <Data ElementName="unknown" Type="int32" Size="1" />
+</Data>
+</Struct>
 <Struct Name="WS_RequestRecipeDetail" ClientVersion="1" OpcodeName="OP_RequestRecipeDetailsMsg">
 <Data ElementName="num_recipes" Type="int32" Size="1" />
 <Data ElementName="recipe_array" Type="Array" ArrayVariableSize="num_recipes">
   <Data ElementName="recipe_id" Type="int32" Size="1" />
 </Data>
+</Struct>
+<Struct Name="WS_RequestRecipeDetail" ClientVersion="546" OpcodeName="OP_RequestRecipeDetailsMsg">
+  <Data ElementName="num_recipes" Type="int32" Size="1" />
+  <Data ElementName="recipes_array" Type="Array" ArraySizeVariable="num_recipes">
+    <Data ElementName="recipe_id" Type="int32" Size="1" />
+  </Data>
 </Struct>
 <Struct Name="WS_DisplayHouseStatus" ClientVersion="1096" OpcodeName="OP_PlayerHouseDisplayStatusMsg">
 <Data ElementName="unknown1" Type="int32" Size="1" />

@@ -2650,7 +2650,7 @@ void WorldDatabase::SaveCharacterQuests(Client* client){
 			query.AddQueryAsync(client->GetCharacterID(),this,Q_UPDATE, "update character_quests set current_quest = 0 where char_id = %u", client->GetCharacterID());
 			query.AddQueryAsync(client->GetCharacterID(), this,Q_UPDATE, "update character_quests set current_quest = 1 where char_id = %u and quest_id = %u", client->GetCharacterID(), itr->first);
 		}
-		if(itr->second->GetSaveNeeded()){
+		if(itr->second && itr->second->GetSaveNeeded()){
 			query.AddQueryAsync(client->GetCharacterID(), this,Q_INSERT, "insert ignore into character_quests (char_id, quest_id, given_date, quest_giver) values(%u, %u, now(), %u)", client->GetCharacterID(), itr->first, itr->second->GetQuestGiver());
 			query.AddQueryAsync(client->GetCharacterID(), this,Q_UPDATE, "update character_quests set tracked = %i, quest_flags = %u, hidden = %i, complete_count = %u where char_id = %u and quest_id = %u", itr->second->IsTracked() ? 1 : 0, itr->second->GetQuestFlags(), itr->second->IsHidden() ? 1 : 0, itr->second->GetCompleteCount(), client->GetCharacterID(), itr->first);
 			SaveCharacterQuestProgress(client, itr->second);
@@ -2661,7 +2661,7 @@ void WorldDatabase::SaveCharacterQuests(Client* client){
 		LogWrite(WORLD__ERROR, 0, "World", "Error in SaveCharacterQuests query '%s': %s", query.GetQuery(), query.GetError());
 	quests = client->GetPlayer()->GetCompletedPlayerQuests();
 	for(itr = quests->begin(); itr != quests->end(); itr++){
-		if(itr->second->GetSaveNeeded()){
+		if(itr->second && itr->second->GetSaveNeeded()){
 			query.AddQueryAsync(client->GetCharacterID(), this,Q_DELETE, "delete FROM character_quest_progress where char_id = %u and quest_id = %u", client->GetCharacterID(), itr->first);
 
 			/* incase the quest is completed before the quest could be inserted in the PlayerQuests loop, we first try to insert it.  If it already exists then we can just update

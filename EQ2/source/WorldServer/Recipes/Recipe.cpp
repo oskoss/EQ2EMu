@@ -24,9 +24,11 @@
 #include "Recipe.h"
 #include "../../common/ConfigReader.h"
 #include "../Items/Items.h"
+#include "../World.h"
 
 extern ConfigReader configReader;
 extern MasterItemList master_item_list;
+extern World world;
 
 
 Recipe::Recipe() {
@@ -57,28 +59,63 @@ Recipe::~Recipe() {
 Recipe::Recipe(Recipe *in){
 	assert(in);
 	id = in->GetID();
+	soe_id = in->GetSoeID();
 	book_id = in->GetBookID();
 	strncpy(name, in->GetName(), sizeof(name));
+	strncpy(description, in->GetDescription(), sizeof(description));
 	strncpy(book_name, in->GetBookName(), sizeof(book_name));
 	strncpy(book, in->GetBook(), sizeof(book));
 	strncpy(device, in->GetDevice(), sizeof(device));
-	strncpy(product_name, in->product_name, sizeof(product_name));
-	strncpy(primary_build_comp_title, in->primary_build_comp_title, sizeof(primary_build_comp_title));
-	strncpy(build1_comp_title, in->build1_comp_title, sizeof(build1_comp_title));
-	strncpy(build2_comp_title, in->build2_comp_title, sizeof(build2_comp_title));
-	strncpy(build3_comp_title, in->build3_comp_title, sizeof(build3_comp_title));
-	strncpy(build4_comp_title, in->build4_comp_title, sizeof(build4_comp_title));
+	
 	level = in->GetLevel();
 	tier = in->GetTier();
 	icon = in->GetIcon();
 	skill = in->GetSkill();
 	technique = in->GetTechnique();
 	knowledge = in->GetKnowledge();
+	device_sub_type = in->GetDevice_Sub_Type();
 	classes = in->GetClasses();
-	device_sub_type = in-> GetDevice_Sub_Type();
+	unknown1 = in->GetUnknown1();
 	unknown2 = in->GetUnknown2();
 	unknown3 = in->GetUnknown3();
 	unknown4 = in->GetUnknown4();
+	
+	product_item_id = in->GetProductID();
+	strncpy(product_name, in->product_name, sizeof(product_name));
+	product_qty = in->GetProductQuantity();
+	
+	strncpy(primary_build_comp_title, in->primary_build_comp_title, sizeof(primary_build_comp_title));
+	strncpy(build1_comp_title, in->build1_comp_title, sizeof(build1_comp_title));
+	strncpy(build2_comp_title, in->build2_comp_title, sizeof(build2_comp_title));
+	strncpy(build3_comp_title, in->build3_comp_title, sizeof(build3_comp_title));
+	strncpy(build4_comp_title, in->build4_comp_title, sizeof(build4_comp_title));
+	
+	strncpy(fuel_comp_title, in->fuel_comp_title, sizeof(fuel_comp_title));
+	build1_comp_qty = in->GetBuild1ComponentQuantity();
+	build2_comp_qty = in->GetBuild2ComponentQuantity();
+	build3_comp_qty = in->GetBuild3ComponentQuantity();
+	build4_comp_qty = in->GetBuild4ComponentQuantity();
+	fuel_comp_qty = in->GetFuelComponentQuantity();
+	primary_comp_qty = in->GetPrimaryComponentQuantity();
+	highestStage = in->GetHighestStage();
+	
+	std::map<int8, RecipeProducts*>::iterator itr;
+	for (itr = in->products.begin(); itr != in->products.end(); itr++) {
+		RecipeProducts* rp = new RecipeProducts;
+		rp->product_id = itr->second->product_id;
+		rp->byproduct_id = itr->second->byproduct_id;
+		rp->product_qty = itr->second->product_qty;
+		rp->byproduct_qty = itr->second->byproduct_qty;
+		products.insert(make_pair(itr->first, rp));
+	}
+	
+	std::map<int8, vector<int32>>::iterator itr2;
+	for (itr2 = in->components.begin(); itr2 != in->components.end(); itr2++) {
+		std::vector<int32> recipe_component;
+		 std::copy(itr2->second.begin(), itr2->second.end(),
+              std::back_inserter(recipe_component));
+		components.insert(make_pair(itr2->first, recipe_component));
+	}
 }
 
 MasterRecipeList::MasterRecipeList() {
@@ -224,6 +261,12 @@ bool PlayerRecipeList::RemoveRecipe(int32 recipe_id) {
 	return ret;
 }
 
+
+int32 PlayerRecipeList::Size() {
+    std::unique_lock lock(player_recipe_mutex);
+	return recipes.size();
+}
+
 MasterRecipeBookList::MasterRecipeBookList(){
 	m_recipeBooks.SetName("MasterRecipeBookList::recipeBooks");
 }
@@ -344,7 +387,11 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 		packet->setSubstructDataByName("info_header", "show_name", 1);
 	else
 		packet->setSubstructDataByName("info_header", "show_popup", 1);
-	if(packet_type > 0)
+	
+	if(client->GetVersion() <= 546) {
+		packet->setSubstructDataByName("info_header", "packettype", 0x02);
+	}
+	else if(packet_type > 0)
 		packet->setSubstructDataByName("info_header", "packettype", GetItemPacketType(packet->GetVersion()));
 	else
 		if(version == 1096)
@@ -473,6 +520,10 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	// Check to see if we have a primary component (slot = 0)
 	vector<Item*> itemss;
 	if (recipe->components.count(0) > 0) {
+		if(client->GetVersion() <= 546) {
+			packet->setSubstructDataByName("recipe_info", "primary_count", 1);
+		}	
+		
 		int16 have_qty = 0;
 		vector<int32> rc = recipe->components[0];
 		for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
@@ -504,20 +555,20 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 	if (recipe->components.count(4) > 0)
 		total_build_components++;
 
-	
+	int8 index = 0;
+	int8 count = 0;
 	if (total_build_components > 0) {
 		packet->setSubstructArrayLengthByName("recipe_info", "num_comps", total_build_components);
-		for (int8 index = 0; index < 4; index++) {
+		for (index = 0; index < 4; index++) {
 			if (recipe->components.count(index + 1) == 0)
 				continue;
-
+			
+			count++;
 			vector<int32> rc = recipe->components[index + 1];
 			int16 have_qty = 0;
 			string comp_title;
 			int8 comp_qty;
 			for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
-
-				
 				if (index == 0) {
 					comp_title = recipe->build1_comp_title;
 					comp_qty = recipe->build1_comp_qty;
@@ -546,8 +597,14 @@ EQ2Packet * Recipe::SerializeRecipe(Client *client, Recipe *recipe, bool display
 		}
 		
 	}
+	
+	if(client->GetVersion() <= 546) {
+		packet->setSubstructDataByName("recipe_info", "fuel_count", 1);
+		packet->setSubstructDataByName("recipe_info", "fuel_comp", recipe->fuel_comp_title);
+		packet->setSubstructDataByName("recipe_info", "fuel_comp_qty", recipe->fuel_comp_qty);
+	}	
 	// Check to see if we have a fuel component (slot = 5)
-	if (recipe->components.count(5) > 0) {
+	else if (recipe->components.count(5) > 0) {
 		vector<int32> rc = recipe->components[5];
 		for (itr = rc.begin(); itr != rc.end(); itr++, i++) {
 			item = master_item_list.GetItem(*itr);
