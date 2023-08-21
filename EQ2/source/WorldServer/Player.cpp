@@ -4594,7 +4594,7 @@ Quest* Player::SetStepComplete(int32 id, int32 step){
 	Quest* ret = 0;
 	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if(player_quests.count(id) > 0){
-		if(player_quests[id]->SetStepComplete(step))
+		if(player_quests[id] && player_quests[id]->SetStepComplete(step))
 			ret = player_quests[id];
 	}
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
@@ -4605,7 +4605,7 @@ Quest* Player::AddStepProgress(int32 quest_id, int32 step, int32 progress) {
 	Quest* ret = 0;
 	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 	if (player_quests.count(quest_id) > 0) {
-		if (player_quests[quest_id]->AddStepProgress(step, progress))
+		if (player_quests[quest_id] && player_quests[quest_id]->AddStepProgress(step, progress))
 			ret = player_quests[quest_id];
 	}
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
@@ -4616,7 +4616,7 @@ int32 Player::GetStepProgress(int32 quest_id, int32 step_id) {
 	int32 ret = 0;
 
 	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
-	if (player_quests.count(quest_id) > 0)
+	if (player_quests.count(quest_id) > 0 && player_quests[quest_id])
 		ret = player_quests[quest_id]->GetStepProgress(step_id);
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 
