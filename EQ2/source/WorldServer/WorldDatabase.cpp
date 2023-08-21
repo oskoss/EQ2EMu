@@ -6353,8 +6353,8 @@ void WorldDatabase::LoadSpellErrors() {
 }
 
 void WorldDatabase::SaveCharacterHistory(Player* player, int8 type, int8 subtype, int32 value, int32 value2, char* location, int32 event_date) {
-	string str_type;
-	string str_subtype;
+	string str_type("");
+	string str_subtype("");
 	switch (type) {
 	case HISTORY_TYPE_NONE:
 		str_type = "None";
@@ -6403,7 +6403,7 @@ void WorldDatabase::SaveCharacterHistory(Player* player, int8 type, int8 subtype
 
 	Query query;
 	query.AddQueryAsync(player->GetCharacterID(), this, Q_REPLACE, "replace into character_history (char_id, type, subtype, value, value2, location, event_date) values (%u, '%s', '%s', %i, %i, '%s', %u)", 
-		player->GetCharacterID(), str_type.c_str(), str_subtype.c_str(), value, value2, location, event_date);
+		player->GetCharacterID(), str_type.c_str(), str_subtype.c_str(), value, value2, getSafeEscapeString(location).c_str(), event_date);
 }
 
 void WorldDatabase::LoadTransportMaps(ZoneServer* zone) {

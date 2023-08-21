@@ -4866,7 +4866,7 @@ int8 Player::CheckQuestFlag(Spawn* spawn){
 		for(int32 i=0;i<quests->size();i++){
 			MPlayerQuests.readlock(__FUNCTION__, __LINE__);
 			if(player_quests.count(quests->at(i)) > 0){
-				if(player_quests[quests->at(i)]->GetCompleted() && player_quests[quests->at(i)]->GetQuestReturnNPC() == spawn->GetDatabaseID()){
+				if(player_quests[quests->at(i)] && player_quests[quests->at(i)]->GetCompleted() && player_quests[quests->at(i)]->GetQuestReturnNPC() == spawn->GetDatabaseID()){
 					ret = 2;
 					MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 					break;

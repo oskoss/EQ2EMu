@@ -73,6 +73,9 @@ void ClientPacketFunctions::SendHousingList(Client* client) {
 	std::vector<PlayerHouse*> houses = world.GetAllPlayerHouses(client->GetCharacterID());
 	// this packet must be sent first otherwise it blocks out the enter house option after paying upkeep
 	PacketStruct* packet = configReader.getStruct("WS_CharacterHousingList", client->GetVersion());
+	if(!packet) {
+		return;
+	}
 	packet->setArrayLengthByName("num_houses", houses.size());
 	for (int i = 0; i < houses.size(); i++)
 	{
