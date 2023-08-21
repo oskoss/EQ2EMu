@@ -134,6 +134,11 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 		
 	// need this to enable the "enter house" button
 	PacketStruct* packet = configReader.getStruct("WS_UpdateHouseAccessDataMsg", client->GetVersion());
+	
+	if(!packet) {
+		return;
+	}
+
 	if(client->GetCurrentZone()->GetInstanceType() != PERSONAL_HOUSE_INSTANCE
 			&& client->GetCurrentZone()->GetInstanceType() != GUILD_HOUSE_INSTANCE) {
 		if (packet) {
