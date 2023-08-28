@@ -3538,7 +3538,7 @@ int EQ2Emu_lua_HasQuest(lua_State* state) {
 	}
 	int32 quest_id = lua_interface->GetInt32Value(state, 2);
 	if (quest_id > 0) {
-		lua_interface->SetBooleanValue(state, (((Player*)player)->player_quests.count(quest_id) > 0));
+		lua_interface->SetBooleanValue(state, (((Player*)player)->HasActiveQuest(quest_id) > 0));
 		return 1;
 	} else {
 		lua_interface->LogError("%s: LUA HasQuest command error: quest_id is not valid", lua_interface->GetScriptName(state));

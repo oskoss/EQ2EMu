@@ -1827,8 +1827,16 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 		}
 		if (canEquip && slot == 255)
 		{
-			if (slot_id == 255)
-				slot = item->slot_data.at(0);
+			if (slot_id == 255) {
+				if(item->slot_data.size() > 0) {
+					slot = item->slot_data.at(0);
+				}
+				else {
+					LogWrite(PLAYER__ERROR, 0, "Player", "Attempt to equip item %s (%u) with auto equip FAILED, no slot_data exists!  Check items table, 'slots' column value should not be 0.", item->name.c_str(), item->details.item_id);
+					item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+					return packets;
+				}
+			}
 			else
 				slot = slot_id;
 			item_list.MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
@@ -4777,7 +4785,7 @@ Quest* Player::GetCompletedQuest(int32 quest_id){
 bool Player::HasQuestBeenCompleted(int32 quest_id){
 	bool ret = false;
 	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
-	if(completed_quests.count(quest_id) > 0)
+	if(completed_quests.count(quest_id) > 0 && completed_quests[quest_id])
 		ret = true;
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	
@@ -4787,7 +4795,7 @@ bool Player::HasQuestBeenCompleted(int32 quest_id){
 bool Player::HasActiveQuest(int32 quest_id){
 	bool ret = false;
 	MPlayerQuests.readlock(__FUNCTION__, __LINE__);
-	if(player_quests.count(quest_id) > 0)
+	if(player_quests.count(quest_id) > 0 && player_quests[quest_id])
 		ret = true;
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	
