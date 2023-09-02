@@ -159,7 +159,7 @@ public:
 	~SpellProcess();
 
 	/// <summary>Remove all spells from the SpellProcess </summary>
-	void RemoveAllSpells();
+	void RemoveAllSpells(bool reload_spells = false);
 
 	/// <summary>Main loop, handles everything (interupts, cast time, recast, ...) </summary>
 	void Process();

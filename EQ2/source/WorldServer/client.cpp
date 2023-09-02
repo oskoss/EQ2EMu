@@ -2180,7 +2180,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 
 				{
 					player->GetInfoStruct()->subtract_status_points(status_req);
-					ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id);
+					ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id, false, false);
 					int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
 					int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
 					world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
@@ -2201,7 +2201,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 							break;
 						}
 
-						ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id);
+						ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id, false, false);
 						int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
 						int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
 						world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
@@ -2230,7 +2230,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			if (ph) {
 				HouseZone* hz = world.GetHouseZone(ph->house_id);
 				if (hz) {
-					ZoneServer* house = zone_list.GetByInstanceID(ph->instance_id, hz->zone_id);
+					ZoneServer* house = zone_list.GetByInstanceID(ph->instance_id, hz->zone_id, false, true);
 					if (house) {
 						Zone(house, true);
 					}
@@ -4127,7 +4127,7 @@ ZoneServer* Client::IdentifyInstance(int32 zoneID) {
 			}
 
 			// Need to update `character_instances` table with new timestamps (for persistent) and instance id's
-			instance_zone = zone_list.GetByInstanceID(data->instance_id, zoneID);
+			instance_zone = zone_list.GetByInstanceID(data->instance_id, zoneID, false, false);
 
 			// if we got an instance_zone and the instance_id from the data is 0 or data instance id is not the same as the zone instance id then update values
 			if (instance_zone && (data->instance_id == 0 || data->instance_id != instance_zone->GetInstanceID())) {
@@ -4287,7 +4287,7 @@ bool Client::CheckZoneAccess(const char* zoneName) {
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "Zone access check for %s (%u), client: %u", zoneName, database.GetZoneID(zoneName), GetVersion());
 
-	ZoneServer* zone = zone_list.Get(zoneName, false);
+	ZoneServer* zone = zone_list.Get(zoneName, false, false, false);
 
 	// JA: implemented /zone lock|unlock commands (2012.07.28)
 	if (zone && zone->GetZoneLockState())
@@ -4368,7 +4368,7 @@ bool Client::CheckZoneAccess(const char* zoneName) {
 }
 
 void Client::Zone(int32 instanceid, bool set_coords, bool byInstanceID, bool is_spell) {
-	Zone(zone_list.GetByInstanceID(instanceid), set_coords, is_spell);
+	Zone(zone_list.GetByInstanceID(instanceid, 0, false, true), set_coords, is_spell);
 
 }
 

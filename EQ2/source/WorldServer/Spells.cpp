@@ -697,9 +697,40 @@ void Spell::SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, C
 
 	}
 }
+
+sint16 Spell::TranslateClientSpellIcon(int16 version) {
+	sint16 spell_icon = GetSpellIcon();
+	if(version <= 546) {
+		switch(spell_icon) {
+			case 772: // tracking
+				spell_icon = 32; // ??
+				break;
+			case 773: // mining
+				spell_icon = 33; // OK
+				break;
+			case 774: // gathering
+				spell_icon = 56; // OK
+				break;
+			case 775: // fishing
+				spell_icon = 55; // OK
+				break;
+			case 776: // trapping
+				spell_icon = 46; // OK
+				break;
+			case 777: // foresting
+				spell_icon = 125; // OK
+				break;
+			case 778: // collecting
+				spell_icon = 167; // OK
+				break;
+		}
+	}
+	return spell_icon;
+}
+
 void Spell::SetPacketInformation(PacketStruct* packet, Client* client, bool display_tier) {
 	packet->setSubstructDataByName("spell_info", "id", spell->id);
-	packet->setSubstructDataByName("spell_info", "icon", spell->icon);
+	packet->setSubstructDataByName("spell_info", "icon", TranslateClientSpellIcon(client->GetVersion()));
 	packet->setSubstructDataByName("spell_info", "icon2", spell->icon_heroic_op);	// fix struct element name eventually
 	packet->setSubstructDataByName("spell_info", "icontype", spell->icon_backdrop);	// fix struct element name eventually
 

@@ -359,7 +359,7 @@ bool ConsoleZoneCommand(Seperator *sep)
 		{
 			if( sep->IsNumber(2) )
 			{
-				zone = zone_list.Get(atoi(sep->arg[2]), false);
+				zone = zone_list.Get(atoi(sep->arg[2]), false, false, false);
 				if( zone )
 				{
 					printf("> Zone status for zone ID %i...\n", atoi(sep->arg[2]));

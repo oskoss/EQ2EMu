@@ -335,6 +335,7 @@ public:
 	void AddSpellLuaDataBool(bool value, string helper);
 	void AddSpellLuaDataString(string value, string value2, string helper);
 	int32 GetSpellID();
+	sint16 TranslateClientSpellIcon(int16 version);
 	void SetPacketInformation(PacketStruct* packet, Client* client = 0, bool display_tier = false);
 	void SetAAPacketInformation(PacketStruct* packet, AltAdvanceData* data, Client* client = 0, bool display_tier = false);
 	int8 GetSpellTier();

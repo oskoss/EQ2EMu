@@ -6461,11 +6461,14 @@ to zero and treated like placeholders." />
 <Data ElementName="size_unknown" Type="float" />
 <Data ElementName="unknown4" Type="int8" />
 </Struct>
-<Struct Name="WS_ServerControlFlags" ClientVersion="1" OpcodeName="OP_ChangeServerControlFlagMsg" >
-<Data ElementName="parameter1" Type="int8" />
-<Data ElementName="parameter2" Type="int8" />
-<Data ElementName="parameter3" Type="int8" />
-<Data ElementName="value" Type="int8" />
+<!-- classic uses opcode OP_UpdateClientPredFlagsMsg instead of OP_ChangeServerControlFlagMsg -->
+<Struct Name="WS_ServerControlFlags" ClientVersion="1" OpcodeName="OP_UpdateClientPredFlagsMsg" >
+<Data ElementName="parameter" Type="int32" />
+<Data ElementName="value" Type="int32" />
+</Struct>
+<Struct Name="WS_ServerControlFlags" ClientVersion="546" OpcodeName="OP_UpdateClientPredFlagsMsg" >
+<Data ElementName="parameter" Type="int32" />
+<Data ElementName="value" Type="int32" />
 </Struct>
 <Struct Name="WS_ServerControlFlags" ClientVersion="547" OpcodeName="OP_ChangeServerControlFlagMsg" >
 <Data ElementName="parameter1" Type="int8" />
@@ -15936,12 +15939,11 @@ to zero and treated like placeholders." />
 <Data ElementName="skill_id" Type="int32" Size="6"/>
 </Struct>
 <Struct Name="WS_ShowItemCreation" ClientVersion="546" OpcodeName="OP_ShowItemCreationProcessUIMsg">
-<!-- starting durability maybe?-->
 <Data ElementName="max_possible_durability" Type="int32" Size="1" />
 <Data ElementName="max_possible_progress" Type="int32" Size="1" />
 <Data ElementName="unknown2" Type="int32" Size="2" />
 <Data ElementName="progress_levels_known" Type="int8" Size="1" />
-<Data ElementName="num_process" Type="int8" Size="1" />
+<Data ElementName="num_process" Type="int16" Size="1" />
 <Data ElementName="process_array" Type="Array" ArraySizeVariable="num_process">
   <Data ElementName="progress_needed" Type="int32" Size="1" />
   <Data ElementName="unknown3" Type="int8" Size="1" IfVariableNotSet="progress_needed"/>
@@ -15952,7 +15954,7 @@ to zero and treated like placeholders." />
   <Data ElementName="item_byproduct_icon" Type="int16" />
   <!-- Another EQ2_Item? Does subtype set to FF prevent the rest of the packet?-->
   <!-- If not an EQ2_item this unknown *might* be quantity-->
-  <Data ElementName="item_byproduct_unknown" Type="int8" />
+  <Data ElementName="item_byproduct_unknown" Type="int16" />
   <Data ElementName="packettype" Type="int16" />
   <Data ElementName="packetsubtype" Type="int8" />
 </Data>
@@ -15962,7 +15964,7 @@ to zero and treated like placeholders." />
 <Data ElementName="product_item" Type="EQ2_Item" />
 <Data ElementName="product_byproduct_name" Type="EQ2_16Bit_String" />
 <Data ElementName="product_byproduct_icon" Type="int16" />
-<Data ElementName="product_byproduct_unknown" Type="int8" />
+<Data ElementName="product_byproduct_unknown" Type="int16" />
 <Data ElementName="packettype" Type="int16" />
 <Data ElementName="packetsubtype" Type="int8" />
 <Data ElementName="skill_id" Type="int32" Size="6"/>

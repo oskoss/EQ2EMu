@@ -1888,7 +1888,72 @@ public:
 	
 	bool IsEngagedInEncounter(Spawn** res = nullptr);
 	bool IsEngagedBySpawnID(int32 id);
+	void SendControlEffectDetailsToClient(Client* client);
 		
+	std::string GetControlEffectName(int8 control_effect_type) {
+		switch(control_effect_type) {
+			case CONTROL_EFFECT_TYPE_MEZ: {
+				return "Mesmerize";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_STIFLE:{
+				return "Stifle";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_DAZE:{
+				return "Daze";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_STUN:{
+				return "Stun";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_ROOT:{
+				return "Root";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_FEAR:{
+				return "Fear";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_WALKUNDERWATER:{
+				return "WalkUnderwater";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_JUMPUNDERWATER:{
+				return "JumpUnderwater";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_INVIS:{
+				return "Invisible";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_STEALTH:{
+				return "Stealth";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_SNARE:{
+				return "Snare";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_FLIGHT:{
+				return "Flight";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_GLIDE:{
+				return "Glide";
+				break;
+			}
+			case CONTROL_EFFECT_TYPE_SAFEFALL:{
+				return "SafeFall";
+				break;
+			}
+			default: {
+				return "Undefined";
+				break;
+			}
+		}
+	}
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		MEquipment;
 	std::mutex		MStats;

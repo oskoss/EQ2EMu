@@ -2322,6 +2322,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 
 	bool spawnHiddenFromClient = false;
 
+	int8 classicFlags = 0;
 	// radius of 0 is always seen, -1 is never seen (unless items/spells override), larger than 0 is a defined radius to restrict visibility
 	sint32 radius = rule_manager.GetGlobalRule(R_PVP, InvisPlayerDiscoveryRange)->GetSInt32();
 	if (radius != 0 && (Spawn*)spawn != this && this->IsPlayer() && !spawn->CanSeeInvis((Entity*)this))
@@ -2435,12 +2436,19 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	
 	if (IsNPC() && !IsPet() && !scaredOfPlayer)
 	{
-		if(((Entity*)this)->GetInfoStruct()->get_interaction_flag())
-			packet->setDataByName("interaction_flag", ((Entity*)this)->GetInfoStruct()->get_interaction_flag()); //this makes NPCs head turn to look at you (12)
-		else
+		if(((Entity*)this)->GetInfoStruct()->get_interaction_flag()) {
+			if(((Entity*)this)->GetInfoStruct()->get_interaction_flag() == 255) { 
+				packet->setDataByName("interaction_flag", 0);
+				classicFlags += INFO_CLASSIC_FLAG_NOLOOK;
+			}
+			else {
+				packet->setDataByName("interaction_flag", ((Entity*)this)->GetInfoStruct()->get_interaction_flag()); //this makes NPCs head turn to look at you (12)
+			}
+		}
+		else {
 			packet->setDataByName("interaction_flag", 12); //turn head since no other value is set
+		}
 	}
-	
 	packet->setDataByName("emote_state", appearance.emote_state);
 	packet->setDataByName("mood_state", appearance.mood_state);
 	packet->setDataByName("gender", appearance.gender);
@@ -2499,18 +2507,36 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		// find the visual flags
 		int8 vis_flag = 0;
 		//Invis + crouch flag check
-		if (entity->IsStealthed())
+		if (entity->IsStealthed()) {
 			vis_flag += (INFO_VIS_FLAG_INVIS + INFO_VIS_FLAG_CROUCH);
+			classicFlags += INFO_VIS_FLAG_INVIS + INFO_VIS_FLAG_CROUCH;
+		}
 		//Invis flag check
-		else if (entity->IsInvis())
+		else if (entity->IsInvis()) {
 			vis_flag += INFO_VIS_FLAG_INVIS;
+			classicFlags += INFO_VIS_FLAG_INVIS;
+		}
+		
 		//Mount flag check
-		if (entity->GetMount() > 0)
+		if (entity->GetMount() > 0) {
 			vis_flag += INFO_VIS_FLAG_MOUNTED;
+		}
+		
 		//Hide hood check
-		if ((IsPlayer() && ((Player*)this)->get_character_flag(CF_HIDE_HOOD)) || appearance.hide_hood)
+		if (IsPlayer() && ((Player*)this)->get_character_flag(CF_HIDE_HOOD)) {
 			vis_flag += INFO_VIS_FLAG_HIDE_HOOD;
-
+		}
+		else if(IsPlayer()) {
+			classicFlags += INFO_CLASSIC_FLAG_SHOW_HOOD;
+		}
+		
+		if(appearance.hide_hood) {
+			vis_flag += INFO_VIS_FLAG_HIDE_HOOD;
+		}
+			
+		if(version <= 546) {
+			packet->setDataByName("flags", classicFlags);
+		}
 		packet->setDataByName("visual_flag", vis_flag);
 		packet->setColorByName("mount_saddle_color", entity->GetMountSaddleColor());
 		packet->setColorByName("mount_color", entity->GetMountColor());
@@ -2716,7 +2742,6 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	}
 
 	packet->setDataByName("activity_status", temp_activity_status); //appearance.activity_status);
-
 	// If player and player has a follow target
 	/* Jan 2021 Note!! Setting follow_target 0xFFFFFFFF has the result in causing strange behavior in swimming.  Targetting a mob makes you focus down to its swim level, unable to swim above it.
 	** in the same respect the player will drop like a rock to the bottom of the ocean (seems to be when self set to that flag?)

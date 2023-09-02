@@ -2865,7 +2865,7 @@ EQ2Packet* Player::GetSpellBookUpdatePacket(int16 version) {
 					packet->setSubstructArrayDataByName("spells", "recast_available", spell_entry->recast_available, 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "recast_time", spell_entry->recast, 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "status", spell_entry->status, 0, ptr);
-					packet->setSubstructArrayDataByName("spells", "icon", (spell->GetSpellIcon() * -1) - 1, 0, ptr);
+					packet->setSubstructArrayDataByName("spells", "icon", (spell->TranslateClientSpellIcon(version) * -1) - 1, 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "icon_type", spell->GetSpellIconBackdrop(), 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "icon2", spell->GetSpellIconHeroicOp(), 0, ptr);
 					packet->setSubstructArrayDataByName("spells", "unique_id", (spell_entry->tier + 1) * -1, 0, ptr); //this is actually GetSpellNameCrc(spell->GetName()), but hijacking it for spell tier
@@ -6589,7 +6589,22 @@ void PlayerControlFlags::SendControlFlagUpdates(Client* client){
 	for (itr = flag_changes.begin(); itr != flag_changes.end(); itr++){
 		ptr = &itr->second;
 		for (itr2 = ptr->begin(); itr2 != ptr->end(); itr2++){
-			ClientPacketFunctions::SendServerControlFlags(client, itr->first, itr2->first, itr2->second);
+			int32 param = itr2->first;
+			if(client->GetVersion() <= 546) {
+				switch(itr->first) {
+					case 4: {
+						if(itr2->first == 64) { // stun
+							ClientPacketFunctions::SendServerControlFlagsClassic(client, 8, itr2->second);
+							param = 16;
+						}
+						break;
+					}
+				}
+				ClientPacketFunctions::SendServerControlFlagsClassic(client, itr2->first, itr2->second);
+			}
+			else {
+				ClientPacketFunctions::SendServerControlFlags(client, itr->first, itr2->first, itr2->second);
+			}
 		}
 	}
 	flag_changes.clear();
@@ -6899,7 +6914,7 @@ void Player::SaveSpellEffects()
 				target_char_id = ((Player*)spawn)->GetCharacterID();
 
 			int32 timestamp = 0xFFFFFFFF;
-			if(!info->spell_effects[i].spell->spell->GetSpellData()->duration_until_cancel)
+			if(info->spell_effects[i].spell->spell->GetSpellData() && !info->spell_effects[i].spell->spell->GetSpellData()->duration_until_cancel)
 				timestamp = info->spell_effects[i].expire_timestamp - Timer::GetCurrentTime2();
 			
 			int32 caster_char_id = info->spell_effects[i].spell->initial_caster_char_id;
@@ -6933,7 +6948,7 @@ void Player::SaveSpellEffects()
 			int32 caster_char_id = (info->maintained_effects[i].spell->caster && info->maintained_effects[i].spell->caster->IsPlayer()) ? ((Player*)info->maintained_effects[i].spell->caster)->GetCharacterID() : 0;
 			
 			int32 timestamp = 0xFFFFFFFF;
-			if(!info->maintained_effects[i].spell->spell->GetSpellData()->duration_until_cancel)
+			if(info->maintained_effects[i].spell->spell->GetSpellData() && !info->maintained_effects[i].spell->spell->GetSpellData()->duration_until_cancel)
 				timestamp = info->maintained_effects[i].expire_timestamp - Timer::GetCurrentTime2();
 			savedEffects.AddQueryAsync(GetCharacterID(), &database, Q_INSERT, 
 			"insert into character_spell_effects (name, caster_char_id, target_char_id, target_type, db_effect_type, spell_id, effect_slot, slot_pos, icon, icon_backdrop, conc_used, tier, total_time, expire_timestamp, lua_file, custom_spell, charid, damage_remaining, effect_bitmask, num_triggers, had_triggers, cancel_after_triggers, crit, last_spellattack_hit, interrupted, resisted, custom_function) values ('%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %f, %u, '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s')", 

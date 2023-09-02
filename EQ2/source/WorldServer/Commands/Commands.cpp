@@ -2095,6 +2095,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[1][0] && sep->IsNumber(1)){
 				if(strcmp(sep->arg[0], "inventory") == 0){
 					int32 item_index = atol(sep->arg[1]);
+					
+					if(client->GetVersion() <= 546) {
+						item_index = (uint32)-(sint32)item_index & 0xFFFFFFFF;
+						item_index -= 1;
+					}
 					Item* item = client->GetPlayer()->item_list.GetItemFromIndex(item_index);
 					if(item){
 						if (item->IsCollectable() && client->SendCollectionsForItem(item))
@@ -2812,11 +2817,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_FLYMODE:{
 			if(sep && sep->arg[0] && sep->IsNumber(0)){
 				PrintSep(sep, "COMMAND_FLYMODE");
-				int8 val = atoi(sep->arg[0]);
+				int8 val = atoul(sep->arg[0]);
 				ClientPacketFunctions::SendFlyMode(client, val);
 			}
 			else{
-				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage ON: /flymode 1");
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage ON: /flymode [1|2] 1 = fly, 2 = no clip");
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Usage OFF: /flymode 0");
 			}
 			break;
@@ -3476,9 +3481,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					PrintSep(sep, "ZONE LOCK");
 
 					if(sep->IsNumber(1))
-						zsZone = zone_list.Get(atoul(sep->arg[1]), false);
+						zsZone = zone_list.Get(atoul(sep->arg[1]), false, false, false);
 					else
-						zsZone = zone_list.Get(sep->arg[1], false);
+						zsZone = zone_list.Get(sep->arg[1], false, false, false);
 
 					if( zsZone )
 					{
@@ -3495,9 +3500,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					PrintSep(sep, "ZONE UNLOCK");
 
 					if(sep->IsNumber(1))
-						zsZone = zone_list.Get(atoul(sep->arg[1]), false);
+						zsZone = zone_list.Get(atoul(sep->arg[1]), false, false, false);
 					else
-						zsZone = zone_list.Get(sep->arg[1], false);
+						zsZone = zone_list.Get(sep->arg[1], false, false, false);
 
 					if( zsZone )
 					{
@@ -4021,6 +4026,15 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					}
 					else
 						client->SetPlayerPOVGhost(nullptr);
+				}
+				else if (strcmp(sep->arg[0], "controleffects") == 0)
+				{
+					if(cmdTarget && cmdTarget->IsEntity()) {
+						((Entity*)cmdTarget)->SendControlEffectDetailsToClient(client);
+					}
+					else {
+						client->GetPlayer()->SendControlEffectDetailsToClient(client);
+					}
 				}
 				else if (strcmp(sep->arg[0], "luadebug") == 0)
 				{
@@ -6737,7 +6751,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 		else if(sep->arg[4][0] && strncasecmp("move", sep->arg[0], 4) == 0 && sep->IsNumber(1) && sep->IsNumber(2) && sep->IsNumber(3) && sep->IsNumber(4))
 		{
 			int16 from_index = atoi(sep->arg[1]);
-			sint16 to_slot = player->ConvertSlotFromClient(atoi(sep->arg[2]), client->GetVersion());
+			sint16 to_slot = atoi(sep->arg[2]); // don't convert slot since this is inventory not equipment
 			sint32 bag_id = atol(sep->arg[3]);
 			int8 charges = atoi(sep->arg[4]);
 			Item* item = client->GetPlayer()->item_list.GetItemFromIndex(from_index);
@@ -6889,7 +6903,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 						bag_id = atol(sep->arg[2]);
 
 					if(sep->IsNumber(3))
-						to_slot = player->ConvertSlotFromClient(atoi(sep->arg[3]), client->GetVersion());
+						to_slot = atoi(sep->arg[3]);
 				}
 
 				sint8 unk4 = 0;
@@ -6938,7 +6952,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 		}
 		else if (sep->arg[2][0] && strncasecmp("pop", sep->arg[0], 3) == 0 && sep->IsNumber(1) && sep->IsNumber(2)) 
 		{
-			sint16 to_slot = player->ConvertSlotFromClient(atoi(sep->arg[1]), client->GetVersion());
+			sint16 to_slot = atoi(sep->arg[1]);
 			sint32 bag_id = atoi(sep->arg[2]);
 			Item* item = client->GetPlayer()->item_list.GetOverflowItem();
 			if (item) {
@@ -10619,6 +10633,21 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 		else if (atoi(sep->arg[0]) == 31) {
 			client->SendRecipeList();
 		}
+		else if (atoi(sep->arg[0]) == 32 && sep->IsNumber(1) && sep->IsNumber(2)) {
+			if(client->GetVersion() <= 546) {
+				int32 param = atoul(sep->arg[1]);
+				int32 paramvalue = atoul(sep->arg[2]);
+				client->Message(CHANNEL_COLOR_YELLOW, "Send control flag param %u param value %u", param, paramvalue);
+				ClientPacketFunctions::SendServerControlFlagsClassic(client, param, paramvalue);
+			}
+			else if(sep->IsNumber(3)) {
+				int8 param1 = atoul(sep->arg[1]);
+				int8 param2 = atoul(sep->arg[2]);
+				int8 paramval = atoul(sep->arg[3]);
+				client->Message(CHANNEL_COLOR_YELLOW, "Send control flag param1 %u param2 %u param value %u", param1, param2, paramval);
+				ClientPacketFunctions::SendServerControlFlags(client, param1, param2, paramval);
+			}
+		}
 	}
 	else {
 			PacketStruct* packet2 = configReader.getStruct("WS_ExamineSpellInfo", client->GetVersion());
@@ -10931,7 +10960,7 @@ void Commands::Command_ZoneSafeCoords(Client *client, Seperator *sep)
 
 	if (zone_id > 0)
 	{
-		zone = zone_list.Get(zone_id, false);
+		zone = zone_list.Get(zone_id, false, false, false);
 		if (zone)
 		{
 			zone->SetSafeX(client->GetPlayer()->GetX());
@@ -11004,14 +11033,14 @@ void Commands::Command_ZoneSet(Client* client, Seperator* sep)
 		if (sep->IsNumber(0) && atoi(sep->arg[0]) > 0) 
 		{
 			zone_id = atoi(sep->arg[0]);
-			zone = zone_list.Get(atoi(sep->arg[0]), false);
+			zone = zone_list.Get(atoi(sep->arg[0]), false, false, false);
 		}
 		else 
 		{
 			zone_id = database.GetZoneID(sep->arg[0]);
 
 			if (zone_id > 0)
-				zone = zone_list.Get(sep->arg[0], false);
+				zone = zone_list.Get(sep->arg[0], false, false, false);
 		}
 
 		if (zone_id > 0) 

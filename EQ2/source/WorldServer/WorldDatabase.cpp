@@ -2050,20 +2050,20 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 		}
 		else if (!stricmp(prop_name, CHAR_PROPERTY_FLYMODE))
 		{
-			int8 flymode = atoi(prop_value);
+			int8 flymode = atoul(prop_value);
 			if (flymode) // avoid fly mode notification unless enabled
 				ClientPacketFunctions::SendFlyMode(client, flymode, false);
 		}
 		else if (!stricmp(prop_name, CHAR_PROPERTY_INVUL))
 		{
-			int8 invul = atoi(prop_value);
+			int8 invul = atoul(prop_value);
 			client->GetPlayer()->SetInvulnerable(invul == 1);
 			if (client->GetPlayer()->GetInvulnerable())
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You are now invulnerable!");
 		}
 		else if (!stricmp(prop_name, CHAR_PROPERTY_GMVISION))
 		{
-			int8 val = atoi(prop_value);
+			int8 val = atoul(prop_value);
 			client->GetPlayer()->SetGMVision(val == 1);
 			client->GetCurrentZone()->SendAllSpawnsForVisChange(client, false);
 			if (val)
@@ -2071,7 +2071,7 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 		}
 		else if (!stricmp(prop_name, CHAR_PROPERTY_REGIONDEBUG))
 		{
-			int8 val = atoi(prop_value);
+			int8 val = atoul(prop_value);
 			
 			client->SetRegionDebug(val == 1);
 			if (val)
@@ -2079,7 +2079,7 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 		}
 		else if (!stricmp(prop_name, CHAR_PROPERTY_LUADEBUG))
 		{
-			int8 val = atoi(prop_value);
+			int8 val = atoul(prop_value);
 			if (val)
 			{
 				client->SetLuaDebugClient(true);

@@ -3740,3 +3740,23 @@ bool Entity::IsEngagedBySpawnID(int32 id) {
 	
 	return ret;
 }
+
+void Entity::SendControlEffectDetailsToClient(Client* client) {
+	client->Message(CHANNEL_COLOR_YELLOW, "Current control effects on %s", GetName());
+	client->Message(CHANNEL_COLOR_YELLOW, "-------------------------------");
+	for (int i = 0; i < CONTROL_MAX_EFFECTS; i++) {
+		if(control_effects[i]) {
+			MutexList<LuaSpell*>* spells = control_effects[i];
+			if(spells->size() > 0) {
+				MutexList<LuaSpell*>::iterator itr = spells->begin();		
+				while(itr.Next()){
+					LuaSpell* spell = itr->value;
+					if(spell && spell->spell && spell->spell->GetSpellData()) {
+						client->Message(CHANNEL_COLOR_YELLOW, "Spell %s (%u) control effect %s", spell->spell->GetName(), spell->spell->GetSpellData()->id, GetControlEffectName(i).c_str());
+					}
+				}
+			}
+		}
+	}
+	client->Message(CHANNEL_COLOR_YELLOW, "-------------------------------");
+}

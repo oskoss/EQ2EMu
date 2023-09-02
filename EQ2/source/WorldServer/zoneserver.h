@@ -276,7 +276,7 @@ enum SUBSPAWN_TYPES {
 // need to attempt to clean this up and add xml comments, remove unused code, find a logical way to sort the functions maybe by get/set/process/add etc...
 class ZoneServer {
 public:
-	ZoneServer(const char* file, bool incoming_client=false);
+	ZoneServer(const char* file);
     ~ZoneServer();
 	
 	void		IncrementIncomingClients();
@@ -735,7 +735,7 @@ private:
 	/*
 	Following functions were public but never used outside the zone server so moved them to private
 	*/
-	void	ClientProcess();																					// never used outside zone server
+	void	ClientProcess(bool ignore_shutdown_timer = false);													// never used outside zone server
 	void	RemoveClient(Client* client);																		// never used outside zone server
 	void	DeterminePosition(SpawnLocation* spawnlocation, Spawn* spawn);										// never used outside zone server
 	void	AddDeadSpawn(Spawn* spawn, int32 timer = 0xFFFFFFFF);												// never used outside zone server
@@ -893,6 +893,7 @@ private:
 	Timer	regenTimer;
 	Timer	respawn_timer;
 	Timer	shutdownTimer;
+	Timer	startupDelayTimer;
 	Timer	spawn_check_add;
 	Timer	spawn_check_remove;
 	Timer	spawn_expire_timer;
@@ -914,8 +915,8 @@ private:
 	volatile bool	repop_zone;
 	volatile bool	respawns_allowed;
 	volatile bool	LoadingData;
-	bool    reloading_spellprocess;
-	bool	zoneShuttingDown;
+	std::atomic<bool> reloading_spellprocess;
+	std::atomic<bool> zoneShuttingDown;
 	bool	cityzone;
 	bool	always_loaded;
 	bool	isInstance;	

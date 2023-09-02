@@ -241,9 +241,22 @@ void ClientPacketFunctions::SendUpdateSpellBook ( Client* client ){
 	client->GetPlayer()->UnlockAllSpells(true);
 }
 
+void ClientPacketFunctions::SendServerControlFlagsClassic(Client* client, int32 param, int32 value) {
+	PacketStruct* packet = configReader.getStruct("WS_ServerControlFlags", client->GetVersion());
+	if(packet) {
+		packet->setDataByName("parameter", param);
+		packet->setDataByName("value", value);
+		client->QueuePacket(packet->serialize());
+	}
+	safe_delete(packet);
+}
 void ClientPacketFunctions::SendServerControlFlags(Client* client, int8 param, int8 param_val, int8 value) {
 	PacketStruct* packet = configReader.getStruct("WS_ServerControlFlags", client->GetVersion());
 	if(packet) {
+		
+		if(client->GetVersion() <= 546 && param == 1 && !value) {
+			param_val = 0;
+		}
 		if (param == 1)
 			packet->setDataByName("parameter1", param_val);
 		else if (param == 2)
@@ -258,7 +271,6 @@ void ClientPacketFunctions::SendServerControlFlags(Client* client, int8 param, i
 			safe_delete(packet);
 			return;
 		}
-
 		packet->setDataByName("value", value);
 		client->QueuePacket(packet->serialize());
 		/*
@@ -395,18 +407,44 @@ void ClientPacketFunctions::SendStateCommand(Client* client, int32 spawn_id, int
 
 void ClientPacketFunctions::SendFlyMode(Client* client, int8 flymode, bool updateCharProperty)
 {
-	PacketStruct* packet = configReader.getStruct("WS_ServerControlFlags", client->GetVersion());
-
 	if (updateCharProperty)
 		database.insertCharacterProperty(client, CHAR_PROPERTY_FLYMODE, (char*)std::to_string(flymode).c_str());
-
-	if (packet) {
-		packet->setDataByName("parameter5", 32);
-		packet->setDataByName("value", flymode);
-		client->QueuePacket(packet->serialize());
-
-		client->Message(CHANNEL_STATUS, "Flymode %s", flymode == 1 ? "on" : "off");
+	if(client->GetVersion() <= 546) {
+		if(flymode) {
+			// old flymode
+			SendServerControlFlagsClassic(client, flymode, 1);
+			if(flymode == 1) {
+				// disable noclip
+				SendServerControlFlagsClassic(client, 2, 0);
+			}
+		}
+		else {
+			// disable flymode and noclip
+			SendServerControlFlagsClassic(client, 2, 0);
+			SendServerControlFlagsClassic(client, 1, 0);
+		}
+	}
+	else {	
+		if(flymode == 2) {
+			// new flymode + noclip
+			SendServerControlFlags(client, 5, 32, 1);
+			SendServerControlFlags(client, 1, 2, 1);
+		}
+		else if(flymode == 1) {
+			// new flymode
+			SendServerControlFlags(client, 5, 32, 1);
+			SendServerControlFlags(client, 1, 2, 0);
+		}
+		else {
+			// disable flymode and noclip
+			SendServerControlFlags(client, 5, 32, 0);
+			SendServerControlFlags(client, 1, 2, 0);
+		}
+	}
+		
+		client->Message(CHANNEL_STATUS, "Flymode %s, No Clip %s", flymode > 0 ? "on" : "off", flymode > 1 ? "on" : "off");
 		/*
+		CLASSIC/DOF ONLY HAS THE FIRST SET OF FLAGS
 		Some other values for this packet
 		first param:
 		01 flymode
@@ -417,6 +455,7 @@ void ClientPacketFunctions::SendFlyMode(Client* client, int8 flymode, bool updat
 		32 low gravity
 		64 sit
 
+		EVERYTHING BELOW NOT SUPPORTED BY CLASSIC/DOF
 		second
 		2 crouch
 
@@ -437,6 +476,4 @@ void ClientPacketFunctions::SendFlyMode(Client* client, int8 flymode, bool updat
 		32 flymode2?
 
 		*/
-		safe_delete(packet);
-	}
 }

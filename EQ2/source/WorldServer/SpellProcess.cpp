@@ -43,12 +43,12 @@ SpellProcess::~SpellProcess(){
 	RemoveAllSpells();
 }
 
-void SpellProcess::RemoveAllSpells(){
+void SpellProcess::RemoveAllSpells(bool reload_spells){
 	ClearSpellScriptTimerList();
 
 	MutexList<LuaSpell*>::iterator active_spells_itr = active_spells.begin();
 	while(active_spells_itr.Next()){
-		DeleteCasterSpell(active_spells_itr->value, "", true, 0, true);
+		DeleteCasterSpell(active_spells_itr->value, "", true, 0, !reload_spells);
 	}
 
 	MSpellProcess.lock();

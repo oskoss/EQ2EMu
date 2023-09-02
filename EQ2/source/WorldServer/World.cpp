@@ -549,7 +549,7 @@ void ZoneList::Remove(ZoneServer* zone) {
 		world.RemoveMaps(std::string(zoneName));
 	}
 }
-ZoneServer* ZoneList::Get(const char* zone_name, bool loadZone, bool skip_existing_zones) {
+ZoneServer* ZoneList::Get(const char* zone_name, bool loadZone, bool skip_existing_zones, bool increment_zone) {
 	list<ZoneServer*>::iterator zone_iter;
 	ZoneServer* tmp = 0;
 	ZoneServer* ret = 0;
@@ -560,9 +560,13 @@ ZoneServer* ZoneList::Get(const char* zone_name, bool loadZone, bool skip_existi
 			tmp = *zone_iter;
 			if (!tmp->isZoneShuttingDown() && !tmp->IsInstanceZone() && strlen(zone_name) == strlen(tmp->GetZoneName()) && 
 				strncasecmp(tmp->GetZoneName(), zone_name, strlen(zone_name))==0){
-				if(tmp->NumPlayers() < 30 || tmp->IsCityZone())
+				if(tmp->NumPlayers() < 30 || tmp->IsCityZone()) {
 					ret = tmp;
-				break;
+					if(increment_zone) {
+						ret->IncrementIncomingClients();
+					}
+					break;
+				}
 			}
 		}
 
@@ -573,18 +577,15 @@ ZoneServer* ZoneList::Get(const char* zone_name, bool loadZone, bool skip_existi
 	{
 		if ( loadZone )
 		{
-			ret = new ZoneServer(zone_name, true);
+			ret = new ZoneServer(zone_name);
 			database.LoadZoneInfo(ret);
 			ret->Init();
 		}
 	}
-	else if(ret && loadZone) {
-		ret->IncrementIncomingClients();
-	}
 	return ret;
 }
 
-ZoneServer* ZoneList::Get(int32 id, bool loadZone, bool skip_existing_zones) {
+ZoneServer* ZoneList::Get(int32 id, bool loadZone, bool skip_existing_zones, bool increment_zone) {
 	list<ZoneServer*>::iterator zone_iter;
 	ZoneServer* tmp = 0;
 	ZoneServer* ret = 0;
@@ -593,16 +594,21 @@ ZoneServer* ZoneList::Get(int32 id, bool loadZone, bool skip_existing_zones) {
 		for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++){
 			tmp = *zone_iter;
 			if(!tmp->isZoneShuttingDown() && !tmp->IsInstanceZone() && tmp->GetZoneID() == id){
-				if(tmp->NumPlayers() < 30 || tmp->IsCityZone())
+				if(tmp->NumPlayers() < 30 || tmp->IsCityZone()) {
 					ret = tmp;
-				break;
+					if(increment_zone) {
+						ret->IncrementIncomingClients();
+					}
+					break;
+				}
 			}
 		}
 		MZoneList.releasereadlock(__FUNCTION__, __LINE__);
 	}
 
-	if(ret)
+	if(ret) {
 		tmp = ret;
+	}
 	else if (loadZone) {
 		string zonename = database.GetZoneName(id);
 		if(zonename.length() >0){
@@ -634,7 +640,7 @@ void ZoneList::SendZoneList(Client* client) {
 	MZoneList.releasereadlock(__FUNCTION__, __LINE__);
 }
 
-ZoneServer* ZoneList::GetByInstanceID(int32 id, int32 zone_id, bool skip_existing_zones) {
+ZoneServer* ZoneList::GetByInstanceID(int32 id, int32 zone_id, bool skip_existing_zones, bool increment_zone) {
 	list<ZoneServer*>::iterator zone_iter;
 	ZoneServer* tmp = 0;
 	ZoneServer* ret = 0;
@@ -644,17 +650,21 @@ ZoneServer* ZoneList::GetByInstanceID(int32 id, int32 zone_id, bool skip_existin
 		{
 			for(zone_iter=zlist.begin(); zone_iter!=zlist.end(); zone_iter++){
 				tmp = *zone_iter;
-				if(tmp->GetInstanceID() == id){
-						ret = tmp;
-						break;
+				if(!tmp->isZoneShuttingDown() && tmp->GetInstanceID() == id){
+					ret = tmp;
+					if(increment_zone) {
+						ret->IncrementIncomingClients();
+					}
+					break;
 				}
 			}
 		}
 		MZoneList.releasereadlock(__FUNCTION__, __LINE__);
 	}
 
-	if(ret)
+	if(ret) {
 		tmp = ret;
+	}
 	else if ( zone_id > 0 ){
 		string zonename = database.GetZoneName(zone_id);
 		if(zonename.length() > 0){

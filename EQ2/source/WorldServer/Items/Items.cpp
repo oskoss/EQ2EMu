@@ -3330,15 +3330,20 @@ bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8
 	if(item_from){
 		if(to_bag_id > 0){  //bag item
 			Item* bag = GetItemFromUniqueID(to_bag_id, true, false);
-			if(bag && bag->details.num_slots > to)
+			if(bag && bag->details.num_slots > to && (!item_from || !item_from->IsBag()))
 				item_to = items[to_bag_id][BASE_EQUIPMENT][to];
 			else{
 				MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 				return false;
 			}
 		}
-		else
+		else {
 			item_to = items[to_bag_id][BASE_EQUIPMENT][to];
+			if(item_to && item_to->IsBag() && item_from && item_from->IsBag()) {
+				MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
+				return false;
+			}
+		}
 		if(charges > 0) {
 			if (item_to && item_from->details.item_id == item_to->details.item_id){
 				if(item_to->details.count > 0 && item_to->details.count < item_to->stack_count){
@@ -3614,17 +3619,28 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 		packet->setSubstructArrayDataByName("items", "unique_id", item->details.item_id, 0, i);
 	else
 		packet->setSubstructArrayDataByName("items", "unique_id", item->details.unique_id, 0, i);
-	packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id, 0, i);
 	packet->setSubstructArrayDataByName("items", "inv_slot_id", item->details.inv_slot_id, 0, i);
 	packet->setSubstructArrayDataByName("items", "menu_type", menu_data, 0, i);
-	if (overflow)
+	if (overflow) {
 		packet->setSubstructArrayDataByName("items", "index", 0xFFFF, 0, i);
+	}
+	else if(client->GetVersion() <= 546) {
+		if(item->details.inv_slot_id == 0 && item->details.slot_id < 6) {
+			packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id, 0, i);
+		}
+		else {
+			packet->setSubstructArrayDataByName("items", "bag_id", i, 0, i);
+		}
+		packet->setSubstructArrayDataByName("items", "index", 0xFFFF, 0, i);
+		item->details.index = i;
+	}
 	else {
+		packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id, 0, i);
 		packet->setSubstructArrayDataByName("items", "index", i, 0, i);
 		item->details.index = i;
 	}
 	packet->setSubstructArrayDataByName("items", "icon", item->details.icon, 0, i);
-	packet->setSubstructArrayDataByName("items", "slot_id", player->ConvertSlotToClient(item->details.slot_id, client->GetVersion()), 0, i);
+	packet->setSubstructArrayDataByName("items", "slot_id", item->details.slot_id, 0, i); // inventory doesn't convert slots
 	if (client->GetVersion() <= 1208) {
 		packet->setSubstructArrayDataByName("items", "count", (std::min)(item->details.count, (int16)255), 0, i);
 	}

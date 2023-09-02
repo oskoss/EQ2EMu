@@ -119,11 +119,8 @@ extern MasterSkillList master_skill_list;
 int32 MinInstanceID = 1000;
 
 // JA: Moved most default values to Rules and risky initializers to ZoneServer::Init() - 2012.12.07
-ZoneServer::ZoneServer(const char* name, bool incoming_client) {
+ZoneServer::ZoneServer(const char* name) {
 	incoming_clients = 0;
-	
-	if(incoming_client)
-		IncrementIncomingClients();
 	
 	MIncomingClients.SetName("ZoneServer::MIncomingClients");
 
@@ -258,13 +255,18 @@ ZoneServer::~ZoneServer() {
 void ZoneServer::IncrementIncomingClients() { 
 	MIncomingClients.writelock(__FUNCTION__, __LINE__);
 	incoming_clients++;
+	LogWrite(ZONE__INFO, 0, "Zone", "Increment incoming clients of '%s' zoneid %u (instance id: %u).  Current incoming client count: %u", zone_name, zoneID, instanceID, incoming_clients);
 	MIncomingClients.releasewritelock(__FUNCTION__, __LINE__);
 }
 
 void ZoneServer::DecrementIncomingClients() { 
 	MIncomingClients.writelock(__FUNCTION__, __LINE__);
+	bool zeroed = false;
 	if(incoming_clients)
 		incoming_clients--;
+	else
+		zeroed = true;
+	LogWrite(ZONE__INFO, 0, "Zone", "Decrement incoming clients of '%s' zoneid %u (instance id: %u).  Current incoming client count: %u (was client count previously zero: %u)", zone_name, zoneID, instanceID, incoming_clients, zeroed);
 	MIncomingClients.releasewritelock(__FUNCTION__, __LINE__);
 }
 
@@ -282,7 +284,6 @@ void ZoneServer::Init()
 	shutdownTimer.Disable();
 	spawn_range.Start(rule_manager.GetGlobalRule(R_Zone, CheckAttackPlayer)->GetInt32());
 	aggro_timer.Start(rule_manager.GetGlobalRule(R_Zone, CheckAttackNPC)->GetInt32());
-
 	/* Weather stuff */
 	InitWeather();
 
@@ -450,6 +451,7 @@ void ZoneServer::DeleteSpellProcess(){
 	MMasterZoneLock->unlock();
 	MMasterSpawnLock.releasewritelock(__FUNCTION__, __LINE__);
 	DismissAllPets();
+	spellProcess->RemoveAllSpells(true);
 	safe_delete(spellProcess);
 }
 
@@ -1452,7 +1454,7 @@ bool ZoneServer::Process()
 			{
 				SetWatchdogTime(Timer::GetCurrentTime2());
 				// Client loop
-				ClientProcess();
+				ClientProcess(true);
 				Sleep(10);
 			}
 
@@ -1488,6 +1490,8 @@ bool ZoneServer::Process()
 					break;
 			}
 	
+			startupDelayTimer.Start(60000); // this is hard coded for 60 seconds after the zone is loaded to allow a client to at least add itself to the list before we start zone shutdown timer
+			
 			MMasterZoneLock->lock();
 			
 			LoadingData = false;
@@ -1522,7 +1526,9 @@ bool ZoneServer::Process()
 			SendCharSheetChanges();
 
 		// Client loop
-		ClientProcess();
+		ClientProcess(startupDelayTimer.Enabled());
+		if(startupDelayTimer.Check())
+			startupDelayTimer.Disable();
 
 		if(spellProcess)
 			spellProcess->Process();
@@ -3391,9 +3397,9 @@ void ZoneServer::RemoveClientImmediately(Client* client) {
 	}
 }
 
-void ZoneServer::ClientProcess()
+void ZoneServer::ClientProcess(bool ignore_shutdown_timer)
 {
-	if(connected_clients.size(true) == 0)
+	if(!ignore_shutdown_timer && connected_clients.size(true) == 0)
 	{
 		MIncomingClients.readlock(__FUNCTION__, __LINE__);
 		bool shutdownDelayCheck = shutdownDelayTimer.Check();

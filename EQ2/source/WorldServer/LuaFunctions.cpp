@@ -1698,11 +1698,11 @@ int EQ2Emu_lua_GetZone(lua_State* state) {
 	int32 zone_id = lua_interface->GetInt32Value(state);
 	ZoneServer* zone = 0;
 	if (zone_id > 0)
-		zone = zone_list.Get(zone_id);
+		zone = zone_list.Get(zone_id, true, false, false);
 	else {
 		string zone_name = lua_interface->GetStringValue(state);
 		if (zone_name.length() > 0) {
-			zone = zone_list.Get(zone_name.c_str());
+			zone = zone_list.Get(zone_name.c_str(), true, false, false);
 		}
 		else {
 			Spawn* spawn = lua_interface->GetSpawn(state);

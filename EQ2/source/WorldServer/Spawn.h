@@ -173,6 +173,11 @@
 #define VISUAL_STATE_COLLECTION_TURN_IN		6674
 #define VISUAL_STATE_IDLE_AFRAID			17953
 
+#define INFO_CLASSIC_FLAG_INVIS                 1
+#define INFO_CLASSIC_FLAG_SHOW_HOOD             2
+#define INFO_CLASSIC_FLAG_NOLOOK                4
+#define INFO_CLASSIC_FLAG_CROUCH                8
+
 using namespace std;
 class Spell;
 class ZoneServer;

@@ -58,6 +58,8 @@ public:
 
 	static void SendServerControlFlags(Client* client, int8 param, int8 param_val, int8 value);
 
+	static void SendServerControlFlagsClassic(Client* client, int32 param, int32 value);
+
 	static void SendInstanceList(Client* client);
 
 	static void SendZoneChange(Client* client, char* zone_ip, int16 zone_port, int32 key);
