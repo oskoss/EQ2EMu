@@ -130,12 +130,18 @@ bool OpcodeManager::LoadOpcodesFile(const char *filename, OpcodeSetStrategy *s) 
 
 //convenience routines
 const char *OpcodeManager::EmuToName(const EmuOpcode emu_op) {
+	if(emu_op > _maxEmuOpcode)
+		return "OP_Unknown";
+	
 	return(OpcodeNames[emu_op]);
 }
 
 const char *OpcodeManager::EQToName(const uint16 eq_op) {
 	//first must resolve the eq op to an emu op
 	EmuOpcode emu_op = EQToEmu(eq_op);
+	if(emu_op > _maxEmuOpcode)
+		return "OP_Unknown";
+	
 	return(OpcodeNames[emu_op]);
 }
 
@@ -227,7 +233,12 @@ uint16 RegularOpcodeManager::EmuToEQ(const EmuOpcode emu_op) {
 	//opcode is checked for validity in GetEQOpcode
 	uint16 res;
 	MOpcodes.lock();
-	res = emu_to_eq[emu_op];
+	
+	if(emu_op > _maxEmuOpcode)
+		res = 0;
+	else
+		res = emu_to_eq[emu_op];
+	
 	MOpcodes.unlock();
 #ifdef _DEBUG_TRANSLATE
 	fprintf(stderr, "M Translate Emu %s (%d) to EQ 0x%.4x\n", OpcodeNames[emu_op], emu_op, res);
@@ -242,7 +253,10 @@ EmuOpcode RegularOpcodeManager::EQToEmu(const uint16 eq_op) {
 //		return(OP_Unknown);
 	EmuOpcode res;
 	MOpcodes.lock();
-	res = eq_to_emu[eq_op];
+	if(eq_op >= MAX_EQ_OPCODE)
+		res = OP_Unknown;
+	else
+		res = eq_to_emu[eq_op];
 	MOpcodes.unlock();
 #ifdef _DEBUG_TRANSLATE
 	fprintf(stderr, "M Translate EQ 0x%.4x to Emu %s (%d)\n", eq_op, OpcodeNames[res], res);
@@ -253,8 +267,12 @@ EmuOpcode RegularOpcodeManager::EQToEmu(const uint16 eq_op) {
 void RegularOpcodeManager::SetOpcode(EmuOpcode emu_op, uint16 eq_op) {
 	
 	//clear out old mapping
-	uint16 oldop = emu_to_eq[emu_op];
-	if(oldop != 0)
+	uint16 oldop = 0;
+	
+	if(emu_op <= _maxEmuOpcode)
+		 oldop = emu_to_eq[emu_op];
+	
+	if(oldop != 0 && oldop < MAX_EQ_OPCODE)
 		eq_to_emu[oldop] = OP_Unknown;
 	
 	//use our strategy, since we have it

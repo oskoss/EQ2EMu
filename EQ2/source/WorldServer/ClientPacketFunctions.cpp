@@ -253,10 +253,6 @@ void ClientPacketFunctions::SendServerControlFlagsClassic(Client* client, int32 
 void ClientPacketFunctions::SendServerControlFlags(Client* client, int8 param, int8 param_val, int8 value) {
 	PacketStruct* packet = configReader.getStruct("WS_ServerControlFlags", client->GetVersion());
 	if(packet) {
-		
-		if(client->GetVersion() <= 546 && param == 1 && !value) {
-			param_val = 0;
-		}
 		if (param == 1)
 			packet->setDataByName("parameter1", param_val);
 		else if (param == 2)

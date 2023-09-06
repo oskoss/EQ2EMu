@@ -703,7 +703,7 @@ sint16 Spell::TranslateClientSpellIcon(int16 version) {
 	if(version <= 546) {
 		switch(spell_icon) {
 			case 772: // tracking
-				spell_icon = 32; // ??
+				spell_icon = 231; // ??
 				break;
 			case 773: // mining
 				spell_icon = 33; // OK

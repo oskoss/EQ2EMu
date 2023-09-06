@@ -6600,7 +6600,7 @@ void PlayerControlFlags::SendControlFlagUpdates(Client* client){
 						break;
 					}
 				}
-				ClientPacketFunctions::SendServerControlFlagsClassic(client, itr2->first, itr2->second);
+				ClientPacketFunctions::SendServerControlFlagsClassic(client, param, itr2->second);
 			}
 			else {
 				ClientPacketFunctions::SendServerControlFlags(client, itr->first, itr2->first, itr2->second);

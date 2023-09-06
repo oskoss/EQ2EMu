@@ -3184,8 +3184,8 @@ to zero and treated like placeholders." />
 <Struct Name="WS_HearDeath" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearDeathCmd">
 <Data ElementName="attacker" Type="int32" />
 <Data ElementName="defender" Type="int32" />
-<Data ElementName="damage_type" Type="int8" />
 <Data ElementName="blow_type" Type="int16" />
+<Data ElementName="damage_type" Type="int8" />
 </Struct>
 <Struct Name="WS_UpdateSkillBook" ClientVersion="1" OpcodeName="OP_UpdateSkillBookMsg" >
 <Data ElementName="skill_count" Type="int16" />

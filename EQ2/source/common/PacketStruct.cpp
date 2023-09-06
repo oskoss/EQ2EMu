@@ -1427,8 +1427,8 @@ bool PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len
 	}
 	case DATA_STRUCT_ARRAY: {
 		int32 size = GetArraySize(data_struct, 0);
-		if (size > 0xFFFF) {
-			LogWrite(PACKET__WARNING, 1, "Packet", "Possible corrupt packet while loading struct array, orig array size: %u in struct name %s, data name %s", size, GetName(), (data_struct && data_struct->GetName()) ? data_struct->GetName() : "??");
+		if (size > 0xFFFF || size > GetLoadLen()-GetLoadPos()) {
+			LogWrite(PACKET__WARNING, 1, "Packet", "Possible corrupt packet while loading struct array, orig array size: %u in struct name %s, data name %s, load_len %u, load_pos %u", size, GetName(), (data_struct && data_struct->GetName()) ? data_struct->GetName() : "??", GetLoadLen(), GetLoadPos());
 			return false;
 		}
 		PacketStruct* ps = GetPacketStructByName(data_struct->GetName());
@@ -1439,8 +1439,9 @@ bool PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len
 		}
 		if (ps && size > 0) {
 			//for(int i=0;i<size && (GetLoadLen()-GetLoadPos()) > 0;i++){
-			ps->LoadPacketData(GetLoadBuffer() + GetLoadPos(), GetLoadLen() - GetLoadPos());
-			SetLoadPos(GetLoadPos() + ps->GetLoadPos());
+			if(ps->LoadPacketData(GetLoadBuffer() + GetLoadPos(), GetLoadLen() - GetLoadPos())) {
+				SetLoadPos(GetLoadPos() + ps->GetLoadPos());
+			}
 			//}
 		}
 		break;

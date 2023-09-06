@@ -4910,11 +4910,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							else if(set_type == SPAWN_SET_VALUE_LOCATION)
 							{
 								spawn->SetLocation(client->GetPlayer()->GetLocation());
-								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set '%s' to '%u' for spawn '%s'", sep->arg[0], client->GetPlayer()->GetLocation(), name.c_str());
+								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set '%s' to '%u' for spawn '%s' (DBID: %u)", sep->arg[0], client->GetPlayer()->GetLocation(), name.c_str(), spawn->GetDatabaseID());
 							}
 							else
 							{
-								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set '%s' to '%s' for spawn '%s'", sep->arg[0], sep->arg[1], name.c_str());
+								client->Message(CHANNEL_COLOR_YELLOW, "Successfully set '%s' to '%s' for spawn '%s' (DBID: %u)", sep->arg[0], sep->arg[1], name.c_str(), spawn->GetDatabaseID());
 							}
 
 							switch (set_type)
@@ -4961,7 +4961,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							{
 								if(spawn->GetSpawnLocationID() > 0 && database.UpdateSpawnLocationSpawns(spawn))
 								{
-									client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully saved spawn information.");
+									client->Message(CHANNEL_COLOR_YELLOW, "Successfully saved spawn information for spawn '%s' (DBID: %u)", name.c_str(), spawn->GetDatabaseID());
 								}
 								else if(spawn->GetSpawnLocationID() > 0)
 								{
@@ -4972,7 +4972,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							{
 								if(spawn->GetDatabaseID() > 0 && database.SaveSpawnInfo(spawn))
 								{
-									client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully saved spawn.");
+									client->Message(CHANNEL_COLOR_YELLOW, "Successfully saved spawn for spawn '%s' (DBID: %u)", name.c_str(), spawn->GetDatabaseID());
 								}
 								else if(spawn->GetDatabaseID() > 0)
 								{
@@ -5027,9 +5027,11 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			Spawn* spawn = cmdTarget;
 			if(spawn && !spawn->IsPlayer()){
 				if(spawn->GetSpawnLocationID() > 0){
+					string name = string(spawn->GetName());
+					int32 dbid = spawn->GetDatabaseID();
 					if(database.RemoveSpawnFromSpawnLocation(spawn)){
 						client->GetCurrentZone()->RemoveSpawn(spawn, true, false, true, true, true);
-						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Successfully removed spawn from zone");
+						client->Message(CHANNEL_COLOR_YELLOW, "Successfully removed spawn from zone for spawn '%s' (DBID: %u)", name.c_str(), dbid);
 					}
 					else
 						client->SimpleMessage(CHANNEL_COLOR_RED, "Error removing spawn, see console window for details.");

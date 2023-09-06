@@ -2033,8 +2033,7 @@ void ZoneServer::ProcessDrowning(){
 		vector<Client*>::iterator itr;
 		for(itr = dead_list.begin(); itr != dead_list.end(); itr++){
 			RemoveDrowningVictim((*itr)->GetPlayer());
-			KillSpawn(false, (*itr)->GetPlayer(), 0);
-			(*itr)->SimpleMessage(CHANNEL_NARRATIVE, "You are sleeping with the fishes!  Glug, glug...");
+			KillSpawn(false, (*itr)->GetPlayer(), nullptr, true, 0, 0, 10); // kill blow type 10 means death by WATER! (glug glug!)
 		}
 	}
 }
@@ -4933,7 +4932,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 				packet->setDataByName("blow_type", kill_blow_type);
 
 				client->QueuePacket(packet->serialize());
-				LogWrite(COMBAT__DEBUG, 0, "Combat", "Zone Killing '%s'", dead->GetName());
+				LogWrite(COMBAT__DEBUG, 0, "Combat", "Zone Killing of '%s' by '%s' damage type %u, blow type %u", dead->GetName(), killer ? killer->GetName() : "", damage_type, kill_blow_type);
 				safe_delete(packet);
 			}
 		}

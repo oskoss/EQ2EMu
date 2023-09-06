@@ -1085,36 +1085,38 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 
 		PacketStruct* request;
 		request = configReader.getStruct("LoginByNumRequest", 1);
-		if (request && request->LoadPacketData(app->pBuffer, app->size)) {
-			// test the original location of Version for clients older than 1212
-			version = request->getType_int16_ByName("version");
+		if (request) {
+			if(request->LoadPacketData(app->pBuffer, app->size)) {
+				// test the original location of Version for clients older than 1212
+				version = request->getType_int16_ByName("version");
 
-			if (version == 0 || version >= 1208 || EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
-				// must be new client data version method, re-fetch the packet
-				safe_delete(request);
-				request = configReader.getStruct("LoginByNumRequest", 1208);
+				if (version == 0 || version >= 1208 || EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
+					// must be new client data version method, re-fetch the packet
+					safe_delete(request);
+					request = configReader.getStruct("LoginByNumRequest", 1208);
 
-				if (request && request->LoadPacketData(app->pBuffer, app->size)) {
-					// Xinux suggests using an INT16 here. Our first new version = 57000
-					version = request->getType_int16_ByName("version");
+					if (request && request->LoadPacketData(app->pBuffer, app->size)) {
+						// Xinux suggests using an INT16 here. Our first new version = 57000
+						version = request->getType_int16_ByName("version");
+					}
+					else {
+						LogWrite(LOGIN__ERROR, 0, "Login", "Nasty Horrible things happening. Tell a dev asap! Version: %i", version);
+						break;
+					}
 				}
-				else {
-					LogWrite(LOGIN__ERROR, 0, "Login", "Nasty Horrible things happening. Tell a dev asap! Version: %i", version);
-					break;
+
+				if (EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
+					LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);
+					ClientPacketFunctions::SendLoginDenied(this);
+					return false;
 				}
+
+				int32 account_id = request->getType_int32_ByName("account_id");
+				int32 access_code = request->getType_int32_ByName("access_code");
+
+				if (!HandleNewLogin(account_id, access_code))
+					return false;
 			}
-
-			if (EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
-				LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);
-				ClientPacketFunctions::SendLoginDenied(this);
-				return false;
-			}
-
-			int32 account_id = request->getType_int32_ByName("account_id");
-			int32 access_code = request->getType_int32_ByName("access_code");
-
-			if (!HandleNewLogin(account_id, access_code))
-				return false;
 		}
 		safe_delete(request);
 		break;
@@ -1123,18 +1125,19 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_MapRequest", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_MapRequest", GetVersion());
 		if (packet && app->size > 2 && GetCurrentZone()) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			PacketStruct* fog_packet = configReader.getStruct("WS_FogInit", GetVersion());
-			if (fog_packet) {
-				LogWrite(PACKET__DEBUG, 0, "Packet", "In OP_MapRequest: Fog Packet");
-				database.LoadFogInit(packet->getType_EQ2_16BitString_ByName("zone").data, fog_packet);
-				fog_packet->setDataByName("unknown1", 1);
-				fog_packet->setDataByName("unknown3", 1);
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				PacketStruct* fog_packet = configReader.getStruct("WS_FogInit", GetVersion());
+				if (fog_packet) {
+					LogWrite(PACKET__DEBUG, 0, "Packet", "In OP_MapRequest: Fog Packet");
+					database.LoadFogInit(packet->getType_EQ2_16BitString_ByName("zone").data, fog_packet);
+					fog_packet->setDataByName("unknown1", 1);
+					fog_packet->setDataByName("unknown3", 1);
 
-				LogWrite(CCLIENT__PACKET, 0, "Client", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
-				//fog_packet->PrintPacket();
-				QueuePacket(fog_packet->serialize());
-				safe_delete(fog_packet);
+					LogWrite(CCLIENT__PACKET, 0, "Client", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
+					//fog_packet->PrintPacket();
+					QueuePacket(fog_packet->serialize());
+					safe_delete(fog_packet);
+				}
 			}
 			safe_delete(packet);
 		}
@@ -1262,21 +1265,22 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	case OP_QuestJournalSetVisibleMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_QuestJournalSetVisibleMsg", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_QuestJournalVisible", GetVersion());
-		if (packet && packet->LoadPacketData(app->pBuffer, app->size)) {
-			int32 quest_id = packet->getType_int32_ByName("quest_id");
-			bool hidden = packet->getType_int8_ByName("visible") == 1 ? false : true;
-			GetPlayer()->MPlayerQuests.readlock(__FUNCTION__, __LINE__);
-			map<int32, Quest*>* player_quests = player->GetPlayerQuests();
-			if (player_quests) {
-				if (player_quests->count(quest_id) > 0)
-					player_quests->at(quest_id)->SetHidden(hidden);
+		if (packet) {
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				int32 quest_id = packet->getType_int32_ByName("quest_id");
+				bool hidden = packet->getType_int8_ByName("visible") == 1 ? false : true;
+				GetPlayer()->MPlayerQuests.readlock(__FUNCTION__, __LINE__);
+				map<int32, Quest*>* player_quests = player->GetPlayerQuests();
+				if (player_quests) {
+					if (player_quests->count(quest_id) > 0)
+						player_quests->at(quest_id)->SetHidden(hidden);
+					else
+						LogWrite(CCLIENT__ERROR, 0, "Client", "OP_QuestJournalSetVisibleMsg error: Player does not have quest with id of %u", quest_id);
+				}
 				else
-					LogWrite(CCLIENT__ERROR, 0, "Client", "OP_QuestJournalSetVisibleMsg error: Player does not have quest with id of %u", quest_id);
+					LogWrite(CCLIENT__ERROR, 0, "Client", "OP_QuestJournalSetVisibleMsg error: Unable to get player(%s) quests", player->GetName());
+				GetPlayer()->MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 			}
-			else
-				LogWrite(CCLIENT__ERROR, 0, "Client", "OP_QuestJournalSetVisibleMsg error: Unable to get player(%s) quests", player->GetName());
-			GetPlayer()->MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
-
 			safe_delete(packet);
 		}
 		break;
@@ -1284,28 +1288,30 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	case OP_MacroUpdateMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_MacroUpdateMsg", opcode, opcode);
 		PacketStruct* macro_update = configReader.getStruct("WS_MacroUpdate", GetVersion());
-		if (macro_update && macro_update->LoadPacketData(app->pBuffer, app->size)) {
-			vector<string>* update = new vector<string>;
-			int8 number = macro_update->getType_int8_ByName("number");
-			int16 icon = macro_update->getType_int16_ByName("icon");
-			string name = macro_update->getType_EQ2_8BitString_ByName("name").data;
-			int8 count = macro_update->getType_int8_ByName("macro_count");
+		if (macro_update) {
+			if(macro_update->LoadPacketData(app->pBuffer, app->size)) {
+				vector<string>* update = new vector<string>;
+				int8 number = macro_update->getType_int8_ByName("number");
+				int16 icon = macro_update->getType_int16_ByName("icon");
+				string name = macro_update->getType_EQ2_8BitString_ByName("name").data;
+				int8 count = macro_update->getType_int8_ByName("macro_count");
 
-			if (GetVersion() <= 283) {
-				update->push_back(macro_update->getType_EQ2_8BitString_ByName("command").data);
-			}
-			else {
-				for (int8 i = 0; i < count; i++) {
-					char tmp_command[15] = { 0 };
-					sprintf(tmp_command, "command_%i", i);
-					update->push_back(macro_update->getType_EQ2_16BitString_ByName(tmp_command).data);
+				if (GetVersion() <= 283) {
+					update->push_back(macro_update->getType_EQ2_8BitString_ByName("command").data);
 				}
+				else {
+					for (int8 i = 0; i < count; i++) {
+						char tmp_command[15] = { 0 };
+						sprintf(tmp_command, "command_%i", i);
+						update->push_back(macro_update->getType_EQ2_16BitString_ByName(tmp_command).data);
+					}
+				}
+				if (name.length() == 0)
+					database.UpdateCharacterMacro(GetCharacterID(), number, 0, icon, update);
+				else
+					database.UpdateCharacterMacro(GetCharacterID(), number, name.c_str(), icon, update);
+				safe_delete(update);
 			}
-			if (name.length() == 0)
-				database.UpdateCharacterMacro(GetCharacterID(), number, 0, icon, update);
-			else
-				database.UpdateCharacterMacro(GetCharacterID(), number, name.c_str(), icon, update);
-			safe_delete(update);
 			safe_delete(macro_update);
 		}
 		break;
@@ -1314,10 +1320,11 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_DialogSelectMsg", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_DialogSelect", GetVersion());
 		if (packet) {
-				packet->LoadPacketData(app->pBuffer, app->size);
-				int32 conversation_id = packet->getType_int32_ByName("conversation_id");
-				int32 response_index = packet->getType_int32_ByName("response");
-				HandleDialogSelectMsg(conversation_id, response_index);
+				if(packet->LoadPacketData(app->pBuffer, app->size)) {
+					int32 conversation_id = packet->getType_int32_ByName("conversation_id");
+					int32 response_index = packet->getType_int32_ByName("response");
+					HandleDialogSelectMsg(conversation_id, response_index);
+				}
 			}
 			safe_delete(packet);
 		break;
@@ -1437,9 +1444,8 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			PopulateHouseSpawnFinalize();
 
 			SetSpawnPlacementMode(Client::ServerSpawnPlacementMode::DEFAULT);
-
-			safe_delete(place_object);
 		}
+		safe_delete(place_object);
 		break;
 	}
 	case OP_CampAbortedMsg: {
@@ -1502,6 +1508,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				}
 			}
 		}
+		safe_delete(packet);
 		break;
 	}
 	case OP_KnowledgeWindowSlotMappingMsg: {
@@ -1614,8 +1621,8 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					}
 				}
 			}
-			safe_delete(request);
 		}
+		safe_delete(request);
 		break;
 	}
 	case OP_MapFogDataUpdateMsg: {
@@ -1639,26 +1646,24 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	case OP_RequestRecipeDetailsMsg: {
 		PacketStruct* packet = configReader.getStruct("WS_RequestRecipeDetail", GetVersion());
 		if (packet) {
-			DumpPacket(app->pBuffer, app->size);
-			packet->LoadPacketData(app->pBuffer, app->size);
-			packet->PrintPacket();
-			int32 recipe_id = 0;
-			char recipe_prop_name[30];
-			int32 num_recipes = packet->getType_int32_ByName("num_recipes");
-			// WS_RecipeDetails
-			vector<int32> recipes;
-			for (int32 i = 0; i < num_recipes; i++) {
-				memset(recipe_prop_name, 0, 30);
-				snprintf(recipe_prop_name, 30, "recipe_id_%i", i);
-				recipe_id = packet->getType_int32_ByName(recipe_prop_name);
-				if(recipe_id > 0) {
-					recipes.push_back(recipe_id);
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				vector<int32> recipes;
+				int32 recipe_id = 0;
+				char recipe_prop_name[30];
+				int32 num_recipes = packet->getType_int32_ByName("num_recipes");
+				// WS_RecipeDetails
+				for (int32 i = 0; i < num_recipes; i++) {
+					memset(recipe_prop_name, 0, 30);
+					snprintf(recipe_prop_name, 30, "recipe_id_%i", i);
+					recipe_id = packet->getType_int32_ByName(recipe_prop_name);
+					if(recipe_id > 0) {
+						recipes.push_back(recipe_id);
+					}
 				}
+				SendRecipeDetails(&recipes);
 			}
 			
 			safe_delete(packet);
-
-			SendRecipeDetails(&recipes);
 		}
 		break;
 	}
@@ -1698,53 +1703,53 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		//DumpPacket(app->pBuffer, app->size);
 		PacketStruct* packet = configReader.getStruct("WS_BeginItemCreation", GetVersion());
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			int32 item = 0;
-			int8 qty = 0;
-			vector<pair<int32, int16>> items;
-			char tmp_item_id[30];
-			int8 num_primary_selected_items = packet->getType_int8_ByName("num_primary_selected_items");
-			for (int8 i = 0; i < num_primary_selected_items; i++) {
-				memset(tmp_item_id, 0, 30);
-				sprintf(tmp_item_id, "primary_selected_item_id_%i", i);
-				item = packet->getType_int32_ByName(tmp_item_id);
-				sprintf(tmp_item_id, "primary_selected_item_qty_%i", i);
-				qty = packet->getType_int16_ByName(tmp_item_id);
-				if (item > 0)
-					items.push_back(make_pair(item,qty));
-				item = 0;
-			}
-			int8 build_components = packet->getType_int8_ByName("num_build_components");
-			for (int8 i = 0; i < build_components; i++) {
-				memset(tmp_item_id, 0, 30);
-				sprintf(tmp_item_id, "num_selected_items_%i", i);
-				int8 num_selected_items = packet->getType_int8_ByName(tmp_item_id);
-				for (int8 j = 0; j < num_selected_items; j++) {
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				int32 item = 0;
+				int8 qty = 0;
+				vector<pair<int32, int16>> items;
+				char tmp_item_id[30];
+				int8 num_primary_selected_items = packet->getType_int8_ByName("num_primary_selected_items");
+				for (int8 i = 0; i < num_primary_selected_items; i++) {
 					memset(tmp_item_id, 0, 30);
-					sprintf(tmp_item_id, "selected_id%i_%i", i,j);
+					sprintf(tmp_item_id, "primary_selected_item_id_%i", i);
 					item = packet->getType_int32_ByName(tmp_item_id);
-					sprintf(tmp_item_id, "selected_qty%i_%i", i, j);
+					sprintf(tmp_item_id, "primary_selected_item_qty_%i", i);
+					qty = packet->getType_int16_ByName(tmp_item_id);
+					if (item > 0)
+						items.push_back(make_pair(item,qty));
+					item = 0;
+				}
+				int8 build_components = packet->getType_int8_ByName("num_build_components");
+				for (int8 i = 0; i < build_components; i++) {
+					memset(tmp_item_id, 0, 30);
+					sprintf(tmp_item_id, "num_selected_items_%i", i);
+					int8 num_selected_items = packet->getType_int8_ByName(tmp_item_id);
+					for (int8 j = 0; j < num_selected_items; j++) {
+						memset(tmp_item_id, 0, 30);
+						sprintf(tmp_item_id, "selected_id%i_%i", i,j);
+						item = packet->getType_int32_ByName(tmp_item_id);
+						sprintf(tmp_item_id, "selected_qty%i_%i", i, j);
+						qty = packet->getType_int16_ByName(tmp_item_id);
+						if (item > 0)
+							items.push_back(make_pair(item, qty));
+
+						item = 0;
+					}
+				}
+				int8 num_fuel_items = packet->getType_int8_ByName("num_fuel_items");
+				for (int8 i = 0; i < num_fuel_items; i++) {
+					memset(tmp_item_id, 0, 30);
+					sprintf(tmp_item_id, "fuel_id_%i", i);
+					item = packet->getType_int32_ByName(tmp_item_id);
+					sprintf(tmp_item_id, "fuel_qty_%i", i);
 					qty = packet->getType_int16_ByName(tmp_item_id);
 					if (item > 0)
 						items.push_back(make_pair(item, qty));
-
 					item = 0;
 				}
+				
+				GetCurrentZone()->GetTradeskillMgr()->BeginCrafting(this, items);
 			}
-			int8 num_fuel_items = packet->getType_int8_ByName("num_fuel_items");
-			for (int8 i = 0; i < num_fuel_items; i++) {
-				memset(tmp_item_id, 0, 30);
-				sprintf(tmp_item_id, "fuel_id_%i", i);
-				item = packet->getType_int32_ByName(tmp_item_id);
-				sprintf(tmp_item_id, "fuel_qty_%i", i);
-				qty = packet->getType_int16_ByName(tmp_item_id);
-				if (item > 0)
-					items.push_back(make_pair(item, qty));
-				item = 0;
-			}
-			
-			GetCurrentZone()->GetTradeskillMgr()->BeginCrafting(this, items);
-
 			safe_delete(packet);
 		}
 		break;
@@ -1761,33 +1766,35 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 
 		PacketStruct* packet = configReader.getStruct("WS_Signal", 1);
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			EQ2_16BitString str = packet->getType_EQ2_16BitString_ByName("signal");
-			if (strcmp(str.data.c_str(), "sys_client_avatar_ready") == 0) {
-					LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
-					SetReloadingZone(false);
-					if(GetPlayer()->IsDeletedSpawn()) {
-						GetPlayer()->SetDeletedSpawn(false);
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				EQ2_16BitString str = packet->getType_EQ2_16BitString_ByName("signal");
+				if (strcmp(str.data.c_str(), "sys_client_avatar_ready") == 0) {
+						LogWrite(CCLIENT__DEBUG, 0, "Client", "Client '%s' (%u) is ready for spawn updates.", GetPlayer()->GetName(), GetPlayer()->GetCharacterID());
+						SetReloadingZone(false);
+						if(GetPlayer()->IsDeletedSpawn()) {
+							GetPlayer()->SetDeletedSpawn(false);
+						}
+						ResetZoningCoords();
+						SetReadyForUpdates();
+						GetPlayer()->SendSpawnChanges(true);
+						ProcessStateCommands();
+						GetPlayer()->changed = true;
+						GetPlayer()->info_changed = true;
+						GetPlayer()->vis_changed = true;
+						player_pos_changed = true;
+						GetPlayer()->AddChangedZoneSpawn();
+						ProcessZoneIgnoreWidgets();
 					}
-					ResetZoningCoords();
-					SetReadyForUpdates();
-					GetPlayer()->SendSpawnChanges(true);
-					ProcessStateCommands();
-					GetPlayer()->changed = true;
-					GetPlayer()->info_changed = true;
-					GetPlayer()->vis_changed = true;
-					player_pos_changed = true;
-					GetPlayer()->AddChangedZoneSpawn();
-					ProcessZoneIgnoreWidgets();
-				}
-				else {
-					LogWrite(CCLIENT__WARNING, 0, "Client", "Player %s reported SysClient/SignalMsg state %s.", GetPlayer()->GetName(), str.data.c_str());
-				}
-				const char* zone_script = world.GetZoneScript(player->GetZone()->GetZoneID());
-				if (zone_script && lua_interface)
-				{
-					lua_interface->RunZoneScript(zone_script, "signal_changed", player->GetZone(), player, 0, str.data.c_str());
-				}
+					else {
+						LogWrite(CCLIENT__WARNING, 0, "Client", "Player %s reported SysClient/SignalMsg state %s.", GetPlayer()->GetName(), str.data.c_str());
+					}
+					const char* zone_script = world.GetZoneScript(player->GetZone()->GetZoneID());
+					if (zone_script && lua_interface)
+					{
+						lua_interface->RunZoneScript(zone_script, "signal_changed", player->GetZone(), player, 0, str.data.c_str());
+					}
+			}
+			safe_delete(packet);
 		}
 		break;
 	}
@@ -1800,72 +1807,73 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_EntityVerbsVerbMsg", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_EntityVerbsVerb", GetVersion());
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			int32 spawn_id = packet->getType_int32_ByName("spawn_id");
-			player->SetTarget(player->GetSpawnWithPlayerID(spawn_id));
-			Spawn* spawn = player->GetTarget();
-			if (spawn && !spawn->IsNPC() && !spawn->IsPlayer()) {
-				string command = packet->getType_EQ2_16BitString_ByName("command").data;
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				int32 spawn_id = packet->getType_int32_ByName("spawn_id");
+				player->SetTarget(player->GetSpawnWithPlayerID(spawn_id));
+				Spawn* spawn = player->GetTarget();
+				if (spawn && !spawn->IsNPC() && !spawn->IsPlayer()) {
+					string command = packet->getType_EQ2_16BitString_ByName("command").data;
 
-				if (!HandleHouseEntityCommands(spawn, spawn_id, command))
-				{
-					if (EntityCommandPrecheck(spawn, command.c_str())) {
-						if (spawn->IsGroundSpawn())
-							((GroundSpawn*)spawn)->HandleUse(this, command);
-						else if (spawn->IsObject())
-							((Object*)spawn)->HandleUse(this, command);
-						else if (spawn->IsWidget())
-							((Widget*)spawn)->HandleUse(this, command);
-						else if (spawn->IsSign())
-							((Sign*)spawn)->HandleUse(this, command);
+					if (!HandleHouseEntityCommands(spawn, spawn_id, command))
+					{
+						if (EntityCommandPrecheck(spawn, command.c_str())) {
+							if (spawn->IsGroundSpawn())
+								((GroundSpawn*)spawn)->HandleUse(this, command);
+							else if (spawn->IsObject())
+								((Object*)spawn)->HandleUse(this, command);
+							else if (spawn->IsWidget())
+								((Widget*)spawn)->HandleUse(this, command);
+							else if (spawn->IsSign())
+								((Sign*)spawn)->HandleUse(this, command);
+						}
 					}
 				}
-			}
-			else {
-				EQ2_16BitString command = packet->getType_EQ2_16BitString_ByName("command");
-				if (command.size > 0) {
-					string command_name = command.data;					
-					if (command_name.find(" ") < 0xFFFFFFFF) {
-						if (GetVersion() <= 546) { //this version uses commands in the form "Buy From Merchant" instead of buy_from_merchant
-							string::size_type pos = command_name.find(" ");
-							while(pos != string::npos){
-								command_name.replace(pos, 1, "_");
-								pos = command_name.find(" ");
+				else {
+					EQ2_16BitString command = packet->getType_EQ2_16BitString_ByName("command");
+					if (command.size > 0) {
+						string command_name = command.data;					
+						if (command_name.find(" ") < 0xFFFFFFFF) {
+							if (GetVersion() <= 546) { //this version uses commands in the form "Buy From Merchant" instead of buy_from_merchant
+								string::size_type pos = command_name.find(" ");
+								while(pos != string::npos){
+									command_name.replace(pos, 1, "_");
+									pos = command_name.find(" ");
+								}
 							}
+							else
+								command_name = command_name.substr(0, command_name.find(" "));
 						}
-						else
-							command_name = command_name.substr(0, command_name.find(" "));
-					}
-					int32 handler = commands.GetCommandHandler(command_name.c_str());
-					if (handler != 0xFFFFFFFF) {
-						if (command.data == command_name) {
-							command.data = "";
-							command.size = 0;
+						int32 handler = commands.GetCommandHandler(command_name.c_str());
+						if (handler != 0xFFFFFFFF) {
+							if (command.data == command_name) {
+								command.data = "";
+								command.size = 0;
+							}
+							else {
+								command.data = command.data.substr(command.data.find(" ") + 1);
+								command.size = command.data.length();
+							}
+							commands.Process(handler, &command, this);
 						}
 						else {
-							command.data = command.data.substr(command.data.find(" ") + 1);
-							command.size = command.data.length();
-						}
-						commands.Process(handler, &command, this);
-					}
-					else {
-						if (spawn && spawn->IsNPC()) {
-							if (EntityCommandPrecheck(spawn, command.data.c_str())) {
-								if (!((NPC*)spawn)->HandleUse(this, command.data)) {
-									command_name = command.data;
-									string::size_type pos = command_name.find(" ");
-									while (pos != string::npos) {
-										command_name.replace(pos, 1, "_");
-										pos = command_name.find(" ");
-									}
-									if (!((NPC*)spawn)->HandleUse(this, command_name)) { //convert the spaces to underscores and see if that makes a difference
-										LogWrite(WORLD__ERROR, 0, "World", "Unhandled command in OP_EntityVerbsVerbMsg: %s", command.data.c_str());
+							if (spawn && spawn->IsNPC()) {
+								if (EntityCommandPrecheck(spawn, command.data.c_str())) {
+									if (!((NPC*)spawn)->HandleUse(this, command.data)) {
+										command_name = command.data;
+										string::size_type pos = command_name.find(" ");
+										while (pos != string::npos) {
+											command_name.replace(pos, 1, "_");
+											pos = command_name.find(" ");
+										}
+										if (!((NPC*)spawn)->HandleUse(this, command_name)) { //convert the spaces to underscores and see if that makes a difference
+											LogWrite(WORLD__ERROR, 0, "World", "Unhandled command in OP_EntityVerbsVerbMsg: %s", command.data.c_str());
+										}
 									}
 								}
 							}
+							else
+								LogWrite(WORLD__ERROR, 0, "World", "Unknown command in OP_EntityVerbsVerbMsg: %s", command.data.c_str());
 						}
-						else
-							LogWrite(WORLD__ERROR, 0, "World", "Unknown command in OP_EntityVerbsVerbMsg: %s", command.data.c_str());
 					}
 				}
 			}
@@ -1998,13 +2006,14 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_BeginTrackingMsg", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_BeginTracking", GetVersion());
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			int32 spawn_id = packet->getType_int32_ByName("spawn_id");
-			Spawn* spawn = player->GetSpawnWithPlayerID(spawn_id);
-			if (spawn) {
-				AddWaypoint(spawn->GetName(), WAYPOINT_CATEGORY_TRACKING, spawn_id);
-				BeginWaypoint(spawn->GetName(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
-				player->GetZone()->RemovePlayerTracking(player, TRACKING_CLOSE_WINDOW);
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				int32 spawn_id = packet->getType_int32_ByName("spawn_id");
+				Spawn* spawn = player->GetSpawnWithPlayerID(spawn_id);
+				if (spawn) {
+					AddWaypoint(spawn->GetName(), WAYPOINT_CATEGORY_TRACKING, spawn_id);
+					BeginWaypoint(spawn->GetName(), spawn->GetX(), spawn->GetY(), spawn->GetZ());
+					player->GetZone()->RemovePlayerTracking(player, TRACKING_CLOSE_WINDOW);
+				}
 			}
 			safe_delete(packet);
 		}
@@ -2014,8 +2023,9 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_BioUpdateMsg", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_BioUpdate", GetVersion());
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			player->SetBiography(packet->getType_EQ2_16BitString_ByName("biography").data);
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				player->SetBiography(packet->getType_EQ2_16BitString_ByName("biography").data);
+			}
 			safe_delete(packet);
 		}
 		break;
@@ -2033,38 +2043,39 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		//DumpPacket(app);
 		PacketStruct* packet = configReader.getStruct("WS_RewardPackMsg", GetVersion());
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			string recruiter_name = packet->getType_EQ2_16BitString_ByName("recruiter_name").data;
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				string recruiter_name = packet->getType_EQ2_16BitString_ByName("recruiter_name").data;
 
-			/* Player has contacted a guild recruiter */
-			if (recruiter_name.length() > 0) {
-				Guild* guild = guild_list.GetGuild(packet->getType_int32_ByName("guild_id"));
-				Client* recruiter = zone_list.GetClientByCharName(recruiter_name);
-				if (recruiter && guild) {
-					Message(CHANNEL_GUILD_EVENT, "Contact request sent to %s of %s.", recruiter->GetPlayer()->GetName(), guild->GetName());
-					recruiter->Message(CHANNEL_GUILD_EVENT, "%s [%u %s], [0 Unskilled] (%s) is requesting to speak to YOU about joining the guild.", player->GetName(), player->GetLevel(), classes.GetClassNameCase(player->GetAdventureClass()).c_str(), races.GetRaceNameCase(player->GetRace()));
-					recruiter->PlaySound("ui_guild_page");
+				/* Player has contacted a guild recruiter */
+				if (recruiter_name.length() > 0) {
+					Guild* guild = guild_list.GetGuild(packet->getType_int32_ByName("guild_id"));
+					Client* recruiter = zone_list.GetClientByCharName(recruiter_name);
+					if (recruiter && guild) {
+						Message(CHANNEL_GUILD_EVENT, "Contact request sent to %s of %s.", recruiter->GetPlayer()->GetName(), guild->GetName());
+						recruiter->Message(CHANNEL_GUILD_EVENT, "%s [%u %s], [0 Unskilled] (%s) is requesting to speak to YOU about joining the guild.", player->GetName(), player->GetLevel(), classes.GetClassNameCase(player->GetAdventureClass()).c_str(), races.GetRaceNameCase(player->GetRace()));
+						recruiter->PlaySound("ui_guild_page");
+					}
 				}
-			}
-			/* New picture taken for guild recruiting */
-			else {
-				//DumpPacket(app->pBuffer, app->size);
-				int32 guild_id = 0;
-				int16 picture_data_size = 0;
-				unsigned char* recruiter_picture_data = 0;
-				memcpy(&guild_id, app->pBuffer + 4, sizeof(int32));
-				memcpy(&picture_data_size, app->pBuffer + 15, sizeof(int16));
-				Guild* guild = guild_list.GetGuild(guild_id);
-				if (guild) {
-					GuildMember* gm = guild->GetGuildMember(player);
-					if (gm) {
-						safe_delete_array(gm->recruiter_picture_data);
-						recruiter_picture_data = new unsigned char[picture_data_size];
-						for (int16 i = 0; i < picture_data_size; i++)
-							memcpy(recruiter_picture_data + i, app->pBuffer + 17 + i, 2);
-						gm->recruiter_picture_data = recruiter_picture_data;
-						gm->recruiter_picture_data_size = picture_data_size;
-						guild->SetMemberSaveNeeded(true);
+				/* New picture taken for guild recruiting */
+				else {
+					//DumpPacket(app->pBuffer, app->size);
+					int32 guild_id = 0;
+					int16 picture_data_size = 0;
+					unsigned char* recruiter_picture_data = 0;
+					memcpy(&guild_id, app->pBuffer + 4, sizeof(int32));
+					memcpy(&picture_data_size, app->pBuffer + 15, sizeof(int16));
+					Guild* guild = guild_list.GetGuild(guild_id);
+					if (guild) {
+						GuildMember* gm = guild->GetGuildMember(player);
+						if (gm) {
+							safe_delete_array(gm->recruiter_picture_data);
+							recruiter_picture_data = new unsigned char[picture_data_size];
+							for (int16 i = 0; i < picture_data_size; i++)
+								memcpy(recruiter_picture_data + i, app->pBuffer + 17 + i, 2);
+							gm->recruiter_picture_data = recruiter_picture_data;
+							gm->recruiter_picture_data_size = picture_data_size;
+							guild->SetMemberSaveNeeded(true);
+						}
 					}
 				}
 			}
@@ -2078,64 +2089,64 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		PacketStruct* packet = configReader.getStruct("WS_PetOptions", GetVersion());
 		if (packet && target && (target == player->GetPet() || target == player->GetCharmedPet() || target == player->GetDeityPet() || target == player->GetCosmeticPet())) {
 			bool change = false;
-			packet->LoadPacketData(app->pBuffer, app->size);
-
-			string name = packet->getType_EQ2_16BitString_ByName("pet_name").data;
-			if (strlen(name.c_str()) != 0 && SetPetName(name.c_str())) {
-				target->SetName(name.c_str());
-				GetCurrentZone()->SendUpdateTitles(target);
-				change = true;
-			}
-
-			int8 pet_behavior = player->GetInfoStruct()->get_pet_behavior();
-			// Check protect self setting and update if needed
-			if (packet->getType_int8_ByName("protect_self") == 1) {
-				if ((pet_behavior & 2) == 0) {
-					player->GetInfoStruct()->set_pet_behavior(pet_behavior + 2);
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				string name = packet->getType_EQ2_16BitString_ByName("pet_name").data;
+				if (strlen(name.c_str()) != 0 && SetPetName(name.c_str())) {
+					target->SetName(name.c_str());
+					GetCurrentZone()->SendUpdateTitles(target);
 					change = true;
 				}
-			}
-			else {
-				if ((pet_behavior & 2) != 0) {
-					player->GetInfoStruct()->set_pet_behavior(pet_behavior - 2);
-					change = true;
-				}
-			}
 
-			// Check protect master setting and update if needed
-			if (packet->getType_int8_ByName("protect_master") == 1) {
-				if ((pet_behavior & 1) == 0) {
-					player->GetInfoStruct()->set_pet_behavior(pet_behavior + 1);
-					change = true;
+				int8 pet_behavior = player->GetInfoStruct()->get_pet_behavior();
+				// Check protect self setting and update if needed
+				if (packet->getType_int8_ByName("protect_self") == 1) {
+					if ((pet_behavior & 2) == 0) {
+						player->GetInfoStruct()->set_pet_behavior(pet_behavior + 2);
+						change = true;
+					}
 				}
-			}
-			else {
-				if ((pet_behavior & 1) != 0) {
-					player->GetInfoStruct()->set_pet_behavior(pet_behavior - 1);
-					change = true;
+				else {
+					if ((pet_behavior & 2) != 0) {
+						player->GetInfoStruct()->set_pet_behavior(pet_behavior - 2);
+						change = true;
+					}
 				}
-			}
 
-			int8 pet_movement = player->GetInfoStruct()->get_pet_movement();
-			// Check stay/follow setting and update if needed
-			if (packet->getType_int8_ByName("stay_follow_toggle") == 1) {
-				if (pet_movement != 2) {
-					player->GetInfoStruct()->set_pet_movement(2);
-					change = true;
+				// Check protect master setting and update if needed
+				if (packet->getType_int8_ByName("protect_master") == 1) {
+					if ((pet_behavior & 1) == 0) {
+						player->GetInfoStruct()->set_pet_behavior(pet_behavior + 1);
+						change = true;
+					}
 				}
-			}
-			else {
-				if (pet_movement != 1) {
-					player->GetInfoStruct()->set_pet_movement(1);
-					change = true;
+				else {
+					if ((pet_behavior & 1) != 0) {
+						player->GetInfoStruct()->set_pet_behavior(pet_behavior - 1);
+						change = true;
+					}
 				}
+
+				int8 pet_movement = player->GetInfoStruct()->get_pet_movement();
+				// Check stay/follow setting and update if needed
+				if (packet->getType_int8_ByName("stay_follow_toggle") == 1) {
+					if (pet_movement != 2) {
+						player->GetInfoStruct()->set_pet_movement(2);
+						change = true;
+					}
+				}
+				else {
+					if (pet_movement != 1) {
+						player->GetInfoStruct()->set_pet_movement(1);
+						change = true;
+					}
+				}
+
+				// Ranged/Melee settings are not implemented yet
+
+				if (change)
+					player->SetCharSheetChanged(true);
+
 			}
-
-			// Ranged/Melee settings are not implemented yet
-
-			if (change)
-				player->SetCharSheetChanged(true);
-
 			safe_delete(packet);
 		}
 		break;
@@ -2150,69 +2161,70 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		int64 bank_money = GetPlayer()->GetBankCoinsPlat();
 		PacketStruct* packet = configReader.getStruct("WS_BuyHouse", GetVersion());
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			HouseZone* hz = world.GetHouseZone(packet->getType_int64_ByName("house_id"));
-			if (hz) {
-				bool got_bank_money = BankHasCoin(hz->cost_coin);
-				int8 disable_alignment_req = rule_manager.GetGlobalRule(R_Player, DisableHouseAlignmentRequirement)->GetInt8();
-				std::vector<PlayerHouse*> houses = world.GetAllPlayerHouses(GetCharacterID());
-				if (houses.size() > 24)
-				{
-					SimpleMessage(CHANNEL_COLOR_YELLOW, "You already own 25 houses and may not own another.");
-					safe_delete(packet);
-					break;
-				}
-				if(disable_alignment_req && hz->alignment > 0 && hz->alignment != GetPlayer()->GetAlignment())
-				{
-					std::string req = "You must be of ";
-					if (hz->alignment == 1)
-						req.append("Good");
-					else
-						req.append("Evil");
-					req.append(" alignment to purchase this house");
-					SimpleMessage(CHANNEL_COLOR_YELLOW, req.c_str());
-					safe_delete(packet);
-					break;
-				}
-				int32 status_req = hz->cost_status;
-				int32 available_status = player->GetInfoStruct()->get_status_points();
-				if (status_req <= available_status && (!hz->cost_coin || (hz->cost_coin && player->RemoveCoins(hz->cost_coin)))) 
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				HouseZone* hz = world.GetHouseZone(packet->getType_int64_ByName("house_id"));
+				if (hz) {
+					bool got_bank_money = BankHasCoin(hz->cost_coin);
+					int8 disable_alignment_req = rule_manager.GetGlobalRule(R_Player, DisableHouseAlignmentRequirement)->GetInt8();
+					std::vector<PlayerHouse*> houses = world.GetAllPlayerHouses(GetCharacterID());
+					if (houses.size() > 24)
+					{
+						SimpleMessage(CHANNEL_COLOR_YELLOW, "You already own 25 houses and may not own another.");
+						safe_delete(packet);
+						break;
+					}
+					if(disable_alignment_req && hz->alignment > 0 && hz->alignment != GetPlayer()->GetAlignment())
+					{
+						std::string req = "You must be of ";
+						if (hz->alignment == 1)
+							req.append("Good");
+						else
+							req.append("Evil");
+						req.append(" alignment to purchase this house");
+						SimpleMessage(CHANNEL_COLOR_YELLOW, req.c_str());
+						safe_delete(packet);
+						break;
+					}
+					int32 status_req = hz->cost_status;
+					int32 available_status = player->GetInfoStruct()->get_status_points();
+					if (status_req <= available_status && (!hz->cost_coin || (hz->cost_coin && player->RemoveCoins(hz->cost_coin)))) 
 
-				{
-					player->GetInfoStruct()->subtract_status_points(status_req);
-					ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id, false, false);
-					int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
-					int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
-					world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
-					//ClientPacketFunctions::SendHousingList(this);
-					PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
-					ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
-					PlaySound("coin_cha_ching");
-				}
-				else if (status_req <= available_status && got_bank_money == 1) {
+					{
 						player->GetInfoStruct()->subtract_status_points(status_req);
-						bool bankwithdrawl = BankWithdrawalNoBanker(hz->cost_coin);
-						
-						//this should NEVER happen since we check with got_bank_money, however adding it here should something go nutty.
-						if (bankwithdrawl == 0) {
-							PlaySound("buy_failed");
-							SimpleMessage(CHANNEL_COLOR_RED, "There was an error in bankwithdrawl function.");
-							safe_delete(packet);
-							break;
-						}
-
 						ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id, false, false);
 						int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
 						int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
 						world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
+						//ClientPacketFunctions::SendHousingList(this);
 						PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
 						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
 						PlaySound("coin_cha_ching");
-				}
-				else
-				{
-					SimpleMessage(CHANNEL_COLOR_YELLOW, "You do not have enough money to purchase the house.");
-					PlaySound("buy_failed");
+					}
+					else if (status_req <= available_status && got_bank_money == 1) {
+							player->GetInfoStruct()->subtract_status_points(status_req);
+							bool bankwithdrawl = BankWithdrawalNoBanker(hz->cost_coin);
+							
+							//this should NEVER happen since we check with got_bank_money, however adding it here should something go nutty.
+							if (bankwithdrawl == 0) {
+								PlaySound("buy_failed");
+								SimpleMessage(CHANNEL_COLOR_RED, "There was an error in bankwithdrawl function.");
+								safe_delete(packet);
+								break;
+							}
+
+							ZoneServer* instance_zone = zone_list.GetByInstanceID(0, hz->zone_id, false, false);
+							int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800; // 604800 = 7 days
+							int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
+							world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
+							PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
+							ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+							PlaySound("coin_cha_ching");
+					}
+					else
+					{
+						SimpleMessage(CHANNEL_COLOR_YELLOW, "You do not have enough money to purchase the house.");
+						PlaySound("buy_failed");
+					}
 				}
 			}
 		}
@@ -2225,14 +2237,15 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		
 		PacketStruct* packet = configReader.getStruct("WS_EnterHouse", GetVersion());
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			PlayerHouse* ph = world.GetPlayerHouseByUniqueID(packet->getType_int64_ByName("house_id"));
-			if (ph) {
-				HouseZone* hz = world.GetHouseZone(ph->house_id);
-				if (hz) {
-					ZoneServer* house = zone_list.GetByInstanceID(ph->instance_id, hz->zone_id, false, true);
-					if (house) {
-						Zone(house, true);
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(packet->getType_int64_ByName("house_id"));
+				if (ph) {
+					HouseZone* hz = world.GetHouseZone(ph->house_id);
+					if (hz) {
+						ZoneServer* house = zone_list.GetByInstanceID(ph->instance_id, hz->zone_id, false, true);
+						if (house) {
+							Zone(house, true);
+						}
 					}
 				}
 			}
@@ -2247,127 +2260,127 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		PacketStruct* packet = configReader.getStruct("WS_PayUpkeep", GetVersion());
 
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-
-			int64 houseID = packet->getType_int64_ByName("house_id");
-			PlayerHouse* ph = world.GetPlayerHouseByUniqueID(houseID);
-			if (ph)
-			{
-				HouseZone* hz = world.GetHouseZone(ph->house_id);
-				if (!hz)
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				int64 houseID = packet->getType_int64_ByName("house_id");
+				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(houseID);
+				if (ph)
 				{
-					Message(CHANNEL_COLOR_YELLOW, "HouseZone ID %u does NOT exist!", ph->house_id);
-					safe_delete(packet);
-					break;
-				}
-
-				int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800;
-				if (((sint64)ph->upkeep_due - (sint64)Timer::GetUnixTimeStamp()) > 0)
-				{
-					upkeep_due = ph->upkeep_due + 604800; // 604800 = 7 days
-
-					if (upkeep_due > (Timer::GetUnixTimeStamp() + 7257600)) // 84 days max upkeep to pay https://eq2.zam.com/wiki/Housing_%28EQ2%29#Upkeep
+					HouseZone* hz = world.GetHouseZone(ph->house_id);
+					if (!hz)
 					{
-						Message(CHANNEL_COLOR_YELLOW, "You cannot pay more than 3 months of upkeep.");
-						PlaySound("buy_failed");
+						Message(CHANNEL_COLOR_YELLOW, "HouseZone ID %u does NOT exist!", ph->house_id);
 						safe_delete(packet);
 						break;
 					}
-				}
-				bool escrowChange = false;
-				int64 statusReq = hz->upkeep_status;
-				int64 tmpRecoverStatus = 0;
-				if(ph->escrow_status && statusReq >= ph->escrow_status )
-				{
-					escrowChange = true;
-					tmpRecoverStatus = ph->escrow_status;
-					statusReq -= ph->escrow_status;
-					ph->escrow_status = 0;
-				}
-				else if (ph->escrow_status && statusReq && statusReq <= ph->escrow_status)
-				{
-					escrowChange = true;
-					ph->escrow_status -= statusReq;
-					tmpRecoverStatus = statusReq;
-					statusReq = 0;
-				}
 
-				int64 coinReq = hz->upkeep_coin;
-				int64 tmpRecoverCoins = 0;
-				if (ph->escrow_coins && coinReq >= ph->escrow_coins) // more required to upkeep than in escrow, subtract what we have left
-				{
-					escrowChange = true;
-					tmpRecoverCoins = ph->escrow_coins;
-					coinReq -= ph->escrow_coins;
-					ph->escrow_coins = 0;
-				}
-				else if (ph->escrow_coins && coinReq && coinReq <= ph->escrow_coins)
-				{
-					escrowChange = true;
-					// more than enough in escrow, subtract and make our cost 0!
-					ph->escrow_coins -= coinReq;
-					tmpRecoverCoins = coinReq;
-					coinReq = 0;
-				}
+					int32 upkeep_due = Timer::GetUnixTimeStamp() + 604800;
+					if (((sint64)ph->upkeep_due - (sint64)Timer::GetUnixTimeStamp()) > 0)
+					{
+						upkeep_due = ph->upkeep_due + 604800; // 604800 = 7 days
 
-				int32 available_status_points = player->GetInfoStruct()->get_status_points();
-				if(!statusReq || (statusReq && statusReq <= available_status_points))
-				{
-					if(coinReq && player->RemoveCoins(coinReq))
-						coinReq = 0;
-					
-					if(!coinReq && statusReq && player->GetInfoStruct()->subtract_status_points(statusReq))
+						if (upkeep_due > (Timer::GetUnixTimeStamp() + 7257600)) // 84 days max upkeep to pay https://eq2.zam.com/wiki/Housing_%28EQ2%29#Upkeep
+						{
+							Message(CHANNEL_COLOR_YELLOW, "You cannot pay more than 3 months of upkeep.");
+							PlaySound("buy_failed");
+							safe_delete(packet);
+							break;
+						}
+					}
+					bool escrowChange = false;
+					int64 statusReq = hz->upkeep_status;
+					int64 tmpRecoverStatus = 0;
+					if(ph->escrow_status && statusReq >= ph->escrow_status )
+					{
+						escrowChange = true;
+						tmpRecoverStatus = ph->escrow_status;
+						statusReq -= ph->escrow_status;
+						ph->escrow_status = 0;
+					}
+					else if (ph->escrow_status && statusReq && statusReq <= ph->escrow_status)
+					{
+						escrowChange = true;
+						ph->escrow_status -= statusReq;
+						tmpRecoverStatus = statusReq;
 						statusReq = 0;
-				}
-				bool got_bank_money = BankHasCoin(hz->upkeep_coin);
-				if (!coinReq && !statusReq) // TODO: Need option to take from bank if player does not have enough coin on them
-				{
-					database.AddHistory(ph, GetPlayer()->GetName(), "Paid Upkeep", Timer::GetUnixTimeStamp(), hz->upkeep_coin, 0, 0);
-
-					if (escrowChange)
-						database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins, ph->escrow_status);
-
-					ph->upkeep_due = upkeep_due;
-					database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
-					//ClientPacketFunctions::SendHousingList(this);
-					ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
-					PlaySound("coin_cha_ching");
-				}
-				else if (!statusReq && got_bank_money == 1) {
-					bool bankwithdrawl = BankWithdrawalNoBanker(hz->upkeep_coin);
-
-					//this should NEVER happen since we check with got_bank_money, however adding it here should something go nutty.
-					if (bankwithdrawl == 0) {
-						PlaySound("buy_failed");
-						SimpleMessage(CHANNEL_COLOR_RED, "There was an error in bankwithdrawl function.");
-						safe_delete(packet);
-						break;
 					}
 
-					database.AddHistory(ph, GetPlayer()->GetName(), "Paid Upkeep", Timer::GetUnixTimeStamp(), hz->upkeep_coin, 0, 0);
+					int64 coinReq = hz->upkeep_coin;
+					int64 tmpRecoverCoins = 0;
+					if (ph->escrow_coins && coinReq >= ph->escrow_coins) // more required to upkeep than in escrow, subtract what we have left
+					{
+						escrowChange = true;
+						tmpRecoverCoins = ph->escrow_coins;
+						coinReq -= ph->escrow_coins;
+						ph->escrow_coins = 0;
+					}
+					else if (ph->escrow_coins && coinReq && coinReq <= ph->escrow_coins)
+					{
+						escrowChange = true;
+						// more than enough in escrow, subtract and make our cost 0!
+						ph->escrow_coins -= coinReq;
+						tmpRecoverCoins = coinReq;
+						coinReq = 0;
+					}
 
-					if (escrowChange)
-						database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins, ph->escrow_status);
+					int32 available_status_points = player->GetInfoStruct()->get_status_points();
+					if(!statusReq || (statusReq && statusReq <= available_status_points))
+					{
+						if(coinReq && player->RemoveCoins(coinReq))
+							coinReq = 0;
+						
+						if(!coinReq && statusReq && player->GetInfoStruct()->subtract_status_points(statusReq))
+							statusReq = 0;
+					}
+					bool got_bank_money = BankHasCoin(hz->upkeep_coin);
+					if (!coinReq && !statusReq) // TODO: Need option to take from bank if player does not have enough coin on them
+					{
+						database.AddHistory(ph, GetPlayer()->GetName(), "Paid Upkeep", Timer::GetUnixTimeStamp(), hz->upkeep_coin, 0, 0);
 
-					ph->upkeep_due = upkeep_due;
-					database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
-					ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
-					PlaySound("coin_cha_ching");
+						if (escrowChange)
+							database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins, ph->escrow_status);
+
+						ph->upkeep_due = upkeep_due;
+						database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
+						//ClientPacketFunctions::SendHousingList(this);
+						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+						PlaySound("coin_cha_ching");
+					}
+					else if (!statusReq && got_bank_money == 1) {
+						bool bankwithdrawl = BankWithdrawalNoBanker(hz->upkeep_coin);
+
+						//this should NEVER happen since we check with got_bank_money, however adding it here should something go nutty.
+						if (bankwithdrawl == 0) {
+							PlaySound("buy_failed");
+							SimpleMessage(CHANNEL_COLOR_RED, "There was an error in bankwithdrawl function.");
+							safe_delete(packet);
+							break;
+						}
+
+						database.AddHistory(ph, GetPlayer()->GetName(), "Paid Upkeep", Timer::GetUnixTimeStamp(), hz->upkeep_coin, 0, 0);
+
+						if (escrowChange)
+							database.UpdateHouseEscrow(ph->house_id, ph->instance_id, ph->escrow_coins, ph->escrow_status);
+
+						ph->upkeep_due = upkeep_due;
+						database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
+						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+						PlaySound("coin_cha_ching");
+					}
+					else
+					{
+						// recover the escrow we were going to use but could not spend due to lack of funds
+						if (tmpRecoverCoins)
+							ph->escrow_coins += tmpRecoverCoins;
+						if(tmpRecoverStatus)
+							ph->escrow_status += tmpRecoverStatus;
+
+						SimpleMessage(CHANNEL_COLOR_YELLOW, "You do not have enough money  or status to pay for upkeep.");
+						PlaySound("buy_failed");
+					}
 				}
 				else
-				{
-					// recover the escrow we were going to use but could not spend due to lack of funds
-					if (tmpRecoverCoins)
-						ph->escrow_coins += tmpRecoverCoins;
-					if(tmpRecoverStatus)
-						ph->escrow_status += tmpRecoverStatus;
-
-					SimpleMessage(CHANNEL_COLOR_YELLOW, "You do not have enough money  or status to pay for upkeep.");
-					PlaySound("buy_failed");
-				}
+					Message(CHANNEL_COLOR_YELLOW, "PlayerHouse ID %u does NOT exist!", houseID);
 			}
-			else
-				Message(CHANNEL_COLOR_YELLOW, "PlayerHouse ID %u does NOT exist!", houseID);
 		}
 
 		safe_delete(packet);
@@ -2405,31 +2418,31 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_QuestJournalWaypointMsg", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_QuestJournalWaypoint", GetVersion());
 		if (packet) {
-			packet->LoadPacketData(app->pBuffer, app->size);
-			int32 quests = packet->getType_int32_ByName("num_quests");
+			if(packet->LoadPacketData(app->pBuffer, app->size)) {
+				int32 quests = packet->getType_int32_ByName("num_quests");
 
-			if (quests > 100) // just picking a number higher than max allowed
-			{
-				LogWrite(CCLIENT__ERROR, 0, "Client", "num_quests = %u - quantity too high, aborting load.", quests);
-				break;
-			}
-
-			LogWrite(CCLIENT__DEBUG, 0, "Client", "num_quests = %u", quests);
-
-			for (int32 i = 0; i < quests; i++) {
-				int32 id = packet->getType_int32_ByName("quest_id_0", i);
-				if (id == 0)
-					continue;
-				LogWrite(CCLIENT__DEBUG, 5, "Client", "quest_id = %u", id);
-				bool tracked = packet->getType_int8_ByName("quest_tracked_0", i) == 1 ? true : false;
-				GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__);
-				if (player->player_quests.count(id) > 0) {
-					player->player_quests[id]->SetTracked(tracked);
-					player->player_quests[id]->SetSaveNeeded(true);
+				if (quests > 100) // just picking a number higher than max allowed
+				{
+					LogWrite(CCLIENT__ERROR, 0, "Client", "num_quests = %u - quantity too high, aborting load.", quests);
+					break;
 				}
-				GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
-			}
 
+				LogWrite(CCLIENT__DEBUG, 0, "Client", "num_quests = %u", quests);
+
+				for (int32 i = 0; i < quests; i++) {
+					int32 id = packet->getType_int32_ByName("quest_id_0", i);
+					if (id == 0)
+						continue;
+					LogWrite(CCLIENT__DEBUG, 5, "Client", "quest_id = %u", id);
+					bool tracked = packet->getType_int8_ByName("quest_tracked_0", i) == 1 ? true : false;
+					GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__);
+					if (player->player_quests.count(id) > 0) {
+						player->player_quests[id]->SetTracked(tracked);
+						player->player_quests[id]->SetSaveNeeded(true);
+					}
+					GetPlayer()->MPlayerQuests.releasewritelock(__FUNCTION__, __LINE__);
+				}
+			}
 			safe_delete(packet);
 		}
 
@@ -2603,7 +2616,8 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		else
 			LogWrite(OPCODE__DEBUG, 1, "Opcode", "Received %04X (%i)", app->GetRawOpcode(), app->GetRawOpcode());
 
-		//DumpPacket(app);
+		// keeping this around for debugging purposes
+		DumpPacket(app);
 
 	}
 	}
@@ -2722,92 +2736,98 @@ bool Client::HandleLootItem(Spawn* entity, int32 item_id) {
 void Client::HandleLoot(EQApplicationPacket* app) {
 	PacketStruct* packet = configReader.getStruct("WS_LootType", GetVersion());
 	if (packet) {
-		packet->LoadPacketData(app->pBuffer, app->size);
-		int32 loot_id = packet->getType_int32_ByName("loot_id");
-		bool loot_all = (packet->getType_int8_ByName("loot_all") == 1);
-		safe_delete(packet);
-		int32 item_id = 0;
-		Item* item = 0;
-		Spawn* spawn = GetCurrentZone()->GetSpawnByID(loot_id);
-		if (player->HasPendingLootItems(loot_id)) {
-			Item* master_item = 0;
-			if (loot_all) {
-				vector<Item*>* items = player->GetPendingLootItems(loot_id);
-				if (items) {
-					for (int32 i = 0; loot_all && i < items->size(); i++) {
-						master_item = items->at(i);
-						if (master_item) {
-							item = new Item(master_item);
-							if (item) {
-								loot_all = HandleLootItem(0, item);
-								if (loot_all)
-									player->RemovePendingLootItem(loot_id, item->details.item_id);
-							}
-						}
-					}
-					safe_delete(items);
-				}
-			}
-			else {
-				packet = configReader.getStruct("WS_LootItem", GetVersion());
-				if (packet) {
-					packet->LoadPacketData(app->pBuffer, app->size);
-					item_id = packet->getType_int32_ByName("item_id");
+		if(packet->LoadPacketData(app->pBuffer, app->size)) {
+			int32 loot_id = packet->getType_int32_ByName("loot_id");
+			bool loot_all = (packet->getType_int8_ByName("loot_all") == 1);
+			safe_delete(packet);
+			int32 item_id = 0;
+			Item* item = 0;
+			Spawn* spawn = GetCurrentZone()->GetSpawnByID(loot_id);
+			if (player->HasPendingLootItems(loot_id)) {
+				Item* master_item = 0;
+				if (loot_all) {
 					vector<Item*>* items = player->GetPendingLootItems(loot_id);
 					if (items) {
-						for (int32 i = 0; i < items->size(); i++) {
+						for (int32 i = 0; loot_all && i < items->size(); i++) {
 							master_item = items->at(i);
-							if (master_item && master_item->details.item_id == item_id) {
+							if (master_item) {
 								item = new Item(master_item);
-								if (item && HandleLootItem(0, item))
-									player->RemovePendingLootItem(loot_id, item->details.item_id);
-								break;
+								if (item) {
+									loot_all = HandleLootItem(0, item);
+									if (loot_all)
+										player->RemovePendingLootItem(loot_id, item->details.item_id);
+								}
 							}
 						}
 						safe_delete(items);
-					}
-					safe_delete(packet);
-				}
-			}
-			EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
-			if (outapp)
-				QueuePacket(outapp);
-			Loot(0, player->GetPendingLootItems(loot_id), spawn);
-		}
-		else {
-			if (spawn && !spawn->Alive() && spawn->IsNPC() && ((NPC*)spawn)->Brain()->CheckLootAllowed(player)) {
-				if (loot_all) {
-					while (loot_all && ((item_id = spawn->GetLootItemID()) > 0)) {
-						loot_all = HandleLootItem(spawn, item_id);
 					}
 				}
 				else {
 					packet = configReader.getStruct("WS_LootItem", GetVersion());
 					if (packet) {
-						packet->LoadPacketData(app->pBuffer, app->size);
-						item_id = packet->getType_int32_ByName("item_id");
-						HandleLootItem(spawn, item_id);
+						if(packet->LoadPacketData(app->pBuffer, app->size)) {
+							item_id = packet->getType_int32_ByName("item_id");
+							vector<Item*>* items = player->GetPendingLootItems(loot_id);
+							if (items) {
+								for (int32 i = 0; i < items->size(); i++) {
+									master_item = items->at(i);
+									if (master_item && master_item->details.item_id == item_id) {
+										item = new Item(master_item);
+										if (item && HandleLootItem(0, item))
+											player->RemovePendingLootItem(loot_id, item->details.item_id);
+										break;
+									}
+								}
+								safe_delete(items);
+							}
+						}
 						safe_delete(packet);
 					}
 				}
 				EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 				if (outapp)
 					QueuePacket(outapp);
-				Loot(spawn);
-				if (!spawn->HasLoot()) {
-					CloseLoot(loot_id);
-					if (spawn->IsNPC())
-						GetCurrentZone()->RemoveDeadSpawn(spawn);
-				}
+				Loot(0, player->GetPendingLootItems(loot_id), spawn);
 			}
 			else {
-				if (!spawn) {
-					LogWrite(WORLD__ERROR, 0, "World", "Unknown id of %u when looting!", loot_id);
-					SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to find spawn to loot!");
+				if (spawn && !spawn->Alive() && spawn->IsNPC() && ((NPC*)spawn)->Brain()->CheckLootAllowed(player)) {
+					if (loot_all) {
+						while (loot_all && ((item_id = spawn->GetLootItemID()) > 0)) {
+							loot_all = HandleLootItem(spawn, item_id);
+						}
+					}
+					else {
+						packet = configReader.getStruct("WS_LootItem", GetVersion());
+						if (packet) {
+							if(packet->LoadPacketData(app->pBuffer, app->size)) {
+								item_id = packet->getType_int32_ByName("item_id");
+								HandleLootItem(spawn, item_id);
+							}
+							safe_delete(packet);
+						}
+					}
+					EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
+					if (outapp)
+						QueuePacket(outapp);
+					Loot(spawn);
+					if (!spawn->HasLoot()) {
+						CloseLoot(loot_id);
+						if (spawn->IsNPC())
+							GetCurrentZone()->RemoveDeadSpawn(spawn);
+					}
 				}
-				else
-					SimpleMessage(CHANNEL_COLOR_YELLOW, "You are not unable to loot that at this time.");
+				else {
+					if (!spawn) {
+						LogWrite(WORLD__ERROR, 0, "World", "Unknown id of %u when looting!", loot_id);
+						SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to find spawn to loot!");
+					}
+					else
+						SimpleMessage(CHANNEL_COLOR_YELLOW, "You are not unable to loot that at this time.");
+				}
 			}
+		}
+		else {
+			safe_delete(packet);
 		}
 	}
 
@@ -2821,46 +2841,50 @@ void Client::HandleSkillInfoRequest(EQApplicationPacket* app) {
 	case 0: { //items
 		request = configReader.getStruct("WS_SkillInfoItemRequest", GetVersion());
 		if (request) {
-			request->LoadPacketData(app->pBuffer, app->size);
-			Item* item = GetPlayer()->GetEquipmentList()->GetItemFromUniqueID(request->getType_int32_ByName("unique_id"));
-			if (!item)
-				item = GetPlayer()->item_list.GetItemFromUniqueID(request->getType_int32_ByName("unique_id"), true);
-			if (item) {
-				PacketStruct* response = configReader.getStruct("WS_SkillInfoItemResponse", GetVersion());
-				if (response) {
-					response->setDataByName("request_type", request->getType_int32_ByName("request_type"));
-					response->setDataByName("unique_id", request->getType_int32_ByName("unique_id"));
-					response->setSmallStringByName("name", item->name.c_str());
-					EQ2Packet* app2 = response->serialize();
-					//DumpPacket(app2);
-					QueuePacket(app2);
-					safe_delete(response);
+			if(request->LoadPacketData(app->pBuffer, app->size)) {
+				Item* item = GetPlayer()->GetEquipmentList()->GetItemFromUniqueID(request->getType_int32_ByName("unique_id"));
+				if (!item)
+					item = GetPlayer()->item_list.GetItemFromUniqueID(request->getType_int32_ByName("unique_id"), true);
+				if (item) {
+					PacketStruct* response = configReader.getStruct("WS_SkillInfoItemResponse", GetVersion());
+					if (response) {
+						response->setDataByName("request_type", request->getType_int32_ByName("request_type"));
+						response->setDataByName("unique_id", request->getType_int32_ByName("unique_id"));
+						response->setSmallStringByName("name", item->name.c_str());
+						EQ2Packet* app2 = response->serialize();
+						//DumpPacket(app2);
+						QueuePacket(app2);
+						safe_delete(response);
+					}
 				}
 			}
+			safe_delete(request);
 		}
 		break;
 	}
 	case 2: {//spells
 		request = configReader.getStruct("WS_SkillInfoSpellRequest", GetVersion());
 		if (request) {
-			request->LoadPacketData(app->pBuffer, app->size);
-			int32 id = request->getType_int32_ByName("id");
-			int8 tier = request->getType_int32_ByName("unique_id"); //on live this is really unique_id, but I'm going to make it tier instead :)
-			Spell* spell = master_spell_list.GetSpell(id, tier);
-			PacketStruct* response = configReader.getStruct("WS_SkillInfoResponse", GetVersion());
-			if (response) {
-				response->setDataByName("request_type", 2);
-				response->setDataByName("unique_id", tier);
-				response->setDataByName("id", id);
-				if (spell)
-					response->setSmallStringByName("name", spell->GetName());
-				else
-					response->setSmallStringByName("name", "Unknown Spell");
-				EQ2Packet* app2 = response->serialize();
-				//				DumpPacket(app2);
-				QueuePacket(app2);
-				safe_delete(response);
+			if(request->LoadPacketData(app->pBuffer, app->size)) {
+				int32 id = request->getType_int32_ByName("id");
+				int8 tier = request->getType_int32_ByName("unique_id"); //on live this is really unique_id, but I'm going to make it tier instead :)
+				Spell* spell = master_spell_list.GetSpell(id, tier);
+				PacketStruct* response = configReader.getStruct("WS_SkillInfoResponse", GetVersion());
+				if (response) {
+					response->setDataByName("request_type", 2);
+					response->setDataByName("unique_id", tier);
+					response->setDataByName("id", id);
+					if (spell)
+						response->setSmallStringByName("name", spell->GetName());
+					else
+						response->setSmallStringByName("name", "Unknown Spell");
+					EQ2Packet* app2 = response->serialize();
+					//				DumpPacket(app2);
+					QueuePacket(app2);
+					safe_delete(response);
+				}
 			}
+			safe_delete(request);
 		}
 		break;
 	}
@@ -2895,7 +2919,11 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (!request) {
 			return;
 		}
-		request->LoadPacketData(app->pBuffer, app->size);
+		if(!request->LoadPacketData(app->pBuffer, app->size)) {
+			safe_delete(request);
+			return;
+		}
+		
 		int32 id = request->getType_int32_ByName("id");
 		int32 tier = request->getType_int32_ByName("tier");
 		int32 trait_tier = request->getType_int32_ByName("unknown_id");
@@ -2950,7 +2978,10 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (!request) {
 			return;
 		}
-		request->LoadPacketData(app->pBuffer, app->size);
+		if(!request->LoadPacketData(app->pBuffer, app->size)) {
+			safe_delete(request);
+			return;
+		}
 
 		int32 id = request->getType_int32_ByName("id");
 
@@ -2999,7 +3030,10 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (!request) {
 			return;
 		}
-		request->LoadPacketData(app->pBuffer, app->size);
+		if(!request->LoadPacketData(app->pBuffer, app->size)) {
+			safe_delete(request);
+			return;
+		}
 		int32 id = request->getType_int32_ByName("id");
 		int32 unique_id = request->getType_int32_ByName("unique_id");
 
@@ -3029,7 +3063,10 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 			return;
 		}
 
-		request->LoadPacketData(app->pBuffer, app->size);
+		if(!request->LoadPacketData(app->pBuffer, app->size)) {
+			safe_delete(request);
+			return;
+		}
 		int32 id = request->getType_int32_ByName("item_id");
 		//int32 unknown_0 = request->getType_int32_ByName("unknown",0);
 		//int32 unknown_1 = request->getType_int32_ByName("unknown",1);
@@ -3054,7 +3091,10 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (!request) {
 			return;
 		}
-		request->LoadPacketData(app->pBuffer, app->size);
+		if(!request->LoadPacketData(app->pBuffer, app->size)) {
+			safe_delete(request);
+			return;
+		}
 		int32 id = request->getType_int32_ByName("id");
 		int16 display = request->getType_int8_ByName("partial_info");
 		SpellEffects* effect = player->GetSpellEffect(id);
@@ -3090,7 +3130,10 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 	request = configReader.getStruct("WS_ExamineInfoRequestMsg", GetVersion());
 		if (!request)
 			return;
-		request->LoadPacketData(app->pBuffer, app->size);
+		if(!request->LoadPacketData(app->pBuffer, app->size)) {
+			safe_delete(request);
+			return;
+		}
 		
 		int32 id = 0;
 		if(GetVersion() < 546) {
@@ -3117,7 +3160,10 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		request = configReader.getStruct("WS_ExamineInfoRequestMsg", GetVersion());
 		if (!request)
 			return;
-		request->LoadPacketData(app->pBuffer, app->size);
+		if(!request->LoadPacketData(app->pBuffer, app->size)) {
+			safe_delete(request);
+			return;
+		}
 		int32 id = request->getType_int32_ByName("id");
 		int32 tier = GetPlayer()->GetSpellTier(id);
 		LogWrite(WORLD__INFO, 0, "World", "Examine Info Request->Unique ID: %u Tier: %u ", id, tier);
@@ -3168,25 +3214,25 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 void Client::HandleQuickbarUpdateRequest(EQApplicationPacket* app) {
 	PacketStruct* request = configReader.getStruct("WS_QuickBarUpdateRequest", GetVersion());
 	if (request) {
-		request->LoadPacketData(app->pBuffer, app->size);
-		int32 id = request->getType_int32_ByName("id");
-		int32 bar = request->getType_int32_ByName("hotbar_number");
-		int32 slot = request->getType_int32_ByName("hotkey_slot");
-		int32 type = request->getType_int32_ByName("type");
-		int8 tier = request->getType_int32_ByName("unique_id");
-		EQ2_16BitString text = request->getType_EQ2_16BitString_ByName("text");
-		Spell* spell = 0;
-		if (type == 0xFFFFFFFF)
-			GetPlayer()->RemoveQuickbarItem(bar, slot);
-		else {
-			if (type == QUICKBAR_NORMAL)
-				spell = master_spell_list.GetSpell(id, tier);
-			if (spell)
-				GetPlayer()->AddQuickbarItem(bar, slot, type, spell->GetSpellIcon(), spell->GetSpellIconBackdrop(), id, tier, 0, text.data.c_str());
-			else
-				GetPlayer()->AddQuickbarItem(bar, slot, type, 0, 0, id, 0, 0, text.data.c_str());
+		if(request->LoadPacketData(app->pBuffer, app->size)) {
+			int32 id = request->getType_int32_ByName("id");
+			int32 bar = request->getType_int32_ByName("hotbar_number");
+			int32 slot = request->getType_int32_ByName("hotkey_slot");
+			int32 type = request->getType_int32_ByName("type");
+			int8 tier = request->getType_int32_ByName("unique_id");
+			EQ2_16BitString text = request->getType_EQ2_16BitString_ByName("text");
+			Spell* spell = 0;
+			if (type == 0xFFFFFFFF)
+				GetPlayer()->RemoveQuickbarItem(bar, slot);
+			else {
+				if (type == QUICKBAR_NORMAL)
+					spell = master_spell_list.GetSpell(id, tier);
+				if (spell)
+					GetPlayer()->AddQuickbarItem(bar, slot, type, spell->GetSpellIcon(), spell->GetSpellIconBackdrop(), id, tier, 0, text.data.c_str());
+				else
+					GetPlayer()->AddQuickbarItem(bar, slot, type, 0, 0, id, 0, 0, text.data.c_str());
+			}
 		}
-
 		safe_delete(request);
 	}
 
@@ -4597,79 +4643,80 @@ void Client::UpdateCharacterInstances() {
 void Client::HandleVerbRequest(EQApplicationPacket* app) {
 	PacketStruct* packet = configReader.getStruct("WS_EntityVerbsRequest", GetVersion());
 	if (packet) {
-		packet->LoadPacketData(app->pBuffer, app->size);
-		int32 spawn_id = packet->getType_int32_ByName("spawn_id");
-		PacketStruct* out = configReader.getStruct("WS_EntityVerbsResponse", GetVersion());
-		Spawn* spawn = GetPlayer()->GetSpawnWithPlayerID(spawn_id);
-		vector<EntityCommand*> commands;
-		vector<EntityCommand*> delete_commands;
-		if (out && spawn) {
-			for (int32 i = 0; i < spawn->primary_command_list.size(); i++)
-			{
-				// default is a deny list not allow, only allow if on the iterator list and itr second is not false (deny)
-				if (!spawn->primary_command_list[i]->default_allow_list)
+		if(packet->LoadPacketData(app->pBuffer, app->size)) {
+			int32 spawn_id = packet->getType_int32_ByName("spawn_id");
+			PacketStruct* out = configReader.getStruct("WS_EntityVerbsResponse", GetVersion());
+			Spawn* spawn = GetPlayer()->GetSpawnWithPlayerID(spawn_id);
+			vector<EntityCommand*> commands;
+			vector<EntityCommand*> delete_commands;
+			if (out && spawn) {
+				for (int32 i = 0; i < spawn->primary_command_list.size(); i++)
 				{
-					map<int32, bool>::iterator itr = spawn->primary_command_list[i]->allow_or_deny.find(GetPlayer()->GetCharacterID());
-					if (itr == spawn->primary_command_list[i]->allow_or_deny.end() || !itr->second)
-						continue;
-				}
-				else
-				{
-					// default is allow list, only deny if added to the list as deny (false itr second)
-					map<int32, bool>::iterator itr = spawn->primary_command_list[i]->allow_or_deny.find(GetPlayer()->GetCharacterID());
-					if (itr != spawn->primary_command_list[i]->allow_or_deny.end() && !itr->second)
-						continue;
-				}
-				commands.push_back(spawn->primary_command_list[i]);
-			}
-			for (int32 i = 0; i < spawn->secondary_command_list.size(); i++)
-				commands.push_back(spawn->secondary_command_list[i]);
-			if (spawn->IsPlayer()) {
-				if (player->IsFriend(spawn->GetName()))
-					delete_commands.push_back(player->CreateEntityCommand("remove from friends list", 10000, "friend_remove", "", 0, 0));
-				else
-					delete_commands.push_back(player->CreateEntityCommand("add to friends list", 10000, "friend_add", "", 0, 0));
-				if (player->IsIgnored(spawn->GetName()))
-					delete_commands.push_back(player->CreateEntityCommand("remove from ignore list", 10000, "ignore_remove", "", 0, 0));
-				else
-				{
-					delete_commands.push_back(player->CreateEntityCommand("add to ignore list", 10000, "ignore_add", "", 0, 0));
-					delete_commands.push_back(player->CreateEntityCommand("Trade", 10, "start_trade", "", 0, 0));
-				}
-				if (((Player*)spawn)->GetGroupMemberInfo()) {
-					if (player->IsGroupMember((Player*)spawn) && player->GetGroupMemberInfo()->leader) { //group leader
-						delete_commands.push_back(player->CreateEntityCommand("kick from group", 10000, "kickfromgroup", "", 0, 0));
-						delete_commands.push_back(player->CreateEntityCommand("make group leader", 10000, "makeleader", "", 0, 0));
+					// default is a deny list not allow, only allow if on the iterator list and itr second is not false (deny)
+					if (!spawn->primary_command_list[i]->default_allow_list)
+					{
+						map<int32, bool>::iterator itr = spawn->primary_command_list[i]->allow_or_deny.find(GetPlayer()->GetCharacterID());
+						if (itr == spawn->primary_command_list[i]->allow_or_deny.end() || !itr->second)
+							continue;
 					}
-					if(spawn->IsPlayer() && !player->GetGroupMemberInfo()->mentor_target_char_id)
-						delete_commands.push_back(player->CreateEntityCommand("Mentor", 10000, "mentor", "", 0, 0));
-					else if(spawn->IsPlayer() && player->GetGroupMemberInfo()->mentor_target_char_id == ((Player*)spawn)->GetCharacterID())
-						delete_commands.push_back(player->CreateEntityCommand("Stop Mentoring", 10000, "unmentor", "", 0, 0));
+					else
+					{
+						// default is allow list, only deny if added to the list as deny (false itr second)
+						map<int32, bool>::iterator itr = spawn->primary_command_list[i]->allow_or_deny.find(GetPlayer()->GetCharacterID());
+						if (itr != spawn->primary_command_list[i]->allow_or_deny.end() && !itr->second)
+							continue;
+					}
+					commands.push_back(spawn->primary_command_list[i]);
 				}
-				else if (!player->GetGroupMemberInfo() || (player->GetGroupMemberInfo()->leader && world.GetGroupManager()->GetGroupSize(player->GetGroupMemberInfo()->group_id) < 6))
-					delete_commands.push_back(player->CreateEntityCommand("invite to group", 10000, "invite", "", 0, 0));
-				commands.insert(commands.end(), delete_commands.begin(), delete_commands.end());
-			}
-			out->setDataByName("spawn_id", spawn_id);
-			out->setArrayLengthByName("num_verbs", commands.size());
+				for (int32 i = 0; i < spawn->secondary_command_list.size(); i++)
+					commands.push_back(spawn->secondary_command_list[i]);
+				if (spawn->IsPlayer()) {
+					if (player->IsFriend(spawn->GetName()))
+						delete_commands.push_back(player->CreateEntityCommand("remove from friends list", 10000, "friend_remove", "", 0, 0));
+					else
+						delete_commands.push_back(player->CreateEntityCommand("add to friends list", 10000, "friend_add", "", 0, 0));
+					if (player->IsIgnored(spawn->GetName()))
+						delete_commands.push_back(player->CreateEntityCommand("remove from ignore list", 10000, "ignore_remove", "", 0, 0));
+					else
+					{
+						delete_commands.push_back(player->CreateEntityCommand("add to ignore list", 10000, "ignore_add", "", 0, 0));
+						delete_commands.push_back(player->CreateEntityCommand("Trade", 10, "start_trade", "", 0, 0));
+					}
+					if (((Player*)spawn)->GetGroupMemberInfo()) {
+						if (player->IsGroupMember((Player*)spawn) && player->GetGroupMemberInfo()->leader) { //group leader
+							delete_commands.push_back(player->CreateEntityCommand("kick from group", 10000, "kickfromgroup", "", 0, 0));
+							delete_commands.push_back(player->CreateEntityCommand("make group leader", 10000, "makeleader", "", 0, 0));
+						}
+						if(spawn->IsPlayer() && !player->GetGroupMemberInfo()->mentor_target_char_id)
+							delete_commands.push_back(player->CreateEntityCommand("Mentor", 10000, "mentor", "", 0, 0));
+						else if(spawn->IsPlayer() && player->GetGroupMemberInfo()->mentor_target_char_id == ((Player*)spawn)->GetCharacterID())
+							delete_commands.push_back(player->CreateEntityCommand("Stop Mentoring", 10000, "unmentor", "", 0, 0));
+					}
+					else if (!player->GetGroupMemberInfo() || (player->GetGroupMemberInfo()->leader && world.GetGroupManager()->GetGroupSize(player->GetGroupMemberInfo()->group_id) < 6))
+						delete_commands.push_back(player->CreateEntityCommand("invite to group", 10000, "invite", "", 0, 0));
+					commands.insert(commands.end(), delete_commands.begin(), delete_commands.end());
+				}
+				out->setDataByName("spawn_id", spawn_id);
+				out->setArrayLengthByName("num_verbs", commands.size());
 
-			for (int32 i = 0; i < commands.size(); i++) {
-				out->setArrayDataByName("command", commands[i]->command.c_str(), i);
-				out->setArrayDataByName("distance", commands[i]->distance, i);
-				if (commands[i]->error_text.length() == 0)
-					out->setArrayAddToPacketByName("error", false, i);
-				else {
-					out->setArrayDataByName("display_error", 1, i);
-					out->setArrayDataByName("error", commands[i]->error_text.c_str(), i);
+				for (int32 i = 0; i < commands.size(); i++) {
+					out->setArrayDataByName("command", commands[i]->command.c_str(), i);
+					out->setArrayDataByName("distance", commands[i]->distance, i);
+					if (commands[i]->error_text.length() == 0)
+						out->setArrayAddToPacketByName("error", false, i);
+					else {
+						out->setArrayDataByName("display_error", 1, i);
+						out->setArrayDataByName("error", commands[i]->error_text.c_str(), i);
+					}
+					out->setArrayDataByName("display_text", commands[i]->name.c_str(), i);
 				}
-				out->setArrayDataByName("display_text", commands[i]->name.c_str(), i);
-			}
-			EQ2Packet* outapp = out->serialize();
-			//DumpPacket(outapp);
-			QueuePacket(outapp);
-			safe_delete(out);
-			for (int32 i = 0; i < delete_commands.size(); i++) {
-				safe_delete(delete_commands[i]);
+				EQ2Packet* outapp = out->serialize();
+				//DumpPacket(outapp);
+				QueuePacket(outapp);
+				safe_delete(out);
+				for (int32 i = 0; i < delete_commands.size(); i++) {
+					safe_delete(delete_commands[i]);
+				}
 			}
 		}
 		safe_delete(packet);
@@ -8608,101 +8655,102 @@ void Client::DisplayMailMessage(int32 mail_id) {
 void Client::HandleSentMail(EQApplicationPacket* app) {
 	PacketStruct* packet = configReader.getStruct("WS_MailSendMessage", GetVersion());
 	if (packet) {
-		packet->LoadPacketData(app->pBuffer, app->size);
-		string player_to = packet->getType_EQ2_16BitString_ByName("player_to").data;
-		PacketStruct* reply_packet = configReader.getStruct("WS_MailSendMessageReply", GetVersion());
-		vector<int32>* ids = 0;
-		MMailWindowMutex.lock();
-		if (reply_packet) {
-			int8 reply_type = MAIL_SEND_RESULT_UNKNOWN_ERROR;
-			if (player_to.length() == 0)
-				reply_type = MAIL_SEND_RESULT_EMPTY_TO_LIST;
-			else if (player_to.compare(string(GetPlayer()->GetName())) == 0)
-				reply_type = MAIL_SEND_RESULT_CANNOT_SEND_TO_SELF;
-			else if (GetAdminStatus() == 0 && !player->RemoveCoins(10))
-				reply_type = MAIL_SEND_RESULT_NOT_ENOUGH_COIN;
-			else {
-				if (GetAdminStatus() > 200 && player_to.compare("<all>") == 0) {
-					if (mail_window.char_item_id == 0 && (mail_window.coin_copper + mail_window.coin_silver + mail_window.coin_gold + mail_window.coin_plat) == 0)
-						ids = database.GetAllPlayerIDs();
-					else
-						SimpleMessage(CHANNEL_NARRATIVE, "You may not mail gifts to multiple players.");
-				}
+		if(packet->LoadPacketData(app->pBuffer, app->size)) {
+			string player_to = packet->getType_EQ2_16BitString_ByName("player_to").data;
+			PacketStruct* reply_packet = configReader.getStruct("WS_MailSendMessageReply", GetVersion());
+			vector<int32>* ids = 0;
+			MMailWindowMutex.lock();
+			if (reply_packet) {
+				int8 reply_type = MAIL_SEND_RESULT_UNKNOWN_ERROR;
+				if (player_to.length() == 0)
+					reply_type = MAIL_SEND_RESULT_EMPTY_TO_LIST;
+				else if (player_to.compare(string(GetPlayer()->GetName())) == 0)
+					reply_type = MAIL_SEND_RESULT_CANNOT_SEND_TO_SELF;
+				else if (GetAdminStatus() == 0 && !player->RemoveCoins(10))
+					reply_type = MAIL_SEND_RESULT_NOT_ENOUGH_COIN;
 				else {
-					ids = new vector<int32>;
-					ids->push_back(database.GetCharacterID(player_to.c_str()));
-				}
-				if (ids) {
-					for (int32 i = 0; i < ids->size(); i++) {
-						int32 player_to_id = ids->at(i);
-						if (player_to_id > 0) {
-							reply_type = MAIL_SEND_RESULT_SUCCESS;
-							Mail* mail = new Mail;
-							mail->mail_id = 0;
-							mail->player_to_id = player_to_id;
-							mail->player_from = string(GetPlayer()->GetName());
-							mail->subject = packet->getType_EQ2_16BitString_ByName("subject").data;
-							mail->mail_body = packet->getType_EQ2_16BitString_ByName("mail_body").data;
-							mail->already_read = 0;
-							mail->mail_type = MAIL_TYPE_REGULAR;
-							mail->coin_copper = mail_window.coin_copper;
-							mail->coin_silver = mail_window.coin_silver;
-							mail->coin_gold = mail_window.coin_gold;
-							mail->coin_plat = mail_window.coin_plat;
-							mail->char_item_id = mail_window.char_item_id;
-							mail->stack = mail_window.stack;
+					if (GetAdminStatus() > 200 && player_to.compare("<all>") == 0) {
+						if (mail_window.char_item_id == 0 && (mail_window.coin_copper + mail_window.coin_silver + mail_window.coin_gold + mail_window.coin_plat) == 0)
+							ids = database.GetAllPlayerIDs();
+						else
+							SimpleMessage(CHANNEL_NARRATIVE, "You may not mail gifts to multiple players.");
+					}
+					else {
+						ids = new vector<int32>;
+						ids->push_back(database.GetCharacterID(player_to.c_str()));
+					}
+					if (ids) {
+						for (int32 i = 0; i < ids->size(); i++) {
+							int32 player_to_id = ids->at(i);
+							if (player_to_id > 0) {
+								reply_type = MAIL_SEND_RESULT_SUCCESS;
+								Mail* mail = new Mail;
+								mail->mail_id = 0;
+								mail->player_to_id = player_to_id;
+								mail->player_from = string(GetPlayer()->GetName());
+								mail->subject = packet->getType_EQ2_16BitString_ByName("subject").data;
+								mail->mail_body = packet->getType_EQ2_16BitString_ByName("mail_body").data;
+								mail->already_read = 0;
+								mail->mail_type = MAIL_TYPE_REGULAR;
+								mail->coin_copper = mail_window.coin_copper;
+								mail->coin_silver = mail_window.coin_silver;
+								mail->coin_gold = mail_window.coin_gold;
+								mail->coin_plat = mail_window.coin_plat;
+								mail->char_item_id = mail_window.char_item_id;
+								mail->stack = mail_window.stack;
 
-							// GM's send mail for free!
-							if (GetAdminStatus() > 0)
-							{
-								mail->postage_cost = 0;
-								mail->attachment_cost = 0;
+								// GM's send mail for free!
+								if (GetAdminStatus() > 0)
+								{
+									mail->postage_cost = 0;
+									mail->attachment_cost = 0;
+								}
+								else
+								{
+									mail->postage_cost = 10;
+									mail->attachment_cost = 50;
+								}
+								mail->time_sent = Timer::GetUnixTimeStamp();
+								mail->expire_time = mail->time_sent + 2592000;	//30 days in seconds
+								
+								mail->save_needed = false;
+								database.SavePlayerMail(mail);
+								Client* to_client = zone_list.GetClientByCharID(player_to_id);
+								if (to_client) {
+									to_client->GetPlayer()->AddMail(mail);
+									to_client->SimpleMessage(CHANNEL_NARRATIVE, "You have unread mail in your mailbox.");
+									string popup_text = "You have unread mail!";
+									to_client->SendPopupMessage(10, popup_text.c_str(), "", 3, 0xFF, 0xFF, 0xFF);
+								}
+								else {
+									// don't need the pointer the client doesn't exist currently
+									safe_delete(mail);
+								}
+								ResetSendMail(false, false);
 							}
 							else
-							{
-								mail->postage_cost = 10;
-								mail->attachment_cost = 50;
-							}
-							mail->time_sent = Timer::GetUnixTimeStamp();
-							mail->expire_time = mail->time_sent + 2592000;	//30 days in seconds
-							
-							mail->save_needed = false;
-							database.SavePlayerMail(mail);
-							Client* to_client = zone_list.GetClientByCharID(player_to_id);
-							if (to_client) {
-								to_client->GetPlayer()->AddMail(mail);
-								to_client->SimpleMessage(CHANNEL_NARRATIVE, "You have unread mail in your mailbox.");
-								string popup_text = "You have unread mail!";
-								to_client->SendPopupMessage(10, popup_text.c_str(), "", 3, 0xFF, 0xFF, 0xFF);
-							}
-							else {
-								// don't need the pointer the client doesn't exist currently
-								safe_delete(mail);
-							}
-							ResetSendMail(false, false);
+								reply_type = MAIL_SEND_RESULT_UNKNOWN_PLAYER;
 						}
-						else
-							reply_type = MAIL_SEND_RESULT_UNKNOWN_PLAYER;
 					}
 				}
-			}
-			string players_to = "";
-			if (ids) {
-				for (int32 i = 0; i < ids->size(); i++) {
-					if (ids->at(i) != 0)
-						players_to.append(database.GetCharacterName(ids->at(i)));
-					if (i < (ids->size() - 1))
-						players_to.append(", ");
+				string players_to = "";
+				if (ids) {
+					for (int32 i = 0; i < ids->size(); i++) {
+						if (ids->at(i) != 0)
+							players_to.append(database.GetCharacterName(ids->at(i)));
+						if (i < (ids->size() - 1))
+							players_to.append(", ");
+					}
 				}
+				reply_packet->setDataByName("player_to", players_to.c_str());
+				reply_packet->setDataByName("reply_type", reply_type);
+				QueuePacket(reply_packet->serialize());
+				safe_delete(reply_packet);
+				safe_delete(ids);
 			}
-			reply_packet->setDataByName("player_to", players_to.c_str());
-			reply_packet->setDataByName("reply_type", reply_type);
-			QueuePacket(reply_packet->serialize());
-			safe_delete(reply_packet);
-			safe_delete(ids);
+			MMailWindowMutex.unlock();
 		}
 		safe_delete(packet);
-		MMailWindowMutex.unlock();
 	}
 
 }
