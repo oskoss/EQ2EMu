@@ -58,7 +58,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 	vector<HeroicOPStarter*> temp;
 	HeroicOPStarter* starter = 0;
 
-	LogWrite(SPELL__ERROR, 0, "HO", "Current Stage %u, wheel exists: %u, looking for icon %u", m_currentStage, m_wheel ? 1 : 0, icon);
+	LogWrite(SPELL__DEBUG, 0, "HO", "Current Stage %u, wheel exists: %u, looking for icon %u", m_currentStage, m_wheel ? 1 : 0, icon);
 	// If no wheel is set we are dealing with a starter chain still.
 	if (!m_wheel) {
 		// Loop through the starter chains
@@ -91,7 +91,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 				starter = *itr;
 				// Found one that is 0xFFFF, means the starter chain is done, get a wheel and reset the stage to 0
 				if ((starter->abilities[m_currentStage] == 0xFFFF)) {
-					LogWrite(SPELL__ERROR, 0, "HO", "Current Stage %u, starter reset (new stage 0)", m_currentStage);
+					LogWrite(SPELL__DEBUG, 0, "HO", "Current Stage %u, starter reset (new stage 0)", m_currentStage);
 					// reset the stage
 					ResetStage();
 					// geth the wheel
@@ -109,7 +109,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 
 			// Check to see if the completed start chain pointer was set
 			if (complete_starter) {
-				LogWrite(SPELL__ERROR, 0, "HO", "Current Stage %u, complete_starter set", m_currentStage);
+				LogWrite(SPELL__DEBUG, 0, "HO", "Current Stage %u, complete_starter set", m_currentStage);
 				// clear the starter list
 				starters.clear();
 				// add the completed starter back in, we do this in case we need this starter again we can just do starters.at(0), for example shifting the wheel
@@ -118,7 +118,7 @@ bool HeroicOP::UpdateHeroicOP(int16 icon) {
 		}
 	}
 	else {
-		LogWrite(SPELL__ERROR, 0, "HO", "Current Stage %u, wheel order: %u", m_currentStage, m_wheel->order);
+		LogWrite(SPELL__DEBUG, 0, "HO", "Current Stage %u, wheel order: %u", m_currentStage, m_wheel->order);
 		// Wheel was set so we need to check the order it needs to be completed in.
 		if (m_wheel->order == 0) {
 			// No order
@@ -270,7 +270,7 @@ void MasterHeroicOPList::AddWheel(int32 starter_id, HeroicOPWheel* wheel) {
 
 	// No match found give an error.
 	if (!found)
-		LogWrite(SPELL__ERROR, 0, "HO", "Attempted to add a wheel to a starter (%u) that doesn't exsist", starter_id);
+		LogWrite(SPELL__DEBUG, 0, "HO", "Attempted to add a wheel to a starter (%u) that doesn't exsist", starter_id);
 }
 
 HeroicOP* MasterHeroicOPList::GetHeroicOP(int8 class_id) {

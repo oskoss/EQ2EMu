@@ -1506,6 +1506,11 @@ bool ZoneServer::Process()
 			spawn_check_add.Trigger();
 		}
 
+		if (reloading_spellprocess){
+			MMasterZoneLock->unlock();
+			return !zoneShuttingDown;
+		}
+		
 		if(shutdownTimer.Enabled() && shutdownTimer.Check() && connected_clients.size(true) == 0) {
 			//if(lifetime_client_count)
 				zoneShuttingDown = true;
@@ -1514,11 +1519,8 @@ bool ZoneServer::Process()
 				shutdownTimer.Start(120000, true);
 				lifetime_client_count = 1;
 			}*/
-		}
-
-		if (reloading_spellprocess){
 			MMasterZoneLock->unlock();
-			return !zoneShuttingDown;
+			return false;
 		}
 
 		// client loop
@@ -7364,7 +7366,7 @@ ThreadReturnType ZoneLoop(void* tmp) {
 		else
 			Sleep(10);
 	}
-	zs->Process(); //run loop once more to clean up some functions
+	// we failed, time to disappear, no more processing period
 	safe_delete(zs);
 	THREAD_RETURN(NULL);
 }

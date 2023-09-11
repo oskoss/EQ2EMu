@@ -1638,9 +1638,12 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_SendLatestRequestMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SendLatestRequestMsg", opcode, opcode);
-		uchar blah25[] = { 0x01 };
-		EQ2Packet* app25 = new EQ2Packet(OP_ClearDataMsg, blah25, sizeof(blah25));
-		QueuePacket(app25);
+		if(GetVersion() < 60085) {
+			// this does not exist in newer clients like AoM, confirmed to exist in DoF, other clients will need review at a later time
+			uchar blah25[] = { 0x01 };
+			EQ2Packet* app25 = new EQ2Packet(OP_ClearDataMsg, blah25, sizeof(blah25));
+			QueuePacket(app25);
+		}
 		break;
 	}
 	case OP_RequestRecipeDetailsMsg: {

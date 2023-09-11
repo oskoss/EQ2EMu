@@ -43,12 +43,12 @@ end
 
 function CheckShardExpired(NPC)
 	local creationStamp = GetShardCreatedTimestamp(NPC)
-	local year_ = string.sub(creationStamp, 0, 4)
-	local month_ = string.sub(creationStamp, 5, 6)
-	local day_ = string.sub(creationStamp, 7, 8)
-	local hour_ = string.sub(creationStamp, 9, 10)
-	local min_ = string.sub(creationStamp, 11, 12)
-	local sec_ = string.sub(creationStamp, 13, 14)
+	local year_ = math.floor(string.sub(creationStamp, 0, 4))
+	local month_ = math.floor(string.sub(creationStamp, 5, 6))
+	local day_ = math.floor(string.sub(creationStamp, 7, 8))
+	local hour_ = math.floor(string.sub(creationStamp, 9, 10))
+	local min_ = math.floor(string.sub(creationStamp, 11, 12))
+	local sec_ = math.floor(string.sub(creationStamp, 13, 14))
 	local currentUTCTime = os.time(os.date('!*t'))
 	local creationTime = os.time{year=year_, month=month_, day=day_, hour=hour_, min=min_,sec=sec_}
 	

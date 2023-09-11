@@ -1818,13 +1818,13 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 		if (soloItr != m_soloHO.end()) {
 			ho = soloItr->second;
 			bool match = false;
-			LogWrite(SPELL__ERROR, 0, "HO", "target = %u", ho->GetTarget());
+			LogWrite(SPELL__DEBUG, 0, "HO", "target = %u", ho->GetTarget());
 			spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 			for (int8 i = 0; i < spell->targets.size(); i++) {
-				LogWrite(SPELL__ERROR, 0, "HO", "%u", spell->targets.at(i));
+				LogWrite(SPELL__DEBUG, 0, "HO", "Target ID: %u", spell->targets.at(i));
 				if (spell->targets.at(i) == ho->GetTarget() || spell->spell->GetSpellData()->friendly_spell) {
 					match = true;
-					LogWrite(SPELL__ERROR, 0, "HO", "match found");
+					LogWrite(SPELL__DEBUG, 0, "HO", "match found");
 					break;
 				}
 			}
