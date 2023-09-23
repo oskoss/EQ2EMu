@@ -29,7 +29,7 @@ extern World world;
 
 GroundSpawn::GroundSpawn(){ 
 	packet_num = 0;
-	appearance.encounter_level = 0;
+	appearance.difficulty = 0;
 	spawn_type = 2;
 	appearance.pos.state = 129;
 	number_harvests = 0;

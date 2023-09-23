@@ -15,8 +15,7 @@ public:
 	const char * GetErrorMsg() {return mysql_error(&mysql);}
 
 	bool Connect();
-	bool Connect(const char *host, const char *user, const char *password, const char *database);
-	bool Connect(const char *host, const char *user, const char *password, const char *database, unsigned int port);
+	bool Connect(const char *host, const char *user, const char *password, const char *database, unsigned int port = 3306);
 
 	bool Query(const char *query, ...);
 	bool Select(DatabaseResult *result, const char *query, ...);

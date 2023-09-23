@@ -2765,7 +2765,7 @@ NPC* ZoneServer::AddNPCSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentr
 			info->set_poison(spawnentry->poison_override);
 		}
 		if(spawnentry->difficulty_override > 0){
-			npc->SetEncounterLevel(spawnentry->difficulty_override, 1);
+			npc->SetDifficulty(spawnentry->difficulty_override, 1);
 		}
 		if (spawnentry->expire_time > 0)
 			AddSpawnExpireTimer(npc, spawnentry->expire_time, spawnentry->expire_offset);
@@ -4805,7 +4805,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 				((Player*)spawn)->UpdatePlayerStatistic(STAT_PLAYER_TOTAL_NPC_KILLS, 1);
 
 				// If this was an epic mob kill send the announcement for this player
-				if (dead->GetEncounterLevel() >= 10)
+				if (dead->GetDifficulty() >= 10)
 					SendEpicMobDeathToGuild((Player*)spawn, dead);
 
 				// Clear hostile spells from the players spell queue

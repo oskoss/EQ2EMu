@@ -216,7 +216,7 @@ struct AppearanceData {
 	int8			tradeskill_level;
 	int8			min_level;
 	int8			max_level;
-	int8			encounter_level;	
+	int8			difficulty;	
 	int16			visible; // 02 = normal, 15 = shadow
 	char			name[128]; //size around here somewhere
 	char			last_name[64];

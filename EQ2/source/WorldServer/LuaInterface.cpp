@@ -942,6 +942,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetDistance", EQ2Emu_lua_GetDistance);
 	lua_register(state, "GetHeading", EQ2Emu_lua_GetHeading);
 	lua_register(state, "GetLevel", EQ2Emu_lua_GetLevel);
+	lua_register(state, "GetDifficulty", EQ2Emu_lua_GetDifficulty);
 	lua_register(state, "GetHP", EQ2Emu_lua_GetCurrentHP);
 	lua_register(state, "GetMaxHP", EQ2Emu_lua_GetMaxHP);
 	lua_register(state, "GetMaxHPBase", EQ2Emu_lua_GetMaxHPBase);

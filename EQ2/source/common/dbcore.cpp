@@ -75,7 +75,7 @@ DBcore::~DBcore() {
 }
 
 
-bool DBcore::ReadDBINI(char* host, char* user, char* passwd, char* database, int32& port, bool& compress, bool* items) {
+bool DBcore::ReadDBINI(char* host, char* user, char* passwd, char* database, unsigned int* port, bool* compress, bool* items) {
 	char line[256], * key, * val;
 	bool on_database_section = false;
 	FILE* f;
@@ -133,15 +133,17 @@ bool DBcore::ReadDBINI(char* host, char* user, char* passwd, char* database, int
 				strcpy(database, val);
 				items[3] = true;
 			}
-			else if (strcasecmp(key, "port") == 0) {
-				port = atoi(val);
+			else if (strcasecmp(key, "port") == 0 && port) {
+				*port = atoul(val);
 				items[4] = true;
 			}
 			else if (strcasecmp(key, "compression") == 0) {
 				if (strcasecmp(val, "on") == 0) {
-					compress = true;
-					items[5] = true;
-					LogWrite(DATABASE__INFO, 0, "DBCore", "DB Compression on.");
+					if(compress) { 
+						*compress = true;
+						items[5] = true;
+						LogWrite(DATABASE__INFO, 0, "DBCore", "DB Compression on.");
+					}
 				}
 			}
 		}

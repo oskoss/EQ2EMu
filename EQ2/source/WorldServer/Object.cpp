@@ -31,7 +31,7 @@ Object::Object(){
 	packet_num = 0;
 	appearance.activity_status = 64;
 	appearance.pos.state = 1;
-	appearance.encounter_level = 0;
+	appearance.difficulty = 0;
 	spawn_type = 2;
 	m_deviceID = 0;
 }

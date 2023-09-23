@@ -2439,7 +2439,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					LogWrite(CCLIENT__DEBUG, 5, "Client", "quest_id = %u", id);
 					bool tracked = packet->getType_int8_ByName("quest_tracked_0", i) == 1 ? true : false;
 					GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__);
-					if (player->player_quests.count(id) > 0) {
+					if (player->player_quests.count(id) > 0 && player->player_quests[id]) {
 						player->player_quests[id]->SetTracked(tracked);
 						player->player_quests[id]->SetSaveNeeded(true);
 					}
@@ -6190,7 +6190,7 @@ void Client::SetPlayerQuest(Quest* quest, map<int32, int32>* progress) {
 void Client::AddPlayerQuest(Quest* quest, bool call_accepted, bool send_packets) {
 	bool lockCleared = false;
 	GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__);
-	if (player->player_quests.count(quest->GetQuestID()) > 0) {
+	if (player->player_quests.count(quest->GetQuestID()) > 0 && player->player_quests[quest->GetQuestID()]) {
 		if (player->player_quests[quest->GetQuestID()]->GetQuestFlags() > 0)
 			quest->SetQuestFlags(player->player_quests[quest->GetQuestID()]->GetQuestFlags());
 		int32 questID = quest->GetQuestID();
@@ -6234,7 +6234,7 @@ void Client::RemovePlayerQuest(int32 id, bool send_update, bool delete_quest) {
 	if (current_quest_id == id)
 		current_quest_id = 0;
 	GetPlayer()->MPlayerQuests.writelock(__FUNCTION__, __LINE__);
-	if (player->player_quests.count(id) > 0) {
+	if (player->player_quests.count(id) > 0 && player->player_quests[id]) {
 		if (delete_quest) {
 			player->player_quests[id]->SetDeleted(true);
 			database.DeleteCharacterQuest(id, GetCharacterID(), player->GetCompletedPlayerQuests()->count(id) > 0);

@@ -434,7 +434,7 @@ void Commands::Command_Bot_Create(Client* client, Seperator* sep) {
 			bot->SetAdventureClass(advClass);
 			bot->SetLevel(client->GetPlayer()->GetLevel());
 			bot->SetName(name.c_str());
-			bot->SetEncounterLevel(6);
+			bot->SetDifficulty(6);
 			bot->size = 32;
 			if (bot->GetTotalHP() == 0) {
 				bot->SetTotalHP(25 * bot->GetLevel() + 1);
@@ -541,7 +541,7 @@ void Commands::Command_Bot_Spawn(Client* client, Seperator* sep) {
 			bot->SetLocation(client->GetPlayer()->GetLocation());
 			bot->SetInitialState(16512);
 			bot->SetLevel(client->GetPlayer()->GetLevel());
-			bot->SetEncounterLevel(6);
+			bot->SetDifficulty(6);
 			bot->size = 32;
 			if (bot->GetTotalHP() == 0) {
 				bot->SetTotalHP(25 * bot->GetLevel() + 1);

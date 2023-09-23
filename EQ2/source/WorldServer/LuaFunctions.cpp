@@ -3145,6 +3145,15 @@ int EQ2Emu_lua_GetLevel(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_GetDifficulty(lua_State* state) {
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	if (spawn) {
+		lua_interface->SetInt32Value(state, spawn->GetDifficulty());
+		return 1;
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_GetCurrentPower(lua_State* state) {
 	if (!lua_interface)
 		return 0;

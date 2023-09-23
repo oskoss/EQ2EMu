@@ -3892,12 +3892,12 @@ float Player::CalculateXP(Spawn* victim){
 	float total = multiplier * 8;	
 	LogWrite(PLAYER__DEBUG, 5, "XP", "Multiplier * 8 = %.2f", total);
 
-	if(victim->GetEncounterLevel() > 6) { // no need to multiply by 1 if this is a normal mob
-		total *= (victim->GetEncounterLevel() - 5);
+	if(victim->GetDifficulty() > 6) { // no need to multiply by 1 if this is a normal mob
+		total *= (victim->GetDifficulty() - 5);
 		LogWrite(PLAYER__DEBUG, 5, "XP", "Encounter > 6, total = %.2f", total);
 	}
-	else if(victim->GetEncounterLevel() <= 5) {
-		total /= (7 - victim->GetEncounterLevel()); //1 down mobs are worth half credit, 2 down worth .25, etc
+	else if(victim->GetDifficulty() <= 5) {
+		total /= (7 - victim->GetDifficulty()); //1 down mobs are worth half credit, 2 down worth .25, etc
 		LogWrite(PLAYER__DEBUG, 5, "XP", "Encounter <= 5, total = %.2f", total);
 	}
 
@@ -5500,7 +5500,6 @@ void Player::SetGroupInformation(PacketStruct* packet){
 				member = info->member;
 
 				if (member && member->GetZone() == GetZone()) {
-					packet->setSubstructDataByName("group_members", "unknown3", 1, x);
 					packet->setSubstructDataByName("group_members", "spawn_id", GetIDWithPlayerSpawn(member), x);
 
 					if (member->HasPet()) {
@@ -5547,11 +5546,13 @@ void Player::SetGroupInformation(PacketStruct* packet){
 							det_count = 255;
 					}
 					packet->setSubstructDataByName("group_members", "curse_count", det_count, x);
+
+					packet->setSubstructDataByName("group_members", "zone_status", 1, x);
 				}
 				else {
-					packet->setSubstructDataByName("group_members", "unknown3", 2, x);
 					packet->setSubstructDataByName("group_members", "pet_id", 0xFFFFFFFF, x);
 					//packet->setSubstructDataByName("group_members", "unknown5", 1, x, 1); // unknown5 > 1 = name is blue
+					packet->setSubstructDataByName("group_members", "zone_status", 2, x);
 				}
 
 				packet->setSubstructDataByName("group_members", "name", info->name.c_str(), x);

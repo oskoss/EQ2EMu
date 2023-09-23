@@ -41,7 +41,7 @@ Widget::Widget(){
 	linked_spawn = 0;
 	linked_spawn_id = 0;
 	appearance.pos.state = 1;
-	appearance.encounter_level = 0;
+	appearance.difficulty = 0;
 	spawn_type = 2;
 	appearance.activity_status = 64;
 	include_location = true;

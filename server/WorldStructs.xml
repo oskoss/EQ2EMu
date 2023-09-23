@@ -1502,7 +1502,7 @@ to zero and treated like placeholders." />
 <Data ElementName="name" Type="char" Size="41" />
 <Data ElementName="zone" Type="char" Size="60" />
 <Data ElementName="instance" Type="int8" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="zone_status" Type="int8" Size="1" />
 <Data ElementName="unknown4" Type="int16" Size="1" />
 <Data ElementName="race_id" Type="int8" Size="1" />
 <Data ElementName="class_id" Type="int8" Size="1" />
@@ -1525,7 +1525,7 @@ to zero and treated like placeholders." />
 <Data ElementName="name" Type="char" Size="41" />
 <Data ElementName="zone" Type="char" Size="60" />
 <Data ElementName="instance" Type="int8" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="zone_status" Type="int8" Size="1" />
 <Data ElementName="unknown4" Type="int16" Size="1" />
 <Data ElementName="race_id" Type="int8" Size="1" />
 <Data ElementName="class_id" Type="int8" Size="1" />
@@ -1549,7 +1549,7 @@ to zero and treated like placeholders." />
 <Data ElementName="name" Type="char" Size="41" />
 <Data ElementName="zone" Type="char" Size="60" />
 <Data ElementName="instance" Type="int8" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="zone_status" Type="int8" Size="1" />
 <Data ElementName="unknown4" Type="int16" Size="1" />
 <Data ElementName="race_id" Type="int8" Size="1" />
 <Data ElementName="class_id" Type="int8" Size="1" />
@@ -1575,7 +1575,7 @@ to zero and treated like placeholders." />
 <Data ElementName="name" Type="char" Size="41" />
 <Data ElementName="zone" Type="char" Size="60" />
 <Data ElementName="instance" Type="int8" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="zone_status" Type="int8" Size="1" />
 <Data ElementName="unknown4" Type="int16" Size="1" />
 <Data ElementName="race_id" Type="int8" Size="1" />
 <Data ElementName="class_id" Type="int8" Size="1" />
@@ -1599,7 +1599,7 @@ to zero and treated like placeholders." />
 <Data ElementName="name" Type="char" Size="41" />
 <Data ElementName="zone" Type="char" Size="60" />
 <Data ElementName="instance" Type="int8" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="zone_status" Type="int8" Size="1" />
 <Data ElementName="unknown4" Type="int16" Size="1" />
 <Data ElementName="race_id" Type="int8" Size="1" />
 <Data ElementName="class_id" Type="int8" Size="1" />
@@ -1623,7 +1623,7 @@ to zero and treated like placeholders." />
 <Data ElementName="name" Type="char" Size="41" />
 <Data ElementName="zone" Type="char" Size="60" />
 <Data ElementName="instance" Type="int8" Size="1" />
-<Data ElementName="unknown3" Type="int8" Size="1" />
+<Data ElementName="zone_status" Type="int8" Size="1" />
 <Data ElementName="unknown4" Type="int16" Size="1" />
 <Data ElementName="race_id" Type="int8" Size="1" />
 <Data ElementName="class_id" Type="int8" Size="1" />

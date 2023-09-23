@@ -79,6 +79,7 @@ int EQ2Emu_lua_SetQuestYellow(lua_State* state);
 
 //Gets
 int EQ2Emu_lua_GetLevel(lua_State* state);
+int EQ2Emu_lua_GetDifficulty(lua_State* state);
 int EQ2Emu_lua_GetCurrentHP(lua_State* state);
 int EQ2Emu_lua_GetMaxHP(lua_State* state);
 int EQ2Emu_lua_GetMaxHPBase(lua_State* state);

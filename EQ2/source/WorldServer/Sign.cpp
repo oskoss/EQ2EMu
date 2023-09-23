@@ -36,7 +36,7 @@ Sign::Sign(){
 	widget_y = 0;
 	widget_z = 0;
 	appearance.pos.state = 1;
-	appearance.encounter_level = 0;
+	appearance.difficulty = 0;
 	spawn_type = 2;
 	appearance.activity_status = 64;
 	sign_type = 0;

@@ -54,7 +54,7 @@ DatabaseNew::~DatabaseNew() {
 
 bool DatabaseNew::Connect() {
 	char line[256], *key, *val;
-	char host[256], user[64], password[64], database[64];
+	char host[256], user[64], password[64], database[64], port[64];
 	bool found_section = false;
 	FILE *f;
 
@@ -67,6 +67,7 @@ bool DatabaseNew::Connect() {
 	memset(user, 0, sizeof(user));
 	memset(password, 0, sizeof(password));
 	memset(database, 0, sizeof(database));
+	memset(port, 0, sizeof(port));
 
 	while (fgets(line, sizeof(line), f) != NULL) {
 		if (line[0] == '#' || line[0] == '\n' || line[0] == '\r')
@@ -87,6 +88,8 @@ bool DatabaseNew::Connect() {
 						strncpy(password, val, sizeof(password) - 1);
 					else if (strncasecmp(line, "database", 8) == 0)
 						strncpy(database, val, sizeof(database) - 1);
+					else if (strncasecmp(line, "port", 4) == 0)
+						strncpy(port, val, sizeof(port) - 1);
 				}
 			}
 		}
@@ -111,11 +114,8 @@ bool DatabaseNew::Connect() {
 		return false;
 	}
 
-	return Connect(host, user, password, database);
-}
-
-bool DatabaseNew::Connect(const char *host, const char *user, const char *password, const char *database) {
-	return Connect(host, user, password, database, 3306);
+	unsigned int portnum = atoul(port);
+	return Connect(host, user, password, database, portnum);
 }
 
 bool DatabaseNew::Connect(const char *host, const char *user, const char *password, const char *database, unsigned int port) {

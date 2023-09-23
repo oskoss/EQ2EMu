@@ -58,7 +58,7 @@ Spawn::Spawn(){
 	memset(&appearance, 0, sizeof(AppearanceData)); 
 	memset(&basic_info, 0, sizeof(BasicInfoStruct));
 	appearance.pos.state = 0x4080;
-	appearance.encounter_level =6;
+	appearance.difficulty = 6;
 	size = 32;
 	appearance.pos.collision_radius = 32;
 	id = Spawn::NextID();
@@ -2375,7 +2375,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	packet->setDataByName("effective_level", IsEntity() && ((Entity*)this)->GetInfoStruct()->get_effective_level() != 0 ? (int8)((Entity*)this)->GetInfoStruct()->get_effective_level() : (int8)GetLevel());
 	packet->setDataByName("level", (int8)GetLevel());
 	packet->setDataByName("unknown4", (int8)GetLevel());
-	packet->setDataByName("difficulty", appearance.encounter_level); //6);
+	packet->setDataByName("difficulty", GetDifficulty()); //6);
 	packet->setDataByName("unknown6", 1);
 	packet->setDataByName("heroic_flag", appearance.heroic_flag);
 	packet->setDataByName("class", appearance.adventure_class);
@@ -2609,7 +2609,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	if (appearance.icon == 0) {
 		if (appearance.attackable == 1)
 			appearance.icon = 0;
-		else if (appearance.encounter_level > 0)
+		else if (GetDifficulty() > 0)
 			appearance.icon = 4;
 		else
 			appearance.icon = 6;

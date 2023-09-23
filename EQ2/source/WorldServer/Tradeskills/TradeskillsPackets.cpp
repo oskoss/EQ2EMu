@@ -505,8 +505,14 @@ void ClientPacketFunctions::SendItemCreationUI(Client* client, Recipe* recipe) {
 
 		packet->setArrayDataByName("item_name", item->name.c_str(), i);
 		packet->setArrayDataByName("item_icon", item->details.icon, i);
-		if(client->GetVersion() < 860)
-			packet->setItemArrayDataByName("item", item, client->GetPlayer(), i, 0, -1);
+		
+		if(client->GetVersion() < 860) {
+			
+		char item_slot_name[64];
+		snprintf(item_slot_name,64,"item_%u",i);
+					packet->setItemByName(item_slot_name, item, client->GetPlayer(), 0, 5, true, true);
+			//packet->setItemArrayDataByName("item", item, client->GetPlayer(), i, 0, -1);
+		}
 		else if (client->GetVersion() < 1193)
 			packet->setItemArrayDataByName("item", item, client->GetPlayer(), i);
 		else
@@ -577,9 +583,9 @@ void ClientPacketFunctions::SendItemCreationUI(Client* client, Recipe* recipe) {
 	}
 
 
-	//packet->PrintPacket();
+	packet->PrintPacket();
 	EQ2Packet* outapp = packet->serialize();
-	//DumpPacket(outapp);
+	DumpPacket(outapp);
 	client->QueuePacket(outapp);
 	safe_delete(packet);
 }

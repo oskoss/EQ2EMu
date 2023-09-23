@@ -234,8 +234,13 @@ void Brain::AddHate(Entity* entity, sint32 hate) {
 	// Lock the hate list, we are altering the list so use write lock
 	MHateList.writelock(__FUNCTION__, __LINE__);
 
-	if (m_hatelist.count(entity->GetID()) > 0)
+	if (m_hatelist.count(entity->GetID()) > 0) {
 		m_hatelist[entity->GetID()] += hate;
+		// take into consideration that 0 or negative hate is not valid, we need to properly reset the value
+		if(m_hatelist[entity->GetID()] < 1) {
+			m_hatelist[entity->GetID()] = 1;
+		}
+	}
 	else
 		m_hatelist.insert(std::pair<int32, sint32>(entity->GetID(), hate));
 

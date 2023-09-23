@@ -486,8 +486,8 @@ public:
 	void SetID(int32 in_id){
 		Set(&id, in_id);
 	}
-	void SetEncounterLevel(int8 enc_level, bool setUpdateFlags = true){
-		SetInfo(&appearance.encounter_level, enc_level, setUpdateFlags);
+	void SetDifficulty(int8 difficulty, bool setUpdateFlags = true){
+		SetInfo(&appearance.difficulty, difficulty, setUpdateFlags);
 	}
 	virtual void SetLevel(int16 level, bool setUpdateFlags = true){
 		SetInfo(&appearance.level, level, setUpdateFlags);
@@ -673,8 +673,8 @@ public:
 	float GetDistance(Spawn* spawn, float x1, float y1, float z1, bool includeRadius=true);
 	float CalculateRadius(Spawn* target);
 
-	int8 GetEncounterLevel(){
-		return appearance.encounter_level;
+	int8 GetDifficulty(){
+		return appearance.difficulty;
 	}
 	sint32 GetTotalPower();
 	sint32 GetPower();

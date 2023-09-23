@@ -332,8 +332,8 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				break;
 									   }
 			case SPAWN_SET_VALUE_DIFFICULTY:{
-				sprintf(tmp, "%i", target->GetEncounterLevel());
-				target->SetEncounterLevel(val, send_update);
+				sprintf(tmp, "%i", target->GetDifficulty());
+				target->SetDifficulty(val, send_update);
 				break;
 											}
 			case SPAWN_SET_VALUE_MODEL_TYPE:{
@@ -1007,7 +1007,7 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				break;
 									   }
 			case SPAWN_SET_VALUE_DIFFICULTY:{
-				target->SetEncounterLevel(val, send_update);
+				target->SetDifficulty(val, send_update);
 				break;
 											}
 			case SPAWN_SET_VALUE_MODEL_TYPE:{
@@ -3359,7 +3359,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 		}
 		case COMMAND_GROUP_ACCEPT_INVITE: {
-			if(sep && sep->arg[0] && strcmp(sep->arg[0], "group") == 0) {
+			if((sep && sep->arg[0] && strcmp(sep->arg[0], "group") == 0) || (!sep && client->GetVersion() <= 546)) {
 				int8 result = world.GetGroupManager()->AcceptInvite(client->GetPlayer());
 
 				if (result == 0)
@@ -4519,7 +4519,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				spawn->SetTotalHP(0);
 				spawn->SetPower(0);
 				spawn->SetTotalPower(0);
-				spawn->SetEncounterLevel(0);
+				spawn->SetDifficulty(0);
 				spawn->SetTargetable(0);
 				spawn->SetSogaModelType(0);
 				spawn->SetCollisionRadius(19);
@@ -4539,7 +4539,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				spawn->SetLevel(atoi(sep->arg[3]));
 				spawn->SetName(sep->arg[4]);
 				if(sep->arg[5][0] && sep->IsNumber(5))
-					spawn->SetEncounterLevel(atoi(sep->arg[5]));
+					spawn->SetDifficulty(atoi(sep->arg[5]));
 				if(sep->arg[6][0] && sep->IsNumber(6))
 					spawn->size = atoi(sep->arg[6]);
 				if(spawn->GetTotalHP() == 0){
@@ -4715,7 +4715,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				client->Message(CHANNEL_COLOR_YELLOW, "Race: %i, Class: %i, Gender: %i", spawn->GetRace(), spawn->GetAdventureClass(), spawn->GetGender());
 				client->Message(CHANNEL_COLOR_YELLOW, "Level: %i, HP: %u / %u, Power: %u / %u", spawn->GetLevel(), spawn->GetHP(), spawn->GetTotalHP(), spawn->GetPower(), spawn->GetTotalPower());
 				client->Message(CHANNEL_COLOR_YELLOW, "Respawn Time: %u (sec), X: %f, Y: %f, Z: %f Heading: %f", spawn->GetRespawnTime(), spawn->GetX(), spawn->GetY(), spawn->GetZ(), spawn->GetHeading());
-				client->Message(CHANNEL_COLOR_YELLOW, "Collision Radius: %i, Size: %i, Difficulty: %i, Heroic: %i", spawn->GetCollisionRadius(), spawn->GetSize(), spawn->GetEncounterLevel(), spawn->GetHeroic());
+				client->Message(CHANNEL_COLOR_YELLOW, "Collision Radius: %i, Size: %i, Difficulty: %i, Heroic: %i", spawn->GetCollisionRadius(), spawn->GetSize(), spawn->GetDifficulty(), spawn->GetHeroic());
 				client->Message(CHANNEL_COLOR_YELLOW, "Targetable: %i, Show Name: %i, Attackable: %i, Show Level: %i", spawn->GetTargetable(), spawn->GetShowName(), spawn->GetAttackable(), spawn->GetShowLevel());
 				client->Message(CHANNEL_COLOR_YELLOW, "Show Command Icon: %i, Display Hand Icon: %i", spawn->GetShowCommandIcon(), spawn->GetShowHandIcon());
 				if (spawn->IsEntity()) {
@@ -4753,7 +4753,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				details += "Level:		" + to_string(spawn->GetLevel()) + "\n";
 				details += "HP:		" + to_string(spawn->GetHP()) + " / " + to_string(spawn->GetTotalHP()) + "(" + to_string(spawn->GetIntHPRatio()) + "%)\n";
 				details += "Power:		" + to_string(spawn->GetPower()) + + " / " + to_string(spawn->GetTotalPower()) + "\n";
-				details += "Difficulty:		" + to_string(spawn->GetEncounterLevel()) + "\n";
+				details += "Difficulty:		" + to_string(spawn->GetDifficulty()) + "\n";
 				details += "Heroic:		" + to_string(spawn->GetHeroic()) + "\n";
 				details += "Group ID:		" + to_string(spawn->GetSpawnGroupID()) + "\n";
 				details += "Faction ID:		" + to_string(spawn->GetFactionID()) + "\n";

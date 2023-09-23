@@ -87,12 +87,12 @@ Database::Database()
 
 bool Database::Init(bool silentLoad) {
 	char host[200], user[200], passwd[200], database[200];
-	int32 port=0;
+	unsigned int port=0;
 	bool compression = false;
 	bool items[6] = {false, false, false, false, false, false};
 	const char* exampleIni[] = { "[Database]", "host = localhost", "user = root", "password = pass", "database = dbname", "### --- Assure each parameter is on a new line!" };
 
-	if(!ReadDBINI(host, user, passwd, database, port, compression, items)) {
+	if(!ReadDBINI(host, user, passwd, database, &port, &compression, items)) {
 		//exit(1);
 		return false;
 	}

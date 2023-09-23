@@ -980,7 +980,7 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->appearance.min_level = atoi(row[2]);
 		npc->appearance.max_level = atoi(row[3]);
 		npc->appearance.level =		atoi(row[2]);
-		npc->appearance.encounter_level = atoi(row[4]);
+		npc->appearance.difficulty = atoi(row[4]);
 		npc->appearance.race = atoi(row[5]);
 		npc->appearance.model_type = atoi(row[6]);
 		npc->appearance.soga_model_type = atoi(row[62]);
@@ -3478,7 +3478,7 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 
 		if(spawn->IsNPC()){
 			query.RunQuery2(Q_INSERT, "insert into spawn_npcs (spawn_id, min_level, max_level, enc_level, class_, gender, min_group_size, max_group_size, hair_type_id, facial_hair_type_id, wing_type_id, chest_type_id, legs_type_id, soga_hair_type_id, soga_facial_hair_type_id, soga_model_type, heroic_flag, action_state, mood_state, initial_state, activity_status, hide_hood, emote_state) values(%u, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i)",
-				spawn->GetDatabaseID(), spawn->GetLevel(), spawn->GetLevel(), spawn->appearance.encounter_level, spawn->GetAdventureClass(), spawn->GetGender(), 0, 0, ((NPC*)spawn)->features.hair_type, ((NPC*)spawn)->features.hair_face_type, 
+				spawn->GetDatabaseID(), spawn->GetLevel(), spawn->GetLevel(), spawn->GetDifficulty(), spawn->GetAdventureClass(), spawn->GetGender(), 0, 0, ((NPC*)spawn)->features.hair_type, ((NPC*)spawn)->features.hair_face_type, 
 				((NPC*)spawn)->features.wing_type, ((NPC*)spawn)->features.chest_type, ((NPC*)spawn)->features.legs_type, ((NPC*)spawn)->features.soga_hair_type, ((NPC*)spawn)->features.soga_hair_face_type, spawn->appearance.soga_model_type, spawn->appearance.heroic_flag, spawn->GetActionState(), spawn->GetMoodState(), spawn->GetInitialState(), spawn->GetActivityStatus(), spawn->appearance.hide_hood, spawn->appearance.emote_state);
 		}
 		else if(spawn->IsObject()){
@@ -3499,7 +3499,7 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 	else{
 		if(spawn->IsNPC()){
 			query.RunQuery2(Q_UPDATE, "update spawn_npcs, spawn set name='%s', min_level=%i, max_level=%i, enc_level=%i, race=%i, model_type=%i, class_=%i, gender=%i, show_name=%i, attackable=%i, show_level=%i, targetable=%i, show_command_icon=%i, display_hand_icon=%i, hair_type_id=%i, facial_hair_type_id=%i, wing_type_id=%i, chest_type_id=%i, legs_type_id=%i, soga_hair_type_id=%i, soga_facial_hair_type_id=%i, soga_model_type=%i, size=%i, hp=%u, heroic_flag=%i, power=%u, collision_radius=%i, command_primary=%u, command_secondary=%u, visual_state=%i, action_state=%i, mood_state=%i, initial_state=%i, activity_status=%i, alignment=%i, faction_id=%u, hide_hood=%i, emote_state=%i, suffix ='%s', prefix='%s', last_name='%s', merchant_min_level = %u, merchant_max_level = %u where spawn_npcs.spawn_id = spawn.id and spawn.id = %u",
-				name.c_str(), spawn->GetLevel(), spawn->GetLevel(), spawn->appearance.encounter_level, spawn->GetRace(), spawn->GetModelType(),
+				name.c_str(), spawn->GetLevel(), spawn->GetLevel(), spawn->GetDifficulty(), spawn->GetRace(), spawn->GetModelType(),
 				spawn->GetAdventureClass(), spawn->GetGender(), spawn->appearance.display_name, spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.targetable, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, ((NPC*)spawn)->features.hair_type, 
 				((NPC*)spawn)->features.hair_face_type, ((NPC*)spawn)->features.wing_type, ((NPC*)spawn)->features.chest_type, ((NPC*)spawn)->features.legs_type, ((NPC*)spawn)->features.soga_hair_type, ((NPC*)spawn)->features.soga_hair_face_type, spawn->appearance.soga_model_type, spawn->GetSize(), 
 				spawn->GetTotalHP(), spawn->appearance.heroic_flag, spawn->GetTotalPower(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), 
@@ -6781,7 +6781,7 @@ bool WorldDatabase::LoadNPC(ZoneServer* zone, int32 spawn_id) {
 		npc->appearance.min_level = result.GetInt8(2);
 		npc->appearance.max_level = result.GetInt8(3);
 		npc->appearance.level =		result.GetInt8(2);
-		npc->appearance.encounter_level = result.GetInt8(4);
+		npc->appearance.difficulty = result.GetInt8(4);
 		npc->appearance.race = result.GetInt8(5);
 		npc->appearance.model_type = result.GetInt16(6);
 		npc->appearance.soga_model_type = result.GetInt16(62);
