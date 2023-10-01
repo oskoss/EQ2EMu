@@ -1887,6 +1887,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				}
 			}	
 			
+			bool valueSet = false;
 			if (tmp_subtype == 255 ){
 				
 				dropstat += 1;
@@ -1894,36 +1895,61 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			}
 			else {
 				packet->setArrayDataByName("stat_type", stat_type, i-dropstat);
-				packet->setArrayDataByName("stat_subtype", tmp_subtype, i-dropstat);
+				
+				if(client->GetVersion() <= 546 && stat_type == 5) {
+					valueSet = true;
+					// DoF client has to be goofy about this junk, stat_subtype is the stat value, value is always "9" and we set the stat_name to the appropriate stat (but power=mana)
+					packet->setArrayDataByName("stat_subtype", (sint16)statValue , i - dropstat);
+					packet->setArrayDataByName("value", (sint16)9 , i - dropstat);
+					switch(tmp_subtype) {
+						case 0: {
+							packet->setArrayDataByName("stat_name", "health", i - dropstat);
+							break;
+						}
+						case 1: {
+							packet->setArrayDataByName("stat_name", "mana", i - dropstat);
+							break;
+						}
+						case 2: {
+							packet->setArrayDataByName("stat_name", "concentration", i - dropstat);
+							break;
+						}
+					}
+				}
+				else {
+					packet->setArrayDataByName("stat_subtype", tmp_subtype, i-dropstat);
+				}
 			}
 			if (stat->stat_name.length() > 0)
 				packet->setArrayDataByName("stat_name", stat->stat_name.c_str(), i-dropstat);
 			/* SF client */
 
-			if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331) {
-				if (stat->stat_type == 6){
-					packet->setArrayDataByName("value", statValue , i - dropstat);//63119 or when diety started (this is actually the modified stat
-					packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value (this is the unmodified stat
+			if(!valueSet) {
+				if ((client->GetVersion() >= 63119) || client->GetVersion() == 61331) {
+					if (stat->stat_type == 6){
+						packet->setArrayDataByName("value", statValue , i - dropstat);//63119 or when diety started (this is actually the modified stat
+						packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value (this is the unmodified stat
+					}
+					else	{
+						packet->setArrayDataByName("value", (sint16)statValue , i - dropstat, 0U, true);
+						packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value
+					}
 				}
-				else	{
-					packet->setArrayDataByName("value", (sint16)statValue , i - dropstat, 0U, true);
+				 else if (client->GetVersion() >= 1028) {
+					if (stat->stat_type == 6){
+						packet->setArrayDataByName("value", statValue , i - dropstat);//63119 or when diety started (this is actually the infused modified stat
+						packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value (this is the unmodified stat
+					}
+					else {
+						packet->setArrayDataByName("value", (sint16)statValue , i - dropstat, 0U, true);
+						packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value
+					}
+					
+				}
+				else{
+					packet->setArrayDataByName("value", (sint16)statValue , i - dropstat);
 					packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value
 				}
-			}
-			 else if (client->GetVersion() >= 1028) {
-				if (stat->stat_type == 6){
-					packet->setArrayDataByName("value", statValue , i - dropstat);//63119 or when diety started (this is actually the infused modified stat
-					packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value (this is the unmodified stat
-				}
-				else {
-					packet->setArrayDataByName("value", (sint16)statValue , i - dropstat, 0U, true);
-					packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value
-				}
-				
-			}
-			else{
-				packet->setArrayDataByName("value", (sint16)statValue , i - dropstat);
-				packet->setArrayDataByName("value2", stat->value, i - dropstat);//63119 temp will be replace by modified value
 			}
 		}
 	}

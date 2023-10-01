@@ -2525,14 +2525,16 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		//Hide hood check
 		bool vis_hide_hood = false;
 		if (IsPlayer() && ((Player*)this)->get_character_flag(CF_HIDE_HOOD)) {
-			vis_flag += INFO_VIS_FLAG_HIDE_HOOD;
+			if(version > 546) {
+				vis_flag += INFO_VIS_FLAG_HIDE_HOOD;
+			}
 			vis_hide_hood = true;
 		}
 		else if(IsPlayer()) {
 			classicFlags += INFO_CLASSIC_FLAG_SHOW_HOOD;
 		}
 		
-		if(!vis_hide_hood && appearance.hide_hood) {
+		if(!vis_hide_hood && appearance.hide_hood && version > 546) {
 			vis_flag += INFO_VIS_FLAG_HIDE_HOOD;
 		}
 			

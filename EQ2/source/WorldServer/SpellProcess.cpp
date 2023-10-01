@@ -2164,13 +2164,13 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 
 								// if NPC group member is (still) an NPC (wtf?) and is alive, send the NPC group member back as a successful target of non-friendly spell group_member->Alive()
 								if (group_member->GetZone() == caster->GetZone() && 
-								group_member->IsNPC() && group_member->Alive() && !((Entity*)group_member)->IsAOEImmune() && (!((Entity*)group_member)->IsMezzed() || group_member == target))
+								group_member->IsNPC() && (data->friendly_spell || ((Entity*)caster)->AttackAllowed((Entity*)group_member)) && group_member->Alive() && !((Entity*)group_member)->IsAOEImmune() && (!((Entity*)group_member)->IsMezzed() || group_member == target))
 									AddLuaSpellTarget(luaspell, group_member->GetID());
 
 								// note: this should generate some hate towards the caster
 							}
 						} // end is spawngroup
-						else
+						else if(data->friendly_spell || ((Entity*)caster)->AttackAllowed((Entity*)target))
 							AddLuaSpellTarget(luaspell, target->GetID()); // return single target NPC for non-friendly spell
 					}
 					else if(data->friendly_spell)
@@ -2184,7 +2184,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 					}
 					else if(target && target->IsPlayer())
 					{
-						if(!GetPlayerGroupTargets((Player*)target, caster, luaspell, true, false))
+						if(!GetPlayerGroupTargets((Player*)target, caster, luaspell, true, false) && ((Entity*)caster)->AttackAllowed((Entity*)target))
 							AddSelfAndPet(luaspell, target);
 					}
 				}
@@ -2299,7 +2299,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 						{
 							Spawn* group_member = *itr;
 
-							if (group_member->IsNPC() && group_member->Alive()){
+							if (group_member->IsNPC() && group_member->Alive() && ((Entity*)caster)->AttackAllowed(((Entity*)group_member))){
 								AddLuaSpellTarget(luaspell, group_member->GetID(), false);
 								if (((Entity*)group_member)->HasPet()){
 									Entity* pet = ((Entity*)group_member)->GetPet();
@@ -2397,7 +2397,7 @@ void SpellProcess::GetSpellTargets(LuaSpell* luaspell)
 
 							// if NPC group member is (still) an NPC (wtf?) and is alive, send the NPC group member back as a successful target of non-friendly spell group_member->Alive()
 							if (group_member->GetZone() == caster->GetZone() && 
-							group_member->IsNPC() && group_member->Alive() && !((Entity*)group_member)->IsAOEImmune() && (!((Entity*)group_member)->IsMezzed() || group_member == target))
+							group_member->IsNPC() && group_member->Alive() && ((Entity*)caster)->AttackAllowed((Entity*)group_member) && !((Entity*)group_member)->IsAOEImmune() && (!((Entity*)group_member)->IsMezzed() || group_member == target))
 								AddLuaSpellTarget(luaspell, group_member->GetID(), false);
 
 							// note: this should generate some hate towards the caster
@@ -2547,14 +2547,16 @@ void SpellProcess::GetSpellTargetsTrueAOE(LuaSpell* luaspell) {
 		luaspell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 		for (int8 i = 0; i < spawns.size(); i++) {
 			if (i == 0){
-				if (luaspell->initial_target && luaspell->caster->GetID() != luaspell->initial_target){
+				Spawn* spawn = luaspell->caster->GetZone()->GetSpawnByID(luaspell->initial_target);
+				if (spawn && luaspell->initial_target && luaspell->caster->GetID() != luaspell->initial_target && luaspell->caster->AttackAllowed((Entity*)spawn)){
 					//this is the "Direct" target and aoe can't be avoided
 					AddLuaSpellTarget(luaspell, luaspell->initial_target, false);
 					ignore_target = luaspell->initial_target;
 				}
-				if (luaspell->targets.size() >= luaspell->spell->GetSpellData()->max_aoe_targets)
-					break;
 			}
+			
+			if (luaspell->targets.size() >= luaspell->spell->GetSpellData()->max_aoe_targets)
+				break;
 			
 			int32 target_id = spawns.at(i);
 			Spawn* spawn = luaspell->caster->GetZone()->GetSpawnByID(target_id);
@@ -2562,7 +2564,7 @@ void SpellProcess::GetSpellTargetsTrueAOE(LuaSpell* luaspell) {
 				LogWrite(SPELL__ERROR, 0, "Spell", "Error: Spell target is NULL!  SpellProcess::ProcessSpell for Spell '%s' target id %u", (luaspell->spell != nullptr) ? luaspell->spell->GetName() : "Unknown", target_id);
 			}
 			//If we have already added this spawn, check the next spawn in the list
-			if (spawn && spawn->GetID() == ignore_target){
+			if (spawn && spawn->GetID() == ignore_target || (spawn->IsEntity() && !luaspell->caster->AttackAllowed((Entity*)spawn))){
 				continue;
 			}
 			if (spawn){

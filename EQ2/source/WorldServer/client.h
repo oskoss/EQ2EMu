@@ -685,7 +685,8 @@ private:
 	string* pending_last_name;
 	IncomingPaperdollImage incoming_paperdoll;
 	int32 transmuteID;
-
+	ZoneServer* GetHouseZoneServer(int32 spawn_id, int64 house_id);
+	
 	std::atomic<bool> m_recipeListSent;
 	bool initial_spawns_sent;
 	bool should_load_spells;

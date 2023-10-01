@@ -40,12 +40,12 @@
     <Data ElementName="flags" Type="int32" Size="1" />
     <Data ElementName="unknown8_1" Type="int8" Size="15" />
     <Data ElementName="stat_count" Type="int8" />
-    <Data ElementName="stat_array" Type="Array" ArraySizeVariable="stat_count">
-      <Data ElementName="stat_type" Type="int16" OversizedValue="127" OversizedByte="127" Size="1" />
-      <Data ElementName="stat_subtype" Type="sint16" OversizedValue="127" OversizedByte="127" Size="1" />
-      <Data ElementName="value" Type="sint16" OversizedValue="127" OversizedByte="127" Size="1" />
-      <Data ElementName="stat_name" Type="EQ2_8Bit_String" Size="1" />
-    </Data>
+	<Data ElementName="stat_array" Type="Array" ArraySizeVariable="stat_count">
+	  <Data ElementName="stat_type" Type="int8" Size="1"/> <!-- v138 -->
+	  <Data ElementName="stat_subtype" Type="sint16" OversizedValue="127" OversizedByte="127" Size="1" /> <!-- v139 -->
+	  <Data ElementName="value" Type="sint16" OversizedValue="127" OversizedByte="127" Size="1" /> <!-- v140 -->
+	  <Data ElementName="stat_name" Type="EQ2_8Bit_String" Size="1" /> <!-- v141? -->
+	</Data>
     <Data ElementName="stat_string_count" Type="int8" />
     <Data ElementName="stat_string_array" Type="Array" ArraySizeVariable="stat_string_count">
       <Data ElementName="stat_string" Type="EQ2_8Bit_String" Size="1" />

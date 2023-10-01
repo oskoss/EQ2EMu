@@ -2060,6 +2060,38 @@ vector<PlayerHouse*> World::GetAllPlayerHousesByHouseID(int32 house_id) {
 	return ret;
 }
 
+PlayerHouse* World::GetPlayerHouse(Client* client, int32 spawn_id, int64 unique_house_id, HouseZone** set_house_zone) {
+	PlayerHouse* ph = nullptr;
+	HouseZone* hz = nullptr;
+	
+	if(spawn_id) {
+		Spawn* houseWidget = client->GetPlayer()->GetSpawnByIndex(spawn_id);
+		if(houseWidget && houseWidget->IsWidget() && ((Widget*)houseWidget)->GetHouseID()) {
+			hz = world.GetHouseZone(((Widget*)houseWidget)->GetHouseID());
+			if (hz) {
+				ph = world.GetPlayerHouseByHouseID(client->GetPlayer()->GetCharacterID(), hz->id);
+			}
+		}
+	}
+	
+	if(!ph && client->GetCurrentZone()->GetInstanceID()) {
+		ph = world.GetPlayerHouseByInstanceID(client->GetCurrentZone()->GetInstanceID());
+	}
+	
+	if(!ph && unique_house_id) {
+		ph = world.GetPlayerHouseByUniqueID(unique_house_id);
+	}
+	
+	if (ph && !hz) {
+		hz = world.GetHouseZone(ph->house_id);
+	}
+	
+	if(set_house_zone)
+		*set_house_zone = hz;
+	
+	return ph;
+}
+
 void World::PopulateTOVStatMap() {
 	//This function populates a map that converts changed CoE to ToV stats
 	tov_itemstat_conversion[0] = TOV_ITEM_STAT_HPREGEN;

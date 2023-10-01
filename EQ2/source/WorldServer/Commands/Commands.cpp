@@ -3741,10 +3741,19 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_HOUSE_DEPOSIT:
 		{
 			PrintSep(sep, "COMMAND_HOUSE_DEPOSIT");
-			// arg0 = ??? (set to 3)
+			// arg0 = spawn_id for DoF, could also be house_id for newer clients
 			// arg1 = coin (in copper)
 			// arg2 = status? (not implemented yet)
-			PlayerHouse* ph = world.GetPlayerHouseByInstanceID(client->GetCurrentZone()->GetInstanceID());
+			PlayerHouse* ph = nullptr;
+			int32 spawn_id = 0;
+			if(sep && sep->arg[0]) {
+				spawn_id = atoul(sep->arg[0]);
+				ph = world.GetPlayerHouse(client, spawn_id, client->GetVersion() > 546 ? spawn_id : 0, nullptr);
+			}
+			
+			if(!ph) {
+				ph = world.GetPlayerHouseByInstanceID(client->GetCurrentZone()->GetInstanceID());
+			}
 			if (ph && sep && sep->IsNumber(1))
 			{
 				int64 outValCoin = strtoull(sep->arg[1], NULL, 0);
@@ -3779,7 +3788,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						database.LoadDeposits(ph);
 						client->PlaySound("coin_cha_ching");
 						HouseZone* hz = world.GetHouseZone(ph->house_id);
-						ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetPlayer()->GetID());
+						ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetVersion() <= 546 ? spawn_id : client->GetPlayer()->GetID());
 					}
 					else
 					{
@@ -3796,16 +3805,21 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		}
 		case COMMAND_HOUSE:
 		{
+			int32 spawn_id = 0;
 			if (sep && sep->IsNumber(0))
 			{
-				int32 unique_id = atoi(sep->arg[0]);
-				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
+				PlayerHouse* ph = nullptr;
+				if(!ph && sep && sep->arg[0]) {
+					spawn_id = atoul(sep->arg[0]);
+					ph = world.GetPlayerHouse(client, spawn_id, spawn_id, nullptr);
+				}
+				
 				HouseZone* hz = 0;
 					
 				if (ph)
 					hz = world.GetHouseZone(ph->house_id);
 				// there is a arg[1] that is true/false, but not sure what it is for investigate more later
-				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetPlayer()->GetID());
+				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetVersion() <= 546 ? spawn_id : client->GetPlayer()->GetID());
 			}
 			else if (client->GetCurrentZone()->GetInstanceType() != 0)
 			{
@@ -3816,7 +3830,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if ( ph )
 					hz = world.GetHouseZone(ph->house_id);
 
-				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetPlayer()->GetID());
+				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetVersion() <= 546 ? spawn_id : client->GetPlayer()->GetID());
 				client->GetCurrentZone()->SendHouseItems(client);
 			}
 			break;
@@ -8481,17 +8495,22 @@ void Commands::Command_ShowCloak(Client* client, Seperator* sep)
 void Commands::Command_ShowHelm(Client* client, Seperator* sep)
 {
 	Player* player = client->GetPlayer();
-
+	
+	if(client->GetVersion() <= 546) {
+		return; // not allowed/supported
+	}
+	
 	if (sep && sep->arg[0])
 	{
+		PrintSep(sep, "Command_ShowHelm");
 		const char* value = sep->arg[0];
 		if (strncasecmp(value, "true", strlen(value)) == 0) 
 		{
-			player->reset_character_flag(CF_HIDE_HELM);
-			player->set_character_flag(CF_HIDE_HOOD);
+			player->toggle_character_flag(CF_HIDE_HELM);
+			player->toggle_character_flag(CF_HIDE_HOOD);
 		}
 		else if (strncasecmp(value, "false", strlen(value)) == 0) 
-			player->set_character_flag(CF_HIDE_HELM);
+			player->toggle_character_flag(CF_HIDE_HELM);
 		else
 		{
 			client->Message(CHANNEL_COLOR_YELLOW, "Not supposed to be here! Please /bug this: Error in %s (%u)", __FUNCTION__, __LINE__);
@@ -8513,15 +8532,19 @@ void Commands::Command_ShowHood(Client* client, Seperator* sep)
 
 	if (sep && sep->arg[0])
 	{
+		PrintSep(sep, "Command_ShowHood");
 		const char* value = sep->arg[0];
 
 		if (strncasecmp(value, "true", strlen(value)) == 0) 
 		{
-			player->reset_character_flag(CF_HIDE_HOOD);
-			player->set_character_flag(CF_HIDE_HELM);
+			player->toggle_character_flag(CF_HIDE_HOOD);
+			if(client->GetVersion() > 546) { // no hide helm support in DoF
+				player->toggle_character_flag(CF_HIDE_HELM);
+			}
 		}
-		else if (strncasecmp(value, "false", strlen(value)) == 0) 
-			player->set_character_flag(CF_HIDE_HOOD);
+		else if (strncasecmp(value, "false", strlen(value)) == 0) {
+			player->toggle_character_flag(CF_HIDE_HOOD);
+		}
 		else
 		{
 			client->Message(CHANNEL_COLOR_YELLOW, "Not supposed to be here! Please /bug this: Error in %s (%u)", __FUNCTION__, __LINE__);
@@ -8540,20 +8563,25 @@ void Commands::Command_ShowHood(Client* client, Seperator* sep)
 void Commands::Command_ShowHoodHelm(Client* client, Seperator* sep)
 {
 	Player* player = client->GetPlayer();
-
+	
+	if(client->GetVersion() <= 546) {
+		return; // not allowed/supported
+	}
+	
 	if (sep && sep->arg[0])
 	{
+		PrintSep(sep, "Command_ShowHoodHelm");
 		const char* value = sep->arg[0];
 		if (strncasecmp(value, "true", strlen(value)) == 0) 
 		{
-			player->reset_character_flag(CF_HIDE_HOOD);
-			player->reset_character_flag(CF_HIDE_HELM);
+			player->toggle_character_flag(CF_HIDE_HOOD);
+			player->toggle_character_flag(CF_HIDE_HELM);
 		}
 		else if (strncasecmp(value, "false", strlen(value)) == 0) 
 		{
 			// don't think we ever wind up in here...
-			player->set_character_flag(CF_HIDE_HOOD);
-			player->set_character_flag(CF_HIDE_HELM);
+			player->toggle_character_flag(CF_HIDE_HOOD);
+			player->toggle_character_flag(CF_HIDE_HELM);
 		}
 		else
 		{

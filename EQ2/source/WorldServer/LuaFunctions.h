@@ -415,6 +415,7 @@ int EQ2Emu_lua_LastSpellAttackHit(lua_State* state);
 
 int EQ2Emu_lua_IsBehind(lua_State* state);
 int EQ2Emu_lua_IsFlanking(lua_State* state);
+int EQ2Emu_lua_InFront(lua_State* state);
 int EQ2Emu_lua_AddSpellTimer(lua_State* state);
 int EQ2Emu_lua_SetItemCount(lua_State* state);
 int EQ2Emu_lua_GetItemCount(lua_State* state);

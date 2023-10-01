@@ -1287,6 +1287,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "LastSpellAttackHit", EQ2Emu_lua_LastSpellAttackHit);
 	lua_register(state, "IsBehind", EQ2Emu_lua_IsBehind);
 	lua_register(state, "IsFlanking", EQ2Emu_lua_IsFlanking);
+	lua_register(state, "InFront", EQ2Emu_lua_InFront);
 	lua_register(state, "AddSpellTimer", EQ2Emu_lua_AddSpellTimer);
 	lua_register(state, "GetItemCount", EQ2Emu_lua_GetItemCount);
 	lua_register(state, "SetItemCount", EQ2Emu_lua_SetItemCount);

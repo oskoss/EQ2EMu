@@ -62,7 +62,7 @@ void ClientPacketFunctions::SendHousePurchase(Client* client, HouseZone* hz, int
 			enable_buy = false;
 
 		packet->setDataByName("enable_buy", enable_buy ? 1 : 0);
-
+		//packet->PrintPacket();
 		client->QueuePacket(packet->serialize());
 	}
 
@@ -70,6 +70,10 @@ void ClientPacketFunctions::SendHousePurchase(Client* client, HouseZone* hz, int
 }
 
 void ClientPacketFunctions::SendHousingList(Client* client) {
+	if(client->GetVersion() <= 546) {
+		return; // not supported
+	}
+	
 	std::vector<PlayerHouse*> houses = world.GetAllPlayerHouses(client->GetCharacterID());
 	// this packet must be sent first otherwise it blocks out the enter house option after paying upkeep
 	PacketStruct* packet = configReader.getStruct("WS_CharacterHousingList", client->GetVersion());
@@ -133,14 +137,16 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 		upkeep_due = ph->upkeep_due - Timer::GetUnixTimeStamp();
 		
 	// need this to enable the "enter house" button
-	PacketStruct* packet = configReader.getStruct("WS_UpdateHouseAccessDataMsg", client->GetVersion());
-	
-	if(!packet) {
-		return;
-	}
+	PacketStruct* packet = nullptr;
 
-	if(client->GetCurrentZone()->GetInstanceType() != PERSONAL_HOUSE_INSTANCE
+
+	if(client->GetVersion() > 546 && client->GetCurrentZone()->GetInstanceType() != PERSONAL_HOUSE_INSTANCE
 			&& client->GetCurrentZone()->GetInstanceType() != GUILD_HOUSE_INSTANCE) {
+		packet = configReader.getStruct("WS_UpdateHouseAccessDataMsg", client->GetVersion());
+		
+		if(!packet) {
+			return; // we need this for these clients or enter house will not work properly
+		}
 		if (packet) {
 			packet->setDataByName("house_id", 0xFFFFFFFFFFFFFFFF);
 			packet->setDataByName("success",  (upkeep_due > 0) ? 0xFFFFFFFF : 0);
@@ -150,7 +156,7 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 		client->QueuePacket(packet->serialize());
 	}
 	safe_delete(packet);
-		
+	
 	packet = configReader.getStruct("WS_PlayerHouseBaseScreen", client->GetVersion());
 	if (packet) {
 		packet->setDataByName("house_id", ph->unique_id);
@@ -169,53 +175,51 @@ void ClientPacketFunctions::SendBaseHouseWindow(Client* client, HouseZone* hz, P
 		packet->setDataByName("privlage_level", 4);
 		// temp - set house type to personal house for now
 		packet->setDataByName("house_type", 0);
-
-		if (client->GetCurrentZone()->GetInstanceType() == PERSONAL_HOUSE_INSTANCE
+			
+		if(client->GetCurrentZone()->GetInstanceType() == PERSONAL_HOUSE_INSTANCE
 			|| client->GetCurrentZone()->GetInstanceType() == GUILD_HOUSE_INSTANCE) {
-				// Inside a house need to set a flag and set the history for the tabs
+				packet->setDataByName("inside_house", 1);
+				packet->setDataByName("public_access_level", 1);
+		}
+		packet->setDataByName("num_access", 0);
+		packet->setDataByName("num_history", 0);
 
-			packet->setDataByName("inside_house", 1);
-			packet->setDataByName("num_access", 0);
-			packet->setDataByName("public_access_level", 1);
-			packet->setDataByName("num_history", 0);
+		// allows deposits/history to be seen -- at this point seems plausible supposed to be 'inside_house'..?
+		packet->setDataByName("unknown3", (ph->deposits.size() || ph->history.size()) ? 1 : 0);
 
-			// allows deposits/history to be seen -- at this point seems plausible supposed to be 'inside_house'..?
-			packet->setDataByName("unknown3", (ph->deposits.size() || ph->history.size()) ? 1 : 0);
-
-			packet->setArrayLengthByName("num_deposit", ph->deposits.size());
-			list<Deposit>::iterator itr;
-			int d = 0;
-			for (itr = ph->deposits.begin(); itr != ph->deposits.end(); itr++)
-			{
-				packet->setArrayDataByName("deposit_name", itr->name.c_str(), d);
-				packet->setArrayDataByName("deposit_total_coin", itr->amount, d);
-				packet->setArrayDataByName("deposit_time_stamp", itr->timestamp, d);
-				packet->setArrayDataByName("deposit_last_coin", itr->last_amount, d);
-				packet->setArrayDataByName("deposit_total_status", itr->status, d);
-				packet->setArrayDataByName("deposit_last_status", itr->last_status, d);
-				d++;
-			}
-
-
-			packet->setArrayLengthByName("num_history", ph->history.size());
-			list<HouseHistory>::iterator hitr;
-			d = 0;
-			for (hitr = ph->history.begin(); hitr != ph->history.end(); hitr++)
-			{
-				packet->setArrayDataByName("history_name", hitr->name.c_str(), d);
-				packet->setArrayDataByName("history_coins", hitr->amount, d);
-				packet->setArrayDataByName("history_status", hitr->status, d);
-				packet->setArrayDataByName("history_time_stamp", hitr->timestamp, d);
-				packet->setArrayDataByName("history_reason", hitr->reason.c_str(), d);
-				packet->setArrayDataByName("history_add_flag", hitr->pos_flag, d);
-				d++;
-			}
+		packet->setArrayLengthByName("num_deposit", ph->deposits.size());
+		list<Deposit>::iterator itr;
+		int d = 0;
+		for (itr = ph->deposits.begin(); itr != ph->deposits.end(); itr++)
+		{
+			packet->setArrayDataByName("deposit_name", itr->name.c_str(), d);
+			packet->setArrayDataByName("deposit_total_coin", itr->amount, d);
+			packet->setArrayDataByName("deposit_time_stamp", itr->timestamp, d);
+			packet->setArrayDataByName("deposit_last_coin", itr->last_amount, d);
+			packet->setArrayDataByName("deposit_total_status", itr->status, d);
+			packet->setArrayDataByName("deposit_last_status", itr->last_status, d);
+			d++;
 		}
 
-		client->QueuePacket(packet->serialize());
-		safe_delete(packet);
-	}
 
+		packet->setArrayLengthByName("num_history", ph->history.size());
+		list<HouseHistory>::iterator hitr;
+		d = 0;
+		for (hitr = ph->history.begin(); hitr != ph->history.end(); hitr++)
+		{
+			packet->setArrayDataByName("history_name", hitr->name.c_str(), d);
+			packet->setArrayDataByName("history_coins", hitr->amount, d);
+			packet->setArrayDataByName("history_status", hitr->status, d);
+			packet->setArrayDataByName("history_time_stamp", hitr->timestamp, d);
+			packet->setArrayDataByName("history_reason", hitr->reason.c_str(), d);
+			packet->setArrayDataByName("history_add_flag", hitr->pos_flag, d);
+			d++;
+		}
+		
+		EQ2Packet* pack = packet->serialize();
+		//DumpPacket(pack);
+		client->QueuePacket(pack);
+	}
 	safe_delete(packet);
 }
 
