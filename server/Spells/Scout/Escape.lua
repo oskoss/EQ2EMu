@@ -8,6 +8,18 @@
 
 
 -- Teleports caster and caster's group within the zone
+
+function precast(Caster, Target)
+    if(GetCanEvac(Caster) == 1)
+    then
+        return true   
+    else
+        SendMessage(Caster, "You cannot use evacuate spells in this zone.", "red")
+        return false
+    end
+    return true
+end
+
 function cast(Caster, Target)
     Evac()
 end

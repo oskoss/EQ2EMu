@@ -1391,6 +1391,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetCanGate", EQ2Emu_lua_GetCanGate);
     lua_register(state, "SetCanGate", EQ2Emu_lua_SetCanGate);
 
+	lua_register(state, "SetCanEvac", EQ2Emu_lua_SetCanEvac);
+	lua_register(state, "GetCanEvac", EQ2Emu_lua_GetCanEvac);
+
 	lua_register(state, "AddSpawnProximity", EQ2Emu_lua_AddSpawnProximity);
 
 	lua_register(state, "CanSeeInvis", EQ2Emu_lua_CanSeeInvis);

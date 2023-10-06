@@ -619,6 +619,9 @@ public:
 	bool	GetCanGate() { return can_gate; }
 	void	SetCanGate(int32 val) { can_gate = val; }
 
+	bool	GetCanEvac() { return can_evac; }
+	void	SetCanEvac(int32 val) { can_evac = val; }
+
 	void	RemoveClientImmediately(Client* client);
 
 	void	ClearHate(Entity* entity);
@@ -956,6 +959,7 @@ private:
 	//devn00b:test
 	int		can_bind;
 	bool	can_gate;
+	bool	can_evac;
 
 	map<int16, PacketStruct*> versioned_pos_structs;
 	map<int16, PacketStruct*> versioned_info_structs;

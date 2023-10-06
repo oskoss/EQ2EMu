@@ -11629,6 +11629,31 @@ int EQ2Emu_lua_GetCanGate(lua_State* state) {
 	return 0;
 }
 
+int EQ2Emu_lua_SetCanEvac(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	ZoneServer* zone = player->GetZone();
+	bool canevac = lua_interface->GetInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+	if (zone)
+		zone->SetCanEvac(canevac);
+	return 0;
+}
+
+int EQ2Emu_lua_GetCanEvac(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* player = lua_interface->GetSpawn(state);
+	ZoneServer* zone = player->GetZone();
+	lua_interface->ResetFunctionStack(state);
+	if (zone) {
+		lua_interface->SetInt32Value(state, zone->GetCanEvac());
+		return 1;
+	}
+	return 0;
+}
+
 int EQ2Emu_lua_AddSpawnProximity(lua_State* state) {
 	if (!lua_interface)
 		return 0;
