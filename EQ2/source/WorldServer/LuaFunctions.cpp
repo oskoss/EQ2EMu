@@ -8694,6 +8694,33 @@ int EQ2Emu_lua_IsFlanking(lua_State* state) {
 	return 1;
 }
 
+int EQ2Emu_lua_InFront(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	Spawn* target = lua_interface->GetSpawn(state, 2);
+	lua_interface->ResetFunctionStack(state);
+
+	if (!spawn) {
+		lua_interface->LogError("%s: LUA InFrontSpawn command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!spawn->IsEntity()) {
+		lua_interface->LogError("%s: LUA InFrontSpawn command error: spawn is not an entity", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	if (!target) {
+		lua_interface->LogError("%s: LUA InFrontSpawn command error: target is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	lua_interface->SetBooleanValue(state, ((Entity*)spawn)->InFrontSpawn(target, spawn->GetX(), spawn->GetZ()));
+	return 1;
+}
+
 int EQ2Emu_lua_GetItemCount(lua_State* state) {
 	if (!lua_interface)
 		return 0;

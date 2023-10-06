@@ -96,6 +96,10 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 		LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: no target, mezzed, stunned or dazed");
 		return false;
 	}
+	
+	if((!target->IsPlayer() && !target->GetAttackable()) || (!IsPlayer() && !GetAttackable())) {
+		return false;
+	}
 
 	if (IsPlayer())
 		client = GetZone()->GetClientBySpawn(this);

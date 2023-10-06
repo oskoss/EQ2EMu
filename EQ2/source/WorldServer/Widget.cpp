@@ -18,6 +18,9 @@
     along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include "Widget.h"
 #include "../common/ConfigReader.h"
 #include "Spells.h"
@@ -363,15 +366,18 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 		else if (meets_quest_reqs && appearance.show_command_icon != 1)
 			return;
 	}
-
+	std::string cmdlower(command);
+	boost::algorithm::to_lower(cmdlower);
+	
 	if (client && GetTransporterID() > 0)
 	{
 		client->SetTemporaryTransportID(0);
 		GetZone()->GetTransporters(&destinations, client, GetTransporterID());
 	}
-	if (destinations.size() && client)
+	bool skipHouseCommands = (cmdlower == "access" || cmdlower == "visit");
+	if (!skipHouseCommands && destinations.size() && client)
 		client->ProcessTeleport(this, &destinations, GetTransporterID());
-	else if (overrideWidgetType == WIDGET_TYPE_DOOR || overrideWidgetType == WIDGET_TYPE_LIFT){
+	else if (!skipHouseCommands && (overrideWidgetType == WIDGET_TYPE_DOOR || overrideWidgetType == WIDGET_TYPE_LIFT)){
 		Widget* widget = this;
 		if (!action_spawn && action_spawn_id > 0){
 			Spawn* spawn = GetZone()->GetSpawnByDatabaseID(action_spawn_id);
@@ -400,18 +406,44 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 		}
 		widget->ProcessUse(client ? client->GetPlayer() : nullptr);
 	}
-	else if (client && m_houseID > 0 && strncasecmp("access", command.c_str(), 6) == 0) {
-		// Used a door to enter a house
-		HouseZone* hz = world.GetHouseZone(m_houseID);
-		PlayerHouse* ph = 0;
-		if (hz)
-			ph = world.GetPlayerHouseByHouseID(client->GetPlayer()->GetCharacterID(), hz->id);
+	else if (client && cmdlower == "access" && GetZone()->GetInstanceID() && 
+					(GetZone()->GetInstanceType() == PERSONAL_HOUSE_INSTANCE || GetZone()->GetInstanceType() == GUILD_HOUSE_INSTANCE)) {
+		// Used a door within a house
+		PlayerHouse* ph = world.GetPlayerHouseByInstanceID(GetZone()->GetInstanceID());
 		if (ph) {
-			// if we aren't in our own house we should get the full list of houses we can visit
-			if ( m_houseID && client->GetCurrentZone()->GetInstanceType() != Instance_Type::PERSONAL_HOUSE_INSTANCE )
-				ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
+			HouseZone* hz = world.GetHouseZone(ph->house_id);
+			if (hz) {
+				int32 id = client->GetPlayer()->GetIDWithPlayerSpawn(this);
+				ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(hz->id));
 
-			ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, client->GetPlayer()->GetID());
+				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, id);
+			}
+		}
+	}
+	else if (client && m_houseID > 0 && cmdlower == "access") {
+		// Used a door to enter a house
+		HouseZone* hz = nullptr;
+		PlayerHouse* ph = nullptr;
+		
+		int32 id = 0;
+		if(client->GetVersion() <= 546) {
+			id = client->GetPlayer()->GetIDWithPlayerSpawn(this);
+			ph = world.GetPlayerHouse(client, id, 0, &hz);
+		}
+		else {
+			hz = world.GetHouseZone(m_houseID);
+			if(hz) {
+				ph = world.GetPlayerHouseByHouseID(client->GetPlayer()->GetCharacterID(), hz->id);
+			}
+			id = client->GetPlayer()->GetID();// reconsider?
+		}
+		
+		if (ph && hz) {
+			// if we aren't in our own house we should get the full list of houses we can visit
+			if ( client->GetCurrentZone()->GetInstanceType() != Instance_Type::PERSONAL_HOUSE_INSTANCE && client->GetVersion() > 546 )
+				ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(hz->id));
+
+			ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, id);
 			client->GetCurrentZone()->SendHouseItems(client);
 		}
 		else {
@@ -419,23 +451,14 @@ void Widget::HandleUse(Client* client, string command, int8 overrideWidgetType){
 				ClientPacketFunctions::SendHousePurchase(client, hz, 0);
 		}
 	}
-	else if (client && strncasecmp("access", command.c_str(), 6) == 0 && GetZone()->GetInstanceType() > 0) {
-		// Used a door within a house
-		PlayerHouse* ph = world.GetPlayerHouseByInstanceID(GetZone()->GetInstanceID());
-		if (ph) {
-			HouseZone* hz = world.GetHouseZone(ph->house_id);
-			if (hz) {
-				int32 id = client->GetPlayer()->GetIDWithPlayerSpawn(this);
-				if (m_houseID)
-					ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
-
-				ClientPacketFunctions::SendBaseHouseWindow(client, hz, ph, id);
-			}
-		}
-	}
-	else if (client && m_houseID > 0 && strncasecmp("visit", command.c_str(), 6) == 0) {
+	else if (client && m_houseID > 0 && cmdlower == "visit") {
+		HouseZone* hz = nullptr;
+		int32 id = client->GetPlayer()->GetIDWithPlayerSpawn(this);
+		PlayerHouse* ph = world.GetPlayerHouse(client, id, 0, &hz);
 		ClientPacketFunctions::SendHousingList(client);
-		ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(m_houseID));
+		if(hz != nullptr) {
+			ClientPacketFunctions::SendHouseVisitWindow(client, world.GetAllPlayerHousesByHouseID(hz->id));
+		}
 	}
 	else if (client && command.length() > 0) {
 		EntityCommand* entity_command = FindEntityCommand(command);

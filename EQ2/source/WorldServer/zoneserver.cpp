@@ -8392,6 +8392,10 @@ void ZoneServer::SendHouseItems(Client* client)
 
 	PacketStruct* packet = configReader.getStruct("WS_HouseItemsList", client->GetVersion());
 
+	if(!packet) {
+		return;
+	}
+	
 	std::vector<HouseItem> items = GetHouseItems(client);
 
 	// setting this to 1 puts it on the door widget

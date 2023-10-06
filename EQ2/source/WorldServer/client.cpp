@@ -2161,11 +2161,19 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_BuyPlayerHouseMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_BuyPlayerHouseMsg", opcode, opcode);
+		DumpPacket(app);
 		int64 bank_money = GetPlayer()->GetBankCoinsPlat();
 		PacketStruct* packet = configReader.getStruct("WS_BuyHouse", GetVersion());
 		if (packet) {
 			if(packet->LoadPacketData(app->pBuffer, app->size)) {
-				HouseZone* hz = world.GetHouseZone(packet->getType_int64_ByName("house_id"));
+				int64 house_id = 0;
+				if(GetVersion() <= 546) {
+					house_id = packet->getType_int32_ByName("house_id");
+				}
+				else {
+					house_id = packet->getType_int64_ByName("house_id");
+				}
+				HouseZone* hz = world.GetHouseZone(house_id);
 				if (hz) {
 					bool got_bank_money = BankHasCoin(hz->cost_coin);
 					int8 disable_alignment_req = rule_manager.GetGlobalRule(R_Player, DisableHouseAlignmentRequirement)->GetInt8();
@@ -2200,7 +2208,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 						world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
 						//ClientPacketFunctions::SendHousingList(this);
 						PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
-						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, GetVersion() <= 546 ? house_id : this->GetPlayer()->GetID());
 						PlaySound("coin_cha_ching");
 					}
 					else if (status_req <= available_status && got_bank_money == 1) {
@@ -2220,7 +2228,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 							int64 unique_id = database.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, instance_zone->GetInstanceID(), upkeep_due);
 							world.AddPlayerHouse(GetPlayer()->GetCharacterID(), hz->id, unique_id, instance_zone->GetInstanceID(), upkeep_due, 0, 0, GetPlayer()->GetName());
 							PlayerHouse* ph = world.GetPlayerHouseByUniqueID(unique_id);
-							ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+							ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, GetVersion() <= 546 ? house_id : this->GetPlayer()->GetID());
 							PlaySound("coin_cha_ching");
 					}
 					else
@@ -2237,19 +2245,25 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_EnterHouseMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_EnterHouseMsg", opcode, opcode);
-		
+		DumpPacket(app);
 		PacketStruct* packet = configReader.getStruct("WS_EnterHouse", GetVersion());
 		if (packet) {
 			if(packet->LoadPacketData(app->pBuffer, app->size)) {
-				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(packet->getType_int64_ByName("house_id"));
-				if (ph) {
-					HouseZone* hz = world.GetHouseZone(ph->house_id);
-					if (hz) {
-						ZoneServer* house = zone_list.GetByInstanceID(ph->instance_id, hz->zone_id, false, true);
-						if (house) {
-							Zone(house, true);
-						}
-					}
+				PlayerHouse* ph = nullptr;
+				HouseZone* hz = nullptr;
+				int64 house_id = 0;
+				int32 spawn_index = 0;
+				
+				if(GetVersion() <= 546) {
+					spawn_index = packet->getType_int32_ByName("house_id");
+				}
+				else {
+					house_id = packet->getType_int64_ByName("house_id");
+				}
+				
+				ZoneServer* house = GetHouseZoneServer(spawn_index, house_id);
+				if (house) {
+					Zone(house, true);
 				}
 			}
 		}
@@ -2264,11 +2278,18 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 
 		if (packet) {
 			if(packet->LoadPacketData(app->pBuffer, app->size)) {
-				int64 houseID = packet->getType_int64_ByName("house_id");
-				PlayerHouse* ph = world.GetPlayerHouseByUniqueID(houseID);
+				int64 house_id = 0;
+				
+				if(GetVersion() <= 546) {
+					house_id = packet->getType_int32_ByName("house_id");
+				}
+				else {
+					house_id = packet->getType_int64_ByName("house_id");
+				}
+				HouseZone* hz = nullptr;
+				PlayerHouse* ph = world.GetPlayerHouse(this, GetVersion() <= 546 ? house_id : 0, GetVersion() > 546 ? house_id : 0, &hz);
 				if (ph)
 				{
-					HouseZone* hz = world.GetHouseZone(ph->house_id);
 					if (!hz)
 					{
 						Message(CHANNEL_COLOR_YELLOW, "HouseZone ID %u does NOT exist!", ph->house_id);
@@ -2345,7 +2366,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 						ph->upkeep_due = upkeep_due;
 						database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
 						//ClientPacketFunctions::SendHousingList(this);
-						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, GetVersion() <= 546 ? house_id : this->GetPlayer()->GetID());
 						PlaySound("coin_cha_ching");
 					}
 					else if (!statusReq && got_bank_money == 1) {
@@ -2366,7 +2387,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 
 						ph->upkeep_due = upkeep_due;
 						database.SetHouseUpkeepDue(GetCharacterID(), ph->house_id, ph->instance_id, ph->upkeep_due);
-						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, this->GetPlayer()->GetID());
+						ClientPacketFunctions::SendBaseHouseWindow(this, hz, ph, GetVersion() <= 546 ? house_id : this->GetPlayer()->GetID());
 						PlaySound("coin_cha_ching");
 					}
 					else
@@ -2382,7 +2403,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 					}
 				}
 				else
-					Message(CHANNEL_COLOR_YELLOW, "PlayerHouse ID %u does NOT exist!", houseID);
+					Message(CHANNEL_COLOR_YELLOW, "PlayerHouse ID %u does NOT exist!", house_id);
 			}
 		}
 
@@ -12371,4 +12392,34 @@ void Client::SendRecipeDetails(vector<int32>* recipes) {
 	
 	QueuePacket(packet->serialize());
 	safe_delete(packet);
+}
+
+ZoneServer* Client::GetHouseZoneServer(int32 spawn_id, int64 house_id) {
+	PlayerHouse* ph = nullptr;
+	HouseZone* hz = nullptr;
+	if(spawn_id) {
+		Spawn* houseWidget = GetPlayer()->GetSpawnByIndex(spawn_id);
+		if(houseWidget && houseWidget->IsWidget() && ((Widget*)houseWidget)->GetHouseID()) {
+			hz = world.GetHouseZone(((Widget*)houseWidget)->GetHouseID());
+			if (hz) {
+				ph = world.GetPlayerHouseByHouseID(GetPlayer()->GetCharacterID(), hz->id);
+			} else {
+				Message(CHANNEL_COLOR_YELLOW, "HouseWidget spawn index %u house zone could not be found.", spawn_id);
+			}
+		}
+	}
+	
+	if(!ph && house_id) {
+		ph = world.GetPlayerHouseByUniqueID(house_id);
+		if (ph) {
+			hz = world.GetHouseZone(ph->house_id);
+		}
+	}
+	
+	if (ph && hz) {
+		ZoneServer* house = zone_list.GetByInstanceID(ph->instance_id, hz->zone_id, false, true);
+		return house;
+	}
+	
+	return nullptr;
 }

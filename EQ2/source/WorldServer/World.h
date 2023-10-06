@@ -590,7 +590,8 @@ public:
 	PlayerHouse* GetPlayerHouseByInstanceID(int32 instance_id);
 	vector<PlayerHouse*> GetAllPlayerHouses(int32 char_id);
 	vector<PlayerHouse*> GetAllPlayerHousesByHouseID(int32 house_id);
-
+	PlayerHouse* GetPlayerHouse(Client* client, int32 spawn_id, int64 unique_house_id, HouseZone** set_house_zone);
+	
 	void ReloadHouseData(PlayerHouse* ph);
 
 	PlayerGroupManager* GetGroupManager() { return &m_playerGroupManager; }
