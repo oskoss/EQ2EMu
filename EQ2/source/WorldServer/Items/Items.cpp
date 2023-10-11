@@ -2296,7 +2296,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			}
 			case ITEM_TYPE_BAG:{
 				if(bag_info){
-					if (client->GetVersion() <= 283) {
+					if (client->GetVersion() <= 546) {
 						if (bag_info->num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
 							bag_info->num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
 						packet->setSubstructDataByName("details", "num_slots", bag_info->num_slots);
@@ -2510,14 +2510,14 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		Quest* quest = master_quest_list.GetQuest(generic_info.offers_quest_id, false);
 		if(quest){
 			packet->setSubstructDataByName("footer", "offers_quest", strlen(generic_info.offers_quest_name) ? generic_info.offers_quest_name : quest->GetName());
-			packet->setSubstructDataByName("footer", "quest_color", player->GetArrowColor(quest->GetQuestLevel()));
+			packet->setSubstructDataByName("footer", "offers_quest_color", player->GetArrowColor(quest->GetQuestLevel()));
 		}
 	}
 	if(generic_info.part_of_quest_id > 0){
 		Quest* quest = master_quest_list.GetQuest(generic_info.part_of_quest_id, false);
 		if(quest){
 			packet->setSubstructDataByName("footer", "part_of_quest", strlen(generic_info.required_by_quest_name) ? generic_info.required_by_quest_name : quest->GetName());
-			packet->setSubstructDataByName("footer", "quest_color", player->GetArrowColor(quest->GetQuestLevel()));
+			packet->setSubstructDataByName("footer", "part_of_quest_color", player->GetArrowColor(quest->GetQuestLevel()));
 		}
 	}
 	if(generic_info.max_charges > 0){
@@ -3177,10 +3177,7 @@ vector<Item*> PlayerItemList::GetAllItemsFromID(int32 id, bool include_bank, boo
 					if (slot_itr->second && slot_itr->second->details.item_id == id) {
 						if (lock)
 							MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
-						int32 yyy = 0;
 						ret.push_back(slot_itr->second);
-						
-						//return slot_itr->second;
 					}
 				}
 				
@@ -3527,7 +3524,6 @@ EQ2Packet* PlayerItemList::serialize(Player* player, int16 version){
 
 void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item* item, int16 i, bool overflow){
 	Client *client;
-	int8 tmp_subtype = 0;
 	if (!packet || !player)
 		return;
 	client = player->GetZone()->GetClientBySpawn(player);
@@ -3539,7 +3535,7 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 		menu_data -= ITEM_MENU_TYPE_GENERIC;
 
 	if (item->details.num_slots > 0) {
-		if (packet->GetVersion() <= 283 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
+		if (packet->GetVersion() <= 546 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
 			item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
 		menu_data += ITEM_MENU_TYPE_BAG;
 		if (item->details.num_free_slots == item->details.num_slots)
@@ -3758,7 +3754,7 @@ bool PlayerItemList::HasItem(int32 id, bool include_bank){
 }
 
 bool PlayerItemList::SharedBankAddAllowed(Item* item){
-	if(!item || item->CheckFlag(NO_TRADE) && item->CheckFlag2(HEIRLOOM) == 0)
+	if(!item || (item->CheckFlag(NO_TRADE) && (item->CheckFlag2(HEIRLOOM) == 0)))
 		return false;
 
 	MPlayerItems.readlock(__FUNCTION__, __LINE__);
@@ -4121,13 +4117,15 @@ Item* EquipmentItemList::GetItem(int8 slot_id){
 }
 
 void EquipmentItemList::SendEquippedItems(Player* player){
-	if(!player->GetClient())
+	if(!player->GetClient()) {
 		return;
-		for(int16 i=0;i<NUM_SLOTS;i++){
-			Item* item = items[i];
-			if(item && item->details.item_id > 0)
-				player->GetClient()->QueuePacket(item->serialize(player->GetClient()->GetVersion(), false, player));
-		}
+	}
+	
+	for(int16 i=0;i<NUM_SLOTS;i++){
+		Item* item = items[i];
+		if(item && item->details.item_id > 0)
+			player->GetClient()->QueuePacket(item->serialize(player->GetClient()->GetVersion(), false, player));
+	}
 }
 
 EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
@@ -4163,7 +4161,7 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 				if(item->slot_data.size() > 0)
 					menu_data -= ITEM_MENU_TYPE_GENERIC;
 				if (item->details.num_slots > 0) {
-					if (packet->GetVersion() <= 283 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
+					if (packet->GetVersion() <= 546 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
 						item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
 					menu_data += ITEM_MENU_TYPE_BAG;
 					if (item->details.num_free_slots == item->details.num_slots)

@@ -6592,14 +6592,37 @@ void PlayerControlFlags::SendControlFlagUpdates(Client* client){
 		for (itr2 = ptr->begin(); itr2 != ptr->end(); itr2++){
 			int32 param = itr2->first;
 			if(client->GetVersion() <= 546) {
+				if(itr->first == 1) { // first set of flags DoF only supports these
+					bool skip = false;
+					switch(itr2->first) {
+						case 1: // flymode for DoF
+						case 2: // no clip mode for DoF
+						case 4: // we don't know
+						case 32: { // safe fall (DoF is low gravity for this parameter)
+							skip = true;
+							break;
+						}
+					}
+				
+					if(skip) {
+						continue;
+					}
+				}
+				
+				bool bypassFlag = true;
+				// remap control effects to old DoF from AoM
 				switch(itr->first) {
 					case 4: {
 						if(itr2->first == 64) { // stun
 							ClientPacketFunctions::SendServerControlFlagsClassic(client, 8, itr2->second);
 							param = 16;
+							bypassFlag = false;
 						}
 						break;
 					}
+				}
+				if(itr->first > 1 && bypassFlag) {
+					continue; // we don't support flag sets higher than 1 for DoF
 				}
 				ClientPacketFunctions::SendServerControlFlagsClassic(client, param, itr2->second);
 			}

@@ -2298,19 +2298,7 @@ void Spawn::InitializePosPacketData(Player* player, PacketStruct* packet, bool b
 	if (!IsPlayer()) // has to be 2 or NPC's warp around when moving
 		packet->setDataByName("pos_movement_mode", 2);
 	
-	if(version <= 910)
-		packet->setDataByName("pos_unknown10", 0xFFFF, 1);
-	else if (version >= 1119)
-			packet->setDataByName("face_actor_id", 0xFFFFFFFF);
-	else
-		packet->setDataByName("pos_unknown10", 0xFFFF);
-
-	if(version <= 910)
-		packet->setDataByName("pos_unknown10", 0xFFFF, 2);
-	else if (version >= 1119)
-		packet->setDataByName("face_actor_id", 0xFFFFFFFF);
-	else
-		packet->setDataByName("pos_unknown10", 0XFFFF, 1);
+	packet->setDataByName("face_actor_id", 0xFFFFFFFF);
 
 	packet->setDataByName("pos_pitch1", appearance.pos.Pitch1);
 	packet->setDataByName("pos_pitch2", appearance.pos.Pitch2);

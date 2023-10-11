@@ -9819,17 +9819,25 @@ to zero and treated like placeholders." />
     <Data ElementName="item_id" Type="int64" Size="1" />
     <Data ElementName="quantity" Type="int32" Size="1" />
     <Data ElementName="unknown15x" Type="int8" Size="4" />
+    <Data ElementName="string_two" Type="EQ2_16Bit_String" Size="1" />
+    <Data ElementName="string_x" Type="EQ2_16Bit_String" Size="1" />
+    <Data ElementName="unknown15y" Type="int8" Size="6" />
+	<Data ElementName="stack_size" Type="int16" Size="1" />
+	<Data ElementName="unknown3" Type="int8" Size="14" />
+	<Data ElementName="icon" Type="int16" Size="1" />
     <Data ElementName="item_name" Type="EQ2_16Bit_String" Size="1" />
-    <Data ElementName="string_one" Type="EQ2_16Bit_String" Size="1" />
-    <Data ElementName="unknown15y" Type="int8" Size="28" />
-    <Data ElementName="sell_price" Type="int64" Size="1" />
-    <Data ElementName="unknown15spacex" Type="int8" Size="28" />
+    <Data ElementName="unknown15x" Type="int8" Size="2" />
+	<Data ElementName="sell_price" Type="int64" Size="1" />
+    <Data ElementName="unknown15spacey" Type="int8" Size="28" />
     <Data ElementName="seller_name" Type="EQ2_16Bit_String" Size="1" />
     <Data ElementName="icon" Type="int16" Size="1" />
     <Data ElementName="unknown" Type="int8" Size="10" />
 </Data>
+<Data ElementName="unknown" Type="int32" Size="1" />
+<Data ElementName="num_pages" Type="int32" Size="1" />
+<Data ElementName="per_page" Type="int32" Size="1" />
+<Data ElementName="page" Type="int32" Size="1" />
 </Struct>
-
 <Struct Name="WS_BrokerItems" ClientVersion="972" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqConsignmentItemsCmd" >
 <Data ElementName="unknown" Type="int8" />
 <Data ElementName="num_items" Type="int32" />
@@ -15958,12 +15966,7 @@ to zero and treated like placeholders." />
 <Data ElementName="num_process" Type="int16" Size="1" />
 <Data ElementName="process_array" Type="Array" ArraySizeVariable="num_process">
   <Data ElementName="progress_needed" Type="int32" Size="1" />
-  <Data ElementName="unknown3" Type="int8" Size="1" IfVariableNotSet="progress_needed"/>
-  <Data ElementName="item_name" Type="EQ2_16Bit_String" />
   <Data ElementName="item_icon" Type="int16" />
-  <Data ElementName="item" Type="EQ2_Item" />
-  <Data ElementName="item_byproduct_name" Type="EQ2_16Bit_String" />
-  <Data ElementName="item_byproduct_icon" Type="int16" />
   <!-- Another EQ2_Item? Does subtype set to FF prevent the rest of the packet?-->
   <!-- If not an EQ2_item this unknown *might* be quantity-->
   <Data ElementName="item_byproduct_unknown" Type="int16" />
@@ -16489,6 +16492,18 @@ to zero and treated like placeholders." />
 <Data ElementName="counter_reaction" Type="int8" Size="1" />
 </Struct>
 <Struct Name="WS_UpdateCreateItem" ClientVersion="1" OpcodeName="OP_UpdateItemCreationProcessUIMsg">
+<Data ElementName="effect" Type="int8" Size="1" />
+<Data ElementName="total_durability" Type="int32" Size="1" />
+<Data ElementName="total_progress" Type="int32" Size="1" />
+<Data ElementName="progress_level" Type="int8" Size="1" />
+<Data ElementName="reaction_icon" Type="int16" Size="1" />
+<Data ElementName="reaction_name" Type="EQ2_16Bit_String" />
+<Data ElementName="durability_change" Type="sint32" Size="1" />
+<Data ElementName="progress_change" Type="sint32" Size="1" />
+<Data ElementName="spawn_id" Type="int32" Size="1" />
+<Data ElementName="unknown" Type="int8" Size="1" />
+</Struct>
+<Struct Name="WS_UpdateCreateItem" ClientVersion="547" OpcodeName="OP_UpdateItemCreationProcessUIMsg">
 <Data ElementName="effect" Type="int8" Size="1" />
 <Data ElementName="total_durability" Type="int32" Size="1" />
 <Data ElementName="total_progress" Type="int32" Size="1" />

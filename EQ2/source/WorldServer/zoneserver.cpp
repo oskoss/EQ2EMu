@@ -7236,6 +7236,7 @@ void ZoneServer::ResurrectSpawn(Spawn* spawn, Client* client) {
 	if(power_amt > spawn->GetTotalPower())
 		power_amt = spawn->GetTotalPower();
 
+	spawn->SetAlive(true);
 	spawn->SetHP(heal_amt);
 	if(power_amt > 0)
 		spawn->SetPower(power_amt);
@@ -7271,16 +7272,16 @@ void ZoneServer::ResurrectSpawn(Spawn* spawn, Client* client) {
 			if(packet){
 				client->QueuePacket(packet->serialize());
 			}
-			packet = configReader.getStruct("WS_ServerControlFlags", client->GetVersion());
-			if(packet)
-			{
-				packet->setDataByName("parameter1", 8);
-				client->QueuePacket(packet->serialize());
-				packet->setDataByName("parameter1", 16);
-				client->QueuePacket(packet->serialize());
-			}
-
 			safe_delete(packet);
+			
+			if(client->GetVersion() <= 546) {
+				ClientPacketFunctions::SendServerControlFlagsClassic(client, 8, 0);
+				ClientPacketFunctions::SendServerControlFlagsClassic(client, 16, 0);
+			}
+			else {
+				ClientPacketFunctions::SendServerControlFlags(client, 1, 8, 0);
+				ClientPacketFunctions::SendServerControlFlags(client, 1, 16, 0);
+			}
 			client->SimpleMessage(CHANNEL_NARRATIVE, "You regain consciousness!");
 		}
 	}

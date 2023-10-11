@@ -11609,10 +11609,16 @@ int EQ2Emu_lua_GetZoneHolidayFlag(lua_State* state) {
 int EQ2Emu_lua_SetCanBind(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	Spawn* player = lua_interface->GetSpawn(state);
-	ZoneServer* zone = player->GetZone();
+	Spawn* spawn = lua_interface->GetSpawn(state);
 	bool canbind = lua_interface->GetInt32Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
+	
+	if(!spawn) {
+		lua_interface->LogError("%s: LUA SetCanBind command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	ZoneServer* zone = spawn->GetZone();
 	if (zone)
 		zone->SetCanBind(canbind);
 	return 0;
@@ -11621,9 +11627,16 @@ int EQ2Emu_lua_SetCanBind(lua_State* state) {
 int EQ2Emu_lua_GetCanBind(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	Spawn* player = lua_interface->GetSpawn(state);
-	ZoneServer* zone = player->GetZone();
+	
+	Spawn* spawn = lua_interface->GetSpawn(state);
 	lua_interface->ResetFunctionStack(state);
+	
+	if(!spawn) {
+		lua_interface->LogError("%s: LUA GetCanBind command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	ZoneServer* zone = spawn->GetZone();
 	if (zone) {
 		lua_interface->SetInt32Value(state, zone->GetCanBind());
 		return 1;
@@ -11634,10 +11647,17 @@ int EQ2Emu_lua_GetCanBind(lua_State* state) {
 int EQ2Emu_lua_SetCanGate(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	Spawn* player = lua_interface->GetSpawn(state);
-	ZoneServer* zone = player->GetZone();
+	
+	Spawn* spawn = lua_interface->GetSpawn(state);
 	bool cangate = lua_interface->GetInt32Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
+	
+	if(!spawn) {
+		lua_interface->LogError("%s: LUA SetCanGate command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	ZoneServer* zone = spawn->GetZone();
 	if (zone)
 		zone->SetCanGate(cangate);
 	return 0;
@@ -11646,9 +11666,16 @@ int EQ2Emu_lua_SetCanGate(lua_State* state) {
 int EQ2Emu_lua_GetCanGate(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	Spawn* player = lua_interface->GetSpawn(state);
-	ZoneServer* zone = player->GetZone();
+	
+	Spawn* spawn = lua_interface->GetSpawn(state);
 	lua_interface->ResetFunctionStack(state);
+	
+	if(!spawn) {
+		lua_interface->LogError("%s: LUA GetCanGate command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	ZoneServer* zone = spawn->GetZone();
 	if (zone) {
 		lua_interface->SetInt32Value(state, zone->GetCanGate());
 		return 1;
@@ -11659,10 +11686,17 @@ int EQ2Emu_lua_GetCanGate(lua_State* state) {
 int EQ2Emu_lua_SetCanEvac(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	Spawn* player = lua_interface->GetSpawn(state);
-	ZoneServer* zone = player->GetZone();
+	
+	Spawn* spawn = lua_interface->GetSpawn(state);
 	bool canevac = lua_interface->GetInt32Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
+	
+	if(!spawn) {
+		lua_interface->LogError("%s: LUA SetCanEvac command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	ZoneServer* zone = spawn->GetZone();
 	if (zone)
 		zone->SetCanEvac(canevac);
 	return 0;
@@ -11671,9 +11705,16 @@ int EQ2Emu_lua_SetCanEvac(lua_State* state) {
 int EQ2Emu_lua_GetCanEvac(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	Spawn* player = lua_interface->GetSpawn(state);
-	ZoneServer* zone = player->GetZone();
+	
+	Spawn* spawn = lua_interface->GetSpawn(state);
 	lua_interface->ResetFunctionStack(state);
+	
+	if(!spawn) {
+		lua_interface->LogError("%s: LUA GetCanEvac command error: spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	
+	ZoneServer* zone = spawn->GetZone();
 	if (zone) {
 		lua_interface->SetInt32Value(state, zone->GetCanEvac());
 		return 1;
@@ -12066,15 +12107,16 @@ int EQ2Emu_lua_SetSpellData(lua_State* state) {
 		return 0;
 	LuaSpell* spell = lua_interface->GetSpell(state);
 	string field = lua_interface->GetStringValue(state, 2);
-	lua_interface->ResetFunctionStack(state);
 	int8 fieldArg = 3; // field value after the initial set
 
 	if (!spell) {
 		lua_interface->LogError("%s: Spell not given in SetSpellData!", lua_interface->GetScriptName(state));
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	if (!spell->spell || !spell->spell->GetSpellData()) {
 		lua_interface->LogError("%s: Inner Spell or SpellData not given in SetSpellData!", lua_interface->GetScriptName(state));
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 
@@ -12083,6 +12125,7 @@ int EQ2Emu_lua_SetSpellData(lua_State* state) {
 	bool valSet = false;
 
 	spell->spell->SetSpellData(state, field, fieldArg);
+	lua_interface->ResetFunctionStack(state);
 
 	return valSet;
 }
@@ -12095,16 +12138,19 @@ int EQ2Emu_lua_SetSpellDataIndex(lua_State* state) {
 
 	if (!spell) {
 		lua_interface->LogError("%s: Spell not given in SetSpellDataIndex!", lua_interface->GetScriptName(state));
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 	if (!spell->spell || !spell->spell->GetSpellData()) {
 		lua_interface->LogError("%s: Inner Spell or SpellData not given in SetSpellDataIndex!", lua_interface->GetScriptName(state));
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 
 	if (spell->spell->lua_data.size() <= idx)
 	{
 		lua_interface->LogError("%s: lua_data size %i <= %i (idx passed) SetSpellDataIndex!", lua_interface->GetScriptName(state), spell->spell->lua_data.size(), idx);
+		lua_interface->ResetFunctionStack(state);
 		return 0;
 	}
 

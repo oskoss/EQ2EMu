@@ -215,8 +215,9 @@ void TradeskillMgr::Process() {
 						}
 					}
 				}
-
-				client->QueuePacket(packet->serialize());
+				EQ2Packet* pack = packet->serialize();
+				packet->PrintPacket();
+				client->QueuePacket(pack);
 				safe_delete(packet);
 			}
 

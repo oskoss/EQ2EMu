@@ -522,18 +522,16 @@ void Client::DisplayDeadWindow()
 	player->SetPower(0);
 	GetCurrentZone()->TriggerCharSheetTimer();
 
-	PacketStruct* packet = configReader.getStruct("WS_ServerControlFlags", GetVersion());
-	if (packet)
-	{
-		packet->setDataByName("parameter1", 8);
-		packet->setDataByName("value", 1);
-		QueuePacket(packet->serialize());
-		packet->setDataByName("parameter1", 16);
-		QueuePacket(packet->serialize());
-		safe_delete(packet);
+	if(GetVersion() <= 546) {
+		ClientPacketFunctions::SendServerControlFlagsClassic(this, 8, 1);
+		ClientPacketFunctions::SendServerControlFlagsClassic(this, 16, 1);
+	}
+	else {
+		ClientPacketFunctions::SendServerControlFlags(this, 1, 8, 1);
+		ClientPacketFunctions::SendServerControlFlags(this, 1, 16, 1);
 	}
 
-	packet = configReader.getStruct("WS_ServerUpdateTarget", GetVersion());
+	PacketStruct* packet = configReader.getStruct("WS_ServerUpdateTarget", GetVersion());
 	if (packet)
 	{
 		packet->setDataByName("spawn_id", 0xFFFFFFFF);
@@ -547,18 +545,17 @@ void Client::DisplayDeadWindow()
 
 void Client::HandlePlayerRevive(int32 point_id)
 {
-	PacketStruct* packet = configReader.getStruct("WS_ServerControlFlags", GetVersion());
-	if (packet)
-	{
-		packet->setDataByName("parameter1", 8);
-		QueuePacket(packet->serialize());
-		packet->setDataByName("parameter1", 16);
-		QueuePacket(packet->serialize());
-		safe_delete(packet);
+	if(GetVersion() <= 546) {
+		ClientPacketFunctions::SendServerControlFlagsClassic(this, 8, 0);
+		ClientPacketFunctions::SendServerControlFlagsClassic(this, 16, 0);
+	}
+	else {
+		ClientPacketFunctions::SendServerControlFlags(this, 1, 8, 0);
+		ClientPacketFunctions::SendServerControlFlags(this, 1, 16, 0);
 	}
 
 	SimpleMessage(CHANNEL_NARRATIVE, "You regain consciousness!");
-	packet = configReader.getStruct("WS_Resurrected", GetVersion());
+	PacketStruct* packet = configReader.getStruct("WS_Resurrected", GetVersion());
 	if (packet)
 	{
 		QueuePacket(packet->serialize());
@@ -2161,7 +2158,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_BuyPlayerHouseMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_BuyPlayerHouseMsg", opcode, opcode);
-		DumpPacket(app);
+		//DumpPacket(app);
 		int64 bank_money = GetPlayer()->GetBankCoinsPlat();
 		PacketStruct* packet = configReader.getStruct("WS_BuyHouse", GetVersion());
 		if (packet) {
@@ -2245,7 +2242,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_EnterHouseMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_EnterHouseMsg", opcode, opcode);
-		DumpPacket(app);
+		//DumpPacket(app);
 		PacketStruct* packet = configReader.getStruct("WS_EnterHouse", GetVersion());
 		if (packet) {
 			if(packet->LoadPacketData(app->pBuffer, app->size)) {
@@ -7085,10 +7082,6 @@ bool Client::AddItem(Item* item, bool* item_deleted, AddItemType type) {
 	if (!item) {
 		return false;
 	}
-	if (item->IsBag()) {
-		if (GetVersion() <= 283 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
-			item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;		
-	}
 	if (player->AddItem(item, type)) {
 		EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 		if (outapp) {
@@ -7681,7 +7674,7 @@ void Client::RepairItem(int32 item_id) {
 		if (!item)
 			item = player->GetEquipmentList()->GetItemFromItemID(item_id);
 		if (item) {
-			if(item->CheckFlag(NO_REPAIR)) {
+			if(item->CheckFlag2(NO_REPAIR)) {
 				Message(CHANNEL_MERCHANT, "The mender was unable to repair your items.");
 				PlaySound("buy_failed");
 			}
@@ -8251,7 +8244,7 @@ void Client::SendRepairList() {
 					packet->setArrayDataByName("description", item->description.c_str(), i);
 			}
 			if (GetVersion() <= 546) {
-				packet->setDataByName("type", 0);
+				packet->setDataByName("type", 112);
 			}
 			else {
 				packet->setDataByName("type", 96);
@@ -8261,11 +8254,11 @@ void Client::SendRepairList() {
 			//DumpPacket(outapp);
 			QueuePacket(outapp);
 			
-			if (GetVersion() <= 546) {
+			/*if (GetVersion() <= 546) {
 				packet->setDataByName("type", 16);
 				EQ2Packet* outapp2 = packet->serialize();
 				QueuePacket(outapp2);
-			}
+			}*/
 			
 			safe_delete(packet);
 		}
@@ -9356,7 +9349,6 @@ void Client::SearchStore(int32 page) {
 					packet->setArrayDataByName("item_id", item->details.item_id, i);
 					packet->setArrayDataByName("item_id2", item->details.item_id, i);
 					packet->setArrayDataByName("icon", item->details.icon, i);
-					packet->setArrayDataByName("unknown15", 1, i, World::newValue);
 					//packet->setArrayDataByName("unknown2b", i, i);
 					packet->setArrayDataByName("item_seller_id", 1, i);
 					if (item->stack_count == 0)
@@ -10343,7 +10335,7 @@ void Client::SendRecipeList() {
 			packet->setArrayDataByName("unknown", 0x7005BE3, i); //0x7005BE3
 			i++;
 		}
-		packet->PrintPacket();
+		//packet->PrintPacket();
 		EQ2Packet* ret = packet->serializeCountPacket(GetVersion(), 0, nullptr, nullptr);
 		QueuePacket(ret);
 		safe_delete(packet);
