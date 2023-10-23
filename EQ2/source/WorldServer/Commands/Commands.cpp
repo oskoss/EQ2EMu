@@ -2096,9 +2096,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if(strcmp(sep->arg[0], "inventory") == 0){
 					int32 item_index = atol(sep->arg[1]);
 					
-					if(client->GetVersion() <= 546) {
-						item_index = (uint32)-(sint32)item_index & 0xFFFFFFFF;
-						item_index -= 1;
+					if(client->GetVersion() <= 546 && item_index <= 255) {
+						item_index = 255 - item_index;
 					}
 					Item* item = client->GetPlayer()->item_list.GetItemFromIndex(item_index);
 					if(item){
@@ -2117,7 +2116,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						}
 					}
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Index: %u", item_index);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info inventory: Unknown Index: %u", item_index);
 				}
 				else if(strcmp(sep->arg[0], "equipment") == 0){
 					int32 item_index = client->GetPlayer()->ConvertSlotFromClient(atol(sep->arg[1]), client->GetVersion());
@@ -2129,7 +2128,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							lua_interface->RunItemScript(item->GetItemScript(), "examined", item, client->GetPlayer());
 					}
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Index: %u", item_index);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info equipment: Unknown Index: %u", item_index);
 				}
 				else if(strcmp(sep->arg[0], "appearance") == 0){
 					int32 item_index = client->GetPlayer()->ConvertSlotFromClient(atol(sep->arg[1]), client->GetVersion());
@@ -2141,7 +2140,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 							lua_interface->RunItemScript(item->GetItemScript(), "examined", item, client->GetPlayer());
 					}
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Index: %u", item_index);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info appearance: Unknown Index: %u", item_index);
 				}
 				else if(strcmp(sep->arg[0], "item") == 0 || strcmp(sep->arg[0], "merchant") == 0 || strcmp(sep->arg[0], "store") == 0 || strcmp(sep->arg[0], "buyback") == 0 || strcmp(sep->arg[0], "consignment") == 0){
 					int32 item_id = atoul(sep->arg[1]);
@@ -2151,7 +2150,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->QueuePacket(app);
 					}
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Item ID: %u", item_id);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info item|merchant|store|buyback|consignment: Unknown Item ID: %u", item_id);
 				}
 				else if (strcmp(sep->arg[0], "spell") == 0) {
 					sint32 spell_id = atol(sep->arg[1]);
@@ -2160,7 +2159,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if (outapp)
 						client->QueuePacket(outapp);
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Spell ID and/or Tier, ID: %u, Tier: %i", spell_id, tier);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info spell: Unknown Spell ID and/or Tier, ID: %u, Tier: %i", spell_id, tier);
 				}
 				else if (strcmp(sep->arg[0], "achievement") == 0) {
 					sint32 spell_id = atol(sep->arg[2]);
@@ -2170,12 +2169,12 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					SpellBookEntry* spellentry = 0;
 					int8 tier = client->GetPlayer()->GetSpellTier(spell_id);
 				
-					LogWrite(COMMAND__ERROR, 0, "Command", "AA Spell ID and/or Tier, ID: %u, Group: %i", spell_id, group);
+					LogWrite(COMMAND__ERROR, 0, "Command", "/info achievement: AA Spell ID and/or Tier, ID: %u, Group: %i", spell_id, group);
 					EQ2Packet* outapp = master_spell_list.GetAASpellPacket(spell_id, tier, client, true, 0x45);
 					if (outapp)
 						client->QueuePacket(outapp);
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Spell ID and/or Tier, ID: %u, Tier: %i", spell_id, group);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info achievement: Unknown Spell ID and/or Tier, ID: %u, Tier: %i", spell_id, group);
 				}
 				else if (strcmp(sep->arg[0], "spellbook") == 0) {
 					sint32 spell_id = atol(sep->arg[1]);
@@ -2189,7 +2188,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if (outapp)
 						client->QueuePacket(outapp);
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Spell ID and/or Tier, ID: %u, Tier: %i", spell_id, tier);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info spellbook: Unknown Spell ID and/or Tier, ID: %u, Tier: %i", spell_id, tier);
 				}
 				else if (strcmp(sep->arg[0], "recipe") == 0) {
 					sint32 recipe_id = atol(sep->arg[1]);
@@ -2197,7 +2196,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if(outapp)
 						client->QueuePacket(outapp);
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Recipe ID: %u", recipe_id);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info recipe: Unknown Recipe ID: %u", recipe_id);
 				}
 				else if (strcmp(sep->arg[0], "recipe_product") == 0) {
 					sint32 recipe_id = atol(sep->arg[1]);
@@ -2213,31 +2212,31 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								client->QueuePacket(app);
 							}
 							else
-								LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Item ID: %u", recipe->GetProductID());
+								LogWrite(COMMAND__ERROR, 0, "Command", "/info recipe_product: Unknown Item ID: %u", recipe->GetProductID());
 						}
 						else {
-								LogWrite(COMMAND__ERROR, 0, "Command", "recipe_product recipe->GetProductID() has value 0 for recipe id %u.", recipe_id);
+								LogWrite(COMMAND__ERROR, 0, "Command", "/info recipe_product: recipe->GetProductID() has value 0 for recipe id %u.", recipe_id);
 						}
 					}
 					else {
-							LogWrite(COMMAND__ERROR, 0, "Command", "recipe_product with recipe id %u not found (recipe missing or no product in stage 1 assigned).", recipe_id);
+							LogWrite(COMMAND__ERROR, 0, "Command", "/info recipe_product: with recipe id %u not found (recipe missing or no product in stage 1 assigned).", recipe_id);
 					}
 				}
 				else if (strcmp(sep->arg[0], "maintained") ==0) {
 					int32 slot = atol(sep->arg[1]);
 					int32 spell_id = atol(sep->arg[2]);
-					LogWrite(COMMAND__DEBUG, 5, "Command", "Unknown Spell ID - Slot: %u unknown: %u", slot, spell_id);
+					LogWrite(COMMAND__DEBUG, 5, "Command", "/info maintained: Spell ID - Slot: %u unknown: %u", slot, spell_id);
 					//int8 tier = client->GetPlayer()->GetSpellTier(spell_id);
 					MaintainedEffects* info = client->GetPlayer()->GetMaintainedSpellBySlot(slot);
 					EQ2Packet* outapp = master_spell_list.GetSpellPacket(info->spell_id, info->tier, client, true, 0x00);
 					if(outapp)
 						client->QueuePacket(outapp);
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Spell ID: %u", spell_id);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info maintained: Unknown Spell ID: %u", spell_id);
 				}
 				else if (strcmp(sep->arg[0], "effect") == 0) {
 					int32 spell_id = atol(sep->arg[1]);
-					LogWrite(COMMAND__DEBUG, 5, "Command", "Unknown Spell ID: %u", spell_id);
+					LogWrite(COMMAND__DEBUG, 5, "Command", "/info effect: Spell ID: %u", spell_id);
 					int8 tier = client->GetPlayer()->GetSpellTier(spell_id);
 					int8 type = 0;
 					if (client->GetVersion() <= 546)
@@ -2247,7 +2246,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						client->QueuePacket(outapp);
 					}
 					else
-						LogWrite(COMMAND__ERROR, 0, "Command", "Unknown Spell ID: %u", spell_id);
+						LogWrite(COMMAND__ERROR, 0, "Command", "/info effect: Unknown Spell ID: %u", spell_id);
 				}
 			}
 			else if (sep && strcmp(sep->arg[0], "overflow") == 0) {
@@ -2257,7 +2256,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					client->QueuePacket(app);
 				}
 				else
-					LogWrite(COMMAND__ERROR, 0,"Command", "Unable to retrieve an overflow item.");
+					LogWrite(COMMAND__ERROR, 0,"Command", "/info overflow: Unable to retrieve an overflow item.");
 			}
 			else
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW,"Usage:  /info {inventory|equipment|spell} {id}");
@@ -11126,14 +11125,16 @@ void Commands::Command_SendMerchantWindow(Client* client, Seperator* sep, bool s
 			if(!(spawn->GetMerchantType() & MERCHANT_TYPE_NO_BUY_BACK))
 				client->SendBuyBackList(sell);
 
-			PacketStruct* packet = configReader.getStruct("WS_UpdateMerchant", client->GetVersion());
-			if (packet) {
-				packet->setDataByName("spawn_id", 0xFFFFFFFF);
-				packet->setDataByName("type", 16);
-				EQ2Packet* outapp = packet->serialize();
-				if (outapp)
-					client->QueuePacket(outapp);
-				safe_delete(packet);
+			if(client->GetVersion() > 546) {
+				PacketStruct* packet = configReader.getStruct("WS_UpdateMerchant", client->GetVersion());
+				if (packet) {
+					packet->setDataByName("spawn_id", 0xFFFFFFFF);
+					packet->setDataByName("type", 16);
+					EQ2Packet* outapp = packet->serialize();
+					if (outapp)
+						client->QueuePacket(outapp);
+					safe_delete(packet);
+				}
 			}
 		}
 		if (spawn->GetMerchantType() & MERCHANT_TYPE_REPAIR)

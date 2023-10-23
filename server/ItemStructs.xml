@@ -4083,6 +4083,14 @@
 </Data>
 <Data ElementName="equip_flag" Type="int8" Size="1" />
 </Struct>
+<Struct Name="WS_UpdateInventory" ClientVersion="546" OpcodeName="OP_UpdateInventoryMsg" >
+<Data ElementName="item_count" Type="int16" />
+<Data ElementName="packed_size" Type="int32" />
+<Data ElementName="item_array" Type="Array" ArraySizeVariable="item_count">
+  <Data ElementName="items" Substruct="Substruct_Item" Size="1" />
+</Data>
+<Data ElementName="equip_flag" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_UpdateInventory" ClientVersion="547" OpcodeName="OP_UpdateInventoryMsg" >
 <Data ElementName="item_count" Type="int16" />
 <Data ElementName="packed_size" Type="int32" />
@@ -4202,7 +4210,6 @@
 <Data ElementName="delay" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
 <Data ElementName="range_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
 <Data ElementName="range_high" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
-<Data ElementName="damage_type" Type="int8" Size="1" />
 <Data ElementName="rating" Type="float" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
@@ -4331,6 +4338,16 @@
 
 <Data ElementName="damage_type" Type="int8" Size="1" />
 </Struct>
+<Struct Name="WS_ItemRangeDetails"  ClientVersion="547">
+<Data ElementName="damage_low1" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_high1" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_low2" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="damage_high2" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="delay" Type="int8" Size="1"/>
+<Data ElementName="range_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+
+<Data ElementName="damage_type" Type="int8" Size="1" />
+</Struct>
 <Struct Name="WS_ItemArmorDetails" ClientVersion="1">
 <Data ElementName="mitigation_low" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
 <Data ElementName="mitigation_high" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
@@ -4448,6 +4465,19 @@
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
 <Struct Name="WS_ItemBauble" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
+<Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
+<Data ElementName="cast" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="recovery" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
+<Data ElementName="duration" Type="int32" Size="1" />
+<Data ElementName="recast" Type="float" Size="1" />
+<Data ElementName="display_cast_time" Type="int8" Size="1" />
+<Data ElementName="display_bauble_type" Type="int8" Size="1" />
+<Data ElementName="effect_radius" Type="float" Size="1" />
+<Data ElementName="max_aoe_targets" Type="int32" Size="1" />
+<Data ElementName="display_until_cancelled" Type="int8" Size="1" />
+<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
+</Struct>
+<Struct Name="WS_ItemBauble" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_ItemDescription" Size="1" />
 <Data ElementName="cast" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />
 <Data ElementName="recovery" Type="int16" Size="1" OversizedValue="127" OversizedByte="127" />

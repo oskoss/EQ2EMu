@@ -1119,7 +1119,7 @@ void PacketStruct::AddFlag(const char* name) {
 	flags.push_back(string(name));
 }
 
-bool PacketStruct::LoadPacketData(uchar* data, int32 data_len) {
+bool PacketStruct::LoadPacketData(uchar* data, int32 data_len, bool create_color) {
 	loadedSuccessfully = true;
 	DataStruct* data_struct = 0;
 	try {
@@ -1304,7 +1304,7 @@ bool PacketStruct::LoadPacketData(uchar* data, int32 data_len) {
 					useType2 = true;
 				safe_delete(varnames);
 			}
-			if (!StructLoadData(data_struct, GetStructPointer(data_struct), data_struct->GetLength(), useType2))
+			if (!StructLoadData(data_struct, GetStructPointer(data_struct), data_struct->GetLength(), useType2, create_color))
 			{
 				loadedSuccessfully = false;
 				break;
@@ -1316,7 +1316,7 @@ bool PacketStruct::LoadPacketData(uchar* data, int32 data_len) {
 	}
 	return loadedSuccessfully;
 }
-bool PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len, bool useType2) {
+bool PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len, bool useType2, bool create_color) {
 	int8 type = 0;
 	if (useType2) {
 		type = data_struct->GetType2();
@@ -1415,7 +1415,9 @@ bool PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len
 		break;
 	}
 	case DATA_STRUCT_COLOR: {
-		if (strcmp(GetName(), "CreateCharacter") == 0 || strcmp(GetName(), "WS_SubmitCharCust") == 0)
+			// lets not do this again, DoF behaves differently than AoM, DoF is not compatible with CreateEQ2Color
+			//if (strcmp(GetName(), "CreateCharacter") == 0 || strcmp(GetName(), "WS_SubmitCharCust") == 0)
+		if(create_color)
 			CreateEQ2Color((EQ2_Color*)data);
 		else
 			LoadData((EQ2_Color*)data, len);
@@ -1439,7 +1441,7 @@ bool PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len
 		}
 		if (ps && size > 0) {
 			//for(int i=0;i<size && (GetLoadLen()-GetLoadPos()) > 0;i++){
-			if(ps->LoadPacketData(GetLoadBuffer() + GetLoadPos(), GetLoadLen() - GetLoadPos())) {
+			if(ps->LoadPacketData(GetLoadBuffer() + GetLoadPos(), GetLoadLen() - GetLoadPos(), create_color)) {
 				SetLoadPos(GetLoadPos() + ps->GetLoadPos());
 			}
 			//}

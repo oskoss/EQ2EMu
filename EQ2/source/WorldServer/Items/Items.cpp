@@ -2226,7 +2226,13 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 		if (adornment_info)
 			LogWrite(ITEM__DEBUG, 0, "Items", "\ttype: %i, Duration: %i, item_types_: %i, slot_type: %i", generic_info.item_type, adornment_info->duration, adornment_info->item_types, adornment_info->slot_type);
 
-		packet->setSubstructDataByName("header", "item_type", generic_info.item_type);
+		int8 tmpType = generic_info.item_type;
+		if (client->GetVersion() <= 283 && generic_info.item_type > ITEM_TYPE_RECIPE)
+			tmpType = 0;
+		else if(client->GetVersion() <= 546 && (generic_info.item_type > ITEM_TYPE_HOUSE || generic_info.item_type == ITEM_TYPE_BAUBLE))
+			tmpType = 0;
+		
+		packet->setSubstructDataByName("header", "item_type", tmpType);
 		switch(generic_info.item_type){
 			case ITEM_TYPE_WEAPON:{
 				if(weapon_info){
@@ -2396,7 +2402,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				break;
 			}
 			case ITEM_TYPE_BAUBLE:{
-				if(bauble_info && client->GetVersion() >= 284){
+				if(bauble_info && client->GetVersion() >= 546){
 					packet->setDataByName("cast", bauble_info->cast);
 					packet->setDataByName("recovery", bauble_info->recovery);
 					packet->setDataByName("duration", bauble_info->duration);
@@ -2585,10 +2591,16 @@ PacketStruct* Item::PrepareItem(int16 version, bool merchant_item, bool loot_ite
 		packet = configReader.getStruct("WS_ItemGeneric", version);
 		packet->AddFlag("loot");
 	}
+	else if(version <= 546 && (generic_info.item_type > ITEM_TYPE_HOUSE || generic_info.item_type == ITEM_TYPE_BAUBLE)) {
+		packet = configReader.getStruct("WS_ItemGeneric", version);
+	}
 	else{
 		int8 tmpType = generic_info.item_type;
 		if (version <= 283 && generic_info.item_type > ITEM_TYPE_RECIPE)
 			tmpType = 0;
+		else if(version <= 546 && (generic_info.item_type > ITEM_TYPE_HOUSE || generic_info.item_type == ITEM_TYPE_BAUBLE))
+			tmpType = 0;
+		
 		switch(tmpType){
 			case ITEM_TYPE_WEAPON:{
 				if(merchant_item)
@@ -3646,19 +3658,17 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 	if (overflow) {
 		packet->setSubstructArrayDataByName("items", "index", 0xFFFF, 0, i);
 	}
-	else if(client->GetVersion() <= 546) {
-		if(item->details.inv_slot_id == 0 && item->details.slot_id < 6) {
-			packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id, 0, i);
+	else {
+		
+		if(i < 6) {
+			packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id ? item->details.bag_id : i, 0, i);
+			packet->setSubstructArrayDataByName("items", "index", 0xFF, 0, i);
+			
 		}
 		else {
-			packet->setSubstructArrayDataByName("items", "bag_id", i, 0, i);
+			packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id, 0, i);
+			packet->setSubstructArrayDataByName("items", "index", i, 0, i);
 		}
-		packet->setSubstructArrayDataByName("items", "index", 0xFFFF, 0, i);
-		item->details.index = i;
-	}
-	else {
-		packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id, 0, i);
-		packet->setSubstructArrayDataByName("items", "index", i, 0, i);
 		item->details.index = i;
 	}
 	packet->setSubstructArrayDataByName("items", "icon", item->details.icon, 0, i);

@@ -317,7 +317,7 @@ bool LoginServer::Process() {
 			int8 resp = 0;
 			int32 acct_id = 0;
 			int32 char_id = 0;
-			if(packet && packet->LoadPacketData(pack->pBuffer+sizeof(int16),pack->size - sizeof(int16))){
+			if(packet && packet->LoadPacketData(pack->pBuffer+sizeof(int16),pack->size - sizeof(int16), version <= 546 ? false : true)){
 				EQ2_16BitString name = packet->getType_EQ2_16BitString_ByName("name");
 				resp = database.CheckNameFilter(name.data.c_str());
 				acct_id = packet->getType_int32_ByName("account_id");

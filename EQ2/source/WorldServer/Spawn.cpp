@@ -2555,6 +2555,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 			packet->setDataByName("soga_chin_type", entity->features.soga_chin_type[i], i);
 			packet->setDataByName("soga_nose_type", entity->features.soga_nose_type[i], i);
 		}
+		
 		packet->setColorByName("skin_color", entity->features.skin_color);
 		packet->setColorByName("model_color", entity->features.model_color);
 		packet->setColorByName("eye_color", entity->features.eye_color);
@@ -2577,7 +2578,7 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 		packet->setColorByName("soga_hair_face_color", entity->features.soga_hair_face_color);
 		packet->setColorByName("soga_hair_face_highlight_color", entity->features.soga_hair_face_highlight_color);
 		packet->setColorByName("soga_hair_highlight", entity->features.soga_hair_highlight_color);
-
+		
 		packet->setDataByName("body_size", entity->features.body_size);
 		packet->setDataByName("body_age", entity->features.body_age);
 

@@ -276,9 +276,9 @@ bool Client::Process() {
 				DumpPacket(app);
 				playWaitTimer = new Timer ( 15000 );
 				playWaitTimer->Start ( );
-				cout << "Char Create Request From: " << GetAccountName() << "....";
-				if(packet->LoadPacketData(app->pBuffer,app->size)){
-					cout << "Loaded Successfully\n";
+				
+				LogWrite(WORLD__INFO, 1, "World", "Character creation request from account %s", GetAccountName());
+				if(packet->LoadPacketData(app->pBuffer,app->size, GetVersion() <= 546 ? false : true)){
 					packet->setDataByName("account_id",GetAccountID());
 					LWorld* world_server = world_list.FindByID(packet->getType_int32_ByName("server_id"));
 					if(!world_server)
@@ -308,7 +308,7 @@ bool Client::Process() {
 					}
 				}
 				else{
-					cout << "Error loading Char Create Packet!!\n";
+					LogWrite(WORLD__ERROR, 1, "World", "Error in character creation request from account %s!", GetAccountName());
 					safe_delete(packet);
 				}
 				//	world_list.SendWorldChanged(create.profile.server_id, false, this);

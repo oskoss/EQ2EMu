@@ -50,7 +50,7 @@ public:
 	void CheckCharacterTimeStamps(LoginAccount* acct);
 	string GetCharacterName(int32 char_id , int32 server_id, int32 account_id);
 	void SaveCharacterColors(int32 char_id, char* type, EQ2_Color color);
-	void SaveCharacterFloats(int32 char_id, char* type, float float1, float float2, float float3);
+	void SaveCharacterFloats(int32 char_id, char* type, float float1, float float2, float float3, float multiplier=100.0f);
 	int16 GetAppearanceID(string name);
 	void DeactivateCharID(int32 server_id, int32 char_id, int32 exception_id);
 	int32 SaveCharacter(PacketStruct* create, LoginAccount* acct, int32 world_charid, int32 client_version);

@@ -268,14 +268,14 @@ to zero and treated like placeholders." />
 <Data ElementName="unknown5" Type="int32" Size="1" /> <!-- 4 -->
 <Data ElementName="version" Type="int8" Size="1" /> <!-- 4 -->
 <Data ElementName="race_type" Type="int16" Size="1" />
-<Data ElementName="skin_color" Type="sint8" Size="3" />
+<Data ElementName="skin_color" Type="sint8" Size="3"/>
 <Data ElementName="eye_color" Type="sint8" Size="3" />
 <Data ElementName="equip" Type="EQ2_EquipmentItem" Size="23" />
 <Data ElementName="hair_type" Type="int16" Size="1" />
 <Data ElementName="hair_type_color" Type="sint8" Size="3" />
 <Data ElementName="hair_type_highlight_color" Type="sint8" Size="3" />
 <Data ElementName="hair_face_type" Type="int16" Size="1" />
-<Data ElementName="hair_face_color" Type="sint8" Size="3" />
+<Data ElementName="hair_face_color" Type="sint8" Size="3" />	
 <Data ElementName="hair_face_highlight_color" Type="sint8" Size="3" />
 <Data ElementName="chest_type" Type="int16" Size="1" />
 <Data ElementName="shirt_color" Type="sint8" Size="3" />
@@ -301,7 +301,7 @@ to zero and treated like placeholders." />
 <Data ElementName="hair_color3" Type="sint8" Size="3" />
 <Data ElementName="unknown11" Type="int8" Size="10" />
 <Data ElementName="soga_race_type" Type="int16" Size="1" />
-<Data ElementName="soga_skin_color" Type="EQ2_Color" />
+<Data ElementName="soga_skin_colorx" Type="EQ2_Color" />
 <Data ElementName="soga_eye_color" Type="EQ2_Color" />
 <Data ElementName="Unknown12" Type="int8" Size="3" />
 <Data ElementName="soga_eye_type" Type="sint8" Size="3" />

@@ -186,7 +186,7 @@ public:
 	void	SaveBuyBack(int32 char_id, int32 item_id, int16 quantity, int32 price);
 	void	DeleteItem(int32 char_id, Item* item, const char* type);
 	void	SaveCharacterColors(int32 char_id, const char* type, EQ2_Color color);
-	void	SaveCharacterFloats(int32 char_id, const char* type, float float1, float float2, float float3);
+	void	SaveCharacterFloats(int32 char_id, const char* type, float float1, float float2, float float3, float multiplier = 100.0f);
 	int16	GetAppearanceID(string name);
 	vector<int16>* GetAppearanceIDsLikeName(string name, bool filtered = true);
 	string	GetAppearanceName(int16 appearance_id);

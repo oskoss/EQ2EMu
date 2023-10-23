@@ -413,8 +413,8 @@ public:
 	}
 	void UpdateArrayByArrayLengthName(const char* name, int32 index, int32 size);
 	void UpdateArrayByArrayLength(DataStruct* data_struct, int32 index, int32 size);
-	bool StructLoadData(DataStruct* data_struct, void* data, int32 len, bool useType2 = false);
-	bool LoadPacketData(uchar* data, int32 data_len);
+	bool StructLoadData(DataStruct* data_struct, void* data, int32 len, bool useType2 = false, bool create_color = false);
+	bool LoadPacketData(uchar* data, int32 data_len, bool create_color = false);
 	bool CheckFlagExists(const char* name);
 
 	void setColorByName(const char* name, EQ2_Color* data, int32 index = 0) {

@@ -2597,7 +2597,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	{
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_SubmitCharCust", opcode, opcode);
 		PacketStruct* packet = configReader.getStruct("WS_SubmitCharCust", version);
-		if (packet && packet->LoadPacketData(app->pBuffer, app->size)) {
+		if (packet && packet->LoadPacketData(app->pBuffer, app->size, GetVersion() <= 546 ? false : true)) {
 			int8 type = packet->getType_int8_ByName("type");
 			if (type == 0) {
 				/*if (player->custNPC) {
@@ -3098,7 +3098,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		Item* item = master_item_list.GetItem(id);
 		if (item) {
 			//only display popup for non merchant links
-			EQ2Packet* app = item->serialize(GetVersion(), (request->getType_int8_ByName("show_popup") != 0), GetPlayer(), true, 0, 0, true);
+			EQ2Packet* app = item->serialize(GetVersion(), (request->getType_int8_ByName("show_popup") != 0), GetPlayer(), true, 0, 0, GetVersion() > 546 ? true : false);
 			//DumpPacket(app);
 			QueuePacket(app);
 		}
@@ -7965,6 +7965,7 @@ void Client::SendBuyMerchantList(bool sell) {
 					else
 						packet->setDataByName("type", 2);
 				}
+				packet->PrintPacket();
 				EQ2Packet* outapp = packet->serialize();
 				//	DumpPacket(outapp);
 				QueuePacket(outapp);
