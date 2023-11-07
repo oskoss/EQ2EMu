@@ -294,15 +294,26 @@ void Sign::HandleUse(Client* client, string command)
 			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You are too far away!");
 		}
 	}
+	
 	else if (client && command.length() > 0)
 	{
 		EntityCommand* entity_command = FindEntityCommand(command);
+
+
+		//devn00b: Add support for marking objects
+		if (strcmp(entity_command->command.c_str(), "mark") == 0) {
+			LogWrite(SIGN__DEBUG, 0, "Sign", "ActivateMarkReqested Sign - Command: '%s' (Should read mark)", entity_command->command.c_str());
+			int32 char_id = client->GetCharacterID();
+			database.SaveSignMark(char_id, GetWidgetID(), database.GetCharacterName(char_id), client);
+			return;
+		}
 
 		if (entity_command)
 		{
 			LogWrite(SIGN__DEBUG, 0, "Sign", "ActivateQuestRequired Sign - Command: '%s'", entity_command->command.c_str());
 			client->GetCurrentZone()->ProcessEntityCommand(entity_command, client->GetPlayer(), client->GetPlayer()->GetTarget());
 		}
+
 	}
 
 }

@@ -298,6 +298,10 @@ public:
 	int32   LoadHouseContainers(int32 item_id = 0);
 	void	LoadBrokerItemStats();
 
+	void	SaveSignMark(int32 char_id, int32 sign_id, char* char_name, Client* client);
+	string	GetSignMark(int32 char_id, int32 sign_id, char* char_name); // returns the string containing the character name
+
+
 	map<int32, vector<LevelArray*> >*	LoadSpellClasses();
 	void	LoadTransporters(ZoneServer* zone);
 	void	LoadTransportMaps(ZoneServer* zone);

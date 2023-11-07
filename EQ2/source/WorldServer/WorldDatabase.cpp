@@ -3109,7 +3109,6 @@ void WorldDatabase::LoadSpecialZones(){
 			zone->Init();
 
 			zone->SetAlwaysLoaded(atoi(row[2]) == 1);
-//			zone->SetCityZone(atoi(row[3]) == 1);
 		}
 	}
 }
@@ -8403,4 +8402,29 @@ int32	WorldDatabase::GetAccountAge(int32 account_id) {
 
 	acct_age = curr_time - acct_created;
 	return acct_age;
+}
+
+void WorldDatabase::SaveSignMark(int32 char_id, int32 sign_id, char* char_name, Client* client) {
+
+	if (!database_new.Query("update spawn_signs set char_id=%u, char_name='%s' where widget_id=%u", char_id, char_name, sign_id)) {
+		LogWrite(SIGN__DEBUG, 0, "Sign", "ERROR in WorldDatabase::SaveSignMark");
+		return;
+	}
+
+}
+
+string WorldDatabase::GetSignMark(int32 char_id, int32 sign_id, char* char_name) {
+	Query query;
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT char_name from spawn_signs where widget_id=%u", sign_id);
+	char* charname = 0;
+
+	if (result && mysql_num_rows(result) > 0) {
+		MYSQL_ROW row = mysql_fetch_row(result);
+
+		charname = new char[strlen(row[0]) + 1];
+		memset(charname, 0, strlen(row[0]) + 1);
+		strcpy(charname, row[0]);
+	}
+
+	return charname;
 }
