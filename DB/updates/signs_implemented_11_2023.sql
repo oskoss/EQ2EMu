@@ -1,0 +1,1 @@
+ALTER TABLE `spawn_signs` ADD COLUMN `char_id` INT UNSIGNED NULL DEFAULT '0' AFTER `language`, ADD COLUMN `char_name` VARCHAR(50) NULL DEFAULT NULL AFTER `char_id`;
