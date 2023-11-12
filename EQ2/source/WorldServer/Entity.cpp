@@ -346,6 +346,7 @@ void Entity::MapInfoStruct()
 	get_int8_funcs["reload_player_spells"] = l::bind(&InfoStruct::get_reload_player_spells, &info_struct);
 	
 	get_string_funcs["action_state"] = l::bind(&InfoStruct::get_action_state, &info_struct);
+	get_string_funcs["combat_action_state"] = l::bind(&InfoStruct::get_combat_action_state, &info_struct);
 
 /** SETS **/
 	set_string_funcs["name"] = l::bind(&InfoStruct::set_name, &info_struct, l::_1);
@@ -537,6 +538,7 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["reload_player_spells"] = l::bind(&InfoStruct::set_reload_player_spells, &info_struct, l::_1);
 	
 	set_string_funcs["action_state"] = l::bind(&InfoStruct::set_action_state, &info_struct, l::_1);
+	set_string_funcs["combat_action_state"] = l::bind(&InfoStruct::set_combat_action_state, &info_struct, l::_1);
 
 }
 
@@ -1335,7 +1337,7 @@ void Entity::CalculateBonuses(){
 	info->set_potency(0);
 	info->set_hate_mod(0);
 	info->set_reuse_speed(0);
-	info->set_casting_speed(0);
+//	info->set_casting_speed(0);
 	info->set_recovery_speed(0);
 	info->set_spell_reuse_speed(0);
 	info->set_spell_multi_attack(0);
@@ -2161,7 +2163,7 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 			}
 
 			if (attacker && spell->caster)
-				attacker->DamageSpawn(spell->caster, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, redirectDamage, redirectDamage, 0, 0, false, false, false, spell);
+				attacker->DamageSpawn(spell->caster, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, redirectDamage, redirectDamage, 0, 0, false, false, false, false, spell);
 		}
 
 		bool shouldRemoveSpell = false;

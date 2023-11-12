@@ -8,11 +8,12 @@
 
 function cast(Caster, Target, DmgType, MinVal, MaxVal)
 
+	local damageInflicted = false;
     -- Inflicts 12 - 20 piercing damage on target
     if MaxVal ~= nil and MinVal < MaxVal then
-        SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))
+        damageInflicted = SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))
     else
-        SpellDamage(Target, DmgType, MinVal)
+        damageInflicted = SpellDamage(Target, DmgType, MinVal)
     end
 
     -- Applies Knockdown on termination.  Lasts for 1.5 seconds.
@@ -20,8 +21,7 @@ function cast(Caster, Target, DmgType, MinVal, MaxVal)
     --     Stuns target
     --     Blurs vision of target
     --     Does not affect Epic targets
-    if not IsEpic(Target) then
-        Knockback(Caster, Target, 1500)
+    if damageInflicted and not IsEpic(Target) then
         AddControlEffect(Target, 4)
         BlurVision(Target, 1.0)
         AddSpellTimer(1500, "RemoveStunBlur")

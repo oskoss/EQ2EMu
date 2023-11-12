@@ -390,13 +390,18 @@ void Entity::RangeAttack(Spawn* victim, float distance, Item* weapon, Item* ammo
 		SetAttackDelay(false, true);
 }
 
-bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8 damage_type, int32 low_damage, int32 high_damage, int8 crit_mod, bool no_calcs){
+bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8 damage_type, int32 low_damage, int32 high_damage, int8 crit_mod, bool no_calcs, int8 override_packet_type, bool take_power){
 	if(!victim || !luaspell || !luaspell->spell)
 		return false;
 
 	Spell* spell = luaspell->spell;
 	Skill* skill = nullptr;
-
+	int8 packet_type = DAMAGE_PACKET_TYPE_SPELL_DAMAGE;
+	
+	if(override_packet_type) {
+		packet_type = override_packet_type;
+	}
+	
 	int8 hit_result = 0;
 	bool is_tick = false; // if spell is already active, this is a tick
 	if (GetZone()->GetSpellProcess()->GetActiveSpells()->count(luaspell)){
@@ -404,14 +409,14 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 		is_tick = true;
 	}
 	else if(spell->GetSpellData()->type == SPELL_BOOK_TYPE_COMBAT_ART)
-		hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, 0, false);
+		hit_result = DetermineHit(victim, packet_type, damage_type, 0, false, luaspell);
 	else
-		hit_result = DetermineHit(victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, 0, true, luaspell);
+		hit_result = DetermineHit(victim, packet_type, damage_type, 0, true, luaspell);
 	
 	if(victim->IsEntity()) {
 		CheckEncounterState((Entity*)victim);
 	}
-	
+	bool successful_hit = true;
 	if(hit_result == DAMAGE_PACKET_RESULT_SUCCESSFUL) {
 		luaspell->last_spellattack_hit = true;
 		//If this spell is a tick and has already crit, force the tick to crit
@@ -421,8 +426,8 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 			else
 				crit_mod = 2;
 		}
-		if(DamageSpawn((Entity*)victim, DAMAGE_PACKET_TYPE_SPELL_DAMAGE, damage_type, low_damage, high_damage, spell->GetName(), crit_mod, is_tick, no_calcs, luaspell) && !luaspell->crit)
-			luaspell->crit = true;
+		DamageSpawn((Entity*)victim, packet_type, damage_type, low_damage, high_damage, spell->GetName(), crit_mod, is_tick, no_calcs, false, take_power, luaspell);
+		
 		CheckProcs(PROC_TYPE_OFFENSIVE, victim);
 		CheckProcs(PROC_TYPE_MAGICAL_OFFENSIVE, victim);
 
@@ -447,6 +452,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 		}
 	}
 	else {
+		successful_hit = false;
 		if(hit_result == DAMAGE_PACKET_RESULT_RESIST)
 			luaspell->resisted = true;
 		if(victim->IsNPC())
@@ -518,7 +524,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 		}
 	}
 
-	return true;
+	return successful_hit;
 }
 
 bool Entity::ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32 high_damage, string name, string success_msg, string effect_msg) {
@@ -703,6 +709,9 @@ bool Entity::SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string
 }
 
 int8 Entity::DetermineHit(Spawn* victim, int8 type, int8 damage_type, float ToHitBonus, bool is_caster_spell, LuaSpell* lua_spell){
+	if(lua_spell) {
+		lua_spell->is_damage_spell = true;
+	}
 	if(!victim) {
 		return DAMAGE_PACKET_RESULT_MISS;
 	}
@@ -957,10 +966,16 @@ Skill* Entity::GetSkillByWeaponType(int8 type, int8 damage_type, bool update) {
 	return 0;
 }
 
-bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod, bool is_tick, bool no_calcs, bool ignore_attacker, LuaSpell* spell) {
+bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod, bool is_tick, bool no_calcs, bool ignore_attacker, bool take_power, LuaSpell* spell) {
+	if(spell) {
+		spell->is_damage_spell = true;
+	}
+	
+	bool has_damaged = false;
+	
 	if(!victim || !victim->Alive() || victim->GetHP() == 0)
 		return false;
-
+	
 	int8 hit_result = 0;
 	int16 blow_type = 0;
 	sint32 damage = 0;
@@ -1070,8 +1085,21 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 
 			if (damage < (sint64)prevDmg)
 				useWards = true;
-
-			victim->TakeDamage(damage);
+			if(damage > 0 && spell) {
+				has_damaged = true;
+				spell->has_damaged = true;
+			}
+			if(take_power) {
+				sint32 curPower = victim->GetPower();
+				if(curPower < damage)
+					curPower = 0;
+				else
+					curPower -= damage;
+				victim->SetPower(curPower);
+			}
+			else {
+				victim->TakeDamage(damage);
+			}
 			victim->CheckProcs(PROC_TYPE_DAMAGED, this);
 
 			if (IsPlayer()) {
@@ -1124,8 +1152,9 @@ bool Entity::DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_
 		else
 			victim->CheckProcs(PROC_TYPE_PHYSICAL_DEFENSIVE, this);
 	}
-	
-	return crit;
+	if(spell)
+		spell->crit = crit;
+	return has_damaged;
 }
 
 float Entity::CalculateMitigation(int8 type, int8 damage_type, int16 effective_level_attacker, bool for_pvp) {

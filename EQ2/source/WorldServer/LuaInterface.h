@@ -91,6 +91,8 @@ struct LuaSpell{
 	int8            slot_pos;
 	int32           damage_remaining;
 	bool			resisted;
+	bool			has_damaged;
+	bool			is_damage_spell;
 	bool			interrupted;
 	bool            crit;
 	bool            last_spellattack_hit;

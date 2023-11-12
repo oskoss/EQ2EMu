@@ -471,6 +471,7 @@ struct InfoStruct{
 		reload_player_spells_ = oldStruct->get_reload_player_spells();
 		
 		action_state_ = oldStruct->get_action_state();
+		combat_action_state_ = oldStruct->get_combat_action_state();
 
 	}
 	//mutable std::shared_mutex mutex_;
@@ -681,6 +682,8 @@ struct InfoStruct{
 	
 	std::string get_action_state() { std::lock_guard<std::mutex> lk(classMutex); return action_state_; }
 	
+	std::string get_combat_action_state() { std::lock_guard<std::mutex> lk(classMutex); return combat_action_state_; }
+	
 	void	set_name(std::string value) { std::lock_guard<std::mutex> lk(classMutex); name_ = value; }
 	
 	void	set_deity(std::string value) { std::lock_guard<std::mutex> lk(classMutex); deity_ = value; }
@@ -883,11 +886,11 @@ struct InfoStruct{
 	void	add_crit_bonus(float value) { std::lock_guard<std::mutex> lk(classMutex); if(crit_bonus_ + value < 0.0f) crit_bonus_ = 0.0f; else crit_bonus_ += value; }
 	void	add_potency(float value) { std::lock_guard<std::mutex> lk(classMutex); if(potency_ + value < 0.0f) potency_ = 0.0f; else potency_ += value; }
 	void	add_hate_mod(float value) { std::lock_guard<std::mutex> lk(classMutex); if(hate_mod_ + value < 0.0f) hate_mod_ = 0.0f; else hate_mod_ += value; }
-	void	add_reuse_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(reuse_speed_ + value < 0.0f) reuse_speed_ = 0.0f; else reuse_speed_ += value; }
-	void	add_casting_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(casting_speed_ + value < 0.0f) casting_speed_ = 0.0f; else casting_speed_ += value; }
-	void	add_recovery_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(recovery_speed_ + value < 0.0f) recovery_speed_ = 0.0f; else recovery_speed_ += value; }
-	void	add_spell_reuse_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(spell_reuse_speed_ + value < 0.0f) spell_reuse_speed_ = 0.0f; else spell_reuse_speed_ += value; }
-	void	add_spell_multi_attack(float value) { std::lock_guard<std::mutex> lk(classMutex); if(spell_multi_attack_ + value < 0.0f) spell_multi_attack_ = 0.0f; else spell_multi_attack_ += value; }
+	void	add_reuse_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); reuse_speed_ += value; }
+	void	add_casting_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); casting_speed_ += value; }
+	void	add_recovery_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); recovery_speed_ += value; }
+	void	add_spell_reuse_speed(float value) { std::lock_guard<std::mutex> lk(classMutex); spell_reuse_speed_ += value; }
+	void	add_spell_multi_attack(float value) { std::lock_guard<std::mutex> lk(classMutex); spell_multi_attack_ += value; }
 	void	add_dps(float value) { std::lock_guard<std::mutex> lk(classMutex); if(dps_ + value < 0.0f) dps_ = 0.0f; else dps_ += value; }
 	void	add_dps_multiplier(float value) { std::lock_guard<std::mutex> lk(classMutex); if(dps_multiplier_ + value < 0.0f) dps_multiplier_ = 0.0f; else dps_multiplier_ += value; }
 	void	add_attackspeed(float value) { std::lock_guard<std::mutex> lk(classMutex); if(attackspeed_ + value < 0.0f) attackspeed_ = 0.0f; else attackspeed_ += value; }
@@ -974,6 +977,8 @@ struct InfoStruct{
 	void	set_reload_player_spells(int8 value) { std::lock_guard<std::mutex> lk(classMutex); reload_player_spells_ = value; }
 
 	void	set_action_state(std::string value) { std::lock_guard<std::mutex> lk(classMutex); action_state_ = value; }
+	
+	void	set_combat_action_state(std::string value) { std::lock_guard<std::mutex> lk(classMutex); combat_action_state_ = value; }
 	
 	void	ResetEffects(Spawn* spawn)
 	{
@@ -1183,6 +1188,7 @@ private:
 	int8			reload_player_spells_;
 	
 	std::string		action_state_;
+	std::string		combat_action_state_;
 	
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		classMutex;
@@ -1424,13 +1430,13 @@ public:
 	bool			RangeWeaponReady();
 	void			MeleeAttack(Spawn* victim, float distance, bool primary, bool multi_attack = false);
 	void			RangeAttack(Spawn* victim, float distance, Item* weapon, Item* ammo, bool multi_attack = false);
-	bool			SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8 damage_type, int32 low_damage, int32 high_damage, int8 crit_mod = 0, bool no_calcs = false);
+	bool			SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8 damage_type, int32 low_damage, int32 high_damage, int8 crit_mod = 0, bool no_calcs = false, int8 override_packet_type = 0, bool take_power = false);
 	bool			ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32 high_damage, string name, string success_msg, string effect_msg);
 	bool            SpellHeal(Spawn* target, float distance, LuaSpell* luaspell, string heal_type, int32 low_heal, int32 high_heal, int8 crit_mod = 0, bool no_calcs = false, string custom_spell_name="");
 	int8			DetermineHit(Spawn* victim, int8 type, int8 damage_type, float ToHitBonus, bool is_caster_spell, LuaSpell* lua_spell = nullptr);
 	float			GetDamageTypeResistPercentage(int8 damage_type);
 	Skill*			GetSkillByWeaponType(int8 type, int8 damage_type, bool update);
-	bool			DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod = 0, bool is_tick = false, bool no_damage_calcs = false, bool ignore_attacker = false, LuaSpell* spell = 0);
+	bool			DamageSpawn(Entity* victim, int8 type, int8 damage_type, int32 low_damage, int32 high_damage, const char* spell_name, int8 crit_mod = 0, bool is_tick = false, bool no_damage_calcs = false, bool ignore_attacker = false, bool take_power = false, LuaSpell* spell = 0);
 	float			CalculateMitigation(int8 type = DAMAGE_PACKET_TYPE_SIMPLE_DAMAGE, int8 damage_type = 0, int16 attacker_level = 0, bool for_pvp = false);
 	void			AddHate(Entity* attacker, sint32 hate);
 	bool			CheckInterruptSpell(Entity* attacker);

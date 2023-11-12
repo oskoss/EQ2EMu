@@ -279,7 +279,7 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 			if(valid)
 				return true;
 		}
-		else if(p->pBuffer[offset] != 0xff && p->pBuffer[offset+1] == 0xff) {
+		else if(p->pBuffer[offset] != 0xff && p->pBuffer[offset+1] == 0xff && p->size > (1+offset)) {
 			uint8 new_length = 0;
 			
 			memcpy(&new_length, p->pBuffer+offset, sizeof(int8));
@@ -291,7 +291,7 @@ bool EQStream::HandleEmbeddedPacket(EQProtocolPacket *p, int16 offset, int16 len
 			delete subp;
 			return true;
 			}
-		}		
+		}
 	}
 	return false;
 }
@@ -1467,8 +1467,9 @@ void EQStream::Write(int eq_fd)
 		//no more data to send
 		if (GetState() == CLOSING) {
 			MOutboundQueue.lock();
-			if (SequencedQueue.size() > 0 )
-				LogWrite(PACKET__DEBUG, 9, "Packet",  "All outgoing data flushed, client should be disconnecting, awaiting acknowledgement of SequencedQueue.");
+			if (SequencedQueue.size() > 0 ) {
+				// retransmission attempts
+			}
 			else
 			{
 				LogWrite(PACKET__DEBUG, 9, "Packet", "All outgoing data flushed, disconnecting client.");

@@ -1029,6 +1029,7 @@
 <Data ElementName="index" Type="int16" Size="1" />
 <Data ElementName="icon" Type="int16" Size="1" />
 <Data ElementName="count" Type="int8" Size="1" />
+<Data ElementName="unknown" Type="int8" Size="1" />
 <Data ElementName="level" Type="int8" Size="1" />
 <Data ElementName="tier" Type="int8" Size="1" />
 <Data ElementName="num_slots" Type="int8" Size="1" />
@@ -1036,19 +1037,20 @@
 <Data ElementName="name" Type="char" Size="81" />
 </Struct>
 <Struct Name="Substruct_Item" ClientVersion="546" >
-<Data ElementName="unique_id" Type="int32" Size="1" />
-<Data ElementName="bag_id" Type="int32" Size="1" />
-<Data ElementName="inv_slot_id" Type="int32" Size="1" />
-<Data ElementName="menu_type" Type="int32" Size="1" />
-<Data ElementName="slot_id" Type="int8" Size="1" />
-<Data ElementName="index" Type="int16" Size="1" />
-<Data ElementName="icon" Type="int16" Size="1" />
-<Data ElementName="count" Type="int8" Size="1" />
-<Data ElementName="level" Type="int8" Size="1" />
-<Data ElementName="tier" Type="int8" Size="1" />
-<Data ElementName="num_slots" Type="int8" Size="1" />
-<Data ElementName="item_id" Type="sint32" Size="1" />
-<Data ElementName="name" Type="char" Size="81" />
+<Data ElementName="unique_id" Type="int32" Size="1" /><!-- 4 -->
+<Data ElementName="bag_id" Type="int32" Size="1" /><!-- 8 -->
+<Data ElementName="inv_slot_id" Type="int32" Size="1" /><!-- 12 -->
+<Data ElementName="menu_type" Type="int32" Size="1" /><!-- 16 -->
+<Data ElementName="slot_id" Type="int8" Size="1" /><!-- 17 -->
+<Data ElementName="index" Type="int16" Size="1" /><!-- 19 -->
+<Data ElementName="icon" Type="int16" Size="1" /> <!-- 21 -->
+<Data ElementName="count" Type="int8" Size="1" /> <!-- 23 -->
+<Data ElementName="level" Type="int8" Size="1" /> <!-- 24 -->
+<Data ElementName="tier" Type="int8" Size="1" /> <!-- 25 -->
+<Data ElementName="num_slots" Type="int8" Size="1" /> <!-- 26 -->
+<Data ElementName="item_id" Type="sint32" Size="1" /> <!-- 27 -->
+<Data ElementName="name" Type="char" Size="64" />
+<Data ElementName="unknown6" Type="int8" Size="17" />
 </Struct>
 <Struct Name="Substruct_Item" ClientVersion="547" >
 <Data ElementName="unique_id" Type="int32" Size="1" />

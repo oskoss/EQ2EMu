@@ -810,7 +810,7 @@ void Spell::SetPacketInformation(PacketStruct* packet, Client* client, bool disp
 	else {
 		packet->setSubstructDataByName("spell_info", "cast_time", spell->cast_time);
 	}
-	packet->setSubstructDataByName("spell_info", "recast", spell->recast);
+	packet->setSubstructDataByName("spell_info", "recast", CalculateRecastTimer(client->GetPlayer())/1000);
 	packet->setSubstructDataByName("spell_info", "radius", spell->radius);
 	packet->setSubstructDataByName("spell_info", "req_concentration", spell->req_concentration);
 	//packet->setSubstructDataByName("spell_info","req_concentration2", 2);
@@ -2220,12 +2220,40 @@ bool Spell::IsCopiedSpell() {
 void Spell::ModifyCastTime(Entity* caster){
 	int16 cast_time = spell->cast_time;
 	float cast_speed = caster->GetInfoStruct()->get_casting_speed();
-	if (cast_time > 0){
-		if (cast_speed > 0) // casting speed can only reduce up to half a cast time
-			spell->cast_time *= max((float) 0.5, (float) (1 / (1 + (cast_speed * .01))));
-		else if (cast_speed < 0) // not sure if casting speed debuff is capped on live or not, capping at 1.5 * the normal rate for now
-			spell->cast_time *= min((float) 1.5, (float) (1 + (1 - (1 / (1 + (cast_speed * -.01))))));
+	if (cast_speed > 0.0f){
+		bool modifiedSpeed = false;
+		if (cast_speed > 0.0f && (modifiedSpeed = true)) // casting speed can only reduce up to half a cast time
+			spell->cast_time *= max(0.5f, (float) (1 / (1 + (cast_speed * .01))));
+		else if (cast_speed < 0.0f && (modifiedSpeed = true)) // not sure if casting speed debuff is capped on live or not, capping at 1.5 * the normal rate for now
+			spell->cast_time *= min(1.5f, (float) (1 + (1 - (1 / (1 + (cast_speed * -.01))))));
+		
+		if(modifiedSpeed) {
+			LogWrite(SPELL__DEBUG, 9, "Spells", "%s: spell %s cast time %u to %u based on cast_speed %f", GetName(), caster->GetName(), cast_time, spell->cast_time, cast_speed);
+		}
 	}
+}
+
+int32 Spell::CalculateRecastTimer(Entity* caster, float override_timer) {
+	int32 original_recast = static_cast<int>(GetSpellData()->recast) * 1000;
+	
+	if(override_timer > 0.0f) {
+		original_recast = static_cast<int>(override_timer) * 1000;
+	}
+	
+	int32 recast_time = original_recast;
+	float cast_speed = caster->GetInfoStruct()->get_spell_reuse_speed();
+	if (cast_speed > 0.0f){
+		bool modifiedSpeed = false;
+		if (cast_speed > 0.0f && (modifiedSpeed = true)) // casting speed can only reduce up to half a cast time
+			recast_time *= max(0.5f, (float) (1 / (1 + (cast_speed * .01))));
+		else if (cast_speed < 0.0f && (modifiedSpeed = true)) // not sure if casting speed debuff is capped on live or not, capping at 1.5 * the normal rate for now
+			recast_time *= min(1.5f, (float) (1 + (1 - (1 / (1 + (cast_speed * -.01))))));
+		
+		if(modifiedSpeed) {
+			LogWrite(SPELL__DEBUG, 9, "Spells", "%s: spell %s recast time %u to %u based on spell_reuse_time %f", GetName(), caster->GetName(), original_recast, recast_time, cast_speed);
+		}
+	}
+	return recast_time;
 }
 
 vector <SpellDisplayEffect*>* Spell::GetSpellEffects(){

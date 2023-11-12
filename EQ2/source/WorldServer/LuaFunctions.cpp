@@ -1854,7 +1854,8 @@ int EQ2Emu_lua_SpellDamage(lua_State* state) {
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	if(!luaspell || luaspell->resisted) {
 		lua_interface->ResetFunctionStack(state);
-		return 0;
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
 	}
 	Spawn* caster = luaspell->caster;
 	sint32 type = lua_interface->GetSInt32Value(state, 2);
@@ -1936,6 +1937,7 @@ int EQ2Emu_lua_SpellDamage(lua_State* state) {
 					success = true;
 			}
 		}
+		lua_interface->SetBooleanValue(state, luaspell->has_damaged);
 		if (success) {
 			Spell* spell = luaspell->spell;
 			if (caster->IsPlayer() && spell && spell->GetSpellData()->target_type == 1 && spell->GetSpellData()->spell_book_type == 1) { //offense combat art
@@ -1945,7 +1947,118 @@ int EQ2Emu_lua_SpellDamage(lua_State* state) {
 			}
 		}
 	}
-	return 0;
+	else {
+		lua_interface->SetBooleanValue(state, false);
+	}
+	return 1;
+}
+
+int EQ2Emu_lua_SpellDamageExt(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	Spawn* target = lua_interface->GetSpawn(state);
+	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
+	if(!luaspell || luaspell->resisted) {
+		lua_interface->ResetFunctionStack(state);
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+	}
+	Spawn* caster = luaspell->caster;
+	sint32 type = lua_interface->GetSInt32Value(state, 2);
+	int32 min_damage = lua_interface->GetInt32Value(state, 3);
+	int32 max_damage = lua_interface->GetInt32Value(state, 4);
+	int8 crit_mod = lua_interface->GetInt32Value(state, 5);
+	bool no_calcs = lua_interface->GetInt32Value(state, 6) == 1;
+	int32 override_packet_type = lua_interface->GetInt32Value(state, 7);
+	bool take_power = lua_interface->GetInt32Value(state, 8) == 1;
+	//lua_interface->ResetFunctionStack(state);
+	int32 class_id = lua_interface->GetInt32Value(state, 9);
+	vector<int16> faction_req;
+	vector<int16> race_req;
+	int32 class_req = 0;
+	int32 i = 0;
+	int8 f = 0;
+	int8 r = 0;
+	while ((class_id = lua_interface->GetInt32Value(state, 9 + i))) {
+		if (class_id < 100) {
+			class_req += pow(2.0, double(class_id - 1));
+		}
+		else if (class_id > 100 && class_id < 1000) {
+			race_req.push_back(class_id);
+			r++;
+		}
+		else {
+			faction_req.push_back(class_id);
+			f++;
+		}
+		i++;
+	}
+	lua_interface->ResetFunctionStack(state);
+	if (caster && caster->IsEntity()) {
+		bool race_match = false;
+		bool success = false;
+		luaspell->resisted = false;
+		if (luaspell->targets.size() > 0) {
+			ZoneServer* zone = luaspell->caster->GetZone();
+			Spawn* target = 0;
+			luaspell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+			for (int32 i = 0; i < luaspell->targets.size(); i++) {
+				if ((target = zone->GetSpawnByID(luaspell->targets[i]))) {
+
+					if (race_req.size() > 0) {
+						for (int8 i = 0; i < race_req.size(); i++) {
+						if(race_req[i] == target->GetRace() ||
+							race_req[i] == race_types_list.GetRaceType(target->GetModelType()) ||
+							race_req[i] == race_types_list.GetRaceBaseType(target->GetModelType())) {
+								race_match = true;
+							}
+						}
+					}
+					else
+						race_match = true; // if the race_req.size = 0 then there is no race requirement and the race_match will be true
+					if (race_match == true) {
+						float distance = caster->GetDistance(target, true);
+						((Entity*)caster)->SpellAttack(target, distance, luaspell, type, min_damage, max_damage, crit_mod, no_calcs, override_packet_type, take_power);
+					}
+				}
+			}
+			success = true;
+			luaspell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+		}
+		else if (target) {
+
+			//check class and race/faction here
+			if (race_req.size() > 0) {
+				for (int8 i = 0; i < race_req.size(); i++) {
+					if(race_req[i] == target->GetRace() ||
+						race_req[i] == race_types_list.GetRaceType(target->GetModelType()) ||
+						race_req[i] == race_types_list.GetRaceBaseType(target->GetModelType())) {
+						race_match = true;
+					}
+				}
+			}
+			else
+				race_match = true; // if the race_req.size = 0 then there is no race requirement and the race_match will be true
+			if (race_match == true) {
+				float distance = caster->GetDistance(target, true);
+				if (((Entity*)caster)->SpellAttack(target, distance, luaspell, type, min_damage, max_damage, crit_mod, no_calcs, override_packet_type, take_power))
+					success = true;
+			}
+		}
+		lua_interface->SetBooleanValue(state, luaspell->has_damaged);
+		if (success) {
+			Spell* spell = luaspell->spell;
+			if (caster->IsPlayer() && spell && spell->GetSpellData()->target_type == 1 && spell->GetSpellData()->spell_book_type == 1) { //offense combat art
+				((Player*)caster)->InCombat(true);
+				if (caster->GetZone())
+					caster->GetZone()->TriggerCharSheetTimer();
+			}
+		}
+	}
+	else {
+		lua_interface->SetBooleanValue(state, false);
+	}
+	return 1;
 }
 int EQ2Emu_lua_ModifyPower(lua_State* state) {
 	if (!lua_interface)
@@ -12424,30 +12537,39 @@ int EQ2Emu_lua_DamageSpawn(lua_State* state) {
 	bool is_tick = (lua_interface->GetInt8Value(state, 9) == 1);
 	bool no_calcs = (lua_interface->GetInt8Value(state, 10) == 1);
 	bool ignore_attacker = (lua_interface->GetInt8Value(state, 11) == 1);
+	bool take_power = (lua_interface->GetInt8Value(state, 12) == 1);
 
 	lua_interface->ResetFunctionStack(state);
 	if (!attacker) {
 		lua_interface->LogError("%s: LUA ProcDamage command error: caster is not a valid spawn", lua_interface->GetScriptName(state));
-		return 0;
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+
 	}
 
 	if (!attacker->IsEntity()) {
 		lua_interface->LogError("%s: LUA ProcDamage command error: caster is not an entity", lua_interface->GetScriptName(state));
-		return 0;
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+
 	}
 
 	if (!victim) {
 		lua_interface->LogError("%s: LUA ProcDamage command error: target is not a valid spawn", lua_interface->GetScriptName(state));
-		return 0;
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
+
 	}
 
 	if (!victim->IsEntity()) {
 		lua_interface->LogError("%s: LUA ProcDamage command error: target is not an entity", lua_interface->GetScriptName(state));
-		return 0;
+		lua_interface->SetBooleanValue(state, false);
+		return 1;
 	}
 
-	((Entity*)attacker)->DamageSpawn((Entity*)victim, type, dmg_type, low_damage, high_damage, spell_name.c_str(), crit_mod, is_tick, no_calcs, ignore_attacker);
-	return 0;
+	bool has_damaged = ((Entity*)attacker)->DamageSpawn((Entity*)victim, type, dmg_type, low_damage, high_damage, spell_name.c_str(), crit_mod, is_tick, no_calcs, ignore_attacker, take_power);
+	lua_interface->SetBooleanValue(state, has_damaged);
+	return 1;
 }
 
 int EQ2Emu_lua_IsInvulnerable(lua_State* state) {
@@ -13877,4 +13999,31 @@ int EQ2Emu_lua_RemoveWidgetFromZoneMap(lua_State* state) {
 	zone->AddIgnoredWidget(widget_id);
 	lua_interface->SetBooleanValue(state, true);
 	return 1;
+}
+
+int EQ2Emu_lua_SendHearCast(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
+	Spawn* spawn = lua_interface->GetSpawn(state);
+	int32 spell_visual_id = lua_interface->GetInt32Value(state, 2);
+	int16 cast_time = lua_interface->GetInt16Value(state, 3);
+	Spawn* caster = lua_interface->GetSpawn(state, 4);
+	Spawn* target = lua_interface->GetSpawn(state, 5);
+	lua_interface->ResetFunctionStack(state);
+	if(spell && spawn && spawn->IsEntity()) {
+		ZoneServer* zone = spawn->GetZone();
+		if(zone) {
+			zone->SendCastSpellPacket(spell, caster && caster->IsEntity() ? (Entity*)caster : (Entity*)spawn, spell_visual_id, cast_time > 0 ? cast_time : 0xFFFF);
+		}
+	}
+	else if (spawn) {
+		if (spawn->IsPlayer()) {
+			Client* client = ((Player*)spawn)->GetClient();
+			if (client) {
+				client->SendHearCast(caster ? caster : client->GetPlayer(), target ? target : client->GetPlayer(), spell_visual_id, cast_time);
+			}
+		}
+	}
+	return 0;
 }

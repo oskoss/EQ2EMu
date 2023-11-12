@@ -301,7 +301,7 @@ void Sign::HandleUse(Client* client, string command)
 
 
 		//devn00b: Add support for marking objects
-		if (strcmp(entity_command->command.c_str(), "mark") == 0) {
+		if (entity_command && strcmp(entity_command->command.c_str(), "mark") == 0) {
 			LogWrite(SIGN__DEBUG, 0, "Sign", "ActivateMarkReqested Sign - Command: '%s' (Should read mark)", entity_command->command.c_str());
 			int32 char_id = client->GetCharacterID();
 			database.SaveSignMark(char_id, GetWidgetID(), database.GetCharacterName(char_id), client);

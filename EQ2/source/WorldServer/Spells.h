@@ -364,6 +364,7 @@ public:
 	bool IsOffenseSpell();
 	bool IsCopiedSpell();
 	void ModifyCastTime(Entity* caster);
+	int32 CalculateRecastTimer(Entity* caster, float override_timer = 0.0f);
 	bool CastWhileStunned();
 	bool CastWhileMezzed();
 	bool CastWhileStifled();

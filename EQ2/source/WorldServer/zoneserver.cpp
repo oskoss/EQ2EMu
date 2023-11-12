@@ -5249,13 +5249,18 @@ void ZoneServer::SendInterruptPacket(Spawn* interrupted, LuaSpell* spell, bool f
 	safe_delete(packet);
 }
 
-void ZoneServer::SendCastSpellPacket(LuaSpell* spell, Entity* caster){
+void ZoneServer::SendCastSpellPacket(LuaSpell* spell, Entity* caster, int32 spell_visual_override, int16 casttime_override){
 	EQ2Packet* outapp = 0;
 	PacketStruct* packet = 0;
 	Client* client = 0;
 	if(!caster || !spell || !spell->spell || spell->interrupted)
 		return;
 
+	if(spell->is_damage_spell && (!spell->has_damaged || spell->resisted)) {
+		// we did not successfully hit target, so we should not send the visual
+		return;
+	}
+	
 	vector<Client*>::iterator client_itr;
 
 	MClientList.readlock(__FUNCTION__, __LINE__);
@@ -5284,8 +5289,17 @@ void ZoneServer::SendCastSpellPacket(LuaSpell* spell, Entity* caster){
 					packet->setArrayDataByName("target", 0xFFFFFFFF, i);
 				}
 			}
-			packet->setDataByName("spell_visual", spell->spell->GetSpellData()->spell_visual); //result
-			packet->setDataByName("cast_time", spell->spell->GetSpellData()->cast_time*.01f); //delay
+			
+			int32 visual_to_use = spell_visual_override > 0 ? spell_visual_override : spell->spell->GetSpellData()->spell_visual;
+			int32 visual = client->GetSpellVisualOverride(visual_to_use);
+			
+			packet->setDataByName("spell_visual", visual); //result
+			if(casttime_override != 0xFFFF) {
+				packet->setDataByName("cast_time", casttime_override*.01f); //delay
+			}
+			else {
+				packet->setDataByName("cast_time", spell->spell->GetSpellData()->cast_time*.01f); //delay
+			}
 			packet->setDataByName("spell_id", spell->spell->GetSpellID());
 			packet->setDataByName("spell_level", 1);
 			packet->setDataByName("spell_tier", spell->spell->GetSpellData()->tier);
@@ -5330,7 +5344,10 @@ void ZoneServer::SendCastSpellPacket(int32 spell_visual, Spawn* target, Spawn* c
 				}
 				packet->setArrayLengthByName("num_targets", 1);
 				packet->setArrayDataByName("target", target_id);
-				packet->setDataByName("spell_visual", spell_visual);
+
+				int32 visual = client->GetSpellVisualOverride(spell_visual);
+				
+				packet->setDataByName("spell_visual", visual);
 				packet->setDataByName("cast_time", 0);
 				packet->setDataByName("spell_id", 0);
 				packet->setDataByName("spell_level", 0);

@@ -61,7 +61,7 @@ public:
 		if(in_targeted_message)
 			targeted_message = string(in_targeted_message);
 	}
-	int GetVisualState() { return visual_state; }
+	int32 GetVisualState() { return visual_state; }
 	const char* GetName() { return name.c_str(); }
 	const char* GetMessage() { return message.c_str(); }
 	const char* GetTargetedMessage() { return targeted_message.c_str(); }
@@ -70,7 +70,7 @@ public:
 	string GetMessageString() { return message; }
 	string GetTargetedMessageString() { return targeted_message; }
 private:
-	int visual_state;
+	int32 visual_state;
 	string name;
 	string message;
 	string targeted_message;
@@ -98,7 +98,7 @@ public:
 	}
 
 	void AddVersionRange(int32 min_version, int32 max_version,
-		char* in_name, int in_visual_state, char* in_message, char* in_targeted_message)
+		char* in_name, int in_visual_state, char* in_message = nullptr, char* in_targeted_message = nullptr)
 	{
 		map<VersionRange*, Emote*>::iterator itr = FindVersionRange(min_version, max_version);
 		if (itr != version_map.end())
@@ -164,8 +164,9 @@ public:
 	void Reset(){
 		ClearVisualStates();
 		ClearEmotes();
+		ClearSpellVisuals();
 	}
-
+	
 	void ClearEmotes(){
 		map<string, EmoteVersionRange*>::iterator map_list;
 		for(map_list = emoteMap.begin(); map_list != emoteMap.end(); map_list++ )
@@ -215,8 +216,67 @@ public:
 		}
 		return 0;
 	}
+	
+	void InsertSpellVisualRange(EmoteVersionRange* emote, int32 spell_visual_id) {
+		spellMap[emote->GetName()] = emote;
+		spellMapID[spell_visual_id] = emote;
+	}
+
+	EmoteVersionRange* FindSpellVisualRange(string var) {
+		if (spellMap.count(var) > 0)
+		{
+			return spellMap[var];
+		}
+		return 0;
+	}
+
+	EmoteVersionRange* FindSpellVisualRangeByID(int32 id) {
+		if (spellMapID.count(id) > 0)
+		{
+			return spellMapID[id];
+		}
+		return 0;
+	}
+
+	Emote* FindSpellVisual(string var, int32 version){
+		if (spellMap.count(var) > 0)
+		{
+			map<VersionRange*,Emote*>::iterator itr = spellMap[var]->FindEmoteVersion(version);
+
+			if (itr != spellMap[var]->GetRangeEnd())
+			{
+				Emote* emote = itr->second;
+				return emote;
+			}
+		}
+		return 0;
+	}
+	
+	Emote* FindSpellVisualByID(int32 visual_id, int32 version){
+		if (spellMapID.count(visual_id) > 0)
+		{
+			map<VersionRange*,Emote*>::iterator itr = spellMapID[visual_id]->FindEmoteVersion(version);
+
+			if (itr != spellMapID[visual_id]->GetRangeEnd())
+			{
+				Emote* emote = itr->second;
+				return emote;
+			}
+		}
+		return 0;
+	}
+
+	void ClearSpellVisuals(){
+		map<string, EmoteVersionRange*>::iterator map_list;
+		for(map_list = spellMap.begin(); map_list != spellMap.end(); map_list++ )
+			safe_delete(map_list->second);
+		spellMap.clear();
+		spellMapID.clear();
+	}
 private:
 	map<string,VisualState*> visualStateMap;
 	map<string,EmoteVersionRange*> emoteMap;
+	map<string,EmoteVersionRange*> spellMap;
+	map<int32,EmoteVersionRange*> spellMapID;
 };
 

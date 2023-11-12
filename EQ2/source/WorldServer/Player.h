@@ -513,6 +513,8 @@ public:
 	vector<EQ2Packet*>	UnequipItem(int16 index, sint32 bag_id, int8 slot, int16 version, int8 appearance_type = 0, bool send_item_updates = true);
 	int16 ConvertSlotToClient(int8 slot, int16 version);
 	int16 ConvertSlotFromClient(int8 slot, int16 version);
+	int16 GetNumSlotsEquip(int16 version);
+	int8 GetMaxBagSlots(int16 version);
 	EQ2Packet* SwapEquippedItems(int8 slot1, int8 slot2, int16 version, int16 equiptype);
 	EQ2Packet*	RemoveInventoryItem(int8 bag_slot, int8 slot);
 	EQ2Packet*	SendInventoryUpdate(int16 version);
@@ -1181,6 +1183,7 @@ private:
 	void ModifySpellStatus(SpellBookEntry* spell, sint16 value, bool modify_recast = true, int16 recast = 0);
 	void AddSpellStatus(SpellBookEntry* spell, sint16 value, bool modify_recast = true, int16 recast = 0);
 	void RemoveSpellStatus(SpellBookEntry* spell, sint16 value, bool modify_recast = true, int16 recast = 0);
+	void SetSpellEntryRecast(SpellBookEntry* spell, bool modify_recast, int16 recast);
 	void InitXPTable();
 	map<int8, int32> m_levelXPReq;
 

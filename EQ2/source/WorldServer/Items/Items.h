@@ -24,7 +24,6 @@
 #include <ctime>
 #include "../../common/types.h"
 #include "../../common/DataBuffer.h"
-#include "../../common/MiscFunctions.h"
 #include "../Commands/Commands.h"
 #include "../../common/ConfigReader.h"
 
@@ -111,8 +110,10 @@ extern MasterItemList master_item_list;
 #define DOF_DRINK_SLOT 2097152
 
 #define CLASSIC_EQ_MAX_BAG_SLOTS 20
+#define DOF_EQ_MAX_BAG_SLOTS 36
 #define NUM_BANK_SLOTS 12
 #define NUM_SHARED_BANK_SLOTS 8
+#define CLASSIC_NUM_SLOTS 22
 #define NUM_SLOTS 25
 #define NUM_INV_SLOTS 6
 #define INV_SLOT1 0
@@ -204,8 +205,8 @@ extern MasterItemList master_item_list;
 
 
 
-#define ITEM_MENU_TYPE_GENERIC			1 //0
-#define ITEM_MENU_TYPE_EQUIP			2 //1
+#define ITEM_MENU_TYPE_GENERIC			1 //0 (NON_EQUIPABLE)
+#define ITEM_MENU_TYPE_EQUIP			2 //1 (This is SLOT_FULL for classic)
 #define ITEM_MENU_TYPE_BAG				4//2
 #define ITEM_MENU_TYPE_HOUSE			8 //3 Place
 #define ITEM_MENU_TYPE_EMPTY_BAG		16	//4

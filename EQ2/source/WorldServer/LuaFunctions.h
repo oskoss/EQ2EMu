@@ -183,6 +183,7 @@ int EQ2Emu_lua_Spawn(lua_State* state);
 int EQ2Emu_lua_AddSpawnAccess(lua_State* state);
 int EQ2Emu_lua_CastSpell(lua_State* state);
 int EQ2Emu_lua_SpellDamage(lua_State* state);
+int EQ2Emu_lua_SpellDamageExt(lua_State* state);
 int EQ2Emu_lua_FaceTarget(lua_State* state);
 int EQ2Emu_lua_MoveToLocation(lua_State* state);
 int EQ2Emu_lua_ClearRunningLocations(lua_State* state);
@@ -646,4 +647,6 @@ int EQ2Emu_lua_RemoveRecipeFromPlayer(lua_State* state);
 int EQ2Emu_lua_ReplaceWidgetFromClient(lua_State* state);
 int EQ2Emu_lua_RemoveWidgetFromSpawnMap(lua_State* state);
 int EQ2Emu_lua_RemoveWidgetFromZoneMap(lua_State* state);
+
+int EQ2Emu_lua_SendHearCast(lua_State* state);
 #endif

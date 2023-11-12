@@ -86,6 +86,7 @@ along with EQ2Emulator.  If not, see <http://www.gnu.org/licenses/>.
 #include "Tradeskills/Tradeskills.h"
 #include "AltAdvancement/AltAdvancement.h"
 #include "Bots/Bot.h"
+#include "VisualStates.h"
 
 extern WorldDatabase database;
 extern const char* ZONE_NAME;
@@ -119,6 +120,7 @@ extern MasterAAList master_aa_list;
 extern MasterAAList master_tree_nodes;
 extern ChestTrapList chest_trap_list;
 extern MasterRecipeBookList master_recipebook_list;
+extern VisualStates visual_states;
 
 using namespace std;
 
@@ -3036,7 +3038,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 			sent_item_details[id] = true;
 			MItemDetails.releasewritelock(__FUNCTION__, __LINE__);
 			EQ2Packet* app = item->serialize(GetVersion(), false, GetPlayer());
-			//DumpPacket(app);
+			
 			QueuePacket(app);
 			if (wasSpawn)
 				delete item;
@@ -3070,7 +3072,6 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 			sent_item_details[id] = true;
 			MItemDetails.releasewritelock(__FUNCTION__, __LINE__);
 			EQ2Packet* app = item->serialize(GetVersion(), false, GetPlayer());
-			//DumpPacket(app);
 			QueuePacket(app);
 		}
 		else {
@@ -3099,7 +3100,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if (item) {
 			//only display popup for non merchant links
 			EQ2Packet* app = item->serialize(GetVersion(), (request->getType_int8_ByName("show_popup") != 0), GetPlayer(), true, 0, 0, GetVersion() > 546 ? true : false);
-			//DumpPacket(app);
+			
 			QueuePacket(app);
 		}
 		else {
@@ -7965,9 +7966,7 @@ void Client::SendBuyMerchantList(bool sell) {
 					else
 						packet->setDataByName("type", 2);
 				}
-				packet->PrintPacket();
 				EQ2Packet* outapp = packet->serialize();
-				//	DumpPacket(outapp);
 				QueuePacket(outapp);
 				safe_delete(packet);
 			}
@@ -8541,7 +8540,6 @@ void Client::SendMailList() {
 				p->setArrayDataByName("player_to_id", mail->player_to_id, i);
 				p->setArrayDataByName("player_from", mail->player_from.c_str(), i);
 				p->setArrayDataByName("subject", mail->subject.c_str(), i);
-				p->setArrayDataByName("unknown1", 0x0000, i);
 				p->setArrayDataByName("already_read", mail->already_read, i);
 				if(mail->expire_time)
 					p->setArrayDataByName("mail_deletion", mail->expire_time - mail->time_sent, i);
@@ -8598,6 +8596,8 @@ void Client::SendMailList() {
 			p->setDataByName("unknown3", 0x01F4);
 			p->setDataByName("unknown4", 0x01000000);
 			EQ2Packet* pack = p->serialize();
+			//DumpPacket(pack);
+			//p->PrintPacket();
 			QueuePacket(pack);
 			safe_delete(p);
 		}
@@ -12415,4 +12415,45 @@ ZoneServer* Client::GetHouseZoneServer(int32 spawn_id, int64 house_id) {
 	}
 	
 	return nullptr;
+}
+
+void Client::SendHearCast(Spawn* caster, Spawn* target, int32 spell_visual, int16 cast_time) {
+	PacketStruct* packet = configReader.getStruct("WS_HearCastSpell", GetVersion());
+	if (packet) {
+		int32 caster_id = GetPlayer()->GetIDWithPlayerSpawn(caster);
+		int32 target_id = GetPlayer()->GetIDWithPlayerSpawn(target);
+		
+		packet->setDataByName("spawn_id", caster_id);
+		packet->setArrayLengthByName("num_targets", 1);
+		packet->setArrayDataByName("target", target_id);
+		packet->setDataByName("num_targets", 1);
+
+		int32 visual = GetSpellVisualOverride(spell_visual);
+		
+		packet->setDataByName("spell_visual", visual); //result
+		packet->setDataByName("cast_time", cast_time*.01f); //delay
+		packet->setDataByName("spell_id", 1);
+		packet->setDataByName("spell_level", 1);
+		packet->setDataByName("spell_tier", 1);
+		EQ2Packet* outapp = packet->serialize();
+		
+		DumpPacket(outapp);
+		QueuePacket(outapp);
+		safe_delete(packet);
+	}
+}
+
+int32 Client::GetSpellVisualOverride(int32 spell_visual) {
+	int32 visual = spell_visual;
+	if(GetVersion() <= 546) { // spell's spell_visual field is based on newer clients, DoF has to convert
+		Emote* spellVisualEmote = visual_states.FindSpellVisualByID(visual, 60085);
+		if(spellVisualEmote != nullptr && spellVisualEmote->GetMessageString().size() > 0) {
+			spellVisualEmote = visual_states.FindSpellVisual(spellVisualEmote->GetMessageString(), GetVersion());
+			if(spellVisualEmote) {
+				visual = (int32)spellVisualEmote->GetVisualState();
+			}
+		}
+	}
+	
+	return visual;
 }

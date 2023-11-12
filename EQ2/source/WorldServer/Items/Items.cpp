@@ -2098,7 +2098,6 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 					tradeskill_class_levels[i] = tmp_level;
 			}
 		}
-		bool simplified_display = false;
 		if (client->GetVersion() <= 546) { //simplify display (if possible)
 			map<int8, int16> new_adv_class_levels;
 			for (int i = 1; i <= 31; i += 10) {
@@ -2115,7 +2114,6 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 				}
 			}
 			if (new_adv_class_levels.size() > 0) {
-				simplified_display = true;
 				int8 i = 0;
 				for (itr = new_adv_class_levels.begin(); itr != new_adv_class_levels.end(); itr++) {
 					i = itr->first;
@@ -2302,9 +2300,11 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 			}
 			case ITEM_TYPE_BAG:{
 				if(bag_info){
+					
+					int8 max_slots = player->GetMaxBagSlots(client->GetVersion());
+					if (bag_info->num_slots > max_slots)
+						bag_info->num_slots = max_slots;
 					if (client->GetVersion() <= 546) {
-						if (bag_info->num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
-							bag_info->num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
 						packet->setSubstructDataByName("details", "num_slots", bag_info->num_slots);
 						packet->setSubstructDataByName("details", "weight_reduction", bag_info->weight_reduction);
 					}
@@ -2375,12 +2375,14 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 							packet->setSubstructDataByName("header_info", "footer_type", 0);
 							
 							spell->SetPacketInformation(packet, player->GetZone()->GetClientBySpawn(player));
-							if (player->HasSpell(skill_info->spell_id, skill_info->spell_tier, true))
+							if (player->HasSpell(skill_info->spell_id, skill_info->spell_tier, true)) {
 								packet->setDataByName("scribed", 1);
+							}
 
 								if (packet->GetVersion() >= 927){
-									if (player->HasSpell(skill_info->spell_id, skill_info->spell_tier, true))
+									if (player->HasSpell(skill_info->spell_id, skill_info->spell_tier, true)) {
 										packet->setAddToPacketByName("scribed_better_version", 1);// need to confirm
+									}
 								}
 								else
 									packet->setAddToPacketByName("scribed_better_version", 0); //if not scribed
@@ -2576,7 +2578,6 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	packet->setSubstructDataByName("footer", "description", description.c_str());
 
 	LogWrite(ITEM__PACKET, 0, "Items", "Dump/Print Packet in func: %s, line: %i", __FUNCTION__, __LINE__);
-
 #if EQDEBUG >= 9
 	packet->PrintPacket();
 #endif
@@ -3547,9 +3548,12 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 		menu_data -= ITEM_MENU_TYPE_GENERIC;
 
 	if (item->details.num_slots > 0) {
-		if (packet->GetVersion() <= 546 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
-			item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
+		int8 max_slots = player->GetMaxBagSlots(client->GetVersion());
+		if (item->details.num_slots > max_slots)
+			item->details.num_slots = max_slots;
+		
 		menu_data += ITEM_MENU_TYPE_BAG;
+		
 		if (item->details.num_free_slots == item->details.num_slots)
 			menu_data += ITEM_MENU_TYPE_EMPTY_BAG;
 	}
@@ -3653,24 +3657,24 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 		packet->setSubstructArrayDataByName("items", "unique_id", item->details.item_id, 0, i);
 	else
 		packet->setSubstructArrayDataByName("items", "unique_id", item->details.unique_id, 0, i);
+	packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id, 0, i);
 	packet->setSubstructArrayDataByName("items", "inv_slot_id", item->details.inv_slot_id, 0, i);
 	packet->setSubstructArrayDataByName("items", "menu_type", menu_data, 0, i);
-	if (overflow) {
+	if (overflow)
 		packet->setSubstructArrayDataByName("items", "index", 0xFFFF, 0, i);
-	}
 	else {
-		
-		if(i < 6) {
-			packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id ? item->details.bag_id : i, 0, i);
-			packet->setSubstructArrayDataByName("items", "index", 0xFF, 0, i);
-			
+		if(packet->GetVersion() <= 546) {
+				/* DoF client and earlier side automatically assigns indexes
+				** we have to send 0xFF or else all index is set to 255 on client
+				** and then examine inventory won't work */
+				packet->setSubstructArrayDataByName("items", "index", 0xFF, 0, i);
 		}
 		else {
-			packet->setSubstructArrayDataByName("items", "bag_id", item->details.bag_id, 0, i);
-			packet->setSubstructArrayDataByName("items", "index", i, 0, i);
+				packet->setSubstructArrayDataByName("items", "index", i, 0, i);
 		}
-		item->details.index = i;
 	}
+	item->details.index = i;
+	
 	packet->setSubstructArrayDataByName("items", "icon", item->details.icon, 0, i);
 	packet->setSubstructArrayDataByName("items", "slot_id", item->details.slot_id, 0, i); // inventory doesn't convert slots
 	if (client->GetVersion() <= 1208) {
@@ -3692,11 +3696,6 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 	packet->setSubstructArrayDataByName("items", "item_id", item->details.item_id, 0, i);
 	//need broker id
 	packet->setSubstructArrayDataByName("items", "name", item->name.c_str(), 0, i);
-
-	
-		
-
-
 	
 }
 
@@ -4147,7 +4146,7 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 		PacketStruct* packet2 = configReader.getStruct("Substruct_Item", version);
 		packet_size = packet2->GetTotalPacketSize();
 		safe_delete(packet2);
-		int8 num_slots = NUM_SLOTS;
+		int8 num_slots = player->GetNumSlotsEquip(version);
 		packet->setArrayLengthByName("item_count", num_slots);
 		if(!orig_packet){
 			xor_packet = new uchar[packet_size* num_slots];
@@ -4161,7 +4160,7 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 
 		int32 levelsLowered = (effective_level > 0 && effective_level < player->GetLevel()) ? player->GetLevel() - effective_level : 0;
 
-		for(int16 i=0;i<NUM_SLOTS;i++){
+		for(int16 i=0;i<num_slots;i++){
 			// override the item slot we currently check as the client has different ordering, we need to match it
 			int16 itemIdx = player->ConvertSlotFromClient(i, version);
 			
@@ -4171,9 +4170,12 @@ EQ2Packet* EquipmentItemList::serialize(int16 version, Player* player){
 				if(item->slot_data.size() > 0)
 					menu_data -= ITEM_MENU_TYPE_GENERIC;
 				if (item->details.num_slots > 0) {
-					if (packet->GetVersion() <= 546 && item->details.num_slots > CLASSIC_EQ_MAX_BAG_SLOTS)
-						item->details.num_slots = CLASSIC_EQ_MAX_BAG_SLOTS;
+					int8 max_slots = player->GetMaxBagSlots(version);
+					if (item->details.num_slots > max_slots)
+						item->details.num_slots = max_slots;
+					
 					menu_data += ITEM_MENU_TYPE_BAG;
+					
 					if (item->details.num_free_slots == item->details.num_slots)
 						menu_data += ITEM_MENU_TYPE_EMPTY_BAG;
 				}

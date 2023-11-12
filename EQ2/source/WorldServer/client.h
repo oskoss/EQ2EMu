@@ -585,6 +585,9 @@ public:
 	
 	void	SendReplaceWidget(int32 widget_id, bool delete_widget, float x=0.0f, float y=0.0f, float z=0.0f, int32 grid_id=0);
 	void	ProcessZoneIgnoreWidgets();
+	
+	void	SendHearCast(Spawn* caster, Spawn* target, int32 spell_visual, int16 cast_time);
+	int32	GetSpellVisualOverride(int32 spell_visual);
 private:
 	void	AddRecipeToPlayerPack(Recipe* recipe, PacketStruct* packet, int16* i);
 	void    SavePlayerImages();

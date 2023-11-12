@@ -2938,6 +2938,21 @@ to zero and treated like placeholders." />
 <Data ElementName="spell" Type="int8" />
 <Data ElementName="spell_name" Type="EQ2_16Bit_String" Size="1" />
 </Struct>
+<Struct Name="WS_HearSiphonSpellDamage" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearCombatCmd">
+<Data ElementName="header" Substruct="WS_HearDamage_Header" Size="1" />
+<Data ElementName="num_dmg" Type="int8" />
+<Data ElementName="siphon_type" Type="int8" />
+<Data ElementName="dmg_array" Type="Array" ArraySizeVariable="num_dmg">
+	<Data ElementName="damage_type" Type="int8" />
+	<Data ElementName="damage" Type="int16" />
+	<Data ElementName="unknown1" Type="int8" />
+	<Data ElementName="unknown2" Type="int8" />
+	<Data ElementName="crit_flag" Type="int8" /> <!-- 4==crit -->
+	<Data ElementName="unknown4" Type="int8" />
+</Data>
+<Data ElementName="spell" Type="int8" />
+<Data ElementName="spell_name" Type="EQ2_16Bit_String" Size="1" />
+</Struct>
 <Struct Name="WS_HearSiphonSpellDamage" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearCombatCmd">
 <Data ElementName="header" Substruct="WS_HearDamage_Header" Size="1" />
 <Data ElementName="siphon_type" Type="int8" />
@@ -3094,8 +3109,8 @@ to zero and treated like placeholders." />
 <Data ElementName="header" Substruct="WS_HearDamage_Header" Size="1" />
 <Data ElementName="siphon_type" Type="int8" />
 <Data ElementName="siphon_subtype" Type="int8" />
-<Data ElementName="damage" Type="int16" />
-<Data ElementName="unknown1" Type="int8" Size="2" />
+<Data ElementName="damage" Type="int32" />
+<Data ElementName="unknown1" Type="int8" Size="5" />
 <Data ElementName="spell_name" Type="EQ2_8Bit_String" Size="1" />
 <!-- All Hear spell damages so far seem to have new bytes at the end (who knows for how long) -->
 <Data ElementName="unknown2" Type="int8" Size="5" />
@@ -3132,12 +3147,20 @@ to zero and treated like placeholders." />
 <!-- All Hear spell damages so far seem to have new bytes at the end (who knows for how long) -->
 <Data ElementName="unknown2" Type="int8" Size="5" />
 </Struct>
+<!-- WS_HearHeal may be innaccurate, copied from DoF -->
 <Struct Name="WS_HearHeal" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearHealCmd">
 <Data ElementName="caster" Type="int32" />
 <Data ElementName="target" Type="int32" />
-<Data ElementName="heal_amt" Type="int32" />
+<Data ElementName="heal_amt" Type="int16" />
 <Data ElementName="spellname" Type="EQ2_16Bit_String" Size="1"/>
-<Data ElementName="type" Type="int16" />
+<Data ElementName="type" Type="int8" />
+</Struct>
+<Struct Name="WS_HearHeal" ClientVersion="546" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearHealCmd">
+<Data ElementName="caster" Type="int32" />
+<Data ElementName="target" Type="int32" />
+<Data ElementName="heal_amt" Type="int16" />
+<Data ElementName="spellname" Type="EQ2_16Bit_String" Size="1"/>
+<Data ElementName="type" Type="int8" />
 </Struct>
 <Struct Name="WS_HearHeal" ClientVersion="57048" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqHearHealCmd">
 <Data ElementName="caster" Type="int32" />

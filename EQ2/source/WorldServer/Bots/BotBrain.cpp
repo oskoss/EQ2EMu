@@ -147,7 +147,7 @@ bool BotBrain::ProcessSpell(Entity* target, float distance) {
 			Body->GetZone()->ProcessSpell(spell, Body, Body->GetTarget());
 			m_spellRecovery = (int32)(Timer::GetCurrentTime2() + (spell->GetSpellData()->cast_time * 10) + (spell->GetSpellData()->recovery * 10) + 2000);
 			// recast time
-			int32 time = Timer::GetCurrentTime2() + (spell->GetSpellData()->recast * 1000);
+			int32 time = Timer::GetCurrentTime2() + (spell->CalculateRecastTimer(Body));
 			Body->SetRecast(spell, time);
 
 			string str = "I am casting ";
@@ -191,7 +191,7 @@ bool BotBrain::ProcessOutOfCombatSpells() {
 			Body->GetZone()->ProcessSpell(spell, Body, Body->GetTarget());
 			m_spellRecovery = (int32)(Timer::GetCurrentTime2() + (spell->GetSpellData()->cast_time * 10) + (spell->GetSpellData()->recovery * 10) + 2000);
 			// recast time
-			int32 time = Timer::GetCurrentTime2() + (spell->GetSpellData()->recast * 1000);
+			int32 time = Timer::GetCurrentTime2() + (spell->CalculateRecastTimer(Body));
 			Body->SetRecast(spell, time);
 
 			string str = "I am casting ";

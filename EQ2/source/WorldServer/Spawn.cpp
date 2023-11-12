@@ -2392,21 +2392,27 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 	else
 		packet->setDataByName("soga_model_type", sogaModelType);
 
-	if (GetTempActionState() >= 0)
-		packet->setDataByName("action_state", GetTempActionState());
-	else {
+	int16 action_state = appearance.action_state;
+	if(IsEntity()) {
+		std::string actionState = "";
+		if (GetTempActionState() >= 0) {
+			action_state = GetTempActionState();
+			actionState = ((Entity*)this)->GetInfoStruct()->get_combat_action_state();
+		}
+		else {
+			actionState = ((Entity*)this)->GetInfoStruct()->get_action_state();
+		}
+		
 		Client* client = spawn->GetClient();
-		int16 action_state = appearance.action_state;
 		if(IsEntity() && client) {
-			std::string actionState = ((Entity*)this)->GetInfoStruct()->get_action_state();
 			if(actionState.size() > 0) {
 				Emote* emote = visual_states.FindEmote(actionState, client->GetVersion());
 				if(emote != NULL)
 					action_state = emote->GetVisualState();
 			}
 		}
-		packet->setDataByName("action_state", action_state);
 	}
+	packet->setDataByName("action_state", action_state);
 	
 	bool scaredOfPlayer = false;
 	

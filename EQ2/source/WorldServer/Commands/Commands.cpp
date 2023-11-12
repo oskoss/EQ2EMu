@@ -10628,26 +10628,8 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 			World::newValue = strtoull(sep->arg[1], NULL, 0);
 		}
 		else if (atoi(sep->arg[0]) == 29 && sep->IsNumber(1)) {
-			PacketStruct* packet = configReader.getStruct("WS_HearCastSpell", client->GetVersion());
-			if (packet) {
-				int32 caster_id = client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer());
-				int32 target_id = client->GetPlayer()->GetIDWithPlayerSpawn(client->GetPlayer());
-				
-				packet->setDataByName("spawn_id", caster_id);
-				packet->setArrayLengthByName("num_targets", 1);
-				packet->setArrayDataByName("target", target_id);
-				packet->setDataByName("num_targets", 1);
-				packet->setDataByName("spell_visual", strtoull(sep->arg[1], NULL, 0)); //result
-				packet->setDataByName("cast_time", sep->IsNumber(2) ? strtof(sep->arg[2], NULL)*.01f : 2500); //delay
-				packet->setDataByName("spell_id", 1);
-				packet->setDataByName("spell_level", 1);
-				packet->setDataByName("spell_tier", 1);
-				EQ2Packet* outapp = packet->serialize();
-				
-				DumpPacket(outapp);
-				client->QueuePacket(outapp);
-				safe_delete(packet);
-			}
+			client->SendHearCast(client->GetPlayer(), client->GetPlayer()->GetTarget() ? client->GetPlayer()->GetTarget() : client->GetPlayer(),
+								 strtoull(sep->arg[1], NULL, 0), atoul(sep->arg[2]));
 		}
 		else if (atoi(sep->arg[0]) == 30) {
 			PacketStruct* packet = configReader.getStruct("WS_UpdateSkillBook", client->GetVersion());
@@ -10676,6 +10658,10 @@ void Commands::Command_Test(Client* client, EQ2_16BitString* command_parms) {
 				client->Message(CHANNEL_COLOR_YELLOW, "Send control flag param1 %u param2 %u param value %u", param1, param2, paramval);
 				ClientPacketFunctions::SendServerControlFlags(client, param1, param2, paramval);
 			}
+		}
+		else if (atoi(sep->arg[0]) == 33 && sep->IsNumber(1) && sep->IsNumber(2)) {
+			client->GetCurrentZone()->SendHealPacket(client->GetPlayer(), client->GetPlayer()->GetTarget() ? client->GetPlayer()->GetTarget() : client->GetPlayer(),
+													 atoul(sep->arg[1]), atoul(sep->arg[2]), "TestSpell");
 		}
 	}
 	else {

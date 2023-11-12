@@ -459,11 +459,29 @@ void WorldDatabase::LoadVisualStates()
 			visual_states.InsertEmoteRange(range);
 		}
 		
-		range->AddVersionRange(atoul(row[4]),atoul(row[5]), row[0], atoi(row[1]), row[2], row[3]);
+		range->AddVersionRange(atoul(row[4]),atoul(row[5]), row[0], atoul(row[1]), row[2], row[3]);
 		total++;
-		LogWrite(WORLD__DEBUG, 5, "World", "---Loading emote state: '%s' (%i)", row[1], atoi(row[0]));
+		LogWrite(WORLD__DEBUG, 5, "World", "---Loading emote state: '%s' (%i)", row[0], atoul(row[0]));
 	}
 	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u emote state(s)", total);
+	
+	
+	total = 0;
+	result = query2.RunQuery2(Q_SELECT, "SELECT name, spell_visual_id, alternate_spell_visual, min_version_range, max_version_range FROM spell_visuals");
+	while(result && (row = mysql_fetch_row(result)))
+	{
+		EmoteVersionRange* range = 0;
+		if ((range = visual_states.FindSpellVisualRange(string(row[0]))) == NULL)
+		{
+			range = new EmoteVersionRange(row[0]);
+			visual_states.InsertSpellVisualRange(range, atoul(row[1]));
+		}
+		
+		range->AddVersionRange(atoul(row[3]),atoul(row[4]), row[0], atoul(row[1]), row[2]);
+		total++;
+		LogWrite(WORLD__DEBUG, 5, "World", "---Loading spell visual state: '%s' (%u)", row[1], atoul(row[0]));
+	}
+	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u spell visual state(s)", total);
 }
 
 void WorldDatabase::LoadSubCommandList() 
@@ -7632,7 +7650,7 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 
 	multimap<LuaSpell*, Entity*> restoreSpells;
 	// Use -1 on type and subtype to turn the enum into an int and make it a 0 index
-	if (!database_new.Select(&result, "SELECT name, caster_char_id, target_char_id, target_type, spell_id, effect_slot, slot_pos, icon, icon_backdrop, conc_used, tier, total_time, expire_timestamp, lua_file, custom_spell, damage_remaining, effect_bitmask, num_triggers, had_triggers, cancel_after_triggers, crit, last_spellattack_hit, interrupted, resisted, custom_function FROM character_spell_effects WHERE charid = %u and db_effect_type = %u", char_id, db_spell_type)) {
+	if (!database_new.Select(&result, "SELECT name, caster_char_id, target_char_id, target_type, spell_id, effect_slot, slot_pos, icon, icon_backdrop, conc_used, tier, total_time, expire_timestamp, lua_file, custom_spell, damage_remaining, effect_bitmask, num_triggers, had_triggers, cancel_after_triggers, crit, last_spellattack_hit, interrupted, resisted, has_damaged, custom_function FROM character_spell_effects WHERE charid = %u and db_effect_type = %u", char_id, db_spell_type)) {
 		LogWrite(DATABASE__ERROR, 0, "DBNew", "MySQL Error %u: %s", database_new.GetError(), database_new.GetErrorMsg());
 		return;
 	}
@@ -7668,6 +7686,7 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 		int8 last_spellattack_hit = result.GetInt32Str("last_spellattack_hit");
 		int8 interrupted = result.GetInt32Str("interrupted");
 		int8 resisted = result.GetInt32Str("resisted");
+		int8 has_damaged = result.GetInt32Str("has_damaged");
 		std::string custom_function = std::string(result.GetStringStr("custom_function"));
 		LuaSpell* lua_spell = 0;
 		if(custom_spell)
@@ -7788,6 +7807,8 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 			lua_spell->interrupted = interrupted;
 			lua_spell->last_spellattack_hit = last_spellattack_hit;
 			lua_spell->num_triggers = num_triggers;
+			lua_spell->has_damaged = has_damaged;
+			lua_spell->is_damage_spell = has_damaged;
 		}
 
 		if(lua_spell->initial_target == 0 && target_char_id == 0xFFFFFFFF && player->HasPet())

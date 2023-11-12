@@ -307,10 +307,15 @@ void SpellProcess::CheckRecast(Spell* spell, Entity* caster, float timer_overrid
 		else
 			timer->client = 0;
 		timer->spell = spell;
-		if(timer_override == 0)
-			timer->timer = new Timer((int32)(spell->GetSpellData()->recast*1000));
-		else
-			timer->timer = new Timer((int32)(timer_override*1000));
+		int32 recast_time = spell->GetSpellData()->recast * 1000;
+		if(timer_override == 0) {
+			recast_time = spell->CalculateRecastTimer(caster);
+			timer->timer = new Timer(recast_time);
+		}
+		else {
+			recast_time = spell->CalculateRecastTimer(caster, timer_override);
+			timer->timer = new Timer(recast_time);
+		}
 		
 		timer->type_group_spell_id = spell->GetSpellData()->type_group_spell_id;
 		timer->linked_timer = spell->GetSpellData()->linked_timer;
@@ -318,11 +323,7 @@ void SpellProcess::CheckRecast(Spell* spell, Entity* caster, float timer_overrid
 
 		recast_timers.Add(timer);
 		if(caster->IsPlayer()){
-			if(timer_override == 0)
-				((Player*)caster)->LockSpell(spell, (int16)(spell->GetSpellData()->recast * 10));
-			else
-				((Player*)caster)->LockSpell(spell, timer_override * 10);
-
+			((Player*)caster)->LockSpell(spell, (int16)(recast_time / 100));
 			if (check_linked_timers && spell->GetSpellData()->linked_timer > 0) {
 				vector<Spell*> linkedSpells = ((Player*)caster)->GetSpellBookSpellsByTimer(spell->GetSpellData()->linked_timer);
 				for (int8 i = 0; i < linkedSpells.size(); i++) {
@@ -620,11 +621,13 @@ bool SpellProcess::CastInstant(Spell* spell, Entity* caster, Entity* target, boo
 			lua_interface->ResetFunctionStack(lua_spell->state);
 	}
 
+	bool result = CastProcessedSpell(lua_spell, passive);
+
 	caster->GetZone()->SendCastSpellPacket(lua_spell, caster);
-
-	if (!remove)
-		return CastProcessedSpell(lua_spell, passive);
-
+	
+	if(!remove)
+		return result;
+	
 	lua_interface->RemoveSpell(lua_spell, true, SpellScriptTimersHasSpell(lua_spell));
 	return true;
 }
@@ -651,12 +654,12 @@ void SpellProcess::SendFinishedCast(LuaSpell* spell, Client* client){
 			UnlockAllSpells(client);
 		
 		if(spell->resisted && spell->spell->GetSpellData()->recast > 0)
-			CheckRecast(spell->spell, client->GetPlayer(), 0.5); // half sec recast on resisted spells
+			CheckRecast(spell->spell, client->GetPlayer(), 0.5f); // half sec recast on resisted spells
 		else if (!spell->interrupted)
 			CheckRecast(spell->spell, client->GetPlayer());
 		else if(spell->caster && spell->caster->IsPlayer())
 		{
-			((Player*)spell->caster)->LockSpell(spell->spell, (int16)(spell->spell->GetSpellData()->recast * 10));
+			((Player*)spell->caster)->LockSpell(spell->spell, (int16)(spell->spell->CalculateRecastTimer(spell->caster) / 100));
 		}
 		PacketStruct* packet = configReader.getStruct("WS_FinishCastSpell", client->GetVersion());
 		if(packet){

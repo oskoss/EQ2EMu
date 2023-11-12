@@ -267,6 +267,8 @@ bool LuaInterface::LoadLuaSpell(const char* name) {
 		spell->caster = 0;
 		spell->initial_target = 0;
 		spell->resisted = false;
+		spell->has_damaged = false;
+		spell->is_damage_spell = false;
 		spell->interrupted = false;
 		spell->last_spellattack_hit = false;
 		spell->crit = false;
@@ -987,6 +989,7 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "GetSpeed", EQ2Emu_lua_GetSpeed);
 	lua_register(state, "HasMoved", EQ2Emu_lua_HasMoved);
 	lua_register(state, "SpellDamage", EQ2Emu_lua_SpellDamage);
+	lua_register(state, "SpellDamageExt", EQ2Emu_lua_SpellDamageExt);
 	lua_register(state, "CastSpell", EQ2Emu_lua_CastSpell);	
 	lua_register(state, "SpellHeal", EQ2Emu_lua_SpellHeal);
 	lua_register(state, "SpellHealPct", EQ2Emu_lua_SpellHealPct);
@@ -1516,6 +1519,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "ReplaceWidgetFromClient", EQ2Emu_lua_ReplaceWidgetFromClient);
 	lua_register(state, "RemoveWidgetFromSpawnMap", EQ2Emu_lua_RemoveWidgetFromSpawnMap);
 	lua_register(state, "RemoveWidgetFromZoneMap", EQ2Emu_lua_RemoveWidgetFromZoneMap);
+	
+	lua_register(state, "SendHearCast", EQ2Emu_lua_SendHearCast);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {
@@ -1980,6 +1985,8 @@ LuaSpell* LuaInterface::GetSpell(const char* name)  {
 		new_spell->timer = spell->timer;
 		new_spell->timer.Disable();
 		new_spell->resisted = false;
+		new_spell->is_damage_spell = false;
+		new_spell->has_damaged = false;
 		new_spell->interrupted = false;
 		new_spell->crit = false;
 		new_spell->last_spellattack_hit = false;

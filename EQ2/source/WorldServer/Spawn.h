@@ -1091,11 +1091,13 @@ public:
 	bool	HasMovementLoop(){ return movement_loop.size() > 0; }
 	bool	HasMovementLocations() { 
 			bool hasLocations = false;
-			if (MMovementLocations)
+			if (MMovementLocations) {
 				MMovementLocations->readlock(__FUNCTION__, __LINE__);
+			}
 				hasLocations = movement_locations ? movement_locations->size() > 0 : false;
-			if (MMovementLocations)
+			if (MMovementLocations) {
 				MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
+			}
 			return hasLocations;
 	}
 
