@@ -1337,7 +1337,7 @@ void Entity::CalculateBonuses(){
 	info->set_potency(0);
 	info->set_hate_mod(0);
 	info->set_reuse_speed(0);
-//	info->set_casting_speed(0);
+	info->set_casting_speed(0);
 	info->set_recovery_speed(0);
 	info->set_spell_reuse_speed(0);
 	info->set_spell_multi_attack(0);
