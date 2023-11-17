@@ -317,13 +317,24 @@ void SpellProcess::CheckRecast(Spell* spell, Entity* caster, float timer_overrid
 			timer->timer = new Timer(recast_time);
 		}
 		
-		timer->type_group_spell_id = spell->GetSpellData()->type_group_spell_id;
-		timer->linked_timer = spell->GetSpellData()->linked_timer;
-		timer->spell_id = spell->GetSpellID();
+		if(recast_time < 1) {
+			safe_delete(timer->timer);
+			safe_delete(timer);
+		}
+		else {
+			timer->type_group_spell_id = spell->GetSpellData()->type_group_spell_id;
+			timer->linked_timer = spell->GetSpellData()->linked_timer;
+			timer->spell_id = spell->GetSpellID();
 
-		recast_timers.Add(timer);
+			recast_timers.Add(timer);
+		}
 		if(caster->IsPlayer()){
-			((Player*)caster)->LockSpell(spell, (int16)(recast_time / 100));
+			if(recast_time < 1) {
+				((Player*)caster)->UnlockSpell(spell);
+			}
+			else {
+				((Player*)caster)->LockSpell(spell, (int16)(recast_time / 100));
+			}
 			if (check_linked_timers && spell->GetSpellData()->linked_timer > 0) {
 				vector<Spell*> linkedSpells = ((Player*)caster)->GetSpellBookSpellsByTimer(spell->GetSpellData()->linked_timer);
 				for (int8 i = 0; i < linkedSpells.size(); i++) {
@@ -659,7 +670,7 @@ void SpellProcess::SendFinishedCast(LuaSpell* spell, Client* client){
 			CheckRecast(spell->spell, client->GetPlayer());
 		else if(spell->caster && spell->caster->IsPlayer())
 		{
-			((Player*)spell->caster)->LockSpell(spell->spell, (int16)(spell->spell->CalculateRecastTimer(spell->caster) / 100));
+			((Player*)spell->caster)->LockSpell(spell->spell, (int16)(spell->spell->CalculateRecastTimer(spell->caster)));
 		}
 		PacketStruct* packet = configReader.getStruct("WS_FinishCastSpell", client->GetVersion());
 		if(packet){

@@ -2573,6 +2573,7 @@ void Player::UnlockAllSpells(bool modify_recast, Spell* exception) {
 void Player::LockSpell(Spell* spell, int16 recast) {
 	vector<SpellBookEntry*>::iterator itr;
 	SpellBookEntry* spell2;
+	
 	MSpellsBook.writelock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
 		spell2 = *itr;
@@ -2708,12 +2709,16 @@ void Player::SetSpellStatus(Spell* spell, int8 status){
 
 void Player::SetSpellEntryRecast(SpellBookEntry* spell, bool modify_recast, int16 recast) {
 	if (modify_recast) {
-		spell->recast = recast;
-		float override_recast = static_cast<float>(recast);
 		Spell* spell_ = master_spell_list.GetSpell(spell->spell_id, spell->tier);
 		if(spell_) {
+				
+			float override_recast = 0.0f;
+			if(recast > 0) {
+				override_recast = static_cast<float>(recast);
+			}
 			int32 recast_time = spell_->CalculateRecastTimer(this, override_recast);
-			spell->recast_available = Timer::GetCurrentTime2() + (recast_time / 10);
+			spell->recast = recast_time / 1000;
+			spell->recast_available = Timer::GetCurrentTime2() + recast_time;
 		}
 		else {
 			spell->recast_available = Timer::GetCurrentTime2() + (recast * 100);
