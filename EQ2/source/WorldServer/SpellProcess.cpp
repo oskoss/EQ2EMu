@@ -299,7 +299,7 @@ bool SpellProcess::IsReady(Spell* spell, Entity* caster){
 	return ret;
 }
 void SpellProcess::CheckRecast(Spell* spell, Entity* caster, float timer_override, bool check_linked_timers) {
-	if(spell && caster && spell->GetSpellData()->recast > 0){
+	if(spell && caster && spell->GetSpellData()->recast > 0.0f){
 		RecastTimer* timer = new RecastTimer;
 		timer->caster = caster;
 		if(caster->IsPlayer())
@@ -307,8 +307,9 @@ void SpellProcess::CheckRecast(Spell* spell, Entity* caster, float timer_overrid
 		else
 			timer->client = 0;
 		timer->spell = spell;
-		int32 recast_time = spell->GetSpellData()->recast * 1000;
-		if(timer_override == 0) {
+		int32 recast_time = static_cast<int32>(spell->GetSpellData()->recast * 1000.0f);
+		
+		if(timer_override == 0.0f) {
 			recast_time = spell->CalculateRecastTimer(caster);
 			timer->timer = new Timer(recast_time);
 		}
@@ -333,14 +334,14 @@ void SpellProcess::CheckRecast(Spell* spell, Entity* caster, float timer_overrid
 				((Player*)caster)->UnlockSpell(spell);
 			}
 			else {
-				((Player*)caster)->LockSpell(spell, (int16)(recast_time / 100));
+				((Player*)caster)->LockSpell(spell, (int16)(recast_time));
 			}
 			if (check_linked_timers && spell->GetSpellData()->linked_timer > 0) {
-				vector<Spell*> linkedSpells = ((Player*)caster)->GetSpellBookSpellsByTimer(spell->GetSpellData()->linked_timer);
+				vector<Spell*> linkedSpells = ((Player*)caster)->GetSpellBookSpellsByTimer(spell, spell->GetSpellData()->linked_timer);
 				for (int8 i = 0; i < linkedSpells.size(); i++) {
 					Spell* spell2 = linkedSpells.at(i);
 					if (spell2)
-						CheckRecast(spell2, caster, timer_override, false);
+						CheckRecast(spell2, caster, static_cast<float>(recast_time), false);
 				}
 			}
 		}

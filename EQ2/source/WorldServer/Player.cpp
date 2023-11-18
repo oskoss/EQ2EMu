@@ -2556,11 +2556,14 @@ void Player::UnlockAllSpells(bool modify_recast, Spell* exception) {
 		if ((*itr)->in_use == false && 
 			 (((*itr)->spell_id != exception_spell_id || 
 			 (*itr)->timer > 0 && (*itr)->timer != exception->GetSpellData()->linked_timer)
-		&& (*itr)->type != SPELL_BOOK_TYPE_TRADESKILL))
+		&& (*itr)->type != SPELL_BOOK_TYPE_TRADESKILL)) {
 			AddSpellStatus((*itr), SPELL_STATUS_LOCK, modify_recast);
+			(*itr)->recast_available = 0;
+		}
 		else if((*itr)->in_remiss)
 		{
 			AddSpellStatus((*itr), SPELL_STATUS_LOCK);
+			(*itr)->recast_available = 0;
 			(*itr)->in_remiss = false;
 		}
 	}
@@ -2599,10 +2602,11 @@ void Player::UnlockSpell(Spell* spell) {
 		if (spell2->spell_id == spell->GetSpellID() || (spell->GetSpellData()->linked_timer > 0 && spell->GetSpellData()->linked_timer == spell2->timer))
 		{
 			spell2->in_use = false;
+			spell2->recast_available = 0;
 			if(all_spells_locked)
 				spell2->in_remiss = true;
 			else
-				AddSpellStatus(spell2, SPELL_STATUS_LOCK);
+				AddSpellStatus(spell2, SPELL_STATUS_LOCK, false);
 		}
 	}
 	MSpellsBook.releasewritelock(__FUNCTION__, __LINE__);
@@ -2660,12 +2664,12 @@ void Player::UnQueueSpell(Spell* spell) {
 	MSpellsBook.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-vector<Spell*> Player::GetSpellBookSpellsByTimer(int32 timerID) {
+vector<Spell*> Player::GetSpellBookSpellsByTimer(Spell* spell, int32 timerID) {
 	vector<Spell*> ret;
 	vector<SpellBookEntry*>::iterator itr;
 	MSpellsBook.readlock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
-		if ((*itr)->timer == timerID)
+		if ((*itr)->timer == timerID && spell->GetSpellID() != (*itr)->spell_id && spell->GetSpellTier() != (*itr)->tier)
 			ret.push_back(master_spell_list.GetSpell((*itr)->spell_id, (*itr)->tier));
 	}
 	MSpellsBook.releasereadlock(__FUNCTION__, __LINE__);
@@ -2709,19 +2713,20 @@ void Player::SetSpellStatus(Spell* spell, int8 status){
 
 void Player::SetSpellEntryRecast(SpellBookEntry* spell, bool modify_recast, int16 recast) {
 	if (modify_recast) {
+		spell->recast = recast / 100;
 		Spell* spell_ = master_spell_list.GetSpell(spell->spell_id, spell->tier);
 		if(spell_) {
-				
 			float override_recast = 0.0f;
 			if(recast > 0) {
 				override_recast = static_cast<float>(recast);
 			}
 			int32 recast_time = spell_->CalculateRecastTimer(this, override_recast);
-			spell->recast = recast_time / 1000;
+			
+			spell->recast = recast_time / 100;
 			spell->recast_available = Timer::GetCurrentTime2() + recast_time;
 		}
 		else {
-			spell->recast_available = Timer::GetCurrentTime2() + (recast * 100);
+			spell->recast_available = Timer::GetCurrentTime2() + recast;
 		}
 	}
 }

@@ -2234,10 +2234,10 @@ void Spell::ModifyCastTime(Entity* caster){
 }
 
 int32 Spell::CalculateRecastTimer(Entity* caster, float override_timer) {
-	int32 original_recast = static_cast<int>(GetSpellData()->recast) * 1000;
+	int32 original_recast = static_cast<int32>(GetSpellData()->recast * 1000.0f);
 	
 	if(override_timer > 0.0f) {
-		original_recast = static_cast<int>(override_timer) * 1000;
+		original_recast = static_cast<int32>(override_timer);
 	}
 	
 	int32 recast_time = original_recast;

@@ -981,7 +981,7 @@ public:
 	void UnQueueSpell(Spell* spell);
 
 	///<summary>Get all the spells the player has with the given id</summary>
-	vector<Spell*> GetSpellBookSpellsByTimer(int32 timerID);
+	vector<Spell*> GetSpellBookSpellsByTimer(Spell* spell, int32 timerID);
 
 	PacketStruct* GetQuestJournalPacket(Quest* quest, int16 version, int32 crc, bool updated = true);
 
