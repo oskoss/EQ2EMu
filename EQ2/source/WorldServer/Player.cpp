@@ -2669,7 +2669,7 @@ vector<Spell*> Player::GetSpellBookSpellsByTimer(Spell* spell, int32 timerID) {
 	vector<SpellBookEntry*>::iterator itr;
 	MSpellsBook.readlock(__FUNCTION__, __LINE__);
 	for (itr = spells.begin(); itr != spells.end(); itr++) {
-		if ((*itr)->timer == timerID && spell->GetSpellID() != (*itr)->spell_id && spell->GetSpellTier() != (*itr)->tier)
+		if ((*itr)->timer == timerID && spell->GetSpellID() != (*itr)->spell_id)
 			ret.push_back(master_spell_list.GetSpell((*itr)->spell_id, (*itr)->tier));
 	}
 	MSpellsBook.releasereadlock(__FUNCTION__, __LINE__);
