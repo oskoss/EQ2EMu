@@ -4061,7 +4061,7 @@ bool Client::Summon(const char* search_name) {
 		if (search_name) {
 			target = GetCurrentZone()->FindSpawn(GetPlayer(), search_name);
 			if (target && target->IsPlayer())
-				search_client = GetCurrentZone()->GetClientBySpawn(target);
+				search_client = target->GetClient();
 			if (!target) {
 				search_client = zone_list.GetClientByCharName(string(search_name));
 				if (search_client)
@@ -10838,9 +10838,7 @@ bool Client::HandleNewLogin(int32 account_id, int32 access_code)
 						SetAccountID(client->GetAccountID());
 						SetAdminStatus(client->GetAdminStatus());
 						SetCurrentZone(GetPlayer()->GetZone());
-						GetPlayer()->GetZone()->UpdateClientSpawnMap(GetPlayer(), this);
 						client->SetPlayer(current_player);
-						GetPlayer()->GetZone()->UpdateClientSpawnMap(current_player, client);
 						GetPlayer()->ResetSavedSpawns();
 						restore_ld_success = true;
 						

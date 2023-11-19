@@ -724,9 +724,8 @@ void Bot::Begin_Camp() {
 	if (!GetOwner())
 		return;
 
-	Client* client = GetZone()->GetClientBySpawn(GetOwner());
-	if (client)
-		client->GetPlayer()->SpawnedBots.erase(BotIndex);
+	if (GetOwner()->IsPlayer())
+		((Player*)GetOwner())->SpawnedBots.erase(BotIndex);
 	
 	camping = false;
 	immediate_camp = true;

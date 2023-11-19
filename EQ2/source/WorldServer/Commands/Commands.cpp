@@ -2095,7 +2095,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[1][0] && sep->IsNumber(1)){
 				if(strcmp(sep->arg[0], "inventory") == 0){
 					int32 item_index = atol(sep->arg[1]);
-					
+					//printf("Index provided: %u\n",item_index);
 					if(client->GetVersion() <= 546 && item_index <= 255) {
 						item_index = 255 - item_index;
 					}
@@ -3145,7 +3145,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if (!target && client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsEntity()) {
 				target = (Entity*)client->GetPlayer()->GetTarget();
 				if (target->IsPlayer()) {
-					target_client = client->GetCurrentZone()->GetClientBySpawn(target);
+					target_client = ((Player*)target)->GetClient();
 				}
 			}
 
@@ -6295,12 +6295,13 @@ void Commands::Command_Guild(Client* client, Seperator* sep)
 		{
 			PendingGuildInvite* pgi = client->GetPendingGuildInvite();
 
-			if (pgi && pgi->guild && pgi->invited_by)
+			if (pgi && pgi->guild && pgi->invited_by && pgi->invited_by->IsPlayer())
 			{
-				Client* client_inviter = pgi->invited_by->GetZone()->GetClientBySpawn(pgi->invited_by);
+				Client* client_inviter = ((Player*)pgi->invited_by)->GetClient();
 
-				if (client_inviter)
+				if (client_inviter) {
 					client_inviter->Message(CHANNEL_NARRATIVE, "%s has declined your invitation to join %s.", client->GetPlayer()->GetName(), pgi->guild->GetName());
+				}
 			}
 			client->SetPendingGuildInvite(0);
 		}
@@ -6483,7 +6484,7 @@ void Commands::Command_GuildsAdd(Client* client, Seperator* sep)
 			if (sep->arg[1] && strlen(sep->arg[1]) > 0)
 				to_client = zone_list.GetClientByCharName(string(sep->arg[1]));
 			else if (client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer())
-				to_client = client->GetPlayer()->GetTarget()->GetZone()->GetClientBySpawn(client->GetPlayer()->GetTarget());
+				to_client = ((Player*)client->GetPlayer()->GetTarget())->GetClient();
 
 			if (to_client)
 				guild->InvitePlayer(client, to_client->GetPlayer()->GetName());
@@ -6526,7 +6527,7 @@ void Commands::Command_GuildsCreate(Client* client, Seperator* sep)
 			}
 			else if (client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer()) 
 			{
-				Client* to_client = client->GetPlayer()->GetTarget()->GetZone()->GetClientBySpawn(client->GetPlayer()->GetTarget());
+				Client* to_client = ((Player*)client->GetPlayer()->GetTarget())->GetClient();
 
 				if (to_client) 
 				{
@@ -6664,7 +6665,7 @@ void Commands::Command_GuildsRemove(Client* client, Seperator* sep)
 			if (sep->arg[1] && strlen(sep->arg[1]) > 0)
 				to_client = zone_list.GetClientByCharName(string(sep->arg[1]));
 			else if (client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer())
-				to_client = client->GetPlayer()->GetTarget()->GetZone()->GetClientBySpawn(client->GetPlayer()->GetTarget());
+				to_client = ((Player*)client->GetPlayer()->GetTarget())->GetClient();
 
 			if (to_client) 
 			{
@@ -7491,8 +7492,11 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 	int64 value = 0;
 
 	Player* player = client->GetPlayer();
-	if (player->HasTarget() && player->GetTarget()->IsPlayer())
+	Client* targetClient = client;
+	if (player->HasTarget() && player->GetTarget()->IsPlayer()) {
 		player = (Player*)player->GetTarget();
+		targetClient = player->GetClient();
+	}
 
 	// need at least 2 args for a valid command
 	if( sep && sep->arg[1] )
@@ -7511,7 +7515,9 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				}
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You give %s %llu copper coin%s", player->GetName(), value, (value > 1 ? "s" : ""));
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu copper coin%s", client->GetPlayer()->GetName(), value, (value > 1 ? "s" : ""));
+					if(targetClient) {
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu copper coin%s", client->GetPlayer()->GetName(), value, (value > 1 ? "s" : ""));
+					}
 				}
 			}
 
@@ -7525,7 +7531,9 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				}
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You give %s %llu silver coin%s", player->GetName(), value / 100, (value > 1 ? "s" : ""));
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu silver coin%s", client->GetPlayer()->GetName(), value / 100, (value > 1 ? "s" : ""));
+					if(targetClient) {
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu silver coin%s", client->GetPlayer()->GetName(), value / 100, (value > 1 ? "s" : ""));
+					}
 				}
 			}
 
@@ -7539,7 +7547,9 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				}
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You give %s %llu gold coin%s", player->GetName(), value / 10000, (value > 1 ? "s" : ""));
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu gold coin%s", client->GetPlayer()->GetName(), value / 10000, (value > 1 ? "s" : ""));
+					if(targetClient) {
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu gold coin%s", client->GetPlayer()->GetName(), value / 10000, (value > 1 ? "s" : ""));
+					}
 				}
 			}
 
@@ -7553,7 +7563,9 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				}
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You give %s %llu platinum coin%s", player->GetName(), value / 1000000, (value > 1 ? "s" : ""));
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu platinum coin%s", client->GetPlayer()->GetName(), value / 1000000, (value > 1 ? "s" : ""));
+					if(targetClient) {				
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu platinum coin%s", client->GetPlayer()->GetName(), value / 1000000, (value > 1 ? "s" : ""));
+					}
 				}
 			}
 
@@ -7578,7 +7590,9 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				}
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You take %llu copper coin%s from %s", value, (value > 1 ? "s" : ""), player->GetName());
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s takes %llu copper coin%s from you", client->GetPlayer()->GetName(), value, (value > 1 ? "s" : ""));
+					if(targetClient) {				
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s takes %llu copper coin%s from you", client->GetPlayer()->GetName(), value, (value > 1 ? "s" : ""));
+					}
 				}
 			}
 
@@ -7592,7 +7606,9 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				}
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You take %llu silver coin%s from %s", value / 100, (value > 1 ? "s" : ""), player->GetName());
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s takes %llu silver coin%s from you", client->GetPlayer()->GetName(), value / 100, (value > 1 ? "s" : ""));
+					if(targetClient) {				
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s takes %llu silver coin%s from you", client->GetPlayer()->GetName(), value / 100, (value > 1 ? "s" : ""));
+					}
 				}
 			}
 
@@ -7606,7 +7622,9 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				}
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You take %llu gold coin%s from %s", value / 10000, (value > 1 ? "s" : ""), player->GetName());
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s takes %llu gold coin%s from you", client->GetPlayer()->GetName(), value / 10000, (value > 1 ? "s" : ""));
+					if(targetClient) {
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s takes %llu gold coin%s from you", client->GetPlayer()->GetName(), value / 10000, (value > 1 ? "s" : ""));
+					}
 				}
 			}
 
@@ -7620,7 +7638,9 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 				}
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You take %llu platinum coin%s from %s", value / 1000000, (value > 1 ? "s" : ""), player->GetName());
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s takes %llu platinum coin%s from you", client->GetPlayer()->GetName(), value / 1000000, (value > 1 ? "s" : ""));
+					if(targetClient) {
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s takes %llu platinum coin%s from you", client->GetPlayer()->GetName(), value / 1000000, (value > 1 ? "s" : ""));
+					}
 				}
 			}
 
@@ -7640,8 +7660,8 @@ void Commands::Command_ModifyCharacter(Client* client, Seperator* sep)
 					if (player) {
 						if (client->GetPlayer() == player)
 							client->ChangeTSLevel(player->GetTSLevel(), level);
-						else
-							player->GetZone()->GetClientBySpawn(player)->ChangeTSLevel(player->GetTSLevel(), level);
+						else if(targetClient)
+							targetClient->ChangeTSLevel(player->GetTSLevel(), level);
 					}
 				}
 				else
@@ -7731,8 +7751,11 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 	int64 value = 0;
 
 	Player* player = client->GetPlayer();
-	if (player->HasTarget() && player->GetTarget()->IsPlayer())
+	Client* targetClient = client;
+	if (player->HasTarget() && player->GetTarget()->IsPlayer()) {
 		player = (Player*)player->GetTarget();
+		targetClient = player->GetClient();
+	}
 
 	// need at least 2 args for a valid command
 
@@ -7801,7 +7824,9 @@ void Commands::Command_ModifyQuest(Client* client, Seperator* sep)
 						else
 						{
 							client->Message(CHANNEL_COLOR_YELLOW, "You have removed the quest %s from %s's journal", quest->GetName(), player->GetName());
-							client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s has removed the quest %s from your journal", client->GetPlayer()->GetName(), quest->GetName());
+							if(targetClient) {
+								targetClient->Message(CHANNEL_COLOR_YELLOW, "%s has removed the quest %s from your journal", client->GetPlayer()->GetName(), quest->GetName());
+							}
 						}
 					LogWrite(COMMAND__INFO, 0, "GM Command", "%s removed the quest %s from %s", client->GetPlayer()->GetName(), quest->GetName(), player->GetName());
 					lua_interface->CallQuestFunction(quest, "Deleted", client->GetPlayer());
@@ -7892,7 +7917,7 @@ void Commands::Command_ModifySkill(Client* client, Seperator* sep)
 
 				if (client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer()) {
 					player = (Player*)client->GetPlayer()->GetTarget();
-					to_client = client->GetCurrentZone()->GetClientBySpawn(player);
+					to_client = player->GetClient();
 				}
 				else {
 					player = client->GetPlayer();
@@ -7929,7 +7954,7 @@ void Commands::Command_ModifySkill(Client* client, Seperator* sep)
 
 				if (client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer()) {
 					player = (Player*)client->GetPlayer()->GetTarget();
-					to_client = client->GetCurrentZone()->GetClientBySpawn(player);
+					to_client = player->GetClient();
 				}
 				else {
 					player = client->GetPlayer();
@@ -7946,7 +7971,9 @@ void Commands::Command_ModifySkill(Client* client, Seperator* sep)
 						}
 						else {
 							client->Message(CHANNEL_STATUS, "Removed skill '%s' from player %s.", skill_name, player->GetName());
-							to_client->Message(CHANNEL_STATUS, "%s has removed skill '%s' from you.", client->GetPlayer()->GetName(), skill_name);
+							if(to_client) {
+								to_client->Message(CHANNEL_STATUS, "%s has removed skill '%s' from you.", client->GetPlayer()->GetName(), skill_name);
+							}
 						}
 					}
 					else {
@@ -7975,7 +8002,7 @@ void Commands::Command_ModifySkill(Client* client, Seperator* sep)
 
 				if (client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer()) {
 					player = (Player*)client->GetPlayer()->GetTarget();
-					to_client = client->GetCurrentZone()->GetClientBySpawn(player);
+					to_client = player->GetClient();
 				}
 				else {
 					player = client->GetPlayer();
@@ -7988,8 +8015,9 @@ void Commands::Command_ModifySkill(Client* client, Seperator* sep)
 						player->GetSkills()->SetSkill(skill->skill_id, val);
 						if (client != to_client)
 							client->Message(CHANNEL_STATUS, "You set %s's '%s' skill to %i.", player->GetName(), skill_name, val);
-
-						to_client->Message(CHANNEL_STATUS, "Your '%s' skill has been set to %i.", skill_name, val);
+						if(to_client) {
+							to_client->Message(CHANNEL_STATUS, "Your '%s' skill has been set to %i.", skill_name, val);
+						}
 					}
 					else {
 						client->Message(CHANNEL_STATUS, "Target does not have the skill '%s'.", skill_name);
@@ -8632,7 +8660,7 @@ void Commands::Command_Skills(Client* client, Seperator* sep, int handler)
 	Client* to_client = 0;
 
 	if(client->GetPlayer()->GetTarget() && client->GetPlayer()->GetTarget()->IsPlayer())
-		to_client = client->GetPlayer()->GetTarget()->GetZone()->GetClientBySpawn(client->GetPlayer()->GetTarget());
+		to_client = ((Player*)client->GetPlayer()->GetTarget())->GetClient();
 
 	switch(handler)
 	{
@@ -11363,9 +11391,11 @@ void Commands::Command_Player_Coins(Client* client, Seperator* sep) {
 	// /player coins add 10
 	// /player coins add plat 10
 	Player* player = client->GetPlayer();
-	if (player->HasTarget() && player->GetTarget()->IsPlayer())
+	Client* targetClient = client;
+	if (player->HasTarget() && player->GetTarget()->IsPlayer()) {
 		player = (Player*)player->GetTarget();
-
+		targetClient = player->GetClient();
+	}
 
 	if (sep && sep->arg[0] && sep->arg[1]) {
 		const char* action = sep->arg[0];
@@ -11380,7 +11410,9 @@ void Commands::Command_Player_Coins(Client* client, Seperator* sep) {
 					client->Message(CHANNEL_COLOR_YELLOW, "You give yourself %llu coin%s", value, (value > 1 ? "s" : ""));
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You give %s %llu coin%s", player->GetName(), value, (value > 1 ? "s" : ""));
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu coin%s", client->GetPlayer()->GetName(), value, (value > 1 ? "s" : ""));
+					if(targetClient) {
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu coin%s", client->GetPlayer()->GetName(), value, (value > 1 ? "s" : ""));
+					}
 				}
 
 				return;
@@ -11405,7 +11437,9 @@ void Commands::Command_Player_Coins(Client* client, Seperator* sep) {
 					client->Message(CHANNEL_COLOR_YELLOW, "You give yourself %llu coin%s", value, (value > 1 ? "s" : ""));
 				else {
 					client->Message(CHANNEL_COLOR_YELLOW, "You give %s %llu coin%s", player->GetName(), value, (value > 1 ? "s" : ""));
-					client->GetCurrentZone()->GetClientBySpawn(player)->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu coin%s", client->GetPlayer()->GetName(), value, (value > 1 ? "s" : ""));
+					if(targetClient) {
+						targetClient->Message(CHANNEL_COLOR_YELLOW, "%s gave you %llu coin%s", client->GetPlayer()->GetName(), value, (value > 1 ? "s" : ""));
+					}
 				}
 				return;
 			}

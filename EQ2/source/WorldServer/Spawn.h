@@ -1314,6 +1314,8 @@ public:
 	
 	void AddIgnoredWidget(int32 id);
 	
+	void SendGroupUpdate();
+	
 	mutable std::shared_mutex MIgnoredWidgets;
 	std::map<int32, bool> ignored_widgets;
 	

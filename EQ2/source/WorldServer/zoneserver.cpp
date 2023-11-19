@@ -473,7 +473,7 @@ void ZoneServer::LoadSpellProcess(){
 
 void ZoneServer::LockAllSpells(Player* player) {
 	if (player && spellProcess) {
-		Client* client = GetClientBySpawn(player);
+		Client* client = ((Player*)player)->GetClient();
 		if (client)
 			spellProcess->LockAllSpells(client);
 	}
@@ -481,7 +481,7 @@ void ZoneServer::LockAllSpells(Player* player) {
 	
 void ZoneServer::UnlockAllSpells(Player* player) {
 	if (player && spellProcess) {
-		Client* client = GetClientBySpawn(player);
+		Client* client = ((Player*)player)->GetClient();
 		if (client)
 			spellProcess->UnlockAllSpells(client);
 	}
@@ -526,7 +526,7 @@ void ZoneServer::DeleteData(bool boot_clients){
 			if(!boot_clients && (spawn->IsPlayer() || spawn->IsBot()))
 				tmp_player_list.push_back(spawn);
 			else if(spawn->IsPlayer()){
-				Client* client = GetClientBySpawn(spawn);
+				Client* client = ((Player*)spawn)->GetClient();
 				if(client)
 					client->Disconnect();
 			}
@@ -739,7 +739,7 @@ void ZoneServer::RegenUpdate(){
 			if(spawn->IsEntity())
 				((Entity*)spawn)->DoRegenUpdate();
 			if(spawn->IsPlayer()){
-				Client* client = GetClientBySpawn(spawn);
+				Client* client = ((Player*)spawn)->GetClient();
 				if(client && client->IsReadyForUpdates())
 					client->QueuePacket(client->GetPlayer()->GetPlayerInfo()->serialize(client->GetVersion()));
 			}
@@ -1991,19 +1991,19 @@ void ZoneServer::RemoveChangedSpawn(Spawn* spawn){
 }
 
 void ZoneServer::AddDrowningVictim(Player* player){
-	Client* client = GetClientBySpawn(player);
+	Client* client = ((Player*)player)->GetClient();
 	if(client && drowning_victims.count(client) == 0)
 		drowning_victims.Put(client, Timer::GetCurrentTime2());
 }
 
 void ZoneServer::RemoveDrowningVictim(Player* player){
-	Client* client = GetClientBySpawn(player);
+	Client* client = ((Player*)player)->GetClient();
 	if(client)
 		drowning_victims.erase(client);
 }
 
 Client* ZoneServer::GetDrowningVictim(Player* player){
-	Client* client = GetClientBySpawn(player);
+	Client* client = ((Player*)player)->GetClient();
 	if(client && drowning_victims.count(client) > 0)
 		return(client);
 	return 0;
@@ -3258,7 +3258,7 @@ void ZoneServer::AddSpawn(Spawn* spawn) {
 	if(spawn->IsNPC())
 		AddEnemyList((NPC*)spawn);
 	if(spawn->IsPlayer() && ((Player*)spawn)->GetGroupMemberInfo())
-		world.GetGroupManager()->SendGroupUpdate(((Player*)spawn)->GetGroupMemberInfo()->group_id, GetClientBySpawn(spawn));
+		spawn->SendGroupUpdate();
 	if (spawn->IsPlayer()) {
 		((Player*)spawn)->GetInfoStruct()->set_rain(rain);
 		((Player*)spawn)->SetCharSheetChanged(true);
@@ -3358,7 +3358,6 @@ void ZoneServer::RemoveClient(Client* client)
 		
 		MClientList.writelock(__FUNCTION__, __LINE__);
 		LogWrite(ZONE__DEBUG, 0, "Zone", "Calling clients.Remove(client)...");
-		UpdateClientSpawnMap(client->GetPlayer(), 0); // address spawn map being prematurely cleared when client list is active
 		
 		std::vector<Client*>::iterator itr2 = find(clients.begin(), clients.end(), client);
 		if (itr2 != clients.end())
@@ -3686,10 +3685,6 @@ void ZoneServer::SendSpawn(Spawn* spawn, Client* client){
 	*/
 	if(spawn->IsEntity() && spawn->HasTrapTriggered())
 		client->QueueStateCommand(client->GetPlayer()->GetIDWithPlayerSpawn(spawn), spawn->GetTrapState());
-}
-
-Client*	ZoneServer::GetClientBySpawn(Spawn* spawn){
-	return client_spawn_map.Get(spawn);
 }
 
 Client*	ZoneServer::GetClientByName(char* name) {
@@ -4564,7 +4559,7 @@ void ZoneServer::SendCalculatedXP(Player* player, Spawn* victim){
 		else {
 			float xp = player->CalculateXP(victim);
 			if (xp > 0) {
-				Client* client = GetClientBySpawn(player);
+				Client* client = ((Player*)player)->GetClient();
 				if(!client)
 					return;
 				player->AddXP((int32)xp);
@@ -4738,7 +4733,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 		if(dead->IsPlayer()) 
 		{
 			((Player*)dead)->UpdatePlayerStatistic(STAT_PLAYER_TOTAL_DEATHS, 1);
-			client = GetClientBySpawn(dead);
+			client = ((Player*)dead)->GetClient();
 
 			((Entity*)dead)->HandleDeathExperienceDebt(killer);
 
@@ -4812,7 +4807,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 				spellProcess->RemoveSpellFromQueue((Player*)spawn, true);
 
 				// Get the client of the player
-				client = GetClientBySpawn(spawn);
+				client = ((Player*)spawn)->GetClient();
 				// valid client?
 				if (client) {
 					// Check for quest kill updates
@@ -4856,7 +4851,7 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 		// make sure the killer is a player and the dead spawn had a faction and wasn't a player
 		if (killer && killer->IsPlayer()) {
 			if (!dead->IsPlayer() && dead->GetFactionID() > 10) {
-			client = GetClientBySpawn(killer);
+			client = ((Player*)killer)->GetClient();
 			if (client)
 				ProcessFaction(dead, client);
 			}
@@ -4981,7 +4976,7 @@ void ZoneServer::SendDamagePacket(Spawn* attacker, Spawn* victim, int8 type1, in
 	PacketStruct* packet = 0;
 	Client* client = 0;
 	if (attacker && victim && victim->IsPlayer() && victim->GetTarget() == 0) {
-		client = GetClientBySpawn(victim);
+		client = ((Player*)victim)->GetClient();
 		if (client)
 			client->TargetSpawn(attacker);
 	}
@@ -5615,10 +5610,6 @@ vector<ZoneInfoSlideStruct*>* ZoneServer::GenerateTutorialSlides() {
 }
 
 EQ2Packet* ZoneServer::GetZoneInfoPacket(Client* client){
-	// this takes place when we get the LoginInfo for returning LD players
-	if(!client->GetPlayer()->IsReturningFromLD())
-		UpdateClientSpawnMap(client->GetPlayer(), client);
-	
 	PacketStruct* packet = configReader.getStruct("WS_ZoneInfo", client->GetVersion());
 	packet->setSmallStringByName("server1",net.GetWorldName());
 	packet->setSmallStringByName("server2",net.GetWorldName());
@@ -6049,7 +6040,7 @@ void ZoneServer::SendUpdateDefaultCommand(Spawn* spawn, const char* command, flo
 		if (!toPlayer->IsPlayer())
 			return;
 
-		Client* client = GetClientBySpawn(toPlayer);
+		Client* client = ((Player*)toPlayer)->GetClient();
 		if (client)
 		{
 			client->SendDefaultCommand(spawn, command, distance);
@@ -6642,7 +6633,7 @@ void ZoneServer::FindSpawn(Client* client, char* regSearchStr)
 
 void ZoneServer::AddPlayerTracking(Player* player) {
 	if (player && !player->GetIsTracking() && players_tracking.count(player->GetDatabaseID()) == 0) {
-		Client* client = GetClientBySpawn(player);
+		Client* client = ((Player*)player)->GetClient();
 		if (client) {
 			PacketStruct* packet = configReader.getStruct("WS_TrackingUpdate", client->GetVersion());
 			if (packet) {
@@ -6659,7 +6650,7 @@ void ZoneServer::AddPlayerTracking(Player* player) {
 
 void ZoneServer::RemovePlayerTracking(Player* player, int8 mode) {
 	if (player && player->GetIsTracking()) {
-		Client* client = GetClientBySpawn(player);
+		Client* client = ((Player*)player)->GetClient();
 		if (client) {
 			PacketStruct* packet = configReader.getStruct("WS_TrackingUpdate", client->GetVersion());
 			if (packet) {
@@ -6676,8 +6667,12 @@ void ZoneServer::RemovePlayerTracking(Player* player, int8 mode) {
 
 void ZoneServer::ProcessTracking() {
 	MutexMap<int32, Player*>::iterator itr = players_tracking.begin();
-	while (itr.Next())
-		ProcessTracking(GetClientBySpawn(itr->second));
+	while (itr.Next()) {
+		Player* player = itr->second;
+		if(player->GetClient()) {
+			ProcessTracking(player->GetClient());
+		}
+	}
 }
 
 void ZoneServer::ProcessTracking(Client* client) {
@@ -7090,15 +7085,17 @@ void ZoneServer::PlayAnimation(Spawn* spawn, int32 visual_state, Spawn* spawn2, 
 		return;
 	if (spawn2){
 		if(hide_type == 1){
-			client = GetClientBySpawn(spawn2);
-			if(client){
-				packet = configReader.getStruct("WS_CannedEmote", client->GetVersion());
-				packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(spawn));
-				packet->setDataByName("anim_type", visual_state);
-				client->QueuePacket(packet->serialize());
+			if(spawn2->IsPlayer()) {
+				client = ((Player*)spawn2)->GetClient();
+				if(client){
+					packet = configReader.getStruct("WS_CannedEmote", client->GetVersion());
+					packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(spawn));
+					packet->setDataByName("anim_type", visual_state);
+					client->QueuePacket(packet->serialize());
+				}
+				safe_delete(packet);
+				return;
 			}
-			safe_delete(packet);
-			return;
 		}
 		if(hide_type == 2)
 			exclude_spawn = spawn2;
@@ -7283,7 +7280,7 @@ void ZoneServer::ResurrectSpawn(Spawn* spawn, Client* client) {
 
 	if(spawn->IsPlayer()){
 		spawn->SetSpawnType(4);
-		client = GetClientBySpawn(spawn);
+		client = ((Player*)spawn)->GetClient();
 		if(client){
 			packet = configReader.getStruct("WS_Resurrected", client->GetVersion());
 			if(packet){
@@ -8604,12 +8601,6 @@ void ZoneServer::ProcessQueuedStateCommands() // in a client list lock only
 		lua_spawn_update_command.clear();
 	}
 	MLuaQueueStateCmd.unlock();
-}
-
-void ZoneServer::UpdateClientSpawnMap(Player* player, Client* client)
-{
-	// client may be null when passed
-	client_spawn_map.Put(player, client);
 }
 
 void ZoneServer::RemoveClientsFromZone(ZoneServer* zone) {

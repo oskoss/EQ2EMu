@@ -60,7 +60,7 @@ bool PlayerGroup::AddMember(Entity* member) {
 	gmi->member = member;
 	gmi->leader = false;
 	if (member->IsPlayer())
-		gmi->client = member->GetZone()->GetClientBySpawn(member);
+		gmi->client = ((Player*)member)->GetClient();
 	else
 		gmi->client = 0;
 	gmi->mentor_target_char_id = 0;

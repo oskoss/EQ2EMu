@@ -1791,7 +1791,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 	int8 tmp_subtype = 0;
 	if (!packet || !player)
 		return;
-	client = player->GetZone()->GetClientBySpawn(player);
+	client = ((Player*)player)->GetClient();
 	if (!client)
 		return;
 	if(creator.length() > 0){
@@ -2374,7 +2374,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 						if(player && client->GetVersion() >= 284) {
 							packet->setSubstructDataByName("header_info", "footer_type", 0);
 							
-							spell->SetPacketInformation(packet, player->GetZone()->GetClientBySpawn(player));
+							spell->SetPacketInformation(packet, client);
 							if (player->HasSpell(skill_info->spell_id, skill_info->spell_tier, true)) {
 								packet->setDataByName("scribed", 1);
 							}
@@ -3539,7 +3539,7 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 	Client *client;
 	if (!packet || !player)
 		return;
-	client = player->GetZone()->GetClientBySpawn(player);
+	client = ((Player*)player)->GetClient();
 	if (!client)
 		return;
 	

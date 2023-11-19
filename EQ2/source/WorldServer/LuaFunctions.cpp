@@ -4094,8 +4094,8 @@ int EQ2Emu_lua_AddQuestStep(lua_State* state) {
 		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_NORMAL, description, ids, quantity, taskgroup, 0, 0, percentage, usableitemid);
 		if (quest_step && icon && quantity > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 	}
@@ -4130,8 +4130,8 @@ int EQ2Emu_lua_AddQuestStepKillLogic(lua_State* state, int8 type)
 		QuestStep* quest_step = quest->AddQuestStep(step, type, description, ids, quantity, taskgroup, 0, 0, percentage, 0);
 		if (quest_step && icon > 0 && quantity > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 		safe_delete(ids);
@@ -4172,8 +4172,8 @@ int EQ2Emu_lua_AddQuestStepChat(lua_State* state) {
 		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_CHAT, description, ids, quantity, taskgroup);
 		if (quest_step && icon > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			if(client)
 				quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
@@ -4209,8 +4209,8 @@ int EQ2Emu_lua_AddQuestStepObtainItem(lua_State* state) {
 		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_OBTAIN_ITEM, description, ids, quantity, taskgroup, 0, 0, percentage, 0);
 		if (quest_step && icon > 0 && quantity > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 		safe_delete(ids);
@@ -4253,8 +4253,8 @@ int EQ2Emu_lua_AddQuestStepZoneLoc(lua_State* state) {
 		safe_delete(locations); // gets duplicated into new table in QuestStep constructor
 		if (quest_step && icon > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 	}
@@ -4296,8 +4296,8 @@ int EQ2Emu_lua_AddQuestStepLocation(lua_State* state) {
 		safe_delete(locations); // gets duplicated into new table in QuestStep constructor
 		if (quest_step && icon > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 	}
@@ -4335,8 +4335,8 @@ int EQ2Emu_lua_AddQuestUsableItem(lua_State* state) {
 		safe_delete(locations); // gets duplicated into new table in QuestStep constructor
 		if (quest_step && icon > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 	}
@@ -4367,8 +4367,8 @@ int EQ2Emu_lua_AddQuestStepSpell(lua_State* state) {
 		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_SPELL, description, ids, quantity, taskgroup, 0, 0, percentage, 0);
 		if (quest_step && icon > 0 && quantity > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 		safe_delete(ids);
@@ -4403,8 +4403,8 @@ int EQ2Emu_lua_AddQuestStepCraft(lua_State* state) {
 		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_CRAFT, description, ids, quantity, taskgroup, 0, 0, percentage, 0);
 		if (quest_step && icon > 0 && quantity > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 		safe_delete(ids);
@@ -4439,8 +4439,8 @@ int EQ2Emu_lua_AddQuestStepHarvest(lua_State* state) {
 		QuestStep* quest_step = quest->AddQuestStep(step, QUEST_STEP_TYPE_HARVEST, description, ids, quantity, taskgroup, 0, 0, percentage, 0);
 		if (quest_step && icon > 0 && quantity > 0)
 			quest_step->SetIcon(icon);
-		if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
+		if (quest->GetPlayer() && ((Player*)quest->GetPlayer())->GetClient()) {
+			Client* client = ((Player*)quest->GetPlayer())->GetClient();
 			quest->GetPlayer()->GetZone()->SendQuestUpdates(client);
 		}
 		safe_delete(ids);
@@ -4522,11 +4522,6 @@ int EQ2Emu_lua_UpdateQuestTaskGroupDescription(lua_State* state) {
 	lua_interface->ResetFunctionStack(state);
 	if (quest && step > 0 && description.length() > 0) {
 		quest->SetTaskGroupDescription(step, description, display_bullets);
-	/*	if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
-			if (client)
-				client->SendQuestUpdateStep(quest, step, false);
-		}*/
 	}
 	return 0;
 }
@@ -4540,11 +4535,6 @@ int EQ2Emu_lua_UpdateQuestStepDescription(lua_State* state) {
 	lua_interface->ResetFunctionStack(state);
 	if (quest && step > 0 && description.length() > 0) {
 		quest->SetStepDescription(step, description);
-		/*if (quest->GetPlayer()) {
-			Client* client = quest->GetPlayer()->GetZone()->GetClientBySpawn(quest->GetPlayer());
-			if (client)
-				client->SendQuestUpdateStepImmediately(quest, step);
-		}*/
 	}
 	return 0;
 }

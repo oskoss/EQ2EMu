@@ -333,7 +333,6 @@ public:
 	void	SendSpellFailedPacket(Client* client, int16 error);
 	void	SendInterruptPacket(Spawn* interrupted, LuaSpell* spell, bool fizzle=false);
 	void	HandleEmote(Spawn* originator, string name);
-	Client*	GetClientBySpawn(Spawn* spawn);
 	Spawn*	GetSpawnByDatabaseID(int32 id);
 	Spawn*	GetSpawnByID(int32 id, bool spawnListLocked=false);
 	
@@ -704,7 +703,6 @@ public:
 	void	QueueStateCommandToClients(int32 spawn_id, int32 state);
 	void	QueueDefaultCommand(int32 spawn_id, std::string command, float distance);
 	void	ProcessQueuedStateCommands();
-	void	UpdateClientSpawnMap(Player* player, Client* client);
 	void	RemoveClientsFromZone(ZoneServer* zone);
 
 	void	WorldTimeUpdateTrigger() { sync_game_time_timer.Trigger(); }
@@ -816,7 +814,6 @@ private:
 	list<LocationTransportDestination*> transporter_locations;
 	
 	/* Mutex Maps */
-	MutexMap<Spawn*, Client*>						client_spawn_map;								// ok
 	MutexMap<Client*, int32>						drowning_victims;
 	MutexMap<int32, int32>							movement_spawns;								// 1st int32 = spawn id
 	MutexMap<int32, PlayerProximity*>				player_proximities;								// 1st int32 = spawn id

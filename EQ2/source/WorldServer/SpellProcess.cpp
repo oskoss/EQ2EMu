@@ -174,13 +174,16 @@ void SpellProcess::Process(){
 			if (cast_timer) {
 				if (cast_timer->timer->Check(false)) {
 					if (cast_timer->spell) {
-						Client* client = cast_timer->zone->GetClientBySpawn(cast_timer->spell->caster);
-						if (client) {
-							PacketStruct* packet = configReader.getStruct("WS_FinishCastSpell", client->GetVersion());
-							if (packet) {
-								packet->setMediumStringByName("spell_name", cast_timer->spell->spell->GetSpellData()->name.data.c_str());
-								client->QueuePacket(packet->serialize());
-								safe_delete(packet);
+						if (cast_timer->spell->caster && cast_timer->spell->caster->IsPlayer()) {
+							
+							Client* client = ((Player*)cast_timer->spell->caster)->GetClient();
+							if(client) {
+								PacketStruct* packet = configReader.getStruct("WS_FinishCastSpell", client->GetVersion());
+								if (packet) {
+									packet->setMediumStringByName("spell_name", cast_timer->spell->spell->GetSpellData()->name.data.c_str());
+									client->QueuePacket(packet->serialize());
+									safe_delete(packet);
+								}
 							}
 						}
 						if (cast_timer->spell && cast_timer->spell->caster)
@@ -303,7 +306,7 @@ void SpellProcess::CheckRecast(Spell* spell, Entity* caster, float timer_overrid
 		RecastTimer* timer = new RecastTimer;
 		timer->caster = caster;
 		if(caster->IsPlayer())
-			timer->client = caster->GetZone()->GetClientBySpawn(caster);
+			timer->client = ((Player*)caster)->GetClient();
 		else
 			timer->client = 0;
 		timer->spell = spell;
@@ -351,18 +354,25 @@ void SpellProcess::CheckInterrupt(InterruptStruct* interrupt){
 	if(!interrupt || !interrupt->interrupted || !interrupt->interrupted->IsEntity())
 		return;
 	Entity* entity = (Entity*)interrupt->interrupted;
-	Client* client = entity->GetZone()->GetClientBySpawn(entity);
-	if(client)
+	Client* client = nullptr;
+	
+	if(entity->IsPlayer()) {
+		client = ((Player*)entity)->GetClient();
+	}
+	
+	if(entity->IsPlayer() && client)
 		SendFinishedCast(GetLuaSpell(entity), client);
 	RemoveSpellTimersFromSpawn(entity, false);
 	entity->IsCasting(false);
 	entity->GetZone()->SendInterruptPacket(entity, interrupt->spell);
-	if(interrupt->error_code > 0)
+	if(interrupt->error_code > 0 && client)
 		entity->GetZone()->SendSpellFailedPacket(client, interrupt->error_code);
 	if(entity->IsPlayer())
 	{
 		((Player*)entity)->UnlockSpell(interrupt->spell->spell);
-		SendSpellBookUpdate(((Player*)entity)->GetClient());
+		if(client) {
+			SendSpellBookUpdate(client);
+		}
 	}
 }
 
@@ -468,7 +478,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 							spell->caster->RemoveDetrimentalSpell(spell);
 					}
 					if(target && target->IsPlayer() && spell->spell->GetSpellData()->fade_message.length() > 0){
-						Client* client = target->GetZone()->GetClientBySpawn(target);
+						Client* client = ((Player*)target)->GetClient();
 						if(client){
 							bool send_to_sender = true;
 							string fade_message = spell->spell->GetSpellData()->fade_message;
@@ -478,7 +488,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 						}
 					}
 					if (target && target->IsPlayer() && spell->spell->GetSpellData()->fade_message.length() > 0) {
-						Client* client = target->GetZone()->GetClientBySpawn(target);
+						Client* client = ((Player*)target)->GetClient();
 						if (client) {
 							bool send_to_sender = true;
 							string fade_message_others = spell->spell->GetSpellData()->fade_message_others;
@@ -863,7 +873,7 @@ void SpellProcess::AddSpellToQueue(Spell* spell, Entity* caster){
 		LogWrite(SPELL__DEBUG, 1, "Spell", "%s AddSpellToQueue casting %s.", caster->GetName(), spell->GetName());
 		spell_que.Put(caster, spell);
 		((Player*)caster)->QueueSpell(spell);
-		Client* client = caster->GetZone()->GetClientBySpawn(caster);
+		Client* client = ((Player*)caster)->GetClient();
 		if(client)
 			SendSpellBookUpdate(client);
 	}
@@ -874,7 +884,7 @@ void SpellProcess::RemoveSpellFromQueue(Spell* spell, Entity* caster, bool send_
 		LogWrite(SPELL__DEBUG, 1, "Spell", "%s RemoveSpellFromQueue casting %s.", caster->GetName(), spell->GetName());
 		spell_que.erase(caster);
 		((Player*)caster)->UnQueueSpell(spell);
-		Client* client = caster->GetZone()->GetClientBySpawn(caster);
+		Client* client = ((Player*)caster)->GetClient();
 		if(client && send_update)
 			SendSpellBookUpdate(client);
 	}
@@ -892,7 +902,7 @@ void SpellProcess::RemoveSpellFromQueue(Entity* caster, bool hostile_only) {
 				LogWrite(SPELL__DEBUG, 1, "Spell", "%s RemoveSpellFromQueue::Secondary casting %s.", caster->GetName(), spell->GetName());
 				spell_que.erase(caster);
 				((Player*)caster)->UnQueueSpell(spell);
-				Client* client = caster->GetZone()->GetClientBySpawn(caster);
+				Client* client = ((Player*)caster)->GetClient();
 				if (client)
 					SendSpellBookUpdate(client);
 			}
@@ -1045,7 +1055,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 		if(caster->IsPlayer() && zone)
 		{
-			client = zone->GetClientBySpawn(caster);
+			client = ((Player*)caster)->GetClient();
 			//version = client->GetVersion();
 		}
 
@@ -1437,7 +1447,7 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				DeleteSpell(lua_spell);
 				return;
 			}
-			if(target->IsPlayer() && zone->GetClientBySpawn(target)->GetCurrentRez()->active){
+			if(target->IsPlayer() && ((Player*)target)->GetClient() && ((Player*)target)->GetClient()->GetCurrentRez()->active){
 				zone->SendSpellFailedPacket(client, SPELL_ERROR_ALREADY_CAST);
 				lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
 				DeleteSpell(lua_spell);
@@ -1585,7 +1595,11 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 
 void SpellProcess::ProcessEntityCommand(ZoneServer* zone, EntityCommand* entity_command, Entity* caster, Spawn* target, bool lock, bool in_heroic_opp)  {
 	if (zone && entity_command && caster && target && !target->IsPlayer()) {
-		Client* client = zone->GetClientBySpawn(caster);
+		Client* client = ((Player*)caster)->GetClient();
+		
+		if(!client) {
+			return;
+		}
 		if (caster->GetDistance(target) > entity_command->distance) {
 			zone->SendSpellFailedPacket(client, SPELL_ERROR_TOO_FAR_AWAY);
 			return;
@@ -1625,7 +1639,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 		return false;
 	Client* client = 0;
 	if(spell->caster && spell->caster->IsPlayer())
-		client = spell->caster->GetZone()->GetClientBySpawn(spell->caster);
+		client = ((Player*)spell->caster)->GetClient();
 	if (spell->spell->GetSpellData()->max_aoe_targets > 0 && spell->targets.size() == 0) {
 		GetSpellTargetsTrueAOE(spell);
 		if (spell->targets.size() == 0) {
@@ -1975,8 +1989,10 @@ void SpellProcess::Interrupted(Entity* caster, Spawn* interruptor, int16 error_c
 			Client* client = 0;
 			if(interruptor && interruptor->IsPlayer())
 			{
-				client = interruptor->GetZone()->GetClientBySpawn(interruptor);
-				client->Message(CHANNEL_SPELLS_OTHER, "You interrupt %s's ability to cast!", interruptor->GetName());
+				client = ((Player*)interruptor)->GetClient();
+				if(client) {
+					client->Message(CHANNEL_SPELLS_OTHER, "You interrupt %s's ability to cast!", caster->GetName());
+				}
 			}
 			
 		}

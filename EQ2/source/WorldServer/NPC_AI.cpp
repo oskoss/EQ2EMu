@@ -96,14 +96,13 @@ void Brain::Think() {
 			if (run_back_distance > MAX_CHASE_DISTANCE || breakWaterPursuit) {
 				LogWrite(NPC_AI__DEBUG, 7, "NPC_AI", "Run back distance is greater then max chase distance, run_back_distance = %f", run_back_distance);
 				// Over the max chase distance, Check to see if the target is is a client
-				Client* client = target->GetZone()->GetClientBySpawn(target);
-				if (client)
+				if (target->IsPlayer() && ((Player*)target)->GetClient())
 				{
 					// Target is a client so send encounter break messages
 					if (m_body->HasSpawnGroup())
-						client->SimpleMessage(CHANNEL_NARRATIVE, "This encounter will no longer give encounter rewards.");
+						((Player*)target)->GetClient()->SimpleMessage(CHANNEL_NARRATIVE, "This encounter will no longer give encounter rewards.");
 					else
-						client->Message(CHANNEL_NARRATIVE, "%s is no longer worth any experience or treasure.", m_body->GetName());
+						((Player*)target)->GetClient()->Message(CHANNEL_NARRATIVE, "%s is no longer worth any experience or treasure.", m_body->GetName());
 				}
 				
 				// Clear the hate list for this NPC

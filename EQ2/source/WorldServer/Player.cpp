@@ -1213,7 +1213,7 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 				control_packet->setDataByName("speed", player->GetSpeed());
 				control_packet->setDataByName("air_speed", player->GetAirSpeed());
 				control_packet->setDataByName("size", 0.51);
-				Client* client = player->GetZone()->GetClientBySpawn(player);
+				Client* client = player->GetClient();
 				if (client)
 					client->QueuePacket(control_packet->serialize());
 				safe_delete(control_packet);
@@ -1727,7 +1727,7 @@ bool Player::CanEquipItem(Item* item, int8 slot) {
 		return false;
 	
 	if (item) {
-		Client* client = GetZone()->GetClientBySpawn(this);
+		Client* client = GetClient();
 		if (client) {
 			if (item->IsWeapon() && slot == 1) {
 				bool dwable = item->IsDualWieldAble(client, item, slot);
@@ -1906,7 +1906,7 @@ vector<EQ2Packet*> Player::EquipItem(int16 index, int16 version, int8 appearance
 				lua_interface->RunZoneScript(zone_script, "item_equipped", GetZone(), this, item->details.item_id, item->name.c_str(), 0, item->details.unique_id);
 			int32 bag_id = item->details.inv_slot_id;
 			if (item->generic_info.condition == 0) {
-				Client* client = GetZone()->GetClientBySpawn(this);
+				Client* client = GetClient();
 				if (client) {
 					string popup_text = "Your ";
 					string popup_item = item->CreateItemLink(client->GetVersion(), true).c_str();
@@ -3191,7 +3191,7 @@ void Player::RemoveMaintainedSpell(LuaSpell* luaspell){
 		return;
 
 	bool found = false;
-	Client* client = GetZone()->GetClientBySpawn(this);
+	Client* client = GetClient();
 	LuaSpell* old_spell = 0;
 	LuaSpell* current_spell = 0;
 	GetMaintainedMutex()->writelock(__FUNCTION__, __LINE__);
@@ -4144,7 +4144,9 @@ bool Player::AddXP(int32 xp_amount){
 	float miniding_min_percent = ((int)(current_xp_percent/10)+1)*10;
 	while((xp_amount + GetXP()) >= GetNeededXP()){
 		if (!CheckLevelStatus(GetLevel() + 1)) {
-			GetZone()->GetClientBySpawn(this)->SimpleMessage(CHANNEL_COLOR_RED, "You do not have the required status to level up anymore!");
+			if(GetClient()) {
+				GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "You do not have the required status to level up anymore!");
+			}
 			SetCharSheetChanged(true);	
 			return false;
 		}
@@ -4180,7 +4182,9 @@ bool Player::AddTSXP(int32 xp_amount){
 	float miniding_min_percent = ((int)(current_xp_percent/10)+1)*10;
 	while((xp_amount + GetTSXP()) >= GetNeededTSXP()){
 		if (!CheckLevelStatus(GetTSLevel() + 1)) {
-			GetZone()->GetClientBySpawn(this)->SimpleMessage(CHANNEL_COLOR_RED, "You do not have the required status to level up anymore!");
+			if(GetClient()) {
+				GetClient()->SimpleMessage(CHANNEL_COLOR_RED, "You do not have the required status to level up anymore!");
+			}
 			return false;
 		}
 		xp_amount -= GetNeededTSXP() - GetTSXP();
@@ -4344,7 +4348,7 @@ void Player::CheckQuestsCraftUpdate(Item* item, int32 qty){
 	}
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	if(update_list && update_list->size() > 0){
-		Client* client = GetZone()->GetClientBySpawn(this);
+		Client* client = GetClient();
 		if(client){
 			for(int8 i=0;i<update_list->size(); i++){
 				client->SendQuestUpdate(update_list->at(i));
@@ -4371,7 +4375,7 @@ void Player::CheckQuestsHarvestUpdate(Item* item, int32 qty){
 	}
 	MPlayerQuests.releasereadlock(__FUNCTION__, __LINE__);
 	if(update_list && update_list->size() > 0){
-		Client* client = GetZone()->GetClientBySpawn(this);
+		Client* client = GetClient();
 		if(client){
 			for(int8 i=0;i<update_list->size(); i++){
 				client->SendQuestUpdate(update_list->at(i));
@@ -5751,7 +5755,7 @@ map<string, int8>* Player::GetIgnoredPlayers(){
 bool Player::CheckLevelStatus(int16 new_level) {
 	int16 LevelCap					= rule_manager.GetGlobalRule(R_Player, MaxLevel)->GetInt16();
 	int16 LevelCapOverrideStatus	= rule_manager.GetGlobalRule(R_Player, MaxLevelOverrideStatus)->GetInt16();
-	if ( (LevelCap < new_level) && (LevelCapOverrideStatus > GetZone()->GetClientBySpawn(this)->GetAdminStatus()) )
+	if ( GetClient() && (LevelCap < new_level) && (LevelCapOverrideStatus > GetClient()->GetAdminStatus()) )
 			return false;
 	return true;
 }
@@ -6155,7 +6159,7 @@ void Player::AddPassiveSpell(int32 id, int8 tier)
 	// player has instead of going through all their spells.
 	passive_spells.push_back(id);
 
-	Client* client = GetZone()->GetClientBySpawn(this);
+	Client* client = GetClient();
 
 	// Don not apply passives if the client is null, zoning, or reviving
 	if (client == NULL || client->IsZoning() || IsResurrecting())
@@ -6463,7 +6467,7 @@ void Player::SendQuestRequiredSpawns(int32 quest_id){
 	m_playerSpawnQuestsRequired.readlock(__FUNCTION__, __LINE__);
 	if (player_spawn_quests_required.size() > 0 ) {
 		ZoneServer* zone = GetZone();
-		Client* client = zone->GetClientBySpawn(this);
+		Client* client = GetClient();
 		if (!client){
 			m_playerSpawnQuestsRequired.releasereadlock(__FUNCTION__, __LINE__);
 			return;
@@ -6496,7 +6500,7 @@ void Player::SendHistoryRequiredSpawns(int32 event_id){
 	m_playerSpawnHistoryRequired.readlock(__FUNCTION__, __LINE__);
 	if (player_spawn_history_required.size() > 0) {
 		ZoneServer* zone = GetZone();
-		Client* client = zone->GetClientBySpawn(this);
+		Client* client = GetClient();
 		if (!client){
 			m_playerSpawnHistoryRequired.releasereadlock(__FUNCTION__, __LINE__);
 			return;

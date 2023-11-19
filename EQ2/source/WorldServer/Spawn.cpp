@@ -806,8 +806,8 @@ uchar* Spawn::spawn_vis_changes(Player* player, int16 version, int16* vis_packet
 		return nullptr;
 	}
 
-	uchar* tmp = new uchar[size + 10];
-	size = Pack(tmp, xor_vis_packet, size, size, version);
+	uchar* tmp = new uchar[size + 1000];
+	size = Pack(tmp, xor_vis_packet, size, size+1000, version);
 	player->vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
 	int32 orig_size = size;
@@ -859,14 +859,16 @@ uchar* Spawn::spawn_pos_changes(Player* player, int16 version, int16* pos_packet
 		return nullptr;
 	}
 
+	int16 newSize = size + 1000;
 	uchar* tmp;
-	if (IsPlayer() && version > 283)
-		tmp = new uchar[size + 14];
-	else
-		tmp = new uchar[size + 10];
-	size = Pack(tmp, xor_pos_packet, size, size, version);
+	if (IsPlayer() && version > 283) {
+		tmp = new uchar[newSize];
+	}
+	else {
+		tmp = new uchar[newSize];
+	}
+	size = Pack(tmp, xor_pos_packet, size, newSize, version);
 	player->pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
-
 
 	int32 orig_size = size;
 	// Needed for CoE+ clients
@@ -1182,8 +1184,8 @@ uchar* Spawn::spawn_vis_changes_ex(Player* player, int16 version, int16* vis_pac
 		return nullptr;
 	}
 
-	uchar* tmp = new uchar[size + 10];
-	size = Pack(tmp, xor_vis_packet, size, size, version);
+	uchar* tmp = new uchar[size + 1000];
+	size = Pack(tmp, xor_vis_packet, size, size+1000, version);
 
 	player->vis_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
@@ -1247,12 +1249,17 @@ uchar* Spawn::spawn_pos_changes_ex(Player* player, int16 version, int16* pos_pac
 		return nullptr;
 	}
 
-	uchar* tmp = new uchar[size + 10];
-
-	size = Pack(tmp, xor_pos_packet, size, size, version);
-
+	int16 newSize = size + 1000;
+	uchar* tmp;
+	if (IsPlayer() && version > 283) {
+		tmp = new uchar[newSize];
+	}
+	else {
+		tmp = new uchar[newSize];
+	}
+	size = Pack(tmp, xor_pos_packet, size, newSize, version);
 	player->pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
-
+	
 	int32 orig_size = size;
 
 	if (version >= 1188) {
@@ -1414,13 +1421,7 @@ void Spawn::SetHP(sint32 new_val, bool setUpdateFlags){
 	if(/*IsPlayer() &&*/ GetZone() && basic_info.cur_hp > 0 && basic_info.cur_hp < basic_info.max_hp)
 		GetZone()->AddDamagedSpawn(this);
 
-	if (IsEntity() && ((Entity*)this)->GetGroupMemberInfo()) {
-		((Entity*)this)->UpdateGroupMemberInfo();
-		if (IsPlayer())
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id, GetZone()->GetClientBySpawn(this));
-		else
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
-	}
+	SendGroupUpdate();
 
 	if ( IsPlayer() && new_val == 0 ) // fixes on death not showing hp update for players
 		((Player*)this)->SetCharSheetChanged(true);
@@ -1447,13 +1448,7 @@ void Spawn::SetTotalHP(sint32 new_val){
 	if(GetZone() && basic_info.cur_hp > 0 && basic_info.cur_hp < basic_info.max_hp)
 		GetZone()->AddDamagedSpawn(this);
 
-	if (IsEntity() && ((Entity*)this)->GetGroupMemberInfo()) {
-		((Entity*)this)->UpdateGroupMemberInfo();
-		if (IsPlayer())
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id, GetZone()->GetClientBySpawn(this));
-		else
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
-	}
+	SendGroupUpdate();
 
 	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner() != nullptr && ((NPC*)this)->GetOwner()->IsPlayer()) {
 		Player* player = (Player*)((NPC*)this)->GetOwner();
@@ -1476,13 +1471,7 @@ void Spawn::SetTotalHPBase(sint32 new_val)
 	if(GetZone() && basic_info.cur_hp > 0 && basic_info.cur_hp < basic_info.max_hp)
 		GetZone()->AddDamagedSpawn(this);
 
-	if (IsEntity() && ((Entity*)this)->GetGroupMemberInfo()) {
-		((Entity*)this)->UpdateGroupMemberInfo();
-		if (IsPlayer())
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id, GetZone()->GetClientBySpawn(this));
-		else
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
-	}
+	SendGroupUpdate();
 }
 sint32 Spawn::GetHP()
 {
@@ -1506,13 +1495,7 @@ void Spawn::SetPower(sint32 power, bool setUpdateFlags){
 	if(/*IsPlayer() &&*/ GetZone() && basic_info.cur_power < basic_info.max_power)
 		GetZone()->AddDamagedSpawn(this);
 
-	if (IsEntity() && ((Entity*)this)->GetGroupMemberInfo()) {
-		((Entity*)this)->UpdateGroupMemberInfo();
-		if (IsPlayer())
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id, GetZone()->GetClientBySpawn(this));
-		else
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
-	}
+	SendGroupUpdate();
 
 	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner() != nullptr && ((NPC*)this)->GetOwner()->IsPlayer()) {
 		Player* player = (Player*)((NPC*)this)->GetOwner();
@@ -1537,13 +1520,7 @@ void Spawn::SetTotalPower(sint32 new_val)
 	if(GetZone() && basic_info.cur_power < basic_info.max_power)
 		GetZone()->AddDamagedSpawn(this);
 
-	if (IsEntity() && ((Entity*)this)->GetGroupMemberInfo()) {
-		((Entity*)this)->UpdateGroupMemberInfo();
-		if (IsPlayer())
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id, GetZone()->GetClientBySpawn(this));
-		else
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
-	}
+	SendGroupUpdate();
 
 	if (IsNPC() && ((NPC*)this)->IsPet() && ((NPC*)this)->GetOwner() != nullptr && ((NPC*)this)->GetOwner()->IsPlayer()) {
 		Player* player = (Player*)((NPC*)this)->GetOwner();
@@ -1566,13 +1543,7 @@ void Spawn::SetTotalPowerBase(sint32 new_val)
 	if(GetZone() && basic_info.cur_power < basic_info.max_power)
 		GetZone()->AddDamagedSpawn(this);
 
-	if (IsEntity() && ((Entity*)this)->GetGroupMemberInfo()) {
-		((Entity*)this)->UpdateGroupMemberInfo();
-		if (IsPlayer())
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id, GetZone()->GetClientBySpawn(this));
-		else
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
-	}
+	SendGroupUpdate();
 }
 sint32 Spawn::GetPower()
 {
@@ -1607,13 +1578,7 @@ void Spawn::SetTotalSavagery(sint32 new_val)
 void Spawn::SetTotalSavageryBase(sint32 new_val){
 	SetInfo(&basic_info.savagery_base, new_val);
 
-	if (IsEntity() && ((Entity*)this)->GetGroupMemberInfo()) {
-		((Entity*)this)->UpdateGroupMemberInfo();
-		if (IsPlayer())
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id, GetZone()->GetClientBySpawn(this));
-		else
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
-	}
+	SendGroupUpdate();
 }
 sint32 Spawn::GetTotalSavagery()
 {
@@ -1647,13 +1612,7 @@ void Spawn::SetTotalDissonanceBase(sint32 new_val)
 {
 	SetInfo(&basic_info.dissonance_base, new_val);
 
-	if (IsEntity() && ((Entity*)this)->GetGroupMemberInfo()) {
-		((Entity*)this)->UpdateGroupMemberInfo();
-		if (IsPlayer())
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id, GetZone()->GetClientBySpawn(this));
-		else
-			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
-	}
+	SendGroupUpdate();
 }
 sint32 Spawn::GetTotalDissonance()
 {
@@ -4695,5 +4654,19 @@ void Spawn::AddIgnoredWidget(int32 id) {
 	std::unique_lock lock(MIgnoredWidgets);
 	if(ignored_widgets.find(id) == ignored_widgets.end()) {
 		ignored_widgets.insert(make_pair(id,true));
+	}
+}
+
+void Spawn::SendGroupUpdate() {
+	if (IsEntity() && ((Entity*)this)->GetGroupMemberInfo()) {
+		((Entity*)this)->UpdateGroupMemberInfo();
+		if (IsPlayer()) {
+			Client* client = ((Player*)this)->GetClient();
+			if(client) {
+				world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id, client);
+			}
+		}
+		else
+			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
 	}
 }

@@ -2139,7 +2139,7 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 
 			spell->damage_remaining = ward->DamageLeft;
 			if (spell->caster->IsPlayer())
-				ClientPacketFunctions::SendMaintainedExamineUpdate(GetZone()->GetClientBySpawn(spell->caster), spell->slot_pos, ward->DamageLeft, 1);
+				ClientPacketFunctions::SendMaintainedExamineUpdate(((Player*)spell->caster)->GetClient(), spell->slot_pos, ward->DamageLeft, 1);
 
 			if (!redirectDamage)
 				GetZone()->SendHealPacket(ward->Spell->caster, this, HEAL_PACKET_TYPE_ABSORB, damage, spell->spell->GetName());
@@ -2153,13 +2153,17 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 			ward->LastRedirectDamage = redirectDamage;
 			if (this->IsPlayer())
 			{
-				Client* client = GetZone()->GetClientBySpawn(this);
-				client->Message(CHANNEL_COMBAT, "%s intercepted some of the damage intended for you!", spell->caster->GetName());
+				Client* client = this->GetClient();
+				if(client) {
+					client->Message(CHANNEL_COMBAT, "%s intercepted some of the damage intended for you!", spell->caster->GetName());
+				}
 			}
 			if (spell->caster && spell->caster->IsPlayer())
 			{
-				Client* client = GetZone()->GetClientBySpawn(spell->caster);
-				client->Message(CHANNEL_COMBAT, "YOU intercept some of the damage intended for %s!", this->GetName());
+				Client* client = ((Player*)spell->caster)->GetClient();
+				if(client) {
+					client->Message(CHANNEL_COMBAT, "YOU intercept some of the damage intended for %s!", this->GetName());
+				}
 			}
 
 			if (attacker && spell->caster)
@@ -2173,7 +2177,9 @@ int32 Entity::CheckWards(Entity* attacker, int32 damage, int8 damage_type) {
 		if (ward->MaxHitCount && spell->num_triggers && spell->caster->GetZone())
 		{
 			spell->num_triggers--;
-			ClientPacketFunctions::SendMaintainedExamineUpdate(spell->caster->GetZone()->GetClientBySpawn(spell->caster), spell->slot_pos, spell->num_triggers, 0);
+			if(spell->caster->IsPlayer()) {
+				ClientPacketFunctions::SendMaintainedExamineUpdate(((Player*)spell->caster)->GetClient(), spell->slot_pos, spell->num_triggers, 0);
+			}
 		}
 		
 		if (ward->MaxHitCount && ward->HitCount >= ward->MaxHitCount) // there isn't a max hit requirement with the hit count, so just go based on hit count
@@ -2569,10 +2575,10 @@ void Entity::AddStealthSpell(LuaSpell* spell) {
 		info_changed = true;
 		changed = true;
 		AddChangedZoneSpawn();
-		if (IsPlayer())
+		if (IsPlayer() && ((Player*)this)->GetClient())
 		{
 			((Player*)this)->SetCharSheetChanged(true);
-			GetZone()->SendAllSpawnsForVisChange(GetZone()->GetClientBySpawn(this));
+			GetZone()->SendAllSpawnsForVisChange(((Player*)this)->GetClient());
 		}
 	}
 }
@@ -2589,10 +2595,10 @@ void Entity::AddInvisSpell(LuaSpell* spell) {
 		info_changed = true;
 		changed = true;
 		AddChangedZoneSpawn();
-		if (IsPlayer())
+		if (IsPlayer() && ((Player*)this)->GetClient())
 		{
 			((Player*)this)->SetCharSheetChanged(true);
-			GetZone()->SendAllSpawnsForVisChange(GetZone()->GetClientBySpawn(this));
+			GetZone()->SendAllSpawnsForVisChange(((Player*)this)->GetClient());
 		}
 	}
 }
@@ -2608,10 +2614,10 @@ void Entity::RemoveInvisSpell(LuaSpell* spell) {
 		info_changed = true;
 		changed = true;
 		AddChangedZoneSpawn();
-		if (IsPlayer())
+		if (IsPlayer() && ((Player*)this)->GetClient())
 		{
 			((Player*)this)->SetCharSheetChanged(true);
-			GetZone()->SendAllSpawnsForVisChange(GetZone()->GetClientBySpawn(this));
+			GetZone()->SendAllSpawnsForVisChange(((Player*)this)->GetClient());
 		}
 	}
 }
@@ -2627,10 +2633,10 @@ void Entity::RemoveStealthSpell(LuaSpell* spell) {
 		info_changed = true;
 		changed = true;
 		AddChangedZoneSpawn();
-		if (IsPlayer())
+		if (IsPlayer() && ((Player*)this)->GetClient())
 		{
 			((Player*)this)->SetCharSheetChanged(true);
-			GetZone()->SendAllSpawnsForVisChange(GetZone()->GetClientBySpawn(this));
+			GetZone()->SendAllSpawnsForVisChange(((Player*)this)->GetClient());
 		}
 	}
 }

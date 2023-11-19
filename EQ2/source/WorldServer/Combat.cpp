@@ -102,7 +102,7 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 	}
 
 	if (IsPlayer())
-		client = GetZone()->GetClientBySpawn(this);
+		client = ((Player*)this)->GetClient();
 
 	if (IsPet())
 		attacker = ((NPC*)this)->GetOwner();
@@ -328,10 +328,12 @@ void Entity::RangeAttack(Spawn* victim, float distance, Item* weapon, Item* ammo
 				else
 					((Player*)this)->equipment_list.RemoveItem(ammo->details.slot_id, true);
 
-				Client* client = GetZone()->GetClientBySpawn(this);
-				EQ2Packet* outapp = ((Player*)this)->GetEquipmentList()->serialize(client->GetVersion(), (Player*)this);
-				if(outapp)
-					client->QueuePacket(outapp);
+				Client* client = ((Player*)this)->GetClient();
+				if(client) {
+					EQ2Packet* outapp = ((Player*)this)->GetEquipmentList()->serialize(client->GetVersion(), (Player*)this);
+					if(outapp)
+						client->QueuePacket(outapp);
+				}
 			}
 
 			if(victim->IsNPC() && victim->EngagedInCombat() == false) {
@@ -434,7 +436,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 		if(spell->GetSpellData()->success_message.length() > 0){
 			Client* client = nullptr;
 			if(IsPlayer())
-				client = GetZone()->GetClientBySpawn(this);
+				client = ((Player*)this)->GetClient();
 			if(client){
 				string success_message = spell->GetSpellData()->success_message;
 				if(success_message.find("%t") < 0xFFFFFFFF)
@@ -495,7 +497,7 @@ bool Entity::SpellAttack(Spawn* victim, float distance, LuaSpell* luaspell, int8
 			else {
 				Client* client = 0;
 				if(IsPlayer())
-					client = GetZone()->GetClientBySpawn(this);
+					client = ((Player*)this)->GetClient();
 				if(client) {
 					client->GetPlayer()->InCombat(true, client->GetPlayer()->GetRangeAttack());
 				}
@@ -536,7 +538,7 @@ bool Entity::ProcAttack(Spawn* victim, int8 damage_type, int32 low_damage, int32
 		if (success_msg.length() > 0) {
 			Client* client = 0;
 			if(IsPlayer())
-				client = GetZone()->GetClientBySpawn(this);
+				client = ((Player*)this)->GetClient();
 			if(client) {
 				if(success_msg.find("%t") < 0xFFFFFFFF)
 					success_msg.replace(success_msg.find("%t"), 2, victim->GetName());
@@ -1349,12 +1351,14 @@ void Entity::KillSpawn(Spawn* dead, int8 type, int8 damage_type, int16 kill_blow
 		return;
 
 	if (IsPlayer()) {
-		Client* client = GetZone()->GetClientBySpawn(this);
-		PacketStruct* packet = configReader.getStruct("WS_EnterCombat", client->GetVersion());
-		if (packet) {
-			client->QueuePacket(packet->serialize());
+		Client* client = ((Player*)this)->GetClient();
+		if(client) {
+			PacketStruct* packet = configReader.getStruct("WS_EnterCombat", client->GetVersion());
+			if (packet) {
+				client->QueuePacket(packet->serialize());
+			}
+			safe_delete(packet);
 		}
-		safe_delete(packet);
 
 		((Player*)this)->InCombat(false);
 	}
@@ -1511,7 +1515,7 @@ void Player::ProcessCombat() {
 				RangeAttack(combat_target, distance, weapon, ammo);
 			}
 			else {
-				Client* client = GetZone()->GetClientBySpawn(this);
+				Client* client = ((Player*)this)->GetClient();
 				if (client) {
 					// Need to get messages from live, made these up so the player knows what is wrong in game if weapon or ammo are not valid
 					if (!ammo)

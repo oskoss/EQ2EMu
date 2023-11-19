@@ -655,10 +655,10 @@ bool Guild::AddNewGuildMember(Client *client, const char *invited_by, int8 rank)
 	player = client->GetPlayer();
 	assert(player);
 
-	if (members.count(player->GetCharacterID()) == 0 && !player->GetGuild()) {
+	if (members.count(player->GetCharacterID()) == 0 && !player->GetGuild() && ((Player*)player)->GetClient()) {
 		gm = new GuildMember;
 
-		gm->account_id = player->GetZone()->GetClientBySpawn(player)->GetAccountID();
+		gm->account_id = ((Player*)player)->GetClient()->GetAccountID();
 		gm->character_id = player->GetCharacterID();
 		strncpy(gm->name, player->GetName(), sizeof(gm->name));
 		gm->guild_status = 0;
