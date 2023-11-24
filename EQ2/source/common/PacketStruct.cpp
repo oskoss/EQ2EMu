@@ -1389,8 +1389,7 @@ bool PacketStruct::StructLoadData(DataStruct* data_struct, void* data, int32 len
 		break;
 	case DATA_STRUCT_CHAR:
 		LoadData((char*)data, len);
-		data_struct->SetIsSet(*((sint64*)data) > 0);
-//data > 0);
+		data_struct->SetIsSet(true);
 		break;
 	case DATA_STRUCT_FLOAT:
 		LoadData((float*)data, len);
