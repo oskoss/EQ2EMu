@@ -1900,6 +1900,7 @@ bool Spell::SetSpellData(lua_State* state, std::string field, int8 fieldArg)
 	else if (field == "cast_time")
 	{
 		int16 cast_time = lua_interface->GetInt16Value(state, fieldArg);
+		GetSpellData()->orig_cast_time = cast_time;
 		GetSpellData()->cast_time = cast_time;
 		valSet = true;
 	}
@@ -2218,7 +2219,8 @@ bool Spell::IsCopiedSpell() {
 }
 
 void Spell::ModifyCastTime(Entity* caster){
-	int16 cast_time = spell->cast_time;
+	int16 cast_time = spell->orig_cast_time;
+	spell->cast_time = cast_time;
 	float cast_speed = caster->GetInfoStruct()->get_casting_speed();
 	if (cast_speed > 0.0f){
 		bool modifiedSpeed = false;

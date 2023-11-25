@@ -4800,6 +4800,7 @@ void WorldDatabase::LoadSpells()
 
 			/* Spell Parameters */
 			data->call_frequency			= result.GetInt32Str("call_frequency");
+			data->orig_cast_time			= result.GetInt16Str("cast_time");
 			data->cast_time					= result.GetInt16Str("cast_time");
 			data->duration1					= result.GetInt32Str("duration1");
 			data->duration2					= result.GetInt32Str("duration2");
@@ -6437,7 +6438,7 @@ void WorldDatabase::SaveCharacterHistory(Player* player, int8 type, int8 subtype
 		return;
 	}
 
-	LogWrite(PLAYER__INFO, 1, "Player", "Saving character history, type = %s (%i) subtype = %s (%i)", (char*)str_type.c_str(), type, (char*)str_subtype.c_str(), subtype);
+	LogWrite(PLAYER__DEBUG, 1, "Player", "Saving character history, type = %s (%i) subtype = %s (%i)", (char*)str_type.c_str(), type, (char*)str_subtype.c_str(), subtype);
 
 	Query query;
 	query.AddQueryAsync(player->GetCharacterID(), this, Q_REPLACE, "replace into character_history (char_id, type, subtype, value, value2, location, event_date) values (%u, '%s', '%s', %i, %i, '%s', %u)", 

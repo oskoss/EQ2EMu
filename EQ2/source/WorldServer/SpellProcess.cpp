@@ -1524,8 +1524,10 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		else
 			LogWrite(SPELL__DEBUG, 1, "Spell", "Unable to do precast check as there was no lua_interface");
 		
-		if (custom_cast_time > 0)
+		if (custom_cast_time > 0) {
+			spell->GetSpellData()->orig_cast_time = custom_cast_time;
 			spell->GetSpellData()->cast_time = custom_cast_time;
+		}
 
 		//Apply casting speed mod
 		spell->ModifyCastTime(caster);

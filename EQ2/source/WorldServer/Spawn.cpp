@@ -860,13 +860,7 @@ uchar* Spawn::spawn_pos_changes(Player* player, int16 version, int16* pos_packet
 	}
 
 	int16 newSize = size + 1000;
-	uchar* tmp;
-	if (IsPlayer() && version > 283) {
-		tmp = new uchar[newSize];
-	}
-	else {
-		tmp = new uchar[newSize];
-	}
+	uchar* tmp = new uchar[newSize];
 	size = Pack(tmp, xor_pos_packet, size, newSize, version);
 	player->pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
 
@@ -1250,13 +1244,7 @@ uchar* Spawn::spawn_pos_changes_ex(Player* player, int16 version, int16* pos_pac
 	}
 
 	int16 newSize = size + 1000;
-	uchar* tmp;
-	if (IsPlayer() && version > 283) {
-		tmp = new uchar[newSize];
-	}
-	else {
-		tmp = new uchar[newSize];
-	}
+	uchar* tmp = new uchar[newSize];
 	size = Pack(tmp, xor_pos_packet, size, newSize, version);
 	player->pos_mutex.releasewritelock(__FUNCTION__, __LINE__);
 	
@@ -2691,10 +2679,12 @@ void Spawn::InitializeInfoPacketData(Player* spawn, PacketStruct* packet) {
 				packet->setDataByName("camping", 1);
 			if ((appearance.activity_status & ACTIVITY_STATUS_LFG) > 0)
 				packet->setDataByName("lfg", 1);
-			if (EngagedInCombat()) {
-				packet->setDataByName("auto_attack", 1);
-			}
 		}
+		
+		if (EngagedInCombat()) {
+			packet->setDataByName("auto_attack", 1);
+		}
+		
 		if ((appearance.activity_status & ACTIVITY_STATUS_SOLID) > 0)
 			packet->setDataByName("solid_object", 1);
 	}

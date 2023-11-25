@@ -265,6 +265,7 @@ struct SpellData{
 	int16	dissonance_upkeep;
 	int8	target_type;
 	int16	cast_time;
+	int16	orig_cast_time;
 	float	recovery;
 	float	recast;
 	int32	linked_timer;
