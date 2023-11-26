@@ -78,6 +78,7 @@ Spell::Spell(Spell* host_spell, bool unique_spell)
 		spell->can_effect_raid = host_spell->GetSpellData()->can_effect_raid;
 		spell->casting_flags = host_spell->GetSpellData()->casting_flags;
 		spell->cast_time = host_spell->GetSpellData()->cast_time;
+		spell->orig_cast_time = host_spell->GetSpellData()->orig_cast_time;
 		spell->cast_type = host_spell->GetSpellData()->cast_type;
 		spell->cast_while_moving = host_spell->GetSpellData()->cast_while_moving;
 		spell->class_skill = host_spell->GetSpellData()->class_skill;
