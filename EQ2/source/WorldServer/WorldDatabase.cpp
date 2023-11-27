@@ -436,7 +436,10 @@ void WorldDatabase::LoadVisualStates()
 	int32 total = 0;
 	Query query;
 	Query query2;
+	Query query3;
 	MYSQL_ROW row;
+	MYSQL_ROW row2;
+	MYSQL_ROW row3;
 
 	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT visual_state_id, name FROM visual_states");
 	while(result && (row = mysql_fetch_row(result)))
@@ -449,37 +452,37 @@ void WorldDatabase::LoadVisualStates()
 	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u visual states", total);
 
 	total = 0;
-	result = query2.RunQuery2(Q_SELECT, "SELECT name, visual_state_id, message, targeted_message, min_version_range, max_version_range FROM emotes");
-	while(result && (row = mysql_fetch_row(result)))
+	MYSQL_RES* result2 = query2.RunQuery2(Q_SELECT, "SELECT name, visual_state_id, message, targeted_message, min_version_range, max_version_range FROM emotes");
+	while(result2 && (row2 = mysql_fetch_row(result2)))
 	{
 		EmoteVersionRange* range = 0;
-		if ((range = visual_states.FindEmoteRange(string(row[0]))) == NULL)
+		if ((range = visual_states.FindEmoteRange(string(row2[0]))) == NULL)
 		{
-			range = new EmoteVersionRange(row[0]);
+			range = new EmoteVersionRange(row2[0]);
 			visual_states.InsertEmoteRange(range);
 		}
 		
-		range->AddVersionRange(atoul(row[4]),atoul(row[5]), row[0], atoul(row[1]), row[2], row[3]);
+		range->AddVersionRange(atoul(row2[4]),atoul(row2[5]), row2[0], atoul(row2[1]), row2[2], row2[3]);
 		total++;
-		LogWrite(WORLD__DEBUG, 5, "World", "---Loading emote state: '%s' (%i)", row[0], atoul(row[0]));
+		LogWrite(WORLD__DEBUG, 5, "World", "---Loading emote state: '%s' (%i)", row2[0], atoul(row2[0]));
 	}
 	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u emote state(s)", total);
 	
 	
 	total = 0;
-	result = query2.RunQuery2(Q_SELECT, "SELECT name, spell_visual_id, alternate_spell_visual, min_version_range, max_version_range FROM spell_visuals");
-	while(result && (row = mysql_fetch_row(result)))
+	MYSQL_RES* result3 = query3.RunQuery2(Q_SELECT, "SELECT name, spell_visual_id, alternate_spell_visual, min_version_range, max_version_range FROM spell_visuals");
+	while(result3 && (row3 = mysql_fetch_row(result3)))
 	{
 		EmoteVersionRange* range = 0;
-		if ((range = visual_states.FindSpellVisualRange(string(row[0]))) == NULL)
+		if ((range = visual_states.FindSpellVisualRange(string(row3[0]))) == NULL)
 		{
-			range = new EmoteVersionRange(row[0]);
-			visual_states.InsertSpellVisualRange(range, atoul(row[1]));
+			range = new EmoteVersionRange(row3[0]);
+			visual_states.InsertSpellVisualRange(range, atoul(row3[1]));
 		}
 		
-		range->AddVersionRange(atoul(row[3]),atoul(row[4]), row[0], atoul(row[1]), row[2]);
+		range->AddVersionRange(atoul(row3[3]),atoul(row3[4]), row3[0], atoul(row3[1]), row3[2]);
 		total++;
-		LogWrite(WORLD__DEBUG, 5, "World", "---Loading spell visual state: '%s' (%u)", row[1], atoul(row[0]));
+		LogWrite(WORLD__DEBUG, 5, "World", "---Loading spell visual state: '%s' (%u)", row3[1], atoul(row3[0]));
 	}
 	LogWrite(WORLD__DEBUG, 3, "World", "--Loaded %u spell visual state(s)", total);
 }
