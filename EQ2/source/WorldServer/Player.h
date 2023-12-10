@@ -154,6 +154,7 @@ struct HistoryData {
 	char		Location[200];
 	int32		EventID;
 	int32		EventDate;
+	bool		needs_save;
 };
 
 /// <summary>History set through the LUA system</summary>

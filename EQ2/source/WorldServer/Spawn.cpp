@@ -685,12 +685,15 @@ EQ2Packet* Spawn::spawn_serialize(Player* player, int16 version, int16 offset, i
 	ptr += sizeof(oversized_packet);
 
 	int16 opcode = 0;
-	if(IsWidget())
-		opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateWidgetCmd);
-	else if(IsSign())
-		opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateSignWidgetCmd);
-	else
-		opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateGhostCmd);
+	
+	if (EQOpcodeManager.count(GetOpcodeVersion(version)) != 0) {	
+		if(IsWidget())
+			opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateWidgetCmd);
+		else if(IsSign())
+			opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateSignWidgetCmd);
+		else
+			opcode = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqCreateGhostCmd);
+	}
 	memcpy(ptr, &opcode, sizeof(opcode));
 	ptr += sizeof(opcode);
 
@@ -931,7 +934,13 @@ EQ2Packet* Spawn::player_position_update_packet(Player* player, int16 version){
 		size += 2;
 	}
 	static const int8 oversized = 255;
-	int16 opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd);
+	
+	
+	int16 opcode_val = 0;
+	
+	if (EQOpcodeManager.count(GetOpcodeVersion(version)) != 0) {	
+		opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd);
+	}
 	uchar* tmp = new uchar[size];
 	memset(tmp, 0, size);
 	uchar* ptr = tmp;
@@ -991,7 +1000,11 @@ EQ2Packet* Spawn::spawn_update_packet(Player* player, int16 version, bool overri
 	uchar* pos_changes = 0;
 	uchar* vis_changes = 0;
 	static const int8 oversized = 255;
-	int16 opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd);
+	int16 opcode_val = 0;
+	
+	if (EQOpcodeManager.count(GetOpcodeVersion(version)) != 0) {
+		opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd);
+	}
 
 	//We need to lock these variables up to make this thread safe
 	m_Update.writelock(__FUNCTION__, __LINE__);

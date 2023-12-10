@@ -118,7 +118,7 @@ bool WorldDatabase::RemoveSpawnTemplate(int32 template_id)
 
 int32 WorldDatabase::CreateSpawnFromTemplateByID(Client* client, int32 template_id)
 {
-	Query query;
+	Query query, query2, query3, query4, query5, query6;
 	MYSQL_ROW row;
 	int32 spawn_location_id = 0;
 	float new_x = client->GetPlayer()->GetX();
@@ -130,8 +130,7 @@ int32 WorldDatabase::CreateSpawnFromTemplateByID(Client* client, int32 template_
 	LogWrite(COMMAND__DEBUG, 5, "Command", "\tCoords: %.2f %.2f %.2f...", new_x, new_y, new_z);
 
 	// find the spawn_location_id in the template we plan to duplicate
-	Query query1;
-	MYSQL_RES* result = query1.RunQuery2(Q_SELECT, "SELECT spawn_location_id FROM spawn_templates WHERE id = %u", template_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT spawn_location_id FROM spawn_templates WHERE id = %u", template_id);
 	if (result && (row = mysql_fetch_row(result))) {
 		if (row[0])
 			spawn_location_id = atoi(row[0]);
@@ -143,26 +142,25 @@ int32 WorldDatabase::CreateSpawnFromTemplateByID(Client* client, int32 template_
 
 		// insert a new spawn_location_name record
 		string name = "TemplateGenerated";
-		query.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_name (name) VALUES ('%s')", name.c_str());
-		if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
-			LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query.GetQuery(), query.GetError());
+		query2.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_name (name) VALUES ('%s')", name.c_str());
+		if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF){
+			LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query2.GetQuery(), query2.GetError());
 			return 0;
 		}
-		int32 new_location_id = query.GetLastInsertedID();
+		int32 new_location_id = query2.GetLastInsertedID();
 		LogWrite(COMMAND__DEBUG, 5, "Command", "Created new Spawn Location: '%s' (%u)", name.c_str(), new_location_id);
 
 		// get all spawn_location_entries that match the templates spawn_location_id value and insert as new
 		LogWrite(COMMAND__DEBUG, 5, "Command", "Finding existing spawn_location_entry(s) for location_id %u", spawn_location_id);
-		Query query2;
-		MYSQL_RES* result2 = query2.RunQuery2(Q_SELECT, "SELECT spawn_id, spawnpercentage FROM spawn_location_entry WHERE spawn_location_id = %u", spawn_location_id);
+		MYSQL_RES* result2 = query3.RunQuery2(Q_SELECT, "SELECT spawn_id, spawnpercentage FROM spawn_location_entry WHERE spawn_location_id = %u", spawn_location_id);
 		if(result2 && mysql_num_rows(result2) > 0){
 			MYSQL_ROW row2;
 			while(result2 && (row2 = mysql_fetch_row(result2)) && row2[0])
 			{
-				query.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_entry (spawn_id, spawn_location_id, spawnpercentage) VALUES (%u, %u, %i)", 
+				query4.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_entry (spawn_id, spawn_location_id, spawnpercentage) VALUES (%u, %u, %i)", 
 					atoul(row2[0]), new_location_id, atoi(row2[1]));
-				if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
-					LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query.GetQuery(), query.GetError());
+				if(query4.GetErrorNumber() && query4.GetError() && query4.GetErrorNumber() < 0xFFFFFFFF){
+					LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query4.GetQuery(), query4.GetError());
 					return 0;
 				}
 				LogWrite(COMMAND__DEBUG, 5, "Command", "Insert Entry for spawn_id %u, location_id %u, percentage %i", atoul(row2[0]), new_location_id, atoi(row2[1]));
@@ -172,16 +170,15 @@ int32 WorldDatabase::CreateSpawnFromTemplateByID(Client* client, int32 template_
 		// get all spawn_location_placements that match the templates spawn_location_id value and insert as new
 		// Note: /spawn templates within current zone_id only, because of spawn_id issues (cannot template an Antonic spawn in Commonlands)
 		LogWrite(COMMAND__DEBUG, 5, "Command", "Finding existing spawn_location_placement(s) for location_id %u", spawn_location_id);
-		Query query3;
-		MYSQL_RES* result3 = query3.RunQuery2(Q_SELECT, "SELECT zone_id, x_offset, y_offset, z_offset, respawn, expire_timer, expire_offset, grid_id FROM spawn_location_placement WHERE spawn_location_id = %u", spawn_location_id);
+		MYSQL_RES* result3 = query5.RunQuery2(Q_SELECT, "SELECT zone_id, x_offset, y_offset, z_offset, respawn, expire_timer, expire_offset, grid_id FROM spawn_location_placement WHERE spawn_location_id = %u", spawn_location_id);
 		if(result3 && mysql_num_rows(result3) > 0){
 			MYSQL_ROW row3;
 			while(result3 && (row3 = mysql_fetch_row(result3)) && row3[0])
 			{
-				query.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_placement (zone_id, spawn_location_id, x, y, z, heading, x_offset, y_offset, z_offset, respawn, expire_timer, expire_offset, grid_id) VALUES (%i, %u, %2f, %2f, %2f, %2f, %2f, %2f, %2f, %i, %i, %i, %u)", 
+				query6.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_placement (zone_id, spawn_location_id, x, y, z, heading, x_offset, y_offset, z_offset, respawn, expire_timer, expire_offset, grid_id) VALUES (%i, %u, %2f, %2f, %2f, %2f, %2f, %2f, %2f, %i, %i, %i, %u)", 
 					atoi(row3[0]), new_location_id, new_x, new_y, new_z, new_heading, atof(row3[1]), atof(row3[2]), atof(row3[3]), atoi(row3[4]), atoi(row3[5]), atoi(row3[6]), atoul(row3[7]));
-				if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
-					LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query.GetQuery(), query.GetError());
+				if(query6.GetErrorNumber() && query6.GetError() && query6.GetErrorNumber() < 0xFFFFFFFF){
+					LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query6.GetQuery(), query6.GetError());
 					return 0;
 				}
 				LogWrite(COMMAND__DEBUG, 5, "Command", "Insert Placement at new coords for location_id %u", new_location_id);
@@ -197,7 +194,7 @@ int32 WorldDatabase::CreateSpawnFromTemplateByID(Client* client, int32 template_
 
 int32 WorldDatabase::CreateSpawnFromTemplateByName(Client* client, const char* template_name)
 {
-	Query query;
+	Query query, query1, query2, query3, query4, query5, query6;
 	MYSQL_ROW row;
 	int32 template_id = 0;
 	int32 spawn_location_id = 0;
@@ -210,8 +207,7 @@ int32 WorldDatabase::CreateSpawnFromTemplateByName(Client* client, const char* t
 	LogWrite(COMMAND__DEBUG, 5, "Command", "\tCoords: %.2f %.2f %.2f...", new_x, new_y, new_z);
 
 	// find the spawn_location_id in the template we plan to duplicate
-	Query query1;
-	MYSQL_RES* result = query1.RunQuery2(Q_SELECT, "SELECT id, spawn_location_id FROM spawn_templates WHERE name = '%s'", template_name);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT id, spawn_location_id FROM spawn_templates WHERE name = '%s'", template_name);
 	if (result && (row = mysql_fetch_row(result))) {
 		if (row[0])
 		{
@@ -226,26 +222,25 @@ int32 WorldDatabase::CreateSpawnFromTemplateByName(Client* client, const char* t
 
 		// insert a new spawn_location_name record
 		string name = "TemplateGenerated";
-		query.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_name (name) VALUES ('%s')", name.c_str());
-		if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
-			LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query.GetQuery(), query.GetError());
+		query2.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_name (name) VALUES ('%s')", name.c_str());
+		if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF){
+			LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query2.GetQuery(), query2.GetError());
 			return 0;
 		}
-		int32 new_location_id = query.GetLastInsertedID();
+		int32 new_location_id = query2.GetLastInsertedID();
 		LogWrite(COMMAND__DEBUG, 5, "Command", "Created new Spawn Location: '%s' (%u)", name.c_str(), new_location_id);
 
 		// get all spawn_location_entries that match the templates spawn_location_id value and insert as new
 		LogWrite(COMMAND__DEBUG, 5, "Command", "Finding existing spawn_location_entry(s) for location_id %u", spawn_location_id);
-		Query query2;
-		MYSQL_RES* result2 = query2.RunQuery2(Q_SELECT, "SELECT spawn_id, spawnpercentage FROM spawn_location_entry WHERE spawn_location_id = %u", spawn_location_id);
+		MYSQL_RES* result2 = query3.RunQuery2(Q_SELECT, "SELECT spawn_id, spawnpercentage FROM spawn_location_entry WHERE spawn_location_id = %u", spawn_location_id);
 		if(result2 && mysql_num_rows(result2) > 0){
 			MYSQL_ROW row2;
 			while(result2 && (row2 = mysql_fetch_row(result2)) && row2[0])
 			{
-				query.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_entry (spawn_id, spawn_location_id, spawnpercentage) VALUES (%u, %u, %i)", 
+				query4.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_entry (spawn_id, spawn_location_id, spawnpercentage) VALUES (%u, %u, %i)", 
 					atoul(row2[0]), new_location_id, atoi(row2[1]));
-				if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
-					LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query.GetQuery(), query.GetError());
+				if(query4.GetErrorNumber() && query4.GetError() && query4.GetErrorNumber() < 0xFFFFFFFF){
+					LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query4.GetQuery(), query4.GetError());
 					return 0;
 				}
 				LogWrite(COMMAND__DEBUG, 5, "Command", "Insert Entry for spawn_id %u, location_id %u, percentage %i", atoul(row2[0]), new_location_id, atoi(row2[1]));
@@ -255,16 +250,15 @@ int32 WorldDatabase::CreateSpawnFromTemplateByName(Client* client, const char* t
 		// get all spawn_location_placements that match the templates spawn_location_id value and insert as new
 		// Note: /spawn templates within current zone_id only, because of spawn_id issues (cannot template an Antonic spawn in Commonlands)
 		LogWrite(COMMAND__DEBUG, 5, "Command", "Finding existing spawn_location_placement(s) for location_id %u", spawn_location_id);
-		Query query3;
-		MYSQL_RES* result3 = query3.RunQuery2(Q_SELECT, "SELECT zone_id, x_offset, y_offset, z_offset, respawn, expire_timer, expire_offset, grid_id FROM spawn_location_placement WHERE spawn_location_id = %u", spawn_location_id);
+		MYSQL_RES* result3 = query5.RunQuery2(Q_SELECT, "SELECT zone_id, x_offset, y_offset, z_offset, respawn, expire_timer, expire_offset, grid_id FROM spawn_location_placement WHERE spawn_location_id = %u", spawn_location_id);
 		if(result3 && mysql_num_rows(result3) > 0){
 			MYSQL_ROW row3;
 			while(result3 && (row3 = mysql_fetch_row(result3)) && row3[0])
 			{
-				query.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_placement (zone_id, spawn_location_id, x, y, z, heading, x_offset, y_offset, z_offset, respawn, expire_timer, expire_offset, grid_id) VALUES (%i, %u, %2f, %2f, %2f, %2f, %2f, %2f, %2f, %i, %i, %i, %u)", 
+				query6.RunQuery2(Q_INSERT, "INSERT INTO spawn_location_placement (zone_id, spawn_location_id, x, y, z, heading, x_offset, y_offset, z_offset, respawn, expire_timer, expire_offset, grid_id) VALUES (%i, %u, %2f, %2f, %2f, %2f, %2f, %2f, %2f, %i, %i, %i, %u)", 
 					atoi(row3[0]), new_location_id, new_x, new_y, new_z, new_heading, atof(row3[1]), atof(row3[2]), atof(row3[3]), atoi(row3[4]), atoi(row3[5]), atoi(row3[6]), atoul(row3[7]));
-				if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF){
-					LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query.GetQuery(), query.GetError());
+				if(query6.GetErrorNumber() && query6.GetError() && query6.GetErrorNumber() < 0xFFFFFFFF){
+					LogWrite(COMMAND__ERROR, 0, "Command", "Error in CreateSpawnFromTemplateByID query '%s': %s", query6.GetQuery(), query6.GetError());
 					return 0;
 				}
 				LogWrite(COMMAND__DEBUG, 5, "Command", "Insert Placement at new coords for location_id %u", new_location_id);

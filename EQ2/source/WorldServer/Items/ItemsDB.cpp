@@ -1250,7 +1250,6 @@ void WorldDatabase::SaveItem(int32 account_id, int32 char_id, Item* item, const 
 
 void WorldDatabase::DeleteItem(int32 char_id, Item* item, const char* type) 
 {
-	Query query;
 	string delete_item;
 
 	if(type)
@@ -1258,6 +1257,7 @@ void WorldDatabase::DeleteItem(int32 char_id, Item* item, const char* type)
 		LogWrite(ITEM__DEBUG, 1, "Items", "Deleting item_id %u (Type: %s) for player %u", item->details.item_id, type, char_id);
 
 		delete_item = string("DELETE FROM character_items WHERE char_id = %u AND (id = %u OR bag_id = %u) AND type='%s'");
+		Query query;
 		query.RunQuery2(Q_DELETE, delete_item.c_str(), char_id, item->details.unique_id, item->details.unique_id, type);
 	}
 	else
@@ -1265,12 +1265,14 @@ void WorldDatabase::DeleteItem(int32 char_id, Item* item, const char* type)
 		LogWrite(ITEM__DEBUG, 0, "Items", "Deleting item_id %u for player %u", item->details.item_id, char_id);
 
 		delete_item = string("DELETE FROM character_items WHERE char_id = %u AND (id = %u OR bag_id = %u)");
-		query.RunQuery2(Q_DELETE, delete_item.c_str(), char_id, item->details.unique_id, item->details.unique_id);
+		Query query2;
+		query2.RunQuery2(Q_DELETE, delete_item.c_str(), char_id, item->details.unique_id, item->details.unique_id);
 	}
 	
 	if(item->CheckFlag2(HEIRLOOM)) {
 		delete_item = string("DELETE FROM character_items_group_members WHERE unique_id = %u");
-		query.RunQuery2(Q_DELETE, delete_item.c_str(), item->details.unique_id);
+		Query query3;
+		query3.RunQuery2(Q_DELETE, delete_item.c_str(), item->details.unique_id);
 	}
 }
 
@@ -1352,6 +1354,8 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 				}
 
 				item->details.inv_slot_id = atol(row[10]); //bag_id
+				item->details.new_item = false;
+				item->details.new_index = 0;
 				item->details.count = atoi(row[11]); //count
 				item->SetMaxSellValue(atoul(row[12])); //max sell value
 				item->no_sale = (atoul(row[13]) == 1);

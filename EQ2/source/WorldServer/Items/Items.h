@@ -706,6 +706,8 @@ struct ItemCore{
 	int8	num_free_slots;
 	int16	recommended_level;
 	bool	item_locked;
+	bool	new_item;
+	int16	new_index;
 };
 #pragma pack()
 struct ItemStat{
@@ -1139,9 +1141,12 @@ public:
 	
 	int32   GetItemCountInBag(Item* bag);
 
+	int16	GetFirstNewItem();
+	int16	GetNewItemByIndex(int16 in_index);
+	
 	Mutex MPlayerItems;
 private:
-	void AddItemToPacket(PacketStruct* packet, Player* player, Item* item, int16 i, bool overflow = false);
+	void AddItemToPacket(PacketStruct* packet, Player* player, Item* item, int16 i, bool overflow = false, int16 new_index = 0);
 	void Stack(Item* orig_item, Item* item);
 	int16 packet_count;
 	vector<Item*> overflowItems;

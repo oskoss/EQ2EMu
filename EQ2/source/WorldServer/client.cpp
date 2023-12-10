@@ -1107,6 +1107,15 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 				if (EQOpcodeManager.count(GetOpcodeVersion(version)) == 0) {
 					LogWrite(WORLD__ERROR, 0, "World", "Incompatible version: %i", version);
 					ClientPacketFunctions::SendLoginDenied(this);
+					
+					/* reset version and protect server from trying to send packets out to a bad client
+					** cause of Dec 6th/Dec 7th 2023 crash
+					** Client::MakeSpawnChangePacket
+					**	int16 opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd); <-- crashes pulling opcode with bad version
+					*/
+					version = 546;
+					ready_for_updates = false;
+					ready_for_spawns = false;
 					return false;
 				}
 
@@ -2732,6 +2741,12 @@ bool Client::HandleLootItem(Spawn* entity, Item* item) {
 				lua_interface->RunItemScript(item->GetItemScript(), "obtained", item, player);
 			
 			CheckPlayerQuestsItemUpdate(item);
+			
+			if(GetVersion() <= 546) {
+				EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
+				if (outapp)
+					QueuePacket(outapp);
+			}
 			return true;
 		}
 		else
@@ -2777,8 +2792,15 @@ void Client::HandleLoot(EQApplicationPacket* app) {
 								item = new Item(master_item);
 								if (item) {
 									loot_all = HandleLootItem(0, item);
-									if (loot_all)
+									if (loot_all) {
 										player->RemovePendingLootItem(loot_id, item->details.item_id);
+										
+										if(GetVersion() <= 546) {
+											EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
+											if (outapp)
+												QueuePacket(outapp);
+										}
+									}
 								}
 							}
 						}
@@ -2807,9 +2829,11 @@ void Client::HandleLoot(EQApplicationPacket* app) {
 						safe_delete(packet);
 					}
 				}
-				EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
-				if (outapp)
-					QueuePacket(outapp);
+				if(GetVersion() > 546) {
+					EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
+					if (outapp)
+						QueuePacket(outapp);
+				}
 				Loot(0, player->GetPendingLootItems(loot_id), spawn);
 			}
 			else {
@@ -2829,9 +2853,11 @@ void Client::HandleLoot(EQApplicationPacket* app) {
 							safe_delete(packet);
 						}
 					}
-					EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
-					if (outapp)
-						QueuePacket(outapp);
+					if(GetVersion() > 546) {
+						EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
+						if (outapp)
+							QueuePacket(outapp);
+					}
 					Loot(spawn);
 					if (!spawn->HasLoot()) {
 						CloseLoot(loot_id);
@@ -11056,7 +11082,11 @@ void Client::SendSpawnChanges(set<Spawn*>& spawns) {
 void Client::MakeSpawnChangePacket(map<int32, SpawnData> info_changes, map<int32, SpawnData> pos_changes, map<int32, SpawnData> vis_changes, int32 info_size, int32 pos_size, int32 vis_size)
 {
 	static const int8 oversized = 255;
-	int16 opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd);
+	int16 opcode_val = 0;
+	
+	if (EQOpcodeManager.count(GetOpcodeVersion(version)) != 0) {	
+		opcode_val = EQOpcodeManager[GetOpcodeVersion(version)]->EmuToEQ(OP_EqUpdateGhostCmd);
+	}
 	int32 size = info_size + pos_size + vis_size + 8;
 	if (version > 283) //version 283 and below uses an overload for size, not always 4 bytes
 		size += 3;

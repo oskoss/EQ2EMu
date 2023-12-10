@@ -359,16 +359,16 @@ void WorldDatabase::UpdateCharacterMacro(int32 char_id, int8 number, const char*
 
 //we use our timestamp just in case db is on another server, otherwise times might be off
 void WorldDatabase::UpdateVitality(int32 timestamp, float amount){ 
-	Query query;
+	Query query, query2, query3;
 
 	LogWrite(PLAYER__DEBUG, 3, "Player", "Reset Vitality > 100: %f", amount);
 	query.RunQuery2(Q_UPDATE, "update character_details set xp_vitality=100 where (xp_vitality + %f) > 100", amount);
 
 	LogWrite(PLAYER__DEBUG, 3, "Player", "Update Vitality <= 100: %f", amount);
-	query.RunQuery2(Q_UPDATE, "update character_details set xp_vitality=(xp_vitality+%f) where (xp_vitality + %f) <= 100", amount, amount);
+	query2.RunQuery2(Q_UPDATE, "update character_details set xp_vitality=(xp_vitality+%f) where (xp_vitality + %f) <= 100", amount, amount);
 
 	LogWrite(PLAYER__DEBUG, 3, "Player", "Update Vitality Timer: %u", timestamp);
-	query.RunQuery2(Q_UPDATE, "update variables set variable_value=%u where variable_name='vitalitytimer'", timestamp);
+	query3.RunQuery2(Q_UPDATE, "update variables set variable_value=%u where variable_name='vitalitytimer'", timestamp);
 }
 
 void WorldDatabase::SaveVariable(const char* name, const char* value, const char* comment){
@@ -2030,14 +2030,14 @@ bool WorldDatabase::UpdateCharacterTimeStamp(int32 account_id, int32 character_i
 }
 
 bool WorldDatabase::insertCharacterProperty(Client* client, char* propName, char* propValue) {
-	Query query;
+	Query query, query2;
 
 	string update_status = string("update character_properties set propvalue='%s' where charid=%i and propname='%s'");
 	query.RunQuery2(Q_UPDATE, update_status.c_str(), propValue, client->GetCharacterID(), propName);
 	if (!query.GetAffectedRows())
 	{
-		query.RunQuery2(Q_UPDATE, "insert into character_properties (charid, propname, propvalue) values(%i, '%s', '%s')", client->GetCharacterID(), propName, propValue);
-		if (query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF) {
+		query2.RunQuery2(Q_UPDATE, "insert into character_properties (charid, propname, propvalue) values(%i, '%s', '%s')", client->GetCharacterID(), propName, propValue);
+		if (query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF) {
 			LogWrite(WORLD__ERROR, 0, "World", "Error in insertCharacterProperty query '%s': %s", query.GetQuery(), query.GetError());
 			return false;
 		}
@@ -2722,7 +2722,6 @@ void WorldDatabase::SaveCharRepeatableQuest(Client* client, int32 quest_id, int1
 }
 
 void WorldDatabase::SaveCharacterQuestProgress(Client* client, Quest* quest){
-	Query query;
 	vector<QuestStep*>* steps = quest->GetQuestSteps();
 	vector<QuestStep*>::iterator itr;
 	QuestStep* step = 0;
@@ -2730,14 +2729,16 @@ void WorldDatabase::SaveCharacterQuestProgress(Client* client, Quest* quest){
 	if(steps){
 		for(itr = steps->begin(); itr != steps->end(); itr++){
 			step = *itr;
-			if(step && step->GetQuestCurrentQuantity() > 0)
+			if(step && step->GetQuestCurrentQuantity() > 0) {
+				Query query;
 				query.RunQuery2(Q_REPLACE, "replace into character_quest_progress (char_id, quest_id, step_id, progress) values(%u, %u, %u, %i)", client->GetCharacterID(), quest->GetQuestID(), step->GetStepID(), step->GetQuestCurrentQuantity());
+							
+				if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
+					LogWrite(WORLD__ERROR, 0, "World", "Error in SaveCharacterQuestProgress query '%s': %s", query.GetQuery(), query.GetError());
+			}
 		}
 	}
 	quest->MQuestSteps.releasereadlock(__FUNCTION__, __LINE__);
-	
-	if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
-		LogWrite(WORLD__ERROR, 0, "World", "Error in SaveCharacterQuestProgress query '%s': %s", query.GetQuery(), query.GetError());
 }
 
 void WorldDatabase::LoadCharacterQuestProgress(Client* client){
@@ -4312,15 +4313,15 @@ void WorldDatabase::LoadFactionAlliances()
 bool WorldDatabase::UpdateSpawnScriptData(int32 spawn_id, int32 spawn_location_id, int32 spawnentry_id, const char* name){
 	bool ret = false;
 	if((spawn_id > 0 || spawn_location_id > 0 || spawnentry_id > 0) && name){
-		Query query;
+		Query query, query2;
 		int32 row_id = 0;
 		if(spawn_id > 0){
 			query.RunQuery2(Q_DELETE, "DELETE FROM spawn_scripts where spawn_id=%u", spawn_id);
-			query.RunQuery2(Q_INSERT, "INSERT into spawn_scripts (spawn_id, lua_script) values(%u, '%s')", spawn_id, getSafeEscapeString(name).c_str());
-			if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
-				LogWrite(LUA__ERROR, 0, "LUA", "Error in UpdateSpawnScriptData, Query: %s, Error: %s", query.GetQuery(), query.GetError());
+			query2.RunQuery2(Q_INSERT, "INSERT into spawn_scripts (spawn_id, lua_script) values(%u, '%s')", spawn_id, getSafeEscapeString(name).c_str());
+			if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF)
+				LogWrite(LUA__ERROR, 0, "LUA", "Error in UpdateSpawnScriptData, Query: %s, Error: %s", query2.GetQuery(), query2.GetError());
 			else{
-				row_id = query.GetLastInsertedID();
+				row_id = query2.GetLastInsertedID();
 				if(row_id > 0)
 					world.AddSpawnScript(row_id, name);
 				ret = true;
@@ -4328,11 +4329,11 @@ bool WorldDatabase::UpdateSpawnScriptData(int32 spawn_id, int32 spawn_location_i
 		}
 		else if(spawn_location_id > 0){
 			query.RunQuery2(Q_DELETE, "DELETE FROM spawn_scripts where spawn_location_id=%u", spawn_location_id);
-			query.RunQuery2(Q_INSERT, "INSERT into spawn_scripts (spawn_location_id, lua_script) values(%u, '%s')", spawn_location_id, getSafeEscapeString(name).c_str());
-			if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
-				LogWrite(LUA__ERROR, 0, "LUA", "Error in UpdateSpawnScriptData, Query: %s, Error: %s", query.GetQuery(), query.GetError());
+			query2.RunQuery2(Q_INSERT, "INSERT into spawn_scripts (spawn_location_id, lua_script) values(%u, '%s')", spawn_location_id, getSafeEscapeString(name).c_str());
+			if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF)
+				LogWrite(LUA__ERROR, 0, "LUA", "Error in UpdateSpawnScriptData, Query: %s, Error: %s", query2.GetQuery(), query2.GetError());
 			else{
-				row_id = query.GetLastInsertedID();
+				row_id = query2.GetLastInsertedID();
 				if(row_id > 0)
 					world.AddSpawnLocationScript(row_id, name);
 				ret = true;
@@ -4340,11 +4341,11 @@ bool WorldDatabase::UpdateSpawnScriptData(int32 spawn_id, int32 spawn_location_i
 		}
 		else if(spawnentry_id > 0){
 			query.RunQuery2(Q_DELETE, "DELETE FROM spawn_scripts where spawnentry_id=%u", spawnentry_id);
-			query.RunQuery2(Q_INSERT, "INSERT into spawn_scripts (spawnentry_id, lua_script) values(%u, '%s')", spawnentry_id, getSafeEscapeString(name).c_str());
-			if(query.GetErrorNumber() && query.GetError() && query.GetErrorNumber() < 0xFFFFFFFF)
-				LogWrite(LUA__ERROR, 0, "LUA", "Error in UpdateSpawnScriptData, Query: %s, Error: %s", query.GetQuery(), query.GetError());
+			query2.RunQuery2(Q_INSERT, "INSERT into spawn_scripts (spawnentry_id, lua_script) values(%u, '%s')", spawnentry_id, getSafeEscapeString(name).c_str());
+			if(query2.GetErrorNumber() && query2.GetError() && query2.GetErrorNumber() < 0xFFFFFFFF)
+				LogWrite(LUA__ERROR, 0, "LUA", "Error in UpdateSpawnScriptData, Query: %s, Error: %s", query2.GetQuery(), query2.GetError());
 			else{
-				row_id = query.GetLastInsertedID();
+				row_id = query2.GetLastInsertedID();
 				if(row_id > 0)
 					world.AddSpawnEntryScript(row_id, name);
 				ret = true;
@@ -5021,16 +5022,15 @@ bool WorldDatabase::DeleteCharacter(int32 account_id, int32 character_id){
 	if((guild = guild_list.GetGuild(GetGuildIDByCharacterID(character_id))))
 		guild->RemoveGuildMember(character_id);
 
-	Query query;
-	Query query2;
+	Query query, query2, query3, query4, query5;
 	query.RunQuery2(Q_DELETE, "DELETE FROM characters WHERE id=%u AND account_id=%u", character_id, account_id);
 	//delete languages
 	query2.RunQuery2(Q_DELETE, "DELETE FROM character_languages WHERE char_id=%u", character_id);
 	//delete quest rewards
-	query2.RunQuery2(Q_DELETE, "DELETE FROM character_quest_rewards WHERE char_id=%u", character_id);
-	query2.RunQuery2(Q_DELETE, "DELETE FROM character_quest_temporary_rewards WHERE char_id=%u", character_id);
+	query3.RunQuery2(Q_DELETE, "DELETE FROM character_quest_rewards WHERE char_id=%u", character_id);
+	query4.RunQuery2(Q_DELETE, "DELETE FROM character_quest_temporary_rewards WHERE char_id=%u", character_id);
 	//delete character claims
-	query2.RunQuery2(Q_DELETE, "DELETE FROM character_claim_items where char_id=%u", character_id);
+	query5.RunQuery2(Q_DELETE, "DELETE FROM character_claim_items where char_id=%u", character_id);
 
 	if(!query.GetAffectedRows())
 	{
@@ -6377,6 +6377,7 @@ void WorldDatabase::LoadCharacterHistory(int32 char_id, Player *player)
 		strcpy(hd->Location, result.GetString(4));
 		// skipped event id as use for it has not been determined yet
 		hd->EventDate = result.GetInt32(6);
+		hd->needs_save = false;
 
 		player->LoadPlayerHistory(type, subtype, hd);
 	}
@@ -8186,7 +8187,8 @@ void WorldDatabase::UpdateStartingLanguage(int32 char_id, uint8 race_id, int32 s
 		if (mysql_num_rows(result) > 0)	{
 			while (result && (row = mysql_fetch_row(result))){
 			//add custom languages to the character_languages db.
-				query.RunQuery2(Q_INSERT, "INSERT IGNORE INTO character_languages (char_id, language_id) VALUES (%u,%u)",char_id, atoul(row[0]));
+				Query query2;
+				query2.RunQuery2(Q_INSERT, "INSERT IGNORE INTO character_languages (char_id, language_id) VALUES (%u,%u)",char_id, atoul(row[0]));
 			}
 		}
 	}
@@ -8223,8 +8225,8 @@ void WorldDatabase::LoadClaimItems(int32 char_id)
 					max_claim	= 1;
 					curr_claim	= 1;
 				}
-
-				MYSQL_RES* res = query.RunQuery2(Q_INSERT, "insert ignore into character_claim_items (char_id, item_id, max_claim, curr_claim, one_per_char, veteran_reward_time, account_id) values  (%i, %i, %i, %i, %i, %I64i, %i)", char_id, item_id, max_claim, curr_claim, one_per_char, vet_reward_time, acct_id);
+				Query query2;
+				MYSQL_RES* res = query2.RunQuery2(Q_INSERT, "insert ignore into character_claim_items (char_id, item_id, max_claim, curr_claim, one_per_char, veteran_reward_time, account_id) values  (%i, %i, %i, %i, %i, %I64i, %i)", char_id, item_id, max_claim, curr_claim, one_per_char, vet_reward_time, acct_id);
 				total++;
 			}
 		}
@@ -8386,8 +8388,8 @@ void WorldDatabase::ClaimItem(int32 char_id, int32 item_id, Client* client) {
 					}
 				}
 				
-				Query query2;
-				query2.RunQuery2(Q_UPDATE, "UPDATE `character_claim_items` SET `curr_claim`=0 , `last_claim`=%u WHERE char_id=%i and item_id=%i", curr_time, char_id, item_id);
+				Query query4;
+				query4.RunQuery2(Q_UPDATE, "UPDATE `character_claim_items` SET `curr_claim`=0 , `last_claim`=%u WHERE char_id=%i and item_id=%i", curr_time, char_id, item_id);
 				//give the item to the player, and update last claim time.
 				//client->AddItem(item_id);
 				bool item_added = client->AddItem(item_id);

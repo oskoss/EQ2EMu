@@ -2095,9 +2095,19 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[1][0] && sep->IsNumber(1)){
 				if(strcmp(sep->arg[0], "inventory") == 0){
 					int32 item_index = atol(sep->arg[1]);
-					//printf("Index provided: %u\n",item_index);
-					if(client->GetVersion() <= 546 && item_index <= 255) {
-						item_index = 255 - item_index;
+					if(client->GetVersion() <= 546) {
+						if(item_index <= 255) {
+							item_index = 255 - item_index;
+						}
+						else {
+							if(item_index == 256) { // first "new" item to inventory is assigned index 256 by client
+								item_index = client->GetPlayer()->item_list.GetFirstNewItem();
+							}
+							else {
+								// otherwise the slot has to be mapped out depending on the amount of new items + index sent in
+								item_index = client->GetPlayer()->item_list.GetNewItemByIndex((int16)item_index - 255);
+							}
+						}
 					}
 					Item* item = client->GetPlayer()->item_list.GetItemFromIndex(item_index);
 					if(item){

@@ -2946,13 +2946,20 @@ bool PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 		if(itr->first > max_index) //just grab the highest index val for next loop
 			max_index = itr->first;
 	}
+	
+	bool doNotOverrideIndex = false;
 	for(int32 i=0;i<max_index;i++){
 		if(!indexed_items[i]){
 			new_index = i;
+			LogWrite(ITEM__DEBUG, 9, "Item %s assigned to %u",item->name.c_str(), i);
+			item->details.new_item = false;
+			item->details.new_index = 0;
+			doNotOverrideIndex = true;
 			break;
-		}	
+		}
 	}
-	if(new_index == 0 && max_index > 0)
+	// may break non DoF clients
+	if(!doNotOverrideIndex && new_index == 0 && max_index > 0)
 		new_index = max_index;
 
 	indexed_items[new_index] = item;
@@ -3257,6 +3264,8 @@ bool PlayerItemList::AssignItemToFreeSlot(Item* item){
 						if(items[bag->details.bag_id][BASE_EQUIPMENT].count(x) == 0){
 							item->details.inv_slot_id = bag->details.bag_id;
 							item->details.slot_id = x;
+							item->details.new_item = true;
+							item->details.new_index = 0;
 							MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 							bool ret = AddItem(item);
 							return ret;
@@ -3270,6 +3279,8 @@ bool PlayerItemList::AssignItemToFreeSlot(Item* item){
 			if(items[0][BASE_EQUIPMENT].count(i) == 0){
 				item->details.inv_slot_id = 0;
 				item->details.slot_id = i;
+				item->details.new_item = true;
+				item->details.new_index = 0;
 				MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
 				bool ret = AddItem(item);
 				return ret;
@@ -3505,10 +3516,14 @@ EQ2Packet* PlayerItemList::serialize(Player* player, int16 version){
 		
 		packet_count = size;
 		
+		int16 new_index = 0;
 		for(int16 i = 0; i < indexed_items.size(); i++){
 			item = indexed_items[i];
+			if(item && item->details.new_item)
+				new_index++;
+			
 			if (item && item->details.item_id > 0)
-				AddItemToPacket(packet, player, item, i);
+				AddItemToPacket(packet, player, item, i, false, new_index);
 		}
 
 		if (overflowItems.size() > 0) {
@@ -3535,7 +3550,34 @@ EQ2Packet* PlayerItemList::serialize(Player* player, int16 version){
 	return app;
 }
 
-void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item* item, int16 i, bool overflow){
+int16 PlayerItemList::GetFirstNewItem() {
+	int16 new_item_slot = 0;
+	for(int16 i = 0; i < indexed_items.size(); i++){
+		Item* item = indexed_items[i];
+		if(item && item->details.new_item) {
+			return i;
+		}
+	}
+	return 0xFFFF;
+}
+
+int16 PlayerItemList::GetNewItemByIndex(int16 in_index) {
+	int16 new_item_slot = 0;
+	for(int16 i = 0; i < indexed_items.size(); i++){
+		Item* item = indexed_items[i];
+		if(item && item->details.new_item) {
+			new_item_slot++;
+			int16 actual_index = in_index - new_item_slot;
+			LogWrite(ITEM__DEBUG, 9, "In index: %u new index %u actual %u and %u, new slot num %u", in_index, item->details.new_index, actual_index, i, new_item_slot);
+			if(actual_index == i) {
+				return i;
+			}
+		}
+	}
+	return 0xFFFF;
+}
+
+void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item* item, int16 i, bool overflow, int16 new_index){
 	Client *client;
 	if (!packet || !player)
 		return;
@@ -3667,7 +3709,14 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 				/* DoF client and earlier side automatically assigns indexes
 				** we have to send 0xFF or else all index is set to 255 on client
 				** and then examine inventory won't work */
-				packet->setSubstructArrayDataByName("items", "index", 0xFF, 0, i);
+				LogWrite(ITEM__DEBUG, 9, "%s Offset index %u bag id %u (new index %u, set index %u)",item->name.c_str(),i, item->details.bag_id, new_index, item->details.new_index);
+				if(item->details.new_item) {
+					item->details.new_index = new_index + i; // we have to offset in this way to get consistent indexes for the client to send back
+					packet->setSubstructArrayDataByName("items", "index", 0xFF+item->details.new_index, 0, i);
+				}
+				else {
+					packet->setSubstructArrayDataByName("items", "index", 0xFF, 0, i);
+				}
 		}
 		else {
 				packet->setSubstructArrayDataByName("items", "index", i, 0, i);

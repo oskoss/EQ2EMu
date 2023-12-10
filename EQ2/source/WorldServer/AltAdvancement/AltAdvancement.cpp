@@ -257,7 +257,7 @@ void MasterAAList::DisplayAA(Client* client,int8 newtemplate,int8 changemode) {
 	if (TreeNodeList.size() == 0)
 		return;
 	vector<vector<vector<AAEntry> > > AAEntryList ;
-	Query query;
+	Query query, query2;
 	MYSQL_ROW row;
 	int32 Pid = client->GetCharacterID();
 
@@ -282,7 +282,7 @@ void MasterAAList::DisplayAA(Client* client,int8 newtemplate,int8 changemode) {
 	}
 	LogWrite(SPELL__INFO, 0, "AA", "Loaded %u AA Tree Nodes", AAEntryList.size());
 	// load tmplates 4-6 Server
-	MYSQL_RES* result2 = query.RunQuery2(Q_SELECT, "SELECT `template_id`,`tab_id`,`aa_id`,`order`,treeid FROM character_aa where char_id = %i order by `order`", client->GetCharacterID());
+	MYSQL_RES* result2 = query2.RunQuery2(Q_SELECT, "SELECT `template_id`,`tab_id`,`aa_id`,`order`,treeid FROM character_aa where char_id = %i order by `order`", client->GetCharacterID());
 
 	while (result2 && (row = mysql_fetch_row(result2))) {
 		AAEntry newentry;

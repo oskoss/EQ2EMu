@@ -6306,6 +6306,7 @@ void Player::HandleHistoryDiscovery(int8 subtype, int32 value, int32 value2) {
 		hd->Value2 = value2;
 		hd->EventDate = Timer::GetUnixTimeStamp();
 		strcpy(hd->Location, GetZone()->GetZoneName());
+		hd->needs_save = true;
 
 		m_characterHistory[HISTORY_TYPE_DISCOVERY][HISTORY_SUBTYPE_LOCATION].push_back(hd);
 		break;
@@ -6326,6 +6327,7 @@ void Player::HandleHistoryXP(int8 subtype, int32 value, int32 value2) {
 		hd->Value2 = value2;
 		hd->EventDate = Timer::GetUnixTimeStamp();
 		strcpy(hd->Location, GetZone()->GetZoneName());
+		hd->needs_save = true;
 
 		m_characterHistory[HISTORY_TYPE_XP][HISTORY_SUBTYPE_ADVENTURE].push_back(hd);
 	}
@@ -6359,7 +6361,11 @@ void Player::SaveHistory() {
 	for (itr = m_characterHistory.begin(); itr != m_characterHistory.end(); itr++) {
 		for (itr2 = itr->second.begin(); itr2 != itr->second.end(); itr2++) {
 			for (itr3 = itr2->second.begin(); itr3 != itr2->second.end(); itr3++) {
-				database.SaveCharacterHistory(this, itr->first, itr2->first, (*itr3)->Value, (*itr3)->Value2, (*itr3)->Location, (*itr3)->EventDate);
+				
+				if((*itr3)->needs_save) {
+					database.SaveCharacterHistory(this, itr->first, itr2->first, (*itr3)->Value, (*itr3)->Value2, (*itr3)->Location, (*itr3)->EventDate);
+					(*itr3)->needs_save = false;
+				}
 			}
 		}
 	}
