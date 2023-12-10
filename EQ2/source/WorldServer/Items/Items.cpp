@@ -2951,7 +2951,7 @@ bool PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 	for(int32 i=0;i<max_index;i++){
 		if(!indexed_items[i]){
 			new_index = i;
-			LogWrite(ITEM__DEBUG, 9, "Item %s assigned to %u",item->name.c_str(), i);
+			LogWrite(ITEM__DEBUG, 0, "Item %s assigned to %u",item->name.c_str(), i);
 			item->details.new_item = false;
 			item->details.new_index = 0;
 			doNotOverrideIndex = true;
@@ -3568,7 +3568,8 @@ int16 PlayerItemList::GetNewItemByIndex(int16 in_index) {
 		if(item && item->details.new_item) {
 			new_item_slot++;
 			int16 actual_index = in_index - new_item_slot;
-			LogWrite(ITEM__DEBUG, 9, "In index: %u new index %u actual %u and %u, new slot num %u", in_index, item->details.new_index, actual_index, i, new_item_slot);
+			// this isn't compiling right
+			//LogWrite(ITEM__DEBUG, 0, "In index: %u new index %u actual %u and %u, new slot num %u", in_index, item->details.new_index, actual_index, i, new_item_slot);
 			if(actual_index == i) {
 				return i;
 			}
@@ -3709,7 +3710,7 @@ void PlayerItemList::AddItemToPacket(PacketStruct* packet, Player* player, Item*
 				/* DoF client and earlier side automatically assigns indexes
 				** we have to send 0xFF or else all index is set to 255 on client
 				** and then examine inventory won't work */
-				LogWrite(ITEM__DEBUG, 9, "%s Offset index %u bag id %u (new index %u, set index %u)",item->name.c_str(),i, item->details.bag_id, new_index, item->details.new_index);
+				LogWrite(ITEM__DEBUG, 0, "%s Offset index %u bag id %u (new index %u, set index %u)",item->name.c_str(),i, item->details.bag_id, new_index, item->details.new_index);
 				if(item->details.new_item) {
 					item->details.new_index = new_index + i; // we have to offset in this way to get consistent indexes for the client to send back
 					packet->setSubstructArrayDataByName("items", "index", 0xFF+item->details.new_index, 0, i);
