@@ -97,7 +97,7 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 		return false;
 	}
 	
-	if((!target->IsPlayer() && !target->GetAttackable()) || (!IsPlayer() && !GetAttackable())) {
+	if(!target->IsPlayer() && !target->GetAttackable()) {
 		return false;
 	}
 
