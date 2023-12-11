@@ -96,11 +96,6 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 		LogWrite(COMBAT__DEBUG, 3, "AttackAllowed", "Failed to attack: no target, mezzed, stunned or dazed");
 		return false;
 	}
-	
-	if(!target->IsPlayer() && !target->GetAttackable()) {
-		return false;
-	}
-
 	if (IsPlayer())
 		client = ((Player*)this)->GetClient();
 
@@ -109,6 +104,10 @@ bool Entity::AttackAllowed(Entity* target, float distance, bool range_attack) {
 	if (target->IsNPC() && ((NPC*)target)->IsPet()){
 		if (((NPC*)target)->GetOwner())
 			target = ((NPC*)target)->GetOwner();
+	}
+
+	if((IsBot() || (client || (attacker && (attacker->IsPlayer() || attacker->IsBot())))) && !target->IsPlayer() && !target->GetAttackable()) {
+		return false;
 	}
 
 	if (attacker == target) {
