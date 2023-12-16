@@ -16,6 +16,11 @@ Linux
 
 Windows
 - Visual Studio 2019+ and install without the boinc defines for now unless you really want to combine BOINC for windows.
+- windows/visual studio: https://boinc.berkeley.edu/trac/wiki/CompileClient#VisualStudio2013CommunityEditionBuildEnvironment
+- get source (Windows directory has the setup): https://github.com/BOINC/boinc
+- install and compile openssh https://github.com/openssl/openssl/blob/master/NOTES-WINDOWS.md#native-builds-using-visual-c
+- https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/win64/
+- https://strawberryperl.com/
 
 ## Authors
 
