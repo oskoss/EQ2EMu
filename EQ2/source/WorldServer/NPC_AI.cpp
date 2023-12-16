@@ -49,7 +49,7 @@ Brain::Brain(NPC* npc) {
 }
 
 Brain::~Brain() {
-
+	
 }
 
 void Brain::Think() {
@@ -503,7 +503,7 @@ void Brain::ProcessMelee(Entity* target, float distance) {
 bool Brain::HasRecovered() {
 	if(m_spellRecovery > Timer::GetCurrentTime2())
 		return false;
-
+	
 	m_spellRecovery = 0;
 	return true;
 }
@@ -693,6 +693,9 @@ bool Brain::AddToEncounter(int32 id) {
 
 void Brain::ClearEncounter() {
 	MEncounter.writelock(__FUNCTION__, __LINE__);
+	if(m_body) {
+		m_body->RemoveSpells(true);
+	}
 	m_encounter.clear();
 	m_encounter_playerlist.clear();
 	m_playerInEncounter = false;

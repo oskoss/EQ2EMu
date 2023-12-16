@@ -118,6 +118,13 @@ NPC::~NPC(){
 		}
 		safe_delete(skills);
 	}
+	if(spells) {
+		vector<NPCSpell*>::iterator itr;
+		for(itr = spells->begin(); itr != spells->end(); itr++){
+			safe_delete((*itr));
+		}
+		spells->clear();
+	}
 	safe_delete(spells);
 	MutexMap<int32, SkillBonus*>::iterator sb_itr = skill_bonus_list.begin();
 	while (sb_itr.Next())

@@ -81,7 +81,11 @@ void SpellProcess::RemoveAllSpells(bool reload_spells){
 		recast_timers.Remove(recast_timers_itr->value, true);
 	}
 
+	map<LuaSpell*, vector<int32>*>::iterator remove_itr;
 	MRemoveTargetList.writelock(__FUNCTION__, __LINE__);
+	for (remove_itr = remove_target_list.begin(); remove_itr != remove_target_list.end(); remove_itr++){
+		safe_delete(remove_itr->second);
+	}
 	remove_target_list.clear();
 	MRemoveTargetList.releasewritelock(__FUNCTION__, __LINE__);
 
@@ -644,11 +648,19 @@ bool SpellProcess::CastInstant(Spell* spell, Entity* caster, Entity* target, boo
 	}
 
 	bool result = CastProcessedSpell(lua_spell, passive);
-
+	
 	caster->GetZone()->SendCastSpellPacket(lua_spell, caster);
 	
+	if(!result) {
+		lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
+		DeleteSpell(lua_spell);
+		return result;
+	}
+		
 	if(!remove)
 		return result;
+	
+	printf("%s: RemoveSpell %s\n", caster->GetName(), lua_spell->spell->GetName());
 	
 	lua_interface->RemoveSpell(lua_spell, true, SpellScriptTimersHasSpell(lua_spell));
 	return true;
@@ -1671,40 +1683,6 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 	
 	MutexList<LuaSpell*>::iterator itr = active_spells.begin();
 	bool processedSpell = false;
-	LuaSpell* replace_spell = 0;
-	// Check to see if we already casted this spell and it is in the active_spells list
-	/*while (itr.Next()) {
-		LuaSpell* luaspell = itr.value;
-		// Check to see if this is the same spell by comparing caster, spell id, and spell tier
-		if (luaspell->caster == spell->caster && luaspell->spell->GetSpellID() == spell->spell->GetSpellID() && luaspell->spell->GetSpellTier() == spell->spell->GetSpellTier() && luaspell->targets.size() == spell->targets.size()) {
-			vector<Spawn*>::iterator itr;
-			vector<Spawn*>::iterator itr2;
-			bool all_match = true;
-			// compare the target vector to make sure this is the same spell
-			for (itr = luaspell->targets.begin(); itr != luaspell->targets.end(); itr++) {
-				bool match = false;
-				for (itr2 = spell->targets.begin(); itr2 != spell->targets.end(); itr2++) {
-					if ((*itr) == (*itr2)) {
-						match = true;
-						break;
-					}
-				}
-				if (!match) {
-					all_match = false;
-					break;
-				}
-			}
-			if (all_match) {
-				// set a pointer to replace the spell in the active spell list so we don't have to run this loop again
-				replace_spell = luaspell;
-				// if friendly skip the calling of the lua function as they have already been called for the previous version of this spell
-				if (spell->spell->GetSpellData()->friendly_spell == 1)
-					processedSpell = true;
-
-				break;
-			}
-		}
-	}*/
 	
 	bool allTargets = (spell->spell->GetSpellData()->spell_type == SPELL_TYPE_ALLGROUPTARGETS);
 	if (!processedSpell)
@@ -1767,7 +1745,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 			SendFinishedCast(spell, client);
 		return false;
 	}
-	if(!spell->resisted && (spell->spell->GetSpellDuration() > 0 || spell->spell->GetSpellData()->duration_until_cancel)) {
+	if(!spell->resisted && (spell->spell->GetSpellDuration() > 0 || spell->spell->GetSpellData()->duration_until_cancel || spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_NOT_SHOWN)) {
 		for (int32 i = 0; i < spell->targets.size(); i++) {
 			
 			//LogWrite(SPELL__ERROR, 0, "Spell", "No precast function found for %s", ((Entity*)target)->GetName());
@@ -1801,13 +1779,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 			}
 		}
 
-		if (replace_spell) {
-			active_spells.Remove(replace_spell);
-			active_spells.Add(spell);
-		}
-		else {
-			active_spells.Add(spell);
-		}
+		active_spells.Add(spell);
 
 		if (spell->num_triggers > 0)
 			ClientPacketFunctions::SendMaintainedExamineUpdate(client, spell->slot_pos, spell->num_triggers, 0);
@@ -1823,7 +1795,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 			spell->timer.SetTimer(spell->spell->GetSpellData()->call_frequency*100);
 		else
 			spell->timer.SetTimer(spell->spell->GetSpellData()->duration1*100);
-		if (active_spells.count(spell) > 0) {
+		if (active_spells.count(spell) < 1) {
 			active_spells.Add(spell);
 		}
 	}
@@ -2648,7 +2620,6 @@ void SpellProcess::RemoveSpellScriptTimer(SpellScriptTimer* timer, bool locked) 
 void SpellProcess::RemoveSpellScriptTimerBySpell(LuaSpell* spell, bool clearPendingDeletes) {
 	vector<SpellScriptTimer*>::iterator itr;
 	MSpellScriptTimers.writelock(__FUNCTION__, __LINE__);
-
 	if (lua_interface && clearPendingDeletes)
 		lua_interface->DeletePendingSpell(spell);
 
@@ -2945,6 +2916,8 @@ void SpellProcess::DeleteSpell(LuaSpell* spell)
 {
 	RemoveSpellFromQueue(spell->spell, spell->caster);
 
+	DeleteActiveSpell(spell);
+	
 	if (spell->spell->IsCopiedSpell())
 	{
 		lua_interface->RemoveCustomSpell(spell->spell->GetSpellID());

@@ -203,6 +203,10 @@ Player::~Player(){
 	safe_delete(spawn_pos_struct);
 	ClearPendingSelectableItemRewards(0, true);
 	ClearPendingItemRewards();
+	ClearEverything();
+	
+	// leak fix on Language* pointer from Player::AddLanguage
+	player_languages_list.Clear();
 }
 
 EQ2Packet* Player::serialize(Player* player, int16 version){
@@ -1422,7 +1426,7 @@ vector<EQ2Packet*>	Player::UnequipItem(int16 index, sint32 bag_id, int8 slot, in
 	if(appearance_type)
 		equipList = &appearance_equipment_list;
 		
-	if(index >= GetNumSlotsEquip(version)) {
+	if(index >= NUM_SLOTS) {
 		LogWrite(PLAYER__ERROR, 0, "Player", "%u index is out of range for equip items, bag_id: %i, slot: %u, version: %u, appearance: %u", index, bag_id, slot, version, appearance_type);
 		return packets;
 	}
@@ -1961,6 +1965,7 @@ bool Player::AddItem(Item* item, AddItemType type) {
 				client->Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "You cannot obtain %s due to lore conflict.", item->name.c_str());
 				break;			
 			}
+			safe_delete(item);
 			return false;
 		}
 		else if(conflictItemList == STACK_LORE || conflictequipmentList == STACK_LORE || 
@@ -1971,6 +1976,7 @@ bool Player::AddItem(Item* item, AddItemType type) {
 						client->Message(CHANNEL_COLOR_CHAT_RELATIONSHIP, "You already have one stack of the LORE item: %s.", item->name.c_str());
 						break;			
 					}
+			safe_delete(item);
 			return false;
 		}
 		else if (item_list.AssignItemToFreeSlot(item)) {
@@ -3154,6 +3160,9 @@ void Player::AddSpellEffect(LuaSpell* luaspell, int32 override_expire_time){
 		GetZone()->RemoveTargetFromSpell(old_effect->spell, this);
 		RemoveSpellEffect(old_effect->spell);
 	}
+	
+	LogWrite(SPELL__DEBUG, 0, "Spell", "%s AddSpellEffect %s (%u).", spell->GetName(), GetName(), GetID());
+	
 	effect = GetFreeSpellEffectSlot();
 
 	if(effect){
@@ -3489,7 +3498,7 @@ void Player::PrepareIncomingMovementPacket(int32 len, uchar* data, int16 version
 	{
 		if (!IsRooted() && !IsMezzedOrStunned()) {
 			SetX(x);
-			SetY(y);
+			SetY(y, true, true);
 			SetZ(z);
 			SetSpeedX(x_speed);
 			SetSpeedY(y_speed);
@@ -5819,7 +5828,7 @@ void Player::DeleteMail(int32 mail_id, bool from_database) {
 	if (mail_list.count(mail_id) > 0) {
 		if (from_database)
 			database.DeletePlayerMail(mail_list.Get(mail_id));
-		mail_list.erase(mail_id);
+		mail_list.erase(mail_id, true, true); // need to delete the mail ptr
 	}
 }
 

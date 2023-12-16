@@ -366,7 +366,8 @@ public:
 
 	void RemoveTargetFromSpell(LuaSpell* spell, Spawn* target, bool remove_caster = false);
 	void CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete = true, bool removing_all_spells = false);
-
+	void RemoveTargetList(LuaSpell* spell);
+	
 	/// <summary>Adds a solo HO to the SpellProcess</summary>
 	/// <param name='client'>The client who is starting the HO</param>
 	/// <param name='ho'>The HO that is being started</param>

@@ -641,6 +641,7 @@ bool Map::LoadV2Deflated(FILE* f) {
 	string fileName(name);
 	
 	if(fileName.find("EQ2EmuMapTool") != std::string::npos) {
+		safe_delete_array(buf);
 		return(LoadV3Deflated(&file, srcbuf));
 	}
 	

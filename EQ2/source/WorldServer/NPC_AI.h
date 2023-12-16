@@ -137,7 +137,6 @@ protected:
 	NPC*					m_body;
 	// m_spellRecovery = time stamp for when the npc can cast again
 	int32					m_spellRecovery;
-
 private:
 	// MHateList = mutex to lock and unlock the hate list
 	Mutex					MHateList;

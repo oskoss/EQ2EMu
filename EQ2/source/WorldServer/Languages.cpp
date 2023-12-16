@@ -102,6 +102,18 @@ PlayerLanguagesList::PlayerLanguagesList(){
 PlayerLanguagesList::~PlayerLanguagesList(){
 }
 
+void PlayerLanguagesList::Clear() {
+	list<Language*>::iterator itr;
+	Language* language = 0;
+	Language* ret = 0;
+	for(itr = player_languages_list.begin(); itr != player_languages_list.end(); itr++){
+		language = *itr;
+		safe_delete(language);
+	}
+	
+	player_languages_list.clear();
+}
+
 void PlayerLanguagesList::Add(Language* language){
 	player_languages_list.push_back(language);
 }

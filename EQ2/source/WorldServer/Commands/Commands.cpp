@@ -2095,6 +2095,8 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			if(sep && sep->arg[1][0] && sep->IsNumber(1)){
 				if(strcmp(sep->arg[0], "inventory") == 0){
 					int32 item_index = atol(sep->arg[1]);
+					
+					LogWrite(COMMAND__DEBUG, 5, "Command", "/info inventory item original index %u", item_index);
 					if(client->GetVersion() <= 546) {
 						if(item_index <= 255) {
 							item_index = 255 - item_index;
@@ -2113,8 +2115,14 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if(item){
 						if (item->IsCollectable() && client->SendCollectionsForItem(item))
 							break;
-
-						EQ2Packet* app = item->serialize(client->GetVersion(), (!item->GetItemScript() || !lua_interface), client->GetPlayer());
+						
+						EQ2Packet* app = 0;
+						if(client->GetVersion() <= 546) {
+							app = item->serialize(client->GetVersion(), true, client->GetPlayer());
+						}
+						else {
+							app = item->serialize(client->GetVersion(), (!item->GetItemScript() || !lua_interface), client->GetPlayer());
+						}
 						//DumpPacket(app);
 						client->QueuePacket(app);
 						if(item->GetItemScript() && lua_interface)

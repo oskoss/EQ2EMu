@@ -422,10 +422,6 @@ public:
 
 	virtual bool Process(MobMovementManager* mob_movement_manager, Entity* mob)
 	{
-		if (mob->IsRunning()) {
-			mob->StopMoving();
-		}
-
 		return true;
 	}
 

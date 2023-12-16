@@ -91,7 +91,6 @@ Spawn::Spawn(){
 	spawn_group_list = 0;
 	MSpawnGroup = 0;
 	movement_locations = 0;
-	MMovementLocations = 0;
 	target = 0;
 	primary_command_list_id = 0;
 	secondary_command_list_id = 0;
@@ -145,6 +144,8 @@ Spawn::Spawn(){
 }
 
 Spawn::~Spawn(){
+	is_running = false;
+	
 	vector<Item*>::iterator itr;
 	for (itr = loot_items.begin(); itr != loot_items.end(); itr++)
 		safe_delete(*itr);
@@ -158,8 +159,8 @@ Spawn::~Spawn(){
 	secondary_command_list.clear();
 
 	RemoveSpawnFromGroup();
-	if (MMovementLocations)
-		MMovementLocations->writelock(__FUNCTION__, __LINE__);
+	
+	MMovementLocations.lock();
 	if(movement_locations){
 		while(movement_locations->size()){
 			safe_delete(movement_locations->front());
@@ -167,9 +168,7 @@ Spawn::~Spawn(){
 		}
 		safe_delete(movement_locations);
 	}
-	if (MMovementLocations)
-		MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
-	safe_delete(MMovementLocations);
+	MMovementLocations.unlock();
 
 	MMovementLoop.lock();
 	for (int32 i = 0; i < movement_loop.size(); i++)
@@ -2867,15 +2866,17 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 			return;
 		}
 		int locations = 0;
-		if (movement_locations && MMovementLocations)
-		{
-			MMovementLocations->readlock(__FUNCTION__, __LINE__);
+		
+		MMovementLocations.lock_shared();
+		if (movement_locations) {
 			locations = movement_locations->size();
-			MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
 		}
+		MMovementLocations.unlock_shared();
+		
 		if (locations < 1 && GetZone() && ((Entity*)this)->IsFeared())
 		{
 			CalculateNewFearpoint();
+			ValidateRunning(true, true);
 		}
 	}
 
@@ -2905,27 +2906,24 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 			}
 			MovementLocation tmpLoc;
 			MovementLocation* loc = 0;
-			if(MMovementLocations) {
-				MMovementLocations->readlock(__FUNCTION__, __LINE__);
-				
-				if(movement_locations && movement_locations->size() > 0){
-					loc = movement_locations->front();
-					if(loc) {
-						tmpLoc.attackable = loc->attackable;
-						tmpLoc.gridid = loc->gridid;
-						tmpLoc.lua_function = string(loc->lua_function);
-						tmpLoc.mapped = loc->mapped;
-						tmpLoc.reset_hp_on_runback = loc->reset_hp_on_runback;
-						tmpLoc.speed = loc->speed;
-						tmpLoc.stage = loc->stage;
-						tmpLoc.x = loc->x;
-						tmpLoc.y = loc->y;
-						tmpLoc.z = loc->z;
-						loc = &tmpLoc;
-					}
+			MMovementLocations.lock_shared();
+			if(movement_locations && movement_locations->size() > 0){
+				loc = movement_locations->front();
+				if(loc) {
+					tmpLoc.attackable = loc->attackable;
+					tmpLoc.gridid = loc->gridid;
+					tmpLoc.lua_function = string(loc->lua_function);
+					tmpLoc.mapped = loc->mapped;
+					tmpLoc.reset_hp_on_runback = loc->reset_hp_on_runback;
+					tmpLoc.speed = loc->speed;
+					tmpLoc.stage = loc->stage;
+					tmpLoc.x = loc->x;
+					tmpLoc.y = loc->y;
+					tmpLoc.z = loc->z;
+					loc = &tmpLoc;
 				}
-				MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
 			}
+			MMovementLocations.unlock_shared();
 
 			float dist = GetDistance(followTarget, true);
 			if ((!EngagedInCombat() && m_followDistance > 0 && dist <= m_followDistance) || 
@@ -2959,15 +2957,15 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 			MovementData* data = movement_loop[movement_index];
 			// need to resume our movement
 			if(resume_movement){
-				if (movement_locations && MMovementLocations){
-					MMovementLocations->writelock(__FUNCTION__, __LINE__);
+				MMovementLocations.lock();
+				if (movement_locations){
 					while (movement_locations->size()){
 						safe_delete(movement_locations->front());
 						movement_locations->pop_front();
 					}
 					movement_locations->clear();
-					MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
 				}
+				MMovementLocations.unlock();
 
 				data = movement_loop[movement_index];
 				
@@ -3046,17 +3044,17 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 							FaceTarget(data->x, data->z);
 						// If 0 delay at location get and set data for the point after it
 						if(data->delay == 0 && movement_loop.size() > 0){
-							if(movement_locations && MMovementLocations)
+							MMovementLocations.lock();
+							if(movement_locations)
 							{
-								MMovementLocations->writelock(__FUNCTION__, __LINE__);
 								while (movement_locations->size()){
 									safe_delete(movement_locations->front());
 									movement_locations->pop_front();
 								}
 								// clear current target locations
 								movement_locations->clear();
-								MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
 							}
+							MMovementLocations.unlock();
 							// get the data for the location after out new location
 							int16 tmp_index = movement_index+1;
 							MovementData* data2 = 0;
@@ -3121,6 +3119,8 @@ void Spawn::ResetMovement(bool inFlight){
 
 	if(!inFlight)
 		MMovementLoop.releasewritelock();
+	
+	ValidateRunning(true, (inFlight == false));
 }
 
 void Spawn::AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function, float heading, bool include_heading){
@@ -3144,27 +3144,58 @@ void Spawn::AddMovementLocation(float x, float y, float z, float speed, int16 de
 	MMovementLoop.unlock();
 }
 
-bool Spawn::IsRunning(){
+bool Spawn::ValidateRunning(bool lockMovementLocation, bool lockMovementLoop) {
 	bool movement = false;
 
-	if(movement_locations && MMovementLocations)
-	{
-		MMovementLocations->readlock(__FUNCTION__, __LINE__);
-		movement = movement_locations->size() > 0;
-		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
-		if(movement)
-			return true;
+	if(lockMovementLocation) {
+		MMovementLocations.lock_shared();
+	}
+	
+	if(movement_locations) {
+	movement = movement_locations->size() > 0;
+	}
+	
+	if(lockMovementLocation) {
+		MMovementLocations.unlock_shared();
+	}
+	
+	if(IsPauseMovementTimerActive() || (IsEntity() && (((Entity*)this)->IsMezzedOrStunned() || ((Entity*)this)->IsRooted()))) {
+		is_running = false;
+		return false;
+	}
+	
+	if(movement) {
+		is_running = true;
+		return true;
 	}
 
-	MMovementLoop.lock();
+	if(lockMovementLoop) {
+		MMovementLoop.lock();
+	}
+	
 	movement = movement_loop.size() > 0;
-	MMovementLoop.unlock();
+	
+	if(movement) {
+		is_running = true;
+	}
+	else {
+		is_running = false;
+	}
+	
+	if(lockMovementLoop) {
+		MMovementLoop.unlock();
+	}
 	return movement;
+}
+bool Spawn::IsRunning(){
+	return is_running;
 }
 
 void Spawn::RunToLocation(float x, float y, float z, float following_x, float following_y, float following_z){
-	if(IsPauseMovementTimerActive() || (IsEntity() && (((Entity*)this)->IsMezzedOrStunned() || ((Entity*)this)->IsRooted())))
+	if(IsPauseMovementTimerActive() || (IsEntity() && (((Entity*)this)->IsMezzedOrStunned() || ((Entity*)this)->IsRooted()))) {
+		is_running = false;
 		return;
+	}
 	
 	if(!IsWidget())
 		FaceTarget(x, z);
@@ -3182,6 +3213,7 @@ void Spawn::RunToLocation(float x, float y, float z, float following_x, float fo
 		SetPos(&appearance.pos.Z3, following_z, false);
 	}
 
+	is_running = true;
 	position_changed = true;
 	changed = true;
 	GetZone()->AddChangedSpawn(this);
@@ -3189,29 +3221,21 @@ void Spawn::RunToLocation(float x, float y, float z, float following_x, float fo
 
 MovementLocation* Spawn::GetCurrentRunningLocation(){
 	MovementLocation* ret = 0;
-	if(MMovementLocations)
-		MMovementLocations->readlock(__FUNCTION__, __LINE__);
-	
+	MMovementLocations.lock_shared();
 	if(movement_locations && movement_locations->size() > 0){
 		ret = movement_locations->front();
 	}
-
-	if(MMovementLocations)
-		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
+	MMovementLocations.unlock_shared();
 	return ret;
 }
 
 MovementLocation* Spawn::GetLastRunningLocation(){
 	MovementLocation* ret = 0;
-	if(MMovementLocations)
-		MMovementLocations->readlock(__FUNCTION__, __LINE__);
-		
+	MMovementLocations.lock_shared();
 	if(movement_locations && movement_locations->size() > 0){
 		ret = movement_locations->back();
 	}
-
-	if(MMovementLocations)
-		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
+	MMovementLocations.unlock_shared();
 	return ret;
 }
 
@@ -3234,11 +3258,12 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 		z = z - (GetZ() - z)*distance_away/distance;
 	}
 	
+	MMovementLocations.lock();
 	if(!movement_locations){
 		movement_locations = new deque<MovementLocation*>();
-		safe_delete(MMovementLocations);
-		MMovementLocations = new Mutex();
 	}
+	MMovementLocations.unlock();
+	
 	MovementLocation* data = new MovementLocation;
 	data->mapped = isMapped;
 	data->x = x;
@@ -3250,19 +3275,24 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 	data->gridid = 0; // used for runback defaults
 	data->reset_hp_on_runback = false;
 
-	MMovementLocations->writelock(__FUNCTION__, __LINE__);
+	MMovementLocations.lock_shared();
 	if(movement_locations->size() > 0)
 		current_location = movement_locations->back();
+	MMovementLocations.unlock_shared();
+	
 	if(!current_location){
 		SetSpawnOrigX(GetX());
 		SetSpawnOrigY(GetY());
 		SetSpawnOrigZ(GetZ());
 		SetSpawnOrigHeading(GetHeading());
 	}
+	is_running = true;
+	
+	MMovementLocations.lock();
 	movement_locations->push_back(data);
-	MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);	
+	MMovementLocations.unlock();
 	if(!IsPauseMovementTimerActive() && finished_adding_locations){
-		MMovementLocations->writelock(__FUNCTION__, __LINE__);
+		MMovementLocations.lock();
 		current_location = movement_locations->front();
 		SetSpeed(current_location->speed);
 		if(movement_locations->size() > 1){		
@@ -3271,21 +3301,21 @@ void Spawn::AddRunningLocation(float x, float y, float z, float speed, float dis
 		}
 		else
 			RunToLocation(current_location->x, current_location->y, current_location->z, 0, 0, 0);
-		MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);	
+		MMovementLocations.unlock();
 	}
 }
 
 bool Spawn::RemoveRunningLocation(){
 	bool ret = false;
-	if(movement_locations){
-		MMovementLocations->writelock(__FUNCTION__, __LINE__);
-		if(movement_locations->size() > 0){
-			delete movement_locations->front();
-			movement_locations->pop_front();
-			ret = true;
-		}
-		MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
+	MMovementLocations.lock();
+	if(movement_locations && movement_locations->size() > 0){
+		delete movement_locations->front();
+		movement_locations->pop_front();
+		ret = true;
 	}
+	MMovementLocations.unlock();
+	
+	ValidateRunning(true, false);
 	return ret;
 }
 
@@ -3313,8 +3343,8 @@ bool Spawn::CalculateChange(){
 	bool remove_needed = false;
 	MovementLocation* data = 0;
 	MovementLocation tmpLoc;
-	if(movement_locations && MMovementLocations){
-		MMovementLocations->readlock(__FUNCTION__, __LINE__);
+	MMovementLocations.lock_shared();
+	if(movement_locations){
 		if(movement_locations->size() > 0){
 			// Target location
 			data = movement_locations->front();
@@ -3335,8 +3365,8 @@ bool Spawn::CalculateChange(){
 			if(!data || (data->x == GetX() && data->y == GetY() && data->z == GetZ()))
 				remove_needed = true;
 			}
-		MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
 	}
+	MMovementLocations.unlock_shared();
 		
 	if(remove_needed){
 		NewWaypointChange(data);
@@ -3436,9 +3466,9 @@ void Spawn::CalculateRunningLocation(bool stop){
 		SetPos(&appearance.pos.Z3, GetZ(), false);
 		continueElseIf = false;
 	}
-	else if (removed && movement_locations && MMovementLocations) {
-		if (MMovementLocations)
-			MMovementLocations->readlock(__FUNCTION__, __LINE__);
+	else if (removed) {
+		MMovementLocations.lock_shared();
+		if(movement_locations) {
 			if(movement_locations->size() > 0) {
 				MovementLocation* current_location = movement_locations->at(0);
 				if (movement_locations->size() > 1) {
@@ -3450,8 +3480,8 @@ void Spawn::CalculateRunningLocation(bool stop){
 				
 				continueElseIf = false;
 			}
-		if (MMovementLocations)
-			MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
+		}
+		MMovementLocations.unlock_shared();
 	}
 	
 	if (continueElseIf && GetZone() && GetTarget() != NULL && EngagedInCombat())

@@ -266,14 +266,14 @@ Client::~Client() {
 
 
 void Client::RemoveClientFromZone() {
+	if(player && player->GetZone())
+		player->GetZone()->GetSpellProcess()->RemoveSpellTimersFromSpawn(player, true, false, true, true);
+	
 	if (GetTempPlacementSpawn() && GetCurrentZone()) {
 		Spawn* tmp = GetTempPlacementSpawn();
 		SetTempPlacementSpawn(nullptr);
 		GetCurrentZone()->RemoveSpawn(tmp, true, false, true, true, true);
 	}
-
-	if(player && player->GetZone())
-		player->GetZone()->GetSpellProcess()->RemoveSpellTimersFromSpawn(player, true, false, true, true);
 
 	if (current_zone && player) {
 		if (player->GetGroupMemberInfo()) {
@@ -296,6 +296,7 @@ void Client::RemoveClientFromZone() {
 	MDeletePlayer.writelock(__FUNCTION__, __LINE__);
 	if (player && !player->GetPendingDeletion())
 		safe_delete(player);
+	player = nullptr;
 	MDeletePlayer.releasewritelock(__FUNCTION__, __LINE__);
 	
 	deque<BuyBackItem*>::iterator itr;
@@ -397,6 +398,7 @@ void Client::SendLoginInfo() {
 			database.UpdateStartingItems(GetCharacterID(), player->GetAdventureClass(), player->GetRace());
 			database.LoadCharacterItemList(GetAccountID(), GetCharacterID(), player, GetVersion());
 		}
+		GetPlayer()->item_list.SetMaxItemIndex();
 		database.LoadPlayerFactions(this);
 		database.LoadCharacterQuests(this);
 		database.LoadCharacterQuestRewards(this);
@@ -3408,7 +3410,6 @@ bool Client::Process(bool zone_process) {
 	}
 
 	if (GetCurrentZone() && !GetCurrentZone()->IsLoading() && GetCurrentZone()->GetSpawnByID(GetPlayer()->GetID()) && should_load_spells) {
-		player->ApplyPassiveSpells();
 		//database.LoadCharacterActiveSpells(player);
 		player->UnlockAllSpells(true);
 
@@ -3779,6 +3780,13 @@ void ClientList::Remove(Client* client, bool remove_data) {
 		safe_delete(client);
 	}
 
+}
+
+void Client::SetCurrentZone(ZoneServer* zone) { 
+	current_zone = zone;
+	if(player) {
+		player->SetZone(zone, GetVersion());
+	}
 }
 
 void Client::SetCurrentZone(int32 id) {
@@ -7132,7 +7140,6 @@ bool Client::AddItem(Item* item, bool* item_deleted, AddItemType type) {
 	else {
 		lua_interface->SetLuaUserDataStale(item);
 		// likely lore conflict
-		safe_delete(item);
 
 		if(item_deleted)
 			*item_deleted = true;

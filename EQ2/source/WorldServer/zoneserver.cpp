@@ -1560,8 +1560,6 @@ bool ZoneServer::Process()
 		if (sync_game_time_timer.Check() && !zoneShuttingDown)
 			SendTimeUpdateToAllClients();
 
-		if(lua_interface)
-			lua_interface->Process();
 		world.MWorldTime.readlock(__FUNCTION__, __LINE__);
 		int hour = world.GetWorldTimeStruct()->hour;
 		int minute = world.GetWorldTimeStruct()->minute;

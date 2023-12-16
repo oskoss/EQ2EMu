@@ -1076,10 +1076,12 @@ public:
 	PlayerItemList();
 	~PlayerItemList();
 //	int16 number;
+	int32 max_saved_index;
 	map<int32, Item*> indexed_items;
 	map<sint32, map<int8, map<int16, Item*>> > items;
 //	map< int8, Item* > inv_items;
 //	map< int8, Item* > bank_items;
+	int32 SetMaxItemIndex();
 	bool  SharedBankAddAllowed(Item* item);
 	vector<Item*>* GetItemsFromBagID(sint32 bag_id);
 	vector<Item*>* GetItemsInBag(Item* bag);

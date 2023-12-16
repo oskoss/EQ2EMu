@@ -64,6 +64,7 @@ class PlayerLanguagesList {
 public:
 	PlayerLanguagesList();
 	~PlayerLanguagesList();
+	void Clear();
 	void Add(Language* language);
 	Language*	GetLanguage(int32 id);
 	Language*	GetLanguageByName(const char* name);

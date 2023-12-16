@@ -47,6 +47,7 @@
 #include "LuaInterface.h"
 #include "HeroicOp/HeroicOp.h"
 #include "RaceTypes/RaceTypes.h"
+#include "LuaInterface.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -86,6 +87,7 @@ extern ConfigReader configReader;
 extern LoginServer loginserver;
 extern World world;
 extern RuleManager rule_manager;
+extern LuaInterface* lua_interface;
 
 World::World() : save_time_timer(300000), time_tick_timer(3000), vitality_timer(3600000), player_stats_timer(60000), server_stats_timer(60000), /*remove_grouped_player(30000),*/ guilds_timer(60000), lotto_players_timer(500), watchdog_timer(10000) {
 	save_time_timer.Start();
@@ -272,6 +274,9 @@ void World::Process(){
 		WorldTimeTick();
 		MWorldTime.releasewritelock(__FUNCTION__, __LINE__);
 	}
+	
+	if(lua_interface)
+		lua_interface->Process();
 
 	if(vitality_timer.Check())
 		UpdateVitality();

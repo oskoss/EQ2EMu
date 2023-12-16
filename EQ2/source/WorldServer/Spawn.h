@@ -1070,6 +1070,7 @@ public:
 	void	AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function, float heading, bool include_heading = false);
 	void	ProcessMovement(bool isSpawnListLocked=false);
 	void	ResetMovement(bool inFlight=false);
+	bool	ValidateRunning(bool lockMovementLocation, bool lockMovementLoop);
 	bool	IsRunning();
 	void	CalculateRunningLocation(bool stop = false);
 	void	RunToLocation(float x, float y, float z, float following_x = 0, float following_y = 0, float following_z = 0);
@@ -1091,13 +1092,9 @@ public:
 	bool	HasMovementLoop(){ return movement_loop.size() > 0; }
 	bool	HasMovementLocations() { 
 			bool hasLocations = false;
-			if (MMovementLocations) {
-				MMovementLocations->readlock(__FUNCTION__, __LINE__);
-			}
-				hasLocations = movement_locations ? movement_locations->size() > 0 : false;
-			if (MMovementLocations) {
-				MMovementLocations->releasereadlock(__FUNCTION__, __LINE__);
-			}
+			MMovementLocations.lock_shared();
+			hasLocations = movement_locations ? movement_locations->size() > 0 : false;
+			MMovementLocations.unlock_shared();
 			return hasLocations;
 	}
 
@@ -1113,6 +1110,7 @@ public:
 	std::atomic<bool>	position_changed;
 	std::atomic<bool> 	info_changed;
 	std::atomic<bool>	vis_changed;
+	std::atomic<bool>	is_running;
 	int16				size;
 	int32				faction_id;
 	int8				oversized_packet; //0xff
@@ -1187,19 +1185,6 @@ public:
 	bool CheckLoS(glm::vec3 myloc, glm::vec3 oloc);
 
 	void CalculateNewFearpoint();
-
-	void StopMoving() {
-		if (movement_locations && MMovementLocations)
-		{
-			MMovementLocations->writelock(__FUNCTION__, __LINE__);
-			while (movement_locations->size()){
-				safe_delete(movement_locations->front());
-				movement_locations->pop_front();
-			}
-			movement_locations->clear();
-			MMovementLocations->releasewritelock(__FUNCTION__, __LINE__);
-		}
-	}
 
 	enum SpawnProximityType {
 		SPAWNPROXIMITY_DATABASE_ID = 0,
@@ -1370,7 +1355,7 @@ private:
 	int32			trap_opened_time;
 	deque<MovementLocation*>* movement_locations;
 	Mutex			MLootItems;
-	Mutex*			MMovementLocations;
+	mutable std::shared_mutex MMovementLocations;
 	Mutex*			MSpawnGroup;
 	int8			size_offset;
 	int				tmp_visual_state;

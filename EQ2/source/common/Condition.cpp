@@ -124,6 +124,7 @@ int retcode=0;
 Condition::~Condition()
 {
 	pthread_mutex_lock(&mutex);
+	pthread_cond_broadcast(&cond);
 	pthread_cond_destroy(&cond);
 	pthread_mutex_unlock(&mutex);
 	pthread_mutex_destroy(&mutex);

@@ -808,9 +808,6 @@ lua_State* LuaInterface::LoadLuaFile(const char* name) {
 }
 
 void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool can_delete, string reason, bool removing_all_spells) {
-	if(shutting_down)
-		return;
-
 	if(call_remove_function){
 		lua_getglobal(spell->state, "remove");
 		LUASpawnWrapper* spawn_wrapper = new LUASpawnWrapper();
@@ -875,43 +872,45 @@ void LuaInterface::RemoveSpell(LuaSpell* spell, bool call_remove_function, bool 
 	spell->char_id_targets.clear(); // TODO: reach out to those clients in different
 	spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
 
-	// we need to make sure all memory is purged for a copied spell, its only used once
-	if (spell->spell->IsCopiedSpell())
-		can_delete = true;
-
-	if (can_delete) {
-		AddPendingSpellDelete(spell);
-	}
-	if (spell->caster)
-	{
-		if(spell->caster->GetZone()) {
+	if(removing_all_spells) {
+		if(spell->caster && spell->caster->GetZone()) {
 			spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(spell);
+			spell->caster->GetZone()->GetSpellProcess()->DeleteSpell(spell);
 		}
-		spell->caster->RemoveProc(0, spell);
-		spell->caster->RemoveMaintainedSpell(spell);
-
-		int8 spell_type = spell->spell->GetSpellData()->spell_type;
-		if(spell->caster->IsPlayer() && !removing_all_spells)
+	}
+	else {
+		AddPendingSpellDelete(spell);
+		if (spell->caster)
 		{
-			Player* player = (Player*)spell->caster;
-			switch(spell_type)
+			if(spell->caster->GetZone()) {
+				spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(spell);
+			}
+			spell->caster->RemoveProc(0, spell);
+			spell->caster->RemoveMaintainedSpell(spell);
+
+			int8 spell_type = spell->spell->GetSpellData()->spell_type;
+			if(spell->caster->IsPlayer() && !removing_all_spells)
 			{
-				case SPELL_TYPE_FOOD:
-					if(player->get_character_flag(CF_FOOD_AUTO_CONSUME))
-					{
-						Item* item = player->GetEquipmentList()->GetItem(EQ2_FOOD_SLOT);
-						if(item && player->GetClient())
-							player->GetClient()->ConsumeFoodDrink(item, EQ2_FOOD_SLOT);
-					}
-				break;
-				case SPELL_TYPE_DRINK:
-					if(player->get_character_flag(CF_DRINK_AUTO_CONSUME))
-					{
-						Item* item = player->GetEquipmentList()->GetItem(EQ2_DRINK_SLOT);
-						if(item && player->GetClient())
-							player->GetClient()->ConsumeFoodDrink(item, EQ2_DRINK_SLOT);
-					}
-				break;
+				Player* player = (Player*)spell->caster;
+				switch(spell_type)
+				{
+					case SPELL_TYPE_FOOD:
+						if(player->get_character_flag(CF_FOOD_AUTO_CONSUME))
+						{
+							Item* item = player->GetEquipmentList()->GetItem(EQ2_FOOD_SLOT);
+							if(item && player->GetClient())
+								player->GetClient()->ConsumeFoodDrink(item, EQ2_FOOD_SLOT);
+						}
+					break;
+					case SPELL_TYPE_DRINK:
+						if(player->get_character_flag(CF_DRINK_AUTO_CONSUME))
+						{
+							Item* item = player->GetEquipmentList()->GetItem(EQ2_DRINK_SLOT);
+							if(item && player->GetClient())
+								player->GetClient()->ConsumeFoodDrink(item, EQ2_DRINK_SLOT);
+						}
+					break;
+				}
 			}
 		}
 	}
@@ -1565,21 +1564,22 @@ void LuaInterface::DeletePendingSpells(bool all) {
 		for (del_itr = tmp_deletes.begin(); del_itr != tmp_deletes.end(); del_itr++) {
 			spell = *del_itr;
 			
-			
-			if (spell->caster && spell->caster->GetZone()) {
-				spell->caster->GetZone()->GetSpellProcess()->DeleteActiveSpell(spell);
-			}
-			else if(spell->targets.size() > 0 && spell->caster && spell->caster->GetZone()) {
-				spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
-				for (int8 i = 0; i < spell->targets.size(); i++) {
-					Spawn* target = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
-					if (!target || !target->IsEntity())
-						continue;
-					target->GetZone()->GetSpellProcess()->DeleteActiveSpell(spell);
+			if(!all) {
+				if (spell->caster && spell->caster->GetZone()) {
+					spell->caster->GetZone()->GetSpellProcess()->DeleteActiveSpell(spell);
 				}
-				spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+				else if(spell->targets.size() > 0 && spell->caster && spell->caster->GetZone()) {
+					spell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
+					for (int8 i = 0; i < spell->targets.size(); i++) {
+						Spawn* target = spell->caster->GetZone()->GetSpawnByID(spell->targets.at(i));
+						if (!target || !target->IsEntity())
+							continue;
+						target->GetZone()->GetSpellProcess()->DeleteActiveSpell(spell);
+					}
+					spell->MSpellTargets.releasereadlock(__FUNCTION__, __LINE__);
+				}
 			}
-
+			
 			spells_pending_delete.erase(spell);
 
 			if (spell->spell->IsCopiedSpell())

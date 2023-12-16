@@ -2870,6 +2870,7 @@ PlayerItemList::PlayerItemList(){
 	packet_count = 0;
 	xor_packet = 0;
 	orig_packet = 0;
+	max_saved_index = 0;
 	MPlayerItems.SetName("PlayerItemList::MPlayerItems");
 }
 
@@ -2920,6 +2921,21 @@ Item* PlayerItemList::GetItem(sint32 bag_slot, int16 slot, int8 appearance_type)
 	return ret;
 }
 
+int32 PlayerItemList::SetMaxItemIndex() {
+	int32 max_index = indexed_items.size();
+	int32 new_index = 0;
+	map<int32, Item*>::iterator itr;
+	MPlayerItems.writelock(__FUNCTION__, __LINE__);
+	for(itr = indexed_items.begin();itr != indexed_items.end(); itr++){
+		if(itr->first > max_index) //just grab the highest index val for next loop
+			max_index = itr->first;
+	}
+	max_saved_index = max_index;
+	MPlayerItems.releasewritelock(__FUNCTION__, __LINE__);
+	
+	return max_index;
+}
+
 bool PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 	//quick check to verify item
 	if(!item)
@@ -2948,7 +2964,8 @@ bool PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 	}
 	
 	bool doNotOverrideIndex = false;
-	for(int32 i=0;i<max_index;i++){
+	int32 i=0;
+	for(i=0;i<max_index;i++){
 		if(!indexed_items[i]){
 			new_index = i;
 			LogWrite(ITEM__DEBUG, 0, "Item %s assigned to %u",item->name.c_str(), i);
@@ -2958,6 +2975,15 @@ bool PlayerItemList::AddItem(Item* item){ //is called with a slot already set
 			break;
 		}
 	}
+	
+	if(doNotOverrideIndex) {
+		if(i < max_saved_index) {
+		item->details.new_item = false;
+		} else {
+		item->details.new_item = true;
+		}
+	}
+	
 	// may break non DoF clients
 	if(!doNotOverrideIndex && new_index == 0 && max_index > 0)
 		new_index = max_index;
@@ -3569,7 +3595,7 @@ int16 PlayerItemList::GetNewItemByIndex(int16 in_index) {
 			new_item_slot++;
 			int16 actual_index = in_index - new_item_slot;
 			// this isn't compiling right
-			//LogWrite(ITEM__DEBUG, 0, "In index: %u new index %u actual %u and %u, new slot num %u", in_index, item->details.new_index, actual_index, i, new_item_slot);
+			//printf("In index: %u new index %u actual %u and %u, new slot num %u\n", in_index, item->details.new_index, actual_index, i, new_item_slot);
 			if(actual_index == i) {
 				return i;
 			}
