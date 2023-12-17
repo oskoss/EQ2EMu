@@ -2396,7 +2396,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 							
 						}
 						else {							
-							spell->SetPacketInformation(packet);
+							spell->SetPacketInformation(packet, client);
 						}
 						//packet->setDataByName("unknown26", 0);
 					}
