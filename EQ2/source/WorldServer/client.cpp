@@ -749,7 +749,7 @@ void Client::SendCharInfo() {
 	ClientPacketFunctions::SendAbilities(this);
 
 	ClientPacketFunctions::SendSkillBook(this);
-	if (!IsReloadingZone() && !player->IsResurrecting()) {
+	if (!IsReloadingZone() && !player->IsResurrecting() && GetVersion() >= 546) {
 		ClientPacketFunctions::SendUpdateSpellBook(this);
 	}
 	else {
@@ -1472,7 +1472,9 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		break;
 	}
 	case OP_DoneLoadingUIResourcesMsg: {
-		//ClientPacketFunctions::SendUpdateSpellBook(this);
+		if(GetVersion() < 546) {
+			ClientPacketFunctions::SendUpdateSpellBook(this);
+		}
 		EQ2Packet* app = new EQ2Packet(OP_DoneLoadingUIResourcesMsg, 0, 0);
 		QueuePacket(app);
 		if(!player_loading_complete)
@@ -2966,7 +2968,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		Spell* spell = 0;
 		bool trait_display;
 		
-		request = configReader.getStruct("WS_ExamineInfoRequestMsg", GetVersion());
+		request = configReader.getStruct((GetVersion() <= 283) ? "WS_ExamineInfoRequest" : "WS_ExamineInfoRequestMsg", GetVersion());
 		if (!request) {
 			return;
 		}
@@ -3177,7 +3179,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		}
 	}
 	else if (type == 5) { // recipe info
-	request = configReader.getStruct("WS_ExamineInfoRequestMsg", GetVersion());
+	request = configReader.getStruct((GetVersion() <= 283) ? "WS_ExamineInfoRequest" : "WS_ExamineInfoRequestMsg", GetVersion());
 		if (!request)
 			return;
 		if(!request->LoadPacketData(app->pBuffer, app->size)) {
@@ -3189,7 +3191,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		if(GetVersion() < 546) {
 			id = request->getType_int32_ByName("id");
 		}
-		if(GetVersion() == 546) {
+		else if(GetVersion() == 546) {
 			id = request->getType_int32_ByName("unique_id");
 		}
 		else {
@@ -3207,7 +3209,7 @@ void Client::HandleExamineInfoRequest(EQApplicationPacket* app) {
 		Spell* spell = 0;
 		//Spell* spell2 = 0;
 		//AltAdvanceData* data = 0;
-		request = configReader.getStruct("WS_ExamineInfoRequestMsg", GetVersion());
+		request = configReader.getStruct((GetVersion() <= 283) ? "WS_ExamineInfoRequest" : "WS_ExamineInfoRequestMsg", GetVersion());
 		if (!request)
 			return;
 		if(!request->LoadPacketData(app->pBuffer, app->size)) {

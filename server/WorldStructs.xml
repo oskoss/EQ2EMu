@@ -6538,6 +6538,11 @@ to zero and treated like placeholders." />
 <Data ElementName="unique_id" Type="int32" />
 <Data ElementName="unknown5" Type="int16" />
 </Struct>
+<Struct Name="WS_ExamineInfoRequest" ClientVersion="1" >
+<Data ElementName="type" Type="int8" Size="1" />
+<Data ElementName="id" Type="int32" />
+<Data ElementName="display" Type="int8" />
+</Struct>
 <Struct Name="WS_ExamineInfoRequestMsg" ClientVersion="1" OpcodeName="OP_ExamineInfoRequestMsg">
 <Data ElementName="type" Type="int8" Size="1" />
 <Data ElementName="id" Type="int32" />
