@@ -304,9 +304,8 @@ void RuleManager::Init()
 	RULE_INIT(R_World, StartingZoneLanguages, "0");					// default: 0 (0 = Live Like, 1 = Starting City Based)
 	RULE_INIT(R_World, StartingZoneRuleFlag, "0");					// default: 0 - match any options available, just based on version/other fields (will not force qc/outpost)
 																	// 1 - force split zones on alignment/deity despite client selection (queens colony/overlord outpost)
-																	// 2 - (isle of refuge)
 																	// 4 - send to 'new' starting zones, won't support old clients
-																	// 5+ - send to new and old starting zones as needed
+																	// 8 - (isle of refuge)
 	RULE_INIT(R_World, EnforceRacialAlignment, "1");
 	RULE_INIT(R_World, MemoryCacheZoneMaps, "0");					// 0 disables caching the zone maps in memory, too many individual/unique zones entered may cause a lot of memory build up
 	RULE_INIT(R_World, AutoLockEncounter, "0");						// When set to 0 we require player to attack to lock the encounter, otherwise if 1 then npc can auto lock encounter
