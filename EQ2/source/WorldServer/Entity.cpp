@@ -116,7 +116,7 @@ void Entity::DeleteSpellEffects(bool removeClient)
 		if(i<30){
 			if(GetInfoStruct()->maintained_effects[i].spell_id != 0xFFFFFFFF)
 			{
-				if(deletedPtrs.find(GetInfoStruct()->spell_effects[i].spell) == deletedPtrs.end())
+				if(deletedPtrs.find(GetInfoStruct()->maintained_effects[i].spell) == deletedPtrs.end())
 				{
 					lua_interface->RemoveSpell(GetInfoStruct()->maintained_effects[i].spell, false, removeClient, "", removeClient);
 					if (IsPlayer())
