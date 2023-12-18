@@ -131,10 +131,14 @@ void Entity::DeleteSpellEffects(bool removeClient)
 		}
 		if(GetInfoStruct()->spell_effects[i].spell_id != 0xFFFFFFFF)
 		{
-			/*if(GetInfoStruct()->spell_effects[i].spell && GetInfoStruct()->spell_effects[i].spell->spell && 
-				GetInfoStruct()->spell_effects[i].spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_NOT_SHOWN) {
-				lua_interface->RemoveSpell(GetInfoStruct()->spell_effects[i].spell, false, removeClient, "", removeClient);
-			}*/
+			
+			if(deletedPtrs.find(GetInfoStruct()->spell_effects[i].spell) == deletedPtrs.end()) {
+				if(GetInfoStruct()->spell_effects[i].spell && GetInfoStruct()->spell_effects[i].spell->spell && 
+					GetInfoStruct()->spell_effects[i].spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_NOT_SHOWN) {
+					lua_interface->RemoveSpell(GetInfoStruct()->spell_effects[i].spell, false, removeClient, "", removeClient);
+					deletedPtrs[GetInfoStruct()->spell_effects[i].spell] = true;
+				}
+			}
 			GetInfoStruct()->spell_effects[i].spell_id = 0xFFFFFFFF;
 			GetInfoStruct()->spell_effects[i].spell = nullptr;
 		}
