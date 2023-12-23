@@ -310,7 +310,8 @@ void RuleManager::Init()
 	RULE_INIT(R_World, MemoryCacheZoneMaps, "0");					// 0 disables caching the zone maps in memory, too many individual/unique zones entered may cause a lot of memory build up
 	RULE_INIT(R_World, AutoLockEncounter, "0");						// When set to 0 we require player to attack to lock the encounter, otherwise if 1 then npc can auto lock encounter
 	RULE_INIT(R_World, DisplayItemTiers, "1");						// Display item tiers when set to 1, otherwise do not
-	
+	RULE_INIT(R_World, LoreAndLegendAccept, "0"); 					// default: 0 - L&L quests accepted only through starter books. 1 - L&L quests can be started by examining bodyparts.
+
 	//INSERT INTO `ruleset_details`(`id`, `ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (NULL, '1', 'R_World', '', '', '')
 
 	/* ZONE */

@@ -165,6 +165,7 @@ enum RuleType {
 	MemoryCacheZoneMaps,
 	AutoLockEncounter,
 	DisplayItemTiers,
+	LoreAndLegendAccept,
 
 	/* ZONE */
 	MinZoneLevelOverrideStatus,
