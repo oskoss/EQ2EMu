@@ -5022,31 +5022,57 @@ bool WorldDatabase::DeleteCharacter(int32 account_id, int32 character_id){
 	if((guild = guild_list.GetGuild(GetGuildIDByCharacterID(character_id))))
 		guild->RemoveGuildMember(character_id);
 
-	Query query, query2, query3, query4, query5;
-	query.RunQuery2(Q_DELETE, "DELETE FROM characters WHERE id=%u AND account_id=%u", character_id, account_id);
-	//delete languages
-	query2.RunQuery2(Q_DELETE, "DELETE FROM character_languages WHERE char_id=%u", character_id);
-	//delete quest rewards
-	query3.RunQuery2(Q_DELETE, "DELETE FROM character_quest_rewards WHERE char_id=%u", character_id);
-	query4.RunQuery2(Q_DELETE, "DELETE FROM character_quest_temporary_rewards WHERE char_id=%u", character_id);
-	//delete character claims
-	query5.RunQuery2(Q_DELETE, "DELETE FROM character_claim_items where char_id=%u", character_id);
+	Query query;
+	//devn00b: Update this whole thing we were missing many tables. This is ugly but swapped 99% of the delete to async to lighten server load.
 
-	if(!query.GetAffectedRows())
+	//Do character delete immediately. 
+	query.RunQuery2(Q_DELETE, "DELETE FROM characters WHERE id=%u AND account_id=%u", character_id, account_id);
+	
+	//if no character then we shouldn't bother with the rest.
+	if (!query.GetAffectedRows())
 	{
 		//No error just in case ppl try doing stupid stuff
 		return false;
 	}
-	else{ //successfull, so the character did exist with that character_id and account_id
-		// new DB constraints should handle all these deletes, and more... commenting out for now
-		/*query.RunQuery2(Q_DELETE, "delete FROM character_details where char_id=%u", character_id);
-		query.RunQuery2(Q_DELETE, "delete FROM character_factions where char_id=%u", character_id);
-		query.RunQuery2(Q_DELETE, "delete FROM character_items where char_id=%u", character_id);
-		query.RunQuery2(Q_DELETE, "delete FROM character_skillbar where char_id=%u", character_id);
-		query.RunQuery2(Q_DELETE, "delete FROM character_skills where char_id=%u", character_id);
-		query.RunQuery2(Q_DELETE, "delete FROM character_spells where char_id=%u", character_id);
-		query.RunQuery2(Q_DELETE, "delete FROM char_colors where char_id=%u", character_id);*/
-	}
+
+	//Async
+	query.AddQueryAsync(character_id, this, Q_DELETE, "DELETE FROM character_languages WHERE char_id=%u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "DELETE FROM character_quest_rewards WHERE char_id=%u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "DELETE FROM character_quest_temporary_rewards WHERE char_id=%u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "DELETE FROM character_claim_items where char_id=%u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from charactersproperties where charid = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_aa where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_achievements where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_achievements_items where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_buyback where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_collections where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_collection_items where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_details where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_factions where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_history where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_houses where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_instances where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_items where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_items_group_members where character_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_lua_history where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_macros where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_pictures where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_properties where charid = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_quests where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_quest_progress where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_recipes where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_recipe_books where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_skillbar where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_skills where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_social where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_spells where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_spell_effects where caster_char_id = %u or target_char_id = %u", character_id, character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_spell_effect_targets where caster_char_id = %u or target_char_id = %u", character_id, character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_spirit_shards where charid = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from character_titles where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from char_colors where char_id = %u", character_id);
+	query.AddQueryAsync(character_id, this, Q_DELETE, "delete from statistics where char_id = %u", character_id);
+		
 	return true;
 }
 
