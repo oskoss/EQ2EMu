@@ -12026,10 +12026,6 @@
 <Data ElementName="header" Substruct="Substruct_MerchantItemDescription" Size="1" />
 <Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
 </Struct>
-<Struct Name="WS_MerchantItemGeneric" ClientVersion="63119" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
-<Data ElementName="header" Substruct="Substruct_MerchantItemDescription" Size="1" />
-<Data ElementName="footer" Substruct="Substruct_ItemFooter" Size="1" />
-</Struct>
 <Struct Name="WS_MerchantItemDecoration" ClientVersion="63119" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqExamineInfoCmd">
 <Data ElementName="header" Substruct="Substruct_MerchantItemDescription" Size="1" />
 <Data ElementName="decoration_name" Type="EQ2_16Bit_String" Size="1" />
