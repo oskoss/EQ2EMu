@@ -1282,7 +1282,7 @@ void WorldDatabase::LoadCharacterItemList(int32 account_id, int32 char_id, Playe
 
 	Query query;
 	MYSQL_ROW row;
-	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT type, id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value, no_sale, UNIX_TIMESTAMP(last_saved), UNIX_TIMESTAMP(created) FROM character_items where char_id = %u or (bag_id = -4 and account_id = %u) ORDER BY slot asc", char_id, account_id);
+	MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT type, id, slot, item_id, creator,adorn0,adorn1,adorn2, condition_, attuned, bag_id, count, max_sell_value, no_sale, UNIX_TIMESTAMP(last_saved), UNIX_TIMESTAMP(created) FROM character_items where char_id = %u or (bag_id = -4 and account_id = %u) ORDER BY bag_id, slot asc", char_id, account_id);
 
 	if(result)
 	{
