@@ -2304,11 +2304,7 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 					int8 max_slots = player->GetMaxBagSlots(client->GetVersion());
 					if (bag_info->num_slots > max_slots)
 						bag_info->num_slots = max_slots;
-					if (client->GetVersion() <= 546) {
-						packet->setSubstructDataByName("details", "num_slots", bag_info->num_slots);
-						packet->setSubstructDataByName("details", "weight_reduction", bag_info->weight_reduction);
-					}
-					else {
+				
 						int16 free_slots = bag_info->num_slots;
 						if (player) {
 							Item* bag = player->GetPlayerItemList()->GetItemFromUniqueID(details.unique_id, true);
@@ -2354,7 +2350,6 @@ void Item::serialize(PacketStruct* packet, bool show_name, Player* player, int16
 						int8 blah[] = { 0xd8,0x66,0x9b,0x6d,0xb6,0xfb,0x7f };
 						for (int8 i = 0; i < sizeof(blah); i++)
 							packet->setSubstructDataByName("footer", "footer_unknown_0", blah[i], 0, i);
-					}
 				}
 				break;
 			}
