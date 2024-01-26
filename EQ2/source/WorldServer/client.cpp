@@ -8046,9 +8046,9 @@ void Client::SendSellMerchantList(bool sell) {
 				vector<Item*> sellable_items;
 				map<int32, Item*>::iterator test_itr;
 				for (test_itr = items->begin(); test_itr != items->end(); test_itr++) {
-					BOOLEAN isbagwithitems = false;
+					bool isbagwithitems = false;
 					if (test_itr->second && test_itr->second->IsBag() && (test_itr->second->details.num_slots - test_itr->second->details.num_free_slots != test_itr->second->details.num_slots))
-						isbagwithitems = TRUE;
+						isbagwithitems = true;
 					
 					if (test_itr->second && !test_itr->second->CheckFlag(NO_VALUE) && (isbagwithitems == false) && (test_itr->second->details.inv_slot_id != -3) && (test_itr->second->details.inv_slot_id != -4))
 						sellable_items.push_back(test_itr->second);
