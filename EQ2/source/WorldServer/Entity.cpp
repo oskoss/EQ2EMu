@@ -357,6 +357,15 @@ void Entity::MapInfoStruct()
 	
 	get_int8_funcs["reload_player_spells"] = l::bind(&InfoStruct::get_reload_player_spells, &info_struct);
 	
+	get_int8_funcs["group_loot_method"] = l::bind(&InfoStruct::get_group_loot_method, &info_struct);
+	get_int8_funcs["group_loot_items_rarity"] = l::bind(&InfoStruct::get_group_loot_items_rarity, &info_struct);
+	get_int8_funcs["group_auto_split"] = l::bind(&InfoStruct::get_group_auto_split, &info_struct);
+	get_int8_funcs["group_default_yell"] = l::bind(&InfoStruct::get_group_default_yell, &info_struct);
+	get_int8_funcs["group_autolock"] = l::bind(&InfoStruct::get_group_autolock, &info_struct);
+	get_int8_funcs["group_lock_method"] = l::bind(&InfoStruct::get_group_lock_method, &info_struct);
+	get_int8_funcs["group_solo_autolock"] = l::bind(&InfoStruct::get_group_solo_autolock, &info_struct);
+	get_int8_funcs["group_auto_loot_method"] = l::bind(&InfoStruct::get_group_auto_loot_method, &info_struct);
+	
 	get_string_funcs["action_state"] = l::bind(&InfoStruct::get_action_state, &info_struct);
 	get_string_funcs["combat_action_state"] = l::bind(&InfoStruct::get_combat_action_state, &info_struct);
 
@@ -548,6 +557,15 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["first_world_login"] = l::bind(&InfoStruct::set_first_world_login, &info_struct, l::_1);
 	
 	set_int8_funcs["reload_player_spells"] = l::bind(&InfoStruct::set_reload_player_spells, &info_struct, l::_1);
+	
+	set_int8_funcs["group_loot_method"] = l::bind(&InfoStruct::set_group_loot_method, &info_struct, l::_1);
+	set_int8_funcs["group_loot_items_rarity"] = l::bind(&InfoStruct::set_group_loot_items_rarity, &info_struct, l::_1);
+	set_int8_funcs["group_auto_split"] = l::bind(&InfoStruct::set_group_auto_split, &info_struct, l::_1);
+	set_int8_funcs["group_default_yell"] = l::bind(&InfoStruct::set_group_default_yell, &info_struct, l::_1);
+	set_int8_funcs["group_autolock"] = l::bind(&InfoStruct::set_group_autolock, &info_struct, l::_1);
+	set_int8_funcs["group_lock_method"] = l::bind(&InfoStruct::set_group_lock_method, &info_struct, l::_1);
+	set_int8_funcs["group_solo_autolock"] = l::bind(&InfoStruct::set_group_solo_autolock, &info_struct, l::_1);
+	set_int8_funcs["group_auto_loot_method"] = l::bind(&InfoStruct::set_group_auto_loot_method, &info_struct, l::_1);
 	
 	set_string_funcs["action_state"] = l::bind(&InfoStruct::set_action_state, &info_struct, l::_1);
 	set_string_funcs["combat_action_state"] = l::bind(&InfoStruct::set_combat_action_state, &info_struct, l::_1);

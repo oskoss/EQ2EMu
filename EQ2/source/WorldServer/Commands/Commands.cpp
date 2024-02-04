@@ -2849,10 +2849,10 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 				if (sep && sep->arg[0]) {
 					if (!spawn->GetDatabaseID())
 					{
-						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Spawn has no database id to assign to loottables.");
-						break;
+						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "NOTE: Spawn has no database id to assign to loottables.");
 					}
-					else if (!spawn->IsNPC())
+					
+					if (!spawn->IsNPC())
 					{
 						client->SimpleMessage(CHANNEL_COLOR_YELLOW, "these /loot list [add/remove/clearall] sub-commands are only designed for an NPC.");
 						break;
@@ -2892,6 +2892,21 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 						}
 						else
 							client->SimpleMessage(CHANNEL_COLOR_YELLOW, "/loot list clearall - could not match any spawn_id entries in loottable_id.");
+					}
+					else if (!stricmp(sep->arg[0], "details"))
+					{
+						spawn->LockLoot();
+						client->SimpleMessage(CHANNEL_COMMANDS, "Loot Window List:");
+						if (spawn->GetLootWindowList()->size() > 0) {
+							std::map<int32, bool>::iterator itr;
+							for (itr = spawn->GetLootWindowList()->begin(); itr != spawn->GetLootWindowList()->end(); itr++) {
+								Spawn* looter = client->GetPlayer()->GetZone()->GetSpawnByID(itr->first);
+								if (looter) {
+									client->Message(CHANNEL_COLOR_YELLOW, "Looter: %s IsLootWindowOpen: %s, HasCompletedLootWindow: %s.", looter->GetName(), itr->second ? "NO" : "YES", spawn->HasSpawnLootWindowCompleted(itr->first) ? "YES" : "NO");
+								}
+							}
+						}
+						spawn->UnlockLoot();
 					}
 					else
 					{
@@ -2995,7 +3010,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					if (!rule_manager.GetGlobalRule(R_Loot, AutoDisarmChest)->GetBool() && command->handler == COMMAND_DISARM )
 						client->OpenChest(cmdTarget, true);
 					else
-						client->Loot(cmdTarget, rule_manager.GetGlobalRule(R_Loot, AutoDisarmChest)->GetBool());
+						client->LootSpawnRequest(cmdTarget, rule_manager.GetGlobalRule(R_Loot, AutoDisarmChest)->GetBool());
 					if (!(cmdTarget)->HasLoot()){
 						if (((Entity*)cmdTarget)->IsNPC())
 							client->GetCurrentZone()->RemoveDeadSpawn(cmdTarget);
@@ -5708,6 +5723,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_CUREPLAYER: { Command_CurePlayer(client, sep); break; }
 		case COMMAND_SHARE_QUEST: { Command_ShareQuest(client, sep); break; }
 		case COMMAND_YELL: { Command_Yell(client, sep); break; }
+		case COMMAND_SETAUTOLOOTMODE: { Command_SetAutoLootMode(client, sep); break; }
 		default: 
 		{
 			LogWrite(COMMAND__WARNING, 0, "Command", "Unhandled command: %s", command->command.data.c_str());
@@ -12037,49 +12053,101 @@ void Commands::Command_Yell(Client* client, Seperator* sep) {
 	Spawn* res = nullptr;
 	Spawn* prev = nullptr;
 	bool cycleAll = false;
-	if(player->GetTarget() == player) {
+	if (player->GetTarget() == player) {
 		cycleAll = true; // self target breaks all encounters
 	}
-	else if(player->GetTarget()) {
+	else if (player->GetTarget()) {
 		res = player->GetTarget(); // selected target other than self only dis-engages that encounter
 	}
-	
-	if(res && !client->GetPlayer()->IsEngagedBySpawnID(res->GetID()))
+
+	if (res && !client->GetPlayer()->IsEngagedBySpawnID(res->GetID()))
 		return;
-	
+
+	bool groupPermissionYell = true;
+
+	GroupMemberInfo* gmi = client->GetPlayer()->GetGroupMemberInfo();
+	// If the player has a group and has a target
+	if (gmi) {
+		deque<GroupMemberInfo*>::iterator itr;
+
+		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+		if (group && !group->GetGroupOptions()->default_yell && !gmi->leader) { // default_yell_method = 0 means leader only
+			groupPermissionYell = false;
+		}
+
+		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+	}
+
+	if (!groupPermissionYell) {
+		LogWrite(COMMAND__ERROR, 0, "Command", "%s permission to yell denied due to group yell method set to leader only", client->GetPlayer()->GetName());
+		return;
+	}
+
 	bool alreadyYelled = false;
 	do {
-	if(!res && player->IsEngagedInEncounter(&res)) { // no target is set, dis-engage top of hated by list
+		if (!res && player->IsEngagedInEncounter(&res)) { // no target is set, dis-engage top of hated by list
 
-	}
-	if(!res || prev == res) {
-		return;
-	}
-
-	if(res->IsNPC() && ((NPC*)res)->Brain()) {
-		if(!alreadyYelled) {
-			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You yell for help!");
-			string yellMsg = std::string(client->GetPlayer()->GetName()) + " yelled for help!";
-			client->GetPlayer()->GetZone()->SimpleMessage(CHANNEL_COLOR_RED, yellMsg.c_str(), client->GetPlayer(), 35.0f, false);
-			client->GetPlayer()->GetZone()->SendYellPacket(client->GetPlayer());
 		}
-		alreadyYelled = true;
-		
-		NPC* npc = (NPC*)res;
-		npc->Brain()->ClearEncounter();
-		npc->SetLockedNoLoot(ENCOUNTER_STATE_BROKEN);
-		npc->UpdateEncounterState(ENCOUNTER_STATE_BROKEN);
-	}
-	prev = res;
-	res = nullptr;
-	}while(cycleAll);
-	
-	if(!player->IsEngagedInEncounter()) {		
-		if(player->GetInfoStruct()->get_engaged_encounter()) {
+		if (!res || prev == res) {
+			return;
+		}
+
+		if (res->IsNPC() && ((NPC*)res)->Brain()) {
+			if (!alreadyYelled) {
+				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You yell for help!");
+				string yellMsg = std::string(client->GetPlayer()->GetName()) + " yelled for help!";
+				client->GetPlayer()->GetZone()->SimpleMessage(CHANNEL_COLOR_RED, yellMsg.c_str(), client->GetPlayer(), 35.0f, false);
+				client->GetPlayer()->GetZone()->SendYellPacket(client->GetPlayer());
+			}
+			alreadyYelled = true;
+
+			NPC* npc = (NPC*)res;
+			npc->Brain()->ClearEncounter();
+			npc->SetLockedNoLoot(ENCOUNTER_STATE_BROKEN);
+			npc->UpdateEncounterState(ENCOUNTER_STATE_BROKEN);
+		}
+		prev = res;
+		res = nullptr;
+	} while (cycleAll);
+
+	if (!player->IsEngagedInEncounter()) {
+		if (player->GetInfoStruct()->get_engaged_encounter()) {
 			player->GetInfoStruct()->set_engaged_encounter(0);
 			player->SetRegenValues((player->GetInfoStruct()->get_effective_level() > 0) ? player->GetInfoStruct()->get_effective_level() : player->GetLevel());
 			client->GetPlayer()->SetCharSheetChanged(true);
 			player->info_changed = true;
 		}
+	}
+}
+
+
+/* 
+	Function: Command_SetAutoLootMode()
+	Purpose	: Set player auto loot mode (0 = disabled, 1 = need/lotto, 2 = decline).
+	Example	: /setautolootmode [mode]
+*/ 
+void Commands::Command_SetAutoLootMode(Client* client, Seperator* sep) {
+	if (sep && sep->IsNumber(0)) {
+		int8 mode = atoul(sep->arg[0]);
+		switch (mode) {
+		case AutoLootMode::METHOD_DISABLED: {
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Disabled auto loot mode");
+			break;
+		}
+		case AutoLootMode::METHOD_ACCEPT: {
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Enabled auto loot mode for need and lotto.");
+			break;
+		}
+		default: {
+			mode = AutoLootMode::METHOD_DISABLED;
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Enabled auto loot mode to decline need and lotto.");
+			break;
+		}
+		}
+		client->GetPlayer()->GetInfoStruct()->set_group_auto_loot_method(mode);
+		database.insertCharacterProperty(client, CHAR_PROPERTY_AUTOLOOTMETHOD, (char*)std::to_string(mode).c_str());
+		client->SendDefaultGroupOptions();
 	}
 }

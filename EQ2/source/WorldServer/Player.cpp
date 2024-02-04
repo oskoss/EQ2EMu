@@ -125,7 +125,6 @@ Player::Player(){
 }
 Player::~Player(){
 	SetSaveSpellEffects(true);
-	DeleteSpellEffects();
 	for(int32 i=0;i<spells.size();i++){
 		safe_delete(spells[i]);
 	}

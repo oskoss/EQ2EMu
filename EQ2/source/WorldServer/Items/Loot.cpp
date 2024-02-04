@@ -72,7 +72,8 @@ NPC* Entity::DropChest() {
 	chest->SetIcon(32);
 	// 1 = show the right click menu
 	chest->SetShowCommandIcon(1);
-
+	chest->SetLootMethod(this->GetLootMethod(), this->GetLootRarity(), this->GetLootGroupID());
+	chest->SetLootName(this->GetName());
 	int8 highest_tier = 0;
 	vector<Item*>::iterator itr;	
 	for (itr = ((Spawn*)this)->GetLootItems()->begin(); itr != ((Spawn*)this)->GetLootItems()->end(); ) {

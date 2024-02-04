@@ -575,14 +575,24 @@ bool Brain::CheckLootAllowed(Entity* entity) {
 	bool ret = false;
 	vector<int32>::iterator itr;
 
-	if(m_body)
+	if (m_body)
 	{
-		if(rule_manager.GetGlobalRule(R_Loot, AllowChestUnlockByDropTime)->GetInt8()
-		&& m_body->GetChestDropTime() > 0 && Timer::GetCurrentTime2() >= m_body->GetChestDropTime()+(rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeDrop)->GetInt32()*1000))
+		if ((m_body->GetLootMethod() != GroupLootMethod::METHOD_LOTTO && m_body->GetLootMethod() != GroupLootMethod::METHOD_NEED_BEFORE_GREED) && m_body->GetLooterSpawnID() > 0 && m_body->GetLooterSpawnID() != entity->GetID()) {
+			LogWrite(LOOT__INFO, 0, "Loot", "%s: CheckLootAllowed failed, looter spawn id %u does not match received %s(%u)", GetBody()->GetName(), m_body->GetLooterSpawnID(), entity->GetName(), entity->GetID());
+			return false;
+		}
+		if (rule_manager.GetGlobalRule(R_Loot, AllowChestUnlockByDropTime)->GetInt8()
+			&& m_body->GetChestDropTime() > 0 && Timer::GetCurrentTime2() >= m_body->GetChestDropTime() + (rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeDrop)->GetInt32() * 1000)) {
 			return true;
-		if(rule_manager.GetGlobalRule(R_Loot, AllowChestUnlockByTrapTime)->GetInt8() 
-		&& m_body->GetTrapOpenedTime() > 0 && Timer::GetCurrentTime2() >= m_body->GetChestDropTime()+(rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeTrap)->GetInt32()*1000))
+		}
+		if (rule_manager.GetGlobalRule(R_Loot, AllowChestUnlockByTrapTime)->GetInt8()
+			&& m_body->GetTrapOpenedTime() > 0 && Timer::GetCurrentTime2() >= m_body->GetChestDropTime() + (rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeTrap)->GetInt32() * 1000)) {
 			return true;
+		}
+		if ((m_body->GetLootMethod() == GroupLootMethod::METHOD_LOTTO || m_body->GetLootMethod() == GroupLootMethod::METHOD_NEED_BEFORE_GREED) && m_body->HasSpawnLootWindowCompleted(entity->GetID())) {
+			LogWrite(LOOT__INFO, 0, "Loot", "%s: CheckLootAllowed failed, looter %s(%u) has already completed their lotto selections.", GetBody()->GetName(), entity->GetName(), entity->GetID());
+			return false;
+		}
 	}
 	// Check the encounter list to see if the given entity is in it, if so return true.
 	MEncounter.readlock(__FUNCTION__, __LINE__);
@@ -608,7 +618,7 @@ bool Brain::CheckLootAllowed(Entity* entity) {
 			break;
 		}
 	}
-	MEncounter.releasereadlock(__FUNCTION__, __LINE__);	
+	MEncounter.releasereadlock(__FUNCTION__, __LINE__);
 
 	return ret;
 }

@@ -7245,34 +7245,34 @@ to zero and treated like placeholders." />
 <Data ElementName="lotto_timeout" Type="int32" />
 <Data ElementName="loot_id" Type="int32" />
 </Struct>
-<Struct Name="WS_LootType" ClientVersion="1" OpcodeName="OP_LootItemsRequestMsg" >
-<Data ElementName="loot_id" Type="int32" />
-<Data ElementName="loot_all" Type="int8" />
-<Data ElementName="unknown2" Type="int32" />
-</Struct>
-<Struct Name="WS_LootType" ClientVersion="882" OpcodeName="OP_LootItemsRequestMsg" >
-<Data ElementName="loot_id" Type="int32" />
-<Data ElementName="unknown" Type="int8" />
-<Data ElementName="loot_all" Type="int8" />
-<Data ElementName="unknown2" Type="int32" />
-</Struct>
-
 <Struct Name="WS_LootItem" ClientVersion="1" OpcodeName="OP_LootItemsRequestMsg" >
 <Data ElementName="loot_id" Type="int32" />
 <Data ElementName="loot_all" Type="int8" />
-<Data ElementName="unknown2" Type="int8" />
-<Data ElementName="item_id" Type="int32" />
-<Data ElementName="unknown3" Type="int8" />
-<Data ElementName="unknown4" Type="int32" />
+<Data ElementName="item_count" Type="int8" IfVariableNotSet="loot_all"/>
+<Data ElementName="item_list" Type="Array" ArraySizeVariable="item_count" IfVariableNotSet="loot_all">
+	<Data ElementName="item_id" Type="int32" IfVariableNotSet="loot_all"/>
+</Data>
+<Data ElementName="target_id" Type="int32" />
+</Struct>
+<Struct Name="WS_LootItem" ClientVersion="546" OpcodeName="OP_LootItemsRequestMsg" >
+<Data ElementName="loot_id" Type="int32" />
+<Data ElementName="loot_all" Type="int8" />
+<Data ElementName="item_count" Type="int8" IfVariableNotSet="loot_all"/>
+<Data ElementName="item_list" Type="Array" ArraySizeVariable="item_count" IfVariableNotSet="loot_all">
+	<Data ElementName="item_id" Type="int32" IfVariableNotSet="loot_all"/>
+</Data>
+<Data ElementName="target_id" Type="int32" />
 </Struct>
 <Struct Name="WS_LootItem" ClientVersion="882" OpcodeName="OP_LootItemsRequestMsg" >
 <Data ElementName="loot_id" Type="int32" />
 <Data ElementName="unknown" Type="int8" />
 <Data ElementName="loot_all" Type="int8" />
-<Data ElementName="unknown2" Type="int8" />
-<Data ElementName="item_id" Type="int32" />
-<Data ElementName="unknown3" Type="int8" />
-<Data ElementName="unknown4" Type="int32" />
+<Data ElementName="item_count" Type="int8" IfVariableNotSet="loot_all"/>
+<Data ElementName="item_list" Type="Array" ArraySizeVariable="item_count" IfVariableNotSet="loot_all">
+	<Data ElementName="item_id" Type="int32" IfVariableNotSet="loot_all"/>
+</Data>
+<Data ElementName="button_clicked" Type="int8" />
+<Data ElementName="target_id" Type="int32" />
 </Struct>
 <Struct Name="WS_UpdateBank" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqUpdateBankCmd" >
 <Data ElementName="spawn_id" Type="int32" />
@@ -7815,8 +7815,8 @@ to zero and treated like placeholders." />
 <Data ElementName="onscreen_update_text" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="onscreen_update_text2" Type="EQ2_16Bit_String" Size="1" />
 <Data ElementName="onscreen_update_icon" Type="int16" Size="1" />
-<Data ElementName="unknown6" Type="int8" Size="1" />
 <Data ElementName="reward_data" Substruct="Substruct_JournalRewardData" IfVariableNotSet="complete" />
+<Data ElementName="unknown6" Type="int8" Size="1" />
 </Struct>
 <Struct Name="WS_QuestJournalReply" ClientVersion="547" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqQuestJournalReplyCmd" >
 <Data ElementName="quest_id" Type="int32" Size="1" />
@@ -9084,7 +9084,7 @@ to zero and treated like placeholders." />
 <Data ElementName="response_array" Type="Array" ArraySizeVariable="num_responses">
   <Data ElementName="response" Type="EQ2_16Bit_String" Size="1" />
 </Data>
-<Data ElementName="unknown3" Type="int8" />
+<Data ElementName="enable_blue_ui" Type="int8" />
 <Data ElementName="can_close" Type="int8" />
 <Data ElementName="spawn_id" Type="int32" />
 <Data ElementName="voice" Type="EQ2_16Bit_String" Size="1" />
@@ -17960,23 +17960,23 @@ to zero and treated like placeholders." />
 <Data ElementName="default_yell_method" Type="int8" Size="1" />
 </Struct>
 <Struct Name="WS_DefaultGroupOptions" ClientVersion="546" OpcodeName="OP_DefaultGroupOptionsMsg" >
-<Data ElementName="loot_method" Type="int8" Size="1" />
-<Data ElementName="loot_items_rarity" Type="int8" Size="1" />
-<Data ElementName="auto_split_coin" Type="int8" Size="1" />
-<Data ElementName="default_yell_method" Type="int8" Size="1" />
-<Data ElementName="group_autolock" Type="int8" Size="1" />
-<Data ElementName="solo_autolock" Type="int8" Size="1" />
+<Data ElementName="loot_method" Type="int8" Size="1" /> <!-- 0 = leader, 1 = FFA, 2 = lotto -->
+<Data ElementName="loot_items_rarity" Type="int8" Size="1" /> <!-- not available in DoF? -->
+<Data ElementName="auto_split_coin" Type="int8" Size="1" /> <!-- auto split -->
+<Data ElementName="default_yell_method" Type="int8" Size="1" /> <!-- 0 = leader only, 1 = group allowed -->
+<Data ElementName="default_group_lock_method" Type="int8" Size="1" /> <!-- 0 = leader, 1 = anyone -->
+<Data ElementName="group_autolock" Type="int8" Size="1" /> <!-- 0 = false, 1 = true, if set to 0 default_group_lock_method is not sent if changed after -->
 </Struct>
-<Struct Name="WS_DefaultGroupOptions" ClientVersion="547" OpcodeName="OP_DefaultGroupOptionsMsg" >
+<Struct Name="WS_DefaultGroupOptions" ClientVersion="562" OpcodeName="OP_DefaultGroupOptionsMsg" >
 <Data ElementName="loot_method" Type="int8" Size="1" />
 <Data ElementName="loot_items_rarity" Type="int8" Size="1" />
 <Data ElementName="auto_split_coin" Type="int8" Size="1" />
 <Data ElementName="unknown3" Type="int8" Size="1" />
 <Data ElementName="default_yell_method" Type="int8" Size="1" />
-<Data ElementName="unknown5" Type="int8" Size="1" />
+<Data ElementName="default_group_lock_method" Type="int8" Size="1" />
 <Data ElementName="group_autolock" Type="int8" Size="1" />
 <Data ElementName="solo_autolock" Type="int8" Size="1" />
-<Data ElementName="unknown8" Type="int8" Size="1" />
+<Data ElementName="auto_loot_method" Type="int8" Size="1" />
 </Struct>
 <Struct Name="WS_ChoiceWindow" ClientVersion="1" OpcodeName="OP_ClientCmdMsg" OpcodeType="OP_EqChoiceWinCmd">
 <Data ElementName="text" Type="EQ2_16Bit_String" />

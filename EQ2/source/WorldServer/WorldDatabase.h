@@ -113,6 +113,15 @@ using namespace std;
 #define CHAR_PROPERTY_GMVISION		"modify_gmvision"
 #define CHAR_PROPERTY_LUADEBUG		"modify_luadebug"
 
+#define CHAR_PROPERTY_GROUPLOOTMETHOD	 	"group_loot_method"
+#define CHAR_PROPERTY_GROUPLOOTITEMRARITY 	"group_loot_item_rarity"
+#define CHAR_PROPERTY_GROUPAUTOSPLIT 		"group_auto_split"
+#define CHAR_PROPERTY_GROUPDEFAULTYELL 		"group_default_yell"
+#define CHAR_PROPERTY_GROUPAUTOLOCK 		"group_autolock"
+#define CHAR_PROPERTY_GROUPLOCKMETHOD 		"group_lock_method"
+#define CHAR_PROPERTY_GROUPSOLOAUTOLOCK 	"group_solo_autolock"
+#define CHAR_PROPERTY_AUTOLOOTMETHOD	 	"group_auto_loot_method"
+
 #define DB_TYPE_SPELLEFFECTS		1
 #define DB_TYPE_MAINTAINEDEFFECTS	2
 

@@ -306,7 +306,7 @@ public:
 	void	ApplySetSpawnCommand(Client* client, Spawn* target, int8 type, const char* value);
 	void	SetSpawnCommand(Spawn* spawn, int8 type, char* value, Client* client = 0);
 	void	SetSpawnCommand(int32 spawn_id, int8 type, char* value, Client* client = 0);
-	void	AddLoot(NPC* npc, Spawn* killer = nullptr);
+	void	AddLoot(NPC* npc, Spawn* killer = nullptr, GroupLootMethod loot_method = GroupLootMethod::METHOD_FFA, int8 item_rarity = 0, int32 group_id = 0);
 	
 	NPC*	AddNPCSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentry);
 	Object*	AddObjectSpawn(SpawnLocation* spawnlocation, SpawnEntry* spawnentry);
@@ -795,6 +795,8 @@ private:
 	/// <summary>Checks to see if it is time to remove a spawn and removes it</summary>
 	/// <param name='force_delete_all'>Forces all spawns scheduled to be removed regardless of time</param>
 	bool CombatProcess(Spawn* spawn);																			// never used outside zone server
+	void LootProcess(Spawn* spawn);
+	void CloseSpawnLootWindow(Spawn* spawn);
 	void	InitWeather();																						// never used outside zone server
 	///<summary>Dismiss all pets in the zone, useful when the spell process needs to be reloaded</summary>
 	void DismissAllPets();																						// never used outside zone server

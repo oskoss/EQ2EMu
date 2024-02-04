@@ -42,7 +42,7 @@ to zero and treated like placeholders." />
 <Data ElementName="passCode" Type="int32" Size="1" />
 <Data ElementName="version" Type="int16" />
 </Struct>
-<Struct Name="LS_LoginRequest" ClientVersion="547" OpcodeName="OP_LoginRequestMsg">
+<Struct Name="LS_LoginRequest" ClientVersion="562" OpcodeName="OP_LoginRequestMsg">
 <Data ElementName="accesscode" Type="EQ2_16BitString" />
 <Data ElementName="unknown1" Type="EQ2_16BitString" />
 <Data ElementName="username" Type="EQ2_16BitString" />
@@ -95,7 +95,7 @@ to zero and treated like placeholders." />
   <Data ElementName="allowed_races" Type="int32" Size="1" />
 </Data>
 </Struct>
-<Struct Name="LS_WorldList" ClientVersion="547" OpcodeName="OP_WorldListMsg">
+<Struct Name="LS_WorldList" ClientVersion="562" OpcodeName="OP_WorldListMsg">
 <Data ElementName="num_worlds" Type="int8" />
 <Data ElementName="world_list" Type="Array" ArraySizeVariable="num_worlds">
   <Data ElementName="id" Type="int32" Size="1" />
@@ -322,7 +322,7 @@ to zero and treated like placeholders." />
 <Data ElementName="soga_hair_face_color" Type="EQ2_Color" />
 <Data ElementName="soga_hair_face_highlight_color" Type="EQ2_Color" />
 </Struct>
-<Struct Name="CharSelectProfile" ClientVersion="547"> 
+<Struct Name="CharSelectProfile" ClientVersion="562"> 
 <Data ElementName="version" Type="int32" Size="1" />
 <Data ElementName="charid" Type="int32" Size="1" />
 <Data ElementName="server_id" Type="int32" Size="1" />

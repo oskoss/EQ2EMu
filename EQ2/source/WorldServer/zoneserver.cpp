@@ -939,6 +939,8 @@ bool ZoneServer::AggroVictim(NPC* npc, Spawn* victim, Client* client)
 		else
 			npc->InCombat(true);
 	}
+	
+	victim->CheckEncounterState((Entity*)npc, true);
 	return true;
 }
 
@@ -1270,10 +1272,201 @@ bool ZoneServer::CombatProcess(Spawn* spawn) {
 
 	if (spawn && spawn->IsEntity())
 		((Entity*)spawn)->ProcessCombat();
+	if (spawn && !spawn->Alive() && !spawn->IsLootDispensed()) {
+		LootProcess(spawn);
+	}
 
 	return ret;
 }
 
+void ZoneServer::LootProcess(Spawn* spawn) {
+	if (spawn->GetLootMethod() == GroupLootMethod::METHOD_ROUND_ROBIN) {
+		spawn->LockLoot();
+		if (spawn->CheckLootTimer() || spawn->IsLootWindowComplete()) {
+			LogWrite(LOOT__INFO, 0, "Loot", "%s: Dispensing loot, loot window was completed? %s.", spawn->GetName(), spawn->IsLootWindowComplete() ? "YES" : "NO");
+			spawn->DisableLootTimer();
+			spawn->SetLootDispensed();
+			Spawn* looter = nullptr;
+			if (spawn->GetLootGroupID() < 1 && spawn->GetLootWindowList()->size() > 0) {
+				std::map<int32, bool>::iterator itr;
+
+				for (itr = spawn->GetLootWindowList()->begin(); itr != spawn->GetLootWindowList()->end(); itr++) {
+					Spawn* entry = GetSpawnByID(itr->first, true);
+					if (entry->IsPlayer()) {
+						looter = entry;
+						break;
+					}
+				}
+
+				int32 item_id = 0;
+				std::vector<int32> item_list;
+				spawn->GetLootItemsList(&item_list);
+				spawn->UnlockLoot();
+
+				std::vector<int32>::iterator item_itr;
+
+				for (item_itr = item_list.begin(); item_itr != item_list.end(); item_itr++) {
+					int32 item_id = *item_itr;
+					Item* tmpItem = master_item_list.GetItem(item_id);
+
+					bool skipItem = spawn->IsItemInLootTier(tmpItem);
+
+					if (skipItem)
+						continue;
+
+					if (looter) {
+						if (looter->IsPlayer()) {
+
+							Item* item = spawn->LootItem(item_id);
+							bool success = false;
+							success = ((Player*)looter)->GetClient()->HandleLootItem(spawn, item, ((Player*)looter));
+
+							if (!success)
+								spawn->AddLootItem(item);
+						}
+						else {
+							Item* item = spawn->LootItem(item_id);
+							safe_delete(item);
+						}
+					}
+				}
+			}
+			else if (spawn->GetLootGroupID() > 0) {
+				int32 item_id = 0;
+				std::vector<int32> item_list;
+				spawn->GetLootItemsList(&item_list);
+				spawn->UnlockLoot();
+				spawn->DistributeGroupLoot_RoundRobin(&item_list);
+			}
+			
+			if (!spawn->HasLoot()) {
+				if (spawn->IsNPC())
+					RemoveDeadSpawn(spawn);
+			}
+			else {
+				spawn->LockLoot();
+				spawn->SetLootMethod(GroupLootMethod::METHOD_FFA, 0, 0);
+				spawn->SetLooterSpawnID(0);
+				spawn->UnlockLoot();
+			}
+		}
+		else {
+			spawn->UnlockLoot();
+		}
+	}
+	else if ((spawn->GetLootMethod() == GroupLootMethod::METHOD_LOTTO || spawn->GetLootMethod() == GroupLootMethod::METHOD_NEED_BEFORE_GREED) && spawn->IsLootTimerRunning()) {
+		spawn->LockLoot();
+		if (spawn->CheckLootTimer() || spawn->IsLootWindowComplete()) {
+			LogWrite(LOOT__INFO, 0, "Loot", "%s: Dispensing loot, loot window was completed? %s.", spawn->GetName(), spawn->IsLootWindowComplete() ? "YES" : "NO");
+			spawn->DisableLootTimer();
+			spawn->SetLootDispensed();
+
+			// identify any clients that still have the loot window open, close it out
+			CloseSpawnLootWindow(spawn);
+
+			// lotto items while we have loot items in the list
+			int32 item_id = 0;
+			std::vector<int32> item_list;
+			spawn->GetLootItemsList(&item_list);
+			spawn->UnlockLoot();
+
+			std::vector<int32>::iterator item_itr;
+
+			for (item_itr = item_list.begin(); item_itr != item_list.end(); item_itr++) {
+				int32 item_id = *item_itr;
+				Item* tmpItem = master_item_list.GetItem(item_id);
+
+				bool skipItem = spawn->IsItemInLootTier(tmpItem);
+
+				if (skipItem)
+					continue;
+
+				std::map<int32, int32> out_entries;
+				std::map<int32, int32>::iterator out_itr;
+				bool itemNeed = true;
+				switch (spawn->GetLootMethod()) {
+				case GroupLootMethod::METHOD_LOTTO: {
+					spawn->GetSpawnLottoEntries(item_id, &out_entries);
+					break;
+				}
+				case GroupLootMethod::METHOD_NEED_BEFORE_GREED: {
+					spawn->GetSpawnNeedGreedEntries(item_id, true, &out_entries);
+					if (out_entries.size() < 1) {
+						spawn->GetSpawnNeedGreedEntries(item_id, false, &out_entries);
+						itemNeed = false;
+					}
+					break;
+				}
+				}
+				if (out_entries.size() < 1) {
+					LogWrite(LOOT__INFO, 0, "Loot", "%s: No spawns matched for loot attempt of %s (%u), skip item.", spawn->GetName(), tmpItem ? tmpItem->name.c_str() : "Unknown", item_id);
+					continue;
+				}
+				Spawn* looter = nullptr;
+				int32 curWinValue = 0;
+				for (out_itr = out_entries.begin(); out_itr != out_entries.end(); out_itr++) {
+					Spawn* entry = GetSpawnByID(out_itr->first, true);
+					if ((out_itr->second > curWinValue) || looter == nullptr) {
+						curWinValue = out_itr->second;
+						looter = entry;
+					}
+					if (spawn->GetLootMethod() == GroupLootMethod::METHOD_LOTTO) {
+						world.GetGroupManager()->SendGroupMessage(spawn->GetLootGroupID(), CHANNEL_LOOT_ROLLS, "%s rolled %u on %s.", entry->GetName(), out_itr->second, tmpItem ? tmpItem->name.c_str() : "Unknown");
+					}
+					else {
+						world.GetGroupManager()->SendGroupMessage(spawn->GetLootGroupID(), CHANNEL_LOOT_ROLLS, "%s rolled %s (%u) on %s.", entry->GetName(), itemNeed ? "NEED" : "GREED", out_itr->second, tmpItem ? tmpItem->name.c_str() : "Unknown");
+					}
+				}
+
+				if (looter) {
+					if (looter->IsPlayer()) {
+						Item* item = spawn->LootItem(item_id);
+						bool success = false;
+						success = ((Player*)looter)->GetClient()->HandleLootItem(spawn, item, ((Player*)looter));
+
+						if (!success)
+							spawn->AddLootItem(item);
+					}
+					else {
+						Item* item = spawn->LootItem(item_id);
+						safe_delete(item);
+					}
+				}
+			}
+
+			if (!spawn->HasLoot()) {
+				if (spawn->IsNPC())
+					RemoveDeadSpawn(spawn);
+			}
+			else {
+				spawn->LockLoot();
+				spawn->SetLootMethod(GroupLootMethod::METHOD_FFA, 0, 0);
+				spawn->SetLooterSpawnID(0);
+				spawn->UnlockLoot();
+			}
+		}
+		else {
+			spawn->UnlockLoot();
+		}
+	}
+}
+
+void ZoneServer::CloseSpawnLootWindow(Spawn* spawn) {
+	if (spawn->GetLootWindowList()->size() > 0) {
+		std::map<int32, bool>::iterator itr;
+		for (itr = spawn->GetLootWindowList()->begin(); itr != spawn->GetLootWindowList()->end(); itr++) {
+			if (itr->second)
+				continue;
+
+			itr->second = true;
+			Spawn* looter = GetSpawnByID(itr->first, true);
+			if (looter && looter->IsPlayer() && ((Player*)looter)->GetClient()) {
+				LogWrite(LOOT__DEBUG, 0, "Loot", "%s: Close loot for player %s.", spawn->GetName(), looter->GetName());
+				((Player*)looter)->GetClient()->CloseLoot(spawn->GetID());
+			}
+		}
+	}
+}
 void ZoneServer::AddPendingDelete(Spawn* spawn) {
 	MSpawnDeleteList.writelock(__FUNCTION__, __LINE__);
 	spawn->SetDeletedSpawn(true);
@@ -2510,12 +2703,13 @@ void ZoneServer::ProcessSpawnLocations()
 	LogWrite(SPAWN__TRACE, 0, "Spawn", "Exit %s", __FUNCTION__);
 }
 
-void ZoneServer::AddLoot(NPC* npc, Spawn* killer){
+void ZoneServer::AddLoot(NPC* npc, Spawn* killer, GroupLootMethod loot_method, int8 item_rarity, int32 group_id){
 	// this function is ran twice, first on spawn of mob, then at death of mob (gray mob check and no_drop_quest_completed_id check)
 
 	// first we see if the skipping of gray mobs loot is enabled, then we move all non body drops
 	if(killer)
 	{
+		npc->SetLootMethod(loot_method, item_rarity, group_id);
 		int8 skip_loot_gray_mob_flag = rule_manager.GetGlobalRule(R_Loot, SkipLootGrayMob)->GetInt8();
 		if(skip_loot_gray_mob_flag) {
 			Player* player = 0;
@@ -3296,7 +3490,11 @@ void ZoneServer::RemoveClient(Client* client)
 		loginserver.SendImmediateEquipmentUpdatesForChar(client->GetPlayer()->GetCharacterID());
 
 		if (!client->IsZoning()) 
-		{
+		{			
+			client->SaveSpells();
+			
+			client->GetPlayer()->DeleteSpellEffects(true);
+			
 			if ((guild = client->GetPlayer()->GetGuild()) != NULL)
 				guild->GuildMemberLogoff(client->GetPlayer());
 
@@ -3345,10 +3543,6 @@ void ZoneServer::RemoveClient(Client* client)
 			if (spawn)
 				((Bot*)spawn)->Camp();
 		}
-
-		client->SaveSpells();
-		
-		client->GetPlayer()->DeleteSpellEffects(true);
 		
 		if(dismissPets) {
 				((Entity*)client->GetPlayer())->DismissAllPets();
@@ -4699,7 +4893,19 @@ void ZoneServer::KillSpawn(bool spawnListLocked, Spawn* dead, Spawn* killer, boo
 			else {
 				Entity* hated = ((NPC*)dead)->Brain()->GetMostHated();
 				if(hated) {
-					AddLoot((NPC*)dead, hated);
+					GroupLootMethod loot_method = GroupLootMethod::METHOD_FFA;
+					int8 item_rarity = 0;
+					if(hated->GetGroupMemberInfo()) {
+						world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+						PlayerGroup* group = world.GetGroupManager()->GetGroup(hated->GetGroupMemberInfo()->group_id);
+						if (group) {
+							loot_method = (GroupLootMethod)group->GetGroupOptions()->loot_method;
+							item_rarity = group->GetGroupOptions()->loot_items_rarity;
+							LogWrite(LOOT__DEBUG, 0, "Loot", "%s: Loot method set to %u.", dead->GetName(), loot_method);
+						}
+						world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+					}
+					AddLoot((NPC*)dead, hated, loot_method, item_rarity, hated->GetGroupMemberInfo() ? hated->GetGroupMemberInfo()->group_id : 0);
 				}
 			}
 		}

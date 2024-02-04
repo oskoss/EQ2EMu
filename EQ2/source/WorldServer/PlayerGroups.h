@@ -38,8 +38,11 @@ struct GroupOptions{
 	int8	loot_items_rarity;
 	int8	auto_split;
 	int8	default_yell;
+	int8	group_lock_method;
 	int8	group_autolock;
 	int8	solo_autolock;
+	int8	auto_loot_method;
+	int8	last_looted_index;
 };
 
 /// <summary>All the generic info for the group window, plus a client pointer for players</summary>
@@ -94,6 +97,7 @@ public:
 
 
 	void SimpleGroupMessage(const char* message);
+	void SendGroupMessage(int8 type, const char* message, ...);
 	void GroupChatMessage(Spawn* from, int32 language, const char* message);
 	bool MakeLeader(Entity* new_leader);
 	
@@ -103,8 +107,14 @@ public:
 	void UpdateGroupMemberInfo(Entity* ent, bool groupMembersLocked=false);
 	Entity* GetGroupMemberByPosition(Entity* seeker, int32 mapped_position);
 	
+	void SetDefaultGroupOptions(GroupOptions* options=nullptr);
+	
+	GroupOptions* GetGroupOptions() { return &group_options; }
+	int8 GetLastLooterIndex() { return group_options.last_looted_index; }
+	void SetNextLooterIndex(int8 new_index) { group_options.last_looted_index = new_index; }
 	Mutex MGroupMembers;				// Mutex for the group members
 private:
+	GroupOptions			group_options;
 	int32					m_id;		// ID of this group
 	deque<GroupMemberInfo*>	m_members;	// List of members in this group
 	
@@ -186,6 +196,7 @@ public:
 	bool HasGroupCompletedQuest(int32 group_id, int32 quest_id);
 
 	void SimpleGroupMessage(int32 group_id, const char* message);
+	void SendGroupMessage(int32 group_id, int8 type, const char* message, ...);
 	void GroupMessage(int32 group_id, const char* message, ...);
 	void GroupChatMessage(int32 group_id, Spawn* from, int32 language, const char* message);
 	bool MakeLeader(int32 group_id, Entity* new_leader);

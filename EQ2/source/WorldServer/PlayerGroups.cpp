@@ -35,6 +35,7 @@ extern RuleManager rule_manager;
 PlayerGroup::PlayerGroup(int32 id) {
 	m_id = id;
 	MGroupMembers.SetName("MGroupMembers");
+	SetDefaultGroupOptions();
 }
 
 PlayerGroup::~PlayerGroup() {
@@ -163,6 +164,24 @@ void PlayerGroup::SimpleGroupMessage(const char* message) {
 	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
 }
 
+void PlayerGroup::SendGroupMessage(int8 type, const char* message, ...) {
+	va_list argptr;
+	char buffer[4096];
+	buffer[0] = 0;
+	va_start(argptr, message);
+	vsnprintf(buffer, sizeof(buffer), message, argptr);
+	va_end(argptr);
+
+	deque<GroupMemberInfo*>::iterator itr;
+	MGroupMembers.readlock(__FUNCTION__, __LINE__);
+	for (itr = m_members.begin(); itr != m_members.end(); itr++) {
+		GroupMemberInfo* info = *itr;
+		if (info->client)
+			info->client->SimpleMessage(type, buffer);
+	}
+	MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+}
+
 void PlayerGroup::GroupChatMessage(Spawn* from, int32 language, const char* message) {
 	deque<GroupMemberInfo*>::iterator itr;
 	MGroupMembers.readlock(__FUNCTION__, __LINE__);
@@ -191,7 +210,6 @@ bool PlayerGroup::MakeLeader(Entity* new_leader) {
 	
 	return true;
 }
-
 
 bool PlayerGroup::ShareQuestWithGroup(Client* quest_sharer, Quest* quest) {
 	if(!quest || !quest_sharer)
@@ -311,12 +329,23 @@ void PlayerGroupManager::NewGroup(Entity* leader) {
 	// Create a new group with the valid ID we got from above
 	PlayerGroup* new_group = new PlayerGroup(m_nextGroupID);
 
+	GroupOptions goptions;
+	goptions.loot_method = leader->GetInfoStruct()->get_group_loot_method();
+	goptions.loot_items_rarity = leader->GetInfoStruct()->get_group_loot_items_rarity();
+	goptions.auto_split = leader->GetInfoStruct()->get_group_auto_split();
+	goptions.default_yell = leader->GetInfoStruct()->get_group_default_yell();
+	goptions.group_autolock = leader->GetInfoStruct()->get_group_autolock();
+	goptions.group_lock_method = leader->GetInfoStruct()->get_group_lock_method();
+	goptions.solo_autolock = leader->GetInfoStruct()->get_group_solo_autolock();
+	goptions.auto_loot_method = leader->GetInfoStruct()->get_group_auto_loot_method();
+	new_group->SetDefaultGroupOptions(&goptions);		
+
 	// Add the new group to the list (need to do this first, AddMember needs ref to the PlayerGroup ptr -> UpdateGroupMemberInfo)
 	m_groups[m_nextGroupID] = new_group;
 
 	// Add the leader to the group
 	new_group->AddMember(leader);
-
+	
 	leader->GetGroupMemberInfo()->leader = true;
 }
 
@@ -597,6 +626,20 @@ void PlayerGroupManager::SimpleGroupMessage(int32 group_id, const char* message)
 
 	if (m_groups.count(group_id) > 0)
 		m_groups[group_id]->SimpleGroupMessage(message);
+}
+
+void PlayerGroupManager::SendGroupMessage(int32 group_id, int8 type, const char* message, ...) {
+	std::shared_lock lock(MGroups);
+	
+	va_list argptr;
+	char buffer[4096];
+	buffer[0] = 0;
+	va_start(argptr, message);
+	vsnprintf(buffer, sizeof(buffer), message, argptr);
+	va_end(argptr);
+	
+	if (m_groups.count(group_id) > 0)
+		m_groups[group_id]->SendGroupMessage(type, buffer);
 }
 
 void PlayerGroupManager::GroupMessage(int32 group_id, const char* message, ...) {
@@ -927,4 +970,31 @@ Entity* PlayerGroup::GetGroupMemberByPosition(Entity* seeker, int32 mapped_posit
 	MGroupMembers.releasereadlock();
 
 	return ret;
+}
+
+void PlayerGroup::SetDefaultGroupOptions(GroupOptions* options) {
+	MGroupMembers.writelock();
+	if (options != nullptr) {
+		group_options.loot_method = options->loot_method;
+		group_options.loot_items_rarity = options->loot_items_rarity;
+		group_options.auto_split = options->auto_split;
+		group_options.default_yell = options->default_yell;
+		group_options.group_lock_method = options->group_lock_method;
+		group_options.group_autolock = options->group_autolock;
+		group_options.solo_autolock = options->solo_autolock;
+		group_options.auto_loot_method = options->auto_loot_method;
+	}
+	else {
+		group_options.loot_method = 1;
+		group_options.loot_items_rarity = 0;
+		group_options.auto_split = 1;
+		group_options.default_yell = 1;
+		group_options.group_lock_method = 0;
+		group_options.group_autolock = 0;
+		group_options.solo_autolock = 0;
+		group_options.auto_loot_method = 0;
+		group_options.last_looted_index = 0;
+	}
+
+	MGroupMembers.releasewritelock();
 }

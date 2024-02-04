@@ -1038,10 +1038,16 @@ void Client::SendDefaultGroupOptions() {
 	*/
 	PacketStruct* default_options = configReader.getStruct("WS_DefaultGroupOptions", GetVersion());
 	if (default_options) {
-		default_options->setDataByName("loot_method", 1);
-		default_options->setDataByName("loot_items_rarity", 1);
-		default_options->setDataByName("auto_split_coin", 1);
-		default_options->setDataByName("default_yell_method", 1);
+		default_options->setDataByName("loot_method", GetPlayer()->GetInfoStruct()->get_group_loot_method());
+		default_options->setDataByName("loot_items_rarity", GetPlayer()->GetInfoStruct()->get_group_loot_items_rarity());
+		default_options->setDataByName("auto_split_coin", GetPlayer()->GetInfoStruct()->get_group_auto_split());
+		default_options->setDataByName("default_yell_method", GetPlayer()->GetInfoStruct()->get_group_default_yell());
+		default_options->setDataByName("group_autolock", GetPlayer()->GetInfoStruct()->get_group_autolock());
+		default_options->setDataByName("default_group_lock_method", GetPlayer()->GetInfoStruct()->get_group_lock_method());
+		if(GetVersion() > 561) {
+			default_options->setDataByName("solo_autolock", GetPlayer()->GetInfoStruct()->get_group_solo_autolock());
+			default_options->setDataByName("auto_loot_method", GetPlayer()->GetInfoStruct()->get_group_auto_loot_method());
+		}
 		EQ2Packet* app7 = default_options->serialize();
 		QueuePacket(app7);
 		safe_delete(default_options);
@@ -1129,6 +1135,66 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 			}
 		}
 		safe_delete(request);
+		break;
+	}
+	case OP_DefaultGroupOptionsMsg: {
+		PacketStruct* packet = configReader.getStruct("WS_DefaultGroupOptions", GetVersion());
+		if (packet) {
+			if (packet->LoadPacketData(app->pBuffer, app->size)) {
+				packet->PrintPacket();
+				int8 loot_method = packet->getType_int8_ByName("loot_method");
+				int8 loot_items_rarity = packet->getType_int8_ByName("loot_items_rarity");
+				int8 auto_split_coin = packet->getType_int8_ByName("auto_split_coin");
+				int8 default_yell_method = packet->getType_int8_ByName("default_yell_method");
+				int8 autolock = packet->getType_int8_ByName("group_autolock");
+				int8 group_lock_method = packet->getType_int8_ByName("default_group_lock_method");
+				int8 solo_autolock = packet->getType_int8_ByName("solo_autolock");
+				int8 auto_loot_method = 0;
+
+				if (GetVersion() > 561) {
+					auto_loot_method = packet->getType_int8_ByName("auto_loot_method");
+					if (auto_loot_method > AutoLootMode::METHOD_DECLINE)
+						auto_loot_method = AutoLootMode::METHOD_DECLINE;
+				}
+				GetPlayer()->GetInfoStruct()->set_group_loot_method(loot_method);
+				GetPlayer()->GetInfoStruct()->set_group_loot_items_rarity(loot_items_rarity);
+				GetPlayer()->GetInfoStruct()->set_group_auto_split(auto_split_coin);
+				GetPlayer()->GetInfoStruct()->set_group_default_yell(default_yell_method);
+				GetPlayer()->GetInfoStruct()->set_group_autolock(autolock);
+				GetPlayer()->GetInfoStruct()->set_group_lock_method(group_lock_method);
+				GetPlayer()->GetInfoStruct()->set_group_solo_autolock(solo_autolock);
+				GetPlayer()->GetInfoStruct()->set_group_auto_loot_method(auto_loot_method);
+
+				database.insertCharacterProperty(this, CHAR_PROPERTY_GROUPLOOTMETHOD, (char*)std::to_string(loot_method).c_str());
+				database.insertCharacterProperty(this, CHAR_PROPERTY_GROUPLOOTITEMRARITY, (char*)std::to_string(loot_items_rarity).c_str());
+				database.insertCharacterProperty(this, CHAR_PROPERTY_GROUPAUTOSPLIT, (char*)std::to_string(auto_split_coin).c_str());
+				database.insertCharacterProperty(this, CHAR_PROPERTY_GROUPDEFAULTYELL, (char*)std::to_string(default_yell_method).c_str());
+				database.insertCharacterProperty(this, CHAR_PROPERTY_GROUPAUTOLOCK, (char*)std::to_string(autolock).c_str());
+				database.insertCharacterProperty(this, CHAR_PROPERTY_GROUPLOCKMETHOD, (char*)std::to_string(group_lock_method).c_str());
+				database.insertCharacterProperty(this, CHAR_PROPERTY_GROUPSOLOAUTOLOCK, (char*)std::to_string(solo_autolock).c_str());
+				database.insertCharacterProperty(this, CHAR_PROPERTY_AUTOLOOTMETHOD, (char*)std::to_string(auto_loot_method).c_str());
+
+				if (this->GetPlayer()->GetGroupMemberInfo() && this->GetPlayer()->GetGroupMemberInfo()->leader)
+				{
+					world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+					PlayerGroup* group = world.GetGroupManager()->GetGroup(this->GetPlayer()->GetGroupMemberInfo()->group_id);
+					if (group)
+					{
+						GroupOptions goptions;
+						goptions.loot_method = loot_method;
+						goptions.loot_items_rarity = loot_items_rarity;
+						goptions.auto_split = auto_split_coin;
+						goptions.default_yell = default_yell_method;
+						goptions.group_autolock = autolock;
+						goptions.solo_autolock = solo_autolock;
+						goptions.auto_loot_method = auto_loot_method;
+						group->SetDefaultGroupOptions(&goptions);
+					}
+					world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+				}
+			}
+			safe_delete(packet);
+		}
 		break;
 	}
 	case OP_MapRequest: {
@@ -1507,7 +1573,21 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	}
 	case OP_LootItemsRequestMsg: {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_LootItemsRequestMsg", opcode, opcode);
-		HandleLoot(app);
+		HandleLootItemRequestPacket(app);
+		break;
+	}
+	case OP_StoppedLootingMsg: {
+		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_StoppedLootingMsg", opcode, opcode);
+		if (app->size < sizeof(int32))
+			break;
+		
+		int32 loot_id = 0;
+		memcpy(&loot_id, app->pBuffer, sizeof(int32));
+		Spawn* spawn = GetCurrentZone()->GetSpawnByID(loot_id);
+		if(spawn) {
+			spawn->SetSpawnLootWindowCompleted(GetPlayer()->GetID());
+			spawn->SetLooterSpawnID(0);
+		}
 		break;
 	}
 	case OP_WaypointSelectMsg: {
@@ -1561,8 +1641,9 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		}
 		else
 		{
-			if(zoning_destination)
+			if(zoning_destination) {
 				SetCurrentZone(zoning_destination);
+			}
 			LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_ReadyToZoneMsg", opcode, opcode);
 			bool succeed_override_zone = true;
 			if(!GetCurrentZone()) {
@@ -2664,28 +2745,64 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 	return ret;
 }
 
-bool Client::HandleLootItem(Spawn* entity, Item* item) {
+bool Client::HandleLootItem(Spawn* entity, Item* item, Spawn* target, bool overrideLootRestrictions) {
 	if (!item) {
 		SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to find item to loot!");
 		return false;
 	}
 	int32 conflictItemList = 0, conflictequipmentList = 0, conflictAppearanceEquipmentList = 0;
 	int16 lore_stack_count = 0;
-	if(((conflictItemList = player->item_list.CheckSlotConflict(item, true, true, &lore_stack_count)) == LORE ||
-	   (conflictequipmentList = player->equipment_list.CheckSlotConflict(item, true, &lore_stack_count)) == LORE ||
-	   (conflictAppearanceEquipmentList = player->appearance_equipment_list.CheckSlotConflict(item, true, &lore_stack_count)) == LORE) && !item->CheckFlag(STACK_LORE)) {
+
+	Player* lootingPlayer = player;
+	Client* lootingClient = this;
+	if (target != nullptr && target != lootingPlayer && target->IsPlayer()) {
+		lootingPlayer = (Player*)target;
+		lootingClient = lootingPlayer->GetClient();
+	}
+
+	// needs to only be checked before expiration of loot restrictions
+	if (!overrideLootRestrictions) {
+		if (entity->GetLootGroupID() > 0 && (!lootingPlayer->GetGroupMemberInfo() || lootingPlayer->GetGroupMemberInfo()->group_id != entity->GetLootGroupID())) {
+			LogWrite(LOOT__ERROR, 0, "Loot", "%s: Loot Group ID from %s did not match Item: %s (%u), expected group id %u.", entity->GetName(), lootingPlayer->GetName(), item->name.c_str(), item->details.item_id, entity->GetLootGroupID());
+			return false;
+		}
+		if (entity->GetLootMethod() != GroupLootMethod::METHOD_FFA) {
+			switch (entity->GetLootMethod()) {
+			case GroupLootMethod::METHOD_LEADER: {
+				if (entity->GetLootGroupID() > 0 && (!lootingPlayer->GetGroupMemberInfo() || (lootingPlayer->GetGroupMemberInfo() && (lootingPlayer->GetGroupMemberInfo()->group_id != entity->GetLootGroupID() || !lootingPlayer->GetGroupMemberInfo()->leader)))) {
+					LogWrite(LOOT__ERROR, 0, "Loot", "%s: Loot Attempt from %s was not allowed with Item: %s (%u), must be group leader.", entity->GetName(), lootingPlayer->GetName(), item->name.c_str(), item->details.item_id);
+					return false;
+				}
+				break;
+			}
+			case GroupLootMethod::METHOD_LOTTO:
+			case GroupLootMethod::METHOD_NEED_BEFORE_GREED: {
+				if (entity->IsLootTimerRunning()) {
+					LogWrite(LOOT__INFO, 0, "Loot", "%s: Loot Timer is still running, flag player %s to lotto Item: %s (%u).", entity->GetName(), lootingPlayer->GetName(), item->name.c_str(), item->details.item_id);
+					return false;
+				}
+				break;
+			}
+			}
+		}
+	}
+
+	if (((conflictItemList = lootingPlayer->item_list.CheckSlotConflict(item, true, true, &lore_stack_count)) == LORE ||
+		(conflictequipmentList = lootingPlayer->equipment_list.CheckSlotConflict(item, true, &lore_stack_count)) == LORE ||
+		(conflictAppearanceEquipmentList = lootingPlayer->appearance_equipment_list.CheckSlotConflict(item, true, &lore_stack_count)) == LORE) && !item->CheckFlag(STACK_LORE)) {
 		Message(CHANNEL_COLOR_RED, "You cannot loot %s due to lore conflict.", item->name.c_str());
 		return false;
 	}
-	else if(conflictItemList == STACK_LORE || conflictequipmentList == STACK_LORE || conflictAppearanceEquipmentList == STACK_LORE) {
+	else if (conflictItemList == STACK_LORE || conflictequipmentList == STACK_LORE || conflictAppearanceEquipmentList == STACK_LORE) {
 		Message(CHANNEL_COLOR_RED, "You cannot loot %s due to stack lore conflict.", item->name.c_str());
 		return false;
 	}
-	if (player->item_list.HasFreeSlot() || player->item_list.CanStack(item)) {
-		if (player->item_list.AssignItemToFreeSlot(item)) {
-			
-			if(item->CheckFlag2(HEIRLOOM)) { // TODO: RAID Support
-				GroupMemberInfo* gmi = GetPlayer()->GetGroupMemberInfo();
+
+	if (lootingPlayer->item_list.HasFreeSlot() || lootingPlayer->item_list.CanStack(item)) {
+		if (lootingPlayer->item_list.AssignItemToFreeSlot(item)) {
+
+			if (item->CheckFlag2(HEIRLOOM)) { // TODO: RAID Support
+				GroupMemberInfo* gmi = lootingClient->GetPlayer()->GetGroupMemberInfo();
 				if (gmi && gmi->group_id)
 				{
 					PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
@@ -2693,18 +2810,18 @@ bool Client::HandleLootItem(Spawn* entity, Item* item) {
 					{
 						group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
 						deque<GroupMemberInfo*>* members = group->GetMembers();
-						if(members) {
+						if (members) {
 							for (int8 i = 0; i < members->size(); i++) {
 								Entity* member = members->at(i)->member;
-								if(!member)
+								if (!member)
 									continue;
 
-								if ((member->GetZone() != this->GetPlayer()->GetZone()))
+								if ((member->GetZone() != lootingClient->GetPlayer()->GetZone()))
 									continue;
-								
-								if(member->IsPlayer()) {
-										item->grouped_char_ids.insert(std::make_pair(((Player*)member)->GetCharacterID(), true));
-										item->save_needed = true;
+
+								if (member->IsPlayer()) {
+									item->grouped_char_ids.insert(std::make_pair(((Player*)member)->GetCharacterID(), true));
+									item->save_needed = true;
 								}
 							}
 						}
@@ -2712,15 +2829,15 @@ bool Client::HandleLootItem(Spawn* entity, Item* item) {
 					}
 				}
 			}
-			
+
 			int8 type = CHANNEL_LOOT;
 			if (entity) {
-				Message(type, "You loot %s from the corpse of %s", item->CreateItemLink(GetVersion()).c_str(), entity->GetName());
+				lootingClient->Message(type, "You loot %s from the corpse of %s", item->CreateItemLink(GetVersion()).c_str(), entity->GetName());
 			}
 			else {
-				Message(type, "You found a %s.", item->CreateItemLink(GetVersion()).c_str());
+				lootingClient->Message(type, "You found a %s.", item->CreateItemLink(GetVersion()).c_str());
 			}
-			Guild* guild = player->GetGuild();
+			Guild* guild = lootingPlayer->GetGuild();
 			if (guild && item->details.tier >= ITEM_TAG_LEGENDARY) {
 				char adjective[32];
 				int8 type;
@@ -2737,153 +2854,210 @@ bool Client::HandleLootItem(Spawn* entity, Item* item) {
 					strncpy(adjective, "Legendary", sizeof(adjective) - 1);
 					type = GUILD_EVENT_LOOTS_LEGENDARY_ITEM;
 				}
-				guild->AddNewGuildEvent(type, "%s has looted the %s %s", Timer::GetUnixTimeStamp(), true, player->GetName(), adjective, item->CreateItemLink(GetVersion()).c_str());
-				guild->SendMessageToGuild(type, "%s has looted the %s %s", player->GetName(), adjective, item->CreateItemLink(GetVersion()).c_str());
+				guild->AddNewGuildEvent(type, "%s has looted the %s %s", Timer::GetUnixTimeStamp(), true, lootingPlayer->GetName(), adjective, item->CreateItemLink(GetVersion()).c_str());
+				guild->SendMessageToGuild(type, "%s has looted the %s %s", lootingPlayer->GetName(), adjective, item->CreateItemLink(GetVersion()).c_str());
 			}
 
 			if (item->GetItemScript() && lua_interface)
-				lua_interface->RunItemScript(item->GetItemScript(), "obtained", item, player);
-			
-			CheckPlayerQuestsItemUpdate(item);
-			
-			if(GetVersion() <= 546) {
-				EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
+				lua_interface->RunItemScript(item->GetItemScript(), "obtained", item, lootingPlayer);
+
+			lootingClient->CheckPlayerQuestsItemUpdate(item);
+
+			if (GetVersion() <= 546) {
+				EQ2Packet* outapp = lootingPlayer->SendInventoryUpdate(GetVersion());
 				if (outapp)
-					QueuePacket(outapp);
+					lootingClient->QueuePacket(outapp);
 			}
 			return true;
 		}
 		else
-			SimpleMessage(CHANNEL_COLOR_RED, "Could not find free slot to place item.");
+			lootingClient->SimpleMessage(CHANNEL_COLOR_RED, "Could not find free slot to place item.");
 	}
 	else
-		SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to loot item: Inventory is FULL.");
+		lootingClient->SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to loot item: Inventory is FULL.");
 
 	return false;
 }
 
-bool Client::HandleLootItem(Spawn* entity, int32 item_id) {
+bool Client::HandleLootItemByID(Spawn* entity, int32 item_id, Spawn* target) {
 	if (!entity) {
 		return false;
 	}
 	Item* item = entity->LootItem(item_id);
 	bool success = false;
-	success = HandleLootItem(entity, item);
-	if(!success)
+	success = HandleLootItem(entity, item, target);
+	if (!success)
 		entity->AddLootItem(item);
-	
+
 	return success;
 }
 
-void Client::HandleLoot(EQApplicationPacket* app) {
-	PacketStruct* packet = configReader.getStruct("WS_LootType", GetVersion());
+void Client::HandleLootItemRequestPacket(EQApplicationPacket* app) {
+	PacketStruct* packet = configReader.getStruct("WS_LootItem", GetVersion());
 	if (packet) {
-		if(packet->LoadPacketData(app->pBuffer, app->size)) {
+		if (packet->LoadPacketData(app->pBuffer, app->size)) {
 			int32 loot_id = packet->getType_int32_ByName("loot_id");
 			bool loot_all = (packet->getType_int8_ByName("loot_all") == 1);
-			safe_delete(packet);
-			int32 item_id = 0;
-			Item* item = 0;
+			int32 target_id = packet->getType_int32_ByName("target_id");
+			int8 button_clicked = packet->getType_int8_ByName("button_clicked");
 			Spawn* spawn = GetCurrentZone()->GetSpawnByID(loot_id);
-			if (player->HasPendingLootItems(loot_id)) {
-				Item* master_item = 0;
-				if (loot_all) {
-					vector<Item*>* items = player->GetPendingLootItems(loot_id);
-					if (items) {
-						for (int32 i = 0; loot_all && i < items->size(); i++) {
-							master_item = items->at(i);
-							if (master_item) {
-								item = new Item(master_item);
-								if (item) {
-									loot_all = HandleLootItem(0, item);
-									if (loot_all) {
-										player->RemovePendingLootItem(loot_id, item->details.item_id);
-										
-										if(GetVersion() <= 546) {
-											EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
-											if (outapp)
-												QueuePacket(outapp);
-										}
-									}
+			if(!spawn) {
+				safe_delete(packet);
+				return;
+			}
+			Item* item = nullptr;
+			vector<Item*>* items = player->GetPendingLootItems(loot_id);
+			if (items) {
+				int32 item_id = packet->getType_int32_ByName("item_id_0");
+				for (int32 i = 0; i < items->size(); i++) {
+					Item* master_item = items->at(i);
+					if (master_item && (loot_all || master_item->details.item_id == item_id)) {
+						item = new Item(master_item);
+						if (item) {
+							loot_all = HandleLootItem(0, item);
+							if (loot_all) {
+								player->RemovePendingLootItem(loot_id, item->details.item_id);
+
+								if (GetVersion() <= 546) {
+									EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
+									if (outapp)
+										QueuePacket(outapp);
 								}
 							}
 						}
-						safe_delete(items);
+
+						if (!loot_all)
+							break;
+					}
+				}
+				safe_delete(items);
+				safe_delete(packet);
+				return;
+			}
+
+			spawn->LockLoot();
+			bool unlockedLoot = false;
+			if (spawn && !spawn->Alive() && spawn->IsNPC() && ((NPC*)spawn)->Brain()->CheckLootAllowed(player)) {
+				if (loot_all) {
+					switch (spawn->GetLootMethod()) {
+					case GroupLootMethod::METHOD_LOTTO: {
+						spawn->AddLottoItemRequest(0xFFFFFFFF, GetPlayer()->GetID());
+						break;
+					}
+					case GroupLootMethod::METHOD_NEED_BEFORE_GREED: {
+						spawn->AddNeedGreedItemRequest(0xFFFFFFFF, GetPlayer()->GetID(), true);
+					}
+					default: {
+						if (!unlockedLoot) {
+							spawn->UnlockLoot();
+							unlockedLoot = true;
+						}
+						int32 item_id = 0;
+						while (loot_all && ((item_id = spawn->GetLootItemID()) > 0)) {
+							loot_all = HandleLootItemByID(spawn, item_id, GetPlayer());
+						}
+						break;
+					}
+					}
+					spawn->UnlockLoot();
+					if (spawn->GetLootMethod() == GroupLootMethod::METHOD_LOTTO) {
+						CloseLoot(loot_id);
 					}
 				}
 				else {
-					packet = configReader.getStruct("WS_LootItem", GetVersion());
-					if (packet) {
-						if(packet->LoadPacketData(app->pBuffer, app->size)) {
-							item_id = packet->getType_int32_ByName("item_id");
-							vector<Item*>* items = player->GetPendingLootItems(loot_id);
-							if (items) {
-								for (int32 i = 0; i < items->size(); i++) {
-									master_item = items->at(i);
-									if (master_item && master_item->details.item_id == item_id) {
-										item = new Item(master_item);
-										if (item && HandleLootItem(0, item))
-											player->RemovePendingLootItem(loot_id, item->details.item_id);
-										break;
-									}
-								}
-								safe_delete(items);
+					int8 item_count = packet->getType_int8_ByName("item_count");
+					for (int8 cur = 0; cur < item_count; cur++) {
+						char item_field_name[64];
+						snprintf(item_field_name, 64, "item_id_%u", cur);
+						int32 item_id = packet->getType_int32_ByName(item_field_name);
+						Spawn* target = this->GetPlayer();
+						if (target_id != 0xFFFFFFFF && GetPlayer()->GetGroupMemberInfo()) {
+							Spawn* destTarget = GetPlayer()->GetSpawnWithPlayerID(target_id);
+							if (destTarget && (!destTarget->IsPlayer() || !world.GetGroupManager()->IsInGroup(GetPlayer()->GetGroupMemberInfo()->group_id, ((Player*)destTarget)))) {
+								SimpleMessage(CHANNEL_COMMAND_TEXT, "HACKS!!");
+								safe_delete(packet);
+								spawn->UnlockLoot();
+								return;
 							}
+							target = destTarget;
 						}
-						safe_delete(packet);
+						bool breakLoopAllLooted = false;
+						switch (spawn->GetLootMethod()) {
+						case GroupLootMethod::METHOD_LOTTO: {
+							spawn->AddLottoItemRequest(item_id, GetPlayer()->GetID());
+							break;
+						}
+						case GroupLootMethod::METHOD_NEED_BEFORE_GREED: {
+							if (button_clicked == 3) { // decline
+								break;
+							}
+							if (GetVersion() <= 546) {
+								button_clicked = 1; // selecting is need
+							}
+							spawn->AddNeedGreedItemRequest(item_id, GetPlayer()->GetID(), (button_clicked == 1));
+							break;
+						}
+						default: {
+							if (!unlockedLoot) {
+								spawn->UnlockLoot();
+								unlockedLoot = true;
+							}
+							if (!loot_all) {
+								HandleLootItemByID(spawn, item_id, target);
+							}
+							else {
+								while (loot_all && ((item_id = spawn->GetLootItemID()) > 0)) {
+									loot_all = HandleLootItemByID(spawn, item_id, target);
+								}
+								breakLoopAllLooted = true;
+							}
+							break;
+						}
+						}
+						if (breakLoopAllLooted) {
+							break;
+						}
+					}
+					if (!unlockedLoot) {
+						spawn->UnlockLoot();
+					}
+					if (spawn->GetLootMethod() == GroupLootMethod::METHOD_LOTTO ||
+						(spawn->GetLootMethod() == GroupLootMethod::METHOD_NEED_BEFORE_GREED && item_count >= spawn->GetLootCount())) {
+						CloseLoot(loot_id);
 					}
 				}
-				if(GetVersion() > 546) {
+
+				if (GetVersion() > 546) {
 					EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
 					if (outapp)
 						QueuePacket(outapp);
 				}
-				Loot(0, player->GetPendingLootItems(loot_id), spawn);
-			}
-			else {
-				if (spawn && !spawn->Alive() && spawn->IsNPC() && ((NPC*)spawn)->Brain()->CheckLootAllowed(player)) {
-					if (loot_all) {
-						while (loot_all && ((item_id = spawn->GetLootItemID()) > 0)) {
-							loot_all = HandleLootItem(spawn, item_id);
-						}
-					}
-					else {
-						packet = configReader.getStruct("WS_LootItem", GetVersion());
-						if (packet) {
-							if(packet->LoadPacketData(app->pBuffer, app->size)) {
-								item_id = packet->getType_int32_ByName("item_id");
-								HandleLootItem(spawn, item_id);
-							}
-							safe_delete(packet);
-						}
-					}
-					if(GetVersion() > 546) {
-						EQ2Packet* outapp = player->SendInventoryUpdate(GetVersion());
-						if (outapp)
-							QueuePacket(outapp);
-					}
-					Loot(spawn);
-					if (!spawn->HasLoot()) {
-						CloseLoot(loot_id);
-						if (spawn->IsNPC())
-							GetCurrentZone()->RemoveDeadSpawn(spawn);
-					}
+				if (spawn->GetLootMethod() != GroupLootMethod::METHOD_LOTTO && spawn->GetLootMethod() != GroupLootMethod::METHOD_NEED_BEFORE_GREED) {
+					LootSpawnRequest(spawn);
 				}
 				else {
-					if (!spawn) {
-						LogWrite(WORLD__ERROR, 0, "World", "Unknown id of %u when looting!", loot_id);
-						SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to find spawn to loot!");
-					}
-					else
-						SimpleMessage(CHANNEL_COLOR_YELLOW, "You are not unable to loot that at this time.");
+					spawn->SetSpawnLootWindowCompleted(GetPlayer()->GetID());
+				}
+
+				if (!spawn->HasLoot()) {
+					CloseLoot(loot_id);
+					if (spawn->IsNPC())
+						GetCurrentZone()->RemoveDeadSpawn(spawn);
 				}
 			}
+			else {
+				spawn->UnlockLoot();
+				if (!spawn) {
+					LogWrite(WORLD__ERROR, 0, "World", "Unknown id of %u when looting!", loot_id);
+					SimpleMessage(CHANNEL_COLOR_YELLOW, "Unable to find spawn to loot!");
+				}
+				else
+					SimpleMessage(CHANNEL_COLOR_YELLOW, "You are not unable to loot that at this time.");
+			}
 		}
-		else {
-			safe_delete(packet);
-		}
-	}
 
+		safe_delete(packet);
+	}
 }
 
 void Client::HandleSkillInfoRequest(EQApplicationPacket* app) {
@@ -4499,7 +4673,9 @@ void Client::Zone(ZoneServer* new_zone, bool set_coords, bool is_spell) {
 
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Removing player from current zone...", __FUNCTION__);
 	GetCurrentZone()->RemoveSpawn(player, false, true, true, true, !is_spell);
-
+	
+	GetPlayer()->DeleteSpellEffects(true);
+		
 	LogWrite(CCLIENT__DEBUG, 0, "Client", "%s: Setting zone to '%s'...", __FUNCTION__, new_zone->GetZoneName());
 	SetZoningDestination(new_zone);
 	SetCurrentZone(new_zone);
@@ -5200,11 +5376,6 @@ void Client::ChangeTSLevel(int16 old_level, int16 new_level) {
 	QueuePacket(master_trait_list.GetTraitListPacket(this));
 }
 
-void Client::SendPendingLoot(int32 total_coins, Spawn* entity) {
-	if (entity)
-		Loot(total_coins, player->GetPendingLootItems(entity->GetID()), entity);
-}
-
 void Client::CloseLoot(int32 spawn_id) {
 	if (GetVersion() > 546) {
 		PacketStruct* packet = configReader.getStruct("WS_CloseWindow", GetVersion());
@@ -5218,7 +5389,8 @@ void Client::CloseLoot(int32 spawn_id) {
 			safe_delete(packet);
 		}
 	}
-	else if(spawn_id > 0){
+	
+	if(spawn_id > 0){
 		PacketStruct* packet = configReader.getStruct("WS_StoppedLooting", GetVersion());
 		if (packet) {
 			packet->setDataByName("spawn_id", spawn_id);
@@ -5226,6 +5398,11 @@ void Client::CloseLoot(int32 spawn_id) {
 			if (outapp)
 				QueuePacket(outapp);
 			safe_delete(packet);
+		}
+		
+		Spawn* spawn = GetPlayer()->GetSpawnWithPlayerID(spawn_id);
+		if(spawn) {
+			spawn->CloseLoot(GetPlayer());
 		}
 	}
 }
@@ -5266,7 +5443,7 @@ string Client::GetCoinMessage(int32 total_coins) {
 	return message;
 }
 
-void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
+void Client::SendLootResponsePacket(int32 total_coins, vector<Item*>* items, Spawn* entity, bool ignore_loot_tier) {
 	if (!entity) {
 		CloseLoot(0);
 		return;
@@ -5277,7 +5454,7 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 		string message = "";
 		if (entity->GetHP() == 0) {
 			message = "You loot ";
-			entity->SetLootCoins(0);
+			entity->SetLootCoins(0, false);
 		}
 		else
 			message = "You receive ";
@@ -5290,30 +5467,48 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 	}
 	if (!items || items->size() == 0)
 		CloseLoot(entity->GetID());
+
+	entity->StartLootTimer(GetPlayer());
+
 	PacketStruct* packet = configReader.getStruct("WS_UpdateLoot", GetVersion());
 	if (packet) {
+		entity->AddSpawnLootWindowCompleted(GetPlayer()->GetID(), false);
 		vector<Item*>::iterator itr;
 		int32 packet_size = 0;
 		EQ2Packet* outapp = 0;
 		uchar* data = 0;
+		vector<Item*> send_items;
+		if (items && items->size() > 0) {
+			for (int i = 0; i < items->size(); i++) {
+				Item* item = (*items)[i];
+
+				if (entity->GetLootMethod() > GroupLootMethod::METHOD_FFA && !ignore_loot_tier) {
+					bool skipItem = entity->IsItemInLootTier(item);
+					if (!skipItem) {
+						send_items.push_back(item);
+					}
+				}
+				else {
+					send_items.push_back(item);
+				}
+			}
+		}
 		if (GetVersion() >= 284) {
-			if (GetVersion() > 546) {
-				if (items && items->size() > 0) {
-					packet->setDataByName("loot_count", items->size());
+			if (GetVersion() > 561) {
+				if (send_items.size() > 0) {
+					packet->setDataByName("loot_count", send_items.size());
 					packet->setDataByName("display", 1);
 				}
-				packet->setDataByName("loot_type", 1);
-				if (version >= 1096)
-					packet->setDataByName("lotto_timeout", 0x78);
-				else
-					packet->setDataByName("lotto_timeout", 0x3C);
+				packet->setDataByName("loot_type", entity->GetLootMethod());
+
+				packet->setDataByName("lotto_timeout", entity->GetLootTimeRemaining() / 1000);
 
 				packet->setDataByName("loot_id", entity->GetID());
 				EQ2Packet* tmpPacket = packet->serialize();
 				packet_size += tmpPacket->size;
-				if (items && items->size() > 0) {
-					data = new uchar[items->size() * 1000 + packet_size];
-					memset(data, 0, items->size() * 1000 + packet_size);
+				if (send_items.size() > 0) {
+					data = new uchar[send_items.size() * 1000 + packet_size];
+					memset(data, 0, send_items.size() * 1000 + packet_size);
 				}
 				else {
 					data = new uchar[packet_size];
@@ -5324,8 +5519,8 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 				ptr += tmpPacket->size;
 				safe_delete(tmpPacket);
 				Item* item = 0;
-				if (items && items->size() > 0) {
-					for (itr = items->begin(); itr != items->end(); itr++) {
+				if (send_items.size() > 0) {
+					for (itr = send_items.begin(); itr != send_items.end(); itr++) {
 						item = *itr;
 						memcpy(ptr, &item->details.item_id, sizeof(int32));
 						ptr += sizeof(int32);
@@ -5340,7 +5535,7 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 						else if (GetVersion() >= 860) {
 							offset = 11;
 						}
-						else if (GetVersion() <= 546) {
+						else if (GetVersion() <= 561) {
 							offset = 19;
 						}
 						else {
@@ -5360,12 +5555,12 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 				outapp = new EQ2Packet(OP_ClientCmdMsg, data, packet_size);
 			}
 			else {
-				if (items && items->size() > 0) {
-					packet->setArrayLengthByName("loot_count", items->size());
+				if (send_items.size() > 0) {
+					packet->setArrayLengthByName("loot_count", send_items.size());
 					Item* item = 0;
-					if (items && items->size() > 0) {
+					if (send_items.size() > 0) {
 						int i = 0;
-						for (itr = items->begin(); itr != items->end(); itr++) {
+						for (itr = send_items.begin(); itr != send_items.end(); itr++) {
 							item = *itr;
 							packet->setArrayDataByName("loot_id", item->details.item_id, i);
 							packet->setItemArrayDataByName("item", item, GetPlayer(), i, 0, 2, true);
@@ -5374,17 +5569,17 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 					}
 					packet->setDataByName("display", 1);
 				}
-				packet->setDataByName("loot_type", 1); // normal
-				packet->setDataByName("lotto_timeout", 0x3c); // 60 seconds
+				packet->setDataByName("loot_type", entity->GetLootMethod()); // normal
+				packet->setDataByName("lotto_timeout", entity->GetLootTimeRemaining() / 1000); // 60 seconds
 				packet->setDataByName("spawn_id", entity->GetID());
 				outapp = packet->serialize();
 			}
 		}
 		else {
-			if (items && items->size() > 0) {
-				packet->setArrayLengthByName("loot_count", items->size());
-				for (int i = 0; i < items->size(); i++) {
-					Item* item = (*items)[i];
+			if (send_items.size() > 0) {
+				packet->setArrayLengthByName("loot_count", send_items.size());
+				for (int i = 0; i < send_items.size(); i++) {
+					Item* item = (send_items)[i];
 					packet->setArrayDataByName("name", item->name.c_str(), i);
 					packet->setArrayDataByName("item_id", item->details.item_id, i);
 					packet->setArrayDataByName("count", item->details.count, i);
@@ -5412,18 +5607,162 @@ void Client::Loot(int32 total_coins, vector<Item*>* items, Spawn* entity) {
 
 }
 
-void Client::Loot(Spawn* entity, bool attemptDisarm) {
-	if (entity->IsNPC() && ((NPC*)entity)->Brain()->CheckLootAllowed(GetPlayer())) {
-		int32 total_coins = entity->GetLootCoins();
+bool Client::LootSpawnByMethod(Spawn* entity) {
+	bool sentLoot = false;
+	world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+	GroupMemberInfo* gmi = GetPlayer()->GetGroupMemberInfo();
+	if (gmi && gmi->group_id)
+	{
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+		if (group)
+		{
+			int8 auto_split_coin = group->GetGroupOptions()->auto_split;
+			group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+			deque<GroupMemberInfo*>* members = group->GetMembers();
+			int32 split_coin_per_player = 0;
+			int32 coins_remain_after_split = entity->GetLootCoins();
+			int32 total_coins = entity->GetLootCoins();
+
+			if (auto_split_coin) {
+				int8 members_in_zone = 0;
+
+				for (int8 i = 0; i < members->size(); i++) {
+					Entity* member = members->at(i)->member;
+					if (!member || !member->IsPlayer())
+						continue;
+
+					if (member->GetZone() != GetPlayer()->GetZone())
+						continue;
+
+					members_in_zone++;
+				}
+
+				if (members_in_zone < 1) // this should not happen, but divide by zero checked
+					members_in_zone = 0;
+
+				split_coin_per_player = entity->GetLootCoins() / members_in_zone;
+				coins_remain_after_split = entity->GetLootCoins() - (split_coin_per_player * members_in_zone);
+				entity->SetLootCoins(0, false);
+			}
+
+			LogWrite(LOOT__INFO, 0, "Loot", "%s: Group LootSpawnByMethod %u, auto coin split %u, split coin per player %u, remaining coin after split %u", entity->GetName(), entity->GetLootMethod(), auto_split_coin, split_coin_per_player, coins_remain_after_split);
+			bool startWithLooter = true;
+
+			for (int8 i = 0; i < members->size(); i++) {
+				Entity* member = members->at(i)->member;
+				if (!member || !member->IsPlayer())
+					continue;
+
+				if (member->GetZone() != GetPlayer()->GetZone())
+					continue;
+
+				// this will make sure we properly send the loot window to the initial requester if there is no item rarity matches
+				if (startWithLooter && member != GetPlayer())
+					continue;
+				else if (!startWithLooter && member == GetPlayer())
+					continue;
+				else if (startWithLooter) {
+					i = 0;
+					startWithLooter = false;
+				}
+
+				if (auto_split_coin && (split_coin_per_player + coins_remain_after_split) > 0) {
+					player->AddCoins(split_coin_per_player + coins_remain_after_split);
+					if (((Player*)member)->GetClient()) {
+						((Player*)member)->GetClient()->Message(CHANNEL_MONEY_SPLIT, "Your share of %s from the corpse of %s is %s.", GetCoinMessage(total_coins).c_str(), entity->GetLootName(), GetCoinMessage(split_coin_per_player + coins_remain_after_split).c_str());
+					}
+					if (coins_remain_after_split > 0) // overflow of coin division went to the first player
+						coins_remain_after_split = 0;
+				}
+				switch (entity->GetLootMethod()) {
+				case GroupLootMethod::METHOD_LOTTO:
+				case GroupLootMethod::METHOD_NEED_BEFORE_GREED: {
+					if (((Player*)member)->GetClient()) {
+						switch (member->GetInfoStruct()->get_group_auto_loot_method()) {
+						case 1: { // lotto, need
+							if (entity->GetLootMethod() == GroupLootMethod::METHOD_LOTTO) {
+								entity->AddLottoItemRequest(0xFFFFFFFF, GetPlayer()->GetID());
+							}
+							else { // *need* before greed
+								entity->AddNeedGreedItemRequest(0xFFFFFFFF, GetPlayer()->GetID(), true);
+							}
+							entity->AddSpawnLootWindowCompleted(member->GetID(), true);
+							// if it already exists we have to override the setting
+							entity->SetSpawnLootWindowCompleted(GetPlayer()->GetID());
+							break;
+						}
+						case 2: { // decline
+							entity->AddSpawnLootWindowCompleted(member->GetID(), true);
+							// if it already exists we have to override the setting
+							entity->SetSpawnLootWindowCompleted(GetPlayer()->GetID());
+							break;						
+						}
+						default: { // presume 0 or higher than 2	
+							((Player*)member)->GetClient()->SendLootResponsePacket((!auto_split_coin && member == GetPlayer()) ? entity->GetLootCoins() : 0, entity->GetLootItems(), entity, true);
+							break;
+						}
+						}
+						sentLoot = true;
+					}
+					break;
+				}
+				case GroupLootMethod::METHOD_ROUND_ROBIN: {
+					entity->AddSpawnLootWindowCompleted(member->GetID(), true);
+					sentLoot = true;
+					break;
+				}
+				case GroupLootMethod::METHOD_LEADER: {
+					if (member->GetGroupMemberInfo()->leader)
+						((Player*)member)->GetClient()->SendLootResponsePacket((!auto_split_coin && member == GetPlayer()) ? entity->GetLootCoins() : 0, entity->GetLootItems(), entity);
+					break;
+				}
+				case GroupLootMethod::METHOD_FFA: {
+					if(member == GetPlayer()) {
+						((Player*)member)->GetClient()->SendLootResponsePacket((!auto_split_coin && member == GetPlayer()) ? entity->GetLootCoins() : 0, entity->GetLootItems(), entity);
+					}
+					break;
+				}
+				}
+			}
+			group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+		}
+	}
+	world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+	return sentLoot;
+}
+void Client::LootSpawnRequest(Spawn* entity, bool attemptDisarm) {
+	bool lootAllowed = false;
+	bool sentLoot = false;
+	std::vector<int32> item_list;
+	if (entity->IsNPC()) {
 		entity->LockLoot();
-		Loot(total_coins, entity->GetLootItems(), entity);
+		lootAllowed = ((NPC*)entity)->Brain()->CheckLootAllowed(GetPlayer());
 		entity->UnlockLoot();
 
-		OpenChest(entity, attemptDisarm);
-	}
-	else
-		SimpleMessage(CHANNEL_COLOR_YELLOW, "You are not allowed to loot at this time.");
+		if (lootAllowed) {
+			OpenChest(entity, attemptDisarm);
+		}
+		else {
+			SimpleMessage(CHANNEL_COLOR_YELLOW, "You are not allowed to loot at this time.");
+			return;
+		}
 
+		entity->LockLoot();
+		if (((NPC*)entity)->Brain()->CheckLootAllowed(GetPlayer())) {
+			lootAllowed = true;
+			if ((sentLoot = LootSpawnByMethod(entity))) {
+				entity->GetLootItemsList(&item_list);
+			}
+			else {
+				SendLootResponsePacket(entity->GetLootCoins(), entity->GetLootItems(), entity);
+			}
+		}
+		entity->UnlockLoot();
+
+		if (lootAllowed) {
+			entity->DistributeGroupLoot_RoundRobin(&item_list, true);
+		}
+	}
 }
 
 void Client::OpenChest(Spawn* entity, bool attemptDisarm)
@@ -6572,7 +6911,7 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 		}
 		if (rewarded_coin > coin)
 			coin = rewarded_coin;
-		if (!quest && !was_displayed) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+		if (!quest && !was_displayed) { //this entire function is either for version <=561 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
 			if (coin > 0) {
 				player->AddCoins(coin);
 				PlaySound("coin_cha_ching");
@@ -6582,7 +6921,7 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 		packet2->setSubstructDataByName("reward_data", "reward", header);
 		packet2->setSubstructDataByName("reward_data", "max_coin", coin);
 		if (player->GetGuild() && !was_displayed) {
-			if (!quest) { //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+			if (!quest) { //this entire function is either for version <=561 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
 				player->GetInfoStruct()->add_status_points(status_points);
 				player->SetCharSheetChanged(true);
 			}
@@ -6606,7 +6945,7 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 						packet2->setArrayDataByName("reward_id", item->details.item_id, i);
 						packet2->setItemArrayDataByName("item", item, player, i, 0, -1);
 					}
-					if(!quest) //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+					if(!quest) //this entire function is either for version <=561 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
 						player->AddPendingItemReward(item); //item reference will be deleted after the player accepts it
 				}
 			}
@@ -6617,7 +6956,7 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 					packet2->setArrayDataByName("reward_id", item->details.item_id, i);
 					packet2->setItemArrayDataByName("item", item, player, i, 0, -1);
 				}
-				if(!quest) //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+				if(!quest) //this entire function is either for version <=561 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
 					player->AddPendingItemReward(item); //item reference will be deleted after the player accepts it
 				
 				i++;
@@ -6630,7 +6969,7 @@ void Client::DisplayQuestRewards(Quest* quest, int64 coin, vector<Item*>* reward
 				if (item) {
 					packet2->setArrayDataByName("select_reward_id", item->details.item_id, i);
 					packet2->setItemArrayDataByName("select_item", item, player, i, 0, -1);
-					if (!quest) //this entire function is either for version <=546 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
+					if (!quest) //this entire function is either for version <=561 or for quest rewards in middle of quest, so quest should be 0, otherwise quest will handle the rewards
 						player->AddPendingSelectableItemReward(source_id, item); //item reference will be deleted after the player selects one
 				}
 			}
@@ -6712,7 +7051,7 @@ void Client::DisplayQuestComplete(Quest* quest, bool tempReward, std::string cus
 	if (!quest)
 		return;
 	
-	if (GetVersion() <= 546) {
+	if (GetVersion() <= 561) {
 		DisplayQuestRewards(quest, 0, quest->GetRewardItems(), quest->GetSelectableRewardItems(), quest->GetRewardFactions(), "Quest Complete!", quest->GetStatusPoints(), tempReward ? customDescription.c_str() : quest->GetCompletedDescription(), was_displayed);
 		return;
 	}
@@ -6907,6 +7246,7 @@ void Client::DisplayConversation(int32 conversation_id, int32 spawn_id, vector<C
 		packet->setDataByName("conversation_id", conversation_id);
 		packet->setDataByName("text", text);
 		packet->setDataByName("language", language); // default 0
+		packet->setDataByName("enable_blue_ui", 0); // default 0
 		packet->setDataByName("can_close", can_close); // default 1
 		conversation_map[conversation_id].clear();
 		if (conversations) {
@@ -8046,7 +8386,11 @@ void Client::SendSellMerchantList(bool sell) {
 				vector<Item*> sellable_items;
 				map<int32, Item*>::iterator test_itr;
 				for (test_itr = items->begin(); test_itr != items->end(); test_itr++) {
-					if (test_itr->second && !test_itr->second->CheckFlag(NO_VALUE))
+					bool isbagwithitems = false;
+					if (test_itr->second && test_itr->second->IsBag() && (test_itr->second->details.num_slots - test_itr->second->details.num_free_slots != test_itr->second->details.num_slots))
+						isbagwithitems = true;
+					
+					if (test_itr->second && !test_itr->second->CheckFlag(NO_VALUE) && (isbagwithitems == false) && (test_itr->second->details.inv_slot_id != -3) && (test_itr->second->details.inv_slot_id != -4))
 						sellable_items.push_back(test_itr->second);
 				}
 				packet->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(spawn));
@@ -9417,8 +9761,10 @@ void Client::SearchStore(int32 page) {
 }
 
 void Client::SetReadyForUpdates() {
-	if (!ready_for_updates)
+	if (!ready_for_updates) {
 		database.loadCharacterProperties(this);
+		SendDefaultGroupOptions();
+	}
 
 	ready_for_updates = true;
 	

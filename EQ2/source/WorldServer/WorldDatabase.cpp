@@ -2066,7 +2066,7 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 		if (!stricmp(prop_name, CHAR_PROPERTY_SPEED))
 		{
 			float new_speed = atof(prop_value);
-			client->GetPlayer()->SetSpeed(new_speed,true);
+			client->GetPlayer()->SetSpeed(new_speed, true);
 			client->GetPlayer()->SetCharSheetChanged(true);
 		}
 		else if (!stricmp(prop_name, CHAR_PROPERTY_FLYMODE))
@@ -2093,7 +2093,7 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 		else if (!stricmp(prop_name, CHAR_PROPERTY_REGIONDEBUG))
 		{
 			int8 val = atoul(prop_value);
-			
+
 			client->SetRegionDebug(val == 1);
 			if (val)
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Region Debug Enabled!");
@@ -2109,6 +2109,46 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You will now receive LUA error messages.");
 			}
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_GROUPLOOTMETHOD))
+		{
+			int8 val = atoul(prop_value);
+			client->GetPlayer()->GetInfoStruct()->set_group_loot_method(val);
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_GROUPLOOTITEMRARITY))
+		{
+			int8 val = atoul(prop_value);
+			client->GetPlayer()->GetInfoStruct()->set_group_loot_items_rarity(val);
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_GROUPAUTOSPLIT))
+		{
+			int8 val = atoul(prop_value);
+			client->GetPlayer()->GetInfoStruct()->set_group_auto_split(val);
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_GROUPDEFAULTYELL))
+		{
+			int8 val = atoul(prop_value);
+			client->GetPlayer()->GetInfoStruct()->set_group_default_yell(val);
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_GROUPAUTOLOCK))
+		{
+			int8 val = atoul(prop_value);
+			client->GetPlayer()->GetInfoStruct()->set_group_autolock(val);
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_GROUPSOLOAUTOLOCK))
+		{
+			int8 val = atoul(prop_value);
+			client->GetPlayer()->GetInfoStruct()->set_group_solo_autolock(val);
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_AUTOLOOTMETHOD))
+		{
+			int8 val = atoul(prop_value);
+			client->GetPlayer()->GetInfoStruct()->set_group_auto_loot_method(val);
+		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_GROUPLOCKMETHOD))
+		{
+			int8 val = atoul(prop_value);
+			client->GetPlayer()->GetInfoStruct()->set_group_lock_method(val);
 		}
 	}
 

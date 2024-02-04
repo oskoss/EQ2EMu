@@ -11152,7 +11152,7 @@ int EQ2Emu_lua_GetSpellTier(lua_State* state) {
 
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	lua_interface->ResetFunctionStack(state);
-	if (!luaspell) {
+	if (!luaspell || !luaspell->spell) {
 		lua_interface->LogError("%s: LUA GetSpellTier command error: must be used in a spell script", lua_interface->GetScriptName(state));
 		return 0;
 	}
@@ -11168,7 +11168,7 @@ int EQ2Emu_lua_GetSpellID(lua_State* state) {
 
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	lua_interface->ResetFunctionStack(state);
-	if (!luaspell) {
+	if (!luaspell || !luaspell->spell) {
 		lua_interface->LogError("%s: LUA GetSpellID command error: must be used in a spell script", lua_interface->GetScriptName(state));
 		return 0;
 	}
@@ -11321,7 +11321,7 @@ int EQ2Emu_lua_ShowLootWindow(lua_State* state) {
 		lua_interface->LogError("%s: LUA ShowLootWindow has no items", lua_interface->GetScriptName(state));
 		return 0;
 	}
-	client->Loot(spawn->GetLootCoins(), items, spawn);
+	client->SendLootResponsePacket(spawn->GetLootCoins(), items, spawn, true);
 	return 0;
 }
 

@@ -222,7 +222,7 @@ void ConfigReader::loadDataStruct(PacketStruct* packet, XMLNode parentNode, bool
 								new_name = string(name).append("_").append(ds->GetStringName());
 							else
 								new_name = string(name).append("_").append(ds->GetStringName()).append("_").append(tmp);
-							
+
 							DataStruct* ds2 = new DataStruct(new_name.c_str(), ds->GetType(),ds->GetLength(), ds->GetType2());
 
 							if(!array_packet && strlen(ds->GetArraySizeVariable()) > 1)
@@ -231,9 +231,8 @@ void ConfigReader::loadDataStruct(PacketStruct* packet, XMLNode parentNode, bool
 							ds2->SetOversizedByte(ds->GetOversizedByte());
 							ds2->SetDefaultValue(ds->GetDefaultValue());
 							ds2->SetMaxArraySize(ds->GetMaxArraySize());
-							ds2->SetIfSetVariable(ds->GetIfSetVariable());
-							ds2->SetIfNotSetVariable(ds->GetIfNotSetVariable());
-							ds2->SetIfEqualsVariable(ds->GetIfEqualsVariable());
+							ds2->SetIfSetVariable(ds->GetIfSetVariable() ? ds->GetIfSetVariable() : if_variable);
+							ds2->SetIfNotSetVariable(ds->GetIfSetVariable() ? ds->GetIfNotSetVariable() : if_not_variable);
 							ds2->SetIfNotEqualsVariable(ds->GetIfNotEqualsVariable());
 							ds2->SetIfFlagNotSetVariable(ds->GetIfFlagNotSetVariable());
 							ds2->SetIfFlagSetVariable(ds->GetIfFlagSetVariable());

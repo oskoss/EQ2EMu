@@ -141,6 +141,12 @@ Spawn::Spawn(){
 	scared_by_strong_players = false;
 	is_alive = true;
 	SetLockedNoLoot(ENCOUNTER_STATE_AVAILABLE);
+	loot_method = GroupLootMethod::METHOD_FFA;
+	loot_rarity = 0;
+	loot_group_id = 0;
+	looter_spawn_id = 0;
+	is_loot_complete = false;
+	is_loot_dispensed = false;
 }
 
 Spawn::~Spawn(){
@@ -3707,33 +3713,81 @@ void Spawn::UpdateEncounterState(int8 new_state) {
 	}
 }
 
-void Spawn::CheckEncounterState(Entity* victim) {
-	if(!IsEntity() || !victim->IsNPC())
+void Spawn::CheckEncounterState(Entity* victim, bool test_auto_lock) {
+	if (!IsEntity() || !victim->IsNPC())
 		return;
-	
+
 	Entity* ent = ((Entity*)this);
-	if(victim->GetLockedNoLoot() == ENCOUNTER_STATE_AVAILABLE) {
-		if(!ent->GetInfoStruct()->get_engaged_encounter()) {
-			ent->GetInfoStruct()->set_engaged_encounter(1);
-		}
-	
+	if (victim->GetLockedNoLoot() == ENCOUNTER_STATE_AVAILABLE) {
+
 		Entity* attacker = nullptr;
-		if(ent->GetOwner())
+		if (ent->GetOwner())
 			attacker = ent->GetOwner();
 		else
 			attacker = ent;
-		
-		if(!attacker->GetInfoStruct()->get_engaged_encounter()) {
+
+		bool matchedAutoLock = false;
+		if (attacker->IsEntity() && ((Entity*)attacker)->GetGroupMemberInfo()) {
+			world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+			GroupMemberInfo* gmi = ((Entity*)attacker)->GetGroupMemberInfo();
+			if (gmi && gmi->group_id)
+			{
+				PlayerGroup* group = world.GetGroupManager()->GetGroup(gmi->group_id);
+				if (group && ((group->GetGroupOptions()->group_lock_method && group->GetGroupOptions()->group_autolock == 1) || attacker->GetGroupMemberInfo()->leader))
+				{
+					matchedAutoLock = true;
+					group->MGroupMembers.readlock(__FUNCTION__, __LINE__);
+					deque<GroupMemberInfo*>* members = group->GetMembers();
+
+					for (int8 i = 0; i < members->size(); i++) {
+						Entity* member = members->at(i)->member;
+						if (member->GetZone() != attacker->GetZone())
+							continue;
+
+						if (member->IsEntity()) {
+							if (!member->GetInfoStruct()->get_engaged_encounter()) {
+								member->GetInfoStruct()->set_engaged_encounter(1);
+							}
+							if (((NPC*)victim)->Brain()) {
+								((NPC*)victim)->Brain()->AddHate(member, 0);
+								((NPC*)victim)->Brain()->AddToEncounter(member);
+								victim->AddTargetToEncounter(member);
+							}
+						}
+					}
+					group->MGroupMembers.releasereadlock(__FUNCTION__, __LINE__);
+				}
+			}
+			world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+		}
+		else if (attacker->GetInfoStruct()->get_group_solo_autolock()) {
+			matchedAutoLock = true;
+			if (((NPC*)victim)->Brain()) {
+				((NPC*)victim)->Brain()->AddHate(attacker, 0);
+				((NPC*)victim)->Brain()->AddToEncounter(attacker);
+				victim->AddTargetToEncounter(attacker);
+			}
+		}
+
+		if (test_auto_lock && !matchedAutoLock) {
+			return;
+		}
+
+		if (!ent->GetInfoStruct()->get_engaged_encounter()) {
+			ent->GetInfoStruct()->set_engaged_encounter(1);
+		}
+
+		if (!attacker->GetInfoStruct()->get_engaged_encounter()) {
 			attacker->GetInfoStruct()->set_engaged_encounter(1);
 		}
-		
+
 		int8 skip_loot_gray_mob_flag = rule_manager.GetGlobalRule(R_Loot, SkipLootGrayMob)->GetInt8();
-		
+
 		int8 difficulty = attacker->GetArrowColor(victim->GetLevel());
-		
+
 		int8 new_enc_state = ENCOUNTER_STATE_AVAILABLE;
-		if(skip_loot_gray_mob_flag && difficulty == ARROW_COLOR_GRAY) {
-			if(!attacker->IsPlayer() && !attacker->IsBot()) {
+		if (skip_loot_gray_mob_flag && difficulty == ARROW_COLOR_GRAY) {
+			if (!attacker->IsPlayer() && !attacker->IsBot()) {
 				new_enc_state = ENCOUNTER_STATE_BROKEN;
 			}
 			else {
@@ -3741,14 +3795,14 @@ void Spawn::CheckEncounterState(Entity* victim) {
 			}
 		}
 		else {
-			if(attacker->IsPlayer() || attacker->IsBot()) {
+			if (attacker->IsPlayer() || attacker->IsBot()) {
 				new_enc_state = ENCOUNTER_STATE_LOCKED;
 			}
 			else {
 				new_enc_state = ENCOUNTER_STATE_BROKEN;
 			}
 		}
-		
+
 		victim->SetLockedNoLoot(new_enc_state);
 		victim->UpdateEncounterState(new_enc_state);
 	}
@@ -4208,6 +4262,16 @@ int32 Spawn::GetLootItemID() {
 	}
 	MLootItems.unlock();
 	return ret;
+}
+
+void Spawn::GetLootItemsList(std::vector<int32>* out_entries) {
+	if(!out_entries)
+		return;
+	
+	vector<Item*>::iterator itr;
+	for (itr = loot_items.begin(); itr != loot_items.end(); itr++) {
+		out_entries->push_back((*itr)->details.item_id);
+	}
 }
 
 bool Spawn::HasLootItemID(int32 id) {
@@ -4701,5 +4765,265 @@ void Spawn::SendGroupUpdate() {
 		}
 		else
 			world.GetGroupManager()->SendGroupUpdate(((Entity*)this)->GetGroupMemberInfo()->group_id);
+	}
+}
+
+bool Spawn::AddNeedGreedItemRequest(int32 item_id, int32 spawn_id, bool need_item) {
+	LogWrite(LOOT__INFO, 0, "Loot", "%s: AddNeedGreedItemRequest Item ID: %u, Spawn ID: %u, Need Item: %u", GetName(), item_id, spawn_id, need_item);
+	if (HasSpawnNeedGreedEntry(item_id, spawn_id)) {
+		return false;
+	}
+
+	need_greed_items.insert(make_pair(item_id, std::make_pair(spawn_id, need_item)));
+
+	AddSpawnLootWindowCompleted(spawn_id, false);
+	return true;
+}
+
+bool Spawn::AddLottoItemRequest(int32 item_id, int32 spawn_id) {
+	LogWrite(LOOT__INFO, 0, "Loot", "%s: AddLottoItemRequest Item ID: %u, Spawn ID: %u", GetName(), item_id, spawn_id);
+	if (HasSpawnLottoEntry(item_id, spawn_id)) {
+		return false;
+	}
+
+	lotto_items.insert(make_pair(item_id, spawn_id));
+
+	AddSpawnLootWindowCompleted(spawn_id, false);
+	return true;
+}
+
+void Spawn::AddSpawnLootWindowCompleted(int32 spawn_id, bool status_) {
+	if (loot_complete.find(spawn_id) == loot_complete.end()) {
+		loot_complete.insert(make_pair(spawn_id, status_));
+	}
+
+	is_loot_complete = HasLootWindowCompleted();
+}
+
+bool Spawn::SetSpawnLootWindowCompleted(int32 spawn_id) {
+	std::map<int32, bool>::iterator itr = loot_complete.find(spawn_id);
+	if (itr != loot_complete.end()) {
+		itr->second = true;
+		is_loot_complete = HasLootWindowCompleted();
+		return true;
+	}
+	return false;
+}
+
+bool Spawn::HasSpawnLootWindowCompleted(int32 spawn_id) {
+	std::map<int32, bool>::iterator itr = loot_complete.find(spawn_id);
+	if (itr != loot_complete.end() && itr->second) {
+		return true;
+	}
+	return false;
+}
+
+bool Spawn::HasSpawnNeedGreedEntry(int32 item_id, int32 spawn_id) {
+	for (auto [itr, rangeEnd] = need_greed_items.equal_range(item_id); itr != rangeEnd; itr++) {
+		LogWrite(LOOT__DEBUG, 8, "Loot", "%s: HasSpawnNeedGreedEntry Item ID: %u, Spawn ID: %u", GetName(), itr->first, itr->second.first);
+		if (spawn_id == itr->second.first) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Spawn::HasSpawnLottoEntry(int32 item_id, int32 spawn_id) {
+	for (auto [itr, rangeEnd] = lotto_items.equal_range(item_id); itr != rangeEnd; itr++) {
+		LogWrite(LOOT__DEBUG, 8, "Loot", "%s: HasSpawnLottoEntry Item ID: %u, Spawn ID: %u", GetName(), itr->first, itr->second);
+		if (spawn_id == itr->second) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void Spawn::GetSpawnLottoEntries(int32 item_id, std::map<int32, int32>* out_entries) {
+	if (!out_entries)
+		return;
+
+	std::map<int32, bool> spawn_matches;
+	for (auto [itr, endrange] = lotto_items.equal_range(item_id); itr != endrange; itr++) {
+		out_entries->insert(std::make_pair(itr->second, (int32)MakeRandomInt(0, 100)));
+		spawn_matches[itr->second] = true;
+	}
+
+	// 0xFFFFFFFF represents selecting "All" on the lotto screen
+	for (auto [itr, endrange] = lotto_items.equal_range(0xFFFFFFFF); itr != endrange; itr++) {
+		if (spawn_matches.find(itr->second) == spawn_matches.end()) {
+			out_entries->insert(std::make_pair(itr->second, (int32)MakeRandomInt(0, 100)));
+		}
+	}
+}
+
+void Spawn::GetSpawnNeedGreedEntries(int32 item_id, bool need_item, std::map<int32, int32>* out_entries) {
+	if (!out_entries)
+		return;
+
+	for (auto [itr, rangeEnd] = need_greed_items.equal_range(item_id); itr != rangeEnd; itr++) {
+		out_entries->insert(std::make_pair(itr->second.first, (int32)MakeRandomInt(0, 100)));
+	}
+}
+
+bool Spawn::HasLootWindowCompleted() {
+	std::map<int32, bool>::iterator itr;
+	for (itr = loot_complete.begin(); itr != loot_complete.end(); itr++) {
+		if (!itr->second)
+			return false;
+	}
+
+	return true;
+}
+
+void Spawn::StartLootTimer(Spawn* looter) {
+	if (!IsLootTimerRunning()) {
+		int32 loot_timer_time = rule_manager.GetGlobalRule(R_Loot, LootDistributionTime)->GetInt32() * 1000;
+		if(rule_manager.GetGlobalRule(R_Loot, AllowChestUnlockByDropTime)->GetBool() && loot_timer_time > rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeDrop)->GetInt32()*1000) {
+			loot_timer_time = (rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeDrop)->GetInt32()*1000) / 2;
+		}
+		
+		if(rule_manager.GetGlobalRule(R_Loot, AllowChestUnlockByTrapTime)->GetBool() && loot_timer_time > rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeTrap)->GetInt32()*1000) {
+			loot_timer_time = (rule_manager.GetGlobalRule(R_Loot, ChestUnlockedTimeTrap)->GetInt32()*1000) / 2;
+		}
+		
+		if(loot_timer_time < 1000) {
+			loot_timer_time = 60000; // hardcode assure they aren't setting some really ridiculous low number
+		}
+		
+		loot_timer.Start(loot_timer_time, true);
+	}
+	if (looter) {
+		looter_spawn_id = looter->GetID();
+	}
+}
+
+void Spawn::CloseLoot(Spawn* sender) {
+	if (sender) {
+		SetSpawnLootWindowCompleted(sender->GetID());
+	}
+	if (sender && looter_spawn_id > 0 && sender->GetID() != looter_spawn_id) {
+		LogWrite(LOOT__ERROR, 0, "Loot", "%s: CloseLoot Looter Spawn ID: %u does not match sender %u.", GetName(), looter_spawn_id, sender->GetID());
+		return;
+	}
+	if (!IsLootTimerRunning() && GetLootMethod() != GroupLootMethod::METHOD_LOTTO && GetLootMethod() != GroupLootMethod::METHOD_NEED_BEFORE_GREED) {
+		loot_timer.Disable();
+	}
+	looter_spawn_id = 0;
+}
+
+void Spawn::SetLootMethod(GroupLootMethod method, int8 item_rarity, int32 group_id) {
+	LogWrite(LOOT__INFO, 0, "Loot", "%s: Set Loot Method : %u, group id : %u", GetName(), (int32)method, group_id);
+	loot_group_id = group_id;
+	loot_method = method;
+	loot_rarity = item_rarity;
+	if (loot_name.size() < 1) {
+		loot_name = std::string(GetName());
+	}
+}
+
+bool Spawn::IsItemInLootTier(Item* item) {
+	if (!item)
+		return true;
+
+	bool skipItem = true;
+	switch (GetLootRarity()) {
+	case LootTier::ITEMS_TREASURED_PLUS: {
+		if (item->details.tier >= ITEM_TAG_TREASURED) {
+			skipItem = false;
+		}
+		break;
+	}
+	case LootTier::ITEMS_LEGENDARY_PLUS: {
+		if (item->details.tier >= ITEM_TAG_LEGENDARY) {
+			skipItem = false;
+		}
+		break;
+	}
+	case LootTier::ITEMS_FABLED_PLUS: {
+		if (item->details.tier >= ITEM_TAG_FABLED) {
+			skipItem = false;
+		}
+		break;
+	}
+	default: {
+		skipItem = false;
+		break;
+	}
+	}
+
+	return skipItem;
+}
+
+void Spawn::DistributeGroupLoot_RoundRobin(std::vector<int32>* item_list, bool roundRobinTrashLoot) {
+
+	std::vector<int32>::iterator item_itr;
+
+	for (item_itr = item_list->begin(); item_itr != item_list->end(); item_itr++) {
+		int32 item_id = *item_itr;
+		Item* tmpItem = master_item_list.GetItem(item_id);
+		Spawn* looter = nullptr;
+
+		bool skipItem = IsItemInLootTier(tmpItem);
+
+		if ((skipItem && !roundRobinTrashLoot) || (!skipItem && roundRobinTrashLoot))
+			continue;
+
+		world.GetGroupManager()->GroupLock(__FUNCTION__, __LINE__);
+		PlayerGroup* group = world.GetGroupManager()->GetGroup(GetLootGroupID());
+		if (group) {
+			group->MGroupMembers.writelock(__FUNCTION__, __LINE__);
+			deque<GroupMemberInfo*>* members = group->GetMembers();
+
+			int8 index = group->GetLastLooterIndex();
+			if (index >= members->size()) {
+				index = 0;
+			}
+
+			GroupMemberInfo* gmi = members->at(index);
+			if (gmi) {
+				looter = gmi->member;
+			}
+			bool loopAttempted = false;
+			while (looter) {
+				if (!looter->IsPlayer()) {
+					index++;
+					if (index >= members->size()) {
+						if (loopAttempted) {
+							looter = nullptr;
+							break;
+						}
+						loopAttempted = true;
+						index = 0;
+					}
+					gmi = members->at(index);
+					if (gmi) {
+						looter = gmi->member;
+					}
+					continue;
+				}
+				else {
+					break;
+				}
+			}
+			index += 1;
+			group->SetNextLooterIndex(index);
+			group->MGroupMembers.releasewritelock(__FUNCTION__, __LINE__);
+		}
+		world.GetGroupManager()->ReleaseGroupLock(__FUNCTION__, __LINE__);
+
+		if (looter) {
+			if (looter->IsPlayer()) {
+				Item* item = LootItem(item_id);
+				bool success = false;
+				success = ((Player*)looter)->GetClient()->HandleLootItem(this, item, ((Player*)looter), roundRobinTrashLoot);
+
+				if (!success)
+					AddLootItem(item);
+			}
+			else {
+				Item* item = LootItem(item_id);
+				safe_delete(item);
+			}
+		}
 	}
 }

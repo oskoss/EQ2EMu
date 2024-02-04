@@ -279,6 +279,15 @@ struct InfoStruct{
 		first_world_login_ = 0;
 		reload_player_spells_ = 0;
 		
+		group_loot_method_ = 1;
+		group_loot_items_rarity_ = 1;
+		group_auto_split_ = 1;
+		group_default_yell_ = 1;
+		group_autolock_ = 0;
+		group_lock_method_ = 0;
+		group_solo_autolock_ = 0;
+		group_auto_loot_method_ = 0;
+		
 		action_state_ = std::string("");
 	}
 
@@ -680,6 +689,15 @@ struct InfoStruct{
 	
 	int8	get_reload_player_spells() { std::lock_guard<std::mutex> lk(classMutex); return reload_player_spells_; }
 	
+	int8	get_group_loot_method() { std::lock_guard<std::mutex> lk(classMutex); return group_loot_method_; }
+	int8	get_group_loot_items_rarity() { std::lock_guard<std::mutex> lk(classMutex); return group_loot_items_rarity_; }
+	int8	get_group_auto_split() { std::lock_guard<std::mutex> lk(classMutex); return group_auto_split_; }
+	int8	get_group_default_yell() { std::lock_guard<std::mutex> lk(classMutex); return group_default_yell_; }
+	int8	get_group_autolock() { std::lock_guard<std::mutex> lk(classMutex); return group_autolock_; }
+	int8	get_group_lock_method() { std::lock_guard<std::mutex> lk(classMutex); return group_lock_method_; }
+	int8	get_group_solo_autolock() { std::lock_guard<std::mutex> lk(classMutex); return group_solo_autolock_; }
+	int8	get_group_auto_loot_method() { std::lock_guard<std::mutex> lk(classMutex); return group_auto_loot_method_; }
+	
 	std::string get_action_state() { std::lock_guard<std::mutex> lk(classMutex); return action_state_; }
 	
 	std::string get_combat_action_state() { std::lock_guard<std::mutex> lk(classMutex); return combat_action_state_; }
@@ -975,6 +993,15 @@ struct InfoStruct{
 	void	set_first_world_login(int8 value) { std::lock_guard<std::mutex> lk(classMutex); first_world_login_ = value; }
 	
 	void	set_reload_player_spells(int8 value) { std::lock_guard<std::mutex> lk(classMutex); reload_player_spells_ = value; }
+	
+	void	set_group_loot_method(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_loot_method_ = value; }
+	void	set_group_loot_items_rarity(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_loot_items_rarity_ = value; }
+	void	set_group_auto_split(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_auto_split_ = value;  }
+	void	set_group_default_yell(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_default_yell_ = value; }
+	void	set_group_autolock(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_autolock_ = value;  }
+	void	set_group_lock_method(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_lock_method_ = value;  }
+	void	set_group_solo_autolock(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_solo_autolock_ = value; }
+	void	set_group_auto_loot_method(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_auto_loot_method_ = value; }
 
 	void	set_action_state(std::string value) { std::lock_guard<std::mutex> lk(classMutex); action_state_ = value; }
 	
@@ -1186,6 +1213,15 @@ private:
 	
 	int8			first_world_login_;
 	int8			reload_player_spells_;
+	
+	int8			group_loot_method_;
+	int8			group_loot_items_rarity_;
+	int8			group_auto_split_;
+	int8			group_default_yell_;
+	int8			group_autolock_;
+	int8			group_lock_method_;
+	int8			group_solo_autolock_;
+	int8			group_auto_loot_method_;
 	
 	std::string		action_state_;
 	std::string		combat_action_state_;

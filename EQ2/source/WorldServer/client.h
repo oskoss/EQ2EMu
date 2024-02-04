@@ -181,9 +181,9 @@ public:
 	void	SendPlayerDeathWindow();
 	float	DistanceFrom(Client* client);
 	void	SendDefaultGroupOptions();
-	bool	HandleLootItem(Spawn* entity, int32 item_id);
-	bool	HandleLootItem(Spawn* entity, Item* item);
-	void	HandleLoot(EQApplicationPacket* app);
+	bool	HandleLootItemByID(Spawn* entity, int32 item_id, Spawn* target);
+	bool	HandleLootItem(Spawn* entity, Item* item, Spawn* target=nullptr, bool overrideLootRestrictions = false);
+	void	HandleLootItemRequestPacket(EQApplicationPacket* app);
 	void	HandleSkillInfoRequest(EQApplicationPacket* app);
 	void	HandleExamineInfoRequest(EQApplicationPacket* app);
 	void	HandleQuickbarUpdateRequest(EQApplicationPacket* app);
@@ -263,9 +263,9 @@ public:
 	void	Save();
 	bool	remove_from_list;
 	void	CloseLoot(int32 spawn_id);
-	void	SendPendingLoot(int32 total_coins, Spawn* entity);
-	void	Loot(int32 total_coins, vector<Item*>* items, Spawn* entity);
-	void	Loot(Spawn* entity, bool attemptDisarm=true);
+	void	SendLootResponsePacket(int32 total_coins, vector<Item*>* items, Spawn* entity, bool ignore_loot_tier = false);
+	void	LootSpawnRequest(Spawn* entity, bool attemptDisarm=true);
+	bool	LootSpawnByMethod(Spawn* entity);
 	void	OpenChest(Spawn* entity, bool attemptDisarm=true);
 	void	CastGroupOrSelf(Entity* source, uint32 spellID, uint32 spellTier=1, float restrictiveRadius=0.0f);
 	void	CheckPlayerQuestsKillUpdate(Spawn* spawn);

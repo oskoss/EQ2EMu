@@ -264,6 +264,28 @@ struct TimedGridData {
 	int32 widget_id;
 };
 
+enum GroupLootMethod {
+	METHOD_LEADER=0,
+	METHOD_FFA=1,
+	METHOD_LOTTO=2,
+	METHOD_NEED_BEFORE_GREED=3,
+	METHOD_ROUND_ROBIN=4
+};
+
+enum AutoLootMode {
+	METHOD_DISABLED=0,
+	METHOD_ACCEPT=1,
+	METHOD_DECLINE=2
+};
+
+enum LootTier {
+	ITEMS_ALL=0,
+	ITEMS_TREASURED_PLUS=1,
+	ITEMS_LEGENDARY_PLUS=2,
+	ITEMS_FABLED_PLUS=3
+};
+
+
 class Spawn {
 public:
 	Spawn();
@@ -941,6 +963,15 @@ public:
 		MLootItems.unlock();
 	}
 
+	int32 GetLootCount() {
+		int32 loot_item_count = 0;
+		MLootItems.lock();
+		loot_item_count = loot_items.size();
+		MLootItems.unlock();
+		
+		return loot_item_count;
+	}
+	
 	void ClearNonBodyLoot() {
 
 		MLootItems.lock();
@@ -964,10 +995,14 @@ public:
 		UnlockLoot();
 		return coins;
 	}
-	void SetLootCoins(int32 val) {
-		LockLoot();
+	void SetLootCoins(int32 val, bool lockloot = true) {
+		if(lockloot)
+			LockLoot();
+		
 		loot_coins = val;
-		UnlockLoot();
+		
+		if(lockloot)
+			UnlockLoot();
 	}
 	void AddLootCoins(int32 coins) {
 		LockLoot();
@@ -1016,7 +1051,7 @@ public:
 	bool	IsInSpawnGroup(Spawn* spawn);
 	Spawn*	IsSpawnGroupMembersAlive(Spawn* ignore_spawn=nullptr, bool npc_only = true);
 	void	UpdateEncounterState(int8 new_state);
-	void	CheckEncounterState(Entity* victim);
+	void	CheckEncounterState(Entity* victim, bool test_auto_lock = false);
 	void	AddTargetToEncounter(Entity* entity);
 	
 	void	SendSpawnChanges(bool val){ send_spawn_changes = val; }
@@ -1301,6 +1336,47 @@ public:
 	
 	void SendGroupUpdate();
 	
+	void OverrideLootMethod(GroupLootMethod newMethod) { loot_method = newMethod; }
+	void SetLootMethod(GroupLootMethod method, int8 item_rarity = 0, int32 group_id = 0);
+	int32 GetLootGroupID() { return loot_group_id; }
+	GroupLootMethod GetLootMethod() { return loot_method; }
+	int8 GetLootRarity() { return loot_rarity; }
+	int32 GetLootTimeRemaining() { return loot_timer.GetRemainingTime(); }
+	bool IsLootTimerRunning() { return loot_timer.Enabled(); }
+	bool CheckLootTimer() { return loot_timer.Check(); }
+	void DisableLootTimer() { return loot_timer.Disable(); }
+	int32 GetLooterSpawnID() { return looter_spawn_id; }
+	void SetLooterSpawnID(int32 id) { looter_spawn_id = id; }
+	bool AddNeedGreedItemRequest(int32 item_id, int32 spawn_id, bool need_item);
+	bool AddLottoItemRequest(int32 item_id, int32 spawn_id);
+	void AddSpawnLootWindowCompleted(int32 spawn_id, bool status_);
+	bool SetSpawnLootWindowCompleted(int32 spawn_id);
+	bool HasSpawnLootWindowCompleted(int32 spawn_id);
+	bool HasSpawnNeedGreedEntry(int32 item_id, int32 spawn_id);
+	bool HasSpawnLottoEntry(int32 item_id, int32 spawn_id);
+	void GetSpawnLottoEntries(int32 item_id, std::map<int32, int32>* out_entries);
+	void GetLootItemsList(std::vector<int32>* out_entries);
+	void GetSpawnNeedGreedEntries(int32 item_id, bool need_item, std::map<int32, int32>* out_entries);
+	
+	bool HasLootWindowCompleted();
+	bool IsLootWindowComplete() { return is_loot_complete; }
+	void SetLootDispensed() { is_loot_dispensed = true; }
+	bool IsLootDispensed() { return is_loot_dispensed; }
+	std::map<int32, bool>* GetLootWindowList() { return &loot_complete; }
+	void StartLootTimer(Spawn* looter);
+	void CloseLoot(Spawn* sender);
+	
+	void SetLootName(char* name) {
+		if(name != nullptr) {
+			loot_name = std::string(name); 
+		}
+	}
+	
+	const char* GetLootName() { return loot_name.c_str(); }
+	
+	bool IsItemInLootTier(Item* item);
+	void DistributeGroupLoot_RoundRobin(std::vector<int32>* item_list, bool roundRobinTrashLoot = false); // trash loot is what falls under the item tier requirement by group options
+	
 	mutable std::shared_mutex MIgnoredWidgets;
 	std::map<int32, bool> ignored_widgets;
 	
@@ -1346,9 +1422,23 @@ protected:
 
 	void CheckProximities();
 	Timer pause_timer;
-private:		
+	
+private:
+	int32			loot_group_id;
+	GroupLootMethod loot_method;
+	int8			loot_rarity;
+	Timer 			loot_timer;
+	int32			looter_spawn_id;
 	vector<Item*>	loot_items;
 	int32			loot_coins;
+	std::multimap<int32, int32> lotto_items;
+	std::multimap<int32, std::pair<int32, bool>> need_greed_items;
+	
+	std::map<int32, bool> loot_complete;
+	bool			is_loot_complete;
+	bool			is_loot_dispensed;
+	std::string		loot_name;
+	
 	bool			trap_triggered;
 	int32			trap_state;
 	int32			chest_drop_time;

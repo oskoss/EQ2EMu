@@ -1130,6 +1130,7 @@ bool PacketStruct::LoadPacketData(uchar* data, int32 data_len, bool create_color
 			data_struct = *itr;
 			if (!data_struct->AddToStruct())
 				continue;
+			
 			if (data_struct->GetIfSet() && data_struct->GetIfSetVariable()) {
 				string varname = string(data_struct->GetIfSetVariable());
 				if (varname.find(",") < 0xFFFFFFFF) {
