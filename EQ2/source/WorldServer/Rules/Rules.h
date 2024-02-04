@@ -230,7 +230,8 @@ enum RuleType {
 
 	DatabaseVersion,
 
-	SkipLootGrayMob
+	SkipLootGrayMob,
+	LootDistributionTime	
 };
 
 class Rule {
