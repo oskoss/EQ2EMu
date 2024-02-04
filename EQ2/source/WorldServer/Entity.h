@@ -280,7 +280,7 @@ struct InfoStruct{
 		reload_player_spells_ = 0;
 		
 		group_loot_method_ = 1;
-		group_loot_items_rarity_ = 1;
+		group_loot_items_rarity_ = 0;
 		group_auto_split_ = 1;
 		group_default_yell_ = 1;
 		group_autolock_ = 0;

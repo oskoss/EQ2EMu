@@ -16174,7 +16174,7 @@ to zero and treated like placeholders." />
   <Data ElementName="fuel_item_id" Type="int32" Size="1" />
   <Data ElementName="fuel_icon" Type="int16" />
   <Data ElementName="fuel_total_quantity" Type="int8" Size="1" />
-  <Data ElementName="fuel_unknown4" Type="int8" Size="2" />
+ 
 </Data>
 <Data ElementName="num_fuel_items_selected" Type="int8" />
 <Data ElementName="fuel_items_selected_array" Type="Array" ArraySizeVariable="num_fuel_items_selected">

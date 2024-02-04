@@ -279,10 +279,10 @@ void ClientPacketFunctions::SendCreateFromRecipe(Client* client, int32 recipeID)
 					}
 				}
 			}
-			packet->setArrayLengthByName("num_build_items_selected", selected_items.size());
+			packet->setSubArrayLengthByName("num_build_items_selected", selected_items.size(),index   );
 			for (int8 i = 0; i < selected_items.size(); i++) {
-				packet->setArrayDataByName("build_selected_item_qty", selected_items[i].second, i);
-				packet->setArrayDataByName("build_selected_id", selected_items[i].first, i);
+				packet->setSubArrayDataByName("build_selected_item_qty", selected_items[i].second,index, i);
+				packet->setSubArrayDataByName("build_selected_item_id", selected_items[i].first,index, i);
 
 			}
 			int16 qty = 0;
