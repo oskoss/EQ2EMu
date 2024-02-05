@@ -2761,7 +2761,7 @@ bool Client::HandleLootItem(Spawn* entity, Item* item, Spawn* target, bool overr
 	}
 
 	// needs to only be checked before expiration of loot restrictions
-	if (!overrideLootRestrictions) {
+	if (entity && !overrideLootRestrictions) {
 		if (entity->GetLootGroupID() > 0 && (!lootingPlayer->GetGroupMemberInfo() || lootingPlayer->GetGroupMemberInfo()->group_id != entity->GetLootGroupID())) {
 			LogWrite(LOOT__ERROR, 0, "Loot", "%s: Loot Group ID from %s did not match Item: %s (%u), expected group id %u.", entity->GetName(), lootingPlayer->GetName(), item->name.c_str(), item->details.item_id, entity->GetLootGroupID());
 			return false;
