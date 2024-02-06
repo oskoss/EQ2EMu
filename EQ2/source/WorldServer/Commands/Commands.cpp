@@ -12141,7 +12141,7 @@ void Commands::Command_SetAutoLootMode(Client* client, Seperator* sep) {
 			break;
 		}
 		default: {
-			mode = AutoLootMode::METHOD_DISABLED;
+			mode = AutoLootMode::METHOD_DECLINE;
 			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Enabled auto loot mode to decline need and lotto.");
 			break;
 		}
