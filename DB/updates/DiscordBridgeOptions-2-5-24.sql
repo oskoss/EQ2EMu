@@ -1,0 +1,4 @@
+INSERT INTO `ruleset_details` (`ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (1, 'R_Discord', 'DiscordEnabled', '1', 'Enable (1) or Disable(0) the Discord Bridge System.');
+INSERT INTO `ruleset_details` (`ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (1, 'R_Discord', 'DiscordWebhookURL', 'https://example.com', 'Webhook url for EQ2 -> Discord coms.');
+INSERT INTO `ruleset_details` (`ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (1, 'R_Discord', 'DiscordBotToken', '0', 'This is the token for the bot, given in the discord developer site.');
+INSERT INTO `ruleset_details` (`ruleset_id`, `rule_category`, `rule_type`, `rule_value`, `description`) VALUES (1, 'R_Discord', 'DiscordListenChan', '0', 'Channe ID you want to listen to chat from. this is for Discord -> EQ2 coms.');

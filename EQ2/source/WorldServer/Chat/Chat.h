@@ -27,6 +27,13 @@
 #include "../client.h"
 #include "ChatChannel.h"
 
+#ifdef DISCORD
+	#ifndef WIN32
+		#pragma once
+		#include <dpp/dpp.h>
+	#endif
+#endif
+
 using namespace std;
 /*
 
@@ -100,6 +107,8 @@ public:
 	bool LeaveAllChannels(Client *client);
 	bool TellChannel(Client *client, const char *channel_name, const char *message, const char* name = 0);
 	bool SendChannelUserList(Client *client, const char *channel_name);
+	//devn00b
+	int PushDiscordMsg(const char*, const char*);
 	ChatChannel* GetChannel(const char* channel_name);
 
 private:

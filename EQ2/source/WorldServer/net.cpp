@@ -57,6 +57,16 @@ using namespace std;
 #include "Transmute.h"
 #include "Zone/ChestTrap.h"
 
+//devn00b
+#ifdef DISCORD
+	//linux only for the moment.
+	#ifndef WIN32
+		#include <dpp/dpp.h>
+		#include "Chat/Chat.h"
+		extern Chat chat;
+	#endif
+#endif
+
 double frame_time = 0.0;
 
 #ifdef WIN32
@@ -113,6 +123,12 @@ extern map<int16, int16> EQOpcodeVersions;
 ThreadReturnType ItemLoad (void* tmp);
 ThreadReturnType AchievmentLoad (void* tmp);
 ThreadReturnType SpellLoad (void* tmp);
+//devn00b
+#ifdef DISCORD
+	#ifndef WIN32
+		ThreadReturnType StartDiscord (void* tmp);
+	#endif
+#endif
 
 int main(int argc, char** argv) {
 #ifdef PROFILER
@@ -238,9 +254,12 @@ int main(int argc, char** argv) {
 		pthread_t thread2;
 		pthread_create(&thread2, NULL, SpellLoad, &world);
 		pthread_detach(thread2);
-		//pthread_t thread3;
-		//pthread_create(&thread3, NULL, AchievmentLoad, &world);
-		//pthread_detach(thread3);
+		//devn00b
+		#ifdef DISCORD
+		pthread_t thread3;
+		pthread_create(&thread3, NULL, StartDiscord, &world);
+		pthread_detach(thread3);
+		#endif
 #endif
 	}
 
@@ -930,3 +949,64 @@ void NetConnection::WelcomeHeader()
 
 	fflush(stdout);
 }
+
+#ifdef DISCORD
+ThreadReturnType StartDiscord(void* tmp)
+{
+#ifndef DISCORD
+	THREAD_RETURN(NULL);
+#endif
+	if (tmp == 0) {
+		ThrowError("StartDiscord: tmp = 0!");
+		THREAD_RETURN(NULL);
+	}
+
+#ifdef WIN32
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+#endif
+
+	bool enablediscord = rule_manager.GetGlobalRule(R_Discord, DiscordEnabled)->GetBool();
+	
+	if(enablediscord == false) {
+		LogWrite(INIT__INFO, 0,"Discord","Bot Disabled By Rule...");
+		THREAD_RETURN(NULL);
+	}
+
+	LogWrite(INIT__INFO, 0, "Discord", "Starting Discord Bridge...");
+	const char* bottoken = rule_manager.GetGlobalRule(R_Discord, DiscordBotToken)->GetString();
+
+	if(strlen(bottoken)== 0) {
+		LogWrite(INIT__INFO, 0,"Discord","Bot Token Was Empty...");
+		THREAD_RETURN(NULL);
+	}
+
+	dpp::cluster bot(bottoken, dpp::i_default_intents | dpp::i_message_content);
+	
+	//if we have debug on, go ahead and show DPP logs.
+	#ifdef DEBUG
+		bot.on_log([&bot](const dpp::log_t & event) {
+		std::cout << "[" << dpp::utility::loglevel(event.severity) << "] " << event.message << "\n";
+		});
+	#endif
+	
+	bot.on_message_create([&bot](const dpp::message_create_t& event) {
+		if (event.msg.author.is_bot() == false) {
+			std::string chanid  = event.msg.channel_id.str();
+			std::string listenchan = rule_manager.GetGlobalRule(R_Discord, DiscordListenChan)->GetString();
+
+			if(chanid.compare(listenchan) != 0 || !chanid.size() || !listenchan.size()) {
+				return;
+			}
+			 chat.TellChannel(NULL, listenchan.c_str(), event.msg.content.c_str(), event.msg.author.username.c_str());
+		}
+	});
+
+	while(true) {
+		bot.start(dpp::st_wait);
+		//wait 30s for reconnect. prevents hammering discord and a potential ban.
+		std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+	}
+	
+	THREAD_RETURN(NULL);
+}
+#endif
