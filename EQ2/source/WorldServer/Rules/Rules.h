@@ -270,8 +270,8 @@ public:
 private:
 	int32 category;
 	int32 type;
-	char value[64];
-	char combined[256];
+	char value[1024];
+	char combined[2048];
 };
 
 class RuleSet {
