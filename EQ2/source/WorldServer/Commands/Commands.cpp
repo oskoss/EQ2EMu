@@ -11323,7 +11323,7 @@ void Commands::Command_Aquaman(Client* client, Seperator* sep) {
 void Commands::Command_ReportBug(Client* client, Seperator* sep) 
 {
 	if(sep)
-	{
+	{ 
 		string data;
 
 		if(sep->arg[0]){
@@ -11335,6 +11335,10 @@ void Commands::Command_ReportBug(Client* client, Seperator* sep)
 				data.append(" ").append(sep->arg[i]);
 		}
 
+		if(!sep->IsSet(7)){
+        data.append(" ").append(std::to_string(client->GetVersion())).append("\a");
+		}
+	
 		const char* target_name = 0;
 		int32 spawn_id = 0;
 
