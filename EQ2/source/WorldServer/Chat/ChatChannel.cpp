@@ -135,23 +135,36 @@ bool ChatChannel::TellChannel(Client *client, const char *message, const char* n
 		packet_struct->setDataByName("from_spawn_id", 0xFFFFFFFF);
 		packet_struct->setDataByName("to_spawn_id", 0xFFFFFFFF);
 
-		if (client)
+		if (client != NULL){
 			packet_struct->setDataByName("from", client->GetPlayer()->GetName());
-		else
-			packet_struct->setDataByName("from", name2);
+		} else {
+			char name3[128];
+			sprintf(name3,"[%s] from discord",name2);
+			packet_struct->setDataByName("from", name3);
+		}
 
 		packet_struct->setDataByName("to", to_client->GetPlayer()->GetName());
 		packet_struct->setDataByName("channel", to_client->GetMessageChannelColor(CHANNEL_CUSTOM_CHANNEL));
-		packet_struct->setDataByName("language", client->GetPlayer()->GetCurrentLanguage());
+
+		if(client != NULL){
+			packet_struct->setDataByName("language", client->GetPlayer()->GetCurrentLanguage());
+		}else{
+			packet_struct->setDataByName("language", 0);
+		}
 		packet_struct->setDataByName("message", message);
 		packet_struct->setDataByName("channel_name", name);
 		packet_struct->setDataByName("show_bubble", 1);
-		
-		if (client->GetPlayer()->GetCurrentLanguage() == 0 || to_client->GetPlayer()->HasLanguage(client->GetPlayer()->GetCurrentLanguage())) {
+
+		if(client != NULL){
+			if (client->GetPlayer()->GetCurrentLanguage() == 0 || to_client->GetPlayer()->HasLanguage(client->GetPlayer()->GetCurrentLanguage())) {
+				packet_struct->setDataByName("understood", 1);
+			}
+		} else {
 			packet_struct->setDataByName("understood", 1);
 		}
+
 		packet_struct->setDataByName("unknown4", 0);
-		
+	
 		to_client->QueuePacket(packet_struct->serialize());
 		safe_delete(packet_struct);
 	}
@@ -210,4 +223,5 @@ bool ChatChannel::SendChannelUserList(Client *client) {
 	safe_delete(packet_struct);
 
 	return true;
-}
+} 
+

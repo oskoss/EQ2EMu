@@ -376,6 +376,12 @@ void RuleManager::Init()
 
 	RULE_INIT(R_World, DatabaseVersion, "0");
 
+	//devn00b
+	RULE_INIT(R_Discord, DiscordEnabled, "0"); //Enable/Disable built in discord bot.
+	RULE_INIT(R_Discord, DiscordWebhookURL, "None"); //Webhook url used for server -> discord messages.
+	RULE_INIT(R_Discord, DiscordBotToken, "None"); //Bot token used to connect to discord and provides discord -> server messages.
+	RULE_INIT(R_Discord, DiscordChannel, "Discord"); // in-game channel used for server -> discord messages.
+	RULE_INIT(R_Discord, DiscordListenChan, "0"); // Discord ChannelID used for discord->server messages.
 #undef RULE_INIT
 }
 

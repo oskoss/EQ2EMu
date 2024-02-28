@@ -40,7 +40,8 @@ enum RuleCategory {
 	R_Zone,
 	R_Loot,
 	R_Spells,
-	R_Expansion
+	R_Expansion,
+	R_Discord
 };
 
 enum RuleType {
@@ -231,7 +232,12 @@ enum RuleType {
 	DatabaseVersion,
 
 	SkipLootGrayMob,
-	LootDistributionTime	
+	LootDistributionTime,
+	DiscordEnabled,
+	DiscordWebhookURL,
+	DiscordBotToken,
+	DiscordChannel,
+	DiscordListenChan
 };
 
 class Rule {
@@ -264,8 +270,8 @@ public:
 private:
 	int32 category;
 	int32 type;
-	char value[64];
-	char combined[256];
+	char value[1024];
+	char combined[2048];
 };
 
 class RuleSet {

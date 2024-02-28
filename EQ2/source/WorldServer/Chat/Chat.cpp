@@ -22,8 +22,23 @@
 #include "../../common/Log.h"
 #include "../../common/ConfigReader.h"
 #include "../../common/PacketStruct.h"
+		#include "../Rules/Rules.h"
+		extern RuleManager rule_manager;
+
+//devn00b
+#ifdef DISCORD
+	#ifndef WIN32
+		#include <dpp/dpp.h>
+		#include "ChatChannel.h"
+
+		extern ChatChannel channel;
+	#endif
+#endif
+
 
 extern ConfigReader configReader;
+
+
 
 Chat::Chat() {
 	m_channels.SetName("Chat::Channels");
@@ -262,6 +277,8 @@ bool Chat::LeaveAllChannels(Client *client) {
 bool Chat::TellChannel(Client *client, const char *channel_name, const char *message, const char* name) {
 	vector<ChatChannel *>::iterator itr;
 	bool ret = false;
+	bool enablediscord = rule_manager.GetGlobalRule(R_Discord, DiscordEnabled)->GetBool();
+	const char* discordchan = rule_manager.GetGlobalRule(R_Discord, DiscordChannel)->GetString();
 
 	m_channels.readlock(__FUNCTION__, __LINE__);
 	for (itr = channels.begin(); itr != channels.end(); itr++) {
@@ -270,6 +287,21 @@ bool Chat::TellChannel(Client *client, const char *channel_name, const char *mes
 				ret = (*itr)->TellChannelClient(client, message, name);
 			else
 				ret = (*itr)->TellChannel(client, message, name);
+
+			if(enablediscord == true && client){
+
+				if (strcmp(channel_name, discordchan) != 0){	
+					m_channels.releasereadlock(__FUNCTION__, __LINE__);
+					return ret;
+				}
+#ifdef DISCORD
+				if (client) {
+                	std::string whofrom = client->GetPlayer()->GetName();
+                	std::string msg = string(message);
+                	ret = PushDiscordMsg(msg.c_str(), whofrom.c_str());
+				}
+#endif				
+			}
 
 			break;
 		}
@@ -310,3 +342,31 @@ ChatChannel* Chat::GetChannel(const char *channel_name) {
 
 	return ret;
 }
+
+#ifdef DISCORD
+//this sends chat from EQ2EMu to Discord. Currently using webhooks. Makes things simpler code wise.
+int Chat::PushDiscordMsg(const char* msg, const char* from) {
+	bool enablediscord = rule_manager.GetGlobalRule(R_Discord, DiscordEnabled)->GetBool();
+	
+	if(enablediscord == false) {
+		LogWrite(INIT__INFO, 0,"Discord","Bot Disabled By Rule...");
+		return 0;
+	}
+
+ 	m_channels.readlock(__FUNCTION__, __LINE__);
+	const char* hook = rule_manager.GetGlobalRule(R_Discord, DiscordWebhookURL)->GetString();
+	std::string servername = net.GetWorldName();
+	char ourmsg[4096];
+
+	//form our message
+	sprintf(ourmsg,"[%s] [%s] Says: %s",from, servername.c_str(), msg);
+
+	/* send a message with this webhook */
+	dpp::cluster bot("");
+	dpp::webhook wh(hook);
+	bot.execute_webhook(wh, dpp::message(ourmsg));
+    m_channels.releasereadlock(__FUNCTION__, __LINE__);
+	
+	return 1;
+}
+#endif
