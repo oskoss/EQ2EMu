@@ -2977,7 +2977,9 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 				
 				if(data)
 				{
-					((Entity*)this)->SetSpeed(data->speed);
+					if(IsEntity()) {
+						((Entity*)this)->SetSpeed(data->speed);
+					}
 					SetSpeed(data->speed);
 					if(data->use_movement_location_heading)
 						SetHeading(data->heading);
