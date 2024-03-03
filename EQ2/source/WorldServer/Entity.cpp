@@ -118,12 +118,10 @@ void Entity::DeleteSpellEffects(bool removeClient)
 			{
 				if(deletedPtrs.find(GetInfoStruct()->maintained_effects[i].spell) == deletedPtrs.end())
 				{
-					LogWrite(SPELL__ERROR, 0, "Spell", "Delete maintained spell effect %u from %s", GetInfoStruct()->maintained_effects[i].spell_id, GetName());
+					deletedPtrs[GetInfoStruct()->maintained_effects[i].spell] = true;
 					lua_interface->RemoveSpell(GetInfoStruct()->maintained_effects[i].spell, false, removeClient, "", removeClient);
 					if (IsPlayer())
 						GetInfoStruct()->maintained_effects[i].icon = 0xFFFF;
-
-					deletedPtrs[GetInfoStruct()->maintained_effects[i].spell] = true;
 				}
 				
 				GetInfoStruct()->maintained_effects[i].spell_id = 0xFFFFFFFF;
@@ -132,16 +130,11 @@ void Entity::DeleteSpellEffects(bool removeClient)
 		}
 		if(GetInfoStruct()->spell_effects[i].spell_id != 0xFFFFFFFF)
 		{
-			
 			if(deletedPtrs.find(GetInfoStruct()->spell_effects[i].spell) == deletedPtrs.end()) {
 				if(GetInfoStruct()->spell_effects[i].spell && GetInfoStruct()->spell_effects[i].spell->spell && 
 					GetInfoStruct()->spell_effects[i].spell->spell->GetSpellData()->spell_book_type == SPELL_BOOK_TYPE_NOT_SHOWN) {
-					LogWrite(SPELL__ERROR, 0, "Spell", "Delete spell effect %u from %s", GetInfoStruct()->spell_effects[i].spell_id, GetName());
-					lua_interface->RemoveSpell(GetInfoStruct()->spell_effects[i].spell, false, removeClient, "", removeClient);
 					deletedPtrs[GetInfoStruct()->spell_effects[i].spell] = true;
-				}
-				else {
-					LogWrite(PLAYER__ERROR, 0, "Debug", "Skip delete spell effect %u from %s", GetInfoStruct()->spell_effects[i].spell_id, GetName());
+					lua_interface->RemoveSpell(GetInfoStruct()->spell_effects[i].spell, false, removeClient, "", removeClient);
 				}
 			}
 			GetInfoStruct()->spell_effects[i].spell_id = 0xFFFFFFFF;
