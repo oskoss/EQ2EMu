@@ -660,8 +660,6 @@ bool SpellProcess::CastInstant(Spell* spell, Entity* caster, Entity* target, boo
 	if(!remove)
 		return result;
 	
-	printf("%s: RemoveSpell %s\n", caster->GetName(), lua_spell->spell->GetName());
-	
 	lua_interface->RemoveSpell(lua_spell, true, SpellScriptTimersHasSpell(lua_spell));
 	return true;
 }
@@ -1735,9 +1733,14 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 					effect_message.replace(effect_message.find("%C"), 2, spell->caster->GetName());
 					send_to_sender = false;
 				}
-				spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, effect_message.c_str(), target, 50, send_to_sender);
+				
+				if(spell->caster->GetZone()) {
+					spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, effect_message.c_str(), target, 50, send_to_sender);
+				}
 			}
-			target->GetZone()->CallSpawnScript(target, SPAWN_SCRIPT_CASTED_ON, spell->caster, spell->spell->GetName());
+			if(target->GetZone()) {
+				target->GetZone()->CallSpawnScript(target, SPAWN_SCRIPT_CASTED_ON, spell->caster, spell->spell->GetName());
+			}
 		}
 	}
 	else{
@@ -2733,6 +2736,7 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 	if (!spell)
 		return;
 
+	MRemoveTargetList.writelock(__FUNCTION__, __LINE__);
 	if (remove_target_list.size() > 0){
 		map<LuaSpell*, vector<int32>*>::iterator remove_itr;
 		vector<int32>::iterator remove_target_itr;
@@ -2742,7 +2746,6 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 		Spawn* remove_spawn = 0;
 		bool should_delete = false;
 
-		MRemoveTargetList.writelock(__FUNCTION__, __LINE__);
 		for (remove_itr = remove_target_list.begin(); remove_itr != remove_target_list.end(); remove_itr++){
 			if (remove_itr->first == spell){
 				targets = &spell->targets;
@@ -2806,6 +2809,9 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 		MRemoveTargetList.releasewritelock(__FUNCTION__, __LINE__);
 		if (should_delete)
 			DeleteCasterSpell(spell, "purged");
+	}
+	else {
+		MRemoveTargetList.releasewritelock(__FUNCTION__, __LINE__);
 	}
 }
 
