@@ -4923,7 +4923,7 @@ void Client::HandleVerbRequest(EQApplicationPacket* app) {
 						}
 						if(spawn->IsPlayer() && player->GetGroupMemberInfo() && !player->GetGroupMemberInfo()->mentor_target_char_id)
 							delete_commands.push_back(player->CreateEntityCommand("Mentor", 10000, "mentor", "", 0, 0));
-						else if(spawn->IsPlayer() && player->GetGroupMemberInfo()->mentor_target_char_id == ((Player*)spawn)->GetCharacterID())
+						else if(spawn->IsPlayer() && player->GetGroupMemberInfo() && player->GetGroupMemberInfo()->mentor_target_char_id == ((Player*)spawn)->GetCharacterID())
 							delete_commands.push_back(player->CreateEntityCommand("Stop Mentoring", 10000, "unmentor", "", 0, 0));
 					}
 					else if (!player->GetGroupMemberInfo() || (player->GetGroupMemberInfo()->leader && world.GetGroupManager()->GetGroupSize(player->GetGroupMemberInfo()->group_id) < 6))
