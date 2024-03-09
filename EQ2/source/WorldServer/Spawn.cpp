@@ -3743,7 +3743,7 @@ void Spawn::CheckEncounterState(Entity* victim, bool test_auto_lock) {
 
 					for (int8 i = 0; i < members->size(); i++) {
 						Entity* member = members->at(i)->member;
-						if (member->GetZone() != attacker->GetZone())
+						if (!member || member->GetZone() != attacker->GetZone())
 							continue;
 
 						if (member->IsEntity()) {

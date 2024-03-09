@@ -4921,7 +4921,7 @@ void Client::HandleVerbRequest(EQApplicationPacket* app) {
 							delete_commands.push_back(player->CreateEntityCommand("kick from group", 10000, "kickfromgroup", "", 0, 0));
 							delete_commands.push_back(player->CreateEntityCommand("make group leader", 10000, "makeleader", "", 0, 0));
 						}
-						if(spawn->IsPlayer() && !player->GetGroupMemberInfo()->mentor_target_char_id)
+						if(spawn->IsPlayer() && player->GetGroupMemberInfo() && !player->GetGroupMemberInfo()->mentor_target_char_id)
 							delete_commands.push_back(player->CreateEntityCommand("Mentor", 10000, "mentor", "", 0, 0));
 						else if(spawn->IsPlayer() && player->GetGroupMemberInfo()->mentor_target_char_id == ((Player*)spawn)->GetCharacterID())
 							delete_commands.push_back(player->CreateEntityCommand("Stop Mentoring", 10000, "unmentor", "", 0, 0));
