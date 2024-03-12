@@ -2931,6 +2931,7 @@ void SpellProcess::DeleteSpell(LuaSpell* spell)
 	}
 	
 	lua_interface->SetLuaUserDataStale(spell);
+	lua_interface->RemoveCurrentSpell(spell->state);
 	safe_delete(spell);
 }
 

@@ -523,7 +523,7 @@ const char* LuaInterface::GetScriptName(lua_State* state)
 	MRegionScripts.releasewritelock(__FUNCTION__, __LINE__);
 
 	MSpells.lock();
-	LuaSpell* spell = GetCurrentSpell(state);
+	LuaSpell* spell = GetCurrentSpell(state, false);
 	if (spell)
 	{
 		const char* fileName = (spell->file_name.length() > 0) ? spell->file_name.c_str() : "";
@@ -609,10 +609,27 @@ std::string LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, boo
 	return functionCalled;
 }
 
-LuaSpell* LuaInterface::GetCurrentSpell(lua_State* state) {
+LuaSpell* LuaInterface::GetCurrentSpell(lua_State* state, bool needsLock) {
+	LuaSpell* spell = 0;
+	
+	if(needsLock)
+		MSpells.lock();
+	
 	if(current_spells.count(state) > 0)
-		return current_spells[state];
-	return 0;
+		spell = current_spells[state];
+	
+	if(needsLock)
+		MSpells.unlock();
+	
+	return spell;
+}
+
+void LuaInterface::RemoveCurrentSpell(lua_State* state) {
+	MSpells.lock();
+	map<lua_State*, LuaSpell*>::iterator itr = current_spells.find(state);
+	if(itr != current_spells.end())
+		current_spells.erase(itr);
+	MSpells.unlock();
 }
 
 bool LuaInterface::CallSpellProcess(LuaSpell* spell, int8 num_parameters, std::string customFunction) {
@@ -1589,6 +1606,7 @@ void LuaInterface::DeletePendingSpells(bool all) {
 			}
 
 			SetLuaUserDataStale(spell);
+			RemoveCurrentSpell(spell->state);
 			safe_delete(spell);
 		}
 	}
