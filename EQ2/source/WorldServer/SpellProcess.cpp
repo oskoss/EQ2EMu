@@ -1734,7 +1734,7 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 					send_to_sender = false;
 				}
 				
-				if(spell->caster->GetZone()) {
+				if(spell->caster && spell->caster->GetZone()) {
 					spell->caster->GetZone()->SimpleMessage(CHANNEL_SPELLS_OTHER, effect_message.c_str(), target, 50, send_to_sender);
 				}
 			}
