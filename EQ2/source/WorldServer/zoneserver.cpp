@@ -1526,9 +1526,8 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 					}
 					housing_spawn_map.erase(spawn->GetID());
 				}
-				
-				spellProcess->RemoveCaster(spawn);
 				MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
+				spellProcess->RemoveCaster(spawn);
 				safe_delete(spawn);
 			}
 			else
@@ -3628,7 +3627,11 @@ void ZoneServer::ClientProcess(bool ignore_shutdown_timer)
 				{
 					// avoid spam of messages while we await linkdead to complete
 					if(!client->IsLinkdeadTimerEnabled()) {
-						LogWrite(ZONE__DEBUG, 0, "Zone", "Client is disconnecting in %s (camping = %s)", __FUNCTION__, (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING) == 0 ? "false" : "true");
+						bool camping = (client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_CAMPING);
+						LogWrite(ZONE__DEBUG, 0, "Zone", "Client is disconnecting in %s (camping = %s)", __FUNCTION__, camping ? "true" : "false");
+						if(!camping) {
+							client->setConnection(nullptr);
+						}
 					}
 					
 					if((client->GetPlayer()->GetActivityStatus() & ACTIVITY_STATUS_LINKDEAD) > 0) {
