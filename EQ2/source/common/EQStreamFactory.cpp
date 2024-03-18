@@ -323,8 +323,9 @@ void EQStreamFactory::CheckTimeout(bool remove_all)
 				#ifdef WORLD
 				client_list.RemoveConnection(temp->second);
 				#endif
-				delete temp->second;
+				EQStream* stream = temp->second;
 				Streams.erase(temp);
+				delete stream;
 				continue;
 			}
 		}

@@ -231,6 +231,7 @@ public:
 	ZoneServer* GetZoningDestination() { return zoning_destination; }
 	Player*	GetPlayer(){ return player; }
 	EQStream*	getConnection(){ return eqs; }
+	void	setConnection(EQStream* ieqs){ eqs = ieqs; }
 
 	inline int32		GetIP()				{ return ip; }
 	inline int16		GetPort()			{ return port; }
