@@ -43,6 +43,18 @@ SpellProcess::~SpellProcess(){
 	RemoveAllSpells();
 }
 
+void SpellProcess::RemoveCaster(Spawn* caster){
+	MutexList<LuaSpell*>::iterator active_spells_itr = active_spells.begin();
+	while(active_spells_itr.Next()){
+		LuaSpell* spell = active_spells_itr->value;
+		spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
+		if(spell->caster == caster) {
+			spell->caster = nullptr;
+		}
+		spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+	}
+}
+
 void SpellProcess::RemoveAllSpells(bool reload_spells){
 	ClearSpellScriptTimerList();
 
@@ -2751,14 +2763,13 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 				targets = &spell->targets;
 				remove_targets = remove_itr->second;
 				if (remove_targets && targets){
+					spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
 					for (remove_target_itr = remove_targets->begin(); remove_target_itr != remove_targets->end(); remove_target_itr++){
 						if(!spell->caster || !spell->caster->GetZone())
 							continue;
 
 						remove_spawn = spell->caster->GetZone()->GetSpawnByID((*remove_target_itr));
 						if (remove_spawn) {
-							spell->MSpellTargets.writelock(__FUNCTION__, __LINE__);
-
 							if(remove_spawn && remove_spawn->IsPlayer())
 							{
 								multimap<int32,int8>::iterator entries;
@@ -2791,13 +2802,14 @@ void SpellProcess::CheckRemoveTargetFromSpell(LuaSpell* spell, bool allow_delete
 									break;
 								}
 							}
-							spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 							if (targets->size() == 0 && spell->char_id_targets.size() == 0 && allow_delete) {
+								spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 								should_delete = true;
 								break;
 							}
 						}
 					}
+					spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
 				}
 				break;
 			}

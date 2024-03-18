@@ -783,7 +783,6 @@ private:
 	void	ReloadTransporters();																				// never used outside zone server
 	void	DeleteSpawns(bool delete_all);																		// never used outside zone server
 	void	AddPendingDelete(Spawn* spawn);																		// never used outside zone server
-	void	RemovePendingDelete(Spawn* spawn);																		// never used outside zone server
 	void	ClearDeadSpawns();																					// never used outside zone server
 	void	RemoveChangedSpawn(Spawn* spawn);																	// never used outside zone server
 	void	ProcessDrowning();																					// never used outside zone server

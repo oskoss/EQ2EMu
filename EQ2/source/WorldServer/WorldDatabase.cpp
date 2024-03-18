@@ -6099,10 +6099,12 @@ bool WorldDatabase::LoadLocationGridLocations(LocationGrid* grid) {
 	bool ret = false;
 	if (grid) {
 		Query query;
+		int row_count = 0;
 		MYSQL_ROW row;
 		MYSQL_RES* result = query.RunQuery2(Q_SELECT, "SELECT `id`, `x`, `y`, `z` FROM `location_details` WHERE `location_id`=%u", grid->id);
-		if (result->row_count >= 3) {
+		if (result) {
 			while (result && (row = mysql_fetch_row(result))) {
+				row_count++;
 				Location* location = new Location;
 				location->id = atoul(row[0]);
 				location->x = atof(row[1]);
@@ -6112,8 +6114,8 @@ bool WorldDatabase::LoadLocationGridLocations(LocationGrid* grid) {
 			}
 			ret = true;
 		}
-		else
-			LogWrite(WORLD__ERROR, 0, "World", "Grid '%s' only has %u location(s).  A minimum of 3 is needed.", grid->name.c_str(), result->row_count);
+		if(row_count > 0 && row_count < 3)
+			LogWrite(WORLD__WARNING, 0, "World", "Grid '%s' only has %u location(s).  A minimum of 3 is needed for a proper location based grid.", grid->name.c_str(), row_count);
 	}
 	return ret;
 }

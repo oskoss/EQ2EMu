@@ -1475,18 +1475,6 @@ void ZoneServer::AddPendingDelete(Spawn* spawn) {
 	MSpawnDeleteList.releasewritelock(__FUNCTION__, __LINE__);
 }
 
-void ZoneServer::RemovePendingDelete(Spawn* spawn) {
-	if (!spawn)
-		return;
-
-	MSpawnDeleteList.writelock(__FUNCTION__, __LINE__);
-	if (spawn_delete_list.count(spawn) > 0)
-	{
-		spawn_delete_list.erase(spawn);
-	}
-	MSpawnDeleteList.releasewritelock(__FUNCTION__, __LINE__);
-}
-
 void ZoneServer::DeleteSpawns(bool delete_all) {
 	MSpawnDeleteList.writelock(__FUNCTION__, __LINE__);
 	MPendingSpawnRemoval.readlock(__FUNCTION__, __LINE__);
@@ -1538,8 +1526,9 @@ void ZoneServer::DeleteSpawns(bool delete_all) {
 					}
 					housing_spawn_map.erase(spawn->GetID());
 				}
-				MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 				
+				spellProcess->RemoveCaster(spawn);
+				MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 				safe_delete(spawn);
 			}
 			else
@@ -6403,7 +6392,8 @@ void ZoneServer::CheckLocationGrids() {
 			MutexList<LocationGrid*>::iterator location_grid_itr = location_grids.begin();
 			while (location_grid_itr.Next()) {
 				LocationGrid* grid = location_grid_itr.value;
-				if (grid->locations.size() > 0 || /*(grid->grid_id == grid_id ||*/ grid->players.count(player) > 0) {
+				bool playerInGrid = false;
+				if (grid->locations.size() > 0 || (playerInGrid = (grid->grid_id > 0 && grid->grid_id == grid_id)) || grid->players.count(player) > 0) {
 					float x_small = 0;
 					float x_large = 0;
 					float y_small = 0;
@@ -6412,41 +6402,46 @@ void ZoneServer::CheckLocationGrids() {
 					float z_large = 0;
 					bool first = true;
 					bool in_grid = false;
-					MutexList<Location*>::iterator location_itr = grid->locations.begin();
-					while (location_itr.Next()) {
-						Location* location = location_itr.value;
-						if (first) {
-							x_small = location->x;
-							x_large = location->x;
-							if (grid->include_y) {
-								y_small = location->y;
-								y_large = location->y;
-							}
-							z_small = location->z;
-							z_large = location->z;
-							first = false;
-						}
-						else {
-							if (location->x < x_small)
-								x_small = location->x;
-							else if (location->x > x_large)
-								x_large = location->x;
-							if (grid->include_y) {
-								if (location->y < y_small)
-									y_small = location->y;
-								else if (location->y > y_large)
-									y_large = location->y;
-							}
-							if (location->z < z_small)
-								z_small = location->z;
-							else if (location->z > z_large)
-								z_large = location->z;
-						}
+					if(grid->locations.size() == 0 && playerInGrid) { // no locations, we presume player is in grid
+						in_grid = true;
 					}
-					if (grid->include_y && (x >= x_small && x <= x_large && y >= y_small && y <= y_large && z >= z_small && z <= z_large))
-						in_grid = true;
-					else if (x >= x_small && x <= x_large && z >= z_small && z <= z_large)
-						in_grid = true;
+					else {
+						MutexList<Location*>::iterator location_itr = grid->locations.begin();
+						while (location_itr.Next()) {
+							Location* location = location_itr.value;
+							if (first) {
+								x_small = location->x;
+								x_large = location->x;
+								if (grid->include_y) {
+									y_small = location->y;
+									y_large = location->y;
+								}
+								z_small = location->z;
+								z_large = location->z;
+								first = false;
+							}
+							else {
+								if (location->x < x_small)
+									x_small = location->x;
+								else if (location->x > x_large)
+									x_large = location->x;
+								if (grid->include_y) {
+									if (location->y < y_small)
+										y_small = location->y;
+									else if (location->y > y_large)
+										y_large = location->y;
+								}
+								if (location->z < z_small)
+									z_small = location->z;
+								else if (location->z > z_large)
+									z_large = location->z;
+							}
+						}
+						if (grid->include_y && (x >= x_small && x <= x_large && y >= y_small && y <= y_large && z >= z_small && z <= z_large))
+							in_grid = true;
+						else if (x >= x_small && x <= x_large && z >= z_small && z <= z_large)
+							in_grid = true;
+					}
 					if (in_grid && grid->players.count(player) == 0) {
 						grid->players.Put(player, true);
 
