@@ -268,7 +268,7 @@ public:
 
 	/// <summary>Remove the given spell from the ZpellProcess</summary>
 	/// <param name='spell'>LuaSpell to remove</param>
-	bool DeleteCasterSpell(LuaSpell* spell, string reason="", bool removing_all_spells = false, Spawn* remove_target = nullptr, bool zone_shutting_down = false);
+	bool DeleteCasterSpell(LuaSpell* spell, string reason="", bool removing_all_spells = false, Spawn* remove_target = nullptr, bool zone_shutting_down = false, bool shared_lock_spell = true);
 
 	/// <summary>Interrupt the spell</summary>
 	/// <param name='interrupt'>InterruptStruct that contains all the info</param>
@@ -399,8 +399,8 @@ public:
 	static void AddSelfAndPetToCharTargets(LuaSpell* spell, Spawn* caster, bool onlyPet=false);
 	void DeleteActiveSpell(LuaSpell* spell);
 	static bool AddLuaSpellTarget(LuaSpell* lua_spell, int32 id, bool lock_spell_targets = true);
-private:
 	mutable std::shared_mutex MSpellProcess;
+private:
 	MutexMap<Entity*,Spell*> spell_que;
 	MutexList<LuaSpell*> active_spells;
 	MutexList<CastTimer*> cast_timers;

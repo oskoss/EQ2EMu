@@ -410,8 +410,10 @@ bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell, string reason)
 	return ret;
 }
 
-bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, Spawn* remove_target, bool zone_shutting_down){
-    std::shared_lock lock(MSpellProcess);	
+bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, Spawn* remove_target, bool zone_shutting_down, bool shared_lock_spell){
+	if(shared_lock_spell) {
+		MSpellProcess.lock_shared();
+	}
 
 	bool ret = false;
 	Spawn* target = 0;
@@ -435,6 +437,9 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 				}
 			}
 			spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
+			if(shared_lock_spell) {
+				MSpellProcess.unlock_shared();
+			}
 			return target_valid;
 		}
 		spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
@@ -534,6 +539,9 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 			lua_interface->RemoveSpell(spell, true, SpellScriptTimersHasSpell(spell), reason, removing_all_spells);
 	}
 	
+	if(shared_lock_spell) {
+		MSpellProcess.unlock_shared();
+	}
 	return ret;
 }
 
@@ -2012,7 +2020,7 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 			if (!spell)
 				continue;
 			if(spell->caster == spawn && call_expire_function){
-				DeleteCasterSpell(spell, "expired", remove_all);
+				DeleteCasterSpell(spell, "expired", remove_all, nullptr, false, lock_spell_process);
 				continue;
 			}
 			if (spell->spell->GetSpellData()->persist_through_death)

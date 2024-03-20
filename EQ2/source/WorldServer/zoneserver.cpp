@@ -531,7 +531,7 @@ void ZoneServer::DeleteData(bool boot_clients){
 					client->Disconnect();
 			}
 			else{
-				RemoveSpawnSupportFunctions(spawn, true);
+				RemoveSpawnSupportFunctions(spawn, boot_clients);
 				RemoveSpawnFromGrid(spawn, spawn->GetLocation());
 				AddPendingDelete(spawn);
 			}
@@ -841,8 +841,11 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 		}
 		MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 	}
-	else
+	else {
+		spellProcess->MSpellProcess.lock();
 		DeleteData(false);
+		spellProcess->MSpellProcess.unlock();
+	}
 
 	if(repop)
 	{
