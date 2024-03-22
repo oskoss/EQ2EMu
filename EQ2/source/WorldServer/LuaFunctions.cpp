@@ -1731,7 +1731,7 @@ int EQ2Emu_lua_AddHate(lua_State* state) {
 	}
 	
 	if (entity && entity->IsEntity() && amount != 0) {
-		if (luaspell) {
+		if (luaspell && luaspell->caster) {
 			ZoneServer* zone = luaspell->caster->GetZone();
 			luaspell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
 			for (int32 i = 0; i < luaspell->targets.size(); i++) {
@@ -2566,7 +2566,9 @@ int EQ2Emu_lua_RemoveSpellBonus(lua_State* state) {
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	if (luaspell && luaspell->spell) {
-		ZoneServer* zone = luaspell->caster->GetZone();
+		ZoneServer* zone = nullptr;
+		if (luaspell->caster != nullptr)
+			zone = luaspell->caster->GetZone();
 		if(!zone) {
 			zone = spawn->GetZone(); // workaround to try to establish a zone to find the targets and remove the spells
 		}
@@ -2666,7 +2668,7 @@ int EQ2Emu_lua_RemoveSkillBonus(lua_State* state) {
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	if (spawn && spawn->IsPlayer()) {
 		int32 spell_id = 0;
-		if (luaspell && luaspell->spell) {
+		if (luaspell && luaspell->spell && luaspell->caster) {
 			if(luaspell->resisted) {
 				lua_interface->ResetFunctionStack(state);
 				return 0;
@@ -2893,7 +2895,7 @@ int EQ2Emu_lua_RemoveControlEffect(lua_State* state) {
 	bool only_remove_spawn = lua_interface->GetInt8Value(state, 3) == 1;
 	LuaSpell* luaspell = lua_interface->GetCurrentSpell(state);
 	if (spawn && spawn->IsEntity()) {
-		if (!only_remove_spawn && luaspell && luaspell->spell) {
+		if (!only_remove_spawn && luaspell && luaspell->spell && luaspell->caster) {
 			ZoneServer* zone = luaspell->caster->GetZone();
 			Spawn* target = 0;
 			luaspell->MSpellTargets.readlock(__FUNCTION__, __LINE__);
