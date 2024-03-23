@@ -2941,8 +2941,6 @@ void SpellProcess::AddSpellCancel(LuaSpell* spell){
 void SpellProcess::DeleteSpell(LuaSpell* spell)
 {
 	RemoveSpellFromQueue(spell->spell, spell->caster);
-
-	DeleteActiveSpell(spell);
 	
 	if (spell->spell->IsCopiedSpell())
 	{
@@ -2952,7 +2950,8 @@ void SpellProcess::DeleteSpell(LuaSpell* spell)
 	
 	lua_interface->SetLuaUserDataStale(spell);
 	lua_interface->RemoveCurrentSpell(spell->state);
-	safe_delete(spell);
+	
+	DeleteActiveSpell(spell);
 }
 
 void SpellProcess::SpellCannotStack(ZoneServer* zone, Client* client, Entity* caster, LuaSpell* lua_spell, LuaSpell* conflictSpell)
@@ -2999,7 +2998,7 @@ void SpellProcess::AddSelfAndPetToCharTargets(LuaSpell* spell, Spawn* caster, bo
 }
 
 void SpellProcess::DeleteActiveSpell(LuaSpell* spell) {
-	active_spells.Remove(spell);
+	active_spells.Remove(spell, true);
 }
 
 bool SpellProcess::AddLuaSpellTarget(LuaSpell* lua_spell, int32 id, bool lock_spell_targets) {
