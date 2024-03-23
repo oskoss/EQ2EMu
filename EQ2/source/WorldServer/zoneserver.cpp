@@ -6542,6 +6542,8 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_proce
 	if(spawn->IsEntity())
 		RemoveSpellTimersFromSpawn((Entity*)spawn, true, true, true, lock_spell_process);
 
+	StopSpawnScriptTimer(spawn, "");
+
 	RemoveDamagedSpawn(spawn);
 	spawn->SendSpawnChanges(false);
 	RemoveChangedSpawn(spawn);
