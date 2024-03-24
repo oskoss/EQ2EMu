@@ -531,7 +531,7 @@ void ZoneServer::DeleteData(bool boot_clients){
 					client->Disconnect();
 			}
 			else{
-				RemoveSpawnSupportFunctions(spawn, boot_clients);
+				RemoveSpawnSupportFunctions(spawn, boot_clients, boot_clients);
 				RemoveSpawnFromGrid(spawn, spawn->GetLocation());
 				AddPendingDelete(spawn);
 			}
@@ -6533,7 +6533,7 @@ void ZoneServer::ProcessEntityCommand(EntityCommand* entity_command, Entity* cas
 		spellProcess->ProcessEntityCommand(this, entity_command, caster, target, lock);
 }
 
-void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_process) {
+void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_process, bool shutdown) {
 	if(!spawn)
 		return;	
 	
@@ -6542,8 +6542,9 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_proce
 	if(spawn->IsEntity())
 		RemoveSpellTimersFromSpawn((Entity*)spawn, true, true, true, lock_spell_process);
 
-	StopSpawnScriptTimer(spawn, "");
-
+	if(!shutdown) { // in case of shutdown, DeleteData(true) handles the cleanup later via DeleteSpawnScriptTimers
+		StopSpawnScriptTimer(spawn, "");
+	}
 	RemoveDamagedSpawn(spawn);
 	spawn->SendSpawnChanges(false);
 	RemoveChangedSpawn(spawn);
