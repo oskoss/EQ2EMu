@@ -779,7 +779,7 @@ private:
 	void	RemoveLocationProximities();																		// never used outside zone server
 	void	CheckLocationProximity();																			// never used outside zone server
 	void	CheckLocationGrids();																				// never used outside zone server
-	void	RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_process = false);															// never used outside zone server
+	void	RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_process = false, bool shutdown = false);	// never used outside zone server
 	void	ReloadTransporters();																				// never used outside zone server
 	void	DeleteSpawns(bool delete_all);																		// never used outside zone server
 	void	AddPendingDelete(Spawn* spawn);																		// never used outside zone server
