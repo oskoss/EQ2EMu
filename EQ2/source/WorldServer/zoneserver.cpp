@@ -531,7 +531,7 @@ void ZoneServer::DeleteData(bool boot_clients){
 					client->Disconnect();
 			}
 			else{
-				RemoveSpawnSupportFunctions(spawn, boot_clients, boot_clients);
+				RemoveSpawnSupportFunctions(spawn, boot_clients, true);
 				RemoveSpawnFromGrid(spawn, spawn->GetLocation());
 				AddPendingDelete(spawn);
 			}
@@ -1716,7 +1716,7 @@ bool ZoneServer::Process()
 		if(startupDelayTimer.Check())
 			startupDelayTimer.Disable();
 
-		if(spellProcess)
+		if(!reloading && spellProcess)
 			spellProcess->Process();
 		if (tradeskillMgr)
 			tradeskillMgr->Process();
@@ -1783,7 +1783,7 @@ bool ZoneServer::Process()
 			CheckWidgetTimers();
 
 		// spawn_script_timers loop
-		if(!zoneShuttingDown)
+		if(!reloading && !zoneShuttingDown)
 			CheckSpawnScriptTimers();
 
 		// Check to see if a dead spawn needs to be removed
