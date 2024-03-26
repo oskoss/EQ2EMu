@@ -411,7 +411,7 @@ bool SpellProcess::DeleteCasterSpell(Spawn* caster, Spell* spell, string reason)
 }
 
 bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removing_all_spells, Spawn* remove_target, bool zone_shutting_down, bool shared_lock_spell){
-	if(shared_lock_spell) {
+	if(shared_lock_spell && !removing_all_spells) {
 		MSpellProcess.lock_shared();
 	}
 
@@ -437,7 +437,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 				}
 			}
 			spell->MSpellTargets.releasewritelock(__FUNCTION__, __LINE__);
-			if(shared_lock_spell) {
+			if(shared_lock_spell && !removing_all_spells) {
 				MSpellProcess.unlock_shared();
 			}
 			return target_valid;
@@ -539,7 +539,7 @@ bool SpellProcess::DeleteCasterSpell(LuaSpell* spell, string reason, bool removi
 			lua_interface->RemoveSpell(spell, true, SpellScriptTimersHasSpell(spell), reason, removing_all_spells);
 	}
 	
-	if(shared_lock_spell) {
+	if(shared_lock_spell && !removing_all_spells) {
 		MSpellProcess.unlock_shared();
 	}
 	return ret;
