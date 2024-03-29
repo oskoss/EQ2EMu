@@ -233,7 +233,13 @@ bool DatabaseNew::Select(DatabaseResult *result, const char *query, ...) {
 		res = mysql_store_result(&mysql);
 
 		if (res != NULL)
-			ret = result->StoreResult(res);
+		{
+			// Grab number of rows and number of fields from the query
+			uint8 num_rows = mysql_affected_rows(&mysql);
+			uint8 num_fields = mysql_field_count(&mysql);
+
+			ret = result->StoreResult(res, num_fields, num_rows);
+		}
 		else {
 			LogWrite(DATABASE__ERROR, 0, "Database", "Error storing MySql query result (%d): %s\n%s", mysql_errno(&mysql), mysql_error(&mysql), buf);
 			ret = false;
