@@ -4326,12 +4326,14 @@ void ZoneServer::StopSpawnScriptTimer(Spawn* spawn, std::string functionName){
 	if(spawn_script_timers.size() > 0){
 		set<SpawnScriptTimer*>::iterator itr;
 		SpawnScriptTimer* timer = 0;
-		for (itr = spawn_script_timers.begin(); itr != spawn_script_timers.end(); itr++) {
+		for (itr = spawn_script_timers.begin(); itr != spawn_script_timers.end(); ) {
 			timer = *itr;
 			if(timer->spawn == spawn->GetID() && (functionName == "" || timer->function == functionName) && remove_spawn_script_timers_list.count(timer) == 0) {
 				itr = spawn_script_timers.erase(itr);
 				safe_delete(timer);
 			}
+			else
+				itr++;
 		}
 	}
 	MRemoveSpawnScriptTimersList.releasewritelock(__FUNCTION__, __LINE__);
@@ -4366,7 +4368,13 @@ void ZoneServer::DeleteSpawnScriptTimers() {
 		
 		for (itr = remove_spawn_script_timers_list.begin(); itr != remove_spawn_script_timers_list.end(); itr++) {
 			timer = *itr;
-			spawn_script_timers.erase(timer);
+			set<SpawnScriptTimer*>::iterator itr2;
+
+			itr2 = spawn_script_timers.find(timer);
+
+			if(itr2 != spawn_script_timers.end())
+				spawn_script_timers.erase(itr2);
+
 			safe_delete(timer);	
 		}
 		remove_spawn_script_timers_list.clear();
