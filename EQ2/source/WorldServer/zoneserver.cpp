@@ -842,9 +842,7 @@ void ZoneServer::ProcessDepop(bool respawns_allowed, bool repop) {
 		MSpawnList.releasewritelock(__FUNCTION__, __LINE__);
 	}
 	else {
-		spellProcess->MSpellProcess.lock();
 		DeleteData(false);
-		spellProcess->MSpellProcess.unlock();
 	}
 
 	if(repop)
