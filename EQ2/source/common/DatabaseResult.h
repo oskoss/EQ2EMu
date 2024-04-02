@@ -6,13 +6,14 @@
 #include <WinSock2.h>	//#include <my_global.h> when we/if we go to winsock2 :/
 #endif
 #include <mysql.h>
+#include <map>
 
 class DatabaseResult {
 public:
 	DatabaseResult();
 	virtual ~DatabaseResult();
 
-	bool StoreResult(MYSQL_RES *res);
+	bool StoreResult(MYSQL_RES* result, uint8 field_count, uint8 row_count);
 	bool Next();
 
 	bool IsNull(unsigned int index);
@@ -40,15 +41,17 @@ public:
 	const char * GetString(unsigned int index);
 	const char * GetStringStr(const char *field_name);
 
-	unsigned int GetNumRows() {return result == NULL ? 0 : (unsigned int)mysql_num_rows(result);}
+	const unsigned int GetNumRows() { return num_rows; }
 	
 	const char * GetFieldValue(unsigned int index);
 	const char * GetFieldValueStr(const char *field_name);
 private:
 	MYSQL_RES *result;
 	MYSQL_ROW row;
-	char **field_names;
+	unsigned int num_rows;
 	unsigned int num_fields;
+
+	std::map<std::string_view,uint8> field_map;
 };
 
 #endif

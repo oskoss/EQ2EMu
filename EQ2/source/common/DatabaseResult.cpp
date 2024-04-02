@@ -28,11 +28,7 @@
 //return this instead of NULL for certain functions to prevent crashes from coding errors
 static const char *empty_str = "";
 
-DatabaseResult::DatabaseResult() {
-	result = NULL;
-	field_names = NULL;
-	num_fields = 0;
-	row = 0;
+DatabaseResult::DatabaseResult(): field_map(), result(0), num_fields(0), row(0) {
 }
 
 DatabaseResult::~DatabaseResult() {
@@ -41,60 +37,40 @@ DatabaseResult::~DatabaseResult() {
 	if (result != NULL)
 		mysql_free_result(result);
 
-	if (field_names != NULL) {
-		for (i = 0; i < num_fields; i++)
-			free(field_names[i]);
-		free(field_names);
+	if (field_map.size()) {
+		field_map.clear();
 	}
 }
 
-bool DatabaseResult::StoreResult(MYSQL_RES *res) {
-	unsigned int i, j;
-	MYSQL_FIELD *field;
+bool DatabaseResult::StoreResult(MYSQL_RES* res, uint8 field_count, uint8 row_count) {
 
 	//clear any previously stored result
 	if (result != NULL)
 		mysql_free_result(result);
 
 	//clear any field names from a previous result
-	if (field_names != NULL) {
-		for (i = 0; i < num_fields; i++)
-			free(field_names[i]);
-		free(field_names);
+	if (field_map.size()) {
+		field_map.clear();
 	}
 
-	//store the new result
 	result = res;
-	num_fields = mysql_num_fields(res);
-	
-	//allocate enough space for each field's name
-	if ((field_names = (char **)malloc(sizeof(char *) * num_fields)) == NULL) {
-		LogWrite(DATABASE__ERROR, 0, "Database Result", "Unable to allocate %u bytes when storing database result and fetching field names\nNumber of fields=%u\n", sizeof(char *) * num_fields, num_fields);
-		mysql_free_result(result);
+	num_rows = row_count;	
+	num_fields = field_count;
+
+	// No rows or fields then we don't care
+	if (!num_rows || !num_fields) {
+		mysql_free_result(res);
 		result = NULL;
-		num_fields = 0;
 		return false;
 	}
 
-	//store each field's name
-	i = 0;
-	while ((field = mysql_fetch_field(result)) != NULL) {
-		if ((field_names[i] = (char *)calloc(field->name_length + 1, sizeof(char))) == NULL) {
-			LogWrite(DATABASE__ERROR, 0, "Database Result", "Unable to allocate %u bytes when storing databse result and copying field name %s\n", field->name_length + 1, field->name);
-			mysql_free_result(result);
-			result = NULL;
-			for (j = 0; j < i; j++)
-				free(field_names[j]);
-			free(field_names);
-			field_names = NULL;
-			num_fields = 0;
-			return false;
-		}
+	
+	const MYSQL_FIELD* fields = mysql_fetch_fields(result);
 
-		strncpy(field_names[i], field->name, field->name_length);
-		i++;
+	for (uint8 i = 0; i < num_fields; ++i) {
+		field_map.emplace(std::make_pair(std::string_view(fields[i].name), i));
 	}
-
+	
 	return true;
 }
 
@@ -108,11 +84,9 @@ const char * DatabaseResult::GetFieldValue(unsigned int index) {
 }
 
 const char * DatabaseResult::GetFieldValueStr(const char *field_name) {
-	unsigned int i;
-
-	for (i = 0; i < num_fields; i++) {
-		if (strncmp(field_name, field_names[i], FIELD_NAME_MAX) == 0)
-			return row[i];
+	const auto& map_iterator = field_map.find(std::string_view(field_name));
+	if (map_iterator != field_map.end()) {
+		return row[map_iterator->second];
 	}
 
 	LogWrite(DATABASE__ERROR, 0, "Database Result", "Unknown field name '%s'", field_name);
