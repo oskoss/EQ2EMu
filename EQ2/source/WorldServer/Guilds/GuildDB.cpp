@@ -77,8 +77,10 @@ int32 WorldDatabase::LoadGuildMembers(Guild* guild) {
 
 	while (result && (row = mysql_fetch_row(result))) {
 		char_id = atoul(row[0]);
-		if (!(name = GetCharacterName(char_id)))
+		if (!(name = GetCharacterName(char_id))) {
+			LogWrite(GUILD__ERROR, 0, "Guilds", "WorldDatabase::LoadGuildMembers Cannot find guild member with character id %u.", char_id);
 			continue;
+		}
 
 		GuildMember* gm = new GuildMember;
 		gm->character_id = char_id;

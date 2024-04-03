@@ -294,8 +294,6 @@ void Client::RemoveClientFromZone() {
 	safe_delete_array(incoming_paperdoll.image_bytes);
 
 	MDeletePlayer.writelock(__FUNCTION__, __LINE__);
-	if (player && !player->GetPendingDeletion())
-		safe_delete(player);
 	player = nullptr;
 	MDeletePlayer.releasewritelock(__FUNCTION__, __LINE__);
 	
@@ -672,17 +670,7 @@ void Client::HandlePlayerRevive(int32 point_id)
 		safe_delete(packet);
 	}
 
-	packet = configReader.getStruct("WS_SetControlGhost", GetVersion());
-	if (packet)
-	{
-		packet->setDataByName("spawn_id", 0xFFFFFFFF);
-		packet->setDataByName("speed", 32);
-		packet->setDataByName("unknown2", 0);
-		//DoF Merge: old value and speed wasn't included
-		//packet->setDataByName("unknown2", 255);
-		QueuePacket(packet->serialize());
-		safe_delete(packet);
-	}
+	SendControlGhost();
 
 	packet = configReader.getStruct("WS_SetPOVGhostCmd", GetVersion());
 	if (packet)
@@ -713,6 +701,20 @@ void Client::HandlePlayerRevive(int32 point_id)
 	m_resurrect.releasewritelock(__FUNCTION__, __LINE__);
 }
 
+void Client::SendControlGhost(int32 send_id, int8 unknown2) {
+	PacketStruct* packet = configReader.getStruct("WS_SetControlGhost", GetVersion());
+	if (packet) {
+		packet->setDataByName("spawn_id", send_id);
+		packet->setDataByName("speed", GetPlayer()->GetSpeed());
+		packet->setDataByName("size", 0.51);
+		packet->setDataByName("unknown2", unknown2);
+		packet->setDataByName("air_speed", player->GetAirSpeed());
+		EQ2Packet* app = packet->serialize();
+		QueuePacket(app);
+		safe_delete(packet);
+	}
+}
+
 void Client::SendCharInfo() {
 	EQ2Packet* app;
 	
@@ -722,18 +724,8 @@ void Client::SendCharInfo() {
 
 	SendCharPOVGhost();
 
-	PacketStruct* packet = configReader.getStruct("WS_SetControlGhost", GetVersion());
-	if (packet) {
-		packet->setDataByName("spawn_id", player->GetIDWithPlayerSpawn(player));
-		packet->setDataByName("size", .56);
-		packet->setDataByName("unknown2", 255);
-		packet->setDataByName("speed", player->GetSpeed());
-		packet->setDataByName("air_speed", player->GetAirSpeed());
-		EQ2Packet* app = packet->serialize();
-		QueuePacket(app);
-		safe_delete(packet);
-
-	}
+	SendControlGhost(player->GetIDWithPlayerSpawn(player), 255);
+	
 	if (version <= 283) {
 		//le: hack to allow client time to zone in, it gets stuck on Loading UI Resources if we go too fast, need to figure it out.  Probably something it doesnt like with ExamineInfo packets
 		Sleep(2000);
@@ -1566,6 +1558,7 @@ bool Client::HandlePacket(EQApplicationPacket* app) {
 		LogWrite(OPCODE__DEBUG, 1, "Opcode", "Opcode 0x%X (%i): OP_DoneLoadingEntityResourcesMsg", opcode, opcode);
 		if (!IsReadyForSpawns())
 			SetReadyForSpawns(true);
+		player->CalculateApplyWeight();
 		SendCharInfo();
 		pos_update.Start();
 		quest_pos_timer.Start();
@@ -7583,6 +7576,8 @@ bool Client::RemoveItem(Item* item, int16 quantity, bool force_override_no_delet
 			lua_interface->SetLuaUserDataStale(item);
 			safe_delete(item);
 		}
+
+		GetPlayer()->CalculateApplyWeight();
 		return true;
 	}
 

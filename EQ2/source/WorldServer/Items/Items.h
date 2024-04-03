@@ -1096,6 +1096,7 @@ public:
 	bool  AssignItemToFreeSlot(Item* item);
 	int16 GetNumberOfFreeSlots();
 	int16 GetNumberOfItems();
+	int32 GetWeight();
 	bool  HasFreeSlot();
 	bool  HasFreeBagSlot();
 	void DestroyItem(int16 index);
@@ -1168,6 +1169,7 @@ public:
 
 	bool	HasItem(int32 id);
 	int8	GetNumberOfItems();
+	int32	GetWeight();
 	Item*	GetItemFromUniqueID(int32 item_id);
 	Item*	GetItemFromItemID(int32 item_id);
 	void	SetItem(int8 slot_id, Item* item, bool locked = false);

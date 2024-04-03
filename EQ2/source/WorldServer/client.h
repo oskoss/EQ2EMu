@@ -175,6 +175,7 @@ public:
 	void	SendZoneInfo();
 	void	SendZoneSpawns();
 	void	HandleVerbRequest(EQApplicationPacket* app);
+	void	SendControlGhost(int32 send_id=0xFFFFFFFF, int8 unknown2=0);
 	void	SendCharInfo();
 	void	SendLoginDeniedBadVersion();
 	void	SendCharPOVGhost();

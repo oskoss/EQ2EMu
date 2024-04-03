@@ -639,6 +639,9 @@ bool LuaInterface::CallSpellProcess(LuaSpell* spell, int8 num_parameters, std::s
 	MSpells.lock();
 	current_spells[spell->state] = spell;
 	MSpells.unlock();
+	
+	LogWrite(SPELL__DEBUG, 0, "Spell", "%s LuaInterface::CallSpellProcess spell %s (%u) function %s, caster %s.", spell->spell ? spell->spell->GetName() : "UnknownUnset", spell->spell ? spell->spell->GetSpellID() : 0, customFunction.c_str(), spell->caster->GetName());
+	
 	if(lua_pcall(spell->state, num_parameters, 0, 0) != 0){
 		LogError("Error running function '%s' in %s: %s", customFunction.c_str(), spell->spell->GetName(), lua_tostring(spell->state, -1));
 		lua_pop(spell->state, 1);

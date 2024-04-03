@@ -1386,7 +1386,7 @@ void Entity::CalculateBonuses(){
 	MStats.lock();
 	stats.clear();
 	MStats.unlock();
-
+		
 	ItemStatsValues* values = equipment_list.CalculateEquipmentBonuses(this);
 	CalculateSpellBonuses(values);
 	
@@ -1560,8 +1560,58 @@ void Entity::CalculateBonuses(){
 	info->set_avoidance_display(total_avoidance);
 
 	SetRegenValues(effective_level);
-
+	
+	CalculateApplyWeight();
+	
 	safe_delete(values);
+}
+
+void Entity::CalculateApplyWeight() {
+	if (IsPlayer()) {
+		int32 prev_weight = GetInfoStruct()->get_weight();
+		int32 inv_weight = ((Player*)this)->item_list.GetWeight();
+		
+		// calculate coin
+		int32 coin_copper = GetInfoStruct()->get_coin_copper();
+		int32 coin_silver = GetInfoStruct()->get_coin_silver();
+		int32 coin_gold = GetInfoStruct()->get_coin_gold();
+		int32 coin_plat = GetInfoStruct()->get_coin_plat();
+		
+		float weight_per_hundred = rule_manager.GetGlobalRule(R_Player, CoinWeightPerHundred)->GetFloat();
+		if(weight_per_hundred < 0.0f) {
+			weight_per_hundred = 0.0f;
+		}
+		int32 total_weight = (int32)((double)coin_copper / weight_per_hundred) + (double)((double)coin_silver / weight_per_hundred) + (double)((double)coin_gold / weight_per_hundred) + (double)((double)coin_plat / weight_per_hundred);
+		
+		total_weight += (int32)((double)inv_weight / 10.0);
+		
+		GetInfoStruct()->set_weight(total_weight);
+		
+		SetSpeedMultiplier(GetHighestSnare());
+		((Player*)this)->SetSpeed(GetSpeed());
+		if(((Player*)this)->GetClient()) {
+			((Player*)this)->GetClient()->SendControlGhost();
+		}
+		info_changed = true;
+		changed = true;
+		AddChangedZoneSpawn();
+		((Player*)this)->SetCharSheetChanged(true);
+	}
+	int32 max_weight = 0;
+	float weight_str_multiplier = rule_manager.GetGlobalRule(R_Player, MaxWeightStrengthMultiplier)->GetFloat();
+	int32 base_weight = rule_manager.GetGlobalRule(R_Player, BaseWeight)->GetInt32();
+	if(weight_str_multiplier < 0.0f) {
+		weight_str_multiplier = 0.0f;
+	}
+	
+	if(GetInfoStruct()->get_str() <= 0.0f) {
+		max_weight = base_weight; // rule for base strength
+	}
+	else {
+		max_weight = (int32)((double)GetInfoStruct()->get_str() * weight_str_multiplier); // rule multipler for strength
+		max_weight += base_weight; // rule for base strength
+	}
+	GetInfoStruct()->set_max_weight(max_weight);
 }
 
 void Entity::SetRegenValues(int16 effective_level)
@@ -1699,7 +1749,7 @@ void Entity::AddSpellBonus(LuaSpell* spell, int16 type, float value, int64 class
 	bonus->tier = (spell && spell->spell) ? spell->spell->GetSpellTier() : 0;
 	bonus_list.Add(bonus);
 
-	if(IsNPC())
+	if(IsNPC() || IsPlayer())
 		CalculateBonuses();
 }
 
@@ -1734,7 +1784,7 @@ void Entity::RemoveSpellBonus(const LuaSpell* spell, bool remove_all){
 		bonus_list.Remove(itr.value, true);
 	}
 	
-	if(IsNPC())
+	if(IsNPC() || IsPlayer())
 		CalculateBonuses();
 }
 
@@ -2795,17 +2845,35 @@ void Entity::SetSnareValue(LuaSpell* spell, float snare_val) {
 float Entity::GetHighestSnare() {
 	// For simplicity this will return the highest snare value, which is actually the lowest value
 	float ret = 1.0f;
-
+	float weight_diff = 0.0f;
+	if (IsPlayer() && rule_manager.GetGlobalRule(R_Player, WeightInflictsSpeed)->GetBool()) {
+		float weight_pct_impact = rule_manager.GetGlobalRule(R_Player, WeightPercentImpact)->GetFloat();
+		float weight_pct_cap = rule_manager.GetGlobalRule(R_Player, WeightPercentCap)->GetFloat();
+		if(weight_pct_impact > 1.0f) {
+			weight_pct_impact = 1.0f;
+		}
+		if(weight_pct_cap < weight_pct_impact) {
+			weight_pct_impact = weight_pct_cap;
+		}
+		int32 weight = GetInfoStruct()->get_weight();
+		int32 max_weight = GetInfoStruct()->get_max_weight();
+		if(weight > max_weight) {
+			int32 diff = weight - max_weight;
+			weight_diff = (float)diff * weight_pct_impact; // percentage impact rule on weight "per stone", default 1%
+			if(weight_diff > weight_pct_cap) // cap weight impact rule
+				weight_diff = weight_pct_cap; // cap weight impact rule
+		}
+	}
 	if (snare_values.size() == 0)
-		return ret;
+		return ((ret - weight_diff) < 0.0f ) ? 0.0f : (ret - weight_diff);
 
 	map<LuaSpell*, float>::iterator itr;
 	for (itr = snare_values.begin(); itr != snare_values.end(); itr++) {
 		if (itr->second < ret)
 			ret = itr->second;
 	}
-
-	return ret;
+	
+	return ((ret - weight_diff) < 0.0f ) ? 0.0f : (ret - weight_diff);
 }
 
 bool Entity::IsSnared() {

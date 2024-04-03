@@ -3391,6 +3391,20 @@ int16 PlayerItemList::GetNumberOfItems(){
 	return ret;
 }
 
+int32 PlayerItemList::GetWeight(){
+	int32 ret = 0;
+	MPlayerItems.readlock(__FUNCTION__, __LINE__);
+	for(int16 i = 0; i < indexed_items.size(); i++){
+		Item* item = indexed_items[i];
+		if (item) {
+			ret += item->generic_info.weight;
+		}
+	}
+	MPlayerItems.releasereadlock(__FUNCTION__, __LINE__);
+	return ret;
+}
+
+
 bool PlayerItemList::MoveItem(sint32 to_bag_id, int16 from_index, sint8 to, int8 appearance_type, int8 charges){
 	MPlayerItems.writelock(__FUNCTION__, __LINE__);
 	Item* item_from = indexed_items[from_index];
@@ -4162,6 +4176,18 @@ int8 EquipmentItemList::GetNumberOfItems(){
 	for(int8 i=0;i<NUM_SLOTS;i++){
 		if(items[i])
 			ret++;
+	}
+	MEquipmentItems.unlock();
+	return ret;
+}
+
+int32 EquipmentItemList::GetWeight(){
+	int32 ret = 0;
+	MEquipmentItems.lock();
+	for(int8 i=0;i<NUM_SLOTS;i++){
+		if(items[i]) {
+			ret += items[i]->generic_info.weight;
+		}
 	}
 	MEquipmentItems.unlock();
 	return ret;

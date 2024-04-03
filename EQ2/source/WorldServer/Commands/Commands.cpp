@@ -6796,6 +6796,7 @@ void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteComma
 				}
 				client->GetPlayer()->item_list.DestroyItem(index);
 				client->GetPlayer()->UpdateInventory(bag_id);
+				client->GetPlayer()->CalculateApplyWeight();
 			}
 		}
 		else if(sep->arg[4][0] && strncasecmp("move", sep->arg[0], 4) == 0 && sep->IsNumber(1) && sep->IsNumber(2) && sep->IsNumber(3) && sep->IsNumber(4))

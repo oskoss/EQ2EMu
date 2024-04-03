@@ -1784,8 +1784,6 @@ bool SpellProcess::CastProcessedSpell(LuaSpell* spell, bool passive, bool in_her
 			}
 			if (i == 0 && !spell->spell->GetSpellData()->not_maintained) {
 				spell->caster->AddMaintainedSpell(spell);
-				//((Entity*)target)->AddMaintainedSpell(spell);
-				LogWrite(SPELL__DEBUG, 0, "Spell", "AddMaintained on %s", ((Entity*)target)->GetName());
 			}
 			
 			SpellEffects* effect = ((Entity*)target)->GetSpellEffect(spell->spell->GetSpellID());

@@ -220,6 +220,12 @@ void RuleManager::Init()
 	RULE_INIT(R_Player, SwimmingSkillMinBreathLength, "30");
 	RULE_INIT(R_Player, SwimmingSkillMaxBreathLength, "1000");
 	RULE_INIT(R_Player, AutoSkillUpBaseSkills, "0"); // when set to 1 we auto skill to max value on levelling up for armor,shield,class,weapon skills
+	RULE_INIT(R_Player, MaxWeightStrengthMultiplier, "2.0"); // multiplier for strength to add to max weight, eg 25 str * 2.0 = 50 max weight + base weight
+	RULE_INIT(R_Player, BaseWeight, "50"); // base weight per class, added to max weight with the strength multiplier
+	RULE_INIT(R_Player, WeightPercentImpact, "0.01"); // overweight in stone speed impact (.01 = 1% per 1 stone)
+	RULE_INIT(R_Player, WeightPercentCap, "0.95"); // cap total impact for being overweight (.95 = 95%)
+	RULE_INIT(R_Player, CoinWeightPerHundred, "100.0"); // coin weight per stone, 100.0 = 100 coins per 1 stone
+	RULE_INIT(R_Player, WeightInflictsSpeed, "1"); // whether weight will inflict speed, 1 = on, 0 = off
 	
 	/* PVP */
 	RULE_INIT(R_PVP, AllowPVP, "0");

@@ -353,7 +353,6 @@ float PlayerInfo::GetBindZoneHeading(){
 }
 
 PacketStruct* PlayerInfo::serialize2(int16 version){
-	player->CalculateBonuses();
 	PacketStruct* packet = configReader.getStruct("WS_CharacterSheet", version);
 	if(packet){
 		//TODO: 2021 FIX THIS CASTING
@@ -638,8 +637,6 @@ void PlayerInfo::SetAccountAge(int32 age){
 }
 
 EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyValue) {
-	player->CalculateBonuses();
-
 	PacketStruct* packet = configReader.getStruct("WS_CharacterSheet", version);
 	//0-69, locked screen movement
 	//30-69 normal movement
@@ -979,9 +976,6 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 		packet->setDataByName("unknown168", 168);
 		packet->setDataByName("decrease_falling_dmg", 169);
 
-
-		info_struct->set_max_weight(200);
-
 		if (version <= 546) {
 			packet->setDataByName("exp_yellow", info_struct->get_xp_yellow() / 10);
 			packet->setDataByName("exp_blue", info_struct->get_xp_blue()/10);
@@ -1208,19 +1202,8 @@ EQ2Packet* PlayerInfo::serialize(int16 version, int16 modifyPos, int32 modifyVal
 			size = Pack(tmp, changes, size, size, version, reverse);
 		}
 
-		if (version >= 546)
-		{
-			PacketStruct* control_packet = configReader.getStruct("WS_SetControlGhost", version);
-			if (control_packet) {
-				control_packet->setDataByName("spawn_id", 0xFFFFFFFF);
-				control_packet->setDataByName("speed", player->GetSpeed());
-				control_packet->setDataByName("air_speed", player->GetAirSpeed());
-				control_packet->setDataByName("size", 0.51);
-				Client* client = player->GetClient();
-				if (client)
-					client->QueuePacket(control_packet->serialize());
-				safe_delete(control_packet);
-			}
+		if (version >= 546 && player->GetClient()) {
+			player->GetClient()->SendControlGhost();
 		}
 
 		EQ2Packet* ret_packet = new EQ2Packet(OP_UpdateCharacterSheetMsg, tmp, size);
@@ -1980,10 +1963,13 @@ bool Player::AddItem(Item* item, AddItemType type) {
 		}
 		else if (item_list.AssignItemToFreeSlot(item)) {
 			item->save_needed = true;
+			CalculateApplyWeight();
 			return true;
 		}
-		else if (item_list.AddOverflowItem(item))
+		else if (item_list.AddOverflowItem(item)) {
+			CalculateApplyWeight();
 			return true;
+		}
 	}
 	return false;
 }
