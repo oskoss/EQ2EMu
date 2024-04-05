@@ -450,6 +450,8 @@ public:
 	void Command_ShareQuest(Client* client, Seperator* sep);
 	void Command_Yell(Client* client, Seperator* sep);
 	void Command_SetAutoLootMode(Client* client, Seperator* sep);
+	void Command_AutoAttack(Client* client, Seperator* sep);
+	void Command_Assist(Client* client, Seperator* sep);
 
 	// AA Commands
 	void Get_AA_Xml(Client* client, Seperator* sep);
@@ -939,6 +941,7 @@ private:
 #define COMMAND_SHARE_QUEST				533
 
 #define COMMAND_SETAUTOLOOTMODE			534
+#define COMMAND_ASSIST					535
 
 #define GET_AA_XML						750
 #define ADD_AA							751

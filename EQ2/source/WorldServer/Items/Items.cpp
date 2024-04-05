@@ -849,6 +849,16 @@ ItemStatsValues* MasterItemList::CalculateItemBonuses(Item* item, Entity* entity
 					id = stat->stat_type*multiplier + stat->stat_subtype;
 			}
 
+			if(entity->IsPlayer()) {
+				int32 effective_level = entity->GetInfoStructUInt("effective_level");
+				if(effective_level && effective_level < entity->GetLevel() && item->details.recommended_level > effective_level)
+				{
+					int32 diff = item->details.recommended_level - effective_level;
+					float tmpValue = (float)value;
+					value = (sint32)(float)(tmpValue / (1.0f + ((float)diff * rule_manager.GetGlobalRule(R_Player, MentorItemDecayRate)->GetFloat())));
+				}
+			}
+			
 			world.AddBonuses(item, values, id, value, entity);
 		}
 		return values;

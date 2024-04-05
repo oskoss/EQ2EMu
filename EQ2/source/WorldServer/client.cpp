@@ -726,10 +726,6 @@ void Client::SendCharInfo() {
 
 	SendControlGhost(player->GetIDWithPlayerSpawn(player), 255);
 	
-	if (version <= 283) {
-		//le: hack to allow client time to zone in, it gets stuck on Loading UI Resources if we go too fast, need to figure it out.  Probably something it doesnt like with ExamineInfo packets
-		Sleep(2000);
-	}
 	//sending bad spawn packet?
 
 	//SendAchievementsList();

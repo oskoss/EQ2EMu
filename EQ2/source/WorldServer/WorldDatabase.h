@@ -122,6 +122,8 @@ using namespace std;
 #define CHAR_PROPERTY_GROUPSOLOAUTOLOCK 	"group_solo_autolock"
 #define CHAR_PROPERTY_AUTOLOOTMETHOD	 	"group_auto_loot_method"
 
+#define CHAR_PROPERTY_ASSISTAUTOATTACK	 	"assist_auto_attack"
+
 #define DB_TYPE_SPELLEFFECTS		1
 #define DB_TYPE_MAINTAINEDEFFECTS	2
 

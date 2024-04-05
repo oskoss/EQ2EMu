@@ -1742,8 +1742,31 @@ bool Player::CanEquipItem(Item* item, int8 slot) {
 					else
 						client->Message(CHANNEL_COLOR_RED, "Your class may not equip %s.", item->CreateItemLink(client->GetVersion()).c_str());
 				}
-				else
-					client->SimpleMessage(0, "You lack the skill required to equip this item.");
+				else {
+					Skill* firstSkill = master_skill_list.GetSkill(item->generic_info.skill_req1);
+					Skill* secondSkill = master_skill_list.GetSkill(item->generic_info.skill_req2);
+					std::string msg("");
+					if(GetClient()->GetAdminStatus() >= 200) {
+						if(firstSkill && !skill_list.HasSkill(item->generic_info.skill_req1)) {
+							msg += "(" + std::string(firstSkill->name.data.c_str());
+						}
+						
+						if(secondSkill && !skill_list.HasSkill(item->generic_info.skill_req2)) {
+							if(msg.length() > 0) {
+								msg += ", ";
+							}
+							else {
+								msg = "(";
+							}
+							msg += std::string(secondSkill->name.data.c_str());
+						}
+						
+						if(msg.length() > 0) {
+							msg += ") ";
+						}
+					}
+					client->Message(0, "You lack the skill %srequired to equip this item.",msg.c_str());
+				}
 			}
 			else
 				client->Message(0, "Item %s isn't equipable.", item->name.c_str());

@@ -363,6 +363,7 @@ void Entity::MapInfoStruct()
 	get_int8_funcs["group_lock_method"] = l::bind(&InfoStruct::get_group_lock_method, &info_struct);
 	get_int8_funcs["group_solo_autolock"] = l::bind(&InfoStruct::get_group_solo_autolock, &info_struct);
 	get_int8_funcs["group_auto_loot_method"] = l::bind(&InfoStruct::get_group_auto_loot_method, &info_struct);
+	get_int8_funcs["assist_auto_attack"] = l::bind(&InfoStruct::get_assist_auto_attack, &info_struct);
 	
 	get_string_funcs["action_state"] = l::bind(&InfoStruct::get_action_state, &info_struct);
 	get_string_funcs["combat_action_state"] = l::bind(&InfoStruct::get_combat_action_state, &info_struct);
@@ -564,6 +565,7 @@ void Entity::MapInfoStruct()
 	set_int8_funcs["group_lock_method"] = l::bind(&InfoStruct::set_group_lock_method, &info_struct, l::_1);
 	set_int8_funcs["group_solo_autolock"] = l::bind(&InfoStruct::set_group_solo_autolock, &info_struct, l::_1);
 	set_int8_funcs["group_auto_loot_method"] = l::bind(&InfoStruct::set_group_auto_loot_method, &info_struct, l::_1);
+	set_int8_funcs["assist_auto_attack"] = l::bind(&InfoStruct::set_assist_auto_attack, &info_struct, l::_1);
 	
 	set_string_funcs["action_state"] = l::bind(&InfoStruct::set_action_state, &info_struct, l::_1);
 	set_string_funcs["combat_action_state"] = l::bind(&InfoStruct::set_combat_action_state, &info_struct, l::_1);
@@ -762,6 +764,62 @@ void Entity::SetSecondaryLastAttackTime(int32 new_time){
 	GetInfoStruct()->set_secondary_last_attack_time(new_time);
 }
 
+void Entity::GetWeaponDamage(Item* item, int32* low_damage, int32* high_damage) {
+	if(!low_damage || !high_damage)
+		return;
+	int32 selected_low_dmg = item->weapon_info->damage_low3;
+	int32 selected_high_dmg = item->weapon_info->damage_high3;
+	
+	if(IsPlayer()) {
+		float skillMultiplier = rule_manager.GetGlobalRule(R_Player, LevelMasterySkillMultiplier)->GetFloat();
+		if(skillMultiplier <= 0.0f) {
+			skillMultiplier = 1.0f;
+		}
+		int32 min_level_skill = (int32)((float)item->generic_info.adventure_default_level*skillMultiplier);
+		int32 rec_level_skill = (int32)((float)item->details.recommended_level*skillMultiplier);
+		if(min_level_skill > rec_level_skill) {
+			rec_level_skill = rec_level_skill;
+		}
+		
+		Skill* masterySkill = ((Player*)this)->skill_list.GetSkill(item->generic_info.skill_req2);
+		if(masterySkill) {
+		LogWrite(PLAYER__ERROR, 0, "Player", "Item has skill %s %u requirement", masterySkill->name.data.c_str(), item->generic_info.skill_req2);
+			int16 skillID = master_item_list.GetItemStatIDByName(masterySkill->name.data);
+			int32 skill_chance = (int32)CalculateSkillWithBonus((char*)masterySkill->name.data.c_str(), master_item_list.GetItemStatIDByName(masterySkill->name.data), false);
+			if(skill_chance >= min_level_skill && skill_chance < rec_level_skill) {
+				int32 diff_skill = rec_level_skill - skill_chance;
+				if(diff_skill < 1) {
+					selected_low_dmg = item->weapon_info->damage_low2;
+					selected_high_dmg = item->weapon_info->damage_high2;
+				}
+				else {
+					diff_skill += 1;
+					double logResult = log((double)diff_skill) / skillMultiplier;
+					if(logResult > 1.0f) {
+						logResult = .95f;
+					}
+					
+					selected_low_dmg = (int32)((double)item->weapon_info->damage_low2 * (1.0 - logResult));
+					if(selected_low_dmg < item->weapon_info->damage_low3) {
+						selected_low_dmg = item->weapon_info->damage_low3;
+					}
+					selected_high_dmg = (int32)((double)item->weapon_info->damage_high2 * (1.0 - logResult));
+					if(selected_high_dmg < item->weapon_info->damage_high3) {
+						selected_high_dmg = item->weapon_info->damage_high3;
+					}
+				}
+			}
+			else if(skill_chance >= rec_level_skill) {
+				selected_low_dmg = item->weapon_info->damage_low2;
+				selected_high_dmg = item->weapon_info->damage_high2;
+			}
+		}
+	}
+
+	*low_damage = selected_low_dmg;
+	*high_damage = selected_high_dmg;
+}
+
 void Entity::ChangePrimaryWeapon(){
 	if(GetInfoStruct()->get_override_primary_weapon()) {
 		return;
@@ -770,9 +828,12 @@ void Entity::ChangePrimaryWeapon(){
 	int32 str_offset_dmg = GetStrengthDamage();
 	Item* item = equipment_list.GetItem(EQ2_PRIMARY_SLOT);
 	if(item && item->details.item_id > 0 && item->IsWeapon()){
+		int32 selected_low_dmg = item->weapon_info->damage_low3;
+		int32 selected_high_dmg = item->weapon_info->damage_high3;
+		GetWeaponDamage(item, &selected_low_dmg, &selected_high_dmg);
 		GetInfoStruct()->set_primary_weapon_delay(item->weapon_info->delay * 100);
-		GetInfoStruct()->set_primary_weapon_damage_low(item->weapon_info->damage_low3 + str_offset_dmg);
-		GetInfoStruct()->set_primary_weapon_damage_high(item->weapon_info->damage_high3 + str_offset_dmg);
+		GetInfoStruct()->set_primary_weapon_damage_low(selected_low_dmg + str_offset_dmg);
+		GetInfoStruct()->set_primary_weapon_damage_high(selected_high_dmg + str_offset_dmg);
 		GetInfoStruct()->set_primary_weapon_type(item->GetWeaponType());
 		GetInfoStruct()->set_wield_type(item->weapon_info->wield_type);
 	}
@@ -803,9 +864,12 @@ void Entity::ChangeSecondaryWeapon(){
 	
 	Item* item = equipment_list.GetItem(EQ2_SECONDARY_SLOT);
 	if(item && item->details.item_id > 0 && item->IsWeapon()){
+		int32 selected_low_dmg = item->weapon_info->damage_low3;
+		int32 selected_high_dmg = item->weapon_info->damage_high3;
+		GetWeaponDamage(item, &selected_low_dmg, &selected_high_dmg);
 		GetInfoStruct()->set_secondary_weapon_delay(item->weapon_info->delay * 100);
-		GetInfoStruct()->set_secondary_weapon_damage_low(item->weapon_info->damage_low3 + str_offset_dmg);
-		GetInfoStruct()->set_secondary_weapon_damage_high(item->weapon_info->damage_high3 + str_offset_dmg);
+		GetInfoStruct()->set_secondary_weapon_damage_low(selected_low_dmg + str_offset_dmg);
+		GetInfoStruct()->set_secondary_weapon_damage_high(selected_high_dmg + str_offset_dmg);
 		GetInfoStruct()->set_secondary_weapon_type(item->GetWeaponType());
 	}
 	else{
@@ -1562,6 +1626,8 @@ void Entity::CalculateBonuses(){
 	SetRegenValues(effective_level);
 	
 	CalculateApplyWeight();
+	
+	UpdateWeapons();
 	
 	safe_delete(values);
 }

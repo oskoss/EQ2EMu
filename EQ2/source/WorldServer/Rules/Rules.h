@@ -86,6 +86,7 @@ enum RuleType {
 	WeightPercentCap,
 	CoinWeightPerHundred,
 	WeightInflictsSpeed,
+	LevelMasterySkillMultiplier,
 
 	/* PVP */
 	AllowPVP,

@@ -287,6 +287,7 @@ struct InfoStruct{
 		group_lock_method_ = 0;
 		group_solo_autolock_ = 0;
 		group_auto_loot_method_ = 0;
+		assist_auto_attack_ = 0;
 		
 		action_state_ = std::string("");
 	}
@@ -697,6 +698,7 @@ struct InfoStruct{
 	int8	get_group_lock_method() { std::lock_guard<std::mutex> lk(classMutex); return group_lock_method_; }
 	int8	get_group_solo_autolock() { std::lock_guard<std::mutex> lk(classMutex); return group_solo_autolock_; }
 	int8	get_group_auto_loot_method() { std::lock_guard<std::mutex> lk(classMutex); return group_auto_loot_method_; }
+	int8	get_assist_auto_attack() { std::lock_guard<std::mutex> lk(classMutex); return assist_auto_attack_; }
 	
 	std::string get_action_state() { std::lock_guard<std::mutex> lk(classMutex); return action_state_; }
 	
@@ -1002,6 +1004,8 @@ struct InfoStruct{
 	void	set_group_lock_method(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_lock_method_ = value;  }
 	void	set_group_solo_autolock(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_solo_autolock_ = value; }
 	void	set_group_auto_loot_method(int8 value) { std::lock_guard<std::mutex> lk(classMutex); group_auto_loot_method_ = value; }
+	
+	void	set_assist_auto_attack(int8 value) { std::lock_guard<std::mutex> lk(classMutex); assist_auto_attack_ = value; }
 
 	void	set_action_state(std::string value) { std::lock_guard<std::mutex> lk(classMutex); action_state_ = value; }
 	
@@ -1223,6 +1227,8 @@ private:
 	int8			group_solo_autolock_;
 	int8			group_auto_loot_method_;
 	
+	int8			assist_auto_attack_;
+	
 	std::string		action_state_;
 	std::string		combat_action_state_;
 	
@@ -1323,6 +1329,7 @@ struct ThreatTransfer {
 #define IMMUNITY_TYPE_AOE 7
 #define IMMUNITY_TYPE_TAUNT 8
 #define IMMUNITY_TYPE_RIPOSTE 9
+#define IMMUNITY_TYPE_STRIKETHROUGH 10
 
 //class Spell;
 //class ZoneServer;
@@ -1454,6 +1461,8 @@ public:
 	bool	IsDualWield();
 	bool	BehindTarget(Spawn* target);
 	bool	FlankingTarget(Spawn* target);
+	
+	void	GetWeaponDamage(Item* item, int32* low_damage, int32* high_damage);
 	void	ChangePrimaryWeapon();
 	void	ChangeSecondaryWeapon();
 	void	ChangeRangedWeapon();

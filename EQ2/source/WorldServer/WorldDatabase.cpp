@@ -2150,6 +2150,11 @@ bool WorldDatabase::loadCharacterProperties(Client* client) {
 			int8 val = atoul(prop_value);
 			client->GetPlayer()->GetInfoStruct()->set_group_lock_method(val);
 		}
+		else if (!stricmp(prop_name, CHAR_PROPERTY_ASSISTAUTOATTACK))
+		{
+			int8 val = atoul(prop_value);
+			client->GetPlayer()->GetInfoStruct()->set_assist_auto_attack(val);
+		}
 	}
 
 	return true;

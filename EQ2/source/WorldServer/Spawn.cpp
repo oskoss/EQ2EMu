@@ -147,6 +147,7 @@ Spawn::Spawn(){
 	looter_spawn_id = 0;
 	is_loot_complete = false;
 	is_loot_dispensed = false;
+	reset_movement = false;
 }
 
 Spawn::~Spawn(){
@@ -2847,6 +2848,10 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 		}*/
 		return;
 	}
+	if(reset_movement) {
+		ResetMovement();
+		reset_movement = false;
+	}
 
 	if (forceMapCheck && GetZone() != nullptr && GetMap() != nullptr && GetMap()->IsMapLoaded())
 	{
@@ -3113,9 +3118,9 @@ void Spawn::ProcessMovement(bool isSpawnListLocked){
 	}*/
 }
 
-void Spawn::ResetMovement(bool inFlight){
-	if(!inFlight)
-		MMovementLoop.writelock();
+void Spawn::ResetMovement(){
+	MMovementLoop.writelock();
+	
 	vector<MovementData*>::iterator itr;
 	for(itr = movement_loop.begin(); itr != movement_loop.end(); itr++){
 		safe_delete(*itr);
@@ -3125,10 +3130,9 @@ void Spawn::ResetMovement(bool inFlight){
 	resume_movement = true;
 	ClearRunningLocations();
 
-	if(!inFlight)
-		MMovementLoop.releasewritelock();
+	MMovementLoop.releasewritelock();
 	
-	ValidateRunning(true, (inFlight == false));
+	ValidateRunning(true, true);
 }
 
 void Spawn::AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function, float heading, bool include_heading){
@@ -4541,7 +4545,7 @@ float Spawn::SpawnAngle(Spawn* target, float selfx, float selfz)
 
 void Spawn::StopMovement()
 {
-	ResetMovement(true);
+	reset_movement = true;
 }
 
 bool Spawn::PauseMovement(int32 period_of_time_ms)

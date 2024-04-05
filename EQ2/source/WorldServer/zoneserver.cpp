@@ -2773,6 +2773,7 @@ void ZoneServer::AddLoot(NPC* npc, Spawn* killer, GroupLootMethod loot_method, i
 							
 							int droplistsize = loot_drops->size();
 							float chancedroptally = 0;
+							bool breakIterMaxLoot = false;
 							chancedrop = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 100));
 							for (loot_drop_itr = loot_drops->begin(); loot_drop_itr != loot_drops->end(); loot_drop_itr++) {
 								drop = *loot_drop_itr;
@@ -2825,8 +2826,15 @@ void ZoneServer::AddLoot(NPC* npc, Spawn* killer, GroupLootMethod loot_method, i
 									//if(drop->equip_item) 
 
 								}
-								if (table->maxlootitems > 0 && count >= table->maxlootitems)
+								// so many items on this table break out and cap it!
+								if (table->maxlootitems > 0 && count >= table->maxlootitems) {
+									breakIterMaxLoot = true;
 									break;
+								}
+							}
+							// hit our max item drop for this table already, break out of numberchances
+							if(breakIterMaxLoot) {
+								break;
 							}
 						}
 					}

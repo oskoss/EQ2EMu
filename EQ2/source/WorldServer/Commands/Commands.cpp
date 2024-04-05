@@ -4110,57 +4110,9 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		}
 		case COMMAND_ATTACK:
 		case COMMAND_AUTO_ATTACK:{
-			int8 type = 1;
-			bool update = false;
-			Player* player = client->GetPlayer();
-			if(!player)
-				break;
-			bool incombat = player->EngagedInCombat();
-			if(sep && sep->arg[0] && sep->IsNumber(0))
-				type = atoi(sep->arg[0]);
-			if(!client->GetPlayer()->Alive()){
-				client->SimpleMessage(CHANNEL_COLOR_RED,"You cannot do that right now.");
-				break;
-			}
-			if(type == 0){
-				if(incombat)
-					client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
-					player->StopCombat(type);
-					update = true;
-			}
-			else {
-				if(type == 2){
-					player->InCombat(false);
-					if(incombat && player->GetRangeAttack()){
-						player->StopCombat(type);
-						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
-						update = true;
-					}
-					else{
-						player->SetRangeAttack(true);
-						player->InCombat(true, true);
-						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You start fighting.");
-						update = true;
-					}
-				}
-				else {
-					player->InCombat(false, true);
-					player->SetRangeAttack(false);
-					player->InCombat(true);
-					if(!incombat) {
-						client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You start fighting.");
-						update = true;
-					}
-				}
-				/*else
-					client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You cannot attack that!");*/
-			}
-			
-			if(update) {
-				player->SetCharSheetChanged(true);
-			}
+			Command_AutoAttack(client, sep);
 			break;
-								}
+		}
 		case COMMAND_DEPOP:{
 			bool allow_respawns = false;
 			if(sep && sep->arg[0] && sep->IsNumber(0)){
@@ -5724,6 +5676,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 		case COMMAND_SHARE_QUEST: { Command_ShareQuest(client, sep); break; }
 		case COMMAND_YELL: { Command_Yell(client, sep); break; }
 		case COMMAND_SETAUTOLOOTMODE: { Command_SetAutoLootMode(client, sep); break; }
+		case COMMAND_ASSIST: { Command_Assist(client, sep); break; }
 		default: 
 		{
 			LogWrite(COMMAND__WARNING, 0, "Command", "Unhandled command: %s", command->command.data.c_str());
@@ -10970,6 +10923,8 @@ void Commands::Command_WeaponStats(Client* client)
 	if (primary) {
 		client->Message(0, "Name: %s", primary->name.c_str());
 		client->Message(0, "Base Damage: %u - %u", primary->weapon_info->damage_low3, primary->weapon_info->damage_high3);
+		client->Message(0, "Mastery Damage: %u - %u", primary->weapon_info->damage_low2, primary->weapon_info->damage_high2);
+		client->Message(0, "Damage: %u - %u", primary->weapon_info->damage_low1, primary->weapon_info->damage_high1);
 		client->Message(0, "Actual Damage: %u - %u", target ? ((Entity*)target)->GetPrimaryWeaponMinDamage() : player->GetPrimaryWeaponMinDamage(),
 													target ? ((Entity*)target)->GetPrimaryWeaponMaxDamage() : player->GetPrimaryWeaponMaxDamage());
 		client->Message(0, "Actual Delay: %u", target ? ((Entity*)target)->GetPrimaryWeaponDelay() : player->GetPrimaryWeaponDelay());
@@ -10992,6 +10947,8 @@ void Commands::Command_WeaponStats(Client* client)
 		client->SimpleMessage(0, "Secondary:");
 		client->Message(0, "Name: %s", secondary->name.c_str());
 		client->Message(0, "Base Damage: %u - %u", secondary->weapon_info->damage_low3, secondary->weapon_info->damage_high3);
+		client->Message(0, "Mastery Damage: %u - %u", secondary->weapon_info->damage_low2, secondary->weapon_info->damage_high2);
+		client->Message(0, "Damage: %u - %u", secondary->weapon_info->damage_low1, secondary->weapon_info->damage_high1);
 		client->Message(0, "Actual Damage: %u - %u", target ? ((Entity*)target)->GetSecondaryWeaponMinDamage() : player->GetSecondaryWeaponMinDamage(), 
 													 target ? ((Entity*)target)->GetSecondaryWeaponMaxDamage() : player->GetSecondaryWeaponMaxDamage());
 		client->Message(0, "Actual Delay: %d", target ? ((Entity*)target)->GetSecondaryWeaponDelay() : player->GetSecondaryWeaponDelay() * 0.1);
@@ -11004,6 +10961,8 @@ void Commands::Command_WeaponStats(Client* client)
 	if (ranged) {
 		client->Message(0, "Name: %s", ranged->name.c_str());
 		client->Message(0, "Base Damage: %u - %u", ranged->ranged_info->weapon_info.damage_low3, ranged->ranged_info->weapon_info.damage_high3);
+		client->Message(0, "Mastery Damage: %u - %u", ranged->ranged_info->weapon_info.damage_low2, ranged->ranged_info->weapon_info.damage_high2);
+		client->Message(0, "Damage: %u - %u", ranged->ranged_info->weapon_info.damage_low1, ranged->ranged_info->weapon_info.damage_high1);
 		client->Message(0, "Actual Damage: %u - %u", target ? ((Entity*)target)->GetRangedWeaponMinDamage() : player->GetRangedWeaponMinDamage(), 
 													 target ? ((Entity*)target)->GetRangedWeaponMaxDamage() : player->GetRangedWeaponMaxDamage());
 		client->Message(0, "Actual Delay: %d",  target ? ((Entity*)target)->GetRangeWeaponDelay() : player->GetRangeWeaponDelay() * 0.1);
@@ -12156,3 +12115,101 @@ void Commands::Command_SetAutoLootMode(Client* client, Seperator* sep) {
 		client->SendDefaultGroupOptions();
 	}
 }
+
+/*
+	Function: Command_AutoAttack()
+	Purpose	: Attack / Auto Attack
+	Example	: /attack, /autoattack type
+*/ 
+void Commands::Command_AutoAttack(Client* client, Seperator* sep) {
+	int8 type = 1;
+	bool update = false;
+	Player* player = client->GetPlayer();
+	if(!player)
+		return;
+	bool incombat = player->EngagedInCombat();
+	if(sep && sep->arg[0] && sep->IsNumber(0))
+		type = atoi(sep->arg[0]);
+	if(!client->GetPlayer()->Alive()){
+		client->SimpleMessage(CHANNEL_COLOR_RED,"You cannot do that right now.");
+		return;
+	}
+	if(type == 0){
+		if(incombat)
+			client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
+			player->StopCombat(type);
+			update = true;
+	}
+	else {
+		if(type == 2){
+			player->InCombat(false);
+			if(incombat && player->GetRangeAttack()){
+				player->StopCombat(type);
+				client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You stop fighting.");
+				update = true;
+			}
+			else{
+				player->SetRangeAttack(true);
+				player->InCombat(true, true);
+				client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You start fighting.");
+				update = true;
+			}
+		}
+		else {
+			player->InCombat(false, true);
+			player->SetRangeAttack(false);
+			player->InCombat(true);
+			if(!incombat) {
+				client->SimpleMessage(CHANNEL_GENERAL_COMBAT, "You start fighting.");
+				update = true;
+			}
+		}
+		/*else
+			client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You cannot attack that!");*/
+	}
+	
+	if(update) {
+		player->SetCharSheetChanged(true);
+	}
+}
+	
+/* 
+	Function: Command_Assist()
+	Purpose	: Assist target
+	Example	: /assist [name]
+	* Uses target or character name
+*/ 
+void Commands::Command_Assist(Client* client, Seperator* sep) {
+	Entity* player = (Entity*)client->GetPlayer();
+	Spawn* res = nullptr;
+	if(sep && sep->arg[0]) {
+		if(!stricmp(sep->arg[0], "on")) {
+			database.insertCharacterProperty(client, CHAR_PROPERTY_ASSISTAUTOATTACK, "1");
+			return;
+		}
+		else if(!stricmp(sep->arg[0], "off")) {
+			database.insertCharacterProperty(client, CHAR_PROPERTY_ASSISTAUTOATTACK, "0");
+			return;
+		}
+		Client* otherClient = client->GetPlayer()->GetZone()->GetClientByName(sep->arg[0]);
+		if(otherClient) {
+			res = otherClient->GetPlayer();
+		}
+	}
+	
+	if (player->GetTarget()) {
+		res = player->GetTarget(); // selected target other than self only dis-engages that encounter
+	}
+	if(res && res->GetTarget()) {
+		res = res->GetTarget();
+	}
+	
+	if(res) {
+		client->TargetSpawn(res);
+		
+		if(client->GetPlayer()->GetInfoStruct()->get_assist_auto_attack() && !player->EngagedInCombat()) {
+			Command_AutoAttack(client, nullptr);
+		}
+	}
+}
+

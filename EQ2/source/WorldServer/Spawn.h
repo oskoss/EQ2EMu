@@ -1104,7 +1104,7 @@ public:
 	void	MoveToLocation(Spawn* spawn, float distance, bool immediate = true, bool isMappedLocation = false);
 	void	AddMovementLocation(float x, float y, float z, float speed, int16 delay, const char* lua_function, float heading, bool include_heading = false);
 	void	ProcessMovement(bool isSpawnListLocked=false);
-	void	ResetMovement(bool inFlight=false);
+	void	ResetMovement();
 	bool	ValidateRunning(bool lockMovementLocation, bool lockMovementLoop);
 	bool	IsRunning();
 	void	CalculateRunningLocation(bool stop = false);
@@ -1506,6 +1506,7 @@ private:
 	int32 loot_drop_type;
 
 	std::atomic<bool> deleted_spawn;
+	std::atomic<bool> reset_movement;
 	Mutex m_GridMutex;
 	bool is_collector;
 	bool scared_by_strong_players;

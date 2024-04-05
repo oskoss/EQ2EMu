@@ -13335,7 +13335,7 @@ int EQ2Emu_lua_StopMovement(lua_State* state) {
 		return 0;
 	Spawn* spawn = lua_interface->GetSpawn(state);
 	if (spawn) {
-		spawn->StopMovement();
+		spawn->ResetMovement();
 	}
 	lua_interface->ResetFunctionStack(state);
 	return 0;

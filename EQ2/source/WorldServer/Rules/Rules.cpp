@@ -226,6 +226,7 @@ void RuleManager::Init()
 	RULE_INIT(R_Player, WeightPercentCap, "0.95"); // cap total impact for being overweight (.95 = 95%)
 	RULE_INIT(R_Player, CoinWeightPerHundred, "100.0"); // coin weight per stone, 100.0 = 100 coins per 1 stone
 	RULE_INIT(R_Player, WeightInflictsSpeed, "1"); // whether weight will inflict speed, 1 = on, 0 = off
+	RULE_INIT(R_Player, LevelMasterySkillMultiplier, "5"); // multiplier for adventure level / recommended level when applying mastery damage to determine if they are in mastery range
 	
 	/* PVP */
 	RULE_INIT(R_PVP, AllowPVP, "0");
