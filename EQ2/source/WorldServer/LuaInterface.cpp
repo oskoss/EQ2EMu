@@ -624,12 +624,18 @@ LuaSpell* LuaInterface::GetCurrentSpell(lua_State* state, bool needsLock) {
 	return spell;
 }
 
-void LuaInterface::RemoveCurrentSpell(lua_State* state) {
-	MSpells.lock();
+void LuaInterface::RemoveCurrentSpell(lua_State* state, bool needsLock) {
+	if(needsLock) {
+		MSpells.lock();
+		MSpellDelete.lock();
+	}
 	map<lua_State*, LuaSpell*>::iterator itr = current_spells.find(state);
 	if(itr != current_spells.end())
 		current_spells.erase(itr);
-	MSpells.unlock();
+	if(needsLock) {
+		MSpellDelete.unlock();
+		MSpells.unlock();
+	}
 }
 
 bool LuaInterface::CallSpellProcess(LuaSpell* spell, int8 num_parameters, std::string customFunction) {
@@ -1570,6 +1576,7 @@ void LuaInterface::AddUserDataPtr(LUAUserData* data, void* data_ptr) {
 }
 
 void LuaInterface::DeletePendingSpells(bool all) {
+	MSpells.lock();
 	MSpellDelete.lock();
 	if (spells_pending_delete.size() > 0) {
 		int32 time = Timer::GetCurrentTime2();
@@ -1609,11 +1616,12 @@ void LuaInterface::DeletePendingSpells(bool all) {
 			}
 
 			SetLuaUserDataStale(spell);
-			RemoveCurrentSpell(spell->state);
+			RemoveCurrentSpell(spell->state, false);
 			safe_delete(spell);
 		}
 	}
 	MSpellDelete.unlock();
+	MSpells.unlock();
 }
 
 void LuaInterface::DeletePendingSpell(LuaSpell* spell) {
