@@ -58,6 +58,9 @@ function Step5Init(Quest, QuestGiver, Player)
 	AddQuestStepObtainItem(Quest, 5, "I should find a way to buy the shard from Merchant Vim.", 1, 100, "Ingrid would like me to buy her a Shard of Luclin.", 11, ShardOfLucin)
 	AddQuestStepCompleteAction(Quest, 5, "Step5Complete")
 	SetTutorialStep(Player, 24)
+--	 while HasItem(Player,12565,1) do
+--	    SetStepComplete(Player,524,5)
+--	end
 end
 
 function Step6Init(Quest, QuestGiver, Player)
@@ -88,9 +91,6 @@ end
 function Step9Init(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 8, "I have killed the rats.")
 	UpdateQuestTaskGroupDescription(Quest, 8, "I killed the rats that Captain Varlos requested.")
-    if GetLevel(Player) <2 then
-        SetPlayerLevel(Player,2)
-    end
 	AddQuestStepChat(Quest, 9, "I should speak to Captain Varlos.", 1, "Inform Captain Varlos that you have exterminated the vermin.", 11, CaptainVarlos)
 	AddQuestStepCompleteAction(Quest, 9, "Step9Complete")
 end
@@ -104,7 +104,7 @@ function Step10Init(Quest, QuestGiver, Player)
 end
 
 function CurrentStep(Quest, QuestGiver, Player)
-	if GetQuestStep(Player, 524) == 2 then
+	if GetQuestStepProgress(Player, 524,2) == 0 and GetQuestStep(Player, 524) == 2 then
 		i = 1
 		spawns = GetSpawnListBySpawnID(Player, 270010)
 		repeat
@@ -117,7 +117,10 @@ function CurrentStep(Quest, QuestGiver, Player)
 			i = i + 1
 		until spawn == Nil
 		InstructionWindow(Player, -1.0, "You completed the first part of the quest. As you complete quests and defeat enemies, you earn experience points. This is represented in your experience point display. Filling your experience point display is always a requirement to gain your next level. As you gain levels, you will gain access to more powerful skills and abilities.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_011_f16aa848.mp3", 1702963584, 3318288731, "tutorial_stage_15", "", "continue")
-		FlashWindow(Player, "MainHUD.Experience", 15.0)			
+--		InstructionWindow(Player, -1.0, "You completed the first part of the quest. As you complete quests and defeat enemies, you earn experience points. This is represented in your experience point display. Filling your experience point display is always a requirement to gain your next level. As you gain levels, you will gain access to more powerful skills and abilities.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_011_f16aa848.mp3", 1702963584, 3318288731, "", "", "continue")
+        if GetClientVersion(Player)<=546 then
+		FlashWindow(Player, "MainHUD.Experience", 15.0)	
+		end
 		SetTutorialStep(Player, 14)
 		AddPrimaryEntityCommandAllSpawns(Player, 270010, "open", 10, "open")
 		chest = GetRandomSpawnByID(Player, 270010)
@@ -293,8 +296,8 @@ function Accepted(Quest, QuestGiver, Player)
 	
 	local Waulon = GetSpawn(QuestGiver, 270002)
 	FaceTarget(QuestGiver, Waulon)	
---	local Ingred = GetSpawn(QuestGiver, 270001)
---  WalkToGeredo(Ingred, Spawn)
+--	local Ingred = GetSpawn(Player, 270001)
+--    WalkToGeredo(Ingred, Player)
 end
 
 function Declined(Quest, QuestGiver, Player)

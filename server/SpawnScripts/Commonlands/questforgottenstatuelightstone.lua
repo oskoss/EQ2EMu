@@ -9,7 +9,9 @@
 local TheReturnOfTheLight = 485
 
 function spawn(NPC)
-SetPlayerProximityFunction(NPC, 5, "InRange")
+        SetRequiredQuest(NPC,TheReturnOfTheLight,3,0,0,1)
+        SetRequiredQuest(NPC,TheReturnOfTheLight,2,0,0,1)
+--SetPlayerProximityFunction(NPC, 5, "InRange")
 end
 
 function InRange(NPC, Spawn)
@@ -24,9 +26,10 @@ function casted_on(NPC, Spawn, SpellName)
 		if SpellName == 'Touch burned out lightstone to statue' then
 		    if GetQuestStep(Spawn, TheReturnOfTheLight) == 3 then
 		    SetStepComplete(Spawn, TheReturnOfTheLight, 3)
-		    end
-		 local con = CreateConversation()
-		  AddConversationOption(con, "[Put stone away]")
-	        StartDialogConversation(con, 1, NPC, Spawn, "Touching the lightstone to the statue causes the small orb to flicker with light and grow warm in your hand.")
+		    
+		local con = CreateConversation()
+		AddConversationOption(con, "[Put stone away]")
+	    StartDialogConversation(con, 1, NPC, Spawn, "Touching the lightstone to the statue causes the small orb to flicker with light and grow warm in your hand.")
+        end
 end	
 end

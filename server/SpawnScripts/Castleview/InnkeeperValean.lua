@@ -16,7 +16,7 @@ local LostBook = 5468
 function spawn(NPC)
 ProvidesQuest(NPC,Books)
 SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
-
+    SetInfoStructString(NPC, "action_state", "ponder")
 end
 
 function respawn(NPC)
@@ -96,7 +96,7 @@ function NoDinner(NPC, Spawn)
     SetStepComplete(Spawn, Dinner, 1)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Again?! That froglok should hire more people so Faeadaen isn't worked to the bone. Thanks for letting me know. I guess I'll dine alone tonight.")
+	Dialog.AddDialog("Again!? That froglok should hire more people so poor Faeadaen isn't worked to the bone. Well, thanks for letting me know. I guess I'll dine alone tonight.")
 	Dialog.AddVoiceover("voiceover/english/innkeeper_valean/qey_village04/innkeepervalean000.mp3", 4169629165,2563079815)
  	PlayFlavor(NPC, "", "", "sigh", 0,0 , Spawn)
     Dialog.AddOption( "There is always tomorrow.")
@@ -117,7 +117,7 @@ end
 function UpdateReservation(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Pardon my indiscretion, friend. I assumed... because you're making his reservation that... you were a close friend of Taneran's. He and I speak sometimes when he retires for the night. Please don't mention this to the Lady. I will see that his room is ready.")
+	Dialog.AddDialog("Pardon my indiscretion, friend. I assumed because you're making his reservation that you were a close friend of Taneran. He and I speak sometimes when he retires for the night ... please, don't mention this to the lady... I shall see that his room is ready...")
 	Dialog.AddVoiceover("voiceover/english/innkeeper_valean/qey_village04/innkeepervalean002.mp3", 1569016427,2379789272)
  	PlayFlavor(NPC, "", "", "boggle", 0,0 , Spawn)
     Dialog.AddOption( "I will let her know.", "ReservationMade")
@@ -201,15 +201,3 @@ function dlg_2_4(NPC, Spawn)
 	AddConversationOption(conversation, "That's enough for now, thanks.")
 	StartConversation(conversation, NPC, Spawn, "Many different kinds of housing are available in the city of Qeynos.  As a show of appreciation, Antonia Bayle has awarded you a one bedroom house for free at this time.")
 	end
-
-
-
---[[
-	PlayFlavor(NPC, "innkeeper_uglar_splinterthumb/qey_village04/innkeeper001.mp3", "", "", 1553251638, 3978555092)
-	AddConversationOption(conversation, "How can I place an item in my house?", "dlg_7_1")
-	AddConversationOption(conversation, "What kind of housing is available to me?")
-	AddConversationOption(conversation, "What is the marketboard for?")
-	AddConversationOption(conversation, "What is my house for?")
-	AddConversationOption(conversation, "Nothing right now.")
-	StartConversation(conversation, NPC, Spawn, "Hello there" .. GetName(Spawn) .. ". what can I help you with?")
-	--]]

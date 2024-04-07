@@ -11,6 +11,7 @@ dofile("SpawnScripts/Generic/GenericVoiceOvers.lua")
 local DWARF_MENTOR_QUEST_2 = 285
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "drinking_idle")
 end
 
 function respawn(NPC)

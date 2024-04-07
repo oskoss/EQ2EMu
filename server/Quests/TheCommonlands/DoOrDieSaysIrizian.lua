@@ -20,9 +20,9 @@ end
 function Accepted(Quest, QuestGiver, Player)
 	FaceTarget(QuestGiver, Player)
 	local conversation = CreateConversation()
+	PlayFlavor(QuestGiver, "voiceover/english/inquisitor_irizan/commonlands/quests/inquisitor_irizan/inquisitor_irizan004.mp3", "", "", 3630396908, 2916800485, Player)
 	AddConversationOption(conversation, "Crystal clear.")
 	StartConversation(conversation, QuestGiver, Player, "I'm pleased that we've come to an understanding so quickly. My request is quite simple. I need you to recover a few items for me. That's it. Merchant Edmond is your contact; he'll tell you what you need to do. Is this clear?")
-	PlayFlavor(NPC, "voiceover/english/inquisitor_irizan/commonlands/quests/inquisitor_irizan/inquisitor_irizan004.mp3", "", "", 3630396908, 2916800485, Spawn)
 end
 
 

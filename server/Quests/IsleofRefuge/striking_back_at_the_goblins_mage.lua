@@ -10,6 +10,7 @@
         Followed by: Attack on the Orc Leader
 --]]
 require "SpawnScripts/Generic/DialogModule"
+dofile("SpawnScripts/Generic/ClassSkillCheck.lua")
 
 function Init(Quest)
 	AddQuestStepKill(Quest, 1, "I need to collect 4 Goblin Blood from Gruttooth Brutes.", 4, 70, "I need to collect four goblin blood samples from brutes found in the goblin village on the northwestern part of the island and return them to Mizan.", 178, 3250134,3250123,3250124)
@@ -17,6 +18,7 @@ function Init(Quest)
 end
 
 function Accepted(Quest, QuestGiver, Player)
+    SkillCheck(QuestGiver,Player)
     FaceTarget(QuestGiver, Player)
 	Dialog.New(QuestGiver, Player)   
  	Dialog.AddDialog("Very good.  The village is located in the northwest portion of the isle.  The others should already be on their way to the village.  You are to provide magical support for the assault.  The sooner you return with the samples, the sooner my teacher can begin to work on the warding spells.")

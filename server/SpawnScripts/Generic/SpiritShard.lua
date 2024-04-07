@@ -42,13 +42,13 @@ function recovershard(NPC, Spawn)
 end
 
 function CheckShardExpired(NPC)
-	local creationStamp = tostring(GetShardCreatedTimestamp(NPC))
-	local year_ = math.floor(tonumber(string.sub(creationStamp, 0, 4)))
-	local month_ = math.floor(tonumber(string.sub(creationStamp, 5, 6)))
-	local day_ = math.floor(tonumber(string.sub(creationStamp, 7, 8)))
-	local hour_ = math.floor(tonumber(string.sub(creationStamp, 9, 10)))
-	local min_ = math.floor(tonumber(string.sub(creationStamp, 11, 12)))
-	local sec_ = math.floor(tonumber(string.sub(creationStamp, 13, 14)))
+	local creationStamp = GetShardCreatedTimestamp(NPC)
+	local year_ = math.floor(string.sub(creationStamp, 0, 4))
+	local month_ = math.floor(string.sub(creationStamp, 5, 6))
+	local day_ = math.floor(string.sub(creationStamp, 7, 8))
+	local hour_ = math.floor(string.sub(creationStamp, 9, 10))
+	local min_ = math.floor(string.sub(creationStamp, 11, 12))
+	local sec_ = math.floor(string.sub(creationStamp, 13, 14))
 	local currentUTCTime = os.time(os.date('!*t'))
 	local creationTime = os.time{year=year_, month=month_, day=day_, hour=hour_, min=min_,sec=sec_}
 	

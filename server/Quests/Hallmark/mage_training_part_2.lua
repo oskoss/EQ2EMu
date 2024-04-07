@@ -24,6 +24,11 @@ function Accepted(Quest, QuestGiver, Player)
     PlayFlavor(QuestGiver, "", "", "doh", 0, 0, Player)
     Dialog.AddOption("I suppose I can try my own \"charm\". I'll go speak with Willim.")	
 	Dialog.Start()
+
+if GetQuestStep(Player,5877)==1 then
+    SetStepComplete(Player,5877,1)
+end
+
 end
 
 function Declined(Quest, QuestGiver, Player)

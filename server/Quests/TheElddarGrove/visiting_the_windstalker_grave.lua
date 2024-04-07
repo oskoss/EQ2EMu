@@ -10,6 +10,7 @@
 	Followed by		:	None
 --]]
 
+require "SpawnScripts/Generic/DialogModule"
 
 function Init(Quest)
 	 AddQuestStepZoneLoc(Quest, 1, "I need to find Holly Windstalker's grave in Antonica.", 10, "I should go to Holly Windstalker's grave to see if there is any truth to the rumor.", 2339,-1854.52, -2.89, -624.46,12)
@@ -18,7 +19,13 @@ function Init(Quest)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Ahh ... very well, you are a daring soul! To get to the grave, follow the aqueduct from Qeynos to Windstalker Village. The village is built around the waterwheel that keeps the aqueduct flowing.  The duct passes through rock so you may lose sight of it for a time.  Just continue around the mountain, and you'll see it on the other side.")
+	Dialog.AddVoiceover("voiceover/english/lookout_venylle/qey_elddar/lookoutvenylle002.mp3",2384165847, 2428685999)
+	PlayFlavor(QuestGiver, "", "", "thank", 0, 0, Player)
+	Dialog.AddOption("Thank you.  I'll follow those directions.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

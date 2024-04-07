@@ -8,6 +8,7 @@
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "metalworking_idle")
 end
 
 function respawn(NPC)

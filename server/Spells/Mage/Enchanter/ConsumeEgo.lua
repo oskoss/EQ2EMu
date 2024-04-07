@@ -8,9 +8,11 @@
 
 -- Increases power of caster by 6 instantly and every 4 seconds
 function cast(Caster, Target, Pwr)
-	SpellHeal("Power", Pwr)
+    --SpellDamage(Target, 6, 14, 14)
+	SpellHeal("Power", Pwr, Pwr, Caster)
 end
 
 function tick(Caster, Target, Pwr)
-	SpellHeal("Power", Pwr)
+    --SpellDamage(Target, 6, 14, 14)
+	SpellHeal("Power", Pwr, Pwr, Caster)
 end

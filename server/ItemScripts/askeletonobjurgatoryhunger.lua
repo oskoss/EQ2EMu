@@ -9,19 +9,25 @@
 local LoreAndLegendSkeleton = 5396
 
 function examined(Item, Player)
-if not HasQuest(Player, LoreAndLegendSkeleton) and not HasCompletedQuest(Player, LoreAndLegendSkeleton) then
-OfferQuest(nil, Player, LoreAndLegendSkeleton)
-elseif not QuestStepIsComplete(Player, LoreAndLegendSkeleton, 6) then
-conversation = CreateConversation()    
-AddConversationOption(conversation, "Begin to study...", "Step_Complete")
-AddConversationOption(conversation, "No, put away", "CloseItemConversation")
-StartDialogConversation(conversation, 2, Item, Player, "This item can be used to learn the secrets of the skeleton. Do you wish to study it?")
+    local LnLAccept = GetRuleFlagFloat("R_World", "LoreAndLegendAccept")
+if LnLAccept > 0 and not HasQuest(Player, LoreAndLegendSkeleton) and not HasCompletedQuest(Player, LoreAndLegendSkeleton) then
+    OfferQuest(nil, Player, LoreAndLegendSkeleton)
+else
+    conversation = CreateConversation()    
+if  HasQuest(Player, LoreAndLegendSkeleton) and  GetQuestStepProgress(Player, LoreAndLegendSkeleton, 6)==0 then
+    AddConversationOption(conversation, "Begin to study...", "Step_Complete")
 end
-   end
+    AddConversationOption(conversation, "No, put away", "CloseItemConversation")
+    StartDialogConversation(conversation, 2, Item, Player, "This item can be used to learn the secrets of the skeleton. Do you wish to study it?")
+    end
+end
 
 function Step_Complete(Item, Player)
-SetStepComplete(Player, LoreAndLegendSkeleton, 6)
-RemoveItem(Player, 2736)
+if HasItem(Player,2736,1) then
+    SetStepComplete(Player, LoreAndLegendSkeleton, 6)
+    CloseItemConversation(Item, Player)
+    RemoveItem(Player, 2736)
+end
 end
 
 

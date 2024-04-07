@@ -5,12 +5,16 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 function spawn(NPC)
 
 end
 
 function hailed(NPC, Spawn)
+if HasQuest(Spawn,5865) and not QuestStepIsComplete(Spawn,5865,1)then --FREEPORT OPPORTUNITY
+    SetStepComplete(Spawn,5865,1)
+end
 Dialog2(NPC, Spawn)
 end
 
@@ -30,10 +34,11 @@ function Dialog1(NPC, Spawn)
 end
 
 function Dialog2(NPC, Spawn)
+    local choice = MakeRandomInt(1,3)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	Dialog.AddDialog("What are you looking at?   Stay away from me, and keep your hands off my collections, you scumbag!")
-	Dialog.AddVoiceover("voiceover/english/voice_emotes/greetings/greetings_1_1046.mp3", 0, 0)
+	Dialog.AddVoiceover("voiceover/english/voice_emotes/greetings/greetings_"..choice.."_1046.mp3", 0, 0)
 	Dialog.AddOption("What collections?", "Dialog8")
     if HasCollectionsToHandIn(Spawn) then
 	Dialog.AddOption("I have a collection for you.", "Dialog1")

@@ -11,6 +11,7 @@ dofile("SpawnScripts/Generic/GenericVoiceOvers.lua")
 local TargetingCorruption = 225
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "ponder")
 end
 
 function respawn(NPC)

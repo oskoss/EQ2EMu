@@ -6,8 +6,10 @@
                    : 
 --]]
 dofile("SpawnScripts/Generic/MonsterCallouts/BaseGoblin2.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
     ChooseMovement(NPC)
 end
 
@@ -32,8 +34,8 @@ function RouteOne(NPC, Spawn)
     MovementLoopAddLocation(NPC, X + 12, Y, Z, 2,math.random(5,10))
     MovementLoopAddLocation(NPC, X + 12, Y, Z + 4, 2 , 15 , "InitialPause")
 	MovementLoopAddLocation(NPC, X + 14, Y, Z, 2, math.random(5,10))
-	MovementLoopAddLocation(NPC, X + 5, Y, Z + 4, 4, math.random(5,10))
-	MovementLoopAddLocation(NPC, X, Y, Z, 4, 15 , "InitialPause")
+	MovementLoopAddLocation(NPC, X + 5, Y, Z + 4, 4, math.random(5,10), "InitialPause")
+	MovementLoopAddLocation(NPC, X, Y, Z, 4, 15 ,"ChooseMovement")
 end
 
 function RouteTwo(NPC, Spawn)
@@ -45,7 +47,7 @@ function RouteTwo(NPC, Spawn)
     MovementLoopAddLocation(NPC, X - 14, Y, Z - 4, 4, math.random(5,10))
 	MovementLoopAddLocation(NPC, X - 12, Y, Z, 2, 15 , "InitialPause")
 	MovementLoopAddLocation(NPC, X - 12, Y, Z - 4, 2, math.random(5,10))
-	MovementLoopAddLocation(NPC, X, Y, Z, 1, 0)
+	MovementLoopAddLocation(NPC, X, Y, Z, 1, 0, "ChooseMovement")
 end
 
 function RouteThree(NPC, Spawn)
@@ -57,7 +59,7 @@ function RouteThree(NPC, Spawn)
 	MovementLoopAddLocation(NPC, X + 5, Y, Z - 4, 2, math.random(5,10))
 	MovementLoopAddLocation(NPC, X + 14, Y, Z, 2, 15 , "InitialPause")
 	MovementLoopAddLocation(NPC, X + 12, Y, Z - 4, 4, math.random(5,10))
-	MovementLoopAddLocation(NPC, X, Y, Z, 2, math.random(5,10))
+	MovementLoopAddLocation(NPC, X, Y, Z, 2, math.random(5,10), "ChooseMovement")
 end
 
 function RouteFour(NPC, Spawn)
@@ -69,7 +71,7 @@ function RouteFour(NPC, Spawn)
 	MovementLoopAddLocation(NPC, X - 5, Y, Z + 4, 2, math.random(5,10))
 	MovementLoopAddLocation(NPC, X - 14, Y, Z, 4, math.random(5,10))
 	MovementLoopAddLocation(NPC, X - 12, Y, Z + 4, 2, 15 , "InitialPause")
-	MovementLoopAddLocation(NPC, X, Y, Z, 2, math.random(5,10))
+	MovementLoopAddLocation(NPC, X, Y, Z, 2, math.random(5,10), "ChooseMovement")
 end
 
 function respawn(NPC, Spawn)
@@ -93,12 +95,14 @@ function InitialPause(NPC)
 end
 
 function Gather(NPC)
-    SpawnSet(NPC, "visual_state", "2809")	-- Start gathering
+--    SpawnSet(NPC, "visual_state", "gathering_search")	-- Start gathering
+    PlayFlavor(NPC,"","","gathering_search",0,0)
     AddTimer(NPC, 8000, "Collect")	        -- for 5 seconds, then stop
 end
 
 function Collect(NPC)
-    SpawnSet(NPC, "visual_state", "2810")	-- Start gathering
+--  SpawnSet(NPC, "visual_state", "gathering_success")	-- Start gathering
+    PlayFlavor(NPC,"","","gathering_success",0,0)
     AddTimer(NPC, 2000, "stop_gathering")	-- for 5 seconds, then stop
 end
 

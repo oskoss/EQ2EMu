@@ -5,6 +5,7 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 local Rats = 5503
 
@@ -23,23 +24,33 @@ if math.random(1, 100) <= 70 then
 end
 
 function hailed(NPC, Spawn)
-    conversation = CreateConversation()    
-    SetTarget(NPC,Spawn) 
-    FaceTarget(NPC, Spawn)
+    if GetFactionAmount(Spawn,11)<0 then
+	    FaceTarget(NPC, Spawn)
+        PlayFlavor(NPC, "", "", "glare", 0, 0, Spawn)
+    else
+    Dialog1(NPC, Spawn)
     AddTimer(NPC,30000,"RemoveTarget",1,Spawn)    
-    PlayFlavor(NPC, "voiceover/english/watcher_curmogliel_kar_thal/qey_village03/watchercurmogliel000.mp3", "", "", 1545523898, 2801793023, Spawn)
- if not HasCompletedQuest (Spawn, Rats) and not HasQuest (Spawn, Rats) and GetLevel(Spawn) >=6 then 
-    AddConversationOption(conversation, "Haven't the gods been quiet since The Shattering?", "Gods")
+end
+end
+
+function Dialog1(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("The Celestial Watch is ever vigilant. Rest will come only after the tyranny of evil can be undone.")
+	Dialog.AddVoiceover("voiceover/english/watcher_curmogliel_kar_thal/qey_village03/watchercurmogliel000.mp3", 1545523898, 2801793023)
+    if not HasCompletedQuest (Spawn, Rats) and not HasQuest (Spawn, Rats) and GetLevel(Spawn) >=6 then 
+    Dialog.AddOption("Haven't the gods been quiet since The Shattering?", "Gods")
     end
- if GetQuestStep (Spawn, Rats)==2 then 
-    AddConversationOption(conversation, "I have slain the Bloodsabers. Is that proof enough?", "Finished")
+    if GetQuestStep (Spawn, Rats)==2 then 
+    Dialog.AddOption("I have slain the Bloodsabers. Is that proof enough?", "Finished")
     end    
-    AddConversationOption(conversation, "Good to know. Good day to you.")
-if not HasCompletedQuest (Spawn, Rats) and not HasQuest (Spawn, Rats) then
-    AddConversationOption(conversation, "I don't need faith telling me what to do.","NoFaith")
+    Dialog.AddOption("Good to know. Good day to you.")
+    if not HasCompletedQuest (Spawn, Rats) and not HasQuest (Spawn, Rats) then
+    Dialog.AddOption( "I don't need faith telling me what to do.","NoFaith")
+    end
+    Dialog.Start()
 end
-    StartConversation(conversation, NPC, Spawn, "The Celestial Watch is ever vigilant. Rest will come only after the tyranny of evil can be undone.")
-end
+
 
 function RemoveTarget(NPC,Spawn)
 if GetTarget(NPC)==Spawn then
@@ -48,20 +59,22 @@ end
 end
 
  function NoFaith(NPC, Spawn)
-  conversation = CreateConversation()
-    FaceTarget(NPC, Spawn)  
-  PlayFlavor(NPC, "voiceover/english/watcher_curmogliel_kar_thal/qey_village03/watchercurmogliel004.mp3","","sigh",3442673353,215479191,Spawn)
-  AddConversationOption(conversation, "Perhaps.")
-  StartConversation(conversation, NPC, Spawn, "Faith is all that can save us. I am sorry you cannot see this. This fight is not yours. But someday, you shall find your way.")
+	FaceTarget(NPC, Spawn)
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("Faith is all that can save us. I am sorry you cannot see this. This fight is not yours. But someday, you shall find your way.")
+	Dialog.AddVoiceover("voiceover/english/watcher_curmogliel_kar_thal/qey_village03/watchercurmogliel004.mp3", 3442673353, 215479191)
+	Dialog.AddOption("Perhaps.")
+	Dialog.Start()
 end   
 
  function Gods(NPC, Spawn)
-  conversation = CreateConversation()
-    FaceTarget(NPC, Spawn)  
-  PlayFlavor(NPC, "voiceover/english/watcher_curmogliel_kar_thal/qey_village03/watchercurmogliel001.mp3","","nod",2796372523,2339729936,Spawn)
-  AddConversationOption(conversation, "How can I prove my faith?","Prove")
-  AddConversationOption(conversation, "I don't need faith telling me what to do.","NoFaith")  
-  StartConversation(conversation, NPC, Spawn, "The Celestial Watch is the bearer of faith in this near faithless world. The powers that be have been silenced for ages, and far too many have lost faith. Now is the time for all to prove their faith.")
+	FaceTarget(NPC, Spawn)
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("The Celestial Watch is the bearer of faith in this near faithless world. The powers that be have been silenced for ages, and far too many have lost faith. Now is the time for all to prove their faith.")
+	Dialog.AddVoiceover("voiceover/english/watcher_curmogliel_kar_thal/qey_village03/watchercurmogliel001", 2796372523, 2339729936)
+    Dialog.AddOption("How can I prove my faith?","Prove2")
+    Dialog.AddOption("I don't need faith telling me what to do.","NoFaith")  
+    Dialog.Start()
 end   
 
  function Prove(NPC, Spawn)

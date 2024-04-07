@@ -15,6 +15,7 @@ local FarSeas_SixtyThree = 237
 function spawn(NPC)
 	ProvidesQuest(NPC, BADGER_PELTS_FOR_DIGGS)
 	SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "metalworking_idle")
 end
 
 function respawn(NPC)

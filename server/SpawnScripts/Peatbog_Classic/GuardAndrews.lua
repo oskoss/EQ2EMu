@@ -6,9 +6,11 @@
                    : 
 --]]
 dofile("SpawnScripts/Generic/GenericGuardVoiceOvers.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+	SetPlayerProximityFunction(NPC, 12, "InRange", "LeaveRange")
 end
 
 function respawn(NPC)
@@ -17,8 +19,13 @@ end
 
 
 function InRange(NPC, Spawn)
-		CheckFaction(NPC, Spawn, "Qeynos")
-	end
+    if GetFactionAmount(Spawn,11)>=5000 then
+        if GetLevel(Spawn) ==8 or GetLevel(Spawn)==9 then
+        ClassCheck(NPC,Spawn)
+        end
+    end
+    CheckFaction(NPC, Spawn, "Qeynos")
+end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)

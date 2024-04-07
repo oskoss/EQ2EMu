@@ -7,8 +7,12 @@
 --]]
 
 function spawn(NPC)
-AddTimer(NPC, 2000, "call", "", Spawn)
-SetAggroRadius(NPC, 20)
+    dmgMod = GetStr(NPC)/10
+    SetInfoStructUInt(NPC, "override_primary_weapon", 1)        
+    SetInfoStructUInt(NPC, "primary_weapon_damage_low", math.floor(55 + dmgMod)) 
+    SetInfoStructUInt(NPC, "primary_weapon_damage_high", math.floor(95 + dmgMod))
+    AddTimer(NPC, 3200, "call", "", Spawn)
+    SetAggroRadius(NPC, 20)
 end
 
 function call(NPC, Spawn)

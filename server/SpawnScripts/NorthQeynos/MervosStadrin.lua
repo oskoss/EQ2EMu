@@ -16,6 +16,9 @@ function respawn(NPC)
 end
 
 function hailed(NPC, Spawn)
+if HasQuest(Spawn,5766) and GetQuestStepProgress(Spawn,5766,1) ==0 then
+    SetStepComplete(Spawn,5766,1)
+end
 Dialog2(NPC, Spawn)
 end
 

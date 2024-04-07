@@ -2,56 +2,110 @@
 	Script Name	: SpawnScripts/BeggarsCourt/MarcusLevidius.lua
 	Script Purpose	: Marcus Levidius 
 	Script Author	: John Adams
-	Script Date	: 2009.04.05 (18.7.2022 by torsten, waypoints)
-	Script Notes	: Auto-Generated Conversation from PacketParser Data
+	Script Date	: 2009.04.05 (18.7.2022 by torsten, waypoints)(New setup 27.11.2023 by Dorbin)
+	Script Notes	: 
 --]]
 
-function spawn(NPC)
-    waypoints(NPC)
-end
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
 
-function respawn(NPC)
-	spawn(NPC)
+function spawn(NPC)
+SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
+waypoints(NPC)
 end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-
-	choice = math.random(1, 4)
-
-	if choice == 1 then
-		PlayFlavor(NPC, "", "Yes, yes, hello. I'm busy.", "hello", 1689589577, 4560189, Spawn)
-	elseif choice == 2 then
-		PlayFlavor(NPC, "", "Oh, drat, I hope not. Oh, sorry, I thought you might have meant the weather.", "confused", 1689589577, 4560189, Spawn)
-	elseif choice == 3 then
-		PlayFlavor(NPC, "", "Grim determination has gotten us to where we are now.", "agree", 1689589577, 4560189, Spawn)
-	elseif choice == 4 then
-		PlayFlavor(NPC, "", "One day, we shall reign supreme over the lessers.", "brandish", 1689589577, 4560189, Spawn)
-	end
+GenericEcologyHail(NPC, Spawn, faction)
 end
+
+function InRange(NPC,Spawn)
+GenericEcologyCallout(NPC, Spawn, faction)
+end
+    
+function respawn(NPC)
+		spawn(NPC)
+	end
+	
 
 function waypoints(NPC)
-	MovementLoopAddLocation(NPC, 39.71, -6.25, 46.31, 2, 0)
-	MovementLoopAddLocation(NPC, 29.43, -5.75, 40.97, 2, math.random(8,12))
-	MovementLoopAddLocation(NPC, 34.18, -5, 33, 2, 0)
-	MovementLoopAddLocation(NPC, 26.31, -5.75, 32.09, 2, math.random(8,12))
-	MovementLoopAddLocation(NPC, -17.58, -5, 17.83, 2, 0)
-	MovementLoopAddLocation(NPC, -15.27, -4.99, 7.51, 2, 0)
-	MovementLoopAddLocation(NPC, -10.51, -2.31, 11.61, 2, 0)
-	MovementLoopAddLocation(NPC, -1.01, 1.94, 15.71, 2, math.random(8,12))
-	MovementLoopAddLocation(NPC, 3.24, 2.66, 5.35, 2, 0)
-	MovementLoopAddLocation(NPC, 15.59, 3.5, 7.75, 2, 0)
-	MovementLoopAddLocation(NPC, 19.71, 3.5, 2.88, 2, 0)
-	MovementLoopAddLocation(NPC, 21.91, 5.25, -14.45, 2, math.random(8,12))
-	MovementLoopAddLocation(NPC, 7.21, 4.75, -23.88, 2, 0)
-	MovementLoopAddLocation(NPC, -0.71, 3.75, -24.3, 2, math.random(8,12))
-	MovementLoopAddLocation(NPC, -13.99, 2, -4.07, 2, 0)
-	MovementLoopAddLocation(NPC, 7, 2.71, 8.39, 2, 0)
-	MovementLoopAddLocation(NPC, 48.64, 2.59, 9.6, 2, 0)
-	MovementLoopAddLocation(NPC, 28.38, 2, 14.39, 2, 0)
-	MovementLoopAddLocation(NPC, 47.81, 2.5, 10.96, 2, 0)
-	MovementLoopAddLocation(NPC, 50, 1.93, 26.01, 2, math.random(8,12))
-	MovementLoopAddLocation(NPC, 32.54, -5, 24.13, 2, 0)
-	MovementLoopAddLocation(NPC, 29.27, -6.25, 46.87, 2, 0)
-	MovementLoopAddLocation(NPC, 11.54, -6.51, 46.06, 2, 0)
+	MovementLoopAddLocation(NPC, -27.1, -5, 11.44, 2, 1)
+	MovementLoopAddLocation(NPC, -27.1, -5, 11.44, 2, 30,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, -26.97, -5, 12.35, 2, 0)
+	MovementLoopAddLocation(NPC, -29.35, -5, 13.85, 2, 0)
+	MovementLoopAddLocation(NPC, -27.49, -5, 15.97, 2, 0)
+	MovementLoopAddLocation(NPC, -22.58, -5, 16.37, 2, 0)
+	MovementLoopAddLocation(NPC, -15.73, -5, 16.57, 2, 0)
+	MovementLoopAddLocation(NPC, -11.15, -5.5, 20.23, 2, 0)
+	MovementLoopAddLocation(NPC, -1.17, -5.5, 22.13, 2, 0)
+	MovementLoopAddLocation(NPC, 2.35, -5.5, 22.98, 2, 0)
+	MovementLoopAddLocation(NPC, 5.33, -5.5, 27.74, 2, 0)
+	MovementLoopAddLocation(NPC, 8.08, -5.5, 30.1, 2, 0)
+	MovementLoopAddLocation(NPC, 14.44, -5.5, 32.63, 2, 0)
+	MovementLoopAddLocation(NPC, 20.18, -5.75, 33.33, 2, 0)
+	MovementLoopAddLocation(NPC, 22.17, -6, 37.28, 2, 1)
+	MovementLoopAddLocation(NPC, 22.17, -6, 37.28, 2, 30,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 22.43, -6, 37.65, 2, 0)
+	MovementLoopAddLocation(NPC, 22.68, -6, 39.18, 2, 0)
+	MovementLoopAddLocation(NPC, 21.35, -6, 39.81, 2, 1)
+	MovementLoopAddLocation(NPC, 21.35, -6, 39.81, 2, 30,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 21.35, -6, 39.81, 2, 0)
+	MovementLoopAddLocation(NPC, 21.76, -6, 42.26, 2, 0)
+	MovementLoopAddLocation(NPC, 17.62, -6.89, 50.15, 2, 0)
+	MovementLoopAddLocation(NPC, 16.1, -7, 51.15, 2, 0)
+	MovementLoopAddLocation(NPC, 3.3, -7, 52.41, 2, 0)
+	MovementLoopAddLocation(NPC, -4.53, -7, 48.12, 2, 0)
+	MovementLoopAddLocation(NPC, -10.06, -7, 52.32, 2, 0)
+	MovementLoopAddLocation(NPC, -14.75, -7, 54.81, 2, 0)
+	MovementLoopAddLocation(NPC, -14.97, -7, 50.53, 2, 1)
+	MovementLoopAddLocation(NPC, -14.97, -7, 50.53, 2, 30,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, -14.97, -7, 50.53, 2, 0)
+	MovementLoopAddLocation(NPC, -14.67, -7, 52.3, 2, 0)
+	MovementLoopAddLocation(NPC, -12.68, -7, 53.78, 2, 0)
+	MovementLoopAddLocation(NPC, -11.17, -7, 51.86, 2, 0)
+	MovementLoopAddLocation(NPC, -10.36, -7, 44.81, 2, 0)
+	MovementLoopAddLocation(NPC, -13.84, -7, 39.83, 2, 0)
+	MovementLoopAddLocation(NPC, -19.36, -7, 36.38, 2, 0)
+	MovementLoopAddLocation(NPC, -28.54, -5.75, 25.17, 2, 0)
+	MovementLoopAddLocation(NPC, -34.48, -5.5, 18.8, 2, 0)
+	MovementLoopAddLocation(NPC, -34.48, -5.5, 18.8, 2, 1)
+	MovementLoopAddLocation(NPC, -34.48, -5.5, 18.8, 2, 20,"EcologyEmotes")
+	
+	MovementLoopAddLocation(NPC, -28.54, -5.75, 25.17, 2, 0)
+	MovementLoopAddLocation(NPC, -19.36, -7, 36.38, 2, 0)
+	MovementLoopAddLocation(NPC, -13.84, -7, 39.83, 2, 0)
+	MovementLoopAddLocation(NPC, -10.36, -7, 44.81, 2, 0)
+	MovementLoopAddLocation(NPC, -11.17, -7, 51.86, 2, 0)
+	MovementLoopAddLocation(NPC, -12.68, -7, 53.78, 2, 0)
+	MovementLoopAddLocation(NPC, -14.67, -7, 52.3, 2, 0)
+	MovementLoopAddLocation(NPC, -14.97, -7, 50.53, 2, 0)
+	MovementLoopAddLocation(NPC, -14.97, -7, 50.53, 2, 1)
+	MovementLoopAddLocation(NPC, -14.97, -7, 50.53, 2, 30,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, -14.75, -7, 54.81, 2, 0)
+	MovementLoopAddLocation(NPC, -10.06, -7, 52.32, 2, 0)
+	MovementLoopAddLocation(NPC, -4.53, -7, 48.12, 2, 0)
+	MovementLoopAddLocation(NPC, 3.3, -7, 52.41, 2, 0)
+	MovementLoopAddLocation(NPC, 16.1, -7, 51.15, 2, 0)
+	MovementLoopAddLocation(NPC, 17.62, -6.89, 50.15, 2, 0)
+	MovementLoopAddLocation(NPC, 21.76, -6, 42.26, 2, 0)
+	MovementLoopAddLocation(NPC, 21.35, -6, 39.81, 2, 0)
+	MovementLoopAddLocation(NPC, 21.35, -6, 39.81, 2, 1)
+	MovementLoopAddLocation(NPC, 21.35, -6, 39.81, 2, 30,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 22.68, -6, 39.18, 2, 0)
+	MovementLoopAddLocation(NPC, 22.43, -6, 37.65, 2, 0)
+	MovementLoopAddLocation(NPC, 22.17, -6, 37.28, 2, 1)
+	MovementLoopAddLocation(NPC, 22.17, -6, 37.28, 2, 30,"EcologyEmotes")
+	MovementLoopAddLocation(NPC, 20.18, -5.75, 33.33, 2, 0)
+	MovementLoopAddLocation(NPC, 14.44, -5.5, 32.63, 2, 0)
+	MovementLoopAddLocation(NPC, 8.08, -5.5, 30.1, 2, 0)
+	MovementLoopAddLocation(NPC, 5.33, -5.5, 27.74, 2, 0)
+	MovementLoopAddLocation(NPC, 2.35, -5.5, 22.98, 2, 0)
+	MovementLoopAddLocation(NPC, -1.17, -5.5, 22.13, 2, 0)
+	MovementLoopAddLocation(NPC, -11.15, -5.5, 20.23, 2, 0)
+	MovementLoopAddLocation(NPC, -15.73, -5, 16.57, 2, 0)
+	MovementLoopAddLocation(NPC, -22.58, -5, 16.37, 2, 0)
+	MovementLoopAddLocation(NPC, -27.49, -5, 15.97, 2, 0)
+	MovementLoopAddLocation(NPC, -29.35, -5, 13.85, 2, 0)
+	MovementLoopAddLocation(NPC, -26.97, -5, 12.35, 2, 0)
 end
+
+

@@ -5,7 +5,7 @@
     Script Purpose : 
                    : 
 --]]
-
+require "SpawnScripts/Generic/NPCModule"
 local FinishingtheNegotiations = 425
 local TroubleAbout = 441
 local MoreThenMeetsTheEye = 442
@@ -13,8 +13,10 @@ local ProvingYourWorth = 443
 local ConfusionIsTheKey = 444
 local OneFinalTask = 445
 
-function spawn(NPC)
-	SetPlayerProximityFunction(NPC, 10, "InRange")
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    FreeportGuard(NPC)
+    SetPlayerProximityFunction(NPC, 10, "InRange")
 end
 
 function InRange(NPC, Spawn)

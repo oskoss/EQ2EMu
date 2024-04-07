@@ -9,25 +9,30 @@
         Preceded by: None
         Followed by: 
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 function Init(Quest)
 	AddQuestStepZoneLoc(Quest, 1, "I must find the chessboard floor in Stormhold.", 10, "I should venture into the Stormhold to see if this giant chessboard floor exists.", 0,  70, -5, -100, 15)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
+    UpdateQuestZone(Quest,"Stormhold")
 end
 
 function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I found the chessboard floor in Stormhold.")
 	UpdateQuestTaskGroupDescription(Quest, 1, "I saw the remarkable chessboard in the Stormhold.")
+    UpdateQuestZone(Quest,"Antonica")
 	AddQuestStepChat(Quest, 2, "I must speak with Breeza Harmet.", 1, "I should return to Breeza Harmet at Windstalker Pond in Antonica and tell her of the giant chessboard.", 0, 120159)
 	AddQuestStepCompleteAction(Quest, 2, "QuestComplete")
 end	
 
 function Accepted(Quest, QuestGiver, Player)
 	FaceTarget(QuestGiver, Player)
-	local conversation = CreateConversation()
-    PlayFlavor(QuestGiver, "voiceover/english/breeza_harmet/antonica/breezaharmet002.mp3", "", "", 3534908306, 1371562053, Player)
-	AddConversationOption(conversation, "Most call it Stormhold. I have heard tales of it. If I see this giant chessboard, I will return to tell you.")
-	StartConversation(conversation, QuestGiver, Player, "Oh no, not I.  I'm not an adventurer like you. I'm a mere fletcher who enjoys a good game of chess. Unfortunately, the banquet hall is within Stormguard, the legendary home of the Knights of Thunder. If you come across the fortress in your travels, would you return to me and let me know if the chessboard hall truly exists?")
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Oh no, not I.  I'm not an adventurer like you. I'm a mere fletcher who enjoys a good game of chess. Unfortunately, the banquet hall is within Stormguard, the legendary home of the Knights of Thunder. If you come across the fortress in your travels, would you return to me and let me know if the chessboard hall truly exists?")
+	Dialog.AddVoiceover("voiceover/english/breeza_harmet/antonica/breezaharmet002.mp3", 3534908306, 1371562053)
+	PlayFlavor(QuestGiver, "", "", "no", 0, 0, Player)
+	Dialog.AddOption("Most call it Stormhold. I have heard tales of it. If I see this giant chessboard, I will return to tell you.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

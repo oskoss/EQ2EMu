@@ -9,12 +9,17 @@
 dofile("SpawnScripts/NorthQeynos/QueenAntoniaBayle.lua")
 
 function init_zone_script(Zone)
-
+    SetLocationProximityFunction(Zone,659.21, -10.21, -376.89, 12, "Arbos","LeaveLocation")
 end
 
 function player_entry(Zone, Player)
 SendPopUpMessage(Player, "The Elddar Grove", 230, 230, 230)   
 end
+
+function Arbos(Zone,Player)
+      SendPopUpMessage(Player, "Arbos, The Great Tree", 255, 255, 0)
+    end
+
 
 function dawn(Zone)
 local Antonia = GetSpawnByLocationID(Zone,412938)

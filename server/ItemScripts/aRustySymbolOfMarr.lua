@@ -1,21 +1,36 @@
 --[[
 	Script Name	: ItemScripts/RustySymbolOfMarr.lua
 	Script Purpose	: Offers quest "Rusty Symbol of Marr"
-	Script Author	: premierio015
-	Script Date	    : 12.11.2020
+	Script Author	: premierio015\\Dorbin
+	Script Date	    : 12.11.2020 \\ 11.14.2023
 	Script Notes	:  
 --]]
 
-local quest = 584
 
 function examined(Item, Player)
-	if not HasQuest(Player, quest) and not HasCompletedQuest(Player, quest) then
-		OfferQuest(nil, Player, quest)
-		
-	   elseif HasItem(Player, 2555) and HasQuest(Player, quest) then
-			RemoveItem(Player, 2555)
+    conversation = CreateConversation()
+	if CanReceiveQuest(Player,RustySymbol) then
+    AddConversationOption(conversation, "Someone of faith might want this.","Offer")
+    end
+    AddConversationOption(conversation, "[Put the symbol away]")
+    StartDialogConversation(conversation, 2, Item, Player, "The metal medallion is very old and rusty but bears the symbol of Mithaniel Marr.")
 end
-   end
- 
 
-    
+
+
+
+function Offer(Item,Player)
+    if CanReceiveQuest(Player,RustySymbol) then
+    OfferQuest(nil,Player,RustySymbol)
+    end
+    CloseItemConversation(Item,Player)
+end
+
+
+
+function QuestFinish(Item,Player)
+    CloseItemConversation(Item,Player)
+    if HasItem(Player,2555) then
+        RemoveItem(Player,2555,1)
+    end
+end    

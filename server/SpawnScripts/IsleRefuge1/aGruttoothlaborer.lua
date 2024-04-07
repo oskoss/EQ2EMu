@@ -6,26 +6,19 @@
                    : 
 --]]
 dofile("SpawnScripts/Generic/MonsterCallouts/BaseGoblin1.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-    local Level = GetLevel(NPC)
-    local level1 = 3
-    local level2 = 4
-    local difficulty1 = 6
-    local hp1 = 75
-    local power1 = 45
-    local difficulty2 = 6
-    local hp2 = 110
-    local power2 = 55
-    if Level == level1 then
-    SpawnSet(NPC, "difficulty", difficulty1)
-    SpawnSet(NPC, "hp", hp1)
-    SpawnSet(NPC, "power", power1)
-    elseif Level == level2
-        then
-    SpawnSet(NPC, "difficulty", difficulty2)
-    SpawnSet(NPC, "hp", hp2)
-    SpawnSet(NPC, "power", power2)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    local ID = GetSpawnID(NPC)
+    if ID ==3250122 then
+    SetInfoStructString(NPC, "action_state", "cooking_idle")
+    elseif ID ==3250104 then
+    SetInfoStructString(NPC, "action_state", "mining_digging")
+    elseif ID ==3250105 then
+    SetInfoStructString(NPC, "action_state", "forestry_chopping")
+    elseif ID ==3250095 then
+    SetInfoStructString(NPC, "action_state", "woodworking_idle")
     end
 
 end

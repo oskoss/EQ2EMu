@@ -1,28 +1,35 @@
 --[[
     Script Name    : Spells/Fighter/Brawler/ShoulderCharge.lua
-    Script Author  : Dello
-    Script Date    : 2014.07.10 06:07:13
+    Script Author  : LordPazuzu
+    Script Date    : 9/2/2023
     Script Purpose : 
                    : 
 --]]
 
 
-function cast(Caster, Target, DmgType, MinVal, MaxVal)
-    if MaxVal ~= nil and MinVal < MaxVal then
-        SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))
-    else
-        SpellDamage(Target, DmgType, MinVal)
-    end
+function cast(Caster, Target, DmgType, DmgLow, DmgHigh)
 
-    if not IsEpic(Target) then
-        AddControlEffect(Target, 4)
-        BlurVision(Target, 1.0)
-        Knockback(Caster, Target, 1500)
-        AddSpellTimer(1500, "RemoveKnockdown")
+    Level = GetLevel(Caster)
+    SpellLevel = 13
+    Mastery = SpellLevel + 10
+    StatBonus = GetStr(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
     end
+    
+    
+    DmgBonus = LvlBonus + StatBonus
+    MaxDmg = math.floor(DmgBonus) * 2 + DmgHigh
+    MinDmg = math.floor(DmgBonus) * 2 + DmgLow
+    
+    SpellDamage(Target, DmgType, MinDmg, MaxDmg)
+    AddControlEffect(Target, 4 )
 end
 
-function RemoveKnockdown(Caster, Target)
+function remove(Caster, Target)
     RemoveControlEffect(Target, 4)
-    BlurVision(Target, 0.0)
+
 end
+

@@ -10,18 +10,14 @@ local LukursAntiques = 374
 
 function casted_on(NPC, Spawn, SpellName)
 	if SpellName == 'Search' then
-		if  GetQuestStep(Spawn, LukursAntiques) == 2 then --ShadowedMask
-            SetStepComplete(Spawn, LukursAntiques, 2)
+		if  GetTempVariable(Spawn,"Mask1")=="1" then --ShadowedMask
+            SetStepComplete(Spawn, LukursAntiques, 1)
         end
     end
 end
 
 function spawn(NPC)
     SetRequiredQuest(NPC, LukursAntiques, 2)
-end
-
-function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
 end
 
 function respawn(NPC)

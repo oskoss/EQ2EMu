@@ -8,6 +8,7 @@
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "mood_sad")
 end
 
 function respawn(NPC)
@@ -26,8 +27,8 @@ function hailed(NPC, Spawn)
 
 		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1053.mp3", "", "", 0, 0, Spawn)
 		AddConversationOption(conversation, "Nothing.", "dlg_11_1")
-	StartConversation(conversation, NPC, Spawn, "What?")
-	if convo==18 then
+	    StartConversation(conversation, NPC, Spawn, "What?")
+--[[	if convo==18 then
 		PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1053.mp3", "", "", 0, 0, Spawn)
 		AddConversationOption(conversation, "Nothing.", "dlg_18_1")
 		StartConversation(conversation, NPC, Spawn, "What?")
@@ -41,7 +42,7 @@ function hailed(NPC, Spawn)
 	
 	if convo==20 then
 		PlayFlavor(NPC, "", "Just leave me alone. Please!", "no", 1689589577, 4560189, Spawn)
-	end
+	end]]--
 
 end
 

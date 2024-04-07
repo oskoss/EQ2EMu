@@ -13,7 +13,7 @@
 
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "Gather five tokens from the creatures in the Oakmyst Forest.", 5, 30, "The local forests have been seeded with tokens for the citizens of Graystone Yard to gather. These tokens may be found on any creatures in the Oakmyst Forest.", 1333,8300001, 8300002, 8300003, 8300004, 8300005, 8300006, 8300008, 8300010, 8300013, 8300014, 8300015, 8300016, 8300017, 8300018, 8300019, 8300022, 8300023, 8300026, 8300027, 8300034, 8300035, 8300036, 8300048, 8300049, 8300050, 8300051, 8300052, 8300053, 8300064)
+	AddQuestStepKill(Quest, 1, "Gather five tokens from the creatures in the Oakmyst Forest.", 5, 34, "The local forests have been seeded with tokens for the citizens of Graystone Yard to gather. These tokens may be found on any creatures in the Oakmyst Forest.", 1333,8300001, 8300002, 8300003, 8300004, 8300005, 8300006, 8300008, 8300010, 8300013, 8300014, 8300015, 8300016, 8300017, 8300018, 8300019, 8300022, 8300023, 8300026, 8300027, 8300034, 8300035, 8300036, 8300048, 8300049, 8300050, 8300051, 8300052, 8300053, 8300064)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
     UpdateQuestZone(Quest,"Oakmyst Forest")
 end
@@ -42,8 +42,8 @@ function Step2Complete(Quest, QuestGiver, Player)
 	-- The following UpdateQuestStepDescription and UpdateTaskGroupDescription are not needed, parser adds them for completion in case stuff needs to be moved around
 	UpdateQuestStepDescription(Quest, 2, "I've entered the citizenship trial.")
 	UpdateQuestTaskGroupDescription(Quest, 2, "I've entered the citizenship trial.")
-    UpdateQuestZone(Quest,"Qeynos Citizenship Trial Chamber")
-	AddQuestStepChat(Quest, 3, "I need to speak with Marshal Glorfel regarding my Citizenship Trial.", 1, "I need to speak with Marshal Glorfel regarding my Citizenship Trial", 1333, 22101350)
+    UpdateQuestZone(Quest,"Citizenship Trial Chamber")
+	AddQuestStepChat(Quest, 3, "I need to speak with Marshal Glorfel regarding my Citizenship Trial.", 1, "I need to speak with Marshal Glorfel regarding my Citizenship Trial", 1350, 	8250009)
 	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")   
 end
 
@@ -53,52 +53,29 @@ function Step3Complete(Quest, QuestGiver, Player)
 	UpdateQuestTaskGroupDescription(Quest, 3, "I've entered the citizenship trial.")
 
  	AddQuestStepChat(Quest, 4, "I need to judge the traitors.",1, "Marshal Glorfel has tasked me with rendering judgment upon some treasonous residents in order to gain citizenship.  He has pointed out that there are those who would betray our great city to that wretch Lucan.  To prove myself, I will have to render final judgment on all of them. ",0,22101351)
- 	AddQuestStepChat(Quest, 5, "I need to judge the traitors.",1, "Marshal Glorfel has tasked me with rendering judgment upon some treasonous residents in order to gain citizenship.  He has pointed out that there are those who would betray our great city to that wretch Lucan.  To prove myself, I will have to render final judgment on all of them. ",0,22101354)
- 	AddQuestStepChat(Quest, 6, "I need to judge the traitors.",1, "Marshal Glorfel has tasked me with rendering judgment upon some treasonous residents in order to gain citizenship.  He has pointed out that there are those who would betray our great city to that wretch Lucan.  To prove myself, I will have to render final judgment on all of them. ",0,22101353)
-    AddQuestStepChat(Quest, 7, "I need to judge the traitors.",1, "Marshal Glorfel has tasked me with rendering judgment upon some treasonous residents in order to gain citizenship.  He has pointed out that there are those who would betray our great city to that wretch Lucan.  To prove myself, I will have to render final judgment on all of them. ",0,22101352)
 	AddQuestStepCompleteAction(Quest, 4, "Step4Complete")   
-	AddQuestStepCompleteAction(Quest, 5, "Step5Complete")   
-	AddQuestStepCompleteAction(Quest, 6, "Step6Complete")   
-    AddQuestStepCompleteAction(Quest, 7, "Step7Complete")
 end
 
 function Step4Complete(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 4, "I've judged the Freeport mole.")
-	CheckProgress(Quest, QuestGiver, Player)
+	UpdateQuestStepDescription(Quest, 4, "I've judged the traitors.")
+	UpdateQuestTaskGroupDescription(Quest, 4, "I have dealt with the traitors")
+	AddQuestStepChat(Quest, 5, "I need to return to Marshal Glorfel.", 1, "I must return to Marshal Glorfel to let him know the deed is done.",0, 	8250009)
+    AddQuestStepCompleteAction(Quest, 5, "QuestComplete")
 end
 
-
-function Step5Complete(Quest, QuestGiver, Player)
-    	UpdateQuestStepDescription(Quest, 5, "I've judged the disgruntled refugee.")
-CheckProgress(Quest, QuestGiver, Player)
-end
-
-
-function Step6Complete(Quest, QuestGiver, Player)
-    	UpdateQuestStepDescription(Quest, 6, "I've judged the Freeport partisan.")
-   CheckProgress(Quest, QuestGiver, Player)
-end
-
-function Step7Complete(Quest, QuestGiver, Player)
-    UpdateQuestStepDescription(Quest, 7, "I've judged Tavithi N'sari.")
-   CheckProgress(Quest, QuestGiver, Player)
-end
-
-function CheckProgress(Quest, QuestGiver, Player)
-    if QuestStepIsComplete(Player, 5720, 4) and QuestStepIsComplete(Player, 5720, 5)  and QuestStepIsComplete(Player, 5720, 6) and QuestStepIsComplete(Player, 5720, 7)then
-	UpdateQuestTaskGroupDescription(Quest, 7, "I have dealt with the traitors")
-	AddQuestStepChat(Quest, 8, "I need to return to Marshal Glorfel.", 1, "I must return to Marshal Glorfel to let him know the deed is done.",0, 22101350)
-    AddQuestStepCompleteAction(Quest, 8, "QuestComplete")
-    end
-end
 
 function QuestComplete(Quest, QuestGiver, Player)
 	-- The following UpdateQuestStepDescription and UpdateTaskGroupDescription are not needed, parser adds them for completion in case stuff needs to be moved around
-	UpdateQuestStepDescription(Quest, 8, "Qeynos Citizenship Granted")
-	UpdateQuestTaskGroupDescription(Quest, 8, "I returned to Marshal Glorfel and he has granted me Qeynos citizenship.")
+	UpdateQuestStepDescription(Quest, 5, "Qeynos Citizenship Granted")
+	UpdateQuestTaskGroupDescription(Quest, 5, "I returned to Marshal Glorfel and he has granted me Qeynos citizenship.")
 
 	UpdateQuestDescription(Quest, "The task list is completed and you may now apply to become a citizen of the city of Qeynos.")
 	GiveQuestReward(Quest, Player)
+alignment = GetAlignment(Player)
+
+if alignment ~= 1 then
+SetAlignment(Player, 1)
+end
 end
 
 
@@ -113,12 +90,6 @@ function Reload(Quest, QuestGiver, Player, Step)
     elseif Step == 4 then	    
     Step4Complete(Quest, QuestGiver, Player)
     elseif Step == 5 then	    
-    Step5Complete(Quest, QuestGiver, Player)
-    elseif Step == 6 then
-	Step6Complete(Quest, QuestGiver, Player)
-    elseif Step == 7 then
-	Step7Complete(Quest, QuestGiver, Player)
-	elseif Step == 8 then
 	QuestComplete(Quest, QuestGiver, Player)
 	end
 end

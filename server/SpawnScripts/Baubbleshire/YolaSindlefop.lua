@@ -42,5 +42,6 @@ function HandOver(NPC, Spawn)
 	PlayFlavor(NPC, "", "", "thank", 0, 0, Spawn)
 	Dialog.AddOption("Enjoy.")
 	Dialog.Start()
+    PlayFlavor(NPC, "", "", "sit_exit", 0, 0, Spawn)
 end
 

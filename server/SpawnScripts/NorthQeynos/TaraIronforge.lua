@@ -5,22 +5,24 @@
     Script Purpose : Jewelery Pickup for Taneran quest
                    : 
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 local Taneran = 5459
 
 function spawn(NPC)
-
+    SetInfoStructString(NPC, "action_state", "artificing_idle")
 end
 
 function hailed(NPC, Spawn)
-    conversation = CreateConversation()
 	FaceTarget(NPC, Spawn)
-	PlayFlavor(NPC, "voiceover/english/tara_ironforge/qey_north/taraironforge.mp3", "", "", 1778772317, 1476685213, Spawn)
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("Hello, friend! I've just received some fine gems from the hard-working dwarves in the village! Take a look. See if anything strikes your fancy.")
+	Dialog.AddVoiceover("voiceover/english/tara_ironforge/qey_north/taraironforge.mp3", 1778772317, 1476685213)
 	if GetQuestStep (Spawn, Taneran)==1 then
-	AddConversationOption(conversation, "I'm here to pick up an order for Taneran. Here is the order form.","Order")
+	Dialog.AddOption("I'm here to pick up an order for Taneran. Here is the order form.","Order")
 	end    
-	AddConversationOption(conversation, "Thank you. I'll browse around.")
-	StartConversation(conversation, NPC, Spawn, "Hello, friend! I've just received some fine gems from the hard-working dwarves in the village! Take a look. See if anything strikes your fancy.")
+	Dialog.AddOption("Thank you. I'll browse around. ")
+	Dialog.Start()
 	end
 
 
@@ -29,11 +31,13 @@ function respawn(NPC)
 end
 
 function Order(NPC, Spawn)
-    conversation = CreateConversation()
 	FaceTarget(NPC, Spawn)
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("Oh! Let's look. Yes, I believe I have just what he's looking for. Take this to him. I am certain he will be pleased.")
+	Dialog.AddVoiceover("voiceover/english/tara_ironforge/qey_north/taraironforge001.mp3", 829541547, 700812740)
 	PlayFlavor(NPC, "", "", "agree", 0, 0, Spawn)
-	AddConversationOption(conversation, "I'll get it to him. Thank you.","Pickup")
-	StartConversation(conversation, NPC, Spawn, "Oh! Let's look. Yes, I believe I have just what he's looking for. Take this to him. I am certain he will be pleased.")
+	Dialog.AddOption("I'll get it to him. Thank you.","Pickup")
+	Dialog.Start()
 	end
 	
 	function Pickup(NPC, Spawn)

@@ -6,14 +6,25 @@
                    : 
 --]]
 
--- Heals target for 182 - 223
--- Increases Max Health of target by 27.6
+function cast(Caster, Target, MinVal, MaxVal)
+    Level = GetLevel(Caster)
+    SpellLevel= 18
+    Mastery = SpellLevel + 10
+    StatBonus = GetWis(Caster) / 10
+    
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
 
-function cast(Caster, Target, MinHeal, MaxHeal, HP)
-SpellHeal("Heal", MinHeal, MaxHeal)
-    AddSpellBonus(Target, 606, HP)
+    HealBonus = math.floor(LvlBonus + StatBonus) * 2
+    MinHeal = MinVal + HealBonus
+    MaxHeal = MaxVal + HealBonus
+    
+    SpellHeal("Heal", MinHeal, MaxHeal)
 end
 
 function remove(Caster, Target)
     RemoveSpellBonus(Target)
+
 end

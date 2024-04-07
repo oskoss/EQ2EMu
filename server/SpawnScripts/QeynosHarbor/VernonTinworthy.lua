@@ -9,6 +9,7 @@
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "drinking_idle")
 end
 
 function respawn(NPC)

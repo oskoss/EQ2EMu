@@ -13,6 +13,7 @@ function spawn(NPC)
 AddTimer(NPC, 5000, "EmoteLoop")    
 	SetPlayerProximityFunction(NPC, 6, "InRange", "LeaveRange")
 ProvidesQuest(NPC,Delivery)
+    SetInfoStructString(NPC, "action_state", "tapfoot")
 end
 
 function respawn(NPC)

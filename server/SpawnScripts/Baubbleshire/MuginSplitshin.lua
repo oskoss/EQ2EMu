@@ -8,6 +8,7 @@
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "tapfoot")
 end
 
 function InRange(NPC, Spawn)

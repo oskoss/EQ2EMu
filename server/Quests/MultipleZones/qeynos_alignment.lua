@@ -39,7 +39,7 @@ Halas = GetFactionAmount(Player, 16)
 Gorowyn = GetFactionAmount(Player, 17)
 alignment = GetAlignment(Player)
 
-if GetRace(Player) == 0 or GetRace(Player) == 3 or GetRace(Player) == 5 or GetRace(Player) == 6 or GetRace(Player) == 9 or GetRace(Player) == 11 or GetRace(Player) == 20 then
+if alignment ~= 1 then
 SetAlignment(Player, 1)
 end
 
@@ -108,6 +108,10 @@ function Step1Complete(Quest, QuestGiver, Player)
     elseif Race == 5 or Race == 7 then
 	AddQuestStepChat(Quest, 2, "I must find the Steward", 1, "I have been instructed to seek out the Steward when I arrive in Qeynos.  I should ring the bell on the docks to book passage to the city.", 11, 2380173)
     UpdateQuestZone(Quest, "Baubbleshire")
+    else
+	AddQuestStepChat(Quest, 2, "I must find the Steward", 1, "I have been instructed to seek out the Steward when I arrive in Qeynos.  I should ring the bell on the docks to book passage to the city.", 11, 2330170)
+    UpdateQuestZone(Quest, "Nettleville")
+
 end
 
 	AddQuestStepCompleteAction(Quest, 2, "QuestComplete")

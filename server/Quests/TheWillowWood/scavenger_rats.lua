@@ -9,6 +9,7 @@
         Preceded by: None
         Followed by: 
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 
 function Init(Quest)
@@ -18,11 +19,12 @@ function Init(Quest)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	FaceTarget(NPC, Player)
-    conversation = CreateConversation()
-    AddConversationOption(conversation, "Farewell Salinia.")
-    StartConversation(conversation, QuestGiver, Player, "Thank you for assisting us. If you slay only a few rats it will make a difference. Good luck on your hunt, adventurer")
- 	PlayFlavor(NPC, "", "", "thank", 0,0 , Player)
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Thank you for assisting us. If you slay only a few rats it will make a difference. Good luck on your hunt, adventurer.")
+ 	PlayFlavor(QuestGiver, "", "", "thank", 0,0 , Player)
+	Dialog.AddOption("Farewell Salinia.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)
@@ -55,8 +57,7 @@ end
 function Reload(Quest, QuestGiver, Player, Step)
 	if Step == 1 then
 		Step1Complete(Quest, QuestGiver, Player)
-	end
-	if Step == 2 then
+	elseif Step == 2 then
 		QuestComplete(Quest, QuestGiver, Player)
 	end
 end

@@ -10,6 +10,7 @@
  local TheChomper = 5696
 
 function spawn(NPC)
+        AddTimer(NPC,math.random(2500,6000),"AttackRocks")
 
 end
 
@@ -26,3 +27,10 @@ if QuestIsComplete(Spawn, TheChomper) or HasItem(Spawn, 1285) then
 RemoveLootItem(NPC, 1285) 
   end
 end
+
+function AttackRocks(NPC)
+    if not IsInCombat(NPC) then
+    PlayAnimation(NPC,10784)
+    end
+    AddTimer(NPC, math.random(3000,6000), "AttackRocks")
+end 

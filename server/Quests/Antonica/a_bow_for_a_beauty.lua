@@ -11,7 +11,7 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "Landwyn has asked me to collect earthcrawler leg joints.", 5, 30, "I need to gather perfectly polished earthcrawler leg joints for Landwyn.", 1908, 120121, 121267)
+	AddQuestStepKill(Quest, 1, "Landwyn has asked me to collect earthcrawler leg joints.", 5, 40, "I need to gather perfectly polished earthcrawler leg joints for Landwyn.", 1908, 120121, 121267)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
 end
 

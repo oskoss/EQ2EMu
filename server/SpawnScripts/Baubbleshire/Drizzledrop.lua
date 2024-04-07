@@ -7,7 +7,7 @@
 --]]
 
 function spawn(NPC)
-
+    SetInfoStructString(NPC, "action_state", "alchemy_idle")
 end
 
 function hailed(NPC, Spawn)

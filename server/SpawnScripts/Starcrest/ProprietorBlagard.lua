@@ -11,6 +11,7 @@ local AnIntriguingEye = 5366
 local TheMotleyMerchantManifest = 5368
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "tapfoot")
 end
 
 function respawn(NPC)

@@ -9,7 +9,7 @@
 local DefiledDremDrem = 5367
 
 function spawn(NPC)
-SetPlayerProximityFunction(NPC, 10, "InRange", Spawn)
+SetPlayerProximityFunction(NPC, 12, "InRange", Spawn)
 end
 
 function casted_on(NPC, Spawn, SpellName)
@@ -22,27 +22,27 @@ end
 end
 
 function offer(NPC, Spawn)
-       OfferQuest(NPC, Spawn, DefiledDremDrem)
-       local con = CreateConversation()
-     AddConversationOption(con, "I should find the bones.")
-      AddConversationOption(con, "exit")
- StartDialogConversation(con, 1, NPC, Spawn, "Upon opening the coffin, you notice that it is empty.  This coffin has been defiled!")
-        SetAccessToEntityCommand(Spawn,NPC,"examine coffin", 0)
-     SpawnSet(NPC, "show_command_icon", 0)
+    OfferQuest(NPC, Spawn, DefiledDremDrem)
+    local con = CreateConversation()
+    AddConversationOption(con, "I should find the bones.")
+    AddConversationOption(con, "exit")
+    StartDialogConversation(con, 1, NPC, Spawn, "Upon opening the coffin, you notice that it is empty.  This coffin has been defiled!")
+    SetAccessToEntityCommand(Spawn,NPC,"examine coffin", 0)
+    SpawnSet(NPC, "show_command_icon", 0)
     SpawnSet(NPC, "display_hand_icon", 0)
     AddTimer(NPC, 10000, "check", 1, Spawn)
 end
 
 function InRange(NPC, Spawn)
  if HasQuest(Spawn, DefiledDremDrem) or HasCompletedQuest(Spawn, DefiledDremDrem) then
-      SetAccessToEntityCommand(Spawn,NPC,"examine coffin", 0)
+    SetAccessToEntityCommand(Spawn,NPC,"examine coffin", 0)
     SpawnSet(NPC, "show_command_icon", 0)
     SpawnSet(NPC, "display_hand_icon", 0)
 end
 end
 
 function check(NPC, Spawn)
-     if not HasQuest(Spawn, DefiledDremDrem) and not HasCompletedQuest(Spawn,  DefiledDremDrem) then
+    if not HasQuest(Spawn, DefiledDremDrem) and not HasCompletedQuest(Spawn,  DefiledDremDrem) then
     SpawnSet(NPC, "show_command_icon", 1)
     SpawnSet(NPC, "display_hand_icon", 1)
     SetAccessToEntityCommand(Spawn,NPC,"examine pump", 1)

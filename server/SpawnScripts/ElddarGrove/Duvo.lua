@@ -11,6 +11,7 @@ local papers = 5536
 function spawn(NPC)
 SetPlayerProximityFunction(NPC, 6, "InRange", "LeaveRange")		
 ProvidesQuest(NPC,muffins)
+    SetInfoStructString(NPC, "action_state", "alchemy_idle")
 end
 
 

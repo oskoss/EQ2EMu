@@ -1,7 +1,7 @@
 --[[
 	Script Name		: SpawnScripts/BeggarsCourt/ManiusGallaBC.lua
 	Script Purpose	: Manius Galla
-	Script Author	: torsten
+	Script Author	: torsten\\Dorbin
 	Script Date		: 2022.07.15
 	Script Notes	: 
 --]]
@@ -21,92 +21,98 @@ function respawn(NPC)
 end
 
 function hailed(NPC, Spawn)
-    FaceTarget(NPC, Spawn)
-    
-    if not HasQuest(Spawn, JoiningtheGang) and not HasCompletedQuest(Spawn, JoiningtheGang) then
-	    OfferQuest(NPC, Spawn, JoiningtheGang)
-        Dialog1(NPC, Spawn)
-    end
-    if HasCompletedQuest(Spawn, JoiningtheGang) then
-        if not HasQuest(Spawn, DonationsfromtheBanker) and not HasCompletedQuest(Spawn, DonationsfromtheBanker) then
-            OfferQuest(NPC, Spawn, DonationsfromtheBanker)
-        end
-    end
-    if GetQuestStep(Spawn, JoiningtheGang) == 2 then
-        SetStepComplete(Spawn, JoiningtheGang, 2)	
-        Dialog5(NPC, Spawn)
-    end
-  	if GetQuestStep(Spawn, DonationsfromtheBanker) == 2 then
-        SetStepComplete(Spawn, DonationsfromtheBanker, 2)	
-    end
-    Dialog4(NPC, Spawn)
+if GetFactionAmount(Spawn,12) <0 then
+	FaceTarget(NPC, Spawn)
+    PlayFlavor(NPC, "","","taunt",0,0, Spawn)
+elseif GetQuestStep(Spawn,JoiningtheGang)==1 then
+ 	FaceTarget(NPC, Spawn)
+    PlayFlavor(NPC, "","You best be dealing with those raiders, unless you're too much of whimp. We don't allow wimps in our ranks, now scram!","sneer",0,0, Spawn)
+elseif GetQuestStep(Spawn,DonationsfromtheBanker)==1 then
+ 	FaceTarget(NPC, Spawn)
+    PlayFlavor(NPC, "","Well, where is it? I don't see our \"donation\" on you. Get to the bank already!","glare",0,0, Spawn)
+else
+     Dialog1(NPC,Spawn)
+   end
 end
+
+--Mind your own business.  If you keep gawking, you'll walk away with a limp--and that's because I'm in a good mood today.
 
 function Dialog1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	Dialog.AddDialog("Mind your own business. If you keep gawking, you'll be walking away with a limp. And that's only because I'm in a good mood today.")
-	Dialog.AddOption("I want to join your gang.", "Dialog7")
-	Dialog.AddOption("I didn't see anything.")
+	Dialog.AddVoiceover("voiceover/english/voice_emotes/greetings/greetings_"..MakeRandomInt(1,3).."_1004.mp3", 0, 0)
+    if CanReceiveQuest(Spawn,JoiningtheGang) then
+	Dialog.AddOption("I want to join your gang.", "Dialog2")
+    elseif GetQuestStep(Spawn,JoiningtheGang)==2 then
+	Dialog.AddOption("I've killed the raiders.", "Dialog4")
+    end    
+    if CanReceiveQuest(Spawn,DonationsfromtheBanker) then
+	Dialog.AddOption("So, can I join your gang now?", "Dialog5")
+    elseif GetQuestStep(Spawn,DonationsfromtheBanker)==2 then
+	Dialog.AddOption("Here's the money. He said you should eat rotten berries given to you by witches.", "Dialog6")
+    end    
+    Dialog.AddOption("I didn't see anything.")
 	Dialog.Start()
 end
 
 function Dialog2(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Don't even bother coming back if they ain't!")
-	Dialog.AddOption("Don't worry about it.")
+	Dialog.AddDialog("Did you hear that, boys? This runt wants to join our gang! HA HA HA HA! You couldn't fight your way out of a wet parchment bag let alone join us. HA HA HA! We keep people safe inside the city districts!  You're better off paying us for protection, runt.")
+    PlayFlavor(NPC, "","","chuckle",0,0, Spawn)
+	Dialog.AddOption("Why don't you give me a test?", "Offer1")
+	Dialog.AddOption("I don't need to take this from you. Good bye.")
 	Dialog.Start()
+end
+
+function Offer1(NPC,Spawn)
+    OfferQuest(NPC,Spawn,JoiningtheGang)
 end
 
 function Dialog3(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("A test, huh? Yeah ... hey, boys ... let's give this runt a bit of a test. Okay, here's your test: Go deeper in this place and find some of the lackeys who hang around the raiders. Kill some of them and maybe you can work for us.")
-	Dialog.AddOption("Okay, I'll be back when they're dead.", "Dialog2")
+	Dialog.AddDialog("Don't even bother coming back if they ain't!")
+    PlayFlavor(NPC, "","","stare",0,0, Spawn)
+	Dialog.AddOption("Don't worry about it.")
 	Dialog.Start()
 end
 
 function Dialog4(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Mind your own business. If you keep gawking, you'll be walking away with a limp. And that's only because I'm in a good mood today.")
-	Dialog.AddVoiceover("voiceover/english/voice_emotes/greetings/greetings_1_1004.mp3", 0, 0)
-	Dialog.AddOption("I didn't see anything.")
+	Dialog.AddDialog("Crispin already heard. Hpmh ... You got lucky, I guess. Either way, those Raiders won't bother our clients in the Court anymore. I don't know if I should let you join our gang ... let me think about it.")
+    PlayFlavor(NPC, "","","agree",0,0, Spawn)
+	Dialog.AddOption("I'll check back.")
 	Dialog.Start()
+	SetStepComplete(Spawn,JoiningtheGang,2)
 end
+
 
 function Dialog5(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Crispin already heard. Hpmh ... You got lucky, I guess. Either way, those Raiders won't bother our clients in the Court anymore. I don't know if I should let you join our gang ... let me think about it.")
-	Dialog.AddOption("I'll check back.")
+	Dialog.AddDialog("Hpmh ... You got lucky, I guess. Either way, those Raiders won't bother our clients in the Court anymore. I don't know if I should let you join our gang ... let me think about it. ")
+    PlayFlavor(NPC, "","","ponder",0,0, Spawn)
+	Dialog.AddOption("Oh, come on. How else can I prove myself?","Offer2")
+	Dialog.AddOption("You're impossible!")
 	Dialog.Start()
+end
+
+function Offer2(NPC,Spawn)
+    OfferQuest(NPC,Spawn,DonationsfromtheBanker)
 end
 
 function Dialog6(NPC, Spawn)
+	SetStepComplete(Spawn,DonationsfromtheBanker,2)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Mind your own business. If you keep gawking, you'll be walking away with a limp. And that's only because I'm in a good mood today.")
-	Dialog.AddOption("I want to join your gang.", "Dialog7")
-	Dialog.AddOption("I didn't see anything.")
+	Dialog.AddDialog("So he's in with the witches now is he?  I'll keep my eye on all of 'em.  What's this paltry sum?  He's cheated me, he has!  That old miser will have an accident before the sun is down, or I won't rest.  Here's a coin for you.  Get lost while I decide that banker's fate.  GRRRR!!!")
+    PlayFlavor(NPC, "","","grumble",0,0, Spawn)
+	Dialog.AddOption("Whoa, Don't get angry at me! I'm out of here...")
 	Dialog.Start()
 end
 
-function Dialog7(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Did you hear that, boys? This runt wants to join our gang! HA HA HA HA! You couldn't fight your way out of a wet parchment bag let alone join us. HA HA HA! We keep people safe inside the city districts!  You're better off paying us for protection, runt.")
-	Dialog.AddOption("Why don't you give me a test?", "Dialog3")
-	Dialog.AddOption("I don't need to take this from you. Good bye.")
-	Dialog.Start()
-end
 
-function Dialog8(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Mind your own business. If you keep gawking, you'll be walking away with a limp. And that's only because I'm in a good mood today.")
-	Dialog.AddOption("I've killed the raiders.", "Dialog5")
-	Dialog.AddOption("I didn't see anything.")
-	Dialog.Start()
-end
+--

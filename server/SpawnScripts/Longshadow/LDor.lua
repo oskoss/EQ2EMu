@@ -6,29 +6,42 @@
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
 
+require "SpawnScripts/Generic/DialogModule"
+
 function spawn(NPC)
-	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+SetPlayerProximityFunction(NPC, 9, "InRange", "LeaveRange")
 end
 
 function respawn(NPC)
 	spawn(NPC)
 end
 
-function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	SaySomethingRandom(NPC, Spawn)
-end
-
 function InRange(NPC, Spawn)
-	SaySomethingRandom(NPC, Spawn)
+	 if MakeRandomInt(1, 100) <= 33 and GetFactionAmount(Spawn,12) >0 then
+	    FaceTarget(NPC, Spawn)
+        PlayFlavor(NPC, "voiceover/english/optional2/darkelf_eco_evil_1/ft/service/merchant/darkelf_merchant_service_evil_1_aoi_gm_53388b91.mp3", "Only traitors to the Overlord would pass up a bargain like this. You're not a traitor are you?", "beckon", 1403936443, 3068231605, Spawn)
+ elseif  GetFactionAmount(Spawn,12) <=0 then
+	 FaceTarget(NPC, Spawn)
+     PlayFlavor(NPC, "", "", "shakefist", 4267987983, 4115199119, Spawn, 0)
+    end
+end   
+
+function respawn(NPC)
+	spawn(NPC)
 end
 
-function LeaveRange(NPC, Spawn)
+function hailed(NPC, Spawn)
+	 if GetFactionAmount(Spawn,12) >0 then
+     Dialog1(NPC, Spawn)
+ elseif  GetFactionAmount(Spawn,12) <=0 then
+	    FaceTarget(NPC, Spawn)
+	    PlayFlavor(NPC, "voiceover/english/darkelf_eco_evil_1/ft/service/innkeeper/darkelf_innkeeper_service_evil_1_notcitizen_gm_85c35337.mp3", "We don't serve your pathetic kind here.  Get out of my sight!", "heckno", 4267987983, 4115199119, Spawn, 0)
+    end	    
 end
 
-function SaySomethingRandom(NPC, Spawn)
-	choice = math.random(1, 3)
-
+function     Dialog1(NPC, Spawn)
+    FaceTarget(NPC,Spawn)
+	local choice = MakeRandomInt(1,3)
 	if choice == 1 then
 		PlayFlavor(NPC, "voiceover/english/optional2/darkelf_eco_evil_1/ft/service/merchant/darkelf_merchant_service_evil_1_hail_gm_f715099e.mp3", "Hello there, kind adventurer.  My merchandise carries the seal of the Overlord himself!  Go ahead, take a look!", "salute_freeport", 1302153135, 3653961458, Spawn)
 	elseif choice == 2 then

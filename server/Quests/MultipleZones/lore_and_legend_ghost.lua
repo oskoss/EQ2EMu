@@ -11,9 +11,9 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find a ghost dream shard.", 1, 100, "I must locate several ghost body parts.", 2516, 334)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a ghost ectoplasm.", 1, 100, "I must locate several ghost body parts.", 2516, 334)
-	AddQuestStepKillByRace(Quest, 3, "I need to find a ghost haunted fragment.", 1, 100, "I must locate several ghost body parts.", 2516, 334)
+	AddQuestStepKillByRace(Quest, 1, "I need to find a ghost dream shard.", 1, 10, "I must locate several ghost body parts.", 2516, 334)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a ghost ectoplasm.", 1, 35, "I must locate several ghost body parts.", 2516, 334)
+	AddQuestStepKillByRace(Quest, 3, "I need to find a ghost haunted fragment.", 1, 25, "I must locate several ghost body parts.", 2516, 334)
 	AddQuestStep(Quest, 4, "I need to find and study a ghost vile plasm.", 1, 100, "I must locate several ghost body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a ghost ethereal strand.", 1, 100, "I must locate several ghost body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study a ghost phantasmal echo.", 1, 100, "I must locate several ghost body parts.", 11)

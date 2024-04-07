@@ -33,9 +33,10 @@ end
 function Option1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-    Dialog.AddVoiceover("voiceover/english/knight-captain_antillin/antonica/captainantillin001.mp3",  841411724, 1572096111)
-	Dialog.AddOption("What will you do?", "Option2")
 	Dialog.AddDialog("Corporal Peckett has raised a militia patrol? Very good! You must return at once to Corporal Peckett and inform him that the entire squad has been lost within a gnoll hive.")
+    Dialog.AddVoiceover("voiceover/english/knight-captain_antillin/antonica/captainantillin001.mp3",  841411724, 1572096111)
+    PlayFlavor(NPC,"","","agree",0,0,Spawn)
+	Dialog.AddOption("What will you do?", "Option2")
 	Dialog.Start()
 end
 
@@ -43,8 +44,12 @@ function Option2(NPC, Spawn)
     SetStepComplete(Spawn, PeckettsPatrol, 13)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-    Dialog.AddVoiceover("voiceover/english/knight-captain_antillin/antonica/captainantillin002.mp3", 4242603088, 1602660198)
-	Dialog.AddOption("I wish you luck, Captain. For Qeynos!")
 	Dialog.AddDialog("I must return to this hive to properly plot its location and uncover some of its mysteries before I report back to the generals of the Qeynos Guard. Now go! Before the gnolls have us both!")
+    Dialog.AddVoiceover("voiceover/english/knight-captain_antillin/antonica/captainantillin002.mp3", 4242603088, 1602660198)
+	Dialog.AddOption("I wish you luck, Captain. For Qeynos!","Salute")
 	Dialog.Start()
+end
+
+function Salute(NPC,Spawn)
+    PlayFlavor(NPC,"","","salute",0,0,Spawn)
 end

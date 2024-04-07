@@ -5,33 +5,14 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/MonsterCallouts/DarkpawGnoll1.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-    local Level = GetLevel(NPC)
-    local level1 = 17
-    local level2 = 18
-    local difficulty1 = 9
-    local hp1 = 4030
-    local power1 = 1670
-    local difficulty2 = 9
-    local hp2 = 4410
-    local power2 = 1670
-    if Level == level1 then
-    SpawnSet(NPC, "difficulty", difficulty1)
-    SpawnSet(NPC, "hp", hp1)
-    SpawnSet(NPC, "power", power1)
-    elseif Level == level2
-        then
-    SpawnSet(NPC, "difficulty", difficulty2)
-    SpawnSet(NPC, "hp", hp2)
-    SpawnSet(NPC, "power", power2)
-    end
-
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    IdleAggressive(NPC)
 end
 
-function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-end
 
 function respawn(NPC)
 	spawn(NPC)

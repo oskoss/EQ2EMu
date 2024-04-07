@@ -7,6 +7,7 @@
 --]]
 
 require "SpawnScripts/Generic/DialogModule"
+local Mage1 = 5902
 
 function spawn(NPC)
 end
@@ -16,7 +17,11 @@ function respawn(NPC)
 end
 
 function hailed(NPC, Spawn)
+    if GetFactionAmount(Spawn,12) >0 then
     Dialog3(NPC, Spawn)
+    else
+    PlayFlavor(NPC,"","","cutthroat",0,0,Spawn)
+    end
 end
 
 function Dialog1(NPC, Spawn)
@@ -44,6 +49,20 @@ function Dialog3(NPC, Spawn)
 	Dialog.AddVoiceover("voiceover/english/reana_astia/fprt_hood04/std_reana_astia.mp3", 3795939248, 4147514993)
 	Dialog.AddOption("Then I have no need to talk to you.")
 	Dialog.AddOption("Are you a farmer?", "Dialog1")
+	if HasQuest(Spawn,Mage1) and GetQuestStepProgress(Spawn,Mage1,7)== 0 then
+	Dialog.AddOption("I understand you witnessed a summoning today. What was summoned?", "Dialog4")
+	end
+	Dialog.Start()
+end
+
+function Dialog4(NPC, Spawn)
+    SetStepComplete(Spawn,Mage1,7)
+	FaceTarget(NPC, Spawn)
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("Dunno for certain.  There was this bright light right before it showed up, so we couldn't see it. That's what made it hard to run out of there, too... this guy summoned up a whole bunch of enormous spears!  I know they were spears, because as I was running away, I ran right into one of them!  I was gored open by that spear and barely made it to a Priest in time... if you find out who did it, kill them for me, got it?")
+	Dialog.AddVoiceover("voiceover/english/merchant_reana_astia/fprt_hood04/std_reana_astia002.mp3", 1441981908, 166520196)
+    PlayFlavor(NPC,"","","shrug",0,0,Spawn)
+	Dialog.AddOption("I'll consider it. So this person summoned some spears... thank you.")
 	Dialog.Start()
 end
 

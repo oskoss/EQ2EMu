@@ -1,0 +1,102 @@
+--[[
+    Script Name    : SpawnScripts/Commonlands/CaptainGaer.lua
+    Script Author  : LordPazuzu
+    Script Date    : 2024.01.19 02:01:04
+    Script Purpose : 
+                   : 
+--]]
+require "SpawnScripts/Generic/NPCModule"
+
+function spawn(NPC, Spawn)
+    dmgMod = GetStr(NPC)/10
+    SetInfoStructUInt(NPC, "override_primary_weapon", 1)        
+    SetInfoStructUInt(NPC, "primary_weapon_damage_low", math.floor(55+ dmgMod)) 
+    SetInfoStructUInt(NPC, "primary_weapon_damage_high", math.floor(95 + dmgMod))
+    Bloodskull(NPC)
+    OrcChainCommon(NPC)
+    AddTimer(NPC, 6000, "waypoints")
+end
+
+function hailed(NPC, Spawn)
+	FaceTarget(NPC, Spawn)
+end
+
+function respawn(NPC)
+	spawn(NPC)
+end
+
+function waypoints(NPC)
+	MovementLoopAddLocation(NPC, -853.31, -47.85, 665.66, 2, 0)
+	MovementLoopAddLocation(NPC, -854.13, -47.25, 631.48, 2, 0)
+	MovementLoopAddLocation(NPC, -883.2, -48.02, 622.32, 2, 0)
+	MovementLoopAddLocation(NPC, -922.78, -48.04, 622.32, 2, 0)
+	MovementLoopAddLocation(NPC, -950.03, -48.04, 614.71, 2, 0)
+	MovementLoopAddLocation(NPC, -981.42, -48.04, 601.61, 2, 0)
+	MovementLoopAddLocation(NPC, -1072.99, -48.04, 621.02, 2, 0)
+	MovementLoopAddLocation(NPC, -1097.7, -48.04, 617.37, 2, 0)
+	MovementLoopAddLocation(NPC, -1124.87, -48.04, 621.24, 2, 0)
+	MovementLoopAddLocation(NPC, -1148.21, -48.04, 632.06, 2, 0)
+	MovementLoopAddLocation(NPC, -1195.37, -47.91, 626.67, 2, 0)
+	MovementLoopAddLocation(NPC, -1201.45, -47.47, 620.68, 2, 0)
+	MovementLoopAddLocation(NPC, -1199.98, -47.13, 611.8, 2, 0)
+	MovementLoopAddLocation(NPC, -1168.19, -47.37, 589.7, 2, 0)
+	MovementLoopAddLocation(NPC, -1099.29, -47.22, 551.58, 2, 0)
+	MovementLoopAddLocation(NPC, -1074, -47.58, 552.66, 2, 0)
+	MovementLoopAddLocation(NPC, -1051.47, -47.66, 559.23, 2, 0)
+	MovementLoopAddLocation(NPC, -1015.81, -47.84, 575.63, 2, 0)
+	MovementLoopAddLocation(NPC, -998.11, -47.83, 576.63, 2, 0)
+	MovementLoopAddLocation(NPC, -909.95, -48.02, 555.98, 2, 0)
+	MovementLoopAddLocation(NPC, -847.01, -48.04, 540.67, 2, 0)
+	MovementLoopAddLocation(NPC, -803.28, -48.04, 522.18, 2, 0)
+	MovementLoopAddLocation(NPC, -735.52, -47.84, 461.03, 2, 0)
+	MovementLoopAddLocation(NPC, -685.04, -48.04, 437.92, 2, 0)
+	MovementLoopAddLocation(NPC, -654.54, -45.76, 425.58, 2, 0)
+	MovementLoopAddLocation(NPC, -605.63, -47.55, 372.49, 2, 0)
+	MovementLoopAddLocation(NPC, -577.7, -47.29, 348.63, 2, 0)
+	MovementLoopAddLocation(NPC, -549.75, -46.48, 307.69, 2, 0)
+	MovementLoopAddLocation(NPC, -514.57, -47.38, 279.68, 2, 0)
+	MovementLoopAddLocation(NPC, -472.31, -46.99, 282.11, 2, 0)
+	MovementLoopAddLocation(NPC, -423.39, -45.45, 289.7, 2, 0)
+	MovementLoopAddLocation(NPC, -377.48, -45.18, 319.77, 2, 0)
+	MovementLoopAddLocation(NPC, -352.01, -44.87, 322.8, 2, 0)
+	MovementLoopAddLocation(NPC, -324.04, -44.41, 305.68, 2, 0)
+	MovementLoopAddLocation(NPC, -311.39, -43.84, 298.71, 2, 0)
+	MovementLoopAddLocation(NPC, -299.78, -46.29, 287.78, 2, 0)
+	MovementLoopAddLocation(NPC, -263.31, -46.08, 210.04, 2, 0)
+	MovementLoopAddLocation(NPC, -253.1, -46.25, 199.62, 2, 0)
+	MovementLoopAddLocation(NPC, -240.26, -47.37, 197.59, 2, 0)
+	MovementLoopAddLocation(NPC, -193.7, -48.04, 209.45, 2, 0)
+	MovementLoopAddLocation(NPC, -181.94, -47.48, 224.61, 2, 0)
+	MovementLoopAddLocation(NPC, -178.35, -47.41, 243.59, 2, 0)
+	MovementLoopAddLocation(NPC, -183.73, -47.64, 268.36, 2, 0)
+	MovementLoopAddLocation(NPC, -181.18, -45.97, 299.93, 2, 0)
+	MovementLoopAddLocation(NPC, -184.05, -46.94, 332.56, 2, 0)
+	MovementLoopAddLocation(NPC, -189.4, -48.1, 382.65, 2, 0)
+	MovementLoopAddLocation(NPC, -196.88, -47.91, 394.92, 2, 0)
+	MovementLoopAddLocation(NPC, -211.1, -47.23, 399.72, 2, 0)
+	MovementLoopAddLocation(NPC, -234.53, -46.64, 397.2, 2, 0)
+	MovementLoopAddLocation(NPC, -240.24, -46.3, 398.41, 2, 0)
+	MovementLoopAddLocation(NPC, -262.26, -46.93, 418.43, 2, 0)
+	MovementLoopAddLocation(NPC, -257.77, -46.93, 474.66, 2, 0)
+	MovementLoopAddLocation(NPC, -261.59, -45.66, 522.59, 2, 0)
+	MovementLoopAddLocation(NPC, -290.99, -44.69, 564.43, 2, 0)
+	MovementLoopAddLocation(NPC, -330.21, -46.98, 583.85, 2, 0)
+	MovementLoopAddLocation(NPC, -369.31, -47.88, 588.66, 2, 0)
+	MovementLoopAddLocation(NPC, -408.62, -45.09, 591.41, 2, 0)
+	MovementLoopAddLocation(NPC, -428.42, -45.52, 600.49, 2, 0)
+	MovementLoopAddLocation(NPC, -459.35, -47.9, 627.84, 2, 0)
+	MovementLoopAddLocation(NPC, -542.09, -46.13, 626.25, 2, 0)
+	MovementLoopAddLocation(NPC, -600.73, -48.06, 623.84, 2, 0)
+	MovementLoopAddLocation(NPC, -685.76, -47.58, 614.7, 2, 0)
+	MovementLoopAddLocation(NPC, -768.94, -48.04, 618.47, 2, 0)
+	MovementLoopAddLocation(NPC, -820.7, -47.98, 612.81, 2, 0)
+	MovementLoopAddLocation(NPC, -842.97, -47.77, 617.33, 2, 0)
+	MovementLoopAddLocation(NPC, -854.26, -47.21, 637.21, 2, 0)
+	MovementLoopAddLocation(NPC, -854.92, -47.43, 650.55, 2, 0)
+	MovementLoopAddLocation(NPC, -852.89, -47.65, 671.6, 2, 0)
+	MovementLoopAddLocation(NPC, -852.89, -47.65, 671.6, 2, 0, "Action")
+end
+
+function Action(NPC,Spawn)
+    Despawn(NPC)
+end

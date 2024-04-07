@@ -9,6 +9,7 @@
 local HALFELF_MENTOR_QUEST_2 = 219
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "tapfoot")
 end
 
 function respawn(NPC)

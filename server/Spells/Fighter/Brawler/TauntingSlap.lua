@@ -1,16 +1,26 @@
 --[[
     Script Name    : Spells/Fighter/Brawler/TauntingSlap.lua
-    Script Author  : Dello
-    Script Date    : 2014.07.11 02:07:49
+    Script Author  : LordPazuzu
+    Script Date    : 9/29/2023
     Script Purpose : 
                    : 
 --]]
 
 function cast(Caster, Target, MinVal, MaxVal)
-    -- Increases Threat to target by 355 - 434 
-    if MaxVal ~= nil and MinVal < MaxVal then
-        AddHate(Caster, Target, math.random(MinVal, MaxVal), 1)
-    else
-        AddHate(Caster, Target, MinVal, 1)
+    Level = GetLevel(Caster)
+    SpellLevel = 17
+    Mastery = SpellLevel + 10
+    StatBonus = GetStr(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
     end
+    
+    HateBonus = LvlBonus * 4
+    MaxHate = MaxVal + HateBonus
+    MinHate = MinVal + HateBonus
+    AddHate(Caster, Target, math.random(MinHate,MaxHate),1)
+    
+
 end

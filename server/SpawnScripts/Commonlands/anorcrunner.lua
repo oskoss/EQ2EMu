@@ -5,9 +5,12 @@
     Script Purpose : 
                    : 
 --]]
-require "SpawnScripts/Generic/MovementCircleSmall"
-function spawn(NPC)
-    SpawnChooseRandomMovement(NPC)
+require "SpawnScripts/Generic/NPCModule"
+
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    Bloodskull(NPC)
+    OrcArmorCommon(NPC)
 end
 
 function hailed(NPC, Spawn)

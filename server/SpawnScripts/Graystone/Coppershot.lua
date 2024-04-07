@@ -44,7 +44,7 @@ function LagerDelivery(NPC, Spawn)
 	conversation = CreateConversation()
     PlayFlavor(NPC, "voiceover/english/bartender_coppershot/qey_village03/bartendercoppershot001.mp3", "", "thanks", 552811210, 4089856593, Spawn)
 	AddConversationOption(conversation, "I'll make sure he gets this. Thanks.", "UpdateDelivery")
-	StartConversation(conversation, NPC, Spawn, "Ye don't say! Must'a been ol' Deeppockets that sent ya. His family brew is famous here! Please, give him this antique stein. Now don't drop it! He'll be sure to find it interesting.")
+	StartConversation(conversation, NPC, Spawn, "You don't say!  Must've been ol' Deeppockets who sent ya'.  His family brew is famous here.  Please give him this antique stein.  Now, don't drop it.  He'll be sure to find it interesting.")
 end
 
 function UpdateDelivery(NPC, Spawn)

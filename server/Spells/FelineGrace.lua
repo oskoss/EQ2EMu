@@ -9,10 +9,10 @@
 -- Grants the skill Safefall.
 
 function cast(Caster, Target)
-    AddControlEffect(Target, 14)
+    AddControlEffect(Caster, 14)
 end
 
 function remove(Caster, Target)
-    RemoveControlEffect(Target, 14)
+    RemoveControlEffect(Caster, 14)
 end
 

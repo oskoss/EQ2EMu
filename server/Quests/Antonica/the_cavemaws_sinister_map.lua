@@ -10,8 +10,9 @@
         Followed by: 
 --]]
 
+
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "I need to slay the Cavemaw tunnelers in the Antonican caves.", 5, 100, "The cavemaw gnolls are up to no good, planning to dig their way all the way to Qeynos for a staged attack.  I cannot stop them all, but I can certainly slow them down.", 104, 120290)
+	AddQuestStepKill(Quest, 1, "I need to slay the Cavemaw tunnelers in the Antonican caves.", 30, 100, "The cavemaw gnolls are up to no good, planning to dig their way all the way to Qeynos for a staged attack.  I cannot stop them all, but I can certainly slow them down.", 104, 120290)
 	AddQuestStepCompleteAction(Quest, 1, "QuestComplete")
 end
 
@@ -41,5 +42,3 @@ function Reload(Quest, QuestGiver, Player, Step)
 		QuestComplete(Quest, QuestGiver, Player)
 	end
 end
-
-

@@ -9,6 +9,7 @@
         Preceded by: None
         Followed by: 
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 function Init(Quest)
 	AddQuestStepChat(Quest, 1, "I need to pick up an order of fish from Umli Grayfist.", 1, "Umli Grayfist's order of fish for Gretta won't keep forever.", 2540, 2210135)
@@ -18,11 +19,13 @@ end
 
 function Accepted(Quest, QuestGiver, Player)
 	FaceTarget(QuestGiver, Player)
-	local conversation = CreateConversation()
-    PlayFlavor(QuestGiver, "voiceover/english/merchant_gretta_steinbeard/qey_north/grettasteinbeard_x002.mp3", "", "chuckle", 2938647056, 1980096242, Player)
-	AddConversationOption(conversation, "I hope I don't regret this.")
-	AddConversationOption(conversation, "I'll be back soon... hopefully.")
-	StartConversation(conversation, QuestGiver, Player, "Ah, thank Brell I don't have to go!.. Uh, that you're going to that mudglub Umli.  You'll find him at the harbor down by the docks.  Can't miss him.  He's uglier than a troll woman in a wedding dress! Hah!  And you can tell him I said so!")
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Ah, thank Brell I don't have to go!.. Uh, that you're going to that mudglub Umli.  You'll find him at the harbor down by the docks.  Can't miss him.  He's uglier than a troll woman in a wedding dress! Hah!  And you can tell him I said so!")
+	Dialog.AddVoiceover("voiceover/english/merchant_gretta_steinbeard/qey_north/grettasteinbeard_x000.mp3", 612712171, 2321965832)
+    PlayFlavor(QuestGiver, "", "", "chuckle", 0, 0, Player)
+	Dialog.AddOption("I hope I don't regret this.")
+	Dialog.AddOption("I'll be back soon... hopefully.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

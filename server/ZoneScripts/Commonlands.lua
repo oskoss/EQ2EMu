@@ -6,7 +6,8 @@
 	Script Notes	:	
 --]]
 
-
+--local SearchForTheMissing = 573
+--local AFesteringProblem = 5800
 
 function init_zone_script(zone)
     SetLocationProximityFunction(zone, 757.39, -31.98, -585.17, 10, "GriffonTower", "Leave")   -- Nektulos (from Freeport)
@@ -21,7 +22,7 @@ end
 
      
 function player_entry(zone, player)
-SendPopUpMessage(player, "The Commonlands", 230, 230, 230)    
+    SendPopUpMessage(player, "The Commonlands", 230, 230, 230)
 end
 
 function enter_location(zone, spawn, grid)

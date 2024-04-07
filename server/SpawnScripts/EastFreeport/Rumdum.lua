@@ -56,7 +56,7 @@ function Dialog7(NPC, Spawn)
 	Dialog.AddDialog("Froglok?!  Let me tell ya somethin' 'bout them Frogloks... them froggies are only good fer squishin'.  I remember the first time I squished a Froglok ... I was five-years old and --")
 	Dialog.AddVoiceover("voiceover/english/rumdum/fprt_east/quest_rumdum008.mp3", 1911216997, 2661721879)
 	Dialog.AddEmote("threaten")
-	if HasCoin(Spawn, 400) then
+	if HasCoin(Spawn, 400) and CanReceiveQuest(Spawn,TheSteinOfMoggok)then
 	Dialog.AddOption("Bartender, we need another four silver ale here!", "Dialog8")
 	end
 	Dialog.AddOption("That's it, I'm out of here.")
@@ -117,7 +117,7 @@ function Dialog2(NPC, Spawn)
 	Dialog.AddDialog("Are ya callin' me smelly?!  Nobody calls Rumdum Clurg smelly!")
 	Dialog.AddVoiceover("voiceover/english/rumdum/fprt_east/quest_rumdum002.mp3", 2456172890, 2255945862)
 	Dialog.AddEmote("threaten")
-	if not HasQuest(Spawn, TheSteinOfMoggok) and not HasCompletedQuest(Spawn, TheSteinOfMoggok) then
+	if not HasQuest(Spawn, TheSteinOfMoggok) and not HasCompletedQuest(Spawn, TheSteinOfMoggok) and CanReceiveQuest(Spawn,TheSteinOfMoggok) then
 	Dialog.AddOption("Easy, big guy.  How about I buy you a drink?", "Dialog3")
 	end
 	Dialog.AddOption("Uh... I'll be leaving now.")

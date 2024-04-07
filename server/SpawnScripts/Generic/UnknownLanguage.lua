@@ -311,26 +311,26 @@ function Garbled(NPC, Spawn, Faction)
                 	local choice = math.random(1,6)
 
                 	if choice == 1 then
-	            	PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_2_garbled_gm_5a81ec49.mp3", "Hekveten plava SU klina", "", 3536439879, 1109691272, Spawn)
+	            	PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_2_garbled_gm_5a81ec49.mp3", "Hekveten plava SU klina", "", 3536439879, 1109691272, Spawn,26)
                 	elseif choice == 2 then
-            		PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_2_garbled_gm_bc265d9b.mp3", "EeeSIP   qweek  MEEerallow  neep", "", 148555474, 1278831922, Spawn)
+            		PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_2_garbled_gm_bc265d9b.mp3", "EeeSIP   qweek  MEEerallow  neep", "", 148555474, 1278831922, Spawn,26)
                 	elseif choice == 3 then
-            		PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_2_garbled_gm_5c77ba46.mp3", "Chee   ava   kirAH   tay!", "", 1940215504, 447502824, Spawn)
+            		PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_2_garbled_gm_5c77ba46.mp3", "Chee   ava   kirAH   tay!", "", 1940215504, 447502824, Spawn,26)
                 	elseif choice == 4 then
-            		PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_1_garbled_gm_5a81ec49.mp3", "Hekveten plava SU klina", "", 2175556278, 29227183, Spawn)
+            		PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_1_garbled_gm_5a81ec49.mp3", "Hekveten plava SU klina", "", 2175556278, 29227183, Spawn,26)
                 	elseif choice == 5 then
-	            	PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_1_garbled_gm_5c77ba46.mp3", "Chee   ava   kirAH   tay!", "", 806743894, 496586204, Spawn)
+	            	PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_1_garbled_gm_5c77ba46.mp3", "Chee   ava   kirAH   tay!", "", 806743894, 496586204, Spawn,26)
 	                elseif choice == 6 then
-	            	PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_1_garbled_gm_21432a6a.mp3", "TravaHAS merallund kBORrten illanya", "", 1269733907, 434806140, Spawn)
+	            	PlayFlavor(NPC, "voiceover/english/optional3/ratonga_bloodsabers/ft/ratonga/ratonga_bloodsabers_1_garbled_gm_21432a6a.mp3", "TravaHAS merallund kBORrten illanya", "", 1269733907, 434806140, Spawn,26)
 		            end				    
 				elseif gender == FEMALE then
 	                local choice = math.random(1,3)
                     if choice == 1 then
-		            PlayFlavor(NPC, "voiceover/english/ratonga_darkblades/ft/ratonga/ratonga_darkblades_1_garbled_gf_5a81ec49.mp3", "Hekveten plava SU klina", "", 4282746773, 1025120966, Spawn)
+		            PlayFlavor(NPC, "voiceover/english/ratonga_darkblades/ft/ratonga/ratonga_darkblades_1_garbled_gf_5a81ec49.mp3", "Hekveten plava SU klina", "", 4282746773, 1025120966, Spawn,26)
                 	elseif choice == 2 then
-            		PlayFlavor(NPC, "voiceover/english/ratonga_black_magi/ft/ratonga/ratonga_black_magi_1_garbled_gf_21432a6a.mp3", "EeeSIP   qweek  MEEerallow  neep", "", 3484386885, 1475086391, Spawn)
+            		PlayFlavor(NPC, "voiceover/english/ratonga_black_magi/ft/ratonga/ratonga_black_magi_1_garbled_gf_21432a6a.mp3", "EeeSIP   qweek  MEEerallow  neep", "", 3484386885, 1475086391, Spawn,26)
                 	elseif choice == 3 then
-            		PlayFlavor(NPC, "voiceover/english/ratonga_black_magi/ft/ratonga/ratonga_black_magi_1_garbled_gf_5a81ec49.mp3", "Chee   ava   kirAH   tay!", "", 3639926873, 1002267878, Spawn)
+            		PlayFlavor(NPC, "voiceover/english/ratonga_black_magi/ft/ratonga/ratonga_black_magi_1_garbled_gf_5a81ec49.mp3", "Chee   ava   kirAH   tay!", "", 3639926873, 1002267878, Spawn,26)
                 						
 					end    
 				end

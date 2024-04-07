@@ -8,9 +8,13 @@
 dofile("SpawnScripts/NorthQeynos/QueenAntoniaBayle.lua")
 
 function init_zone_script(Zone)
-
+    SetLocationProximityFunction(Zone,479.03, -9.20, 127.18, 10, "FountofStorms","LeaveLocation")
 end
 
+function FountofStorms(Zone,Player)
+      SendPopUpMessage(Player, "Fountain of Storms", 255, 255, 0)
+    end
+    
 function player_entry(Zone, Player)
 SendPopUpMessage(Player, "South Qeynos", 230, 230, 230)   
 end

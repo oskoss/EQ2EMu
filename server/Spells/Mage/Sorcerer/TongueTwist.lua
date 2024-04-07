@@ -1,24 +1,35 @@
 --[[
     Script Name    : Spells/Mage/Sorcerer/TongueTwist.lua
-    Script Author  : neatz09
-    Script Date    : 2020.11.05 02:11:13
+    Script Author  : LordPazuzu
+    Script Date    : 12/17/2022
     Script Purpose : 
                    : 
 --]]
 
--- Interrupts target
--- Inflicts 4 - 6 magic damage on target
--- Stifles target
---     If Target is not Epic
--- Resistibility increases against targets higher than level 29.
 
-function cast(Caster, Target, DmgType, MinVal, MaxVal)
-    Say(Caster, "Resistibility not implemented.")
+
+function cast(Caster, Target, DmgType, MinVal, MaxVal, SpellLevel)
     Interrupt(Caster, Target)
-	SpellDamage(Target, DmgType, MinVal, MaxVal)
-		if not IsEpic() then
+    
+    Level = GetLevel(Caster)
+    Mastery = SpellLevel + 10
+    StatBonus = GetInt(Caster) / 10
+    
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+
+    DmgBonus = LvlBonus + StatBonus
+    MaxDmg = math.floor(DmgBonus) * 2 + MaxVal
+    MinDmg = math.floor(DmgBonus) * 2 + MinVal
+    
+    
+    SpellDamage(Target, DmgType, MinDmg, MaxDmg)
+	
+	if not IsEpic() then
 			AddControlEffect(Target, 2)
-				end
+	end
 end
 
 function remove(Caster, Target)

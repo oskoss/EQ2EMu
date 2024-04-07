@@ -5,10 +5,10 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-require "SpawnScripts/Generic/MovementCircleSmall"
-function spawn(NPC)
-    SpawnChooseRandomMovement(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
 end
 
 function hailed(NPC, Spawn)

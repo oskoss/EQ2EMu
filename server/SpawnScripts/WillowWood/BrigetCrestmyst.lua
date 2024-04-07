@@ -9,6 +9,7 @@
 dofile("SpawnScripts/Generic/GenericWeaponsmithVoiceOvers.lua")
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "woodworking_idle")
 end
 
 function respawn(NPC)

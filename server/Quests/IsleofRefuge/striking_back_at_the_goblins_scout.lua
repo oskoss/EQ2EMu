@@ -10,6 +10,7 @@
         Followed by: Hunting the Orcish Leader
 --]]
 require "SpawnScripts/Generic/DialogModule"
+dofile("SpawnScripts/Generic/ClassSkillCheck.lua")
 
 function Init(Quest)
 	AddQuestStepKill(Quest, 1, "I need to gather four wolf harnesses and return to Vladiminn.", 4, 70, "My part in the raid on the main goblin camp will consist of slaying the trained battle and war wolves that the goblins keep there.  Vladiminn would like me to return four wolf harnesses to him.", 286, 3250128,3250129)

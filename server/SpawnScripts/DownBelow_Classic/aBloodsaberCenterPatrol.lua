@@ -5,10 +5,27 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/MonsterCallouts/BloodSabers.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-
-waypoints(NPC)
+function spawn(NPC, Spawn)
+    --if not HasLanguage(Spawn,26) then
+        --Garbled(NPC,Spawn)
+    --end
+    
+    if GetSpawnID(NPC) == 8340015 then
+        dmgMod = GetStr(NPC)/10
+        SetInfoStructUInt(NPC, "override_primary_weapon", 1)        
+        SetInfoStructUInt(NPC, "primary_weapon_damage_low", math.floor(12 + dmgMod)) 
+        SetInfoStructUInt(NPC, "primary_weapon_damage_high", math.floor(24 + dmgMod))
+    else
+        NPCModule(NPC, Spawn)
+        ratonga(NPC)
+    end
+    
+    SetSeeHide(NPC,1)
+    SetSeeInvis(NPC,1)
+    waypoints(NPC)
 end
 
 function hailed(NPC, Spawn)

@@ -17,7 +17,7 @@ function InRange(NPC, Spawn) --Quest Callout
 if GetFactionAmount(Spawn,11)<0 then
 PlayFlavor(NPC, "", "", "shakefist", 0, 0, Spawn)
 FaceTarget(NPC, Spawn)
-elseif GetRace(Spawn)== 9 or GetRace(Spawn)== 11 then
+elseif GetRace(Spawn)== 9 or GetRace(Spawn)== 11 or GetRace(Spawn) == 19 or GetRace(Spawn) == 11 or GetRace(Spawn) == 10 or GetRace(Spawn) >= 12 or GetRace(Spawn)<= 14  then
     if not HasQuest(Spawn,5763) and not HasCompletedQuest(Spawn, 5763) and HasQuest(Spawn, 5762) and not HasCompletedQuest(Spawn, 5762)then   
     Talk(NPC,Spawn)
     elseif CalloutTimer == false then
@@ -41,7 +41,7 @@ end
 
 
 function hailed(NPC, Spawn)
-if GetRace(Spawn)== 9 or GetRace(Spawn)== 11 then
+if GetRace(Spawn)== 9 or GetRace(Spawn)== 11 or GetRace(Spawn) == 19 or GetRace(Spawn) == 11 or GetRace(Spawn) == 10 or GetRace(Spawn) >= 12 or GetRace(Spawn)<= 14  then
     if not HasQuest(Spawn,5763) and not HasCompletedQuest(Spawn, 5763) and not HasQuest(Spawn, 5762) and not HasCompletedQuest(Spawn, 5762) then   
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)

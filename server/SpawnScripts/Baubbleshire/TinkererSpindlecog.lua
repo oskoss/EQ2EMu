@@ -13,6 +13,7 @@ local SpindleCogQuest = 5447
 function spawn(NPC)
 ProvidesQuest(NPC, SpindleCogQuest)
 conversation = CreateConversation()
+    SetInfoStructString(NPC, "action_state", "artificing_idle")
 end
 
 function respawn(NPC)

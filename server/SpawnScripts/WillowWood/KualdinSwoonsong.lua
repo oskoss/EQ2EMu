@@ -13,38 +13,60 @@ local Delivery = 5471
 function spawn(NPC)
 SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
 ProvidesQuest(NPC, Delivery)
+    SetTempVariable(NPC, "CalloutTimer", "false")
+    SetTempVariable(NPC, "CalloutTimer1", "false")
+    SetTempVariable(NPC, "CalloutTimer2", "false")
 end
 
 function InRange(NPC, Spawn) --Quest Callout
 if GetFactionAmount(Spawn,11)<0 then
         FactionChecking(NPC, Spawn, faction)
 else
-if not HasCompletedQuest (Spawn, Delivery) and not HasQuest (Spawn, Delivery)  then 
-    if math.random(1, 100) <= 80 then
-            choice = math.random(1,3)
-    FaceTarget(NPC, Spawn)
-    if choice ==1 then
-	PlayFlavor(NPC, "voiceover/english/kualdin_swoonsong/qey_village05/100_kualdin_swoonsong_callout_47db249c.mp3", "Gather around people ... gather around. I'll be warming up my voice in a few minutes.", "orate", 1269733907, 434806140, Spawn)
-    elseif choice ==2 then
-	PlayFlavor(NPC, "voiceover/english/kualdin_swoonsong/qey_village05/100_kualdin_swoonsong_multhail2_1c41a7b8.mp3", "Hail, fair adventurer. If you can spare some time, my devotees are gathering to hear the latest masterpiece by yours truely.", "royalwave", 2123310145, 515687997, Spawn)
-    elseif choice ==3 then
-    PlayFlavor(NPC, "voiceover/english/kualdin_swoonsong/qey_village05/100_kualdin_swoonsong_multhail1_7f060d18.mp3", "Hail fair, adventurer. Please be on your way. I've no time for chatting with commoners. I must warm up my voice. My fans await me...", "smirk", 2685665398, 3421389957, Spawn)
+if CanReceiveQuest (Spawn, Delivery)  then 
+    if  GetTempVariable(NPC, "CalloutTimer")== "false"then
+        SetTempVariable(NPC, "CalloutTimer", "true")
+        AddTimer(NPC,10000,"ResetTimer",1,Spawn)
+        FaceTarget(NPC, Spawn)
+        if  GetTempVariable(NPC, "CalloutTimer1")== "false"then
+	        PlayFlavor(NPC, "voiceover/english/kualdin_swoonsong/qey_village05/100_kualdin_swoonsong_callout_47db249c.mp3", "Gather around people ... gather around. I'll be warming up my voice in a few minutes.", "orate", 1269733907, 434806140, Spawn)
+            SetTempVariable(NPC, "CalloutTimer1", "true")
+
+        elseif GetTempVariable(NPC, "CalloutTimer2")== "false"then
+	        PlayFlavor(NPC, "voiceover/english/kualdin_swoonsong/qey_village05/100_kualdin_swoonsong_multhail2_1c41a7b8.mp3", "Hail, fair adventurer. If you can spare some time, my devotees are gathering to hear the latest masterpiece by yours truely.", "royalwave", 2123310145, 515687997, Spawn)
+            SetTempVariable(NPC, "CalloutTimer2", "true")
+
+        else
+            SetTempVariable(NPC, "CalloutTimer1", "false")
+            SetTempVariable(NPC, "CalloutTimer2", "false")
+            PlayFlavor(NPC, "voiceover/english/kualdin_swoonsong/qey_village05/100_kualdin_swoonsong_multhail1_7f060d18.mp3", "Hail fair, adventurer. Please be on your way. I've no time for chatting with commoners. I must warm up my voice. My fans await me...", "smirk", 2685665398, 3421389957, Spawn)
+        end
     end
-    end
+    
 else  
-    if math.random(1, 100) <= 50 then
-    choice = math.random(1,2)
-    if choice ==1 then
+    if MakeRandomInt(1, 100) <= 50 then
+    choice = MakeRandomInt(1,2)
     FaceTarget(NPC, Spawn)
-    PlayFlavor(NPC, "", "", "royalwave", 0, 0, Spawn)
-         else
-    FaceTarget(NPC, Spawn)
-    PlayFlavor(NPC, "", "", "smirk", 0, 0, Spawn)
-         end
+        if choice ==1 then
+        PlayFlavor(NPC, "", "", "royalwave", 0, 0, Spawn)
+        else
+        PlayFlavor(NPC, "", "", "smirk", 0, 0, Spawn)
+        end
     end
     end
 end
 end
+
+
+function ResetTimer(NPC) -- 7 SECOND PAUSE BETWEEN VOs
+    SetTempVariable(NPC, "CalloutTimer", "false")
+end
+
+
+
+
+
+
+
 
 function respawn(NPC)
 	spawn(NPC)
@@ -108,10 +130,10 @@ end
  function Delivered(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Wonderful! I'll add Buipia to my concert plans. I'll fit her in somewhere between my second and fifth solo. Thanks for your help. Take this coin for your time. You MUST save it and buy a concert ticket!")
+	Dialog.AddDialog("Wonderful! I'll add Bupipa to my concert plans. I'll fit her in somewhere between my second and fifth solo. Thanks for your help. Take this coin for your time. You MUST save it and buy a concert ticket!")
 	Dialog.AddVoiceover("voiceover/english/kualdin_swoonsong/qey_village05/kualdinswoonsong003.mp3", 2468409303, 338695465)
 	PlayFlavor(NPC, "", "", "thanks", 0, 0, Spawn)
-	Dialog.AddOption("I'll concider it. Glad I could help.", "Reward")
+	Dialog.AddOption("I'll consider it. Glad I could help.", "Reward")
 	Dialog.Start()
 end   
 

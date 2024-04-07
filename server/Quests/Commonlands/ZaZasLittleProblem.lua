@@ -1,7 +1,7 @@
 --[[
 	Script Name		:	Quests/Commonlands/ZaZasLittleProblem.lua
 	Script Purpose	:	Handles the quest, "ZaZa's Little Problem"
-	Script Author	:	premierio015
+	Script Author	:	premierio015\\Dorbin
 	Script Date		:	20.05.2021
 	Script Notes	:	Auto generated with QuestParser.
 
@@ -11,6 +11,7 @@
 	Followed by		:	None
 --]]
 
+require "SpawnScripts/Generic/DialogModule"
 
 function Init(Quest)
 	AddQuestStepKill(Quest, 1, "I need monitor behemoth tears from the Commonlands.", 2, 100, "I need to collect the required ingredients for ZaZa's potion.", 176, 330065, 330738)
@@ -19,17 +20,18 @@ function Init(Quest)
 
 
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
-		AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
+	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
    	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
 
 end
 
 function Accepted(Quest, QuestGiver, Player)
 	FaceTarget(QuestGiver, Player)
-	local conversation = CreateConversation()
-	AddConversationOption(conversation, "See you soon.")
-	StartConversation(conversation, QuestGiver, Player, "I'm trusting you with the happiness of my marriage.  You are most kind to help poor ZaZa.  I will see you again ... soon.")
-	PlayFlavor(NPC, "voiceover/english/zaza_lenska/fprt_hood03/quests/zazalenska/zazalenska004.mp3", "", "", 3780741793, 1494900278)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("I'm trusting you with the happiness of my marriage.  You are most kind to help poor ZaZa.  I will see you again ... soon.")
+	Dialog.AddVoiceover("voiceover/english/zaza_lenska/fprt_hood03/quests/zazalenska/zazalenska004.mp3", 3780741793, 1494900278)
+	Dialog.AddOption("See you soon.")
+	Dialog.Start()
 end
 
 
@@ -44,25 +46,28 @@ end
 
 function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I obtained monitor behemoth tears for ZaZa.")
+    CheckProgress(Quest, QuestGiver, Player)
 end
 
 function Step2Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 2, "I obtained the vulrich blood for ZaZa.")
+    CheckProgress(Quest, QuestGiver, Player)
+end
+
+function Step3Complete(Quest, QuestGiver, Player)
+	UpdateQuestStepDescription(Quest, 3, "I got the venom I needed to complete ZaZa's potion.")
+    CheckProgress(Quest, QuestGiver, Player)
 end
 
  function  CheckProgress(Quest, QuestGiver, Player)
       if QuestStepIsComplete(Player, 451, 1) and QuestStepIsComplete(Player, 451, 2) and QuestStepIsComplete(Player, 451, 3) then
-    UpdateQuestTaskGroupDescription(Quest, 1, "I've obtained the monitor behemoth tears.")
+    UpdateQuestTaskGroupDescription(Quest, 1, "I've obtained Zaza's ingredients.")
 	AddQuestStepChat(Quest, 4, "I need to speak to ZaZa.", 1, "I need to speak with ZaZa Lenska in the Commonlands.", 11, 330051)
 	AddQuestStepCompleteAction(Quest, 4, "QuestComplete")
      
  end    
     end
 
-
-function Step3Complete(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 3, "I got the venom I needed to complete ZaZa's potion.")
-end
 
 function QuestComplete(Quest, QuestGiver, Player)
 	-- The following UpdateQuestStepDescription and UpdateTaskGroupDescription are not needed, parser adds them for completion in case stuff needs to be moved around

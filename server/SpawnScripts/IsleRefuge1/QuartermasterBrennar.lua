@@ -11,7 +11,7 @@ SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
 end
 
 function InRange(NPC,Spawn)
-RandomGreeting(NPC, Spawn)
+    RandomGreeting(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 end
 

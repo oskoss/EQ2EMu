@@ -22,7 +22,7 @@ seen_quest_praise = false
 function GenerateStateDefines(player)
     local bLegacy = (GetClientVersion(player) <= 526)
     
-    if bLegacy then
+    if bLegacy == true then
         VSTATE_WAVE = 883
         VSTATE_HELLO = 318
         VSTATE_DOUBLETAKE = 250
@@ -54,10 +54,15 @@ end
 require "SpawnScripts/Generic/DialogModule"
 
 function spawn(NPC)
-
+SetTempVariable(NPC,"SetStep9",nil)
 end
 
 function get_attention_init(NPC, player)
+    AddTimer(NPC,5000,"attention_trigger",1,player)
+end
+
+
+function attention_trigger(NPC, player)
 	InstructionWindow(player, -1.0, "Captain Varlos looks like he is trying to get your attention.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_027_30c39009.mp3", 2146230300, 3258594756, "captain_attention", "", "continue")
 	AddTimer(NPC, 100, "get_attention", 1, player)
 end
@@ -103,7 +108,7 @@ function hailed(NPC, player)
 		Dialog.AddVoiceover("voiceover/english/captain_varlos/boat_06p_tutorial02/varlos_0_001.mp3", 1930075150, 2666442405)
 		Dialog.AddEmote("hello")
         if GetClass(player)>0 then
- 	    Dialog.AddOption("There must be a mistake.  I'm just a commoner. [CLASSIC CLASS CHANGE]", "Commoner")
+ 	    Dialog.AddOption("There must be a mistake.  I'm just a commoner.\n\n[CLASSIC CLASS CHANGE]", "Commoner")
         end    
 		Dialog.AddOption("Where am I?", "where_am_I")
 		Dialog.Start()		
@@ -123,12 +128,14 @@ function hailed(NPC, player)
 	elseif HasQuest(player, 524) and GetQuestStep(player, 524) == 10 then
 		PlayFlavor(NPC, "voiceover/english/captain_varlos/boat_06p_tutorial02_fvo_023.mp3", "You still need to kill that landlubber of a goblin! Get to it mate!", "", 3269557913, 3104212801,player)
 	elseif HasQuest(player, 524) and GetQuestStep(player, 524) == 9 then
+if GetTempVariable(NPC,"SetStep9")~= "1" then
 		SetTutorialStep(player, 51)
 		Dialog.New(NPC, player)
 		Dialog.AddDialog("Ya' made quick work of them vermin.")
 		Dialog.AddVoiceover("voiceover/english/captain_varlos/boat_06p_tutorial02/varlos_0_016.mp3", 1130776869, 4119313971)
 		Dialog.AddOption("Thanks.", "quest_step_9")
 		Dialog.Start()
+end
 	elseif HasCompletedQuest(player, 524) and not seen_quest_praise then
 		seen_quest_praise = true
 		Dialog.New(NPC, player)
@@ -155,7 +162,7 @@ function Commoner(NPC, player)
 		Dialog.AddVoiceover("voiceover/english/captain_varlos/boat_06p_tutorial02/varlos_0_002.mp3", 2054400186, 1976167819)
 		Dialog.AddEmote("ponder")
 		Dialog.AddOption("Yes, I am a Commoner.", "Commoner2")
-		Dialog.AddOption("Nevermind.  Who are you?","who_are_you")
+		Dialog.AddOption("Nevermind. Who are you?","who_are_you")
 		Dialog.Start()
 end
 
@@ -197,13 +204,20 @@ function drop_anchor(NPC, player)
 	Dialog.AddOption("[Continue]", "hailed")
 	Dialog.Start()
 		MovementLoopAddLocation(GetSpawn(NPC, 270001), 4.21, -2.07, 3.72, 4,0)
-		MovementLoopAddLocation(GetSpawn(NPC, 270001), 1.97, 0.59, 16.73, 4,0)
-		MovementLoopAddLocation(GetSpawn(NPC, 270001), 1.07, 0.66, 18.69, 4,20)
-		MovementLoopAddLocation(GetSpawn(NPC, 270001), 1.07, 0.66, 18.69, 2,0)
+		MovementLoopAddLocation(GetSpawn(NPC, 270001), 1.97, 0.63, 16.73, 4,0)
+		MovementLoopAddLocation(GetSpawn(NPC, 270001), 2.22, 0.66, 18.76, 4,0)
+		MovementLoopAddLocation(GetSpawn(NPC, 270001), 2.22, 0.66, 18.76, 4,2,"Head")
+		MovementLoopAddLocation(GetSpawn(NPC, 270001), 2.22, 0.66, 18.76, 4,120)
+		MovementLoopAddLocation(GetSpawn(NPC, 270001), 2.22, 0.66, 18.76, 4,0)
 		MovementLoopAddLocation(GetSpawn(NPC, 270001), 1.97, 0.59, 16.73, 2,0)
 		MovementLoopAddLocation(GetSpawn(NPC, 270001), 4.21, -2.07, 3.72, 2,0)
 		MovementLoopAddLocation(GetSpawn(NPC, 270001), 2.91, -2.07, -3.61, 2,120)
 	end
+
+function Head(NPC)
+    SetHeading(GetSpawn(NPC, 270001),220)
+end
+
 
 function ready_to_go_ashore(NPC, player)
 	Dialog.New(NPC, player)
@@ -235,6 +249,7 @@ function zone_to_isle(NPC, player)
 end
 
 function quest_step_9(NPC, player)	
+    SetTempVariable(NPC,"SetStep9",1)
     if GetClientVersion(player)<= 546 then
 	AddTimer(GetSpawn(NPC, 270013), 100, "attack")
 	else
@@ -243,12 +258,20 @@ function quest_step_9(NPC, player)
 	AddTimer(NPC, 1000, "quest_step_9b", 1, player)	
 end
 
+
 function quest_step_9b(NPC, player)
 	FaceTarget(NPC, GetSpawn(NPC, 270013))
 	PlayFlavor(NPC, "voiceover/english/captain_varlos/boat_06p_tutorial02_fvo_017.mp3", "Wait. Tis that a... No, it cain' be!", "", 1253231512, 1752159147)
-	AddTimer(NPC, 4000, "quest_step_9c", 1, player)	
+	AddTimer(NPC, 1500, "Roar", 1, player)	
+	AddTimer(NPC, 8000, "quest_step_9c", 1, player)	
 	GenerateStateDefines(player)
 	SendStateCommand(GetSpawn(NPC, 270005), VSTATE_DOUBLETAKE)	
+    CastSpell(player,2550417,1,1,player)
+end
+
+function Roar(NPC,player)
+    PlayFlavor(NPC,"","","listen")
+    PlaySound(NPC,"sounds/critters/drake/drake_scream01.wav",GetX(NPC),GetY(NPC),GetZ(NPC))
 end
 
 function quest_step_9c(NPC, player)	
@@ -265,7 +288,7 @@ function quest_step_9c(NPC, player)
 	
 	GenerateStateDefines(player)
 	SendStateCommand(Anikra, VSTATE_POINT)
-	SendStateCommand(Valik, VSTATE_POINT)
+	SendStateCommand(Valik, VSTATE_SQUEAL)
 	SendStateCommand(Geredo, VSTATE_POINT)
 	
 	SendStateCommand(GetSpawn(NPC, 270001), VSTATE_CROUCH_ENTER)
@@ -274,7 +297,7 @@ function quest_step_9c(NPC, player)
     MoveToLocation(Vim, -0.27, 0.56, 15.78,4)
     MoveToLocation(Vim, 2.15, 0.55, 15.60,4)
     MoveToLocation(Vim, 5.84, -1.82, 9.84,4)
-	AddTimer(NPC, 8000, "VimHeading")	
+	AddTimer(NPC, 6500, "VimHeading")	
 	AddTimer(NPC, 9000, "quest_step_9d", 1, player)	
 end
 
@@ -284,7 +307,7 @@ function VimHeading(NPC, player)
 end
 
 function quest_step_9d(NPC, player)	
-	PlayFlavor(NPC, "voiceover/english/captain_varlos/boat_06p_tutorial02_fvo_019.mp3", "Everyone down! Watch it!", "", 2065401462, 2542613809)
+	PlayFlavor(NPC, "voiceover/english/captain_varlos/boat_06p_tutorial02_fvo_019.mp3", "Everyone down! Watch it!", "untrained_dodge", 2065401462, 2542613809)
 	GenerateStateDefines(player)
 	SendStateCommand(GetSpawn(NPC, 270007), VSTATE_CROUCH_ENTER)
 	SendStateCommand(GetSpawn(NPC, 270001), VSTATE_CROUCH_EXIT)
@@ -292,7 +315,8 @@ function quest_step_9d(NPC, player)
 	SendStateCommand(GetSpawn(NPC, 270006), VSTATE_OUCH)
 	SendStateCommand(GetSpawn(NPC, 270005), VSTATE_CRINGE)
 	SendStateCommand(GetSpawn(NPC, 270002), VSTATE_CRINGE)
-	AddTimer(NPC, 3500, "quest_step_9e", 1, player)
+    PlayFlavor(player,"","","untrained_dodge01")
+    AddTimer(NPC, 1500, "quest_step_9e", 1, player)
 	i=1
 	spawns = GetSpawnListBySpawnID(player, 270011)
 	repeat
@@ -309,6 +333,7 @@ function quest_step_9e(NPC, player)
 	PerformCameraShake(player, 0.5)	
 	PerformCameraShake(player, 0.30000001192092896)
 	PerformCameraShake(player, 0.10000000149011612)
+    PlayFlavor(NPC,"","","untrained_dodge")
 	AddTimer(NPC, 3500, "quest_step_9f", 1, player)
 end
 
@@ -356,14 +381,21 @@ function quest_step_7b(NPC, player)
 	Dialog.AddVoiceover("voiceover/english/captain_varlos/boat_06p_tutorial02/varlos_0_013.mp3", 3880459741, 170861362)
 	Dialog.AddOption("How do you expect me to kill them?", "quest_step_7c")
 	Dialog.Start()
+		SendStateCommand(NPC, 0)
+
 end
 
 function quest_step_7c(NPC, player)
 	Dialog.New(NPC, player)
 	Dialog.AddDialog("Wit this 'ere club. It is nice and splintered, sure ta' cause them some pain.")
 	Dialog.AddVoiceover("voiceover/english/captain_varlos/boat_06p_tutorial02/varlos_0_014.mp3", 2083163804, 202693960)
+	AddTimer(NPC, 500, "Brandish", 1, player)
     Dialog.AddOption("Aye, aye, Captain!", "quest_step_7d")
 	Dialog.Start()
+end
+
+function Brandish(NPC,Spawn)
+    PlayFlavor(NPC,"","","brandish",0,0,player)
 end
 
 function quest_step_7d (NPC,player)
@@ -432,13 +464,19 @@ function where_are_we_headed(NPC, player)
 	finished_how_did_I_get_here = true
 	if not finished_where_are_we_headed then
 		FaceTarget(NPC, player)
-		PlayFlavor(NPC, "voiceover/english/captain_varlos/boat_06p_tutorial02_fvo_005.mp3", "We are heading to the Island of Refuge.", "", 1602680439, 2810422278)
+ 	    CloseConversation(NPC,player)
+        AddTimer(NPC,200,"headingto",1,player)
 		AddTimer(NPC, 500, "shake_camera_medium", 1, player)
 		AddTimer(NPC, 1500, "shake_camera_low", 1, player)
 		AddTimer(NPC, 2500, "shake_camera_low", 1, player)	
 		AddTimer(NPC, 3100, "shake_camera_low", 1, player)	
-		AddTimer(NPC, 3600, "high_winds_1", 1, player)
+		AddTimer(NPC, 4400, "shake_camera_medium", 1, player)
+		AddTimer(NPC, 5600, "high_winds_1", 1, player)
 	end
+end
+
+function headingto(NPC,player)
+		PlayFlavor(NPC, "voiceover/english/captain_varlos/boat_06p_tutorial02_fvo_005.mp3", "We are heading to the Island of Refuge.", "", 1602680439, 2810422278, player)
 end
 
 function shake_camera_low(NPC, player)

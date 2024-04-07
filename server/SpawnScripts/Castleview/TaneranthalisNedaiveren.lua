@@ -13,6 +13,7 @@ local Jewel = 5459
 function spawn(NPC)
 ProvidesQuest(NPC, Jewel)
 SetPlayerProximityFunction(NPC, 6, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "ponder")
 end
 
 function respawn(NPC)

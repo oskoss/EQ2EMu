@@ -8,6 +8,7 @@
 
 function spawn(NPC)
 AddTimer(NPC, 5000, "EmoteLoop")    
+    SetInfoStructString(NPC, "action_state", "mood_angry")
 end
 
 function hailed(NPC, Spawn)

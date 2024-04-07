@@ -24,6 +24,7 @@ end
 function spawn(NPC)
     ProvidesQuest(NPC,pond)
     SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
+    SetInfoStructString(NPC, "action_state", "fishing_fight")
 end
 
 
@@ -52,7 +53,7 @@ function Dialog3(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	PlayFlavor(NPC, "", "", "confused", 0, 0, Spawn)
-    Dialog.AddDialog("Oh, I've tried just about everywhere.  I get nibbles at most fishing holes, except for Crater Pond, outside the city gates.  The big meteor that crashed in that pond poisoned and killed everything living in it's waters! Nothing grows in it's tainted waters now; not even pond scum.")
+    Dialog.AddDialog("Oh, I've tried just about everywhere. I get nibbles at most fishing holes -- except for Crater Pond outside the city gates. The bit of meteor that crashed in that pond poisoned and killed everything living in its waters. Nothing grows in its tainted waters now, not even pond scum.")
 	Dialog.AddVoiceover("voiceover/english/ashilda_machinry/qey_harbor/ashildamachinry001.mp3", 4148175362, 2095028620)
 	Dialog.AddOption("Interesting.  Where is Crater Pond?", "Quest")
 	Dialog.AddOption("Wow, that sounds dreadful.  Good luck out here!")

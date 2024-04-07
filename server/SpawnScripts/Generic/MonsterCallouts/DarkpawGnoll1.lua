@@ -37,7 +37,8 @@ function Garbled(NPC,Spawn)
 end
 
  function aggro(NPC,Spawn)   
-    if not HasLanguage(Spawn,18 )then
+    if IsPlayer(Spawn)==true then
+    if not HasLanguage(Spawn,18 )and IsPlayer(Spawn)==true then
     Garbled(NPC,Spawn)
     else
  	local choice = MakeRandomInt(1,11)
@@ -71,13 +72,15 @@ end
        AddTimer(NPC,15000,"FifteenCall")
     end
 end   
-
+end
 -- Doesn't Work PlayFlavor(NPC, "voiceover/english/optional5/gnoll_base_2/ft/gnoll/gnoll_base_2_1_aggro_959e4683.mp3", "Intruder!", "", 1672215946, 3521592402, Spawn, 18)
 
 
 function death(NPC,Spawn)
     if math.random(0,100)<=75 then
-    if not HasLanguage(Spawn,18 )then
+    if IsPlayer(Spawn)==true then
+
+    if not HasLanguage(Spawn,18 ) then
     Garbled(NPC,Spawn)
     else
         local choice = MakeRandomInt(1,9)
@@ -104,16 +107,18 @@ function death(NPC,Spawn)
     end
 end
 end
+end
 
 -- DOES NOT WORK		PlayFlavor(NPC, "voiceover/english/optional5/gnoll_base_2/ft/gnoll/gnoll_base_2_1_death_7cbd3c71.mp3", "I'll rip your throat open!", "", 134141978, 4165685331, Spawn, 18)
 
-function FifteenCall(NPC,Player)
+function FifteenCall(NPC,Spawn)
+    if IsPlayer(Spawn)==true then
 if IsInCombat(NPC)==true then
  if IsAlive(NPC) then
  if IsInCombat(NPC)==true then
     if math.random(0,100)<=60 then
-     if not HasLanguage(Player,18 )then
-    Garbled(NPC,Player)
+     if not HasLanguage(Spawn,18 )and IsPlayer(Spawn)==true then
+    Garbled(NPC,Spawn)
     else       
       local choice = MakeRandomInt(1,4)
 	    if choice == 1 then
@@ -133,14 +138,16 @@ end
 end
 end
 end
+end
 
 function healthchanged(NPC, Spawn)  
+    if IsPlayer(Spawn)==true then
     if HealthCallout == false then
     if GetHP(NPC) < GetMaxHP(NPC) * 0.55 then
      if GetHP(NPC) > GetMaxHP(NPC) * 0.45 then
         HealthCallout = true
         AddTimer(NPC,10000,"HealthReset")
-    if not HasLanguage(Spawn,18 )then
+    if not HasLanguage(Spawn,18 )and IsPlayer(Spawn)==true then
         Garbled(NPC,Spawn)
     else    
       local choice = MakeRandomInt(1,4)
@@ -162,6 +169,7 @@ function healthchanged(NPC, Spawn)
 end
 end
 end
+end
 
 function HealthReset (NPC)
     HealthCallout = false
@@ -169,7 +177,8 @@ end
 
 
 function victory(NPC,Spawn)
-        if  HasLanguage(Spawn,18 )then
+     if IsPlayer(Spawn)==true then
+       if  HasLanguage(Spawn,18 )and IsPlayer(Spawn)==true then
   local choice = MakeRandomInt(1,3)
 	    if choice == 1 then
 	    PlayFlavor(NPC, "voiceover/english/gnoll_base_1/ft/gnoll/gnoll_base_1_3_victory_e4520926.mp3", "Packmate not happy with scrawny catch.", "", 1321865956, 173648139, Spawn, 18)
@@ -178,5 +187,6 @@ function victory(NPC,Spawn)
         elseif choice == 3 then
 		PlayFlavor(NPC, "voiceover/english/gnoll_darkpaw/ft/gnoll/gnoll_darkpaw_1_victory_d9fbe894.mp3", "That was easy!  Next!", "", 1732578964, 1761133947, Spawn, 18)
     end
+end
 end
 end

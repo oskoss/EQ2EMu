@@ -9,8 +9,12 @@
 local AFriendInNeed = 422 
 
 function spawn(NPC)
-EmoteLoop(NPC)
-SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange", Spawn)
+    dmgMod = GetStr(NPC)/10
+    SetInfoStructUInt(NPC, "override_primary_weapon", 1)        
+    SetInfoStructUInt(NPC, "primary_weapon_damage_low", math.floor(45 + dmgMod)) 
+    SetInfoStructUInt(NPC, "primary_weapon_damage_high", math.floor(85 + dmgMod))
+    EmoteLoop(NPC)
+    SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange", Spawn)
 end
 
 function hailed(NPC, Spawn)

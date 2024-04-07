@@ -6,9 +6,11 @@
                    : 
 --]]
 dofile("SpawnScripts/Generic/MonsterCallouts/DarkpawGnoll1.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    IdleAggressive(NPC)
 end
 
 function hailed(NPC, Spawn)

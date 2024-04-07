@@ -119,6 +119,7 @@ end
 
 
 function SwordReturned(NPC, Spawn)
+ 	SetEquipment(NPC, 0, 2258 , 255, 255, 255, 255, 255, 255) --Examines Sword
     SetStepComplete(Spawn, Sword, 2)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
@@ -128,8 +129,12 @@ function SwordReturned(NPC, Spawn)
     Dialog.AddOption("I'm sure Froptub would be happy to hear that.")
     Dialog.AddOption("As long as you're happy with it. Good luck.")
     Dialog.Start()
+    AddTimer(NPC,8500,"HideSword")
 end   
 
+function HideSword (NPC)
+	    SetEquipment(NPC, 0, 0 , 255, 255, 255, 255, 255, 255) --Hides Sword
+end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)

@@ -6,8 +6,12 @@
                    : 
 --]]
 
-function spawn(NPC)
+require "SpawnScripts/Generic/CombatModule"
+
+function spawn(NPC, Spawn)
+    combatModule(NPC, Spawn)
 	waypoints(NPC)
+	
 end
 
 function hailed(NPC, Spawn)
@@ -15,6 +19,15 @@ end
 
 function respawn(NPC)
 	spawn(NPC)
+end
+
+function death(NPC,Spawn)
+    local zone = GetZone(NPC)
+    local rat1 = GetSpawnByLocationID(zone,1586105)
+    local rat2 = GetSpawnByLocationID(zone,1586106)
+    if not IsAlive(rat1) and not IsAlive(rat2) then
+        SetPlayerLevel(Spawn,2)
+    end
 end
 
 function waypoints(NPC)

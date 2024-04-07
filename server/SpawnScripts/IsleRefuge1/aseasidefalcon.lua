@@ -5,9 +5,11 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-Waypoints(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    Waypoints(NPC)
 end
 
 function hailed(NPC, Spawn)
@@ -15,6 +17,10 @@ end
 
 function respawn(NPC)
 	spawn(NPC)
+end
+
+function death(NPC,Spawn)
+    PlayFlavor(NPC,"","","result_feather_explosion",0,0)
 end
 
 function Waypoints(NPC)

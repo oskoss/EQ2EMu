@@ -15,13 +15,15 @@
 function Init(Quest)
 	AddQuestStepKill(Quest, 1, "Collect tears from Brokentusk prophets", 4, 100, "Dyerth said I should be able to find some Brokentusk prophets in the Ruins, so that's where I should start.", 2489, 1270009)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
+    UpdateQuestZone(Quest,"The Ruins")
 end
 
 function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have collected the tears from the orcs.")
 	UpdateQuestTaskGroupDescription(Quest, 1, "I have collected the tears of four Brokentusk prophets.")
+    UpdateQuestZone(Quest,"Scale Yard")
 
-    AddQuestStepChat(Quest, 2, "I should return to Dyerth Shiraz.", 1, "I should return to Dyerth Shiraz in Scale Yard.", 11, 1390054)
+    AddQuestStepChat(Quest, 2, "I should return to Dyerth Shiraz.", 1, "I should return these to Dyerth Shiraz so that she can start making some Sazzpazilla.", 11, 1390054)
     AddQuestStepCompleteAction(Quest, 2, "QuestComplete")
 end
 

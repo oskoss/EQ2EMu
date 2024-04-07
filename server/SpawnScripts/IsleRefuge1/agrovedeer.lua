@@ -5,33 +5,10 @@
     Script Purpose : 
                    : 
 --]]
- 
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-   local Level = GetLevel(NPC)
-    local level1 = 2
-    local level2 = 3
-    local difficulty1 = 6
-    local hp1 = 45
-    local power1 = 35
-    local difficulty2 = 6
-    local hp2 = 75
-    local power2 = 45
-    local difficulty3 = 6
-    local hp3 = 110
-    local power3 = 55
-    if Level == level1 then
-    SpawnSet(NPC, "difficulty", difficulty1)
-    SpawnSet(NPC, "hp", hp1)
-    SpawnSet(NPC, "power", power1)
-    elseif Level == level2
-        then
-    SpawnSet(NPC, "difficulty", difficulty2)
-    SpawnSet(NPC, "hp", hp2)
-    SpawnSet(NPC, "power", power2)
-    end
-    SetInfoStructUInt(NPC, "hp_regen_override", 1)
-    SetInfoStructUInt(NPC, "hp_regen", 1)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
     SetInfoStructUInt(NPC, "friendly_target_npc", 1)
     Diseased(NPC)   
     ChooseMovement(NPC)

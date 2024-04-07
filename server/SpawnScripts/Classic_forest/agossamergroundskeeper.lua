@@ -5,21 +5,22 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-	waypoints(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+	AddTimer(NPC, 6000, "waypoints")
     Appearance(NPC)
 end
 
 function Appearance(NPC)
-if GetGender(NPC)==2 then
-    SpawnSet(NPC,"model_type",2851)
+    if GetGender(NPC)==2 then
+        SpawnSet(NPC,"model_type",2851)
+    end
 end
-end
-
-
 
 function respawn(NPC)
+    spawn(NPC)
 end
 
 function waypoints(NPC)

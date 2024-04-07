@@ -37,13 +37,11 @@ function hailed(NPC, Spawn)
             "Is Vim not going to sell it to you? That is just my luck... well I guess I will have to finish this work then.",
             "", 4181806501, 3186272404)
     elseif step == 6 then
-        SetTutorialStep(Spawn, 31)
-        AddCoin(Spawn, 10)
-        DisplayText(Spawn, 34, "You receive 10 Copper.")
+        AddTimer(NPC,5000,"Next",1,Spawn)
         Dialog.New(NPC, Spawn)
-        Dialog.AddDialog(
-            "Ah! You got the shard. Great! Now I can stop doing this work and enjoy the rest of this trip. Here is some coin for your help.")
+        Dialog.AddDialog("Ah! You got the shard. Great! Now I can stop doing this work and enjoy the rest of this trip. Here is some coin for your help.")
         Dialog.AddVoiceover("voiceover/english/ingrid/boat_06p_tutorial02/ingrid_0_006.mp3", 502975024, 483052250)
+        PlayFlavor(NPC,"","","happy")
         Dialog.AddOption("Thanks.", "thanks_for_getting_shard")
         Dialog.Start()
     elseif GetX(NPC) < 5 then
@@ -60,17 +58,21 @@ function hailed(NPC, Spawn)
         end
     end
 end
+
+function Next(NPC,Spawn)
+        SetTutorialStep(Spawn, 31)
+end
 end
 
-function InRange(NPC,Player)
+function InRange(NPC,Spawn)
 if GetTempVariable(NPC,"Starting","Checking") then
-    SetTempVariable(NPC, "Staring", "Done")
-    AddTimer(NPC, 30000, "WalkToGeredo",1,Player)
+    SetTempVariable(NPC, "Starting", "Done")
+    AddTimer(NPC, 30000, "WalkToGeredo",1,Spawn)
     end
 end
 
-function WalkToGeredo(NPC, Player)
-	playerhasquest = HasQuest(Player, 524)
+function WalkToGeredo(NPC, Spawn)
+	playerhasquest = HasQuest(Spawn, 524)
 	if playerhasquest == true then
 	MoveToLocation(NPC, 2.35, -2.07, -3.34, 5, nil, false)
 	else
@@ -331,6 +333,8 @@ end
 function thanks_for_getting_shard(NPC, Spawn)
     SetStepComplete(Spawn, 524, 6)
     RemoveItem(Spawn, ShardOfLuclin)
+    AddCoin(Spawn, 10)
+    SendMessage(Spawn, "You receive 10 Copper.")
 end
 
 function respawn(NPC)

@@ -7,11 +7,13 @@
 --]]
 
 require("SpawnScripts/Generic/BloodskullVoiceOvers")
-
+require "SpawnScripts/Generic/NPCModule"
 local BloodskullIntentions = 403
 
-function spawn(NPC)
-
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    Bloodskull(NPC)
+    OrcArmorCommon(NPC)
 end
 
 function hailed(NPC, Spawn)

@@ -15,12 +15,20 @@ function hailed(NPC, Spawn)
     local conversation = CreateConversation()
         AddConversationOption(conversation, "Yes", "leave")
         AddConversationOption(conversation, "No")
+--      AddConversationOption(conversation, "Test Remove","Test")
         if GetClass(Spawn)>0 then
-        AddConversationOption(conversation, "      Wait,  I'm just a commoner.              [CLASSIC CLASS CHANGE TO COMMONER].","Commoner")
+        AddConversationOption(conversation, "Wait,  I'm just a commoner.\n\n[CLASSIC CLASS CHANGE TO COMMONER].","Commoner")
         end
 
         
-        StartConversation(conversation, NPC, Spawn, "          Head for land?          [Leave The Far Journey?]")
+        StartConversation(conversation, NPC, Spawn, "Head for land?\n[Leave The Far Journey?]")
+end
+
+function Test(NPC,Spawn)
+	PlayFlavor(NPC, "", "Done", "", 0, 0, Spawn, 0)
+ if HasQuest(Spawn, 524)then     -- COMPLETES REMAINING QUEST STEPS (Replace w/ quest removal once we figure that out)
+    RemovePlayerQuest(Spawn,524)
+end
 end
 
 function leave(NPC, Spawn)
@@ -114,7 +122,7 @@ if HasQuest(Spawn, 524)then     -- COMPLETES REMAINING QUEST STEPS (Replace w/ q
 
 end
 
-AddTimer(NPC,3000,"ToShore",1,Spawn)
+AddTimer(NPC,3300,"ToShore",1,Spawn)
 end
 
 
@@ -129,10 +137,10 @@ function ToShore(NPC, Spawn)
             RemoveItem(Spawn,12565,1)
         end          
 if GetClass(Spawn) == 0 then
-          ZoneRef = GetZone("IsleRefuge1")
+        ZoneRef = GetZone("IsleRefuge1")
         Zone(ZoneRef,Spawn)     
 elseif GetDeity(Spawn) == 0 then
-          ZoneRef = GetZone("OutpostOverlord")
+        ZoneRef = GetZone("OutpostOverlord")
         Zone(ZoneRef,Spawn)  
  
 elseif GetDeity(Spawn) == 1 then 

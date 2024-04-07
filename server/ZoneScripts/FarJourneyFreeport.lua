@@ -8,6 +8,14 @@
 
 seen_step_45 = false
 
+function player_entry(Zone, player)
+    SetHeading(player,180)
+end
+
+function init_zone_script(Zone)
+end    
+
+
 function signal_changed(zone, player, signal)
 	if signal == "sys_client_avatar_ready" and HasQuest(player, 524) == false and HasCompletedQuest(player, 524) == false then
 		i = 1
@@ -19,6 +27,7 @@ function signal_changed(zone, player, signal)
 			end
 			i = i + 1
 		until spawn == nil
+		
 		InstructionWindow(player, 10.0, "Welcome to Norrath, the world of EverQuest II. Left click on the help button at any time for more detailed help and information.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_001_63779ca0.mp3", 3450229107, 2555116653, "introduction", "", "continue")
 		ShowWindow(player, "MainHUD.StartMenu", 1)
 		FlashWindow(player, "MainHUD.StartMenu.help", 10.0)
@@ -41,13 +50,13 @@ function signal_changed(zone, player, signal)
 			InstructionWindow(player, -1.0, "Double left click on Captain Varlos to interact with him.", "", 0, 0, "tutorial_stage_6", "", "server")
 			SetTutorialStep(player, 5)
 	end
-	if signal == "tutorial_stage_9" and GetTutorialStep(player) == 8 then
+--[[	if signal == "tutorial_stage_9" and GetTutorialStep(player) == 8 then
 			ShowWindow(player, "MainHUD.StartMenu", 0)
 			FlashWindow(player, "MainHUD.StartMenu.quest_journal", 0.0)
 			InstructionWindow(player, -1.0, "The quest journal will keep track of all important quest information for you.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_008_dea98146.mp3", 1585802421, 4158930887, "tutorial_stage_10", "", "continue")
 			SetTutorialStep(player, 9)
 	end
---[[	if signal == "tutorial_stage_10" and GetTutorialStep(player) == 9 then
+	if signal == "tutorial_stage_10" and GetTutorialStep(player) == 9 then
 			FlashWindow(player, "Journals.ActiveQuest", 6.5)
 			InstructionWindow(player, -1.0, "This is your quest helper. It displays the current step of your active quest.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_009_7270f5ed.mp3", 1886677883, 3646680727, "tutorial_stage_13", "", "continue")
 			SetTutorialStep(player, 10)
@@ -57,10 +66,12 @@ function signal_changed(zone, player, signal)
 			ShowWindow(player, "Journals.JournalsQuest", 0)
 			SetTutorialStep(player, 13)
 	end
+	--]]
 	if (signal == "tutorial_stage_15" and GetTutorialStep(player) == 14)  or (signal == "sys_client_avatar_ready" and HasQuest(player, 524) == true and GetQuestStep(player, 524) == 2) then		
 		InstructionWindow(player, -1.0, "Move your mouse pointer over the boxes. Notice that your mouse pointer changes shape again, and the boxes start to glow. Double left click to open each of the boxes.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_012_9ba468fb.mp3", 1009896073, 25784171, "tutorial_stage_16", "Double left click on a box to open it.", "server")
 		SetTutorialStep(player, 15)
 	end
+--[[
 	if signal == "tutorial_stage_18" and GetTutorialStep(player) == 16 then
 			ShowWindow(player, "Inventory.Inventory", 0)
 			InstructionWindow(player, -1.0, "Managing your inventory and equipment is very important. It is how you use all of the gear that you will find on your adventures. Left click on the inventory button.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_015_46f20016.mp3", 2394903675, 552673556, "tutorial_stage_19", "Open your inventory. (click on the inventory button)", "open Inventory")
@@ -111,11 +122,11 @@ function signal_changed(zone, player, signal)
 		InstructionWindow(player, -1.0, "Notice the tunic now occupies the chest equipment slot and you are now wearing it.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_018_8786e939.mp3", 3902294834, 2836623234, "tutorial_stage_22", "", "continue")
 		FlashWindow(player, "Inventory.Inventory.EquipmentPage.EqSlot3", 6.0)
 		SetTutorialStep(player, 21)
-	end]]--
+	end
 	if signal == "tutorial_stage_22" and GetTutorialStep(player) == 21 then
 			FlashWindow(player, "Inventory.Inventory.EquipmentPage.Chest3", 0.0)
 			InstructionWindow(player, -1.0, "Waulon is waiting for you to return with his hat. Close your inventory window and go talk to him. Remember, double left clicking on Waulon will start the conversation.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_019_9da1b75d.mp3", 741062937, 535829184, "tutorial_stage_23", "Double left click on Waulon to hail him.", "server")			
-	end
+	end]]--
 	if signal == "sys_client_avatar_ready" and HasQuest(player, 524) == true and GetQuestStep(player, 524) == 5 then
 		InstructionWindow(player, -1.0, "A merchant is a special type of character who buys and sells things. Find and double left click on Merchant Vim to start a transaction.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_020_6ea052d3.mp3", 4250953579, 3003156164, "tutorial_stage_24", "Double left click on Merchant Vim.", "server")
 		SetTutorialStep(player, 24)
@@ -213,7 +224,7 @@ function signal_changed(zone, player, signal)
 	end	
 	if signal == "tutorial_stage_50" then
 		SetTutorialStep(player, 50)
-		InstructionWindow(player, -1.0, "Notice that your experience point display is now empty, and your maximum health and power have increased.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_047_5c382a71.mp3", 1130515024, 564825664, "tutorial_stage_51", "", "continue")
+		InstructionWindow(player, -1.0, "Notice that your experience point display is now empty, and your maximum health and power have increased.", "voiceover/english/narrator/boat_06p_tutorial02/narrator_047_5c382a71.mp3", 1130515024, 564825664, "", "", "continue")
 		FlashWindow(player, "MainHUD.Player.HealthBarBkg", 6.0)
 		FlashWindow(player, "MainHUD.Player.ManaBarBkg", 6.0)
 		FlashWindow(player, "MainHUD.Player.Name", 6.0)

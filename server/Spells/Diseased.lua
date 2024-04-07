@@ -14,5 +14,11 @@
 --]]
 
 function cast(Caster, Target)
-    SpawnSet(Caster,"visual_state",11395)
+    SetInfoStructString(Caster, "action_state", "disease")
+--    SpawnSet(Caster,"visual_state",11395)
+end
+
+function remove(Caster, Target, DoTType, MinVal, MaxVal)
+    SetInfoStructString(Caster, "action_state", "0")
+     SpawnSet(Caster,"action_state",0)
 end

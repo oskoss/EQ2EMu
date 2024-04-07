@@ -9,6 +9,8 @@ require "SpawnScripts/Generic/DialogModule"
 
 function spawn(NPC)
     SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
+
+    if GetSpawnLocationID(NPC)==133779441 then
     SetRequiredQuest(NPC, 5760, 1, 1) --BAUBBLESHIRE
     SetRequiredQuest(NPC, 5760, 2, 1)   
     SetRequiredQuest(NPC, 5760, 3, 1)   
@@ -16,10 +18,13 @@ function spawn(NPC)
     SetRequiredQuest(NPC, 5760, 5, 1)   
     SetRequiredQuest(NPC, 5760, 6, 1)   
     SetRequiredQuest(NPC, 5760, 7, 1)   
+    elseif GetSpawnLocationID(NPC)==133786867 then
     SetRequiredQuest(NPC, 5760, 11, 1)   
     SetRequiredQuest(NPC, 5760, 12, 1)   
     SetRequiredQuest(NPC, 5760, 13, 1) 
+    end
     
+    if GetSpawnLocationID(NPC)==133779441 then
     SetRequiredQuest(NPC, 5761, 1, 1) --WILLOW WOOD
     SetRequiredQuest(NPC, 5761, 2, 1)   
     SetRequiredQuest(NPC, 5761, 3, 1)   
@@ -27,10 +32,13 @@ function spawn(NPC)
     SetRequiredQuest(NPC, 5761, 5, 1)   
     SetRequiredQuest(NPC, 5761, 6, 1)   
     SetRequiredQuest(NPC, 5761, 7, 1)   
+    elseif GetSpawnLocationID(NPC)==133786867 then
     SetRequiredQuest(NPC, 5761, 11, 1)   
     SetRequiredQuest(NPC, 5761, 12, 1)   
     SetRequiredQuest(NPC, 5761, 13, 1)    
+    end
 
+    if GetSpawnLocationID(NPC)==133779441 then
     SetRequiredQuest(NPC, 5762, 1, 1) --STARCREST
     SetRequiredQuest(NPC, 5762, 2, 1)   
     SetRequiredQuest(NPC, 5762, 3, 1)   
@@ -38,10 +46,13 @@ function spawn(NPC)
     SetRequiredQuest(NPC, 5762, 5, 1)   
     SetRequiredQuest(NPC, 5762, 6, 1)   
     SetRequiredQuest(NPC, 5762, 7, 1)   
+    elseif GetSpawnLocationID(NPC)==133786867 then
     SetRequiredQuest(NPC, 5762, 11, 1)   
     SetRequiredQuest(NPC, 5762, 12, 1)   
     SetRequiredQuest(NPC, 5762, 13, 1)  
+    end
 
+    if GetSpawnLocationID(NPC)==133779441 then
     SetRequiredQuest(NPC, 5763, 1, 1) --NETTLEVILLE
     SetRequiredQuest(NPC, 5763, 2, 1)   
     SetRequiredQuest(NPC, 5763, 3, 1)   
@@ -49,10 +60,13 @@ function spawn(NPC)
     SetRequiredQuest(NPC, 5763, 5, 1)   
     SetRequiredQuest(NPC, 5763, 6, 1)   
     SetRequiredQuest(NPC, 5763, 7, 1)   
+    elseif GetSpawnLocationID(NPC)==133786867 then
     SetRequiredQuest(NPC, 5763, 11, 1)   
     SetRequiredQuest(NPC, 5763, 12, 1)   
     SetRequiredQuest(NPC, 5763, 13, 1) 
+    end
 
+    if GetSpawnLocationID(NPC)==133779441 then
     SetRequiredQuest(NPC, 5764, 1, 1) --GRAYSTONE
     SetRequiredQuest(NPC, 5764, 2, 1)   
     SetRequiredQuest(NPC, 5764, 3, 1)   
@@ -60,10 +74,13 @@ function spawn(NPC)
     SetRequiredQuest(NPC, 5764, 5, 1)   
     SetRequiredQuest(NPC, 5764, 6, 1)   
     SetRequiredQuest(NPC, 5764, 7, 1)   
+    elseif GetSpawnLocationID(NPC)==133786867 then
     SetRequiredQuest(NPC, 5764, 11, 1)   
     SetRequiredQuest(NPC, 5764, 12, 1)   
     SetRequiredQuest(NPC, 5764, 13, 1) 
+    end
 
+    if GetSpawnLocationID(NPC)==133779441 then
     SetRequiredQuest(NPC, 5765, 1, 1) --CASTLEVIEW
     SetRequiredQuest(NPC, 5765, 2, 1)   
     SetRequiredQuest(NPC, 5765, 3, 1)   
@@ -71,9 +88,11 @@ function spawn(NPC)
     SetRequiredQuest(NPC, 5765, 5, 1)   
     SetRequiredQuest(NPC, 5765, 6, 1)   
     SetRequiredQuest(NPC, 5765, 7, 1)   
+    elseif GetSpawnLocationID(NPC)==133786867 then
     SetRequiredQuest(NPC, 5765, 11, 1)   
     SetRequiredQuest(NPC, 5765, 12, 1)   
     SetRequiredQuest(NPC, 5765, 13, 1) 
+    end
 end
 
 function InRange(NPC, Spawn)

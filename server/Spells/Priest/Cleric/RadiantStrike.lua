@@ -11,7 +11,25 @@
 -- Inflicts 37 - 45 divine damage on target
 --     If target is undead
 
-function cast(Caster, Target, DmgType, MinVal, MaxVal)
-SpellDamage(Target, DmgType, MinVal, MaxVal)
-    Say(Caster, "Missing undead feature")
+function cast(Caster, Target, DmgType, MinVal, MaxVal, SpellLevel)
+    
+    Level = GetLevel(Caster)
+    Mastery = SpellLevel + 10
+    StatBonus = GetInt(Caster) / 10
+    
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+
+    DmgBonus = LvlBonus + StatBonus
+    MaxDmg = math.floor(DmgBonus) * 2 + MaxVal
+    MinDmg = math.floor(DmgBonus) * 2 + MaxVal
+    
+    SpellDamage(Target, DmgType, MinDmg, MaxDmg)
+    
+    if GetRaceBaseType(Target) == 333 then
+        SpellDamage(Target, Dmgtype, MinDmg, MaxDmg)
+    end
+
 end

@@ -9,6 +9,7 @@
 dofile("SpawnScripts/Generic/GenericMerchantVoiceOvers.lua")
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "tailoring_idle")
 end
 
 function respawn(NPC)

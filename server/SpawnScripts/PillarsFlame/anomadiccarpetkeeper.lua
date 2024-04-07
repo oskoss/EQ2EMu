@@ -10,6 +10,10 @@ function respawn(NPC)
 	spawn(NPC)
 end
 
+function spawn(NPC)
+
+end
+
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()

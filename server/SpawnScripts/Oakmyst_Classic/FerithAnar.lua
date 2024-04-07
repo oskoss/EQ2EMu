@@ -7,6 +7,10 @@
 --]]
 
 function spawn(NPC)
+    dmgMod = GetStr(NPC)/10
+    SetInfoStructUInt(NPC, "override_primary_weapon", 1)        
+    SetInfoStructUInt(NPC, "primary_weapon_damage_low", math.floor(18 + dmgMod)) 
+    SetInfoStructUInt(NPC, "primary_weapon_damage_high", math.floor(32 + dmgMod))
 
 waypoints(NPC)
 end

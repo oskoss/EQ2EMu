@@ -20,8 +20,16 @@ function casted_on(NPC, Spawn, Message)
     RockbellyNew = SpawnByLocationID(zone,133774610)
     AddTimer(NPC,2000,"Attacking",1,Spawn)
     SetStepComplete(Spawn,5747,1)
+    SetAccessToEntityCommand(Spawn,NPC,"kick gravestone", 0)
+    SpawnSet(NPC, "show_command_icon", 0)
+    AddTimer(NPC,30000,"Reset")
     end
 end
+end
+
+function Reset(NPC)
+    SetAccessToEntityCommand(Spawn,NPC,"kick gravestone", 1)
+    SpawnSet(NPC, "show_command_icon", 1)
 end
 
 function Attacking(NPC,Spawn)

@@ -5,14 +5,6 @@
     Script Purpose : 
                    : 
 --]]
-
--- Inflicts 22 - 36 mental damage on target
--- Inflicts 22 - 36 mental damage on target
--- Stifles target
---     If Target is not Epic
--- If weapon equipped in Ranged
--- Resistibility increases against targets higher than level 29.
-
 function precast(Caster, Target)
     -- Requires bow
     local item = GetEquippedItemBySlot(Caster, 16)
@@ -25,16 +17,20 @@ function precast(Caster, Target)
 end
 
 function cast(Caster, Target, DmgType, MinVal, MaxVal)
-	Say(Caster, "Resistibility not Implemented.")
-		SpellDamage(Target, DmgType, MinVal, MaxVal)
-			if LastSpellAttackHit() then
-				SpellDamage(Target, DmgType, MinVal, MaxVal)
-					end
-		if LastSpellAttackHit() and not IsEpic() then
-			AddControlEffect(Target, 2)
-				end
-end
-		
-function remove(Caster, Target)
-    RemoveControlEffect(Target, 2)
+    Level = GetLevel(Caster)
+    SpellLevel = 16
+    Mastery = SpellLevel + 10
+    StatBonus = GetAgi(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+    
+    DmgBonus = LvlBonus + StatBonus
+    MinDmg = math.floor(DmgBonus) * 2 + MinVal
+    MaxDmg = math.floor(DmgBonus) * 2 + MaxVal
+    
+    SpellDamage(Target, DmgType, MinDmg, MaxDmg)
+    SpellDamage(Target, DmgType, MinDmg, MaxDmg)
 end

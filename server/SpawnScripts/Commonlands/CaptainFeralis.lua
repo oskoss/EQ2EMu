@@ -5,6 +5,7 @@
     Script Purpose : 
     Script Notes   : Offer Quests "Filling the Coffers", "Ventar T'Kal", "Tesera Valnos".
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
 local CaptainFeralis = 405
 local QUEST = 406 -- Filling the Coffers quest
@@ -13,10 +14,11 @@ local QUEST3 = 412 -- Returning to Captain Feralis quest (Ventar)
 local QUEST4 = 414 -- Tesera Valnos quest
 local QUEST5 = 5221 -- Returning to Captain Feralis quest ( Tecera)
 
-function spawn(NPC)
-SetPlayerProximityFunction(NPC, 10, "InRange")
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    FreeportGuard(NPC)
+    SetPlayerProximityFunction(NPC, 10, "InRange")
 end
-
 
 function InRange(NPC, Spawn)
 if GetDeity(Spawn) ~= 1  then

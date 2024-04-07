@@ -22,7 +22,11 @@ end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
+    dlg_6_1(NPC, Spawn)
+end
+
+--[[
+    conversation = CreateConversation()
 
 		PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
 		AddConversationOption(conversation, "I would like the writ: Followers of the Fang", "dlg_5_1")
@@ -38,13 +42,15 @@ function hailed(NPC, Spawn)
 	end
 
 end
+]]--
 
 function dlg_6_1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
 	PlayFlavor(NPC, "voiceover/english/pupil_adept_wazzlefop/qey_south/100_soc_gnome_concordium_wazzlefop_greeting_fd45f78a.mp3", "", "", 4189930656, 304987589, Spawn)
-		AddConversationOption(conversation, "Okay.", "dlg_6_2")
+--	AddConversationOption(conversation, "Okay.", "dlg_6_2")
+	AddConversationOption(conversation, "Not today.")
 	StartConversation(conversation, NPC, Spawn, "Are you a seeker of the arcane?  Do you thirst for the knowledge of the mystical?  You've come to the right place.  Here at the Concordium, we serve the queen by using our mystical prowess to aid those in need.  Take this writ and help us in our search for truth.")
 end
 

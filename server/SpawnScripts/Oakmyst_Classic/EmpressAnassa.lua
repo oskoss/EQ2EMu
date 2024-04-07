@@ -24,8 +24,8 @@ function hailed(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	Dialog.AddDialog("Greetings and welcome to our hollowed grove. What is it you seek?")
 	Dialog.AddVoiceover("voiceover/english/empress_anassa/qey_adv01_oakmyst/empressanassa000.mp3", 122104258, 2418821305)
-	if HasCompletedQuest(Spawn, QUEST_FROM_NEOLA) and HasCompletedQuest(Spawn, QUEST_FROM_JUDGE) and not HasQuest(Spawn, QUEST_1) and not HasCompletedQuest(Spawn, QUEST_1) then
-	Dialog.AddOption("Your judge has sent me. ", "Dialog1")
+	if CanReceiveQuest(Spawn, QUEST_1) then
+	Dialog.AddOption("Your judge has sent me.", "Dialog1")
 	elseif HasQuest(Spawn, QUEST_1) and GetQuestStep(Spawn, QUEST_1) == 1 then
 	Dialog.AddOption("What is Rotweed?", "WhatIsRotweed")
 	elseif HasQuest(Spawn, QUEST_1) and GetQuestStep(Spawn, QUEST_1) == 2 then
@@ -65,8 +65,7 @@ function KilledRotweed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	Dialog.AddDialog("This is good, but others like Rotweed will return someday. We will watch and defend. We, of this woodland, thank you.")
-	--Missing VoiceOver MP3 Keys (1/17/2022)- Dorbin
-	Dialog.AddVoiceover("voiceover/english/empress_anassa/qey_adv01_oakmyst/empressanassa004.mp3", 0, 0)
+	Dialog.AddVoiceover("voiceover/english/empress_anassa/qey_adv01_oakmyst/empressanassa004.mp3", 3428637414, 1159660811)
 	Dialog.AddOption("Thank you, Empress Anassa.")
 	Dialog.Start()
 end

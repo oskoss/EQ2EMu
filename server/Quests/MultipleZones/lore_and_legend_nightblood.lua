@@ -11,9 +11,9 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find a nightblood doom essence.", 1, 100, "I must locate several nightblood body parts.", 2516, 246)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a nightblood forged horn.", 1, 100, "I must locate several nightblood body parts.", 2516, 246)
-	AddQuestStepKillByRace(Quest, 3, "I need to find a nightblood heart of darkness.", 1, 100, "I must locate several nightblood body parts.", 2516, 246)
+	AddQuestStepKillByRace(Quest, 1, "I need to find a nightblood doom essence.", 1, 25, "I must locate several nightblood body parts.", 2516, 246)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a nightblood forged horn.", 1, 35, "I must locate several nightblood body parts.", 2516, 246)
+	AddQuestStepKillByRace(Quest, 3, "I need to find a nightblood heart of darkness.", 1, 10, "I must locate several nightblood body parts.", 2516, 246)
 	AddQuestStep(Quest, 4, "I need to find and study a nightblood hoof.", 1, 100, "I must locate several nightblood body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a nightblood inferno eye.", 1, 100, "I must locate several nightblood body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study a nightblood tooth.", 1, 100, "I must locate several nightblood body parts.", 11)

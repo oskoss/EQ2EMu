@@ -6,3 +6,13 @@
                    : 
 --]]
 dofile("SpawnScripts/Generic/MonsterCallouts/Fairy_PeatBog.lua")
+dofile("SpawnScripts/Generic/CatalogueQuestUpdates.lua")
+require "SpawnScripts/Generic/NPCModule"
+
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+end
+
+function respawn(NPC, Spawn)
+    spawn()
+end

@@ -5,34 +5,16 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/MonsterCallouts/Windstalkers.lua")
+require "SpawnScripts/Generic/NPCModule"
 
 local LichaDancingQueen = 5342
 
-function spawn(NPC)
-    local Level = GetLevel(NPC)
-    local level1 = 16
-    local level2 = 17
-    local difficulty1 = 6
-    local hp1 = 1045
-    local power1 = 310
-    local difficulty2 = 6
-    local hp2 = 1180
-    local power2 = 360
-    if Level == level1 then
-    SpawnSet(NPC, "difficulty", difficulty1)
-    SpawnSet(NPC, "hp", hp1)
-    SpawnSet(NPC, "power", power1)
-    elseif Level == level2
-        then
-    SpawnSet(NPC, "difficulty", difficulty2)
-    SpawnSet(NPC, "hp", hp2)
-    SpawnSet(NPC, "power", power2)
-    end
-SetTempVariable(NPC, "QUEST_HAILED", "false")
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    ChooseRace(NPC)
+    SetTempVariable(NPC, "QUEST_HAILED", "false")
 end
-
-
-
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
@@ -48,6 +30,28 @@ function hailed(NPC, Spawn)
 	elseif choice == 2 then
 	PlayFlavor(NPC, "", "I know, I know. You already told me.", "", 0, 0, Spawn)
 	end
+else
+    if GetClass(Spawn) >= 15 and GetClass(Spawn) <= 17 or GetClass(Spawn)==39 then
+    	local choice = MakeRandomInt(1, 2)
+    	if choice == 1 then
+        SendMessage(Spawn,"The Windstalker Citizen eyes you approvingly.","white")
+        elseif choice == 2 then
+       SendMessage(Spawn,"The Windstalker Citizen gives you a friendly nod of acknowledgement.","white")
+    	PlayFlavor(NPC, "", "", "nod", 0, 0, Spawn)
+    	end	
+    else
+        local choice = MakeRandomInt(1, 3)
+    	if choice == 1 then
+        SendMessage(Spawn,"The Windstalker Citizen eyes closely in a disapproving manner.","white")
+     	PlayFlavor(NPC, "", "", "glare", 0, 0, Spawn)
+       elseif choice == 2 then
+       SendMessage(Spawn,"The Windstalker Citizen does not want to engage with you.","white")
+    	PlayFlavor(NPC, "", "", "sniff", 0, 0, Spawn)
+       elseif choice == 3 then
+       SendMessage(Spawn,"The Windstalker Citizen stares sniffs the air around you.","white")
+    	PlayFlavor(NPC, "", "", "peer", 0, 0, Spawn)
+    	end	
+    end    
 end
    end
 
@@ -96,9 +100,17 @@ SetTempVariable(NPC, "QUEST_HAILED", "false")
 end
    end
 
-
-
-
 function respawn(NPC)
 	spawn(NPC)
 end
+
+function ChooseRace(NPC)
+    SetRace = MakeRandomInt(1,2)
+    if SetRace == 1 then
+        human(NPC)
+    elseif SetRace == 2 then
+        halfelf(NPC)
+    end
+end
+
+

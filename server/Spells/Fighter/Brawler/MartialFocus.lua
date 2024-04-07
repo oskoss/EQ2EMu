@@ -1,16 +1,16 @@
 --[[
     Script Name    : Spells/Fighter/Brawler/MartialFocus.lua
-    Script Author  : Dello
-    Script Date    : 2014.07.10 06:07:01
+    Script Author  : LordPazuzu
+    Script Date    : 9/2/2023
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target, MaxVal)
-    AddSpellBonus(Target, 0, MaxVal)
-    AddSpellBonus(Target, 2, MaxVal)
+function cast(Caster, Target, DefSkills)
+    AddSkillBonus(Caster, GetSkillIDByName("Parry"), DefSkills)
+    AddSkillBonus(Caster, GetSkillIDByName("Deflection"), DefSkills)
 end
 
 function remove(Caster, Target, MaxVal)
-    RemoveSpellBonus(Target)
+     RemoveSkillBonus(Caster)
 end

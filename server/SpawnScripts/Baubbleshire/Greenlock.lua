@@ -31,7 +31,7 @@ function InitialPause(NPC)
     local GatherSpawn = GetSpawn(NPC, 2380178)	-- Get Greenlock
 
     math.randomseed(os.time())
-    local pause = math.random (1, 4)
+    local pause = MakeRandomInt (1, 4)
 
             if pause == 1 then
                     AddTimer(NPC, 100, "stop_gathering")  
@@ -43,13 +43,13 @@ end
 
 function Gather(NPC)
     local GatherSpawn = GetSpawn(NPC, 2380178)	-- Get Greenlock
-    SpawnSet(NPC, "visual_state", "2809")	-- Start gathering
+    PlayFlavor(NPC,"","","gathering_search",0,0)
     AddTimer(NPC, 8000, "Collect")	        -- for 5 seconds, then stop
 end
 
 function Collect(NPC)
     local GatherSpawn = GetSpawn(NPC, 2380178)	-- Get Greenlock
-    SpawnSet(NPC, "visual_state", "2810")	-- Start gathering
+    PlayFlavor(NPC,"","","gathering_success",0,0)
     AddTimer(NPC, 2000, "stop_gathering")	-- for 5 seconds, then stop
 end
 

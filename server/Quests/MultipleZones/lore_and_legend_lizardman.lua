@@ -11,9 +11,9 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find a lizardman brain.", 1, 100, "I must locate several lizardman body parts.", 2516, 314)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a lizardman heart.", 1, 100, "I must locate several lizardman body parts.", 2516, 314)
-	AddQuestStepKillByRace(Quest, 3, "I need to find a lizardman spirit.", 1, 100, "I must locate several lizardman body parts.", 2516, 314)
+	AddQuestStepKillByRace(Quest, 1, "I need to find a lizardman brain.", 1, 25, "I must locate several lizardman body parts.", 2516, 314)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a lizardman heart.", 1, 35, "I must locate several lizardman body parts.", 2516, 314)
+	AddQuestStepKillByRace(Quest, 3, "I need to find a lizardman spirit.", 1, 10, "I must locate several lizardman body parts.", 2516, 314)
 	AddQuestStep(Quest, 4, "I need to find and study a lizardman tail.", 1, 100, "I must locate several lizardman body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a lizardman scale.", 1, 100, "I must locate several lizardman body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study a lizardman claw.", 1, 100, "I must locate several lizardman body parts.", 11)

@@ -11,9 +11,9 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find a giant spirit.", 1, 100, "I must locate several giant body parts.", 2516, 258)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a giant heart.", 1, 100, "I must locate several giant body parts.", 2516, 258)
-	AddQuestStepKillByRace(Quest, 3, "I need to find a giant eye.", 1, 100, "I must locate several giant body parts.", 2516, 258)
+	AddQuestStepKillByRace(Quest, 1, "I need to find a giant spirit.", 1, 10, "I must locate several giant body parts.", 2516, 258)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a giant heart.", 1, 35, "I must locate several giant body parts.", 2516, 258)
+	AddQuestStepKillByRace(Quest, 3, "I need to find a giant eye.", 1, 25, "I must locate several giant body parts.", 2516, 258)
 	AddQuestStep(Quest, 4, "I need to find and study a giant toe.", 1, 100, "I must locate several giant body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a giant finger.", 1, 100, "I must locate several giant body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study a giant tooth.", 1, 100, "I must locate several giant body parts.", 11)

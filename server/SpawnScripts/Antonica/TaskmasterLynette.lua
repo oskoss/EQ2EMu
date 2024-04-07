@@ -1,21 +1,21 @@
 --[[
 	Script Name	: SpawnScripts/Antonica/TaskmasterLynette.lua
 	Script Purpose	: Taskmaster Lynette 
-	Script Author	: geordie0511
+	Script Author	: geordie0511,Dorbin
 	Script Date	: 2019.03.19
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
 
-local A1 = 474
-local A2 = 475
-local A3 = 476
-local A4 = 477
-local A5 = 478
-local A6 = 479
-local A7 = 480
-local A8 = 481
-local A9 = 482
-local A10 = 483
+local A1 = 5818
+local A2 = 5819
+local A3 = 5820
+local A4 = 5821
+local A5 = 5822
+local A6 = 5823
+local A7 = 5824
+local A8 = 5825
+local A9 = 5826
+local A10 = 5827
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
@@ -33,9 +33,14 @@ end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/taskmaster_lynette/qey_harbor/taskmasterlynette000.mp3", "", "", 2422547870, 3187249838, Spawn)
+	conversation = CreateConversation()
+if HasQuest(Spawn,5766) and GetQuestStepProgress(Spawn,5766,5) == 0 then --WELCOME TO QEYNOS,CITIZEN
+    SetStepComplete(Spawn,5766,5)
+end
+
+
+	PlayFlavor(NPC, "voiceover/english/taskmaster_lynette/qey_harbor/taskmasterlynette000.mp3", "", "tapfoot", 2422547870, 3187249838, Spawn)
 	if GetQuestStep(Spawn, A1) == 4 then
 		AddConversationOption(conversation, "I won't bother you then.")
 		AddConversationOption(conversation, "What is a Far Seas Requisition?", "dlg_3_1")
@@ -134,10 +139,13 @@ function dlg_3_1(NPC, Spawn)
 end
 
 function dlg_3_2(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
+if HasQuest(Spawn,5766) and GetQuestStepProgress(Spawn,5766,3) == 0 then --WELCOME TO QEYNOS,CITIZEN
+    SetStepComplete(Spawn,5766,3)
+end
+FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 
-	PlayFlavor(NPC, "voiceover/english/taskmaster_lynette/qey_harbor/taskmasterlynette002.mp3", "", "", 3001837794, 1766542530, Spawn)
+	PlayFlavor(NPC, "voiceover/english/taskmaster_lynette/qey_harbor/taskmasterlynette002.mp3", "", "heckno", 3001837794, 1766542530, Spawn)
 	AddConversationOption(conversation, "Good day to you. ")
 	StartConversation(conversation, NPC, Spawn, "This is the office for processing requisition orders, not the office for employment. We have more than enough huntsmen on staff.  So, unless you happen to find an unclaimed Far Seas Requisition and fill its order... our business is done.  Good day. Next!")
 end

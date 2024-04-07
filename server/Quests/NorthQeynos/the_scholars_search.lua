@@ -12,7 +12,7 @@
 require "SpawnScripts/Generic/DialogModule"
 
 function Init(Quest)
-	AddQuestStepLocation(Quest, 1, "I need to find and search the area around the Bells of Vhalen.", 6, "According to Demini, the scholar to the Sage of Ages was last seen at the Bells of Vhalen out in Antonica.  Perhaps I can find him there.", 11, -1300, 38 ,45)
+	AddQuestStepZoneLoc(Quest, 1, "I need to find and search the area around the Bells of Vhalen.", 7, "According to Demini, the scholar to the Sage of Ages was last seen at the Bells of Vhalen out in Antonica.  Perhaps I can find him there.", 11, -1300, 38 ,45,12)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
     UpdateQuestZone(Quest,"Antonica")
 end
@@ -46,42 +46,42 @@ function Step2Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 2, "I've found a partially eaten page from a journal.")
 	UpdateQuestTaskGroupDescription(Quest, 2, "I've found a clue on a badger.  It's a page from a journal, claiming that the scholar was actually escorting the Sage of Ages personally.  Unfortunately, the last words on the page claim the two had been accosted by bandits.")
 
-	AddQuestStepLocation(Quest, 3, "I need to search the area around the Bramble Woods.", 10, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11, -1659, -11, 416)
+	AddQuestStepZoneLoc(Quest, 3, "I need to search the area around the Bramble Woods.", 10, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11, -1659, -11, 416,12)
 	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
 end
 
 function Step3Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 3, "I've searched the Bramble Woods, but found no trace of the pair.")
 
-	AddQuestStepLocation(Quest, 4, "I need to search the area around the Qeynos Highway", 10, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11,-1723, -14, 376)
+	AddQuestStepZoneLoc(Quest, 4, "I need to search the area around the Qeynos Highway", 15, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11,-1723, -14, 376,12)
 	AddQuestStepCompleteAction(Quest, 4, "Step4Complete")
 end
 
 function Step4Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 4, "I've searched the Qeynos Highway, but found no trace of the pair")
 
-	AddQuestStepLocation(Quest, 5, "I need to search the area around the Northern Farmlands", 10, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11, -1902, -14, 42)
+	AddQuestStepZoneLoc(Quest, 5, "I need to search the area around the Northern Farmlands", 15, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11, -1902, -14, 42,12)
 	AddQuestStepCompleteAction(Quest, 5, "Step5Complete")
 end
 
 function Step5Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 5, "I've searched the Northern Farmlands, but found no trace of the pair")
 
-	AddQuestStepLocation(Quest, 6, "I need to search the area around the Gnollslayer Highlands", 10, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11, -1755, -14, 521)
+	AddQuestStepZoneLoc(Quest, 6, "I need to search the area around the Gnollslayer Highlands", 15, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11, -1755, -14, 521,12)
 	AddQuestStepCompleteAction(Quest, 6, "Step6Complete")
 end
 
 function Step6Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 6, "I've searched the Gnollslayer Highlands, but found no trace of the pair")
 
-	AddQuestStepLocation(Quest, 7, "I need to search the area around the Scarecrow Fields", 10, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11,-1755, -14, 521)
+	AddQuestStepZoneLoc(Quest, 7, "I need to search the area around the Scarecrow Fields", 15, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11,-1755, -14, 521,12)
 	AddQuestStepCompleteAction(Quest, 7, "Step7Complete")
 end
 
 function Step7Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 7, "I've searched the Scarecrow Fields, but found no trace of the pair")
 
-	AddQuestStepLocation(Quest, 8, "I need to search the area around the Keep of the Gnollslayers", 8, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11, -2089, -45, 474)
+	AddQuestStepZoneLoc(Quest, 8, "I need to search the area around the Keep of the Gnollslayers", 10, "I should check the surrounding region to see if I can find both the scholar and the Sage of Ages.  I hope it's not too late to find them.", 11, -2089, -45, 474,12)
 	AddQuestStepCompleteAction(Quest, 8, "Step8Complete")
 end
 

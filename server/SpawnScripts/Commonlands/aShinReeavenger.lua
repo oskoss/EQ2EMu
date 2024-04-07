@@ -5,12 +5,13 @@
     Script Purpose : 
                    : 
 --]]
-
+require "SpawnScripts/Generic/NPCModule"
 local TheSkeletonKey = 411
 local blood_stained_finger_bones = 331128
 
-function spawn(NPC)
-
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    RandomMovement(NPC, Spawn, 12, -12, 2, 8, 15)
 end
 
 function hailed(NPC, Spawn)

@@ -9,9 +9,18 @@
 dofile("SpawnScripts/NorthQeynos/QueenAntoniaBayle.lua")
 
 function init_zone_script(Zone)
-
+    SetLocationProximityFunction(Zone,293.00, -18.10, -20.88, 12, "ClaymorePlaza","LeaveLocation")
+    SetLocationProximityFunction(Zone,473.95, -18.76, -345.05, 18, "IronforgeEstate","LeaveLocation")
 end
 
+function ClaymorePlaza(Zone,Player)
+      SendPopUpMessage(Player, "The Claymore Plaza", 255, 255, 0)
+    end
+ 
+function IronforgeEstate(Zone,Player)
+      SendPopUpMessage(Player, "The Ironforge Estate", 255, 255, 0)
+    end 
+    
 function player_entry(Zone, Player)
 SendPopUpMessage(Player, "North Qeynos", 230, 230, 230)   
 end
@@ -20,7 +29,7 @@ end
 function dawn(Zone)
 local Antonia = GetSpawnByLocationID(Zone,379658)
 if Antonia ~=nil then
-local choice = MakeRandomInt(1,5)  -- Atonia's Speechs - #5 represents a skipped speech
+local choice = MakeRandomInt(1,5)  -- Antonia's Speechs - #5 represents a skipped speech
     if choice == 1 then
     PlayAnimation(Antonia, 10756) 
     AddTimer(Antonia, 2000, "visage01")	

@@ -11,9 +11,9 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find a centaur spirit.", 1, 100, "I must locate several centaur body parts.", 2516, 283)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a centaur heart.", 1, 100, "I must locate several centaur body parts.", 2516, 283)
-	AddQuestStepKillByRace(Quest, 3, "I need to find a centaur brain.", 1, 100, "I must locate several centaur body parts.", 2516, 283)
+	AddQuestStepKillByRace(Quest, 1, "I need to find a centaur spirit.", 1, 25, "I must locate several centaur body parts.", 2516, 283)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a centaur heart.", 1, 10, "I must locate several centaur body parts.", 2516, 283)
+	AddQuestStepKillByRace(Quest, 3, "I need to find a centaur brain.", 1, 35, "I must locate several centaur body parts.", 2516, 283)
 	AddQuestStep(Quest, 4, "I need to find and study a centaur hoof.", 1, 100, "I must locate several centaur body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a centaur eye.", 1, 100, "I must locate several centaur body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study a centaur hand.", 1, 100, "I must locate several centaur body parts.", 11)

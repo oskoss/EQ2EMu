@@ -50,7 +50,7 @@ end
 
 function QuestStep4(Quest, QuestGiver, Player)
 	UpdateQuestTaskGroupDescription(Quest, 1, "I've managed to gather everything for Fawn Starstone's garden.")
-	AddQuestStepChat(Quest, 4, "Return to Fawn in Starcrest Commune.", 1, "I need to give these items to Fawn for her garden.", 0, 2530059)
+	AddQuestStepChat(Quest, 4, "Return to Fawn in Starcrest Commune.", 1, "I need to give these items to Fawn for her garden.", 0, 2340032)
 	AddQuestStepCompleteAction(Quest, 4, "quest_complete_gaveitemstoFawn")
 end
 

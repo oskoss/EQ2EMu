@@ -6,22 +6,23 @@
                    : 
 --]]
 
-function precast(Caster, Target)
-    -- You must be sneaking to use this ability.
-    if IsStealthed(Caster) then
-        return true
-    end
 
-    SendMessage(Caster, "You must be sneaking to use this ability.", "yellow")
-    return false
-end
 function cast(Caster, Target, DmgType, MinVal, MaxVal)
-    -- Inflicts 217 - 362 slashing damage on target
-    if MaxVal ~= nil and MinVal < MaxVal then
-        SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))
-    else
-        SpellDamage(Target, DmgType, MinVal)
+    Level = GetLevel(Caster)
+    SpellLevel = 20
+    Mastery = SpellLevel + 10
+    StatBonus = GetStr(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
     end
+    
+    DmgBonus = LvlBonus + StatBonus
+    MaxDmg = math.floor(DmgBonus * 2.5) + MaxVal
+    MinDmg = math.floor(DmgBonus * 2.5) + MaxVal
+    
+    SpellDamage(Target, DmgType, MinDmg, MaxDmg)
 
     -- Stifles target
     --     If Target is not Epic

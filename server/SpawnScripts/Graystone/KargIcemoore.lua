@@ -9,6 +9,7 @@
 local TheMotleyMerchantManifest = 5368
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "drinking_idle")
 end
 
 function respawn(NPC)

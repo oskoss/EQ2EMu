@@ -8,6 +8,10 @@
 
 local HALF_ELF_MENTOR_QUEST_1 = 218
 
+function Spawn(NPC)
+        SetInfoStructString(NPC, "action_state", "tapfoot")
+end
+
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()

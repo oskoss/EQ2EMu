@@ -16,7 +16,7 @@ require "SpawnScripts/Generic/DialogModule"
 function Init(Quest)
 AddQuestStepZoneLoc(Quest, 1, "I need to collect Peat Bog water.", 18, "I need to collect bog water in Grommluk's jar from the middle of Peat Bog.", 356, 667.10, -33.6, 501.99,829)
 AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
-UpdateQuestZone(Quest, "The Peat Bog")
+UpdateQuestZone(Quest, "Peat Bog")
 end
 
 function Accepted(Quest, QuestGiver, Player)

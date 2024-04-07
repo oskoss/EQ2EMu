@@ -6,3 +6,12 @@
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
 dofile("SpawnScripts/Generic/MonsterCallouts/BaseGnoll1.lua")
+require "SpawnScripts/Generic/NPCModule"
+
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+end
+
+function respawn(NPC, Spawn)
+    spawn()
+end

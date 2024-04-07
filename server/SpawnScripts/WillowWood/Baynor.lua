@@ -13,6 +13,7 @@ local Delivery = 5482
 function spawn(NPC)
 SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
 ProvidesQuest(NPC, Delivery)
+    SetInfoStructString(NPC, "action_state", "metalworking_idle")
 end
 
 function InRange(NPC, Spawn) --Quest Callout

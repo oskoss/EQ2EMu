@@ -9,6 +9,7 @@ dofile("SpawnScripts/Generic/GenericVoiceOvers.lua")
 dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "ponder")
 end
 
 function respawn(NPC)

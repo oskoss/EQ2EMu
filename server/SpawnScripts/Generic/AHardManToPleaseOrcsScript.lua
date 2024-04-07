@@ -5,19 +5,20 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    Bloodskull(NPC)
+    OrcArmorCommon(NPC)
 	SetPlayerProximityFunction(NPC, 50, "InRange")
 end
 
 function InRange(NPC, Spawn)
-if IsPlayer(Spawn) then
- Attack(NPC, Spawn)
- end   
-    end
-
-
-
+    if IsPlayer(Spawn) then
+        Attack(NPC, Spawn)
+    end   
+end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)

@@ -1,10 +1,13 @@
 --[[
 	Script Name		: SpawnScripts/BeggarsCourt/Aquila.lua
 	Script Purpose	: Aquila
-	Script Author	: torsten
+	Script Author	: Dorbin
 	Script Date		: 2022.07.18
 	Script Notes	: 
 --]]
+
+
+dofile("SpawnScripts/Generic/GenericGuardVoiceOvers.lua")
 
 function spawn(NPC)
 end
@@ -14,7 +17,11 @@ function respawn(NPC)
 end
 
 function hailed(NPC, Spawn)
-	RandomGreeting(NPC, Spawn)
+    if GetFactionAmount(Spawn,12)<0 then
+        else
+    FaceTarget(NPC, Spawn)
+    GenericGuardHail(NPC,Spawn)
+end
 end
 
 function RandomGreeting(NPC, Spawn)

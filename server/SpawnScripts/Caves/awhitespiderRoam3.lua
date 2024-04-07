@@ -5,10 +5,11 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-
-waypoints(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    waypoints(NPC)
 end
 
 function hailed(NPC, Spawn)

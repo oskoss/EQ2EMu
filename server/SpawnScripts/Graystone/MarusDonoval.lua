@@ -5,6 +5,13 @@
 	Script Date	: 2009.09.27
 	Script Notes	: 
 --]]
+function Spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "drinking_idle")
+end
+
+function respawn(NPC)
+    Spawn(NPC)
+end
 
 -- Quest ID's
 local A_TIME_FOR_FIGHTING = 289

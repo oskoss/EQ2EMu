@@ -10,10 +10,12 @@
 	Preceded by		:	None
 	Followed by		:	None
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 local TheStolenArtifactsofThex = 5683
 
 function Init(Quest)
+    UpdateQuestZone(Quest,"Big Bend")
 	AddQuestStep(Quest, 1, "Inspect the Thex monument", 1, 100, "I must go to Big Bend and find all five of the Thex artifacts relocated there.", 11)
     AddQuestStep(Quest, 2, "Inspect the Thex monument", 1, 100, "I must go to Big Bend and find all five of the Thex artifacts relocated there.", 11)
 	AddQuestStep(Quest, 3, "Inspect the Thex monument", 1, 100, "I must go to Big Bend and find all five of the Thex artifacts relocated there.", 11)
@@ -46,7 +48,8 @@ end
 
 function CheckProgress(Quest, QuestGiver, Player)
     if QuestStepIsComplete(Player, TheStolenArtifactsofThex, 1) and QuestStepIsComplete(Player, TheStolenArtifactsofThex, 2) and QuestStepIsComplete(Player, TheStolenArtifactsofThex, 3) and QuestStepIsComplete(Player, TheStolenArtifactsofThex, 4) then
- 	    UpdateQuestTaskGroupDescription(Quest, 1, "I went to Big Bend and could only find four Thex artifacts.")
+ 	    UpdateQuestTaskGroupDescription(Quest, 1, "I went to Big Bend and could only find four Thexian artifacts.")
+        UpdateQuestZone(Quest,"Longshadow Alley")
  	    
 	    AddQuestStepChat(Quest, 5, "Speak to Kylanith D'Lar", 1, "I must report back to Kylanith D'Lar in Longshadow Alley.", 11, 1380032)
 	    AddQuestStepCompleteAction(Quest, 5, "Step5Complete")
@@ -62,10 +65,10 @@ function Step5Complete(Quest, QuestGiver, Player)
 end
 
 function Step6Complete(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 6, "Inspected the Thex monument.")
+	UpdateQuestStepDescription(Quest, 6, "I discovered the Thex monument gravestone.")
 	UpdateQuestTaskGroupDescription(Quest, 3, "I went to the Freeport graveyard to find the fifth Thex artifact.")
-
-	AddQuestStepChat(Quest, 7, "Speak to Kylanith D'Lar", 1, "I must report back to Kylanith D'Lar in Longshadow Alley.", 11, 1380032)
+    UpdateQuestZone(Quest,"Longshadow Alley")
+	AddQuestStepChat(Quest, 7, "I must inform Kylanith of the illegible monument.", 1, "I must report my findings to Kylanith D'Lar in Longshadow Alley.", 11, 1380032)
 	AddQuestStepCompleteAction(Quest, 7, "QuestComplete")
 end
 
@@ -80,7 +83,13 @@ end
 
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("It is rumored that the artifacts are somewhere within Big Bend's foul-stenching streets. Some artifacts have sustained great damage. Find them for me and report their existence. ")
+	Dialog.AddVoiceover("voiceover/english/optional1/kylanith_d_lar/language/thexian/lan_5_kylanith_x1_initial01.mp3", 2884704375, 1873644890)
+	Dialog.AddLanguage(2)
+	Dialog.AddOption("I will find them and report back.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

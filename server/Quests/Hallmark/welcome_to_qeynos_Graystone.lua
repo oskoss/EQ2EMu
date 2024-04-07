@@ -28,6 +28,9 @@ function Accepted(Quest, QuestGiver, Player)
     if HasQuest(Player,5717) and GetQuestStep(Player,5717)==2 then
         SetStepComplete(Player,5717,2)
     end        
+    if HasQuest(Player,5792) and GetQuestStep(Player,5792)==2 then
+        SetStepComplete(Player,5792,2)
+    end        
 end
 
 function Step1Complete(Quest, QuestGiver, Player)
@@ -62,20 +65,22 @@ end
 function Step5Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 5, "I've returned to my room and spoken with caretaker Fairlee.")
 	UpdateQuestTaskGroupDescription(Quest, 5, "I've returned to my room and spoken with caretaker Fairlee.  She gave me a painting of hers to place on my walls.")
-	AddQuestStep(Quest, 6, "Open your inventory.  \"Place\" your new painting and then speak with the caretaker.", 1,100, "Caretake Fairlee has suggested that I place the painting on my walls to liven up the place.  I should place the painting and then ask her about The Baubbleshire.",0)
+	AddQuestStep(Quest, 6, "Open your inventory.  \"Place\" your new painting and then speak with the caretaker.", 1,100, "Caretake Fairlee has suggested that I place the painting on my walls to liven up the place.  I should place the painting and then ask her about Graystone Yard.",0)
 	AddQuestStepCompleteAction(Quest, 6, "Step6Complete")   
 end
 
 function Step6Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 6, "I've placed the painting and spoken with the caretaker.")
 	UpdateQuestTaskGroupDescription(Quest, 6, "I've placed the painting and spoken with the caretaker.")
-	AddQuestStepZoneLoc(Quest, 7, "I need to visit the gates to the Oakmyst Forest.",6,"\"Some people choose to adventure in the Oakmyst Forest.  It's a dangerous place, so watch yourself.  Here's where you can find the gates to the forest.  I'll show you a few other places after you take a look at the gates.\" - Ms. Fairlee", 11,861.01, -5.17, -203.63,235)
+    UpdateQuestZone(Quest,"Oakmyst Forest")
+	AddQuestStepZoneLoc(Quest, 7, "I need to visit the gates to the Oakmyst Forest.",15,"\"Some people choose to adventure in the Oakmyst Forest.  It's a dangerous place, so watch yourself.  Here's where you can find the gates to the forest.  I'll show you a few other places after you take a look at the gates.\" - Ms. Fairlee", 11,858.79, 2.16, -189.35,830)
 	AddQuestStepCompleteAction(Quest, 7, "Step7Complete")   
 end
 
 function Step7Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 7, "I've found the gates to the Oakmyst Forest.")
 	UpdateQuestTaskGroupDescription(Quest, 7, "I've visisted one of four locations Ms. Fairlee has told me about.")
+    UpdateQuestZone(Quest,"Graystone Yard")
 	AddQuestStepChat(Quest, 8, "I need to introduce myself to the Graystone Yard crafting trainer, Dorak Everstock.",1,"\"Not all coin gained by refugees comes from battling vermin. Crafting is a great opportunity for some refugees to become skilled in a tradeskill.  You should meet with the crafting trainer outside The Stalwart Township so you become familiar with where to begin a tradeskill if you so desire.\" - Ms. Fairlee", 11,2350050)
 	AddQuestStepCompleteAction(Quest, 8, "Step8Complete")   
 end
@@ -90,7 +95,7 @@ end
 function Step9Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 9, "I've found the enterence to the Down Below.")
 	UpdateQuestTaskGroupDescription(Quest, 9, "I've visisted three of four locations Ms. Fairlee has told me about.")
-	AddQuestStepZoneLoc(Quest, 10, "I need to locate the gates to Qeynos Harbor.",6, "\"Even though only citizens can travel into the city proper, it would be rude not to at least show where the gates to Qeynos are.  I'll lead you over to where you can find the gates into the city.  I should be done with fixing up the place by the time you get back.\" - Ms. Fairlee", 11,865.63, -25.47, -98.92,235)
+	AddQuestStep(Quest, 10, "I need to locate the gates to Qeynos Harbor.",1,100, "\"Even though only citizens can travel into the city proper, it would be rude not to at least show where the gates to Qeynos are.  I'll lead you over to where you can find the gates into the city.  I should be done with fixing up the place by the time you get back.\" - Ms. Fairlee", 11)
 	AddQuestStepCompleteAction(Quest, 10, "Step10Complete")   
 end
 
@@ -118,7 +123,7 @@ end
 function Step13Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 13, "I've spoken with Marshal Glorfel and have been told how to become a citizen.")
 	UpdateQuestTaskGroupDescription(Quest, 13, "I've spoken with Marshal Glorfel and have been told how to become a citizen.")
-	AddQuestStepChat(Quest, 14, "Judge the traitors individually and prove your loyalty to Qeynos.", 1, 100,"Marshal Glorfel has tasked me with rendering judgment upon some treasonous residents in order to gain citizenship.  He has pointed out that there are those who would betray our great city to that wretch Lucan.  To prove myself, I will have to render final judgment on all of them.",11,22101350)
+	AddQuestStepChat(Quest, 14, "Judge the traitors individually and prove your loyalty to Qeynos.", 1,"Marshal Glorfel has tasked me with rendering judgment upon some treasonous residents in order to gain citizenship.  He has pointed out that there are those who would betray our great city to that wretch Lucan.  To prove myself, I will have to render final judgment on all of them.",11,22101350)
 	AddQuestStepCompleteAction(Quest, 14, "QuestComplete")   
 end
 

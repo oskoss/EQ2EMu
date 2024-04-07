@@ -6,9 +6,11 @@
                    : 
 --]]
 dofile("SpawnScripts/Generic/MonsterCallouts/BaseGnoll1.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-TheLook(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    TheLook(NPC)
 end
 
 function respawn(NPC)

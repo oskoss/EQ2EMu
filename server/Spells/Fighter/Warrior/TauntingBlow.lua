@@ -1,21 +1,32 @@
 --[[
     Script Name    : Spells/Fighter/Warrior/TauntingBlow.lua
-    Script Author  : neatz09
-    Script Date    : 2020.01.02 03:01:10
+    Script Author  : LordPazuzu
+    Script Date    : 3/28/2023
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target, DmgType, DmgLow, DmgHigh, MinTauntVal, MaxTauntVal)
--- Inflicts 7 - 11 melee damage on target
-SpellDamage(Target, DmgType, DmgLow, DmgHigh)
+function cast(Caster, Target, DmgType, DmgLow, DmgHigh, MinTauntVal, MaxTauntVal, SpellLevel)
+    
+    Level = GetLevel(Caster)
+    Mastery = SpellLevel + 10
+    StatBonus = GetStr(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+    
+    
+    DmgBonus = LvlBonus + StatBonus
+    MaxDmg = math.floor(DmgBonus) * 2 + DmgHigh
+    MinDmg = math.floor(DmgBonus) * 2 + DmgLow
+    
+    SpellDamage(Target, DmgType, MinDmg, MaxDmg)
+
 -- Increases Threat to target by 435 - 531 
     
-if MaxTauntVal ~= nil and MinTauntVal < MaxTauntVal then
-      hateAmount = math.random(MinTauntVal, MaxTauntVal)
-      AddHate(Caster, Target, hateAmount)
-    else
-      AddHate(Caster, Target, MinTauntVal)
-    end
+AddHate(Caster, Target, math.random(MinTauntVal, MaxTauntVal), 1)
+
 end
 

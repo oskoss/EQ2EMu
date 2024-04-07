@@ -9,10 +9,11 @@
 	Preceded by		:	None
 	Followed by		:	None
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "I must kill four ratonga Bloodsabers.", 4, 100, "I need to slay four ratonga Bloodsabers in the Down Below.", 611, 1990025,1990026,1990027,1990023)
+	AddQuestStepKill(Quest, 1, "I must kill four ratonga Bloodsabers.", 4, 100, "I need to slay four ratonga Bloodsabers in the Down Below.", 611, 8340015,8340016,8340017,8340018, 8340019, 8340055)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
 	UpdateQuestZone(Quest,"The Down Below")
 end
@@ -26,7 +27,13 @@ function Step1Complete(Quest,QuestGiver,Player)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Then seek out the catacombs! You must slay the Bloodsabers in the caverns. May your faith in the righteous bring you victory, or welcome you in the afterlife. The gods are watching!")
+	Dialog.AddVoiceover("voiceover/english/watcher_curmogliel_kar_thal/qey_village03/watchercurmogliel002", 1937849354, 1911529851)
+    PlayFlavor(QuestGiver, "","","agree",0,0,Player)
+    Dialog.AddOption("I will prove myself. I will be back.")
+    Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

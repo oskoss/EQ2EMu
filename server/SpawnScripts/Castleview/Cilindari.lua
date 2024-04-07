@@ -10,6 +10,7 @@ dofile("SpawnScripts/Generic/GenericAlchemistVoiceOvers.lua")
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "alchemy_idle")
 end
 
 function respawn(NPC)

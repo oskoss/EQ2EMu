@@ -62,7 +62,7 @@ end
 function Camp_Stage2(NPC, Spawn) --Stage 2 Atramentor(active) 
   local zone = GetZone(NPC)
   local choice = math.random(0,100)
-    if choice <=20 then   -- % Chance for Boss to Spawn
+    if choice <=100 then   -- % Chance for Boss to Spawn
     local CampSpawn1 = GetSpawnByLocationID(zone, 133777642) --Atramentor(inactive)
     local CampSpawn7 = GetSpawnByLocationID(zone, 133777643)
     local CampSpawn8 = GetSpawnByLocationID(zone, 133777656)

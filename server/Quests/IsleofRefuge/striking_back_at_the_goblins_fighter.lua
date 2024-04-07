@@ -10,6 +10,7 @@
         Followed by: Removing the Orc Menace 
 --]]
 require "SpawnScripts/Generic/DialogModule"
+dofile("SpawnScripts/Generic/ClassSkillCheck.lua")
 
 function Init(Quest)
 	AddQuestStepKill(Quest, 1, "I need to collect 4 Flint Head Spears.", 4, 80, "I need to kill Gruttooth Brutes to collect 4 Flint Head Spears", 287, 3250124)

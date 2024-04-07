@@ -12,6 +12,7 @@ local HalfPint = 5448
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "tailoring_idle")
 end
 
 function respawn(NPC)

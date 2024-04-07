@@ -1,22 +1,27 @@
 --[[
     Script Name    : Spells/Fighter/Taunt.lua
-    Script Author  : neatz09
-    Script Date    : 2020.11.03 02:11:15
+    Script Author  : LordPazuzu
+    Script Date    : 9/29/2023
     Script Purpose : 
                    : 
 --]]
 
--- Increases Threat to target by 135 - 166 
---[[function cast(Caster, Target, MinVal, MaxVal)
-    if MaxVal ~= nil and MinVal < MaxVal then
-        AddHate(Caster, Target, math.random(MaxVal, MinVal), 1)
-    else
-        AddHate(Caster, Target, MinVal, 1)
-    end
-end
---]]
+
 
 function cast(Caster, Target, MinVal, MaxVal)
-AddHate(Caster, Target, math.random(MinVal, MaxVal), 1)
+    Level = GetLevel(Caster)
+    SpellLevel = 3
+    Mastery = SpellLevel + 10
+    StatBonus = GetStr(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+    
+    HateBonus = LvlBonus * 2
+    MaxHate = MaxVal + HateBonus
+    MinHate = MinVal + HateBonus
+    AddHate(Caster, Target, math.random(MinHate,MaxHate),1)
     
 end

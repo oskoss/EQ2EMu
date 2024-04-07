@@ -9,6 +9,7 @@
 require "SpawnScripts/Generic/DialogModule"
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "tapfoot")
 end
 
 function respawn(NPC)
@@ -27,4 +28,5 @@ function Dialog1(NPC, Spawn)
 	Dialog.AddOption("I don't know you either.")
 	Dialog.Start()
 end
+
 

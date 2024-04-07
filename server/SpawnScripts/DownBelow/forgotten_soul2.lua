@@ -5,27 +5,11 @@
 	Script Date		:	05/14/2020 12:15:18 PM
 	Script Notes	:	Locations collected from Live
 --]]
+dofile("SpawnScripts/Generic/MonsterCallouts/BaseSkeleton1.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-    local Level = GetLevel(NPC)
-    local level1 = 10
-    local level2 = 9
-    local difficulty1 = 6
-    local hp1 = 370
-    local power1 = 130
-    local difficulty2 = 6
-    local hp2 = 275
-    local power2 = 110
-    if Level == level1 then
-    SpawnSet(NPC, "difficulty", difficulty1)
-    SpawnSet(NPC, "hp", hp1)
-    SpawnSet(NPC, "power", power1)
-    elseif Level == level2
-        then
-    SpawnSet(NPC, "difficulty", difficulty2)
-    SpawnSet(NPC, "hp", hp2)
-    SpawnSet(NPC, "power", power2)
-    end
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
 	waypoints(NPC)
 end
 

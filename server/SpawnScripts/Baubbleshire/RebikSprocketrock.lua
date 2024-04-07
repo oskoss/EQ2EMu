@@ -8,6 +8,7 @@
 local Acidic = 5449
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "tapfoot")
 end
 
 function respawn(NPC)

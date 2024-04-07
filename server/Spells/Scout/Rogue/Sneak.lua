@@ -12,10 +12,10 @@
 
 function cast(Caster, Target)
     Stealth(1)
-    AddSpellBonus(Target, 633, 1)
+    --AddSpellBonus(Target, 633, 1)
 end
 
 function remove(Caster, Target)
     RemoveStealth()
-    RemoveSpellBonus(Target)
+    --RemoveSpellBonus(Target)
 end

@@ -5,14 +5,11 @@
     Script Purpose : 
                    : 
 --]]
-require "SpawnScripts/Generic/MovementCircleSmall"
-
-
+require "SpawnScripts/Generic/NPCModule"
 local BrokenEquipment = 415
-
-
-function spawn(NPC)
-    SpawnChooseRandomMovement(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    RandomMovement(NPC, Spawn, 12, -12, 2, 8, 15)
 end
 
 function hailed(NPC, Spawn)

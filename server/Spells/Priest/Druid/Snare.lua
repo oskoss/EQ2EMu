@@ -1,7 +1,7 @@
 --[[
     Script Name    : Spells/Priest/Druid/Snare.lua
-    Script Author  : neatz09
-    Script Date    : 2020.09.21 12:09:26
+    Script Author  : LordPazuzu
+    Script Date    : 3/14/2023
     Script Purpose : 
                    : 
 --]]
@@ -19,12 +19,12 @@ function precast(Caster, Target)
 end
 
 
-function cast(Caster, Target, SlowAmt)
-local Slow = 100 - SlowAmt
-	SetSpeedMultiplier(Target, Slow)
+function cast(Caster, Target, Snare)
+    Slow = 1.0 - Snare
+    SetSpellSnareValue(Target, Slow) 
+    AddControlEffect(Target, 11)
 end
 
-
 function remove(Caster, Target)
-SetSpeedMultiplier(Target, 1)
+    RemoveControlEffect(Target, 11)
 end

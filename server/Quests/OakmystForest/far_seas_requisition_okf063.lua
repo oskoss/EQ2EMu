@@ -14,30 +14,35 @@
 
 function Init(Quest)
 	AddQuestStepKill(Quest, 1, "I must collect five Oakmyst deer pelts.", 5, 80, "To fill the requisition, I must hunt down the creatures in Oakmyst Forest, reachable by any number of mariner bells in the City of Qeynos.", 138, 1950001, 1950007, 8300015,8300013)
+	AddQuestStepKill(Quest, 2, "I must collect five badger cub pelts.", 5, 80, "To fill the requisition, I must hunt down the creatures in Oakmyst Forest, reachable by any number of mariner bells in the City of Qeynos.", 129, 1950035)
+	AddQuestStepKill(Quest, 3, "I must collect a single bear cub pelt.", 1, 70, "To fill the requisition, I must hunt down the creatures in Oakmyst Forest, reachable by any number of mariner bells in the City of Qeynos.", 128, 1950000)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
+	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
+	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
 end
 
 function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have collected five Oakmyst fawn pelts.")
-
-	AddQuestStepKill(Quest, 2, "I must collect five badger cub pelts.", 5, 80, "To fill the requisition, I must hunt down the creatures in Oakmyst Forest, reachable by any number of mariner bells in the City of Qeynos.", 129, 1950035)
-	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
+    QuestCheck(Quest, QuestGiver, Player)
 end
 
 function Step2Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 2, "I have collected five badger cub pelts.")
-
-	AddQuestStepKill(Quest, 3, "I must collect a single bear cub pelt.", 1, 70, "To fill the requisition, I must hunt down the creatures in Oakmyst Forest, reachable by any number of mariner bells in the City of Qeynos.", 128, 1950000)
-	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
+    QuestCheck(Quest, QuestGiver, Player)
 end
 
 function Step3Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 3, "I have collected a single bear cub pelt.")
-	UpdateQuestTaskGroupDescription(Quest, 1, "I have collected all of the items listed in the requisition.")
+    QuestCheck(Quest, QuestGiver, Player)
+end
 
+function  QuestCheck(Quest, QuestGiver, Player)
+    if QuestStepIsComplete(Player,237,1) and QuestStepIsComplete(Player,237,2) and QuestStepIsComplete(Player,237,3) then
+	UpdateQuestTaskGroupDescription(Quest, 1, "I have collected all of the items listed in the requisition.")
  	UpdateQuestZone(Quest, "Baubbleshire")
 	AddQuestStepChat(Quest, 4, "I need to talk to Diggin Diggs", 1, "I must go to the province district of Qeynos to seek out the client for this order.", 10, 6600085, 2380049)
 	AddQuestStepCompleteAction(Quest, 4, "QuestComplete")
+end
 end
 
 function QuestComplete(Quest, QuestGiver, Player)

@@ -10,13 +10,31 @@
 --     Inflicts 3 piercing damage on target
 
 function cast(Caster, Target, DmgType, MinVal)
-	AddProc(Target, 16, 100)
+	AddProc(Target, 4, 100)
 end
 
 function proc(Caster, Target, Type, DmgType, MinVal)
-	if Type == 16 then
-		ProcDamage(Caster, Target, "Nettleshield Thorns", DmgType, MinVal)
-			end
+	
+	Level = GetLevel(Caster)
+    SpellLevel = 10
+    Mastery = SpellLevel + 10
+    StatBonus = GetInt(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+    
+    DmgBonus = LvlBonus + StatBonus
+    MinDmg = MinVal + math.floor(DmgBonus)
+    
+  
+	  	if Type == 4 then
+		Spell = GetSpell(5503,1)
+		SetSpellDataIndex(Spell, 0, DmgType)
+		SetSpellDataIndex(Spell, 1, MinDmg)
+		CastCustomSpell(Spell, Caster, Target)
+		end
 end
 
 function remove(Caster, Target)

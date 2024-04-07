@@ -11,6 +11,7 @@ dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
 function spawn(NPC)
 	waypoints(NPC)
     SetPlayerProximityFunction(NPC, 5, "InRange", "LeaveRange")		
+    SetInfoStructString(NPC, "action_state", "mood_angry")
 end
 
 function hailed(NPC, Spawn)
@@ -19,7 +20,7 @@ function hailed(NPC, Spawn)
 end
 
 function InRange(NPC,Spawn)
-if GetFaction(Spawn,11)<0 then
+if GetFactionAmount(Spawn,11)<0 then
     FactionCheckingCallout(NPC,Spawn,faction)
     end
 end

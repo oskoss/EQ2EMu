@@ -20,7 +20,7 @@ function spawn(NPC)
      SetPlayerProximityFunction(NPC, 10, "InRange", Spawn) 
 end
 
-function InRange(NPC, Spawn)
+--[[function InRange(NPC, Spawn)
 if not HasCompletedQuest(Spawn, RunningOutOfBeer) then
 ProvidesQuest(NPC, RunningOutOfBeer)
 elseif HasCompletedQuest(Spawn, RunningOutOfBeer) then
@@ -36,7 +36,7 @@ ProvidesQuest(NPC, PracticalJokeOnBlarton)
   SetInfoFlag(NPC)
 SetVisualFlag(NPC)
 end
-   end
+end]]--
 
 function respawn(NPC)
 	spawn(NPC)
@@ -44,15 +44,15 @@ end
 
 function hailed(NPC, Spawn)
     local choice = MakeRandomInt(1, 4)
-    if choice == 1 then
-   	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_1_1060.mp3", "", "", 0, 0, Spawn)
-   	elseif choice == 2 then
-   	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1060.mp3", "", "", 0, 0, Spawn)
-   	elseif choice == 3 then
-   	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1060.mp3", "", "", 0, 0, Spawn)
-   	elseif choice == 4 then
-    PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1004.mp3", "", "", 0, 0, Spawn)
-    end
+        if choice == 1 then
+   	    PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_1_1060.mp3", "", "", 0, 0, Spawn)
+   	    elseif choice == 2 then
+   	    PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1060.mp3", "", "", 0, 0, Spawn)
+   	    elseif choice == 3 then
+   	    PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1060.mp3", "", "", 0, 0, Spawn)
+   	    elseif choice == 4 then
+        PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1004.mp3", "", "", 0, 0, Spawn)
+        end
 	FaceTarget(NPC, Spawn)
 	local conversation = CreateConversation()
     if not HasQuest(Spawn, RunningOutOfBeer) and not HasCompletedQuest(Spawn, RunningOutOfBeer) then

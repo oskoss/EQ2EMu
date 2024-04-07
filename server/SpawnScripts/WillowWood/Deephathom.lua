@@ -1,8 +1,8 @@
 --[[
 	Script Name	: SpawnScripts/WillowWood/Deephathom.lua
 	Script Purpose	: Deephathom <Banker>
-	Script Author	: Scatman
-	Script Date	: 2009.09.15
+	Script Author	: Dorbin
+	Script Date	: 2022.05.15
 	Script Notes	: 
 --]]
 require "SpawnScripts/Generic/DialogModule"
@@ -71,10 +71,12 @@ function Dialog2a(NPC, Spawn)
 	Dialog.AddOption("Crafter","Dialog2b")
     if GetRace(Spawn)==5 then
 	Dialog.AddOption("Part-Adventurer, Part-Crafter","Dialog2b")
+	Dialog.AddOption("I've never really settled on one thing. ","Dialog2b")
     elseif GetRace(Spawn)==15 then
-	Dialog.AddOption("Well, I can tell you I'm NOT part tree.","Dialog2b")
+	Dialog.AddOption("Well, I can tell you I'm NOT part tree... but let's Harvester?","Dialog2b")
+	Dialog.AddOption("Collector! All the shinies and their insects, rocks, and feathers are my passion!","Dialog2b")
     elseif GetRace(Spawn)==16 then
-	Dialog.AddOption("If you put down sprite...","Dialog2b")
+	Dialog.AddOption("If you put down sprite I'll...","Dialog2b")
     end
 	Dialog.Start()
 end

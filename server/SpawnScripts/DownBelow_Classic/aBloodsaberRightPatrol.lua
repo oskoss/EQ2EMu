@@ -5,10 +5,16 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/MonsterCallouts/BloodSabers.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-
-waypoints(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    ratonga(NPC)
+   -- if not HasLanguage(Spawn,26) then
+      --  Garbled(NPC,Spawn)
+    --end
+    waypoints(NPC)
 end
 
 function hailed(NPC, Spawn)

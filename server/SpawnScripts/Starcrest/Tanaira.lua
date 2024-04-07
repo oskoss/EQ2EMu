@@ -14,6 +14,7 @@ local HailCheck = false
 function spawn(NPC)
     ProvidesQuest(NPC,5605)
 AddTimer(NPC, 5000, "EmoteLoop")
+        SetInfoStructString(NPC, "action_state", "ponder")
 end
 
 function hailed(NPC, Spawn)
@@ -52,6 +53,7 @@ end
 
 function Dialog2(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
+    SetTarget(NPC,Spawn)
 	Dialog.New(NPC, Spawn)
 	if HasQuest(Spawn, FAR_SEAS_DR_PBG0162_QUEST_ID) and GetQuestStep(Spawn, FAR_SEAS_DR_PBG0162_QUEST_ID) == 2 then
 		SetStepComplete(Spawn, FAR_SEAS_DR_PBG0162_QUEST_ID, 2)
@@ -84,9 +86,10 @@ end
 
 function Delivered(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
+    SetTarget(NPC,Spawn)
 	Dialog.New(NPC, Spawn)
     SetStepComplete(Spawn, 5605, 2)
-    PlayFlavor(NPC, "", "", "thanks", 0, 0, Spawn)
+    PlayFlavor(NPC, "", "", "thank", 0, 0, Spawn)
 	Dialog.AddDialog("Thank you so much!  This map looks great.  Now, I just need to ask Grekin about that picnic.")
 	Dialog.AddVoiceover("voiceover/english/merchant_tanaira/qey_village02/merchanttanaira002.mp3", 702642153, 3039622281)
 	Dialog.AddOption("Best of luck to you both.")

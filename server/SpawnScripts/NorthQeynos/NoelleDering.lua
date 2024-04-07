@@ -37,7 +37,7 @@ function Dialog1(NPC, Spawn)
     Dialog.AddDialog("Greetings! I welcome you to Irontoes East! Please speak with Harold or Gretta if you need help!")
 	Dialog.AddVoiceover("voiceover/english/noelle_dering/qey_north/noelledering.mp3", 2170111717, 1186191258)
     if GetQuestStep(Spawn,Sword)==1 then
-	Dialog.AddOption("I have your 'gift' for you from Walter Channing.  He said your husband needs to check the if the balance needs to be adjusted.","Delivered")
+	Dialog.AddOption("I've been sent to deliver a sword to you by the Call to Arms.","Delivered")
     end
 	Dialog.AddOption("Thanks, I'll keep that in mind")
 	Dialog.Start()
@@ -49,7 +49,7 @@ function Delivered(NPC, Spawn)
 	PlayFlavor(NPC, "", "", "thanks", 0, 0, Spawn)
     Dialog.AddDialog("Praise the gods!  You've come just in time.  Oh, I must not be too loud or Nicola will suspect something!  If you wouldn't mind, would you mind slipping out the back door so he doesn't see you leave?")
 	Dialog.AddVoiceover("voiceover/english/noelle_dering/qey_north/noelledering000.mp3", 2834883607, 1827900597)
-	Dialog.AddOption("I'll be discrete.","Update")
+	Dialog.AddOption("Of course, I'd hate to spoil a good surprise.","Update")
 	Dialog.Start()
 end
 

@@ -16,6 +16,7 @@ local PieThief = 5437
 function spawn(NPC)
     ProvidesQuest(NPC, PieThief)
 	SetPlayerProximityFunction(NPC, 9, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "cooking_idle")
 end
 
 function respawn(NPC)

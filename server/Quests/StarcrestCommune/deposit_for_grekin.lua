@@ -10,6 +10,7 @@
 	Preceded by		:	None
 	Followed by		:	None
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 
 function Init(Quest)
@@ -18,7 +19,13 @@ function Init(Quest)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+    PlayFlavor(QuestGiver, "", "", "agree", 0, 0, Player)
+	Dialog.AddDialog("For starters, it is only a day's proceeds. Also, there are three guards between the banks and us. I'm pretty sure you would be caught if you tried to run. Aside from all that, you have a friendly face and I think I can trust you. Take this box to the bank and return with the receipt.")
+	Dialog.AddVoiceover("voiceover/english/merchant_grekin/qey_village02/merchantgrekin001.mp3", 2487079650,1001036096)
+	Dialog.AddOption("Okay. I will be back shortly with the receipt.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

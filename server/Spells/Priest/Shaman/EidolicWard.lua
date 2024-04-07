@@ -1,25 +1,31 @@
 --[[
     Script Name    : Spells/Priest/Shaman/EidolicWard.lua
-    Script Author  : John Adams
-    Script Date    : 2013.08.11 07:08:20
+    Script Author  : LordPazuzu
+    Script Date    : 3/14/2024
     Script Purpose : 
                    : 
 --]]
 
-function cast(Caster, Target)
-    -- code to cast the spell
-    Say(Caster, "Whoops! Guess this is not implemented yet!")
+function cast(Caster, Target, BaseWard)
+    Level = GetLevel(Caster)
+    SpellLevel = 15
+    Mastery = SpellLevel + 10
+    StatBonus = GetWis(Caster) / 10
+    
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
 
--- Info from spell_display_effects (remove from script when done)
--- Wards target against 215 points of all damage
+    WardBonus = LvlBonus + StatBonus
+    TotalWard = BaseWard + math.floor(WardBonus * 2)
 
-end
-
-function tick(Caster, Target)
-    -- code to process each call_frequency (tick) set in spell_tiers
+    AddWard(TotalWard)
 end
 
 function remove(Caster, Target)
-    -- code to remove the spell
+    local heal = GetWardAmountLeft(Target)
+    SpellHeal("Heal", heal, heal)
+    RemoveWard(Caster)
 end
 

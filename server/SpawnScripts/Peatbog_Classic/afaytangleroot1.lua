@@ -5,10 +5,11 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-
-waypoints(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    waypoints(NPC)
 end
 
 function hailed(NPC, Spawn)
@@ -20,7 +21,7 @@ function respawn(NPC)
 end
 
 function waypoints(NPC)
-	MovementLoopAddLocation(NPC, 683.83, -33.19, 519.99, 2, 4)
+	MovementLoopAddLocation(NPC, 683.83, -33.19, 519.99, 2, 6)
 	MovementLoopAddLocation(NPC, 696.65, -32.55, 522.84, 2, math.random(5,10))
 	MovementLoopAddLocation(NPC, 696.65, -32.55, 522.84, 2, 0)
 	MovementLoopAddLocation(NPC, 702.71, -33.88, 511.03, 2, math.random(5,10))

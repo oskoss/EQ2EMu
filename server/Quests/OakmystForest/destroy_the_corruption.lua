@@ -31,7 +31,7 @@ function Declined(Quest, QuestGiver, Player)
 end
 
 function Step1_Complete_KilledRotweed(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 1, "I have found and defeated Rotweed .")
+	UpdateQuestStepDescription(Quest, 1, "I have found and defeated Rotweed.")
 	UpdateQuestTaskGroupDescription(Quest, 1, "I have slain the many creatures that made up Rotweed the plant fiend.")
 
 	AddQuestStepChat(Quest, 2, "Speak to Empress Anassa.", 1, "I must return to speak to Empress Anassa in Oakmyst Forest.", 0, 1950050,8300021) 
@@ -39,6 +39,8 @@ function Step1_Complete_KilledRotweed(Quest, QuestGiver, Player)
 end
 
 function QuestComplete(Quest, QuestGiver, Player)
+	UpdateQuestStepDescription(Quest, 2, "I have spoken to Empress Anassa.")
+	UpdateQuestStepDescription(Quest, 2, "I have returned and spoken to Empress Anassa.")
 	UpdateQuestDescription(Quest, "I encountered and defeated the twisted plant fiend Rotweed. Empress Anassa of the Oakmyst dryads was very appreciative.")
 	GiveQuestReward(Quest, Player)
 end
@@ -46,5 +48,7 @@ end
 function Reload(Quest, QuestGiver, Player, Step)
 	if Step == 1 then
 		Step1_Complete_KilledRotweed(Quest, QuestGiver, Player)
+	elseif Step == 2 then
+		QuestComplete(Quest, QuestGiver, Player)
 	end
 end

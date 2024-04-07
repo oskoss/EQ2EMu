@@ -12,6 +12,7 @@ dofile("SpawnScripts/Generic/UnknownLanguage.lua")
 function spawn(NPC)
     SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
     ProvidesQuest(NPC,5598)
+    SetInfoStructString(NPC, "action_state", "mood_angry")
 end
 
 function respawn(NPC)

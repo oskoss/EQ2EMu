@@ -5,12 +5,14 @@
 	Script Date	: 2008.09.24
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
+dofile("SpawnScripts/Generic/UnknownLanguage.lua")
 
 -- Quest ID's
 local UNFORTUNATE_MISTAKES = 303
 
 function spawn(NPC)
 	SetTempVariable(NPC, "Ready", "true")
+    SetInfoStructString(NPC, "action_state", "ponder")
 end
 
 function respawn(NPC)
@@ -18,6 +20,11 @@ function respawn(NPC)
 end
 
 function hailed(NPC, Spawn)
+    if not HasLanguage(Spawn,13)then
+    FaceTarget(NPC, Spawn)    
+    Garbled(NPC,Spawn)
+    PlayFlavor(NPC,"","","no",0,0,Spawn)
+    else
 	if GetTempVariable(NPC, "AllowQuestProgress") == "true" then
 		FaceTarget(NPC, Spawn)
 		conversation = CreateConversation()
@@ -26,8 +33,12 @@ function hailed(NPC, Spawn)
 			if GetQuestStep(Spawn, UNFORTUNATE_MISTAKES) == 1 then
 				SomethingIMustDo(NPC, Spawn)
 			end
-		end
 	end
+    else
+ 		PlayFlavor(NPC, "voiceover/english/tutorial_revamp/ralkesh_orto/qey_village01/qst_ralkesh_orto_onemoment_89f15716.mp3", "One moment please, this is important.", "", 4271869261, 3070926903, Spawn, 13)
+   
+	end
+end
 end
 
 function SomethingIMustDo(NPC, Spawn)

@@ -14,6 +14,7 @@ local Reservation = 5452
 function spawn(NPC)
     ProvidesQuest(NPC, Reservation)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "orate")
 end
 
 function respawn(NPC)

@@ -1,17 +1,34 @@
 --[[
 	Script Name		: SpawnScripts/BeggarsCourt/Cordilia.lua
 	Script Purpose	: Cordilia
-	Script Author	: torsten
+	Script Author	: torsten\\Dorbin
 	Script Date		: 2022.07.18
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
 
 function spawn(NPC)
+SetPlayerProximityFunction(NPC, 11, "InRange", "LeaveRange")
 end
 
 function respawn(NPC)
 	spawn(NPC)
 end
+
+function InRange(NPC, Spawn)
+if  GetFactionAmount(Spawn,12) <=0 then
+	 FaceTarget(NPC, Spawn)
+     PlayFlavor(NPC, "", "", "shakefist", 0, 0, Spawn, 0)
+    elseif MakeRandomInt(0,100)<=50 then
+        local choice = MakeRandomInt(1,2)
+ 	    FaceTarget(NPC, Spawn)
+        if choice == 1 then
+        PlayFlavor(NPC, "", "", "hello", 0, 0, Spawn, 0)
+        else
+        PlayFlavor(NPC, "", "", "bye", 0, 0, Spawn, 0)
+        end
+    end
+end   
+
 
 function hailed(NPC, Spawn)
 	RandomGreeting(NPC, Spawn)

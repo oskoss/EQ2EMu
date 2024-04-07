@@ -21,6 +21,7 @@ elseif choice == 2 then
 SpawnSet(NPC, "model_type", 2852)
 SpawnSet(NPC, "gender", 1)
 end
+end
 
 function spawn(NPC)
 	spoke = false

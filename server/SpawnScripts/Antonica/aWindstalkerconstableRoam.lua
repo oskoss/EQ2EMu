@@ -5,14 +5,15 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/MonsterCallouts/Windstalkers.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-	waypoints(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    human(NPC)
+    AddTimer(NPC, 6000, "waypoints")
 end
 
-function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-end
 
 function respawn(NPC)
 end

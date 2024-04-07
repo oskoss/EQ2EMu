@@ -6,9 +6,12 @@
                    : 
 --]]
 
+require "SpawnScripts/Generic/NPCModule"
+
 function spawn(NPC)
-SetAggroRadius(NPC, 20)
- AddTimer(NPC, 180000, "despawn", 1)
+    NPCModule(NPC, Spawn)  
+    SetAggroRadius(NPC, 20)
+    AddTimer(NPC, 180000, "despawn", 1)
 end
 
 function despawn(NPC, Spawn)

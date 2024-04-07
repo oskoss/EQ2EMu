@@ -55,7 +55,6 @@ local CHANNELER = 44
 
 function spawn(NPC)
 --SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")  --PORCIA SHOULD ONLY RESPOND TO HAIL.  Script copied from Soothsayer Tabina w/ VOs switched.
-waypoints(NPC)
 end
 
 function hailed(NPC, Spawn)

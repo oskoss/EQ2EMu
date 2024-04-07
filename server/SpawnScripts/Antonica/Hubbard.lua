@@ -7,9 +7,11 @@
 --]]
 
 dofile("SpawnScripts/Generic/GenericGuardVoiceOvers.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+	SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
 end
 
 function respawn(NPC)

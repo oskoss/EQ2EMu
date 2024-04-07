@@ -25,25 +25,25 @@ function EmoteLoop(NPC)
     local choice = MakeRandomInt(1,10)
 
         if choice == 1 then
-            PlayAnimation(NPC, 1966)
+            PlayFlavor(NPC,"","","bostaff_attack")
             AddTimer(NPC, 2100, "Idle")
         elseif choice == 2 then
-            PlayAnimation(NPC, 1967)
+            PlayFlavor(NPC,"","","bostaff_attack01")
             AddTimer(NPC, 1700, "Idle")
         elseif choice == 3 then
-            PlayAnimation(NPC, 1968)
+            PlayFlavor(NPC,"","","bostaff_attack02")
             AddTimer(NPC, 2400, "Idle")
         elseif choice == 4 then
-             PlayAnimation(NPC, 1969)
+            PlayFlavor(NPC,"","","bostaff_attack03")
             AddTimer(NPC, 3200, "Idle")
         elseif choice == 5 then
-            PlayAnimation(NPC, 2953)
+            PlayFlavor(NPC,"","","bostaff_kick")
             AddTimer(NPC, 3700, "Idle")
         elseif choice == 6 then
-            PlayAnimation(NPC, 10868)
+            PlayFlavor(NPC,"","","bostaff_dodge_forehand")
             AddTimer(NPC, 1500, "Idle")
         else
-            PlayAnimation(NPC, 10889)
+            PlayFlavor(NPC,"","","bostaff_taunt_combat_art")
             AddTimer(NPC, 3500, "Idle")
         end
 end

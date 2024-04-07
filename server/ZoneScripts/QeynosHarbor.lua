@@ -35,8 +35,13 @@ local RANGER = 39
 local ASSASSIN = 40 
 
 
-function init_zone_script(zone)
+function init_zone_script(Zone)
+    SetLocationProximityFunction(Zone,736.83, -20.84, -36.27, 10, "Clock","LeaveLocation")
 end
+
+function Clock(Zone,Player)
+      SendPopUpMessage(Player, "The Clock of Ak'Anon", 255, 255, 0)
+    end
 
 function player_entry(Zone, Spawn)
 SendPopUpMessage(Spawn, "Qeynos Harbor", 230, 230, 230)   

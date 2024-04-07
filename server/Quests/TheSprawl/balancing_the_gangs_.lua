@@ -1,7 +1,7 @@
 --[[
 	Script Name		:	balancing_the_gangs.lua
 	Script Purpose	:	Handles the quest, "Balancing the Gangs"
-	Script Author	:	premierio015
+	Script Author	:	premierio015\\Dorbin
 	Script Date		:	25.06.2021
 	Script Notes	:	Auto generated with QuestParser.
 
@@ -15,12 +15,15 @@
 function Init(Quest)
 	SetQuestFeatherColor(Quest, 3)
 	SetQuestRepeatable(Quest)
-	AddQuestStepKill(Quest, 1, "Kill Giantslayer thugs", 8, 100, "I should go rough up a few Giantslayer thugs in the Sprawl for being bullies.  I can reach the Sprawl by using any of the bells in and around the City of Freeport.", 611, 1260013)
+	AddQuestStepKill(Quest, 1, "Kill Giantslayer thugs", 8, 100, "I should go rough up a few Giantslayer thugs in the Sprawl for being bullies.  I can reach the Sprawl by using any of the bells in and around the City of Freeport.", 611, 8400015)
 	AddQuestStepCompleteAction(Quest, 1, "QuestComplete")
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	if HasItem(Player, 2262) then
+	RemoveItem(Player, 2262)
+    SendMessage(Player,"You stuff the Guttersnipe note in your quest satchle.")
+end
 end
 
 function Declined(Quest, QuestGiver, Player)
@@ -37,9 +40,7 @@ function QuestComplete(Quest, QuestGiver, Player)
 	UpdateQuestTaskGroupDescription(Quest, 1, "I beat up 8 Giantslayer thugs in the Sprawl.")
 	UpdateQuestDescription(Quest, "I finished roughing up the Giantslayers.  That should shift the power balance a little more to even around here. <br>")
 	GiveQuestReward(Quest, Player)
-	if HasItem(Player, 2262) then
-	RemoveItem(Player, 2262)
-end
+
    end
 
 function Reload(Quest, QuestGiver, Player, Step)

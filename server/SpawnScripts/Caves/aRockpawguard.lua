@@ -7,8 +7,10 @@
 --]]
 
 dofile("SpawnScripts/Generic/MonsterCallouts/BaseGnoll1.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
     if GetSpawnLocationID(NPC)==133777792 then
 	MovementLoopAddLocation(NPC, 37.27, 38.1, -78.57, 2, 0)
 	MovementLoopAddLocation(NPC, 37.5, 38.44, -87.86, 2, 0)

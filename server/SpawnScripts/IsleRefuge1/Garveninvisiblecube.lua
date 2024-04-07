@@ -5,18 +5,21 @@
     Script Purpose : 
                    : 
 --]]
-local QuestOfferCheck = false -- Avoids spamming quest offer when when/out of range
 
 function spawn(NPC)
 SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")		
+SetTempVariable(NPC,"QuestOfferCheck","false")-- Avoids spamming quest offer when when/out of range
 end
 
 function InRange(NPC,Spawn)
-if QuestOfferCheck==false then
+if GetTempVariable(NPC,"QuestOfferCheck")=="false" then
     if GetClass(Spawn)==0 and not HasQuest(Spawn,5725) and not HasCompletedQuest(Spawn, 5725) then
+        if not HasItem(Spawn,20902) and GetLevel(Spawn) <2 then  -- GIVES SMALL BAG  
+        SummonItem(Spawn,20902,1,1)
+        end
     OfferQuest(NPC,Spawn,5725)
-    QuestOfferCheck = true
-    AddTimer(NPC,7000,"TimerReset")
+    SetTempVariable(NPC,"QuestOfferCheck","true")
+    AddTimer(NPC,10000,"TimerReset")
     end
 end
 end
@@ -26,5 +29,5 @@ function respawn(NPC)
 end
 
 function TimerReset(NPC)
-    QuestOfferCheck = false
-    end
+SetTempVariable(NPC,"QuestOfferCheck","false")
+end

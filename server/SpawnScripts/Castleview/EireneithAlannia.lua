@@ -17,6 +17,7 @@ local Deer = 5469
 function spawn(NPC)
 SetPlayerProximityFunction(NPC, 6, "InRange", "LeaveRange")
 ProvidesQuest(NPC, Deer)
+    SetInfoStructString(NPC, "action_state", "tapfoot")
 end
 
 function respawn(NPC)

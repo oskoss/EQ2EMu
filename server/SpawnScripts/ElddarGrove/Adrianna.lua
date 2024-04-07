@@ -8,6 +8,7 @@
 local Delivery = 5562
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "cooking_idle")
 end
 
 function respawn(NPC)

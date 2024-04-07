@@ -12,7 +12,7 @@
 
 function Init(Quest)
 	AddQuestStepKillByRace(Quest, 1, "I need to find a zombie reanimating essence.", 1, 35, "I must locate several zombie body parts.", 2516, 343)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a zombie degenerated vitae.", 1, 15, "I must locate several zombie body parts.", 2522, 343)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a zombie degenerated vitae.", 1, 10, "I must locate several zombie body parts.", 2522, 343)
 	AddQuestStepKillByRace(Quest, 3, "I need to find a zombie grotesque visage.", 1, 25, "I must locate several zombie body parts.", 2493, 343)
 	AddQuestStep(Quest, 4, "I need to find and study a necrotic zombie skin.", 1, 100, "I must locate several zombie body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a flesh covered zombie bone.", 1, 100, "I must locate several zombie body parts.", 11)

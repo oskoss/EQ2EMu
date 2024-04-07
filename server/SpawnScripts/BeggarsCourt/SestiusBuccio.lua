@@ -14,13 +14,16 @@ function respawn(NPC)
 end
 
 function hailed(NPC, Spawn)
+    FaceTarget(NPC,Spawn)
 	RandomGreeting(NPC, Spawn)
 end
 
 function RandomGreeting(NPC, Spawn)
-	local choice = MakeRandomInt(1,1)
+	local choice = MakeRandomInt(1,2)
 
 	if choice == 1 then
-		PlayFlavor(NPC, "voiceover/english/human_eco_evil_bartender/ft/eco/evil/human_eco_evil_bartender_barmaid_gm_fce6ec9a.mp3", "I can't tell this pub from a pigsty.  Get to work and clean this mess!", "", 1129202055, 4037261409, Spawn, 0)
-	end
+    PlayFlavor(NPC, "voiceover/english/human_eco_evil_bartender/ft/eco/evil/human_eco_evil_bartender_hail_gm_35e6e167.mp3", "Just so ya know, I'm not in the business to hear your sad stories. Now what will it be?", "nod", 1595668242, 2514401652, Spawn)
+    elseif choice == 2 then
+    PlayFlavor(NPC, "voiceover/english/human_eco_evil_bartender/ft/eco/evil/human_eco_evil_bartender_hail_gm_201b6d6a.mp3", "What can I get for ya?", "hello", 2895097847, 2686872643, Spawn)    
+    end
 end

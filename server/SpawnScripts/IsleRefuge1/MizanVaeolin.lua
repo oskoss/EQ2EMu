@@ -5,7 +5,7 @@
     Script Purpose : 
                    : 
 --]]
-
+dofile("SpawnScripts/Generic/ClassSkillCheck.lua")
 require "SpawnScripts/Generic/DialogModule"
 local Mage2 = 5733
 local Mage3 = 5736
@@ -125,9 +125,16 @@ else
 	Dialog.AddOption("I suppose it is time I do my own research off the island.  Good day Mizan.","Thanks")
 	end 	
 	Dialog.AddOption("I will leave you to your research.")
+    if GetClass(Spawn)==21 then
+    Dialog.AddOption("Can you make sure my skills are in order?","Skills")
+    end
 	Dialog.Start()
-
 end
+end
+
+function Skills(NPC,Spawn)
+    SkillCheck(NPC,Spawn)
+    PlayFlavor(NPC,"","","nod",0,0,Spawn)
 end
 
 function Thanks(NPC,Spawn)

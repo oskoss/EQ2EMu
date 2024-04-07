@@ -5,14 +5,14 @@
     Script Purpose : 
 
         Zone       : ThePeatBog
-        Quest Giver: 
+        Quest Giver: Book quest starter
         Preceded by: None
         Followed by: 
 --]]
 
 
 function Init(Quest)
-	AddQuestStepZoneLoc(Quest, 1, "Find the Qeynos drain.", 4, "Visit the Qeynos Drain to the north in the Peat Bog.", 11, 666.14, -32.67, 396.23,829)
+	AddQuestStepZoneLoc(Quest, 1, "Find the Qeynos drain.", 6, "Visit the Qeynos Drain to the north in the Peat Bog.", 11, 666.14, -32.67, 396.23,829)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
 end
 
@@ -40,7 +40,7 @@ function Step2Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 2, "Entered the hollow tree at the pond.")
 	UpdateQuestTaskGroupDescription(Quest, 2, "I visited the hollow tree at the pond.")
 
-	AddQuestStepZoneLoc(Quest, 3, "Go to the hollowed stump.", 5, "Travel to the south of the Bog and find the hollowed stump in a corner of rock.", 11, 768.09, -31.64, 627.86,829)
+	AddQuestStepZoneLoc(Quest, 3, "Go to the hollowed stump.", 7, "Travel to the south of the Bog and find the hollowed stump in a corner of rock.", 11, 768.09, -31.64, 627.86,829)
 	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
 end
 
@@ -56,7 +56,7 @@ function Step4Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 4, "Went to the Lone Stump.")
 	UpdateQuestTaskGroupDescription(Quest, 4, "Visited the ancient wood ring called the Lone Stump Ring and investigate the stump.")
 
-	AddQuestStepZoneLoc(Quest, 5, "Go to the Deadend Niche.", 7, "Travel north a short distance from the Lone Stump Ring to find Deadend Niche.", 11, 757.73, -32.70, 489.06,829)
+	AddQuestStepZoneLoc(Quest, 5, "Go to the Deadend Niche.", 8, "Travel north a short distance from the Lone Stump Ring to find Deadend Niche.", 11, 757.73, -32.70, 489.06,829)
 	AddQuestStepCompleteAction(Quest, 5, "QuestComplete")
 end
 

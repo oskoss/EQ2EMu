@@ -11,9 +11,9 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find a bixie spirit.", 1, 100, "I must locate several bixie body parts.", 2516, 113)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a bixie heart.", 1, 100, "I must locate several bixie body parts.", 2516, 113)
-	AddQuestStepKillByRace(Quest, 3, "I need to find a bixie brain.", 1, 100, "I must locate several bixie body parts.", 2516, 113)
+	AddQuestStepKillByRace(Quest, 1, "I need to find a bixie spirit.", 1, 25, "I must locate several bixie body parts.", 2516, 113)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a bixie heart.", 1, 35, "I must locate several bixie body parts.", 2516, 113)
+	AddQuestStepKillByRace(Quest, 3, "I need to find a bixie brain.", 1, 10, "I must locate several bixie body parts.", 2516, 113)
 	AddQuestStep(Quest, 4, "I need to find and study a bixie eye.", 1, 100, "I must locate several bixie body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a bixie leg.", 1, 100, "I must locate several bixie body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study a bixie stinger.", 1, 100, "I must locate several bixie body parts.", 11)

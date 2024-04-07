@@ -13,12 +13,16 @@
 
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "Kill orcs", 1, 100, "I feel the irresistible need to slay orcs in the Ruins!  I can reach the Ruins by using any of the bells in and around the City of Freeport.", 91, 1270017, 1270005, 1270006, 1270014, 1270040, 1270007, 1270042, 1270022, 1270009, 1270045, 1270024, 1270025, 1270013, 1270041, 1270043, 1270030)
+	AddQuestStepKill(Quest, 1, "Kill orcs", 6, 100, "I feel the irresistible need to slay orcs in the Ruins!  I can reach the Ruins by using any of the bells in and around the City of Freeport.", 91, 8420001, 8420002,8420003, 8420004, 8420005,8420006, 8420007,8420009,8420010, 8420011, 8420012, 8420013, 8420014, 8420027, 8420028, 8420029, 8420030, 8420031, 8420038, 8420039, 8420042, 8420043, 8420068, 8420069)
 	AddQuestStepCompleteAction(Quest, 1, "QuestComplete")
+	UpdateQuestZone(Quest,"Ruins")
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+    if HasItem(Player,1335,1) then
+        RemoveItem(Player,1335)
+        SendMessage(Player,"You place the carved orc axe in your quest satchle.") 
+    end
 end
 
 function Declined(Quest, QuestGiver, Player)

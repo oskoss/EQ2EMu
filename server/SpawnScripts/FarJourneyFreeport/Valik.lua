@@ -11,6 +11,17 @@ AddTimer(NPC,26000,"waypoints")
 end
 
 function hailed(NPC, Spawn)
+	goblin = GetSpawn(NPC, 270008)
+	if goblin == nil or IsAlive(goblin) == false then
+	Talk(NPC,Spawn)
+	elseif IsAlive(goblin) == true and GetSpawn(NPC, 270011)~= nil then
+	Talk(NPC,Spawn)
+	elseif IsAlive(goblin) == true and GetSpawn(NPC, 270011)== nil then
+		PlayFlavor(NPC, "", "", "cringe", 0, 0)
+	end
+end
+
+function Talk(NPC,Spawn)
 	choice = math.random(0, 1)	
     FaceTarget(NPC, Spawn)	
 	if choice == 1 then

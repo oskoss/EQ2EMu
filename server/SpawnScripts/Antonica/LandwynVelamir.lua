@@ -21,7 +21,7 @@ ProvidesQuest(NPC,PeppermintsAndPotions)
 ProvidesQuest(NPC,SongToPrexus)
 end
 
-function InRange(NPC, Spawn)
+--[[function InRange(NPC, Spawn)
   if not HasQuest(Spawn, UnderAShadyTree) and not  HasCompletedQuest(Spawn, UnderAShadyTree) then
   ProvidesQuest(NPC, UnderAShadyTree)
   SetInfoFlag(NPC)
@@ -43,7 +43,7 @@ elseif HasCompletedQuest(Spawn, PeppermintsAndPotions)  then
   SetInfoFlag(NPC)
 SetVisualFlag(NPC)     
 end
-end
+end]]--
 
 
 function respawn(NPC)
@@ -69,7 +69,7 @@ function hailed(NPC, Spawn)
 	AddConversationOption(conversation, "It seems not as well as you.", "Option1")
 	   	AddConversationOption(conversation, "I have no time for love.")
 	StartConversation(conversation, NPC, Spawn, "Do you know love, my friend?")
-	elseif GetQuestStep(Spawn, UnderAShadyTree) == 1 or GetQuestStep(Spawn, ABowForABeauty) == 1 or GetQuestStep(Spawn, ABowForABeauty) == 2 or GetQuestStep(Spawn, SheWillBeAShiningPetal) == 1 or GetQuestStep(Spawn, PeppermintsAndPotions) == 1 or GetQuestStep(Spawn, PeppermintsAndPotions) == 2 or GetQuestStep(Spawn, PeppermintsAndPotions) == 3 or GetQuestStep(Spawn, SongToPrexus) == 1   then
+	elseif GetQuestStep(Spawn, UnderAShadyTree) == 1 or GetQuestStep(Spawn, ABowForABeauty) == 1 or GetQuestStep(Spawn, ABowForABeauty) == 2 or GetQuestStep(Spawn, SheWillBeAShiningPetal) == 1 or GetQuestStep(Spawn, PeppermintsAndPotions) <= 3 or GetQuestStep(Spawn, SongToPrexus) == 1   then
 					PlayFlavor(NPC, "", "Returning to me with information of love?", "", 1689589577, 4560189, Spawn)
 	elseif GetQuestStep(Spawn, UnderAShadyTree) == 2 then
 	AddConversationOption(conversation, "Here are the flowers.", "Option4")
@@ -85,10 +85,11 @@ elseif HasCompletedQuest(Spawn, UnderAShadyTree) and HasCompletedQuest(Spawn, AB
    Option13(NPC, Spawn)
  elseif HasCompletedQuest(Spawn, UnderAShadyTree) and HasCompletedQuest(Spawn, ABowForABeauty) and HasCompletedQuest(Spawn, SheWillBeAShiningPetal) and not HasQuest(Spawn, PeppermintsAndPotions) and not HasCompletedQuest(Spawn, PeppermintsAndPotions) then
      Option15(NPC, Spawn)
- elseif GetQuestStep(Spawn, ABowForABeauty) == 4 then
+ elseif GetQuestStep(Spawn, PeppermintsAndPotions) == 4 then
      Option17(NPC, Spawn)
  elseif HasCompletedQuest(Spawn, UnderAShadyTree) and HasCompletedQuest(Spawn, ABowForABeauty) and HasCompletedQuest(Spawn, SheWillBeAShiningPetal) and HasCompletedQuest(Spawn, PeppermintsAndPotions) and not HasQuest(Spawn, SongToPrexus) and not HasCompletedQuest(Spawn, SongToPrexus) then
  Option19(NPC, Spawn)
+
  elseif GetQuestStep(Spawn, SongToPrexus) == 2 then
     Option23(NPC, Spawn)
  elseif HasCompletedQuest(Spawn, UnderAShadyTree) and HasCompletedQuest(Spawn, ABowForABeauty) and HasCompletedQuest(Spawn, SheWillBeAShiningPetal) and HasCompletedQuest(Spawn, PeppermintsAndPotions)  and  HasCompletedQuest(Spawn, SongToPrexus) then

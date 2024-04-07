@@ -5,19 +5,22 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    race(NPC)
+    AddTimer(NPC, 1500, "movement")
 
-
-function spawn(NPC)
-local choice = math.random(1,2)
-if choice == 1 then
-SpawnSet(NPC, "model_type", 132)
-SpawnSet(NPC, "gender", 2) 
-else
-SpawnSet(NPC, "model_type", 134)
-SpawnSet(NPC, "gender", 1) 
 end
-   end
+
+function movement(NPC, Spawn)
+    if IsHeroic(NPC) == false then
+        RandomMovement(NPC, Spawn, 12, -12, 2, 8, 15)
+    else
+        IdleAlert(NPC)
+    end
+end
 
 function hailed(NPC, Spawn)
     FaceTarget(NPC, Spawn)
@@ -79,4 +82,14 @@ else
 PlayFlavor(NPC, "voiceover/english/human_base_1/ft/human/human_base_1_1_aggro_gm_a203c9ec.mp3", "Prepare to face your doom, meddler.", "", 1496819882, 365167432, Spawn)
 end
    end
-      end 
+        end 
+  
+function race(NPC)
+    setrace = MakeRandomInt(1,2)
+    if setrace == 1 then
+        human(NPC)
+    elseif setrace == 2 then
+        halfelf(NPC)
+    end
+end
+ 

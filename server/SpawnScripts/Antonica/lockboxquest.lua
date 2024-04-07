@@ -31,11 +31,11 @@ end
 
 function con2(NPC, Spawn)
       local con = CreateConversation()
-      if not HasQuest(Spawn, PeckettsPatrol) and not HasCompletedQuest(Spawn, PeckettsPatrol) then
+      if CanReceiveQuest(Spawn, PeckettsPatrol) then
        AddConversationOption(con, "Put the logbook back and help the garrison.", "offer")
        end
         AddConversationOption(con, "Stop your inspection")
-        StartDialogConversation(con, 1, NPC, Spawn, "The Coldwind Point Garrison, Qeynos Guard Tower Guard Regiment.     Captain Antillin CO     We have taken a critical hit in our defenses. Both Guard Nimegin and Bollin have been slain in combat with a horde of gnolls wishing to claim the lighthouse. The gnolls managed to thieve a map of Qeynos kept on post. I will be taking the bulk of the squad to give chase and retrieve the map. Until then, Corporal Peckett and a few guards will be our only defense. He must wait for reinforcements to provide the local patrol or create a militia of adventurers so that the patrol can be accomplished.     DO NOT REMOVE THIS LOGBOOK by Order of the Qeynos Guard.")
+        StartDialogConversation(con, 1, NPC, Spawn, "The Coldwind Point Garrison, Qeynos Guard Tower Guard Regiment.\nCaptain Antillin CO\n\nWe have taken a critical hit in our defenses. Both Guard Nimegin and Bollin have been slain in combat with a horde of gnolls wishing to claim the lighthouse. The gnolls managed to thieve a map of Qeynos kept on post. I will be taking the bulk of the squad to give chase and retrieve the map. Until then, Corporal Peckett and a few guards will be our only defense. He must wait for reinforcements to provide the local patrol or create a militia of adventurers so that the patrol can be accomplished.\n\nDO NOT REMOVE THIS LOGBOOK by Order of the Qeynos Guard.")
 end
 
 function offer(NPC, Spawn)

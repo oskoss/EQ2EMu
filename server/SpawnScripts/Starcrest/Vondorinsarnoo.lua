@@ -92,8 +92,8 @@ function Dialog3(NPC, Spawn)
     end
     if GetQuestStep(Spawn,SOBERING_REMEDY) ==4 then
 	Dialog.AddOption("Here are the components you asked for.","Turnin")
-    end        
-    Dialog.AddOption("Guess some people handle their liquor better than others.  Good day!")
+    end       
+    Dialog.AddOption("Guess some people handle their liquor better than others. Good day!")
 	Dialog.Start()
 end
 

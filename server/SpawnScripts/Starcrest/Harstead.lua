@@ -5,6 +5,9 @@
 	Script Date	: 2008.09.23
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
+function spawn(NPC)
+        SetInfoStructString(NPC, "action_state", "woodworking_idle")
+end
 
 function hailed(NPC, Spawn)
 	FaceTarget(NPC, Spawn)

@@ -9,7 +9,7 @@
 local TheMotleyMerchantManifest = 5368
 
 function spawn(NPC)
-
+    SetInfoStructString(NPC, "action_state", "mood_angry")
 end
 
 

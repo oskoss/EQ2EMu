@@ -11,9 +11,9 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find a golem ambulatory fragment.", 1, 100, "I must locate several golem body parts.", 2516, 135)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a golem core shard.", 1, 100, "I must locate several golem body parts.", 2516, 135)
-	AddQuestStepKillByRace(Quest, 3, "I need to find a golem essence trap.", 1, 100, "I must locate several golem body parts.", 2516, 135)
+	AddQuestStepKillByRace(Quest, 1, "I need to find a golem ambulatory fragment.", 1, 25, "I must locate several golem body parts.", 2516, 135)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a golem core shard.", 1, 10, "I must locate several golem body parts.", 2516, 135)
+	AddQuestStepKillByRace(Quest, 3, "I need to find a golem essence trap.", 1, 35, "I must locate several golem body parts.", 2516, 135)
 	AddQuestStep(Quest, 4, "I need to find and study a golem motive prism.", 1, 100, "I must locate several golem body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a golem corporeal shell.", 1, 100, "I must locate several golem body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study a golem sentience leash.", 1, 100, "I must locate several golem body parts.", 11)

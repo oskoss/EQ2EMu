@@ -11,6 +11,7 @@
 	Followed by		:	None
 --]]
 
+require "SpawnScripts/Generic/DialogModule"
 
 function Init(Quest)
 	AddQuestStepKill(Quest, 1, "I must kill six decaying skeletons.", 6, 100, "I need to find the mausoleum that rests on a small island just off Antonica near the gates of North Qeynos, and put to rest decaying skeleton's and risen protector's.", 611, 120450)
@@ -21,7 +22,13 @@ function Init(Quest)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Too many unatural dangers thrive to name them in one sitting.  You'd learn more of the undead if you served Qeynos in a civic manner.  A mausoleum rests on a small island in Antonica near the north gates of Qeynos.  Venture to the crypt and confront it's protector's decaying filthy skeletons.  Put to rest a dozen of these unnatural guardians who walk the earth.")
+	Dialog.AddVoiceover("voiceover/english/lookout_venylle/qey_elddar/lookoutvenylle003.mp3",166316836, 1644056019)
+	PlayFlavor(QuestGiver, "", "", "thank", 0, 0, Player)
+	Dialog.AddOption( "Alright.  I'll return once I've dealt with a dozen of these undead.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

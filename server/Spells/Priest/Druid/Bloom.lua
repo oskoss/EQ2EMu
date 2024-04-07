@@ -10,9 +10,37 @@
 -- Heals target for 9 - 11 every second
 
 function cast(Caster, Target, MinVal, MaxVal, TickMin, TickMax)
-	SpellHeal("Heal", MinVal, MaxVal)
+	Level = GetLevel(Caster)
+	SpellLevel = 13
+    Mastery = SpellLevel + 10
+    StatBonus = GetWis(Caster) / 10
+    
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+
+    HealBonus = LvlBonus + StatBonus
+    MinHeal = math.floor(HealBonus) * 2 + MinVal
+    MaxHeal = math.floor(HealBonus) * 2 + MaxVal
+    
+    SpellHeal("Heal", MinHeal, MaxHeal)
 end
 
 function tick(Caster, Target, MinVal, MaxVal, TickMin, TickMax)
-	SpellHeal("Heal", TickMin, TickMax)
+	Level = GetLevel(Caster)
+	SpellLevel = 13
+    Mastery = SpellLevel + 10
+    StatBonus = GetWis(Caster) / 10
+    
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+
+    HealBonus = LvlBonus + StatBonus
+    MinTick = math.floor(HealBonus) * 2 + TickMin
+    MaxTick = math.floor(HealBonus) * 2 + Tickmax
+    
+    SpellHeal("Heal", MinTick, MaxTick)
 end

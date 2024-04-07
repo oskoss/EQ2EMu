@@ -8,6 +8,7 @@
 local Message = 5525
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "orate")
 end
 
 function respawn(NPC)

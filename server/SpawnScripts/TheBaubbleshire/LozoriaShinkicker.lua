@@ -14,6 +14,7 @@ local OroRoots = 5438
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 4, "InRange", "LeaveRange")
 	    ProvidesQuest(NPC, OroRoots)
+    SetInfoStructString(NPC, "action_state", "drinking_idle")
 end
 
 function respawn(NPC)
@@ -45,7 +46,7 @@ function hailed(NPC, Spawn)
 	    FaceTarget(NPC, Spawn)
 	    Dialog.New(NPC, Spawn)
 
-    if not HasQuest(Spawn,OroRoots) then	    
+    if  CanReceiveQuest(Spawn,OroRoots) then	    
 	    Dialog.AddDialog("Bring me another pint, Bregun!  Mine's almost empty!  Well, hello there! What brings you into my Papa's fine establishment?")
 	    Dialog.AddVoiceover("voiceover/english/lozoria_shinkicker/qey_village06/lozoriashinkicker000.mp3", 1408955306, 2441116246)
 --	    Dialog.AddRequirement(REQ_QUEST_DOESNT_HAVE_QUEST, OroRoots)
@@ -53,15 +54,20 @@ function hailed(NPC, Spawn)
         Dialog.AddDialog("Well hello, friend. I do hate rushin' ya, but I must have that oro root! Bregun's itchin' to make the next batch of brew!")
 	    Dialog.AddVoiceover("voiceover/english/voice_emotes/greetings/greetings_1_1006.mp3", 0, 0)
 --	    Dialog.AddRequirement(REQ_QUEST_HAS_QUEST, OroRoots)
-    end	    
+    else
+	    Dialog.AddDialog("Bring me another pint, Bregun!  Mine's almost empty!  Well, hello there! What brings you into my Papa's fine establishment?")
+	    Dialog.AddVoiceover("voiceover/english/lozoria_shinkicker/qey_village06/lozoriashinkicker000.mp3", 1408955306, 2441116246)
+	end	    
 	    Dialog.AddOption("I smell that pie!  You were the one that took it from Nyla's window!", "Guilty")
 	    Dialog.AddOptionRequirement(REQ_QUEST_HAS_QUEST, PieThief)
 	    Dialog.AddOptionRequirement(REQ_QUEST_ON_STEP, PieThief ,4)
 	    
+     if  CanReceiveQuest(Spawn,OroRoots) then	    
 	    Dialog.AddOption("I'm actually looking for work.  Have any jobs that need doing?", "OroStart") 
 	    Dialog.AddOptionRequirement(REQ_QUEST_DOESNT_HAVE_QUEST, OroRoots)
 	    Dialog.AddOptionRequirement(REQ_QUEST_NOT_HAS_COMPLETED_QUEST, OroRoots)
-	    
+    end
+    
 	    Dialog.AddOption("I've found your Oro roots. Here you go.", "FoundRoots")
 	    Dialog.AddOptionRequirement(REQ_QUEST_ON_STEP, OroRoots , 2)
 	    

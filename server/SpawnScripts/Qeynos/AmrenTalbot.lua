@@ -11,7 +11,7 @@ local ACrumpledNote = 5374 -- A Crumpled Note Mages Version
 local spellbookFrags = 5485
 
 function spawn(NPC)
-
+    SetInfoStructString(NPC, "action_state", "cast_priest_buff_01")
 end
 
 function respawn(NPC)
@@ -34,28 +34,23 @@ function hailed(NPC, Spawn)
 end
 
 function quest_complete2(NPC, Spawn)
+    SetStepComplete(Spawn, spellbookFrags, 1)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	Dialog.AddDialog("Have you? Let me take a look at that... Yes, this is what we are looking for! Allow me to defray any expenses you a incurred finding this piece. Here you are.")
 	Dialog.AddVoiceover("voiceover/english/amren_talbot/qey_south/amrentalbot001.mp3",  3750992893, 2423832468)
-	Dialog.AddOption("Thank you.","Reward2")
+	Dialog.AddOption("Thank you.")
 	Dialog.Start()
 end
 
-function Reward2 (NPC,Spawn)
-    SetStepComplete(Spawn, spellbookFrags, 1)
-  end  
-
-function Reward1 (NPC,Spawn)
-    SetStepComplete(Spawn, spellbookFrags, 1)
-  end  
 
 function quest_complete(NPC, Spawn)
+    SetStepComplete(Spawn, ACrumpledNote, 1)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	Dialog.AddDialog("An interesting find, though I doubt it bears much in the realm of truth.  Nevertheless, I shall bring this to my superior's attention.  I suppose I should grant you token for your time. Here you are.")
 	Dialog.AddVoiceover("voiceover/english/amren_talbot/qey_south/amrentalbot002.mp3",  2532326758, 3659967005)
-	Dialog.AddOption("I would appreciate it if you would.","Reward1")
+	Dialog.AddOption("I would appreciate it if you would.")
 	Dialog.Start()
 end
 

@@ -11,7 +11,7 @@ local AnIntriguingEye = 5366
 local TheMotleyMerchantManifest = 5368
 
 function spawn(NPC)
-
+    SetInfoStructString(NPC, "action_state", "drinking_idle")
 end
 
 function hailed(NPC, Spawn)

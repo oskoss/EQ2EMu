@@ -5,11 +5,13 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/CatalogueQuestUpdates.lua")
 
 local QUEST_3 = 5561
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
 end
 
 function targeted(NPC, Spawn)

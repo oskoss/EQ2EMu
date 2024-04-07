@@ -5,34 +5,18 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-    local Level = GetLevel(NPC)
-    local level1 = 4
-    local level2 = 5
-    local difficulty1 = 6
-    local hp1 = 110
-    local power1 = 55
-    local difficulty2 = 6
-    local hp2 = 130
-    local power2 = 65
-    if Level == level1 then
-    SpawnSet(NPC, "difficulty", difficulty1)
-    SpawnSet(NPC, "hp", hp1)
-    SpawnSet(NPC, "power", power1)
-    elseif Level == level2
-        then
-    SpawnSet(NPC, "difficulty", difficulty2)
-    SpawnSet(NPC, "hp", hp2)
-    SpawnSet(NPC, "power", power2)
-    end
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
 
     --AddTimer(NPC,(MakeRandomInt(0,8000)),"ChooseMovement")
     ChooseMovement(NPC)
 end
 
 function ChooseMovement(NPC)
-	local route = math.random(1,3)
+  
+	local route = MakeRandomInt(1,3)
 	if route == 1 then
 	    RouteOne(NPC, Spawn)
 	elseif route == 2 then

@@ -5,12 +5,12 @@
     Script Purpose : 
                    : 
 --]]
-
+require "SpawnScripts/Generic/NPCModule"
 local ARatDivided = 447
 local  AHardManToPlease = 450
 
 function spawn(NPC)
-    SetTempVariable(NPC, "HAILED", "true")  
+    SetTempVariable(NPC, "HAILED", "true") 
 end
 
 function hailed(NPC, Spawn)

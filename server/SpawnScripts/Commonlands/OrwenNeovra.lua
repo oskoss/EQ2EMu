@@ -5,12 +5,14 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
 local TheSearchForArianna = 5211
 local DoubleCrossNRevenge = 5512
 
 function spawn(NPC)
 ProvidesQuest(NPC, TheSearchForArianna)
+human(NPC)
 end
 
 function hailed(NPC, Spawn)

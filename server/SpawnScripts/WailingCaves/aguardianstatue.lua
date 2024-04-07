@@ -9,7 +9,6 @@
 
 
 function spawn(NPC)
-    SetInvulnerable(NPC)
 		SetLuaBrain(NPC)
 	SetBrainTick(NPC, 500)
 	Think(NPC)
@@ -19,7 +18,7 @@ end
 function Think(NPC)
 	local mostHated = GetMostHated(NPC)
 	if mostHated ~= nil then
---[[ Say(NPC, "Has most hated") --]]
+Say(NPC, "Has most hated")
 		aggro(NPC, mostHated)
 	end
 end
@@ -27,7 +26,7 @@ end
 
 
 function aggro(NPC, Spawn)
-       if GetDistance(NPC, Spawn, 1) <= 3 then
+       if GetDistance(NPC, Spawn) <= 3 then
     	if GetTempVariable(NPC, "CASTING") ~= "True" then
     	    	SetTempVariable(NPC, "CASTING", "True")
 CastSpell(Spawn, 230170, 1, NPC)

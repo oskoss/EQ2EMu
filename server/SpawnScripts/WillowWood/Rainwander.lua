@@ -9,6 +9,7 @@
 dofile("SpawnScripts/Generic/GenericAlchemistVoiceOvers.lua")
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "alchemy_idle")
 end
 
 function respawn(NPC)

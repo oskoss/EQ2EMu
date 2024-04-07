@@ -1,7 +1,7 @@
 --[[
     Script Name    : Spells/Priest/Cleric/MarkofPawns.lua
-    Script Author  : neatz09
-    Script Date    : 2020.11.10 10:11:52
+    Script Author  : LordPazuzu
+    Script Date    : 3/28/2023
     Script Purpose : 
                    : 
 --]]
@@ -15,13 +15,30 @@ function cast(Caster, Target, Mit, Healz, Chance)
 	AddProc(Target, 16, Chance)
 end
 
-function proc(Caster, Target, Type, Mit, Healz, Chance)
+
+
+function proc(Caster, Target, Type, Mit, Heal, Chance)
+    Level = GetLevel(Caster)
+    SpellLevel = 18
+    Mastery = SpellLevel + 10
+    StatBonus = GetWis(Caster) / 10
+    
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+
+    HealBonus = LvlBonus + StatBonus
+    TotalHeal = math.floor(HealBonus) * 2 + Heal
+    
 	Spell = GetSpell(5449, GetSpellTier())
 		if Type == 16 then
-			SetSpellDataIndex(Spell, 0, Healz)
+			SetSpellDataIndex(Spell, 0, TotalHeal)
 				CastCustomSpell(Spell, Caster, Target)
 					end
 end
+
+
 
 function remove(Caster, Target)
 	RemoveSpellBonus(Target)

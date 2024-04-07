@@ -11,9 +11,9 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find a treant spirit.", 1, 100, "I must locate several treant body parts.", 2516, 121)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a treant heart.", 1, 100, "I must locate several treant body parts.", 2516, 121)
-	AddQuestStepKillByRace(Quest, 3, "I need to find a treant vial of sap.", 1, 100, "I must locate several treant body parts.", 2516, 121)
+	AddQuestStepKillByRace(Quest, 1, "I need to find a treant spirit.", 1, 10, "I must locate several treant body parts.", 2516, 121)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a treant heart.", 1, 35, "I must locate several treant body parts.", 2516, 121)
+	AddQuestStepKillByRace(Quest, 3, "I need to find a treant vial of sap.", 1, 25, "I must locate several treant body parts.", 2516, 121)
 	AddQuestStep(Quest, 4, "I need to find and study a treant bark.", 1, 100, "I must locate several treant body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a treant eye.", 1, 100, "I must locate several treant body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study a treant leaf.", 1, 100, "I must locate several treant body parts.", 11)

@@ -40,53 +40,41 @@ end
 function Feathers1(NPC, Spawn)
  	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
-	PlayFlavor(NPC, "", "", "", 0, 0, Spawn)
-	AddConversationOption(conversation, "I think I could get the feathers you need.","Feathers2")
+	AddConversationOption(conversation, "I think I could get the feathers you need.","Feathersoffer")
 	AddConversationOption(conversation, "I wish you luck with finding them.")
 	StartConversation(conversation, NPC, Spawn, "I hate to admit it, but I've not been having the best of luck with the feathers.  It seems there's been some furious competition for the hawks in the forest ruins, as their feathers are not only very useful for fletching, but also for use as quills.")
 end   
 
-function Feathers2(NPC, Spawn)
- 	FaceTarget(NPC, Spawn)
-	conversation = CreateConversation()
-	PlayFlavor(NPC, "", "", "whome", 0, 0, Spawn)
-	AddConversationOption(conversation, "I'll be back with the birds as soon as I manage to kill them!","Feathers3")
-	AddConversationOption(conversation, "I wish you luck with finding them.")
-	StartConversation(conversation, NPC, Spawn, "You would do that for a stranger?  I couldn't let such a task go unrewarded of course.  I am but a simple hunter, but I would find something to grant you in return for the feathers.  I can't make enough arrows without the feathers from at least five hawks.")
-end   
 
-function Feathers3(NPC, Spawn)
+function Feathersoffer(NPC, Spawn)
 OfferQuest(NPC,Spawn, Hawks)
 FaceTarget(NPC, Spawn)
 end
 
 function FeathersDone1(NPC, Spawn)
+    SetStepComplete(Spawn,Hawks,2)
  	FaceTarget(NPC, Spawn)
 	conversation = CreateConversation()
 	PlayFlavor(NPC, "", "", "thanks", 0, 0, Spawn)
-	AddConversationOption(conversation, "Thank you, and safe journeys to you.","FeathersDone2")
+	AddConversationOption(conversation, "Thank you, and safe journeys to you.")
 	StartConversation(conversation, NPC, Spawn, "That's wonderful!  I'll be happy to pull the feathers off myself, that's not a problem!  You've saved me quite a bit of coin!  Speaking of coin, here's some for your effort.")
 end   
 
-function FeathersDone2(NPC, Spawn)
-    SetStepComplete(Spawn,Hawks,2)
-	FaceTarget(NPC, Spawn)
-end
 
 function EmoteLoop(NPC)
     local emoteChoice = MakeRandomInt(1,3)
 
     if emoteChoice == 1 then
 -- ponder
-        PlayAnimation(NPC, 12030)
+	    PlayFlavor(NPC, "", "", "ponder", 0, 0, Spawn)
         AddTimer(NPC, MakeRandomInt(15000,18000), "EmoteLoop")	
     elseif emoteChoice == 2 then
 -- sniff
-        PlayAnimation(NPC, 12329)
+	    PlayFlavor(NPC, "", "", "sniff", 0, 0, Spawn)
         AddTimer(NPC, MakeRandomInt(6000,9000), "EmoteLoop")	
     else
 -- tapfoot
-        PlayAnimation(NPC, 13056)
+    	PlayFlavor(NPC, "", "", "tapfoot", 0, 0, Spawn)
         AddTimer(NPC, MakeRandomInt(15000,18000), "EmoteLoop")	
     end
 end

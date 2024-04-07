@@ -9,6 +9,7 @@
 	Preceded by		:	None
 	Followed by		:	None
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 
 function Init(Quest)
@@ -20,17 +21,25 @@ function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have spoken with Sentius.")
 	UpdateQuestTaskGroupDescription(Quest, 1, "Sentius claims that the application will take time and that he's working on it.")
 
-    AddQuestStepChat(Quest, 2, "I should return to Siricus.", 1, "I should return to Siricus.", 11, 1370045)
+    AddQuestStepChat(Quest, 2, "I need to speak with Siricus.", 1, "I need to let Siricus know that he's going to have to wait a little longer to get into the Militia.", 11, 1370045)
 	AddQuestStepCompleteAction(Quest, 2, "QuestComplete")
 end
 
 function QuestComplete(Quest, QuestGiver, Player)
+	UpdateQuestStepDescription(Quest, 2, "I have spoken with Siricus.")
+	UpdateQuestTaskGroupDescription(Quest, 2, "I told Siricus that his friend is still trying to get him into the Militia.")
 	UpdateQuestDescription(Quest, "Siricus Calventius is waiting to get into the Militia. I have a good feeling he'll be waiting a lot longer, considering how people treat the gimp.")
 	GiveQuestReward(Quest, Player)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Great! Manius said if I leave my house again without his permission, he and his guys would play \"Smack the Gimp\" with me. Go ask Sentius Poisonleaf the status of my Militia application. I paid him the processing fee -- he's an undercover agent, you know. Thanks for your help, buddy!")
+	Dialog.AddVoiceover("voiceover/english/siricus_calventius/fprt_hood04/quests/siricuscalventius/siricus_x1_accept.mp3", 265810226, 2507610341)
+ 	PlayFlavor(QuestGiver, "", "", "thanks", 0, 0, Player)
+	Dialog.AddOption("I'll see what Sentius has to say.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

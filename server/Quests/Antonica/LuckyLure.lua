@@ -13,7 +13,7 @@
 
 
 function Init(Quest)
-	AddQuestStep(Quest, 1, "Find Blarton's fishing lure.", 1, 100, "I should search for Blarton's lost lure along the beach north of Windstalker Village in Antonica.", 1037)
+	AddQuestStepZoneLoc(Quest, 1, "Find Blarton's fishing lure.", 1, 12, "I should search for Blarton's lost lure along the beach north of Windstalker Village in Antonica.", 1037, -1970.96, -28.74,12)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
 end
 

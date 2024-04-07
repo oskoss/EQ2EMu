@@ -13,36 +13,24 @@ local SeerStone = 5225
 
 
 function InRange(NPC, Spawn)
-  if not HasQuest(Spawn, QuenchingTheirThirst) and not HasCompletedQuest(Spawn, QuenchingTheirThirst) then
-  ProvidesQuest(NPC, QuenchingTheirThirst)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
-  elseif HasCompletedQuest(Spawn, QuenchingTheirThirst) then
-  ProvidesQuest(NPC, FarFromHome)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
-  elseif HasCompletedQuest(Spawn, FarFromHome) then
-  ProvidesQuest(NPC, NoRiskNoReward)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
- elseif HasCompletedQuest(Spawn, NoRiskNoReward) then
-  ProvidesQuest(NPC, SeerStone)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
-end
+
    end
 
 function spawn(NPC)
-	SetPlayerProximityFunction(NPC, 10, "InRange")
+  ProvidesQuest(NPC, QuenchingTheirThirst)
+  ProvidesQuest(NPC, FarFromHome)
+  ProvidesQuest(NPC, NoRiskNoReward)
+  ProvidesQuest(NPC, SeerStone)
+  SetPlayerProximityFunction(NPC, 10, "InRange")
 end
 
 function respawn(NPC)
 	spawn(NPC)
 end
 
-function hailed(NPC)
+function hailed(NPC,Spawn)
 FaceTarget(NPC, Spawn)
-if not HasQuest(Spawn, QuenchingTheirThirst) and not HasoCompletedQuest(Spawn, QuenchingTheirThirst) then
+if not HasQuest(Spawn, QuenchingTheirThirst) and not HasCompletedQuest(Spawn, QuenchingTheirThirst) then
 	local conversation = CreateConversation()
 	AddConversationOption(conversation, "What assistance do you require?", "Option1")
 	AddConversationOption(conversation, "I'm busy at the moment.")

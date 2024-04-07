@@ -12,12 +12,15 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKill(Quest, 1, "Kill crabs", 30, 100, "I need to kill crabs in the Sunken City until my rage subsides.  I can reach the Sunken City by using any of the bells in and around the City of Freeport.", 77, 1240007, 1240008, 1240037, 1240045)
+	AddQuestStepKill(Quest, 1, "Kill crabs", 30, 100, "I need to kill crabs in the Sunken City until my rage subsides.  I can reach the Sunken City by using any of the bells in and around the City of Freeport.", 77, 1240007, 1240008, 1240037, 1240045,8410002,8410001,8410017)
 	AddQuestStepCompleteAction(Quest, 1, "QuestComplete")
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+    if HasItem(Player,3034,1) then
+        RemoveItem(Player,3034)
+        SendMessage(Player,"You stuff the claw crab in your quest satchle.")
+    end
 end
 
 function Declined(Quest, QuestGiver, Player)

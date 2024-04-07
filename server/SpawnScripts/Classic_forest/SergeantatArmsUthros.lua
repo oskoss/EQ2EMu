@@ -5,6 +5,7 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/AdvancementGaze.lua")
 
 function spawn(NPC)
 	ProvidesQuest(NPC, 5486)
@@ -13,6 +14,12 @@ function spawn(NPC)
 end
 
 function InRange(NPC, Spawn) 
+    if GetFactionAmount(Spawn,11)>=5000 then
+    if GetLevel(Spawn) ==8 or GetLevel(Spawn)==9 then
+    ClassCheck(NPC,Spawn)
+    end
+    end
+
 if GetFactionAmount(Spawn,11)<0 then
 	FaceTarget(NPC, Spawn)
 	PlayFlavor(NPC, "", "", "shakefist", 0, 0)

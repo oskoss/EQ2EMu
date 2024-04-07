@@ -14,6 +14,7 @@ local Delivery = 5499
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
 	ProvidesQuest(NPC, Delivery)
+    SetInfoStructString(NPC, "action_state", "alchemy_idle")
 end
 
 function respawn(NPC)

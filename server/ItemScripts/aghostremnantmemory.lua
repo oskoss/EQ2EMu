@@ -1,6 +1,6 @@
 --[[
     Script Name    : ItemScripts/aghostremnantmemory.lua
-    Script Author  : AussieGlen
+    Script Author  : AussieGlen/Dorbin
     Script Date    : 2021.12.31 11:12:13
     Script Purpose : 
                    : 
@@ -9,24 +9,30 @@
 local LoreAndLegendGhost = 5404
 
 function examined(Item, Player)
-if not HasQuest(Player, LoreAndLegendGhost) and not HasCompletedQuest(Player, LoreAndLegendGhost) then
-OfferQuest(nil, Player, LoreAndLegendGhost)
-elseif not QuestStepIsComplete(Player, LoreAndLegendGhost, 7) then
-conversation = CreateConversation()    
-AddConversationOption(conversation, "Begin to study...", "Step_Complete")
-AddConversationOption(conversation, "No, put away", "CloseItemConversation")
-StartDialogConversation(conversation, 2, Item, Player, "This item can be used to learn the secrets of the ghost. Do you wish to study it?")
+    local LnLAccept = GetRuleFlagFloat("R_World", "LoreAndLegendAccept")
+if LnLAccept > 0 and not HasQuest(Player, LoreAndLegendGhost) and not HasCompletedQuest(Player, LoreAndLegendGhost) then
+    OfferQuest(nil, Player, LoreAndLegendGhost)
+else
+    conversation = CreateConversation()    
+if  HasQuest(Player, LoreAndLegendGhost) and  GetQuestStepProgress(Player, LoreAndLegendGhost, 7)==0 then
+    AddConversationOption(conversation, "Begin to study...", "Step_Complete")
 end
-   end
+    AddConversationOption(conversation, "No, put away", "CloseItemConversation")
+    StartDialogConversation(conversation, 2, Item, Player, "This item can be used to learn the secrets of the ghost. Do you wish to study it?")
+    end
+end
 
 function Step_Complete(Item, Player)
-SetStepComplete(Player, LoreAndLegendGhost, 7)
-RemoveItem(Player, 1766)
+if HasItem(Player,1766,1) then
+    SetStepComplete(Player, LoreAndLegendGhost, 7)
+    CloseItemConversation(Item, Player)
+    RemoveItem(Player, 1766)
+end
 end
 
 
 function item_description(Item, Spawn)
     return "You have already examined this item."
 end
-nd
+
 

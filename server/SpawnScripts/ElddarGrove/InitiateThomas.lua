@@ -13,32 +13,32 @@ end
 function EmoteLoop(NPC)
     SpawnSet(NPC, "action_state", 0)
     local choice = MakeRandomInt(1,8)
-
-        if choice == 1 then
-            PlayAnimation(NPC, 1644)
-            AddTimer(NPC, 1550, "Idle")
+         if choice == 1 then
+        PlayFlavor(NPC,"","","pugilist_attack")
+          AddTimer(NPC, 2550, "Idle")
         elseif choice == 2 then
-            PlayAnimation(NPC, 1646)
-            AddTimer(NPC, 2100, "Idle")
+        PlayFlavor(NPC,"","","pugilist_attack02")
+          AddTimer(NPC, 3100, "Idle")
         elseif choice == 3 then
-            PlayAnimation(NPC, 1284)
-            AddTimer(NPC, 2050, "Idle")
+        PlayFlavor(NPC,"","","monk_attack02")
+          AddTimer(NPC, 3050, "Idle")
         elseif choice == 4 then
-            PlayAnimation(NPC, 3021)
-            AddTimer(NPC, 2100, "Idle")
+        PlayFlavor(NPC,"","","monk_wild_swing")
+            AddTimer(NPC, 3100, "Idle")
         elseif choice == 5 then
-            PlayAnimation(NPC, 1201)
-            AddTimer(NPC, 1450, "Idle")
+        PlayFlavor(NPC,"","","monk_attack01")
+            AddTimer(NPC, 2450, "Idle")
         elseif choice == 6 then
-            PlayAnimation(NPC, 1181)
-            AddTimer(NPC, 1550, "Idle")
+        PlayFlavor(NPC,"","","monk_attack")
+            AddTimer(NPC, 2550, "Idle")
         elseif choice == 7 then
-            PlayAnimation(NPC, 4506)
-            AddTimer(NPC, 3400, "Idle")
+        PlayFlavor(NPC,"","","monk_attack03")
+            AddTimer(NPC, 4400, "Idle")
         else
-            PlayAnimation(NPC, 3037)
-            AddTimer(NPC, 2300, "Idle")
-        end
+        PlayFlavor(NPC,"","","pugilist_wild_swing")
+            AddTimer(NPC, 3300, "Idle")
+        end       
+        
 end
 
 function Idle(NPC)

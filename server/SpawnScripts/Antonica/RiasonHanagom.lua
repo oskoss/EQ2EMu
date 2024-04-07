@@ -5,6 +5,7 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/MonsterCallouts/BaseHuman1.lua")
 
 local LetterToRiason = 5350 -- Letter to Riason quest
 local ARediscoveredShrine = 5351 -- A Rediscovered Shrine? quest
@@ -82,14 +83,6 @@ end
 function offer(NPC, Spawn)
 OfferQuest(NPC, Spawn, ARediscoveredShrine)
 end
-
-
-
-
-function attacked(NPC, Spawn)
-PlayFlavor(NPC, "voiceover/english/human_base_1/ft/human/human_base_1_1_aggro_gm_a30c4f9d.mp3", "To Arms!", "", 1238020980, 748146443, Spawn)
-end
-
 
 
 

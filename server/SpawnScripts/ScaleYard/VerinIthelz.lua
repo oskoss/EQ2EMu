@@ -46,3 +46,8 @@ function RandomGreeting(NPC, Spawn)
 		PlayVoice(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1028.mp3", 0, 0, Spawn)
 	end
 end
+--"You are no warrior in their eyes," said one of the woodcutters softly.  He was one of the Dervin thralls, his ankles bound by chains to the table upon which he cut larger hunks of wood into smaller pieces.
+
+--I suppose. I have thralls of all kinds.  Some are manacled, some are corralled.  All are expensive ... especially the exotics, like the high elf here.  Brona the slaver exacts a pretty bit of coin for such as these.  If I don't find a cheaper source, my coffers will run dry.  May I perhaps seek your assistance?  
+--Yes, I did. I'm looking for ways to increase my horde of thralls without paying Brona's steep prices. My contacts tell me that Zekvila is capturing orcs to work as her thralls. That broodling must not have better thralls than me! You must prevent her from capturing more orcs!
+--Very good! Now let's see Zekvila upstage me! If she wants more thralls, she must empty her pockets to that thief Brona. Ha! Her entourage of thralls won't compete with my mighty force! If she tries, I'll sick my barbarian dogs on the wench! Here, add this coin to your purse.

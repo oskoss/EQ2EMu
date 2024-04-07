@@ -12,6 +12,7 @@ local Delivery = 5500
 function spawn(NPC)
 SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
 ProvidesQuest(NPC, Delivery)
+    SetInfoStructString(NPC, "action_state", "tapfoot")
 end
 
 function InRange(NPC, Spawn) --Quest Callout

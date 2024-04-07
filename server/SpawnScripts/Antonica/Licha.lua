@@ -13,26 +13,13 @@ local SheHadRibbonsInHerHair = 5343 -- She Had Ribbon in Her Hair quest
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 20, "InRange")
+  ProvidesQuest(NPC, SparklyOrNothing)
+  ProvidesQuest(NPC, ANewDressNOW)
+  ProvidesQuest(NPC, LichaDancingQueen)
+  ProvidesQuest(NPC, SheHadRibbonsInHerHair)
 end
 
 function InRange(NPC, Spawn)
-  if not HasQuest(Spawn, SparklyOrNothing) and not HasCompletedQuest(Spawn, SparklyOrNothing) then
-  ProvidesQuest(NPC, SparklyOrNothing)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
-  elseif HasCompletedQuest(Spawn, SparklyOrNothing) then
-  ProvidesQuest(NPC, ANewDressNOW)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
-  elseif HasCompletedQuest(Spawn, ANewDressNOW) then
-  ProvidesQuest(NPC, LichaDancingQueen)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
- elseif HasCompletedQuest(Spawn, LichaDancingQueen) then
-  ProvidesQuest(NPC, SheHadRibbonsInHerHair)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
-end
    end
 
 function hailed(NPC, Spawn)
@@ -69,6 +56,7 @@ function Option1(NPC, Spawn)
 	AddConversationOption(conversation, "See something you like?", "Option3")
 	AddConversationOption(conversation, "I've had enough orders from you.")
 	StartConversation(conversation, NPC, Spawn, "Turn around. Let me look you over.")
+	PlayFlavor(NPC,"","","peer",0,0,Spawn)
 end
 
 function Option2(NPC, Spawn)
@@ -77,6 +65,7 @@ function Option2(NPC, Spawn)
 	AddConversationOption(conversation, "What is it you want me to do?", "Option4")
 	AddConversationOption(conversation, "No.")
 	StartConversation(conversation, NPC, Spawn, "I suppose you will have to do. There are things I need and surely no one expects me to dirty my flawless nails doing them. So, you will do them for me?")
+	PlayFlavor(NPC,"","","sniff",0,0,Spawn)
 end
 
 
@@ -86,6 +75,7 @@ function Option3(NPC, Spawn)
 	AddConversationOption(conversation, "I can assure you, miss, that I can kill anything I want to.", "Option4")
 	AddConversationOption(conversation, "Adventurers do not have time for baths or spoiled children. Good day.")
 	StartConversation(conversation, NPC, Spawn, "Hardly.... Tell me, what dirt pile did you crawl out of? Your armor, if you can call it that, is filthy. Really, you should wash more. And you call that a weapon? I would be surprised if you could kill a lowly mouse with that thing.")
+	PlayFlavor(NPC,"","","lookaway",0,0,Spawn)
 end
 
 function Option4(NPC, Spawn)
@@ -102,6 +92,7 @@ function Option5(NPC, Spawn)
 	AddConversationOption(conversation, "As you wish.", "offer")
 	AddConversationOption(conversation, "Get them yourself. A good wallop might do you good.")
 	StartConversation(conversation, NPC, Spawn, "Too dangerous for you, my strong, dirty adventurer? I think not! Bring me the shiniest scales you can find, and do it quickly.")
+	PlayFlavor(NPC,"","","smirk",0,0,Spawn)
 end
 
 -- 2nd  QUEST
@@ -111,6 +102,7 @@ function Option6(NPC, Spawn)
 	AddConversationOption(conversation, "What do you want, now?", "Option7")
 	AddConversationOption(conversation, "I don't know, and I don't want to know.")
 	StartConversation(conversation, NPC, Spawn, "Why is he so mean?")
+	PlayFlavor(NPC,"","","grumble",0,0,Spawn)
 end
 
 
@@ -130,6 +122,7 @@ function Option8(NPC, Spawn)
 	AddConversationOption(conversation, "Fine. Where is it being delivered?", "Option9")
 	AddConversationOption(conversation, "No.")
 	StartConversation(conversation, NPC, Spawn, "Your sarcasm is not appreciated! This is no laughing matter, adventurer of filth. That dress is imported from a distant land, and it is priceless. Priceless, I tell you! Go and get it for me now.")
+	PlayFlavor(NPC,"","","scold",0,0,Spawn)
 end
 
 
@@ -159,6 +152,7 @@ function Option11(NPC, Spawn)
 	AddConversationOption(conversation, "You are as pretty as a pig.", "Option12")
 	AddConversationOption(conversation, "Your narcissism is overwhelming. Goodbye.")
 	StartConversation(conversation, NPC, Spawn, "Don't I look gorgeous? Ah, this new dress is perfect for my performance, but what is a performance without an audience?")
+	PlayFlavor(NPC,"","","shimmy",0,0,Spawn)
 end
 
 function Option12(NPC, Spawn)
@@ -167,6 +161,7 @@ function Option12(NPC, Spawn)
 	AddConversationOption(conversation, "Fine, fine...  What do you want?", "Option13")
 	AddConversationOption(conversation, "My stench and I will be going.")
 	StartConversation(conversation, NPC, Spawn, "How dare you! Never will you see a pig dance as I will! Adventurer of swine, assist me now or rid me of your stench!")
+	PlayFlavor(NPC,"","","boggle",0,0,Spawn)
 end
 
 function Option13(NPC, Spawn)
@@ -176,6 +171,7 @@ function Option13(NPC, Spawn)
 	AddConversationOption(conversation, "No one will be willing, trust me. Bye.")
 	AddConversationOption(conversation, "I'm too busy right now.")
 	StartConversation(conversation, NPC, Spawn, "I will be performing an original dance number of my own creation. It is an inspired piece... A story told through movement. It is the story of a princess finding her one, true love. Now, bring my audience quickly, while the muse still flows through me.")
+	PlayFlavor(NPC,"","","orate",0,0,Spawn)
 end
 
 --- 4TH QUEST
@@ -186,6 +182,7 @@ function Option14(NPC, Spawn)
 	AddConversationOption(conversation, "Well, you're not exactly full of rainbows and sunshine, friend.")
 		AddConversationOption(conversation, "I'm rather busy right now.")
 	StartConversation(conversation, NPC, Spawn, "Why would anyone hurt poor, little me?")
+	PlayFlavor(NPC,"","","whome",0,0,Spawn)
 end
 
 function Option15(NPC, Spawn)
@@ -202,6 +199,7 @@ function Option16(NPC, Spawn)
 	AddConversationOption(conversation, "Okay, okay... I'll go get them.", "offer4")
 	AddConversationOption(conversation, "You will never learn. Goodbye.")
 	StartConversation(conversation, NPC, Spawn, "Evil, vile highwaymen! Go get them back, unless you are too scared, adventurer of slime.")
+	PlayFlavor(NPC,"","","shakefist",0,0,Spawn)
 end
 
 

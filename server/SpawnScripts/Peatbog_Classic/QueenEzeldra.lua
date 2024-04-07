@@ -8,6 +8,10 @@
 dofile("SpawnScripts/Generic/MonsterCallouts/Fairy_PeatBog.lua")
 
 function spawn(NPC)
+    dmgMod = GetStr(NPC)/10
+    SetInfoStructUInt(NPC, "override_primary_weapon", 1)        
+    SetInfoStructUInt(NPC, "primary_weapon_damage_low", math.floor(12 + dmgMod)) 
+    SetInfoStructUInt(NPC, "primary_weapon_damage_high", math.floor(24 + dmgMod))
 
 end
 

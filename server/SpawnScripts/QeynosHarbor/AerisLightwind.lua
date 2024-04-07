@@ -59,10 +59,10 @@ function Dialog1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	PlayFlavor(NPC, "", "", "hello", 0, 0, Spawn)
-	Dialog.AddDialog("Look around? Freshest catch on the docks.")
+	Dialog.AddDialog("Look around! Freshest catch on the docks.")
 	Dialog.AddVoiceover("voiceover/english/merchant_aeris_lightwind/qey_harbor/aerislightwind000.mp3", 2050407066, 4101070387)
     if not QuestStepIsComplete(Spawn,fishy,2) and HasQuest(Spawn,fishy) then
-	Dialog.AddOption("Galsway looking for the best price for fish on the market.  Might you have a deal for him?","FishQuestion")
+	Dialog.AddOption("Galsway is looking for the best price for fish on the market.  Might you have a deal for him?","FishQuestion")
     end
 	Dialog.AddOption("Not right now, thanks.")
 	Dialog.Start()

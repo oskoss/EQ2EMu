@@ -58,7 +58,7 @@ function waypoints(NPC)
 	MovementLoopAddLocation(NPC, 877.09, -25.41, 47.16, 2, 0)
 	MovementLoopAddLocation(NPC, 865.11, -25.37, 55.39, 2, 20)
 	MovementLoopAddLocation(NPC, 864.66, -25.43, 27.11, 2, 0)
-	MovementLoopAddLocation(NPC, 864.81, -25.43, 23.99, 2, 1)
+	MovementLoopAddLocation(NPC, 864.81, -25.43, 23.99, 2, 1,"Face")
 	MovementLoopAddLocation(NPC, 864.12, -25.43, 23.88, 2, 15,"EcologyEmotes")
 	MovementLoopAddLocation(NPC, 857.65, -25.47, 21.59, 2, 0)
 	MovementLoopAddLocation(NPC, 849.17, -25.46, 13.7, 2, 0)
@@ -117,24 +117,28 @@ function waypoints(NPC)
 end
 
  function Drink(NPC)
-    PlayAnimation(NPC,11422)
+        PlayFlavor(NPC,"","","drinking_idle",0,0)
     AddTimer(NPC,8000, "Drink2")
+end
+
+function Face(NPC)
+    SetHeading(NPC,205)
 end
 
 function Drink2(NPC)
   choice = math.random(1,3)   
         if choice == 1 then    
-        PlayAnimation(NPC,891)
+        PlayFlavor(NPC,"","","yawn",0,0)
         elseif choice == 2 then    
-        PlayAnimation(NPC,11422)
+        PlayFlavor(NPC,"","","drinking_idle",0,0)
         else
-        PlayAnimation(NPC,11668)
+        PlayFlavor(NPC,"","","happy",0,0)
         end            
     AddTimer(NPC,6000, "Drink3")
 end
 
 function Drink3(NPC)
-    PlayAnimation(NPC,11422)
+        PlayFlavor(NPC,"","","drinking_idle",0,0)
 end
 
 

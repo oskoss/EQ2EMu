@@ -25,6 +25,11 @@ function Accepted(Quest, QuestGiver, Player)
     PlayFlavor(QuestGiver, "", "", "nod", 0, 0, Player)
     Dialog.AddOption("Alright. I'll investigate the creatures in the bog.")	
 	Dialog.Start()
+
+if GetQuestStep(Player,5877)==1 then
+    SetStepComplete(Player,5877,1)
+end
+
 end
 
 function Declined(Quest, QuestGiver, Player)

@@ -12,7 +12,7 @@
 require "SpawnScripts/Generic/DialogModule"
 
 function Init(Quest)
-   	AddQuestStepChat(Quest, 1, "I need to go to the scribe shop.", 1, "I need to go to the scribe shop in Nettleville to see if Marjani Kenan is still there.", 11, 2360024)
+   	AddQuestStepChat(Quest, 1, "I need to go to the scribe shop.", 1, "I need to go to the scribe shop in Nettleville to see if Marjani Kenan is still there.", 11, 2330031)
 	AddQuestStepCompleteAction(Quest, 1, "CheckIn")
 end
 

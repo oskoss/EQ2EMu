@@ -18,7 +18,10 @@ function Init(Quest)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+    if HasItem(Player,2555,1) then
+        RemoveItem(Player,2555)
+        SendMessage(Player,"You place the rusty symbol of Marr in your quest satchle.")
+    end
 end
 
 function Declined(Quest, QuestGiver, Player)

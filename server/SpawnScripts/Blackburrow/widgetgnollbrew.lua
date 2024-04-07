@@ -10,7 +10,7 @@ local GnollBrew = 5638
 local BuckyID = 133773751
 
 function spawn(NPC)
-
+    SetRequiredQuest(NPC,GnollBrew,1,0,0,1)
 end
 
 function casted_on(NPC, Spawn, Command)

@@ -70,19 +70,8 @@ function DepositStart(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	Dialog.AddDialog("If it's coin you need I can help out, but you'll have to do a favor for me. I need my daily proceeds delivered to the bank.")
 	Dialog.AddVoiceover("voiceover/english/merchant_grekin/qey_village02/merchantgrekin000.mp3", 1743731083,2583786819)
-	Dialog.AddOption("You would trust me with your money?", "Trust")
+	Dialog.AddOption("You would trust me with your money?", "DepositBegin")
 	Dialog.AddOption("On second thought, I shouldn't be handling someone else's large sums of coin.")
-	Dialog.Start()
-end
-
-function Trust(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-	Dialog.New(NPC, Spawn)
-    PlayFlavor(NPC, "", "", "agree", 0, 0, Spawn)
-	Dialog.AddDialog("For starters, it is only a day's proceeds. Also, there are three guards between the banks and us. I'm pretty sure you would be caught if you tried to run. Aside from all that, you have a friendly face and I think I can trust you. Take this box to the bank and return with the recipt.")
-	Dialog.AddVoiceover("voiceover/english/merchant_grekin/qey_village02/merchantgrekin001.mp3", 2487079650,1001036096)
-	Dialog.AddOption("Okay. I will be back shortly with the recipt.", "DepositBegin")
-	Dialog.AddOption("I don't want to get tangled up in this.")
 	Dialog.Start()
 end
 

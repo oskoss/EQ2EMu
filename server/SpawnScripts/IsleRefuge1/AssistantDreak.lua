@@ -107,12 +107,15 @@ function QuestUpdate8(NPC, Player)
 		Dialog.AddOption("All right, I'll be back with your lock.")
 		Dialog.Start()
         SetStepComplete(Player, Cellar,8)
-        if GetTradeskillLevel(Player)<2 then
-        SetTradeskillLevel(Player,2)
+    if GetTradeskillLevel(Player) <2  then
+        Quest = GetQuest(Player,5749)
+        SummonItem(Player,1030001,1)
+        GiveQuestItem(Quest, Player, "", 20708,1001034,1001034,1001034,7391,7391,7391)
         SetTradeskillClass(Player,1)
+        SetTradeskillLevel(Player,2)
 	    SendMessage(Player, "You are now an Artisan!")
         SendPopUpMessage(Player, "You are now an Artisan!", 200, 200, 200)            
-        end
+    end
 end
 
 function respawn(NPC)
@@ -146,7 +149,7 @@ end
 
 function Finished(NPC, Player)
 		FaceTarget(NPC, Player)
-        PlayFlavor(NPC,"voiceover/english/assistant_dreak/tutorial_island02/030_wizard_assistant_dreak_quest_completed_e3b1aced.mp3","Thanks for all your help!  Make sure to clean up when you're done in the cellar.","thanks",1096069834,205718440, Spawn)
+        PlayFlavor(NPC,"voiceover/english/assistant_dreak/tutorial_island02/030_wizard_assistant_dreak_quest_completed_e3b1aced.mp3","Thanks for all your help!  Make sure to clean up when you're done in the cellar.","thanks",1096069834,205718440, Player)
 end
 --[[
 

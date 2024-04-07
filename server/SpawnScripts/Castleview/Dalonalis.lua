@@ -63,7 +63,7 @@ function Dialog2a(NPC, Spawn)
     if GetRace(Spawn)==4 then
 	Dialog.AddOption("Fly catcher doesn't seem right... Harvester?","Dialog2b")
     elseif GetRace(Spawn)==8 then
-	Dialog.AddOption("How could I sum up living numerous lifetimes in one word?! Let's say Epicurean.","Dialog2b")
+	Dialog.AddOption("How could I sum up living numerous lifetimes in one word?!... Let's say \"Many\"?","Dialog2b")
     end
 	Dialog.Start()
 end

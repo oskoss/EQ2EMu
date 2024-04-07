@@ -13,7 +13,7 @@ function cast(Caster, Target, Chance)
 	
 	local roll = math.random(1, 100);
 	if roll <= Chance then
-		ClearHate(Target, Caster)
+		ClearHate(NPC, Caster)
 		SendMessage(Caster, "Your feign death succeeded", "yellow")
 	else
 		SendMessage(Caster, "Your feign death attempt failed", "yellow")

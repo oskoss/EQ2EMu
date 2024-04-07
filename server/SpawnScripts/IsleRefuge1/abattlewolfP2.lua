@@ -5,10 +5,12 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-
-AddTimer(NPC, 800, "followsentry")      
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    SetSeeHide(NPC,1)
+    AddTimer(NPC, 800, "followsentry")      
 end
 
 function hailed(NPC, Spawn)

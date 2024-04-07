@@ -6,8 +6,11 @@
                    : 
 --]]
 dofile("SpawnScripts/Generic/MonsterCallouts/BaseGoblin1.lua")
+require "SpawnScripts/Generic/CombatModule"
 
-function spawn(NPC)
+
+function spawn(NPC, Spawn)
+    combatModule(NPC, Spawn)
 	waypoints(NPC)
 end
 

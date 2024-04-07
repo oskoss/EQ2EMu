@@ -7,7 +7,7 @@
 --]]
 
 function spawn(NPC)
-	SetPlayerProximityFunction(NPC, 10, "InRange")
+	SetPlayerProximityFunction(NPC, 15, "InRange")
 end
 
 function hailed(NPC, Spawn)
@@ -16,8 +16,10 @@ end
 
 function InRange(NPC, Spawn)
  	FaceTarget(NPC, Spawn)
-	PlayFlavor(NPC, "",  "Say! Are you a collector, too? I'm having the worst luck!", "", 0, 0, Spawn)
+	PlayFlavor(NPC, "",  "Say! Are you a collector, too? I'm having the worst luck!", "flustered", 0, 0, Spawn)
 end
+
+
 	
 
 function respawn(NPC)

@@ -14,22 +14,6 @@ function spawn(NPC)
 end
 
 function aggro(NPC, Spawn)
-    AddTimer(NPC, math.random(1500,2500), "spellLoop")
-    AddTimer(NPC, 1000, "eleLoop")
-end
-
-function eleLoop(NPC, Spawn)
-    Shout(NPC, "eleLoop firing.")
-    AddTimer(NPC, 57000, "eleSpawns")
-end
- 
-function eleSpawns(NPC, Spawn) -- spawns elementals on a timer. timer starts on aggro.
-    AddTimer(NPC, 1000, "eleLoop")
--- CastSpell(NPC, summon chaotic elemental, 3, NPC)
-end
-
-function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
 end
 
 function respawn(NPC)

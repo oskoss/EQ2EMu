@@ -14,6 +14,7 @@ require "SpawnScripts/Generic/DialogModule"
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
     ProvidesQuest(NPC,bait)
+    SetInfoStructString(NPC, "action_state", "fishing_fight")
 end
 
 
@@ -64,8 +65,8 @@ function Dialog1(NPC, Spawn)
     if not HasQuest(Spawn,bait) and not HasCompletedQuest(Spawn,bait) then
 	Dialog.AddOption("How are the fish biting today?", "Dialog2")
     end
-    if GetQuestStep(Spawn,bait)==2 then
-	Dialog.AddOption("I've brought the fairy wings and slug meat you were looking for.", "Dialog3")
+    if GetQuestStep(Spawn,bait)==3 then
+	Dialog.AddOption("I've brought the fairy wings and slug meat you were looking for.", "JobDone")
     end
     Dialog.AddOption("Not interested right now.  Good luck on your next catch.")
 	Dialog.Start()
@@ -98,5 +99,5 @@ end
 
 function JobDone(NPC, Spawn)
  	FaceTarget(NPC, Spawn)
-    SetStepComplete(Spawn,bait, 2)
+    SetStepComplete(Spawn,bait, 3)
     end

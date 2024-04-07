@@ -34,10 +34,10 @@ function Step1Complete(Quest, QuestGiver, Player)
 	AddQuestStepZoneLoc(Quest, 3, "Visit the tree that peeks.", 10, "I must visit the four location in Antonica mentioned in \"Visions of Coldwind Point\".", 11,  -25, -5, 671, 12)
 	AddQuestStepZoneLoc(Quest, 4, "Visit the sword like no other.", 10, "I must visit the four location in Antonica mentioned in \"Visions of Coldwind Point\".", 11, -435, 1, 553, 12)
 	AddQuestStepZoneLoc(Quest, 5, "Visit the King of the thicket.", 10, "I must visit the four location in Antonica mentioned in \"Visions of Coldwind Point\".", 11, -698, -3, 596, 12)
-		AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
+	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
 	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
 	AddQuestStepCompleteAction(Quest, 4, "Step4Complete")
-    
+	AddQuestStepCompleteAction(Quest, 5, "Step5Complete")
 end
 
 
@@ -58,11 +58,13 @@ function Step4Complete(Quest, QuestGiver, Player)
 	CheckProgress(Quest, QuestGiver, Player)
 end
 
-
+function Step5Complete(Quest, QuestGiver, Player)
+	UpdateQuestStepDescription(Quest, 5, "Visited the Great Oak.")
+	CheckProgress(Quest, QuestGiver, Player)
+end
 
 function QuestComplete(Quest, QuestGiver, Player)
 	-- The following UpdateQuestStepDescription and UpdateTaskGroupDescription are not needed, parser adds them for completion in case stuff needs to be moved around
-	UpdateQuestStepDescription(Quest, 5, "Visited the Great Oak.")
 	UpdateQuestTaskGroupDescription(Quest, 2, "I visited the four location in Antonica mentioned in  \"Visions of Coldwind Point\".")
     if HasItem(Player, 15265) then
     RemoveItem(Player, 15265)

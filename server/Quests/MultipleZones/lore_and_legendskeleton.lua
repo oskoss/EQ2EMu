@@ -12,9 +12,9 @@
 
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find a skeleton essence.", 1, 30, "I must locate several skeleton body parts.", 2516, 340)
-	AddQuestStepKillByRace(Quest, 2, "I need to find a skeleton skull.", 1, 40, "I must locate several skeleton body parts.", 91, 340)
-	AddQuestStepKillByRace(Quest, 3, "I need to find a skeleton ribcage.", 1, 55, "I must locate several skeleton body parts.", 90, 340)
+	AddQuestStepKillByRace(Quest, 1, "I need to find a skeleton essence.", 1, 10, "I must locate several skeleton body parts.", 2516, 340)
+	AddQuestStepKillByRace(Quest, 2, "I need to find a skeleton skull.", 1, 35, "I must locate several skeleton body parts.", 91, 340)
+	AddQuestStepKillByRace(Quest, 3, "I need to find a skeleton ribcage.", 1, 25, "I must locate several skeleton body parts.", 90, 340)
 	AddQuestStep(Quest, 4, "I need to find and study a skeleton arm.", 1, 100, "I must locate several skeleton body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study a skeleton leg.", 1, 100, "I must locate several skeleton body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study a skeleton objurgatory hunger.", 1, 100, "I must locate several skeleton body parts.", 11)

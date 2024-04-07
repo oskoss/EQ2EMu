@@ -19,7 +19,7 @@ function hailed(NPC, player)
 		step = GetQuestStep(player, 524) 
 		if step == 1 then			
 --			InstructionWindowGoal(player,0)	
---			InstructionWindowClose(player)
+			InstructionWindowClose(player)
 			Dialog.New(NPC, player)
 			Dialog.AddDialog("Wot? Oh, hey there, ye' startled me.")
 			Dialog.AddVoiceover("voiceover/english/waulon/boat_06p_tutorial02/walon_0_001.mp3", 814960513, 2301562586)
@@ -33,7 +33,8 @@ function hailed(NPC, player)
 			Dialog.AddVoiceover("voiceover/english/waulon/boat_06p_tutorial02/walon_0_005.mp3", 4097259098, 893296183)
 			Dialog.AddOption("Glad to help!", "returned_hat")
 			Dialog.Start()
-			InstructionWindowGoal(player, 0)
+	        SetEquipment(NPC, 2, 1083, 255, 255, 255, 255, 255, 255) --Gives Waulon his hat back visually
+--			InstructionWindowGoal(player, 0)
 		end
 	end	
 end
@@ -46,11 +47,12 @@ function returned_hat(NPC, player)
 	Dialog.Start()
 end
 
-function returned_hat(NPC, player)
+function received_charm(NPC, player)
+    finished_step_three(NPC, player)
 	Dialog.New(NPC, player)
 	Dialog.AddDialog("Well now, Ingrid o'er there, can show ya' the rest of the ship. Me needs ta' plot the course ta' the isles now.")
 	Dialog.AddVoiceover("voiceover/english/waulon/boat_06p_tutorial02/walon_0_007.mp3", 1973137904, 2648127610)
-	Dialog.AddOption("Ok.", "finished_step_three")
+	Dialog.AddOption("Ok.")
 	Dialog.Start()
 end
 

@@ -19,11 +19,21 @@ end
 
 function cast(Caster, Target, MinVal, MaxVal, SkillAmt)
     -- Inflicts 175 - 293 ranged damage on target
-    if MaxVal ~= nil and MinVal < MaxVal then
-        SpellDamage(Target, 0, math.random(MinVal, MaxVal))
-    else
-        SpellDamage(Target, 0, MinVal)
+    Level = GetLevel(Caster)
+    SpellLevel = 20
+    Mastery = SpellLevel + 10
+    StatBonus = GetAgi(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
     end
+    
+    DmgBonus = LvlBonus + StatBonus
+    MaxDmg = math.floor(DmgBonus * 2.5) + MaxVal
+    MinDmg = math.floor(DmgBonus * 2.5) + MaxVal
+    
+    SpellDamage(Target, 0, MinDmg, MaxDmg)
 
     -- Decreases Deflection and Parry of target by 10.8
     AddSkillBonus(Target, GetSkillIDByName("Deflection"), SkillAmt)

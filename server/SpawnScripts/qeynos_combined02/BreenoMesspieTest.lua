@@ -75,7 +75,7 @@ function aggro(NPC, Spawn)
     if GetTempVariable(NPC, "CASTING") ~= "True" then
         SetTempVariable(NPC, "CASTING", "True")
         SpawnSet(NPC, "visual_state", 0) 
-        CastSpell(Spawn, 993, 1, NPC)
+        CastSpell(Spawn, 993, 1 , NPC)
         AddTimer(NPC, timebetweenShots, "FinishedCasting") --  PLAY WITH TIME HERE
     end
 end

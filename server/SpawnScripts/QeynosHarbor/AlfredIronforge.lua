@@ -29,6 +29,8 @@ elseif GetTradeskillLevel(Spawn)==9 and GetTradeskillClass(Spawn)== 1 then
   Dialog1(NPC,Spawn)  
 elseif GetTradeskillClass(Spawn)>1 then
     AlreadySkilled(NPC,Spawn)
+elseif GetTradeskillClass(Spawn)<1 then
+    NotSkilled(NPC,Spawn)
     end
 end
 

@@ -9,6 +9,7 @@
 local HALF_ELF_MENTOR_QUEST_1 = 218
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "ponder")
 end
 
 function respawn(NPC)

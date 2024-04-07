@@ -10,6 +10,7 @@ dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
 
 function spawn(NPC)
 SetPlayerProximityFunction(NPC, 7, "InRange", "LeaveRange")		
+    SetInfoStructString(NPC, "action_state", "cast_priest_buff_01")
 end
 
 function hailed(NPC, Spawn)

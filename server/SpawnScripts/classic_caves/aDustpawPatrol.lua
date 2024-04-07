@@ -5,10 +5,12 @@
     Script Purpose : 
                    : 
 --]]
-
+dofile("SpawnScripts/Generic/CatalogueQuestUpdates.lua")
 dofile("SpawnScripts/Generic/MonsterCallouts/BaseGnoll1.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
 	waypoints(NPC)
 end
 

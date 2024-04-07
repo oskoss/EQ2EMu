@@ -5,34 +5,26 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/CatalogueQuestUpdates.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-    local Level = GetLevel(NPC)
-    local level1 = 14
-    local level2 = 15
-    local difficulty1 = 9
-    local hp1 = 2650
-    local power1 = 1205
-    local difficulty2 = 9
-    local hp2 = 3060
-    local power2 = 1350
-    if Level == level1 then
-    SpawnSet(NPC, "difficulty", difficulty1)
-    SpawnSet(NPC, "hp", hp1)
-    SpawnSet(NPC, "power", power1)
-    elseif Level == level2
-        then
-    SpawnSet(NPC, "difficulty", difficulty2)
-    SpawnSet(NPC, "hp", hp2)
-    SpawnSet(NPC, "power", power2)
-    end
-
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    ChooseClass(NPC)
 end
 
-function hailed(NPC, Spawn)
-	FaceTarget(NPC, Spawn)
-end
 
 function respawn(NPC)
 	spawn(NPC)
+end
+
+function ChooseClass(NPC)
+    SetClass =  MakeRandomInt(1,3)
+    if SetClass== 1 or SetClass == 2 then
+        SpawnSet(NPC, "class", 2)
+        SetSpellList(NPC,451)
+    elseif SetClass == 3  then
+        SpawnSet(NPC, "class", 12)
+        SetSpellList(NPC, 329)
+    end
 end

@@ -10,9 +10,11 @@
 local BlackshieldDockhandID = 299539
 local SmugglersSecrets = 452
 local CratesOnTheNerves = 453 
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-SetPlayerProximityFunction(NPC, 10, "InRange")
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    SetPlayerProximityFunction(NPC, 10, "InRange")
 end
 
 function respawn(NPC)

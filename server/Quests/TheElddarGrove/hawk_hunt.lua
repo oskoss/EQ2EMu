@@ -17,7 +17,11 @@ function Init(Quest)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	FaceTarget(QuestGiver, Player)
+	local conversation = CreateConversation()
+    PlayFlavor(QuestGiver, "", "", "agree", 0, 0, Player)
+	AddConversationOption(conversation, "I'll see what I can do.")
+	StartConversation(conversation, QuestGiver, Player, "If you find some feathers worth using, I might have something that interests you... I'll be here working with Nightbow for a while on other orders if you need me again.")
 end
 
 function Declined(Quest, QuestGiver, Player)

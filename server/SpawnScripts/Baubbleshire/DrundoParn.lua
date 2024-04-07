@@ -11,6 +11,7 @@ local HELPING_SOME_FRIENDS = 325 -- was 72
 local NEEZERS_SURVEY = 330 -- was 28
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "drinking_idle")
 end
 
 function respawn(NPC)

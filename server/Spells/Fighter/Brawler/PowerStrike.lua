@@ -1,21 +1,34 @@
 --[[
     Script Name    : Spells/Fighter/Brawler/PowerStrike.lua
-    Script Author  : neatz09
-    Script Date    : 2020.11.05 04:11:09
+    Script Author  : LordPazuzu
+    Script Date    : 9/2/2023
     Script Purpose : 
                    : 
 --]]
 
 -- Inflicts 28 - 46 melee damage on target
--- Decreases Defense of target by 1.3
+
 -- If facing target
 
-function cast(Caster, Target)
+function cast(Caster, Target, DmgType, DmgLow, DmgHigh)
     Say(Caster, "facing target not implemented.")
-	SpellDamage(Target, DmgType, MinVal, MaxVal)
-	AddSkillBonus(Target, GetSkillIDByName("Defense"), SkillAmt)
+    Level = GetLevel(Caster)
+    SpellLevel = 10
+    Mastery = SpellLevel + 10
+    StatBonus = GetStr(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+    
+    
+    DmgBonus = LvlBonus + StatBonus
+    MaxDmg = math.floor(DmgBonus) * 2 + DmgHigh
+    MinDmg = math.floor(DmgBonus) * 2 + DmgLow
+    
+    SpellDamage(Target, DmgType, MinDmg, MaxDmg)
+    Interrupt(Caster, Target)
+	
 end
 
-function remove(Caster, Target)
-    RemoveSpellBonus(Target)
-end

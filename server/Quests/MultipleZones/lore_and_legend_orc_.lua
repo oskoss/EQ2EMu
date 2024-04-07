@@ -1,7 +1,7 @@
 --[[
 	Script Name		:	Quests/MultipleZones/lore_and_legend_orc_.lua
 	Script Purpose	:	Handles the quest, "Lore and Legend: Orc"
-	Script Author	:	premierio015
+	Script Author	:	premierio015//Dorbin
 	Script Date		:	20.06.2021
 	Script Notes	:	Auto generated with QuestParser.
 
@@ -13,22 +13,22 @@
 
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find an orc spirit.", 1, 100, "I must locate several orc body parts.", 2516, 317)
-		AddQuestStep(Quest, 2, "I need to find an orc heart.", 1, 100, "I must locate several orc body parts.", 135)
-			AddQuestStep(Quest, 3, "I need to find an orc brain.", 1, 100, "I must locate several orc body parts.", 109)
-				AddQuestStep(Quest, 4, "I need to find and study an orc eye.", 1, 100, "I must locate several orc body parts.", 11)
-					AddQuestStep(Quest, 5, "I need to find and study an orc skin.", 1, 100, "I must locate several orc body parts.", 11)
-						AddQuestStep(Quest, 6, "I need to find and study an orc tooth.", 1, 100, "I must locate several orc body parts.", 11)
-							AddQuestStep(Quest, 7, "I need to find and study an orc spine.", 1, 100, "I must locate several orc body parts.", 11)
-								AddQuestStep(Quest, 8, "I need to find and study an orc ear.", 1, 100, "I must locate several orc body parts.", 11)
+	AddQuestStepKillByRace(Quest, 1, "I need to find an orc spirit.", 1, 10, "I must locate several orc body parts.", 2516, 317)
+	AddQuestStepKillByRace(Quest, 2, "I need to find an orc heart.", 1, 35, "I must locate several orc body parts.", 135, 317)
+	AddQuestStepKillByRace(Quest, 3, "I need to find an orc brain.", 1, 22, "I must locate several orc body parts.", 109, 317)
+	AddQuestStep(Quest, 4, "I need to find and study an orc eye.", 1, 100, "I must locate several orc body parts.", 11)
+	AddQuestStep(Quest, 5, "I need to find and study an orc skin.", 1, 100, "I must locate several orc body parts.", 11)
+	AddQuestStep(Quest, 6, "I need to find and study an orc tooth.", 1, 100, "I must locate several orc body parts.", 11)
+	AddQuestStep(Quest, 7, "I need to find and study an orc spine.", 1, 100, "I must locate several orc body parts.", 11)
+	AddQuestStep(Quest, 8, "I need to find and study an orc ear.", 1, 100, "I must locate several orc body parts.", 11)
 	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
-		AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
+	AddQuestStepCompleteAction(Quest, 2, "Step2Complete")
  	AddQuestStepCompleteAction(Quest, 3, "Step3Complete")
- 		AddQuestStepCompleteAction(Quest, 4, "Step4Complete")
+ 	AddQuestStepCompleteAction(Quest, 4, "Step4Complete")
 	AddQuestStepCompleteAction(Quest, 5, "Step5Complete")
 	AddQuestStepCompleteAction(Quest, 6, "Step6Complete")
 	AddQuestStepCompleteAction(Quest, 7, "Step7Complete")
-	    AddQuestStepCompleteAction(Quest, 8, "Step8Complete")
+	AddQuestStepCompleteAction(Quest, 8, "Step8Complete")
 end
 
 function Accepted(Quest, QuestGiver, Player)

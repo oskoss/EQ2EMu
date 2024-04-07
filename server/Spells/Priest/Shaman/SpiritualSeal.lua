@@ -12,6 +12,7 @@
 function cast(Caster, Target, HP, Mit)
     AddSpellBonus(Target, 606, HP)
     AddSpellBonus(Target, 202, Mit)
+    AddSpellBonus(Target, 209, Mit)
 
 end
 

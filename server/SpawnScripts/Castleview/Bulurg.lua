@@ -10,7 +10,8 @@ dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
 --dofile("SpawnScripts/Generic/GenericBartenderVoiceOvers.lua")
 
 local Water = 5456
-
+local FarSea372 = 5887
+local FarSea436 = 5888
 function spawn(NPC)
 ProvidesQuest(NPC,Water)
 SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
@@ -39,9 +40,9 @@ function hailed(NPC, Spawn)
         if GetFactionAmount(Spawn,11) <0 then
         FactionChecking(NPC, Spawn, faction)
         else        
-    if not HasCompletedQuest(Spawn, Water) then
+--    if not HasCompletedQuest(Spawn, Water) then
             QuestStart(NPC, Spawn,conversation)
-    else
+--[[    else
       	FaceTarget(NPC, Spawn)  
         local choice = math.random(1,4)
 	        if choice == 1 then
@@ -53,7 +54,7 @@ function hailed(NPC, Spawn)
 	        elseif choice == 4 then
         PlayFlavor(NPC, "voiceover/english/bartender_bulurg/qey_village04/bartenderbulurg000.mp3", "Good to see you found my Hole-in-the-Wall Tavern! Taste my brews made with real swamp water, now with more flies!", "hello", 1246934802, 3942849521, Spawn)
         end
-    end
+    end--]]
 end
 end
 
@@ -69,6 +70,9 @@ end
         if HasQuest (Spawn, Water) and GetQuestStep(Spawn, Water) == 2 then
         Dialog.AddOption("Here is a full jug of water from the Oakmyst falls.", "FullJug")
         end
+         if HasQuest (Spawn, FarSea372) and GetQuestStep(Spawn, FarSea372) == 4 or HasQuest(Spawn,FarSea436) and GetQuestStep(Spawn,FarSea436) == 4 then
+        Dialog.AddOption("I've completed a Far Seas requisition for you.", "CompleteFarSea")
+        end       
         Dialog.AddOption("I'm good for now, thanks.")	
         Dialog.Start()
     end
@@ -102,3 +106,21 @@ function TakeJug (NPC, Spawn)
     FaceTarget(NPC, Spawn)
     OfferQuest(NPC, Spawn, Water)
 end
+
+
+ function CompleteFarSea(NPC, Spawn)
+if HasQuest (Spawn, FarSea372) and GetQuestStep(Spawn, FarSea372) == 4  then
+    SetStepComplete(Spawn, FarSea372, 4)
+end
+ if HasQuest (Spawn, FarSea436) and GetQuestStep(Spawn, FarSea436) == 4  then
+    SetStepComplete(Spawn, FarSea436, 4)
+end
+    FaceTarget(NPC, Spawn)
+	Dialog.New(NPC, Spawn)
+	Dialog.AddDialog("I bet you have some stories, eh?  Adventuring must be an exciting life!")
+	Dialog.AddVoiceover("voiceover/english/froglok_eco_good_1/ft/service/bartender/froglok_bartender_service_good_1_hail_gf_ce733912.mp3",1840731743,2065794369)
+ 	PlayFlavor(NPC, "", "", "thank", 0,0 , Spawn)
+   Dialog.AddOption("Thanks for the coin!")
+   Dialog.AddOption("More than I'd like to admit. Thanks.")
+   Dialog.Start()
+end  

@@ -14,25 +14,13 @@ local FishingForBait = 5339
 local PracticalJokeOnBlarton = 5355
 
 function spawn(NPC)
+    ProvidesQuest(NPC,Lucky)    
+    ProvidesQuest(NPC,FishingHoleHunt)    
+    ProvidesQuest(NPC,TheOneThatGotAway)    
  SetPlayerProximityFunction(NPC, 15, "InRange", Spawn) 
 end
 
 function InRange(NPC, Spawn)
-if not HasCompletedQuest(Spawn, Lucky) then
-ProvidesQuest(NPC, Lucky)
-elseif HasCompletedQuest(Spawn, Lucky) then
-ProvidesQuest(NPC, FishingHoleHunt)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
-elseif  HasCompletedQuest(Spawn, FishingHoleHunt) then
-ProvidesQuest(NPC, TheOneThatGotAway)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
-elseif  HasCompletedQuest(Spawn, TheOneThatGotAway) then
-ProvidesQuest(NPC, FishingForBait)
-  SetInfoFlag(NPC)
-SetVisualFlag(NPC)
-end
    end
 
 function respawn(NPC)
@@ -52,7 +40,9 @@ function hailed(NPC, Spawn)
 	elseif choice == 3 then
 	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_3_1040.mp3", "", "", 0, 0, Spawn)
 	end
-	if not HasQuest(Spawn, Lucky) and not HasCompletedQuest(Spawn, Lucky) and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
+	 if GetQuestStep(Spawn, PracticalJokeOnBlarton) == 1 then
+		 SIDEQUEST_OPTION(NPC, Spawn)
+	elseif  not HasQuest(Spawn, Lucky) and not HasCompletedQuest(Spawn, Lucky) and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
 	  Option1(NPC, Spawn)
 	elseif GetQuestStep(Spawn, Lucky) == 1 or GetQuestStep(Spawn, FishingHoleHunt) == 1 or GetQuestStep(Spawn, FishingHoleHunt) == 2 or GetQuestStep(Spawn, FishingHoleHunt) == 3 or GetQuestStep(Spawn, FishingHoleHunt) == 4 or GetQuestStep(Spawn, FishingHoleHunt) == 5 or GetQuestStep(Spawn, FishingHoleHunt) == 6 or GetQuestStep(Spawn, TheOneThatGotAway) == 1 or GetQuestStep(Spawn, FishingForBait) == 1 and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
 	  Quest_Progress(NPC, Spawn)
@@ -62,18 +52,17 @@ function hailed(NPC, Spawn)
 	  Option2(NPC, Spawn)
 	elseif GetQuestStep(Spawn, FishingHoleHunt) == 7 and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
 	  Quest2_Complete(NPC, Spawn)
-	 elseif HasCompletedQuest(Spawn, Lucky) and HasCompletedQuest(Spawn, FishingHoleHunt) and not HasQuest(Spawn, TheOneThatGotAway) and not HasCompletedQuest(Spawn, TheOneThatGotAway) and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
+	elseif HasCompletedQuest(Spawn, Lucky) and HasCompletedQuest(Spawn, FishingHoleHunt) and not HasQuest(Spawn, TheOneThatGotAway) and not HasCompletedQuest(Spawn, TheOneThatGotAway) and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
 	 Option4(NPC, Spawn)    
-	 elseif GetQuestStep(Spawn,  TheOneThatGotAway) == 2 then
+	elseif GetQuestStep(Spawn,  TheOneThatGotAway) == 2 then
 	  Quest3_Complete(NPC, Spawn)
-	 elseif HasCompletedQuest(Spawn, Lucky) and HasCompletedQuest(Spawn, FishingHoleHunt) and HasCompletedQuest(Spawn, TheOneThatGotAway) and not HasQuest(Spawn, FishingForBait) and not HasCompletedQuest(Spawn, FishingForBait) and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
+	elseif HasCompletedQuest(Spawn, Lucky) and HasCompletedQuest(Spawn, FishingHoleHunt) and HasCompletedQuest(Spawn, TheOneThatGotAway) and not HasQuest(Spawn, FishingForBait) and not HasCompletedQuest(Spawn, FishingForBait) and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
 	   Option6(NPC, Spawn)
-	 	 elseif GetQuestStep(Spawn,  FishingForBait) == 2 and not GetQuestStep(Spawn, PracticalJokeOnBlarton) == 1 then
+	elseif GetQuestStep(Spawn,  FishingForBait) == 2 and not GetQuestStep(Spawn, PracticalJokeOnBlarton) == 1 then
 	    Quest4_Complete(NPC, Spawn)
-		 elseif HasCompletedQuest(Spawn, Lucky) and HasCompletedQuest(Spawn, FishingHoleHunt) and HasCompletedQuest(Spawn, TheOneThatGotAway) and HasCompletedQuest(Spawn, FishingForBait) and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
+	elseif HasCompletedQuest(Spawn, Lucky) and HasCompletedQuest(Spawn, FishingHoleHunt) and HasCompletedQuest(Spawn, TheOneThatGotAway) and HasCompletedQuest(Spawn, FishingForBait) and not HasQuest(Spawn,  PracticalJokeOnBlarton) then
 		 PlayFlavor(NPC, "", "Thank you so much for all of your help! I can't wait to get back to fishing again.", "", 0, 0, Spawn)
-		 elseif GetQuestStep(Spawn, PracticalJokeOnBlarton) == 1 then
-		 SIDEQUEST_OPTION(NPC, Spawn)
+
     elseif GetTempVariable(NPC, "Drunk") == "true" then
   PlayFlavor(NPC, "", "...", "",  0, 0, Spawn)
 end

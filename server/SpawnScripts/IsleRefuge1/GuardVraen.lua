@@ -6,8 +6,10 @@
                    : 
 --]]
 require "SpawnScripts/Generic/DialogModule"
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
 	SetPlayerProximityFunction(NPC, 10, "InRange", "LeaveRange")
 end
 

@@ -9,6 +9,7 @@
         Preceded by: None
         Followed by: 
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 
 function Init(Quest)
@@ -18,11 +19,14 @@ end
 
 function Accepted(Quest, QuestGiver, Player)
 	FaceTarget(QuestGiver, Player)
-	local conversation = CreateConversation()
-    PlayFlavor(QuestGiver, "voiceover/english/gavin_ironforge/qey_north/gavinironforge002.mp3", "", "smile", 2486535171, 583526887, Player)
-	AddConversationOption(conversation, "I'll make sure Rowena receives this.")
-	StartConversation(conversation, QuestGiver, Player, "Wonderful!  Take this small box to Medic Rowena in the temple.  Tell her the Jewel Box sent you.  She'll be very pleased as she is not expecting it until tomorrow!  You will have some coin upon your return.")
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Wonderful! Take this small box to Medic Rowena in the temple. Tell her the Jewel Box sent you. She'll be very pleased, as she's not expecting it until the morrow. You will have some coin upon your return.")
+	Dialog.AddVoiceover("voiceover/english/gavin_ironforge/qey_north/gavinironforge002.mp3",  2486535171, 583526887)
+    PlayFlavor(QuestGiver, "", "", "smile", 0, 0, Player)
+	Dialog.AddOption("I'll be off now!")
+	Dialog.Start()
 end
+
 
 function Declined(Quest, QuestGiver, Player)
 	-- Add dialog here for when the quest is declined

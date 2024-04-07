@@ -5,9 +5,11 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/CombatModule"
 
-function spawn(NPC)
-EmoteLoop(NPC,Spawn)
+function spawn(NPC, Spawn)
+    combatModule(NPC, Spawn)  
+    EmoteLoop(NPC,Spawn)
 end
 
 function EmoteLoop(NPC,Spawn)

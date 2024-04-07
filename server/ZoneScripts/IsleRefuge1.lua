@@ -7,8 +7,6 @@
 --]]
 
 
-
-
 function player_entry(Zone, Spawn)
 SendPopUpMessage(Spawn, "The Isle of Refuge", 230, 230, 230)
 end

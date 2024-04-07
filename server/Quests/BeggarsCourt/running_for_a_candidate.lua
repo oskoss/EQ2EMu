@@ -1,7 +1,7 @@
 --[[
 	Script Name		:	running_for_a_candidate.lua
 	Script Purpose	:	Handles the quest, "Running For A Candidate"
-	Script Author	:	torsten
+	Script Author	:	torsten\\Dorbin
 	Script Date		:	17.07.2022
 	Script Notes	:	
 
@@ -10,28 +10,28 @@
 	Preceded by		:	To Spite a Darkleaf
 	Followed by		:	None
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 
 function Init(Quest)
-	AddQuestStepChat(Quest, 1, "Marianna Darklea asks you to deliver a note to Lurina Galla.", 1, "Marianna Darklea asks you to deliver a note to Lurina Galla here in Beggar's Court.", 11, 1370026)
-	AddQuestStepCompleteAction(Quest, 1, "Step1Complete")
-end
-
-function Step1Complete(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 1, "The note was delivered to Lurina.")
-	UpdateQuestTaskGroupDescription(Quest, 1, "The note was delivered to Lurina in the upper courtyard.")
-
-    AddQuestStepChat(Quest, 2, "I should return to Mariana.", 1, "I should return to Mariana to tell her I delivered the note.", 11, 1370014)
-	AddQuestStepCompleteAction(Quest, 2, "QuestComplete")
+	AddQuestStepChat(Quest, 1, "I need to speak with Lurina in Beggar's Court.", 1, "I need to tell Lurina Galla that 'Elowyn is a perfect candidate'.", 11, 1370026)
+	AddQuestStepCompleteAction(Quest, 1, "QuestComplete")
 end
 
 function QuestComplete(Quest, QuestGiver, Player)
-	UpdateQuestDescription(Quest, "You finished the final task of Mariana Darfleaf. That's all you want to have to do with this person.")
+	UpdateQuestStepDescription(Quest, 1, "I've spoken with Lurina.")
+	UpdateQuestTaskGroupDescription(Quest, 1, "I've given Lurina the message that Mariana had me send.")
+
+	UpdateQuestDescription(Quest, "I think I may have stumbled into some intrigue in the district. It seems that Lurina Galla and Mariana Darkleaf have something going on that involves Elowyn the Half-Elf. I wonder if one day I'll find out more about what's going on. No sense bothering Mariana again. For now.")
 	GiveQuestReward(Quest, Player)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("Ugh. If you'll stop bothering me, then fine! Go find Lurina Galla and tell her I found the perfect candidate, Elowyn. He's ideal! Now, off with you! Go tell Lurina and don't bother me again!")
+	Dialog.AddOption("Fine.")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)
@@ -44,8 +44,6 @@ end
 
 function Reload(Quest, QuestGiver, Player, Step)
 	if Step == 1 then
-	    Step1Complete(Quest, QuestGiver, Player)
-	elseif Step == 2 then
 	    QuestComplete(Quest, QuestGiver, Player)
 	end
 end

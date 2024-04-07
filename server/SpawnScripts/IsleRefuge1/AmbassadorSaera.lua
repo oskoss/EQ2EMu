@@ -2,7 +2,7 @@
     Script Name    : SpawnScripts/IsleRefuge1/AmbassadorSaera.lua
     Script Author  : Dorbin
     Script Date    : 2022.08.30 03:08:04
-    Script Purpose : Just applying parsed dialog here.  Obvisouly needs more.
+    Script Purpose : 
                    : 
 --]]
 
@@ -65,7 +65,7 @@ end
 function hailed(NPC, Spawn)
 if GetClass(Spawn)>0 then
 if not HasQuest(Spawn,5758) and not HasQuest(Spawn,5717) and not HasCompletedQuest(Spawn,5758)  and not HasCompletedQuest(Spawn,5717) and not  HasItem(Spawn, 1413,1) and GetFactionAmount(Spawn,11) >=0  then
-   if GetRace(Spawn) == BARBARIAN or GetRace(Spawn) == DWARF or GetRace(Spawn) == ERUDITE or GetRace(Spawn) ==GNOME or GetRace(Spawn) == HALF_ELF or GetRace(Spawn) == HUMAN or GetRace(Spawn) == FROGLOK or GetRace(Spawn) == KERRA or GetRace(Spawn) == HIGH_ELF or GetRace(Spawn) == HALFLING or GetRace(Spawn) == WOOD_ELF or GetRace(Spawn) == FAE or GetRace(Spawn) == AERAKYN then
+   if GetRace(Spawn) == BARBARIAN or GetRace(Spawn) == DWARF or GetRace(Spawn) == ERUDITE or GetRace(Spawn) ==GNOME or GetRace(Spawn) == HALF_ELF or GetRace(Spawn) == HUMAN or GetRace(Spawn) == FROGLOK or GetRace(Spawn) == KERRA or GetRace(Spawn) == HIGH_ELF or GetRace(Spawn) == HALFLING or GetRace(Spawn) == WOOD_ELF or GetRace(Spawn) == FAE or GetRace(Spawn) == VAMPIRE or GetRace(Spawn) == AERAKYN then
         Dialog1(NPC, Spawn)
         else
         NotRace(NPC, Spawn)
@@ -146,15 +146,34 @@ end
 
 
 function Dialog5(NPC, Spawn)
+    if GetClientVersion(Spawn) <= 546 then
+       local con = CreateConversation()
+        if GetClass(Spawn)==1 then
+	    AddConversationOption(con, ""..GetName(Spawn).." the Fighter", "Dialog6")
+        elseif GetClass(Spawn)==11 then
+	    AddConversationOption(con, ""..GetName(Spawn).." the Priest", "Dialog6")
+        elseif GetClass(Spawn)==21 then
+	    AddConversationOption(con, ""..GetName(Spawn).." the Mage", "Dialog6")
+        elseif GetClass(Spawn)==31 then
+	    AddConversationOption(con, ""..GetName(Spawn).." the Scout", "Dialog6")
+        else
+	    AddConversationOption(con, ""..GetName(Spawn).."", "Dialog6")
+        end
+        AddConversationOption(con, "On second thought, I need to reconsider.","CloseConversation")
+        StartDialogConversation(con, 1, NPC, Spawn, "OFFICIAL QEYNOS DOCUMENTATION:\n-----------------------------------------\nI \""..GetName(Spawn).."\" pledge myself to \nthe City of Qeynos and its ruler,\nQueen Antonia Bayle. \n\nI will strive to uphold its ideals of honor and goodwill for all citizens of Qeynos.\n\nSigned,")
+	else
 	window = CreateOptionWindow();
 	AddOptionWindowOption(window, " Pledge allegiance to Qeynos", "Dedicate yourself to the City of Qeynos and to its leader,           Queen Antonia Bayle.                                                                                [This decision is final!]", 2, 16, "Dialog6")
 	AddOptionWindowOption(window, " Reconsider", "Rescind your request.  Return to Ambassador Saera if you decide Qeynos is right for you.", 2, 13, "Sigh")
 	SendOptionWindow(window, Spawn, "Pledge allegiance to Qeynos?", "Cancel")
+
+end
 end
 
 function Dialog6(NPC, Spawn)
-OfferQuest(NPC,Spawn,5717)
+OfferQuest(NPC,Spawn,Qeynos)
 FaceTarget(NPC,Spawn)
+CloseConversation(NPC,Spawn)
 end
 
 function Sigh(NPC, Spawn)

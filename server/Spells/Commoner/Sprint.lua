@@ -21,7 +21,8 @@ function cast(Caster, Target, Speed, is_tick)
 		end
 	else
 		if is_tick  == true then
-			ModifyPower(Caster, -1 * (total_power * .1))
+	    local total_power = GetMaxPower(Caster)
+			ModifyPower(Caster, (-1 *(total_power * .1)))
 		end
 		if GetTempVariable(Caster, "sprint_bonus_active") ~= "true" then
 			AddSpellBonus(Caster, 609, Speed)
@@ -32,6 +33,7 @@ function cast(Caster, Target, Speed, is_tick)
 		SetTempVariable(Caster, "sprint_bonus_z", GetZ(Caster) .. "")
 	end
 end
+
 
 function SprinterHasMoved(Caster, is_tick)
 	if is_tick ~= true then

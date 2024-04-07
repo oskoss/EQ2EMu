@@ -5,7 +5,7 @@
     Script Purpose : 
                    : 
 --]]
-
+dofile("SpawnScripts/Generic/ClassSkillCheck.lua")
 require "SpawnScripts/Generic/DialogModule"
 local Fighter2 = 5731
 local Fighter3 = 5735
@@ -19,6 +19,7 @@ function spawn(NPC)
     ProvidesQuest(NPC, Fighter4)
     ProvidesQuest(NPC, Fighter5)
     ProvidesQuest(NPC, Fighter6)
+    SetInfoStructString(NPC, "action_state", "metalworking_idle")
     end
 
 function InRange(NPC,Spawn)
@@ -72,9 +73,16 @@ function hailed(NPC, Spawn)
     if HasCompletedQuest(Spawn,Fighter6) then
 	Dialog.AddOption("Greetings Braksan.  I hope your work has slowed down some.","Thanks")
 	end 	
-	Dialog.AddOption("I will leave you to your work.")
-	Dialog.Start()
+    Dialog.AddOption("I will leave you to your work.")
+    if GetClass(Spawn)==1 then
+    Dialog.AddOption("Can you make sure my skills are in order?","Skills")
+    end	Dialog.Start()
 end
+end
+
+function Skills(NPC,Spawn)
+    SkillCheck(NPC,Spawn)
+    PlayFlavor(NPC,"","","nod",0,0,Spawn)
 end
 
 function Thanks(NPC,Spawn)
@@ -117,8 +125,8 @@ function Interested(NPC,Spawn)
 	Dialog.Start()
 end
 
-function Quest3Start(NPC,Player)
-    OfferQuest(NPC,Player,Fighter3)
+function Quest3Start(NPC,Spawn)
+    OfferQuest(NPC,Spawn,Fighter3)
     FaceTarget(NPC, Spawn)
 end
 

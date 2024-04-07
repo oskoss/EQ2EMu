@@ -9,35 +9,80 @@
 require "SpawnScripts/Generic/DialogModule"
 
 function spawn(NPC)
+SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
 end
 
 function respawn(NPC)
 	spawn(NPC)
 end
 
+function InRange(NPC, Spawn)
+	 if MakeRandomInt(1, 100) <= 18 and GetFactionAmount(Spawn,12) >0 then
+	    FaceTarget(NPC, Spawn)
+        PlayFlavor(NPC, "voiceover/english/barbarian_eco_evil_1/ft/service/innkeeper/barbarian_innkeeper_service_evil_1_aoi_gm_523a90f5.mp3", "Ah hello there!  A traveling adventurer.  You're in luck, we just had a recent death... err last minute cancellation.", "hello", 2939649453, 60816266, Spawn)
+ elseif  GetFactionAmount(Spawn,12) <=0 then
+	    FaceTarget(NPC, Spawn)
+	    PlayFlavor(NPC, "", "We don't serve your pathetic kind here.  Get out of my sight!", "shakefist", 4267987983, 4115199119, Spawn, 0)
+    end
+end   
+	 
+
 function hailed(NPC, Spawn)
-	RandomGreeting(NPC, Spawn)
+    if GetFactionAmount(Spawn,12) >0 then
+    Dialog1(NPC, Spawn)
+	else
+	 FaceTarget(NPC, Spawn)
+	PlayFlavor(NPC, "", "We don't serve your pathetic kind here.  Get out of my sight!", "shakefist", 4267987983, 4115199119, Spawn, 0)
+    end	    
 end
 
 function RandomGreeting(NPC, Spawn)
-	Dialog1(NPC, Spawn)
+	local choice = MakeRandomInt(1,4)
+	    FaceTarget(NPC, Spawn)
+
+	if choice == 1 then
+		PlayFlavor(NPC, "voiceover/english/barbarian_eco_evil_1/ft/service/innkeeper/barbarian_innkeeper_service_evil_1_hail_gm_252bf582.mp3", "Room rates are by the night not by the hour!", "no", 2290384264, 3204846441, Spawn, 0)
+	elseif choice == 2 then
+		PlayFlavor(NPC, "voiceover/english/barbarian_eco_evil_1/ft/service/innkeeper/barbarian_innkeeper_service_evil_1_hail_gm_a81dfaee.mp3", "Can't you see I'm busy doing some very important things now.  I don't care if there's any hot water! ", "tapfoot", 1233544589, 3237948704, Spawn, 0)
+	elseif choice == 3 then
+		PlayFlavor(NPC, "voiceover/english/barbarian_eco_evil_1/ft/service/innkeeper/barbarian_innkeeper_service_evil_1_hail_gm_c58b0e.mp3", "What!  What do you want?", "glare", 3188768809, 805088185, Spawn, 0)
+	elseif choice == 4 then
+		PlayFlavor(NPC, "voiceover/english/barbarian_eco_evil_1/ft/service/innkeeper/barbarian_innkeeper_service_evil_1_hail_gm_cac7726b.mp3", "Look I'm no cook, but I was going to have some fresh kidneys myself.  You want me to get you a pair?", "shrug", 2965195375, 1753238152, Spawn, 0)
+	end
 end
 
-function Dialog1(NPC, Spawn)
+--[[function Dialog1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("Hello Gaikichi, I am the Innkeeper for this district. We have received word of your arrival and have a room prepared for you.  Would you like to know more about housing?")
+	Dialog.AddDialog("Hello, I am the Innkeeper for this district. We have received word of your arrival and have a room prepared for you.  Would you like to know more about housing?")
 	Dialog.AddVoiceover("innkeeper_melus/fprt_hood04/innkeeper010.mp3", 328655352, 2391913046)
 	Dialog.AddOption("Yes.", "Dialog9")
 	Dialog.AddOption("No thanks.")
 	Dialog.Start()
-end
+end]]--
 
-function Dialog9(NPC, Spawn)
+function Dialog1(NPC, Spawn)
 	FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
-	Dialog.AddDialog("What would you like to know?")
-	Dialog.AddVoiceover("innkeeper_melus/fprt_hood04/innkeeper001.mp3", 1649814488, 96870422)
+	local choice = MakeRandomInt(1,4)
+
+	if choice == 1 then
+    	Dialog.AddDialog("Room rates are by the night not by the hour!")
+	    Dialog.AddVoiceover("voiceover/english/barbarian_eco_evil_1/ft/service/innkeeper/barbarian_innkeeper_service_evil_1_hail_gm_252bf582.mp3", 2290384264, 3204846441)
+		PlayFlavor(NPC, "", "", "no", 0, 0, Spawn, 0)
+	elseif choice == 2 then
+	    Dialog.AddDialog("Can't you see I'm busy doing some very important things now.  I don't care if there's any hot water! ")
+	    Dialog.AddVoiceover("voiceover/english/barbarian_eco_evil_1/ft/service/innkeeper/barbarian_innkeeper_service_evil_1_hail_gm_a81dfaee.mp3", 1233544589, 3237948704)
+		PlayFlavor(NPC, "", "", "stare", 0, 0, Spawn, 0)
+	elseif choice == 3 then
+    	Dialog.AddDialog("What!  What do you want?")
+	    Dialog.AddVoiceover("voiceover/english/barbarian_eco_evil_1/ft/service/innkeeper/barbarian_innkeeper_service_evil_1_hail_gm_c58b0e.mp3", 3188768809, 805088185)
+		PlayFlavor(NPC, "", "", "glare", 0, 0, Spawn, 0)
+	elseif choice == 4 then
+	    Dialog.AddDialog("Look I'm no cook, but I was going to have some fresh kidneys myself.  You want me to get you a pair?")
+	    Dialog.AddVoiceover("voiceover/english/barbarian_eco_evil_1/ft/service/innkeeper/barbarian_innkeeper_service_evil_1_hail_gm_cac7726b.mp3", 2965195375, 1753238152)
+		PlayFlavor(NPC, "", "", "shrug", 0, 0, Spawn, 0)
+	end
 	Dialog.AddOption("How can I place an item in my house?", "Dialog7")
 	Dialog.AddOption("What kind of housing is available to me?", "Dialog10")
 	Dialog.AddOption("What is the marketboard for?", "Dialog6")
@@ -78,7 +123,7 @@ function Dialog2(NPC, Spawn)
 	Dialog.AddOption("How can I place an item in my house?", "Dialog7")
 	Dialog.AddOption("What kind of housing is available to me?", "Dialog10")
 	Dialog.AddOption("What is the marketboard for?", "Dialog6")
-	Dialog.AddOption("Thatâ€™s enough for now, thanks.")
+	Dialog.AddOption("That's enough for now, thanks.")
 	Dialog.Start()
 end
 

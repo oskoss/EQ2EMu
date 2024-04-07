@@ -12,6 +12,7 @@
 
 
 function Init(Quest)
+    UpdateQuestZone(Quest,"Forest Ruins")
  local RandomChoice = MakeRandomInt(1, 6)
 
 	SetQuestFeatherColor(Quest, 3)

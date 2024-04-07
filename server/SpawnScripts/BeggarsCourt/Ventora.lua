@@ -1,10 +1,12 @@
 --[[
 	Script Name		: SpawnScripts/BeggarsCourt/Ventora.lua
 	Script Purpose	: Ventora
-	Script Author	: torsten
+	Script Author	: Dorbin
 	Script Date		: 2022.07.18
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
+
+dofile("SpawnScripts/Generic/GenericGuardVoiceOvers.lua")
 
 function spawn(NPC)
 end
@@ -14,7 +16,11 @@ function respawn(NPC)
 end
 
 function hailed(NPC, Spawn)
-	RandomGreeting(NPC, Spawn)
+    if GetFactionAmount(Spawn,12)<0 then
+        else
+    FaceTarget(NPC, Spawn)
+    GenericGuardHail(NPC,Spawn)
+end
 end
 
 function RandomGreeting(NPC, Spawn)

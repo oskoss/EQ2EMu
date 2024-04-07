@@ -5,32 +5,26 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/MonsterCallouts/HighwaymanAntonica.lua")
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
-    local Level = GetLevel(NPC)
-    local level1 = 17
-    local level2 = 18
-    local difficulty1 = 6
-    local hp1 = 1180
-    local power1 = 360
-    local difficulty2 = 6
-    local hp2 = 1290
-    local power2 = 410
-    if Level == level1 then
-    SpawnSet(NPC, "difficulty", difficulty1)
-    SpawnSet(NPC, "hp", hp1)
-    SpawnSet(NPC, "power", power1)
-    elseif Level == level2
-        then
-    SpawnSet(NPC, "difficulty", difficulty2)
-    SpawnSet(NPC, "hp", hp2)
-    SpawnSet(NPC, "power", power2)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+
+    local RaceCheck = MakeRandomInt(1,2)
+    if RaceCheck ==1 then
+        human(NPC)
+    else
+        barbarian(NPC)   
     end
 
 end
 
 function hailed(NPC, Spawn)
+    if IsInCombat(NPC)== false then
 	FaceTarget(NPC, Spawn)
+	Attack(NPC,Spawn)
+	end
 end
 
 function respawn(NPC)

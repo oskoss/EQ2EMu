@@ -60,7 +60,7 @@ end
 
 
 function Drink(NPC)
-    PlayAnimation(NPC,11422)
+        PlayFlavor(NPC,"","","drinking_idle",0,0)
 end
 
 

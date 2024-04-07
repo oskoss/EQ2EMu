@@ -5,11 +5,11 @@
 	Script Date	: 10/4/2022
 	Script Notes	: 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-
-
-function spawn(NPC)
-
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    RandomMovement(NPC, Spawn, 4, -4, 2, 8, 15)
 end
 
 function respawn(NPC)

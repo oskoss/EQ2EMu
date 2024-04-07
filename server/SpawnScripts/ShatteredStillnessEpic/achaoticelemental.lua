@@ -9,7 +9,6 @@
 spells = {30159} -- Swirling Cloud of Blood, Stunning Shards}
 
 function spawn(NPC)
-    AddTimer(NPC, 1000, "spellLoop")
 end
 
 function hailed(NPC, Spawn)

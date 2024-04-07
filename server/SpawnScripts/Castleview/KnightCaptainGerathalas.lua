@@ -6,12 +6,13 @@
 	Script Notes	: 
 --]]
 require "SpawnScripts/Generic/DialogModule"
+dofile("SpawnScripts/Generic/AdvancementGaze.lua")
 dofile("SpawnScripts/Generic/GenericVoiceOvers.lua")
 
 local Rats = 5460
 
 function spawn(NPC)
-SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
+SetPlayerProximityFunction(NPC, 9, "InRange", "LeaveRange")
 ProvidesQuest(NPC, Rats)
 end
 
@@ -19,7 +20,13 @@ function respawn(NPC)
 end
 
 function InRange(NPC, Spawn) --Quest Callout
-if MakeRandomInt(1, 100) <= 70 then
+    if GetFactionAmount(Spawn,11)>=5000 then
+        if GetLevel(Spawn) ==8 or GetLevel(Spawn)==9 then
+        ClassCheck(NPC,Spawn)
+        end
+    end
+    
+    if MakeRandomInt(1, 100) <= 70 then
     if GetFactionAmount(Spawn,11)>0 then
     if GetLevel(Spawn) <5 then
             FaceTarget(NPC, Spawn)

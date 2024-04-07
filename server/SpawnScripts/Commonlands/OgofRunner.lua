@@ -5,10 +5,13 @@
     Script Purpose : 
                    : 
 --]]
+require "SpawnScripts/Generic/NPCModule"
 
-function spawn(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
+    Bloodskull(NPC)
+    OrcArmorCommon(NPC)
 	AddTimer(NPC, 900, "follow_Ogof")
-
 end
 
 function follow_Ogof(NPC, Spawn)

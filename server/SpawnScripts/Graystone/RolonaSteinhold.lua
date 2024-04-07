@@ -85,24 +85,24 @@ function Door(NPC,Spawn)
 end
 
 function Drink(NPC)
-    PlayAnimation(NPC,11422)
+        PlayFlavor(NPC,"","","drinking_idle",0,0)
     AddTimer(NPC,8000, "Drink2")
 end
 
 function Drink2(NPC)
   choice = math.random(1,4)   
         if choice == 1 then    
-        PlayAnimation(NPC,891)
+        PlayFlavor(NPC,"","","yawn",0,0)
         elseif choice == 2 then    
-        PlayAnimation(NPC,11422)
+        PlayFlavor(NPC,"","","drinking_idle",0,0)
         elseif choice == 3 then    
         PlayFlavor(NPC,"","","confused",0,0)
         else
-        PlayAnimation(NPC,11668)
+        PlayFlavor(NPC,"","","happy",0,0)
         end            
     AddTimer(NPC,6000, "Drink3")
 end
 
 function Drink3(NPC)
-    PlayAnimation(NPC,11422)
+        PlayFlavor(NPC,"","","drinking_idle",0,0)
 end

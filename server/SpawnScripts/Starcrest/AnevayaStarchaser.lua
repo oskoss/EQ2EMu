@@ -62,7 +62,7 @@ local ConcFac = GetFactionAmount(Spawn, 136)
 		PlayFlavor(NPC, "voiceover/english/highelf_eco_good_concordium/ft/eco/good/highelf_eco_good_concordium_10_gf_f5fd7a50.mp3", "To aid the Concordium is to unleash the force for good that burns within us all!", "thank", 3469670242, 3251902799, Spawn)
 	elseif choice == 7 then
 	    FaceTarget(NPC, Spawn)
-		PlayFlavor(NPC, "voiceover/english/highelf_eco_good_concordium/ft/eco/good/highelf_eco_good_concordium_30_gf_1e49a37f.mp3", "Your couragous actions have assisted the Concordium in its quest for all knowledge!", "cheer", 1170821333, 3893107670, Spawn)
+		PlayFlavor(NPC, "voiceover/english/highelf_eco_good_concordium/ft/eco/good/highelf_eco_good_concordium_30_gf_1e49a37f.mp3", "Your courageous actions have assisted the Concordium in its quest for all knowledge!", "cheer", 1170821333, 3893107670, Spawn)
 	    end
     end
 end

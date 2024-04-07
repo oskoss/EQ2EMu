@@ -16,7 +16,11 @@ end
 
 function spawn(NPC)
 	SetPlayerProximityFunction(NPC, 15, "InRange", "LeaveRange")	    
-     AddTimer(NPC,math.random(1260000, 2160000),"wakeup")            --random activation between 12 (~21min) and 24 (37min) Norrath/in-game hours
+    AddTimer(NPC,math.random(1260000, 2160000),"wakeup")            --random activation between 12 (~21min) and 24 (37min) Norrath/in-game hours
+    dmgMod = GetStr(NPC)/10
+    SetInfoStructUInt(NPC, "override_primary_weapon", 1)        
+    SetInfoStructUInt(NPC, "primary_weapon_damage_low", math.floor(30 + dmgMod)) 
+    SetInfoStructUInt(NPC, "primary_weapon_damage_high", math.floor(60 + dmgMod))
     end
     
 function InRange(NCP,Spawn)                                          --(Doesn't trigger) VERY small chance to activate when players are near

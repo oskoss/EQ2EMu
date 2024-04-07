@@ -5,11 +5,20 @@
     Script Purpose : 
                    : 
 --]]
+dofile("SpawnScripts/Generic/AdvancementGaze.lua")
 
 function NonCitizen(NPC,Spawn)
+ if GetFactionAmount(Spawn,11)>=5000 then
+    if GetLevel(Spawn) ==8 or GetLevel(Spawn)==9 then--CLASS ADVANCEMENT QUEST CHECK
+    ClassCheck(NPC,Spawn)
+    end
+end
+
 	Qfaction = GetFactionAmount(Spawn,11)
 	FPfaction = GetFactionAmount(Spawn,12)
-	local zone = GetZone(NPC)
+    local invul = IsInvulnerable(Spawn)
+
+    local zone = GetZone(NPC)
 	if GetZoneID(zone) >= 220 and GetZoneID(zone) <= 238 then                -- clarifies which zone is designated EVIL or GOOD
 	    GOOD = true
 	elseif GetZoneID(zone) == 207 then
@@ -28,21 +37,41 @@ function NonCitizen(NPC,Spawn)
 	    EVIL = true
 	end
 
-	if GOOD and GetFactionAmount(Spawn,11) >0 then                                                
-	    if not HasCompletedQuest(Spawn,5718) and not HasCompletedQuest(Spawn,5719) and not HasCompletedQuest(Spawn,5720) and not HasCompletedQuest(Spawn,5721) and not HasCompletedQuest(Spawn,5722) and not HasCompletedQuest(Spawn,5723) then
+	if GOOD and GetFactionAmount(Spawn,11) >0 and invul == false then
+	    if not HasCompletedQuest(Spawn,5718) and
+	    not HasCompletedQuest(Spawn,5719) and  --CITIZENSHIP TRIALS
+	    not HasCompletedQuest(Spawn,5720) and
+	    not HasCompletedQuest(Spawn,5721) and
+	    not HasCompletedQuest(Spawn,5722) and
+	    not HasCompletedQuest(Spawn,5723) then
+        if GetClass(Spawn) ==1 or GetClass(Spawn)==11 or GetClass(Spawn)==21 or GetClass(Spawn)==31 then --CLASS(Archetype) CHECK. THESE ARE POSSIBLE REFUGEES.
+ 
+        SetInfoStructUInt(NPC, "override_primary_weapon", 1)        -- Enables override of server autoattack damage. Set to 0 to  allow server to set damage.
+        SetInfoStructUInt(NPC, "primary_weapon_damage_low", 0) 
+        SetInfoStructUInt(NPC, "primary_weapon_damage_high", 0)
+       
         Attack(NPC,Spawn)
         AddTimer(NPC,500,"Expel",1,Spawn)
         SendMessage(Spawn,"A guard has spotted you!","red")
         PlaySound(Spawn,"sounds/ui/ui_warning.wav", GetX(NPC), GetY(NPC), GetZ(NPC))
         end
+        end
+        elseif GOOD and GetFactionAmount(Spawn,11)<1000 and invul == false then  --NON CITIZENS
+        SetInfoStructUInt(NPC, "override_primary_weapon", 0)        -- Enables override of server autoattack damage. Set to 0 to  allow server to set damage.
+        Attack(NPC,Spawn)
+        AddTimer(NPC,500,"ExpelOtherFaction",1,Spawn)
+        SendPopUpMessage(Spawn,"A guard has spotted you!",250,0,0)
+        SendMessage(Spawn,"A guard has spotted you!","red")
+        PlaySound(Spawn,"sounds/ui/ui_warning.wav", GetX(NPC), GetY(NPC), GetZ(NPC))       
     end
 end
 
 
 function Expel(NPC,Spawn)
+    local invul = IsInvulnerable(Spawn)
     if IsInCombat(NPC) then
     AddTimer(NPC,500,"Expel",1,Spawn)
-    if GetDistance(Spawn,NPC) <=6 then
+    if invul == false and GetDistance(Spawn,NPC) <=4 then
         CastSpell(NPC,1225)
         PlayAnimation(Spawn,11764)
         ExpeltoHood(NPC,Spawn)
@@ -50,10 +79,44 @@ function Expel(NPC,Spawn)
         SendPopUpMessage(Spawn,"Refugee! You are not allowed inside the walls of Qeynos!",250,0,0)
         SendMessage(Spawn,"Refugee! You are not allowed inside the walls of Qeynos!","red")
         PlaySound(Spawn,"sounds/ui/ui_duel_defeat.wav", GetX(NPC), GetY(NPC), GetZ(NPC))
-        SetHP(Spawn,SetMaxHP(Spawn))
+        End (NPC,Spawn)
+--      SetHP(Spawn,SetMaxHP(Spawn))
     end
 end
 end
+
+function End (NPC,Spawn)
+        ClearHate(NPC, Spawn)
+        SetInCombat(Spawn, false)
+        SetInCombat(NPC, false)
+        ClearEncounter(NPC)
+        SetTarget(Spawn,nil)
+        SetInfoStructUInt(NPC, "override_primary_weapon", 0)        -- Enables override of server autoattack damage. Set to 0 to  allow server to set damage.
+end   
+
+
+function ExpelOtherFaction(NPC,Spawn)
+    local invul = IsInvulnerable(Spawn)
+    if IsInCombat(NPC) then
+    if invul == false and GetDistance(Spawn,NPC) <=5 then
+        CastSpell(NPC,1225)
+        PlayAnimation(Spawn,11764)
+        ExpeltoOutofCity(NPC,Spawn)
+        SetInvulnerable(Spawn)
+        SendPopUpMessage(Spawn,"You are not allowed inside the walls of Qeynos!",250,0,0)
+        SendMessage(Spawn,"You are not allowed inside the walls of Qeynos!","red")
+        PlaySound(Spawn,"sounds/ui/ui_duel_defeat.wav", GetX(NPC), GetY(NPC), GetZ(NPC))
+        SetHP(Spawn,SetMaxHP(Spawn))
+        End (NPC,Spawn)
+    end
+end
+end
+
+function ExpeltoOutofCity(NPC,Spawn)
+        ZoneRef = GetZone("Antonica")
+        Zone(ZoneRef,Spawn,-130.85, -15.10, -77.62, 137.28)
+end
+
 
 function ExpeltoHood(NPC,Spawn)
    local Race = GetRace(Spawn)

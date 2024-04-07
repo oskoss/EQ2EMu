@@ -5,8 +5,11 @@
 	Script Date		: 2022.07.18
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 --]]
+dofile("SpawnScripts/Generic/GenericEcologyVoiceOvers.lua")
+local TimeCheck = false                                                       -- used to delay between hail uses
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "ponder")
 end
 
 function respawn(NPC)
@@ -14,10 +17,24 @@ function respawn(NPC)
 end
 
 function hailed(NPC, Spawn)
-	RandomGreeting(NPC, Spawn)
+	if GetFactionAmount(Spawn,12) <0 then
+     	FaceTarget(NPC, Spawn)
+        FactionChecking(NPC, Spawn, faction)
+    else    
+	    if TimeCheck == false then                                              -- checks timer
+        TimeCheck = true                                                        -- turns on timer to stop player spamming
+	    AddTimer(NPC,2500,"ResetTimer")   
+	    FaceTarget(NPC, Spawn)
+	    Talk(NPC, Spawn)
+        end
+    end
 end
 
-function RandomGreeting(NPC, Spawn)
+function ResetTimer(NPC)                                                      -- resets hail timer after initial use
+   TimeCheck = false 
+end
+
+function Talk(NPC, Spawn)
 	local choice = MakeRandomInt(1,5)
 
 	if choice == 1 then

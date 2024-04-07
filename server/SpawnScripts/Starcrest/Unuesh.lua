@@ -15,6 +15,9 @@ Talk(NPC, Spawn)
 end
 end
 
+function spawn(NPC)
+        SetInfoStructString(NPC, "action_state", "tailoring_idle")
+end
 
 function Talk(NPC, Spawn)
 	FaceTarget(NPC, Spawn)

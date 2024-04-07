@@ -5,10 +5,15 @@
 	Script Date	: 2019.01.15
 	Script Notes	: Auto-Generated Conversation from PacketParser Data
 	Notes: Updated w/ Holly's 20+ min pathing script. 2022.08.26 Dorbin
+	       Updated w/ autoattack damage. LordPazuzu 1/12/24
 --]]
 
 function spawn(NPC)
-    waypoints(NPC)
+    dmgMod = GetStr(NPC)/10
+    SetInfoStructUInt(NPC, "override_primary_weapon", 1)        
+    SetInfoStructUInt(NPC, "primary_weapon_damage_low", math.floor(65 + dmgMod)) 
+    SetInfoStructUInt(NPC, "primary_weapon_damage_high", math.floor(105 + dmgMod))
+    AddTimer(NPC, 10000, "waypoints")
 end
 
 function respawn(NPC)

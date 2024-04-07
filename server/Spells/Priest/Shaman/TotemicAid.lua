@@ -1,18 +1,28 @@
 --[[
     Script Name    : Spells/Priest/Shaman/TotemicAid.lua
-    Script Author  : neatz09
-    Script Date    : 2019.12.14 02:12:50
+    Script Author  : LordPazuzu
+    Script Date    : 3/15/2024
     Script Purpose : 
                    : 
 --]]
 
--- Info from spell_display_effects (remove from script when done)
--- Heals target for 91 - 111
--- Increases Max Health of target by 11.3
+function cast(Caster, Target, MinVal, MaxVal)
+    Level = GetLevel(Caster)
+    SpellLevel= 17
+    Mastery = SpellLevel + 10
+    StatBonus = GetWis(Caster) / 10
+    
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
 
-function cast(Caster, Target, MinHeal, MaxHeal, HP)
-SpellHeal("Heal", MinHeal, MaxHeal)
-    AddSpellBonus(Target, 606, HP)
+    HealBonus = math.floor(LvlBonus + StatBonus) * 2
+    MinHeal = MinVal + HealBonus
+    MaxHeal = MaxVal + HealBonus
+    
+    SpellHeal("Heal", MinHeal, MaxHeal)
+    CureByType(1, 3, "", (GetLevel(Caster) * 1.08) + 1)
 end
 
 function remove(Caster, Target)

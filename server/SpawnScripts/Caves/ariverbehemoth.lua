@@ -6,11 +6,12 @@
 	Script Notes	: 
 --]]
 dofile("SpawnScripts/Generic/MonsterCallouts/BaseGolem1.lua")
-
+require "SpawnScripts/Generic/NPCModule"
 
 local RIVER_BEHEMOTH_REMAINS_ID = 1970101
 
-function spawn(NPC)
+function spawn(NPC, Spawn)
+    NPCModule(NPC, Spawn)
 end
 
 function respawn(NPC)

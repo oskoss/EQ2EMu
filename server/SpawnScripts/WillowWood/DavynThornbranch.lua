@@ -16,6 +16,7 @@ function spawn(NPC)
 	ProvidesQuest(NPC, WOOD_ELF_QUEST_3)
 	ProvidesQuest(NPC, WOOD_ELF_QUEST_5)
 	SetPlayerProximityFunction(NPC, 8, "InRange", "LeaveRange")
+    SetInfoStructString(NPC, "action_state", "ponder")
 end
 
 function respawn(NPC)

@@ -11,9 +11,9 @@
 --]]
 
 function Init(Quest)
-	AddQuestStepKillByRace(Quest, 1, "I need to find an efreeti spirit.", 1, 100, "I must locate several efreeti body parts.", 2516, 249)
-	AddQuestStepKillByRace(Quest, 2, "I need to find an efreeti swirling smoke.", 1, 100, "I must locate several efreeti body parts.", 2516, 249)
-	AddQuestStepKillByRace(Quest, 3, "I need to find an efreeti wish fragment.", 1, 100, "I must locate several efreeti body parts.", 2516, 249)
+	AddQuestStepKillByRace(Quest, 1, "I need to find an efreeti spirit.", 1, 35, "I must locate several efreeti body parts.", 2516, 249)
+	AddQuestStepKillByRace(Quest, 2, "I need to find an efreeti swirling smoke.", 1, 25, "I must locate several efreeti body parts.", 2516, 249)
+	AddQuestStepKillByRace(Quest, 3, "I need to find an efreeti wish fragment.", 1, 10, "I must locate several efreeti body parts.", 2516, 249)
 	AddQuestStep(Quest, 4, "I need to find and study an efreeti silken sash.", 1, 100, "I must locate several efreeti body parts.", 11)
 	AddQuestStep(Quest, 5, "I need to find and study an efreeti shattered lamp.", 1, 100, "I must locate several efreeti body parts.", 11)
 	AddQuestStep(Quest, 6, "I need to find and study an efreeti broken shackle.", 1, 100, "I must locate several efreeti body parts.", 11)

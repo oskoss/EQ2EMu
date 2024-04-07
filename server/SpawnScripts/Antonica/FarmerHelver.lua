@@ -17,5 +17,5 @@ function respawn(NPC)
 end
 
 function hailed(NPC, Spawn)
-	PlayFlavor(NPC, "", "These farms provide a lot of necessary food to Qeynos.  It's a lot of work, but it is rewarding.", "agree", 1689589577, 4560189,  Spawn)
+	PlayFlavor(NPC, "voiceover/english/voice_emotes/greetings/greetings_2_1052.mp3", "These farms provide a lot of necessary food to Qeynos.  It's a lot of work, but it is rewarding.", "agree", 0, 0,  Spawn)
 end

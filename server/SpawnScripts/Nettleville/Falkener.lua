@@ -5,7 +5,7 @@
     Script Purpose : 
                    : 
 --]]
-
+dofile("SpawnScripts/Generic/AdvancementGaze.lua")
 dofile("SpawnScripts/Generic/GenericGuardVoiceOvers.lua")
 
 function spawn(NPC)
@@ -14,7 +14,12 @@ function spawn(NPC)
 end
 
 function InRange(NPC, Spawn)
-	CheckFaction(NPC, Spawn, "Qeynos")
+    if GetFactionAmount(Spawn,11)>=5000 then
+        if GetLevel(Spawn) ==8 or GetLevel(Spawn)==9 then
+        ClassCheck(NPC,Spawn)
+        end
+    end
+    CheckFaction(NPC, Spawn, "Qeynos")
     if GetFactionAmount(Spawn,11)>0 then
     if math.random(1,100)<15 then
 	GenericGuardHail(NPC, Spawn)

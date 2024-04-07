@@ -10,6 +10,7 @@
 	Preceded by		:	None
 	Followed by		:	None
 --]]
+require "SpawnScripts/Generic/DialogModule"
 
 
 function Init(Quest)
@@ -21,17 +22,25 @@ function Step1Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 1, "I have collected two zombie eyes")
 	UpdateQuestTaskGroupDescription(Quest, 1, "I have found a pair of zombie eyes from two different zombies.")
     
-    AddQuestStepChat(Quest, 2, "I should return to Divek.", 1, "I should return to Divek.", 11, 1380029)
+    AddQuestStepChat(Quest, 2, "I should return to Divek.", 1, "I will need to now bring these eyes back to Divek for my payment.", 11, 1380029)
 	AddQuestStepCompleteAction(Quest, 2, "QuestComplete")
 end
 
+
+
 function QuestComplete(Quest, QuestGiver, Player)
-	UpdateQuestDescription(Quest, "Divek has paid me for the eyes that he claims will be used to look for his brother's soul. I have been warned not to interrupt his ritual. At least I was paid for the job.")
+	UpdateQuestStepDescription(Quest, 2, "I've given Divek the two zombie eyes")
+	UpdateQuestTaskGroupDescription(Quest,2, "I have found a pair of zombie eyes from two different zombies.")
+    	UpdateQuestDescription(Quest, "Divek has paid me for the eyes that he claims will be used to look for his brother's soul. I have been warned not to interrupt his ritual. At least I was paid for the job.")
 	GiveQuestReward(Quest, Player)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+	FaceTarget(QuestGiver, Player)
+	Dialog.New(QuestGiver, Player)
+	Dialog.AddDialog("I need a pair of eyes from a zombie's skull.  The eyes will allow me to peer into the spirit realm and locate my brother's soul.  Go to the graveyard and extract one pair of zombie eyes.  They must be whole and intact, with minimal decay.")
+   Dialog.AddOption("Finding your brother's spirit better be worth it!")
+	Dialog.Start()
 end
 
 function Declined(Quest, QuestGiver, Player)

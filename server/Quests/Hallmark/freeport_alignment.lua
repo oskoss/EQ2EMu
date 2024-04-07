@@ -37,7 +37,7 @@ Halas = GetFactionAmount(Player, 16)
 Gorowyn = GetFactionAmount(Player, 17)
 alignment = GetAlignment(Player)
 
-if GetRace(Player) == 0 or GetRace(Player) == 3 or GetRace(Player) == 5 or GetRace(Player) == 6 or GetRace(Player) == 9 or GetRace(Player) == 11 or GetRace(Player) == 20 then
+if alignment ~= 0 then
 SetAlignment(Player, 0)
 end
 
@@ -98,7 +98,7 @@ function Step1Complete(Quest, QuestGiver, Player)
     UpdateQuestZone(Quest, "Longshadow Alley")
 
     -- Barbarian / Iksar / Sarnak
-    elseif Race == 0 or Race == 10 or Race == 19 then
+    elseif Race == 0 or Race == 10 or Race == 18 then
 	AddQuestStepChat(Quest, 2, "I must find the Overseer", 1, "I have been instructed to seek out the Overseer when I arrive in Freeport.   I should ring the bell on the docks to book passage to the city.", 11, 1390126)
     UpdateQuestZone(Quest, "Scale Yard")
 

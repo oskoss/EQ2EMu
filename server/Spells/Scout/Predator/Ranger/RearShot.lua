@@ -35,7 +35,7 @@ function cast(Caster, Target, Snare, MinVal, MaxVal)
     --     Slows target by 27.4%
     --     5% chance to dispel when target receives hostile action
     --     5% chance to dispel when target takes damage
-    local slow = 100.0 - snare
+    local slow = 100.0 - Snare
     SetSpeedMultiplier(Target, slow)
     AddSpellTimer(24000, "RemoveSnare")
 end

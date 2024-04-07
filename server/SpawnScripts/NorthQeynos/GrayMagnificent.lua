@@ -7,8 +7,9 @@
 --]]
 
 function spawn(NPC)
-AddTimer(NPC, 5000, "EmoteLoop")
-AddTimer(NPC, 12000,"Swooning")
+AddTimer(NPC, 5000, "EmoteLoop",1)
+AddTimer(NPC, 12000,"SwooningLilly",1)
+AddTimer(NPC, 12000,"SwooningLaura",1)
 end
 
 function hailed(NPC, Spawn)
@@ -42,33 +43,41 @@ function EmoteLoop(NPC)
      end
 end
 
-function Swooning(NPC,Spawn)
+function SwooningLaura(NPC,Spawn)
         local Laura = GetSpawn(NPC, 2220056)
-        local Lilly = GetSpawn(NPC, 2220115)
 	
 	if Laura ~= nil then 
     FaceTarget(Laura,NPC)
      SetTarget(Laura,NPC)
-   choice = math.random(1,3)   
+   choice = MakeRandomInt(1,4)   
         if choice == 1 then
         PlayFlavor(Laura, "","", "flustered", 0, 0)
-        elseif choice == 2 then
-        PlayFlavor(Laura, "","", "cheer", 0, 0)            
-        elseif choice == 2 then
+      elseif choice == 2 then
+       PlayFlavor(Laura, "","", "cheer", 0, 0)            
+        elseif choice == 3 then
         PlayFlavor(Laura, "","", "snicker", 0, 0)            
+        elseif choice == 4 then
+        PlayFlavor(Laura, "","", "applaude", 0, 0) 
         end
     end    
+end
+
+function SwooningLilly(NPC,Spawn)
+    local Lilly = GetSpawn(NPC, 2220115)
     if Lilly ~=nil then
      FaceTarget(Lilly,NPC)
      SetTarget(Lilly,NPC)
-    choice = math.random(1,3)   
+    choice = MakeRandomInt(1,4)   
         if choice == 1 then
         PlayFlavor(Lilly, "","", "happy", 0, 0)
         elseif choice == 2 then
-        PlayFlavor(Lilly, "","", "giggle", 0, 0)            
+       PlayFlavor(Lilly, "","", "giggle", 0, 0)            
         elseif choice == 3 then
-        PlayFlavor(Lilly, "","", "nod", 0, 0)            
+       PlayFlavor(Lilly, "","", "nod", 0, 0)            
+        elseif choice == 4 then
+       PlayFlavor(Lilly, "","", "applaude", 0, 0) 
         end
        end
-        AddTimer(NPC, MakeRandomInt(25000,32000), "Swooning")	
+        AddTimer(NPC, MakeRandomInt(25000,32000), "SwooningLaura",1)	
+        AddTimer(NPC, MakeRandomInt(25000,32000), "SwooningLilly",1)	
 end

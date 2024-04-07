@@ -1,7 +1,7 @@
 --[[
 	Script Name		:	Quests/Commonlands/the_return_of_the_light.lua
 	Script Purpose	:	Handles the quest, "The Return of the Light"
-	Script Author	:	premierio015
+	Script Author	:	premierio015//Dorbin
 	Script Date		:	30.05.2021
 	Script Notes	:	Auto generated with QuestParser.
 
@@ -19,7 +19,10 @@ function Init(Quest)
 end
 
 function Accepted(Quest, QuestGiver, Player)
-	-- Add dialog here for when the quest is accepted
+    if HasItem(Player,4737,1) then
+        RemoveItem(Player,4737)
+        SendMessage(Player,"You place the burned out light stone in your quest satchle.") 
+    end
 end
 
 function Declined(Quest, QuestGiver, Player)
@@ -42,7 +45,7 @@ function Step1Complete(Quest, QuestGiver, Player)
 end
 
 function Step2Complete(Quest, QuestGiver, Player)
-	UpdateQuestStepDescription(Quest, 2, "I touched &quot;the Mourned&quot; with the lightstone.")
+	UpdateQuestStepDescription(Quest, 2, "I touched \"the Mourned\" with the lightstone.")
 	 CheckProgress(Quest, QuestGiver, Player)
 
 end
@@ -55,7 +58,7 @@ end
 function Step4Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 4, "I returned to Cannix Silverflame.")
 	UpdateQuestTaskGroupDescription(Quest, 3, "I returned to Cannix Silverflame.")
-    GiveQuestItem(Quest, Player, "I returned to Cannix Silverflame.",  151067)
+
 	AddQuestStepKill(Quest, 5, "I need to slay the lion Rama'nai.", 1, 100, "I need to find and kill the great beast Rama'nai in honorable combat.  He can be found in the Commonlands.", 611, 330088)
 	AddQuestStepCompleteAction(Quest, 5, "Step5Complete")
 end
@@ -63,10 +66,7 @@ end
 function Step5Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 5, "I slew Rama'nai.")
 	UpdateQuestTaskGroupDescription(Quest, 4, "I defeated the lion Rama'nai in combat and dipped the lightstone in his blood.  The stone is glowing brighter now.")
-	if HasItem(Player, 151067) then
-    RemoveItem(Player, 151067)
-    end
-    GiveQuestItem(Quest, Player, "I returned to Cannix Silverflame.",   144492)
+
 	AddQuestStepChat(Quest, 6, "I should return to Cannix Silverflame.", 1, "I should return to Cannix Silverflame.", 11, 330175)
 	AddQuestStepCompleteAction(Quest, 6, "Step6Complete")
 end
@@ -75,9 +75,9 @@ function Step6Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 6, "I returned to Cannix Silverflame.")
 	UpdateQuestTaskGroupDescription(Quest, 5, "I returned to Cannix Silverflame.")
 	AddQuestStepKill(Quest, 7, "I need to slay Captain Ogof.", 1, 100, "I need to find and defeat the orc captains that are defiling and stealing from the ancient graves of the Knights of Truth.", 611, 330266)
-		AddQuestStepKill(Quest, 8, "I need to slay Captain Gaer.", 1, 100, "I need to find and defeat the orc captains that are defiling and stealing from the ancient graves of the Knights of Truth.", 611, 330264)
+	AddQuestStepKill(Quest, 8, "I need to slay Captain Gaer.", 1, 100, "I need to find and defeat the orc captains that are defiling and stealing from the ancient graves of the Knights of Truth.", 611, 330264)
 	AddQuestStepCompleteAction(Quest, 7, "Step7Complete")
-		AddQuestStepCompleteAction(Quest, 8, "Step8Complete")
+	AddQuestStepCompleteAction(Quest, 8, "Step8Complete")
 end
 
 function Step7Complete(Quest, QuestGiver, Player)
@@ -93,10 +93,7 @@ end
 function Step9Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 9, "I returned to Cannix Silverflame.")
 	UpdateQuestTaskGroupDescription(Quest, 7, "I returned to Cannix Silverflame.")
-    	if HasItem(Player, 144492) then
-    RemoveItem(Player, 144492)
-    end
-    GiveQuestItem(Quest, Player, "I returned to Cannix Silverflame.", 180730)        
+
 	AddQuestStepKill(Quest, 10, "I need to defeat the High Priest of Val'marr.", 1, 100, "I need to release the High Priest of Val'marr from his cursed state and allow him to rest in peace.", 611, 330076)
 	AddQuestStepCompleteAction(Quest, 10, "Step10Complete")
 end
@@ -111,10 +108,7 @@ end
 function Step11Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 11, "I returned to Cannix Silverflame.")
 	UpdateQuestTaskGroupDescription(Quest, 9, "I returned to Cannix Silverflame.")
-	 if HasItem(Player, 180730) then
-     RemoveItem(Player, 180730)
-    end
-    GiveQuestItem(Quest, Player, "I returned to Cannix Silverflame.",  155134)      
+
 	AddQuestStepKill(Quest, 12, "I need to recover a broken Sword of Truth from General Drull.", 1, 100, "I need to recover a broken Sword of Truth from the orc General Drull.  Cannix says he can be found in the Bloodskulls' camp.", 45, 3060020)
 	AddQuestStepCompleteAction(Quest, 12, "Step12Complete")
 end
@@ -123,7 +117,7 @@ function Step12Complete(Quest, QuestGiver, Player)
 	UpdateQuestStepDescription(Quest, 12, "I recovered the broken Sword of Truth from General Drull.")
 	UpdateQuestTaskGroupDescription(Quest, 10, "I recovered the sword from General Drull.  I found him in Bloodskull Valley with the other leaders of the Bloodskull clan.")
     
-	AddQuestStep(Quest, 13, "I should return to Cannix Silverflame.", 1, 100, "I should return to Cannix Silverflame.", 11)
+	AddQuestStepKill(Quest, 13, "I should return to Cannix Silverflame.", 1, 100, "I should return to Cannix Silverflame.", 11,330404)
 	AddQuestStepCompleteAction(Quest, 13, "QuestComplete")
 end
 
@@ -131,15 +125,17 @@ function QuestComplete(Quest, QuestGiver, Player)
 	-- The following UpdateQuestStepDescription and UpdateTaskGroupDescription are not needed, parser adds them for completion in case stuff needs to be moved around
 	UpdateQuestStepDescription(Quest, 13, "I got my Greater Lightstone back.")
 	UpdateQuestTaskGroupDescription(Quest, 11, "I got my Greater Lightstone back.")
-
+	if HasItem(Player, 155134,1) then
+    RemoveItem(Player, 155134)
+    end
 	UpdateQuestDescription(Quest, "It looks like I now have in my possession a legendary Greater Lightstone.  By following the directions of Cannix Silverflame, I was able to increase the power of the lightstone gradually.  Cannix says this object has some importance among his people, too bad he isn't around anymore so I can ask him about it...")
 	GiveQuestReward(Quest, Player)
 end
 
 
 function  CheckProgress(Quest, QuestGiver, Player)
-if QuestStepIsComplete(Player, 485, 2) and QuestStepIsComplete(Player, 485, 3)  then
-    	UpdateQuestTaskGroupDescription(Quest, 2, "I touched the lightstone to both of the Cavalier statues ''the Mourned'' and ''the Forgotten''.  My lightstone seems to be glowing brighter now.")
+if QuestStepIsComplete(Player, 485, 2) and QuestStepIsComplete(Player, 485, 3) and not QuestStepIsComplete(Player,485,4) then
+    UpdateQuestTaskGroupDescription(Quest, 2, "I touched the lightstone to both of the Cavalier statues ''the Mourned'' and ''the Forgotten''.  My lightstone seems to be glowing brighter now.")
 	AddQuestStepChat(Quest, 4, "I should return to Cannix Silverflame.", 1, "I should return to Cannix Silverflame.", 11, 330175)
 	AddQuestStepCompleteAction(Quest, 4, "Step4Complete")
 elseif QuestStepIsComplete(Player, 485, 7) and QuestStepIsComplete(Player, 485, 8) then

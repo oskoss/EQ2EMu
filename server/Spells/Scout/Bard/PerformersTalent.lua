@@ -1,20 +1,30 @@
 --[[
     Script Name    : Spells/Scout/Bard/PerformersTalent.lua
-    Script Author  : neatz09
-    Script Date    : 2020.11.06 05:11:35
+    Script Author  : LordPazuzu
+    Script Date    : 3/29/2024
     Script Purpose : 
                    : 
 --]]
 
--- Increases AGI of caster by 10.0
--- Increases INT of caster by 25.0
 
-function cast(Caster, Target, Bored, AsFuck)
-    AddSpellBonus(Target, 2, Bored)
-    AddSpellBonus(Target, 4, AsFuck)
+function cast(Caster, Target, Agi, Arcane)
+    Level = GetLevel(Caster)
+    SpellLevel = 13
+    Mastery = SpellLevel + 10
+    StatBonus = GetWis(Caster) / 10
+    
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
+    end
+    
+    AgiBonus = (StatBonus + LvlBonus) * 0.2 
+    ArcaneBonus = (StatBonus + LvlBonus) * 2 
+    
+    AddSpellBonus(Target, 2, Agi + AgiBonus)
+    AddSpellBonus(Target, 203, Arcane + ArcaneBonus)
 end
 
 function remove(Caster, Target)
-    RemoveSpellBonus(Target)
     RemoveSpellBonus(Target)
 end

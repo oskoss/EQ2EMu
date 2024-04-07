@@ -53,7 +53,7 @@ function hailed(NPC, Spawn)
     if GetFactionAmount(Spawn,11) <0 then
         PlayFlavor(NPC, "", "", "heckno", 0, 0, Spawn)
     else    
-    if not HasCompletedQuest (Spawn, Delivery) and not HasQuest (Spawn, Delivery) then 
+    if CanReceiveQuest(Spawn, Delivery) then 
     FaceTarget(NPC, Spawn)
 	Dialog.New(NPC, Spawn)
 	Dialog.AddDialog("What's all this madness?! Are Deeppockets working for someone else? What's become of us!? Enough of my woes. What's your order? Be quick with it.")

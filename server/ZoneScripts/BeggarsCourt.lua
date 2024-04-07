@@ -13,6 +13,7 @@ local A_ROMMULS_LOYALIST = 1370067
 local THAEN_SEVELLOS = 1370066
 
 function init_zone_script(Zone)
+    SetLocationProximityFunction(Zone,63.94, -6.18, 100.11, 12, "Shrine","LeaveLocation")
 
 	SetLocationProximityFunction(Zone, 82.78, -7.08, 112.83, 10, "InRange", "LeaveRange")
 	SetLocationProximityFunction(Zone, 70.43, 5.02, -22.17, 20, "InRangeQuest4", "LeaveRange")
@@ -54,5 +55,10 @@ function InRangeQuest4(Zone, Spawn)
 	end
 end
 
-function LeaveRange(zone, Spawn)
+function player_entry(Zone, Player)
+      SendPopUpMessage(Player, "Beggar's Court", 255, 255, 255)
 end
+
+function Shrine(Zone,Player)
+      SendPopUpMessage(Player, "Fountain of Divine Retribution", 255, 255, 0)
+    end

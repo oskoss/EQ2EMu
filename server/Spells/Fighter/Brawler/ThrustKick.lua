@@ -1,28 +1,29 @@
 --[[
     Script Name    : Spells/Fighter/Brawler/ThrustKick.lua
-    Script Author  : Dello
-    Script Date    : 2014.07.10 06:07:34
+    Script Author  : LordPazuzu
+    Script Date    : 9/2/2023
     Script Purpose : 
                    : 
 --]]
 
 
-function cast(Caster, Target, DmgType, MinVal, MaxVal)
-    if MaxVal ~= nil and MinVal < MaxVal then
-        SpellDamage(Target, DmgType, math.random(MinVal, MaxVal))
-    else
-        SpellDamage(Target, DmgType, MinVal)
+function cast(Caster, Target, DmgType, DmgLow, DmgHigh)
+    Say(Caster, "facing target not implemented.")
+    Level = GetLevel(Caster)
+    SpellLevel = 11
+    Mastery = SpellLevel + 10
+    StatBonus = GetStr(Caster) / 10
+        
+    if Level < Mastery then
+        LvlBonus = Level - SpellLevel
+        else LvlBonus = Mastery - SpellLevel
     end
-
-    if not IsEpic(Target) then
-        AddControlEffect(Target, 4)
-        BlurVision(Target, 1.0)
-        Knockback(Caster, Target, 1500)
-        AddSpellTimer(1500, "RemoveKnockdown")
-    end
+    
+    
+    DmgBonus = LvlBonus + StatBonus
+    MaxDmg = math.floor(DmgBonus) * 2 + DmgHigh
+    MinDmg = math.floor(DmgBonus) * 2 + DmgLow
+    
+    SpellDamage(Target, DmgType, MinDmg, MaxDmg)
 end
 
-function RemoveKnockdown(Caster, Target)
-    RemoveControlEffect(Target, 4)
-    BlurVision(Target, 0.0)
-end

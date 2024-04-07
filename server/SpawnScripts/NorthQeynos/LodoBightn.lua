@@ -10,6 +10,7 @@ require "SpawnScripts/Generic/DialogModule"
 local Dagger = 5558
 
 function spawn(NPC)
+    SetInfoStructString(NPC, "action_state", "drinking_idle")
 end
 
 function respawn(NPC)

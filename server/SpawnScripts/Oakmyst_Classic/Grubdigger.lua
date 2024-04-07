@@ -12,14 +12,14 @@ function spawn(NPC)
     local level2 = 16
     local level3 = 17
     local difficulty1 = 8
-    local hp1 = 1905
-    local power1 = 640
+    local hp1 = 2985
+    local power1 = 800
     local difficulty2 = 8
-    local hp2 = 2180
-    local power2 = 670
+    local hp2 = 3410
+    local power2 = 840
     local difficulty3 =8
-    local hp3 = 2460
-    local power3 = 725
+    local hp3 = 3990
+    local power3 = 910
     if Level == level1 then
     SpawnSet(NPC, "difficulty", difficulty1)
     SpawnSet(NPC, "hp", hp1)
@@ -35,7 +35,10 @@ function spawn(NPC)
     SpawnSet(NPC, "hp", hp3)
     SpawnSet(NPC, "power", power3)
     end
-
+    dmgMod = GetStr(NPC)/10
+    SetInfoStructUInt(NPC, "override_primary_weapon", 1)        
+    SetInfoStructUInt(NPC, "primary_weapon_damage_low", math.floor(30 + dmgMod)) 
+    SetInfoStructUInt(NPC, "primary_weapon_damage_high", math.floor(60 + dmgMod))
 waypoints(NPC)
 end
 
