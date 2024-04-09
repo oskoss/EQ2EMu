@@ -569,6 +569,16 @@ std::string LuaInterface::AddSpawnPointers(LuaSpell* spell, bool first_cast, boo
 		functionCalled = "tick";
 		lua_getglobal(spell->state, "tick");
 	}
+	
+	LogWrite(SPELL__DEBUG, 0, "Spell", "LuaInterface::AddSpawnPointers spell %s (%u) function %s, caster %s.", spell->spell ? spell->spell->GetName() : "UnknownUnset", spell->spell ? spell->spell->GetSpellID() : 0, functionCalled.c_str(), spell->caster ? spell->caster->GetName() : "Unknown");
+
+	if (!lua_isfunction(spell->state, lua_gettop(spell->state))){
+		lua_pop(spell->state, 1);
+		return string("");
+	}
+	else {
+		lua_getglobal(spell->state, functionCalled.c_str());
+	}
 
 	if(passLuaSpell)
 		SetSpellValue(spell->state, spell);

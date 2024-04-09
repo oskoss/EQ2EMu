@@ -653,8 +653,8 @@ bool SpellProcess::CastInstant(Spell* spell, Entity* caster, Entity* target, boo
 			Spell* tmpSpell = lua_spell->spell;
 			lua_spell->spell = new Spell(lua_spell->spell);
 			lua_interface->AddCustomSpell(lua_spell);
-			lua_interface->AddSpawnPointers(lua_spell, false, false, "customspell",0,true);
-			if (lua_pcall(lua_spell->state, 3, 3, 0) != 0) {
+			std::string outCall = lua_interface->AddSpawnPointers(lua_spell, false, false, "customspell",0,true);
+			if (outCall.length() > 0 && lua_pcall(lua_spell->state, 3, 3, 0) != 0) {
 				lua_interface->RemoveCustomSpell(lua_spell->spell->GetSpellID());
 				lua_interface->ResetFunctionStack(lua_spell->state);
 				safe_delete(lua_spell->spell);
@@ -1097,8 +1097,8 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 				Spell* tmpSpell = lua_spell->spell;
 				lua_spell->spell = new Spell(lua_spell->spell);
 				lua_interface->AddCustomSpell(lua_spell);
-				lua_interface->AddSpawnPointers(lua_spell, false, false, "customspell", 0, true);
-				if (lua_pcall(lua_spell->state, 3, 3, 0) != 0) {
+				std::string outCall = lua_interface->AddSpawnPointers(lua_spell, false, false, "customspell", 0, true);
+				if (outCall.length() > 0 && lua_pcall(lua_spell->state, 3, 3, 0) != 0) {
 					lua_interface->RemoveCustomSpell(lua_spell->spell->GetSpellID());
 					lua_interface->ResetFunctionStack(lua_spell->state);
 					safe_delete(lua_spell->spell);
@@ -1533,8 +1533,8 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		// Precast in lua
 		if (lua_interface) {
 			bool result = false;
-			lua_interface->AddSpawnPointers(lua_spell, false, true);
-			if (lua_pcall(lua_spell->state, 2, 2, 0) == 0) {
+			std::string outCall = lua_interface->AddSpawnPointers(lua_spell, false, true);
+			if (outCall.length() > 0 && lua_pcall(lua_spell->state, 2, 2, 0) == 0) {
 				result = lua_interface->GetBooleanValue(lua_spell->state, 1);
 				int8 error = lua_interface->GetInt8Value(lua_spell->state, 2) == 0 ? SPELL_ERROR_CANNOT_PREPARE : lua_interface->GetInt8Value(lua_spell->state, 2);
 				lua_interface->ResetFunctionStack(lua_spell->state);
