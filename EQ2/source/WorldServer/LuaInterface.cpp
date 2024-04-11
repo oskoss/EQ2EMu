@@ -959,6 +959,8 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "SetPower", EQ2Emu_lua_SetCurrentPower);
 	lua_register(state, "SetMaxPower", EQ2Emu_lua_SetMaxPower);
 	lua_register(state, "SetMaxPowerBase", EQ2Emu_lua_SetMaxPowerBase);
+	lua_register(state, "ModifyMaxHP", EQ2Emu_lua_ModifyMaxHP);
+	lua_register(state, "ModifyMaxPower", EQ2Emu_lua_ModifyMaxPower);
 	lua_register(state, "SetPosition", EQ2Emu_lua_SetPosition);
 	lua_register(state, "SetHeading", EQ2Emu_lua_SetHeading);
 	lua_register(state, "SetModelType", EQ2Emu_lua_SetModelType);

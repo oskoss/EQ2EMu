@@ -40,6 +40,8 @@ int EQ2Emu_lua_SetMaxHPBase(lua_State* state);
 int EQ2Emu_lua_SetCurrentPower(lua_State* state);
 int EQ2Emu_lua_SetMaxPower(lua_State* state);
 int EQ2Emu_lua_SetMaxPowerBase(lua_State* state);
+int EQ2Emu_lua_ModifyMaxHP(lua_State* state);
+int EQ2Emu_lua_ModifyMaxPower(lua_State* state);
 int EQ2Emu_lua_SetHeading(lua_State* state);
 int EQ2Emu_lua_SetModelType(lua_State* state);
 int EQ2Emu_lua_SetAdventureClass(lua_State* state);
