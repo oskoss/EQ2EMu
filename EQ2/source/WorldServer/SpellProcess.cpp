@@ -1534,11 +1534,16 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 		if (lua_interface) {
 			bool result = false;
 			std::string outCall = lua_interface->AddSpawnPointers(lua_spell, false, true);
-			if (outCall.length() > 0 && lua_pcall(lua_spell->state, 2, 2, 0) == 0) {
-				result = lua_interface->GetBooleanValue(lua_spell->state, 1);
-				int8 error = lua_interface->GetInt8Value(lua_spell->state, 2) == 0 ? SPELL_ERROR_CANNOT_PREPARE : lua_interface->GetInt8Value(lua_spell->state, 2);
+			if (outCall.length() > 0 && lua_pcall(lua_spell->state, 2, LUA_MULTRET, 0) == 0) {
+				int8 error = SPELL_ERROR_CANNOT_PREPARE;
+				if (lua_toboolean(lua_spell->state, -1))
+				{
+					result = lua_toboolean(lua_spell->state, -1);
+					lua_pop(lua_spell->state, 1);
+				}
 				lua_interface->ResetFunctionStack(lua_spell->state);
 
+				// need to add back support for error to be modified
 				if (!result) {
 					zone->SendSpellFailedPacket(client, error);
 					lua_spell->caster->GetZone()->GetSpellProcess()->RemoveSpellScriptTimerBySpell(lua_spell);
