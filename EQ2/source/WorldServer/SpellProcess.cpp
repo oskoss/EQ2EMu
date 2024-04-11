@@ -1536,7 +1536,20 @@ void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, 
 			std::string outCall = lua_interface->AddSpawnPointers(lua_spell, false, true);
 			if (outCall.length() > 0 && lua_pcall(lua_spell->state, 2, LUA_MULTRET, 0) == 0) {
 				int8 error = SPELL_ERROR_CANNOT_PREPARE;
-				if (lua_toboolean(lua_spell->state, -1))
+				if(lua_istable(lua_spell->state, -1)) {
+					lua_rawgeti(lua_spell->state, -1, 1);
+					if(lua_isboolean(lua_spell->state, -1)) {
+						result = lua_toboolean(lua_spell->state,-1);
+					}
+					lua_pop(lua_spell->state, 1);
+					
+					lua_rawgeti(lua_spell->state, -1, 2);
+					if(lua_isnumber(lua_spell->state, -1)) {
+						error = lua_tonumber(lua_spell->state,-1);
+					}
+					lua_pop(lua_spell->state, 1);
+				}
+				else if (lua_toboolean(lua_spell->state, -1))
 				{
 					result = lua_toboolean(lua_spell->state, -1);
 					lua_pop(lua_spell->state, 1);
