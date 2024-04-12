@@ -442,13 +442,13 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 									  }
 			case SPAWN_SET_VALUE_HP:{
 				sprintf(tmp, "%i", target->GetHP());
-				target->SetTotalHPBase(val, send_update);
+				target->SetTotalHPBase(val);
 				target->SetHP(val, send_update);
 				break;
 									}
 			case SPAWN_SET_VALUE_POWER:{
 				sprintf(tmp, "%i", target->GetPower());
-				target->SetTotalPowerBase(val, false);
+				target->SetTotalPowerBase(val);
 				target->SetPower(val, send_update);
 				break;
 									   }
