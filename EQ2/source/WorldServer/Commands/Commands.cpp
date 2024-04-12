@@ -442,11 +442,13 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 									  }
 			case SPAWN_SET_VALUE_HP:{
 				sprintf(tmp, "%i", target->GetHP());
+				target->SetTotalHPBase(val, send_update);
 				target->SetHP(val, send_update);
 				break;
 									}
 			case SPAWN_SET_VALUE_POWER:{
 				sprintf(tmp, "%i", target->GetPower());
+				target->SetTotalPowerBase(val, false);
 				target->SetPower(val, send_update);
 				break;
 									   }
@@ -5065,7 +5067,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 								}
 		case COMMAND_SPAWN_ADD:{
 			Spawn* spawn = cmdTarget;
-			if(spawn && sep && sep->arg[1][0] && (sep->IsNumber(0) || strncasecmp(sep->arg[0], "new", 3) == 0)){
+			if(spawn && sep && ((sep->arg[1][0] && sep->IsNumber(0)) || (sep->arg[0][0] && strncasecmp(sep->arg[0], "new", 3) == 0))){
 				if(spawn->GetSpawnLocationID() > 0){
 					client->Message(CHANNEL_COLOR_RED, "This spawn already has a spawn group id of %u, use /spawn remove to reassign it", spawn->GetSpawnLocationID());
 					break;
