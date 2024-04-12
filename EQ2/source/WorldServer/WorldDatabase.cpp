@@ -1662,10 +1662,10 @@ bool WorldDatabase::LoadCharacterStats(int32 id, int32 account_id, Client* clien
 			
 			client->GetPlayer()->SetHP(result.GetSInt32Str("hp"));
 			client->GetPlayer()->SetPower(result.GetSInt32Str("power"));
-			info->set_max_concentration(result.GetInt8Str("max_concentration"));
+			info->set_max_concentration_base(result.GetInt8Str("max_concentration"));
 			
-			if (info->get_max_concentration() == 0)
-				info->set_max_concentration(5);
+			if (info->get_max_concentration_base() == 0)
+				info->set_max_concentration_base(5);
 
 			info->set_attack_base(result.GetInt16Str("attack"));
 			info->set_mitigation_base(result.GetInt16Str("mitigation"));

@@ -829,7 +829,15 @@ bool SpellProcess::TakeHP(LuaSpell* spell, int32 custom_hp_req) {
 bool SpellProcess::CheckConcentration(LuaSpell* spell) {
 	if (spell && spell->caster) {
 		int8 req = spell->spell->GetSpellData()->req_concentration;
-		int8 current_avail = 5 - spell->caster->GetConcentrationCurrent();
+		if(spell->caster->GetConcentrationCurrent() >= spell->caster->GetConcentrationMax()) {
+			if(req) {
+				return false; // req needed, no concentration or beyond our concentration
+			}
+			else {
+				 return true; // no req set
+			}
+		}
+		int8 current_avail = spell->caster->GetConcentrationMax() - spell->caster->GetConcentrationCurrent();
 		if (current_avail >= req)
 			return true;
 	}
@@ -839,10 +847,18 @@ bool SpellProcess::CheckConcentration(LuaSpell* spell) {
 bool SpellProcess::AddConcentration(LuaSpell* spell) {
 	if (spell && spell->caster) {
 		int8 req = spell->spell->GetSpellData()->req_concentration;
-		int8 curConcentration = spell->caster->GetInfoStruct()->get_cur_concentration();
-		int8 current_avail = 5 - curConcentration;
+		
+		if(spell->caster->GetConcentrationCurrent() >= spell->caster->GetConcentrationMax()) {
+			if(req) {
+				return false; // req needed, no concentration or beyond our concentration
+			}
+			else {
+				 return true; // no req set
+			}
+		}
+		int8 current_avail = spell->caster->GetConcentrationMax() - spell->caster->GetConcentrationCurrent();
 		if (current_avail >= req) {
-			spell->caster->GetInfoStruct()->set_cur_concentration(curConcentration + req);
+			spell->caster->GetInfoStruct()->set_cur_concentration(spell->caster->GetConcentrationCurrent() + req);
 			if (spell->caster->IsPlayer() && spell->caster->GetZone())
 				spell->caster->GetZone()->TriggerCharSheetTimer();
 			LogWrite(SPELL__DEBUG, 0, "Spell", "Concentration is now %u on %s (Spell %s)", spell->caster->GetInfoStruct()->get_cur_concentration(), spell->caster->GetName(), spell->spell->GetName());

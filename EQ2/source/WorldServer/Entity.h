@@ -499,6 +499,7 @@ struct InfoStruct{
 
 	int8	 get_cur_concentration() { std::lock_guard<std::mutex> lk(classMutex); return cur_concentration_; }
 	int8	 get_max_concentration() { std::lock_guard<std::mutex> lk(classMutex); return max_concentration_; }
+	int8	 get_max_concentration_base() { std::lock_guard<std::mutex> lk(classMutex); return max_concentration_base_; }
 	int16	 get_cur_attack() { std::lock_guard<std::mutex> lk(classMutex); return cur_attack_; }
 	int16	 get_attack_base() { std::lock_guard<std::mutex> lk(classMutex); return attack_base_; }
 	int16	 get_cur_mitigation() { std::lock_guard<std::mutex> lk(classMutex); return cur_mitigation_; }
@@ -720,6 +721,7 @@ struct InfoStruct{
 
 	void	set_cur_concentration(int8 value) { std::lock_guard<std::mutex> lk(classMutex); cur_concentration_ = value; }
 	void	set_max_concentration(int8 value) { std::lock_guard<std::mutex> lk(classMutex); max_concentration_ = value; }
+	void	set_max_concentration_base(int8 value) { std::lock_guard<std::mutex> lk(classMutex); max_concentration_base_ = value; }
 
 	void	add_cur_concentration(int8 value) { std::lock_guard<std::mutex> lk(classMutex); cur_concentration_ += value; }
 	void	add_max_concentration(int8 value) { std::lock_guard<std::mutex> lk(classMutex); max_concentration_ += value; }
@@ -1043,6 +1045,7 @@ private:
 	
 	int8			cur_concentration_;
 	int8			max_concentration_;
+	int8			max_concentration_base_;
 	int16			cur_attack_;
 	int16			attack_base_;
 	int16			cur_mitigation_;

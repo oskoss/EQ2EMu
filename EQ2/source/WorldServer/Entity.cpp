@@ -87,6 +87,9 @@ Entity::Entity(){
 	m_petSpellID = 0;
 	m_petSpellTier = 0;
 	m_petDismissing = false;
+	
+	if (!IsPlayer() && GetInfoStruct()->get_max_concentration_base() == 0)
+		GetInfoStruct()->set_max_concentration_base(5);
 }
 
 Entity::~Entity(){
@@ -180,6 +183,7 @@ void Entity::MapInfoStruct()
 	get_int16_funcs["tradeskill_max_level"] = l::bind(&InfoStruct::get_tradeskill_max_level, &info_struct);
 	get_int8_funcs["cur_concentration"] = l::bind(&InfoStruct::get_cur_concentration, &info_struct);
 	get_int8_funcs["max_concentration"] = l::bind(&InfoStruct::get_max_concentration, &info_struct);
+	get_int8_funcs["max_concentration_base"] = l::bind(&InfoStruct::get_max_concentration_base, &info_struct);
 	get_int16_funcs["cur_attack"] = l::bind(&InfoStruct::get_cur_attack, &info_struct);
 	get_int16_funcs["attack_base"] = l::bind(&InfoStruct::get_attack_base, &info_struct);
 	get_int16_funcs["cur_mitigation"] = l::bind(&InfoStruct::get_cur_mitigation, &info_struct);
@@ -382,6 +386,7 @@ void Entity::MapInfoStruct()
 	set_int16_funcs["tradeskill_max_level"] = l::bind(&InfoStruct::set_tradeskill_max_level, &info_struct, l::_1);
 	set_int8_funcs["cur_concentration"] = l::bind(&InfoStruct::set_cur_concentration, &info_struct, l::_1);
 	set_int8_funcs["max_concentration"] = l::bind(&InfoStruct::set_max_concentration, &info_struct, l::_1);
+	set_int8_funcs["max_concentration_base"] = l::bind(&InfoStruct::set_max_concentration_base, &info_struct, l::_1);
 	set_int16_funcs["cur_attack"] = l::bind(&InfoStruct::set_cur_attack, &info_struct, l::_1);
 	set_int16_funcs["attack_base"] = l::bind(&InfoStruct::set_attack_base, &info_struct, l::_1);
 	set_int16_funcs["cur_mitigation"] = l::bind(&InfoStruct::set_cur_mitigation, &info_struct, l::_1);
@@ -1495,7 +1500,7 @@ void Entity::CalculateBonuses(){
 
 	info->add_poison(values->vs_poison);
 
-	info->add_max_concentration(values->concentration);
+	info->set_max_concentration(info->get_max_concentration_base() + values->concentration);
 
 	info->add_cold(values->vs_cold);
 
@@ -1532,7 +1537,6 @@ void Entity::CalculateBonuses(){
 	
 	float full_pct_hit = 100.0f;
 
-	//info->cur_concentration = 0;
 	MStats.lock();
 	float parryStat = stats[ITEM_STAT_PARRY];
 	MStats.unlock();
@@ -1590,7 +1594,6 @@ void Entity::CalculateBonuses(){
 	}
 	else
 	{
-		//info->cur_concentration = 0;
 		MStats.lock();
 		float deflectionStat = stats[ITEM_STAT_DEFLECTION];
 		MStats.unlock();
@@ -1605,8 +1608,6 @@ void Entity::CalculateBonuses(){
 	info->set_block(block_actual);
 	full_pct_hit -= block_actual;
 
-
-	//info->cur_concentration = 0;
 	MStats.lock();
 	float defenseStat = stats[ITEM_STAT_DEFENSE];
 	MStats.unlock();
