@@ -3589,7 +3589,7 @@ bool WorldDatabase::SaveSpawnInfo(Spawn* spawn){
 				name.c_str(), spawn->GetLevel(), spawn->GetLevel(), spawn->GetDifficulty(), spawn->GetRace(), spawn->GetModelType(),
 				spawn->GetAdventureClass(), spawn->GetGender(), spawn->appearance.display_name, spawn->appearance.attackable, spawn->appearance.show_level, spawn->appearance.targetable, spawn->appearance.show_command_icon, spawn->appearance.display_hand_icon, ((NPC*)spawn)->features.hair_type, 
 				((NPC*)spawn)->features.hair_face_type, ((NPC*)spawn)->features.wing_type, ((NPC*)spawn)->features.chest_type, ((NPC*)spawn)->features.legs_type, ((NPC*)spawn)->features.soga_hair_type, ((NPC*)spawn)->features.soga_hair_face_type, spawn->appearance.soga_model_type, spawn->GetSize(), 
-				spawn->GetTotalHP(), spawn->appearance.heroic_flag, spawn->GetTotalPower(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), 
+				spawn->GetTotalHPBase(), spawn->appearance.heroic_flag, spawn->GetTotalPowerBase(), spawn->GetCollisionRadius(), spawn->GetPrimaryCommandListID(), 
 				spawn->GetSecondaryCommandListID(), spawn->GetVisualState(), spawn->GetActionState(), spawn->GetMoodState(), spawn->GetInitialState(), 
 				spawn->GetActivityStatus(), ((NPC*)spawn)->GetAlignment(), spawn->GetFactionID(), spawn->appearance.hide_hood, spawn->appearance.emote_state, 
 				suffix.c_str(), prefix.c_str(), last_name.c_str(), spawn->GetMerchantMinLevel(), spawn->GetMerchantMaxLevel(), spawn->GetDatabaseID());
