@@ -6551,6 +6551,11 @@ void ZoneServer::RemoveSpawnSupportFunctions(Spawn* spawn, bool lock_spell_proce
 	if(!spawn)
 		return;	
 	
+	// remove entity* in trade class
+	if(spawn->IsEntity()) {
+		((Entity*)spawn)->TerminateTrade();
+	}
+	
 	if(spawn->IsPlayer() && spawn->GetZone())
 		spawn->GetZone()->RemovePlayerPassenger(((Player*)spawn)->GetCharacterID());
 	if(spawn->IsEntity())

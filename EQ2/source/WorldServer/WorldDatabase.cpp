@@ -8120,6 +8120,8 @@ void WorldDatabase::LoadCharacterSpellEffects(int32 char_id, Client* client, int
 
 		if ( db_spell_type == DB_TYPE_MAINTAINEDEFFECTS )
 		{
+			// restore concentration on zoning/reloading characters maintained effects
+			spellProcess->AddConcentration(lua_spell);
 			if (num_triggers > 0)
 				ClientPacketFunctions::SendMaintainedExamineUpdate(client, slot_pos, num_triggers, 0);
 			if (damage_remaining > 0)

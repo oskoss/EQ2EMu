@@ -1758,7 +1758,6 @@ int EQ2Emu_lua_AddHate(lua_State* state) {
 int EQ2Emu_lua_Zone(lua_State* state) {
 	if (!lua_interface)
 		return 0;
-	LuaSpell* spell = lua_interface->GetCurrentSpell(state);
 	ZoneServer* zone = lua_interface->GetZone(state);
 	Spawn* player = lua_interface->GetSpawn(state, 2);
 	Client* client = 0;
@@ -14017,5 +14016,48 @@ int EQ2Emu_lua_SendHearCast(lua_State* state) {
 			}
 		}
 	}
+	return 0;
+}
+
+int EQ2Emu_lua_GetCharacterFlag(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* player = lua_interface->GetSpawn(state);
+	sint32 flag_id = lua_interface->GetSInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+
+	if (!player) {
+		lua_interface->LogError("%s: LUA HasRecipeBook command error, Spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("%s: LUA HasRecipeBook command error, Spawn is not a player", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	bool ret = ((Player*)player)->get_character_flag(flag_id);
+	lua_interface->SetBooleanValue(state, ret);
+	return 1;
+}
+
+int EQ2Emu_lua_ToggleCharacterFlag(lua_State* state) {
+	if (!lua_interface)
+		return 0;
+
+	Spawn* player = lua_interface->GetSpawn(state);
+	sint32 flag_id = lua_interface->GetSInt32Value(state, 2);
+	lua_interface->ResetFunctionStack(state);
+
+	if (!player) {
+		lua_interface->LogError("%s: LUA HasRecipeBook command error, Spawn is not valid", lua_interface->GetScriptName(state));
+		return 0;
+	}
+	if (!player->IsPlayer()) {
+		lua_interface->LogError("%s: LUA HasRecipeBook command error, Spawn is not a player", lua_interface->GetScriptName(state));
+		return 0;
+	}
+
+	((Player*)player)->toggle_character_flag(flag_id);
 	return 0;
 }

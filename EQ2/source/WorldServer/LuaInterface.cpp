@@ -288,6 +288,11 @@ bool LuaInterface::LoadLuaSpell(const char* name) {
 
 		MSpells.lock();
 		if (spells.count(lua_script) > 0) {
+			
+			SetLuaUserDataStale(spells[lua_script]);
+			MSpellDelete.lock();
+			RemoveCurrentSpell(spells[lua_script]->state, false);
+			MSpellDelete.unlock();
 			lua_close(spells[lua_script]->state);
 			safe_delete(spells[lua_script]);
 		}
@@ -1558,6 +1563,9 @@ void LuaInterface::RegisterFunctions(lua_State* state) {
 	lua_register(state, "RemoveWidgetFromZoneMap", EQ2Emu_lua_RemoveWidgetFromZoneMap);
 	
 	lua_register(state, "SendHearCast", EQ2Emu_lua_SendHearCast);
+	
+	lua_register(state, "GetCharacterFlag", EQ2Emu_lua_GetCharacterFlag);
+	lua_register(state, "ToggleCharacterFlag", EQ2Emu_lua_ToggleCharacterFlag);
 }
 
 void LuaInterface::LogError(const char* error, ...)  {

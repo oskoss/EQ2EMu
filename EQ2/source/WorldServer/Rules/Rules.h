@@ -84,7 +84,7 @@ enum RuleType {
 	BaseWeight,
 	WeightPercentImpact,
 	WeightPercentCap,
-	CoinWeightPerHundred,
+	CoinWeightPerStone,
 	WeightInflictsSpeed,
 	LevelMasterySkillMultiplier,
 

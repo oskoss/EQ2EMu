@@ -13,6 +13,19 @@ Trade::Trade(Entity* trader1, Entity* trader2) {
 	this->trader1 = trader1;
 	this->trader2 = trader2;
 
+	trade_max_slots = 12;
+	
+	if(trader1->IsPlayer()) {
+		if(((Player*)trader1)->GetClient() && ((Player*)trader1)->GetClient()->GetVersion() <= 547) {
+			trade_max_slots = 6;
+		}
+	}
+	
+	if(trader2->IsPlayer()) {
+		if(((Player*)trader2)->GetClient() && ((Player*)trader2)->GetClient()->GetVersion() <= 547) {
+			trade_max_slots = 6;
+		}
+	}
 	trader1_accepted = false;
 	trader2_accepted = false;
 
@@ -32,9 +45,12 @@ int8 Trade::AddItemToTrade(Entity* character, Item* item, int8 quantity, int8 sl
 	if (slot == 255)
 		slot = GetNextFreeSlot(character);
 
-	if (slot < 0 || slot > 11) {
+	if (slot < 0) {
 		LogWrite(PLAYER__ERROR, 0, "Trade", "Player (%s) tried to add an item to an invalid trade slot (%u)", character->GetName(), slot);
 		return 255;
+	}
+	else if(slot >= trade_max_slots) {
+		return 254;
 	}
 
 	Entity* other = GetTradee(character);
@@ -261,6 +277,22 @@ void Trade::Trader2ItemAdd(Item* item, int8 quantity, int8 slot) {
 	trader2_items[slot].quantity = quantity;
 }
 
+Item* Trade::GetTraderSlot(Entity* trader, int8 slot) {
+	if(trader == GetTrader1()) {
+		map<int8, TradeItemInfo>::iterator itr = trader1_items.find(slot);
+		if(itr != trader1_items.end()) {
+			return itr->second.item;
+		}
+	}
+	else if(trader == GetTrader2()) {
+		map<int8, TradeItemInfo>::iterator itr = trader2_items.find(slot);
+		if(itr != trader2_items.end()) {
+			return itr->second.item;
+		}
+	}
+	return nullptr;
+}
+
 void Trade::CompleteTrade() {
 	map<int8, TradeItemInfo>::iterator itr;
 	vector<Item*> trader1_item_pass;
@@ -404,6 +436,7 @@ void Trade::SendTradePacket() {
 				packet->setArrayDataByName("your_item_unknown2", 1, i);
 				packet->setArrayDataByName("your_item_slot", itr->first, i);
 				packet->setArrayDataByName("your_item_id", itr->second.item->details.item_id, i);
+				packet->setArrayDataByName("your_item_name", itr->second.item->name.c_str(), i);
 				packet->setArrayDataByName("your_item_quantity", itr->second.quantity, i);
 				packet->setArrayDataByName("your_item_icon", itr->second.item->details.icon, i);
 				packet->setArrayDataByName("your_item_background", 0, i); // No clue on this value yet
@@ -430,6 +463,7 @@ void Trade::SendTradePacket() {
 				packet->setArrayDataByName("their_item_unknown2", 1, i);
 				packet->setArrayDataByName("their_item_slot", itr->first, i);
 				packet->setArrayDataByName("their_item_id", itr->second.item->details.item_id, i);
+				packet->setArrayDataByName("their_item_name", itr->second.item->name.c_str(), i);
 				packet->setArrayDataByName("their_item_quantity", itr->second.quantity, i);
 				packet->setArrayDataByName("their_item_icon", itr->second.item->details.icon, i);
 				packet->setArrayDataByName("their_item_background", 0, i); // No clue on this value yet

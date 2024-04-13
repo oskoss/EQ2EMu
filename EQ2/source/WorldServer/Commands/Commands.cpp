@@ -2094,6 +2094,7 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 			break;
 								}
 		case COMMAND_INFO:{
+			bool check_self_trade = true;
 			if(sep && sep->arg[1][0] && sep->IsNumber(1)){
 				if(strcmp(sep->arg[0], "inventory") == 0){
 					int32 item_index = atol(sep->arg[1]);
@@ -2267,6 +2268,26 @@ void Commands::Process(int32 index, EQ2_16BitString* command_parms, Client* clie
 					}
 					else
 						LogWrite(COMMAND__ERROR, 0, "Command", "/info effect: Unknown Spell ID: %u", spell_id);
+				}
+				else if(sep->IsNumber(1) && ((strncasecmp("your_trade", sep->arg[0], 10) == 0) ||
+						(strncasecmp("their_trade", sep->arg[0], 11) == 0)))
+				{
+					if(strncasecmp("t", sep->arg[0], 1) == 0) { // their_trade not self trade
+						check_self_trade = false;
+					}
+					
+					int8 slot_id = atoul(sep->arg[1]);
+					if(client->GetPlayer()->trade) {
+						Entity* traderToCheck = client->GetPlayer();
+						if(!check_self_trade) {
+							traderToCheck = client->GetPlayer()->trade->GetTradee(client->GetPlayer());
+						}
+						Item* tradeItem = client->GetPlayer()->trade->GetTraderSlot(traderToCheck, slot_id);
+						if(tradeItem != nullptr) {
+							EQ2Packet* app = tradeItem->serialize(client->GetVersion(), true, client->GetPlayer(), true, 0, 0, client->GetVersion() > 546 ? true : false);
+							client->QueuePacket(app);
+						}
+					}
 				}
 			}
 			else if (sep && strcmp(sep->arg[0], "overflow") == 0) {
@@ -6713,7 +6734,6 @@ void Commands::Command_InspectPlayer(Client* client, Seperator* sep)
 */ 
 void Commands::Command_Inventory(Client* client, Seperator* sep, EQ2_RemoteCommandString* command)
 {
-
 	PrintSep(sep, "Command_Inventory"); // temp to figure out the params
 
 	Player* player = client->GetPlayer();
@@ -9677,6 +9697,8 @@ void Commands::Command_TradeAddItem(Client* client, Seperator* sep)
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You can't trade NO-TRADE items.");
 			else if (result == 3)
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "You can't trade HEIRLOOM items.");
+			else if (result == 254)
+				client->Message(CHANNEL_COLOR_YELLOW, "You are trading with an older client with a %u trade slot restriction...", client->GetPlayer()->trade->MaxSlots());
 			else if (result == 255)
 				client->SimpleMessage(CHANNEL_COLOR_YELLOW, "Unknown error trying to add the item to the trade...");
 		}

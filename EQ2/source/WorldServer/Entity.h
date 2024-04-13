@@ -24,6 +24,7 @@
 #include "Skills.h"
 #include "MutexList.h"
 #include "MutexVector.h"
+#include "Trade.h"
 #include <set>
 #include <mutex>
 #include <vector>
@@ -1027,6 +1028,7 @@ struct InfoStruct{
 			spell_effects[i].spell = nullptr;
 		}
 	}
+	
 	// maintained via their own mutex
 	SpellEffects	spell_effects[45];
 	MaintainedEffects maintained_effects[30];
@@ -2009,6 +2011,8 @@ public:
 			}
 		}
 	}
+	
+	void TerminateTrade();
 	// when PacketStruct is fixed for C++17 this should become a shared_mutex and handle read/write lock
 	std::mutex		MEquipment;
 	std::mutex		MStats;

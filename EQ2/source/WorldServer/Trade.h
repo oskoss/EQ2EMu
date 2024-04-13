@@ -28,6 +28,11 @@ public:
 
 	int8 CheckItem(Entity* trader, Item* item, Entity* other);
 
+	Item* GetTraderSlot(Entity* trader, int8 slot);
+	Entity* GetTrader1() { return trader1; }
+	Entity* GetTrader2() { return trader2; }
+	
+	int8 MaxSlots() { return trade_max_slots; }
 private:
 
 
@@ -48,4 +53,5 @@ private:
 	map<int8, TradeItemInfo> trader2_items;
 	int64 trader2_coins;
 	bool trader2_accepted;
+	int32 trade_max_slots;
 };

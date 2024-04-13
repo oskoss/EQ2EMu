@@ -651,4 +651,7 @@ int EQ2Emu_lua_RemoveWidgetFromSpawnMap(lua_State* state);
 int EQ2Emu_lua_RemoveWidgetFromZoneMap(lua_State* state);
 
 int EQ2Emu_lua_SendHearCast(lua_State* state);
+
+int EQ2Emu_lua_GetCharacterFlag(lua_State* state);
+int EQ2Emu_lua_ToggleCharacterFlag(lua_State* state);
 #endif

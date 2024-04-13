@@ -1644,11 +1644,17 @@ void Entity::CalculateApplyWeight() {
 		int32 coin_gold = GetInfoStruct()->get_coin_gold();
 		int32 coin_plat = GetInfoStruct()->get_coin_plat();
 		
-		float weight_per_hundred = rule_manager.GetGlobalRule(R_Player, CoinWeightPerHundred)->GetFloat();
-		if(weight_per_hundred < 0.0f) {
-			weight_per_hundred = 0.0f;
+		float weight_per_stone = rule_manager.GetGlobalRule(R_Player, CoinWeightPerStone)->GetFloat();
+		if(weight_per_stone < 0.0f) {
+			weight_per_stone = 0.0f;
 		}
-		int32 total_weight = (int32)((double)coin_copper / weight_per_hundred) + (double)((double)coin_silver / weight_per_hundred) + (double)((double)coin_gold / weight_per_hundred) + (double)((double)coin_plat / weight_per_hundred);
+		
+		double weight_copper = ((double)coin_copper / weight_per_stone);
+		double weight_silver = ((double)coin_silver / weight_per_stone);
+		double weight_gold = ((double)coin_gold / weight_per_stone);
+		double weight_platinum = ((double)coin_plat / weight_per_stone);
+		int32 total_weight = (int32)(weight_copper + weight_silver + weight_gold + weight_platinum);
+		LogWrite(PLAYER__DEBUG, 0, "Debug", "Coin Weight Calculated to: %u.  Weight_Copper: %f, Weight_Silver: %f, Weight_Gold: %f, Weight_Platinum: %f", total_weight, weight_copper, weight_silver, weight_gold, weight_platinum);
 		
 		total_weight += (int32)((double)inv_weight / 10.0);
 		
@@ -3930,4 +3936,12 @@ void Entity::SendControlEffectDetailsToClient(Client* client) {
 		}
 	}
 	client->Message(CHANNEL_COLOR_YELLOW, "-------------------------------");
+}
+
+void Entity::TerminateTrade() {
+	Trade* tmpTradePtr = trade;
+	if (tmpTradePtr) {
+		tmpTradePtr->CancelTrade(this);
+		safe_delete(tmpTradePtr);
+	}
 }
