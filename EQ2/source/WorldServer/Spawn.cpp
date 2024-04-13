@@ -1474,12 +1474,18 @@ void Spawn::SetTotalHP(sint32 new_val){
 void Spawn::SetTotalHPBase(sint32 new_val)
 {
 	SetInfo(&basic_info.hp_base, new_val);
-
+	
 	if(GetZone() && basic_info.cur_hp > 0 && basic_info.cur_hp < basic_info.max_hp)
 		GetZone()->AddDamagedSpawn(this);
 
 	SendGroupUpdate();
 }
+
+void Spawn::SetTotalHPBaseInstance(sint32 new_val)
+{
+	SetInfo(&basic_info.hp_base_instance, new_val);
+}
+
 sint32 Spawn::GetHP()
 {
 	return basic_info.cur_hp;
@@ -1491,6 +1497,14 @@ sint32 Spawn::GetTotalHP()
 sint32 Spawn::GetTotalHPBase()
 {
 	return basic_info.hp_base;
+}
+sint32 Spawn::GetTotalHPBaseInstance()
+{
+	return basic_info.hp_base_instance;
+}
+sint32 Spawn::GetTotalPowerBaseInstance()
+{
+	return basic_info.power_base_instance;
 }
 
 
@@ -1546,12 +1560,18 @@ void Spawn::SetTotalPower(sint32 new_val)
 void Spawn::SetTotalPowerBase(sint32 new_val)
 {
 	SetInfo(&basic_info.power_base, new_val);
-
+	
 	if(GetZone() && basic_info.cur_power < basic_info.max_power)
 		GetZone()->AddDamagedSpawn(this);
 
 	SendGroupUpdate();
 }
+
+void Spawn::SetTotalPowerBaseInstance(sint32 new_val)
+{
+	SetInfo(&basic_info.power_base_instance, new_val);
+}
+
 sint32 Spawn::GetPower()
 {
 	return basic_info.cur_power;

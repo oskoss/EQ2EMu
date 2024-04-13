@@ -5356,16 +5356,26 @@ void ZoneServer::SendThreatPacket(Spawn* caster, Spawn* target, int32 threat_amt
 		if(target && target->GetDistance(client->GetPlayer()) > 50)
 			continue;
 		
-		PacketStruct* packet = configReader.getStruct("WS_HearThreatCmd", client->GetVersion());
-		if (packet) {
-			packet->setDataByName("spell_name", spell_name);
-			packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(caster));
-			packet->setDataByName("target", client->GetPlayer()->GetIDWithPlayerSpawn(target));
-			packet->setDataByName("threat_amount", threat_amt);
+		if(client->GetVersion() <= 547) {
+			int8 channel = 46;
 			
-			client->QueuePacket(packet->serialize());
+			if(client->GetPlayer() == caster || client->GetPlayer() == target)
+				channel = 42;
+			
+			client->Message(channel, "%s increases %s hate with %s for %u threat.", spell_name, (client->GetPlayer() == caster) ? "YOUR" : caster->GetName(), (client->GetPlayer() == target) ? "YOU" : target->GetName(), threat_amt);
 		}
-		safe_delete(packet);
+		else {
+			PacketStruct* packet = configReader.getStruct("WS_HearThreatCmd", client->GetVersion());
+			if (packet) {
+				packet->setDataByName("spell_name", spell_name);
+				packet->setDataByName("spawn_id", client->GetPlayer()->GetIDWithPlayerSpawn(caster));
+				packet->setDataByName("target", client->GetPlayer()->GetIDWithPlayerSpawn(target));
+				packet->setDataByName("threat_amount", threat_amt);
+				
+				client->QueuePacket(packet->serialize());
+			}
+			safe_delete(packet);
+		}
 	}
 	MClientList.releasereadlock(__FUNCTION__, __LINE__);
 }

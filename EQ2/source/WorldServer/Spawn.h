@@ -205,9 +205,11 @@ struct BasicInfoStruct{
 	sint32	cur_hp;
 	sint32	max_hp;
 	sint32	hp_base;
+	sint32	hp_base_instance;
 	sint32	cur_power;
 	sint32	max_power;
 	sint32	power_base;
+	sint32	power_base_instance;
 	sint32	cur_savagery;
 	sint32	max_savagery;
 	sint32	savagery_base;
@@ -703,7 +705,9 @@ public:
 	sint32 GetTotalHP();
 	sint32 GetHP();
 	sint32 GetTotalHPBase();
+	sint32 GetTotalHPBaseInstance();
 	sint32 GetTotalPowerBase();
+	sint32 GetTotalPowerBaseInstance();
 	float GetHPRatio() { return GetHP() == 0 || GetTotalHP() == 0 ? 0 : ((float) GetHP() / GetTotalHP() * 100); }
 	int GetIntHPRatio() { return GetTotalHP() == 0 ? 0 : static_cast<int>(GetHPRatio()); }
 	
@@ -728,7 +732,9 @@ public:
 	void SetTotalSavagery(sint32 new_val);
 	void SetTotalDissonance(sint32 new_val);
 	void SetTotalPowerBase(sint32 new_val);
+	void SetTotalPowerBaseInstance(sint32 new_val);
 	void SetTotalHPBase(sint32 new_val);
+	void SetTotalHPBaseInstance(sint32 new_val);
 	void SetTotalSavageryBase(sint32 new_val);
 	void SetTotalDissonanceBase(sint32 new_val);
 	void SetPower(sint32 power, bool setUpdateFlags = true);

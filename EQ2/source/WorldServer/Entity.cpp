@@ -1489,8 +1489,8 @@ void Entity::CalculateBonuses(){
 	}
 	prim_power_bonus = floor(float(prim_power_bonus));
 	sta_hp_bonus = floor(float(sta_hp_bonus));
-	SetTotalHP(GetTotalHPBase() + values->health + sta_hp_bonus);
-	SetTotalPower(GetTotalPowerBase() + values->power + prim_power_bonus);
+	SetTotalHP(GetTotalHPBaseInstance() + values->health + sta_hp_bonus);
+	SetTotalPower(GetTotalPowerBaseInstance() + values->power + prim_power_bonus);
 	if(GetHP() > GetTotalHP())
 		SetHP(GetTotalHP());
 	if(GetPower() > GetTotalPower())

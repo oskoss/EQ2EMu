@@ -1092,10 +1092,12 @@ bool Commands::SetSpawnCommand(Client* client, Spawn* target, int8 type, const c
 				break;
 									  }
 			case SPAWN_SET_VALUE_HP:{
+				target->SetTotalHPBase(val);
 				target->SetHP(val, send_update);
 				break;
 									}
 			case SPAWN_SET_VALUE_POWER:{
+				target->SetTotalPowerBase(val);
 				target->SetPower(val, send_update);
 				break;
 									   }
