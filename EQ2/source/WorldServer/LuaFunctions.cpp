@@ -2094,7 +2094,6 @@ int EQ2Emu_lua_ModifyMaxPower(lua_State* state) {
 	sint32 value = lua_interface->GetSInt32Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
 	if (spawn && value != 0) {
-		spawn->SetPower(spawn->GetPower() + value);
 		if (value > spawn->GetTotalHPBase())
 			spawn->SetTotalPower(spawn->GetTotalPower() + value);
 	}
@@ -2107,7 +2106,6 @@ int EQ2Emu_lua_ModifyMaxHP(lua_State* state) {
 	sint32 value = lua_interface->GetSInt32Value(state, 2);
 	lua_interface->ResetFunctionStack(state);
 	if (spawn && value != 0) {
-		spawn->SetHP(spawn->GetHP() + value);
 		if (value > spawn->GetTotalHPBase())
 			spawn->SetTotalHP(spawn->GetTotalHP() + value);
 	}
