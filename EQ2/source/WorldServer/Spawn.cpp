@@ -1448,8 +1448,10 @@ void Spawn::SetHP(sint32 new_val, bool setUpdateFlags){
 	}
 }
 void Spawn::SetTotalHP(sint32 new_val){
-	if(basic_info.hp_base == 0)
+	if(basic_info.hp_base == 0) {
 		SetTotalHPBase(new_val);
+		SetTotalHPBaseInstance(new_val);
+	}
 	SetInfo(&basic_info.max_hp, new_val);
 
 	if(GetZone() && basic_info.cur_hp > 0 && basic_info.cur_hp < basic_info.max_hp)
@@ -1534,8 +1536,10 @@ void Spawn::SetPower(sint32 power, bool setUpdateFlags){
 }
 void Spawn::SetTotalPower(sint32 new_val)
 {
-	if(basic_info.power_base == 0)
+	if(basic_info.power_base == 0) {
 		SetTotalPowerBase(new_val);
+		SetTotalPowerBaseInstance(new_val);
+	}
 	SetInfo(&basic_info.max_power, new_val);
 
 	if(GetZone() && basic_info.cur_power < basic_info.max_power)

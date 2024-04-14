@@ -5045,7 +5045,9 @@ void Client::ChangeLevel(int16 old_level, int16 new_level) {
 	LogWrite(MISC__TODO, 1, "TODO", "Get new HP/POWER/stat based on default values from DB\n\t(%s, function: %s, line #: %i)", __FILE__, __FUNCTION__, __LINE__);
 
 	GetPlayer()->SetTotalHPBase(new_level * new_level * 2 + 40);
+	GetPlayer()->SetTotalHPBaseInstance(GetPlayer()->GetTotalHPBaseInstance());
 	GetPlayer()->SetTotalPowerBase((sint32)(new_level * new_level * 2.1 + 45));
+	GetPlayer()->SetTotalPowerBaseInstance(GetPlayer()->GetTotalPowerBaseInstance());
 	GetPlayer()->CalculateBonuses();
 	GetPlayer()->SetHP(GetPlayer()->GetTotalHP());
 	GetPlayer()->SetPower(GetPlayer()->GetTotalPower());

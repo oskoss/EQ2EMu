@@ -438,10 +438,12 @@ void Commands::Command_Bot_Create(Client* client, Seperator* sep) {
 			bot->size = 32;
 			if (bot->GetTotalHP() == 0) {
 				bot->SetTotalHP(25 * bot->GetLevel() + 1);
+				bot->SetTotalHPBaseInstance(bot->GetTotalHP());
 				bot->SetHP(25 * bot->GetLevel() + 1);
 			}
 			if (bot->GetTotalPower() == 0) {
 				bot->SetTotalPower(25 * bot->GetLevel() + 1);
+				bot->SetTotalPowerBaseInstance(bot->GetTotalPower());
 				bot->SetPower(25 * bot->GetLevel() + 1);
 			}
 			bot->SetOwner(client->GetPlayer());

@@ -78,7 +78,9 @@ NPC::NPC(NPC* old_npc){
 			SetLevel(appearance.min_level + rand()%((appearance.max_level - appearance.min_level)+1));
 		target = 0;
 		SetTotalHPBase(old_npc->GetTotalHPBase());
-		SetTotalPowerBase(old_npc->GetTotalPowerBase());		
+		SetTotalHPBaseInstance(old_npc->GetTotalHPBase());
+		SetTotalPowerBase(old_npc->GetTotalPowerBase());	
+		SetTotalPowerBaseInstance(old_npc->GetTotalPowerBase());	
 		faction_id = old_npc->faction_id;
 		movement_interrupted = false;
 		old_npc->SetQuestsRequired(this);

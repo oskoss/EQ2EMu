@@ -1023,7 +1023,9 @@ void WorldDatabase::LoadNPCs(ZoneServer* zone){
 		npc->appearance.hide_hood = atoi(row[70]);
 		npc->appearance.randomize = atoi(row[61]);
 		npc->SetTotalHP(atoul(row[26]));
+		npc->SetTotalHPBaseInstance(atoul(row[26]));
 		npc->SetTotalPower(atoul(row[27]));
+		npc->SetTotalPowerBaseInstance(atoul(row[27]));
 		npc->SetHP(npc->GetTotalHP());
 		npc->SetPower(npc->GetTotalPower());
 		if(npc->GetTotalHP() == 0){
