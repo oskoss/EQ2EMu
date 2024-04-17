@@ -15158,28 +15158,28 @@ to zero and treated like placeholders." />
 <Data ElementName="location_z" Type="float" Size="1" />
 </Data>
 </Struct>
-
 <Struct Name="WS_GetMailHeader" ClientVersion="1" OpcodeName="OP_MailGetHeadersReplyMsg">
 <Data ElementName="kiosk_id" Type="int32" />
-<Data ElementName="num_messages" Type="int16" Size="1" />
+<Data ElementName="num_messages" Type="int8" Size="1" />
 <Data ElementName="message_array" Type="Array" ArraySizeVariable="num_messages">
-	<Data ElementName="mail_id" Type="int32" Size="1" />
-	<Data ElementName="player_to_id" Type="int32" Size="1" />
-	<Data ElementName="player_from" Type="EQ2_16Bit_String" />
-	<Data ElementName="subject" Type="EQ2_16Bit_String" />
-	<Data ElementName="unknown1" Type="int16" Size="1" />
-	<Data ElementName="already_read" Type="int8" Size="1" />
-	<Data ElementName="mail_deletion" Type="int32" Size="1" />
-	<Data ElementName="mail_type" Type="int8" Size="1" />
-	<Data ElementName="mail_expire" Type="int32" Size="1" />
-	<Data ElementName="coin_copper" Type="int32" Size="1" />
-	<Data ElementName="coin_silver" Type="int32" Size="1" />
-	<Data ElementName="coin_gold" Type="int32" Size="1" />
-	<Data ElementName="coin_plat" Type="int32" Size="1" />
-	<Data ElementName="num_items" Type="int16" Size="1" />
-	<Data ElementName="packettype" Type="int16" Size="1" />
-	<Data ElementName="packetsubtype" Type="int8" />
-	<Data ElementName="unknown2" Type="int32" />
+    <Data ElementName="mail_id" Type="int32" Size="1" />
+    <Data ElementName="player_to_id" Type="int32" Size="1" />
+    <Data ElementName="subject" Type="EQ2_16Bit_String" />
+    <Data ElementName="player_from" Type="EQ2_16Bit_String" />
+    <Data ElementName="unknown1" Type="int16" Size="1" />
+    <Data ElementName="already_read" Type="int8" Size="1" />
+    <Data ElementName="mail_deletion" Type="int32" Size="1" />
+    <Data ElementName="mail_type" Type="int8" Size="1" />
+    <Data ElementName="mail_expire" Type="int32" Size="1" />
+    <Data ElementName="coin_copper" Type="int32" Size="1" />
+    <Data ElementName="coin_silver" Type="int32" Size="1" />
+    <Data ElementName="coin_gold" Type="int32" Size="1" />
+    <Data ElementName="coin_plat" Type="int32" Size="1" />
+    <Data ElementName="item" Type="EQ2_Item" Optional="TRUE"/>
+    <Data ElementName="end_tagx" Type="int16" IfVariableNotSet="item_%i"/>
+    <Data ElementName="end_tag2" Type="int16" IfVariableNotSet="item_%i"/>
+    <Data ElementName="end_tag3" Type="int16" IfVariableNotSet="item_%i"/>
+    <Data ElementName="end_tag4" Type="int8" size="4"/>
 </Data>
 <Data ElementName="postage_cost" Type="int32" Size="1" />
 <Data ElementName="attachment_cost" Type="int32" Size="1" />
@@ -15230,13 +15230,11 @@ to zero and treated like placeholders." />
 <Data ElementName="coin_silver" Type="int32" />
 <Data ElementName="coin_gold" Type="int32" />
 <Data ElementName="coin_plat" Type="int32" />
-<Data ElementName="stack" Type="int16" Size="1" />
-<Data ElementName="packettype" Type="int16" Size="1" />
-<Data ElementName="packetsubtype" Type="int8" />
-<Data ElementName="unknown4" Type="int32" IfVariableNotSet="stack_0" />
-<Data ElementName="unknown5" Type="int32" Size="1" />
-<Data ElementName="unknown6" Type="int16" Size="1" />
-<Data ElementName="unknown7" Type="int8" Size="3" />
+<Data ElementName="item" Type="EQ2_Item" Optional="TRUE"/>
+<Data ElementName="end_tagx" Type="int16" IfVariableNotSet="item_%i"/>
+<Data ElementName="end_tag2" Type="int16" IfVariableNotSet="item_%i"/>
+<Data ElementName="end_tag3" Type="int8" IfVariableNotSet="item_%i"/>
+<Data ElementName="end_tag4" Type="int8" size="5"/>
 </Struct>
 <Struct Name="WS_MailGetMessage" ClientVersion="1193" OpcodeName="OP_MailGetMessageReplyMsg">
 <Data ElementName="kiosk_id" Type="int32" />

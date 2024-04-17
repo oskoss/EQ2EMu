@@ -1019,22 +1019,6 @@ Spell* SpellProcess::GetSpell(Entity* caster){
 	return spell;
 }
 
-Spawn* SpellProcess::GetSpellTarget(Entity* caster){
-	Spawn* target = 0;
-	if(cast_timers.size() > 0){		
-		CastTimer* cast_timer = 0;
-		MutexList<CastTimer*>::iterator itr = cast_timers.begin();
-		while(itr.Next()){
-			 cast_timer = itr->value;
-			 if(cast_timer && cast_timer->spell->caster == caster){
-				target = caster->GetZone()->GetSpawnByID(cast_timer->spell->initial_target);
-				break;
-			 }
-		}
-	}
-	return target;
-}
-
 void SpellProcess::ProcessSpell(ZoneServer* zone, Spell* spell, Entity* caster, Spawn* target, bool lock, bool harvest_spell, LuaSpell* customSpell, int16 custom_cast_time, bool in_heroic_opp)
 {
 	if((customSpell != 0 || spell != 0) && caster)
@@ -2006,11 +1990,9 @@ void SpellProcess::Interrupted(Entity* caster, Spawn* interruptor, int16 error_c
 		if (spell && ((from_movement && !spell->spell->GetSpellData()->cast_while_moving) || (!from_movement && spell->spell->GetSpellData()->interruptable) ||
 			cancel)) 
 		{
-			Spawn* target = GetSpellTarget(caster);
 			InterruptStruct* interrupt = new InterruptStruct;
 			interrupt->interrupted = caster;
 			interrupt->spell = spell;
-			interrupt->target = target;
 			interrupt->error_code = error_code;
 			spell->interrupted = true;
 			interrupt_list.Add(interrupt);
@@ -2041,6 +2023,7 @@ void SpellProcess::RemoveSpellTimersFromSpawn(Spawn* spawn, bool remove_all, boo
 			 if(cast_timer && cast_timer->spell && cast_timer->spell->caster == spawn){
 				cast_timer->spell->caster = 0;
 				cast_timer->delete_timer = true;
+				cast_timer->spell = nullptr;
 			 }
 		}
 	}

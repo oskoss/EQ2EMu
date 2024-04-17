@@ -8969,7 +8969,6 @@ void Client::SendMailList() {
 			p->setDataByName("unknown4", 0x01000000);
 			EQ2Packet* pack = p->serialize();
 			//DumpPacket(pack);
-			//p->PrintPacket();
 			QueuePacket(pack);
 			safe_delete(p);
 		}
@@ -8991,6 +8990,10 @@ void Client::DisplayMailMessage(int32 mail_id) {
 				update->setDataByName("packetsubtype", 0xFF);
 				QueuePacket(update->serialize());
 				safe_delete(update);
+			}
+			if(GetVersion() <= 547 && !mail->already_read) {
+				mail->already_read = true;
+				SendMailList();
 			}
 			PacketStruct* packet = configReader.getStruct("WS_MailGetMessage", GetVersion());
 			if (packet) {
@@ -9025,7 +9028,6 @@ void Client::DisplayMailMessage(int32 mail_id) {
 					packet->setDataByName("end_tag2", GetItemPacketType(GetVersion()));
 					packet->setDataByName("end_tag3", 0xFF);
 				}
-				mail->already_read = true;
 				mail->save_needed = true;
 				EQ2Packet* pack = packet->serialize();
 				QueuePacket(pack);

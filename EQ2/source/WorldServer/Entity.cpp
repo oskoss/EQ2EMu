@@ -2365,6 +2365,9 @@ float Entity::CalculateCastingSpeedMod() {
 
 float Entity::GetSpeed() {
 	float ret = speed > GetBaseSpeed() ? speed : GetBaseSpeed();
+	if(IsPlayer()) {
+		ret = GetBaseSpeed();
+	}
 	MStats.lock();
 	
 	if ((IsStealthed() || IsInvis()) && stats.count(ITEM_STAT_STEALTHINVISSPEEDMOD)) {

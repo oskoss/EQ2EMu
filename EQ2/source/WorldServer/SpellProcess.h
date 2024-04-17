@@ -122,7 +122,6 @@
 #define GET_VALUE_BAD_VALUE				0xFFFFFFFF
 struct InterruptStruct{
 	Spawn*			interrupted;
-	Spawn*			target;
 	LuaSpell*		spell;
 	int16			error_code;
 };
