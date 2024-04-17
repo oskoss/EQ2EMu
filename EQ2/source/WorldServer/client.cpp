@@ -8991,7 +8991,7 @@ void Client::DisplayMailMessage(int32 mail_id) {
 				QueuePacket(update->serialize());
 				safe_delete(update);
 			}
-			if(GetVersion() <= 547 && !mail->already_read) {
+			if(!mail->already_read) {
 				mail->already_read = true;
 				SendMailList();
 			}
